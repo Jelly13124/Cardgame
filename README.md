@@ -6,44 +6,6 @@
 
 ![Freecell Screenshot](addons/card-framework/screenshots/freecell.png)
 
-## Table of Contents
-- [Card Framework](#card-framework)
-  - [Table of Contents](#table-of-contents)
-  - [Features](#features)
-  - [Installation](#installation)
-  - [Getting Started](#getting-started)
-  - [Classes](#classes)
-    - [CardManager](#cardmanager)
-      - [Properties](#properties)
-      - [Methods](#methods)
-    - [Card](#card)
-      - [Properties](#properties-1)
-      - [Methods](#methods-1)
-    - [CardFactory](#cardfactory)
-      - [Properties](#properties-2)
-      - [Methods](#methods-2)
-    - [CardContainer](#cardcontainer)
-      - [Properties](#properties-3)
-      - [Methods](#methods-3)
-    - [Pile](#pile)
-      - [Properties](#properties-4)
-      - [Methods](#methods-4)
-    - [Hand](#hand)
-      - [Properties](#properties-5)
-      - [Methods](#methods-5)
-  - [Creating Card Info JSON Files](#creating-card-info-json-files)
-    - [Example](#example)
-  - [Sample Projects](#sample-projects)
-    - [Example1](#example1)
-    - [Freecell](#freecell)
-  - [Contributing](#contributing)
-  - [License / Credits](#license--credits)
-    - [Kenney.nl Card Assets](#kenneynl-card-assets)
-    - [ChatGPT-Generated Spot Images](#chatgpt-generated-spot-images)
-  - [Thanks To](#thanks-to)
-  - [Changelog](#changelog)
-    - [1.0.0 (2025-01-03)](#100-2025-01-03)
-
 
 ## Features
 * **Card Creation & Management**: Easily define and instantiate cards with custom attributes or visuals.
@@ -51,6 +13,41 @@
 * **Card Container**: Create and manage various modules like Piles or Hands, enabling flexible card organization in different game scenarios.
 * **Scalable Architecture**: Extend or modify the base classes to suit various genres (Solitaire, TCG, etc.).
 * **Lightweight & Modular**: Include only the parts you need, so it won't bloat your project.
+
+## Table of Contents
+- [Installation](#installation)
+- [Getting Started](#getting-started)
+- [Classes](#classes)
+  - [CardManager](#cardmanager)
+    - [Properties](#properties)
+    - [Methods](#methods)
+  - [Card](#card)
+    - [Properties](#properties-1)
+    - [Methods](#methods-1)
+  - [CardFactory](#cardfactory)
+    - [Properties](#properties-2)
+    - [Methods](#methods-2)
+  - [CardContainer](#cardcontainer)
+    - [Properties](#properties-3)
+    - [Methods](#methods-3)
+  - [Pile](#pile)
+    - [Properties](#properties-4)
+    - [Methods](#methods-4)
+  - [Hand](#hand)
+    - [Properties](#properties-5)
+    - [Methods](#methods-5)
+- [Creating Card Info JSON Files](#creating-card-info-json-files)
+  - [Example](#example)
+- [Sample Projects](#sample-projects)
+  - [Example1](#example1)
+  - [Freecell](#freecell)
+- [Contributing](#contributing)
+- [License / Credits](#license--credits)
+  - [Kenney.nl Card Assets](#kenneynl-card-assets)
+  - [ChatGPT-Generated Spot Images](#chatgpt-generated-spot-images)
+- [Thanks To](#thanks-to)
+- [Changelog](#changelog)
+  - [1.0.0 (2025-01-03)](#100-2025-01-03)
 
 
 ## Installation
