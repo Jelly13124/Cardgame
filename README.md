@@ -56,7 +56,7 @@
 ## Installation
 1. **Download from Godot Editor’s AssetLib**
    * Open Godot and navigate to the **AssetLib** tab.
-   * Search for **CardFramework** and download the latest version.
+   * Search for **Card Framework** and download the latest version.
 2. **Manual Download to** `addons/card-framework`
    * Alternatively, download the latest version directly.
    * Copy or move the contents to your project under `res://addons/card-framework`.
