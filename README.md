@@ -286,7 +286,8 @@ A **CardContainer** implementation for a **player’s hand** of cards.
 
 ![Example1 Screenshot](addons/card-framework/screenshots/example1.png)
 
-A **simple demonstration** of the Card Framework.  
+A **simple demonstration** of the Card Framework.
+- **Run the scene:** `res://example1/example1.tscn`
 - Uses **Pile** and **Hand** nodes to create basic deck, hand, and discard piles.  
 - Each pile showcases different properties, allowing you to explore how these settings affect card behavior.
 
@@ -298,6 +299,7 @@ A **simple demonstration** of the Card Framework.
 ![Freecell Screenshot](addons/card-framework/screenshots/freecell.png)
 
 A **full FreeCell Game** built on top of the Card Framework.
+- **Run the scene:** `res://freecell/scenes/menu/menu.tscn`
 - **`PlayingCard`**: An extended `Card` class for standard playing cards.  
 - **`Foundation`, `Tableau`, and `Freecell`**: Custom `CardContainer` subclasses implementing FreeCell’s unique rules.  
   - Notably, **`Tableau`** supports moving multiple cards at once.  
