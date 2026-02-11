@@ -1,212 +1,167 @@
-[gd_scene load_steps=12 format=3 uid="uid://60bwveuu2rt"]
+[gd_scene format=3 uid="uid://60bwveuu2rt"]
 
 [ext_resource type="Script" uid="uid://cf56ce8uvkmha" path="res://example1/example1.gd" id="1_2r7vq"]
 [ext_resource type="PackedScene" uid="uid://c7u8hryloq7hy" path="res://addons/card-framework/card_manager.tscn" id="1_rurpr"]
 [ext_resource type="PackedScene" uid="uid://dk6rb7lhv1ef6" path="res://addons/card-framework/pile.tscn" id="2_xkfcc"]
 [ext_resource type="PackedScene" uid="uid://diap3gdfbqvjv" path="res://example1/my_card_factory.tscn" id="3_l4bd6"]
 [ext_resource type="PackedScene" uid="uid://bkpjlq7ggckg6" path="res://addons/card-framework/hand.tscn" id="3_xp5g3"]
-[ext_resource type="Texture2D" uid="uid://cv6ecvmkml3ok" path="res://example1/assets/images/cards/cardBack_green1.png" id="5_kl5wo"]
-[ext_resource type="Texture2D" uid="uid://dacwc4ros7wiv" path="res://example1/assets/images/cards/cardBack_green2.png" id="6_u8c1b"]
-[ext_resource type="Texture2D" uid="uid://c8mcrcwmgi0oc" path="res://example1/assets/images/cards/cardBack_green3.png" id="8_cv7sm"]
-[ext_resource type="Texture2D" uid="uid://cpkjxmuv1ho4b" path="res://example1/assets/images/cards/cardBack_red2.png" id="8_nwj6x"]
-[ext_resource type="Texture2D" uid="uid://bdf2cukmms3nb" path="res://example1/assets/images/cards/cardBack_red3.png" id="10_tthv0"]
-[ext_resource type="Texture2D" uid="uid://b1jy1scbarbg5" path="res://example1/assets/images/cards/cardBack_red4.png" id="11_5najx"]
+[ext_resource type="PackedScene" path="res://example1/battle_column.tscn" id="4_col"]
+[ext_resource type="PackedScene" path="res://example1/spell_play_zone.tscn" id="5_spell"]
 
-[node name="Example1" type="Node"]
+[node name="Example1" type="Node" unique_id=465306552]
 script = ExtResource("1_2r7vq")
 
-[node name="ButtonContainer" type="HBoxContainer" parent="."]
-offset_left = 100.0
-offset_top = 100.0
-offset_right = 200.0
-offset_bottom = 140.0
-
-[node name="ButtonColumnContainer1" type="VBoxContainer" parent="ButtonContainer"]
-layout_mode = 2
-
-[node name="Draw1Button" type="Button" parent="ButtonContainer/ButtonColumnContainer1"]
-layout_mode = 2
-text = "draw 1"
-
-[node name="Draw3Button" type="Button" parent="ButtonContainer/ButtonColumnContainer1"]
-layout_mode = 2
-text = "draw 3"
-
-[node name="ResetDeckButton" type="Button" parent="ButtonContainer/ButtonColumnContainer1"]
-layout_mode = 2
-text = "reset deck"
-
-[node name="UndoButton" type="Button" parent="ButtonContainer/ButtonColumnContainer1"]
-layout_mode = 2
-text = "undo"
-
-[node name="ShuffleHandButton" type="Button" parent="ButtonContainer/ButtonColumnContainer1"]
-layout_mode = 2
-text = "shuffle hand"
-
-[node name="Discard1Button" type="Button" parent="ButtonContainer/ButtonColumnContainer1"]
-layout_mode = 2
-text = "discard 1"
-
-[node name="Discard3Button" type="Button" parent="ButtonContainer/ButtonColumnContainer1"]
-layout_mode = 2
-text = "discard 3"
-
-[node name="ButtonColumnContainer2" type="VBoxContainer" parent="ButtonContainer"]
-layout_mode = 2
-
-[node name="MoveToPile1Button" type="Button" parent="ButtonContainer/ButtonColumnContainer2"]
-layout_mode = 2
-text = "move to pile1"
-
-[node name="MoveToPile2Button" type="Button" parent="ButtonContainer/ButtonColumnContainer2"]
-layout_mode = 2
-text = "move to pile2"
-
-[node name="MoveToPile3Button" type="Button" parent="ButtonContainer/ButtonColumnContainer2"]
-layout_mode = 2
-text = "move to pile3"
-
-[node name="MoveToPile4Button" type="Button" parent="ButtonContainer/ButtonColumnContainer2"]
-layout_mode = 2
-text = "move to pile4"
-
-[node name="ClearAllButton" type="Button" parent="ButtonContainer/ButtonColumnContainer2"]
-layout_mode = 2
-text = "clear all"
-
-[node name="Draw3AtFront" type="Button" parent="ButtonContainer/ButtonColumnContainer2"]
-layout_mode = 2
-text = "draw 3 at front"
-
-[node name="ToggleDiscardButton" type="Button" parent="ButtonContainer/ButtonColumnContainer2"]
-layout_mode = 2
-text = "toggle discard"
-
-[node name="CardManager" parent="." instance=ExtResource("1_rurpr")]
+[node name="CardManager" parent="." unique_id=1234809607 instance=ExtResource("1_rurpr")]
+card_size = Vector2(160, 220)
 card_factory_scene = ExtResource("3_l4bd6")
-debug_mode = true
 
-[node name="Pile1" parent="CardManager" instance=ExtResource("2_xkfcc")]
-offset_left = 1000.0
-offset_top = 100.0
-offset_right = 1000.0
-offset_bottom = 100.0
-sensor_texture = ExtResource("5_kl5wo")
-sensor_visibility = true
+[node name="SpellPlayZone" parent="CardManager" unique_id=1316289548 instance=ExtResource("5_spell")]
+layout_mode = 0
+offset_left = 100.0
+offset_top = 40.0
+offset_right = 1700.0
+offset_bottom = 740.0
 
-[node name="Pile2" parent="CardManager" instance=ExtResource("2_xkfcc")]
-offset_left = 1200.0
-offset_top = 100.0
-offset_right = 1200.0
-offset_bottom = 100.0
-card_face_up = false
-layout = 3
-sensor_texture = ExtResource("6_u8c1b")
-sensor_visibility = true
+[node name="BattleField" type="HBoxContainer" parent="CardManager" unique_id=1269234991]
+layout_mode = 0
+offset_left = 25.0
+offset_top = 40.0
+offset_right = 1895.0
+offset_bottom = 740.0
+theme_override_constants/h_separation = 10
+alignment = 1
 
-[node name="Pile3" parent="CardManager" instance=ExtResource("2_xkfcc")]
-offset_left = 1400.0
-offset_top = 100.0
-offset_right = 1400.0
-offset_bottom = 100.0
-stack_display_gap = 40
-layout = 1
-restrict_to_top_card = false
-sensor_texture = ExtResource("8_cv7sm")
-sensor_visibility = true
+[node name="Column1" parent="CardManager/BattleField" unique_id=1105774856 instance=ExtResource("4_col")]
+layout_mode = 2
 
-[node name="Pile4" parent="CardManager" instance=ExtResource("2_xkfcc")]
-offset_left = 1600.0
-offset_top = 100.0
-offset_right = 1600.0
-offset_bottom = 100.0
-layout = 2
-allow_card_movement = false
-sensor_texture = ExtResource("8_nwj6x")
-sensor_visibility = true
+[node name="Column2" parent="CardManager/BattleField" unique_id=86258571 instance=ExtResource("4_col")]
+layout_mode = 2
 
-[node name="Hand" parent="CardManager" instance=ExtResource("3_xp5g3")]
-offset_left = 1000.0
-offset_top = 800.0
-offset_right = 1000.0
-offset_bottom = 800.0
+[node name="Column3" parent="CardManager/BattleField" unique_id=17745642 instance=ExtResource("4_col")]
+layout_mode = 2
 
-[node name="Deck" parent="CardManager" instance=ExtResource("2_xkfcc")]
+[node name="Column4" parent="CardManager/BattleField" unique_id=348197585 instance=ExtResource("4_col")]
+layout_mode = 2
+
+[node name="Column5" parent="CardManager/BattleField" unique_id=1642834448 instance=ExtResource("4_col")]
+layout_mode = 2
+
+[node name="Column6" parent="CardManager/BattleField" unique_id=381788353 instance=ExtResource("4_col")]
+layout_mode = 2
+is_player_column = false
+
+[node name="Column7" parent="CardManager/BattleField" unique_id=2097013281 instance=ExtResource("4_col")]
+layout_mode = 2
+is_player_column = false
+
+[node name="Column8" parent="CardManager/BattleField" unique_id=1463450099 instance=ExtResource("4_col")]
+layout_mode = 2
+is_player_column = false
+
+[node name="Hand" parent="CardManager" unique_id=894436731 instance=ExtResource("3_xp5g3")]
+layout_mode = 0
+offset_left = 1100.0
+offset_top = 880.0
+offset_right = 1100.0
+offset_bottom = 880.0
+
+[node name="Deck" parent="CardManager" unique_id=196193800 instance=ExtResource("2_xkfcc")]
+layout_mode = 0
 offset_left = 300.0
-offset_top = 800.0
+offset_top = 880.0
 offset_right = 300.0
-offset_bottom = 800.0
+offset_bottom = 880.0
 card_face_up = false
-sensor_texture = ExtResource("10_tthv0")
 
-[node name="Discard" parent="CardManager" instance=ExtResource("2_xkfcc")]
-offset_left = 1600.0
+[node name="Graveyard" parent="CardManager" unique_id=1488260806 instance=ExtResource("2_xkfcc")]
+layout_mode = 0
+offset_left = 100.0
+offset_top = 880.0
+offset_right = 100.0
+offset_bottom = 880.0
+
+[node name="HandLabel" type="Label" parent="." unique_id=1794985305]
+offset_left = 1150.0
 offset_top = 800.0
-offset_right = 1600.0
-offset_bottom = 800.0
-sensor_texture = ExtResource("11_5najx")
-
-[node name="Pile1Label" type="Label" parent="."]
-offset_left = 1055.0
-offset_top = 50.0
-offset_right = 1097.0
-offset_bottom = 73.0
-text = "Pile 1"
-
-[node name="Pile2Label" type="Label" parent="."]
-offset_left = 1255.0
-offset_top = 50.0
-offset_right = 1297.0
-offset_bottom = 73.0
-text = "Pile 2"
-
-[node name="Pile3Label" type="Label" parent="."]
-offset_left = 1455.0
-offset_top = 50.0
-offset_right = 1497.0
-offset_bottom = 73.0
-text = "Pile 3"
-
-[node name="Pile4Label" type="Label" parent="."]
-offset_left = 1655.0
-offset_top = 50.0
-offset_right = 1697.0
-offset_bottom = 73.0
-text = "Pile 4"
-
-[node name="HandLabel" type="Label" parent="."]
-offset_left = 1050.0
-offset_top = 700.0
-offset_right = 1092.0
-offset_bottom = 723.0
+offset_right = 1192.0
+offset_bottom = 823.0
 text = "Hand"
 
-[node name="DeckLabel" type="Label" parent="."]
+[node name="DeckLabel" type="Label" parent="." unique_id=1508836556]
 offset_left = 355.0
-offset_top = 700.0
+offset_top = 800.0
 offset_right = 395.0
-offset_bottom = 723.0
+offset_bottom = 823.0
 text = "Deck"
 
-[node name="DiscardLabel" type="Label" parent="."]
-offset_left = 1655.0
-offset_top = 700.0
-offset_right = 1714.0
-offset_bottom = 723.0
-text = "Discard"
+[node name="GraveyardLabel" type="Label" parent="." unique_id=615314057]
+offset_left = 100.0
+offset_top = 800.0
+offset_right = 159.0
+offset_bottom = 823.0
+text = "Graveyard"
 
-[connection signal="pressed" from="ButtonContainer/ButtonColumnContainer1/Draw1Button" to="." method="_on_draw_1_button_pressed"]
-[connection signal="pressed" from="ButtonContainer/ButtonColumnContainer1/Draw3Button" to="." method="_on_draw_3_button_pressed"]
-[connection signal="pressed" from="ButtonContainer/ButtonColumnContainer1/ResetDeckButton" to="." method="_on_reset_deck_button_pressed"]
-[connection signal="pressed" from="ButtonContainer/ButtonColumnContainer1/UndoButton" to="." method="_on_undo_button_pressed"]
-[connection signal="pressed" from="ButtonContainer/ButtonColumnContainer1/ShuffleHandButton" to="." method="_on_shuffle_hand_button_pressed"]
-[connection signal="pressed" from="ButtonContainer/ButtonColumnContainer1/Discard1Button" to="." method="_on_discard_1_button_pressed"]
-[connection signal="pressed" from="ButtonContainer/ButtonColumnContainer1/Discard3Button" to="." method="_on_discard_3_button_pressed"]
-[connection signal="pressed" from="ButtonContainer/ButtonColumnContainer2/MoveToPile1Button" to="." method="_on_move_to_pile_1_button_pressed"]
-[connection signal="pressed" from="ButtonContainer/ButtonColumnContainer2/MoveToPile2Button" to="." method="_on_move_to_pile_2_button_pressed"]
-[connection signal="pressed" from="ButtonContainer/ButtonColumnContainer2/MoveToPile3Button" to="." method="_on_move_to_pile_3_button_pressed"]
-[connection signal="pressed" from="ButtonContainer/ButtonColumnContainer2/MoveToPile4Button" to="." method="_on_move_to_pile_4_button_pressed"]
-[connection signal="pressed" from="ButtonContainer/ButtonColumnContainer2/ClearAllButton" to="." method="_on_clear_all_button_pressed"]
-[connection signal="pressed" from="ButtonContainer/ButtonColumnContainer2/Draw3AtFront" to="." method="_on_draw_3_at_front_button_pressed"]
-[connection signal="pressed" from="ButtonContainer/ButtonColumnContainer2/ToggleDiscardButton" to="." method="_on_toggle_discard_button_pressed"]
+[node name="EnergyLabel" type="Label" parent="." unique_id=2127611817]
+offset_left = 1650.0
+offset_top = 750.0
+offset_right = 1900.0
+offset_bottom = 776.0
+theme_override_colors/font_color = Color(0.2, 0.6, 1, 1)
+theme_override_font_sizes/font_size = 24
+text = "Energy: 3 / 3"
+
+[node name="RoundLabel" type="Label" parent="." unique_id=1841404796]
+offset_left = 1650.0
+offset_top = 700.0
+offset_right = 1900.0
+offset_bottom = 726.0
+theme_override_font_sizes/font_size = 20
+text = "Round: 1"
+
+[node name="EndRoundButton" type="Button" parent="." unique_id=1608834043]
+offset_left = 1650.0
+offset_top = 800.0
+offset_right = 1900.0
+offset_bottom = 850.0
+theme_override_colors/font_color = Color(1, 0.8, 0, 1)
+theme_override_font_sizes/font_size = 18
+text = "END ROUND"
+
+[node name="NotificationLabel" type="Label" parent="." unique_id=659079838]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -50.0
+offset_right = 300.0
+offset_bottom = 50.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_outline_size = 5
+theme_override_font_sizes/font_size = 42
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlayerFieldLabel" type="Label" parent="." unique_id=400000001]
+offset_left = 25.0
+offset_top = 10.0
+offset_right = 955.0
+offset_bottom = 33.0
+theme_override_colors/font_color = Color(0.4, 0.8, 0.4, 1)
+text = "PLAYER COLUMNS (1-5)"
+horizontal_alignment = 1
+
+[node name="EnemyFieldLabel" type="Label" parent="." unique_id=341662252]
+offset_left = 965.0
+offset_top = 10.0
+offset_right = 1895.0
+offset_bottom = 33.0
+theme_override_colors/font_color = Color(0.8, 0.4, 0.4, 1)
+text = "ENEMY COLUMNS (6-8)"
+horizontal_alignment = 1
+
+[connection signal="pressed" from="EndRoundButton" to="." method="_on_end_round_button_pressed"]
