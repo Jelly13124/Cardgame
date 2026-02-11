@@ -185,20 +185,26 @@ func _load_image(image_path: String) -> Texture2D:
 func _create_card_node(card_name: String, front_image: Texture2D, target: CardContainer, card_info: Dictionary) -> Card:
 	var card = _generate_card(card_info)
 	
-	# Validate container can accept this card
-	if !target._card_can_be_added([card]):
-		print("Card cannot be added: %s" % card_name)
-		card.queue_free()
-		return null
-	
-	# Configure card properties
+	# Configure card properties BEFORE validation
 	card.card_info = card_info
 	card.card_size = card_size
 	
-	# Add to scene tree and container
-	var cards_node = target.get_node("Cards")
-	cards_node.add_child(card)
-	target.add_card(card)
+	# Validate container can accept this card if target exists
+	if target:
+		if !target._card_can_be_added([card]):
+			print("Card cannot be added: %s" % card_name)
+			card.queue_free()
+			return null
+		
+		# Add to scene tree and container
+		var cards_node = target.get_node("Cards")
+		cards_node.add_child(card)
+		target.add_card(card)
+	else:
+		# If no target, add to the root of the current scene so it's in the tree
+		var main = get_tree().current_scene
+		if main:
+			main.add_child(card)
 	
 	# Set card identity and textures
 	card.card_name = card_name

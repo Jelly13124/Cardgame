@@ -103,10 +103,15 @@ func remove_card(card: Card) -> bool:
 	var index = _held_cards.find(card)
 	if index != -1:
 		_held_cards.remove_at(index)
+		update_card_ui()
+		return true
 	else:
 		return false
-	update_card_ui()
-	return true
+
+
+## Returns an array of all cards currently held in this container.
+func get_cards() -> Array[Card]:
+	return _held_cards
 
 ## Returns the number of contained cards
 func get_card_count() -> int:

@@ -1,0 +1,11 @@
+{
+    "name": "spell_zap",
+    "display_name": "ZAP",
+    "type": "spell",
+    "side": "player",
+    "cost": 1,
+    "health": 0,
+    "attack": 0,
+    "front_image": "cardSpadesA.png",
+    "description": "Deal 2 damage."
+}

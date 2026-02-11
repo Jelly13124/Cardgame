@@ -1,0 +1,11 @@
+{
+    "name": "hero_robot_bill",
+    "display_name": "ROBOT BILL",
+    "type": "hero",
+    "side": "player",
+    "cost": 0,
+    "health": 20,
+    "attack": 10,
+    "front_image": "cardSpadesA.png",
+    "description": "The Mech Commander."
+}
