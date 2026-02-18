@@ -72,8 +72,6 @@ func _ready() -> void:
 	var scene_root = get_tree().current_scene
 	if scene_root:
 		scene_root.set_meta("card_manager", self)
-		if debug_mode:
-			print("CardManager registered to scene root: ", scene_root.name)
 
 	card_factory.card_size = card_size
 	card_factory.preload_card_data()

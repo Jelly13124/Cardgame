@@ -1,0 +1,11 @@
+{
+    "name": "unit_boss_mk1",
+    "display_name": "OMEGA BOT",
+    "type": "unit",
+    "side": "enemy",
+    "health": 50,
+    "attack": 10,
+    "front_image": "cardSpadesA.png",
+    "description": "BOSS: Attacks relentlessly until someone dies.",
+    "is_boss": true
+}

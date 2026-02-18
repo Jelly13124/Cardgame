@@ -1,0 +1,14 @@
+{
+    "name": "unit_shield_guard",
+    "display_name": "Shield Guard",
+    "type": "unit",
+    "side": "player",
+    "cost": 2,
+    "attack": 1,
+    "health": 4,
+    "keywords": [
+        "shield"
+    ],
+    "front_image": "cardSpadesJ.png",
+    "description": "Shield: Negates the first instance of damage taken."
+}

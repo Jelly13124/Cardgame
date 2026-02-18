@@ -37,7 +37,6 @@ static var next_id: int = 0
 @export_subgroup("Sensor")
 ## The size of the sensor. If not set, it will follow the size of the card.
 @export var sensor_size: Vector2
-## The position of the sensor.
 @export var sensor_position: Vector2
 ## The texture used for the sensor.
 @export var sensor_texture: Texture
@@ -138,14 +137,21 @@ func check_card_can_be_dropped(cards: Array) -> bool:
 
 	if drop_zone == null:
 		return false
+	
+	if debug_mode:
+		print("[DropCheck] Testing container: %s. Mouse Pos: %v" % [name, get_global_mouse_position()])
 
 	if drop_zone.accept_types.has(CardManager.CARD_ACCEPT_TYPE) == false:
+		if debug_mode: print("  -> Rejected: Wrong accept_type")
 		return false
 		
 	if not drop_zone.check_mouse_is_in_drop_zone():
+		if debug_mode: print("  -> Rejected: Mouse outside bounds. Sensor Rect: ", drop_zone.sensor.get_global_rect())
 		return false
 		
-	return _card_can_be_added(cards)
+	var can_add = _card_can_be_added(cards)
+	if debug_mode: print("  -> Result of _card_can_be_added: ", can_add)
+	return can_add
 
 
 func get_partition_index() -> int:
@@ -211,7 +217,7 @@ func undo(cards: Array, from_indices: Array = []) -> void:
 	sorted_indices.sort()
 	var is_consecutive = true
 	for i in range(1, sorted_indices.size()):
-		if sorted_indices[i] != sorted_indices[i-1] + 1:
+		if sorted_indices[i] != sorted_indices[i - 1] + 1:
 			is_consecutive = false
 			break
 	
@@ -238,7 +244,7 @@ func undo(cards: Array, from_indices: Array = []) -> void:
 			card_index_pairs.append({"card": cards[i], "index": from_indices[i], "original_order": i})
 		
 		# Sort by index descending, then by original order ascending for stable sorting
-		card_index_pairs.sort_custom(func(a, b): 
+		card_index_pairs.sort_custom(func(a, b):
 			if a.index == b.index:
 				return a.original_order < b.original_order
 			return a.index > b.index
@@ -246,7 +252,7 @@ func undo(cards: Array, from_indices: Array = []) -> void:
 		
 		# Restore each card to its original index
 		for pair in card_index_pairs:
-			var target_index = min(pair.index, _held_cards.size())  # Clamp to valid range
+			var target_index = min(pair.index, _held_cards.size()) # Clamp to valid range
 			_move_cards([pair.card], target_index)
 
 
@@ -295,7 +301,7 @@ func _insert_card_to_container(card: Card, index: int) -> void:
 		elif index > _held_cards.size():
 			index = _held_cards.size()
 		_held_cards.insert(index, card)
-	update_card_ui()	
+	update_card_ui()
 
 
 func _move_to_card_container(_card: Card, index: int = -1) -> void:
@@ -371,31 +377,40 @@ func _find_and_register_card_manager() -> void:
 	if card_manager != null:
 		return
 
+	print("[REG] Container '%s' (id=%d) searching for CardManager..." % [name, unique_id])
+
 	# Try scene root meta registration first (most flexible)
 	var scene_root = get_tree().current_scene
 	if scene_root and scene_root.has_meta("card_manager"):
 		card_manager = scene_root.get_meta("card_manager")
-		if debug_mode:
-			print("CardContainer found CardManager via scene root meta: ", name)
+		print("[REG]   Found via scene root meta")
 	else:
 		# Fallback to parent traversal for backward compatibility
 		card_manager = _find_card_manager_in_parents()
-		if card_manager and debug_mode:
-			print("CardContainer found CardManager via parent traversal: ", name)
+		if card_manager:
+			print("[REG]   Found via parent traversal")
+		else:
+			print("[REG]   NOT FOUND! Parent chain: ", _get_parent_chain())
 
 	# CardManager must be found for proper functionality
 	if card_manager == null:
-		push_error("CardContainer '%s' could not find CardManager.\n" % name +
-			"SOLUTION: Ensure CardManager is positioned ABOVE CardContainers in scene tree:\n" +
-			"✅ Correct:   Scene → CardManager → UI → CardContainer\n" +
-			"❌ Incorrect: Scene → UI → CardContainer → CardManager")
+		push_error("CardContainer '%s' could not find CardManager." % name)
 		return
 
 	# Register with found CardManager
 	card_manager._add_card_container(unique_id, self)
+	print("[REG]   Registered as id=%d" % unique_id)
 
 	# Initialize drop zone now that we have CardManager
 	_initialize_drop_zone()
+
+func _get_parent_chain() -> String:
+	var chain = ""
+	var p = get_parent()
+	while p:
+		chain += p.name + " -> "
+		p = p.get_parent()
+	return chain
 
 
 ## Traverses parent nodes to find CardManager (fallback method).
@@ -414,6 +429,9 @@ func _initialize_drop_zone() -> void:
 	if enable_drop_zone:
 		drop_zone = drop_zone_scene.instantiate()
 		add_child(drop_zone)
+		# Ensure it covers the whole container for accurate local mouse positioning
+		drop_zone.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		
 		drop_zone.init(self, [CardManager.CARD_ACCEPT_TYPE])
 		# If sensor_size is not set, they will follow the card size.
 		if sensor_size == Vector2(0, 0):

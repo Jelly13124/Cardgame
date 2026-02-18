@@ -41,7 +41,7 @@ extends CardFactory
 ## Base card scene to instantiate for each card (must inherit from Card class)
 @export var default_card_scene: PackedScene
 
-@export_group("asset_paths") 
+@export_group("asset_paths")
 ## Directory path containing card image assets (PNG, JPG, etc.)
 @export var card_asset_dir: String
 ## Directory path containing card information JSON files
@@ -100,69 +100,85 @@ func create_card(card_name: String, target: CardContainer) -> Card:
 		return _create_card_node(card_info.name, front_image, target, card_info)
 
 
-## Scans card info directory and preloads all JSON data and textures into cache.
-## Significantly improves card creation performance by eliminating file I/O during gameplay.
-## Should be called during game initialization or loading screens.
 func preload_card_data() -> void:
-	var dir = DirAccess.open(card_info_dir)
+	_scan_dir_recursive(card_info_dir)
+
+func _scan_dir_recursive(path: String) -> void:
+	var dir = DirAccess.open(path)
 	if dir == null:
-		push_error("Failed to open directory: %s" % card_info_dir)
+		push_error("Failed to open directory: %s" % path)
 		return
 
-	# Scan directory for all JSON files
 	dir.list_dir_begin()
 	var file_name = dir.get_next()
 	while file_name != "":
-		# Skip non-JSON files
-		if !file_name.ends_with(".json"):
-			file_name = dir.get_next()
-			continue
-
-		# Extract card name from filename (without .json extension)
-		var card_name = file_name.get_basename()
-		var card_info = _load_card_info(card_name)
-		if card_info == null:
-			push_error("Failed to load card info for %s" % card_name)
-			continue
-
-		# Load corresponding texture asset
-		var front_image_path = card_asset_dir + "/" + card_info.get("front_image", "")
-		var front_image_texture = _load_image(front_image_path)
-		if front_image_texture == null:
-			push_error("Failed to load card image: %s" % front_image_path)
-			continue
-
-		# Cache both JSON data and texture for fast access
-		preloaded_cards[card_name] = {
-			"info": card_info,
-			"texture": front_image_texture
-		}
-		print("Preloaded card data:", preloaded_cards[card_name])
-		
+		if dir.current_is_dir():
+			if file_name != "." and file_name != "..":
+				_scan_dir_recursive(path + "/" + file_name)
+		else:
+			if file_name.ends_with(".json"):
+				var card_name = file_name.get_basename()
+				var full_path = path + "/" + file_name
+				_preload_single_card(card_name, full_path)
 		file_name = dir.get_next()
 
+func _preload_single_card(card_name: String, full_path: String) -> void:
+	var card_info = _parse_json_file(full_path)
+	if card_info.is_empty():
+		return
 
-## Loads and parses JSON card data from file system.
-## @param card_name: Card identifier (filename without .json extension)
-## @returns: Dictionary containing card data or empty dict if loading failed
-func _load_card_info(card_name: String) -> Dictionary:
-	var json_path = card_info_dir + "/" + card_name + ".json"
-	if !FileAccess.file_exists(json_path):
+	var front_image_path = card_asset_dir + "/" + card_info.get("front_image", "")
+	var front_image_texture = _load_image(front_image_path)
+	if front_image_texture == null:
+		return
+
+	preloaded_cards[card_name] = {
+		"info": card_info,
+		"texture": front_image_texture
+	}
+	print("Preloaded card: %s from %s" % [card_name, full_path])
+
+func _parse_json_file(path: String) -> Dictionary:
+	if !FileAccess.file_exists(path):
 		return {}
-
-	# Read JSON file content
-	var file = FileAccess.open(json_path, FileAccess.READ)
+	var file = FileAccess.open(path, FileAccess.READ)
 	var json_string = file.get_as_text()
 	file.close()
 
-	# Parse JSON with error handling
 	var json = JSON.new()
 	var error = json.parse(json_string)
 	if error != OK:
-		push_error("Failed to parse JSON: %s" % json_path)
+		push_error("Failed to parse JSON: %s" % path)
 		return {}
-
 	return json.data
+
+
+func _load_card_info(card_name: String) -> Dictionary:
+	# Check root first
+	var root_path = card_info_dir + "/" + card_name + ".json"
+	if FileAccess.file_exists(root_path):
+		return _parse_json_file(root_path)
+	
+	# Search subdirectories recursively
+	return _search_subdirs_for_card(card_info_dir, card_name)
+
+func _search_subdirs_for_card(path: String, card_name: String) -> Dictionary:
+	var dir = DirAccess.open(path)
+	if dir == null: return {}
+	
+	dir.list_dir_begin()
+	var item = dir.get_next()
+	while item != "":
+		if dir.current_is_dir():
+			if item != "." and item != "..":
+				var res = _search_subdirs_for_card(path + "/" + item, card_name)
+				if not res.is_empty():
+					return res
+		else:
+			if item == card_name + ".json":
+				return _parse_json_file(path + "/" + item)
+		item = dir.get_next()
+	return {}
 
 
 ## Loads image texture from file path with error handling.
@@ -185,8 +201,9 @@ func _load_image(image_path: String) -> Texture2D:
 func _create_card_node(card_name: String, front_image: Texture2D, target: CardContainer, card_info: Dictionary) -> Card:
 	var card = _generate_card(card_info)
 	
-	# Configure card properties BEFORE validation
-	card.card_info = card_info
+	# Duplicate the dictionary to prevent shared-reference bugs
+	# (e.g. changing faction or buffs on one card affecting all future cards)
+	card.card_info = card_info.duplicate()
 	card.card_size = card_size
 	
 	# Validate container can accept this card if target exists
@@ -199,6 +216,13 @@ func _create_card_node(card_name: String, front_image: Texture2D, target: CardCo
 		# Add to scene tree and container
 		var cards_node = target.get_node("Cards")
 		cards_node.add_child(card)
+		
+		# If enemy, start from the far right for a "marching in" effect
+		if card.card_info.get("side", "") == "enemy":
+			# Offset Y slightly to match the row's center_y if target is a BattleRow
+			var row_center_y = target.get("center_y") if target.has_method("get") else 0.0
+			card.global_position = Vector2(2500, target.global_position.y + row_center_y)
+		
 		target.add_card(card)
 	else:
 		# If no target, add to the root of the current scene so it's in the tree

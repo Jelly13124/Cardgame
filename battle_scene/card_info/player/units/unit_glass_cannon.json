@@ -1,0 +1,14 @@
+{
+    "name": "unit_glass_cannon",
+    "display_name": "Glass Cannon",
+    "type": "unit",
+    "side": "player",
+    "cost": 1,
+    "attack": 10,
+    "health": 1,
+    "keywords": [
+        "shield"
+    ],
+    "front_image": "cardSpadesA.png",
+    "description": "Shield. High attack, but fragile."
+}

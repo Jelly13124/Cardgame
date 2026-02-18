@@ -1,0 +1,13 @@
+{
+    "name": "unit_reaper",
+    "display_name": "REAPER",
+    "type": "unit",
+    "side": "enemy",
+    "attack": 2,
+    "health": 3,
+    "keywords": [
+        "wipe"
+    ],
+    "front_image": "cardSpadesQ.png",
+    "description": "Wipe: Attacks EVERY player unit in the current row."
+}

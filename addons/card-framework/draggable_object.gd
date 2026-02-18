@@ -32,10 +32,10 @@ extends Control
 # Enums
 ## Enumeration of possible interaction states for the draggable object.
 enum DraggableState {
-	IDLE,       ## Default state - no interaction
-	HOVERING,   ## Mouse over state - visual feedback
-	HOLDING,    ## Dragging state - follows mouse
-	MOVING      ## Programmatic move state - ignores input
+	IDLE, ## Default state - no interaction
+	HOVERING, ## Mouse over state - visual feedback
+	HOLDING, ## Dragging state - follows mouse
+	MOVING ## Programmatic move state - ignores input
 }
 
 ## The speed at which the objects moves.
@@ -74,11 +74,11 @@ var current_holding_mouse_position: Vector2
 var original_position: Vector2
 var original_scale: Vector2
 var original_hover_rotation: float
-var current_hover_position: Vector2  # Track position during hover animation
+var current_hover_position: Vector2 # Track position during hover animation
 
 # Move operation tracking
-var target_destination: Vector2  # Target position passed to move() function
-var target_rotation: float       # Target rotation passed to move() function
+var target_destination: Vector2 # Target position passed to move() function
+var target_rotation: float # Target rotation passed to move() function
 var original_destination: Vector2
 var original_rotation: float
 var destination_degree: float
@@ -219,7 +219,7 @@ func _start_hover_animation() -> void:
 	if hover_tween and hover_tween.is_valid():
 		hover_tween.kill()
 		hover_tween = null
-		position = original_position  # Reset position to original before starting new hover
+		position = original_position # Reset position to original before starting new hover
 		scale = original_scale
 		rotation = original_hover_rotation
 
@@ -233,7 +233,7 @@ func _start_hover_animation() -> void:
 	
 	# Create new hover tween
 	hover_tween = create_tween()
-	hover_tween.set_parallel(true)  # Allow multiple properties to animate simultaneously
+	hover_tween.set_parallel(true) # Allow multiple properties to animate simultaneously
 	
 	# Animate position (hover up)
 	var target_position = Vector2(position.x, position.y - hover_distance)

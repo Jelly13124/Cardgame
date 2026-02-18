@@ -162,3 +162,8 @@ func _handle_mouse_released() -> void:
 	super._handle_mouse_released()
 	if card_container:
 		card_container.release_holding_cards()
+
+
+## Returns a string representation of this card.
+func _to_string() -> String:
+	return "[Card:%s]" % card_name

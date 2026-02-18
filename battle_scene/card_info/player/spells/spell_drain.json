@@ -1,0 +1,10 @@
+{
+    "name": "spell_drain",
+    "display_name": "DRAIN",
+    "type": "spell",
+    "side": "player",
+    "cost": 0,
+    "target_type": "row",
+    "front_image": "cardSpades3.png",
+    "description": "Reduce current energy by 2."
+}

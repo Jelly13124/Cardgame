@@ -1,0 +1,10 @@
+{
+    "name": "spell_draft",
+    "display_name": "DRAFT",
+    "type": "spell",
+    "side": "player",
+    "cost": 1,
+    "target_type": "row",
+    "front_image": "cardSpades2.png",
+    "description": "Draw 1 card."
+}

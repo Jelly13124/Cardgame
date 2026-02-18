@@ -7,7 +7,7 @@
 
 **Professional-grade Godot 4.x addon** for building 2D card games. Create **Solitaire**, **TCG**, or **deck-building roguelikes** with flexible card handling and drag-and-drop interactions.
 
-![Example1 Screenshot](addons/card-framework/screenshots/example1.png) ![Freecell Screenshot](addons/card-framework/screenshots/freecell.png)
+![BattleScene Screenshot](addons/card-framework/screenshots/example1.png) ![Freecell Screenshot](addons/card-framework/screenshots/freecell.png)
 
 ## Key Features
 
@@ -48,10 +48,10 @@
 
 ## Sample Projects
 
-**`example1/`** - Basic demonstration with different container types  
+**`battle_scene/`** - Basic demonstration with different container types  
 **`freecell/`** - Complete game with custom rules, statistics, seed generation
 
-Run: `res://example1/example1.tscn` or `res://freecell/scenes/menu/menu.tscn`
+Run: `res://battle_scene/battle_scene.tscn` or `res://freecell/scenes/menu/menu.tscn`
 
 ## Customization
 
