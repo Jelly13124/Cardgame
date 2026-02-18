@@ -1,0 +1,11 @@
+{
+    "name": "custom_unit_3",
+    "display_name": "SENTRY",
+    "type": "unit",
+    "side": "player",
+    "cost": 2,
+    "health": 2,
+    "attack": 2,
+    "front_image": "cardSpadesA.png",
+    "description": "Guard the line."
+}

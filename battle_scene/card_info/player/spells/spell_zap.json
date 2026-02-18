@@ -1,0 +1,10 @@
+{
+    "name": "spell_zap",
+    "display_name": "ZAP",
+    "type": "spell",
+    "side": "player",
+    "cost": 1,
+    "target_type": "unit",
+    "front_image": "cardSpadesA.png",
+    "description": "Deal 2 damage to a unit."
+}

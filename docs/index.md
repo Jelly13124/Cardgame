@@ -5,7 +5,7 @@
 ### Getting Started
 - [Quick Start Guide](../README.md) - Essential setup and installation
 - [Detailed Getting Started](GETTING_STARTED.md) - Complete step-by-step guide
-- [Example1 Tutorial](../example1/README.md) - Beginner-friendly framework introduction
+- [Example1 Tutorial](../battle_scene/README.md) - Beginner-friendly framework introduction
 - [FreeCell Implementation](../freecell/README.md) - Advanced production-ready reference
 
 ### API Reference

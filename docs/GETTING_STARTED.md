@@ -366,7 +366,7 @@ func deal_cards_to_hand(count: int):
 ## Next Steps
 
 ### Explore Sample Projects
-- **`example1/`** - Basic demonstration of all container types
+- **`battle_scene/`** - Basic demonstration of all container types
 - **`freecell/`** - Complete game implementation with custom rules
 
 ### Advanced Customization

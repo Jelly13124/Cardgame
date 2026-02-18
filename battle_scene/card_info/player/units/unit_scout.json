@@ -1,0 +1,11 @@
+{
+    "name": "custom_unit_2",
+    "display_name": "SCOUT",
+    "type": "unit",
+    "side": "player",
+    "cost": 1,
+    "health": 2,
+    "attack": 2,
+    "front_image": "cardSpadesA.png",
+    "description": "Quick deploy unit."
+}

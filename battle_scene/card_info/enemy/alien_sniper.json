@@ -1,0 +1,11 @@
+{
+    "name": "alien_sniper",
+    "display_name": "ALIEN SNIPER",
+    "type": "unit",
+    "side": "enemy",
+    "cost": 0,
+    "health": 1,
+    "attack": 7,
+    "front_image": "cardSpadesA.png",
+    "description": "Extreme damage, fragile armor."
+}

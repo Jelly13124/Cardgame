@@ -27,22 +27,21 @@ class_name DropZone
 extends Control
 
 
-
 # Dynamic sensor properties with automatic UI synchronization
 ## Size of the drop sensor area
-var sensor_size: Vector2: 
+var sensor_size: Vector2:
 	set(value):
 		sensor.size = value
 		sensor_outline.size = value
 
 ## Position offset of the drop sensor relative to DropZone
-var sensor_position: Vector2: 
+var sensor_position: Vector2:
 	set(value):
 		sensor.position = value
 		sensor_outline.position = value
 
 ## @deprecated: Since it was designed to debug the sensor, please use sensor_outline_visible instead.
-var sensor_texture : Texture:
+var sensor_texture: Texture:
 	set(value):
 		sensor.texture = value
 
@@ -87,7 +86,7 @@ var horizontal_partition: Array
 ## Creates sensor and debugging UI components.
 ## @param _parent: Container that owns this drop zone
 ## @param accept_types: Array of draggable object types this zone accepts
-func init(_parent: Node, accept_types: Array =[]):
+func init(_parent: Node, accept_types: Array = []):
 	parent = _parent
 	self.accept_types = accept_types
 
@@ -96,7 +95,7 @@ func init(_parent: Node, accept_types: Array =[]):
 		sensor = TextureRect.new()
 		sensor.name = "Sensor"
 		sensor.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		sensor.z_index = CardFrameworkSettings.VISUAL_SENSOR_Z_INDEX  # Behind everything else
+		sensor.z_index = CardFrameworkSettings.VISUAL_SENSOR_Z_INDEX # Behind everything else
 		add_child(sensor)
 
 	# Create debugging outline (initially hidden)
@@ -180,7 +179,7 @@ func set_vertical_partitions(positions: Array):
 		outline.z_index = CardFrameworkSettings.VISUAL_OUTLINE_Z_INDEX
 		outline.border_color = CardFrameworkSettings.DEBUG_OUTLINE_COLOR
 		outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		outline.size = Vector2(1, sensor.size.y)  # Vertical line full height
+		outline.size = Vector2(1, sensor.size.y) # Vertical line full height
 		
 		# Convert global partition position to local coordinates
 		var local_x = vertical_partition[i] - global_position.x
@@ -221,7 +220,7 @@ func get_vertical_layers() -> int:
 	if vertical_partition == null or vertical_partition.is_empty():
 		return -1
 
-	var mouse_position = get_global_mouse_position()
+	var mouse_position = get_local_mouse_position() # Use LOCAL
 	
 	# Count how many partition lines the mouse has crossed
 	var current_index := 0
@@ -241,7 +240,7 @@ func get_horizontal_layers() -> int:
 	if horizontal_partition == null or horizontal_partition.is_empty():
 		return -1
 
-	var mouse_position = get_global_mouse_position()
+	var mouse_position = get_local_mouse_position() # Use LOCAL
 	
 	var current_index := 0
 

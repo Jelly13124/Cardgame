@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://battle_spot"]
+
+[ext_resource type="Script" path="res://battle_scene/battle_spot.gd" id="1_script"]
+
+[node name="BattleSpot" type="Control"]
+custom_minimum_size = Vector2(160, 220)
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 1
+script = ExtResource("1_script")
+sensor_visibility = true
