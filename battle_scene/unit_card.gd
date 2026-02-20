@@ -226,6 +226,7 @@ func _handle_mouse_pressed() -> void:
 	
 	# --- SPELL TARGETING OVERRIDE ---
 	# Spell cards should NOT be dragged. They use click-to-cast or arrow targeting.
+	# We support both Click-Click and Hold-Drag (via BattleScene logic)
 	if card_info.get("type", "") == "spell" and card_container.name == "Hand":
 		var main = get_tree().current_scene
 		if main == null:
@@ -237,17 +238,18 @@ func _handle_mouse_pressed() -> void:
 				main.show_notification("NOT ENOUGH ENERGY", Color(0.2, 0.6, 1))
 			return
 		
-		var target_type = card_info.get("target_type", "row")
+		# Check if the spell REQUIRES targeting (Arrow System)
+		var needs_target = card_info.get("needs_target", false)
 		
-		if target_type == "row":
-			# Row spells: cast immediately on click
-			if main.has_method("play_spell"):
-				main.play_spell(self, Vector2.ZERO)
-		elif target_type == "unit":
-			# Unit spells: enter targeting mode with arrow
+		if needs_target:
+			# Targeted spells: Override drag and use Arrow System
 			if main.has_method("start_spell_targeting"):
 				main.start_spell_targeting(self)
-		return
+			return
+		else:
+			# Untargeted spells (Global): Allow normal drag-and-drop
+			# Do nothing here, let super() handle the drag
+			pass
 	
 	# Proceed with normal card dragging (from hand/deck/field)
 	super._handle_mouse_pressed()
