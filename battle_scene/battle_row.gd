@@ -140,13 +140,25 @@ func get_card_at_slot(slot: int) -> Card:
 func move_cards(cards: Array, index: int = -1, with_history: bool = true) -> bool:
 	var hand_cards = []
 	
-	# Determine slot from the partition index (provided by CardManager/DropZone)
-	# Or fallback to mouse position if called manually
 	var drop_slot = index
+	
+	# If dropping via drag-and-drop, calculate slot from mouse position
 	if drop_slot == -1:
 		var local_mouse_x = get_local_mouse_position().x
-		if local_mouse_x < 935:
-			drop_slot = int(clamp(floor((local_mouse_x - 10) / slot_width), 0, 3))
+		
+		# STRICT CHECK: Only allow drops on the Player Side (Left ~935px)
+		if local_mouse_x >= 935:
+			if debug_mode: print("[BattleRow] Rejected: Can only deploy to Player Side.")
+			var main = get_tree().current_scene
+			if main and main.has_method("show_notification"):
+				main.show_notification("INVALID ZONE", Color(0.8, 0.4, 0.4))
+			return false
+			
+		drop_slot = int(clamp(floor((local_mouse_x - 10) / slot_width), 0, 3))
+	
+	# Double check: Only allow slots 0-3 for player deployment
+	if drop_slot > 3:
+		return false
 	
 	if debug_mode:
 		print("[BattleRow %d] move_cards fired. Assigned slot: %d" % [row_index, drop_slot])
@@ -184,3 +196,7 @@ func remove_card(card: Card) -> bool:
 		if card.has_method("set_view_mode"):
 			card.set_view_mode("card")
 	return result
+
+func set_highlight(active: bool) -> void:
+	if has_node("HighlightRect"):
+		$HighlightRect.visible = active

@@ -131,8 +131,9 @@ func _on_drag_dropped(cards: Array) -> void:
 			# Restore mouse_filter before move_cards (DraggableObject will manage it from here)
 			for card in cards:
 				card.mouse_filter = original_mouse_filters[card]
-			card_container.move_cards(cards, index)
-			return
+			var move_success = card_container.move_cards(cards, index)
+			if move_success:
+				return
 	
 	for card in cards:
 		# Restore mouse_filter before return_card (DraggableObject will manage it from here)

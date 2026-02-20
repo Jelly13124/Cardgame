@@ -25,6 +25,13 @@ var is_game_over: bool = false
 var is_targeting: bool = false
 var targeting_card: Control = null
 var targeting_arrow: Node2D = null
+# var targeting_start_time: int = 0 # Re-added below with pos
+var hovered_unit: Control = null
+var hovered_row: Control = null
+var targeting_overlay: Control = null
+var targeting_type: String = "unit" # "unit", "row", "none"
+var targeting_start_pos: Vector2 = Vector2.ZERO
+var targeting_start_time: int = 0
 const TARGETING_ARROW_SCRIPT = preload("res://battle_scene/targeting_arrow.gd")
 
 
@@ -36,6 +43,68 @@ func _ready():
 		notify_label.modulate.a = 0
 	
 	_start_new_game()
+	
+	# Create blocking overlay for targeting
+	targeting_overlay = Control.new()
+	targeting_overlay.name = "TargetingOverlay"
+	targeting_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	targeting_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	targeting_overlay.visible = false
+	targeting_overlay.gui_input.connect(_on_targeting_overlay_gui_input)
+	
+	# Add to CardManager to ensure it's above cards and properly sized
+	card_manager.add_child(targeting_overlay)
+	
+	set_process(true)
+
+func _process(_delta: float) -> void:
+	if not is_targeting:
+		if hovered_unit:
+			_set_hover_effect(hovered_unit, false)
+			hovered_unit = null
+		return
+	
+	var mouse_pos = get_viewport().get_mouse_position()
+	var unit_under_mouse = _get_unit_at_position(mouse_pos)
+	var row_under_mouse = _get_row_at_position(mouse_pos)
+	
+	# --- UNIT TARGETING ---
+	if targeting_type == "unit":
+		if unit_under_mouse != hovered_unit:
+			if hovered_unit:
+				_set_hover_effect(hovered_unit, false)
+			
+			hovered_unit = unit_under_mouse
+			
+			if hovered_unit:
+				_set_hover_effect(hovered_unit, true)
+	
+	# --- ROW TARGETING ---
+	elif targeting_type == "row":
+		if row_under_mouse != hovered_row:
+			if hovered_row and hovered_row.has_method("set_highlight"):
+				hovered_row.set_highlight(false)
+			
+			hovered_row = row_under_mouse
+			
+			if hovered_row and hovered_row.has_method("set_highlight"):
+				hovered_row.set_highlight(true)
+
+	# --- NO TARGETING (Global) ---
+	# No specific highlight needed, arrow just follows mouse.
+
+func _set_hover_effect(unit: Control, active: bool) -> void:
+	if not is_instance_valid(unit): return
+	
+	var tween = create_tween()
+	tween.set_parallel(true)
+	
+	if active:
+		tween.tween_property(unit, "scale", unit.original_scale * 1.2, 0.1)
+		tween.tween_property(unit, "modulate", Color(1.2, 1.2, 1.2), 0.1)
+	else:
+		tween.tween_property(unit, "scale", unit.original_scale, 0.1)
+		tween.tween_property(unit, "modulate", Color.WHITE, 0.1)
 
 
 # Displays a message in the center of the screen that fades away
@@ -166,6 +235,7 @@ func _get_randomized_card_list() -> Array:
 	var list = [
 		"spell_zap", "spell_zap",
 		"spell_drain", "spell_draft",
+		"spell_air_raid", "spell_air_raid",
 		"unit_drone", "unit_scout", "unit_sentry", "unit_shield_guard", "unit_glass_cannon"
 	]
 	var full_deck = []
@@ -250,6 +320,16 @@ func _ascend_enemies():
 		
 		if enemies_to_move.size() > 0:
 			for card in enemies_to_move:
+				# Check if target row has space for enemies (Max 4 enemies)
+				var enemy_count = 0
+				for c in target_row.get_cards():
+					if c.card_info.get("side", "player") != "player":
+						enemy_count += 1
+				
+				if enemy_count >= 4:
+					# Target row is full, stop ascending for this unit
+					continue
+				
 				source_row.remove_card(card)
 				target_row.add_card(card)
 			await get_tree().create_timer(0.3).timeout
@@ -326,9 +406,7 @@ func _resolve_structured_combat(row: Node, is_top_row: bool):
 				await _perform_attack(player, target)
 			await get_tree().create_timer(0.4).timeout
 
-	await get_tree().create_timer(0.2).timeout
-	
-	await get_tree().create_timer(0.2).timeout
+	await get_tree().create_timer(0.4).timeout
 
 
 # Process removed lane logic
@@ -411,6 +489,20 @@ func play_spell(card: Control, drop_position: Vector2):
 			hand.add_card(card)
 			return
 
+	elif target_type == "row":
+		# Logic for row-targeted spells dropped via drag-and-drop
+		var target_row = _get_row_at_position(drop_position)
+		if target_row:
+			target_unit = target_row # Pass row as target
+		else:
+			# If dropped in empty space, maybe "global" behavior or cancel?
+			# For now, require hitting a row for "row" type spells
+			show_notification("INVALID TARGET", Color(0.8, 0.4, 0.4))
+			if card.card_container:
+				card.card_container.remove_card(card)
+			hand.add_card(card)
+			return
+
 	if card.card_container:
 		card.card_container.remove_card(card)
 	
@@ -477,6 +569,13 @@ func _get_unit_at_position(pos: Vector2) -> Card:
 	return null
 
 
+func _get_row_at_position(pos: Vector2) -> Control:
+	for row in _get_battle_rows():
+		if row.get_global_rect().has_point(pos):
+			return row
+	return null
+
+
 # --- Energy Management ---
 
 # Returns true if the player has enough current_energy to play the selected cards
@@ -508,6 +607,7 @@ func start_spell_targeting(card: Control) -> void:
 	
 	is_targeting = true
 	targeting_card = card
+	targeting_type = card.card_info.get("target_type", "unit")
 	
 	# Highlight the selected spell card
 	card.modulate = Color(0.7, 0.9, 1.3)
@@ -521,6 +621,15 @@ func start_spell_targeting(card: Control) -> void:
 	var card_center = card.global_position + card.card_size / 2.0
 	targeting_arrow.start(card_center)
 	
+	# Track start for hybrid Drag/Click behavior
+	targeting_start_pos = get_viewport().get_mouse_position()
+	targeting_start_time = Time.get_ticks_msec()
+	
+	# Enable blocking overlay
+	if targeting_overlay:
+		targeting_overlay.visible = true
+		targeting_overlay.move_to_front() # Ensure it blocks everything
+		
 	show_notification("SELECT A TARGET", Color(1, 0.8, 0.2))
 
 
@@ -541,6 +650,18 @@ func _cancel_spell_targeting() -> void:
 	
 	targeting_card = null
 	is_targeting = false
+	if hovered_unit:
+		_set_hover_effect(hovered_unit, false)
+		hovered_unit = null
+
+	if hovered_row and hovered_row.has_method("set_highlight"):
+		hovered_row.set_highlight(false)
+		hovered_row = null
+	
+	# Disable blocking overlay
+	if targeting_overlay:
+		targeting_overlay.visible = false
+		
 	show_notification("TARGETING CANCELLED", Color(0.6, 0.6, 0.6))
 
 
@@ -550,7 +671,26 @@ func _complete_spell_targeting() -> void:
 		return
 	
 	var mouse_pos = get_viewport().get_mouse_position()
-	var target_unit = _get_unit_at_position(mouse_pos)
+	
+	# Resolve target based on type
+	var final_target = null
+	var is_valid_target = false
+
+	if targeting_type == "unit":
+		final_target = _get_unit_at_position(mouse_pos)
+		if final_target:
+			is_valid_target = true
+			
+	elif targeting_type == "row":
+		final_target = _get_row_at_position(mouse_pos)
+		if final_target:
+			is_valid_target = true
+			
+	elif targeting_type == "none":
+		# Always valid if clicking in the game window (or specifically battlefield?)
+		# For now, just assume any click in targeting mode is valid for "none" type
+		final_target = null # No specific target object needed for global spells
+		is_valid_target = true
 	
 	# Remove arrow first
 	if targeting_arrow and is_instance_valid(targeting_arrow):
@@ -562,40 +702,90 @@ func _complete_spell_targeting() -> void:
 	if targeting_card and is_instance_valid(targeting_card):
 		targeting_card.modulate = Color.WHITE
 	
-	if target_unit == null:
-		show_notification("NO TARGET FOUND", Color(0.8, 0.4, 0.4))
-		is_targeting = false
-		targeting_card = null
+	if not is_valid_target:
+		# Don't cancel immediately on release in empty space IF we were holding (old logic),
+		# but for Click-Toggle, clicking empty space SHOULD cancel.
+		show_notification("INVALID TARGET", Color(0.8, 0.4, 0.4))
+		_cancel_spell_targeting() # Use the standardized cancel method to clean up overlay
 		return
 	
 	# Cast the spell on the target
 	var card = targeting_card
-	is_targeting = false
-	targeting_card = null
 	
-	# Execute the spell at the current position
-	play_spell(card, mouse_pos)
+	# Cleanup targeting state (overlay, arrow, vars)
+	# We call _cancel_spell_targeting logic manually or just reset specific things?
+	# Better to reset specific things to avoid "TARGETING CANCELLED" message overriding "SPELL CAST"
+	
+	# Remove arrow
+	if targeting_arrow and is_instance_valid(targeting_arrow):
+		targeting_arrow.stop()
+		targeting_arrow.queue_free()
+		targeting_arrow = null
+	
+	# Un-highlight
+	if targeting_card and is_instance_valid(targeting_card):
+		targeting_card.modulate = Color.WHITE
+		
+	if hovered_unit:
+		_set_hover_effect(hovered_unit, false)
+		hovered_unit = null
+
+	if hovered_row and hovered_row.has_method("set_highlight"):
+		hovered_row.set_highlight(false)
+		hovered_row = null
+		
+	if targeting_overlay:
+		targeting_overlay.visible = false
+		
+	targeting_card = null
+	is_targeting = false
+	
+	# Execute the spell at the current position with the resolved target
+	_execute_spell_with_target(card, final_target)
 
 
-## Handles global input for spell targeting (cancel/confirm).
-func _unhandled_input(event: InputEvent) -> void:
+func _execute_spell_with_target(card: Control, target: Object) -> void:
+	if is_game_over: return
+
+	if card.card_container:
+		card.card_container.remove_card(card)
+	
+	# Spend energy
+	spend_energy([card])
+	
+	_resolve_spell_effect(card, target)
+	
+	# Spells go back to deck
+	deck.add_card(card)
+	deck.shuffle()
+
+
+## Handles input on the blocking overlay
+func _on_targeting_overlay_gui_input(event: InputEvent) -> void:
 	if not is_targeting:
 		return
-	
+		
 	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-			# Right-click cancels targeting
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				# Already targeting, clicking again usually means "Complete" (Toggle mode)
+				_complete_spell_targeting()
+			else:
+				# Mouse RELEASED
+				# Check if we dragged significantly or held for a while
+				var current_pos = get_viewport().get_mouse_position()
+				var drag_dist = current_pos.distance_to(targeting_start_pos)
+				var hold_time = Time.get_ticks_msec() - targeting_start_time
+				
+				# If user dragged > 20px OR held > 200ms, treat release as "Cast"
+				# Otherwise, treat it as a "Click" (initiate targeting) and wait for second click
+				if drag_dist > 20 or hold_time > 200:
+					_complete_spell_targeting()
+					
+		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 			_cancel_spell_targeting()
-			get_viewport().set_input_as_handled()
-		elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			# Left-click completes targeting
-			_complete_spell_targeting()
-			get_viewport().set_input_as_handled()
-	
-	if event is InputEventKey and event.pressed:
-		if event.keycode == KEY_ESCAPE:
-			_cancel_spell_targeting()
-			get_viewport().set_input_as_handled()
+
+# Removed _unhandled_input logic as it is replaced by overlay
 
 
 # --- UI Signals ---

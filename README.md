@@ -7,14 +7,14 @@
 
 **Professional-grade Godot 4.x addon** for building 2D card games. Create **Solitaire**, **TCG**, or **deck-building roguelikes** with flexible card handling and drag-and-drop interactions.
 
-![BattleScene Screenshot](addons/card-framework/screenshots/example1.png) ![Freecell Screenshot](addons/card-framework/screenshots/freecell.png)
+![BattleScene Screenshot](addons/card-framework/screenshots/battle_scene.png)
 
 ## Key Features
 
 • **Drag & Drop System** - Intuitive card interactions with built-in validation  
 • **Flexible Containers** - `Pile` (stacks), `Hand` (fanned layouts), custom containers  
 • **JSON Card Data** - Define cards with metadata, images, and custom properties  
-• **Production Ready** - Complete FreeCell implementation included  
+• **Production Ready** - Professional card interaction system
 • **Extensible Architecture** - Factory patterns, inheritance hierarchy, event system
 
 ## Installation
@@ -46,12 +46,15 @@
 **CardContainer** - Base class for `Pile` (stacks) and `Hand` (fanned layouts)  
 **CardFactory** - Creates cards from JSON data, supports custom implementations
 
-## Sample Projects
+## Samples
 
-**`battle_scene/`** - Basic demonstration with different container types  
-**`freecell/`** - Complete game with custom rules, statistics, seed generation
+**`battle_scene/`** - Complete Sci-Fi Card Battle implementation. Features:
+- Unit deployment and battlefield rows
+- Spell targeting arrows (Bezier curves)
+- Click-to-cast row spells
+- Custom unit keywords (Shield, Wipe, etc.)
 
-Run: `res://battle_scene/battle_scene.tscn` or `res://freecell/scenes/menu/menu.tscn`
+Run: `res://battle_scene/battle_scene.tscn`
 
 ## Customization
 

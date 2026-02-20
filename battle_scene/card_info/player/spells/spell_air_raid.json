@@ -1,0 +1,10 @@
+{
+    "id": "spell_air_raid",
+    "name": "spell_air_raid",
+    "type": "spell",
+    "cost": 2,
+    "target_type": "row",
+    "needs_target": true,
+    "description": "Deal 1 DMG to all enemies in a row.",
+    "front_image": "cardJoker.png"
+}
