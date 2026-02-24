@@ -349,10 +349,19 @@ func _update_target_positions() -> void:
 
 
 func _move_object(target: Node, to: Node, index: int = -1) -> void:
+	var safe_index = index
+	if safe_index != -1 and to != null:
+		# Important: Clamp safe_index to valid child count bounds to prevent Engine crashing
+		# Because target might not be in 'to' yet, the max valid index after addition is 'child_count'
+		var max_index = to.get_child_count()
+		if target.get_parent() == to:
+			max_index -= 1
+		safe_index = mini(safe_index, max_index)
+
 	if target.get_parent() == to:
 		# If already the same parent, just change the order with move_child
-		if index != -1:
-			to.move_child(target, index)
+		if safe_index != -1:
+			to.move_child(target, safe_index)
 		else:
 			# If index is -1, move to the last position
 			to.move_child(target, to.get_child_count() - 1)
@@ -361,9 +370,9 @@ func _move_object(target: Node, to: Node, index: int = -1) -> void:
 	var global_pos = target.global_position
 	if target.get_parent() != null:
 		target.get_parent().remove_child(target)
-	if index != -1:
+	if safe_index != -1:
 		to.add_child(target)
-		to.move_child(target, index)
+		to.move_child(target, safe_index)
 	else:
 		to.add_child(target)
 	target.global_position = global_pos

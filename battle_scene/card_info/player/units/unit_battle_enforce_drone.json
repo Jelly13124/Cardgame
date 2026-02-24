@@ -1,0 +1,16 @@
+{
+    "id": "unit_battle_enforce_drone",
+    "name": "unit_battle_enforce_drone",
+    "display_name": "Battle Enforce Drone",
+    "type": "unit",
+    "side": "player",
+    "cost": 1,
+    "health": 2,
+    "attack": 2,
+    "keywords": [
+        "battle_cry_buff_adj"
+    ],
+    "description": "Battle Cry: Permanently grants +1/+1 to adjacent friendly units.",
+    "front_image": "cardBack_blue4.png"
+}
+

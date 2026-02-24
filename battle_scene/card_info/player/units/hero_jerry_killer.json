@@ -1,0 +1,26 @@
+{
+    "name": "hero_jerry_killer",
+    "display_name": "JERRY KILLER",
+    "type": "hero",
+    "side": "player",
+    "cost": 1,
+    "health": 15,
+    "attack": 12,
+    "front_image": "cardBack_blue4.png",
+    "description": "Spell-focused commander.",
+    "starting_pool": [
+        "unit_robot_leader",
+        "unit_robot_leader",
+        "unit_battle_enforce_drone",
+        "unit_shield_bot",
+        "unit_attack_drone",
+        "spell_zap",
+        "spell_zap",
+        "spell_zap",
+        "spell_air_raid",
+        "spell_air_raid",
+        "spell_draft",
+        "spell_draft"
+    ]
+}
+

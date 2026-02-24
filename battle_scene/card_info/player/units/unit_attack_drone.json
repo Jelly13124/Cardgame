@@ -1,0 +1,13 @@
+{
+    "name": "unit_attack_drone",
+    "display_name": "Attack Drone",
+    "type": "unit",
+    "side": "player",
+    "cost": 1,
+    "health": 3,
+    "attack": 10,
+    "keywords": [],
+    "description": "High damage unit for taking out priority targets.",
+    "front_image": "cardBack_blue4.png"
+}
+

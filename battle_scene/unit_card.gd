@@ -25,6 +25,7 @@ var current_view_mode: String = "card"
 var health: int = 0
 var attack: int = 0
 var keyword_instances: Array = []
+var custom_script_instance: Node = null
 
 
 func _ready() -> void:
@@ -45,12 +46,10 @@ func _ready() -> void:
 	# Call parent _ready which handles basic texture setup
 	super._ready()
 	
-	# Connect to input signal for debug killing (don't override _gui_input which breaks inheritance)
-	connect("gui_input", _on_unit_gui_input)
-	
 	# Populate UI from card_info if available
 	_update_card_ui()
 	_load_keywords()
+	_load_custom_script()
 	set_view_mode("card") # Default to card view
 
 
@@ -177,6 +176,27 @@ func take_damage(amount: int) -> void:
 		if main and main.has_method("kill_unit"):
 			main.kill_unit(self)
 
+func add_temporary_stats(atk: int, hp: int) -> void:
+	attack += atk
+	health += hp
+	card_info["attack"] = float(attack)
+	card_info["health"] = float(health)
+	_update_card_ui()
+	var main = get_tree().current_scene
+	if main and main.has_signal("unit_stats_changed"):
+		main.emit_signal("unit_stats_changed", self, atk, hp, false)
+
+func add_permanent_stats(atk: int, hp: int) -> void:
+	add_temporary_stats(atk, hp)
+	var uid = get_meta("uid", "")
+	if uid != "":
+		var run_manager = get_node_or_null("/root/RunManager")
+		if run_manager and run_manager.has_method("add_permanent_stats"):
+			run_manager.add_permanent_stats(uid, atk, hp)
+	var main = get_tree().current_scene
+	if main and main.has_signal("unit_stats_changed"):
+		main.emit_signal("unit_stats_changed", self, atk, hp, true)
+
 
 ## Sets textures for the card faces and the UI art containers
 func set_faces(front_face: Texture2D, back_face: Texture2D) -> void:
@@ -208,6 +228,16 @@ func _load_keywords() -> void:
 		else:
 			push_warning("Keyword script not found: %s" % script_path)
 
+func _load_custom_script() -> void:
+	var script_path = card_info.get("script_path", "")
+	if script_path != "" and FileAccess.file_exists(script_path):
+		var CustomScript = load(script_path)
+		if CustomScript:
+			custom_script_instance = CustomScript.new()
+			add_child(custom_script_instance)
+			if custom_script_instance.has_method("setup"):
+				custom_script_instance.setup(self)
+
 func show_notification(text: String, color: Color = Color.WHITE) -> void:
 	var main = get_tree().current_scene
 	if main and main.has_method("show_notification"):
@@ -220,6 +250,9 @@ func refresh_ui() -> void:
 
 
 func _handle_mouse_pressed() -> void:
+	if card_container == null:
+		return
+		
 	# Disable dragging if the unit is already on the battlefield (in a BattleRow)
 	if card_container.is_in_group("battle_row"):
 		return
@@ -256,10 +289,3 @@ func _handle_mouse_pressed() -> void:
 
 func is_player_unit() -> bool:
 	return card_info.get("side", "player") == "player"
-
-func _on_unit_gui_input(event: InputEvent) -> void:
-	# Right-click a unit on the field to "kill" it (Debug)
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-		var main = get_tree().current_scene
-		if main and main.has_method("kill_unit") and card_container.is_in_group("battle_row"):
-			main.kill_unit(self)

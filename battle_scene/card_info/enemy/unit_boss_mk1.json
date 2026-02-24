@@ -5,7 +5,7 @@
     "side": "enemy",
     "health": 50,
     "attack": 10,
-    "front_image": "cardSpadesA.png",
+    "front_image": "cardBack_blue4.png",
     "description": "BOSS: Attacks relentlessly until someone dies.",
     "is_boss": true
 }

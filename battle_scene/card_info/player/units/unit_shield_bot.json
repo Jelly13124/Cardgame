@@ -1,0 +1,13 @@
+{
+    "name": "unit_shield_bot",
+    "display_name": "Shield Bot",
+    "type": "unit",
+    "side": "player",
+    "cost": 1,
+    "health": 10,
+    "attack": 5,
+    "keywords": [],
+    "description": "High health unit for holding the line.",
+    "front_image": "cardBack_blue4.png"
+}
+
