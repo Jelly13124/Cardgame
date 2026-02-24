@@ -6,5 +6,5 @@
     "target_type": "row",
     "needs_target": true,
     "description": "Deal 1 DMG to all enemies in a row.",
-    "front_image": "cardJoker.png"
+    "front_image": "cardBack_blue4.png"
 }

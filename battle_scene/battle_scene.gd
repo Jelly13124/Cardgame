@@ -155,6 +155,14 @@ func _start_next_round():
 		_draw_cards(2) # Draw 2 cards every round
 		_spawn_enemy_units() # Spawn some random enemies to fight
 
+	# Trigger Turn Start abilities (e.g. Leader buff)
+	for row in _get_battle_rows():
+		for card in row.get_cards():
+			if is_instance_valid(card) and "keyword_instances" in card:
+				for kw in card.keyword_instances:
+					if kw.has_method("on_turn_start"):
+						kw.on_turn_start(row)
+
 
 func _spawn_enemy_units():
 	var rows_list = _get_battle_rows()
@@ -166,7 +174,7 @@ func _spawn_enemy_units():
 	if current_round > 2: spawn_count = 2
 	if current_round > 5: spawn_count = 3
 	
-	var enemy_types = ["alien_killer", "alien_sniper", "alien_soldier", "unit_reaper"]
+	var enemy_types = ["alien_soldier", "alien_sniper", "alien_killer", "unit_reaper"]
 	
 	for i in range(spawn_count):
 		if spawn_row.get_card_count() < 8:
@@ -223,20 +231,40 @@ func _update_ui_labels():
 
 # Clears the deck and refills it with a fresh, shuffled list of cards
 func _reset_deck():
-	var list = _get_randomized_card_list()
+	var list = []
+	var run_manager = get_node_or_null("/root/RunManager")
+	if run_manager and run_manager.is_run_active:
+		list = run_manager.player_deck.duplicate()
+	else:
+		list = _get_randomized_card_list()
+		
+	rectify_deck_if_small(list)
+	
 	deck.clear_cards()
-	for card_name in list:
-		card_factory.create_card(card_name, deck)
+	for item in list:
+		var card_name = item if typeof(item) == TYPE_STRING else item["card_id"]
+		var card = card_factory.create_card(card_name, deck)
+		if card and typeof(item) == TYPE_DICTIONARY:
+			card.set_meta("uid", item["uid"])
+			if card is UnitCard:
+				var b_atk = item.get("bonus_attack", 0)
+				var b_hp = item.get("bonus_health", 0)
+				if b_atk > 0 or b_hp > 0:
+					card.add_permanent_stats(b_atk, b_hp)
 	deck.shuffle()
+
+func rectify_deck_if_small(list: Array):
+	# Fallback if deck is too small (e.g drafted a single card test deck)
+	while list.size() < 10:
+		list.append_array(list.duplicate())
 
 
 # Returns the master list of all available cards in the deck
 func _get_randomized_card_list() -> Array:
 	var list = [
 		"spell_zap", "spell_zap",
-		"spell_drain", "spell_draft",
-		"spell_air_raid", "spell_air_raid",
-		"unit_drone", "unit_scout", "unit_sentry", "unit_shield_guard", "unit_glass_cannon"
+		"spell_draft", "spell_air_raid",
+		"unit_robot_leader", "unit_robot_leader"
 	]
 	var full_deck = []
 	# Triple the list to create a 39-card deck for longer games
@@ -285,6 +313,49 @@ func _run_combat_phase():
 	# After combat ends, surviving enemies ascend to the next layer
 	await _ascend_enemies()
 	_start_next_round()
+
+# --- Game Mechanics ---
+
+## Permanently buffs a unit's attack and health. Triggers Robot Bill's passive.
+func buff_unit(unit: Control, atk: int, hp: int) -> void:
+	if not is_instance_valid(unit) or not "card_info" in unit: return
+	
+	unit.attack += atk
+	if unit.attack_label: unit.attack_label.text = str(unit.attack)
+	if unit.token_attack_label: unit.token_attack_label.text = str(unit.attack)
+	
+	unit.health += hp
+	
+	unit.card_info["attack"] = unit.attack
+	unit.card_info["health"] = unit.health
+	
+	if unit.health_label: unit.health_label.text = str(unit.health)
+	if unit.token_health_label: unit.token_health_label.text = str(unit.health)
+	
+	# Only execute passive if this wasn't bill himself gaining stats from his own effect
+	var is_player = unit.card_info.get("side", "") == "player"
+	var is_bill_himself = unit.card_info.get("name", "") == "hero_robot_bill"
+	
+	if is_player and not is_bill_himself:
+		_trigger_bill_passive(atk, hp)
+
+func _trigger_bill_passive(atk: int, hp: int) -> void:
+	for row in _get_battle_rows():
+		for card in row.get_cards():
+			if is_instance_valid(card) and card.card_info.get("name", "") == "hero_robot_bill":
+				if not "card_info" in card: continue
+				
+				card.attack += atk
+				card.health += hp
+				card.card_info["attack"] = card.attack
+				card.card_info["health"] = card.health
+				
+				if card.attack_label: card.attack_label.text = str(card.attack)
+				if card.token_attack_label: card.token_attack_label.text = str(card.attack)
+				if card.health_label: card.health_label.text = str(card.health)
+				if card.token_health_label: card.token_health_label.text = str(card.health)
+				
+				card.show_notification("BILL GROWS! (+%d/+%d)" % [atk, hp], Color.GOLD)
 
 
 func _move_enemies_phase():
@@ -350,63 +421,72 @@ func _resolve_structured_combat(row: Node, is_top_row: bool):
 	if p_units.is_empty() and e_units.is_empty():
 		return
 
-	# PHASE 1: ALL Enemies attack the frontmost Player unit
-	for enemy in e_units:
-		if not is_instance_valid(enemy) or enemy.get_parent() == null: continue
-		
-		# Initial target list: find current frontmost player
-		var targets = []
-		for i in range(3, -1, -1):
-			var unit = row.get_card_at_slot(i)
-			if unit and unit.card_info.get("side", "player") == "player":
-				targets.append(unit)
-				break
-		
-		# Allow keywords to modify/expand the target list (e.g., Wipe)
-		if enemy is UnitCard:
-			for kw in enemy.keyword_instances:
-				targets = kw.on_before_attack(targets, row)
-		
-		if targets.size() > 0:
-			for target in targets:
-				await _perform_attack(enemy, target)
-			await get_tree().create_timer(0.4).timeout
-		elif is_top_row:
-			# If no player units in top row, attack Mothership (Slot 0)
-			var ship = row.get_card_at_slot(0)
-			if ship and is_instance_valid(ship) and ship.card_info.get("name", "") == "building_mothership":
-				await _perform_attack(enemy, ship)
-				await get_tree().create_timer(0.4).timeout
+	var all_units = p_units + e_units
+	
+	# PHASE 0: Fast Units
+	for u in all_units:
+		if is_instance_valid(u) and u.get_parent() != null:
+			if _has_keyword(u, "fast"):
+				var is_player = u.card_info.get("side", "player") == "player"
+				var targ_range = range(4, 8) if is_player else range(3, -1, -1)
+				await _unit_execute_attack(u, row, targ_range, not is_player and is_top_row)
 
-	# PHASE 2: ALL surviving Player units attack the frontmost Enemy unit
-	# Refresh units list as some might have died
-	p_units = []
+	# PHASE 1: Normal Enemies
+	for enemy in e_units:
+		if is_instance_valid(enemy) and enemy.get_parent() != null and not _has_keyword(enemy, "fast"):
+			await _unit_execute_attack(enemy, row, range(3, -1, -1), is_top_row)
+
+	# PHASE 2: Normal Players
+	p_units.clear()
 	for card in row.get_cards():
 		if is_instance_valid(card) and card.card_info.get("side", "player") == "player":
 			p_units.append(card)
 
 	for player in p_units:
-		if not is_instance_valid(player) or player.get_parent() == null: continue
-		
-		# Initial target list: find current frontmost enemy
-		var targets = []
-		for i in range(4, 8):
-			var unit = row.get_card_at_slot(i)
-			if unit and unit.card_info.get("side", "player") != "player":
-				targets.append(unit)
-				break
-		
-		# Allow keywords to modify/expand the target list (e.g., Wipe)
-		if player is UnitCard:
-			for kw in player.keyword_instances:
-				targets = kw.on_before_attack(targets, row)
-		
-		if targets.size() > 0:
-			for target in targets:
-				await _perform_attack(player, target)
-			await get_tree().create_timer(0.4).timeout
+		if is_instance_valid(player) and player.get_parent() != null and not _has_keyword(player, "fast"):
+			await _unit_execute_attack(player, row, range(4, 8), false)
 
 	await get_tree().create_timer(0.4).timeout
+
+
+func _has_keyword(unit: Control, kw_name: String) -> bool:
+	if not "keyword_instances" in unit: return false
+	for kw in unit.keyword_instances:
+		if kw.name.to_lower() == kw_name.to_lower():
+			return true
+	return false
+
+func _unit_execute_attack(attacker: Control, row: Node, targets_range: Array, attack_ship: bool):
+	if not is_instance_valid(attacker) or attacker.get_parent() == null: return
+	
+	var attack_count = 2 if _has_keyword(attacker, "wind") else 1
+			
+	for attack_idx in range(attack_count):
+		if not is_instance_valid(attacker) or attacker.get_parent() == null: return
+		
+		var targets = []
+		for i in targets_range:
+			var target = row.get_card_at_slot(i)
+			if target and is_instance_valid(target):
+				var target_side = target.card_info.get("side", "player")
+				var attacker_side = attacker.card_info.get("side", "player")
+				if target_side != attacker_side:
+					targets.append(target)
+					break # Only target the first one in line by default
+		
+		if "keyword_instances" in attacker:
+			for kw in attacker.keyword_instances:
+				targets = kw.on_before_attack(targets, row)
+			
+		if targets.size() > 0:
+			for target in targets:
+				await _perform_attack(attacker, target)
+			await get_tree().create_timer(0.4).timeout
+		elif attack_ship:
+			var ship = row.get_card_at_slot(0)
+			if ship and is_instance_valid(ship) and ship.card_info.get("name", "") == "building_mothership":
+				await _perform_attack(attacker, ship)
+				await get_tree().create_timer(0.4).timeout
 
 
 # Process removed lane logic
@@ -456,16 +536,35 @@ func kill_unit(card: Control):
 		_game_over()
 		return
 
+	if card.card_info.get("is_boss", false):
+		_victory()
+
 	if card.card_container:
 		card.card_container.remove_card(card)
 	card.queue_free() # Simply delete the unit
 	show_notification("UNIT DESTROYED", Color(1, 0.2, 0.2))
 
 
+func _victory():
+	is_game_over = true
+	show_notification("VICTORY!", Color(0.2, 1.0, 0.2))
+	
+	var run_manager = get_node_or_null("/root/RunManager")
+	if run_manager:
+		run_manager.add_resources(50, 10)
+		
+	await get_tree().create_timer(2.0).timeout
+	get_tree().change_scene_to_file("res://run_system/ui/card_draft_reward.tscn")
+
 # Stops the game and shows the failure message
 func _game_over():
 	is_game_over = true
 	show_notification("GAME OVER - MOTHERSHIP DESTROYED", Color(1, 0.1, 0.1))
+	var run_manager = get_node_or_null("/root/RunManager")
+	if run_manager:
+		run_manager._handle_run_loss()
+	await get_tree().create_timer(3.0).timeout
+	get_tree().change_scene_to_file("res://run_system/ui/starter_deck_builder.tscn")
 
 
 ## Handles spell casting. 

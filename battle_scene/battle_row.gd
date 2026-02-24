@@ -166,6 +166,7 @@ func move_cards(cards: Array, index: int = -1, with_history: bool = true) -> boo
 	for card in cards:
 		if card.card_container is Hand:
 			hand_cards.append(card)
+			card.set_meta("just_deployed", true)
 			# Force side to player when played from hand
 			if card is UnitCard:
 				card.card_info["side"] = "player"
@@ -188,6 +189,14 @@ func on_card_move_done(card: Card):
 	# we ensure it's in Token mode.
 	if card is UnitCard:
 		card.set_view_mode("token")
+		if card.get_meta("just_deployed", false):
+			card.set_meta("just_deployed", false)
+			var slot = card.get_meta("battle_slot", -1)
+			if "keyword_instances" in card:
+				for kw in card.keyword_instances:
+					if kw.has_method("on_deploy"):
+						kw.on_deploy(self, slot)
+
 func remove_card(card: Card) -> bool:
 	var result = super.remove_card(card)
 	if result:

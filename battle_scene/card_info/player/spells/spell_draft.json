@@ -6,6 +6,6 @@
     "cost": 1,
     "target_type": "none",
     "needs_target": false,
-    "front_image": "cardSpades2.png",
+    "front_image": "cardBack_blue4.png",
     "description": "Draw 1 card."
 }

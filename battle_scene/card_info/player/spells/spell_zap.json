@@ -6,6 +6,6 @@
     "cost": 1,
     "target_type": "unit",
     "needs_target": true,
-    "front_image": "cardSpadesA.png",
+    "front_image": "cardBack_blue4.png",
     "description": "Deal 2 damage to a unit."
 }

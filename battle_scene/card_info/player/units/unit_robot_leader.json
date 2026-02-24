@@ -1,0 +1,16 @@
+{
+    "id": "unit_robot_leader",
+    "name": "unit_robot_leader",
+    "display_name": "Robot Leader",
+    "type": "unit",
+    "side": "player",
+    "cost": 1,
+    "health": 8,
+    "attack": 1,
+    "keywords": [
+        "Leader"
+    ],
+    "description": "Leader: Grants +1/+1 to all friendly units in this row at the start of each round.",
+    "front_image": "cardBack_blue4.png"
+}
+
