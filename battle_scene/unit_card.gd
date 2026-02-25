@@ -26,6 +26,7 @@ var current_view_mode: String = "card"
 # Combat state
 var health: int = 0
 var attack: int = 0
+var can_attack: bool = false
 var keyword_instances: Array = []
 var custom_script_instance: Node = null
 
@@ -71,6 +72,25 @@ func set_view_mode(mode: String) -> void:
 
 
 ## Updates all UI elements from card_info dictionary
+func _on_gui_input(event: InputEvent) -> void:
+	if current_view_mode == "token" and can_attack:
+		var main = get_tree().current_scene
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				if main and main.has_method("start_manual_attack"):
+					main.start_manual_attack(self)
+					get_viewport().set_input_as_handled()
+					return
+		
+		# If the main scene is currently handling an attack targeting, absorb the input
+		if main and main.get("is_manual_attacking"):
+			# Absorb input so we don't start dragging the card
+			if event is InputEventMouseMotion:
+				pass
+			return
+			
+	super._on_gui_input(event)
+
 func _update_card_ui() -> void:
 	if card_info.is_empty():
 		return

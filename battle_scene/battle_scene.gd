@@ -32,7 +32,6 @@ var is_in_combat_phase: bool = false
 var is_targeting: bool = false
 var targeting_card: Control = null
 var targeting_arrow: Node2D = null
-# var targeting_start_time: int = 0 # Re-added below with pos
 var hovered_unit: Control = null
 var hovered_row: Control = null
 var targeting_overlay: Control = null
@@ -40,6 +39,10 @@ var targeting_type: String = "unit" # "unit", "row", "none"
 var targeting_start_pos: Vector2 = Vector2.ZERO
 var targeting_start_time: int = 0
 const TARGETING_ARROW_SCRIPT = preload("res://battle_scene/targeting_arrow.gd")
+
+# --- Manual Attack Targeting State ---
+var is_manual_attacking: bool = false
+var manual_attacker: Control = null
 
 
 func _ready():
@@ -53,6 +56,16 @@ func _ready():
 	if speed_button:
 		speed_button.text = "Speed: " + speed_labels[current_speed_idx]
 	
+	var rows_array = _get_battle_rows()
+	if rows_array.size() >= 3:
+		rows_array[0].row_side = "enemy"
+		rows_array[1].row_side = "enemy"
+		rows_array[2].row_side = "player"
+		
+	var run_manager = get_node_or_null("/root/RunManager")
+	if run_manager and not run_manager.is_connected("run_ended", _on_run_ended):
+		run_manager.connect("run_ended", _on_run_ended)
+		
 	_start_new_game()
 	
 	# Create blocking overlay for targeting
@@ -72,6 +85,23 @@ func _wait(seconds: float) -> void:
 	await get_tree().create_timer(seconds, true, false, false).timeout
 
 func _process(_delta: float) -> void:
+	if is_manual_attacking:
+		var mouse_pos = get_viewport().get_mouse_position()
+		if targeting_arrow:
+			targeting_arrow.queue_redraw()
+			
+		var unit_under_mouse = _get_unit_at_position(mouse_pos)
+		if unit_under_mouse and unit_under_mouse.card_info.get("side", "player") == "enemy":
+			if unit_under_mouse != hovered_unit:
+				if hovered_unit: _set_hover_effect(hovered_unit, false)
+				hovered_unit = unit_under_mouse
+				_set_hover_effect(hovered_unit, true)
+		else:
+			if hovered_unit:
+				_set_hover_effect(hovered_unit, false)
+				hovered_unit = null
+		return
+
 	if not is_targeting:
 		if hovered_unit:
 			_set_hover_effect(hovered_unit, false)
@@ -144,13 +174,8 @@ func _start_new_game():
 	is_game_over = false
 	current_round = 0
 	_reset_deck()
-	
-	# Deploy the Mother Ship at the first slot (Slot 0) of the top row
-	var top_row = _get_battle_rows()[0]
-	var ship = card_factory.create_card("building_mothership", top_row)
-	if ship:
-		ship.set_meta("battle_slot", 0)
-		ship.can_be_interacted_with = false
+	# Deploy the Mother Ship in the center of the player row (REMOVED)
+	# Mothership UI is removed; Player health is now the sole win/loss condition
 	
 	_start_next_round()
 
@@ -180,8 +205,7 @@ func _start_next_round():
 
 func _spawn_enemy_units():
 	var rows_list = _get_battle_rows()
-	if rows_list.size() <= 3: return
-	var spawn_row = rows_list[3]
+	if rows_list.size() < 3: return
 	
 	# Increase difficulty: more bots as rounds progress
 	var spawn_count = 1
@@ -191,7 +215,8 @@ func _spawn_enemy_units():
 	var enemy_types = ["alien_soldier", "alien_sniper", "alien_killer", "unit_reaper"]
 	
 	for i in range(spawn_count):
-		if spawn_row.get_card_count() < 8:
+		var spawn_row = rows_list[0] if randi() % 2 == 0 else rows_list[1]
+		if spawn_row.get_card_count() < 7:
 			var random_type = enemy_types[randi() % enemy_types.size()]
 			var card = card_factory.create_card(random_type, spawn_row)
 			if card:
@@ -201,6 +226,7 @@ func _spawn_enemy_units():
 	# Boss Round: Spawn Boss at Round 5, 10, 20...
 	if current_round % 10 == 0 or current_round == 5:
 		show_notification("BOSS WARNING: OMEGA BOT DETECTED!", Color(1, 0, 0))
+		var spawn_row = rows_list[0]
 		var boss = card_factory.create_card("unit_boss_mk1", spawn_row)
 		if boss:
 			boss.card_info["side"] = "enemy"
@@ -298,7 +324,7 @@ func _get_battle_rows() -> Array:
 
 
 func _on_end_round_button_pressed():
-	_run_combat_phase()
+	_execute_enemy_turn()
 
 func _on_speed_button_pressed():
 	current_speed_idx = (current_speed_idx + 1) % speed_options.size()
@@ -307,8 +333,8 @@ func _on_speed_button_pressed():
 	if speed_button:
 		speed_button.text = "Speed: " + speed_labels[current_speed_idx]
 
-
-func _run_combat_phase():
+func _execute_enemy_turn():
+	if is_in_combat_phase or is_game_over: return
 	is_in_combat_phase = true
 	Engine.time_scale = speed_options[current_speed_idx]
 	
@@ -317,141 +343,68 @@ func _run_combat_phase():
 		for card in row.get_cards():
 			card.can_be_interacted_with = false
 	
-	show_notification("COMBAT START", Color(1, 0.5, 0.2))
-	await _wait(0.5)
+	show_notification("ENEMY TURN", Color(1, 0.4, 0.4))
+	await _wait(1.0)
 	
-	# Process layers from Bottom (3) to Top (0)
+	# Enemy AI: Attack random targets
 	var rows_list = _get_battle_rows()
-	# Ensure we have all 4 rows
-	if rows_list.size() < 4:
-		push_error("Not enough battle rows found for combat phase!")
-		is_in_combat_phase = false
-		Engine.time_scale = 1.0
-		return
-
-	# Layer 1 is Bottom (index 3), Layer 4 is Top (index 0)
-	for i in range(3, -1, -1):
-		await _resolve_structured_combat(rows_list[i], i == 0)
+	if rows_list.size() >= 3:
+		var enemy_rows = [rows_list[0], rows_list[1]]
+		var player_row = rows_list[2]
+		
+		for e_row in enemy_rows:
+			var e_cards = e_row.get_cards()
+			for e_unit in e_cards:
+				# Check if still valid (could be killed by spikes/etc)
+				if not is_instance_valid(e_unit) or e_unit.get_parent() == null: continue
+				if e_unit.card_info.get("side", "player") == "enemy":
+					# Gather valid targets again in case someone died
+					var valid_targets = []
+					for card in player_row.get_cards():
+						if is_instance_valid(card) and card.card_info.get("side", "player") == "player":
+							valid_targets.append(card)
+							
+					if valid_targets.size() > 0:
+						var target = valid_targets[randi() % valid_targets.size()]
+						var attack_count = 2 if _has_keyword(e_unit, "wind") else 1
+						if is_instance_valid(e_unit) and is_instance_valid(target):
+							await _perform_attack(e_unit, target)
+							await _wait(0.2)
+					else:
+						# No targets! Direct face damage
+						var a_atk = int(e_unit.card_info.get("attack", 0))
+						var run_manager = get_node_or_null("/root/RunManager")
+						if run_manager:
+							run_manager.modify_health(-a_atk)
+							show_notification("FACE HIT! -" + str(a_atk), Color(1, 0.2, 0.2))
+							
+							# Simple attack animation forwards and backwards
+							var a_pos = e_unit.global_position
+							var tween = create_tween()
+							var strike_pos = a_pos + Vector2(0, 100) # Jump down towards screen bottom
+							tween.tween_property(e_unit, "global_position", strike_pos, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+							await tween.finished
+							
+							var back_tween = create_tween()
+							back_tween.tween_property(e_unit, "global_position", a_pos, 0.15)
+							await back_tween.finished
+							await _wait(0.2)
 	
-	show_notification("COMBAT END", Color(1, 0.8, 0.2))
+	show_notification("YOUR TURN", Color(0.4, 0.8, 1.0))
 	await _wait(0.5)
-	
-	# After combat ends, surviving enemies ascend to the next layer
-	await _ascend_enemies()
 	
 	is_in_combat_phase = false
 	Engine.time_scale = 1.0
 	
+	# Reset player attacks
+	if rows_list.size() >= 3:
+		for card in rows_list[2].get_cards():
+			if is_instance_valid(card) and card.card_info.get("side", "player") == "player":
+				card.can_attack = true
+				card.modulate = Color(1.0, 1.0, 1.0)
+				card.can_be_interacted_with = true
+	
 	_start_next_round()
-
-# --- Game Mechanics ---
-
-## Permanently buffs a unit's attack and health. Triggers Robot Bill's passive.
-func buff_unit(unit: Control, atk: int, hp: int) -> void:
-	if not is_instance_valid(unit) or not "card_info" in unit: return
-	
-	if unit.has_method("add_permanent_stats"):
-		unit.add_permanent_stats(atk, hp)
-
-
-func _move_enemies_phase():
-	# In the new Row system, marching is "automatic" via BattleRow's front-filling queue.
-	# However, we can add a visual delay or a check here if we want manual marching.
-	# For now, let's just trigger a UI refresh to ensure everyone is in place.
-	for row in _get_battle_rows():
-		row._update_target_positions()
-	
-	await _wait(0.2)
-
-
-func _ascend_enemies():
-	# Enemies on Row N move to Row N-1 IF they survived combat.
-	# Process from index 1 up to 3 (Row 1, 2, 3) and move them to (0, 1, 2).
-	# Row 0 (Top) enemies stay where they are.
-	var rows_list = _get_battle_rows()
-	if rows_list.size() < 4: return
-	
-	show_notification("ENEMIES ASCENDING!", Color(1, 0.2, 0.2))
-	
-	# Process top-down to avoid a unit ascending multiple rows in one loop
-	for i in range(1, 4):
-		var source_row = rows_list[i]
-		var target_row = rows_list[i - 1]
-		
-		# Identify enemies to move
-		var enemies_to_move = []
-		for card in source_row.get_cards():
-			if not is_instance_valid(card): continue
-			if card.card_info.get("side", "player") != "player":
-				enemies_to_move.append(card)
-		
-		if enemies_to_move.size() > 0:
-			for card in enemies_to_move:
-				# Check if target row has space for enemies (Max 4 enemies)
-				var enemy_count = 0
-				for c in target_row.get_cards():
-					if c.card_info.get("side", "player") != "player":
-						enemy_count += 1
-				
-				if enemy_count >= 4:
-					# Target row is full, stop ascending for this unit
-					continue
-				
-				source_row.remove_card(card)
-				target_row.add_card(card)
-			await _wait(0.3)
-
-
-func _resolve_structured_combat(row: Node, is_top_row: bool):
-	var cards = row.get_cards()
-	var p_units = []
-	var e_units = []
-	
-	for card in cards:
-		if not is_instance_valid(card): continue
-		if card.card_info.get("side", "player") == "player":
-			p_units.append(card)
-		else:
-			e_units.append(card)
-	
-	if p_units.is_empty() and e_units.is_empty():
-		return
-
-	# Sort enemies from slot 4 to 7 (Left to Right)
-	e_units.sort_custom(func(a, b): return a.get_meta("battle_slot", 99) < b.get_meta("battle_slot", 99))
-	
-	# Sort players from slot 3 to 0 (Right to Left / Front to Back)
-	p_units.sort_custom(func(a, b): return a.get_meta("battle_slot", -1) > b.get_meta("battle_slot", -1))
-
-	var all_units = p_units + e_units
-	
-	# PHASE 0: Fast Units
-	for u in all_units:
-		if is_instance_valid(u) and u.get_parent() != null:
-			if _has_keyword(u, "fast"):
-				var is_player = u.card_info.get("side", "player") == "player"
-				var targ_range = range(4, 8) if is_player else range(3, -1, -1)
-				await _unit_execute_attack(u, row, targ_range, not is_player and is_top_row)
-
-	# PHASE 1: Normal Enemies
-	for enemy in e_units:
-		if is_instance_valid(enemy) and enemy.get_parent() != null and not _has_keyword(enemy, "fast"):
-			await _unit_execute_attack(enemy, row, range(3, -1, -1), is_top_row)
-
-	# PHASE 2: Normal Players
-	# Rebuild the list from the row to get any newly spawned units, then sort again
-	p_units.clear()
-	for card in row.get_cards():
-		if is_instance_valid(card) and card.card_info.get("side", "player") == "player":
-			p_units.append(card)
-			
-	p_units.sort_custom(func(a, b): return a.get_meta("battle_slot", -1) > b.get_meta("battle_slot", -1))
-
-	for player in p_units:
-		if is_instance_valid(player) and player.get_parent() != null and not _has_keyword(player, "fast"):
-			await _unit_execute_attack(player, row, range(4, 8), false)
-
-	await _wait(0.4)
 
 
 func _has_keyword(unit: Control, kw_name: String) -> bool:
@@ -460,42 +413,6 @@ func _has_keyword(unit: Control, kw_name: String) -> bool:
 		if kw.name.to_lower() == kw_name.to_lower():
 			return true
 	return false
-
-func _unit_execute_attack(attacker: Control, row: Node, targets_range: Array, attack_ship: bool):
-	if not is_instance_valid(attacker) or attacker.get_parent() == null: return
-	
-	var attack_count = 2 if _has_keyword(attacker, "wind") else 1
-			
-	for attack_idx in range(attack_count):
-		if not is_instance_valid(attacker) or attacker.get_parent() == null: return
-		
-		var targets = []
-		for i in targets_range:
-			var target = row.get_card_at_slot(i)
-			if target and is_instance_valid(target):
-				var target_side = target.card_info.get("side", "player")
-				var attacker_side = attacker.card_info.get("side", "player")
-				if target_side != attacker_side:
-					targets.append(target)
-					break # Only target the first one in line by default
-		
-		if "keyword_instances" in attacker:
-			for kw in attacker.keyword_instances:
-				targets = kw.on_before_attack(targets, row)
-			
-		if targets.size() > 0:
-			for target in targets:
-				await _perform_attack(attacker, target)
-			await _wait(0.4)
-		elif attack_ship:
-			var ship = row.get_card_at_slot(0)
-			if ship and is_instance_valid(ship) and ship.card_info.get("name", "") == "building_mothership":
-				await _perform_attack(attacker, ship)
-				await _wait(0.4)
-
-
-# Process removed lane logic
-
 
 func _perform_attack(attacker: Control, defender: Control):
 	# Visual feedback: Simple bump
@@ -510,9 +427,13 @@ func _perform_attack(attacker: Control, defender: Control):
 	
 	# Resolve damage
 	var a_atk = int(attacker.card_info.get("attack", 0))
+	var d_atk = int(defender.card_info.get("attack", 0))
 	
 	if defender.has_method("take_damage"):
 		defender.take_damage(a_atk)
+		
+	if is_instance_valid(attacker) and attacker.has_method("take_damage"):
+		attacker.take_damage(d_atk)
 		
 	# Back to positions (only for survivors)
 	var survivors = []
@@ -533,10 +454,6 @@ func _perform_attack(attacker: Control, defender: Control):
 func kill_unit(card: Control):
 	if is_game_over: return
 	
-	if card.card_info.get("name", "") == "building_mothership":
-		_game_over()
-		return
-
 	if card.card_info.get("is_boss", false):
 		_victory()
 
@@ -557,13 +474,17 @@ func _victory():
 	await _wait(2.0)
 	get_tree().change_scene_to_file("res://run_system/ui/card_draft_reward.tscn")
 
+func _on_run_ended(victory: bool):
+	if victory:
+		_victory()
+	else:
+		_game_over()
+
 # Stops the game and shows the failure message
 func _game_over():
+	if is_game_over: return
 	is_game_over = true
-	show_notification("GAME OVER - MOTHERSHIP DESTROYED", Color(1, 0.1, 0.1))
-	var run_manager = get_node_or_null("/root/RunManager")
-	if run_manager:
-		run_manager._handle_run_loss()
+	show_notification("GAME OVER - HERO DEFEATED", Color(1, 0.1, 0.1))
 	await _wait(3.0)
 	get_tree().change_scene_to_file("res://run_system/ui/starter_deck_builder.tscn")
 
@@ -844,6 +765,62 @@ func _complete_spell_targeting() -> void:
 	_execute_spell_with_target(card, final_target)
 
 
+# --- Manual Attack Actions ---
+func start_manual_attack(attacker: Control):
+	if is_game_over: return
+	
+	is_manual_attacking = true
+	manual_attacker = attacker
+	
+	if not targeting_arrow:
+		targeting_arrow = TARGETING_ARROW_SCRIPT.new()
+		add_child(targeting_arrow)
+		
+	targeting_arrow.origin = attacker.global_position
+	targeting_arrow.is_active = true
+	targeting_arrow.visible = true
+	# Make sure overlay is active to capture release
+	if targeting_overlay:
+		targeting_overlay.visible = true
+
+func _complete_manual_attack():
+	is_manual_attacking = false
+	if targeting_arrow:
+		targeting_arrow.queue_free()
+		targeting_arrow = null
+		
+	if targeting_overlay:
+		targeting_overlay.visible = false
+		
+	var target = hovered_unit
+	if hovered_unit:
+		_set_hover_effect(hovered_unit, false)
+		hovered_unit = null
+	
+	if is_instance_valid(target) and target.card_info.get("side", "player") == "enemy":
+		if manual_attacker and is_instance_valid(manual_attacker):
+			manual_attacker.can_attack = false
+			manual_attacker.modulate = Color(0.6, 0.6, 0.6) # Highlight as exhausted
+			_perform_attack(manual_attacker, target)
+			
+	manual_attacker = null
+
+func _cancel_manual_attack():
+	is_manual_attacking = false
+	if targeting_arrow:
+		targeting_arrow.queue_free()
+		targeting_arrow = null
+		
+	if targeting_overlay:
+		targeting_overlay.visible = false
+		
+	if hovered_unit:
+		_set_hover_effect(hovered_unit, false)
+		hovered_unit = null
+		
+	manual_attacker = null
+
+
 func _execute_spell_with_target(card: Control, target: Object) -> void:
 	if is_game_over: return
 
@@ -862,6 +839,14 @@ func _execute_spell_with_target(card: Control, target: Object) -> void:
 
 ## Handles input on the blocking overlay
 func _on_targeting_overlay_gui_input(event: InputEvent) -> void:
+	if is_manual_attacking:
+		if event is InputEventMouseButton:
+			if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+				_complete_manual_attack()
+			elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+				_cancel_manual_attack()
+		return
+
 	if not is_targeting:
 		return
 		
