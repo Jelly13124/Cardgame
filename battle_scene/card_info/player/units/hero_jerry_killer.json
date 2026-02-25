@@ -12,7 +12,7 @@
         "unit_robot_leader",
         "unit_robot_leader",
         "unit_battle_enforce_drone",
-        "unit_shield_bot",
+        "unit_defend_drone",
         "unit_attack_drone",
         "spell_zap",
         "spell_zap",
@@ -23,4 +23,3 @@
         "spell_draft"
     ]
 }
-

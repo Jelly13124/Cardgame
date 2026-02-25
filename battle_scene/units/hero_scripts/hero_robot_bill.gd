@@ -17,9 +17,8 @@ func _on_unit_stats_changed(target_unit: Control, atk: int, hp: int, _is_permane
 	if not is_player or target_unit == unit_card:
 		return
 		
-	# Apply Permanent Stats to Bill! If the buff was temporary, Bill's buff is currently coded to be permanent
-	# or should it mirror the buff? The user explicitly said:
-	# "for robot bill, we have an atriibute which is when friendly unit gain attibute like +1+1, hero bill gain +1+1 permantly"
-	if unit_card.has_method("add_permanent_stats"):
-		unit_card.add_permanent_stats(atk, hp)
-		unit_card.show_notification("BILL GROWS! (+%d/+%d)" % [atk, hp], Color.GOLD)
+	# Apply +1/+1 permanently to Bill regardless of the actual buff size
+	if atk > 0 or hp > 0:
+		if unit_card.has_method("add_permanent_stats"):
+			unit_card.add_permanent_stats(1, 1)
+			unit_card.show_notification("BILL GROWS! (+1/+1)", Color.GOLD)

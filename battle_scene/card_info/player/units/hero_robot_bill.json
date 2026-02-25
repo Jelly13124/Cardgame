@@ -6,8 +6,8 @@
     "cost": 1,
     "health": 20,
     "attack": 10,
-    "front_image": "cardBack_blue4.png",
-    "description": "Whenever a friendly unit gains stats, Robot Bill gains those stats permanently.",
+    "front_image": "hero_robot_bill.png",
+    "description": "Whenever a friendly unit gains stats, Robot Bill gains +1/+1 permanently.",
     "script_path": "res://battle_scene/units/hero_scripts/hero_robot_bill.gd",
     "starting_pool": [
         "unit_robot_leader",
@@ -15,8 +15,8 @@
         "unit_robot_leader",
         "unit_battle_enforce_drone",
         "unit_battle_enforce_drone",
-        "unit_shield_bot",
-        "unit_shield_bot",
+        "unit_defend_drone",
+        "unit_defend_drone",
         "unit_attack_drone",
         "unit_attack_drone",
         "spell_zap",
@@ -25,4 +25,3 @@
         "spell_air_raid"
     ]
 }
-

@@ -11,6 +11,8 @@ var attack_label: Label
 var health_label: Label
 var description_label: RichTextLabel
 var art_texture: TextureRect
+var dupe_badge: ColorRect
+var dupe_label: Label
 
 # --- UI Element references (Token) ---
 var token_attack_label: Label
@@ -36,6 +38,8 @@ func _ready() -> void:
 	health_label = $FrontFace/HealthCircle/HealthLabel if has_node("FrontFace/HealthCircle/HealthLabel") else null
 	description_label = $FrontFace/DescriptionBox/DescriptionLabel if has_node("FrontFace/DescriptionBox/DescriptionLabel") else null
 	art_texture = $FrontFace/ArtContainer/ArtTexture if has_node("FrontFace/ArtContainer/ArtTexture") else null
+	dupe_badge = $FrontFace/DupeBadge if has_node("FrontFace/DupeBadge") else null
+	dupe_label = $FrontFace/DupeBadge/DupeLabel if has_node("FrontFace/DupeBadge/DupeLabel") else null
 	
 	# Get UI element references for token
 	token_attack_label = $TokenFace/AttackCircle/AttackLabel if has_node("TokenFace/AttackCircle/AttackLabel") else null
@@ -150,9 +154,9 @@ func _update_card_ui() -> void:
 		var style = token_oval_border.get_theme_stylebox("panel").duplicate()
 		if style is StyleBoxFlat:
 			style.border_color = faction_color
-			# Make it a real blue/red oval
+			# Setting bg_color.a to 0 ensures the border is only a border and doesn't tint the image
 			style.bg_color = faction_color
-			style.bg_color.a = 0.4
+			style.bg_color.a = 0.0
 			token_oval_border.add_theme_stylebox_override("panel", style)
 
 func take_damage(amount: int) -> void:
@@ -176,18 +180,19 @@ func take_damage(amount: int) -> void:
 		if main and main.has_method("kill_unit"):
 			main.kill_unit(self)
 
-func add_temporary_stats(atk: int, hp: int) -> void:
+func add_temporary_stats(atk: int, hp: int, emit_signal: bool = true) -> void:
 	attack += atk
 	health += hp
 	card_info["attack"] = float(attack)
 	card_info["health"] = float(health)
 	_update_card_ui()
-	var main = get_tree().current_scene
-	if main and main.has_signal("unit_stats_changed"):
-		main.emit_signal("unit_stats_changed", self, atk, hp, false)
+	if emit_signal:
+		var main = get_tree().current_scene
+		if main and main.has_signal("unit_stats_changed"):
+			main.emit_signal("unit_stats_changed", self, atk, hp, false)
 
 func add_permanent_stats(atk: int, hp: int) -> void:
-	add_temporary_stats(atk, hp)
+	add_temporary_stats(atk, hp, false)
 	var uid = get_meta("uid", "")
 	if uid != "":
 		var run_manager = get_node_or_null("/root/RunManager")
@@ -247,6 +252,14 @@ func show_notification(text: String, color: Color = Color.WHITE) -> void:
 ## Refreshes UI after external data changes
 func refresh_ui() -> void:
 	_update_card_ui()
+
+func set_duplicate_count(count: int) -> void:
+	if dupe_badge and dupe_label:
+		if count > 1:
+			dupe_badge.visible = true
+			dupe_label.text = "x %d" % count
+		else:
+			dupe_badge.visible = false
 
 
 func _handle_mouse_pressed() -> void:

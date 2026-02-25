@@ -6,7 +6,6 @@
     "cost": 1,
     "health": 50,
     "attack": 0,
-    "front_image": "cardBack_blue4.png",
+    "front_image": "unit_mothership.png",
     "description": "If this ship falls, the mission is lost."
 }
-

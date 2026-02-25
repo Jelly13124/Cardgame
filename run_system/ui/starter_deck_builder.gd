@@ -5,7 +5,10 @@ const MAX_CARDS = 10
 
 # These will be loaded dynamically in _ready based on RunManager's hero selection
 var available_pool: Array[String] = []
-var constructed_deck: Array[String] = []
+var constructed_deck: Array[String] = [
+	"unit_defend_drone", "unit_defend_drone",
+	"unit_attack_drone", "unit_attack_drone"
+]
 var current_hero = "hero_robot_bill"
 
 @onready var pool_container = $VBoxContainer/HBoxContainer/PanelPool/VBoxContainer/ScrollContainer/PoolGrid
@@ -88,8 +91,14 @@ func _refresh_ui() -> void:
 				if not card_node.gui_input.is_connected(_on_pool_card_click.bind(card_id)):
 					card_node.gui_input.connect(_on_pool_card_click.bind(card_id))
 		
-	# Populate Deck (Show all drafted copies)
+	# Populate Deck (Show unique drafted copies with multiplier badges)
+	var unique_deck = []
 	for card_id in constructed_deck:
+		if not unique_deck.has(card_id):
+			unique_deck.append(card_id)
+			
+	for card_id in unique_deck:
+		var current_copies = deck_counts.get(card_id, 0)
 		var card_node = card_factory.create_card(card_id, null)
 		if card_node:
 			if card_node.get_parent():
@@ -97,6 +106,10 @@ func _refresh_ui() -> void:
 			deck_container.add_child(card_node)
 			card_node.custom_minimum_size = card_factory.card_size
 			card_node.card_container = null
+			
+			if card_node.has_method("set_duplicate_count"):
+				card_node.set_duplicate_count(current_copies)
+				
 			# Listen for clicks on the card itself
 			if not card_node.gui_input.is_connected(_on_deck_card_click.bind(card_id)):
 				card_node.gui_input.connect(_on_deck_card_click.bind(card_id))
@@ -141,6 +154,18 @@ func _move_to_deck(card_id: String) -> void:
 	_refresh_ui()
 
 func _move_to_pool(card_id: String) -> void:
+	# Enforce mandatory starter cards
+	if card_id == "unit_defend_drone" and constructed_deck.count(card_id) <= 2:
+		var main = get_tree().current_scene
+		if main and main.has_method("show_notification"):
+			main.show_notification("Can't remove mandatory starter!", Color.RED)
+		return
+	if card_id == "unit_attack_drone" and constructed_deck.count(card_id) <= 2:
+		var main = get_tree().current_scene
+		if main and main.has_method("show_notification"):
+			main.show_notification("Can't remove mandatory starter!", Color.RED)
+		return
+		
 	constructed_deck.erase(card_id)
 	_refresh_ui()
 
