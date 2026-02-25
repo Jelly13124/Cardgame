@@ -6,11 +6,12 @@ extends CardContainer
 ## Slots 4-7: Enemy territory (Right)
 
 @export var row_index: int = 0
+@export var row_side: String = "player" # "player" or "enemy"
 
-const TOTAL_SLOTS = 8
-var slot_width: float = 230.0 # Approximate width per slot (1870 / 8)
-var start_x: float = 20.0
-var center_y: float = 70.0
+const TOTAL_SLOTS = 7 # Center them 1870 / 230 = ~8, so 7 is nicely centered
+var slot_width: float = 230.0
+var start_x: float = 130.0
+var center_y: float = 130.0
 
 func _init() -> void:
 	super._init()
@@ -21,13 +22,10 @@ func _ready() -> void:
 	add_to_group("battle_row")
 	# Full row sensor
 	if drop_zone:
-		drop_zone.set_sensor(Vector2(1870, 140), Vector2.ZERO, null, false)
+		drop_zone.set_sensor(Vector2(1870, 260), Vector2.ZERO, null, false)
 		
-		# Define partitions for the 4 player slots (LOCAL COORDINATES)
-		# Slots boundaries: 240, 470, 700, 935 (Center)
-		# NOTE: We keep partitions in DropZone for internal logic, 
-		# but BattleRow handles the index mapping manually for precision.
-		drop_zone.set_vertical_partitions([230, 460, 690, 920, 1150, 1380, 1610])
+		# Full row partitions across the 7 slots
+		drop_zone.set_vertical_partitions([130 + 230 * 1, 130 + 230 * 2, 130 + 230 * 3, 130 + 230 * 4, 130 + 230 * 5, 130 + 230 * 6])
 
 func _card_can_be_added(cards: Array) -> bool:
 	var main = get_tree().current_scene
@@ -35,25 +33,19 @@ func _card_can_be_added(cards: Array) -> bool:
 	for card in cards:
 		var side = card.card_info.get("side", "player")
 		var _is_player = (side == "player")
-		
-		# Check capacity for player side (Slots 0-3)
-		var player_unit_count = 0
-		for held in _held_cards:
-			if held.card_info.get("side", "player") == "player":
-				player_unit_count += 1
-		
-		# Rule 1: Only Units/Heroes can be deployed to battle rows (No Spells)
-		var card_type = card.card_info.get("type", "unit")
-		if card_type != "unit" and card_type != "hero":
+		# New Logic: Enforce Row Side
+		if side != row_side:
 			if main and main.has_method("show_notification"):
-				main.show_notification("ONLY UNITS ALLOWED", Color(1, 0.4, 0.4))
+				main.show_notification("INVALID ROW SIDE", Color(1, 0.4, 0.4))
 			return false
-
-		# If we are adding a player unit, ensure we don't exceed 4
-		if side == "player" and player_unit_count >= 4:
+		
+		# Check capacity for the whole row (Max TOTAL_SLOTS)
+		var unit_count = _held_cards.size()
+		
+		# If we are adding a unit, ensure we don't exceed max slots
+		if unit_count >= TOTAL_SLOTS:
 			if main and main.has_method("show_notification"):
-				main.show_notification("ROW SIDE FULL", Color(1, 0.4, 0.4))
-			print("Drop failed: Row side full (Count: %d)" % player_unit_count)
+				main.show_notification("ROW FULL", Color(1, 0.4, 0.4))
 			return false
 			
 	# Energy check (if from hand)
@@ -72,53 +64,40 @@ func _card_can_be_added(cards: Array) -> bool:
 
 ## Override layout to position cards in their respective slots
 func _update_target_positions() -> void:
-	var p_units = []
-	var e_units = []
+	var units = []
 	for card in _held_cards:
-		if card.card_info.get("side", "player") == "player":
-			p_units.append(card)
-		else:
-			e_units.append(card)
+		units.append(card)
 	
-	# 1. Position Player Units
 	# Track which spots are taken
 	var taken_slots = {}
-	for card in p_units:
+	for card in units:
 		var slot = card.get_meta("battle_slot", -1)
 		if slot != -1:
 			taken_slots[slot] = card
 			
 	# Assign slots to those who don't have one
-	for card in p_units:
+	for card in units:
 		if card.get_meta("battle_slot", -1) == -1:
-			for s in range(4):
+			for s in range(TOTAL_SLOTS):
 				if not taken_slots.has(s):
 					card.set_meta("battle_slot", s)
 					taken_slots[s] = card
 					break
 	
 	# Actually position them
-	for card in p_units:
+	for card in units:
 		var slot = card.get_meta("battle_slot", -1)
-		if slot != -1 and slot < 4:
+		if slot != -1 and slot < TOTAL_SLOTS:
 			_position_card_at_slot(card, slot)
-		
-	# 2. Position Enemy Units (Filling 4, 5, 6, 7)
-	# Enemies start at 4 (Front) and fill back to 7.
-	for i in range(e_units.size()):
-		var slot = 4 + i
-		if slot > 7: break
-		e_units[i].set_meta("battle_slot", slot)
-		_position_card_at_slot(e_units[i], slot)
 
 func _position_card_at_slot(card: Card, slot_index: int) -> void:
 	var target_pos = global_position + Vector2(start_x + (slot_index * slot_width) + (slot_width / 2), center_y)
 	# Center alignment adjustment for cards
-	target_pos -= Vector2(80, 110) * 0.6 # Adjust based on 0.6 scale
+	target_pos -= Vector2(80, 110) # Adjust based on 1.0 scale (160x220 raw size)
 	
 	card.move(target_pos, 0)
-	card.scale = Vector2(0.6, 0.6)
-	card.original_scale = Vector2(0.6, 0.6)
+	card.scale = Vector2(1.0, 1.0)
+	card.original_scale = Vector2(1.0, 1.0)
 	card.show_front = true
 	
 	# Interaction lock for enemies
@@ -145,19 +124,18 @@ func move_cards(cards: Array, index: int = -1, with_history: bool = true) -> boo
 	# If dropping via drag-and-drop, calculate slot from mouse position
 	if drop_slot == -1:
 		var local_mouse_x = get_local_mouse_position().x
-		
-		# STRICT CHECK: Only allow drops on the Player Side (Left ~935px)
-		if local_mouse_x >= 935:
-			if debug_mode: print("[BattleRow] Rejected: Can only deploy to Player Side.")
-			var main = get_tree().current_scene
-			if main and main.has_method("show_notification"):
-				main.show_notification("INVALID ZONE", Color(0.8, 0.4, 0.4))
-			return false
-			
-		drop_slot = int(clamp(floor((local_mouse_x - 10) / slot_width), 0, 3))
+		drop_slot = int(clamp(floor((local_mouse_x - 130) / slot_width), 0, TOTAL_SLOTS - 1))
 	
-	# Double check: Only allow slots 0-3 for player deployment
-	if drop_slot > 3:
+	# Double check slot isn't out of bounds
+	if drop_slot >= TOTAL_SLOTS:
+		return false
+	
+	# Check if slot is occupied (we can only deploy to empty slots)
+	if get_card_at_slot(drop_slot) != null:
+		if debug_mode: print("[BattleRow] slot %d is occupied!" % drop_slot)
+		var main = get_tree().current_scene
+		if main and main.has_method("show_notification"):
+			main.show_notification("SLOT OCCUPIED", Color(1, 0.4, 0.4))
 		return false
 	
 	if debug_mode:
