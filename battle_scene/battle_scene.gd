@@ -1,5 +1,7 @@
 extends Node
 
+signal unit_stats_changed(unit: Control, atk: int, hp: int, is_permanent: bool)
+
 # --- Node References ---
 # These variables link the script to the nodes in the scene tree.
 @onready var card_manager = $CardManager
@@ -13,6 +15,7 @@ extends Node
 @onready var energy_label = $EnergyLabel
 @onready var round_label = $RoundLabel
 @onready var notify_label = $NotificationLabel
+@onready var speed_button = $SpeedButton
 
 # --- Game State Variables ---
 var current_energy: int = 0
@@ -20,6 +23,10 @@ var max_energy: int = 3
 var current_round: int = 0
 var notify_tween: Tween # Used for the fade-out animation of notifications
 var is_game_over: bool = false
+var speed_options: Array[float] = [0.25, 0.5, 1.0, 2.0]
+var speed_labels: Array[String] = ["x 1/2", "x 1", "x 2", "x 4"]
+var current_speed_idx: int = 1
+var is_in_combat_phase: bool = false
 
 # --- Spell Targeting State ---
 var is_targeting: bool = false
@@ -41,6 +48,10 @@ func _ready():
 	# Initialize UI: Make sure the notification label starts invisible
 	if notify_label:
 		notify_label.modulate.a = 0
+		
+	Engine.time_scale = 1.0
+	if speed_button:
+		speed_button.text = "Speed: " + speed_labels[current_speed_idx]
 	
 	_start_new_game()
 	
@@ -56,6 +67,9 @@ func _ready():
 	card_manager.add_child(targeting_overlay)
 	
 	set_process(true)
+
+func _wait(seconds: float) -> void:
+	await get_tree().create_timer(seconds, true, false, false).timeout
 
 func _process(_delta: float) -> void:
 	if not is_targeting:
@@ -286,21 +300,33 @@ func _get_battle_rows() -> Array:
 func _on_end_round_button_pressed():
 	_run_combat_phase()
 
+func _on_speed_button_pressed():
+	current_speed_idx = (current_speed_idx + 1) % speed_options.size()
+	if is_in_combat_phase:
+		Engine.time_scale = speed_options[current_speed_idx]
+	if speed_button:
+		speed_button.text = "Speed: " + speed_labels[current_speed_idx]
+
 
 func _run_combat_phase():
+	is_in_combat_phase = true
+	Engine.time_scale = speed_options[current_speed_idx]
+	
 	# Disable interaction during combat
 	for row in _get_battle_rows():
 		for card in row.get_cards():
 			card.can_be_interacted_with = false
 	
 	show_notification("COMBAT START", Color(1, 0.5, 0.2))
-	await get_tree().create_timer(0.5).timeout
+	await _wait(0.5)
 	
 	# Process layers from Bottom (3) to Top (0)
 	var rows_list = _get_battle_rows()
 	# Ensure we have all 4 rows
 	if rows_list.size() < 4:
 		push_error("Not enough battle rows found for combat phase!")
+		is_in_combat_phase = false
+		Engine.time_scale = 1.0
 		return
 
 	# Layer 1 is Bottom (index 3), Layer 4 is Top (index 0)
@@ -308,10 +334,14 @@ func _run_combat_phase():
 		await _resolve_structured_combat(rows_list[i], i == 0)
 	
 	show_notification("COMBAT END", Color(1, 0.8, 0.2))
-	await get_tree().create_timer(0.5).timeout
+	await _wait(0.5)
 	
 	# After combat ends, surviving enemies ascend to the next layer
 	await _ascend_enemies()
+	
+	is_in_combat_phase = false
+	Engine.time_scale = 1.0
+	
 	_start_next_round()
 
 # --- Game Mechanics ---
@@ -320,42 +350,8 @@ func _run_combat_phase():
 func buff_unit(unit: Control, atk: int, hp: int) -> void:
 	if not is_instance_valid(unit) or not "card_info" in unit: return
 	
-	unit.attack += atk
-	if unit.attack_label: unit.attack_label.text = str(unit.attack)
-	if unit.token_attack_label: unit.token_attack_label.text = str(unit.attack)
-	
-	unit.health += hp
-	
-	unit.card_info["attack"] = unit.attack
-	unit.card_info["health"] = unit.health
-	
-	if unit.health_label: unit.health_label.text = str(unit.health)
-	if unit.token_health_label: unit.token_health_label.text = str(unit.health)
-	
-	# Only execute passive if this wasn't bill himself gaining stats from his own effect
-	var is_player = unit.card_info.get("side", "") == "player"
-	var is_bill_himself = unit.card_info.get("name", "") == "hero_robot_bill"
-	
-	if is_player and not is_bill_himself:
-		_trigger_bill_passive(atk, hp)
-
-func _trigger_bill_passive(atk: int, hp: int) -> void:
-	for row in _get_battle_rows():
-		for card in row.get_cards():
-			if is_instance_valid(card) and card.card_info.get("name", "") == "hero_robot_bill":
-				if not "card_info" in card: continue
-				
-				card.attack += atk
-				card.health += hp
-				card.card_info["attack"] = card.attack
-				card.card_info["health"] = card.health
-				
-				if card.attack_label: card.attack_label.text = str(card.attack)
-				if card.token_attack_label: card.token_attack_label.text = str(card.attack)
-				if card.health_label: card.health_label.text = str(card.health)
-				if card.token_health_label: card.token_health_label.text = str(card.health)
-				
-				card.show_notification("BILL GROWS! (+%d/+%d)" % [atk, hp], Color.GOLD)
+	if unit.has_method("add_permanent_stats"):
+		unit.add_permanent_stats(atk, hp)
 
 
 func _move_enemies_phase():
@@ -365,7 +361,7 @@ func _move_enemies_phase():
 	for row in _get_battle_rows():
 		row._update_target_positions()
 	
-	await get_tree().create_timer(0.2).timeout
+	await _wait(0.2)
 
 
 func _ascend_enemies():
@@ -403,7 +399,7 @@ func _ascend_enemies():
 				
 				source_row.remove_card(card)
 				target_row.add_card(card)
-			await get_tree().create_timer(0.3).timeout
+			await _wait(0.3)
 
 
 func _resolve_structured_combat(row: Node, is_top_row: bool):
@@ -421,6 +417,12 @@ func _resolve_structured_combat(row: Node, is_top_row: bool):
 	if p_units.is_empty() and e_units.is_empty():
 		return
 
+	# Sort enemies from slot 4 to 7 (Left to Right)
+	e_units.sort_custom(func(a, b): return a.get_meta("battle_slot", 99) < b.get_meta("battle_slot", 99))
+	
+	# Sort players from slot 3 to 0 (Right to Left / Front to Back)
+	p_units.sort_custom(func(a, b): return a.get_meta("battle_slot", -1) > b.get_meta("battle_slot", -1))
+
 	var all_units = p_units + e_units
 	
 	# PHASE 0: Fast Units
@@ -437,16 +439,19 @@ func _resolve_structured_combat(row: Node, is_top_row: bool):
 			await _unit_execute_attack(enemy, row, range(3, -1, -1), is_top_row)
 
 	# PHASE 2: Normal Players
+	# Rebuild the list from the row to get any newly spawned units, then sort again
 	p_units.clear()
 	for card in row.get_cards():
 		if is_instance_valid(card) and card.card_info.get("side", "player") == "player":
 			p_units.append(card)
+			
+	p_units.sort_custom(func(a, b): return a.get_meta("battle_slot", -1) > b.get_meta("battle_slot", -1))
 
 	for player in p_units:
 		if is_instance_valid(player) and player.get_parent() != null and not _has_keyword(player, "fast"):
 			await _unit_execute_attack(player, row, range(4, 8), false)
 
-	await get_tree().create_timer(0.4).timeout
+	await _wait(0.4)
 
 
 func _has_keyword(unit: Control, kw_name: String) -> bool:
@@ -481,12 +486,12 @@ func _unit_execute_attack(attacker: Control, row: Node, targets_range: Array, at
 		if targets.size() > 0:
 			for target in targets:
 				await _perform_attack(attacker, target)
-			await get_tree().create_timer(0.4).timeout
+			await _wait(0.4)
 		elif attack_ship:
 			var ship = row.get_card_at_slot(0)
 			if ship and is_instance_valid(ship) and ship.card_info.get("name", "") == "building_mothership":
 				await _perform_attack(attacker, ship)
-				await get_tree().create_timer(0.4).timeout
+				await _wait(0.4)
 
 
 # Process removed lane logic
@@ -496,12 +501,11 @@ func _perform_attack(attacker: Control, defender: Control):
 	# Visual feedback: Simple bump
 	var a_pos = attacker.global_position
 	var d_pos = defender.global_position
-	var mid = (a_pos + d_pos) / 2
 	
 	var tween = create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(attacker, "global_position", mid, 0.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(defender, "global_position", mid + (d_pos - a_pos).normalized() * 50, 0.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# Move attacker to slightly in front of defender
+	var strike_pos = d_pos - (d_pos - a_pos).normalized() * 20
+	tween.tween_property(attacker, "global_position", strike_pos, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	await tween.finished
 	
 	# Resolve damage
@@ -519,11 +523,8 @@ func _perform_attack(attacker: Control, defender: Control):
 		
 	if survivors.size() > 0:
 		var back_tween = create_tween()
-		back_tween.set_parallel(true)
 		if attacker in survivors:
-			back_tween.tween_property(attacker, "global_position", a_pos, 0.1)
-		if defender in survivors:
-			back_tween.tween_property(defender, "global_position", d_pos, 0.1)
+			back_tween.tween_property(attacker, "global_position", a_pos, 0.15)
 		await back_tween.finished
 # --- Game Mechanics ---
 
@@ -553,7 +554,7 @@ func _victory():
 	if run_manager:
 		run_manager.add_resources(50, 10)
 		
-	await get_tree().create_timer(2.0).timeout
+	await _wait(2.0)
 	get_tree().change_scene_to_file("res://run_system/ui/card_draft_reward.tscn")
 
 # Stops the game and shows the failure message
@@ -563,7 +564,7 @@ func _game_over():
 	var run_manager = get_node_or_null("/root/RunManager")
 	if run_manager:
 		run_manager._handle_run_loss()
-	await get_tree().create_timer(3.0).timeout
+	await _wait(3.0)
 	get_tree().change_scene_to_file("res://run_system/ui/starter_deck_builder.tscn")
 
 

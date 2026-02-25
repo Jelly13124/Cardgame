@@ -2,7 +2,7 @@ extends Control
 
 # Temporary master pool for drafting
 var draft_pool = [
-	"unit_robot_leader", "unit_battle_enforce_drone", "unit_shield_bot", "unit_attack_drone", "spell_air_raid", "spell_draft", "spell_zap"
+	"unit_robot_leader", "unit_battle_enforce_drone", "unit_defend_drone", "unit_attack_drone", "spell_air_raid", "spell_draft", "spell_zap"
 ]
 
 @onready var card_container = $VBoxContainer/CardsContainer

@@ -11,6 +11,5 @@
         "battle_cry_buff_adj"
     ],
     "description": "Battle Cry: Permanently grants +1/+1 to adjacent friendly units.",
-    "front_image": "cardBack_blue4.png"
+    "front_image": "unit_enforce_drone.png"
 }
-

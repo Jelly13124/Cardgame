@@ -29,6 +29,13 @@ corner_radius_top_right = 80
 corner_radius_bottom_right = 80
 corner_radius_bottom_left = 80
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mask"]
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 80
+corner_radius_top_right = 80
+corner_radius_bottom_right = 80
+corner_radius_bottom_left = 80
+
 [node name="UnitCard" type="Control"]
 custom_minimum_size = Vector2(160, 220)
 layout_mode = 3
@@ -94,7 +101,7 @@ layout_mode = 0
 offset_right = 140.0
 offset_bottom = 100.0
 expand_mode = 1
-stretch_mode = 5
+stretch_mode = 6
 
 [node name="NameBanner" type="ColorRect" parent="FrontFace"]
 layout_mode = 0
@@ -188,6 +195,26 @@ text = "2"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="DupeBadge" type="ColorRect" parent="FrontFace"]
+visible = false
+layout_mode = 0
+offset_left = 65.0
+offset_top = 210.0
+offset_right = 95.0
+offset_bottom = 230.0
+color = Color(0.1, 0.4, 0.1, 1)
+
+[node name="DupeLabel" type="Label" parent="FrontFace/DupeBadge"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "x 2"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 12
+
 [node name="TokenFace" type="Control" parent="."]
 visible = false
 layout_mode = 1
@@ -198,8 +225,8 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
 
-[node name="ArtContainer" type="Control" parent="TokenFace"]
-clip_contents = true
+[node name="ArtContainer" type="Panel" parent="TokenFace"]
+clip_children = 1
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -213,9 +240,9 @@ offset_bottom = 80.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_mask")
 
 [node name="ArtTexture" type="TextureRect" parent="TokenFace/ArtContainer"]
-material = SubResource("ShaderMaterial_art")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -224,7 +251,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 expand_mode = 1
-stretch_mode = 5
+stretch_mode = 6
 
 [node name="OvalBorder" type="Panel" parent="TokenFace"]
 layout_mode = 1
