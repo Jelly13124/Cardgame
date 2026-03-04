@@ -1,9 +1,13 @@
-extends "res://battle_scene/units/keywords/keyword_base.gd"
+extends Node
 
-## Grants +1/+1 permanently to adjacent friendly units when deployed
-func on_deploy(row: Node, slot_index: int) -> void:
-	if not is_instance_valid(unit) or not unit.get_parent(): return
-	var my_side = unit.card_info.get("side", "player")
+var unit_card: Control
+
+func setup(card: Control) -> void:
+	unit_card = card
+
+func execute_battle_cry(row: Node, slot_index: int) -> void:
+	if not is_instance_valid(unit_card) or not unit_card.get_parent(): return
+	var my_side = unit_card.card_info.get("side", "player")
 	
 	var adjacent_slots = [slot_index - 1, slot_index + 1]
 	var buffed_anyone = false
@@ -17,4 +21,5 @@ func on_deploy(row: Node, slot_index: int) -> void:
 					buffed_anyone = true
 	
 	if buffed_anyone:
-		unit.show_notification("BATTLE CRY!", Color.GOLD)
+		if unit_card.has_method("show_notification"):
+			unit_card.show_notification("BATTLE CRY!", Color.GOLD)

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://y4xx7y3gaypj"
-path="res://.godot/imported/unit_attack_drone.png-cd7d0c15bb391258a36d305ca7559c5f.ctex"
+uid="uid://ck2bu50n3u8pk"
+path="res://.godot/imported/spell_zap.png-a972ffca092f5f0450279ec225782908.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/cards/unit_attack_drone.png"
-dest_files=["res://.godot/imported/unit_attack_drone.png-cd7d0c15bb391258a36d305ca7559c5f.ctex"]
+source_file="res://battle_scene/assets/images/cards/player/spells/spell_zap.png"
+dest_files=["res://.godot/imported/spell_zap.png-a972ffca092f5f0450279ec225782908.ctex"]
 
 [params]
 

@@ -5,8 +5,10 @@
     "side": "player",
     "cost": 1,
     "health": 10,
-    "attack": 5,
-    "keywords": [],
-    "description": "High health unit for holding the line.",
-    "front_image": "unit_defend_drone.png"
+    "attack": 1,
+    "keywords": [
+        "Taunt"
+    ],
+    "description": "Taunt.",
+    "front_image": "player/units/unit_defend_drone.png"
 }

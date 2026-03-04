@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c7q1pjkh5ucxn"
-path="res://.godot/imported/unit_mothership.png-3984b063d5df7581b502d27142e668fb.ctex"
+uid="uid://f60ga50eb2d4"
+path="res://.godot/imported/hero_robot_bill.png-848f6589bf502c828435f592326ad9d4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/cards/unit_mothership.png"
-dest_files=["res://.godot/imported/unit_mothership.png-3984b063d5df7581b502d27142e668fb.ctex"]
+source_file="res://battle_scene/assets/images/cards/player/heroes/hero_robot_bill.png"
+dest_files=["res://.godot/imported/hero_robot_bill.png-848f6589bf502c828435f592326ad9d4.ctex"]
 
 [params]
 

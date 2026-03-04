@@ -36,6 +36,44 @@ corner_radius_top_right = 80
 corner_radius_bottom_right = 80
 corner_radius_bottom_left = 80
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_attack"]
+bg_color = Color(0.85, 0.65, 0.2, 1)
+corner_radius_top_left = 40
+corner_radius_top_right = 40
+corner_radius_bottom_right = 40
+corner_radius_bottom_left = 40
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.1, 0.1, 0.1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health"]
+bg_color = Color(0.8, 0.2, 0.2, 1)
+corner_radius_top_left = 40
+corner_radius_top_right = 40
+corner_radius_bottom_right = 40
+corner_radius_bottom_left = 40
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.1, 0.1, 0.1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_shield_aura"]
+bg_color = Color(0.1, 0.5, 1, 0.3)
+border_width_left = 10
+border_width_top = 10
+border_width_right = 10
+border_width_bottom = 10
+border_color = Color(0.2, 0.6, 1, 0.8)
+corner_radius_top_left = 80
+corner_radius_top_right = 80
+corner_radius_bottom_right = 80
+corner_radius_bottom_left = 80
+shadow_color = Color(0.1, 0.5, 1, 0.5)
+shadow_size = 15
+
 [node name="UnitCard" type="Control"]
 custom_minimum_size = Vector2(160, 220)
 layout_mode = 3
@@ -108,13 +146,13 @@ layout_mode = 0
 offset_left = 12.0
 offset_top = 114.0
 offset_right = 148.0
-offset_bottom = 138.0
+offset_bottom = 134.0
 color = Color(0.3, 0.25, 0.18, 1)
 
 [node name="NameLabel" type="Label" parent="FrontFace/NameBanner"]
 layout_mode = 0
 offset_right = 136.0
-offset_bottom = 24.0
+offset_bottom = 20.0
 theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
 theme_override_font_sizes/font_size = 12
 text = "DRONE"
@@ -124,9 +162,9 @@ vertical_alignment = 1
 [node name="DescriptionBox" type="ColorRect" parent="FrontFace"]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 142.0
+offset_top = 134.0
 offset_right = 148.0
-offset_bottom = 182.0
+offset_bottom = 196.0
 color = Color(0.9, 0.85, 0.75, 1)
 
 [node name="DescriptionLabel" type="RichTextLabel" parent="FrontFace/DescriptionBox"]
@@ -134,7 +172,7 @@ layout_mode = 0
 offset_left = 6.0
 offset_top = 4.0
 offset_right = 130.0
-offset_bottom = 36.0
+offset_bottom = 58.0
 theme_override_colors/default_color = Color(0.15, 0.12, 0.1, 1)
 theme_override_font_sizes/normal_font_size = 9
 bbcode_enabled = true
@@ -159,38 +197,40 @@ text = "0"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="AttackCircle" type="ColorRect" parent="FrontFace"]
+[node name="AttackCircle" type="Panel" parent="FrontFace"]
 layout_mode = 0
-offset_left = 5.0
-offset_top = 190.0
-offset_right = 35.0
-offset_bottom = 215.0
-color = Color(0.85, 0.65, 0.2, 1)
+offset_left = -15.0
+offset_top = 205.0
+offset_right = 15.0
+offset_bottom = 235.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_attack")
 
 [node name="AttackLabel" type="Label" parent="FrontFace/AttackCircle"]
-layout_mode = 0
-offset_right = 30.0
-offset_bottom = 25.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 16
 text = "2"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="HealthCircle" type="ColorRect" parent="FrontFace"]
+[node name="HealthCircle" type="Panel" parent="FrontFace"]
 layout_mode = 0
-offset_left = 125.0
-offset_top = 190.0
-offset_right = 155.0
-offset_bottom = 215.0
-color = Color(0.8, 0.2, 0.2, 1)
+offset_left = 145.0
+offset_top = 205.0
+offset_right = 175.0
+offset_bottom = 235.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_health")
 
 [node name="HealthLabel" type="Label" parent="FrontFace/HealthCircle"]
-layout_mode = 0
-offset_right = 30.0
-offset_bottom = 25.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 16
 text = "2"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -269,12 +309,29 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_border")
 
+[node name="ShieldAura" type="Panel" parent="TokenFace"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -58.0
+offset_top = -78.0
+offset_right = 58.0
+offset_bottom = 78.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_shield_aura")
+
 [node name="AttackCircle" type="ColorRect" parent="TokenFace"]
 layout_mode = 0
 offset_left = 5.0
-offset_top = 175.0
+offset_top = 165.0
 offset_right = 45.0
-offset_bottom = 215.0
+offset_bottom = 205.0
 color = Color(0.85, 0.65, 0.2, 1)
 
 [node name="AttackLabel" type="Label" parent="TokenFace/AttackCircle"]
@@ -293,9 +350,9 @@ vertical_alignment = 1
 [node name="HealthCircle" type="ColorRect" parent="TokenFace"]
 layout_mode = 0
 offset_left = 115.0
-offset_top = 175.0
+offset_top = 165.0
 offset_right = 155.0
-offset_bottom = 215.0
+offset_bottom = 205.0
 color = Color(0.8, 0.2, 0.2, 1)
 
 [node name="HealthLabel" type="Label" parent="TokenFace/HealthCircle"]

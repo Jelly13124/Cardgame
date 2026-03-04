@@ -6,5 +6,5 @@
     "target_type": "row",
     "needs_target": true,
     "description": "Deal 1 DMG to all enemies in a row.",
-    "front_image": "cardBack_blue4.png"
+    "front_image": "player/spells/spell_air_raid.png"
 }

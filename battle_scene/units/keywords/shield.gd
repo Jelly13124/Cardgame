@@ -12,6 +12,6 @@ func on_damage_taken(amount: int) -> int:
 	return amount
 
 func _update_visuals() -> void:
-	if not active:
-		# Could hide a shield overlay node here if we added one to the scene
-		pass
+	if not active and unit:
+		if "token_shield_aura" in unit and unit.token_shield_aura:
+			unit.token_shield_aura.visible = false

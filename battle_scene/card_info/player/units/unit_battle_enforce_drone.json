@@ -8,8 +8,9 @@
     "health": 2,
     "attack": 2,
     "keywords": [
-        "battle_cry_buff_adj"
+        "end_of_turn"
     ],
-    "description": "Battle Cry: Permanently grants +1/+1 to adjacent friendly units.",
-    "front_image": "unit_enforce_drone.png"
+    "description": "Deals 2 damage to a randomly chosen enemy at the end of every turn.",
+    "script_path": "res://battle_scene/units/script_overrides/unit_battle_enforce_drone.gd",
+    "front_image": "player/units/unit_enforce_drone.png"
 }

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ci32fvykd2mux"
-path="res://.godot/imported/unit_defend_drone.png-9bdb9e9c0e9d3ef4b3d34efb190c7fb0.ctex"
+uid="uid://y4xx7y3gaypj"
+path="res://.godot/imported/unit_attack_drone.png-98a7b325e24ea99e74cf8a9c02d2916f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/cards/unit_defend_drone.png"
-dest_files=["res://.godot/imported/unit_defend_drone.png-9bdb9e9c0e9d3ef4b3d34efb190c7fb0.ctex"]
+source_file="res://battle_scene/assets/images/cards/player/units/unit_attack_drone.png"
+dest_files=["res://.godot/imported/unit_attack_drone.png-98a7b325e24ea99e74cf8a9c02d2916f.ctex"]
 
 [params]
 
