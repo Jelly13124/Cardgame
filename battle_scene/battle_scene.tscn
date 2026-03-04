@@ -7,6 +7,38 @@
 [ext_resource type="PackedScene" uid="uid://diap3gdfbqvjv" path="res://battle_scene/my_card_factory.tscn" id="3_l4bd6"]
 [ext_resource type="PackedScene" uid="uid://bkpjlq7ggckg6" path="res://addons/card-framework/hand.tscn" id="3_xp5g3"]
 [ext_resource type="PackedScene" path="res://battle_scene/spell_play_zone.tscn" id="5_spell"]
+[ext_resource type="Texture2D" uid="uid://c7q1pjkh5ucxn" path="res://battle_scene/assets/images/cards/player/units/unit_mothership.png" id="ms_tex"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ms_bg"]
+bg_color = Color(0.1, 0.1, 0.15, 1)
+corner_radius_top_left = 60
+corner_radius_top_right = 60
+corner_radius_bottom_right = 60
+corner_radius_bottom_left = 60
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ms_border"]
+bg_color = Color(0.2, 0.4, 1, 0)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_color = Color(0.2, 0.4, 1, 1)
+corner_radius_top_left = 60
+corner_radius_top_right = 60
+corner_radius_bottom_right = 60
+corner_radius_bottom_left = 60
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ms_health"]
+bg_color = Color(0.8, 0.2, 0.2, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.1, 0.1, 0.1, 1)
+corner_radius_top_left = 40
+corner_radius_top_right = 40
+corner_radius_bottom_right = 40
+corner_radius_bottom_left = 40
 
 [node name="BattleScene" type="Node" unique_id=465306552]
 script = ExtResource("1_2r7vq")
@@ -31,9 +63,9 @@ mouse_filter = 2
 [node name="BattleField" type="VBoxContainer" parent="CardManager" unique_id=1269234991]
 layout_mode = 0
 offset_left = 3.0
-offset_top = -1.0
+offset_top = 80.0
 offset_right = 1920.0
-offset_bottom = 850.0
+offset_bottom = 750.0
 
 [node name="Row1" parent="CardManager/BattleField" unique_id=1105774856 instance=ExtResource("1_rurpr_row")]
 layout_mode = 2
@@ -42,11 +74,77 @@ layout_mode = 2
 layout_mode = 2
 row_index = 1
 
-[node name="Row3" parent="CardManager/BattleField" unique_id=17745642 instance=ExtResource("1_rurpr_row")]
-layout_mode = 2
-row_index = 2
+[node name="MothershipUI" type="Control" parent="CardManager" unique_id=987654320]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -110.0
+offset_top = -480.0
+offset_right = 110.0
+offset_bottom = -260.0
+grow_horizontal = 2
+grow_vertical = 0
 
+[node name="Background" type="Panel" parent="CardManager/MothershipUI" unique_id=202020201]
+clip_children = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ms_bg")
 
+[node name="Art" type="TextureRect" parent="CardManager/MothershipUI/Background" unique_id=202020202]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("ms_tex")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Border" type="Panel" parent="CardManager/MothershipUI" unique_id=202020203]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ms_border")
+
+[node name="HealthCircle" type="Panel" parent="CardManager/MothershipUI" unique_id=202020204]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -30.0
+offset_right = 30.0
+offset_bottom = 30.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_ms_health")
+
+[node name="HealthLabel" type="Label" parent="CardManager/MothershipUI/HealthCircle" unique_id=202020205]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 24
+text = "30"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Hand" parent="CardManager" unique_id=894436731 instance=ExtResource("3_xp5g3")]
 layout_mode = 1
@@ -73,19 +171,6 @@ grow_vertical = 0
 card_face_up = false
 allow_card_movement = false
 
-[node name="HandLabel" type="Label" parent="." unique_id=1794985305]
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -21.0
-offset_top = -280.0
-offset_right = 21.0
-offset_bottom = -257.0
-grow_horizontal = 2
-grow_vertical = 0
-text = "Hand"
 
 [node name="DeckLabel" type="Label" parent="." unique_id=1508836556]
 anchors_preset = 2
@@ -96,16 +181,50 @@ offset_top = -280.0
 offset_right = 140.0
 offset_bottom = -257.0
 grow_vertical = 0
-text = "Deck"
+theme_override_font_sizes/font_size = 24
+text = "30"
+horizontal_alignment = 1
+
+[node name="DiscardPile" parent="CardManager" unique_id=196193801 instance=ExtResource("2_xkfcc")]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -210.0
+offset_top = -180.0
+offset_right = -210.0
+offset_bottom = -180.0
+grow_horizontal = 0
+grow_vertical = 0
+card_face_up = false
+allow_card_movement = false
+
+[node name="DiscardLabel" type="Label" parent="." unique_id=1508836557]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -230.0
+offset_top = -280.0
+offset_right = -160.0
+offset_bottom = -257.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 24
+text = "0"
+horizontal_alignment = 1
 
 [node name="EnergyLabel" type="Label" parent="." unique_id=2127611817]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -270.0
-offset_top = 750.0
+offset_top = 600.0
 offset_right = -20.0
-offset_bottom = 776.0
+offset_bottom = 626.0
 grow_horizontal = 0
 theme_override_colors/font_color = Color(0.2, 0.6, 1, 1)
 theme_override_font_sizes/font_size = 24
@@ -130,30 +249,14 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -270.0
-offset_top = -280.0
+offset_top = -430.0
 offset_right = -20.0
-offset_bottom = -230.0
+offset_bottom = -380.0
 grow_horizontal = 0
 grow_vertical = 0
 theme_override_colors/font_color = Color(1, 0.8, 0, 1)
 theme_override_font_sizes/font_size = 18
 text = "END ROUND"
-
-[node name="SpeedButton" type="Button" parent="." unique_id=1459235810]
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -270.0
-offset_top = -220.0
-offset_right = -20.0
-offset_bottom = -170.0
-grow_horizontal = 0
-grow_vertical = 0
-theme_override_colors/font_color = Color(0, 1, 0, 1)
-theme_override_font_sizes/font_size = 18
-text = "Speed: x 1"
 
 [node name="NotificationLabel" type="Label" parent="." unique_id=659079838]
 anchors_preset = 8
@@ -173,5 +276,72 @@ theme_override_font_sizes/font_size = 42
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="InspectLayer" type="CanvasLayer" parent="." unique_id=987654000]
+layer = 100
+visible = false
+
+[node name="InspectOverlay" type="ColorRect" parent="InspectLayer" unique_id=987654321]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.8)
+
+[node name="InspectPivot" type="Control" parent="InspectLayer/InspectOverlay" unique_id=123456789]
+anchors_preset = 0
+anchor_left = 0.5
+anchor_top = 0.4
+anchor_right = 0.5
+anchor_bottom = 0.4
+grow_horizontal = 2
+grow_vertical = 2
+
 [connection signal="pressed" from="EndRoundButton" to="." method="_on_end_round_button_pressed"]
-[connection signal="pressed" from="SpeedButton" to="." method="_on_speed_button_pressed"]
+[connection signal="gui_input" from="InspectLayer/InspectOverlay" to="." method="_on_inspect_overlay_gui_input"]
+
+[node name="PileViewerLayer" type="CanvasLayer" parent="." unique_id=987654005]
+layer = 101
+visible = false
+
+[node name="Overlay" type="ColorRect" parent="PileViewerLayer" unique_id=987654330]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.9)
+
+[node name="TitleLabel" type="Label" parent="PileViewerLayer" unique_id=987654331]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 50.0
+offset_right = 200.0
+offset_bottom = 120.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 48
+horizontal_alignment = 1
+text = "Pile Viewer"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="PileViewerLayer" unique_id=987654332]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -800.0
+offset_top = -300.0
+offset_right = 800.0
+offset_bottom = 350.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+
+[node name="GridContainer" type="GridContainer" parent="PileViewerLayer/ScrollContainer" unique_id=987654333]
+layout_mode = 2
+columns = 8
+theme_override_constants/h_separation = 30
+theme_override_constants/v_separation = 30
+

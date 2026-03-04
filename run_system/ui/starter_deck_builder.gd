@@ -76,18 +76,22 @@ func _refresh_ui() -> void:
 			
 	for card_id in unique_pool:
 		var current_copies = deck_counts.get(card_id, 0)
-		# Only show in pool if we haven't drafted 2 copies yet
-		if current_copies < 2:
-			var card_node = card_factory.create_card(card_id, null)
-			if card_node:
-				if card_node.get_parent():
-					card_node.get_parent().remove_child(card_node)
-				pool_container.add_child(card_node)
-				card_node.custom_minimum_size = card_factory.card_size
+		var remaining = max(0, 2 - current_copies)
+		
+		var card_node = card_factory.create_card(card_id, null)
+		if card_node:
+			if card_node.get_parent():
+				card_node.get_parent().remove_child(card_node)
+			pool_container.add_child(card_node)
+			card_node.custom_minimum_size = card_factory.card_size
+			card_node.card_container = null
+			
+			if card_node.has_method("set_availability"):
+				card_node.set_availability(remaining)
 				
-				# Prevent the card from thinking it's in a real container to stop dragging
-				card_node.card_container = null
-				# Listen for clicks on the card itself
+			if remaining <= 0:
+				card_node.modulate = Color(0.4, 0.4, 0.4, 1.0) # Turn gray
+			else:
 				if not card_node.gui_input.is_connected(_on_pool_card_click.bind(card_id)):
 					card_node.gui_input.connect(_on_pool_card_click.bind(card_id))
 		

@@ -5,7 +5,7 @@ extends Control
 
 func _ready() -> void:
 	# Add Robot Bill's brand new portrait to the UI
-	var bill_tex = load("res://battle_scene/assets/images/cards/hero_robot_bill.png")
+	var bill_tex = load("res://battle_scene/assets/images/cards/player/heroes/hero_robot_bill.png")
 	if bill_tex:
 		var tex_rect = TextureRect.new()
 		tex_rect.texture = bill_tex

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://f60ga50eb2d4"
-path="res://.godot/imported/hero_robot_bill.png-6bac716a970925e886d64738e00016c5.ctex"
+uid="uid://baajmx6chp4xt"
+path="res://.godot/imported/unit_enforce_drone.png-f24ac4742e64e339e6d7c4c074a7e026.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/cards/hero_robot_bill.png"
-dest_files=["res://.godot/imported/hero_robot_bill.png-6bac716a970925e886d64738e00016c5.ctex"]
+source_file="res://battle_scene/assets/images/cards/player/units/unit_enforce_drone.png"
+dest_files=["res://.godot/imported/unit_enforce_drone.png-f24ac4742e64e339e6d7c4c074a7e026.ctex"]
 
 [params]
 

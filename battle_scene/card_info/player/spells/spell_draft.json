@@ -6,6 +6,6 @@
     "cost": 1,
     "target_type": "none",
     "needs_target": false,
-    "front_image": "cardBack_blue4.png",
+    "front_image": "player/spells/spell_draft.png",
     "description": "Draw 1 card."
 }

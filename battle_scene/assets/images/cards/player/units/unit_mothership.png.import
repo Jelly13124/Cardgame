@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dlh8a1c8ilb31"
-path="res://.godot/imported/unit_robot_leader.png-fdfe908d5737eb1e3ee3361c1b82af9b.ctex"
+uid="uid://c7q1pjkh5ucxn"
+path="res://.godot/imported/unit_mothership.png-1afcb294cc2d2ebb532ebd267d2d18e2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/cards/unit_robot_leader.png"
-dest_files=["res://.godot/imported/unit_robot_leader.png-fdfe908d5737eb1e3ee3361c1b82af9b.ctex"]
+source_file="res://battle_scene/assets/images/cards/player/units/unit_mothership.png"
+dest_files=["res://.godot/imported/unit_mothership.png-1afcb294cc2d2ebb532ebd267d2d18e2.ctex"]
 
 [params]
 

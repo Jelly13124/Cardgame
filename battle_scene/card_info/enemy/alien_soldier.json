@@ -4,8 +4,11 @@
     "type": "unit",
     "side": "enemy",
     "cost": 0,
-    "health": 8,
-    "attack": 3,
-    "front_image": "cardBack_blue4.png",
-    "description": "Heavily armored alien grunt."
+    "health": 5,
+    "attack": 2,
+    "keywords": [
+        "Payback"
+    ],
+    "front_image": "enemy/units/alien_soldier.png",
+    "description": "Payback: Deals damage back when attacked."
 }

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://baajmx6chp4xt"
-path="res://.godot/imported/unit_enforce_drone.png-8844c0dcbf0cff24fca0532576c32147.ctex"
+uid="uid://dlh8a1c8ilb31"
+path="res://.godot/imported/unit_robot_leader.png-bd98e34c552e0ba26717951df3c6965a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/cards/unit_enforce_drone.png"
-dest_files=["res://.godot/imported/unit_enforce_drone.png-8844c0dcbf0cff24fca0532576c32147.ctex"]
+source_file="res://battle_scene/assets/images/cards/player/units/unit_robot_leader.png"
+dest_files=["res://.godot/imported/unit_robot_leader.png-bd98e34c552e0ba26717951df3c6965a.ctex"]
 
 [params]
 
