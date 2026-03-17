@@ -1,14 +1,14 @@
 class_name BattleRow
 extends CardContainer
 
-## BattleRow - A standardized 8-slot horizontal container for a single "floor" of combat.
-## Slots 0-3: Player territory (Left)
-## Slots 4-7: Enemy territory (Right)
+## BattleRow - A horizontal container for one side of combat.
+## Each row belongs to a single side ("player" or "enemy").
+## Units are laid out evenly across up to TOTAL_SLOTS positions.
 
 @export var row_index: int = 0
 @export var row_side: String = "player" # "player" or "enemy"
 
-const TOTAL_SLOTS = 7 # Still enforce max 7
+const TOTAL_SLOTS = 7 # Max cards allowed in a single row
 var slot_width: float = 230.0
 # We calculate center based on 1870 total width
 var row_width: float = 1870.0
@@ -183,10 +183,13 @@ func on_card_move_done(card: Card):
 	# we ensure it's in Token mode.
 	if card is UnitCard:
 		card.set_view_mode("token")
-		card.can_attack = true
-		card.modulate = Color(1.0, 1.0, 1.0)
 		
+		# Only reset attack capabilities if this is a newly deployed card,
+		# not just a card being shifted due to array reorganizations
 		if card.get_meta("just_deployed", false):
+			card.can_attack = true
+			card.modulate = Color(1.0, 1.0, 1.0)
+			
 			card.set_meta("just_deployed", false)
 			var slot = card.get_meta("battle_slot", -1)
 			if "keyword_instances" in card:

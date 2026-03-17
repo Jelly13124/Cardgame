@@ -22,6 +22,8 @@
         "spell_zap",
         "spell_zap",
         "spell_draft",
-        "spell_air_raid"
-    ]
+        "spell_air_raid",
+        "spell_modify"
+    ],
+    "race": "robot"
 }

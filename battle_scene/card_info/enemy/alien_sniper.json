@@ -7,5 +7,6 @@
     "health": 1,
     "attack": 7,
     "description": "Extreme damage, fragile armor.",
-    "front_image": "enemy/units/alien_sniper.png"
+    "front_image": "enemy/units/alien_sniper.png",
+    "race": "robot"
 }

@@ -38,10 +38,10 @@ corner_radius_bottom_left = 80
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_attack"]
 bg_color = Color(0.85, 0.65, 0.2, 1)
-corner_radius_top_left = 40
-corner_radius_top_right = 40
-corner_radius_bottom_right = 40
-corner_radius_bottom_left = 40
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -49,11 +49,11 @@ border_width_bottom = 2
 border_color = Color(0.1, 0.1, 0.1, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health"]
-bg_color = Color(0.8, 0.2, 0.2, 1)
-corner_radius_top_left = 40
-corner_radius_top_right = 40
-corner_radius_bottom_right = 40
-corner_radius_bottom_left = 40
+bg_color = Color(0.2, 0.6, 0.9, 1)
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -178,6 +178,25 @@ theme_override_font_sizes/normal_font_size = 9
 bbcode_enabled = true
 text = "Deals 2 dmg when destroyed."
 scroll_active = false
+
+[node name="RaceBox" type="ColorRect" parent="FrontFace"]
+layout_mode = 0
+offset_left = 35.0
+offset_top = 212.0
+offset_right = 125.0
+offset_bottom = 228.0
+color = Color(0.2, 0.15, 0.12, 1)
+
+[node name="RaceLabel" type="Label" parent="FrontFace/RaceBox"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.9, 0.85, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+text = "ROBOT"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="CostCircle" type="ColorRect" parent="FrontFace"]
 layout_mode = 0
@@ -353,7 +372,7 @@ offset_left = 115.0
 offset_top = 165.0
 offset_right = 155.0
 offset_bottom = 205.0
-color = Color(0.8, 0.2, 0.2, 1)
+color = Color(0.2, 0.6, 0.9, 1)
 
 [node name="HealthLabel" type="Label" parent="TokenFace/HealthCircle"]
 layout_mode = 1

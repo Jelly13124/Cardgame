@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://8n36yadkvxai" path="res://addons/card-framework/json_card_factory.gd" id="1_kvcvr"]
 [ext_resource type="PackedScene" path="res://battle_scene/unit_card.tscn" id="2_unit_card"]
-[ext_resource type="Texture2D" uid="uid://djoauv24lbkhc" path="res://battle_scene/assets/images/cards/cardBack_blue1.png" id="3_b44du"]
+[ext_resource type="Texture2D" path="res://battle_scene/assets/images/cards/cardBack_blue1.png" id="3_b44du"]
 
 [node name="MyCardFactory" type="Node"]
 script = ExtResource("1_kvcvr")

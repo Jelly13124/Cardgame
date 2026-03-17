@@ -6,9 +6,8 @@
     "cost": 0,
     "health": 5,
     "attack": 2,
-    "keywords": [
-        "Payback"
-    ],
+    "keywords": [],
     "front_image": "enemy/units/alien_soldier.png",
-    "description": "Payback: Deals damage back when attacked."
+    "description": "Standard enemy unit.",
+    "race": "robot"
 }

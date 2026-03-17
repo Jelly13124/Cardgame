@@ -1,6 +1,6 @@
-extends Node
+extends "res://battle_scene/spells/logic/spell_logic_base.gd"
 
-func execute(context: Dictionary):
+func execute(context: Dictionary) -> void:
 	var main = context.get("main")
 	
 	if main and main.has_method("gain_energy"):

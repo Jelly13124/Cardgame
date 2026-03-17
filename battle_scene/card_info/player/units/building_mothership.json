@@ -7,5 +7,6 @@
     "health": 50,
     "attack": 0,
     "description": "The command center. Cannot attack.",
-    "front_image": "player/units/unit_mothership.png"
+    "front_image": "player/units/unit_mothership.png",
+    "race": "robot"
 }

@@ -10,6 +10,7 @@ var name_label: Label
 var attack_label: Label
 var health_label: Label
 var description_label: RichTextLabel
+var race_label: Label
 var art_texture: TextureRect
 var dupe_badge: ColorRect
 var dupe_label: Label
@@ -39,6 +40,7 @@ func _ready() -> void:
 	attack_label = $FrontFace/AttackCircle/AttackLabel if has_node("FrontFace/AttackCircle/AttackLabel") else null
 	health_label = $FrontFace/HealthCircle/HealthLabel if has_node("FrontFace/HealthCircle/HealthLabel") else null
 	description_label = $FrontFace/DescriptionBox/DescriptionLabel if has_node("FrontFace/DescriptionBox/DescriptionLabel") else null
+	race_label = $FrontFace/RaceBox/RaceLabel if has_node("FrontFace/RaceBox/RaceLabel") else null
 	art_texture = $FrontFace/ArtContainer/ArtTexture if has_node("FrontFace/ArtContainer/ArtTexture") else null
 	dupe_badge = $FrontFace/DupeBadge if has_node("FrontFace/DupeBadge") else null
 	dupe_label = $FrontFace/DupeBadge/DupeLabel if has_node("FrontFace/DupeBadge/DupeLabel") else null
@@ -85,7 +87,8 @@ func _on_gui_input(event: InputEvent) -> void:
 			
 		# If user clicks an active player unit, trigger attack arrow
 		if can_attack and event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-			if event.pressed:
+			var is_player = card_info.get("side", "player") == "player"
+			if event.pressed and is_player:
 				if main and main.has_method("start_manual_attack"):
 					main.start_manual_attack(self )
 					get_viewport().set_input_as_handled()
@@ -106,15 +109,19 @@ func _on_gui_input(event: InputEvent) -> void:
 			
 	super._on_gui_input(event)
 
+var _stats_initialized: bool = false
+
 func _update_card_ui() -> void:
 	if card_info.is_empty():
 		return
 		
 	# Initialize internal combat stats from card_info exactly once
-	if attack == -1 and card_info.has("attack"):
-		attack = int(card_info.get("attack", 0))
-	if health == -1 and card_info.has("health"):
-		health = int(card_info.get("health", 0))
+	if not _stats_initialized:
+		if card_info.has("attack"):
+			attack = int(card_info.get("attack", 0))
+		if card_info.has("health"):
+			health = int(card_info.get("health", 0))
+		_stats_initialized = true
 		
 	var base_atk = int(card_info.get("attack", 0))
 	var base_hp = int(card_info.get("health", 0))
@@ -165,6 +172,16 @@ func _update_card_ui() -> void:
 	
 	if description_label and card_info.has("description"):
 		description_label.text = card_info.get("description", "")
+		
+	if race_label:
+		if is_spell:
+			if has_node("FrontFace/RaceBox"):
+				$FrontFace/RaceBox.visible = false
+		else:
+			if has_node("FrontFace/RaceBox"):
+				$FrontFace/RaceBox.visible = true
+			var race = card_info.get("race", "robot") # Default robot for units
+			race_label.text = str(race).to_upper()
 	
 	# Art background colors logic
 	var type = card_info.get("type", "unit")
@@ -289,6 +306,20 @@ func _update_card_ui() -> void:
 			if mask_style:
 				$TokenFace/ArtContainer.add_theme_stylebox_override("panel", mask_style)
 
+func reset_to_base_state() -> void:
+	# Wipe combat tracking so it re-reads from card_info
+	_stats_initialized = false
+	
+	# Clear temporary filters/tints
+	modulate = Color(1.0, 1.0, 1.0)
+	can_attack = true
+	
+	# Clear keyword instances (buffs, shields, auras, taunts)
+	keyword_instances.clear()
+	
+	# Refresh UI to base values
+	_update_card_ui()
+
 func take_damage(amount: int) -> void:
 	# Filter damage through keywords (e.g., Shield)
 	var final_damage = amount
@@ -301,7 +332,11 @@ func take_damage(amount: int) -> void:
 	# Visual Feedback: Flash Red
 	modulate = Color(1, 0.2, 0.2)
 	var tween = create_tween()
-	tween.tween_property(self , "modulate", Color.WHITE, 0.3)
+	var target_color = Color.WHITE
+	var is_player = card_info.get("side", "player") == "player"
+	if is_player and get("can_attack") != null and get("can_attack") == false:
+		target_color = Color(0.5, 0.5, 0.5)
+	tween.tween_property(self , "modulate", target_color, 0.3)
 	
 	if health <= 0:
 		var main = get_tree().current_scene
