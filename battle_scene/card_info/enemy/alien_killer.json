@@ -7,5 +7,6 @@
     "health": 3,
     "attack": 5,
     "front_image": "enemy/units/alien_killer.png",
-    "description": "Powerful assassin unit."
+    "description": "Powerful assassin unit.",
+    "race": "robot"
 }

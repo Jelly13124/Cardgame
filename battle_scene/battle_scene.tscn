@@ -29,7 +29,7 @@ corner_radius_bottom_right = 60
 corner_radius_bottom_left = 60
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ms_health"]
-bg_color = Color(0.8, 0.2, 0.2, 1)
+bg_color = Color(0.2, 0.6, 0.9, 1)
 border_width_left = 3
 border_width_top = 3
 border_width_right = 3
@@ -153,7 +153,9 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
+offset_left = -80.0
 offset_top = -180.0
+offset_right = -80.0
 offset_bottom = -180.0
 grow_horizontal = 2
 grow_vertical = 0
@@ -172,19 +174,6 @@ card_face_up = false
 allow_card_movement = false
 
 
-[node name="DeckLabel" type="Label" parent="." unique_id=1508836556]
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 100.0
-offset_top = -280.0
-offset_right = 140.0
-offset_bottom = -257.0
-grow_vertical = 0
-theme_override_font_sizes/font_size = 24
-text = "30"
-horizontal_alignment = 1
-
 [node name="DiscardPile" parent="CardManager" unique_id=196193801 instance=ExtResource("2_xkfcc")]
 layout_mode = 1
 anchors_preset = 3
@@ -200,22 +189,6 @@ grow_horizontal = 0
 grow_vertical = 0
 card_face_up = false
 allow_card_movement = false
-
-[node name="DiscardLabel" type="Label" parent="." unique_id=1508836557]
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -230.0
-offset_top = -280.0
-offset_right = -160.0
-offset_bottom = -257.0
-grow_horizontal = 0
-grow_vertical = 0
-theme_override_font_sizes/font_size = 24
-text = "0"
-horizontal_alignment = 1
 
 [node name="EnergyLabel" type="Label" parent="." unique_id=2127611817]
 anchors_preset = 1

@@ -1,4 +1,4 @@
-extends Node
+extends "res://battle_scene/spells/logic/spell_logic_base.gd"
 
 func execute(context: Dictionary) -> void:
 	var target_row = context.get("target")

@@ -13,8 +13,6 @@ signal unit_stats_changed(unit: Control, atk: int, hp: int, is_permanent: bool)
 @onready var rows = _get_battle_rows()
 
 # UI Label References
-@onready var deck_label = $DeckLabel
-@onready var discard_label = $DiscardLabel
 @onready var energy_label = $EnergyLabel
 @onready var round_label = $RoundLabel
 @onready var notify_label = $NotificationLabel
@@ -86,11 +84,6 @@ func _wait(seconds: float) -> void:
 	await get_tree().create_timer(seconds, true, false, false).timeout
 
 func _process(_delta: float) -> void:
-	if deck_label and deck:
-		deck_label.text = str(deck.get_card_count())
-	if discard_label and discard_pile:
-		discard_label.text = str(discard_pile.get_card_count())
-		
 	if is_manual_attacking:
 		var current_mouse_pos = get_viewport().get_mouse_position()
 		if targeting_arrow:
@@ -154,7 +147,14 @@ func _set_hover_effect(unit: Control, active: bool) -> void:
 		tween.tween_property(unit, "modulate", Color(1.2, 1.2, 1.2), 0.1)
 	else:
 		tween.tween_property(unit, "scale", unit.original_scale, 0.1)
-		tween.tween_property(unit, "modulate", Color.WHITE, 0.1)
+		var target_color = Color.WHITE
+		var is_player = false
+		if "card_info" in unit and unit.card_info is Dictionary:
+			is_player = unit.card_info.get("side", "player") == "player"
+			
+		if is_player and unit.get("can_attack") != null and unit.get("can_attack") == false:
+			target_color = Color(0.5, 0.5, 0.5)
+		tween.tween_property(unit, "modulate", target_color, 0.1)
 
 
 # Displays a message in the center of the screen that fades away
@@ -263,9 +263,31 @@ func _first_round_draw():
 
 # Moves a specific number of cards from the top of the Deck to the Hand
 func _draw_cards(count: int):
-	var cards = deck.get_top_cards(count)
-	if cards.size() > 0:
-		hand.move_cards(cards)
+	for i in range(count):
+		# Re-check deck every iteration in case of reshuffle
+		if deck.get_card_count() == 0:
+			if discard_pile.get_card_count() > 0:
+				show_notification("RESHUFFLING DECK", Color(0.4, 0.8, 1.0))
+				var discarded = discard_pile.get_cards().duplicate()
+				# Move cards back to deck
+				deck.move_cards(discarded)
+				deck.shuffle()
+				# Wait a bit for the shuffle animation/state to settle
+				await _wait(0.3)
+			else:
+				# Both piles are empty
+				break
+		
+		# Now try to draw
+		var cards = deck.get_top_cards(1)
+		if cards.size() > 0:
+			var success = hand.move_cards(cards)
+			if not success:
+				show_notification("HAND FULL", Color(1, 0.4, 0.4))
+				break
+			
+			# Wait briefly between draws for visual clarity and layout stability
+			await _wait(0.25)
 
 
 # Refreshes the text display for Energy and Rounds
@@ -277,9 +299,7 @@ func gain_energy(amount: int) -> void:
 	current_energy += amount
 	if current_energy > max_energy:
 		current_energy = max_energy
-	energy_label.text = "Energy: %d / %d" % [current_energy, max_energy]
-	if round_label:
-		round_label.text = "Round: %d" % current_round
+	_update_ui_labels() # BUG-02 fix: use the central label updater; round did not change
 
 
 # Clears the deck and refills it with a fresh, shuffled list of cards
@@ -292,6 +312,7 @@ func _reset_deck():
 		list = _get_randomized_card_list()
 	
 	deck.clear_cards()
+	discard_pile.clear_cards()
 	for item in list:
 		var card_name = item if typeof(item) == TYPE_STRING else item["card_id"]
 		var card = card_factory.create_card(card_name, deck)
@@ -308,7 +329,7 @@ func _reset_deck():
 func _get_randomized_card_list() -> Array:
 	var list = [
 		"spell_zap", "spell_zap",
-		"spell_energize",
+		"spell_energize", "spell_modify",
 		"spell_draft", "spell_air_raid",
 		"unit_robot_leader", "unit_robot_leader"
 	]
@@ -434,7 +455,6 @@ func _perform_attack(attacker: Control, defender: Control):
 	# Pre-calculate combat math
 	var a_atk = int(attacker.card_info.get("attack", 0))
 	var d_atk = int(defender.card_info.get("attack", 0))
-	var apply_payback = _has_keyword(defender, "payback")
 	
 	# Temporarily render above everything using CanvasItem z_index
 	var old_z = attacker.z_index
@@ -456,11 +476,11 @@ func _perform_attack(attacker: Control, defender: Control):
 		back_tween.tween_property(attacker, "global_position", a_pos, 0.15)
 		
 		# Now that we are safely on our way back visually, we can trigger the damage callbacks
+		# Reciprocal Combat: Both units deal damage to each other.
 		if is_instance_valid(defender) and defender.has_method("take_damage"):
 			defender.take_damage(a_atk)
 			
-		if apply_payback and is_instance_valid(attacker) and attacker.has_method("take_damage"):
-			show_notification("PAYBACK!", Color(1, 0.5, 0))
+		if d_atk > 0 and is_instance_valid(attacker) and attacker.has_method("take_damage"):
 			attacker.take_damage(d_atk)
 			
 		await back_tween.finished
@@ -476,10 +496,12 @@ func _perform_attack(attacker: Control, defender: Control):
 			if original_parent and original_parent.has_method("_update_target_positions"):
 				original_parent._update_target_positions()
 	else:
-		# If attacker somehow died during the lunge, just apply the hit to defender
+		# BUG-04 fix: attacker died during the lunge — still deal damage and wait
+		# before returning so the caller coroutine doesn't unblock too early.
 		if is_instance_valid(defender) and defender.has_method("take_damage"):
 			defender.take_damage(a_atk)
 		await _wait(0.15)
+		# Note: no state restoration needed — the card was freed by kill_unit().
 
 func take_mothership_damage(amount: int):
 	if is_game_over: return
@@ -512,6 +534,8 @@ func kill_unit(card: Control):
 		card.card_container.remove_card(card)
 	
 	if card.card_info.get("side", "player") == "player":
+		if card.has_method("reset_to_base_state"):
+			card.reset_to_base_state()
 		discard_pile.add_card(card)
 	else:
 		card.queue_free() # Simply delete enemy units
@@ -588,13 +612,10 @@ func play_spell(card: Control, drop_position: Vector2):
 	
 	_resolve_spell_effect(card, target_unit)
 	
-	# Spells go back to deck unless they are one-time
-	var keywords = card.card_info.get("keywords", [])
-	if "one-time" in keywords or "One-Time" in keywords:
-		discard_pile.add_card(card)
-	else:
-		deck.add_card(card)
-		deck.shuffle()
+	# All played spells go to discard pile
+	if card.card_container:
+		card.card_container.remove_card(card)
+	discard_pile.add_card(card)
 
 
 func _resolve_spell_effect(card: Control, target: Control = null):
@@ -611,7 +632,7 @@ func _resolve_spell_effect(card: Control, target: Control = null):
 					"card": card,
 					"target": target
 				}
-				logic_instance.execute(context)
+				await logic_instance.execute(context)
 			else:
 				push_error("Spell logic script '%s' does not have execute method!" % script_path)
 		else:
@@ -768,66 +789,29 @@ func _complete_spell_targeting() -> void:
 			is_valid_target = true
 			
 	elif targeting_type == "none":
-		# Always valid if clicking in the game window (or specifically battlefield?)
-		# For now, just assume any click in targeting mode is valid for "none" type
-		final_target = null # No specific target object needed for global spells
+		# Global spells don't need a specific target object
+		final_target = null
 		is_valid_target = true
 	
-	# Remove arrow first
-	if targeting_arrow and is_instance_valid(targeting_arrow):
-		targeting_arrow.stop()
-		targeting_arrow.queue_free()
-		targeting_arrow = null
-	
-	# Un-highlight the card
-	if targeting_card and is_instance_valid(targeting_card):
-		targeting_card.modulate = Color.WHITE
-	
 	if not is_valid_target:
-		# Don't cancel immediately on release in empty space IF we were holding (old logic),
-		# but for Click-Toggle, clicking empty space SHOULD cancel.
 		show_notification("INVALID TARGET", Color(0.8, 0.4, 0.4))
-		_cancel_spell_targeting() # Use the standardized cancel method to clean up overlay
+		_cancel_spell_targeting() # Handles all cleanup including overlay + hover reset
 		return
 	
-	# Cast the spell on the target
+	# BUG-01 fix: save references BEFORE cancel wipes them, then delegate
+	# all state cleanup to _cancel_spell_targeting() — the single source of truth.
+	# We suppress its "TARGETING CANCELLED" notification by casting immediately after.
 	var card = targeting_card
+	_cancel_spell_targeting()
 	
-	# Cleanup targeting state (overlay, arrow, vars)
-	# We call _cancel_spell_targeting logic manually or just reset specific things?
-	# Better to reset specific things to avoid "TARGETING CANCELLED" message overriding "SPELL CAST"
-	
-	# Remove arrow
-	if targeting_arrow and is_instance_valid(targeting_arrow):
-		targeting_arrow.stop()
-		targeting_arrow.queue_free()
-		targeting_arrow = null
-	
-	# Un-highlight
-	if targeting_card and is_instance_valid(targeting_card):
-		targeting_card.modulate = Color.WHITE
-		
-	if hovered_unit:
-		_set_hover_effect(hovered_unit, false)
-		hovered_unit = null
-
-	if hovered_row and hovered_row.has_method("set_highlight"):
-		hovered_row.set_highlight(false)
-		hovered_row = null
-		
-	if targeting_overlay:
-		targeting_overlay.visible = false
-		
-	targeting_card = null
-	is_targeting = false
-	
-	# Execute the spell at the current position with the resolved target
+	# Override the cancel notification with the cast result
 	_execute_spell_with_target(card, final_target)
 
 
 # --- Manual Attack Actions ---
 func start_manual_attack(attacker: Control):
 	if is_game_over: return
+	if attacker.card_info.get("side", "player") != "player": return
 	
 	is_manual_attacking = true
 	manual_attacker = attacker
@@ -932,9 +916,14 @@ func inspect_card(card: Control) -> void:
 			inspected_card.reparent(pivot)
 			inspected_card.card_info = card.card_info.duplicate()
 			
-			# Overwrite the newly spawned card's stats with the current combat state of the token
-			inspected_card.card_info["attack"] = card.attack
-			inspected_card.card_info["health"] = card.health
+			# Overwrite the newly spawned card's stats with the current combat base stats of the token, ignoring transient damage
+			if "attack" in inspected_card and "health" in inspected_card:
+				var base_buffed_atk = card.card_info.get("attack", 0) if "card_info" in card and card.card_info else 0
+				var base_buffed_hp = card.card_info.get("health", 0) if "card_info" in card and card.card_info else 0
+				inspected_card.attack = base_buffed_atk
+				inspected_card.health = base_buffed_hp
+				if inspected_card.has_method("_update_card_ui"):
+					inspected_card._update_card_ui()
 			
 			inspected_card.set_view_mode("card")
 			inspected_card.scale = Vector2(2.5, 2.5)
@@ -1021,15 +1010,12 @@ func _execute_spell_with_target(card: Control, target: Object) -> void:
 	# Spend energy
 	spend_energy([card])
 	
-	_resolve_spell_effect(card, target)
+	await _resolve_spell_effect(card, target)
 	
-	# Spells go back to deck unless one-time
-	var keywords = card.card_info.get("keywords", [])
-	if "one-time" in keywords or "One-Time" in keywords:
-		discard_pile.add_card(card)
-	else:
-		deck.add_card(card)
-		deck.shuffle()
+	# All played spells go to discard pile
+	if card.card_container:
+		card.card_container.remove_card(card)
+	discard_pile.add_card(card)
 
 
 ## Handles input on the blocking overlay

@@ -20,6 +20,8 @@
         "spell_air_raid",
         "spell_air_raid",
         "spell_draft",
-        "spell_draft"
-    ]
+        "spell_draft",
+        "spell_modify"
+    ],
+    "race": "robot"
 }

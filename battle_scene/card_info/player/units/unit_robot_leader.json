@@ -12,5 +12,6 @@
     ],
     "description": "Buffs all adjacent units with +1/+1 when deployed.",
     "script_path": "res://battle_scene/units/script_overrides/unit_robot_leader.gd",
-    "front_image": "player/units/unit_robot_leader.png"
+    "front_image": "player/units/unit_robot_leader.png",
+    "race": "robot"
 }

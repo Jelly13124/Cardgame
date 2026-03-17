@@ -12,5 +12,6 @@
     ],
     "description": "Deals 2 damage to a randomly chosen enemy at the end of every turn.",
     "script_path": "res://battle_scene/units/script_overrides/unit_battle_enforce_drone.gd",
-    "front_image": "player/units/unit_enforce_drone.png"
+    "front_image": "player/units/unit_enforce_drone.png",
+    "race": "robot"
 }

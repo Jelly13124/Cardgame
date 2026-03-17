@@ -10,5 +10,6 @@
         "Taunt"
     ],
     "description": "Taunt.",
-    "front_image": "player/units/unit_defend_drone.png"
+    "front_image": "player/units/unit_defend_drone.png",
+    "race": "robot"
 }

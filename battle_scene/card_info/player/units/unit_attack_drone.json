@@ -8,5 +8,6 @@
     "attack": 10,
     "keywords": [],
     "description": "A basic combat drone.",
-    "front_image": "player/units/unit_attack_drone.png"
+    "front_image": "player/units/unit_attack_drone.png",
+    "race": "robot"
 }

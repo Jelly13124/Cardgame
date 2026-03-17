@@ -1,6 +1,11 @@
 class_name BattleSpot
 extends Pile
 
+## DEPRECATED / UNUSED
+## BattleSpot was a single-card slot from an earlier design iteration.
+## The current game uses BattleRow (battle_row.gd) for all unit placement.
+## This file is kept for reference; safe to delete if never re-used.
+
 @export var is_player_spot: bool = true
 
 func _ready() -> void:
