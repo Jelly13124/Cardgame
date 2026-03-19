@@ -4,14 +4,14 @@
     "display_name": "Robot Leader",
     "type": "unit",
     "side": "player",
-    "cost": 2,
-    "health": 5,
-    "attack": 1,
+    "cost": 1,
+    "health": 2,
+    "attack": 2,
     "keywords": [
         "battle_cry"
     ],
-    "description": "Buffs all adjacent units with +1/+1 when deployed.",
-    "script_path": "res://battle_scene/units/script_overrides/unit_robot_leader.gd",
+    "description": "Battlecry: +1/+1 to adjacent units.",
+    "passive_script_path": "res://battle_scene/units/script_overrides/unit_robot_leader.gd",
     "front_image": "player/units/unit_robot_leader.png",
     "race": "robot"
 }

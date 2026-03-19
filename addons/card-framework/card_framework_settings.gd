@@ -19,7 +19,7 @@ const ANIMATION_MOVE_SPEED: float = 2000.0
 ## Duration of hover animations in seconds
 const ANIMATION_HOVER_DURATION: float = 0.10
 ## Scale multiplier applied during hover effects
-const ANIMATION_HOVER_SCALE: float = 1.1
+const ANIMATION_HOVER_SCALE: float = 1.35
 ## Rotation in degrees applied during hover effects  
 const ANIMATION_HOVER_ROTATION: float = 0.0
 

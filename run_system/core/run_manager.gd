@@ -119,7 +119,7 @@ func _handle_run_loss() -> void:
 	is_run_active = false
 	emit_signal("run_ended", false)
 	# TODO: Trigger base-building retention logic (e.g. keep 30% of Core)
-	print("Mothership destroyed! Run ended.")
+	print("Player Hero defeated! Run ended.")
 
 func _emit_all_state() -> void:
 	emit_signal("health_changed", current_health, max_health)

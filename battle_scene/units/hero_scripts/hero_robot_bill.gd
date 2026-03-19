@@ -12,13 +12,18 @@ func _on_unit_stats_changed(target_unit: Control, atk: int, hp: int, _is_permane
 	if not is_instance_valid(unit_card): return
 	if not is_instance_valid(target_unit): return
 	
-	# Only execute passive if it's a friendly unit AND it's NOT Robot Bill himself
-	var is_player = target_unit.card_info.get("side", "") == "player"
-	if not is_player or target_unit == unit_card:
+	# Make sure Robot Bill is actually deployed on the battlefield
+	if not unit_card.card_container or not unit_card.card_container.is_in_group("battle_row"):
 		return
 		
-	# Apply +1/+1 permanently to Bill regardless of the actual buff size
+	# Only execute passive if it's a friendly ROBOT and it's NOT Robot Bill himself
+	var is_player = target_unit.card_info.get("side", "") == "player"
+	var the_race = str(target_unit.card_info.get("race", "robot"))
+	var is_robot = the_race.to_lower() == "robot"
+	if not is_player or not is_robot or target_unit == unit_card:
+		return
+		
+	# Apply +1/+2 permanently to Bill regardless of the actual buff size
 	if atk > 0 or hp > 0:
 		if unit_card.has_method("add_permanent_stats"):
-			unit_card.add_permanent_stats(1, 1)
-			unit_card.show_notification("BILL GROWS! (+1/+1)", Color.GOLD)
+			unit_card.add_permanent_stats(1, 2)

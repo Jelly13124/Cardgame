@@ -13,7 +13,7 @@ func execute_battle_cry(row: Node, slot_index: int) -> void:
 	var buffed_anyone = false
 	
 	for slot in adjacent_slots:
-		if slot >= 0 and slot <= 3: # Player slots only
+		if slot >= 0 and slot <= 6: # Support all 7 slots on the player's board
 			var neighbor = row.get_card_at_slot(slot)
 			if neighbor and is_instance_valid(neighbor) and neighbor.card_info.get("side", "player") == my_side:
 				if neighbor.has_method("add_permanent_stats"):

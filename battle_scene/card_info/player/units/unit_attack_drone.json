@@ -4,7 +4,7 @@
     "type": "unit",
     "side": "player",
     "cost": 1,
-    "health": 3,
+    "health": 2,
     "attack": 10,
     "keywords": [],
     "description": "A basic combat drone.",

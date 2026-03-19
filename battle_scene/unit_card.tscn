@@ -182,9 +182,9 @@ scroll_active = false
 [node name="RaceBox" type="ColorRect" parent="FrontFace"]
 layout_mode = 0
 offset_left = 35.0
-offset_top = 212.0
+offset_top = 204.0
 offset_right = 125.0
-offset_bottom = 228.0
+offset_bottom = 220.0
 color = Color(0.2, 0.15, 0.12, 1)
 
 [node name="RaceLabel" type="Label" parent="FrontFace/RaceBox"]
@@ -218,10 +218,10 @@ vertical_alignment = 1
 
 [node name="AttackCircle" type="Panel" parent="FrontFace"]
 layout_mode = 0
-offset_left = -15.0
-offset_top = 205.0
-offset_right = 15.0
-offset_bottom = 235.0
+offset_left = 0.0
+offset_top = 190.0
+offset_right = 30.0
+offset_bottom = 220.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_attack")
 
 [node name="AttackLabel" type="Label" parent="FrontFace/AttackCircle"]
@@ -237,10 +237,10 @@ vertical_alignment = 1
 
 [node name="HealthCircle" type="Panel" parent="FrontFace"]
 layout_mode = 0
-offset_left = 145.0
-offset_top = 205.0
-offset_right = 175.0
-offset_bottom = 235.0
+offset_left = 130.0
+offset_top = 190.0
+offset_right = 160.0
+offset_bottom = 220.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_health")
 
 [node name="HealthLabel" type="Label" parent="FrontFace/HealthCircle"]
