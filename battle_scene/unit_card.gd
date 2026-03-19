@@ -5,27 +5,42 @@ class_name UnitCard
 extends Card
 
 # --- UI Element references (Full Card) ---
-var cost_label: Label
-var name_label: Label
-var attack_label: Label
-var health_label: Label
-var description_label: RichTextLabel
-var race_label: Label
-var art_texture: TextureRect
-var dupe_badge: ColorRect
-var dupe_label: Label
+@export_group("Full Card UI Nodes")
+@export var cost_label: Label
+@export var name_label: Label
+@export var attack_label: Label
+@export var health_label: Label
+@export var description_label: RichTextLabel
+@export var race_label: Label
+@export var art_texture: TextureRect
+@export var dupe_badge: ColorRect
+@export var dupe_label: Label
+@export var front_cost_circle: Control
+@export var front_attack_circle: Control
+@export var front_health_circle: Control
+@export var front_race_box: Control
+@export var front_art_background: ColorRect
+@export var front_card_border: ColorRect
+@export var front_name_banner: ColorRect
 
 # --- UI Element references (Token) ---
-var token_attack_label: Label
-var token_health_label: Label
-var token_art_texture: TextureRect
-var token_oval_border: Panel
-var token_shield_aura: Panel
+@export_group("Token UI Nodes")
+@export var token_attack_label: Label
+@export var token_health_label: Label
+@export var token_art_texture: TextureRect
+@export var token_oval_border: Panel
+@export var token_shield_aura: Panel
+@export var token_attack_circle: Control
+@export var token_health_circle: Control
 
 # View mode: "card" or "token"
 var current_view_mode: String = "card"
 
+enum CardType { UNIT, SPELL, HERO }
+
 # Combat state
+var base_health: int = -1
+var base_attack: int = -1
 var health: int = -1
 var attack: int = -1
 var can_attack: bool = false
@@ -33,24 +48,42 @@ var keyword_instances: Array = []
 var custom_script_instance: Node = null
 
 
+func _get_card_type() -> CardType:
+	var t = str(card_info.get("type", "unit")).to_lower()
+	match t:
+		"spell": return CardType.SPELL
+		"hero": return CardType.HERO
+		_: return CardType.UNIT
+
 func _ready() -> void:
-	# Get UI element references for full card
-	cost_label = $FrontFace/CostCircle/CostLabel if has_node("FrontFace/CostCircle/CostLabel") else null
-	name_label = $FrontFace/NameBanner/NameLabel if has_node("FrontFace/NameBanner/NameLabel") else null
-	attack_label = $FrontFace/AttackCircle/AttackLabel if has_node("FrontFace/AttackCircle/AttackLabel") else null
-	health_label = $FrontFace/HealthCircle/HealthLabel if has_node("FrontFace/HealthCircle/HealthLabel") else null
-	description_label = $FrontFace/DescriptionBox/DescriptionLabel if has_node("FrontFace/DescriptionBox/DescriptionLabel") else null
-	race_label = $FrontFace/RaceBox/RaceLabel if has_node("FrontFace/RaceBox/RaceLabel") else null
-	art_texture = $FrontFace/ArtContainer/ArtTexture if has_node("FrontFace/ArtContainer/ArtTexture") else null
-	dupe_badge = $FrontFace/DupeBadge if has_node("FrontFace/DupeBadge") else null
-	dupe_label = $FrontFace/DupeBadge/DupeLabel if has_node("FrontFace/DupeBadge/DupeLabel") else null
+	# Fallback to string paths if not exported in inspector
+	if not cost_label: cost_label = get_node_or_null("FrontFace/CostCircle/CostLabel")
+	if not name_label: name_label = get_node_or_null("FrontFace/NameBanner/NameLabel")
+	if not attack_label: attack_label = get_node_or_null("FrontFace/AttackCircle/AttackLabel")
+	if not health_label: health_label = get_node_or_null("FrontFace/HealthCircle/HealthLabel")
+	if not description_label: description_label = get_node_or_null("FrontFace/DescriptionBox/DescriptionLabel")
+	if not race_label: race_label = get_node_or_null("FrontFace/RaceBox/RaceLabel")
+	if not art_texture: art_texture = get_node_or_null("FrontFace/ArtContainer/ArtTexture")
+	if not dupe_badge: dupe_badge = get_node_or_null("FrontFace/DupeBadge")
+	if not dupe_label: dupe_label = get_node_or_null("FrontFace/DupeBadge/DupeLabel")
+	
+	if not front_cost_circle: front_cost_circle = get_node_or_null("FrontFace/CostCircle")
+	if not front_attack_circle: front_attack_circle = get_node_or_null("FrontFace/AttackCircle")
+	if not front_health_circle: front_health_circle = get_node_or_null("FrontFace/HealthCircle")
+	if not front_race_box: front_race_box = get_node_or_null("FrontFace/RaceBox")
+	if not front_art_background: front_art_background = get_node_or_null("FrontFace/ArtBackground")
+	if not front_card_border: front_card_border = get_node_or_null("FrontFace/CardBorder")
+	if not front_name_banner: front_name_banner = get_node_or_null("FrontFace/NameBanner")
 	
 	# Get UI element references for token
-	token_attack_label = $TokenFace/AttackCircle/AttackLabel if has_node("TokenFace/AttackCircle/AttackLabel") else null
-	token_health_label = $TokenFace/HealthCircle/HealthLabel if has_node("TokenFace/HealthCircle/HealthLabel") else null
-	token_art_texture = $TokenFace/ArtContainer/ArtTexture if has_node("TokenFace/ArtContainer/ArtTexture") else null
-	token_oval_border = $TokenFace/OvalBorder if has_node("TokenFace/OvalBorder") else null
-	token_shield_aura = $TokenFace/ShieldAura if has_node("TokenFace/ShieldAura") else null
+	if not token_attack_label: token_attack_label = get_node_or_null("TokenFace/AttackCircle/AttackLabel")
+	if not token_health_label: token_health_label = get_node_or_null("TokenFace/HealthCircle/HealthLabel")
+	if not token_art_texture: token_art_texture = get_node_or_null("TokenFace/ArtContainer/ArtTexture")
+	if not token_oval_border: token_oval_border = get_node_or_null("TokenFace/OvalBorder")
+	if not token_shield_aura: token_shield_aura = get_node_or_null("TokenFace/ShieldAura")
+	
+	if not token_attack_circle: token_attack_circle = get_node_or_null("TokenFace/AttackCircle")
+	if not token_health_circle: token_health_circle = get_node_or_null("TokenFace/HealthCircle")
 	
 	# Call parent _ready which handles basic texture setup
 	super._ready()
@@ -118,119 +151,121 @@ func _update_card_ui() -> void:
 	# Initialize internal combat stats from card_info exactly once
 	if not _stats_initialized:
 		if card_info.has("attack"):
-			attack = int(card_info.get("attack", 0))
+			base_attack = int(card_info.get("attack", 0))
+			attack = base_attack
 		if card_info.has("health"):
-			health = int(card_info.get("health", 0))
+			base_health = int(card_info.get("health", 0))
+			health = base_health
 		_stats_initialized = true
 		
-	var base_atk = int(card_info.get("attack", 0))
-	var base_hp = int(card_info.get("health", 0))
-	
 	# 1. Sync Full Card UI
 	var is_player = card_info.get("side", "player") == "player"
 	
 	if cost_label:
 		if card_info.has("cost") and is_player:
 			cost_label.text = str(int(card_info.get("cost", 0)))
-			if has_node("FrontFace/CostCircle"):
-				$FrontFace/CostCircle.visible = true
+			if front_cost_circle:
+				front_cost_circle.visible = true
 		else:
-			if has_node("FrontFace/CostCircle"):
-				$FrontFace/CostCircle.visible = false
+			if front_cost_circle:
+				front_cost_circle.visible = false
 	
 	if name_label:
 		var display_name = card_info.get("display_name", card_info.get("name", "UNIT"))
 		name_label.text = display_name.to_upper()
 	
-	var is_spell = card_info.get("type", "unit") == "spell"
+	var card_type = _get_card_type()
+	var is_spell = card_type == CardType.SPELL
 	
 	if attack_label:
 		if is_spell:
-			if has_node("FrontFace/AttackCircle"):
-				$FrontFace/AttackCircle.visible = false
+			if front_attack_circle:
+				front_attack_circle.visible = false
 		elif card_info.has("attack"):
 			attack_label.text = str(attack)
-			if attack > base_atk:
+			if attack > base_attack:
 				attack_label.add_theme_color_override("font_color", Color(0.2, 0.9, 0.2))
+			elif attack < base_attack:
+				attack_label.add_theme_color_override("font_color", Color(0.9, 0.2, 0.2))
 			else:
 				attack_label.remove_theme_color_override("font_color")
-			if has_node("FrontFace/AttackCircle"):
-				$FrontFace/AttackCircle.visible = true # Changed from attack_val > 0 to allow 0-attack units
+			if front_attack_circle:
+				front_attack_circle.visible = true # Changed from attack_val > 0 to allow 0-attack units
 	
 	if health_label:
 		if is_spell:
-			if has_node("FrontFace/HealthCircle"):
-				$FrontFace/HealthCircle.visible = false
+			if front_health_circle:
+				front_health_circle.visible = false
 		elif card_info.has("health"):
 			health_label.text = str(health)
-			if health > base_hp:
+			if health > base_health:
 				health_label.add_theme_color_override("font_color", Color(0.2, 0.9, 0.2))
+			elif health < base_health:
+				health_label.add_theme_color_override("font_color", Color(0.9, 0.2, 0.2))
 			else:
 				health_label.remove_theme_color_override("font_color")
-			if has_node("FrontFace/HealthCircle"):
-				$FrontFace/HealthCircle.visible = true
+			if front_health_circle:
+				front_health_circle.visible = true
 	
 	if description_label and card_info.has("description"):
-		description_label.text = card_info.get("description", "")
+		description_label.text = "[center]" + str(card_info.get("description", "")) + "[/center]"
 		
 	if race_label:
 		if is_spell:
-			if has_node("FrontFace/RaceBox"):
-				$FrontFace/RaceBox.visible = false
+			if front_race_box:
+				front_race_box.visible = false
 		else:
-			if has_node("FrontFace/RaceBox"):
-				$FrontFace/RaceBox.visible = true
+			if front_race_box:
+				front_race_box.visible = true
 			var race = card_info.get("race", "robot") # Default robot for units
 			race_label.text = str(race).to_upper()
 	
 	# Art background colors logic
-	var type = card_info.get("type", "unit")
-	if has_node("FrontFace/ArtBackground"):
-		match type:
-			"hero": $FrontFace/ArtBackground.color = Color(0.8, 0.6, 0.1) # Bright Gold!
-			"spell": $FrontFace/ArtBackground.color = Color(0.2, 0.3, 0.6)
-			"building": $FrontFace/ArtBackground.color = Color(0.4, 0.3, 0.2)
-			_: $FrontFace/ArtBackground.color = Color(0.4, 0.45, 0.5)
+	if front_art_background:
+		match card_type:
+			CardType.HERO: front_art_background.color = Color(0.8, 0.6, 0.1) # Bright Gold!
+			CardType.SPELL: front_art_background.color = Color(0.2, 0.3, 0.6)
+			_: front_art_background.color = Color(0.4, 0.45, 0.5)
 			
 	# Hero specific massive bling-bling on the front card
-	if has_node("FrontFace/CardBorder"):
-		if type == "hero":
-			$FrontFace/CardBorder.color = Color(0.9, 0.75, 0.1) # Gold Border
-			if has_node("FrontFace/NameBanner"):
-				$FrontFace/NameBanner.color = Color(0.7, 0.5, 0.1) # Bright Banner
+	if front_card_border:
+		if card_type == CardType.HERO:
+			front_card_border.color = Color(0.9, 0.75, 0.1) # Gold Border
+			if front_name_banner:
+				front_name_banner.color = Color(0.7, 0.5, 0.1) # Bright Banner
 		else:
-			$FrontFace/CardBorder.color = Color(0.55, 0.45, 0.3)
-			if has_node("FrontFace/NameBanner"):
-				$FrontFace/NameBanner.color = Color(0.3, 0.25, 0.18)
+			front_card_border.color = Color(0.55, 0.45, 0.3)
+			if front_name_banner:
+				front_name_banner.color = Color(0.3, 0.25, 0.18)
 
 	# 2. Sync Token UI
 	if is_spell:
-		if has_node("TokenFace/AttackCircle"):
-			$TokenFace/AttackCircle.visible = false
-		if has_node("TokenFace/HealthCircle"):
-			$TokenFace/HealthCircle.visible = false
+		if token_attack_circle:
+			token_attack_circle.visible = false
+		if token_health_circle:
+			token_health_circle.visible = false
 	else:
 		if token_attack_label and card_info.has("attack"):
 			token_attack_label.text = str(attack)
-			if attack > base_atk:
+			if attack > base_attack:
 				token_attack_label.add_theme_color_override("font_color", Color(0.2, 0.9, 0.2))
-			elif attack < base_atk:
+			elif attack < base_attack:
 				token_attack_label.add_theme_color_override("font_color", Color(0.9, 0.2, 0.2))
 			else:
 				token_attack_label.remove_theme_color_override("font_color")
-			if has_node("TokenFace/AttackCircle"):
-				$TokenFace/AttackCircle.visible = true
+			if token_attack_circle:
+				token_attack_circle.visible = true
 		
 		if token_health_label and card_info.has("health"):
 			token_health_label.text = str(health)
-			if health > base_hp:
+			if health > base_health:
 				token_health_label.add_theme_color_override("font_color", Color(0.2, 0.9, 0.2))
-			elif health < base_hp:
+			elif health < base_health:
 				token_health_label.add_theme_color_override("font_color", Color(0.9, 0.2, 0.2))
 			else:
 				token_health_label.remove_theme_color_override("font_color")
-			if has_node("TokenFace/HealthCircle"):
-				$TokenFace/HealthCircle.visible = true
+			if token_health_circle:
+				token_health_circle.visible = true
 		
 	# 3. Update Faction Visuals and Keywords (Oval Color, Taunt Frame, Shield Aura)
 	if token_oval_border:
@@ -238,7 +273,7 @@ func _update_card_ui() -> void:
 		if not is_player:
 			faction_color = Color(1.0, 0.2, 0.2) # Enemy Red
 			
-		var is_hero = card_info.get("type", "unit") == "hero"
+		var is_hero = card_type == CardType.HERO
 		
 		# Figure out what keywords we have
 		var has_taunt = false
@@ -320,6 +355,18 @@ func reset_to_base_state() -> void:
 	# Refresh UI to base values
 	_update_card_ui()
 
+func refresh_visual_state(custom_tween: Tween = null, duration: float = 0.3) -> void:
+	var target_color = Color.WHITE
+	var is_player = card_info.get("side", "player") == "player"
+	
+	if is_player and not can_attack:
+		target_color = Color(0.5, 0.5, 0.5)
+		
+	if custom_tween:
+		custom_tween.tween_property(self , "modulate", target_color, duration)
+	else:
+		modulate = target_color
+
 func take_damage(amount: int) -> void:
 	# Filter damage through keywords (e.g., Shield)
 	var final_damage = amount
@@ -332,11 +379,7 @@ func take_damage(amount: int) -> void:
 	# Visual Feedback: Flash Red
 	modulate = Color(1, 0.2, 0.2)
 	var tween = create_tween()
-	var target_color = Color.WHITE
-	var is_player = card_info.get("side", "player") == "player"
-	if is_player and get("can_attack") != null and get("can_attack") == false:
-		target_color = Color(0.5, 0.5, 0.5)
-	tween.tween_property(self , "modulate", target_color, 0.3)
+	refresh_visual_state(tween, 0.3)
 	
 	if health <= 0:
 		var main = get_tree().current_scene
@@ -353,6 +396,8 @@ func add_temporary_stats(atk: int, hp: int, do_emit_signal: bool = true) -> void
 			main.emit_signal("unit_stats_changed", self , atk, hp, false)
 
 func add_permanent_stats(atk: int, hp: int) -> void:
+	base_attack += atk
+	base_health += hp
 	attack += atk
 	health += hp
 	card_info["attack"] = float(int(card_info.get("attack", 0)) + atk)
@@ -400,7 +445,7 @@ func _load_keywords() -> void:
 			push_warning("Keyword script not found: %s" % script_path)
 
 func _load_custom_script() -> void:
-	var script_path = card_info.get("script_path", "")
+	var script_path = card_info.get("passive_script_path", "")
 	if script_path != "" and FileAccess.file_exists(script_path):
 		var CustomScript = load(script_path)
 		if CustomScript:
@@ -473,3 +518,8 @@ func _handle_mouse_pressed() -> void:
 
 func is_player_unit() -> bool:
 	return card_info.get("side", "player") == "player"
+
+func set_inspect_scale(multiplier: float) -> void:
+	# Scale the entire card uniformly as normal. 
+	# Godot 4 MSDF fonts will ensure this renders crisply without manual label scaling bounds hacks.
+	self.scale = Vector2(multiplier, multiplier)

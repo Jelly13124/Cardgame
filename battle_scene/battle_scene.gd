@@ -1,5 +1,6 @@
 extends Node
 
+@warning_ignore("unused_signal")
 signal unit_stats_changed(unit: Control, atk: int, hp: int, is_permanent: bool)
 
 # --- Node References ---
@@ -12,6 +13,8 @@ signal unit_stats_changed(unit: Control, atk: int, hp: int, is_permanent: bool)
 # @onready var graveyard = $CardManager/Graveyard # Removed from scene
 @onready var rows = _get_battle_rows()
 
+var deck_manager: Node
+
 # UI Label References
 @onready var energy_label = $EnergyLabel
 @onready var round_label = $RoundLabel
@@ -19,10 +22,8 @@ signal unit_stats_changed(unit: Control, atk: int, hp: int, is_permanent: bool)
 @onready var pile_viewer_layer = $PileViewerLayer
 @onready var pile_viewer_title = $PileViewerLayer/TitleLabel
 @onready var pile_viewer_grid = $PileViewerLayer/ScrollContainer/GridContainer
-@onready var mothership_health_label = $CardManager/MothershipUI/HealthCircle/HealthLabel
 
 # --- Game State Variables ---
-var mothership_health: int = 30
 var current_energy: int = 0
 var max_energy: int = 3
 var current_round: int = 0
@@ -60,6 +61,15 @@ func _ready():
 	if rows_array.size() >= 2:
 		rows_array[0].row_side = "enemy"
 		rows_array[1].row_side = "player"
+		
+	# Instantiate DeckManager
+	deck_manager = preload("res://battle_scene/deck_manager.gd").new()
+	deck_manager.battle_scene = self
+	deck_manager.deck = deck
+	deck_manager.discard_pile = discard_pile
+	deck_manager.hand = hand
+	deck_manager.card_factory = card_factory
+	add_child(deck_manager)
 		
 	var run_manager = get_node_or_null("/root/RunManager")
 	if run_manager and not run_manager.is_connected("run_ended", _on_run_ended):
@@ -147,14 +157,10 @@ func _set_hover_effect(unit: Control, active: bool) -> void:
 		tween.tween_property(unit, "modulate", Color(1.2, 1.2, 1.2), 0.1)
 	else:
 		tween.tween_property(unit, "scale", unit.original_scale, 0.1)
-		var target_color = Color.WHITE
-		var is_player = false
-		if "card_info" in unit and unit.card_info is Dictionary:
-			is_player = unit.card_info.get("side", "player") == "player"
-			
-		if is_player and unit.get("can_attack") != null and unit.get("can_attack") == false:
-			target_color = Color(0.5, 0.5, 0.5)
-		tween.tween_property(unit, "modulate", target_color, 0.1)
+		if unit.has_method("refresh_visual_state"):
+			unit.refresh_visual_state(tween, 0.1)
+		else:
+			tween.tween_property(unit, "modulate", Color.WHITE, 0.1)
 
 
 # Displays a message in the center of the screen that fades away
@@ -179,9 +185,8 @@ func show_notification(text: String, color: Color = Color.WHITE):
 func _start_new_game():
 	is_game_over = false
 	current_round = 0
-	_reset_deck()
-	# Deploy the Mother Ship in the center of the player row (REMOVED)
-	# Mothership UI is removed; Player health is now the sole win/loss condition
+	deck_manager.reset_deck()
+	# Player health is now the sole win/loss condition
 	
 	_start_next_round()
 
@@ -197,9 +202,9 @@ func _start_next_round():
 	_spawn_enemy_units() # Enemies spawn before the player does anything, even on round 1
 	
 	if current_round == 1:
-		_first_round_draw() # Special draw for the start of the game
+		deck_manager.first_round_draw() # Special draw for the start of the game
 	else:
-		_draw_cards(2) # Draw 2 cards every round
+		deck_manager.draw_cards(2) # Draw 2 cards every round
 
 	# Trigger Turn Start abilities (e.g. Leader buff)
 	for row in _get_battle_rows():
@@ -241,53 +246,7 @@ func _spawn_enemy_units():
 			boss.card_info["is_boss"] = true
 			boss.refresh_ui()
 
-# Special opening hand logic
-func _first_round_draw():
-	# Always give the player the Hero card first
-	var _hero = card_factory.create_card("hero_robot_bill", hand)
-	
-	# Draw up to 3 random UNITS specifically for the first round
-	var units_found = []
-	var all_deck_cards = deck.get_cards()
-	# Reverse to get from 'top' of pile if needed, but deck is shuffled
-	for i in range(all_deck_cards.size() - 1, -1, -1):
-		var card = all_deck_cards[i]
-		if card.card_info.get("type", "") == "unit":
-			units_found.append(card)
-			if units_found.size() >= 3:
-				break
-				
-	if units_found.size() > 0:
-		hand.move_cards(units_found)
-
-
-# Moves a specific number of cards from the top of the Deck to the Hand
-func _draw_cards(count: int):
-	for i in range(count):
-		# Re-check deck every iteration in case of reshuffle
-		if deck.get_card_count() == 0:
-			if discard_pile.get_card_count() > 0:
-				show_notification("RESHUFFLING DECK", Color(0.4, 0.8, 1.0))
-				var discarded = discard_pile.get_cards().duplicate()
-				# Move cards back to deck
-				deck.move_cards(discarded)
-				deck.shuffle()
-				# Wait a bit for the shuffle animation/state to settle
-				await _wait(0.3)
-			else:
-				# Both piles are empty
-				break
-		
-		# Now try to draw
-		var cards = deck.get_top_cards(1)
-		if cards.size() > 0:
-			var success = hand.move_cards(cards)
-			if not success:
-				show_notification("HAND FULL", Color(1, 0.4, 0.4))
-				break
-			
-			# Wait briefly between draws for visual clarity and layout stability
-			await _wait(0.25)
+# --- End Deck Management routines moved to deck_manager.gd ---
 
 
 # Refreshes the text display for Energy and Rounds
@@ -302,40 +261,7 @@ func gain_energy(amount: int) -> void:
 	_update_ui_labels() # BUG-02 fix: use the central label updater; round did not change
 
 
-# Clears the deck and refills it with a fresh, shuffled list of cards
-func _reset_deck():
-	var list = []
-	var run_manager = get_node_or_null("/root/RunManager")
-	if run_manager and run_manager.is_run_active:
-		list = run_manager.player_deck.duplicate()
-	else:
-		list = _get_randomized_card_list()
-	
-	deck.clear_cards()
-	discard_pile.clear_cards()
-	for item in list:
-		var card_name = item if typeof(item) == TYPE_STRING else item["card_id"]
-		var card = card_factory.create_card(card_name, deck)
-		if card and typeof(item) == TYPE_DICTIONARY:
-			card.set_meta("uid", item["uid"])
-			if card is UnitCard:
-				var b_atk = item.get("bonus_attack", 0)
-				var b_hp = item.get("bonus_health", 0)
-				if b_atk > 0 or b_hp > 0:
-					card.add_permanent_stats(b_atk, b_hp)
-	deck.shuffle()
-
-# Returns the master list of all available cards in the deck
-func _get_randomized_card_list() -> Array:
-	var list = [
-		"spell_zap", "spell_zap",
-		"spell_energize", "spell_modify",
-		"spell_draft", "spell_air_raid",
-		"unit_robot_leader", "unit_robot_leader"
-	]
-	
-	list.shuffle()
-	return list
+# --- Remaining Core Game Logic ---
 
 
 func _get_battle_rows() -> Array:
@@ -404,7 +330,7 @@ func _execute_enemy_turn():
 					else:
 						# No targets! Direct face damage
 						var a_atk = int(e_unit.card_info.get("attack", 0))
-						take_mothership_damage(a_atk)
+						take_unblocked_damage(a_atk, false)
 						
 						# Simple attack animation forwards and backwards
 						var a_pos = e_unit.global_position
@@ -503,23 +429,43 @@ func _perform_attack(attacker: Control, defender: Control):
 		await _wait(0.15)
 		# Note: no state restoration needed — the card was freed by kill_unit().
 
-func take_mothership_damage(amount: int):
+func _get_hero(is_player: bool) -> Control:
+	for row in rows:
+		if (is_player and row.row_side == "player") or (not is_player and row.row_side == "enemy"):
+			for child in row.get_children():
+				if child is Control and child.has_method("get") and "card_info" in child:
+					if child.card_info.get("type", "") == "hero":
+						return child
+	return null
+
+func take_unblocked_damage(amount: int, is_player_attacking: bool):
 	if is_game_over: return
-	mothership_health -= amount
-	if mothership_health_label:
-		mothership_health_label.text = str(mothership_health)
 	
-	show_notification("MOTHERSHIP HIT! -" + str(amount), Color(1, 0.2, 0.2))
+	var target_hero = _get_hero(not is_player_attacking)
+	if target_hero and target_hero.has_method("take_damage"):
+		target_hero.take_damage(amount)
+		show_notification("HERO HIT! -" + str(amount), Color(1, 0.2, 0.2))
+	else:
+		# If no hero exists to take damage, fallback to game over to prevent softlocks
+		game_over(is_player_attacking)
+
+func game_over(player_won: bool):
+	if is_game_over: return
+	is_game_over = true
 	
-	if mothership_health <= 0:
-		is_game_over = true
-		show_notification("DEFEAT! MOTHERSHIP DESTROYED", Color(1, 0, 0))
+	if player_won:
+		show_notification("VICTORY! ENEMY HERO DESTROYED", Color(0.2, 0.8, 0.2))
+		await _wait(3.0)
+		_victory()
+	else:
+		show_notification("DEFEAT! HERO DESTROYED", Color(1, 0, 0))
 		await _wait(3.0)
 		var run_manager = get_node_or_null("/root/RunManager")
 		if run_manager and run_manager.has_method("end_run"):
 			run_manager.end_run(false)
 		else:
 			get_tree().reload_current_scene()
+
 # --- Game Mechanics ---
 
 ## Moves a card from its current spot to the Graveyard.
@@ -527,8 +473,9 @@ func take_mothership_damage(amount: int):
 func kill_unit(card: Control):
 	if is_game_over: return
 	
-	if card.card_info.get("is_boss", false):
-		_victory()
+	if card.card_info.get("type", "") == "hero":
+		var is_player = card.card_info.get("side", "player") == "player"
+		game_over(not is_player)
 
 	if card.card_container:
 		card.card_container.remove_card(card)
@@ -874,7 +821,11 @@ func _complete_manual_attack():
 			
 		# Execute Attack
 		manual_attacker.can_attack = false
-		manual_attacker.modulate = Color(0.5, 0.5, 0.5) # Gray out to show exhaustion
+		if manual_attacker.has_method("refresh_visual_state"):
+			manual_attacker.refresh_visual_state()
+		else:
+			manual_attacker.modulate = Color(0.5, 0.5, 0.5) # Fallback
+			
 		await _perform_attack(manual_attacker, hovered_unit)
 			
 	manual_attacker = null
@@ -914,19 +865,28 @@ func inspect_card(card: Control) -> void:
 		inspected_card = card_factory.create_card(card.card_info.get("name", "error"), null)
 		if inspected_card:
 			inspected_card.reparent(pivot)
-			inspected_card.card_info = card.card_info.duplicate()
-			
 			# Overwrite the newly spawned card's stats with the current combat base stats of the token, ignoring transient damage
 			if "attack" in inspected_card and "health" in inspected_card:
-				var base_buffed_atk = card.card_info.get("attack", 0) if "card_info" in card and card.card_info else 0
-				var base_buffed_hp = card.card_info.get("health", 0) if "card_info" in card and card.card_info else 0
+				var base_buffed_atk = card.get("base_attack") if "base_attack" in card else 0
+				var base_buffed_hp = card.get("base_health") if "base_health" in card else 0
+				
+				# Ensure null protection
+				if base_buffed_atk == null: base_buffed_atk = 0
+				if base_buffed_hp == null: base_buffed_hp = 0
+				
+				inspected_card.base_attack = base_buffed_atk
+				inspected_card.base_health = base_buffed_hp
 				inspected_card.attack = base_buffed_atk
 				inspected_card.health = base_buffed_hp
 				if inspected_card.has_method("_update_card_ui"):
 					inspected_card._update_card_ui()
 			
 			inspected_card.set_view_mode("card")
-			inspected_card.scale = Vector2(2.5, 2.5)
+			if inspected_card.has_method("set_inspect_scale"):
+				inspected_card.set_inspect_scale(2.5)
+			else:
+				inspected_card.scale = Vector2(2.5, 2.5)
+				
 			# Screen center (960, 540) minus half the scaled card size (200, 275)
 			inspected_card.global_position = Vector2(760, 265)
 			

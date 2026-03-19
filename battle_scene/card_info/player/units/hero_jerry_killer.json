@@ -8,6 +8,7 @@
     "attack": 12,
     "front_image": "cardBack_blue4.png",
     "description": "Spell-focused commander.",
+    "passive_script_path": "res://battle_scene/units/hero_scripts/hero_jerry_killer.gd",
     "starting_pool": [
         "unit_robot_leader",
         "unit_robot_leader",
