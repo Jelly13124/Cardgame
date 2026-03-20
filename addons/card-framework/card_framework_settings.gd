@@ -45,7 +45,7 @@ const LAYOUT_DEFAULT_CARD_SIZE: Vector2 = Vector2(150, 210)
 ## Distance between stacked cards in piles
 const LAYOUT_STACK_GAP: int = 8
 ## Maximum cards to display in stack before hiding
-const LAYOUT_MAX_STACK_DISPLAY: int = 6
+const LAYOUT_MAX_STACK_DISPLAY: int = 1
 ## Maximum number of cards in hand containers
 const LAYOUT_MAX_HAND_SIZE: int = 10
 ## Maximum pixel spread for hand arrangements

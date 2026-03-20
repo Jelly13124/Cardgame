@@ -24,6 +24,8 @@ func first_round_draw() -> void:
 				
 	if units_found.size() > 0:
 		hand.move_cards(units_found)
+	
+	battle_scene._update_ui_labels()
 
 # Moves a specific number of cards from the top of the Deck to the Hand
 func draw_cards(count: int) -> void:
@@ -36,6 +38,7 @@ func draw_cards(count: int) -> void:
 				# Move cards back to deck
 				deck.move_cards(discarded)
 				deck.shuffle()
+				battle_scene._update_ui_labels()
 				# Wait a bit for the shuffle animation/state to settle
 				await battle_scene._wait(0.3)
 			else:
@@ -51,6 +54,7 @@ func draw_cards(count: int) -> void:
 				break
 			
 			# Wait briefly between draws for visual clarity and layout stability
+			battle_scene._update_ui_labels()
 			await battle_scene._wait(0.25)
 
 # Clears the deck and refills it with a fresh, shuffled list of cards
@@ -75,6 +79,7 @@ func reset_deck() -> void:
 				if b_atk > 0 or b_hp > 0:
 					card.add_permanent_stats(b_atk, b_hp)
 	deck.shuffle()
+	battle_scene._update_ui_labels()
 
 # Returns the master list of all available cards in the deck
 func get_randomized_card_list() -> Array:
