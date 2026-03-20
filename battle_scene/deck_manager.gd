@@ -8,13 +8,10 @@ var card_factory: Node
 
 # Special opening hand logic
 func first_round_draw() -> void:
-	# Always give the player the Hero card first
-	var _hero = card_factory.create_card("hero_robot_bill", hand)
-	
-	# Draw up to 3 random UNITS specifically for the first round
+	# Draw up to 3 random UNIT cards specifically for the first round
 	var units_found = []
 	var all_deck_cards = deck.get_cards()
-	# Reverse to get from 'top' of pile if needed, but deck is shuffled
+	
 	for i in range(all_deck_cards.size() - 1, -1, -1):
 		var card = all_deck_cards[i]
 		if card.card_info.get("type", "") == "unit":
@@ -86,7 +83,8 @@ func get_randomized_card_list() -> Array:
 	var list = [
 		"spell_zap", "spell_zap",
 		"spell_energize", "spell_modify",
-		"spell_draft", "spell_air_raid",
+		"spell_draft", "spell_draft", "spell_draft", "spell_draft",
+		"spell_air_raid",
 		"unit_robot_leader", "unit_robot_leader"
 	]
 	
