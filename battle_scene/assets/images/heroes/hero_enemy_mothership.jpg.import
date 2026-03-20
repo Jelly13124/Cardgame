@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dmbbadadaky6g"
-path="res://.godot/imported/spell_air_raid.png-7044f14728ac1c8a5beed542eb54f6ba.ctex"
+uid="uid://dglardbi6bi1a"
+path="res://.godot/imported/hero_enemy_mothership.jpg-d05d434940425dda7abb064293903039.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/cards/player/spells/spell_air_raid.png"
-dest_files=["res://.godot/imported/spell_air_raid.png-7044f14728ac1c8a5beed542eb54f6ba.ctex"]
+source_file="res://battle_scene/assets/images/heroes/hero_enemy_mothership.jpg"
+dest_files=["res://.godot/imported/hero_enemy_mothership.jpg-d05d434940425dda7abb064293903039.ctex"]
 
 [params]
 

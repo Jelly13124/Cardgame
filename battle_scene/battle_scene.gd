@@ -10,8 +10,8 @@ signal unit_stats_changed(unit: Control, atk: int, hp: int, is_permanent: bool)
 @onready var hand = $CardManager/Hand
 @onready var deck = $CardManager/Deck
 @onready var discard_pile = $CardManager/DiscardPile
-# @onready var graveyard = $CardManager/Graveyard # Removed from scene
 @onready var rows = _get_battle_rows()
+@onready var player_hero = $PlayerHeroHUD
 
 var deck_manager: Node
 
@@ -87,7 +87,68 @@ func _ready():
 	# Add to CardManager to ensure it's above cards and properly sized
 	card_manager.add_child(targeting_overlay)
 	
+	# Hero Setup
+	_setup_heroes()
+	
+	# Connect to unit stats changed for Robot Bill Passive
+	if not unit_stats_changed.is_connected(_on_unit_stats_changed):
+		unit_stats_changed.connect(_on_unit_stats_changed)
+	
 	set_process(true)
+
+func _setup_heroes():
+	var run_manager = get_node_or_null("/root/RunManager")
+	var p_hp = 30
+	
+	if run_manager:
+		p_hp = run_manager.get("player_hp") if "player_hp" in run_manager else 30
+		
+	var player_tex = load("res://battle_scene/assets/images/cards/player/heroes/hero_robot_bill.png")
+	
+	player_hero.setup({
+		"name": "Robot Bill",
+		"health": p_hp,
+		"attack": 5,
+		"side": "player",
+		"texture": player_tex
+	})
+
+func _on_unit_stats_changed(unit: Control, _atk: int, _hp: int, _is_permanent: bool):
+	# Robot Bill Passive: Whenever a friendly robot gains stats, gain +1 Attack.
+	if player_hero and unit.has_method("is_player_unit") and unit.is_player_unit():
+		var race = unit.card_info.get("race", "").to_lower()
+		if race == "robot":
+			player_hero.atk += 1
+			show_notification("ROBOT BILL: +1 ATK", Color(0.2, 0.9, 0.2))
+	
+	_check_victory_condition()
+
+func on_hero_ability_triggered(hero: Node):
+	if hero.get("side") == "player":
+		# Bill's 0-cost ability: Deal X dmg to a unit (X = hero attack)
+		start_hero_ability_targeting(hero)
+
+func start_hero_ability_targeting(hero: Node):
+	is_targeting = true
+	targeting_card = hero
+	targeting_type = "unit"
+	
+	# Create the targeting arrow
+	targeting_arrow = TARGETING_ARROW_SCRIPT.new()
+	add_child(targeting_arrow)
+	targeting_arrow.start(hero.global_position + hero.size/2)
+	
+	if targeting_overlay:
+		targeting_overlay.visible = true
+		targeting_overlay.move_to_front()
+	
+	show_notification("SELECT UNIT TO SNIPE (%d DMG)" % hero.get("atk"), Color(1, 0.8, 0.2))
+
+func _on_hero_died(hero: Node):
+	if hero.get("side") == "player":
+		_game_over()
+	else:
+		_victory()
 
 func _wait(seconds: float) -> void:
 	await get_tree().create_timer(seconds, true, false, false).timeout
@@ -329,7 +390,9 @@ func _execute_enemy_turn():
 					else:
 						# No targets! Direct face damage
 						var a_atk = int(e_unit.card_info.get("attack", 0))
-						take_unblocked_damage(a_atk, false)
+						if player_hero:
+							player_hero.take_damage(a_atk)
+							show_notification("HERO HIT! -" + str(a_atk), Color(1, 0.2, 0.2))
 						
 						# Simple attack animation forwards and backwards
 						var a_pos = e_unit.global_position
@@ -427,26 +490,14 @@ func _perform_attack(attacker: Control, defender: Control):
 			defender.take_damage(a_atk)
 		await _wait(0.15)
 		# Note: no state restoration needed — the card was freed by kill_unit().
+		await _wait(0.15)
 
-func _get_hero(is_player: bool) -> Control:
-	for row in rows:
-		if (is_player and row.row_side == "player") or (not is_player and row.row_side == "enemy"):
-			for child in row.get_children():
-				if child is Control and child.has_method("get") and "card_info" in child:
-					if child.card_info.get("type", "") == "hero":
-						return child
-	return null
-
-func take_unblocked_damage(amount: int, is_player_attacking: bool):
+func _check_victory_condition():
 	if is_game_over: return
 	
-	var target_hero = _get_hero(not is_player_attacking)
-	if target_hero and target_hero.has_method("take_damage"):
-		target_hero.take_damage(amount)
-		show_notification("HERO HIT! -" + str(amount), Color(1, 0.2, 0.2))
-	else:
-		# If no hero exists to take damage, fallback to game over to prevent softlocks
-		game_over(is_player_attacking)
+	var enemy_units = rows[0].get_cards()
+	if enemy_units.size() == 0:
+		_victory()
 
 func game_over(player_won: bool):
 	if is_game_over: return
@@ -458,6 +509,8 @@ func game_over(player_won: bool):
 		_victory()
 	else:
 		show_notification("DEFEAT! HERO DESTROYED", Color(1, 0, 0))
+		await _wait(3.0)
+		_game_over()
 		await _wait(3.0)
 		var run_manager = get_node_or_null("/root/RunManager")
 		if run_manager and run_manager.has_method("end_run"):
@@ -471,10 +524,6 @@ func game_over(player_won: bool):
 ## If the card is the Mother Ship, it triggers Game Over.
 func kill_unit(card: Control):
 	if is_game_over: return
-	
-	if card.card_info.get("type", "") == "hero":
-		var is_player = card.card_info.get("side", "player") == "player"
-		game_over(not is_player)
 
 	if card.card_container:
 		card.card_container.remove_card(card)
@@ -491,15 +540,20 @@ func kill_unit(card: Control):
 
 
 func _victory():
+	if is_game_over: return
 	is_game_over = true
-	show_notification("VICTORY!", Color(0.2, 1.0, 0.2))
+	show_notification("VICTORY! ALL ENEMIES DEFEATED", Color(0.2, 1.0, 0.2))
 	
 	var run_manager = get_node_or_null("/root/RunManager")
 	if run_manager:
-		run_manager.add_resources(50, 10)
+		if run_manager.has_method("add_resources"):
+			run_manager.add_resources(50, 10)
 		
-	await _wait(2.0)
-	get_tree().change_scene_to_file("res://run_system/ui/card_draft_reward.tscn")
+	await _wait(3.0)
+	if run_manager and run_manager.has_method("end_run"):
+		run_manager.end_run(true)
+	else:
+		get_tree().change_scene_to_file("res://run_system/ui/card_draft_reward.tscn")
 
 func _on_run_ended(victory: bool):
 	if victory:
@@ -793,12 +847,12 @@ func _complete_manual_attack():
 		manual_attacker = null
 		return
 		
-	if hovered_unit.card_info.get("side", "player") == "enemy":
-		# Enforce TAUNT rule
+	if hovered_unit and (hovered_unit.has_method("get") and hovered_unit.get("side") == "enemy"):
+		# If target is an enemy unit
 		var has_taunt_enemy = false
 		for row in _get_battle_rows():
 			for card in row.get_cards():
-				if is_instance_valid(card) and card.card_info.get("side", "player") == "enemy":
+				if is_instance_valid(card) and card.get("side") == "enemy":
 					if _has_keyword(card, "taunt"):
 						has_taunt_enemy = true
 						break
@@ -964,6 +1018,17 @@ func hide_pile_viewer():
 
 func _execute_spell_with_target(card: Control, target: Object) -> void:
 	if is_game_over: return
+
+	# CHECK: Is this a Hero Ability (Snipe) or a Spell Card?
+	if card == player_hero:
+		if is_instance_valid(target) and target.has_method("take_damage"):
+			var damage = player_hero.get("atk")
+			target.take_damage(damage)
+			show_notification("SNIPE! -%d" % damage, Color(1, 0.5, 0))
+			# Bill's snipe is 0-cost, so no energy spent here.
+			# But if we want to limit it to once per turn:
+			player_hero.set("can_use_ability", false)
+		return
 
 	if card.card_container:
 		card.card_container.remove_card(card)

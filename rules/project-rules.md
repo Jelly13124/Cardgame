@@ -1,5 +1,12 @@
 # Project Rules
 
+## Coding Style Rules
+- **FOLLOW** official Godot 4.x GDScript style guide.
+- **SNAKE_CASE** for variables, functions, and file names.
+- **PASCAL_CASE** for class names.
+- **UPPER_CASE** for constants.
+- **TYPED GDScript** is required for all function signatures and exports.
+
 ## Architecture Rules
 
 ### Node References
@@ -40,14 +47,21 @@
 - Never hardcode slot bounds to `3` or `4` — always reference `TOTAL_SLOTS`.
 
 ## Art Style Rules
-- All card art must be in **Rick and Morty cartoon style**: bold outlines, vibrant colors, exaggerated proportions, sci-fi theme.
+- All image generation must strictly follow the standards defined in [image-creation-rules.md](./image-creation-rules.md).
 - Card art is generated using **Nano Banana** (`generate_image` tool) — never use placeholder images.
-- Prompt format: `"Rick and Morty style sci-fi [description], bold outlines, vibrant colors, card game art, no text"`
 
 ## UI Rules
 - Text rendering relies on **MSDF fonts** — do not use `_crisp_text` scaling workarounds.
 - Spell cards hide Attack/Health circles on both Card and Token views.
 - Hero cards get gold border (`Color(0.9, 0.75, 0.1)`) and bright name banner.
+
+## Animation & Visual FX Rules
+- Use **Godot Built-in Tools** For animations and effects (`AnimationPlayer`, `Tweens`, `GPUParticles2D`).
+
+## Communication Rules
+- **ALWAYS ASK** the user for clarification if any instructions are missing, vague, or could be interpreted in multiple ways. 
+- Do not guess or make assumptions—especially for visual art, complex card effects, or core architectural changes. 
+- If a task involves multiple stages (e.g., creating a new card), present the plan first and confirm once the user is happy with the details.
 
 ## Git Rules
 - Commit messages should be descriptive of what changed and why.
