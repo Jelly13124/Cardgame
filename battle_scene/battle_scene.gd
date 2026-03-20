@@ -17,7 +17,6 @@ var deck_manager: Node
 
 # UI Label References
 @onready var energy_label = $EnergyLabel
-@onready var round_label = $RoundLabel
 @onready var notify_label = $NotificationLabel
 @onready var pile_viewer_layer = $PileViewerLayer
 @onready var pile_viewer_title = $PileViewerLayer/TitleLabel
@@ -487,6 +486,7 @@ func kill_unit(card: Control):
 	else:
 		card.queue_free() # Simply delete enemy units
 		
+	_update_ui_labels()
 	show_notification("UNIT DESTROYED", Color(1, 0.2, 0.2))
 
 
@@ -563,6 +563,7 @@ func play_spell(card: Control, drop_position: Vector2):
 	if card.card_container:
 		card.card_container.remove_card(card)
 	discard_pile.add_card(card)
+	_update_ui_labels()
 
 
 func _resolve_spell_effect(card: Control, target: Control = null):

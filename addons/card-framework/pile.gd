@@ -55,6 +55,39 @@ enum PileDirection {
 ## Whether drop zone follows the top card position (requires allow_card_movement = true)
 @export var align_drop_zone_with_top_card := true
 
+@export_group("visual")
+## Optional texture to show when the pile is empty
+@export var placeholder_texture: Texture
+
+var _placeholder_visual: TextureRect
+
+
+func _ready() -> void:
+	super._ready()
+	if placeholder_texture:
+		_placeholder_visual = TextureRect.new()
+		_placeholder_visual.texture = placeholder_texture
+		_placeholder_visual.name = "Placeholder"
+		_placeholder_visual.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_placeholder_visual.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		
+		# Set size to card_manager.card_size
+		if card_manager:
+			_placeholder_visual.size = card_manager.card_size
+		else:
+			_placeholder_visual.size = CardFrameworkSettings.LAYOUT_DEFAULT_CARD_SIZE
+			
+		# Position it to align with the pile node's top-left
+		_placeholder_visual.position = Vector2.ZERO
+		
+		add_child(_placeholder_visual)
+		# Ensure it's behind cards
+		move_child(_placeholder_visual, 0)
+		_placeholder_visual.modulate.a = 0.5 # Optional: make it look like a ghost slot
+
+
+
+
 
 ## Returns the top n cards from the pile without removing them.
 ## Cards are returned in top-to-bottom order (most recent first).
@@ -93,15 +126,28 @@ func _update_target_positions() -> void:
 		last_index = 0
 	var last_offset = _calculate_offset(last_index)
 	
+	# Update count label if it exists
+	var count_label = get_node_or_null("CountLabel")
+	if count_label:
+		count_label.text = str(_held_cards.size())
+
 	# Align drop zone with top card if enabled
 	if enable_drop_zone and align_drop_zone_with_top_card:
 		drop_zone.change_sensor_position_with_offset(last_offset)
+
+	# Update placeholder visibility
+	if _placeholder_visual:
+		_placeholder_visual.visible = _held_cards.is_empty()
+		# Position it at the base (node top-left)
+		_placeholder_visual.position = Vector2.ZERO
+
+
 
 	# Position each card and set interaction state
 	for i in range(_held_cards.size()):
 		var card = _held_cards[i]
 		var offset = _calculate_offset(i)
-		var target_pos = position + offset
+		var target_pos = global_position + offset
 		
 		# Set card appearance and position
 		card.show_front = card_face_up

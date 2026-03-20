@@ -18,8 +18,8 @@
 ## Usage:
 ## [codeblock]
 ## @onready var hand = $Hand
-## hand.max_hand_size = 7
-## hand.max_hand_spread = 600
+## hand.max_hand_size = 10
+## hand.max_hand_spread = 200
 ## hand.card_face_up = true
 ## [/codeblock]
 class_name Hand
@@ -115,7 +115,12 @@ func _update_target_positions() -> void:
 		var target_pos = global_position
 		@warning_ignore("integer_division")
 		var card_spacing = max_hand_spread / (_held_cards.size() + 1)
-		target_pos.x += (i + 1) * card_spacing - max_hand_spread / 2.0
+		
+		# Center the hand within the Hand node's area and account for card width
+		target_pos.x += size.x / 2.0 + (i + 1) * card_spacing - max_hand_spread / 2.0 - card_size.x / 2.0
+		
+		# Center vertically within the Hand node's area
+		target_pos.y += size.y / 2.0 - card_size.y / 2.0
 		
 		# Apply vertical curve displacement for fan shape
 		if hand_vertical_curve:
