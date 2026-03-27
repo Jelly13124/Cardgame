@@ -160,6 +160,9 @@ func _enter_state(state: DraggableState, from_state: DraggableState) -> void:
 			if hover_tween and hover_tween.is_valid():
 				hover_tween.kill()
 				hover_tween = null
+				
+			scale = original_scale # Fix for stuck hover scale
+			
 			z_index = stored_z_index + CardFrameworkSettings.VISUAL_DRAG_Z_OFFSET
 			mouse_filter = Control.MOUSE_FILTER_IGNORE
 

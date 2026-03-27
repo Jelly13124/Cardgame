@@ -1,34 +1,71 @@
-[gd_scene format=3 uid="uid://60bwveuu2rt"]
+[gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://cf56ce8uvkmha" path="res://battle_scene/battle_scene.gd" id="1_2r7vq"]
-[ext_resource type="PackedScene" uid="uid://c7u8hryloq7hy" path="res://addons/card-framework/card_manager.tscn" id="1_rurpr"]
+[ext_resource type="Script" path="res://battle_scene/battle_scene.gd" id="1_2r7vq"]
+[ext_resource type="PackedScene" path="res://addons/card-framework/card_manager.tscn" id="1_rurpr"]
 [ext_resource type="PackedScene" path="res://battle_scene/battle_row.tscn" id="1_rurpr_row"]
-[ext_resource type="PackedScene" uid="uid://dk6rb7lhv1ef6" path="res://addons/card-framework/pile.tscn" id="2_xkfcc"]
-[ext_resource type="PackedScene" uid="uid://diap3gdfbqvjv" path="res://battle_scene/my_card_factory.tscn" id="3_l4bd6"]
-[ext_resource type="PackedScene" uid="uid://bkpjlq7ggckg6" path="res://addons/card-framework/hand.tscn" id="3_xp5g3"]
+[ext_resource type="PackedScene" path="res://addons/card-framework/pile.tscn" id="2_xkfcc"]
+[ext_resource type="PackedScene" path="res://battle_scene/my_card_factory.tscn" id="3_l4bd6"]
+[ext_resource type="Script" path="res://addons/card-framework/card_manager.gd" id="3_urm3r"]
+[ext_resource type="PackedScene" path="res://addons/card-framework/hand.tscn" id="3_xp5g3"]
 [ext_resource type="PackedScene" path="res://battle_scene/spell_play_zone.tscn" id="5_spell"]
-[ext_resource type="Texture2D" uid="uid://bnx5n1lm62uhd" path="res://battle_scene/assets/images/cards/cardBack_blue1.png" id="6_uv8m4"]
+[ext_resource type="Script" path="res://battle_scene/spell_play_zone.gd" id="6_dqtiq"]
+[ext_resource type="Texture2D" path="res://battle_scene/assets/images/cards/cardBack_blue1.png" id="6_uv8m4"]
 [ext_resource type="PackedScene" path="res://battle_scene/hero_entity.tscn" id="7_hero"]
+[ext_resource type="Script" path="res://battle_scene/battle_row.gd" id="8_ndvft"]
+[ext_resource type="Script" path="res://addons/card-framework/hand.gd" id="10_wrush"]
+[ext_resource type="Script" path="res://addons/card-framework/pile.gd" id="12_ixui7"]
+[ext_resource type="Script" path="res://battle_scene/hero_entity.gd" id="15_53v2g"]
+[ext_resource type="Script" path="res://battle_scene/turn_manager.gd" id="16_turn"]
+[ext_resource type="Script" path="res://battle_scene/combat_engine.gd" id="17_combat"]
+[ext_resource type="Script" path="res://battle_scene/enemy_ai.gd" id="18_ai"]
+[ext_resource type="Script" path="res://battle_scene/battle_ui_manager.gd" id="19_ui"]
+
+[sub_resource type="Curve" id="Curve_lsli3"]
+_limits = [-15.0, 15.0, 0.0, 1.0]
+_data = [Vector2(0, -15), 0.0, 30.0, 0, 1, Vector2(1, 15), 30.0, 0.0, 1, 0]
+point_count = 2
+
+[sub_resource type="Curve" id="Curve_8dbo5"]
+_limits = [0.0, 50.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.5, 40), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_blackhole"]
+bg_color = Color(0.05, 0.05, 0.05, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.7, 0.1, 0.9, 1)
+corner_radius_top_left = 50
+corner_radius_top_right = 50
+corner_radius_bottom_right = 50
+corner_radius_bottom_left = 50
 
 [node name="BattleScene" type="Node" unique_id=465306552]
 script = ExtResource("1_2r7vq")
 
-[node name="CardManager" parent="." unique_id=1234809607 instance=ExtResource("1_rurpr")]
+[node name="CardManager" type="Control" parent="." unique_id=1234809607 instance=ExtResource("1_rurpr")]
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("3_urm3r")
 card_size = Vector2(160, 220)
 card_factory_scene = ExtResource("3_l4bd6")
 
-[node name="SpellPlayZone" parent="CardManager" unique_id=1316289548 instance=ExtResource("5_spell")]
-layout_mode = 0
+[node name="SpellPlayZone" type="Control" parent="CardManager" unique_id=1316289548 instance=ExtResource("5_spell")]
+custom_minimum_size = Vector2(1600, 700)
+anchors_preset = 0
 offset_left = 100.0
 offset_top = 40.0
 offset_right = 1700.0
 offset_bottom = 740.0
 mouse_filter = 2
+script = ExtResource("6_dqtiq")
+sensor_size = Vector2(1600, 700)
 
 [node name="BattleField" type="VBoxContainer" parent="CardManager" unique_id=1269234991]
 layout_mode = 0
@@ -37,14 +74,20 @@ offset_top = 80.0
 offset_right = 1920.0
 offset_bottom = 750.0
 
-[node name="Row1" parent="CardManager/BattleField" unique_id=1105774856 instance=ExtResource("1_rurpr_row")]
+[node name="Row1" type="Control" parent="CardManager/BattleField" unique_id=1105774856 instance=ExtResource("1_rurpr_row")]
+custom_minimum_size = Vector2(1870, 260)
 layout_mode = 2
+mouse_filter = 1
+script = ExtResource("8_ndvft")
 
-[node name="Row2" parent="CardManager/BattleField" unique_id=86258571 instance=ExtResource("1_rurpr_row")]
+[node name="Row2" type="Control" parent="CardManager/BattleField" unique_id=86258571 instance=ExtResource("1_rurpr_row")]
+custom_minimum_size = Vector2(1870, 260)
 layout_mode = 2
+mouse_filter = 1
+script = ExtResource("8_ndvft")
 row_index = 1
 
-[node name="Hand" parent="CardManager" unique_id=894436731 instance=ExtResource("3_xp5g3")]
+[node name="Hand" type="Control" parent="CardManager" unique_id=894436731 instance=ExtResource("3_xp5g3")]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -52,14 +95,18 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -300.0
-offset_top = -180.0
+offset_top = -200.0
 offset_right = 300.0
-offset_bottom = -20.0
+offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 0
+mouse_filter = 1
+script = ExtResource("10_wrush")
 max_hand_spread = 600
+hand_rotation_curve = SubResource("Curve_lsli3")
+hand_vertical_curve = SubResource("Curve_8dbo5")
 
-[node name="Deck" parent="CardManager" unique_id=196193800 instance=ExtResource("2_xkfcc")]
+[node name="Deck" type="Control" parent="CardManager" unique_id=196193800 instance=ExtResource("2_xkfcc")]
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
@@ -69,11 +116,13 @@ offset_top = -250.0
 offset_right = 210.0
 offset_bottom = -30.0
 grow_vertical = 0
+mouse_filter = 1
+script = ExtResource("12_ixui7")
 card_face_up = false
 allow_card_movement = false
 placeholder_texture = ExtResource("6_uv8m4")
 
-[node name="DiscardPile" parent="CardManager" unique_id=196193801 instance=ExtResource("2_xkfcc")]
+[node name="DiscardPile" type="Control" parent="CardManager" unique_id=196193801 instance=ExtResource("2_xkfcc")]
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -86,23 +135,60 @@ offset_right = -50.0
 offset_bottom = -30.0
 grow_horizontal = 0
 grow_vertical = 0
+mouse_filter = 1
+script = ExtResource("12_ixui7")
 card_face_up = false
 allow_card_movement = false
 placeholder_texture = ExtResource("6_uv8m4")
 
-[node name="PlayerHeroHUD" parent="." instance=ExtResource("7_hero")]
+[node name="BlackHolePile" type="Control" parent="CardManager" unique_id=196193802 instance=ExtResource("2_xkfcc")]
 layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -165.0
+offset_top = -370.0
+offset_right = -115.0
+offset_bottom = -320.0
+grow_horizontal = 0
+grow_vertical = 0
+scale = Vector2(1, 1)
+mouse_filter = 1
+script = ExtResource("12_ixui7")
+card_face_up = false
+allow_card_movement = false
+hide_cards = true
+
+[node name="BlackCircle" type="Panel" parent="CardManager/BlackHolePile" unique_id=983578234]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_blackhole")
+
+
+[node name="PlayerHeroHUD" type="Control" parent="." unique_id=965033845 instance=ExtResource("7_hero")]
+custom_minimum_size = Vector2(450, 320)
+layout_mode = 3
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -225.0
-offset_top = -530.0
+offset_top = -540.0
 offset_right = 225.0
-offset_bottom = -210.0
+offset_bottom = -220.0
 grow_horizontal = 2
 grow_vertical = 0
+scale = Vector2(0.9, 0.9)
+pivot_offset = Vector2(225, 160)
+script = ExtResource("15_53v2g")
 
 [node name="EnergyLabel" type="Label" parent="." unique_id=2127611817]
 anchors_preset = 2
@@ -113,8 +199,8 @@ offset_top = -315.0
 offset_right = 210.0
 offset_bottom = -285.0
 grow_vertical = 0
-theme_override_colors/font_color = Color(0.2, 0.6, 1, 1)
 theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.2, 0.6, 1, 1)
 text = "Energy: 3 / 3"
 horizontal_alignment = 1
 
@@ -146,9 +232,9 @@ offset_right = 300.0
 offset_bottom = 50.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_font_sizes/font_size = 42
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_outline_size = 5
-theme_override_font_sizes/font_size = 42
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -198,6 +284,19 @@ theme_override_font_sizes/font_size = 48
 text = "Pile Viewer"
 horizontal_alignment = 1
 
+[node name="CloseButton" type="Button" parent="PileViewerLayer" unique_id=1849204857]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -120.0
+offset_top = 40.0
+offset_right = -40.0
+offset_bottom = 120.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(1, 0.3, 0.3, 1)
+theme_override_font_sizes/font_size = 48
+text = "X"
+
 [node name="ScrollContainer" type="ScrollContainer" parent="PileViewerLayer" unique_id=987654332]
 anchors_preset = 8
 anchor_left = 0.5
@@ -217,6 +316,25 @@ layout_mode = 2
 theme_override_constants/h_separation = 30
 theme_override_constants/v_separation = 30
 columns = 8
+
+[node name="TurnManager" type="Node" parent="." unique_id=2065757597]
+script = ExtResource("16_turn")
+
+[node name="CombatEngine" type="Node" parent="." unique_id=1928488502]
+script = ExtResource("17_combat")
+
+[node name="EnemyAI" type="Node" parent="." unique_id=577575101]
+script = ExtResource("18_ai")
+
+[node name="BattleUIManager" type="Node" parent="." unique_id=654921374]
+script = ExtResource("19_ui")
+energy_label = NodePath("../EnergyLabel")
+notify_label = NodePath("../NotificationLabel")
+inspect_layer = NodePath("../InspectLayer")
+inspect_pivot = NodePath("../InspectLayer/InspectOverlay/InspectPivot")
+pile_viewer_layer = NodePath("../PileViewerLayer")
+pile_viewer_title = NodePath("../PileViewerLayer/TitleLabel")
+pile_viewer_grid = NodePath("../PileViewerLayer/ScrollContainer/GridContainer")
 
 [connection signal="pressed" from="EndRoundButton" to="." method="_on_end_round_button_pressed"]
 [connection signal="gui_input" from="InspectLayer/InspectOverlay" to="." method="_on_inspect_overlay_gui_input"]

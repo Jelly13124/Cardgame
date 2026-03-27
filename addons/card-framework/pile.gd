@@ -46,6 +46,8 @@ enum PileDirection {
 @export var card_face_up := true
 ## Direction in which cards are stacked from the pile's base position
 @export var layout := PileDirection.UP
+## Whether to make all cards in the pile completely invisible
+@export var hide_cards := false
 
 @export_group("pile_interaction")
 ## Whether any card in the pile can be moved via drag-and-drop
@@ -152,6 +154,7 @@ func _update_target_positions() -> void:
 		# Set card appearance and position
 		card.show_front = card_face_up
 		card.move(target_pos, 0)
+		card.visible = not hide_cards
 		
 		# Apply interaction restrictions
 		if not allow_card_movement: 

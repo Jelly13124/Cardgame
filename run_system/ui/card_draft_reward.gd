@@ -31,7 +31,7 @@ func _generate_draft_options() -> void:
 		var btn = Button.new()
 		btn.text = card_id.replace("unit_", "").replace("spell_", "").capitalize()
 		btn.custom_minimum_size = Vector2(250, 400) # Big like a card
-		btn.theme_override_font_sizes.font_size = 24
+		btn.add_theme_font_size_override("font_size", 24)
 		
 		btn.pressed.connect(func(): _on_card_selected(card_id))
 		card_container.add_child(btn)
