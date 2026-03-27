@@ -22,7 +22,8 @@
         "spell_air_raid",
         "spell_draft",
         "spell_draft",
-        "spell_modify"
+        "spell_modify",
+        "spell_energize"
     ],
     "race": "robot"
 }

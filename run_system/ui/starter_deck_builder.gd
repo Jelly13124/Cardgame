@@ -7,7 +7,8 @@ const MAX_CARDS = 10
 var available_pool: Array[String] = []
 var constructed_deck: Array[String] = [
 	"unit_defend_drone", "unit_defend_drone",
-	"unit_attack_drone", "unit_attack_drone"
+	"unit_attack_drone", "unit_attack_drone",
+	"spell_energize", "spell_energize"
 ]
 var current_hero = "hero_robot_bill"
 
