@@ -1,0 +1,12 @@
+{
+	"name": "strike",
+	"title": "Strike",
+	"type": "attack",
+	"cost": 1,
+	"description": "Deal [b]3+Strength[/b] damage.",
+	"front_image": "player/laser_gun.jpg",
+	"side": "player",
+	"effects": [
+		{ "type": "deal_damage", "amount": 3, "scaling": "strength" }
+	]
+}

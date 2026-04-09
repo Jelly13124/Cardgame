@@ -1,68 +1,160 @@
 # Project Rules
 
-## Coding Style Rules
-- **FOLLOW** official Godot 4.x GDScript style guide.
-- **SNAKE_CASE** for variables, functions, and file names.
-- **PASCAL_CASE** for class names.
-- **UPPER_CASE** for constants.
-- **TYPED GDScript** is required for all function signatures and exports.
+**Project:** Unnamed Sci-Fi Roguelite Card Game  
+**Last Updated:** 2026-04-09
 
-## Architecture Rules
+---
 
-### Node References
-- **NEVER** use `get_parent()` to check if a card is on the battlefield. Use `card_container` property instead.
-- **PREFER** `@export` variables for UI node references over hardcoded `$Path` strings.
-- **ALWAYS** use `get_node_or_null()` as fallback when exports are not wired in the inspector.
-- **ALWAYS** use `is_instance_valid()` before accessing any node that could have been freed.
+## 1. Art Style — Wasteland Punk Pixel Art (Non-Negotiable)
 
-### Type Safety
-- Use `UnitCard.CardType` enum (`UNIT`, `SPELL`, `HERO`) instead of raw string comparisons.
-- Use the `_get_card_type()` helper method to convert JSON strings to enum values.
-- There is **no BUILDING type** — it was removed.
+All visual assets in this project **must** be pixel art in the **Wasteland Punk** aesthetic.
 
-### Signal-Driven Communication
-- Stat changes **must** go through `add_permanent_stats()` or `add_temporary_stats()` to emit `unit_stats_changed`.
-- Never modify `attack`/`health` directly without emitting the signal (breaks passive listeners like Robot Bill).
+### What is Wasteland Punk?
+A post-apocalyptic scrapyard universe — think Mad Max meets Fallout, rendered in bold pixel art:
+- **Silhouettes:** Bold, readable at 64px. One glance = instant recognition.
+- **Materials:** Scrap metal, duct tape, rubber, chains, cracked glass, worn leather, exposed wiring — everything is salvaged, dented, and corroded. Nothing is clean or new.
+- **Color palette:** Earth tone base (rusted orange, sandy brown, dusty grey, faded olive) + **one neon accent per character** (glowing eyes, reactor core, toxic liquid, electric sparks).
+- **Outlines:** Bold single-color black outlines — confident pixel weight.
+- **Shading:** Cel-shaded / flat — not photorealistic.
+- **Background:** Always transparent.
 
-### Decoupled Managers
-- All deck/draw operations go through `deck_manager` (not `battle_scene` directly).
-- Spells call `main.deck_manager.draw_cards()` not `main._draw_cards()`.
+### Mandatory PixelLab Prompt Suffix
+**Every asset description MUST end with this exact suffix** to ensure style consistency:
+```
+wasteland punk style, post-apocalyptic scrap aesthetic, rusted metal and salvaged parts,
+single color bold black pixel art outlines, cel-shaded flat colors, earth tone palette
+with one neon accent color, transparent background, side view, full body, pixel art
+```
 
-## Card Data Rules
+### Prohibited
+- ❌ No clean, shiny, or futuristic-clean aesthetics
+- ❌ No Rick and Morty characters (tone is kept, characters are not)
+- ❌ No realistic shading or photorealistic lighting
+- ❌ No assets that don't visually fit the same scrapyard world
 
-### JSON Requirements
-- Every card **must** have: `name`, `display_name`, `type`, `side`, `cost`, `front_image`, `description`.
-- Every unit/hero **must** also have: `health`, `attack`, `race`.
-- The `"race"` field defaults to `"robot"` if omitted.
-- Card `"name"` field must match the JSON filename (without `.json`).
+---
 
-### Keywords
-- Keywords work on **all card types**: units, heroes, AND spells.
-- Keyword names in JSON must match filenames in `battle_scene/units/keywords/` exactly.
-- Do not create new keyword scripts unless adding a genuinely new mechanic.
-- Battle Cry style keywords delegate to `custom_script_instance.execute_battle_cry()`.
+## 2. Asset Generation — PixelLab AI
 
-## Board Rules
-- Maximum **7 slots** per battle row (`TOTAL_SLOTS = 7`).
-- Never hardcode slot bounds to `3` or `4` — always reference `TOTAL_SLOTS`.
+All pixel art is generated via the **PixelLab REST API**.
 
-## Art Style Rules
-- All image generation must strictly follow the standards defined in [image-creation-rules.md](./image-creation-rules.md).
-- Card art is generated using **Nano Banana** (`generate_image` tool) — never use placeholder images.
+### API Details
+- **Base URL:** `https://api.pixellab.ai/v1`
+- **Auth:** `Authorization: Bearer <key>` (key stored in `mcp_config.json`)
+- **Reference docs:** `https://api.pixellab.ai/v2/llms.txt`
 
-## UI Rules
-- Text rendering relies on **MSDF fonts** — do not use `_crisp_text` scaling workarounds.
-- Spell cards hide Attack/Health circles on both Card and Token views.
-- Hero cards get gold border (`Color(0.9, 0.75, 0.1)`) and bright name banner.
+### Endpoints Used
+| Endpoint | Purpose | Size Limits |
+|---|---|---|
+| `POST /generate-image-pixflux` | Generate reference character image | up to 400×400 |
+| `POST /animate-with-text` | Generate animation frames from reference | exactly 64×64 |
 
-## Animation & Visual FX Rules
-- Use **Godot Built-in Tools** For animations and effects (`AnimationPlayer`, `Tweens`, `GPUParticles2D`).
+### Key API Enum Values (use exactly these strings)
+- **outline:** `"single color black outline"`, `"single color outline"`, `"selective outline"`, `"lineless"`
+- **shading:** `"flat shading"`, `"basic shading"`, `"medium shading"`, `"detailed shading"`, `"highly detailed shading"`
+- **detail:** `"low detail"`, `"medium detail"`, `"highly detailed"`
+- **view:** `"side"`, `"low top-down"`, `"high top-down"`
 
-## Communication Rules
-- **ALWAYS ASK** the user for clarification if any instructions are missing, vague, or could be interpreted in multiple ways. 
-- Do not guess or make assumptions—especially for visual art, complex card effects, or core architectural changes. 
-- If a task involves multiple stages (e.g., creating a new card), present the plan first and confirm once the user is happy with the details.
+---
 
-## Git Rules
-- Commit messages should be descriptive of what changed and why.
-- Push to `main` branch after confirming changes work in-game.
+## 3. Sprite Pipeline
+
+Follow this pipeline for every new character or enemy:
+
+1. **Generate reference** — `POST /generate-image-pixflux` at 96×96
+2. **Resize to 64×64** — Use `System.Drawing` in PowerShell (see `generate_enemy.ps1`)
+3. **Generate idle** — `POST /animate-with-text`, action: breathing/resting, 4 frames
+4. **Generate attack** — `POST /animate-with-text`, action: lunge/strike/cast, 4 frames
+5. **Verify PNG headers** — Confirm `89-50-4E-47` magic bytes on all output files
+6. **Save to project** — Place in the correct per-entity subfolder (see §4 below)
+7. **Delete intermediate files** — Remove `_ref.png` and `_ref_64.png` after generation
+8. **Wire in Godot** — Set `sprite_id` in the enemy JSON; `EnemyEntity` loads frames automatically
+
+---
+
+## 4. Asset Folder Structure (Expandable — Must Follow Exactly)
+
+Every entity type gets its **own named subfolder**. No loose files in parent folders.
+
+```
+battle_scene/assets/images/
+├── enemies/
+│   ├── generate_enemy.ps1        ← shared generation script for ALL enemies
+│   ├── trash_robot/              ← one subfolder per enemy sprite_id
+│   │   ├── trash_robot_idle_0.png
+│   │   ├── trash_robot_idle_1.png
+│   │   ├── trash_robot_idle_2.png
+│   │   ├── trash_robot_idle_3.png
+│   │   ├── trash_robot_attack_0.png
+│   │   ├── trash_robot_attack_1.png
+│   │   ├── trash_robot_attack_2.png
+│   │   └── trash_robot_attack_3.png
+│   └── wasteland_robber/         ← future enemy (same pattern)
+│       └── ...
+├── heroes/
+│   └── {hero_id}/                ← one subfolder per hero (when art is ready)
+│       └── ...
+├── cards/
+│   └── player/                   ← card art, referenced by front_image in JSON
+└── backgrounds/                  ← battle scene backgrounds
+```
+
+### Rules
+- **One subfolder per entity** — never put two enemies' frames in the same folder
+- **Subfolder name = `sprite_id`** — must match exactly what's in the enemy's JSON
+- **No loose PNGs in the parent `/enemies/` folder** — always inside a named subfolder
+- **Generation script lives inside the entity subfolder** it generates art for
+- **Delete all intermediate pipeline files** before committing:
+  - `_ref.png` (96×96 reference)
+  - `_ref_64.png` (64×64 resize intermediate)
+- **Godot `.import` files stay** — they are auto-generated and must not be manually edited
+
+---
+
+## 5. Naming Conventions
+
+| Asset | Pattern | Location | Example |
+|---|---|---|---|
+| Animation frame | `{sprite_id}_{anim}_{n}.png` | `enemies/{sprite_id}/` | `trash_robot_idle_0.png` |
+| Generation script | `generate_enemy.ps1` | `enemies/` (shared root) | `enemies/generate_enemy.ps1` |
+| Enemy JSON | `{enemy_id}.json` | `card_info/enemy/` | `robot_grunt.json` |
+| Hero JSON | `{hero_id}.json` | `card_info/hero/` | `warrior.json` |
+| Card JSON | `{card_id}.json` | `card_info/player/` | `strike.json` |
+| Equipment JSON | `{item_id}.json` | `card_info/equipment/` | `scrap_gauntlet.json` |
+| Relic JSON | `{relic_id}.json` | `card_info/relics/` | `cracked_reactor.json` |
+
+---
+
+## 6. Code Architecture Rules
+
+### General
+- **Data-driven everything** — new enemies, cards, equipment, and relics require only JSON; no GDScript changes.
+- **No art logic in `.tscn` files** — all sprite loading happens in GDScript at runtime.
+- **Factory pattern** — use static `create(id)` functions (e.g. `EnemyEntity.create("robot_grunt")`).
+- **Fallback gracefully** — if a texture or JSON is missing, `push_warning()` and continue; never crash.
+
+### Enemy Sprites
+- `EnemyEntity.ENEMIES_DIR` = `"res://battle_scene/assets/images/enemies/"`
+- Frames resolved as: `{ENEMIES_DIR}{sprite_id}/{sprite_id}_{anim}_{n}.png`
+- To add a new enemy: create subfolder + JSON. Zero GDScript changes required.
+
+### Adding New Content — Checklist
+| Content | Steps |
+|---|---|
+| **New enemy** | 1. Create `enemies/{sprite_id}/` with frames 2. Add `card_info/enemy/{id}.json` with `sprite_id` field |
+| **New card** | 1. Add `card_info/player/{id}.json` with `effects[]` array |
+| **New equipment** | 1. Add `card_info/equipment/{id}.json` with `bonuses` dict |
+| **New relic** | 1. Add `card_info/relics/{id}.json` 2. Register trigger in `relic_manager.gd` |
+| **New hero** | 1. Add hero JSON 2. Add hero sprite under `heroes/{hero_id}/` |
+
+---
+
+## 7. Prohibited
+
+- ❌ Do not commit API keys to version control (`mcp_config.json` must be gitignored)
+- ❌ Do not use ColorRect or procedural geometry as final art — temporary debug placeholders only
+- ❌ Do not use non-PNG formats in Godot (convert WebP/JPEG → PNG before importing)
+- ❌ Do not hardcode sprite paths in `.tscn` files — always load programmatically
+- ❌ Do not put multiple enemies' assets in the same folder
+- ❌ Do not leave unused files in the project (delete `_ref.png`, `_ref_64.png` after generation)
+- ❌ Do not add card-specific or enemy-specific logic to shared systems — all variance goes in JSON

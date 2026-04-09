@@ -2,23 +2,21 @@
 
 [ext_resource type="Script" path="res://battle_scene/battle_scene.gd" id="1_2r7vq"]
 [ext_resource type="PackedScene" path="res://addons/card-framework/card_manager.tscn" id="1_rurpr"]
-[ext_resource type="PackedScene" path="res://battle_scene/battle_row.tscn" id="1_rurpr_row"]
+
 [ext_resource type="PackedScene" path="res://addons/card-framework/pile.tscn" id="2_xkfcc"]
 [ext_resource type="PackedScene" path="res://battle_scene/my_card_factory.tscn" id="3_l4bd6"]
 [ext_resource type="Script" path="res://addons/card-framework/card_manager.gd" id="3_urm3r"]
 [ext_resource type="PackedScene" path="res://addons/card-framework/hand.tscn" id="3_xp5g3"]
-[ext_resource type="PackedScene" path="res://battle_scene/spell_play_zone.tscn" id="5_spell"]
-[ext_resource type="Script" path="res://battle_scene/spell_play_zone.gd" id="6_dqtiq"]
-[ext_resource type="Texture2D" path="res://battle_scene/assets/images/cards/cardBack_blue1.png" id="6_uv8m4"]
-[ext_resource type="PackedScene" path="res://battle_scene/hero_entity.tscn" id="7_hero"]
-[ext_resource type="Script" path="res://battle_scene/battle_row.gd" id="8_ndvft"]
+[ext_resource type="Texture2D" path="res://icon.svg" id="6_uv8m4"]
+[ext_resource type="PackedScene" path="res://battle_scene/player.tscn" id="7_player"]
 [ext_resource type="Script" path="res://addons/card-framework/hand.gd" id="10_wrush"]
 [ext_resource type="Script" path="res://addons/card-framework/pile.gd" id="12_ixui7"]
-[ext_resource type="Script" path="res://battle_scene/hero_entity.gd" id="15_53v2g"]
+
 [ext_resource type="Script" path="res://battle_scene/turn_manager.gd" id="16_turn"]
 [ext_resource type="Script" path="res://battle_scene/combat_engine.gd" id="17_combat"]
 [ext_resource type="Script" path="res://battle_scene/enemy_ai.gd" id="18_ai"]
 [ext_resource type="Script" path="res://battle_scene/battle_ui_manager.gd" id="19_ui"]
+[ext_resource type="Script" path="res://battle_scene/card_play_zone.gd" id="20_playzone"]
 
 [sub_resource type="Curve" id="Curve_lsli3"]
 _limits = [-15.0, 15.0, 0.0, 1.0]
@@ -56,36 +54,17 @@ script = ExtResource("3_urm3r")
 card_size = Vector2(160, 220)
 card_factory_scene = ExtResource("3_l4bd6")
 
-[node name="SpellPlayZone" type="Control" parent="CardManager" unique_id=1316289548 instance=ExtResource("5_spell")]
-custom_minimum_size = Vector2(1600, 700)
-anchors_preset = 0
-offset_left = 100.0
-offset_top = 40.0
-offset_right = 1700.0
-offset_bottom = 740.0
-mouse_filter = 2
-script = ExtResource("6_dqtiq")
-sensor_size = Vector2(1600, 700)
-
-[node name="BattleField" type="VBoxContainer" parent="CardManager" unique_id=1269234991]
-layout_mode = 0
-offset_left = 3.0
-offset_top = 80.0
-offset_right = 1920.0
-offset_bottom = 750.0
-
-[node name="Row1" type="Control" parent="CardManager/BattleField" unique_id=1105774856 instance=ExtResource("1_rurpr_row")]
-custom_minimum_size = Vector2(1870, 260)
-layout_mode = 2
+[node name="CardPlayZone" type="Control" parent="CardManager"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 1
-script = ExtResource("8_ndvft")
+script = ExtResource("20_playzone")
 
-[node name="Row2" type="Control" parent="CardManager/BattleField" unique_id=86258571 instance=ExtResource("1_rurpr_row")]
-custom_minimum_size = Vector2(1870, 260)
-layout_mode = 2
-mouse_filter = 1
-script = ExtResource("8_ndvft")
-row_index = 1
+
 
 [node name="Hand" type="Control" parent="CardManager" unique_id=894436731 instance=ExtResource("3_xp5g3")]
 layout_mode = 1
@@ -172,23 +151,11 @@ mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_blackhole")
 
 
-[node name="PlayerHeroHUD" type="Control" parent="." unique_id=965033845 instance=ExtResource("7_hero")]
-custom_minimum_size = Vector2(450, 320)
-layout_mode = 3
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -225.0
-offset_top = -540.0
-offset_right = 225.0
-offset_bottom = -220.0
-grow_horizontal = 2
-grow_vertical = 0
-scale = Vector2(0.9, 0.9)
-pivot_offset = Vector2(225, 160)
-script = ExtResource("15_53v2g")
+[node name="Player" parent="." instance=ExtResource("7_player")]
+position = Vector2(350, 450)
+
+[node name="EnemyContainer" type="Node2D" parent="."]
+position = Vector2(1450, 450)
 
 [node name="EnergyLabel" type="Label" parent="." unique_id=2127611817]
 anchors_preset = 2

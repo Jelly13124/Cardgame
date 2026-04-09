@@ -1,87 +1,83 @@
 ---
 name: code-review
-description: Perform an architectural code review of the Godot card game project
+description: Perform a structured code review of the Slay the Spire-style card game project
 ---
 
 # Code Review
 
 ## Overview
-Performs a structured code review of the card game project, checking for architectural issues, fragile patterns, and potential bugs.
+Performs a structured review against the current STS-style architecture. Checks for correctness, extensibility, and integration health between the battle system, run system, and card framework.
+
+---
 
 ## Review Checklist
 
-### 1. String Fragility
-- [ ] Check for raw `has_node("path/to/node")` patterns — should use `@export` variables or `get_node_or_null()`
-- [ ] Check for raw string type comparisons like `type == "hero"` — should use `CardType` enum
-- [ ] Check for hardcoded keyword strings — should match existing keyword script filenames exactly
+### 1. Card Play Flow
+- [ ] `play_card.gd` routes attack cards to `start_spell_targeting()`, skill/ability to drag zone
+- [ ] `is_resolving` lock in `battle_scene.gd` prevents double-firing during `await`
+- [ ] `CardPlayZone.move_cards()` passes `null` target to `play_spell()` for skills
+- [ ] Discard happens AFTER `resolve_card_effect()` completes (not before)
+- [ ] End-of-turn uses `discard_pile.move_cards(remaining)` (not `add_card` loop)
 
-### 2. Node Reference Safety
-- [ ] Use `card_container` property instead of `get_parent()` to check board placement
-- [ ] Use `is_instance_valid()` before accessing nodes that may have been freed
-- [ ] Use `get_node_or_null()` instead of `$Path` for nodes that may not exist
+### 2. Combat Engine (Data-Driven)
+- [ ] All card effects resolved via `effects[]` array in JSON — no card-specific GDScript
+- [ ] `"scaling"` field correctly maps to player attribute (`strength`, `defense`, etc.)
+- [ ] Legacy fallback only fires for cards missing `effects[]` array
+- [ ] New effect types are added only in `CombatEngine._apply_effect()` match block
 
-### 3. Signal Architecture
-- [ ] Stat changes should emit `unit_stats_changed` signal (via `add_permanent_stats` / `add_temporary_stats`)
-- [ ] Avoid direct cross-script method calls where signals would decouple better
-- [ ] Check signal connections are cleaned up when nodes are freed
+### 3. Enemy System
+- [ ] Enemy loaded via `EnemyEntity.create("id")` reading JSON from `card_info/enemy/`
+- [ ] `action_pattern` cycles correctly (no index overflow)
+- [ ] Intent label updates after each `consume_next_action()` call
+- [ ] `_on_enemy_died()` only emits `victory_declared` when container is empty (check count, not signals)
+- [ ] Multiple enemies offset by 130px — verify they don't overlap with Player at `x=400`
 
-### 4. State Management
-- [ ] DraggableState transitions follow `allowed_transitions` rules
-- [ ] `is_manual_attacking` flag is properly reset on cancel/complete
-- [ ] `is_game_over` guards are present on all game-state-changing functions
+### 4. Turn & Energy Management
+- [ ] `TurnManager` emits `turn_started`, `turn_ended`, `round_changed`, `energy_changed`
+- [ ] `player.start_turn()` resets block AND energy at start of player turn
+- [ ] `enemy.start_turn()` resets enemy block at start of enemy turn
+- [ ] Draw count is exactly 3 per round (both `first_round_draw` and `draw_cards(3)`)
+- [ ] Discard-and-reshuffle triggers when deck hits 0 during `draw_cards()`
 
-### 5. Combat System
-- [ ] Taunt enforcement is checked before allowing attacks
-- [ ] `can_attack` flag is set/reset correctly each turn
-- [ ] Attack animations properly restore card state (z_index, position, DraggableState)
-- [ ] Board slot bounds use `TOTAL_SLOTS` (7) not hardcoded `3` or `4`
+### 5. RunManager Integration
+- [ ] `RunManager.current_health` written back after battle (player HP persistence)
+- [ ] `RunManager.current_encounter` set by MapScene before loading battle
+- [ ] `RunManager.player_attributes` dict read into `PlayerEntity` on battle start
+- [ ] `RunManager.player_deck` used by `deck_manager.reset_deck()` when run is active
+- [ ] `loot_reward.gd` draft_pool contains only valid card IDs that exist as JSON files
 
-### 6. Energy & Resources
-- [ ] `can_afford()` is checked before allowing card plays
-- [ ] `spend_energy()` is called after successful deployment
-- [ ] Spell fizzles refund energy correctly
+### 6. UI / UX
+- [ ] `CharacterHUD.update_stats()` called after every HP/block change
+- [ ] Block badge hidden when block == 0, shown with correct value otherwise
+- [ ] `BattleUIManager` Q/E shortcuts open draw/discard pile viewers without crash
+- [ ] `show_pile_viewer()` does NOT call `set_view_mode()` or `refresh_ui()` (those don't exist)
+- [ ] `NotificationLabel` fades out after 1.5s (no permanent text on screen)
 
-### 7. Deck Management
-- [ ] `deck_manager` handles all draw/shuffle logic (not `battle_scene` directly)
-- [ ] Reshuffle from discard pile works when deck is empty
-- [ ] Hand capacity limits are enforced
+### 7. Node Reference Safety
+- [ ] All `is_instance_valid()` checks before accessing nodes that may have been freed
+- [ ] `get_node_or_null()` used instead of `$Path` for nodes that may not exist
+- [ ] `enemy_container.get_children()` iterated with validity check each item
 
-### 8. UI Consistency
-- [ ] Card type-specific UI elements (attack/health circles) hide for spells
-- [ ] Hero gold border/banner styling applies correctly
-- [ ] Token view mode hides full card face and vice versa
-- [ ] Font scaling relies on MSDF (no `_crisp_text` workarounds)
+---
 
-## Review Process
+## Key Files to Review (in order)
 
-### Step 1: Scan Core Files
-Examine these files in order of importance:
-1. `battle_scene/battle_scene.gd` — Main game logic (God Object risk)
-2. `battle_scene/unit_card.gd` — Card UI and combat stats
-3. `battle_scene/deck_manager.gd` — Draw/shuffle logic
-4. `battle_scene/battle_row.gd` — Board placement rules
-5. `addons/card-framework/draggable_object.gd` — Drag state machine
+| File | What to check |
+|---|---|
+| `battle_scene/battle_scene.gd` | is_resolving lock, RunManager init, _start_new_game |
+| `battle_scene/combat_engine.gd` | Effect match block coverage, lunge animation restore |
+| `battle_scene/enemy_ai.gd` | consume_next_action, victory check race condition |
+| `battle_scene/enemy_entity.gd` | Factory JSON parse, action_pattern cycling, intent label |
+| `battle_scene/deck_manager.gd` | draw_cards reshuffle, reset_deck RunManager path |
+| `battle_scene/play_card.gd` | _handle_mouse_pressed/released routing |
+| `battle_scene/card_play_zone.gd` | move_cards override passes null target |
+| `run_system/core/run_manager.gd` | player_attributes, current_encounter fields |
+| `run_system/ui/loot_reward.gd` | draft_pool card IDs validity |
 
-### Step 2: Scan Script Directories
-- `battle_scene/units/keywords/` — All keyword implementations
-- `battle_scene/units/hero_scripts/` — Hero passive scripts
-- `battle_scene/units/script_overrides/` — Unit-specific override scripts
-- `battle_scene/spells/logic/` — Spell effect scripts
+---
 
-### Step 3: Cross-Reference JSON Data
-- `battle_scene/card_info/player/units/` — Player card definitions
-- `battle_scene/card_info/enemy/` — Enemy card definitions
-- Verify all `passive_script_path` and `script_path` fields point to existing files
-- Verify all keyword names in JSON have matching `.gd` files
-
-### Step 4: Report
-Produce a summary with:
-- **Critical** — Bugs that will crash or break gameplay
-- **Warning** — Architectural issues that make future changes dangerous
-- **Info** — Suggestions for cleaner patterns
-
-## Known Architectural Decisions
-- `battle_scene.gd` is intentionally the main orchestrator (signals connect here)
-- Cards use `card_info` dictionary from JSON (not typed classes) for flexibility
-- The `card-framework` addon manages drag/drop state machine externally
-- `deck_manager` is a runtime-instantiated Node (not in the scene tree by default)
+## Known Architecture Decisions (do not flag as bugs)
+- `battle_scene.gd` is intentionally the central orchestrator — sub-systems access it via `get_parent()` or `get_tree().current_scene`
+- `CardPlayZone` overrides `move_cards()` instead of `on_card_move_done()` because `CardContainer` (unlike `Pile`) never calls `card.move()`, so `_on_move_done` never fires
+- Attack cards use `_unhandled_input` / `_handle_mouse_released` chain instead of a targeting overlay (the overlay approach had zero-size bug)
+- Enemy proximity detection uses `Rect2` body bounds + 110px fallback because enemies have no `Sprite2D`

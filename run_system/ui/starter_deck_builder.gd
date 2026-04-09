@@ -6,9 +6,8 @@ const MAX_CARDS = 10
 # These will be loaded dynamically in _ready based on RunManager's hero selection
 var available_pool: Array[String] = []
 var constructed_deck: Array[String] = [
-	"unit_defend_drone", "unit_defend_drone",
-	"unit_attack_drone", "unit_attack_drone",
-	"spell_energize", "spell_energize"
+	"strike", "strike", "strike", "strike",
+	"defend", "defend", "defend", "defend",
 ]
 var current_hero = "hero_robot_bill"
 
@@ -28,10 +27,10 @@ func _ready() -> void:
 	var factory_script = load("res://addons/card-framework/json_card_factory.gd")
 	if factory_script:
 		card_factory = factory_script.new()
-		card_factory.default_card_scene = load("res://battle_scene/unit_card.tscn")
+		card_factory.default_card_scene = load("res://battle_scene/play_card.tscn")
 		card_factory.card_asset_dir = "res://battle_scene/assets/images/cards"
 		card_factory.card_info_dir = "res://battle_scene/card_info"
-		card_factory.back_image = load("res://battle_scene/assets/images/cards/cardBack_blue4.png")
+		card_factory.back_image = load("res://icon.svg")
 		card_factory.card_size = Vector2(200, 280)
 		add_child(card_factory)
 		card_factory.preload_card_data()
