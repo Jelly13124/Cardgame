@@ -1,119 +1,115 @@
 extends Node
-
-## EnemyAI handles enemy turn decision-making and unit spawning.
+## EnemyAI — spawns enemies from JSON data and executes their turn actions.
+## To add a new enemy encounter, change `_enemy_roster` or load from RunManager.
 
 @onready var main = get_parent()
-@onready var combat_engine = main.get_node("CombatEngine")
 
-func spawn_enemy_units():
-	var rows_list = main._get_battle_rows()
-	if rows_list.size() < 2: return
-	
-	var current_round = main.turn_manager.current_round
-	var spawn_count = 1
-	if current_round > 2: spawn_count = 2
-	if current_round > 5: spawn_count = 3
-	
-	var enemy_types = ["alien_soldier", "alien_sniper", "alien_killer"]
-	
-	for i in range(spawn_count):
-		var spawn_row = rows_list[0]
-		if spawn_row.get_card_count() < 7:
-			var random_type = enemy_types[randi() % enemy_types.size()]
-			var card = main.card_factory.create_card(random_type, spawn_row)
-			if card:
-				card.card_info["side"] = "enemy"
-				card.refresh_ui()
-	
-	# Boss Round
-	if current_round % 10 == 0 or current_round == 5:
-		main.show_notification("BOSS WARNING: OMEGA BOT DETECTED!", Color(1, 0, 0))
-		var spawn_row = rows_list[0]
-		var boss = main.card_factory.create_card("unit_boss_mk1", spawn_row)
-		if boss:
-			boss.card_info["side"] = "enemy"
-			boss.card_info["is_boss"] = true
-			boss.refresh_ui()
+var _enemy_spawned := false
 
-func execute_enemy_turn():
-	if main.is_in_combat_phase or main.is_game_over: return
-	main.is_in_combat_phase = true
-	Engine.time_scale = 1.0
-	
-	# Trigger End Turn abilities
-	for row in main._get_battle_rows():
-		for card in row.get_cards():
-			card.can_be_interacted_with = false
-			if is_instance_valid(card) and "keyword_instances" in card:
-				for kw in card.keyword_instances:
-					if kw.has_method("on_turn_end"):
-						kw.on_turn_end(row)
-	
-	main.show_notification("ENEMY TURN", Color(1, 0.4, 0.4))
-	await main._wait(1.0)
-	
-	var rows_list = main._get_battle_rows()
-	if rows_list.size() >= 2:
-		var enemy_rows = [rows_list[0]]
-		var player_rows = [rows_list[1]]
-		
-		for e_row in enemy_rows:
-			var e_cards = e_row.get_cards()
-			for e_unit in e_cards:
-				if not is_instance_valid(e_unit) or e_unit.get_parent() == null: continue
-				if e_unit.card_info.get("side", "player") == "enemy":
-					var valid_targets = []
-					for p_row in player_rows:
-						for card in p_row.get_cards():
-							if is_instance_valid(card) and card.card_info.get("side", "player") == "player":
-								valid_targets.append(card)
-							
-					# Taunt Filter
-					var taunt_targets = []
-					for t in valid_targets:
-						if combat_engine._has_keyword(t, "taunt"):
-							taunt_targets.append(t)
-					if taunt_targets.size() > 0:
-						valid_targets = taunt_targets
-							
-					if valid_targets.size() > 0:
-						var target = valid_targets[randi() % valid_targets.size()]
-						await combat_engine.perform_attack(e_unit, target)
-						await main._wait(0.2)
-					else:
-						# Direct Hero Attack
-						var a_atk = int(e_unit.card_info.get("attack", 0))
-						if main.player_hero:
-							main.player_hero.take_damage(a_atk)
-							main.show_notification("HERO HIT! -" + str(a_atk), Color(1, 0.2, 0.2))
-						
-						# Animation
-						var a_pos = e_unit.global_position
-						var tween = create_tween()
-						var strike_pos = a_pos + Vector2(0, 100)
-						tween.tween_property(e_unit, "global_position", strike_pos, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-						await tween.finished
-						var back_tween = create_tween()
-						back_tween.tween_property(e_unit, "global_position", a_pos, 0.15)
-						await back_tween.finished
-						await main._wait(0.2)
-	
+## List of enemy IDs to spawn for this encounter. 
+## In the future this will be set by RunManager/MapScene before the battle starts.
+var enemy_roster: Array[String] = ["trash_robot"]
+
+# ─── Spawning ─────────────────────────────────────────────────────────────────
+
+func spawn_enemy_units() -> void:
+	if _enemy_spawned: return
+	if main.enemy_container.get_child_count() > 0:
+		_enemy_spawned = true
+		return
+	_enemy_spawned = true
+
+	for enemy_id in enemy_roster:
+		var enemy = EnemyEntity.create(enemy_id)
+		# Offset enemies horizontally if there are multiple
+		var idx = main.enemy_container.get_child_count()
+		enemy.position = Vector2(idx * 260, 0)
+		main.enemy_container.add_child(enemy)
+
+		# Wire death → victory check
+		enemy.died.connect(_on_enemy_died)
+		main.show_notification(enemy.enemy_name + " APPEARED!", Color(1, 0.3, 0.3))
+
+# ─── Enemy Turn ───────────────────────────────────────────────────────────────
+
+func execute_enemy_turn() -> void:
 	if main.is_game_over: return
-	
+
+	main.show_notification("ENEMY TURN", Color(1, 0.4, 0.4))
+	await get_tree().create_timer(0.8).timeout
+
+	for enemy in main.enemy_container.get_children():
+		if not is_instance_valid(enemy): continue
+		if main.is_game_over: return
+
+		var action: Dictionary = enemy.consume_next_action()
+		await _execute_action(enemy, action)
+		await get_tree().create_timer(0.25).timeout
+
+	if main.is_game_over: return
+
 	main.show_notification("YOUR TURN", Color(0.4, 0.8, 1.0))
-	await main._wait(0.5)
-	
-	main.is_in_combat_phase = false
-	Engine.time_scale = 1.0
-	
-	# Reset player attacks
-	if rows_list.size() >= 2:
-		var p_rows = [rows_list[1]]
-		for p_row in p_rows:
-			for card in p_row.get_cards():
-				if is_instance_valid(card) and card.card_info.get("side", "player") == "player":
-					card.can_attack = true
-					card.modulate = Color(1.0, 1.0, 1.0)
-					card.can_be_interacted_with = true
-	
+	await get_tree().create_timer(0.4).timeout
 	main.turn_manager.end_turn()
+
+# ─── Action Execution ──────────────────────────────────────────────────────────
+
+func _execute_action(enemy: EnemyEntity, action: Dictionary) -> void:
+	var action_type: String = action.get("type", "attack")
+	var amount: int         = int(action.get("amount", 6))
+
+	match action_type:
+		"attack":
+			# Play sprite attack anim at the same time as the lunge tween
+			if enemy.has_method("play_attack"):
+				enemy.play_attack()
+			await _animate_lunge(enemy)
+			if main.player and is_instance_valid(main.player):
+				# Apply weakness debuff: weakened enemy deals 0.75× damage
+				var outgoing = amount
+				if enemy.has_method("get_status_stacks") and enemy.get_status_stacks("weakness") > 0:
+					outgoing = int(outgoing * enemy.status_system.get_outgoing_multiplier())
+				main.player.take_damage(outgoing)
+				main.show_notification("ENEMY ATTACKS %d!" % outgoing, Color(1, 0.3, 0.3))
+			await _animate_return(enemy)
+
+		"block":
+			enemy.add_block(amount)
+			main.show_notification("ENEMY DEFENDS +%d" % amount, Color(0.4, 0.6, 1.0))
+			# Small visual pulse
+			var t = create_tween()
+			t.tween_property(enemy, "scale", Vector2(1.2, 1.2), 0.1)
+			t.tween_property(enemy, "scale", Vector2(1.0, 1.0), 0.1)
+			await t.finished
+
+		"heal":
+			if enemy.has_method("heal"):
+				enemy.heal(amount)
+			main.show_notification("ENEMY HEALS %d" % amount, Color(0.2, 1.0, 0.4))
+
+		_:
+			push_warning("EnemyAI: unknown action type '%s'" % action_type)
+
+# ─── Animations ───────────────────────────────────────────────────────────────
+
+var _enemy_start_positions: Dictionary = {}
+
+func _animate_lunge(enemy: Node) -> void:
+	_enemy_start_positions[enemy] = enemy.global_position
+	var t = create_tween()
+	t.tween_property(enemy, "global_position",
+		enemy.global_position + Vector2(-100, 0), 0.15).set_trans(Tween.TRANS_QUAD)
+	await t.finished
+
+func _animate_return(enemy: Node) -> void:
+	if not _enemy_start_positions.has(enemy): return
+	var t = create_tween()
+	t.tween_property(enemy, "global_position", _enemy_start_positions[enemy], 0.15)
+	await t.finished
+
+# ─── Victory Check ────────────────────────────────────────────────────────────
+
+func _on_enemy_died() -> void:
+	await get_tree().process_frame
+	if main.enemy_container.get_child_count() == 0:
+		main.combat_engine.victory_declared.emit()

@@ -302,12 +302,20 @@ func _can_start_hovering() -> bool:
 
 func _on_mouse_enter() -> void:
 	is_mouse_inside = true
+	var main = get_tree().current_scene
+	if main and main.has_method("_on_unit_hover_entered"):
+		main._on_unit_hover_entered(self)
+		
 	if can_be_interacted_with and _can_start_hovering():
 		change_state(DraggableState.HOVERING)
 
 
 func _on_mouse_exit() -> void:
 	is_mouse_inside = false
+	var main = get_tree().current_scene
+	if main and main.has_method("_on_unit_hover_exited"):
+		main._on_unit_hover_exited(self)
+		
 	match current_state:
 		DraggableState.HOVERING:
 			change_state(DraggableState.IDLE)

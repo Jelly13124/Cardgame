@@ -85,17 +85,10 @@ func create_card(card_name: String, target: CardContainer) -> Card:
 			push_error("Card info not found for card: %s" % card_name)
 			return null
 
-		# Validate required JSON fields
-		if not card_info.has("front_image"):
-			push_error("Card info does not contain 'front_image' key for card: %s" % card_name)
-			return null
-			
-		# Load corresponding image asset
-		var front_image_path = card_asset_dir + "/" + card_info["front_image"]
-		var front_image = _load_image(front_image_path)
-		if front_image == null:
-			push_error("Card image not found: %s" % front_image_path)
-			return null
+		var front_image = null
+		if card_info.has("front_image"):
+			var front_image_path = card_asset_dir + "/" + card_info["front_image"]
+			front_image = _load_image(front_image_path)
 
 		return _create_card_node(card_info.name, front_image, target, card_info)
 
@@ -127,10 +120,10 @@ func _preload_single_card(card_name: String, full_path: String) -> void:
 	if card_info.is_empty():
 		return
 
-	var front_image_path = card_asset_dir + "/" + card_info.get("front_image", "")
-	var front_image_texture = _load_image(front_image_path)
-	if front_image_texture == null:
-		return
+	var front_image_texture = null
+	if card_info.has("front_image"):
+		var front_image_path = card_asset_dir + "/" + card_info["front_image"]
+		front_image_texture = _load_image(front_image_path)
 
 	preloaded_cards[card_name] = {
 		"info": card_info,

@@ -25,6 +25,19 @@ var player_deck: Array = [] # Array of Dictionaries (uid, card_id, bonus_attack,
 var equipped_items: Array[String] = []
 const MAX_ITEMS: int = 5
 
+## Five dimension RPG attributes — passed to PlayerEntity on battle start.
+var player_attributes: Dictionary = {
+	"strength":     3,
+	"constitution": 3,
+	"intelligence": 3,
+	"luck":         3,
+	"charm":        3
+}
+
+## Enemy IDs to encounter in the next battle (set by MapScene before loading battle).
+## Example: ["trash_robot", "wasteland_killer"]
+var current_encounter: Array[String] = ["trash_robot"]
+
 func _ready() -> void:
 	pass
 
@@ -44,8 +57,15 @@ func start_new_run(hero_id: String, starter_deck: Array[String]) -> void:
 	current_floor = 1
 	current_health = max_health
 	equipped_items.clear()
+	current_encounter = ["trash_robot"]
+	player_attributes = {
+		"strength":     3,
+		"constitution": 3,
+		"intelligence": 3,
+		"luck":         3,
+		"charm":        3
+	}
 	is_run_active = true
-	
 	_emit_all_state()
 
 # --- Deck Management ---
@@ -54,9 +74,7 @@ func add_card_to_deck(card_id: String) -> void:
 	var uid = str(Time.get_ticks_usec()) + "_" + str(randi_range(1000, 9999))
 	var card_data = {
 		"uid": uid,
-		"card_id": card_id,
-		"bonus_attack": 0,
-		"bonus_health": 0
+		"card_id": card_id
 	}
 	player_deck.append(card_data)
 	emit_signal("deck_updated")
@@ -70,13 +88,7 @@ func remove_card_from_deck_by_uid(uid: String) -> bool:
 			return true
 	return false
 
-func add_permanent_stats(uid: String, atk: int, hp: int) -> void:
-	for card_data in player_deck:
-		if card_data["uid"] == uid:
-			card_data["bonus_attack"] += atk
-			card_data["bonus_health"] += hp
-			emit_signal("deck_updated")
-			return
+
 
 # --- Health & Damage ---
 

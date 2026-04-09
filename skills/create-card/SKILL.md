@@ -1,90 +1,131 @@
 ---
 name: create-card
-description: Create a new unit, spell, or hero card with JSON data, art reference, and optional scripts
+description: Create a new player card (attack, skill, or ability) with JSON effects data and Wasteland Punk pixel art
 ---
 
 # Create Card
 
 ## Overview
-Creates a new card for the game. This includes the JSON data definition, art path setup, and optional keyword/passive script wiring.
+Creates a new card for the roguelite card game. Each card is a JSON file with an `effects` array that the `CombatEngine` resolves generically — no GDScript changes needed for standard effects.
 
 ## Card Types
-- `unit` — Standard deployable unit with attack/health
-- `spell` — One-time effect card, no attack/health circles shown
-- `hero` — Unique hero unit with passive ability, gold border styling
 
-## Required Steps
+| Type | Play Method | Target |
+|---|---|---|
+| `attack` | Click → drag arrow → release on enemy | Enemy unit |
+| `skill` | Drag card upward into play zone | No target (self) |
+| `ability` | Drag card upward into play zone | No target (self) |
 
-### 1. Create the JSON Card Data
-- **Location:** `battle_scene/card_info/player/units/{card_name}.json`
-- **Enemy cards:** `battle_scene/card_info/enemy/{card_name}.json`
+---
 
-**Required fields for ALL card types:**
+## Step 1 — Create the JSON File
+
+**Location:** `battle_scene/card_info/player/{card_name}.json`
+
+**Full template:**
 ```json
 {
     "name": "card_id_here",
-    "display_name": "Human Readable Name",
-    "type": "unit",
-    "side": "player",
+    "title": "Human Readable Title",
+    "type": "attack",
     "cost": 1,
-    "front_image": "player/units/card_id_here.png",
-    "description": "Card description text.",
-    "race": "robot"
+    "description": "Deal [b]6+Strength[/b] damage.",
+    "front_image": "player/card_id_here.png",
+    "side": "player",
+    "effects": [
+        { "type": "deal_damage", "amount": 6, "scaling": "strength" }
+    ]
 }
 ```
 
-**Additional fields for units/heroes:**
+**Required fields:** `name`, `title`, `type`, `cost`, `description`, `side`, `effects`  
+**Optional fields:** `front_image` (path relative to `battle_scene/assets/images/cards/`)
+
+---
+
+## Step 2 — Choose Effects
+
+The `CombatEngine` resolves every item in `effects[]` in order:
+
+| effect `type` | What it does | `scaling` options |
+|---|---|---|
+| `deal_damage` | Deal damage to the targeted enemy | `strength`, `luck` |
+| `deal_damage_all` | Deal damage to ALL enemies | `strength` |
+| `gain_block` | Player gains block this turn | `constitution` |
+| `gain_strength` | Permanently increase Strength | — |
+| `gain_constitution` | Permanently increase Constitution | — |
+| `gain_intelligence` | Permanently increase Intelligence | — |
+| `gain_luck` | Permanently increase Luck | — |
+| `gain_charm` | Permanently increase Charm | — |
+| `gain_energy` | Give extra energy this turn | — |
+| `draw_cards` | Draw additional cards | — |
+| `apply_status` | Apply status to a target enemy | — |
+| `apply_status_self` | Apply status to the player | — |
+| `apply_status_all` | Apply status to all enemies | — |
+
+**`scaling`**: adds `player.<scaling>` to `amount` at resolution time.
+
+**Player attributes (五维属性):** `strength` / `constitution` / `intelligence` / `luck` / `charm`
+
+**Multi-effect example:**
 ```json
-{
-    "health": 5,
-    "attack": 3,
-    "keywords": []
-}
+"effects": [
+    { "type": "deal_damage", "amount": 5, "scaling": "strength" },
+    { "type": "draw_cards",  "amount": 1 }
+]
 ```
 
-**Additional fields for heroes:**
+---
+
+## Step 3 — Generate Card Art (Wasteland Punk Pixel Art)
+
+**Yes, card images must be pixel art** — same Wasteland Punk style as enemies. No JPGs, no non-pixel art.
+
+Use the `art-gen` skill to generate the card front image via PixelLab:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File `
+  "c:\Users\Jerry\Desktop\Cardgame\battle_scene\assets\images\generate_static_art.ps1" `
+  -Id "card_id_here" `
+  -Category "cards/player" `
+  -Description "a rusted plasma pistol made from salvaged junk parts, glowing blue cracked barrel" `
+  -Width 400 -Height 400
+```
+
+The script automatically appends the Wasteland Punk suffix. Output: `cards/player/{card_id}.png`
+
+Then set in JSON:
 ```json
-{
-    "passive_script_path": "res://battle_scene/units/hero_scripts/hero_name.gd"
-}
+"front_image": "player/card_id_here.png"
 ```
 
-**Additional fields for spells:**
-```json
-{
-    "target_type": "unit"
-}
+> **Existing placeholders to replace:** `holographic_shield.jpg` and `laser_gun.jpg` are old JPG placeholders that should be regenerated as Wasteland Punk pixel art PNGs.
+
+---
+
+## Step 4 — Add to Deck Pool (if needed)
+
+To include the card in the **starter deck**, add its name to `deck_manager.gd`:
+```gdscript
+var list = [
+    "strike", "strike", "strike", "strike",
+    "defend", "defend", "defend", "defend",
+    "overdrive",
+    "your_new_card"  # ← add here
+]
 ```
-`target_type` can be: `"unit"`, `"row"`, or `"none"`.
 
-### 2. Generate Card Art via Nano Banana
-Use the `generate_image` tool (Nano Banana) to create the card artwork.
-- **Art style:** Rick and Morty cartoon style — bold outlines, vibrant colors, exaggerated proportions, sci-fi theme.
-- **Prompt format:** `"Rick and Morty style sci-fi [description of the unit/spell], bold outlines, vibrant colors, card game art, no text"`
-- Save the generated image to the correct asset folder:
-  - **Player units:** `battle_scene/assets/images/cards/player/units/`
-  - **Player heroes:** `battle_scene/assets/images/cards/player/heroes/`
-  - **Enemy units:** `battle_scene/assets/images/cards/enemy/`
-- Art file name must match the `front_image` path in the JSON.
+To include it in the **draft reward pool** (drawn after battle), add to `loot_reward.gd`:
+```gdscript
+var draft_pool = ["strike", "defend", "overdrive", "your_new_card"]
+```
 
-### 3. Wire Keywords (if applicable)
-- Add keyword names to the `"keywords"` array in the JSON.
-- Keywords work on **all card types** (units, heroes, AND spells).
-- Keywords MUST reference existing keyword scripts in `battle_scene/units/keywords/`.
-- **DO NOT** create new keyword scripts here — use the `add-keyword` skill for that.
-- Available keywords: `battle_cry`, `end_of_turn`, `taunt`, `shield`, `wipe`, `one-time`
-
-### 4. Wire Custom Scripts (if applicable)
-- **Hero passives:** Create script in `battle_scene/units/hero_scripts/` and set `"passive_script_path"` in JSON.
-- **Unit overrides:** Create script in `battle_scene/units/script_overrides/` and set `"passive_script_path"` in JSON.
-- **Spell logic:** Create script in `battle_scene/spells/logic/` extending `spell_logic_base.gd`. The file name must match the card `"name"` field.
-
-### 5. Add to Starting Decks (if needed)
-- Edit the hero's JSON `"starting_pool"` array to include the new card's name.
-- Or add it to the draft reward pool in the run system.
+---
 
 ## Architecture Notes
-- Card UI is handled by `unit_card.gd` with the `CardType` enum: `UNIT`, `SPELL`, `HERO`
-- The `card_factory` auto-loads JSON and creates card instances at runtime
-- All stat modifications should use `add_permanent_stats()` or `add_temporary_stats()` which emit the `unit_stats_changed` signal
-- Card containers use `card_container` property (not `get_parent()`) to determine board placement
+
+- Card JSON is auto-discovered from `battle_scene/card_info/player/` — no registration needed
+- `CombatEngine._apply_effect()` handles all effect dispatch — add new effect types there only
+- `PlayCard._handle_mouse_pressed()` routes `attack` vs `skill/ability` based on `card_info["type"]`
+- Enemy cards use a different schema — see `create-enemy` skill
+- `constitution` is the correct attribute name — `defense` no longer exists

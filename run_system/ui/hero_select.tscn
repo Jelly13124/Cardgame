@@ -1,8 +1,8 @@
-[gd_scene format=3 uid="uid://cyk5j6xg86kwp"]
+[gd_scene format=3 uid="uid://bckg6baosrf1k"]
 
-[ext_resource type="Script" path="res://run_system/ui/hero_select.gd" id="1_a0b2d"]
+[ext_resource type="Script" uid="uid://cvubuxgpn8axb" path="res://run_system/ui/hero_select.gd" id="1_a0b2d"]
 
-[node name="HeroSelect" type="Control"]
+[node name="HeroSelect" type="Control" unique_id=643407040]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,7 +11,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_a0b2d")
 
-[node name="ColorRect" type="ColorRect" parent="."]
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1284976407]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -20,7 +20,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.062745, 0.082352, 0.117647, 1)
 
-[node name="TitleLabel" type="Label" parent="."]
+[node name="TitleLabel" type="Label" parent="." unique_id=430688146]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -31,7 +31,7 @@ theme_override_font_sizes/font_size = 64
 text = "SELECT YOUR COMMANDER"
 horizontal_alignment = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1982609953]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -47,11 +47,11 @@ grow_vertical = 2
 theme_override_constants/separation = 100
 alignment = 1
 
-[node name="BillButton" type="Button" parent="HBoxContainer"]
+[node name="BillButton" type="Button" parent="HBoxContainer" unique_id=326793773]
 custom_minimum_size = Vector2(300, 500)
 layout_mode = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/BillButton"]
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/BillButton" unique_id=1223042168]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -60,30 +60,30 @@ grow_horizontal = 2
 grow_vertical = 2
 alignment = 1
 
-[node name="Name" type="Label" parent="HBoxContainer/BillButton/VBoxContainer"]
+[node name="Name" type="Label" parent="HBoxContainer/BillButton/VBoxContainer" unique_id=1690930196]
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 text = "Robot Bill"
 horizontal_alignment = 1
 
-[node name="Stats" type="Label" parent="HBoxContainer/BillButton/VBoxContainer"]
+[node name="Stats" type="Label" parent="HBoxContainer/BillButton/VBoxContainer" unique_id=1604146726]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "ATK: 10 | HP: 20"
 horizontal_alignment = 1
 
-[node name="Desc" type="Label" parent="HBoxContainer/BillButton/VBoxContainer"]
+[node name="Desc" type="Label" parent="HBoxContainer/BillButton/VBoxContainer" unique_id=1284683503]
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 text = "Standard assault commander. Balanced pool."
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="JerryButton" type="Button" parent="HBoxContainer"]
+[node name="JerryButton" type="Button" parent="HBoxContainer" unique_id=144265740]
 custom_minimum_size = Vector2(300, 500)
 layout_mode = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/JerryButton"]
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/JerryButton" unique_id=354663997]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -92,21 +92,21 @@ grow_horizontal = 2
 grow_vertical = 2
 alignment = 1
 
-[node name="Name" type="Label" parent="HBoxContainer/JerryButton/VBoxContainer"]
+[node name="Name" type="Label" parent="HBoxContainer/JerryButton/VBoxContainer" unique_id=426869020]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.4, 0.4, 1)
 theme_override_font_sizes/font_size = 32
 text = "Jerry Killer"
 horizontal_alignment = 1
 
-[node name="Stats" type="Label" parent="HBoxContainer/JerryButton/VBoxContainer"]
+[node name="Stats" type="Label" parent="HBoxContainer/JerryButton/VBoxContainer" unique_id=828958924]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.4, 0.4, 1)
 theme_override_font_sizes/font_size = 24
 text = "ATK: 30 | HP: 5"
 horizontal_alignment = 1
 
-[node name="Desc" type="Label" parent="HBoxContainer/JerryButton/VBoxContainer"]
+[node name="Desc" type="Label" parent="HBoxContainer/JerryButton/VBoxContainer" unique_id=1754746827]
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 text = "Savage glass cannon. Aggressive pool."

@@ -1,0 +1,12 @@
+{
+	"name": "defend",
+	"title": "Defend",
+	"type": "skill",
+	"cost": 1,
+	"description": "Gain 3+Constitution Block.",
+	"front_image": "player/holographic_shield.jpg",
+	"side": "player",
+	"effects": [
+		{ "type": "gain_block", "amount": 3, "scaling": "constitution" }
+	]
+}

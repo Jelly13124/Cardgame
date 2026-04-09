@@ -68,34 +68,18 @@ func inspect_card(card: Control) -> void:
 		if inspected_card:
 			inspected_card.queue_free()
 		
-		inspected_card = main.card_factory.create_card(card.card_info.get("name", "error"), null)
+		var card_name = card.card_info.get("name", "")
+		if card_name.is_empty(): return
+		inspected_card = main.card_factory.create_card(card_name, null)
 		if inspected_card:
+			if inspected_card.get_parent():
+				inspected_card.get_parent().remove_child(inspected_card)
 			inspected_card.reparent(inspect_pivot)
-			
-			if "attack" in inspected_card and "health" in inspected_card:
-				var base_buffed_atk = card.get("base_attack") if "base_attack" in card else 0
-				var base_buffed_hp = card.get("base_health") if "base_health" in card else 0
-				
-				if base_buffed_atk == null: base_buffed_atk = 0
-				if base_buffed_hp == null: base_buffed_hp = 0
-				
-				inspected_card.base_attack = base_buffed_atk
-				inspected_card.base_health = base_buffed_hp
-				inspected_card.attack = base_buffed_atk
-				inspected_card.health = base_buffed_hp
-				if inspected_card.has_method("_update_card_ui"):
-					inspected_card._update_card_ui()
-			
-			inspected_card.set_view_mode("card")
-			if inspected_card.has_method("set_inspect_scale"):
-				inspected_card.set_inspect_scale(2.5)
-			else:
-				inspected_card.scale = Vector2(2.5, 2.5)
-				
-			inspected_card.global_position = Vector2(760, 265)
+			inspected_card.show_front = true
+			inspected_card.scale = Vector2(2.5, 2.5)
 			inspected_card.can_be_interacted_with = false
 			inspected_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			inspected_card.refresh_ui()
+			inspected_card.global_position = Vector2(760, 265)
 
 func _on_inspect_overlay_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
@@ -121,17 +105,19 @@ func show_pile_viewer(title: String, pile_container: CardContainer) -> void:
 		
 	# Populate with cards from the pile
 	for card_data in pile_container.get_cards():
-		var card_instance = main.card_factory.create_card(card_data.card_info.get("name", "error"), null)
+		var card_name = card_data.card_info.get("name", "")
+		if card_name.is_empty(): continue
+		var card_instance = main.card_factory.create_card(card_name, null)
 		if card_instance:
+			# Detach from any existing parent first
 			if card_instance.get_parent():
 				card_instance.get_parent().remove_child(card_instance)
-				
-			card_instance.card_info = card_data.card_info.duplicate()
-			card_instance.set_view_mode("card")
-			card_instance.scale = Vector2(0.8, 0.8)
+			# Show front face
+			card_instance.show_front = true
+			# Disable all interaction
 			card_instance.can_be_interacted_with = false
 			card_instance.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			card_instance.refresh_ui()
+			card_instance.scale = Vector2(0.7, 0.7)
 			pile_viewer_grid.add_child(card_instance)
 			
 	pile_viewer_layer.visible = true
