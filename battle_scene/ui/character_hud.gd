@@ -12,12 +12,13 @@ class_name CharacterHUD
 
 # Internal nodes
 var _name_label: Label
-var _hp_bar_bg: Panel
-var _hp_bar_fill: Panel
+var _hp_frame: NinePatchRect
+var _hp_bar: TextureProgressBar
 var _hp_label: Label
-var _block_badge: Panel
-var _block_icon: Label
+var _block_badge: TextureRect
 var _block_label: Label
+
+const UI_PATH = "res://battle_scene/assets/images/ui/"
 
 func _ready() -> void:
 	_build_ui()
@@ -27,82 +28,68 @@ func _build_ui() -> void:
 	# ---- Name Label ----
 	_name_label = Label.new()
 	_name_label.text = character_name
-	_name_label.add_theme_font_size_override("font_size", 13)
-	_name_label.add_theme_color_override("font_color", Color(1, 1, 1))
+	_name_label.add_theme_font_size_override("font_size", 12)
+	_name_label.add_theme_color_override("font_color", Color(1, 0.95, 0.8))
 	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_name_label.size = Vector2(bar_width, 18)
-	_name_label.position = Vector2(0, 0)
+	_name_label.position = Vector2(0, -2)
 	add_child(_name_label)
 
-	# ---- HP Bar BG ----
-	var bg_style = StyleBoxFlat.new()
-	bg_style.bg_color = Color(0.15, 0.05, 0.05)
-	bg_style.corner_radius_top_left = 6
-	bg_style.corner_radius_top_right = 6
-	bg_style.corner_radius_bottom_right = 6
-	bg_style.corner_radius_bottom_left = 6
-	_hp_bar_bg = Panel.new()
-	_hp_bar_bg.size = Vector2(bar_width, bar_height)
-	_hp_bar_bg.position = Vector2(0, 20)
-	_hp_bar_bg.add_theme_stylebox_override("panel", bg_style)
-	add_child(_hp_bar_bg)
+	# ---- HP Frame (NinePatch) ----
+	_hp_frame = NinePatchRect.new()
+	_hp_frame.texture = load(UI_PATH + "hp_bar_frame.png")
+	_hp_frame.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_hp_frame.patch_margin_left = 4
+	_hp_frame.patch_margin_top = 4
+	_hp_frame.patch_margin_right = 4
+	_hp_frame.patch_margin_bottom = 4
+	_hp_frame.size = Vector2(bar_width, bar_height)
+	_hp_frame.position = Vector2(0, 18)
+	add_child(_hp_frame)
 
-	# ---- HP Bar Fill ----
-	var fill_style = StyleBoxFlat.new()
-	fill_style.bg_color = Color(0.2, 0.75, 0.25)
-	fill_style.corner_radius_top_left = 6
-	fill_style.corner_radius_top_right = 6
-	fill_style.corner_radius_bottom_right = 6
-	fill_style.corner_radius_bottom_left = 6
-	_hp_bar_fill = Panel.new()
-	_hp_bar_fill.size = Vector2(bar_width, bar_height)
-	_hp_bar_fill.position = Vector2(0, 20)
-	_hp_bar_fill.add_theme_stylebox_override("panel", fill_style)
-	add_child(_hp_bar_fill)
+	# ---- HP Bar (ProgressBar) ----
+	_hp_bar = TextureProgressBar.new()
+	_hp_bar.texture_progress = load(UI_PATH + "hp_bar_fill.png")
+	_hp_bar.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_hp_bar.nine_patch_stretch = true
+	_hp_bar.stretch_margin_left = 2
+	_hp_bar.stretch_margin_top = 2
+	_hp_bar.stretch_margin_right = 2
+	_hp_bar.stretch_margin_bottom = 2
+	# Inset slightly inside frame
+	_hp_bar.size = Vector2(bar_width - 4, bar_height - 4)
+	_hp_bar.position = Vector2(2, 2)
+	_hp_frame.add_child(_hp_bar)
 
 	# ---- HP Text ----
 	_hp_label = Label.new()
-	_hp_label.size = Vector2(bar_width, bar_height)
-	_hp_label.position = Vector2(0, 20)
+	_hp_label.size = _hp_frame.size
+	_hp_label.position = Vector2.ZERO
 	_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hp_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_hp_label.add_theme_font_size_override("font_size", 11)
+	_hp_label.add_theme_font_size_override("font_size", 10)
 	_hp_label.add_theme_color_override("font_color", Color(1, 1, 1))
-	add_child(_hp_label)
+	_hp_label.add_theme_color_override("font_shadow_color", Color(0,0,0,0.8))
+	_hp_frame.add_child(_hp_label)
 
-	# ---- Block Badge (hidden by default) ----
-	var badge_style = StyleBoxFlat.new()
-	badge_style.bg_color = Color(0.2, 0.5, 0.95)
-	badge_style.corner_radius_top_left = 12
-	badge_style.corner_radius_top_right = 12
-	badge_style.corner_radius_bottom_right = 12
-	badge_style.corner_radius_bottom_left = 12
-	badge_style.border_width_left = 2
-	badge_style.border_width_top = 2
-	badge_style.border_width_right = 2
-	badge_style.border_width_bottom = 2
-	badge_style.border_color = Color(0.6, 0.8, 1.0)
-
-	_block_badge = Panel.new()
-	_block_badge.size = Vector2(52, 24)
-	_block_badge.position = Vector2(bar_width + 6, 18)
-	_block_badge.add_theme_stylebox_override("panel", badge_style)
+	# ---- Block Badge (Shield) ----
+	_block_badge = TextureRect.new()
+	_block_badge.texture = load(UI_PATH + "block_badge.png")
+	_block_badge.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_block_badge.size = Vector2(32, 32)
+	# Center on the left side of the HP bar
+	_block_badge.position = Vector2(-16, 11)
+	_block_badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_block_badge.visible = false
 	add_child(_block_badge)
 
-	# Shield icon emoji + number inside badge
-	_block_icon = Label.new()
-	_block_icon.text = "🛡"
-	_block_icon.add_theme_font_size_override("font_size", 11)
-	_block_icon.add_theme_color_override("font_color", Color(1, 1, 1))
-	_block_icon.position = Vector2(2, 4)
-	_block_badge.add_child(_block_icon)
-
 	_block_label = Label.new()
-	_block_label.text = "0"
+	_block_label.size = _block_badge.size
+	_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_block_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_block_label.add_theme_font_size_override("font_size", 12)
 	_block_label.add_theme_color_override("font_color", Color(1, 1, 1))
-	_block_label.position = Vector2(22, 4)
+	_block_label.position = Vector2(0, -1) # adjust padding inside shield
 	_block_badge.add_child(_block_label)
 
 ## Call this whenever stats change to refresh all visuals.
@@ -111,25 +98,22 @@ func update_stats(hp: int, max_hp: int, blk: int) -> void:
 	max_health = max_hp
 	current_block = blk
 	
-	# HP bar fill
-	var ratio = float(max(0, hp)) / float(max(1, max_hp))
-	_hp_bar_fill.size.x = bar_width * ratio
+	if not _hp_bar: return
+
+	# HP bar update
+	_hp_bar.max_value = max_hp
+	_hp_bar.value = hp
 	_hp_label.text = "%d / %d" % [max(0, hp), max_hp]
 	
-	# Colour the bar (green -> yellow -> red)
-	var fill_style = StyleBoxFlat.new()
+	# Color grading based on health %
+	var ratio = float(hp) / float(max(1, max_hp))
 	if ratio > 0.5:
-		fill_style.bg_color = Color(0.2, 0.75, 0.25)
+		_hp_bar.tint_progress = Color(0.2, 0.8, 0.3) # Fresh green
 	elif ratio > 0.25:
-		fill_style.bg_color = Color(0.85, 0.65, 0.1)
+		_hp_bar.tint_progress = Color(0.9, 0.7, 0.1) # Wounded yellow
 	else:
-		fill_style.bg_color = Color(0.85, 0.15, 0.15)
-	fill_style.corner_radius_top_left = 6
-	fill_style.corner_radius_top_right = 6
-	fill_style.corner_radius_bottom_right = 6
-	fill_style.corner_radius_bottom_left = 6
-	_hp_bar_fill.add_theme_stylebox_override("panel", fill_style)
+		_hp_bar.tint_progress = Color(0.9, 0.1, 0.1) # Critical red
 	
-	# Block badge
+	# Block badge visibility
 	_block_badge.visible = blk > 0
 	_block_label.text = str(blk)

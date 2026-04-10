@@ -1,10 +1,11 @@
 {
 	"name": "strike",
 	"title": "Strike",
+	"rarity": "common",
 	"type": "attack",
 	"cost": 1,
 	"description": "Deal [b]3+Strength[/b] damage.",
-	"front_image": "player/laser_gun.jpg",
+	"front_image": "player/strike.jpg",
 	"side": "player",
 	"effects": [
 		{ "type": "deal_damage", "amount": 3, "scaling": "strength" }

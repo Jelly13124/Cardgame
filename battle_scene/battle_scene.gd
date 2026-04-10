@@ -51,6 +51,8 @@ func _ready():
 		player.health_changed.connect(_on_player_health_changed)
 		player.energy_changed.connect(_on_player_energy_changed)
 		player.block_changed.connect(_on_player_block_changed)
+		player.stats_changed.connect(_update_ui_labels)
+		player.status_changed.connect(_update_ui_labels)
 		player.died.connect(_game_over)
 	
 	# Combat Engine Signals
@@ -103,17 +105,18 @@ func _set_hover_effect(unit: Node, active: bool) -> void:
 	tween.tween_property(unit, "modulate", modulate_target, 0.1)
 
 ## Returns the enemy node under a screen position (viewport coords).
-## EnemyEntity sprite is AnimatedSprite2D: 64px × 2.0 scale = 128×128, at offset (-64, -128).
+## EnemyEntity sprite is AnimatedSprite2D: 64px × 3.0 scale = 192×192.
+## Anchored at feet: local pos (0, -96) → spans x:[-96, 96], y:[-192, 0].
 func _get_unit_at_position(pos: Vector2) -> Node:
 	for enemy in enemy_container.get_children():
 		if not is_instance_valid(enemy): continue
 		var ep = enemy.global_position
-		# Body rect matches the 128×128 scaled sprite at (-64, -128) from entity origin
-		var body_rect = Rect2(ep.x - 64, ep.y - 128, 128, 128)
+		# Body rect matches the 192×192 scaled sprite anchored at feet
+		var body_rect = Rect2(ep.x - 96, ep.y - 192, 192, 192)
 		if body_rect.has_point(pos):
 			return enemy
-		# Fallback: also catch clicks near the HUD above the sprite
-		if ep.distance_to(pos) < 90.0:
+		# Fallback: catch clicks near the HUD/center area
+		if ep.distance_to(pos) < 110.0:
 			return enemy
 	return null
 
@@ -155,6 +158,12 @@ func _on_player_block_changed(_block: int) -> void: _update_ui_labels()
 func _update_ui_labels():
 	if player:
 		ui_manager.update_labels(player.energy, player.max_energy)
+		refresh_hand_ui()
+
+func refresh_hand_ui():
+	for card in hand.get_cards():
+		if card.has_method("update_display"):
+			card.update_display()
 
 ## Initialise a new battle from RunManager state (or defaults if no run is active).
 func _start_new_game():
@@ -252,14 +261,18 @@ func play_spell(card: Control, target_node: Node):
 	# Resolve combat effects (may await animations)
 	await combat_engine.resolve_card_effect(card, target_node, player)
 	
-	# Move to discard after effect finishes
+	# Animate card flying to the discard pile before officially moving it
 	if is_instance_valid(card):
 		if card.card_container and card.card_container.has_card(card):
 			card.card_container.remove_card(card)
-		discard_pile.add_card(card)
+		await _animate_card_to_discard(card)
+		if is_instance_valid(card):
+			discard_pile.add_card(card)
+			card.modulate.a = 1.0  # restore alpha after discard
 	
 	is_resolving = false
 	_update_ui_labels()
+	refresh_hand_ui()
 
 # ─── Targeting ────────────────────────────────────────────────────────────────
 
@@ -307,6 +320,40 @@ func inspect_card(card: Control) -> void: ui_manager.inspect_card(card)
 func _on_inspect_overlay_gui_input(event: InputEvent) -> void: ui_manager._on_inspect_overlay_gui_input(event)
 func show_pile_viewer(title: String, pile_container: Node): ui_manager.show_pile_viewer(title, pile_container)
 func hide_pile_viewer(): ui_manager.hide_pile_viewer()
+
+# ─── Discard Animation ────────────────────────────────────────────────────────
+
+## Smoothly flies a card to the discard pile's on-screen position, then fades it out.
+func _animate_card_to_discard(card: Control) -> void:
+	if not is_instance_valid(card): return
+
+	# Target: centre of the discard pile node in screen space
+	var target_pos: Vector2
+	if is_instance_valid(discard_pile):
+		target_pos = discard_pile.global_position + Vector2(80, 110) # approx card centre
+	else:
+		return
+
+	# Make sure card renders on top while flying
+	card.z_index = 50
+
+	var tween = create_tween()
+	tween.set_parallel(true)
+	# Fly to discard pile
+	tween.tween_property(card, "global_position", target_pos, 0.35) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	# Shrink slightly as it lands
+	tween.tween_property(card, "scale", Vector2(0.5, 0.5), 0.30) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	# Fade out
+	tween.tween_property(card, "modulate:a", 0.0, 0.30) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+	await tween.finished
+
+	# Reset scale for reuse in the discard pile
+	card.scale = Vector2.ONE
+	card.z_index = 0
 
 func _wait(seconds: float) -> Signal:
 	return get_tree().create_timer(seconds).timeout

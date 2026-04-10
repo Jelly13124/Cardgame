@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" path="res://battle_scene/my_card_factory.tscn" id="3_l4bd6"]
 [ext_resource type="Script" path="res://addons/card-framework/card_manager.gd" id="3_urm3r"]
 [ext_resource type="PackedScene" path="res://addons/card-framework/hand.tscn" id="3_xp5g3"]
-[ext_resource type="Texture2D" path="res://icon.svg" id="6_uv8m4"]
+[ext_resource type="Texture2D" path="res://battle_scene/assets/images/cards/ui/card_back.png" id="6_uv8m4"]
 [ext_resource type="PackedScene" path="res://battle_scene/player.tscn" id="7_player"]
 [ext_resource type="Script" path="res://addons/card-framework/hand.gd" id="10_wrush"]
 [ext_resource type="Script" path="res://addons/card-framework/pile.gd" id="12_ixui7"]
@@ -99,7 +99,17 @@ mouse_filter = 1
 script = ExtResource("12_ixui7")
 card_face_up = false
 allow_card_movement = false
-placeholder_texture = ExtResource("6_uv8m4")
+hide_cards = true
+
+[node name="CardBackVisual" type="TextureRect" parent="CardManager/Deck"]
+layout_mode = 0
+offset_right = 160.0
+offset_bottom = 220.0
+texture = ExtResource("6_uv8m4")
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 2
+mouse_filter = 2
 
 [node name="DiscardPile" type="Control" parent="CardManager" unique_id=196193801 instance=ExtResource("2_xkfcc")]
 layout_mode = 1
@@ -118,7 +128,17 @@ mouse_filter = 1
 script = ExtResource("12_ixui7")
 card_face_up = false
 allow_card_movement = false
-placeholder_texture = ExtResource("6_uv8m4")
+hide_cards = true
+
+[node name="CardBackVisual" type="TextureRect" parent="CardManager/DiscardPile"]
+layout_mode = 0
+offset_right = 160.0
+offset_bottom = 220.0
+texture = ExtResource("6_uv8m4")
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 2
+mouse_filter = 2
 
 [node name="BlackHolePile" type="Control" parent="CardManager" unique_id=196193802 instance=ExtResource("2_xkfcc")]
 layout_mode = 1
@@ -140,15 +160,6 @@ card_face_up = false
 allow_card_movement = false
 hide_cards = true
 
-[node name="BlackCircle" type="Panel" parent="CardManager/BlackHolePile" unique_id=983578234]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_blackhole")
 
 
 [node name="Player" parent="." instance=ExtResource("7_player")]

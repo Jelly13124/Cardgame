@@ -30,7 +30,7 @@ func _ready() -> void:
 		card_factory.default_card_scene = load("res://battle_scene/play_card.tscn")
 		card_factory.card_asset_dir = "res://battle_scene/assets/images/cards"
 		card_factory.card_info_dir = "res://battle_scene/card_info"
-		card_factory.back_image = load("res://icon.svg")
+		card_factory.back_image = load("res://battle_scene/assets/images/cards/ui/card_back.png")
 		card_factory.card_size = Vector2(200, 280)
 		add_child(card_factory)
 		card_factory.preload_card_data()

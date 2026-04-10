@@ -32,7 +32,9 @@ var _hud: Node
 ## Reference to the animated sprite (replaces old ColorRect body)
 var _sprite: AnimatedSprite2D
 var _intent_label: Label
+var _intent_icon: TextureRect
 var _intent_bg: Panel   # Colored pill background for intent badge
+var _intent_tween: Tween
 
 ## Base path for enemy sprite assets — each enemy gets its own subfolder: {ENEMIES_DIR}{sprite_id}/
 const ENEMIES_DIR = "res://battle_scene/assets/images/enemies/"
@@ -64,6 +66,7 @@ static func create(id: String) -> EnemyEntity:
 func _ready() -> void:
 	_build_visual()
 	_update_intent_display()
+	_start_intent_float_anim()
 
 func _build_visual() -> void:
 	if sprite_id != "":
@@ -140,22 +143,27 @@ func _build_intent_badge(intent_pos: Vector2) -> void:
 	pill_style.border_color = Color(1.0, 0.4, 0.4, 0.9)
 
 	_intent_bg = Panel.new()
-	_intent_bg.size = Vector2(120, 30)
+	_intent_bg.size = Vector2(90, 30)
 	_intent_bg.position = intent_pos
 	_intent_bg.add_theme_stylebox_override("panel", pill_style)
 	add_child(_intent_bg)
 
+	# Icon
+	_intent_icon = TextureRect.new()
+	_intent_icon.size = Vector2(24, 24)
+	_intent_icon.position = Vector2(4, 3)
+	_intent_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_intent_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_intent_bg.add_child(_intent_icon)
+
 	# Text label inside the pill
 	_intent_label = Label.new()
-	_intent_label.add_theme_font_size_override("font_size", 15)
+	_intent_label.add_theme_font_size_override("font_size", 14)
 	_intent_label.add_theme_color_override("font_color", Color(1, 1, 1))
-	_intent_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
-	_intent_label.add_theme_constant_override("shadow_offset_x", 1)
-	_intent_label.add_theme_constant_override("shadow_offset_y", 1)
-	_intent_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_intent_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_intent_label.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-	_intent_label.size = Vector2(120, 30)
-	_intent_label.position = Vector2.ZERO
+	_intent_label.size = Vector2(60, 30)
+	_intent_label.position = Vector2(32, 0)
 	_intent_bg.add_child(_intent_label)
 
 ## Builds the health bar (CharacterHUD) positioned below the sprite.
@@ -202,20 +210,31 @@ func _update_intent_display() -> void:
 	pill.border_width_right  = 1
 	pill.border_width_top    = 1
 	pill.border_width_bottom = 1
-	match next.get("type", ""):
+	var type = next.get("type", "")
+	match type:
 		"attack":
 			pill.bg_color     = Color(0.55, 0.08, 0.08, 0.88)
 			pill.border_color = Color(1.0, 0.4, 0.4, 0.9)
+			_intent_icon.texture = load("res://battle_scene/assets/images/ui/intent_attack.png")
 		"block":
 			pill.bg_color     = Color(0.08, 0.25, 0.55, 0.88)
 			pill.border_color = Color(0.4, 0.65, 1.0, 0.9)
-		"heal":
+			_intent_icon.texture = load("res://battle_scene/assets/images/ui/intent_block.png")
+		"heal", "buff":
 			pill.bg_color     = Color(0.08, 0.40, 0.12, 0.88)
 			pill.border_color = Color(0.3, 1.0, 0.4, 0.9)
+			_intent_icon.texture = load("res://battle_scene/assets/images/ui/intent_buff.png")
 		_:
 			pill.bg_color     = Color(0.25, 0.25, 0.25, 0.85)
 			pill.border_color = Color(0.7, 0.7, 0.7, 0.9)
 	_intent_bg.add_theme_stylebox_override("panel", pill)
+
+func _start_intent_float_anim() -> void:
+	if not _intent_bg: return
+	var start_y = _intent_bg.position.y
+	_intent_tween = create_tween().set_loops()
+	_intent_tween.tween_property(_intent_bg, "position:y", start_y - 6, 1.5).set_trans(Tween.TRANS_SINE)
+	_intent_tween.tween_property(_intent_bg, "position:y", start_y, 1.5).set_trans(Tween.TRANS_SINE)
 
 # ─── Combat ───────────────────────────────────────────────────────────────────
 

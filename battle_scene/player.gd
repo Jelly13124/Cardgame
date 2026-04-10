@@ -17,6 +17,8 @@ class_name PlayerEntity
 signal health_changed(new_amount)
 signal energy_changed(new_amount)
 signal block_changed(new_amount)
+signal stats_changed
+signal status_changed
 signal died
 
 const HUD_SCRIPT = preload("res://battle_scene/ui/character_hud.gd")

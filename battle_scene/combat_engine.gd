@@ -15,6 +15,13 @@ signal victory_declared()
 ## player: the PlayerEntity.
 func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 	var effects: Array = card.card_info.get("effects", [])
+	var type = card.card_info.get("type", "skill").to_lower()
+	
+	var card_mult: float = 1.0
+	if type == "attack" and player.has_method("get_status_stacks") and player.get_status_stacks("double_damage") > 0:
+		card_mult = 2.0
+		player.status_system.remove_status("double_damage", player)
+		main.show_notification("DOUBLE DAMAGE ACTIVE!", Color(0.2, 0.8, 1.0))
 
 	if effects.is_empty():
 		# Fallback for cards that predate the effects system
@@ -22,12 +29,11 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 		return
 
 	# Play card animation first, then resolve all effects in sequence
-	var type = card.card_info.get("type", "skill").to_lower()
 	if type == "attack" and target and is_instance_valid(target):
 		await _animate_lunge(player, target.global_position + Vector2(-80, 0))
 
 	for effect in effects:
-		await _apply_effect(effect, target, player)
+		await _apply_effect(effect, target, player, card_mult)
 
 	if type == "attack" and target and is_instance_valid(target):
 		await _animate_return(player)
@@ -36,7 +42,7 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 
 ## Apply a single effect dictionary.
 ## All scaling uses the player's RPG attributes (strength, constitution, intelligence, luck, charm).
-func _apply_effect(effect: Dictionary, target: Node, player: Node) -> void:
+func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: float = 1.0) -> void:
 	var effect_type: String = effect.get("type", "")
 	var amount: int          = int(effect.get("amount", 0))
 	var scaling: String      = effect.get("scaling", "")
@@ -47,9 +53,12 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node) -> void:
 		amount += int(player.get(scaling))
 
 	# Optional multiplier applied AFTER scaling
-	# e.g. { "amount": 0, "scaling": "intelligence", "multiplier": 2 } = 0 + INT, then ×2
 	if multiplier != 1:
 		amount = int(amount * multiplier)
+		
+	# Apply card-level multiplier (e.g. Double Damage status)
+	if card_mult != 1.0:
+		amount = int(amount * card_mult)
 
 	match effect_type:
 		# ── Damage ───────────────────────────────────────────────────────────
@@ -77,16 +86,19 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node) -> void:
 		# ── Stat Buffs ────────────────────────────────────────────────────────
 		"gain_strength":
 			player.strength += amount
+			if player.has_signal("stats_changed"): player.stats_changed.emit()
 			main.show_notification("STRENGTH +%d" % amount, Color(1.0, 0.5, 0.2))
 			await get_tree().create_timer(0.2).timeout
 
 		"gain_constitution":
 			player.constitution += amount
+			if player.has_signal("stats_changed"): player.stats_changed.emit()
 			main.show_notification("CONSTITUTION +%d" % amount, Color(0.4, 0.7, 1.0))
 			await get_tree().create_timer(0.2).timeout
 
 		"gain_intelligence":
 			player.intelligence += amount
+			if player.has_signal("stats_changed"): player.stats_changed.emit()
 			main.show_notification("INTELLIGENCE +%d" % amount, Color(0.8, 0.4, 1.0))
 			await get_tree().create_timer(0.2).timeout
 

@@ -1,9 +1,11 @@
 {
-	"name": "overdrive",
-	"title": "Overdrive",
+	"name": "override",
+	"title": "Override",
+	"rarity": "uncommon",
 	"type": "ability",
 	"cost": 2,
 	"description": "Gain [b]2 Strength[/b].",
+	"front_image": "player/override.jpg",
 	"side": "player",
 	"effects": [
 		{ "type": "gain_strength", "amount": 2 }
