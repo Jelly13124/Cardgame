@@ -172,6 +172,7 @@ func _update_target_positions() -> void:
 			y_max = maxf(y_max, current_y_max)
 
 		card.move(target_pos, target_rotation)
+		card.visible = true  # Reset visibility — cards from hide_cards=true piles arrive invisible
 		card.show_front = card_face_up
 		card.can_be_interacted_with = true
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b0ow1o7dbvv1t"
-path="res://.godot/imported/black_cardback.png-efe55807a554040c08c05dbb5be90069.ctex"
+uid="uid://ca643u7b4lt6h"
+path="res://.godot/imported/block_badge.png-3f7758a7496306626f70e1eea3d7810e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://black_cardback.png"
-dest_files=["res://.godot/imported/black_cardback.png-efe55807a554040c08c05dbb5be90069.ctex"]
+source_file="res://battle_scene/assets/images/ui/block_badge.png"
+dest_files=["res://.godot/imported/block_badge.png-3f7758a7496306626f70e1eea3d7810e.ctex"]
 
 [params]
 

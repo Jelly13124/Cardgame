@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://custom_unit_card"]
+[gd_scene load_steps=6 format=3 uid="uid://custom_unit_card"]
 
 [ext_resource type="Script" path="res://battle_scene/play_card.gd" id="1_script"]
 
@@ -74,6 +74,18 @@ corner_radius_bottom_left = 80
 shadow_color = Color(0.1, 0.5, 1, 0.5)
 shadow_size = 15
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cost"]
+bg_color = Color(0.9, 0.5, 0.1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.55, 0.28, 0.04, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
 [node name="PlayCard" type="Control"]
 custom_minimum_size = Vector2(160, 220)
 layout_mode = 3
@@ -89,74 +101,70 @@ offset_right = 160.0
 offset_bottom = 220.0
 mouse_filter = 1
 
-[node name="TextureRect" type="TextureRect" parent="FrontFace"]
+[node name="PlayableGlow" type="ColorRect" parent="FrontFace"]
 visible = false
-modulate = Color(1, 1, 1, 0)
 layout_mode = 0
-offset_right = 1.0
-offset_bottom = 1.0
+offset_left = -3.0
+offset_top = -3.0
+offset_right = 163.0
+offset_bottom = 223.0
+mouse_filter = 2
+color = Color(0, 1, 1, 0.4)
 
-[node name="CardBackground" type="ColorRect" parent="FrontFace"]
+[node name="TextureRect" type="TextureRect" parent="FrontFace"]
+visible = true
 layout_mode = 0
 offset_right = 160.0
 offset_bottom = 220.0
-color = Color(0.25, 0.2, 0.15, 1)
-
-[node name="CardBorder" type="ColorRect" parent="FrontFace"]
-layout_mode = 0
-offset_left = 2.0
-offset_top = 2.0
-offset_right = 158.0
-offset_bottom = 218.0
-color = Color(0.55, 0.45, 0.3, 1)
-
-[node name="CardInner" type="ColorRect" parent="FrontFace"]
-layout_mode = 0
-offset_left = 5.0
-offset_top = 5.0
-offset_right = 155.0
-offset_bottom = 215.0
-color = Color(0.35, 0.3, 0.22, 1)
+expand_mode = 1
+stretch_mode = 5
 
 [node name="ArtBackground" type="ColorRect" parent="FrontFace"]
 layout_mode = 0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = 150.0
-offset_bottom = 110.0
-color = Color(0.4, 0.45, 0.5, 1)
+offset_left = 8.0
+offset_top = 26.0
+offset_right = 152.0
+offset_bottom = 128.0
+color = Color(0.18, 0.14, 0.09, 1)
 
 [node name="ArtContainer" type="Control" parent="FrontFace"]
 clip_contents = true
 layout_mode = 0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = 150.0
-offset_bottom = 110.0
+offset_left = 12.0
+offset_top = 30.0
+offset_right = 148.0
+offset_bottom = 124.0
 
 [node name="ArtTexture" type="TextureRect" parent="FrontFace/ArtContainer"]
-layout_mode = 0
-offset_right = 140.0
-offset_bottom = 100.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 expand_mode = 1
 stretch_mode = 6
 
-[node name="NameBanner" type="ColorRect" parent="FrontFace"]
+[node name="ArtFrameTexture" type="TextureRect" parent="FrontFace"]
 layout_mode = 0
-offset_left = 12.0
-offset_top = 114.0
-offset_right = 148.0
-offset_bottom = 134.0
-color = Color(0.3, 0.25, 0.18, 1)
+offset_left = 8.0
+offset_top = 26.0
+offset_right = 152.0
+offset_bottom = 128.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
 
-[node name="NameLabel" type="Label" parent="FrontFace/NameBanner"]
+[node name="NameLabel" type="Label" parent="FrontFace"]
 layout_mode = 0
-offset_right = 136.0
-offset_bottom = 20.0
-theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+offset_left = 30.0
+offset_top = 8.0
+offset_right = 148.0
+offset_bottom = 28.0
+theme_override_colors/font_color = Color(1, 0.97, 0.88, 1)
 theme_override_font_sizes/font_size = 12
 text = "DRONE"
-horizontal_alignment = 1
+horizontal_alignment = 0
 vertical_alignment = 1
 
 [node name="DescriptionBox" type="ColorRect" parent="FrontFace"]
@@ -181,11 +189,11 @@ scroll_active = false
 
 [node name="RaceBox" type="ColorRect" parent="FrontFace"]
 layout_mode = 0
-offset_left = 35.0
-offset_top = 204.0
-offset_right = 125.0
-offset_bottom = 220.0
-color = Color(0.2, 0.15, 0.12, 1)
+offset_left = 42.0
+offset_top = 205.0
+offset_right = 118.0
+offset_bottom = 218.0
+color = Color(0.15, 0.12, 0.1, 0.9)
 
 [node name="RaceLabel" type="Label" parent="FrontFace/RaceBox"]
 layout_mode = 1
@@ -200,11 +208,11 @@ vertical_alignment = 1
 
 [node name="CostCircle" type="ColorRect" parent="FrontFace"]
 layout_mode = 0
-offset_left = 130.0
-offset_top = 2.0
-offset_right = 158.0
-offset_bottom = 30.0
-color = Color(0.2, 0.4, 0.8, 1)
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 27.0
+offset_bottom = 27.0
+color = Color(0.88, 0.45, 0.1, 1)
 
 [node name="CostLabel" type="Label" parent="FrontFace/CostCircle"]
 layout_mode = 0

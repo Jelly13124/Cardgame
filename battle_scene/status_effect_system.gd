@@ -23,6 +23,7 @@ const STATUS_COLORS = {
 	"burn":        Color(1.0, 0.4, 0.1),
 	"weakness":    Color(0.7, 0.5, 0.9),
 	"strength_up": Color(1.0, 0.5, 0.2),
+	"double_damage": Color(0.2, 0.8, 1.0),
 }
 
 const STATUS_LABELS = {
@@ -30,6 +31,7 @@ const STATUS_LABELS = {
 	"burn":        "🔥",
 	"weakness":    "⬇",
 	"strength_up": "⬆STR",
+	"double_damage": "×2",
 }
 
 # ─── Public API ───────────────────────────────────────────────────────────────
@@ -38,11 +40,15 @@ const STATUS_LABELS = {
 func add_status(status_name: String, stacks: int, entity: Node) -> void:
 	_statuses[status_name] = _statuses.get(status_name, 0) + stacks
 	_refresh_badges(entity)
+	if entity.has_signal("status_changed"):
+		entity.status_changed.emit()
 
 ## Remove all stacks of a status.
 func remove_status(status_name: String, entity: Node) -> void:
 	_statuses.erase(status_name)
 	_refresh_badges(entity)
+	if entity.has_signal("status_changed"):
+		entity.status_changed.emit()
 
 ## Returns stacks of a status (0 if not present).
 func get_stacks(status_name: String) -> int:

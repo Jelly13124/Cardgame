@@ -30,7 +30,7 @@ Creates a new card for the roguelite card game. Each card is a JSON file with an
     "type": "attack",
     "cost": 1,
     "description": "Deal [b]6+Strength[/b] damage.",
-    "front_image": "player/card_id_here.png",
+    "front_image": "player/card_id_here.jpg",
     "side": "player",
     "effects": [
         { "type": "deal_damage", "amount": 6, "scaling": "strength" }
@@ -77,29 +77,21 @@ The `CombatEngine` resolves every item in `effects[]` in order:
 
 ---
 
+---
+
 ## Step 3 — Generate Card Art (Wasteland Punk Pixel Art)
 
-**Yes, card images must be pixel art** — same Wasteland Punk style as enemies. No JPGs, no non-pixel art.
+**Card images must be high-quality JPGs** — static illustrations distinguish them from animated character sprites (which are PNG).
 
-Use the `art-gen` skill to generate the card front image via PixelLab:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File `
-  "c:\Users\Jerry\Desktop\Cardgame\battle_scene\assets\images\generate_static_art.ps1" `
-  -Id "card_id_here" `
-  -Category "cards/player" `
-  -Description "a rusted plasma pistol made from salvaged junk parts, glowing blue cracked barrel" `
-  -Width 400 -Height 400
-```
-
-The script automatically appends the Wasteland Punk suffix. Output: `cards/player/{card_id}.png`
-
-Then set in JSON:
+**Workflow:**
+1. Use the **`gen-card-art`** skill to generate a custom 16-bit wasteland illustration using **Nano**.
+2. Follow the `gen-card-art` instructions to convert the result to **JPG** and save it to `battle_scene/assets/images/cards/player/`.
+3. Set the resulting path in your JSON:
 ```json
-"front_image": "player/card_id_here.png"
+"front_image": "player/your_card_id.jpg"
 ```
 
-> **Existing placeholders to replace:** `holographic_shield.jpg` and `laser_gun.jpg` are old JPG placeholders that should be regenerated as Wasteland Punk pixel art PNGs.
+> **Legacy Cleanup:** Ensure any old `laser_gun.jpg` or `holographic_shield.jpg` placeholders are replaced with your newly generated tactical art.
 
 ---
 

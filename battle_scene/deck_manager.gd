@@ -65,7 +65,7 @@ func get_randomized_card_list() -> Array:
 	var list = [
 		"strike", "strike", "strike", "strike",
 		"defend", "defend", "defend", "defend",
-		"overdrive"
+		"override", "preemptive_strike"
 	]
 	list.shuffle()
 	return list

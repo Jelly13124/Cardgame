@@ -2,17 +2,60 @@ extends Card
 class_name PlayCard
 
 @onready var cost_label = $FrontFace/CostCircle/CostLabel
-@onready var name_label = $FrontFace/NameBanner/NameLabel
+@onready var name_label = $FrontFace/NameLabel
 @onready var desc_label = $FrontFace/DescriptionBox/DescriptionLabel
 @onready var type_label = $FrontFace/RaceBox/RaceLabel
+@onready var card_bg_texture   = $FrontFace/TextureRect
+@onready var playable_glow     = $FrontFace/PlayableGlow
+@onready var art_frame_texture = $FrontFace/ArtFrameTexture
+@onready var art_bg            = $FrontFace/ArtBackground
+@onready var art_texture       = $FrontFace/ArtContainer/ArtTexture
+
+const MASK_SHADER = preload("res://battle_scene/card_art_mask.gdshader")
+const UI_ASSET_PATH = "res://battle_scene/assets/images/cards/ui/"
+
+var _hover_tween: Tween
+var _glow_tween: Tween
+
+const RARITY_COLORS = {
+	"common":   { "border": Color("#c8a258"), "inner": Color("#2a2e31") },
+	"uncommon": { "border": Color("#4d9eff"), "inner": Color("#1b324d") },
+	"rare":     { "border": Color("#ffd700"), "inner": Color("#4d4200") }
+}
+
+var _mask_material: ShaderMaterial = null
+var _rarity_frames: Dictionary = {}
 
 func _ready() -> void:
 	super._ready()
+	# Load the pixel art card background (front)
+	var bg = load(UI_ASSET_PATH + "card_bg.png")
+	if bg and is_instance_valid(card_bg_texture):
+		card_bg_texture.texture = bg
+	# Load pixel art card back — shown when card is face-down (draw/discard piles)
+	var back_tex = load(UI_ASSET_PATH + "card_back.png")
+	var back_rect = get_node_or_null("BackFace/TextureRect")
+	if back_tex and is_instance_valid(back_rect):
+		back_rect.texture = back_tex
+		back_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		back_rect.stretch_mode = TextureRect.STRETCH_SCALE
+		back_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	# Pre-cache rarity frame textures
+	for r in ["common", "uncommon", "rare"]:
+		var tex = load(UI_ASSET_PATH + "art_frame_%s.png" % r)
+		if tex:
+			_rarity_frames[r] = tex
 	if not card_info.is_empty():
 		set_card_data(card_info)
+	
+	# Connect hover signals for scaling
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
+	
+	pivot_offset = size / 2.0 # Ensure we scale from center
 
 func set_faces(front: Texture2D, back: Texture2D) -> void:
-	$FrontFace/ArtContainer/ArtTexture.texture = front
+	art_texture.texture = front
 	$BackFace/TextureRect.texture = back
 
 ## Called when the player PRESSES the left mouse button on this card.
@@ -57,9 +100,26 @@ func set_card_data(data: Dictionary) -> void:
 	var desc = _build_description(data)
 	desc_label.parse_bbcode("[center]" + desc + "[/center]")
 
-	# ── Type label ───────────────────────────────────────────────────────────
+	# ── Rarity: swap the art FRAME texture ───────────────────────────────────
+	var rarity = data.get("rarity", "common").to_lower()
+	if rarity in _rarity_frames:
+		art_frame_texture.texture = _rarity_frames[rarity]
+	else:
+		art_frame_texture.texture = _rarity_frames.get("common")
+
+	# ── Type & Shape ──────────────────────────────────────────────────────────
 	var c_type = data.get("type", "skill").to_lower()
-	if c_type == "attack":
+	var is_atk = (c_type == "attack")
+
+	# Apply/Update Shader Mask to ArtTexture only
+	if _mask_material == null:
+		_mask_material = ShaderMaterial.new()
+		_mask_material.shader = MASK_SHADER
+		art_texture.material = _mask_material
+	
+	_mask_material.set_shader_parameter("is_attack", is_atk)
+
+	if is_atk:
 		type_label.text = "ATTACK"
 		type_label.modulate = Color(1, 0.4, 0.4)
 	elif c_type == "skill":
@@ -99,31 +159,43 @@ func _build_description(data: Dictionary) -> String:
 		var total: int = base + stat_val
 		if mult != 1:
 			total = int(total * mult)
+			
+		# Apply status effect multipliers for display
+		var final_damage: int = total
+		var final_block: int = total
+		
+		if etype.contains("damage"):
+			final_damage = int(final_damage * stats.get("outgoing_mult", 1.0))
+			if stats.get("double_damage", 0) > 0:
+				final_damage *= 2
 
 		match etype:
 			"deal_damage":
+				var label_val = _color_num(final_damage, total)
 				if scaling != "" and stat_val > 0:
-					lines.append("Deal %d (%d+%s) dmg" % [total, base, scaling.capitalize()])
+					lines.append("Deal %s ([i]%d+[color=#8b0000]%d[/color][/i]) dmg" % [label_val, base, stat_val])
 				else:
-					lines.append("Deal %d dmg" % total)
+					lines.append("Deal %s dmg" % label_val)
 
 			"deal_damage_all":
+				var label_val = _color_num(final_damage, total)
 				if scaling != "" and stat_val > 0:
-					lines.append("Deal %d (%d+%s) to ALL enemies" % [total, base, scaling.capitalize()])
+					lines.append("Deal %s ([i]%d+[color=#8b0000]%d[/color][/i]) to ALL enemies" % [label_val, base, stat_val])
 				else:
-					lines.append("Deal %d dmg to all enemies" % total)
+					lines.append("Deal %s dmg to all enemies" % label_val)
 
 			"gain_block":
+				var label_val = _color_num(final_block, total)
 				if scaling != "" and stat_val > 0:
-					lines.append("Gain %d (%d+%s) block" % [total, base, scaling.capitalize()])
+					lines.append("Gain %s ([i]%d+[color=#4444ff]%d[/color][/i]) block" % [label_val, base, stat_val])
 				else:
-					lines.append("Gain %d block" % total)
+					lines.append("Gain %s block" % label_val)
 
 			"gain_strength":
 				if mult != 1:
 					lines.append("Gain %d (%d×%s) Strength" % [total, int(mult), scaling.capitalize()])
 				elif scaling != "" and stat_val > 0:
-					lines.append("Gain %d (%d+%s) Strength" % [total, base, scaling.capitalize()])
+					lines.append("Gain %d (%d+[color=#8b0000]%d[/color]) Strength" % [total, base, stat_val])
 				else:
 					lines.append("Gain %d Strength" % total)
 
@@ -154,7 +226,27 @@ func _build_description(data: Dictionary) -> String:
 			_:
 				lines.append(etype.replace("_", " ").capitalize())
 
-	return "\n".join(lines)
+	return "[font_size=11]" + "\n".join(lines) + "[/font_size]"
+
+## Refreshes the card UI with current live data
+## Refreshes the card UI with current live data
+func update_display() -> void:
+	if not is_node_ready(): return
+	if not card_info.is_empty():
+		set_card_data(card_info)
+	
+	# Handle playable glow update if we can find the player
+	var scene = get_tree().current_scene
+	if scene and "player" in scene and is_instance_valid(scene.player):
+		update_playable(scene.player.energy)
+
+func _color_num(val: int, base_plus_stat: int) -> String:
+	if val > base_plus_stat:
+		return "[color=#00ff00]%d[/color]" % val # Bright Green
+	elif val < base_plus_stat:
+		return "[color=#ff4444]%d[/color]" % val # Red
+	
+	return str(val)
 
 ## Returns current player attribute values for description calculation.
 ## Uses live player if battle is running, otherwise defaults.
@@ -164,11 +256,49 @@ func _get_player_stats() -> Dictionary:
 	if scene and "player" in scene and is_instance_valid(scene.player):
 		var p = scene.player
 		return {
-			"strength":     int(p.get("strength") if "strength" in p else 0),
-			"constitution": int(p.get("constitution") if "constitution" in p else 0),
-			"intelligence": int(p.get("intelligence") if "intelligence" in p else 0),
-			"luck":         int(p.get("luck") if "luck" in p else 0),
-			"charm":        int(p.get("charm") if "charm" in p else 0),
+			"strength":      int(p.get("strength") if "strength" in p else 0),
+			"constitution":  int(p.get("constitution") if "constitution" in p else 0),
+			"intelligence":  int(p.get("intelligence") if "intelligence" in p else 0),
+			"luck":          int(p.get("luck") if "luck" in p else 0),
+			"charm":         int(p.get("charm") if "charm" in p else 0),
+			"double_damage": p.get_status_stacks("double_damage") if p.has_method("get_status_stacks") else 0,
+			"outgoing_mult": p.status_system.get_outgoing_multiplier() if "status_system" in p else 1.0,
 		}
 	return defaults
 
+# ─── UX Polish (Juice) ────────────────────────────────────────────────────────
+
+func _on_mouse_entered() -> void:
+	if _hover_tween: _hover_tween.kill()
+	_hover_tween = create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_hover_tween.tween_property(self, "scale", Vector2(1.12, 1.12), 0.15)
+	z_index = 10 # bring to front
+
+func _on_mouse_exited() -> void:
+	if _hover_tween: _hover_tween.kill()
+	_hover_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_hover_tween.tween_property(self, "scale", Vector2(1.0, 1.0), 0.15)
+	z_index = 1
+
+## Toggles the "can afford" glow and pulse animation.
+func update_playable(current_energy: int) -> void:
+	if not is_instance_valid(playable_glow): return
+	
+	var cost = int(card_info.get("cost", 0))
+	var can_afford = current_energy >= cost
+	
+	playable_glow.visible = can_afford
+	
+	if can_afford:
+		if not _glow_tween or not _glow_tween.is_running():
+			_start_glow_pulse()
+	else:
+		if _glow_tween:
+			_glow_tween.kill()
+		playable_glow.modulate.a = 1.0
+
+func _start_glow_pulse() -> void:
+	if _glow_tween: _glow_tween.kill()
+	_glow_tween = create_tween().set_loops()
+	_glow_tween.tween_property(playable_glow, "modulate:a", 0.3, 0.8).set_trans(Tween.TRANS_SINE)
+	_glow_tween.tween_property(playable_glow, "modulate:a", 1.0, 0.8).set_trans(Tween.TRANS_SINE)
