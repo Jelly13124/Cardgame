@@ -6,7 +6,6 @@ extends Node
 @onready var hand = $CardManager/Hand
 @onready var deck = $CardManager/Deck
 @onready var discard_pile = $CardManager/DiscardPile
-@onready var black_hole_pile = $CardManager/BlackHolePile
 @onready var player = $Player
 @onready var enemy_container = $EnemyContainer
 @onready var turn_manager = $TurnManager
@@ -15,6 +14,7 @@ extends Node
 @onready var ui_manager = $BattleUIManager
 
 var deck_manager: Node
+var relic_effect_system: RefCounted
 
 # --- Game State ---
 var is_game_over:  bool    = false
@@ -25,6 +25,7 @@ var targeting_arrow: Node2D = null
 var hovered_unit:  Node    = null
 
 const TARGETING_ARROW_SCRIPT = preload("res://battle_scene/targeting_arrow.gd")
+const RELIC_EFFECT_SYSTEM = preload("res://battle_scene/relic_effect_system.gd")
 
 func _ready():
 	print("BATTLE STARTING (STS Layout)")
@@ -42,7 +43,6 @@ func _ready():
 		
 	# Connect TurnManager
 	turn_manager.round_changed.connect(_on_round_changed)
-	turn_manager.energy_changed.connect(_on_energy_changed)
 	turn_manager.turn_started.connect(_on_turn_started)
 	turn_manager.turn_ended.connect(_on_turn_ended)
 	
@@ -76,6 +76,12 @@ func _input(event: InputEvent) -> void:
 	if event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
 		_cancel_spell_targeting()
 		get_viewport().set_input_as_handled()
+	elif event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if targeting_card and is_instance_valid(targeting_card):
+			confirm_spell_targeting(targeting_card)
+		else:
+			_cancel_spell_targeting()
+		get_viewport().set_input_as_handled()
 
 # ─── Process ──────────────────────────────────────────────────────────────────
 
@@ -93,6 +99,9 @@ func _process(_delta: float) -> void:
 		if hovered_unit: _set_hover_effect(hovered_unit, false)
 		hovered_unit = unit_under_mouse
 		if hovered_unit: _set_hover_effect(hovered_unit, true)
+	
+	if targeting_arrow and targeting_arrow.has_method("set_target_valid"):
+		targeting_arrow.set_target_valid(hovered_unit != null)
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -133,6 +142,10 @@ func _on_turn_started(side: String) -> void:
 	
 	# Player turn start: reset block + energy via player.start_turn()
 	player.start_turn()
+	if is_game_over:
+		return
+	if relic_effect_system:
+		relic_effect_system.on_player_turn_started(player, turn_manager.current_round)
 	_update_ui_labels()
 	enemy_ai.spawn_enemy_units()
 	
@@ -148,9 +161,10 @@ func _on_turn_ended(side: String) -> void:
 		if remaining.size() > 0:
 			# Use move_cards so card_container references transfer properly
 			discard_pile.move_cards(remaining)
+		player.end_turn()
+		_update_ui_labels()
 
 func _on_round_changed(_round: int) -> void: _update_ui_labels()
-func _on_energy_changed(_cur: int, _max: int) -> void: _update_ui_labels()
 func _on_player_health_changed(_hp: int) -> void: _update_ui_labels()
 func _on_player_energy_changed(_energy: int) -> void: _update_ui_labels()
 func _on_player_block_changed(_block: int) -> void: _update_ui_labels()
@@ -171,6 +185,8 @@ func _start_new_game():
 	is_resolving = false
 
 	var rm = get_node_or_null("/root/RunManager")
+	relic_effect_system = RELIC_EFFECT_SYSTEM.new()
+	relic_effect_system.setup(rm, self)
 
 	# ── Player HP & Attributes ──────────────────────────────────────────────
 	if rm and rm.get("is_run_active"):
@@ -198,6 +214,8 @@ func _on_end_round_button_pressed():
 func _victory():
 	if is_game_over: return
 	is_game_over = true
+	if relic_effect_system:
+		relic_effect_system.on_combat_victory(player)
 	_write_hp_to_run_manager()
 	show_notification("VICTORY!", Color(0.2, 1.0, 0.2))
 	await get_tree().create_timer(3.0).timeout
@@ -217,6 +235,16 @@ func _write_hp_to_run_manager() -> void:
 	var rm = get_node_or_null("/root/RunManager")
 	if rm and rm.get("is_run_active") and player and is_instance_valid(player):
 		rm.current_health = player.health
+
+func modify_player_attack_damage(amount: int, attacker: Node, defender: Node) -> int:
+	if relic_effect_system:
+		return relic_effect_system.modify_player_attack_damage(amount, attacker, defender)
+	return amount
+
+func modify_enemy_attack_damage(amount: int, attacker: Node, defender: Node) -> int:
+	if relic_effect_system:
+		return relic_effect_system.modify_enemy_attack_damage(amount, attacker, defender)
+	return amount
 
 # ─── Energy ───────────────────────────────────────────────────────────────────
 
@@ -258,6 +286,9 @@ func play_spell(card: Control, target_node: Node):
 	if card.card_container and card.card_container.has_card(card):
 		card.card_container.remove_card(card)
 	
+	_prepare_card_for_play_animation(card)
+	await _animate_card_to_play_area(card, target_node)
+	
 	# Resolve combat effects (may await animations)
 	await combat_engine.resolve_card_effect(card, target_node, player)
 	
@@ -288,9 +319,13 @@ func start_spell_targeting(card: Control) -> void:
 		targeting_arrow = TARGETING_ARROW_SCRIPT.new()
 		add_child(targeting_arrow)
 	
-	targeting_arrow.start(card.global_position + card.size / 2.0)
+	var arrow_origin = card.global_position + Vector2(card.size.x * 0.5, card.size.y * 0.25)
+	targeting_arrow.start(arrow_origin)
 
 func _cancel_spell_targeting() -> void:
+	if hovered_unit:
+		_set_hover_effect(hovered_unit, false)
+		hovered_unit = null
 	is_targeting = false
 	targeting_card = null
 	if targeting_arrow:
@@ -303,6 +338,14 @@ func _cancel_spell_targeting() -> void:
 func confirm_spell_targeting(card: Control) -> void:
 	if not is_targeting or targeting_card != card:
 		return
+	if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		return
+	
+	var unit_at_release = _get_unit_at_position(get_viewport().get_mouse_position())
+	if unit_at_release != hovered_unit:
+		if hovered_unit: _set_hover_effect(hovered_unit, false)
+		hovered_unit = unit_at_release
+		if hovered_unit: _set_hover_effect(hovered_unit, true)
 
 	if hovered_unit and is_instance_valid(hovered_unit):
 		var t = hovered_unit
@@ -321,9 +364,73 @@ func _on_inspect_overlay_gui_input(event: InputEvent) -> void: ui_manager._on_in
 func show_pile_viewer(title: String, pile_container: Node): ui_manager.show_pile_viewer(title, pile_container)
 func hide_pile_viewer(): ui_manager.hide_pile_viewer()
 
+func show_run_deck_viewer() -> void:
+	var rm = get_node_or_null("/root/RunManager")
+	var entries: Array = []
+	if rm and rm.get("is_run_active"):
+		entries = rm.player_deck.duplicate()
+	else:
+		entries = _get_current_battle_deck_entries()
+	ui_manager.show_run_deck_viewer("Run Deck", entries)
+
+func _get_current_battle_deck_entries() -> Array:
+	var entries: Array = []
+	for pile in [hand, deck, discard_pile]:
+		if pile and pile.has_method("get_cards"):
+			for card in pile.get_cards():
+				if is_instance_valid(card):
+					entries.append(card.card_info.get("name", ""))
+	return entries
+
 # ─── Discard Animation ────────────────────────────────────────────────────────
 
-## Smoothly flies a card to the discard pile's on-screen position, then fades it out.
+func _prepare_card_for_play_animation(card: Control) -> void:
+	if not is_instance_valid(card): return
+	card.z_index = 90
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.pivot_offset = card.size / 2.0
+	if "can_be_interacted_with" in card:
+		card.can_be_interacted_with = false
+
+func _animate_card_to_play_area(card: Control, target_node: Node) -> void:
+	if not is_instance_valid(card): return
+	
+	var target_pos = _get_play_area_card_position(card, target_node)
+	var tween = create_tween().set_parallel(true)
+	tween.tween_property(card, "global_position", target_pos, 0.20) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(card, "rotation", 0.0, 0.20) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(card, "scale", Vector2(0.92, 0.92), 0.20) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(card, "modulate:a", 1.0, 0.12)
+	await tween.finished
+	
+	if not is_instance_valid(card): return
+	var settle = create_tween()
+	settle.tween_property(card, "scale", Vector2(1.0, 1.0), 0.06) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	settle.tween_property(card, "scale", Vector2(0.92, 0.92), 0.08) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await settle.finished
+
+func _get_play_area_card_position(card: Control, target_node: Node) -> Vector2:
+	var viewport_size = get_viewport().get_visible_rect().size
+	var card_half = card.size * 0.5
+	var play_center = Vector2(viewport_size.x * 0.5, viewport_size.y * 0.48)
+	
+	if target_node and is_instance_valid(target_node) and player and is_instance_valid(player):
+		play_center = player.global_position.lerp(target_node.global_position, 0.48)
+		play_center.y -= card.size.y * 0.12
+	
+	var pos = play_center - card_half
+	var max_x = maxf(24.0, viewport_size.x - card.size.x - 24.0)
+	var max_y = maxf(80.0, viewport_size.y - card.size.y - 150.0)
+	pos.x = clampf(pos.x, 24.0, max_x)
+	pos.y = clampf(pos.y, 80.0, max_y)
+	return pos
+
+## Flies a card to the discard pile with a short STS-style spin.
 func _animate_card_to_discard(card: Control) -> void:
 	if not is_instance_valid(card): return
 
@@ -334,26 +441,29 @@ func _animate_card_to_discard(card: Control) -> void:
 	else:
 		return
 
-	# Make sure card renders on top while flying
-	card.z_index = 50
+	card.z_index = 90
 
 	var tween = create_tween()
 	tween.set_parallel(true)
-	# Fly to discard pile
-	tween.tween_property(card, "global_position", target_pos, 0.35) \
+	var spin_dir = 1.0 if target_pos.x >= card.global_position.x else -1.0
+	tween.tween_property(card, "global_position", target_pos, 0.34) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	tween.tween_property(card, "rotation", card.rotation + spin_dir * TAU * 0.72, 0.34) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	# Shrink slightly as it lands
-	tween.tween_property(card, "scale", Vector2(0.5, 0.5), 0.30) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	# Fade out
-	tween.tween_property(card, "modulate:a", 0.0, 0.30) \
+	tween.tween_property(card, "scale", Vector2(0.32, 0.32), 0.34) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	tween.tween_property(card, "modulate:a", 0.0, 0.28) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 
 	await tween.finished
 
 	# Reset scale for reuse in the discard pile
 	card.scale = Vector2.ONE
+	card.rotation = 0.0
 	card.z_index = 0
+	card.mouse_filter = Control.MOUSE_FILTER_STOP
+	if "can_be_interacted_with" in card:
+		card.can_be_interacted_with = true
 
 func _wait(seconds: float) -> Signal:
 	return get_tree().create_timer(seconds).timeout

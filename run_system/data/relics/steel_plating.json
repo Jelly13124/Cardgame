@@ -1,0 +1,16 @@
+{
+  "id": "steel_plating",
+  "title": "Steel Plating",
+  "description": "At the start of your first turn each combat, gain 6 Block.",
+  "icon": "res://run_system/assets/images/relics/steel_plating.png",
+  "rarity": "common",
+  "effects": [
+    {
+      "trigger": "player_turn_start",
+      "round": 1,
+      "type": "gain_block",
+      "amount": 6,
+      "once_per_combat": true
+    }
+  ]
+}

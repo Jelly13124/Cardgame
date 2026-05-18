@@ -1,0 +1,175 @@
+{
+  "target": "creature",
+  "mode": "idle",
+  "prompt": "",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\Desktop\\Cardgame\\battle_scene\\assets\\images\\enemies\\trash_robot_generated_idle\\raw-sheet.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 180,
+  "rows": 2,
+  "cols": 2,
+  "cell_size": 128,
+  "fit_scale": 0.86,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "feet",
+  "shared_scale": true,
+  "component_mode": "largest",
+  "component_padding": 8,
+  "min_component_area": 1,
+  "edge_touch_margin": 8,
+  "frame_labels": [
+    "trash_robot_idle-1",
+    "trash_robot_idle-2",
+    "trash_robot_idle-3",
+    "trash_robot_idle-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 102626,
+      "selected_component_bbox": [
+        119,
+        100,
+        526,
+        566
+      ],
+      "crop_bbox": [
+        111,
+        92,
+        534,
+        574
+      ],
+      "edge_touch": false,
+      "output_size": [
+        94,
+        107
+      ],
+      "paste_position": [
+        17,
+        13
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        627,
+        0,
+        1254,
+        627
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 102948,
+      "selected_component_bbox": [
+        92,
+        88,
+        476,
+        566
+      ],
+      "crop_bbox": [
+        84,
+        80,
+        484,
+        574
+      ],
+      "edge_touch": false,
+      "output_size": [
+        88,
+        109
+      ],
+      "paste_position": [
+        20,
+        11
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        627,
+        627,
+        1254
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 104717,
+      "selected_component_bbox": [
+        83,
+        81,
+        562,
+        548
+      ],
+      "crop_bbox": [
+        75,
+        73,
+        570,
+        556
+      ],
+      "edge_touch": false,
+      "output_size": [
+        110,
+        107
+      ],
+      "paste_position": [
+        9,
+        13
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        627,
+        627,
+        1254,
+        1254
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 102170,
+      "selected_component_bbox": [
+        101,
+        81,
+        494,
+        548
+      ],
+      "crop_bbox": [
+        93,
+        73,
+        502,
+        556
+      ],
+      "edge_touch": false,
+      "output_size": [
+        90,
+        107
+      ],
+      "paste_position": [
+        19,
+        13
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

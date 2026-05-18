@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="CardFramework"
-run/main_scene="res://battle_scene/battle_scene.tscn"
+run/main_scene="res://run_system/ui/hero_select.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 
 [autoload]

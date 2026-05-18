@@ -5,6 +5,7 @@ signal health_changed(current: int, maximum: int)
 signal resources_changed(gold: int, core: int)
 signal deck_updated()
 signal items_updated()
+signal relics_updated()
 signal run_ended(victory: bool)
 
 # --- Run State ---
@@ -23,27 +24,190 @@ var core: int = 0
 var current_floor: int = 0
 var player_deck: Array = [] # Array of Dictionaries (uid, card_id, bonus_attack, bonus_health)
 var equipped_items: Array[String] = []
+var relics: Array[String] = []
 const MAX_ITEMS: int = 5
+const DEFAULT_STARTER_DECK = [
+	"strike", "strike", "strike", "strike",
+	"weak_strike",
+	"defend", "defend", "defend", "defend",
+]
 
 ## Five dimension RPG attributes — passed to PlayerEntity on battle start.
 var player_attributes: Dictionary = {
-	"strength":     3,
+	"strength": 3,
 	"constitution": 3,
 	"intelligence": 3,
-	"luck":         3,
-	"charm":        3
+	"luck": 3,
+	"charm": 3
 }
 
 ## Enemy IDs to encounter in the next battle (set by MapScene before loading battle).
 ## Example: ["trash_robot", "wasteland_killer"]
 var current_encounter: Array[String] = ["trash_robot"]
 
+const BATTLE_SCENE: String = "res://battle_scene/battle_scene.tscn"
+const MAP_SCENE: String = "res://run_system/ui/map_scene.tscn"
+const RELIC_DATA_DIR: String = "res://run_system/data/relics/"
+const FIRST_MERCHANT_FLOOR_INDEX: int = 4 # Human-facing layer 5.
+const GUARANTEED_TREASURE_FLOOR_INDEX: int = 6 # Human-facing layer 7.
+
+# --- Map State ---
+## Each entry: { "id": String, "floor": int, "slot": int, "type": String, "children": Array[String] }
+var map_data: Array = []
+var current_node_id: String = "" ## "" means player hasn't chosen a floor-0 node yet
+var _node_index: Dictionary = {}
+
 func _ready() -> void:
 	pass
 
+# --- Map Generation ---
+
+## Generates a procedural map with the given number of rows and max width.
+## Rules:
+##   Floor 0       → 1 node: "relic" (choose starting relic)
+##   Floor N-1     → 1 node: "boss"
+##   Floor N-2     → all nodes are "rest" (pre-boss campfire)
+##   Middle floors → 3-5 random nodes
+##   Floor 6       -> all nodes are "treasure" (human-facing layer 7)
+##   Merchants     -> only appear from floor 4 onward (human-facing layer 5+)
+func generate_map(num_floors: int = 12, width: int = 4) -> void:
+	map_data.clear()
+	_node_index.clear()
+	current_node_id = ""
+	
+	for f in range(num_floors):
+		# Determine how many nodes on this floor
+		var num_nodes: int
+		if f == 0 or f == num_floors - 1:
+			num_nodes = 1 # Start (relic) and end (boss) are single nodes
+		else:
+			num_nodes = randi_range(2, 4)
+			num_nodes = mini(num_nodes, width) # Can't exceed +---available slots
+		
+		# Pick unique random slots — single nodes always go in the center
+		var slots: Array[int] = []
+		if num_nodes == 1:
+			@warning_ignore("integer_division")
+			slots.append(width / 2)
+		else:
+			var available: Array[int] = []
+			for s in range(width):
+				available.append(s)
+			available.shuffle()
+			for i in range(num_nodes):
+				slots.append(available[i])
+			slots.sort()
+		
+		# Assign node types
+		for slot in slots:
+			var node_type = _pick_node_type(f, num_floors)
+			var node = {
+				"id": "f%d_s%d" % [f, slot],
+				"floor": f,
+				"slot": slot,
+				"type": node_type,
+				"children": [] as Array[String]
+			}
+			map_data.append(node)
+	
+	# Connect nodes floor by floor
+	for f in range(num_floors - 1):
+		var current_nodes = _get_nodes_on_floor(f)
+		var next_nodes = _get_nodes_on_floor(f + 1)
+		
+		# Single-node floors connect to ALL nodes on the next floor
+		if current_nodes.size() == 1:
+			for nn in next_nodes:
+				current_nodes[0].children.append(nn.id)
+			continue
+		
+		# If next floor is single node, all current nodes connect to it
+		if next_nodes.size() == 1:
+			for cn in current_nodes:
+				cn.children.append(next_nodes[0].id)
+			continue
+		
+		# Normal proximity-based connections (±2 slot distance)
+		for node in current_nodes:
+			var candidates: Array[String] = []
+			for next_node in next_nodes:
+				if abs(next_node.slot - node.slot) <= 2:
+					candidates.append(next_node.id)
+			
+			# Fallback: connect to the closest node
+			if candidates.is_empty():
+				var closest = next_nodes[0]
+				for nn in next_nodes:
+					if abs(nn.slot - node.slot) < abs(closest.slot - node.slot):
+						closest = nn
+				candidates.append(closest.id)
+			
+			node.children = candidates
+		
+		# Ensure every next-floor node has at least one parent
+		for next_node in next_nodes:
+			var has_parent = false
+			for node in current_nodes:
+				if next_node.id in node.children:
+					has_parent = true
+					break
+			if not has_parent:
+				var closest = current_nodes[0]
+				for cn in current_nodes:
+					if abs(cn.slot - next_node.slot) < abs(closest.slot - next_node.slot):
+						closest = cn
+				closest.children.append(next_node.id)
+
+	for node in map_data:
+		_node_index[node.id] = node
+
+func _pick_node_type(floor_idx: int, total: int) -> String:
+	# Floor 0: starting relic choice
+	if floor_idx == 0:
+		return "relic"
+	# Last floor: boss fight
+	if floor_idx == total - 1:
+		return "boss"
+	# Pre-boss floor: always rest (campfire before the boss)
+	if floor_idx == total - 2:
+		return "rest"
+	# Human-facing layer 7: guaranteed relic chest layer.
+	if floor_idx == GUARANTEED_TREASURE_FLOOR_INDEX:
+		return "treasure"
+	
+	# Random distribution for middle floors
+	var roll = randf()
+	if roll < 0.40:
+		return "enemy"
+	if roll < 0.55:
+		return "unknown"
+	if floor_idx >= FIRST_MERCHANT_FLOOR_INDEX and roll < 0.70:
+		return "merchant"
+	if roll < 0.82:
+		return "rest"
+	if roll < 0.92:
+		return "treasure"
+	return "elite"
+
+func _get_nodes_on_floor(f: int) -> Array:
+	var result: Array = []
+	for node in map_data:
+		if node.floor == f:
+			result.append(node)
+	return result
+
+func get_node_by_id(id: String) -> Dictionary:
+	return _node_index.get(id, {})
+
 # --- Run Initialization ---
 
-## Called when confirming the starter deck and beginning a new run
+func get_default_starter_deck() -> Array[String]:
+	var deck: Array[String] = []
+	for card_id in DEFAULT_STARTER_DECK:
+		deck.append(card_id)
+	return deck
+
+## Called after hero selection to begin a new run.
 func start_new_run(hero_id: String, starter_deck: Array[String]) -> void:
 	current_hero_id = hero_id
 	
@@ -54,16 +218,18 @@ func start_new_run(hero_id: String, starter_deck: Array[String]) -> void:
 	# Reset resources and health
 	gold = 0
 	core = 0
-	current_floor = 1
+	current_floor = 0
 	current_health = max_health
 	equipped_items.clear()
+	relics.clear()
 	current_encounter = ["trash_robot"]
+	generate_map(12, 4)
 	player_attributes = {
-		"strength":     3,
+		"strength": 3,
 		"constitution": 3,
 		"intelligence": 3,
-		"luck":         3,
-		"charm":        3
+		"luck": 3,
+		"charm": 3
 	}
 	is_run_active = true
 	_emit_all_state()
@@ -87,7 +253,6 @@ func remove_card_from_deck_by_uid(uid: String) -> bool:
 			emit_signal("deck_updated")
 			return true
 	return false
-
 
 
 # --- Health & Damage ---
@@ -125,7 +290,72 @@ func equip_item(item_id: String) -> bool:
 		return true
 	return false
 
+# --- Relics ---
+
+func add_relic(relic_id: String) -> bool:
+	if relic_id.is_empty() or relic_id in relics:
+		return false
+	relics.append(relic_id)
+	emit_signal("relics_updated")
+	return true
+
+func has_relic(relic_id: String) -> bool:
+	return relic_id in relics
+
+func remove_relic(relic_id: String) -> bool:
+	var index = relics.find(relic_id)
+	if index == -1:
+		return false
+	relics.remove_at(index)
+	emit_signal("relics_updated")
+	return true
+
+func get_relic_data(relic_id: String) -> Dictionary:
+	var data = {
+		"id": relic_id,
+		"title": _humanize_id(relic_id),
+		"description": "",
+		"icon": "",
+		"rarity": "common",
+		"effects": [],
+	}
+	var file = FileAccess.open(RELIC_DATA_DIR + relic_id + ".json", FileAccess.READ)
+	if not file:
+		return data
+
+	var parsed = JSON.parse_string(file.get_as_text())
+	if typeof(parsed) == TYPE_DICTIONARY:
+		for key in parsed.keys():
+			data[key] = parsed[key]
+	return data
+
+func get_unowned_relic_ids() -> Array[String]:
+	var ids: Array[String] = []
+	var dir = DirAccess.open(RELIC_DATA_DIR)
+	if not dir:
+		return ids
+
+	for file_name in dir.get_files():
+		if not file_name.ends_with(".json"):
+			continue
+		var relic_id = file_name.get_basename()
+		if not has_relic(relic_id):
+			ids.append(relic_id)
+	ids.sort()
+	return ids
+
+func roll_relic_choices(count: int = 3) -> Array[String]:
+	var pool = get_unowned_relic_ids()
+	pool.shuffle()
+	var choices: Array[String] = []
+	for i in range(mini(count, pool.size())):
+		choices.append(pool[i])
+	return choices
+
 # --- Internal Events ---
+
+func _humanize_id(value: String) -> String:
+	return value.replace("_", " ").capitalize()
 
 func _handle_run_loss() -> void:
 	is_run_active = false
@@ -138,6 +368,7 @@ func _emit_all_state() -> void:
 	emit_signal("resources_changed", gold, core)
 	emit_signal("deck_updated")
 	emit_signal("items_updated")
+	emit_signal("relics_updated")
 
 ## Debug tool testing
 func _input(event: InputEvent) -> void:
@@ -152,9 +383,13 @@ func _input(event: InputEvent) -> void:
 				print("Health: ", current_health, "/", max_health)
 				print("Resources - Gold: ", gold, " Core: ", core)
 				print("Items: ", equipped_items)
+				print("Relics: ", relics)
 			KEY_F10:
 				print("DEBUG: +100 Gold")
 				add_resources(100, 0)
 			KEY_F11:
 				print("DEBUG: Take 5 Damage")
 				modify_health(-5)
+			KEY_F12:
+				print("DEBUG: +test_relic")
+				add_relic("test_relic")

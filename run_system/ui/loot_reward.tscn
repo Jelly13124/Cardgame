@@ -3,42 +3,42 @@
 [ext_resource type="Script" path="res://run_system/ui/loot_reward.gd" id="1_loot"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_Frame"]
-bg_color = Color(0.1, 0.12, 0.16, 0.95)
+bg_color = Color(0.075, 0.055, 0.045, 0.96)
 border_width_left = 4
 border_width_top = 4
 border_width_right = 4
 border_width_bottom = 4
-border_color = Color(0.2, 0.35, 0.45, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+border_color = Color(0.45, 0.32, 0.18, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 shadow_color = Color(0, 0, 0, 0.5)
-shadow_size = 20
+shadow_size = 14
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_Banner"]
-bg_color = Color(0.8, 0.75, 0.6, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.6, 0.5, 0.35, 1)
+bg_color = Color(0.105, 0.075, 0.055, 0.98)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.92, 0.66, 0.28, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_Btn"]
-bg_color = Color(0.15, 0.25, 0.35, 0.9)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.3, 0.6, 0.8, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+bg_color = Color(0.13, 0.1, 0.075, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.92, 0.66, 0.28, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 content_margin_left = 40.0
 content_margin_right = 40.0
 content_margin_top = 10.0
@@ -60,7 +60,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.04, 0.04, 0.06, 1)
+color = Color(0.025, 0.019, 0.015, 1)
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -69,7 +69,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 30
+theme_override_constants/separation = 22
 alignment = 1
 
 [node name="BannerPanel" type="PanelContainer" parent="VBoxContainer"]
@@ -86,27 +86,27 @@ theme_override_constants/margin_bottom = 10
 
 [node name="TitleLabel" type="Label" parent="VBoxContainer/BannerPanel/MarginContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.2, 0.15, 0.1, 1)
-theme_override_font_sizes/font_size = 48
-text = "LOOT!"
+theme_override_colors/font_color = Color(1, 0.86, 0.55, 1)
+theme_override_font_sizes/font_size = 46
+text = "COMBAT REWARD"
 horizontal_alignment = 1
 
 [node name="LootPanel" type="PanelContainer" parent="VBoxContainer"]
-custom_minimum_size = Vector2(580, 260)
+custom_minimum_size = Vector2(760, 296)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_Frame")
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/LootPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 40
-theme_override_constants/margin_right = 40
-theme_override_constants/margin_top = 40
-theme_override_constants/margin_bottom = 40
+theme_override_constants/margin_left = 34
+theme_override_constants/margin_right = 34
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_bottom = 30
 
 [node name="LootList" type="VBoxContainer" parent="VBoxContainer/LootPanel/MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 16
 alignment = 1
 
 [node name="BottomRow" type="HBoxContainer" parent="VBoxContainer"]
@@ -120,6 +120,7 @@ theme_override_constants/margin_top = 20
 [node name="ProceedButton" type="Button" parent="VBoxContainer/BottomRow/MarginContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
+theme_override_colors/font_color = Color(1, 0.86, 0.55, 1)
 theme_override_font_sizes/font_size = 28
 theme_override_styles/normal = SubResource("StyleBoxFlat_Btn")
 text = "PROCEED"
@@ -132,7 +133,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 0.8)
+color = Color(0.025, 0.018, 0.014, 0.9)
 
 [node name="VBoxContainer" type="VBoxContainer" parent="DraftOverlay"]
 layout_mode = 1
@@ -146,12 +147,13 @@ alignment = 1
 
 [node name="TitleLabel" type="Label" parent="DraftOverlay/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.95, 1, 1)
+theme_override_colors/font_color = Color(1, 0.86, 0.55, 1)
 theme_override_font_sizes/font_size = 42
 text = "CHOOSE A CARD"
 horizontal_alignment = 1
 
 [node name="DraftPanel" type="PanelContainer" parent="DraftOverlay/VBoxContainer"]
+custom_minimum_size = Vector2(1120, 460)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_Frame")
@@ -165,7 +167,7 @@ theme_override_constants/margin_bottom = 40
 
 [node name="CardsContainer" type="HBoxContainer" parent="DraftOverlay/VBoxContainer/DraftPanel/MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 60
+theme_override_constants/separation = 36
 alignment = 1
 
 [node name="BottomRow" type="HBoxContainer" parent="DraftOverlay/VBoxContainer"]
@@ -179,6 +181,7 @@ theme_override_constants/margin_top = 20
 [node name="SkipDraftButton" type="Button" parent="DraftOverlay/VBoxContainer/BottomRow/MarginContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
+theme_override_colors/font_color = Color(1, 0.86, 0.55, 1)
 theme_override_font_sizes/font_size = 28
 theme_override_styles/normal = SubResource("StyleBoxFlat_Btn")
 text = "SKIP CARD"

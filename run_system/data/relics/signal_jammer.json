@@ -1,0 +1,15 @@
+{
+  "id": "signal_jammer",
+  "title": "Signal Jammer",
+  "description": "The first enemy attack each combat deals 2 less damage.",
+  "icon": "res://run_system/assets/images/relics/signal_jammer.png",
+  "rarity": "common",
+  "effects": [
+    {
+      "trigger": "enemy_attack_damage",
+      "type": "reduce_damage",
+      "amount": 2,
+      "once_per_combat": true
+    }
+  ]
+}

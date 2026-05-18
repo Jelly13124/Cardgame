@@ -1,0 +1,14 @@
+{
+  "id": "lucky_cog",
+  "title": "Lucky Cog",
+  "description": "After combat, gain 5 Gold.",
+  "icon": "res://run_system/assets/images/relics/lucky_cog.png",
+  "rarity": "common",
+  "effects": [
+    {
+      "trigger": "combat_victory",
+      "type": "gain_gold",
+      "amount": 5
+    }
+  ]
+}

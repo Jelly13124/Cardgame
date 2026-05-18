@@ -100,33 +100,60 @@ func show_pile_viewer(title: String, pile_container: CardContainer) -> void:
 	pile_viewer_title.text = title
 	
 	# Clear existing cards
-	for child in pile_viewer_grid.get_children():
-		child.queue_free()
+	_clear_pile_viewer_grid()
 		
 	# Populate with cards from the pile
 	for card_data in pile_container.get_cards():
 		var card_name = card_data.card_info.get("name", "")
 		if card_name.is_empty(): continue
-		var card_instance = main.card_factory.create_card(card_name, null)
-		if card_instance:
-			# Detach from any existing parent first
-			if card_instance.get_parent():
-				card_instance.get_parent().remove_child(card_instance)
-			# Show front face
-			card_instance.show_front = true
-			# Disable all interaction
-			card_instance.can_be_interacted_with = false
-			card_instance.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			card_instance.scale = Vector2(0.7, 0.7)
-			pile_viewer_grid.add_child(card_instance)
+		_add_card_to_viewer(card_name)
 			
+	pile_viewer_layer.visible = true
+
+func show_run_deck_viewer(title: String, deck_entries: Array) -> void:
+	if not pile_viewer_layer: return
+	
+	pile_viewer_title.text = title
+	_clear_pile_viewer_grid()
+	
+	for entry in deck_entries:
+		var card_name = _card_id_from_deck_entry(entry)
+		if card_name.is_empty():
+			continue
+		_add_card_to_viewer(card_name)
+	
 	pile_viewer_layer.visible = true
 
 func hide_pile_viewer() -> void:
 	if not pile_viewer_layer: return
 	pile_viewer_layer.visible = false
+	_clear_pile_viewer_grid()
+
+func _clear_pile_viewer_grid() -> void:
+	if not pile_viewer_grid: return
 	for child in pile_viewer_grid.get_children():
 		child.queue_free()
+
+func _add_card_to_viewer(card_name: String) -> void:
+	if card_name.is_empty(): return
+	var card_instance = main.card_factory.create_card(card_name, null)
+	if card_instance:
+		if card_instance.get_parent():
+			card_instance.get_parent().remove_child(card_instance)
+		card_instance.show_front = true
+		card_instance.can_be_interacted_with = false
+		card_instance.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card_instance.scale = Vector2(0.7, 0.7)
+		pile_viewer_grid.add_child(card_instance)
+
+func _card_id_from_deck_entry(entry) -> String:
+	if typeof(entry) == TYPE_STRING:
+		return entry
+	if typeof(entry) == TYPE_DICTIONARY:
+		return str(entry.get("card_id", entry.get("name", "")))
+	if entry is Control and "card_info" in entry:
+		return str(entry.card_info.get("name", ""))
+	return ""
 
 func _input(event: InputEvent) -> void:
 	if main.is_game_over: return

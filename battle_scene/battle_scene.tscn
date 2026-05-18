@@ -17,6 +17,8 @@
 [ext_resource type="Script" path="res://battle_scene/enemy_ai.gd" id="18_ai"]
 [ext_resource type="Script" path="res://battle_scene/battle_ui_manager.gd" id="19_ui"]
 [ext_resource type="Script" path="res://battle_scene/card_play_zone.gd" id="20_playzone"]
+[ext_resource type="Script" path="res://battle_scene/ui/battle_top_bar.gd" id="21_topbar"]
+[ext_resource type="Texture2D" path="res://battle_scene/assets/images/backgrounds/wasteland_battlefield.png" id="22_bg"]
 
 [sub_resource type="Curve" id="Curve_lsli3"]
 _limits = [-15.0, 15.0, 0.0, 1.0]
@@ -28,20 +30,20 @@ _limits = [0.0, 50.0, 0.0, 1.0]
 _data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.5, 40), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
 point_count = 3
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_blackhole"]
-bg_color = Color(0.05, 0.05, 0.05, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.7, 0.1, 0.9, 1)
-corner_radius_top_left = 50
-corner_radius_top_right = 50
-corner_radius_bottom_right = 50
-corner_radius_bottom_left = 50
-
 [node name="BattleScene" type="Node" unique_id=465306552]
 script = ExtResource("1_2r7vq")
+
+[node name="BattleBackground" type="TextureRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("22_bg")
+expand_mode = 1
+stretch_mode = 6
+texture_filter = 1
 
 [node name="CardManager" type="Control" parent="." unique_id=1234809607 instance=ExtResource("1_rurpr")]
 layout_mode = 3
@@ -140,33 +142,11 @@ stretch_mode = 5
 texture_filter = 2
 mouse_filter = 2
 
-[node name="BlackHolePile" type="Control" parent="CardManager" unique_id=196193802 instance=ExtResource("2_xkfcc")]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -165.0
-offset_top = -370.0
-offset_right = -115.0
-offset_bottom = -320.0
-grow_horizontal = 0
-grow_vertical = 0
-scale = Vector2(1, 1)
-mouse_filter = 1
-script = ExtResource("12_ixui7")
-card_face_up = false
-allow_card_movement = false
-hide_cards = true
-
-
-
 [node name="Player" parent="." instance=ExtResource("7_player")]
-position = Vector2(350, 450)
+position = Vector2(360, 620)
 
 [node name="EnemyContainer" type="Node2D" parent="."]
-position = Vector2(1450, 450)
+position = Vector2(1440, 610)
 
 [node name="EnergyLabel" type="Label" parent="." unique_id=2127611817]
 anchors_preset = 2
@@ -215,6 +195,18 @@ theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_outline_size = 5
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="TopBarLayer" type="CanvasLayer" parent="."]
+layer = 30
+
+[node name="TopBar" type="Control" parent="TopBarLayer"]
+layout_mode = 3
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 62.0
+grow_horizontal = 2
+mouse_filter = 1
+script = ExtResource("21_topbar")
 
 [node name="InspectLayer" type="CanvasLayer" parent="." unique_id=987654000]
 layer = 100
