@@ -199,36 +199,26 @@ func _build_description(data: Dictionary) -> String:
 				else:
 					lines.append("Gain %d Strength" % total)
 
-			"gain_constitution":
-				lines.append("Gain %d Constitution" % total)
-
-			"gain_intelligence":
-				lines.append("Gain %d Intelligence" % total)
-
-			"gain_luck":
-				lines.append("Gain %d Luck" % total)
-
-			"gain_energy":
-				lines.append("Gain %d Energy" % total)
+			"gain_constitution", "gain_intelligence", "gain_luck", "gain_charm", "gain_energy":
+				lines.append("Gain %d %s" % [total, etype.trim_prefix("gain_").capitalize()])
 
 			"draw_cards":
 				lines.append("Draw %d card%s" % [base, "s" if base != 1 else ""])
 
 			"apply_status":
-				lines.append("Apply %s ×%d" % [effect.get("status", "").capitalize(), stacks])
+				lines.append("Apply %s x%d" % [StatusEffectSystem.format_name(effect.get("status", "")), stacks])
 
 			"apply_status_all":
-				lines.append("Apply %s ×%d to all enemies" % [effect.get("status", "").capitalize(), stacks])
+				lines.append("Apply %s x%d to all enemies" % [StatusEffectSystem.format_name(effect.get("status", "")), stacks])
 
 			"apply_status_self":
-				lines.append("Apply %s ×%d to self" % [effect.get("status", "").capitalize(), stacks])
+				lines.append("Apply %s x%d to self" % [StatusEffectSystem.format_name(effect.get("status", "")), stacks])
 
 			_:
 				lines.append(etype.replace("_", " ").capitalize())
 
 	return "[font_size=11]" + "\n".join(lines) + "[/font_size]"
 
-## Refreshes the card UI with current live data
 ## Refreshes the card UI with current live data
 func update_display() -> void:
 	if not is_node_ready(): return

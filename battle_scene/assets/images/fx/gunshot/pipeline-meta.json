@@ -1,0 +1,155 @@
+{
+  "target": "asset",
+  "mode": "sheet",
+  "prompt": "",
+  "role": "",
+  "input": "battle_scene\\assets\\images\\fx\\gunshot\\raw-gunshot-fx.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 200,
+  "rows": 1,
+  "cols": 4,
+  "cell_size": 128,
+  "fit_scale": 0.8,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 0,
+  "min_component_area": 1,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "gunshot_fx-1",
+    "gunshot_fx-2",
+    "gunshot_fx-3",
+    "gunshot_fx-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        543,
+        724
+      ],
+      "component_mode": "all",
+      "component_count": 15,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        118,
+        243,
+        425,
+        484
+      ],
+      "edge_touch": false,
+      "output_size": [
+        70,
+        55
+      ],
+      "paste_position": [
+        29,
+        36
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        543,
+        0,
+        1086,
+        724
+      ],
+      "component_mode": "all",
+      "component_count": 8,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        32,
+        290,
+        464,
+        434
+      ],
+      "edge_touch": false,
+      "output_size": [
+        98,
+        32
+      ],
+      "paste_position": [
+        15,
+        48
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1086,
+        0,
+        1629,
+        724
+      ],
+      "component_mode": "all",
+      "component_count": 18,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        46,
+        298,
+        494,
+        420
+      ],
+      "edge_touch": false,
+      "output_size": [
+        102,
+        27
+      ],
+      "paste_position": [
+        13,
+        50
+      ]
+    },
+    {
+      "grid": [
+        0,
+        3
+      ],
+      "source_box": [
+        1629,
+        0,
+        2172,
+        724
+      ],
+      "component_mode": "all",
+      "component_count": 30,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        94,
+        203,
+        432,
+        502
+      ],
+      "edge_touch": false,
+      "output_size": [
+        77,
+        68
+      ],
+      "paste_position": [
+        25,
+        30
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

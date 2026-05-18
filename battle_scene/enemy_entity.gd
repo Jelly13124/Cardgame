@@ -26,6 +26,7 @@ var action_pattern: Array = []
 var _action_index: int = 0
 
 signal died()
+signal status_changed
 
 # ─── Internal Nodes ───────────────────────────────────────────────────────────
 var _hud: Node
@@ -89,6 +90,10 @@ func _build_sprite_visual(sid: String) -> void:
 	var _load_tex = func(path: String) -> Texture2D:
 		if ResourceLoader.exists(path):
 			return load(path)
+		if FileAccess.file_exists(path):
+			var image := Image.load_from_file(path)
+			if image:
+				return ImageTexture.create_from_image(image)
 		push_warning("EnemyEntity: missing frame '%s'" % path)
 		return null
 
@@ -96,6 +101,14 @@ func _build_sprite_visual(sid: String) -> void:
 	var dir = ENEMIES_DIR + sid + "/"
 
 	# ── Attack (one-shot, non-looping) ─────────────────────────────────────────
+	frames.add_animation("idle")
+	frames.set_animation_loop("idle", true)
+	frames.set_animation_speed("idle", 5.0)
+	for idx in range(4):
+		var tex = _load_tex.call(dir + "%s_idle_%d.png" % [sid, idx])
+		if tex:
+			frames.add_frame("idle", tex)
+
 	frames.add_animation("attack")
 	frames.set_animation_loop("attack", false)
 	frames.set_animation_speed("attack", 8.0)
@@ -105,8 +118,9 @@ func _build_sprite_visual(sid: String) -> void:
 			frames.add_frame("attack", tex)
 
 	add_child(_sprite)
-	# Show frame 0 of attack as static rest pose
-	if frames.has_animation("attack") and frames.get_frame_count("attack") > 0:
+	if frames.has_animation("idle") and frames.get_frame_count("idle") > 0:
+		_sprite.play("idle")
+	elif frames.has_animation("attack") and frames.get_frame_count("attack") > 0:
 		_sprite.play("attack")
 		_sprite.pause()
 		_sprite.frame = 0
@@ -238,6 +252,10 @@ func _start_intent_float_anim() -> void:
 
 # ─── Combat ───────────────────────────────────────────────────────────────────
 
+func notify_status_changed() -> void:
+	status_changed.emit()
+
+
 func take_damage(amount: int) -> void:
 	var dmg_after_block = max(0, amount - block)
 	block = max(0, block - amount)
@@ -257,9 +275,14 @@ func heal(amount: int) -> void:
 	_refresh_hud()
 
 func start_turn() -> void:
-	# Tick status effects before block reset so enemy sees the full state
-	status_system.tick(self )
+	status_system.on_turn_start(self)
+	if health <= 0:
+		return
 	block = 0
+	_refresh_hud()
+
+func end_turn() -> void:
+	status_system.on_turn_end(self)
 	_refresh_hud()
 
 func _refresh_hud() -> void:
@@ -273,11 +296,19 @@ func add_status(status_name: String, stacks: int) -> void:
 func get_status_stacks(status_name: String) -> int:
 	return status_system.get_stacks(status_name)
 
+func get_outgoing_multiplier() -> float:
+	return status_system.get_outgoing_multiplier()
+
+func get_incoming_attack_multiplier() -> float:
+	return status_system.get_incoming_attack_multiplier()
+
 # ─── Animation Helpers ────────────────────────────────────────────────────────
 
 ## Play the attack animation once, then return to idle.
 func play_attack() -> void:
 	if not _sprite or not is_instance_valid(_sprite):
+		return
+	if not _sprite.sprite_frames.has_animation("attack") or _sprite.sprite_frames.get_frame_count("attack") == 0:
 		return
 	if not _sprite.animation_finished.is_connected(_on_attack_finished):
 		_sprite.animation_finished.connect(_on_attack_finished, CONNECT_ONE_SHOT)
@@ -286,4 +317,7 @@ func play_attack() -> void:
 func _on_attack_finished() -> void:
 	# Stay on last frame as rest pose — no idle loop
 	if _sprite and is_instance_valid(_sprite):
-		_sprite.pause()
+		if _sprite.sprite_frames.has_animation("idle") and _sprite.sprite_frames.get_frame_count("idle") > 0:
+			_sprite.play("idle")
+		else:
+			_sprite.pause()

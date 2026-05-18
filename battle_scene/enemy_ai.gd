@@ -42,8 +42,19 @@ func execute_enemy_turn() -> void:
 		if not is_instance_valid(enemy): continue
 		if main.is_game_over: return
 
+		enemy.start_turn()
+		if main.is_game_over:
+			return
+		if not is_instance_valid(enemy) or enemy.health <= 0:
+			await get_tree().process_frame
+			if main.is_game_over:
+				return
+			continue
+
 		var action: Dictionary = enemy.consume_next_action()
 		await _execute_action(enemy, action)
+		if is_instance_valid(enemy):
+			enemy.end_turn()
 		await get_tree().create_timer(0.25).timeout
 
 	if main.is_game_over: return
@@ -65,10 +76,9 @@ func _execute_action(enemy: EnemyEntity, action: Dictionary) -> void:
 				enemy.play_attack()
 			await _animate_lunge(enemy)
 			if main.player and is_instance_valid(main.player):
-				# Apply weakness debuff: weakened enemy deals 0.75× damage
-				var outgoing = amount
-				if enemy.has_method("get_status_stacks") and enemy.get_status_stacks("weakness") > 0:
-					outgoing = int(outgoing * enemy.status_system.get_outgoing_multiplier())
+				var outgoing = main.combat_engine.calculate_attack_damage(amount, enemy, main.player)
+				if main.has_method("modify_enemy_attack_damage"):
+					outgoing = main.modify_enemy_attack_damage(outgoing, enemy, main.player)
 				main.player.take_damage(outgoing)
 				main.show_notification("ENEMY ATTACKS %d!" % outgoing, Color(1, 0.3, 0.3))
 			await _animate_return(enemy)
@@ -112,4 +122,4 @@ func _animate_return(enemy: Node) -> void:
 func _on_enemy_died() -> void:
 	await get_tree().process_frame
 	if main.enemy_container.get_child_count() == 0:
-		main.combat_engine.victory_declared.emit()
+		main.combat_engine.declare_victory()

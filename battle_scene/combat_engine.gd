@@ -1,22 +1,46 @@
 extends Node
-## CombatEngine — Generic effect resolver.
-## Card effects are fully data-driven via the "effects" array in each card's JSON.
-## To add a new effect type, add a match branch in _apply_effect().
-## No card-specific code lives here.
+## Data-driven card effect resolver. Card behavior comes from each card JSON
+## "effects" array; add new effect types in _apply_effect().
 
 signal victory_declared()
 
+const ATTRIBUTE_COLORS = {
+	"gain_strength":     Color(1.0, 0.5, 0.2),
+	"gain_constitution": Color(0.4, 0.7, 1.0),
+	"gain_intelligence": Color(0.8, 0.4, 1.0),
+	"gain_luck":         Color(1.0, 0.9, 0.2),
+	"gain_charm":        Color(1.0, 0.5, 0.8),
+}
+
+const MUZZLE_FLASH_TEX = preload("res://battle_scene/assets/images/fx/gunshot/muzzle_flash.png")
+const BULLET_TEX = preload("res://battle_scene/assets/images/fx/gunshot/bullet.png")
+const IMPACT_TEX = preload("res://battle_scene/assets/images/fx/gunshot/impact.png")
+
 @onready var main = get_parent()
 
-# ─── Public API ───────────────────────────────────────────────────────────────
 
-## Resolve all effects listed on a card.
-## target: the enemy Node for dealing damage (null for non-targeted cards).
-## player: the PlayerEntity.
+func declare_victory() -> void:
+	victory_declared.emit()
+
+
+func calculate_attack_damage(base_damage: int, attacker: Node, defender: Node) -> int:
+	var modified_base = base_damage
+	if main and main.has_method("modify_player_attack_damage") and attacker == main.player:
+		modified_base = main.modify_player_attack_damage(modified_base, attacker, defender)
+
+	var outgoing_mult := 1.0
+	var incoming_mult := 1.0
+	if attacker and attacker.has_method("get_outgoing_multiplier"):
+		outgoing_mult = attacker.get_outgoing_multiplier()
+	if defender and defender.has_method("get_incoming_attack_multiplier"):
+		incoming_mult = defender.get_incoming_attack_multiplier()
+	return int(modified_base * outgoing_mult * incoming_mult)
+
+
 func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 	var effects: Array = card.card_info.get("effects", [])
 	var type = card.card_info.get("type", "skill").to_lower()
-	
+
 	var card_mult: float = 1.0
 	if type == "attack" and player.has_method("get_status_stacks") and player.get_status_stacks("double_damage") > 0:
 		card_mult = 2.0
@@ -24,91 +48,57 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 		main.show_notification("DOUBLE DAMAGE ACTIVE!", Color(0.2, 0.8, 1.0))
 
 	if effects.is_empty():
-		# Fallback for cards that predate the effects system
-		_legacy_fallback(card, target, player)
+		push_warning("CombatEngine: card '%s' has no effects." % card.card_info.get("name", "<unknown>"))
 		return
 
-	# Play card animation first, then resolve all effects in sequence
 	if type == "attack" and target and is_instance_valid(target):
-		await _animate_lunge(player, target.global_position + Vector2(-80, 0))
+		await _animate_player_gunshot(player, target)
 
 	for effect in effects:
 		await _apply_effect(effect, target, player, card_mult)
 
-	if type == "attack" and target and is_instance_valid(target):
-		await _animate_return(player)
 
-# ─── Effect Dispatch ──────────────────────────────────────────────────────────
-
-## Apply a single effect dictionary.
-## All scaling uses the player's RPG attributes (strength, constitution, intelligence, luck, charm).
 func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: float = 1.0) -> void:
 	var effect_type: String = effect.get("type", "")
-	var amount: int          = int(effect.get("amount", 0))
-	var scaling: String      = effect.get("scaling", "")
-	var multiplier: float    = float(effect.get("multiplier", 1))
+	var amount: int = int(effect.get("amount", 0))
+	var scaling: String = effect.get("scaling", "")
+	var multiplier: float = float(effect.get("multiplier", 1))
 
-	# Base stat scaling: amount += player.<scaling>
 	if scaling != "" and scaling in player:
 		amount += int(player.get(scaling))
 
-	# Optional multiplier applied AFTER scaling
 	if multiplier != 1:
 		amount = int(amount * multiplier)
-		
-	# Apply card-level multiplier (e.g. Double Damage status)
-	if card_mult != 1.0:
+
+	var is_damage = effect_type == "deal_damage" or effect_type == "deal_damage_all"
+	if is_damage and card_mult != 1.0:
 		amount = int(amount * card_mult)
 
+	if effect_type in ATTRIBUTE_COLORS:
+		var attr = effect_type.trim_prefix("gain_")
+		player.set(attr, int(player.get(attr)) + amount)
+		if player.has_method("notify_stats_changed"):
+			player.notify_stats_changed()
+		main.show_notification("%s +%d" % [attr.to_upper(), amount], ATTRIBUTE_COLORS[effect_type])
+		await get_tree().create_timer(0.2).timeout
+		return
+
 	match effect_type:
-		# ── Damage ───────────────────────────────────────────────────────────
 		"deal_damage":
 			if target and is_instance_valid(target) and target.has_method("take_damage"):
-				# Apply weakness debuff: weakened attacker deals 0.75× damage
-				var outgoing = amount
-				if player.has_method("get_status_stacks") and player.get_status_stacks("weakness") > 0:
-					outgoing = int(outgoing * player.status_system.get_outgoing_multiplier())
-				if player.has_method("play_attack"):
-					player.play_attack()
+				var outgoing = calculate_attack_damage(amount, player, target)
 				target.take_damage(outgoing)
 				main.show_notification("DEALT %d DAMAGE" % outgoing, Color(1.0, 0.4, 0.3))
 			else:
 				main.show_notification("NO TARGET!", Color(1, 0.5, 0.5))
 
-		# ── Player Defence ────────────────────────────────────────────────────
 		"gain_block":
-			if player.has_method("play_block"):
-				player.play_block()
 			player.add_block(amount)
 			main.show_notification("+%d BLOCK" % amount, Color(0.4, 0.6, 1.0))
 			await get_tree().create_timer(0.2).timeout
 
-		# ── Stat Buffs ────────────────────────────────────────────────────────
-		"gain_strength":
-			player.strength += amount
-			if player.has_signal("stats_changed"): player.stats_changed.emit()
-			main.show_notification("STRENGTH +%d" % amount, Color(1.0, 0.5, 0.2))
-			await get_tree().create_timer(0.2).timeout
-
-		"gain_constitution":
-			player.constitution += amount
-			if player.has_signal("stats_changed"): player.stats_changed.emit()
-			main.show_notification("CONSTITUTION +%d" % amount, Color(0.4, 0.7, 1.0))
-			await get_tree().create_timer(0.2).timeout
-
-		"gain_intelligence":
-			player.intelligence += amount
-			if player.has_signal("stats_changed"): player.stats_changed.emit()
-			main.show_notification("INTELLIGENCE +%d" % amount, Color(0.8, 0.4, 1.0))
-			await get_tree().create_timer(0.2).timeout
-
-		"gain_luck":
-			player.luck += amount
-			main.show_notification("LUCK +%d" % amount, Color(1.0, 0.9, 0.2))
-			await get_tree().create_timer(0.2).timeout
-
 		"gain_energy":
-			player.pay_energy(-amount)  # negative cost = gain
+			player.pay_energy(-amount)
 			main.show_notification("+%d ENERGY" % amount, Color(0.9, 0.9, 0.3))
 			await get_tree().create_timer(0.1).timeout
 
@@ -118,88 +108,80 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			await get_tree().create_timer(0.2).timeout
 
 		"deal_damage_all":
-			# Hit every enemy in the container
 			for enemy in main.enemy_container.get_children():
 				if is_instance_valid(enemy) and enemy.has_method("take_damage"):
-					enemy.take_damage(amount)
-			main.show_notification("ALL ENEMIES: -%d" % amount, Color(1.0, 0.3, 0.2))
+					enemy.take_damage(calculate_attack_damage(amount, player, enemy))
+			main.show_notification("ALL ENEMIES HIT", Color(1.0, 0.3, 0.2))
 			await get_tree().create_timer(0.3).timeout
 
-		# ── Status Effects ────────────────────────────────────────────────────
-		## Apply a status to the targeted enemy.
-		## e.g. { "type": "apply_status", "status": "poison", "stacks": 3 }
 		"apply_status":
 			var status: String = effect.get("status", "")
-			var stacks: int    = int(effect.get("stacks", 1))
+			var stacks: int = int(effect.get("stacks", 1))
 			if target and is_instance_valid(target) and target.has_method("add_status"):
 				target.add_status(status, stacks)
-				main.show_notification("APPLIED %s ×%d" % [status.to_upper(), stacks], Color(0.6, 0.9, 0.3))
+				main.show_notification("APPLIED %s x%d" % [StatusEffectSystem.format_name(status).to_upper(), stacks], Color(0.6, 0.9, 0.3))
 			else:
 				main.show_notification("NO TARGET!", Color(1, 0.5, 0.5))
 			await get_tree().create_timer(0.2).timeout
 
-		## Apply a status to the player.
-		## e.g. { "type": "apply_status_self", "status": "strength_up", "stacks": 2 }
 		"apply_status_self":
 			var status: String = effect.get("status", "")
-			var stacks: int    = int(effect.get("stacks", 1))
+			var stacks: int = int(effect.get("stacks", 1))
 			if player.has_method("add_status"):
 				player.add_status(status, stacks)
-				main.show_notification("APPLIED %s ×%d" % [status.to_upper(), stacks], Color(0.6, 0.9, 0.3))
+				main.show_notification("APPLIED %s x%d" % [StatusEffectSystem.format_name(status).to_upper(), stacks], Color(0.6, 0.9, 0.3))
 			await get_tree().create_timer(0.2).timeout
 
-		## Apply a status to ALL enemies at once.
 		"apply_status_all":
 			var status: String = effect.get("status", "")
-			var stacks: int    = int(effect.get("stacks", 1))
+			var stacks: int = int(effect.get("stacks", 1))
 			for enemy in main.enemy_container.get_children():
 				if is_instance_valid(enemy) and enemy.has_method("add_status"):
 					enemy.add_status(status, stacks)
-			main.show_notification("ALL: %s ×%d" % [status.to_upper(), stacks], Color(0.6, 0.9, 0.3))
+			main.show_notification("ALL: %s x%d" % [StatusEffectSystem.format_name(status).to_upper(), stacks], Color(0.6, 0.9, 0.3))
 			await get_tree().create_timer(0.2).timeout
 
 		_:
 			push_warning("CombatEngine: unknown effect type '%s'" % effect_type)
 
-# ─── Animations ───────────────────────────────────────────────────────────────
 
-var _player_start_pos: Vector2
+func _animate_player_gunshot(player: Node, target: Node) -> void:
+	if player and player.has_method("play_attack"):
+		player.play_attack()
 
-func _animate_lunge(player: Node, toward: Vector2) -> void:
-	_player_start_pos = player.global_position
-	var t = create_tween()
-	t.tween_property(player, "global_position", toward, 0.12).set_trans(Tween.TRANS_QUAD)
-	await t.finished
+	var origin = player.global_position + Vector2(105, -145)
+	var hit = target.global_position + Vector2(-60, -120)
 
-func _animate_return(player: Node) -> void:
-	var t = create_tween()
-	t.tween_property(player, "global_position", _player_start_pos, 0.12)
-	await t.finished
+	var muzzle = _make_fx_sprite(MUZZLE_FLASH_TEX, origin, Vector2(0.62, 0.62))
+	var bullet = _make_fx_sprite(BULLET_TEX, origin + Vector2(24, 0), Vector2(0.42, 0.42))
+	bullet.rotation = (hit - origin).angle()
 
-# ─── Victory ────────────────────────────────────────────────────────────────
+	await get_tree().create_timer(0.05).timeout
+	if is_instance_valid(muzzle):
+		muzzle.queue_free()
 
-func kill_unit(card: Node) -> void:
-	if main.is_game_over: return
-	card.queue_free()
-	await get_tree().process_frame
-	if main.enemy_container.get_child_count() == 0:
-		emit_signal("victory_declared")
+	var flight = create_tween().set_parallel(true)
+	flight.tween_property(bullet, "global_position", hit, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	flight.tween_property(bullet, "modulate:a", 0.0, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await flight.finished
+	if is_instance_valid(bullet):
+		bullet.queue_free()
 
-# ─── Legacy Fallback ─────────────────────────────────────────────────────────
-## Handles cards without an "effects" array (backwards compatibility).
+	var impact = _make_fx_sprite(IMPACT_TEX, hit, Vector2(0.55, 0.55))
+	var burst = create_tween().set_parallel(true)
+	burst.tween_property(impact, "scale", Vector2(0.78, 0.78), 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	burst.tween_property(impact, "modulate:a", 0.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await burst.finished
+	if is_instance_valid(impact):
+		impact.queue_free()
 
-func _legacy_fallback(card: Control, target: Node, player: Node) -> void:
-	var type = card.card_info.get("type", "skill").to_lower()
-	match type:
-		"attack":
-			var dmg = int(card.card_info.get("damage", 0)) + player.strength
-			if target and target.has_method("take_damage"):
-				await _animate_lunge(player, target.global_position + Vector2(-80, 0))
-				target.take_damage(dmg)
-				main.show_notification("DEALT %d DAMAGE" % dmg, Color(1.0, 0.4, 0.3))
-				await _animate_return(player)
-		"skill":
-			var blk = int(card.card_info.get("block", 0)) + player.constitution
-			player.add_block(blk)
-			main.show_notification("+%d BLOCK" % blk, Color(0.4, 0.6, 1.0))
-			await get_tree().create_timer(0.2).timeout
+
+func _make_fx_sprite(texture: Texture2D, pos: Vector2, sprite_scale: Vector2) -> Sprite2D:
+	var sprite = Sprite2D.new()
+	sprite.texture = texture
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite.global_position = pos
+	sprite.scale = sprite_scale
+	sprite.z_index = 80
+	main.add_child(sprite)
+	return sprite

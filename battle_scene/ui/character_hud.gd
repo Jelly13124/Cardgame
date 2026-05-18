@@ -17,6 +17,7 @@ var _hp_bar: TextureProgressBar
 var _hp_label: Label
 var _block_badge: TextureRect
 var _block_label: Label
+var _status_badges: HBoxContainer
 
 const UI_PATH = "res://battle_scene/assets/images/ui/"
 
@@ -91,6 +92,17 @@ func _build_ui() -> void:
 	_block_label.add_theme_color_override("font_color", Color(1, 1, 1))
 	_block_label.position = Vector2(0, -1) # adjust padding inside shield
 	_block_badge.add_child(_block_label)
+
+	# ---- Status Badges ----
+	_status_badges = HBoxContainer.new()
+	_status_badges.name = "StatusBadges"
+	_status_badges.position = Vector2(bar_width + 10, 14)
+	_status_badges.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_status_badges.add_theme_constant_override("separation", 4)
+	add_child(_status_badges)
+
+func get_status_badge_container() -> HBoxContainer:
+	return _status_badges
 
 ## Call this whenever stats change to refresh all visuals.
 func update_stats(hp: int, max_hp: int, blk: int) -> void:

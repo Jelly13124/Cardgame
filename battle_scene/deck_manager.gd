@@ -64,6 +64,7 @@ func reset_deck() -> void:
 func get_randomized_card_list() -> Array:
 	var list = [
 		"strike", "strike", "strike", "strike",
+		"weak_strike",
 		"defend", "defend", "defend", "defend",
 		"override", "preemptive_strike"
 	]

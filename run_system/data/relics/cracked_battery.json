@@ -1,0 +1,16 @@
+{
+  "id": "cracked_battery",
+  "title": "Cracked Battery",
+  "description": "At the start of your first turn each combat, gain 1 Energy.",
+  "icon": "res://run_system/assets/images/relics/cracked_battery.png",
+  "rarity": "common",
+  "effects": [
+    {
+      "trigger": "player_turn_start",
+      "round": 1,
+      "type": "gain_energy",
+      "amount": 1,
+      "once_per_combat": true
+    }
+  ]
+}

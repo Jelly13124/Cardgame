@@ -1,10 +1,31 @@
 extends CardContainer
 class_name CardPlayZone
 
+const HAND_RESERVED_HEIGHT: float = 240.0
+const HORIZONTAL_OVERFLOW: float = 80.0
+
 func _ready():
-	sensor_size = Vector2(3000, 700)
-	sensor_position = Vector2(-500, -100)
+	_sync_play_zone_bounds()
 	super._ready()
+	if get_viewport():
+		get_viewport().size_changed.connect(_sync_play_zone_bounds)
+	_sync_play_zone_bounds()
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		_sync_play_zone_bounds()
+
+func _sync_play_zone_bounds() -> void:
+	var viewport_size = get_viewport_rect().size
+	if viewport_size == Vector2.ZERO and get_viewport():
+		viewport_size = get_viewport().get_visible_rect().size
+	
+	var play_height = maxf(180.0, viewport_size.y - HAND_RESERVED_HEIGHT)
+	sensor_position = Vector2(-HORIZONTAL_OVERFLOW, 0.0)
+	sensor_size = Vector2(viewport_size.x + HORIZONTAL_OVERFLOW * 2.0, play_height)
+	
+	if drop_zone:
+		drop_zone.set_sensor(sensor_size, sensor_position, sensor_texture, sensor_visibility)
 
 func _card_can_be_added(cards: Array) -> bool:
 	var main = get_tree().current_scene
