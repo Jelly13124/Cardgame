@@ -98,9 +98,9 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.focus_mode = Control.FOCUS_NONE
 	button.text = ""
-	button.add_theme_stylebox_override("normal", _make_reward_row_style(T.ROW_BG, T.PANEL_BORDER))
-	button.add_theme_stylebox_override("hover", _make_reward_row_style(T.ROW_HOVER_BG, T.CYAN_EDGE))
-	button.add_theme_stylebox_override("pressed", _make_reward_row_style(T.ROW_PRESSED_BG, T.PANEL_HIGHLIGHT))
+	button.add_theme_stylebox_override("normal", T.reward_row_style(T.PANEL_BG, T.PANEL_BORDER))
+	button.add_theme_stylebox_override("hover", T.reward_row_style(T.WARM_TAN, T.ACCENT_NEON_BLUE))
+	button.add_theme_stylebox_override("pressed", T.reward_row_style(T.RUST_PRIMARY, T.ACCENT_DANGER))
 	button.pressed.connect(_on_loot_selected.bind(str(loot["id"]), button))
 
 	var margin = MarginContainer.new()
@@ -149,7 +149,7 @@ func _make_loot_row(loot: Dictionary) -> Button:
 func _make_icon_well(icon_path: String) -> PanelContainer:
 	var frame = PanelContainer.new()
 	frame.custom_minimum_size = Vector2(82, 82)
-	frame.add_theme_stylebox_override("panel", _make_icon_frame_style())
+	frame.add_theme_stylebox_override("panel", T.icon_frame_style())
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var center = CenterContainer.new()
@@ -180,7 +180,7 @@ func _make_icon_well(icon_path: String) -> PanelContainer:
 func _make_claim_plate() -> PanelContainer:
 	var plate = PanelContainer.new()
 	plate.custom_minimum_size = Vector2(104, 50)
-	plate.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.08, 0.12, 0.13, 1.0), T.CYAN_EDGE, 3))
+	plate.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.08, 0.12, 0.13, 1.0), T.ACCENT_NEON_BLUE, 3))
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var label = Label.new()
@@ -301,7 +301,7 @@ func _make_draft_card_slot(card_id: String) -> Control:
 
 	if card:
 		button.mouse_entered.connect(func():
-			frame.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.13, 0.095, 0.062, 0.96), T.CYAN_EDGE, 4))
+			frame.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.13, 0.095, 0.062, 0.96), T.ACCENT_NEON_BLUE, 4))
 			var tween = create_tween()
 			tween.tween_property(card, "scale", Vector2(1.62, 1.62), 0.10)
 		)
@@ -348,18 +348,3 @@ func _load_texture(path: String) -> Texture2D:
 		return ImageTexture.create_from_image(image)
 
 	return null
-
-
-## Reward row wraps the shared panel with content padding.
-func _make_reward_row_style(bg: Color, border: Color) -> StyleBoxFlat:
-	var style = T.panel_with_shadow(bg, border, 3)
-	style.content_margin_left = 12.0
-	style.content_margin_right = 12.0
-	style.content_margin_top = 8.0
-	style.content_margin_bottom = 8.0
-	return style
-
-
-## Icon well frame is the shared panel with a thicker border.
-func _make_icon_frame_style() -> StyleBoxFlat:
-	return T.panel_with_shadow(Color(0.045, 0.04, 0.035, 1.0), Color(0.62, 0.44, 0.22, 1.0), 2, 3)

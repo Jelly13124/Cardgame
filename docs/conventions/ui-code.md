@@ -31,7 +31,7 @@ panel.add_theme_stylebox_override("panel", T.panel_with_shadow(T.PANEL_BG, T.PAN
 
 - **Why:** consolidates the 3-way StyleBoxFlat duplication we used to have. Centralizes palette tweaks.
 - **What goes in T:** shared colors, common panel/button builders, anything used in 2+ UI files.
-- **What stays in the UI file:** scene-specific compositions (e.g. `_make_reward_row_style` wraps `T.panel_with_shadow` with content margins specific to loot rows).
+- **What stays in the UI file:** one-off inline compositions used by a single caller. If two scenes need the same composition, promote it to a `WastelandTheme` static method instead of duplicating the wrapper.
 
 ### 2. Texture loading goes through a defensive `_load_texture(path)` helper
 Pattern used in `map_scene.gd`, `loot_reward.gd`, and others:

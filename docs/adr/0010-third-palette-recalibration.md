@@ -72,7 +72,7 @@ Rationale: after three pivots in one day, the probability of another pivot is no
 **Negative / Trade-offs:**
 - The theme file's docstring + class_name are decoupled from the visual era. Future readers won't know from the filename whether colors are "punk", "cartoon", or "pixel" — they need to read the file or check the active ADR.
 - Mitigation: keep ADRs as the history of record. Latest active art-direction ADR explains current palette.
-- The legacy aliases at the bottom of `wasteland_theme.gd` (`PANEL_BG_BANNER = PANEL_BG` etc.) are short-term tech debt — they keep existing consumers compiling but mean the same UI looks duplicated under two names. Slice 1B+ should migrate consumers onto the new names and delete the aliases.
+- ~~The legacy aliases at the bottom of `wasteland_theme.gd` (`PANEL_BG_BANNER = PANEL_BG` etc.) are short-term tech debt — they keep existing consumers compiling but mean the same UI looks duplicated under two names. Slice 1B+ should migrate consumers onto the new names and delete the aliases.~~ **Resolved 2026-05-20** by the Theme Finalization slice (`docs/slices/2026-05-20-theme-finalization.md`): all seven aliases removed; `loot_reward.gd` migrated to canonical palette names.
 
 **Risks (and mitigations):**
 - *Risk:* sampled colors are biased toward whichever sprite has the most pixels (e.g. the wasteland_battlefield.png background dominates many top ranks). *Mitigation:* picks were filtered to include underrepresented but project-essential accent colors per project-rules.md prescription.
