@@ -1,6 +1,9 @@
 extends Card
 class_name PlayCard
 
+# Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
+const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
+
 @onready var cost_label = $FrontFace/CostCircle/CostLabel
 @onready var name_label = $FrontFace/NameLabel
 @onready var desc_label = $FrontFace/DescriptionBox/DescriptionLabel
@@ -28,11 +31,11 @@ var _rarity_frames: Dictionary = {}
 
 func _ready() -> void:
 	super._ready()
-	# Load the pixel art card background (front)
+	# Load the card background art (front)
 	var bg = load(UI_ASSET_PATH + "card_bg.png")
 	if bg and is_instance_valid(card_bg_texture):
 		card_bg_texture.texture = bg
-	# Load pixel art card back — shown when card is face-down (draw/discard piles)
+	# Load card back art — shown when card is face-down (draw/discard piles)
 	var back_tex = load(UI_ASSET_PATH + "card_back.png")
 	var back_rect = get_node_or_null("BackFace/TextureRect")
 	if back_tex and is_instance_valid(back_rect):
@@ -206,16 +209,42 @@ func _build_description(data: Dictionary) -> String:
 				lines.append("Draw %d card%s" % [base, "s" if base != 1 else ""])
 
 			"apply_status":
-				lines.append("Apply %s x%d" % [StatusEffectSystem.format_name(effect.get("status", "")), stacks])
+				lines.append("Apply %s x%d" % [STATUS_SYS.format_name(effect.get("status", "")), stacks])
 
 			"apply_status_all":
-				lines.append("Apply %s x%d to all enemies" % [StatusEffectSystem.format_name(effect.get("status", "")), stacks])
+				lines.append("Apply %s x%d to all enemies" % [STATUS_SYS.format_name(effect.get("status", "")), stacks])
 
 			"apply_status_self":
-				lines.append("Apply %s x%d to self" % [StatusEffectSystem.format_name(effect.get("status", "")), stacks])
+				lines.append("Apply %s x%d to self" % [STATUS_SYS.format_name(effect.get("status", "")), stacks])
+
+			"apply_shock":
+				lines.append("Apply [color=#f0e040]Shock[/color] x%d" % stacks)
+
+			"apply_shock_all":
+				lines.append("Apply [color=#f0e040]Shock[/color] x%d to all enemies" % stacks)
+
+			"scale_damage_by_attacks":
+				var s_base: int = int(effect.get("base", 0))
+				var s_per: int = int(effect.get("per", 0))
+				lines.append("Deal %d + %d per Attack played this turn" % [s_base, s_per])
+
+			"exhaust_self":
+				# Rendered separately as a keyword tag below
+				pass
 
 			_:
 				lines.append(etype.replace("_", " ").capitalize())
+
+	# Keyword tags (Retain / Exhaust) appear on their own line, dimmer than effects.
+	var keywords: PackedStringArray = []
+	if bool(data.get("retain", false)):
+		keywords.append("[color=#9ec1ff]Retain[/color]")
+	for e in effects:
+		if typeof(e) == TYPE_DICTIONARY and str(e.get("type", "")) == "exhaust_self":
+			keywords.append("[color=#cfa9ff]Exhaust[/color]")
+			break
+	if keywords.size() > 0:
+		lines.append("[i]%s[/i]" % " · ".join(keywords))
 
 	return "[font_size=11]" + "\n".join(lines) + "[/font_size]"
 

@@ -45,11 +45,40 @@ var player_attributes: Dictionary = {
 ## Example: ["trash_robot", "wasteland_killer"]
 var current_encounter: Array[String] = ["trash_robot"]
 
+## Encounter pools by node type and floor band.
+## MapScene calls `select_encounter(type, floor)` before loading the battle scene
+## to populate `current_encounter`.
+const ENCOUNTER_POOLS_EARLY = [
+	["scrap_rat"],
+	["trash_robot"],
+	["scrap_rat", "scrap_rat"],
+	["wasteland_killer"],
+]
+const ENCOUNTER_POOLS_MID = [
+	["riot_hound"],
+	["rust_brute"],
+	["trash_robot", "scrap_rat"],
+	["mortar_cart"],
+	["wasteland_killer", "scrap_rat"],
+]
+const ENCOUNTER_POOLS_LATE = [
+	["riot_hound", "riot_hound"],
+	["rust_brute", "scrap_rat"],
+	["mortar_cart", "scrap_rat"],
+	["rust_brute", "riot_hound"],
+]
+const ELITE_ROSTER: Array = ["armored_patrol"]
+const BOSS_ROSTER:  Array = ["junkyard_tyrant"]
+
 const BATTLE_SCENE: String = "res://battle_scene/battle_scene.tscn"
 const MAP_SCENE: String = "res://run_system/ui/map_scene.tscn"
 const RELIC_DATA_DIR: String = "res://run_system/data/relics/"
-const FIRST_MERCHANT_FLOOR_INDEX: int = 4 # Human-facing layer 5.
+const FIRST_MERCHANT_FLOOR_INDEX: int = 5 # Human-facing layer 6.
 const GUARANTEED_TREASURE_FLOOR_INDEX: int = 6 # Human-facing layer 7.
+## Floors 1..EARLY_FLOOR_LAST roll combat-only (no rest / treasure / merchant).
+const EARLY_FLOOR_LAST: int = 4
+## At most this many treasures spawn outside the guaranteed floor-6 chest.
+const MAX_EXTRA_TREASURES: int = 2
 
 # --- Map State ---
 ## Each entry: { "id": String, "floor": int, "slot": int, "type": String, "children": Array[String] }
@@ -57,8 +86,13 @@ var map_data: Array = []
 var current_node_id: String = "" ## "" means player hasn't chosen a floor-0 node yet
 var _node_index: Dictionary = {}
 
+const DATA_VALIDATOR = preload("res://battle_scene/data_validator.gd")
+
 func _ready() -> void:
-	pass
+	# Load-time schema check for all card / enemy / relic JSON. Fails loud in
+	# debug builds so typos surface at startup instead of in playtest.
+	var failures = DATA_VALIDATOR.validate_all_data_at_startup()
+	assert(failures == 0, "DataValidator: %d JSON schema failure(s) — see editor output." % failures)
 
 # --- Map Generation ---
 
@@ -98,9 +132,10 @@ func generate_map(num_floors: int = 12, width: int = 4) -> void:
 				slots.append(available[i])
 			slots.sort()
 		
-		# Assign node types
+		# Assign node types — track treasure count across the whole run so we
+		# can enforce MAX_EXTRA_TREASURES.
 		for slot in slots:
-			var node_type = _pick_node_type(f, num_floors)
+			var node_type = _pick_node_type(f, num_floors, _count_extra_treasures())
 			var node = {
 				"id": "f%d_s%d" % [f, slot],
 				"floor": f,
@@ -161,7 +196,7 @@ func generate_map(num_floors: int = 12, width: int = 4) -> void:
 	for node in map_data:
 		_node_index[node.id] = node
 
-func _pick_node_type(floor_idx: int, total: int) -> String:
+func _pick_node_type(floor_idx: int, total: int, treasure_extras_used: int = 0) -> String:
 	# Floor 0: starting relic choice
 	if floor_idx == 0:
 		return "relic"
@@ -174,20 +209,43 @@ func _pick_node_type(floor_idx: int, total: int) -> String:
 	# Human-facing layer 7: guaranteed relic chest layer.
 	if floor_idx == GUARANTEED_TREASURE_FLOOR_INDEX:
 		return "treasure"
-	
-	# Random distribution for middle floors
+
 	var roll = randf()
+
+	# Early floors (1..EARLY_FLOOR_LAST): combat-only — no rest, no treasure,
+	# no merchant. Player gets ramped up on encounters before resources/shops
+	# come online.
+	if floor_idx <= EARLY_FLOOR_LAST:
+		if roll < 0.65:
+			return "enemy"
+		if roll < 0.85:
+			return "unknown"
+		return "elite"
+
+	# Mid/late floors: full pool with reduced treasure rate + global treasure cap.
 	if roll < 0.40:
 		return "enemy"
 	if roll < 0.55:
 		return "unknown"
-	if floor_idx >= FIRST_MERCHANT_FLOOR_INDEX and roll < 0.70:
+	if roll < 0.70:  # merchant always available here (floor >= EARLY_FLOOR_LAST + 1)
 		return "merchant"
-	if roll < 0.82:
+	if roll < 0.88:  # widened rest band (formerly 0.55-0.82 = 27%, now 0.70-0.88 = 18%)
 		return "rest"
-	if roll < 0.92:
+	# Treasure: ~5% nominal AND gated by MAX_EXTRA_TREASURES so a run never
+	# rolls more than guaranteed-floor-6 + N extras.
+	if roll < 0.93 and treasure_extras_used < MAX_EXTRA_TREASURES:
 		return "treasure"
 	return "elite"
+
+
+## Counts treasure nodes generated so far that are NOT on the guaranteed
+## treasure floor — used to enforce MAX_EXTRA_TREASURES during generation.
+func _count_extra_treasures() -> int:
+	var count = 0
+	for node in map_data:
+		if node.type == "treasure" and node.floor != GUARANTEED_TREASURE_FLOOR_INDEX:
+			count += 1
+	return count
 
 func _get_nodes_on_floor(f: int) -> Array:
 	var result: Array = []
@@ -198,6 +256,36 @@ func _get_nodes_on_floor(f: int) -> Array:
 
 func get_node_by_id(id: String) -> Dictionary:
 	return _node_index.get(id, {})
+
+# --- Encounter Selection ---
+
+## Picks an enemy roster based on node type and floor index.
+## Called by MapScene before transitioning to the battle scene.
+func select_encounter(node_type: String, floor_idx: int) -> Array[String]:
+	var result: Array[String] = []
+	match node_type:
+		"boss":
+			for id in BOSS_ROSTER:
+				result.append(str(id))
+		"elite":
+			for id in ELITE_ROSTER:
+				result.append(str(id))
+		"enemy", "unknown":
+			var pool: Array
+			if floor_idx <= 3:
+				pool = ENCOUNTER_POOLS_EARLY
+			elif floor_idx <= 7:
+				pool = ENCOUNTER_POOLS_MID
+			else:
+				pool = ENCOUNTER_POOLS_LATE
+			var pick = pool[randi() % pool.size()]
+			for id in pick:
+				result.append(str(id))
+		_:
+			result.append("trash_robot")
+	if result.is_empty():
+		result.append("trash_robot")
+	return result
 
 # --- Run Initialization ---
 

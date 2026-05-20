@@ -43,9 +43,8 @@ func draw_cards(count: int) -> void:
 # Clears the deck and refills it with a fresh, shuffled list of cards
 func reset_deck() -> void:
 	var list = []
-	var run_manager = get_node_or_null("/root/RunManager")
-	if run_manager and run_manager.get("is_run_active"):
-		list = run_manager.player_deck.duplicate()
+	if RunManager.is_run_active:
+		list = RunManager.player_deck.duplicate()
 	else:
 		list = get_randomized_card_list()
 	

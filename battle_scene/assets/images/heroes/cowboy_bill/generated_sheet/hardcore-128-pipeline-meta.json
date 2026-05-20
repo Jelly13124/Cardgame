@@ -1,0 +1,23 @@
+{
+  "source": "C:\\Users\\Jerry\\.codex\\generated_images\\019db115-8dd5-7322-a778-81abb74ffb7f\\ig_022ebee51bb298e2016a0cfa418a0c819ba0aac7596feb10a4.png",
+  "raw_copy": "battle_scene\\assets\\images\\heroes\\cowboy_bill\\generated_sheet\\hardcore-128-reference-source.png",
+  "style": "Hardcore 128 Pixel Wasteland Art",
+  "frame_size": [
+    128,
+    128
+  ],
+  "idle_frames": [
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\idle\\cowboy_bill_idle_0.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\idle\\cowboy_bill_idle_1.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\idle\\cowboy_bill_idle_2.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\idle\\cowboy_bill_idle_3.png"
+  ],
+  "attack_frames": [
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\attack\\cowboy_bill_attack_0.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\attack\\cowboy_bill_attack_1.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\attack\\cowboy_bill_attack_2.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\attack\\cowboy_bill_attack_3.png"
+  ],
+  "portrait": "battle_scene\\assets\\images\\heroes\\cowboy_bill\\cowboy_bill_portrait.png",
+  "processing": "edge flood-fill background cleanup, crop, fit to 128x128, generated subtle idle bob and muzzle-flash attack frames; attack muzzle flash inset to avoid frame-edge clipping"
+}

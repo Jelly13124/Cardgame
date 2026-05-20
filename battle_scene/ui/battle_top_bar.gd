@@ -1,5 +1,6 @@
 extends Control
 
+const T = preload("res://run_system/ui/theme/wasteland_cartoon_theme.gd")
 const RELIC_DATA_DIR := "res://run_system/data/relics/"
 const BAR_HEIGHT := 62.0
 
@@ -297,27 +298,14 @@ func _make_menu_button(text: String) -> Button:
 	return button
 
 
+## Top-bar button shape — shared base with warm-grey border.
 func _make_button_style(bg: Color) -> StyleBoxFlat:
-	var style = StyleBoxFlat.new()
-	style.bg_color = bg
-	style.border_color = Color(0.67, 0.49, 0.24, 0.72)
-	style.border_width_left = 1
-	style.border_width_top = 1
-	style.border_width_right = 1
-	style.border_width_bottom = 1
-	style.corner_radius_top_left = 6
-	style.corner_radius_top_right = 6
-	style.corner_radius_bottom_right = 6
-	style.corner_radius_bottom_left = 6
-	return style
+	return T.panel_flat(bg, Color(0.67, 0.49, 0.24, 0.72), 6, 1)
 
 
+## Settings/deck panel — shared base with heavier border and content padding.
 func _make_panel_style() -> StyleBoxFlat:
-	var style = _make_button_style(Color(0.07, 0.055, 0.04, 0.98))
-	style.border_width_left = 2
-	style.border_width_top = 2
-	style.border_width_right = 2
-	style.border_width_bottom = 2
+	var style = T.panel_flat(Color(0.07, 0.055, 0.04, 0.98), Color(0.67, 0.49, 0.24, 0.72), 6, 2)
 	style.content_margin_left = 24
 	style.content_margin_top = 22
 	style.content_margin_right = 24
@@ -326,8 +314,8 @@ func _make_panel_style() -> StyleBoxFlat:
 
 
 func _on_deck_pressed() -> void:
-	if main and main.has_method("show_run_deck_viewer"):
-		main.show_run_deck_viewer()
+	if main and main.ui_manager:
+		main.ui_manager.show_run_deck_viewer()
 
 
 func _show_settings() -> void:
@@ -383,7 +371,8 @@ func _on_player_health_changed(_current: int) -> void:
 
 
 func _get_run_manager() -> Node:
-	return get_node_or_null("/root/RunManager")
+	# RunManager is a registered autoload (project.godot) — always available.
+	return RunManager
 
 
 func _humanize_id(value: String) -> String:

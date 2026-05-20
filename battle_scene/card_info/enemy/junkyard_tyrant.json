@@ -1,0 +1,17 @@
+{
+	"id": "junkyard_tyrant",
+	"name": "Junkyard Tyrant",
+	"sprite_id": "junkyard_tyrant",
+	"max_health": 110,
+	"action_pattern": [
+		{ "type": "attack",    "amount": 10, "label": "⚔ 10" },
+		{ "type": "attack",    "amount": 12, "label": "⚔ 12" },
+		{ "type": "block",     "amount": 12, "label": "🛡 12" },
+		{ "type": "telegraph", "label": "💢 CHARGING" },
+		{ "type": "attack",    "amount": 22, "label": "💥 CRUSHING 22", "interruptible": true },
+		{ "type": "attack",    "amount": 14, "label": "⚔ 14" },
+		{ "type": "block",     "amount": 10, "label": "🛡 10" },
+		{ "type": "telegraph", "label": "💢 CHARGING" },
+		{ "type": "attack",    "amount": 22, "label": "💥 CRUSHING 22", "interruptible": true }
+	]
+}

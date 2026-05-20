@@ -1,0 +1,14 @@
+{
+	"name": "cascade",
+	"title": "Cascade",
+	"rarity": "uncommon",
+	"type": "attack",
+	"cost": 1,
+	"description": "Deal 2 damage, plus 2 more for each Attack you've played this turn. Retain.",
+	"front_image": "player/cascade.png",
+	"side": "player",
+	"retain": true,
+	"effects": [
+		{ "type": "scale_damage_by_attacks", "base": 2, "per": 2 }
+	]
+}

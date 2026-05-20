@@ -1,0 +1,15 @@
+{
+	"name": "adrenaline",
+	"title": "Adrenaline",
+	"rarity": "common",
+	"type": "skill",
+	"cost": 0,
+	"description": "Gain 2 Energy. Draw 1 card. Exhaust.",
+	"front_image": "player/adrenaline.png",
+	"side": "player",
+	"effects": [
+		{ "type": "gain_energy", "amount": 2 },
+		{ "type": "draw_cards", "amount": 1 },
+		{ "type": "exhaust_self" }
+	]
+}

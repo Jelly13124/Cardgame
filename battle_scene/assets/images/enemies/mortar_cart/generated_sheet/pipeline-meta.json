@@ -1,0 +1,144 @@
+{
+  "sprite_id": "mortar_cart",
+  "mode": "two_rows",
+  "raw_sheet": "battle_scene/assets/images/enemies/mortar_cart/generated_sheet/raw-sheet.png",
+  "source_size": [
+    1774,
+    887
+  ],
+  "rows": 2,
+  "cols": 4,
+  "frame_size": 64,
+  "shared_scale": 0.12711316397228636,
+  "reprocessed_at": 1779142083,
+  "frames": [
+    {
+      "file": "battle_scene/assets/images/enemies/mortar_cart/mortar_cart_idle_0.png",
+      "anim": "idle",
+      "frame": 0,
+      "source_bbox": [
+        54,
+        89,
+        429,
+        357
+      ],
+      "output_size": [
+        64,
+        64
+      ],
+      "edge_touch_source_cell": false
+    },
+    {
+      "file": "battle_scene/assets/images/enemies/mortar_cart/mortar_cart_idle_1.png",
+      "anim": "idle",
+      "frame": 1,
+      "source_bbox": [
+        30,
+        72,
+        406,
+        357
+      ],
+      "output_size": [
+        64,
+        64
+      ],
+      "edge_touch_source_cell": false
+    },
+    {
+      "file": "battle_scene/assets/images/enemies/mortar_cart/mortar_cart_idle_2.png",
+      "anim": "idle",
+      "frame": 2,
+      "source_bbox": [
+        7,
+        89,
+        433,
+        443
+      ],
+      "output_size": [
+        64,
+        64
+      ],
+      "edge_touch_source_cell": true
+    },
+    {
+      "file": "battle_scene/assets/images/enemies/mortar_cart/mortar_cart_idle_3.png",
+      "anim": "idle",
+      "frame": 3,
+      "source_bbox": [
+        13,
+        97,
+        393,
+        357
+      ],
+      "output_size": [
+        64,
+        64
+      ],
+      "edge_touch_source_cell": false
+    },
+    {
+      "file": "battle_scene/assets/images/enemies/mortar_cart/mortar_cart_attack_0.png",
+      "anim": "attack",
+      "frame": 0,
+      "source_bbox": [
+        44,
+        65,
+        418,
+        339
+      ],
+      "output_size": [
+        64,
+        64
+      ],
+      "edge_touch_source_cell": false
+    },
+    {
+      "file": "battle_scene/assets/images/enemies/mortar_cart/mortar_cart_attack_1.png",
+      "anim": "attack",
+      "frame": 1,
+      "source_bbox": [
+        10,
+        17,
+        395,
+        338
+      ],
+      "output_size": [
+        64,
+        64
+      ],
+      "edge_touch_source_cell": false
+    },
+    {
+      "file": "battle_scene/assets/images/enemies/mortar_cart/mortar_cart_attack_2.png",
+      "anim": "attack",
+      "frame": 2,
+      "source_bbox": [
+        0,
+        0,
+        433,
+        339
+      ],
+      "output_size": [
+        64,
+        64
+      ],
+      "edge_touch_source_cell": true
+    },
+    {
+      "file": "battle_scene/assets/images/enemies/mortar_cart/mortar_cart_attack_3.png",
+      "anim": "attack",
+      "frame": 3,
+      "source_bbox": [
+        10,
+        72,
+        392,
+        338
+      ],
+      "output_size": [
+        64,
+        64
+      ],
+      "edge_touch_source_cell": false
+    }
+  ]
+}

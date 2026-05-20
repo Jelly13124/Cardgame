@@ -1,0 +1,219 @@
+## Renders the wasteland map (background, paths, nodes, legend, top bar).
+## Owned by MapScene; called from MapScene._draw(). All drawing happens on the
+## owning MapScene CanvasItem — this class does not own a CanvasItem of its own.
+##
+## Reads scene state through `_scene.X` (rm, _node_icon_textures, _node_positions,
+## _scroll_offset, _hovered_node_id, _get_screen_pos, _is_accessible).
+extends RefCounted
+class_name MapRenderer
+
+const NODE_RADIUS: float       = 34.0
+const NODE_ICON_SIZE: float    = 64.0
+const LEGEND_NODE_ICON_SIZE: float = 20.0
+
+const LEGEND_ENTRIES = [
+	["relic", "Relic"],
+	["unknown", "Unknown"],
+	["merchant", "Merchant"],
+	["treasure", "Treasure"],
+	["rest", "Rest"],
+	["enemy", "Enemy"],
+	["elite", "Elite"],
+	["boss", "Boss"],
+]
+
+const TYPE_COLORS = {
+	"relic":    Color(0.35, 0.95, 1.0),
+	"unknown":  Color(0.72, 0.82, 0.9),
+	"merchant": Color(1.0, 0.82, 0.18),
+	"treasure": Color(0.34, 1.0, 0.46),
+	"rest":     Color(1.0, 0.56, 0.2),
+	"enemy":    Color(1.0, 0.22, 0.26),
+	"elite":    Color(1.0, 0.18, 0.72),
+	"boss":     Color(1.0, 0.08, 0.12),
+}
+
+var _scene: Control
+var _font: Font
+
+
+func _init(scene: Control) -> void:
+	_scene = scene
+	_font = ThemeDB.fallback_font
+
+
+## Main entry point — called from MapScene._draw().
+func draw(vp: Vector2) -> void:
+	_draw_map_background(vp)
+	if _scene.rm.map_data.is_empty():
+		return
+	_draw_all_paths(vp)
+	_draw_all_nodes(vp)
+	_draw_legend(vp)
+	_draw_top_bar(vp)
+
+
+func _draw_map_background(vp: Vector2) -> void:
+	if _scene.map_background_tex:
+		_scene.draw_texture_rect(_scene.map_background_tex, Rect2(Vector2.ZERO, vp), false)
+	else:
+		_scene.draw_rect(Rect2(Vector2.ZERO, vp), Color(0.08, 0.08, 0.1, 1.0))
+	_scene.draw_rect(Rect2(Vector2.ZERO, vp), Color(0.03, 0.018, 0.01, 0.12))
+
+
+func _draw_all_paths(vp: Vector2) -> void:
+	var current_floor = -1
+	if _scene.rm.current_node_id != "":
+		var cur = _scene.rm.get_node_by_id(_scene.rm.current_node_id)
+		if not cur.is_empty():
+			current_floor = cur.floor
+
+	for node in _scene.rm.map_data:
+		if node.children.is_empty():
+			continue
+
+		var from = _scene._get_screen_pos(node.id)
+		for child_id in node.children:
+			var to = _scene._get_screen_pos(child_id)
+			if from.x < -70 and to.x < -70:
+				continue
+			if from.x > vp.x + 70 and to.x > vp.x + 70:
+				continue
+
+			var color = Color(0.18, 0.72, 1.0, 0.82)
+			if node.id == _scene.rm.current_node_id:
+				color = Color(0.55, 0.95, 1.0, 0.98)
+			elif current_floor >= 0 and node.floor < current_floor:
+				color = Color(0.16, 0.44, 0.68, 0.58)
+
+			_draw_pixel_dashed_line(from, to, Color(0.02, 0.05, 0.08, color.a * 0.62), 3.2, 22.0, 12.0, Vector2(1, 2))
+			_draw_pixel_dashed_line(from, to, color, 2.1, 22.0, 12.0, Vector2.ZERO)
+
+
+func _draw_all_nodes(vp: Vector2) -> void:
+	var current_floor = -1
+	if _scene.rm.current_node_id != "":
+		var cur = _scene.rm.get_node_by_id(_scene.rm.current_node_id)
+		if not cur.is_empty():
+			current_floor = cur.floor
+
+	for node in _scene.rm.map_data:
+		var pos = _scene._get_screen_pos(node.id)
+		if pos.x < -60 or pos.x > vp.x + 60:
+			continue
+
+		var accessible = _scene._is_accessible(node)
+		var is_current = node.id == _scene.rm.current_node_id
+		var visited = is_current or (current_floor >= 0 and node.floor < current_floor)
+		var hovered = node.id == _scene._hovered_node_id and accessible
+
+		var alpha = 1.0
+		if visited and not is_current:
+			alpha = 0.52
+		elif not accessible and not visited:
+			alpha = 0.74
+
+		var radius = NODE_RADIUS + (4.0 if hovered else 0.0)
+		_draw_map_node(pos, node.type, radius, alpha, accessible, visited, is_current, hovered)
+
+
+func _draw_map_node(pos: Vector2, node_type: String, radius: float, alpha: float, accessible: bool, visited: bool, is_current: bool, hovered: bool) -> void:
+	var icon_size = NODE_ICON_SIZE + (4.0 if hovered else 0.0) + (4.0 if is_current else 0.0)
+	var tint = Color(1.0, 1.0, 1.0, alpha)
+	if not accessible and not visited:
+		tint = Color(0.88, 0.84, 0.76, alpha)
+	elif visited and not is_current:
+		tint = Color(0.80, 0.76, 0.66, maxf(alpha, 0.62))
+
+	if is_current:
+		_draw_pixel_selection(pos, radius + 10.0, Color(1.0, 0.92, 0.25, 1.0))
+	elif hovered:
+		_draw_pixel_selection(pos, radius + 9.0, Color(0.45, 0.95, 1.0, 0.95))
+	elif accessible and not visited:
+		_scene.draw_rect(Rect2(pos + Vector2(-2, radius + 7.0), Vector2(4, 4)), Color(0.45, 0.95, 1.0, 0.9))
+
+	_draw_node_texture(pos, node_type, icon_size, tint)
+
+
+func _draw_node_texture(pos: Vector2, node_type: String, icon_size: float, tint: Color) -> void:
+	var texture: Texture2D = _scene._node_icon_textures.get(node_type, null)
+	if texture:
+		var rect = Rect2(pos - Vector2(icon_size * 0.5, icon_size * 0.5), Vector2(icon_size, icon_size))
+		var outline = Color(0.04, 0.025, 0.012, tint.a * 0.58)
+		_draw_node_texture_rect(texture, rect, Vector2(2, 2), outline)
+		_draw_node_texture_rect(texture, rect, Vector2(-1, 0), outline)
+		_draw_node_texture_rect(texture, rect, Vector2(1, 0), outline)
+		_draw_node_texture_rect(texture, rect, Vector2(0, -1), outline)
+		_draw_node_texture_rect(texture, rect, Vector2(0, 1), outline)
+		_scene.draw_texture_rect(texture, rect, false, tint)
+		return
+
+	var type_color: Color = TYPE_COLORS.get(node_type, Color.GRAY)
+	_scene.draw_string(_font, pos + Vector2(-5, 7), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, int(icon_size), Color(type_color.r, type_color.g, type_color.b, tint.a))
+
+
+func _draw_node_texture_rect(texture: Texture2D, rect: Rect2, offset: Vector2, tint: Color) -> void:
+	_scene.draw_texture_rect(texture, Rect2(rect.position + offset, rect.size), false, tint)
+
+
+func _draw_pixel_selection(center: Vector2, radius: float, color: Color) -> void:
+	var left = center.x - radius
+	var right = center.x + radius
+	var top = center.y - radius
+	var bottom = center.y + radius
+	var corner = minf(8.0, radius * 0.38)
+	var width = 2.0
+
+	_scene.draw_line(Vector2(left, top), Vector2(left + corner, top), color, width)
+	_scene.draw_line(Vector2(left, top), Vector2(left, top + corner), color, width)
+	_scene.draw_line(Vector2(right, top), Vector2(right - corner, top), color, width)
+	_scene.draw_line(Vector2(right, top), Vector2(right, top + corner), color, width)
+	_scene.draw_line(Vector2(left, bottom), Vector2(left + corner, bottom), color, width)
+	_scene.draw_line(Vector2(left, bottom), Vector2(left, bottom - corner), color, width)
+	_scene.draw_line(Vector2(right, bottom), Vector2(right - corner, bottom), color, width)
+	_scene.draw_line(Vector2(right, bottom), Vector2(right, bottom - corner), color, width)
+
+
+func _draw_legend(vp: Vector2) -> void:
+	var pw = 150.0
+	var ph = 238.0
+	var px = vp.x - pw - 18.0
+	var py = 68.0
+	var rect = Rect2(px, py, pw, ph)
+
+	_scene.draw_rect(Rect2(rect.position + Vector2(5, 6), rect.size), Color(0.02, 0.012, 0.006, 0.42))
+	_scene.draw_rect(rect, Color(0.70, 0.58, 0.39, 0.92))
+	_scene.draw_rect(rect, Color(0.22, 0.16, 0.10, 0.9), false, 2.0)
+
+	var y = py + 26.0
+	_scene.draw_string(_font, Vector2(px + 45, y), "Legend", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color(0.18, 0.12, 0.08))
+	y += 8.0
+	_scene.draw_line(Vector2(px + 10, y), Vector2(px + pw - 10, y), Color(0.26, 0.18, 0.11, 0.78), 2.0)
+	y += 18.0
+
+	for entry in LEGEND_ENTRIES:
+		_draw_node_texture(Vector2(px + 22, y - 6), str(entry[0]), LEGEND_NODE_ICON_SIZE, Color(1.0, 1.0, 1.0, 1.0))
+		_scene.draw_string(_font, Vector2(px + 38, y), str(entry[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(0.18, 0.12, 0.08))
+		y += 26.0
+
+
+func _draw_top_bar(vp: Vector2) -> void:
+	_scene.draw_rect(Rect2(0, 0, vp.x, 52), Color(0.05, 0.028, 0.018, 0.94))
+	_scene.draw_rect(Rect2(0, 50, vp.x, 4), Color(0.62, 0.42, 0.2, 0.78))
+
+	_scene.draw_string(_font, Vector2(20, 35),  "HP: %d/%d" % [_scene.rm.current_health, _scene.rm.max_health], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(1.0, 0.42, 0.34))
+	_scene.draw_string(_font, Vector2(200, 35), "Gold: %d" % _scene.rm.gold, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(1.0, 0.86, 0.24))
+	_scene.draw_string(_font, Vector2(380, 35), "Floor: %d" % _scene.rm.current_floor, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(0.85, 0.82, 0.72))
+
+
+func _draw_pixel_dashed_line(from: Vector2, to: Vector2, color: Color, width: float, dash: float, gap: float, offset: Vector2) -> void:
+	var length = from.distance_to(to)
+	if length < 1.0:
+		return
+	var dir = (to - from).normalized()
+	var distance = 0.0
+	while distance < length:
+		var start = from + dir * distance + offset
+		var end = from + dir * minf(distance + dash, length) + offset
+		_scene.draw_line(start, end, color, width)
+		distance += dash + gap

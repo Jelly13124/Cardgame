@@ -1,7 +1,7 @@
 # Project Rules
 
 **Project:** Unnamed Sci-Fi Roguelite Card Game  
-**Last Updated:** 2026-04-09
+**Last Updated:** 2026-05-19
 
 ---
 
@@ -12,45 +12,70 @@ All first-party project documentation lives in `docs/`.
 - `docs/PRD.md` defines product scope, gameplay systems, roadmap, and known tech debt.
 - `docs/PROJECT_STRUCTURE.md` maps the codebase, scenes, data files, and assets.
 - `docs/project-rules.md` defines non-negotiable art, asset, naming, and architecture rules.
+- `docs/art-style-reference.md` defines the approved visual reference and prompt anchor.
 
 Do not reintroduce root-level local workflow docs such as `skills/`; shared project process belongs in this folder.
 
 ---
 
-## 1. Art Style — Wasteland Punk Pixel Art (Non-Negotiable)
+## 1. Art Style - Hardcore 128 Pixel Wasteland Art (Non-Negotiable)
 
-All visual assets in this project **must** be pixel art in the **Wasteland Punk** aesthetic.
+All visual assets in this project **must** follow the approved **Hardcore 128 Pixel Wasteland Art** direction in `docs/art-style-reference.md`.
 
-### What is Wasteland Punk?
-A post-apocalyptic scrapyard universe — think Mad Max meets Fallout, rendered in bold pixel art:
-- **Silhouettes:** Bold, readable at 64px. One glance = instant recognition.
-- **Materials:** Scrap metal, duct tape, rubber, chains, cracked glass, worn leather, exposed wiring — everything is salvaged, dented, and corroded. Nothing is clean or new.
-- **Color palette:** Earth tone base (rusted orange, sandy brown, dusty grey, faded olive) + **one neon accent per character** (glowing eyes, reactor core, toxic liquid, electric sparks).
-- **Outlines:** Bold single-color black outlines — confident pixel weight.
-- **Shading:** Cel-shaded / flat — not photorealistic.
+The canonical reference is `docs/art/hardcore-128-pixel-wasteland-reference.png`: a one-eyed robot cowboy in a gritty 128-native wasteland pixel style, with bold black pixel outlines, rusted scrap materials, dusty leather colors, controlled pixel shading, and sparse neon accents.
+
+### Visual Rules
+
+- **Native resolution:** Combat heroes and standard enemies are authored as 128x128 pixel-art frames unless a spec explicitly marks a larger boss scale.
+- **Silhouettes:** Compact, tough, battle-ready, and readable at gameplay size. One glance should identify the unit or item.
+- **Materials:** Scrap metal, duct tape, bolts, dents, rubber, cracked glass, worn leather, patched cloth, and exposed wiring. Everything is salvaged and used.
+- **Color palette:** Warm earth-tone base: leather brown, rust orange, dusty tan, muted olive, dark steel, faded brass, and desaturated charcoal.
+- **Accent color:** One small high-contrast accent per character, item, or UI icon.
+- **Outlines:** Bold black pixel outlines with deliberate pixel clusters. Do not use thin realistic lines or high-resolution cartoon brushwork.
+- **Shading:** Controlled pixel shading with readable highlight/mid/shadow clusters. Avoid photorealism and noisy dithering.
 - **Background:** Character, card, UI, and FX sprites use transparent backgrounds; full-scene map and battle backgrounds are scene-ready PNGs with no UI baked in.
 
-### Mandatory Prompt Suffix
-**Every asset description MUST end with this exact suffix** to ensure style consistency:
+### Character Anchors
+
+- **Cowboy Bill:** robot cowboy hero, exactly one large central camera eye, oversized battered hat, red bandana, patched duster/poncho, chunky boots, salvaged hand cannon, faces right.
+- **Trash Bot:** compact trash-collecting robot enemy, trash-bin or compactor body, camera-eye face, tiny tank treads or scrap wheels, stubby grabber arms, dents/tape/bolts, small neon light, faces left.
+
+### Mandatory Prompt Anchor
+
+Every generated asset prompt must preserve this wording unless the asset type makes a clause impossible:
+
+```text
+hardcore 128 pixel wasteland art style, native 128x128 pixel game sprite readability,
+bold black pixel outlines, gritty rusted scrap metal, worn leather and patched cloth,
+dusty desert palette, controlled pixel shading, salvaged bolts dents tubes and cracked glass,
+one small neon accent, transparent background, no high-resolution cartoon brushwork
 ```
-wasteland punk style, post-apocalyptic scrap aesthetic, rusted metal and salvaged parts,
-single color bold black pixel art outlines, cel-shaded flat colors, earth tone palette
-with one neon accent color, transparent background, side view, full body, pixel art
+
+For combat unit sheets, also include:
+
+```text
+side view, full body, shared baseline, consistent scale, hero faces right or enemy faces left,
+4 idle frames and 4 attack frames
 ```
 
 ### Prohibited
-- ❌ No clean, shiny, or futuristic-clean aesthetics
-- ❌ No Rick and Morty characters (tone is kept, characters are not)
-- ❌ No realistic shading or photorealistic lighting
-- ❌ No assets that don't visually fit the same scrapyard world
+
+- No clean, shiny, or futuristic-clean aesthetics.
+- No direct copies of copyrighted characters or named IP styles.
+- No realistic shading, photorealistic lighting, vector art, or hard-surface concept art.
+- No high-resolution cartoon output for final Godot assets.
+- No tiny 16x16 or 32x32 lo-fi sprites for combat units.
+- No dense pixel noise that makes the sprite unreadable at gameplay size.
+- No assets that do not visually fit the same hardcore 128 pixel wasteland world.
 
 ---
 
 ## 2. Asset Generation - Production Pipeline
 
-All final in-project visual assets must be PNG pixel art that follows the Wasteland Punk rules above. Source generation can use the available image-generation pipeline, but generated sheets must be post-processed into transparent or scene-ready PNGs before being referenced by Godot.
+All final in-project visual assets must be PNG art that follows the Hardcore 128 Pixel Wasteland Art rules above. Source generation can use the available image-generation pipeline, but generated sheets must be post-processed into transparent or scene-ready PNGs before being referenced by Godot.
 
 ### Required Outputs
+
 | Asset Type | Output |
 |---|---|
 | Character / enemy animation | Transparent PNG frames in the entity subfolder |
@@ -59,8 +84,11 @@ All final in-project visual assets must be PNG pixel art that follows the Wastel
 | UI icon / FX | Transparent PNG icon or sprite frame |
 
 ### Prompt Requirements
-- Preserve the exact Wasteland Punk style language from section 1.
+
+- Preserve the exact Hardcore 128 Pixel Wasteland Art language from section 1 and `docs/art-style-reference.md`.
 - Prefer side-view full-body sprites for combat units.
+- Final enemy frames must face left toward the player. Do not rely on a global runtime flip to correct mixed source orientations.
+- Hero frames must face right toward enemies.
 - Keep animation sheets on a solid `#FF00FF` background for chroma-key cleanup.
 - Keep card and background art free of text, logos, and UI labels.
 
@@ -72,49 +100,59 @@ Follow this pipeline for every new character or enemy:
 
 1. Generate a contained sheet - same character, same scale, solid `#FF00FF` background.
 2. Post-process frames - chroma-key cleanup, split frames, align to a shared baseline.
-3. Verify PNG output - confirm transparent PNG frames and consistent dimensions.
+3. Verify PNG output - confirm transparent PNG frames, consistent dimensions, and correct facing direction.
 4. Save to project - place in the correct per-entity subfolder (see section 4 below).
 5. Isolate intermediates - raw sheets may stay in a `generated_sheet/` folder; gameplay must reference only final PNGs.
 6. Wire in Godot - use data-driven IDs where available; character systems load frames at runtime.
 
 ---
 
-## 4. Asset Folder Structure (Expandable — Must Follow Exactly)
+## 4. Asset Folder Structure (Expandable - Must Follow Exactly)
 
-Every entity type gets its **own named subfolder**. No loose files in parent folders.
+Every entity type gets its **own named subfolder**, and within that, each animation lives in its own per-animation subfolder (`idle/`, `attack/`, optional `charge/`). No loose animation PNGs at the entity root.
 
-```
+```text
 battle_scene/assets/images/
-├── enemies/
-│   ├── generate_enemy.ps1        ← shared generation script for ALL enemies
-│   ├── trash_robot/              ← one subfolder per enemy sprite_id
-│   │   ├── trash_robot_idle_0.png
-│   │   ├── trash_robot_idle_1.png
-│   │   ├── trash_robot_idle_2.png
-│   │   ├── trash_robot_idle_3.png
-│   │   ├── trash_robot_attack_0.png
-│   │   ├── trash_robot_attack_1.png
-│   │   ├── trash_robot_attack_2.png
-│   │   └── trash_robot_attack_3.png
-│   └── wasteland_robber/         ← future enemy (same pattern)
-│       └── ...
-├── heroes/
-│   └── {hero_id}/                ← one subfolder per hero (when art is ready)
-│       └── ...
-├── cards/
-│   └── player/                   ← card art, referenced by front_image in JSON
-└── backgrounds/                  ← battle scene backgrounds
+|-- enemies/
+|   |-- generate_enemy.ps1        <- shared generation script for ALL enemies
+|   |-- trash_robot/              <- one subfolder per enemy sprite_id
+|   |   |-- idle/
+|   |   |   |-- trash_robot_idle_0.png
+|   |   |   |-- trash_robot_idle_1.png
+|   |   |   |-- trash_robot_idle_2.png
+|   |   |   `-- trash_robot_idle_3.png
+|   |   |-- attack/
+|   |   |   |-- trash_robot_attack_0.png
+|   |   |   |-- trash_robot_attack_1.png
+|   |   |   |-- trash_robot_attack_2.png
+|   |   |   `-- trash_robot_attack_3.png
+|   |   `-- generated_sheet/      <- pipeline intermediates (raw + meta)
+|   |-- junkyard_tyrant/          <- boss may also have a charge/ subfolder
+|   |   |-- idle/                 (4 frames)
+|   |   |-- attack/               (4 frames)
+|   |   `-- charge/               (4 frames - telegraph wind-up)
+|   `-- wasteland_robber/         <- future enemy, same pattern
+|       `-- ...
+|-- heroes/
+|   `-- {hero_id}/                <- one subfolder per hero
+|       |-- idle/                 (4 frames)
+|       |-- attack/               (4 frames)
+|       `-- {hero_id}_portrait.png
+|-- cards/
+|   `-- player/                   <- card art, referenced by front_image in JSON
+`-- backgrounds/                  <- battle scene backgrounds
 ```
 
 ### Rules
-- **One subfolder per entity** — never put two enemies' frames in the same folder
-- **Subfolder name = `sprite_id`** — must match exactly what's in the enemy's JSON
-- **No loose PNGs in the parent `/enemies/` folder** — always inside a named subfolder
-- **Generation script lives inside the entity subfolder** it generates art for
-- **Delete all intermediate pipeline files** before committing:
-  - `_ref.png` (96×96 reference)
-  - `_ref_64.png` (64×64 resize intermediate)
-- **Godot `.import` files stay** — they are auto-generated and must not be manually edited
+
+- **One subfolder per entity** - never put two enemies' frames in the same folder.
+- **Subfolder name = `sprite_id`** - must match exactly what is in the enemy JSON.
+- **Animation frames go in per-animation subfolders** - `idle/`, `attack/`, `charge/`.
+- **One-off images stay at the entity root** - portraits and single static images do not need animation subfolders.
+- **No loose animation PNGs at the parent `/enemies/` folder or entity root** - always use a named animation subfolder.
+- **Generation script lives inside the entity subfolder** it generates art for when the script is entity-specific; shared scripts may live at the asset category root.
+- **Delete disposable resize intermediates** before committing, such as `_ref.png` and `_ref_64.png`.
+- **Godot `.import` files stay** - they are auto-generated and must not be manually edited.
 
 ---
 
@@ -122,8 +160,8 @@ battle_scene/assets/images/
 
 | Asset | Pattern | Location | Example |
 |---|---|---|---|
-| Animation frame | `{sprite_id}_{anim}_{n}.png` | `enemies/{sprite_id}/` | `trash_robot_idle_0.png` |
-| Generation script | `generate_enemy.ps1` | `enemies/` (shared root) | `enemies/generate_enemy.ps1` |
+| Animation frame | `{sprite_id}_{anim}_{n}.png` | `enemies/{sprite_id}/{anim}/` | `enemies/trash_robot/idle/trash_robot_idle_0.png` |
+| Generation script | `generate_enemy.ps1` | `enemies/` or entity folder | `enemies/generate_enemy.ps1` |
 | Enemy JSON | `{enemy_id}.json` | `card_info/enemy/` | `robot_grunt.json` |
 | Hero JSON | `{hero_id}.json` | `card_info/hero/` | `warrior.json` |
 | Card JSON | `{card_id}.json` | `card_info/player/` | `strike.json` |
@@ -135,34 +173,38 @@ battle_scene/assets/images/
 ## 6. Code Architecture Rules
 
 ### General
-- **Data-driven everything** — new enemies, cards, equipment, and relics require only JSON; no GDScript changes.
-- **No art logic in `.tscn` files** — all sprite loading happens in GDScript at runtime.
-- **Factory pattern** — use static `create(id)` functions (e.g. `EnemyEntity.create("robot_grunt")`).
-- **Fallback gracefully** — if a texture or JSON is missing, `push_warning()` and continue; never crash.
+
+- **Data-driven everything** - new enemies, cards, equipment, and relics require only JSON unless a new shared behavior is needed.
+- **No art logic in `.tscn` files** - all sprite loading happens in GDScript at runtime.
+- **Factory pattern** - use static `create(id)` functions where the codebase already exposes them.
+- **Fallback gracefully** - if a texture or JSON is missing, `push_warning()` and continue; never crash.
 
 ### Enemy Sprites
-- `EnemyEntity.ENEMIES_DIR` = `"res://battle_scene/assets/images/enemies/"`
-- Frames resolved as: `{ENEMIES_DIR}{sprite_id}/{sprite_id}_{anim}_{n}.png`
-- To add a new enemy: create subfolder + JSON. Zero GDScript changes required.
 
-### Adding New Content — Checklist
+- `EnemyEntity.ENEMIES_DIR` = `"res://battle_scene/assets/images/enemies/"`
+- Frames resolve as: `{ENEMIES_DIR}{sprite_id}/{anim}/{sprite_id}_{anim}_{n}.png`
+- Enemy PNGs are stored already facing left toward the player; `EnemyEntity` must not apply a blanket horizontal flip.
+- To add a new enemy: create subfolder + JSON. Zero GDScript changes should be required unless introducing new shared behavior.
+
+### Adding New Content - Checklist
+
 | Content | Steps |
 |---|---|
-| **New enemy** | 1. Create `enemies/{sprite_id}/` with frames 2. Add `card_info/enemy/{id}.json` with `sprite_id` field |
-| **New card** | 1. Add `card_info/player/{id}.json` with `effects[]` array |
-| **New equipment** | 1. Add `card_info/equipment/{id}.json` with `bonuses` dict |
-| **New relic** | 1. Add `run_system/data/relics/{id}.json` 2. Add a shared trigger in `battle_scene/relic_effect_system.gd` only if existing triggers are insufficient |
-| **New hero** | 1. Add hero JSON 2. Add hero sprite under `heroes/{hero_id}/` |
+| **New enemy** | 1. Create `enemies/{sprite_id}/` with frames. 2. Add `card_info/enemy/{id}.json` with `sprite_id`. |
+| **New card** | 1. Add `card_info/player/{id}.json` with `effects[]`. 2. Add card art under `assets/images/cards/player/`. |
+| **New equipment** | 1. Add `card_info/equipment/{id}.json` with `bonuses`. |
+| **New relic** | 1. Add `run_system/data/relics/{id}.json`. 2. Add a shared trigger in `battle_scene/relic_effect_system.gd` only if existing triggers are insufficient. |
+| **New hero** | 1. Add hero JSON. 2. Add hero sprite under `heroes/{hero_id}/`. |
 
 ---
 
 ## 7. Prohibited
 
-- ❌ Do not commit API keys to version control (`mcp_config.json` must be gitignored)
-- ❌ Do not use ColorRect or procedural geometry as final art — temporary debug placeholders only
-- ❌ Do not use non-PNG formats in Godot (convert WebP/JPEG → PNG before importing)
-- ❌ Do not hardcode sprite paths in `.tscn` files — always load programmatically
-- ❌ Do not put multiple enemies' assets in the same folder
-- ❌ Do not leave unused files in the project (delete `_ref.png`, `_ref_64.png` after generation)
-- ❌ Do not add card-specific or enemy-specific logic to shared systems — all variance goes in JSON
-- ❌ Do not add root-level local `skills/` workflow docs; keep project documentation centralized in `docs/`
+- Do not commit API keys to version control (`mcp_config.json` must be gitignored).
+- Do not use ColorRect or procedural geometry as final art; temporary debug placeholders only.
+- Do not use non-PNG formats in Godot (convert WebP/JPEG to PNG before importing).
+- Do not hardcode sprite paths in `.tscn` files; always load programmatically.
+- Do not put multiple enemies' assets in the same folder.
+- Do not leave unused files in the project; delete disposable generation intermediates before committing.
+- Do not add card-specific or enemy-specific logic to shared systems; all variance goes in JSON where possible.
+- Do not add root-level local `skills/` workflow docs; keep project documentation centralized in `docs/`.

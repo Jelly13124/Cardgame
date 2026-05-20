@@ -9,6 +9,10 @@ signal turn_ended(side: String)
 var current_round: int = 0
 var is_player_turn: bool = true
 
+## Counts attack cards the player has played this turn. Read by
+## combat_engine `scale_damage_by_attacks` effect. Reset on player turn start.
+var attacks_played_this_turn: int = 0
+
 
 func _ready() -> void:
 	pass
@@ -16,11 +20,14 @@ func _ready() -> void:
 
 func start_new_game() -> void:
 	current_round = 0
+	attacks_played_this_turn = 0
 	start_next_round()
 
 
 func start_next_round() -> void:
 	current_round += 1
+	if is_player_turn:
+		attacks_played_this_turn = 0
 	emit_signal("round_changed", current_round)
 	emit_signal("turn_started", "player" if is_player_turn else "enemy")
 
@@ -28,7 +35,7 @@ func start_next_round() -> void:
 func end_turn() -> void:
 	emit_signal("turn_ended", "player" if is_player_turn else "enemy")
 	is_player_turn = !is_player_turn
-	
+
 	if is_player_turn:
 		start_next_round()
 	else:

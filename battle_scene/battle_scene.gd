@@ -13,12 +13,14 @@ extends Node
 @onready var enemy_ai = $EnemyAI
 @onready var ui_manager = $BattleUIManager
 
-var deck_manager: Node
-var relic_effect_system: RefCounted
+var deck_manager: Node  # DeckManager (deck_manager.gd) instance
+var relic_effect_system: RefCounted  # RelicEffectSystem (relic_effect_system.gd) instance
+# Typed via the preloaded CARD_ANIMATOR_SCRIPT below — kept as Node so this
+# file parses even before Godot has scanned the class_name registry.
+var card_animator: Node  # CardAnimator (card_animator.gd) instance
 
 # --- Game State ---
 var is_game_over:  bool    = false
-var is_resolving:  bool    = false  # Prevents double-firing play_spell during await
 var is_targeting:  bool    = false
 var targeting_card: Control = null
 var targeting_arrow: Node2D = null
@@ -26,6 +28,8 @@ var hovered_unit:  Node    = null
 
 const TARGETING_ARROW_SCRIPT = preload("res://battle_scene/targeting_arrow.gd")
 const RELIC_EFFECT_SYSTEM = preload("res://battle_scene/relic_effect_system.gd")
+const CARD_ANIMATOR_SCRIPT = preload("res://battle_scene/card_animator.gd")
+const DECK_MANAGER_SCRIPT = preload("res://battle_scene/deck_manager.gd")
 
 func _ready():
 	print("BATTLE STARTING (STS Layout)")
@@ -33,13 +37,18 @@ func _ready():
 	Engine.time_scale = 1.0
 	
 	# Instantiate DeckManager
-	deck_manager = preload("res://battle_scene/deck_manager.gd").new()
+	deck_manager = DECK_MANAGER_SCRIPT.new()
 	deck_manager.battle_scene = self
 	deck_manager.deck = deck
 	deck_manager.discard_pile = discard_pile
 	deck_manager.hand = hand
 	deck_manager.card_factory = card_factory
 	add_child(deck_manager)
+
+	# Instantiate CardAnimator — owns play / discard / exhaust tweens
+	card_animator = CARD_ANIMATOR_SCRIPT.new()
+	card_animator.setup(self)
+	add_child(card_animator)
 		
 	# Connect TurnManager
 	turn_manager.round_changed.connect(_on_round_changed)
@@ -155,12 +164,18 @@ func _on_turn_started(side: String) -> void:
 		deck_manager.draw_cards(3)
 
 ## STS rule: at END of player turn, discard all remaining hand cards.
+## Exception: cards with `"retain": true` stay in hand into the next turn.
 func _on_turn_ended(side: String) -> void:
 	if side == "player":
 		var remaining = hand.get_cards().duplicate()
-		if remaining.size() > 0:
+		var to_discard: Array = []
+		for c in remaining:
+			if is_instance_valid(c) and bool(c.card_info.get("retain", false)):
+				continue
+			to_discard.append(c)
+		if to_discard.size() > 0:
 			# Use move_cards so card_container references transfer properly
-			discard_pile.move_cards(remaining)
+			discard_pile.move_cards(to_discard)
 		player.end_turn()
 		_update_ui_labels()
 
@@ -173,6 +188,16 @@ func _update_ui_labels():
 	if player:
 		ui_manager.update_labels(player.energy, player.max_energy)
 		refresh_hand_ui()
+	# Player status (vulnerable etc.) affects every enemy's intent display.
+	_refresh_all_enemy_intents()
+
+## Tells every alive enemy to recompute its intent badge. Cheap; called on
+## any UI refresh so weak/vulnerable changes show immediately.
+func _refresh_all_enemy_intents() -> void:
+	if not enemy_container: return
+	for enemy in enemy_container.get_children():
+		if is_instance_valid(enemy) and enemy.has_method("update_intent_display"):
+			enemy.update_intent_display()
 
 func refresh_hand_ui():
 	for card in hand.get_cards():
@@ -182,27 +207,24 @@ func refresh_hand_ui():
 ## Initialise a new battle from RunManager state (or defaults if no run is active).
 func _start_new_game():
 	is_game_over = false
-	is_resolving = false
 
-	var rm = get_node_or_null("/root/RunManager")
 	relic_effect_system = RELIC_EFFECT_SYSTEM.new()
-	relic_effect_system.setup(rm, self)
+	relic_effect_system.setup(self)
 
 	# ── Player HP & Attributes ──────────────────────────────────────────────
-	if rm and rm.get("is_run_active"):
-		player.max_health  = rm.max_health
-		player.health      = rm.current_health
-		var attrs = rm.get("player_attributes") if rm.get("player_attributes") else {}
+	if RunManager.is_run_active:
+		player.max_health  = RunManager.max_health
+		player.health      = RunManager.current_health
+		var attrs = RunManager.player_attributes
 		player.strength     = int(attrs.get("strength",     3))
 		player.constitution = int(attrs.get("constitution", 3))
 		player.intelligence = int(attrs.get("intelligence", 3))
 		player.luck         = int(attrs.get("luck",         3))
 		player.charm        = int(attrs.get("charm",        3))
 		# Enemy roster comes from the map encounter data stored in RunManager
-		var roster = rm.get("current_encounter") if rm.get("current_encounter") else []
-		if roster.size() > 0:
-			enemy_ai.enemy_roster = roster
-	
+		if RunManager.current_encounter.size() > 0:
+			enemy_ai.enemy_roster = RunManager.current_encounter
+
 	# ── Deck & Turn ──────────────────────────────────────────────────────────
 	deck_manager.reset_deck()
 	turn_manager.start_new_game()
@@ -232,9 +254,8 @@ func _game_over():
 ## Writes the player's current HP back to RunManager so it persists between battles.
 ## Called on both victory and defeat.
 func _write_hp_to_run_manager() -> void:
-	var rm = get_node_or_null("/root/RunManager")
-	if rm and rm.get("is_run_active") and player and is_instance_valid(player):
-		rm.current_health = player.health
+	if RunManager.is_run_active and player and is_instance_valid(player):
+		RunManager.current_health = player.health
 
 func modify_player_attack_damage(amount: int, attacker: Node, defender: Node) -> int:
 	if relic_effect_system:
@@ -262,48 +283,74 @@ func spend_energy(cards: Array) -> void:
 # ─── Card Play ────────────────────────────────────────────────────────────────
 
 ## Play a card. target_node is the enemy to hit (null for skill/ability).
+## Multiple cards can be in flight simultaneously — animations overlap. A
+## per-card `_in_play` meta lock prevents the same card from being resolved
+## twice (e.g. double-click, double drop).
 func play_spell(card: Control, target_node: Node):
 	if is_game_over: return
 	if not is_instance_valid(card): return
-	
+
+	# Per-card lock — different cards can play in parallel, but the SAME
+	# card can't be played twice before its first resolution finishes.
+	if card.has_meta("_in_play"):
+		return
+	card.set_meta("_in_play", true)
+
 	var type = card.card_info.get("type", "skill").to_lower()
-	
+
 	if type == "attack":
 		if not target_node or not is_instance_valid(target_node):
 			show_notification("MUST TARGET ENEMY", Color(0.8, 0.4, 0.4))
 			hand.add_card(card)
+			card.remove_meta("_in_play")
 			return
-	
-	# is_resolving lock — prevents double-playing the same card
-	# (e.g. if the player clicks very fast while an await is in progress)
-	if is_resolving:
-		show_notification("WAIT...", Color(0.8, 0.8, 0.8))
-		return
-	is_resolving = true
-	
+
 	# Deduct cost; remove from current container if still tracked there
 	spend_energy([card])
 	if card.card_container and card.card_container.has_card(card):
 		card.card_container.remove_card(card)
-	
-	_prepare_card_for_play_animation(card)
-	await _animate_card_to_play_area(card, target_node)
-	
+
+	card_animator.prepare_for_play(card)
+	await card_animator.fly_to_play_area(card, target_node)
+
 	# Resolve combat effects (may await animations)
 	await combat_engine.resolve_card_effect(card, target_node, player)
-	
-	# Animate card flying to the discard pile before officially moving it
+
+	# Release the per-card play lock NOW. The play is logically complete —
+	# what's left below is pure animation/routing. If we don't release here,
+	# the meta survives the trip through discard → reshuffle → deck → hand,
+	# and the card silently refuses to play on its next draw.
+	if is_instance_valid(card):
+		card.remove_meta("_in_play")
+
+	# Route to discard, OR remove from circulation if exhaust_self is among
+	# the card's effects.
+	var should_exhaust := _card_has_exhaust(card)
 	if is_instance_valid(card):
 		if card.card_container and card.card_container.has_card(card):
 			card.card_container.remove_card(card)
-		await _animate_card_to_discard(card)
-		if is_instance_valid(card):
-			discard_pile.add_card(card)
-			card.modulate.a = 1.0  # restore alpha after discard
-	
-	is_resolving = false
+		if should_exhaust:
+			await card_animator.fly_to_exhaust(card)
+			if is_instance_valid(card):
+				card.queue_free()
+		else:
+			await card_animator.fly_to_discard(card)
+			if is_instance_valid(card):
+				discard_pile.add_card(card)
+				card.modulate.a = 1.0  # restore alpha after discard
+
 	_update_ui_labels()
 	refresh_hand_ui()
+
+## Returns true if the card has an `exhaust_self` effect entry.
+func _card_has_exhaust(card: Control) -> bool:
+	if not is_instance_valid(card):
+		return false
+	var effects: Array = card.card_info.get("effects", [])
+	for e in effects:
+		if typeof(e) == TYPE_DICTIONARY and str(e.get("type", "")) == "exhaust_self":
+			return true
+	return false
 
 # ─── Targeting ────────────────────────────────────────────────────────────────
 
@@ -340,7 +387,7 @@ func confirm_spell_targeting(card: Control) -> void:
 		return
 	if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		return
-	
+
 	var unit_at_release = _get_unit_at_position(get_viewport().get_mouse_position())
 	if unit_at_release != hovered_unit:
 		if hovered_unit: _set_hover_effect(hovered_unit, false)
@@ -358,112 +405,6 @@ func confirm_spell_targeting(card: Control) -> void:
 		_cancel_spell_targeting()
 
 # ─── Misc ─────────────────────────────────────────────────────────────────────
-
-func inspect_card(card: Control) -> void: ui_manager.inspect_card(card)
-func _on_inspect_overlay_gui_input(event: InputEvent) -> void: ui_manager._on_inspect_overlay_gui_input(event)
-func show_pile_viewer(title: String, pile_container: Node): ui_manager.show_pile_viewer(title, pile_container)
-func hide_pile_viewer(): ui_manager.hide_pile_viewer()
-
-func show_run_deck_viewer() -> void:
-	var rm = get_node_or_null("/root/RunManager")
-	var entries: Array = []
-	if rm and rm.get("is_run_active"):
-		entries = rm.player_deck.duplicate()
-	else:
-		entries = _get_current_battle_deck_entries()
-	ui_manager.show_run_deck_viewer("Run Deck", entries)
-
-func _get_current_battle_deck_entries() -> Array:
-	var entries: Array = []
-	for pile in [hand, deck, discard_pile]:
-		if pile and pile.has_method("get_cards"):
-			for card in pile.get_cards():
-				if is_instance_valid(card):
-					entries.append(card.card_info.get("name", ""))
-	return entries
-
-# ─── Discard Animation ────────────────────────────────────────────────────────
-
-func _prepare_card_for_play_animation(card: Control) -> void:
-	if not is_instance_valid(card): return
-	card.z_index = 90
-	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.pivot_offset = card.size / 2.0
-	if "can_be_interacted_with" in card:
-		card.can_be_interacted_with = false
-
-func _animate_card_to_play_area(card: Control, target_node: Node) -> void:
-	if not is_instance_valid(card): return
-	
-	var target_pos = _get_play_area_card_position(card, target_node)
-	var tween = create_tween().set_parallel(true)
-	tween.tween_property(card, "global_position", target_pos, 0.20) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(card, "rotation", 0.0, 0.20) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(card, "scale", Vector2(0.92, 0.92), 0.20) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(card, "modulate:a", 1.0, 0.12)
-	await tween.finished
-	
-	if not is_instance_valid(card): return
-	var settle = create_tween()
-	settle.tween_property(card, "scale", Vector2(1.0, 1.0), 0.06) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	settle.tween_property(card, "scale", Vector2(0.92, 0.92), 0.08) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	await settle.finished
-
-func _get_play_area_card_position(card: Control, target_node: Node) -> Vector2:
-	var viewport_size = get_viewport().get_visible_rect().size
-	var card_half = card.size * 0.5
-	var play_center = Vector2(viewport_size.x * 0.5, viewport_size.y * 0.48)
-	
-	if target_node and is_instance_valid(target_node) and player and is_instance_valid(player):
-		play_center = player.global_position.lerp(target_node.global_position, 0.48)
-		play_center.y -= card.size.y * 0.12
-	
-	var pos = play_center - card_half
-	var max_x = maxf(24.0, viewport_size.x - card.size.x - 24.0)
-	var max_y = maxf(80.0, viewport_size.y - card.size.y - 150.0)
-	pos.x = clampf(pos.x, 24.0, max_x)
-	pos.y = clampf(pos.y, 80.0, max_y)
-	return pos
-
-## Flies a card to the discard pile with a short STS-style spin.
-func _animate_card_to_discard(card: Control) -> void:
-	if not is_instance_valid(card): return
-
-	# Target: centre of the discard pile node in screen space
-	var target_pos: Vector2
-	if is_instance_valid(discard_pile):
-		target_pos = discard_pile.global_position + Vector2(80, 110) # approx card centre
-	else:
-		return
-
-	card.z_index = 90
-
-	var tween = create_tween()
-	tween.set_parallel(true)
-	var spin_dir = 1.0 if target_pos.x >= card.global_position.x else -1.0
-	tween.tween_property(card, "global_position", target_pos, 0.34) \
-		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	tween.tween_property(card, "rotation", card.rotation + spin_dir * TAU * 0.72, 0.34) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tween.tween_property(card, "scale", Vector2(0.32, 0.32), 0.34) \
-		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	tween.tween_property(card, "modulate:a", 0.0, 0.28) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-
-	await tween.finished
-
-	# Reset scale for reuse in the discard pile
-	card.scale = Vector2.ONE
-	card.rotation = 0.0
-	card.z_index = 0
-	card.mouse_filter = Control.MOUSE_FILTER_STOP
-	if "can_be_interacted_with" in card:
-		card.can_be_interacted_with = true
 
 func _wait(seconds: float) -> Signal:
 	return get_tree().create_timer(seconds).timeout

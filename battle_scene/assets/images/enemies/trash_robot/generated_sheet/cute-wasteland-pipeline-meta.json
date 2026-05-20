@@ -1,0 +1,145 @@
+{
+  "entity_id": "trash_robot",
+  "kind": "enemy",
+  "source": "C:\\Users\\Jerry\\.codex\\generated_images\\019db115-8dd5-7322-a778-81abb74ffb7f\\ig_0dc5440787bdb1e5016a0cddbebd78819baa1806ae21145af0.png",
+  "raw_sheet": "battle_scene/assets/images/enemies/trash_robot/generated_sheet/cute-wasteland-raw-sheet.png",
+  "source_size": [
+    1774,
+    887
+  ],
+  "rows": 2,
+  "cols": 4,
+  "frame_size": 64,
+  "shared_scale": 0.12652873563218392,
+  "generated_at": 1779228178,
+  "frames": [
+    {
+      "file": "battle_scene/assets/images/enemies/trash_robot/idle/trash_robot_idle_0.png",
+      "anim": "idle",
+      "frame": 0,
+      "source_bbox": [
+        68,
+        71,
+        420,
+        431
+      ],
+      "output_size": [
+        64,
+        64
+      ],
+      "edge_touch_source_cell": false
+    },
+    {
+      "file": "battle_scene/assets/images/enemies/trash_robot/idle/trash_robot_idle_1.png",
+      "anim": "idle",
+      "frame": 1,
+      "source_bbox": [
+        36,
+        74,
+        390,
+        433
+      ],
+      "output_size": [
+        64,
+        64
+      ],
+      "edge_touch_source_cell": false
+    },
+    {
+      "file": "battle_scene/assets/images/enemies/trash_robot/idle/trash_robot_idle_2.png",
+      "anim": "idle",
+      "frame": 2,
+      "source_bbox": [
+        8,
+        69,
+        443,
+        432
+      ],
+      "output_size": [
+        64,
+        64
+      ],
+      "edge_touch_source_cell": true
+    },
+    {
+      "file": "battle_scene/assets/images/enemies/trash_robot/idle/trash_robot_idle_3.png",
+      "anim": "idle",
+      "frame": 3,
+      "source_bbox": [
+        0,
+        73,
+        324,
+        431
+      ],
+      "output_size": [
+        64,
+        64
+      ],
+      "edge_touch_source_cell": true
+    },
+    {
+      "file": "battle_scene/assets/images/enemies/trash_robot/attack/trash_robot_attack_0.png",
+      "anim": "attack",
+      "frame": 0,
+      "source_bbox": [
+        61,
+        46,
+        420,
+        357
+      ],
+      "output_size": [
+        64,
+        64
+      ],
+      "edge_touch_source_cell": false
+    },
+    {
+      "file": "battle_scene/assets/images/enemies/trash_robot/attack/trash_robot_attack_1.png",
+      "anim": "attack",
+      "frame": 1,
+      "source_bbox": [
+        26,
+        72,
+        432,
+        356
+      ],
+      "output_size": [
+        64,
+        64
+      ],
+      "edge_touch_source_cell": false
+    },
+    {
+      "file": "battle_scene/assets/images/enemies/trash_robot/attack/trash_robot_attack_2.png",
+      "anim": "attack",
+      "frame": 2,
+      "source_bbox": [
+        41,
+        110,
+        436,
+        371
+      ],
+      "output_size": [
+        64,
+        64
+      ],
+      "edge_touch_source_cell": false
+    },
+    {
+      "file": "battle_scene/assets/images/enemies/trash_robot/attack/trash_robot_attack_3.png",
+      "anim": "attack",
+      "frame": 3,
+      "source_bbox": [
+        25,
+        34,
+        359,
+        378
+      ],
+      "output_size": [
+        64,
+        64
+      ],
+      "edge_touch_source_cell": false
+    }
+  ]
+}

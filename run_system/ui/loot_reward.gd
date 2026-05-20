@@ -3,19 +3,20 @@ extends Control
 const GOLD_ICON_PATH := "res://run_system/assets/images/loot_ui/gold_reward.png"
 const CARD_REWARD_ICON_PATH := "res://run_system/assets/images/loot_ui/card_reward.png"
 
-const PANEL_BG := Color(0.075, 0.055, 0.045, 0.96)
-const PANEL_BORDER := Color(0.45, 0.32, 0.18, 1.0)
-const PANEL_HIGHLIGHT := Color(0.92, 0.66, 0.28, 1.0)
-const ROW_BG := Color(0.12, 0.09, 0.065, 0.98)
-const ROW_HOVER_BG := Color(0.18, 0.125, 0.075, 1.0)
-const ROW_PRESSED_BG := Color(0.23, 0.16, 0.08, 1.0)
-const TEXT_MAIN := Color(1.0, 0.86, 0.55, 1.0)
-const TEXT_SECONDARY := Color(0.72, 0.82, 0.82, 1.0)
-const CYAN_EDGE := Color(0.23, 0.78, 0.92, 1.0)
+# Shared palette lives in run_system/ui/theme/wasteland_cartoon_theme.gd as
+# `T.PANEL_BG` etc. — see wasteland_cartoon_theme.gd for all colors / builders.
+const T = preload("res://run_system/ui/theme/wasteland_cartoon_theme.gd")
 
 # Card IDs available for drafting - must match filenames in card_info/player/
 var draft_pool = [
-	"strike", "defend", "override", "preemptive_strike", "weak_strike"
+	# Existing pool
+	"strike", "defend", "override", "preemptive_strike", "weak_strike",
+	# Tactical Toolkit — Control
+	"stun_baton", "static_coil", "emp_burst", "overload",
+	# Tactical Toolkit — Combo
+	"cascade", "salvo", "tinker", "hot_swap",
+	# Tactical Toolkit — Burst
+	"overdrive", "charged_shot", "junk_bomb", "adrenaline",
 ]
 
 @onready var loot_root = $VBoxContainer
@@ -51,11 +52,11 @@ func _ready() -> void:
 
 
 func _apply_static_theme() -> void:
-	$VBoxContainer/BannerPanel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.105, 0.075, 0.055, 0.98), PANEL_HIGHLIGHT, 4))
-	$VBoxContainer/LootPanel.add_theme_stylebox_override("panel", _make_panel_style(PANEL_BG, PANEL_BORDER, 5))
-	$DraftOverlay/VBoxContainer/DraftPanel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.055, 0.05, 0.052, 0.98), PANEL_BORDER, 5))
-	_apply_button_theme(proceed_button, Color(0.13, 0.1, 0.075, 1.0), PANEL_HIGHLIGHT)
-	_apply_button_theme(draft_skip_button, Color(0.13, 0.1, 0.075, 1.0), PANEL_HIGHLIGHT)
+	$VBoxContainer/BannerPanel.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.105, 0.075, 0.055, 0.98), T.PANEL_HIGHLIGHT, 4))
+	$VBoxContainer/LootPanel.add_theme_stylebox_override("panel", T.panel_with_shadow(T.PANEL_BG, T.PANEL_BORDER, 5))
+	$DraftOverlay/VBoxContainer/DraftPanel.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.055, 0.05, 0.052, 0.98), T.PANEL_BORDER, 5))
+	T.apply_button_theme(proceed_button, Color(0.13, 0.1, 0.075, 1.0), T.PANEL_HIGHLIGHT)
+	T.apply_button_theme(draft_skip_button, Color(0.13, 0.1, 0.075, 1.0), T.PANEL_HIGHLIGHT)
 
 
 func _generate_loot() -> void:
@@ -94,9 +95,9 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.focus_mode = Control.FOCUS_NONE
 	button.text = ""
-	button.add_theme_stylebox_override("normal", _make_reward_row_style(ROW_BG, PANEL_BORDER))
-	button.add_theme_stylebox_override("hover", _make_reward_row_style(ROW_HOVER_BG, CYAN_EDGE))
-	button.add_theme_stylebox_override("pressed", _make_reward_row_style(ROW_PRESSED_BG, PANEL_HIGHLIGHT))
+	button.add_theme_stylebox_override("normal", _make_reward_row_style(T.ROW_BG, T.PANEL_BORDER))
+	button.add_theme_stylebox_override("hover", _make_reward_row_style(T.ROW_HOVER_BG, T.CYAN_EDGE))
+	button.add_theme_stylebox_override("pressed", _make_reward_row_style(T.ROW_PRESSED_BG, T.PANEL_HIGHLIGHT))
 	button.pressed.connect(_on_loot_selected.bind(str(loot["id"]), button))
 
 	var margin = MarginContainer.new()
@@ -125,7 +126,7 @@ func _make_loot_row(loot: Dictionary) -> Button:
 
 	var title = Label.new()
 	title.text = str(loot.get("title", "Reward"))
-	title.add_theme_color_override("font_color", TEXT_MAIN)
+	title.add_theme_color_override("font_color", T.TEXT_MAIN)
 	title.add_theme_font_size_override("font_size", 31)
 	title.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -133,7 +134,7 @@ func _make_loot_row(loot: Dictionary) -> Button:
 
 	var subtitle = Label.new()
 	subtitle.text = str(loot.get("subtitle", ""))
-	subtitle.add_theme_color_override("font_color", TEXT_SECONDARY)
+	subtitle.add_theme_color_override("font_color", T.TEXT_SECONDARY)
 	subtitle.add_theme_font_size_override("font_size", 17)
 	subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	copy.add_child(subtitle)
@@ -166,7 +167,7 @@ func _make_icon_well(icon_path: String) -> PanelContainer:
 		var fallback = Label.new()
 		fallback.text = "?"
 		fallback.add_theme_font_size_override("font_size", 34)
-		fallback.add_theme_color_override("font_color", TEXT_MAIN)
+		fallback.add_theme_color_override("font_color", T.TEXT_MAIN)
 		fallback.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		center.add_child(fallback)
 
@@ -176,7 +177,7 @@ func _make_icon_well(icon_path: String) -> PanelContainer:
 func _make_claim_plate() -> PanelContainer:
 	var plate = PanelContainer.new()
 	plate.custom_minimum_size = Vector2(104, 50)
-	plate.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.13, 1.0), CYAN_EDGE, 3))
+	plate.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.08, 0.12, 0.13, 1.0), T.CYAN_EDGE, 3))
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var label = Label.new()
@@ -201,10 +202,8 @@ func _on_loot_selected(loot_id: String, button: Button) -> void:
 		return
 
 	if loot["type"] == "gold":
-		var run_manager = get_node_or_null("/root/RunManager")
-		if run_manager:
-			run_manager.add_resources(loot["amount"], 0)
-			print("Claimed %d Gold" % loot["amount"])
+		RunManager.add_resources(loot["amount"], 0)
+		print("Claimed %d Gold" % loot["amount"])
 		button.queue_free()
 	elif loot["type"] == "cards":
 		_open_card_draft()
@@ -212,8 +211,7 @@ func _on_loot_selected(loot_id: String, button: Button) -> void:
 
 
 func _on_proceed_pressed() -> void:
-	var rm = get_node_or_null("/root/RunManager")
-	get_tree().change_scene_to_file(rm.MAP_SCENE if rm else "res://run_system/ui/map_scene.tscn")
+	get_tree().change_scene_to_file(RunManager.MAP_SCENE)
 
 
 func _open_card_draft() -> void:
@@ -275,7 +273,7 @@ func _make_draft_card_slot(card_id: String) -> Control:
 
 	var frame = Panel.new()
 	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
-	frame.add_theme_stylebox_override("panel", _make_panel_style(Color(0.095, 0.072, 0.055, 0.92), PANEL_BORDER, 4))
+	frame.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.095, 0.072, 0.055, 0.92), T.PANEL_BORDER, 4))
 	wrapper.add_child(frame)
 
 	var card = _card_factory.create_card(card_id, null)
@@ -300,12 +298,12 @@ func _make_draft_card_slot(card_id: String) -> Control:
 
 	if card:
 		button.mouse_entered.connect(func():
-			frame.add_theme_stylebox_override("panel", _make_panel_style(Color(0.13, 0.095, 0.062, 0.96), CYAN_EDGE, 4))
+			frame.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.13, 0.095, 0.062, 0.96), T.CYAN_EDGE, 4))
 			var tween = create_tween()
 			tween.tween_property(card, "scale", Vector2(1.62, 1.62), 0.10)
 		)
 		button.mouse_exited.connect(func():
-			frame.add_theme_stylebox_override("panel", _make_panel_style(Color(0.095, 0.072, 0.055, 0.92), PANEL_BORDER, 4))
+			frame.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.095, 0.072, 0.055, 0.92), T.PANEL_BORDER, 4))
 			var tween = create_tween()
 			tween.tween_property(card, "scale", Vector2(1.5, 1.5), 0.10)
 		)
@@ -314,11 +312,8 @@ func _make_draft_card_slot(card_id: String) -> Control:
 
 
 func _on_draft_card_selected(card_id: String) -> void:
-	var run_manager = get_node_or_null("/root/RunManager")
-	if run_manager:
-		run_manager.add_card_to_deck(card_id)
-		print("Drafted card: ", card_id)
-
+	RunManager.add_card_to_deck(card_id)
+	print("Drafted card: ", card_id)
 	_close_card_draft()
 
 
@@ -352,16 +347,9 @@ func _load_texture(path: String) -> Texture2D:
 	return null
 
 
-func _apply_button_theme(button: Button, bg: Color, border: Color) -> void:
-	button.add_theme_stylebox_override("normal", _make_panel_style(bg, border, 4))
-	button.add_theme_stylebox_override("hover", _make_panel_style(bg.lightened(0.12), CYAN_EDGE, 4))
-	button.add_theme_stylebox_override("pressed", _make_panel_style(bg.darkened(0.08), PANEL_HIGHLIGHT, 4))
-	button.add_theme_color_override("font_color", TEXT_MAIN)
-	button.add_theme_color_override("font_hover_color", Color(0.78, 0.96, 1.0, 1.0))
-
-
+## Reward row wraps the shared panel with content padding.
 func _make_reward_row_style(bg: Color, border: Color) -> StyleBoxFlat:
-	var style = _make_panel_style(bg, border, 3)
+	var style = T.panel_with_shadow(bg, border, 3)
 	style.content_margin_left = 12.0
 	style.content_margin_right = 12.0
 	style.content_margin_top = 8.0
@@ -369,28 +357,6 @@ func _make_reward_row_style(bg: Color, border: Color) -> StyleBoxFlat:
 	return style
 
 
+## Icon well frame is the shared panel with a thicker border.
 func _make_icon_frame_style() -> StyleBoxFlat:
-	var style = _make_panel_style(Color(0.045, 0.04, 0.035, 1.0), Color(0.62, 0.44, 0.22, 1.0), 2)
-	style.border_width_left = 3
-	style.border_width_top = 3
-	style.border_width_right = 3
-	style.border_width_bottom = 3
-	return style
-
-
-func _make_panel_style(bg: Color, border: Color, radius: int) -> StyleBoxFlat:
-	var style = StyleBoxFlat.new()
-	style.bg_color = bg
-	style.border_color = border
-	style.border_width_left = 3
-	style.border_width_top = 3
-	style.border_width_right = 3
-	style.border_width_bottom = 3
-	style.corner_radius_top_left = radius
-	style.corner_radius_top_right = radius
-	style.corner_radius_bottom_left = radius
-	style.corner_radius_bottom_right = radius
-	style.shadow_color = Color(0, 0, 0, 0.42)
-	style.shadow_size = 8
-	style.shadow_offset = Vector2(4, 4)
-	return style
+	return T.panel_with_shadow(Color(0.045, 0.04, 0.035, 1.0), Color(0.62, 0.44, 0.22, 1.0), 2, 3)

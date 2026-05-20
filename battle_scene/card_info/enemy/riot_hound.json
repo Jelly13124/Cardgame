@@ -1,0 +1,11 @@
+{
+	"id": "riot_hound",
+	"name": "Riot Hound",
+	"sprite_id": "riot_hound",
+	"max_health": 25,
+	"action_pattern": [
+		{ "type": "attack_status", "amount": 5, "status": "weak", "stacks": 1, "label": "⚔ 5 +Weak" },
+		{ "type": "attack", "amount": 5, "label": "⚔ 5" },
+		{ "type": "block",  "amount": 4, "label": "🛡 4" }
+	]
+}
