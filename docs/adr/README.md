@@ -29,3 +29,5 @@ When you (or a collaborator, or Codex) look at e.g. `RunManager` being an autolo
 | [0006](0006-class-name-via-preload.md) | Reference custom classes via `const X = preload(...)`, not `class_name` global | Accepted |
 | [0007](0007-art-pivot-to-cute-wasteland-cartoon.md) | Art direction pivot: Pixel Punk → Cute Wasteland Cartoon | Superseded by ADR-0008 |
 | [0008](0008-art-pivot-to-hardcore-128-pixel-wasteland.md) | Art direction pivot: Cute Wasteland Cartoon → Hardcore 128 Pixel Wasteland Art | Accepted |
+| [0009](0009-remove-idle-animation-assets.md) | Remove separate idle animation assets | Accepted |
+| [0010](0010-third-palette-recalibration.md) | Third palette recalibration via script-sampling; theme renamed to `wasteland_theme.gd` (no style suffix) | Accepted |

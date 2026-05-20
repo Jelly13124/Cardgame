@@ -55,7 +55,7 @@ For combat unit sheets, also include:
 
 ```text
 side view, full body, shared baseline, consistent scale, hero faces right or enemy faces left,
-4 idle frames and 4 attack frames
+4 attack frames, attack frame 0 doubles as the static rest pose, no separate idle animation
 ```
 
 ### Prohibited
@@ -102,40 +102,32 @@ Follow this pipeline for every new character or enemy:
 2. Post-process frames - chroma-key cleanup, split frames, align to a shared baseline.
 3. Verify PNG output - confirm transparent PNG frames, consistent dimensions, and correct facing direction.
 4. Save to project - place in the correct per-entity subfolder (see section 4 below).
-5. Isolate intermediates - raw sheets may stay in a `generated_sheet/` folder; gameplay must reference only final PNGs.
+5. Isolate intermediates - raw sheets may stay in a `generated_sheet/` folder only if they match the current animation contract; gameplay must reference only final PNGs.
 6. Wire in Godot - use data-driven IDs where available; character systems load frames at runtime.
 
 ---
 
 ## 4. Asset Folder Structure (Expandable - Must Follow Exactly)
 
-Every entity type gets its **own named subfolder**, and within that, each animation lives in its own per-animation subfolder (`idle/`, `attack/`, optional `charge/`). No loose animation PNGs at the entity root.
+Every entity type gets its **own named subfolder**, and within that, each animation lives in its own per-animation subfolder (`attack/`, optional `charge/`). No loose animation PNGs at the entity root. The project no longer keeps separate `idle/` animation assets; `attack_0` is the static rest pose.
 
 ```text
 battle_scene/assets/images/
 |-- enemies/
 |   |-- generate_enemy.ps1        <- shared generation script for ALL enemies
 |   |-- trash_robot/              <- one subfolder per enemy sprite_id
-|   |   |-- idle/
-|   |   |   |-- trash_robot_idle_0.png
-|   |   |   |-- trash_robot_idle_1.png
-|   |   |   |-- trash_robot_idle_2.png
-|   |   |   `-- trash_robot_idle_3.png
 |   |   |-- attack/
 |   |   |   |-- trash_robot_attack_0.png
 |   |   |   |-- trash_robot_attack_1.png
 |   |   |   |-- trash_robot_attack_2.png
 |   |   |   `-- trash_robot_attack_3.png
-|   |   `-- generated_sheet/      <- pipeline intermediates (raw + meta)
 |   |-- junkyard_tyrant/          <- boss may also have a charge/ subfolder
-|   |   |-- idle/                 (4 frames)
 |   |   |-- attack/               (4 frames)
 |   |   `-- charge/               (4 frames - telegraph wind-up)
 |   `-- wasteland_robber/         <- future enemy, same pattern
 |       `-- ...
 |-- heroes/
 |   `-- {hero_id}/                <- one subfolder per hero
-|       |-- idle/                 (4 frames)
 |       |-- attack/               (4 frames)
 |       `-- {hero_id}_portrait.png
 |-- cards/
@@ -147,7 +139,8 @@ battle_scene/assets/images/
 
 - **One subfolder per entity** - never put two enemies' frames in the same folder.
 - **Subfolder name = `sprite_id`** - must match exactly what is in the enemy JSON.
-- **Animation frames go in per-animation subfolders** - `idle/`, `attack/`, `charge/`.
+- **Animation frames go in per-animation subfolders** - `attack/` and optional `charge/`.
+- **No separate idle assets** - `attack_0` is the static rest pose for heroes and enemies.
 - **One-off images stay at the entity root** - portraits and single static images do not need animation subfolders.
 - **No loose animation PNGs at the parent `/enemies/` folder or entity root** - always use a named animation subfolder.
 - **Generation script lives inside the entity subfolder** it generates art for when the script is entity-specific; shared scripts may live at the asset category root.
@@ -160,7 +153,7 @@ battle_scene/assets/images/
 
 | Asset | Pattern | Location | Example |
 |---|---|---|---|
-| Animation frame | `{sprite_id}_{anim}_{n}.png` | `enemies/{sprite_id}/{anim}/` | `enemies/trash_robot/idle/trash_robot_idle_0.png` |
+| Animation frame | `{sprite_id}_{anim}_{n}.png` | `enemies/{sprite_id}/{anim}/` | `enemies/trash_robot/attack/trash_robot_attack_0.png` |
 | Generation script | `generate_enemy.ps1` | `enemies/` or entity folder | `enemies/generate_enemy.ps1` |
 | Enemy JSON | `{enemy_id}.json` | `card_info/enemy/` | `robot_grunt.json` |
 | Hero JSON | `{hero_id}.json` | `card_info/hero/` | `warrior.json` |

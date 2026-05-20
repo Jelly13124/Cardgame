@@ -54,7 +54,7 @@ func _build_visual() -> void:
 
 func _has_animation_frames() -> bool:
 	var dir = HERO_DIR + HERO_ID + "/"
-	return _asset_exists(dir + "idle/%s_idle_0.png" % HERO_ID) or _asset_exists(dir + "attack/%s_attack_0.png" % HERO_ID)
+	return _asset_exists(dir + "attack/%s_attack_0.png" % HERO_ID)
 
 
 func _build_animated_visual() -> void:
@@ -66,11 +66,10 @@ func _build_animated_visual() -> void:
 
 	var frames = SpriteFrames.new()
 	_sprite.sprite_frames = frames
-	_add_animation_frames(frames, "idle", true, 5.0)
 	_add_animation_frames(frames, "attack", false, 9.0)
 	_apply_display_scale(frames)
 	add_child(_sprite)
-	play_idle()
+	_show_rest_pose()
 
 
 func _build_fallback_visual() -> void:
@@ -124,9 +123,8 @@ func _apply_fallback_display_scale() -> void:
 
 
 func _first_frame_texture(frames: SpriteFrames) -> Texture2D:
-	for anim_name in ["idle", "attack"]:
-		if frames.has_animation(anim_name) and frames.get_frame_count(anim_name) > 0:
-			return frames.get_frame_texture(anim_name, 0)
+	if frames.has_animation("attack") and frames.get_frame_count("attack") > 0:
+		return frames.get_frame_texture("attack", 0)
 	return null
 
 
@@ -154,13 +152,11 @@ func _load_texture(path: String) -> Texture2D:
 	return null
 
 
-func play_idle() -> void:
+func _show_rest_pose() -> void:
 	if not _sprite or not is_instance_valid(_sprite):
 		return
 	var frames = _sprite.sprite_frames
-	if frames and frames.has_animation("idle") and frames.get_frame_count("idle") > 0:
-		_sprite.play("idle")
-	elif frames and frames.has_animation("attack") and frames.get_frame_count("attack") > 0:
+	if frames and frames.has_animation("attack") and frames.get_frame_count("attack") > 0:
 		_sprite.play("attack")
 		_sprite.pause()
 		_sprite.frame = 0
@@ -178,7 +174,7 @@ func play_attack() -> void:
 
 
 func _on_attack_finished() -> void:
-	play_idle()
+	_show_rest_pose()
 
 
 func notify_stats_changed() -> void:

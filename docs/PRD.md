@@ -353,8 +353,8 @@ Final Godot assets are PNG files. Character and FX sheets use a solid `#FF00FF` 
 3. Save to `heroes/{hero_id}/`, `enemies/{sprite_id}/`, or `fx/{effect_id}/` as appropriate.
 4. Reference final PNGs from JSON or runtime loaders; gameplay must not reference raw sheets.
 
-- **Folder:** `enemies/{sprite_id}/{sprite_id}_{anim}_{n}.png` or `heroes/{hero_id}/{hero_id}_{anim}_{n}.png`.
-- **Frame counts:** 4 frames idle (looping) + 4 frames attack (one-shot, returns to idle).
+- **Folder:** `enemies/{sprite_id}/{anim}/{sprite_id}_{anim}_{n}.png` or `heroes/{hero_id}/{anim}/{hero_id}_{anim}_{n}.png`.
+- **Frame counts:** 4 attack frames; `attack_0` is also the static rest pose. There are no separate idle animation assets.
 - **Scale:** frames render with nearest filtering in Godot and are sized per entity.
 - **Source sheets:** keep raw/generated sheets in `generated_sheet/` folders only.
 
@@ -371,7 +371,7 @@ Final Godot assets are PNG files. Character and FX sheets use a solid `#FF00FF` 
 - Player HP / block / energy UI (CharacterHUD)
 - Draw pile / discard pile viewer (Q/E shortcuts)
 - Status effect system (poison, burn, weak, vulnerable, strength_up)
-- Pixel art combat sprites with idle + attack animations
+- Pixel art combat sprites with static rest poses and attack animations
 
 ### 🔄 Phase 2 — Run System & Content (Active)
 - Map scene with selectable encounter nodes per floor

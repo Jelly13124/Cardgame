@@ -13,6 +13,7 @@ const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
 const INTENT_ICON_ATTACK = preload("res://battle_scene/assets/images/ui/intent_attack.png")
 const INTENT_ICON_BLOCK  = preload("res://battle_scene/assets/images/ui/intent_block.png")
 const INTENT_ICON_BUFF   = preload("res://battle_scene/assets/images/ui/intent_buff.png")
+const INTENT_ICON_CHARGE = preload("res://battle_scene/assets/images/ui/intent_charge.png")
 const NORMAL_DISPLAY_HEIGHT := 192.0
 const BOSS_DISPLAY_HEIGHT := 288.0
 
@@ -22,7 +23,7 @@ var enemy_name: String = "ENEMY"
 var max_health: int = 30
 var health: int = 30
 var block: int = 0
-## ID used to locate sprite frames: e.g. "trash_robot" → trash_robot_idle_0.png
+## ID used to locate sprite frames: e.g. "trash_robot" -> trash_robot_attack_0.png
 var sprite_id: String = ""
 
 ## Composed status effect system
@@ -99,13 +100,13 @@ func _build_visual() -> void:
 	else:
 		_build_placeholder_visual()
 
-## Build an AnimatedSprite2D from Codex-generated frames.
-## Frame files must be: {SPRITE_DIR}{sid}_idle_N.png and {sid}_attack_N.png
+## Build an AnimatedSprite2D from generated attack frames.
+## Frame files must be: enemies/{sid}/attack/{sid}_attack_N.png
 func _build_sprite_visual(sid: String) -> void:
 	_sprite = AnimatedSprite2D.new()
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_sprite.scale = Vector2(3.0, 3.0)      # 64px frames → 192px display
-	_sprite.position = Vector2(0, -96)     # anchor at feet (same as player)
+	_sprite.scale = Vector2.ONE
+	_sprite.position = Vector2(0, -96)
 	_sprite.flip_h = false                 # enemy PNGs already face left toward the player
 
 	var frames = SpriteFrames.new()
@@ -121,21 +122,11 @@ func _build_sprite_visual(sid: String) -> void:
 		push_warning("EnemyEntity: missing frame '%s'" % path)
 		return null
 
-	# Per-enemy subfolder, animations live in idle/ and attack/ subfolders
+	# Per-enemy subfolder, animations live in attack/ subfolders
 	# (and charge/ for bosses with a telegraph wind-up animation):
-	#   enemies/{sprite_id}/idle/{sprite_id}_idle_N.png
 	#   enemies/{sprite_id}/attack/{sprite_id}_attack_N.png
 	#   enemies/{sprite_id}/charge/{sprite_id}_charge_N.png  (optional)
 	var dir = ENEMIES_DIR + sid + "/"
-
-	# ── Idle (looping) ────────────────────────────────────────────────────────
-	frames.add_animation("idle")
-	frames.set_animation_loop("idle", true)
-	frames.set_animation_speed("idle", 5.0)
-	for idx in range(4):
-		var tex = _load_tex.call(dir + "idle/%s_idle_%d.png" % [sid, idx])
-		if tex:
-			frames.add_frame("idle", tex)
 
 	# ── Attack (one-shot, non-looping) ────────────────────────────────────────
 	frames.add_animation("attack")
@@ -155,17 +146,51 @@ func _build_sprite_visual(sid: String) -> void:
 		if tex:
 			frames.add_frame("charge", tex)
 
+	var display_height := _apply_display_scale(frames)
 	add_child(_sprite)
-	if frames.has_animation("idle") and frames.get_frame_count("idle") > 0:
-		_sprite.play("idle")
-	elif frames.has_animation("attack") and frames.get_frame_count("attack") > 0:
-		_sprite.play("attack")
-		_sprite.pause()
-		_sprite.frame = 0
+	_show_rest_pose()
 
-	# Sprite anchored at feet (0, -96): 192x192, top=-192, bottom=0
-	_build_intent_badge(Vector2(-60, -232))  # 40px above sprite top
+	_build_intent_badge(Vector2(-60, -display_height - 40.0))
 	_build_health_bar(Vector2(-70, 10))      # 10px below feet (centered with bar_width 140)
+
+
+## Scales the sprite to a target display height and returns the **content** height
+## from the entity baseline (feet at y=0) to the topmost visible (non-transparent)
+## pixel. This is what callers should use for placing the intent badge — basing
+## it on the raw canvas height makes the badge "float" above small enemies
+## (e.g. scrap_rat) whose content fills only the bottom of the canvas.
+func _apply_display_scale(frames: SpriteFrames) -> float:
+	var tex := _first_frame_texture(frames)
+	if not tex:
+		return NORMAL_DISPLAY_HEIGHT
+	var native_height := float(tex.get_height())
+	if native_height <= 0.0:
+		return NORMAL_DISPLAY_HEIGHT
+	var target_height := BOSS_DISPLAY_HEIGHT if native_height >= 160.0 else NORMAL_DISPLAY_HEIGHT
+	var display_scale := target_height / native_height
+	_sprite.scale = Vector2(display_scale, display_scale)
+	_sprite.position = Vector2(0, -target_height * 0.5)
+
+	# Detect where the actual sprite content starts (vs how big the canvas is).
+	# get_used_rect returns the bounding box of non-transparent pixels in
+	# native pixel coordinates. Multiply by display_scale to convert to the
+	# displayed dimension. If the sprite fills the whole canvas (e.g. a tall
+	# humanoid), top_offset_displayed is 0 and content_height == target_height
+	# (no behavioral change vs the old version).
+	var top_offset_displayed := 0.0
+	var img := tex.get_image()
+	if img:
+		var used := img.get_used_rect()
+		top_offset_displayed = float(used.position.y) * display_scale
+	return target_height - top_offset_displayed
+
+
+func _first_frame_texture(frames: SpriteFrames) -> Texture2D:
+	for anim_name in ["attack", "charge"]:
+		if frames.has_animation(anim_name) and frames.get_frame_count(anim_name) > 0:
+			return frames.get_frame_texture(anim_name, 0)
+	return null
+
 
 ## Fallback: procedural colored rectangle for enemies without sprite art yet.
 func _build_placeholder_visual() -> void:
@@ -327,7 +352,7 @@ func _update_intent_display() -> void:
 		"telegraph":
 			pill.bg_color     = Color(0.45, 0.30, 0.05, 0.88)
 			pill.border_color = Color(1.0, 0.75, 0.25, 0.95)
-			_intent_icon.texture = null
+			_intent_icon.texture = INTENT_ICON_CHARGE
 		_:
 			pill.bg_color     = Color(0.25, 0.25, 0.25, 0.85)
 			pill.border_color = Color(0.7, 0.7, 0.7, 0.9)
@@ -405,7 +430,7 @@ func get_incoming_attack_multiplier() -> float:
 
 # ─── Animation Helpers ────────────────────────────────────────────────────────
 
-## Play the attack animation once, then return to idle.
+## Play the attack animation once, then return to the static rest pose.
 func play_attack() -> void:
 	if not _sprite or not is_instance_valid(_sprite):
 		return
@@ -416,9 +441,14 @@ func play_attack() -> void:
 	_sprite.play("attack")
 
 func _on_attack_finished() -> void:
-	# Stay on last frame as rest pose — no idle loop
-	if _sprite and is_instance_valid(_sprite):
-		if _sprite.sprite_frames.has_animation("idle") and _sprite.sprite_frames.get_frame_count("idle") > 0:
-			_sprite.play("idle")
-		else:
-			_sprite.pause()
+	_show_rest_pose()
+
+
+func _show_rest_pose() -> void:
+	if not _sprite or not is_instance_valid(_sprite):
+		return
+	if not _sprite.sprite_frames.has_animation("attack") or _sprite.sprite_frames.get_frame_count("attack") == 0:
+		return
+	_sprite.play("attack")
+	_sprite.pause()
+	_sprite.frame = 0

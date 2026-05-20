@@ -15,40 +15,40 @@ You are working in the Godot 4.6 project at `C:\Users\Jerry\Desktop\Cardgame` �
 
 Also look at one reference of each asset type that already exists, so your output matches the project's visual scale and silhouette weight:
 - Card art reference: `battle_scene/assets/images/cards/player/strike.png`
-- Enemy sheet reference: `battle_scene/assets/images/enemies/trash_robot/` (note the per-frame `*_idle_N.png` / `*_attack_N.png` files; newer generated enemies may also contain a `generated_sheet/` subfolder with intermediates and `pipeline-meta.json`)
-- Hero animation reference: `battle_scene/assets/images/heroes/cowboy_bill/` (4 idle + 4 attack at 128×128 native once regenerated)
+- Enemy sheet reference: `battle_scene/assets/images/enemies/trash_robot/` (note the per-frame `attack/*_attack_N.png` files)
+- Hero animation reference: `battle_scene/assets/images/heroes/cowboy_bill/` (4 attack frames at 128x128 native; `attack_0` is the rest pose)
 - FX reference: `battle_scene/assets/images/fx/gunshot/`
 
 ## Step 2 — Deliverables (all listed in section 5 of the asset spec)
 
 - **12 card art PNGs** → `battle_scene/assets/images/cards/player/{card_id}.png` (transparent, no text, no card frame, match `strike.png` dimensions)
-- **5 standard enemy/elite sprite sheets** (`scrap_rat`, `riot_hound`, `rust_brute`, `mortar_cart`, `armored_patrol`) → `battle_scene/assets/images/enemies/{sprite_id}/idle/{sprite_id}_idle_{0-3}.png` and `attack/{sprite_id}_attack_{0-3}.png` (128×128 native, transparent, side view, baseline-aligned). Each animation lives in its own subfolder.
-- **1 boss sprite sheet** (`junkyard_tyrant`) → same `idle/` + `attack/` subfolder pattern at 192×192 native (1.5× the scale of normal enemies); plus a `charge/{sprite_id}_charge_{0-3}.png` subfolder for the telegraph animation
+- **5 standard enemy/elite sprite sheets** (`scrap_rat`, `riot_hound`, `rust_brute`, `mortar_cart`, `armored_patrol`) → `battle_scene/assets/images/enemies/{sprite_id}/attack/{sprite_id}_attack_{0-3}.png` (128x128 native, transparent, side view, baseline-aligned). `attack_0` is the static rest pose.
+- **1 boss sprite sheet** (`junkyard_tyrant`) → same `attack/` subfolder pattern at 192x192 native (1.5x the scale of normal enemies); plus a `charge/{sprite_id}_charge_{0-3}.png` subfolder for the telegraph animation
 
-**Total: 12 card PNGs + 40 standard enemy frames + 8 boss frames (+ 4 optional charge frames) = 60–64 assets.**
+**Total: 12 card PNGs + 20 standard enemy frames + 4 boss attack frames (+ 4 optional charge frames) = 36-40 assets.**
 
 ## Step 3 — Pipeline rules (non-negotiable)
 
 These come from `docs/project-rules.md` §2–§5. Follow exactly:
 
 1. **Every prompt** sent to your image model **must** preserve the Hardcore 128 Pixel Wasteland Art prompt anchor from §1 of project-rules.md. This style anchor is what keeps the project visually coherent.
-2. **One subfolder per enemy** under `battle_scene/assets/images/enemies/{sprite_id}/`, and within that, **one subfolder per animation** (`idle/`, `attack/`, optional `charge/`). The `sprite_id` MUST match the JSON exactly — the gameplay code resolves frame paths as `{ENEMIES_DIR}{sprite_id}/{anim}/{sprite_id}_{anim}_{n}.png`. Wrong folder name (or skipping the animation subfolder) = no sprite loads.
+2. **One subfolder per enemy** under `battle_scene/assets/images/enemies/{sprite_id}/`, and within that, **one subfolder per animation** (`attack/`, optional `charge/`). The `sprite_id` MUST match the JSON exactly — the gameplay code resolves frame paths as `{ENEMIES_DIR}{sprite_id}/{anim}/{sprite_id}_{anim}_{n}.png`. Wrong folder name (or skipping the animation subfolder) = no sprite loads.
 3. **Sheet generation uses a solid `#FF00FF` (magenta) background** for chroma-key cleanup. Final per-frame outputs must be transparent PNG.
-4. **Per-frame file naming + path** is exact: `idle/{sprite_id}_idle_0..3.png`, `attack/{sprite_id}_attack_0..3.png`. Boss adds `charge/junkyard_tyrant_charge_0..3.png`.
+4. **Per-frame file naming + path** is exact: `attack/{sprite_id}_attack_0..3.png`. Boss adds `charge/junkyard_tyrant_charge_0..3.png`.
 5. **Card art has no text, no UI, no card frame, no logos** — just the illustration. The runtime composes the card frame around it.
-6. **Idle frames loop**; **attack frames are one-shot** that returns to idle. Idle should be subtle (bob/breathe); attack should be wind-up → strike → recovery → settle.
-7. **Intermediate sheets** can stay in a `generated_sheet/` subfolder alongside the final frames. Keep them — they help future regenerations. Following the existing pipeline convention, write a `pipeline-meta.json` and `prompt-used.txt` next to each generated sheet.
+6. **No separate idle frames.** `attack_0` is the static rest pose; later attack frames should show wind-up → strike → recovery.
+7. **Intermediate sheets** may stay in a `generated_sheet/` subfolder only if they match the current animation contract. Do not keep old sheets that include canceled animation outputs.
 8. **`.import` files** are generated by Godot automatically the first time the editor sees a new PNG. Do not write them manually. Do not delete existing ones.
 
 ## Step 4 — One enemy at a time
 
 For each enemy in section 3 of the asset spec:
 1. Compose the prompt: theme description from the asset spec entry + neon accent color + mandatory suffix from project-rules.md §1.
-2. Generate the 4-idle / 4-attack sheet (with `#FF00FF` background).
-3. Chroma-key cleanup → split into 4 transparent PNG frames per animation.
+2. Generate the 4-attack sheet (with `#FF00FF` background).
+3. Chroma-key cleanup → split into 4 transparent PNG attack frames.
 4. Verify all frames share the same dimensions and baseline (feet at the same Y for normal enemies; bottom of frame for boss).
 5. Save to the right folder with the right names.
-6. Drop a `pipeline-meta.json` and `prompt-used.txt` in `{sprite_id}/generated_sheet/`.
+6. If keeping intermediates, drop a `pipeline-meta.json` and `prompt-used.txt` in `{sprite_id}/generated_sheet/`.
 
 For the boss (`junkyard_tyrant`), the frame size is 192×192 native instead of 128×128 — it is intentionally larger.
 

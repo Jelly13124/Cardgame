@@ -136,6 +136,8 @@ func _on_statuses_changed(entity: Node) -> void:
 	elif entity.has_signal("status_changed"):
 		entity.status_changed.emit()
 
+const STATUS_BADGE_BG = preload("res://battle_scene/assets/images/ui/status_badge_bg.png")
+
 func _refresh_badges(entity: Node) -> void:
 	var container = entity.find_child("StatusBadges", true, false)
 	if not container:
@@ -147,8 +149,21 @@ func _refresh_badges(entity: Node) -> void:
 	for status_name in _statuses:
 		var stacks = _statuses[status_name]
 		if stacks <= 0: continue
+		# Each badge is a 24x24 NinePatch (status_badge_bg.png) with the status
+		# letter + stack count Label centered inside it.
+		var bg = NinePatchRect.new()
+		bg.texture = STATUS_BADGE_BG
+		bg.custom_minimum_size = Vector2(24, 24)
+		bg.patch_margin_left = 6
+		bg.patch_margin_top = 6
+		bg.patch_margin_right = 6
+		bg.patch_margin_bottom = 6
 		var lbl = Label.new()
 		lbl.text = "%s%d" % [STATUS_LABELS.get(status_name, status_name), stacks]
-		lbl.add_theme_font_size_override("font_size", 12)
+		lbl.add_theme_font_size_override("font_size", 11)
 		lbl.add_theme_color_override("font_color", STATUS_COLORS.get(status_name, Color.WHITE))
-		container.add_child(lbl)
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg.add_child(lbl)
+		container.add_child(bg)
