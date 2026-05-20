@@ -9,9 +9,10 @@
 |---|---|
 | Enemy JSON definitions | `battle_scene/card_info/enemy/{id}.json` |
 | Sprite folder (per enemy) | `battle_scene/assets/images/enemies/{sprite_id}/` |
-| Animation subfolders | `idle/`, `attack/`, optional `charge/` (boss telegraph) |
-| Frame naming | `idle/{sprite_id}_idle_{0-3}.png` + `attack/{sprite_id}_attack_{0-3}.png` (+ optional `charge/{sprite_id}_charge_{0-3}.png`) |
-| Generated art pipeline (intermediates) | `battle_scene/assets/images/enemies/{sprite_id}/generated_sheet/` |
+| Animation subfolders | `attack/`, optional `charge/` (boss telegraph) |
+| Frame naming | `attack/{sprite_id}_attack_{0-3}.png` (+ optional `charge/{sprite_id}_charge_{0-3}.png`) |
+| Rest pose | `attack/{sprite_id}_attack_0.png`; no separate `idle/` assets |
+| Generated art pipeline (intermediates) | Optional, but must not contain canceled animation outputs |
 | Spawn / runtime code | `battle_scene/enemy_entity.gd` (factory + animation), `battle_scene/enemy_ai.gd` (action exec) |
 | Schema validator | `battle_scene/data_validator.gd` `validate_enemy()` + `validate_encounter_pools()` |
 | Encounter selection | `run_system/core/run_manager.gd` `select_encounter()` |

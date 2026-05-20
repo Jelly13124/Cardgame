@@ -15,7 +15,7 @@ Light conventions for UI scripts. UI is currently the messiest part of the codeb
 | Map interaction + relic modal | `run_system/ui/map_scene.gd` |
 | Loot reward screen + card draft | `run_system/ui/loot_reward.gd` |
 | Hero selection | `run_system/ui/hero_select.gd` |
-| Shared theme | `run_system/ui/theme/wasteland_cartoon_theme.gd` (legacy filename; palette must follow Hardcore 128 Pixel Wasteland Art) |
+| Shared theme | `run_system/ui/theme/wasteland_theme.gd` (legacy filename; palette must follow Hardcore 128 Pixel Wasteland Art) |
 
 ---
 
@@ -23,7 +23,7 @@ Light conventions for UI scripts. UI is currently the messiest part of the codeb
 
 ### 1. All shared visual styling goes through the shared theme script
 ```gdscript
-const T = preload("res://run_system/ui/theme/wasteland_cartoon_theme.gd")
+const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 
 # Use builders, don't reinvent StyleBoxFlat.new()
 panel.add_theme_stylebox_override("panel", T.panel_with_shadow(T.PANEL_BG, T.PANEL_BORDER, 5))
@@ -53,7 +53,7 @@ func _load_texture(path: String) -> Texture2D:
 Don't `get_node()` at use time. Cache via `@onready var foo = $Path`.
 
 ### 4. New UI scenes use the shared `theme.tres` (if/when we make it a `.tres`)
-Currently `WastelandCartoonTheme` is a legacy-named script class with builder methods (programmatic theming). A migration to `.tres` Theme resource would let `.tscn` files inherit theme automatically. Not done yet.
+Currently `WastelandTheme` is a legacy-named script class with builder methods (programmatic theming). A migration to `.tres` Theme resource would let `.tscn` files inherit theme automatically. Not done yet.
 
 ---
 
@@ -110,4 +110,4 @@ When a file approaches 400 lines, the responsibilities are usually entangled. Co
 ## When in doubt
 
 - The most-recent ADRs in `docs/adr/` cover style / structure decisions.
-- The shared theme palette lives in `run_system/ui/theme/wasteland_cartoon_theme.gd` - read its constants before defining new colors locally, but keep new colors aligned with Hardcore 128 Pixel Wasteland Art.
+- The shared theme palette lives in `run_system/ui/theme/wasteland_theme.gd` - read its constants before defining new colors locally, but keep new colors aligned with Hardcore 128 Pixel Wasteland Art.

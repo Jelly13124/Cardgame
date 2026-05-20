@@ -47,7 +47,7 @@ hardcore 128 pixel wasteland art style, native 128x128 pixel game sprite readabi
 For combat unit sheets, add:
 
 ```text
-side view, full body, shared baseline, consistent scale, hero faces right or enemy faces left, 4 idle frames and 4 attack frames
+side view, full body, shared baseline, consistent scale, hero faces right or enemy faces left, 4 attack frames, attack frame 0 doubles as the static rest pose, no separate idle animation
 ```
 
 For card illustrations, keep the same style but do not force side-view/full-body if the card art is an object, weapon, or action scene.

@@ -3,7 +3,7 @@ extends Control
 ## Slay-the-Spire style procedural map drawn over a wasteland map background.
 ## The route remains data-driven; only the presentation is custom-drawn here.
 
-const T = preload("res://run_system/ui/theme/wasteland_cartoon_theme.gd")
+const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
 const MAP_RENDERER_SCRIPT = preload("res://run_system/ui/map_renderer.gd")
 const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_pixel_bg.png"
@@ -90,10 +90,21 @@ func _compute_positions() -> void:
 	var max_slot = max(1, _get_max_slot())
 	var map_height = maxf(260.0, vp.y - MAP_TOP - MAP_BOTTOM_PADDING)
 	var slot_spacing = map_height / float(max_slot)
+	var center_y = MAP_TOP + map_height * 0.5
+
+	# Pre-count nodes per floor so we can Y-center single-node floors
+	# (start relic, boss) without depending on which slot they happen to be in.
+	var nodes_per_floor: Dictionary = {}
+	for node in rm.map_data:
+		nodes_per_floor[node.floor] = nodes_per_floor.get(node.floor, 0) + 1
 
 	for node in rm.map_data:
 		var x = MAP_LEFT + node.floor * FLOOR_SPACING
-		var y = MAP_TOP + node.slot * slot_spacing
+		var y: float
+		if nodes_per_floor.get(node.floor, 0) == 1:
+			y = center_y
+		else:
+			y = MAP_TOP + node.slot * slot_spacing
 		_node_positions[node.id] = Vector2(x, y)
 
 
@@ -323,9 +334,9 @@ func _make_relic_choice_button(relic_id: String, source_type: String) -> Button:
 	button.custom_minimum_size = Vector2(620, 82)
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.add_theme_stylebox_override("normal", _make_relic_button_style(Color(0.10, 0.075, 0.055, 0.96)))
-	button.add_theme_stylebox_override("hover", _make_relic_button_style(Color(0.17, 0.12, 0.075, 0.98)))
-	button.add_theme_stylebox_override("pressed", _make_relic_button_style(Color(0.23, 0.16, 0.08, 1.0)))
+	button.add_theme_stylebox_override("normal",  _make_relic_button_style("normal"))
+	button.add_theme_stylebox_override("hover",   _make_relic_button_style("hover"))
+	button.add_theme_stylebox_override("pressed", _make_relic_button_style("pressed"))
 	button.pressed.connect(_on_relic_choice_selected.bind(relic_id, source_type))
 
 	var margin = MarginContainer.new()
@@ -395,19 +406,15 @@ func _on_relic_choice_selected(relic_id: String, _source_type: String) -> void:
 	queue_redraw()
 
 
-## Relic modal background panel — shared base + content margins.
-func _make_relic_panel_style() -> StyleBoxFlat:
-	var style = T.panel_flat(Color(0.055, 0.038, 0.026, 0.98), T.PANEL_BORDER_WARM, 8, 3)
-	style.content_margin_left = 28
-	style.content_margin_right = 28
-	style.content_margin_top = 24
-	style.content_margin_bottom = 24
-	return style
+## Relic modal background panel — uses the dark textured 9-slice modal panel.
+func _make_relic_panel_style() -> StyleBoxTexture:
+	return T.panel_textured("dark")
 
 
-## Relic choice button — shared base with cyan-tinted border.
-func _make_relic_button_style(bg: Color) -> StyleBoxFlat:
-	return T.panel_flat(bg, Color(0.38, 0.86, 1.0, 0.58), 6, 2)
+## Relic choice button — uses the textured 9-slice button for the given state.
+## `state` ∈ {"normal", "hover", "pressed"}. The `bg` legacy arg is ignored.
+func _make_relic_button_style(state: String, _bg: Color = Color.WHITE) -> StyleBoxTexture:
+	return T.button_textured(state)
 
 
 func _humanize_id(value: String) -> String:

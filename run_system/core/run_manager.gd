@@ -79,6 +79,9 @@ const GUARANTEED_TREASURE_FLOOR_INDEX: int = 6 # Human-facing layer 7.
 const EARLY_FLOOR_LAST: int = 4
 ## At most this many treasures spawn outside the guaranteed floor-6 chest.
 const MAX_EXTRA_TREASURES: int = 2
+## Map fan-out cap — each node connects to at most this many child nodes
+## on the next floor. Keeps the route readable and matches the STS shape.
+const MAX_CHILDREN_PER_NODE: int = 3
 
 # --- Map State ---
 ## Each entry: { "id": String, "floor": int, "slot": int, "type": String, "children": Array[String] }
@@ -117,6 +120,13 @@ func generate_map(num_floors: int = 12, width: int = 4) -> void:
 		else:
 			num_nodes = randi_range(2, 4)
 			num_nodes = mini(num_nodes, width) # Can't exceed +---available slots
+			# Floors directly adjacent to a single-node floor must fit within
+			# the MAX_CHILDREN_PER_NODE cap of that single node, otherwise some
+			# nodes would be unreachable. Floor 1 sits below the start (single),
+			# floor N-2 sits above the pre-boss-rest if it's also single (it
+			# is not currently, but kept for symmetry / future-proofing).
+			if f == 1:
+				num_nodes = mini(num_nodes, MAX_CHILDREN_PER_NODE)
 		
 		# Pick unique random slots — single nodes always go in the center
 		var slots: Array[int] = []
@@ -145,56 +155,97 @@ func generate_map(num_floors: int = 12, width: int = 4) -> void:
 			}
 			map_data.append(node)
 	
-	# Connect nodes floor by floor
+	# Connect nodes floor by floor — every node has at most MAX_CHILDREN_PER_NODE
+	# outgoing edges (fan-out cap). Convergence (many parents per child) is fine.
 	for f in range(num_floors - 1):
 		var current_nodes = _get_nodes_on_floor(f)
 		var next_nodes = _get_nodes_on_floor(f + 1)
-		
-		# Single-node floors connect to ALL nodes on the next floor
+
+		# Single-node current → next floor: connect to up to MAX closest by slot.
+		# (floor-1 was already width-capped above so this should reach every node.)
 		if current_nodes.size() == 1:
-			for nn in next_nodes:
+			for nn in _closest_n_by_slot(next_nodes, current_nodes[0].slot, MAX_CHILDREN_PER_NODE):
 				current_nodes[0].children.append(nn.id)
 			continue
-		
-		# If next floor is single node, all current nodes connect to it
+
+		# Single-node next: all current nodes converge on it (fan-IN, no cap).
 		if next_nodes.size() == 1:
 			for cn in current_nodes:
 				cn.children.append(next_nodes[0].id)
 			continue
-		
-		# Normal proximity-based connections (±2 slot distance)
+
+		# Normal: each current node gets up to MAX closest within ±2 slot distance.
+		var fresh_children: Array[String] = []
 		for node in current_nodes:
-			var candidates: Array[String] = []
-			for next_node in next_nodes:
-				if abs(next_node.slot - node.slot) <= 2:
-					candidates.append(next_node.id)
-			
-			# Fallback: connect to the closest node
-			if candidates.is_empty():
-				var closest = next_nodes[0]
-				for nn in next_nodes:
-					if abs(nn.slot - node.slot) < abs(closest.slot - node.slot):
-						closest = nn
-				candidates.append(closest.id)
-			
-			node.children = candidates
-		
-		# Ensure every next-floor node has at least one parent
+			fresh_children = []
+			for nn in _closest_n_by_slot_within(next_nodes, node.slot, MAX_CHILDREN_PER_NODE, 2):
+				fresh_children.append(nn.id)
+			# Fallback: distance cap rejected everyone — take single closest.
+			if fresh_children.is_empty():
+				var closest = _closest_n_by_slot(next_nodes, node.slot, 1)
+				if closest.size() > 0:
+					fresh_children.append(closest[0].id)
+			node.children = fresh_children
+
+		# Ensure every next-floor node has at least one parent. Prefer a parent
+		# that's still under the fan-out cap so we don't break it.
 		for next_node in next_nodes:
 			var has_parent = false
 			for node in current_nodes:
 				if next_node.id in node.children:
 					has_parent = true
 					break
-			if not has_parent:
-				var closest = current_nodes[0]
-				for cn in current_nodes:
-					if abs(cn.slot - next_node.slot) < abs(closest.slot - next_node.slot):
-						closest = cn
-				closest.children.append(next_node.id)
+			if has_parent:
+				continue
+			_attach_orphan_to_under_cap_parent(next_node, current_nodes)
 
 	for node in map_data:
 		_node_index[node.id] = node
+
+## Returns up to `count` nodes from `candidates`, ordered by slot distance to
+## `origin_slot` (closest first).
+static func _closest_n_by_slot(candidates: Array, origin_slot: int, count: int) -> Array:
+	var with_dist: Array = []
+	for c in candidates:
+		with_dist.append({ "node": c, "dist": abs(int(c.slot) - origin_slot) })
+	with_dist.sort_custom(func(a, b): return a.dist < b.dist)
+	var out: Array = []
+	var take = mini(count, with_dist.size())
+	for i in range(take):
+		out.append(with_dist[i].node)
+	return out
+
+
+## Same as _closest_n_by_slot but additionally requires slot distance <= max_dist.
+static func _closest_n_by_slot_within(candidates: Array, origin_slot: int, count: int, max_dist: int) -> Array:
+	var with_dist: Array = []
+	for c in candidates:
+		var d = abs(int(c.slot) - origin_slot)
+		if d <= max_dist:
+			with_dist.append({ "node": c, "dist": d })
+	with_dist.sort_custom(func(a, b): return a.dist < b.dist)
+	var out: Array = []
+	var take = mini(count, with_dist.size())
+	for i in range(take):
+		out.append(with_dist[i].node)
+	return out
+
+
+## Attach an orphan child to the closest parent that still has room under the
+## fan-out cap. Falls back to closest parent overall if all are at cap (rare).
+static func _attach_orphan_to_under_cap_parent(orphan: Dictionary, current_nodes: Array) -> void:
+	var sorted: Array = current_nodes.duplicate()
+	sorted.sort_custom(func(a, b):
+		return abs(int(a.slot) - int(orphan.slot)) < abs(int(b.slot) - int(orphan.slot))
+	)
+	for parent in sorted:
+		if parent.children.size() < MAX_CHILDREN_PER_NODE:
+			parent.children.append(orphan.id)
+			return
+	# All at cap — rare; allow the closest to exceed cap so no orphan exists.
+	if sorted.size() > 0:
+		sorted[0].children.append(orphan.id)
+
 
 func _pick_node_type(floor_idx: int, total: int, treasure_extras_used: int = 0) -> String:
 	# Floor 0: starting relic choice

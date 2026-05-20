@@ -118,19 +118,27 @@ func _draw_all_nodes(vp: Vector2) -> void:
 
 
 func _draw_map_node(pos: Vector2, node_type: String, radius: float, alpha: float, accessible: bool, visited: bool, is_current: bool, hovered: bool) -> void:
-	var icon_size = NODE_ICON_SIZE + (4.0 if hovered else 0.0) + (4.0 if is_current else 0.0)
+	# Hover affordance is pure passive — bigger icon + slightly brighter tint.
+	# No overlay rectangle / brackets / accessibility dot. The current node
+	# still gets a yellow bracket so "you are here" reads at a glance.
+	var icon_size = NODE_ICON_SIZE + (8.0 if hovered else 0.0) + (4.0 if is_current else 0.0)
 	var tint = Color(1.0, 1.0, 1.0, alpha)
 	if not accessible and not visited:
 		tint = Color(0.88, 0.84, 0.76, alpha)
 	elif visited and not is_current:
 		tint = Color(0.80, 0.76, 0.66, maxf(alpha, 0.62))
+	if hovered:
+		# Subtle warm brightness boost — combined with the +8px icon growth
+		# this reads as "this node is highlighted" without any overlay.
+		tint = Color(
+			minf(1.0, tint.r * 1.18),
+			minf(1.0, tint.g * 1.12),
+			minf(1.0, tint.b * 1.04),
+			tint.a
+		)
 
 	if is_current:
 		_draw_pixel_selection(pos, radius + 10.0, Color(1.0, 0.92, 0.25, 1.0))
-	elif hovered:
-		_draw_pixel_selection(pos, radius + 9.0, Color(0.45, 0.95, 1.0, 0.95))
-	elif accessible and not visited:
-		_scene.draw_rect(Rect2(pos + Vector2(-2, radius + 7.0), Vector2(4, 4)), Color(0.45, 0.95, 1.0, 0.9))
 
 	_draw_node_texture(pos, node_type, icon_size, tint)
 

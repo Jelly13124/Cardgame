@@ -3,9 +3,9 @@ extends Control
 const GOLD_ICON_PATH := "res://run_system/assets/images/loot_ui/gold_reward.png"
 const CARD_REWARD_ICON_PATH := "res://run_system/assets/images/loot_ui/card_reward.png"
 
-# Shared palette lives in run_system/ui/theme/wasteland_cartoon_theme.gd as
-# `T.PANEL_BG` etc. — see wasteland_cartoon_theme.gd for all colors / builders.
-const T = preload("res://run_system/ui/theme/wasteland_cartoon_theme.gd")
+# Shared palette lives in run_system/ui/theme/wasteland_theme.gd as
+# `T.PANEL_BG` etc. — see wasteland_theme.gd for all colors / builders.
+const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 
 # Card IDs available for drafting - must match filenames in card_info/player/
 var draft_pool = [
@@ -52,11 +52,14 @@ func _ready() -> void:
 
 
 func _apply_static_theme() -> void:
-	$VBoxContainer/BannerPanel.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.105, 0.075, 0.055, 0.98), T.PANEL_HIGHLIGHT, 4))
-	$VBoxContainer/LootPanel.add_theme_stylebox_override("panel", T.panel_with_shadow(T.PANEL_BG, T.PANEL_BORDER, 5))
-	$DraftOverlay/VBoxContainer/DraftPanel.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.055, 0.05, 0.052, 0.98), T.PANEL_BORDER, 5))
-	T.apply_button_theme(proceed_button, Color(0.13, 0.1, 0.075, 1.0), T.PANEL_HIGHLIGHT)
-	T.apply_button_theme(draft_skip_button, Color(0.13, 0.1, 0.075, 1.0), T.PANEL_HIGHLIGHT)
+	# Main background panels use codex's textured 9-slice (default = riveted
+	# plate; dark = modal-weight) instead of the old programmatic StyleBoxFlat.
+	$VBoxContainer/BannerPanel.add_theme_stylebox_override("panel", T.panel_textured("default"))
+	$VBoxContainer/LootPanel.add_theme_stylebox_override("panel", T.panel_textured("default"))
+	$DraftOverlay/VBoxContainer/DraftPanel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	# Buttons auto-pick up textured normal/hover/pressed via apply_button_theme.
+	T.apply_button_theme(proceed_button)
+	T.apply_button_theme(draft_skip_button)
 
 
 func _generate_loot() -> void:

@@ -38,7 +38,7 @@ Per `docs/project-rules.md` §2 and §3:
 - **Card art:** scene-ready PNG — NO text, NO logos, NO UI elements baked in.
 - **Side-view full body** for combat units; heroes face right, enemies face left.
 - **Enemy facing:** final enemy PNG frames must face left toward the player. Normalize the source frames during post-processing rather than using a blanket runtime flip.
-- **Frame counts (per entity):** 4 idle (looping) + 4 attack (one-shot, returns to idle).
+- **Frame counts (per entity):** 4 attack frames; frame 0 doubles as the static rest pose. Do not generate separate idle frames.
 - **Frame size:** standard combat units use 128×128 native frames. Boss uses 192×192 native frames unless a later spec overrides it.
 - **`.import` files:** Godot auto-generates these on first import. Do not write them manually.
 - **Intermediate sheets** may stay in a `generated_sheet/` subfolder, but final per-frame PNGs are what gameplay loads.
@@ -72,11 +72,9 @@ Per `docs/project-rules.md` §2 and §3:
 ## 3. Enemy Sprite Sheets (4 normal + 1 elite + 1 boss)
 
 For each enemy below, generate:
-- **4 idle frames** (looping, neutral stance, subtle bob/breathe)
-- **4 attack frames** (one-shot, build-up → strike → recovery → settle)
+- **4 attack frames** (frame 0 is static rest pose, then build-up -> strike -> recovery)
 
 **Output folders (per-animation subfolders, NOT loose at entity root):**
-- `battle_scene/assets/images/enemies/{sprite_id}/idle/{sprite_id}_idle_0..3.png`
 - `battle_scene/assets/images/enemies/{sprite_id}/attack/{sprite_id}_attack_0..3.png`
 - `battle_scene/assets/images/enemies/{sprite_id}/charge/{sprite_id}_charge_0..3.png` (Boss only — telegraph)
 
@@ -87,7 +85,7 @@ The `sprite_id` is identical to the value in the enemy's JSON `sprite_id` field 
 ### 3.1 `scrap_rat` (HP 12, swarmer)
 - **Silhouette:** small low-to-ground robot rat, ~50% the height of a human, on six skittering legs
 - **Materials:** salvaged scrap metal plates, exposed wiring along the spine, broken antenna ears
-- **Idle:** crouched, head twitching, occasional spark from antenna
+- **Rest pose:** crouched, head twitching implied by silhouette, occasional spark from antenna
 - **Attack:** lunges forward biting with a steel-jaw mouth
 - **Neon accent:** glowing red dot-eyes
 - **Style suffix:** §0
@@ -95,7 +93,7 @@ The `sprite_id` is identical to the value in the enemy's JSON `sprite_id` field 
 ### 3.2 `riot_hound` (HP 25, applies Weak)
 - **Silhouette:** dog-sized armored attack drone shaped like a doberman, heavy plated head, low stance
 - **Materials:** armored chest plate, riveted leg armor, a muzzle-mounted electric prod that arcs when it bites
-- **Idle:** standing growl-stance, head lowered, prod-tip sparking
+- **Rest pose:** standing growl-stance, head lowered, prod-tip sparking
 - **Attack:** lunges and bites with prod-arc discharging on impact
 - **Neon accent:** electric-blue prod arcs and eye visor
 - **Style suffix:** §0
@@ -103,7 +101,7 @@ The `sprite_id` is identical to the value in the enemy's JSON `sprite_id` field 
 ### 3.3 `rust_brute` (HP 40, tank)
 - **Silhouette:** hulking 2.2m humanoid covered in welded boilerplate, slow but massive
 - **Materials:** patchwork plate armor, exposed pipe-arm hammer, leather-strap harness, ammo belts across chest
-- **Idle:** wide stance, shoulders heaving, hammer-arm resting
+- **Rest pose:** wide stance, hammer-arm resting
 - **Attack:** big overhead pipe-hammer slam
 - **Neon accent:** glowing yellow welding-helmet visor
 - **Style suffix:** §0
@@ -111,15 +109,15 @@ The `sprite_id` is identical to the value in the enemy's JSON `sprite_id` field 
 ### 3.4 `mortar_cart` (HP 28, telegraphs big AoE)
 - **Silhouette:** wheeled artillery cart, mortar-tube angled up, two big spoked junkyard wheels
 - **Materials:** rusted iron cart, shells stacked behind the tube, leather straps and chains
-- **Idle:** cart shifts slightly, smoke trickles from tube
+- **Rest pose:** cart braced in place, smoke trickling from tube
 - **Attack:** tube recoils violently as it fires (the big-AoE frame); show flash and smoke
-- **Neon accent:** glowing toxic-green chemical shell loaded in the breach (visible in idle frame 3 and attack frame 0)
+- **Neon accent:** glowing toxic-green chemical shell loaded in the breach (visible in attack frame 0)
 - **Style suffix:** §0
 
 ### 3.5 `armored_patrol` (Elite, HP 50)
 - **Silhouette:** armored riot guard, ~human height + 30%, riot shield in one hand, shock baton in the other
 - **Materials:** scavenged police riot armor riveted with extra plates, helmet visor, ballistic shield with painted faction sigil
-- **Idle:** combat stance behind shield, baton resting on shield rim
+- **Rest pose:** combat stance behind shield, baton resting on shield rim
 - **Attack:** swings the baton over the shield with a downward strike
 - **Neon accent:** magenta visor-glow and faint magenta sigil paint on shield
 - **Style suffix:** §0
@@ -130,9 +128,9 @@ The `sprite_id` is identical to the value in the enemy's JSON `sprite_id` field 
 - **Frame size:** **192×192 native** (renders at 1.5× the scale of normal enemies)
 - **Silhouette:** 2.5m tyrant in welded scrap-king armor, asymmetric one shoulder pauldron made from a car door, the other arm a massive piston-driven sledge
 - **Materials:** dented car panels, chain mail of bottle caps and washers, a crown of bent rebar
-- **Idle:** menacing stance, sledge resting on shoulder, head swiveling slowly
+- **Rest pose:** menacing stance, sledge resting on shoulder
 - **Attack (4 frames):** wind-up → overhead sledge swing → impact crater → settle
-- **Optional charge frames (`junkyard_tyrant_charge_0..3.png`)** for the telegraph action: 4 frames of the boss raising the sledge over its head with growing electric/orange energy at the head of the sledge. *(If charge frames are not generated, the engine reuses idle frames — non-blocking.)*
+- **Optional charge frames (`junkyard_tyrant_charge_0..3.png`)** for the telegraph action: 4 frames of the boss raising the sledge over its head with growing electric/orange energy at the head of the sledge. *(If charge frames are not generated, the engine keeps the static attack_0 rest pose — non-blocking.)*
 - **Neon accent:** hot-orange sparks at the joints of the piston-arm; sledge head glows orange when charging
 - **Style suffix:** §0
 
@@ -170,32 +168,26 @@ battle_scene/assets/images/cards/player/
   adrenaline.png
 
 battle_scene/assets/images/enemies/scrap_rat/
-  idle/    scrap_rat_idle_0..3.png
   attack/  scrap_rat_attack_0..3.png
 
 battle_scene/assets/images/enemies/riot_hound/
-  idle/    riot_hound_idle_0..3.png
   attack/  riot_hound_attack_0..3.png
 
 battle_scene/assets/images/enemies/rust_brute/
-  idle/    rust_brute_idle_0..3.png
   attack/  rust_brute_attack_0..3.png
 
 battle_scene/assets/images/enemies/mortar_cart/
-  idle/    mortar_cart_idle_0..3.png
   attack/  mortar_cart_attack_0..3.png
 
 battle_scene/assets/images/enemies/armored_patrol/
-  idle/    armored_patrol_idle_0..3.png
   attack/  armored_patrol_attack_0..3.png
 
 battle_scene/assets/images/enemies/junkyard_tyrant/
-  idle/    junkyard_tyrant_idle_0..3.png
   attack/  junkyard_tyrant_attack_0..3.png
   charge/  junkyard_tyrant_charge_0..3.png   (optional — for telegraph)
 ```
 
-Total: **12 card PNGs + 48 enemy PNGs + 8 boss PNGs (+ 4 optional charge PNGs) = 68–72 assets.**
+Total: **12 card PNGs + 20 enemy PNGs + 4 boss attack PNGs (+ 4 optional charge PNGs) = 36-40 assets.**
 
 ---
 

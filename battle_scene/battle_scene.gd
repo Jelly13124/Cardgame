@@ -12,6 +12,7 @@ extends Node
 @onready var combat_engine = $CombatEngine
 @onready var enemy_ai = $EnemyAI
 @onready var ui_manager = $BattleUIManager
+@onready var end_round_button = $EndRoundButton
 
 var deck_manager: Node  # DeckManager (deck_manager.gd) instance
 var relic_effect_system: RefCounted  # RelicEffectSystem (relic_effect_system.gd) instance
@@ -30,6 +31,7 @@ const TARGETING_ARROW_SCRIPT = preload("res://battle_scene/targeting_arrow.gd")
 const RELIC_EFFECT_SYSTEM = preload("res://battle_scene/relic_effect_system.gd")
 const CARD_ANIMATOR_SCRIPT = preload("res://battle_scene/card_animator.gd")
 const DECK_MANAGER_SCRIPT = preload("res://battle_scene/deck_manager.gd")
+const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 
 func _ready():
 	print("BATTLE STARTING (STS Layout)")
@@ -49,6 +51,10 @@ func _ready():
 	card_animator = CARD_ANIMATOR_SCRIPT.new()
 	card_animator.setup(self)
 	add_child(card_animator)
+
+	# Apply textured wasteland button skin to the End Round button.
+	if end_round_button:
+		T.apply_button_theme(end_round_button)
 		
 	# Connect TurnManager
 	turn_manager.round_changed.connect(_on_round_changed)

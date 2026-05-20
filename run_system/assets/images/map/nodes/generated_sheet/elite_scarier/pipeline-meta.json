@@ -1,0 +1,64 @@
+{
+  "target": "asset",
+  "mode": "single",
+  "prompt": "",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019db115-8dd5-7322-a778-81abb74ffb7f\\ig_05cac736d25334f6016a0d35d796c081908103b799099c015a.png",
+  "threshold": 40,
+  "edge_threshold": 70,
+  "duration": 200,
+  "rows": 1,
+  "cols": 1,
+  "cell_size": 128,
+  "fit_scale": 0.82,
+  "trim_border": 4,
+  "edge_clean_depth": 4,
+  "align": "center",
+  "shared_scale": false,
+  "component_mode": "largest",
+  "component_padding": 12,
+  "min_component_area": 1,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "elite-1"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        1254,
+        1254
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 543002,
+      "selected_component_bbox": [
+        160,
+        104,
+        1085,
+        1132
+      ],
+      "crop_bbox": [
+        148,
+        92,
+        1097,
+        1144
+      ],
+      "edge_touch": false,
+      "output_size": [
+        94,
+        104
+      ],
+      "paste_position": [
+        17,
+        12
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

@@ -20,12 +20,6 @@ const UI_ASSET_PATH = "res://battle_scene/assets/images/cards/ui/"
 var _hover_tween: Tween
 var _glow_tween: Tween
 
-const RARITY_COLORS = {
-	"common":   { "border": Color("#c8a258"), "inner": Color("#2a2e31") },
-	"uncommon": { "border": Color("#4d9eff"), "inner": Color("#1b324d") },
-	"rare":     { "border": Color("#ffd700"), "inner": Color("#4d4200") }
-}
-
 var _mask_material: ShaderMaterial = null
 var _rarity_frames: Dictionary = {}
 

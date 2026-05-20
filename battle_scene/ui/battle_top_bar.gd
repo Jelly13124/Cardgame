@@ -1,6 +1,6 @@
 extends Control
 
-const T = preload("res://run_system/ui/theme/wasteland_cartoon_theme.gd")
+const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const RELIC_DATA_DIR := "res://run_system/data/relics/"
 const BAR_HEIGHT := 62.0
 
@@ -284,10 +284,11 @@ func _make_icon_button(text: String, tooltip: String) -> Button:
 	button.custom_minimum_size = Vector2(44, 42)
 	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_size_override("font_size", 20)
-	button.add_theme_color_override("font_color", Color(0.95, 0.86, 0.68))
-	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.13, 0.105, 0.075, 0.92)))
-	button.add_theme_stylebox_override("hover", _make_button_style(Color(0.22, 0.17, 0.1, 0.96)))
-	button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.32, 0.22, 0.1, 1.0)))
+	button.add_theme_color_override("font_color", T.TEXT_MAIN)
+	# Codex's textured 9-slice button (normal / hover / pressed PNGs)
+	button.add_theme_stylebox_override("normal",  T.button_textured("normal"))
+	button.add_theme_stylebox_override("hover",   T.button_textured("hover"))
+	button.add_theme_stylebox_override("pressed", T.button_textured("pressed"))
 	return button
 
 
@@ -298,19 +299,10 @@ func _make_menu_button(text: String) -> Button:
 	return button
 
 
-## Top-bar button shape — shared base with warm-grey border.
-func _make_button_style(bg: Color) -> StyleBoxFlat:
-	return T.panel_flat(bg, Color(0.67, 0.49, 0.24, 0.72), 6, 1)
-
-
-## Settings/deck panel — shared base with heavier border and content padding.
-func _make_panel_style() -> StyleBoxFlat:
-	var style = T.panel_flat(Color(0.07, 0.055, 0.04, 0.98), Color(0.67, 0.49, 0.24, 0.72), 6, 2)
-	style.content_margin_left = 24
-	style.content_margin_top = 22
-	style.content_margin_right = 24
-	style.content_margin_bottom = 22
-	return style
+## Settings panel background — uses the dark textured 9-slice panel.
+## Caller adds extra content margins via wrapping MarginContainer if needed.
+func _make_panel_style() -> StyleBoxTexture:
+	return T.panel_textured("dark")
 
 
 func _on_deck_pressed() -> void:
