@@ -1,7 +1,7 @@
 {
 	"id": "trash_robot",
 	"name": "Trash Robot",
-	"sprite_id": "trash_robot_generated",
+	"sprite_id": "trash_robot",
 	"max_health": 30,
 	"action_pattern": [
 		{ "type": "attack", "amount": 6,  "label": "⚔ 6" },

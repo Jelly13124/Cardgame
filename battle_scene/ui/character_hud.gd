@@ -112,20 +112,12 @@ func update_stats(hp: int, max_hp: int, blk: int) -> void:
 	
 	if not _hp_bar: return
 
-	# HP bar update
+	# HP bar update — fixed tint regardless of HP. (HP-based color grading was
+	# removed because the green→yellow→red transition felt jarring.)
 	_hp_bar.max_value = max_hp
 	_hp_bar.value = hp
 	_hp_label.text = "%d / %d" % [max(0, hp), max_hp]
-	
-	# Color grading based on health %
-	var ratio = float(hp) / float(max(1, max_hp))
-	if ratio > 0.5:
-		_hp_bar.tint_progress = Color(0.2, 0.8, 0.3) # Fresh green
-	elif ratio > 0.25:
-		_hp_bar.tint_progress = Color(0.9, 0.7, 0.1) # Wounded yellow
-	else:
-		_hp_bar.tint_progress = Color(0.9, 0.1, 0.1) # Critical red
-	
+
 	# Block badge visibility
 	_block_badge.visible = blk > 0
 	_block_label.text = str(blk)

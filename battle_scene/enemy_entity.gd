@@ -8,6 +8,14 @@ const HUD_SCRIPT = preload("res://battle_scene/ui/character_hud.gd")
 const ENEMY_DATA_DIR = "res://battle_scene/card_info/enemy/"
 const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
 
+# Intent badge icon textures — preloaded once instead of `load()`-ing on every
+# intent refresh (which can fire frequently as enemy / player status changes).
+const INTENT_ICON_ATTACK = preload("res://battle_scene/assets/images/ui/intent_attack.png")
+const INTENT_ICON_BLOCK  = preload("res://battle_scene/assets/images/ui/intent_block.png")
+const INTENT_ICON_BUFF   = preload("res://battle_scene/assets/images/ui/intent_buff.png")
+const NORMAL_DISPLAY_HEIGHT := 192.0
+const BOSS_DISPLAY_HEIGHT := 288.0
+
 # ─── Stats ────────────────────────────────────────────────────────────────────
 var enemy_id: String = ""
 var enemy_name: String = "ENEMY"
@@ -19,6 +27,17 @@ var sprite_id: String = ""
 
 ## Composed status effect system
 var status_system = STATUS_SYS.new()
+
+## Short labels used inside the intent badge ("⚔ 5 +Weak" etc.).
+const _STATUS_SHORT_NAMES = {
+	"weak":          "Weak",
+	"vulnerable":    "Vuln",
+	"burn":          "Burn",
+	"poison":        "Pois",
+	"shock":         "Shock",
+	"strength_up":   "Str+",
+	"double_damage": "Dbl",
+}
 
 # ─── Action Pattern ───────────────────────────────────────────────────────────
 ## Array of { type, amount, label } dicts that cycle each turn.
@@ -59,7 +78,8 @@ static func create(id: String) -> EnemyEntity:
 				entity.action_pattern = data.get("action_pattern", [])
 				entity.sprite_id   = data.get("sprite_id", "")
 	else:
-		push_warning("EnemyEntity: JSON not found for id '%s', using defaults." % id)
+		push_error("EnemyEntity: JSON not found for id '%s' at '%s'. Encounter will spawn a placeholder enemy." % [id, path])
+		assert(false, "EnemyEntity: JSON not found for id '%s'" % id)
 	return entity
 
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
@@ -68,6 +88,10 @@ func _ready() -> void:
 	_build_visual()
 	_update_intent_display()
 	_start_intent_float_anim()
+	# Refresh intent whenever this enemy's own status changes (e.g. shock /
+	# weak landed). Player-status changes (e.g. vulnerable applied to player)
+	# are broadcast by BattleScene to every enemy via update_intent_display().
+	status_changed.connect(_update_intent_display)
 
 func _build_visual() -> void:
 	if sprite_id != "":
@@ -75,14 +99,14 @@ func _build_visual() -> void:
 	else:
 		_build_placeholder_visual()
 
-## Build an AnimatedSprite2D from PixelLab-generated frames.
+## Build an AnimatedSprite2D from Codex-generated frames.
 ## Frame files must be: {SPRITE_DIR}{sid}_idle_N.png and {sid}_attack_N.png
 func _build_sprite_visual(sid: String) -> void:
 	_sprite = AnimatedSprite2D.new()
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_sprite.scale = Vector2(3.0, 3.0)      # 64px frames → 192px display
 	_sprite.position = Vector2(0, -96)     # anchor at feet (same as player)
-	_sprite.flip_h = false                 # face right
+	_sprite.flip_h = false                 # enemy PNGs already face left toward the player
 
 	var frames = SpriteFrames.new()
 	_sprite.sprite_frames = frames
@@ -97,25 +121,39 @@ func _build_sprite_visual(sid: String) -> void:
 		push_warning("EnemyEntity: missing frame '%s'" % path)
 		return null
 
-	# Per-enemy subfolder: enemies/{sprite_id}/{sprite_id}_attack_N.png
+	# Per-enemy subfolder, animations live in idle/ and attack/ subfolders
+	# (and charge/ for bosses with a telegraph wind-up animation):
+	#   enemies/{sprite_id}/idle/{sprite_id}_idle_N.png
+	#   enemies/{sprite_id}/attack/{sprite_id}_attack_N.png
+	#   enemies/{sprite_id}/charge/{sprite_id}_charge_N.png  (optional)
 	var dir = ENEMIES_DIR + sid + "/"
 
-	# ── Attack (one-shot, non-looping) ─────────────────────────────────────────
+	# ── Idle (looping) ────────────────────────────────────────────────────────
 	frames.add_animation("idle")
 	frames.set_animation_loop("idle", true)
 	frames.set_animation_speed("idle", 5.0)
 	for idx in range(4):
-		var tex = _load_tex.call(dir + "%s_idle_%d.png" % [sid, idx])
+		var tex = _load_tex.call(dir + "idle/%s_idle_%d.png" % [sid, idx])
 		if tex:
 			frames.add_frame("idle", tex)
 
+	# ── Attack (one-shot, non-looping) ────────────────────────────────────────
 	frames.add_animation("attack")
 	frames.set_animation_loop("attack", false)
 	frames.set_animation_speed("attack", 8.0)
 	for idx in range(4):
-		var tex = _load_tex.call(dir + "%s_attack_%d.png" % [sid, idx])
+		var tex = _load_tex.call(dir + "attack/%s_attack_%d.png" % [sid, idx])
 		if tex:
 			frames.add_frame("attack", tex)
+
+	# ── Charge (optional, one-shot — used by boss telegraph) ─────────────────
+	frames.add_animation("charge")
+	frames.set_animation_loop("charge", false)
+	frames.set_animation_speed("charge", 6.0)
+	for idx in range(4):
+		var tex = _load_tex.call(dir + "charge/%s_charge_%d.png" % [sid, idx])
+		if tex:
+			frames.add_frame("charge", tex)
 
 	add_child(_sprite)
 	if frames.has_animation("idle") and frames.get_frame_count("idle") > 0:
@@ -129,7 +167,7 @@ func _build_sprite_visual(sid: String) -> void:
 	_build_intent_badge(Vector2(-60, -232))  # 40px above sprite top
 	_build_health_bar(Vector2(-70, 10))      # 10px below feet (centered with bar_width 140)
 
-## Fallback: procedural colored rectangle for enemies without pixel art yet.
+## Fallback: procedural colored rectangle for enemies without sprite art yet.
 func _build_placeholder_visual() -> void:
 	var body = ColorRect.new()
 	body.color = Color(0.7, 0.15, 0.15)
@@ -208,10 +246,58 @@ func consume_next_action() -> Dictionary:
 	return a
 
 ## Refreshes the intent badge to show what this enemy will do NEXT turn.
+## Public — called by BattleScene to broadcast player-status changes
+## (e.g. vulnerable applied to player) to every enemy.
+func update_intent_display() -> void:
+	_update_intent_display()
+
+
+## Computes the actual damage that will be displayed in the intent badge for
+## this enemy's next attack, taking enemy's own weak and player's vulnerable
+## into account. Mirrors combat_engine.calculate_attack_damage() but without
+## side effects.
+func _compute_display_attack(base_amount: int) -> int:
+	var outgoing := status_system.get_outgoing_multiplier()
+	var incoming := 1.0
+	var battle = get_tree().current_scene if get_tree() else null
+	if battle and "player" in battle and is_instance_valid(battle.player):
+		var p = battle.player
+		if p.has_method("get_incoming_attack_multiplier"):
+			incoming = p.get_incoming_attack_multiplier()
+	return int(round(float(base_amount) * outgoing * incoming))
+
+
 func _update_intent_display() -> void:
 	if not _intent_label: return
 	var next = peek_next_action()
-	_intent_label.text = next.get("label", "?")
+	var action_type = str(next.get("type", ""))
+
+	# For attack-like actions, rebuild the label using the *actual* damage
+	# after weak / vulnerable — so the intent badge stays accurate as the
+	# player applies debuffs. JSON `label` is only honored for non-attack
+	# actions (block / heal / telegraph).
+	var label_text: String
+	if action_type in ["attack", "attack_status", "attack_all"]:
+		var base = int(next.get("amount", 0))
+		var display_dmg = _compute_display_attack(base)
+		var icon = "💥" if action_type == "attack_all" else "⚔"
+		label_text = "%s %d" % [icon, display_dmg]
+		if action_type == "attack_status":
+			var status = str(next.get("status", ""))
+			var stacks = int(next.get("stacks", 1))
+			var status_short = _STATUS_SHORT_NAMES.get(status, status.capitalize())
+			if stacks > 1:
+				label_text += " +%s%d" % [status_short, stacks]
+			else:
+				label_text += " +%s" % status_short
+	else:
+		# block / heal / telegraph — JSON label is the source of truth.
+		label_text = str(next.get("label", "?"))
+
+	# Hint the player they can interrupt this attack with a shock card
+	if bool(next.get("interruptible", false)):
+		label_text += " ⚡"
+	_intent_label.text = label_text
 
 	# Update pill background + border colour to match intent type
 	if not _intent_bg: return
@@ -226,21 +312,32 @@ func _update_intent_display() -> void:
 	pill.border_width_bottom = 1
 	var type = next.get("type", "")
 	match type:
-		"attack":
+		"attack", "attack_status", "attack_all":
 			pill.bg_color     = Color(0.55, 0.08, 0.08, 0.88)
 			pill.border_color = Color(1.0, 0.4, 0.4, 0.9)
-			_intent_icon.texture = load("res://battle_scene/assets/images/ui/intent_attack.png")
+			_intent_icon.texture = INTENT_ICON_ATTACK
 		"block":
 			pill.bg_color     = Color(0.08, 0.25, 0.55, 0.88)
 			pill.border_color = Color(0.4, 0.65, 1.0, 0.9)
-			_intent_icon.texture = load("res://battle_scene/assets/images/ui/intent_block.png")
+			_intent_icon.texture = INTENT_ICON_BLOCK
 		"heal", "buff":
 			pill.bg_color     = Color(0.08, 0.40, 0.12, 0.88)
 			pill.border_color = Color(0.3, 1.0, 0.4, 0.9)
-			_intent_icon.texture = load("res://battle_scene/assets/images/ui/intent_buff.png")
+			_intent_icon.texture = INTENT_ICON_BUFF
+		"telegraph":
+			pill.bg_color     = Color(0.45, 0.30, 0.05, 0.88)
+			pill.border_color = Color(1.0, 0.75, 0.25, 0.95)
+			_intent_icon.texture = null
 		_:
 			pill.bg_color     = Color(0.25, 0.25, 0.25, 0.85)
 			pill.border_color = Color(0.7, 0.7, 0.7, 0.9)
+	# Shock-interruptible attacks get a bright warning border
+	if bool(next.get("interruptible", false)):
+		pill.border_color = Color(1.0, 0.95, 0.25, 1.0)
+		pill.border_width_left   = 2
+		pill.border_width_right  = 2
+		pill.border_width_top    = 2
+		pill.border_width_bottom = 2
 	_intent_bg.add_theme_stylebox_override("panel", pill)
 
 func _start_intent_float_anim() -> void:
@@ -295,6 +392,10 @@ func add_status(status_name: String, stacks: int) -> void:
 
 func get_status_stacks(status_name: String) -> int:
 	return status_system.get_stacks(status_name)
+
+## Returns true if a shock stack was consumed (action should be skipped/cancelled).
+func consume_shock_if_present() -> bool:
+	return status_system.consume_shock(self)
 
 func get_outgoing_multiplier() -> float:
 	return status_system.get_outgoing_multiplier()

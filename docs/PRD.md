@@ -1,14 +1,14 @@
 # Product Requirements Document
 **Project:** Unnamed Sci-Fi Roguelite Card Game  
-**Art Style:** Wasteland Punk Pixel Art  
+**Art Style:** Hardcore 128 Pixel Wasteland Art
 **Engine:** Godot 4.6  
-**Last Updated:** 2026-04-09
+**Last Updated:** 2026-05-19
 
 ---
 
 ## Overview
 
-A single-player roguelite deckbuilder set in a post-apocalyptic scrapyard wasteland. Players collect cards, relics, and equipment while fighting through escalating routes toward bosses. The visual language is locked to Wasteland Punk Pixel Art: rusted scrap metal, dusty earth tones, bold black pixel outlines, and sparse neon accents.
+A single-player roguelite deckbuilder set in a post-apocalyptic scrapyard wasteland. Players collect cards, relics, and equipment while fighting through escalating routes toward bosses. The visual language is locked to Hardcore 128 Pixel Wasteland Art: native 128x128 pixel sprites, bold black pixel outlines, gritty rusted scrap materials, dusty leather/earth tones, controlled pixel shading, and sparse neon accents.
 
 Combat is **Slay the Spire style**: the player has a hand of cards, limited energy, and must choose each turn which cards to play to survive enemy attacks while defeating them.
 
@@ -16,6 +16,7 @@ Project documentation is centralized in `docs/`:
 - `docs/PRD.md` is the product and systems source of truth.
 - `docs/PROJECT_STRUCTURE.md` maps scenes, scripts, data, and assets.
 - `docs/project-rules.md` defines art, asset, naming, and architecture rules.
+- `docs/art-style-reference.md` defines the approved Hardcore 128 Pixel Wasteland Art reference.
 
 ---
 
@@ -99,7 +100,7 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 | **Strength Up** | Bonus strength for stacks turns then expires |
 
 ### Enemy System
-- Each enemy loads from `card_info/enemy/{id}.json` — includes a `sprite_id` for pixel art
+- Each enemy loads from `card_info/enemy/{id}.json` — includes a `sprite_id` for the final sprite art
 - Enemies have an `action_pattern` array that cycles: `attack`, `block`, `heal`
 - **Intent badge** displayed above enemy HUD with emoji (⚔/🛡/♥)
 - Multiple enemies per encounter are supported
@@ -315,26 +316,32 @@ BattleScene (Node)
 
 ---
 
-## Art Style — Wasteland Punk Pixel Art
+## Art Style - Hardcore 128 Pixel Wasteland Art
 
-The game's definitive art direction is **Wasteland Punk Pixel Art**: a post-apocalyptic scrapyard aesthetic (think Mad Max meets Fallout) rendered in bold, cel-shaded pixel art.
+The game's definitive art direction is **Hardcore 128 Pixel Wasteland Art**, based on the approved reference image in `docs/art-style-reference.md`: native 128x128 pixel sprites, bold black pixel outlines, gritty wasteland materials, warm rust/leather colors, controlled pixel shading, and one small neon accent.
 
 ### Visual Rules
 | Element | Rule |
 |---|---|
-| **Silhouette** | Bold, instantly readable at 64×64. Simple shape, exaggerated proportions. |
-| **Materials** | Scrap metal, duct tape, rubber, chains, cracked glass, worn leather, exposed wiring — salvaged and corroded. Nothing clean or new. |
-| **Color palette** | Earth tone base (rusted orange, sandy brown, dusty grey, faded olive) + **one neon accent per character** |
-| **Outlines** | Bold single-color black outlines — pixel-weight, confident |
-| **Shading** | Cel-shaded / flat — NOT photorealistic |
+| **Native resolution** | Combat heroes and standard enemies are authored as 128x128 pixel-art frames unless a spec marks a larger boss scale. |
+| **Silhouette** | Compact, tough, battle-ready, and instantly readable at gameplay size. |
+| **Materials** | Scrap metal, duct tape, bolts, dents, rubber, cracked glass, worn leather, patched cloth, exposed wiring - salvaged and corroded. Nothing clean or new. |
+| **Color palette** | Warm earth-tone base: leather brown, rust orange, dusty tan, muted olive, dark steel, faded brass + **one neon accent per character** |
+| **Outlines** | Bold black pixel outlines with deliberate pixel clusters |
+| **Shading** | Controlled pixel shading with readable highlight/mid/shadow clusters - NOT photorealistic |
 | **Background** | Sprites and FX are transparent; full-scene map and battle backgrounds are scene-ready PNGs with no UI baked in |
 
-### Mandatory Prompt Suffix
-Every generated character or combat sprite prompt should preserve this wording:
+### Character Anchors
+- Cowboy Bill: robot cowboy hero with exactly one large central camera eye, oversized battered hat, red bandana, patched duster/poncho, chunky boots, salvaged hand cannon, facing right.
+- Trash Bot: compact trash-bin robot enemy with compactor body, camera-eye face, tiny treads or scrap wheels, grabber arms, dents/tape/bolts, small neon light, facing left.
+
+### Mandatory Prompt Anchor
+Every generated asset prompt should preserve this wording:
 ```
-wasteland punk style, post-apocalyptic scrap aesthetic, rusted metal and salvaged parts,
-single color bold black pixel art outlines, cel-shaded flat colors, earth tone palette
-with one neon accent color, transparent background, side view, full body, pixel art
+hardcore 128 pixel wasteland art style, native 128x128 pixel game sprite readability,
+bold black pixel outlines, gritty rusted scrap metal, worn leather and patched cloth,
+dusty desert palette, controlled pixel shading, salvaged bolts dents tubes and cracked glass,
+one small neon accent, transparent background, no high-resolution cartoon brushwork
 ```
 
 ### Generation Pipeline
@@ -369,7 +376,7 @@ Final Godot assets are PNG files. Character and FX sheets use a solid `#FF00FF` 
 ### 🔄 Phase 2 — Run System & Content (Active)
 - Map scene with selectable encounter nodes per floor
 - 3-floor structure with boss extraction choice screen
-- 3–5 enemy types with distinct action patterns + pixel art
+- 3–5 enemy types with distinct action patterns + final sprite art
 - 10–15 player cards covering all three types
 - Fixed starter decks with map/reward progression
 - Loot reward with equipment drops
@@ -391,7 +398,7 @@ Final Godot assets are PNG files. Character and FX sheets use a solid `#FF00FF` 
 ### ⬜ Phase 5 — Content Expansion
 - Multiple hero archetypes with unique starting decks
 - 30+ unique cards
-- 10+ enemy types with pixel art
+- 10+ enemy types with final sprite art
 - 3 boss encounters (one per floor) with multi-phase patterns
 - Final boss with unique mechanics
 
@@ -401,7 +408,9 @@ Final Godot assets are PNG files. Character and FX sheets use a solid `#FF00FF` 
 
 | Priority | Issue |
 |---|---|
+| 🟡 | `player.gd:HERO_ID` is hardcoded to `"cowboy_bill"` — `RunManager.current_hero_id` is set by hero_select but `PlayerEntity` ignores it. Both Bill and Jerry render the same sprite + name. Blocks Phase 5 "multiple hero archetypes" — needs hero JSON schema + dynamic loader. |
 | 🟡 | `_write_hp_to_run_manager()` writes HP directly, bypassing `health_changed` signal |
 | 🟢 | API key exposed in `generate_enemy.ps1` — should use env variable |
-| 🟢 | Black Hole Pile exists in scene but has no gameplay purpose yet |
+| 🟢 | Black Hole Pile exists in scene but has no gameplay purpose yet (note: exhaust mechanic now uses queue_free, not BlackHolePile) |
+| 🟢 | `Sharpened Scrap` relic's `_mark_used_once()` call is harmless dead code for non-`once_per_combat` relics — minor readability |
 | P3 | Some legacy generated card art may remain unused; current playable cards should reference PNG art |

@@ -49,6 +49,7 @@ node_modules/
 .taskmaster/notion-sync.json
 .claude/settings.local.json
 .claude/history/
+.superpowers/
 
 # Task files
 # tasks.json

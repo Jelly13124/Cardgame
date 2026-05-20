@@ -2,6 +2,9 @@ extends Node
 ## Data-driven card effect resolver. Card behavior comes from each card JSON
 ## "effects" array; add new effect types in _apply_effect().
 
+# Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
+const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
+
 signal victory_declared()
 
 const ATTRIBUTE_COLORS = {
@@ -48,7 +51,8 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 		main.show_notification("DOUBLE DAMAGE ACTIVE!", Color(0.2, 0.8, 1.0))
 
 	if effects.is_empty():
-		push_warning("CombatEngine: card '%s' has no effects." % card.card_info.get("name", "<unknown>"))
+		push_error("CombatEngine: card '%s' has no effects. Card JSON must define an `effects` array." % card.card_info.get("name", "<unknown>"))
+		assert(false, "CombatEngine: card '%s' has no effects." % card.card_info.get("name", "<unknown>"))
 		return
 
 	if type == "attack" and target and is_instance_valid(target):
@@ -88,6 +92,7 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			if target and is_instance_valid(target) and target.has_method("take_damage"):
 				var outgoing = calculate_attack_damage(amount, player, target)
 				target.take_damage(outgoing)
+				_register_player_attack()
 				main.show_notification("DEALT %d DAMAGE" % outgoing, Color(1.0, 0.4, 0.3))
 			else:
 				main.show_notification("NO TARGET!", Color(1, 0.5, 0.5))
@@ -111,15 +116,56 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			for enemy in main.enemy_container.get_children():
 				if is_instance_valid(enemy) and enemy.has_method("take_damage"):
 					enemy.take_damage(calculate_attack_damage(amount, player, enemy))
+			_register_player_attack()
 			main.show_notification("ALL ENEMIES HIT", Color(1.0, 0.3, 0.2))
 			await get_tree().create_timer(0.3).timeout
+
+		"scale_damage_by_attacks":
+			# Damage scales with attacks the player has already played this turn.
+			# JSON: {"type":"scale_damage_by_attacks", "base":2, "per":2}
+			var base_dmg: int = int(effect.get("base", 0))
+			var per: int = int(effect.get("per", 0))
+			var count: int = 0
+			if main and main.turn_manager:
+				count = int(main.turn_manager.attacks_played_this_turn)
+			var dynamic = base_dmg + per * count
+			if target and is_instance_valid(target) and target.has_method("take_damage"):
+				var outgoing = calculate_attack_damage(dynamic, player, target)
+				target.take_damage(outgoing)
+				_register_player_attack()
+				main.show_notification("DEALT %d DAMAGE" % outgoing, Color(1.0, 0.4, 0.3))
+			else:
+				main.show_notification("NO TARGET!", Color(1, 0.5, 0.5))
+			await get_tree().create_timer(0.2).timeout
+
+		"apply_shock":
+			var s_stacks: int = int(effect.get("stacks", int(effect.get("amount", 1))))
+			if target and is_instance_valid(target) and target.has_method("add_status"):
+				target.add_status("shock", s_stacks)
+				main.show_notification("SHOCK x%d" % s_stacks, Color(0.95, 0.95, 0.3))
+			else:
+				main.show_notification("NO TARGET!", Color(1, 0.5, 0.5))
+			await get_tree().create_timer(0.2).timeout
+
+		"apply_shock_all":
+			var s_stacks_all: int = int(effect.get("stacks", int(effect.get("amount", 1))))
+			for enemy in main.enemy_container.get_children():
+				if is_instance_valid(enemy) and enemy.has_method("add_status"):
+					enemy.add_status("shock", s_stacks_all)
+			main.show_notification("ALL: SHOCK x%d" % s_stacks_all, Color(0.95, 0.95, 0.3))
+			await get_tree().create_timer(0.2).timeout
+
+		"exhaust_self":
+			# Marker effect. The card is routed to exhaust (queue_free)
+			# by battle_scene.gd after card resolution.
+			pass
 
 		"apply_status":
 			var status: String = effect.get("status", "")
 			var stacks: int = int(effect.get("stacks", 1))
 			if target and is_instance_valid(target) and target.has_method("add_status"):
 				target.add_status(status, stacks)
-				main.show_notification("APPLIED %s x%d" % [StatusEffectSystem.format_name(status).to_upper(), stacks], Color(0.6, 0.9, 0.3))
+				main.show_notification("APPLIED %s x%d" % [STATUS_SYS.format_name(status).to_upper(), stacks], Color(0.6, 0.9, 0.3))
 			else:
 				main.show_notification("NO TARGET!", Color(1, 0.5, 0.5))
 			await get_tree().create_timer(0.2).timeout
@@ -129,7 +175,7 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			var stacks: int = int(effect.get("stacks", 1))
 			if player.has_method("add_status"):
 				player.add_status(status, stacks)
-				main.show_notification("APPLIED %s x%d" % [StatusEffectSystem.format_name(status).to_upper(), stacks], Color(0.6, 0.9, 0.3))
+				main.show_notification("APPLIED %s x%d" % [STATUS_SYS.format_name(status).to_upper(), stacks], Color(0.6, 0.9, 0.3))
 			await get_tree().create_timer(0.2).timeout
 
 		"apply_status_all":
@@ -138,11 +184,12 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			for enemy in main.enemy_container.get_children():
 				if is_instance_valid(enemy) and enemy.has_method("add_status"):
 					enemy.add_status(status, stacks)
-			main.show_notification("ALL: %s x%d" % [StatusEffectSystem.format_name(status).to_upper(), stacks], Color(0.6, 0.9, 0.3))
+			main.show_notification("ALL: %s x%d" % [STATUS_SYS.format_name(status).to_upper(), stacks], Color(0.6, 0.9, 0.3))
 			await get_tree().create_timer(0.2).timeout
 
 		_:
-			push_warning("CombatEngine: unknown effect type '%s'" % effect_type)
+			push_error("CombatEngine: unknown effect type '%s'. Add a handler in combat_engine._apply_effect() and update DataValidator.ALLOWED_EFFECT_TYPES." % effect_type)
+			assert(false, "CombatEngine: unknown effect type '%s'" % effect_type)
 
 
 func _animate_player_gunshot(player: Node, target: Node) -> void:
@@ -174,6 +221,12 @@ func _animate_player_gunshot(player: Node, target: Node) -> void:
 	await burst.finished
 	if is_instance_valid(impact):
 		impact.queue_free()
+
+
+## Increment the per-turn attack counter used by combo cards like Cascade.
+func _register_player_attack() -> void:
+	if main and main.turn_manager:
+		main.turn_manager.attacks_played_this_turn += 1
 
 
 func _make_fx_sprite(texture: Texture2D, pos: Vector2, sprite_scale: Vector2) -> Sprite2D:

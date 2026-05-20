@@ -1,13 +1,12 @@
 extends RefCounted
 class_name RelicEffectSystem
 
-var _run_manager: Node
+# RunManager is a registered autoload — accessed directly, no instance plumbing.
 var _battle_scene: Node
 var _used_once: Dictionary = {}
 
 
-func setup(run_manager: Node, battle_scene: Node) -> void:
-	_run_manager = run_manager
+func setup(battle_scene: Node) -> void:
 	_battle_scene = battle_scene
 	_used_once.clear()
 
@@ -77,23 +76,22 @@ func on_combat_victory(player: Node) -> void:
 					_notify("%s: healed %d HP" % [str(entry["title"]), amount], Color(0.3, 1.0, 0.45))
 					_mark_used_once(entry)
 			"gain_gold":
-				if _run_manager and _run_manager.has_method("add_resources"):
-					_run_manager.add_resources(amount, 0)
-					_notify("%s: +%d Gold" % [str(entry["title"]), amount], Color(1.0, 0.85, 0.24))
-					_mark_used_once(entry)
+				RunManager.add_resources(amount, 0)
+				_notify("%s: +%d Gold" % [str(entry["title"]), amount], Color(1.0, 0.85, 0.24))
+				_mark_used_once(entry)
 
 
 func _get_effect_entries(trigger: String) -> Array:
 	var entries: Array = []
-	if not _run_manager or not _run_manager.get("is_run_active"):
+	if not RunManager.is_run_active:
 		return entries
 
-	var relic_ids = _run_manager.get("relics")
+	var relic_ids = RunManager.relics
 	if typeof(relic_ids) != TYPE_ARRAY:
 		return entries
 
 	for relic_id in relic_ids:
-		var data: Dictionary = _run_manager.get_relic_data(str(relic_id))
+		var data: Dictionary = RunManager.get_relic_data(str(relic_id))
 		var effects = data.get("effects", [])
 		if typeof(effects) != TYPE_ARRAY:
 			continue

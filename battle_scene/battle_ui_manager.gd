@@ -110,18 +110,30 @@ func show_pile_viewer(title: String, pile_container: CardContainer) -> void:
 			
 	pile_viewer_layer.visible = true
 
-func show_run_deck_viewer(title: String, deck_entries: Array) -> void:
+func show_run_deck_viewer(title: String = "Run Deck", deck_entries: Array = []) -> void:
 	if not pile_viewer_layer: return
-	
+
+	# If no entries were passed, build them: prefer RunManager.player_deck if a run
+	# is active, otherwise fall back to the live battle's hand+deck+discard.
+	if deck_entries.is_empty():
+		if RunManager.is_run_active:
+			deck_entries = RunManager.player_deck.duplicate()
+		else:
+			for pile in [main.hand, main.deck, main.discard_pile]:
+				if pile and pile.has_method("get_cards"):
+					for card in pile.get_cards():
+						if is_instance_valid(card):
+							deck_entries.append(card.card_info.get("name", ""))
+
 	pile_viewer_title.text = title
 	_clear_pile_viewer_grid()
-	
+
 	for entry in deck_entries:
 		var card_name = _card_id_from_deck_entry(entry)
 		if card_name.is_empty():
 			continue
 		_add_card_to_viewer(card_name)
-	
+
 	pile_viewer_layer.visible = true
 
 func hide_pile_viewer() -> void:

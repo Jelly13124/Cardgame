@@ -1,0 +1,14 @@
+{
+	"name": "overload",
+	"title": "Overload",
+	"rarity": "rare",
+	"type": "attack",
+	"cost": 2,
+	"description": "Deal 8 damage. Apply 2 Shock.",
+	"front_image": "player/overload.png",
+	"side": "player",
+	"effects": [
+		{ "type": "deal_damage", "amount": 8, "scaling": "strength" },
+		{ "type": "apply_shock", "stacks": 2 }
+	]
+}

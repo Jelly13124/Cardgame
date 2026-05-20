@@ -19,6 +19,7 @@ const STATUS_COLORS = {
 	"vulnerable":  Color(0.95, 0.45, 0.2),
 	"strength_up": Color(1.0, 0.5, 0.2),
 	"double_damage": Color(0.2, 0.8, 1.0),
+	"shock":       Color(0.95, 0.95, 0.3),
 }
 
 const STATUS_LABELS = {
@@ -28,6 +29,7 @@ const STATUS_LABELS = {
 	"vulnerable":  "V",
 	"strength_up": "S",
 	"double_damage": "D",
+	"shock":       "⚡",
 }
 
 func add_status(status_name: String, stacks: int, entity: Node) -> void:
@@ -95,6 +97,19 @@ func on_turn_end(entity: Node) -> void:
 
 	if changed:
 		_on_statuses_changed(entity)
+
+## Consume one stack of shock. Returns true if a stack was consumed
+## (caller should treat this as "the action is shocked, skip it").
+## Shock is manual-consume: it does NOT decay on its own.
+func consume_shock(entity: Node) -> bool:
+	if not has_status("shock"):
+		return false
+	_statuses["shock"] -= 1
+	if _statuses["shock"] <= 0:
+		_statuses.erase("shock")
+	_on_statuses_changed(entity)
+	_notify(entity, "SHOCKED", STATUS_COLORS["shock"])
+	return true
 
 func get_outgoing_multiplier() -> float:
 	if has_status("weak"):

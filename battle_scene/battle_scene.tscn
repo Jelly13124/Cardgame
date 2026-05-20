@@ -307,4 +307,4 @@ pile_viewer_title = NodePath("../PileViewerLayer/TitleLabel")
 pile_viewer_grid = NodePath("../PileViewerLayer/ScrollContainer/GridContainer")
 
 [connection signal="pressed" from="EndRoundButton" to="." method="_on_end_round_button_pressed"]
-[connection signal="gui_input" from="InspectLayer/InspectOverlay" to="." method="_on_inspect_overlay_gui_input"]
+[connection signal="gui_input" from="InspectLayer/InspectOverlay" to="BattleUIManager" method="_on_inspect_overlay_gui_input"]

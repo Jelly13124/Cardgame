@@ -24,11 +24,6 @@ func _ready() -> void:
 
 func _select_hero(hero_id: String) -> void:
 	print("Selected Commander: ", hero_id)
-
-	var run_manager = get_node_or_null("/root/RunManager")
-	if run_manager:
-		run_manager.start_new_run(hero_id, run_manager.get_default_starter_deck())
-		get_tree().change_scene_to_file(run_manager.MAP_SCENE)
-	else:
-		push_error("HeroSelect: RunManager autoload not found.")
+	RunManager.start_new_run(hero_id, RunManager.get_default_starter_deck())
+	get_tree().change_scene_to_file(RunManager.MAP_SCENE)
 		

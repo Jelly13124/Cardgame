@@ -24,6 +24,7 @@ const HUD_SCRIPT = preload("res://battle_scene/ui/character_hud.gd")
 const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
 const HERO_DIR = "res://battle_scene/assets/images/heroes/"
 const HERO_ID = "cowboy_bill"
+const TARGET_DISPLAY_HEIGHT := 288.0
 
 var _sprite: AnimatedSprite2D
 var _fallback_sprite: Sprite2D
@@ -53,13 +54,13 @@ func _build_visual() -> void:
 
 func _has_animation_frames() -> bool:
 	var dir = HERO_DIR + HERO_ID + "/"
-	return ResourceLoader.exists(dir + "%s_idle_0.png" % HERO_ID) or ResourceLoader.exists(dir + "%s_attack_0.png" % HERO_ID)
+	return _asset_exists(dir + "idle/%s_idle_0.png" % HERO_ID) or _asset_exists(dir + "attack/%s_attack_0.png" % HERO_ID)
 
 
 func _build_animated_visual() -> void:
 	_sprite = AnimatedSprite2D.new()
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_sprite.scale = Vector2(2.25, 2.25)
+	_sprite.scale = Vector2.ONE
 	_sprite.position = Vector2(0, -120)
 	_sprite.flip_h = false
 
@@ -67,6 +68,7 @@ func _build_animated_visual() -> void:
 	_sprite.sprite_frames = frames
 	_add_animation_frames(frames, "idle", true, 5.0)
 	_add_animation_frames(frames, "attack", false, 9.0)
+	_apply_display_scale(frames)
 	add_child(_sprite)
 	play_idle()
 
@@ -75,11 +77,12 @@ func _build_fallback_visual() -> void:
 	var tex_path = HERO_DIR + HERO_ID + "/cowboy_bill_block_0.png"
 	_fallback_sprite = Sprite2D.new()
 	_fallback_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_fallback_sprite.scale = Vector2(3.0, 3.0)
+	_fallback_sprite.scale = Vector2.ONE
 	_fallback_sprite.position = Vector2(0, -96)
 	_fallback_sprite.flip_h = true
 	if ResourceLoader.exists(tex_path):
 		_fallback_sprite.texture = load(tex_path) as Texture2D
+		_apply_fallback_display_scale()
 	else:
 		push_warning("PlayerEntity: missing sprite '%s'" % tex_path)
 	add_child(_fallback_sprite)
@@ -90,11 +93,49 @@ func _add_animation_frames(frames: SpriteFrames, anim_name: String, loops: bool,
 	frames.set_animation_loop(anim_name, loops)
 	frames.set_animation_speed(anim_name, speed)
 
+	# Hero frames live in per-animation subfolders:
+	#   heroes/{hero_id}/{anim}/{hero_id}_{anim}_N.png
 	var dir = HERO_DIR + HERO_ID + "/"
 	for idx in range(4):
-		var tex = _load_texture(dir + "%s_%s_%d.png" % [HERO_ID, anim_name, idx])
+		var tex = _load_texture(dir + "%s/%s_%s_%d.png" % [anim_name, HERO_ID, anim_name, idx])
 		if tex:
 			frames.add_frame(anim_name, tex)
+
+
+func _apply_display_scale(frames: SpriteFrames) -> void:
+	var tex := _first_frame_texture(frames)
+	if not tex:
+		return
+	var height := float(tex.get_height())
+	if height <= 0.0:
+		return
+	var display_scale := TARGET_DISPLAY_HEIGHT / height
+	_sprite.scale = Vector2(display_scale, display_scale)
+
+
+func _apply_fallback_display_scale() -> void:
+	if not _fallback_sprite.texture:
+		return
+	var height := float(_fallback_sprite.texture.get_height())
+	if height <= 0.0:
+		return
+	var display_scale := TARGET_DISPLAY_HEIGHT / height
+	_fallback_sprite.scale = Vector2(display_scale, display_scale)
+
+
+func _first_frame_texture(frames: SpriteFrames) -> Texture2D:
+	for anim_name in ["idle", "attack"]:
+		if frames.has_animation(anim_name) and frames.get_frame_count(anim_name) > 0:
+			return frames.get_frame_texture(anim_name, 0)
+	return null
+
+
+func _asset_exists(path: String) -> bool:
+	if ResourceLoader.exists(path):
+		return true
+	if path.begins_with("res://"):
+		return FileAccess.file_exists(ProjectSettings.globalize_path(path))
+	return FileAccess.file_exists(path)
 
 
 func _load_texture(path: String) -> Texture2D:
