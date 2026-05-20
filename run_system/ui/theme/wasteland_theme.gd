@@ -42,17 +42,6 @@ const TEXT_MAIN         = Color("#f0d8a8")  # high-contrast text on dark
 const TEXT_SECONDARY    = Color("#b08060")  # dimmer text / subtitle
 const SHADOW_COLOR      = Color(0.00, 0.00, 0.00, 0.42)
 
-# ─── Legacy aliases (kept so existing call sites compile during migration) ───
-# These map old names from `wasteland_cartoon_theme.gd` to the new palette.
-# Slice 1B+ should migrate consumers off these and onto the names above.
-const PANEL_BG_BANNER   = PANEL_BG          # was its own distinct color, now folded
-const PANEL_BORDER_WARM = PANEL_BORDER      # was warmer, now unified
-const PANEL_HIGHLIGHT   = ACCENT_DANGER     # warm highlight role taken by ACCENT_DANGER
-const ROW_BG            = PANEL_BG
-const ROW_HOVER_BG      = WARM_TAN
-const ROW_PRESSED_BG    = RUST_PRIMARY
-const CYAN_EDGE         = ACCENT_NEON_BLUE  # the cyan accent role
-
 # ─── Builders ─────────────────────────────────────────────────────────────────
 
 ## Generic panel with drop shadow. Used by loot_reward backgrounds.
@@ -70,6 +59,21 @@ static func panel_flat(bg: Color, border: Color, radius: int = 8, border_width: 
 ## Rounded button-shaped style. Optionally adds content margins for use as a panel.
 static func rounded_button(bg: Color, border: Color, radius: int = 6, border_width: int = 1) -> StyleBoxFlat:
 	return _base(bg, border, radius, border_width)
+
+## Reward row style: panel_with_shadow wrapped with row-content padding.
+## Used by loot_reward to render the list of loot rows.
+static func reward_row_style(bg: Color, border: Color) -> StyleBoxFlat:
+	var style = panel_with_shadow(bg, border, 3)
+	style.content_margin_left = 12.0
+	style.content_margin_right = 12.0
+	style.content_margin_top = 8.0
+	style.content_margin_bottom = 8.0
+	return style
+
+## Square icon well frame with a slightly thicker border than a normal panel.
+## Used by loot_reward's icon thumbnails.
+static func icon_frame_style() -> StyleBoxFlat:
+	return panel_with_shadow(Color(0.045, 0.04, 0.035, 1.0), Color(0.62, 0.44, 0.22, 1.0), 2, 3)
 
 ## Apply panel + hover + pressed stylebox triplet to a Button.
 ## Updated to use codex's textured button_normal/hover/pressed PNGs (9-slice).

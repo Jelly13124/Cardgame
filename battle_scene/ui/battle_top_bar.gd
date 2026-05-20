@@ -125,7 +125,7 @@ func _build_settings_menu() -> void:
 	var panel = PanelContainer.new()
 	panel.name = "Panel"
 	panel.custom_minimum_size = Vector2(360, 250)
-	panel.add_theme_stylebox_override("panel", _make_panel_style())
+	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
 	center.add_child(panel)
 	
 	var box = VBoxContainer.new()
@@ -297,12 +297,6 @@ func _make_menu_button(text: String) -> Button:
 	button.custom_minimum_size = Vector2(300, 44)
 	button.add_theme_font_size_override("font_size", 18)
 	return button
-
-
-## Settings panel background — uses the dark textured 9-slice panel.
-## Caller adds extra content margins via wrapping MarginContainer if needed.
-func _make_panel_style() -> StyleBoxTexture:
-	return T.panel_textured("dark")
 
 
 func _on_deck_pressed() -> void:

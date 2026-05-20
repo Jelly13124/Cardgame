@@ -278,7 +278,7 @@ func _build_relic_choice_layer() -> void:
 	var panel = PanelContainer.new()
 	panel.name = "Panel"
 	panel.custom_minimum_size = Vector2(720, 410)
-	panel.add_theme_stylebox_override("panel", _make_relic_panel_style())
+	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
 	center.add_child(panel)
 
 	_relic_choice_box = VBoxContainer.new()
@@ -334,9 +334,9 @@ func _make_relic_choice_button(relic_id: String, source_type: String) -> Button:
 	button.custom_minimum_size = Vector2(620, 82)
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.add_theme_stylebox_override("normal",  _make_relic_button_style("normal"))
-	button.add_theme_stylebox_override("hover",   _make_relic_button_style("hover"))
-	button.add_theme_stylebox_override("pressed", _make_relic_button_style("pressed"))
+	button.add_theme_stylebox_override("normal",  T.button_textured("normal"))
+	button.add_theme_stylebox_override("hover",   T.button_textured("hover"))
+	button.add_theme_stylebox_override("pressed", T.button_textured("pressed"))
 	button.pressed.connect(_on_relic_choice_selected.bind(relic_id, source_type))
 
 	var margin = MarginContainer.new()
@@ -404,17 +404,6 @@ func _on_relic_choice_selected(relic_id: String, _source_type: String) -> void:
 	else:
 		_show_popup("Already have that relic.")
 	queue_redraw()
-
-
-## Relic modal background panel — uses the dark textured 9-slice modal panel.
-func _make_relic_panel_style() -> StyleBoxTexture:
-	return T.panel_textured("dark")
-
-
-## Relic choice button — uses the textured 9-slice button for the given state.
-## `state` ∈ {"normal", "hover", "pressed"}. The `bg` legacy arg is ignored.
-func _make_relic_button_style(state: String, _bg: Color = Color.WHITE) -> StyleBoxTexture:
-	return T.button_textured(state)
 
 
 func _humanize_id(value: String) -> String:
