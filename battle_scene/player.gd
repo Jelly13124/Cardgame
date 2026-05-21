@@ -24,7 +24,8 @@ const HUD_SCRIPT = preload("res://battle_scene/ui/character_hud.gd")
 const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
 const HERO_DIR = "res://battle_scene/assets/images/heroes/"
 const HERO_ID = "cowboy_bill"
-const TARGET_DISPLAY_HEIGHT := 288.0
+const TARGET_DISPLAY_HEIGHT := 256.0
+const MUZZLE_NATIVE_POSITION := Vector2(241, 73)
 
 var _sprite: AnimatedSprite2D
 var _fallback_sprite: Sprite2D
@@ -43,12 +44,11 @@ func _build_visual() -> void:
 		_build_fallback_visual()
 
 	_hud = HUD_SCRIPT.new()
-	_hud.character_name = "COWBOY BILL"
 	_hud.max_health = max_health
 	_hud.current_health = health
 	_hud.current_block = block
-	_hud.bar_width = 140
-	_hud.position = Vector2(-70, 10)
+	_hud.bar_width = 180
+	_hud.position = Vector2(-90, 28)
 	add_child(_hud)
 
 
@@ -110,6 +110,7 @@ func _apply_display_scale(frames: SpriteFrames) -> void:
 		return
 	var display_scale := TARGET_DISPLAY_HEIGHT / height
 	_sprite.scale = Vector2(display_scale, display_scale)
+	_sprite.position = Vector2(0, -TARGET_DISPLAY_HEIGHT * 0.5)
 
 
 func _apply_fallback_display_scale() -> void:
@@ -120,6 +121,7 @@ func _apply_fallback_display_scale() -> void:
 		return
 	var display_scale := TARGET_DISPLAY_HEIGHT / height
 	_fallback_sprite.scale = Vector2(display_scale, display_scale)
+	_fallback_sprite.position = Vector2(0, -TARGET_DISPLAY_HEIGHT * 0.5)
 
 
 func _first_frame_texture(frames: SpriteFrames) -> Texture2D:
@@ -175,6 +177,32 @@ func play_attack() -> void:
 
 func _on_attack_finished() -> void:
 	_show_rest_pose()
+
+
+func get_muzzle_global_position() -> Vector2:
+	var tex := _current_sprite_texture()
+	if _sprite and is_instance_valid(_sprite) and tex:
+		var native_origin := Vector2(tex.get_width(), tex.get_height()) * 0.5
+		return _sprite.to_global(MUZZLE_NATIVE_POSITION - native_origin)
+	if _fallback_sprite and is_instance_valid(_fallback_sprite) and _fallback_sprite.texture:
+		var native_origin := Vector2(_fallback_sprite.texture.get_width(), _fallback_sprite.texture.get_height()) * 0.5
+		return _fallback_sprite.to_global(MUZZLE_NATIVE_POSITION - native_origin)
+	return global_position + Vector2(98, -104)
+
+
+func _current_sprite_texture() -> Texture2D:
+	if not _sprite or not is_instance_valid(_sprite):
+		return null
+	var frames := _sprite.sprite_frames
+	if not frames:
+		return null
+	var anim := _sprite.animation
+	if anim == "" or not frames.has_animation(anim) or frames.get_frame_count(anim) == 0:
+		anim = "attack"
+	if not frames.has_animation(anim) or frames.get_frame_count(anim) == 0:
+		return null
+	var frame_idx = clampi(_sprite.frame, 0, frames.get_frame_count(anim) - 1)
+	return frames.get_frame_texture(anim, frame_idx)
 
 
 func notify_stats_changed() -> void:

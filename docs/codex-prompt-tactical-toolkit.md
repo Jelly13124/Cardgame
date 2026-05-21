@@ -16,7 +16,7 @@ You are working in the Godot 4.6 project at `C:\Users\Jerry\Desktop\Cardgame` â€
 Also look at one reference of each asset type that already exists, so your output matches the project's visual scale and silhouette weight:
 - Card art reference: `battle_scene/assets/images/cards/player/strike.png`
 - Enemy sheet reference: `battle_scene/assets/images/enemies/trash_robot/` (note the per-frame `attack/*_attack_N.png` files)
-- Hero animation reference: `battle_scene/assets/images/heroes/cowboy_bill/` (4 attack frames at 128x128 native; `attack_0` is the rest pose)
+- Hero animation reference: `battle_scene/assets/images/heroes/cowboy_bill/` (4 attack frames at 256x256 native; `attack_0` is the rest pose)
 - FX reference: `battle_scene/assets/images/fx/gunshot/`
 
 ## Step 2 â€” Deliverables (all listed in section 5 of the asset spec)

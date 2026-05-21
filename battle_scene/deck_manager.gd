@@ -10,35 +10,48 @@ var card_factory: Node
 func first_round_draw() -> void:
 	draw_cards(3)
 
-# Moves a specific number of cards from the top of the Deck to the Hand
+# Moves a specific number of cards from the top of the Deck to the Hand.
+## Single-card draws use a 0.1s stagger for visual feedback. After a reshuffle,
+## remaining draws are batched into ONE hand.move_cards() call — adding cards
+## one-by-one would re-fan the hand on every add, so any cards still in hand
+## (drawn before deck depleted) visibly shift positions N times. Batching makes
+## the hand re-fan only once to its final layout.
 func draw_cards(count: int) -> void:
-	for i in range(count):
-		# Re-check deck every iteration in case of reshuffle
-		if deck.get_card_count() == 0:
-			if discard_pile.get_card_count() > 0:
-				battle_scene.show_notification("RESHUFFLING", Color(0.4, 0.8, 1.0))
-				var discarded = discard_pile.get_cards().duplicate()
-				# Move cards back to deck
-				deck.move_cards(discarded)
-				deck.shuffle()
-				battle_scene._update_ui_labels()
-				# Wait a bit for the shuffle animation/state to settle
-				await battle_scene._wait(0.3)
-			else:
-				# Both piles are empty
-				break
-		
-		# Now try to draw
-		var cards = deck.get_top_cards(1)
-		if cards.size() > 0:
+	var remaining = count
+	while remaining > 0:
+		if deck.get_card_count() > 0:
+			# Normal staggered single-card draw
+			var cards = deck.get_top_cards(1)
 			var success = hand.move_cards(cards)
 			if not success:
 				battle_scene.show_notification("HAND FULL", Color(1, 0.4, 0.4))
-				break
-			
-			# Wait briefly between draws for visual clarity and layout stability
+				return
 			battle_scene._update_ui_labels()
-			await battle_scene._wait(0.1)
+			remaining -= 1
+			if remaining > 0:
+				await battle_scene._wait(0.1)
+		elif discard_pile.get_card_count() > 0:
+			# Deck empty → reshuffle, then batch the rest in one move_cards call
+			battle_scene.show_notification("RESHUFFLING", Color(0.4, 0.8, 1.0))
+			var discarded = discard_pile.get_cards().duplicate()
+			deck.move_cards(discarded)
+			deck.shuffle()
+			battle_scene._update_ui_labels()
+			await battle_scene._wait(0.3)
+
+			var batch_size = min(remaining, deck.get_card_count())
+			if batch_size <= 0:
+				break
+			var cards = deck.get_top_cards(batch_size)
+			var success = hand.move_cards(cards)
+			if not success:
+				battle_scene.show_notification("HAND FULL", Color(1, 0.4, 0.4))
+				return
+			battle_scene._update_ui_labels()
+			remaining -= batch_size
+		else:
+			# Both piles empty
+			break
 
 # Clears the deck and refills it with a fresh, shuffled list of cards
 func reset_deck() -> void:

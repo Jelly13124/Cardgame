@@ -180,10 +180,35 @@ func _on_turn_ended(side: String) -> void:
 				continue
 			to_discard.append(c)
 		if to_discard.size() > 0:
-			# Use move_cards so card_container references transfer properly
-			discard_pile.move_cards(to_discard)
+			await _animate_hand_discard(to_discard)
 		player.end_turn()
 		_update_ui_labels()
+
+
+## End-of-turn discard cascade: each remaining hand card flies to the discard
+## pile with a small stagger. Without this, dropping them straight into the
+## discard pile (hide_cards=true) would make them vanish on the same frame
+## they're added, with no visual cue that they were discarded.
+func _animate_hand_discard(cards: Array) -> void:
+	const STAGGER := 0.07
+	const FLIGHT_DURATION := 0.36  # matches fly_to_discard tween length + buffer
+	for i in range(cards.size()):
+		var card = cards[i]
+		if not is_instance_valid(card):
+			continue
+		# Detach from hand first so the surviving cards re-fan around the gap.
+		if card.card_container and card.card_container.has_card(card):
+			card.card_container.remove_card(card)
+		# Fire-and-forget: each fly_to_discard runs in parallel via its own tween.
+		card_animator.fly_to_discard(card)
+		if i < cards.size() - 1:
+			await _wait(STAGGER)
+	# Wait for the LAST card's flight before parking everything in discard.
+	await _wait(FLIGHT_DURATION)
+	for card in cards:
+		if is_instance_valid(card):
+			discard_pile.add_card(card)
+			card.modulate.a = 1.0  # restore alpha after fly_to_discard faded it
 
 func _on_round_changed(_round: int) -> void: _update_ui_labels()
 func _on_player_health_changed(_hp: int) -> void: _update_ui_labels()
