@@ -54,7 +54,7 @@ var _hud: Node
 var _sprite: AnimatedSprite2D
 var _intent_label: Label
 var _intent_icon: TextureRect
-var _intent_bg: Panel   # Colored pill background for intent badge
+var _intent_bg: Control
 var _intent_tween: Tween
 
 ## Base path for enemy sprite assets — each enemy gets its own subfolder: {ENEMIES_DIR}{sprite_id}/
@@ -150,8 +150,8 @@ func _build_sprite_visual(sid: String) -> void:
 	add_child(_sprite)
 	_show_rest_pose()
 
-	_build_intent_badge(Vector2(-60, -display_height - 40.0))
-	_build_health_bar(Vector2(-70, 10))      # 10px below feet (centered with bar_width 140)
+	_build_intent_badge(Vector2(-52, -display_height - 44.0))
+	_build_health_bar(Vector2(-90, 28))      # below feet (centered with bar_width 180)
 
 
 ## Scales the sprite to a target display height and returns the **content** height
@@ -192,6 +192,17 @@ func _first_frame_texture(frames: SpriteFrames) -> Texture2D:
 	return null
 
 
+func get_hit_global_position() -> Vector2:
+	if not _sprite or not is_instance_valid(_sprite):
+		return global_position + Vector2(-60, -100)
+	var tex := _first_frame_texture(_sprite.sprite_frames)
+	if not tex:
+		return global_position + Vector2(-60, -100)
+	var native_origin := Vector2(tex.get_width(), tex.get_height()) * 0.5
+	var native_hit := Vector2(tex.get_width() * 0.34, tex.get_height() * 0.48)
+	return _sprite.to_global(native_hit - native_origin)
+
+
 ## Fallback: procedural colored rectangle for enemies without sprite art yet.
 func _build_placeholder_visual() -> void:
 	var body = ColorRect.new()
@@ -200,46 +211,34 @@ func _build_placeholder_visual() -> void:
 	body.position = Vector2(-70, -190)
 	add_child(body)
 	# Placeholder: 140×190, top y=-190, bottom y=0
-	_build_intent_badge(Vector2(-90, -228))  # above placeholder
-	_build_health_bar(Vector2(-94, 8))       # below placeholder
+	_build_intent_badge(Vector2(-52, -228))  # above placeholder
+	_build_health_bar(Vector2(-114, 26))     # below placeholder
 
-## Builds a colored pill badge above the sprite showing the next intent.
-## intent_pos: top-left of the 120×30 pill in entity-local space.
+## Builds a compact icon + text intent readout above the sprite.
+## intent_pos is the top-left position in entity-local space.
 func _build_intent_badge(intent_pos: Vector2) -> void:
-	# Pill background panel
-	var pill_style = StyleBoxFlat.new()
-	pill_style.bg_color = Color(0.6, 0.1, 0.1, 0.88)  # default: attack red
-	pill_style.corner_radius_top_left    = 10
-	pill_style.corner_radius_top_right   = 10
-	pill_style.corner_radius_bottom_left = 10
-	pill_style.corner_radius_bottom_right = 10
-	pill_style.border_width_left   = 1
-	pill_style.border_width_right  = 1
-	pill_style.border_width_top    = 1
-	pill_style.border_width_bottom = 1
-	pill_style.border_color = Color(1.0, 0.4, 0.4, 0.9)
-
-	_intent_bg = Panel.new()
-	_intent_bg.size = Vector2(90, 30)
+	_intent_bg = Control.new()
+	_intent_bg.size = Vector2(104, 36)
 	_intent_bg.position = intent_pos
-	_intent_bg.add_theme_stylebox_override("panel", pill_style)
+	_intent_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_intent_bg)
 
-	# Icon
 	_intent_icon = TextureRect.new()
-	_intent_icon.size = Vector2(24, 24)
-	_intent_icon.position = Vector2(4, 3)
+	_intent_icon.size = Vector2(30, 30)
+	_intent_icon.position = Vector2(0, 3)
 	_intent_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_intent_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_intent_bg.add_child(_intent_icon)
 
-	# Text label inside the pill
 	_intent_label = Label.new()
-	_intent_label.add_theme_font_size_override("font_size", 14)
-	_intent_label.add_theme_color_override("font_color", Color(1, 1, 1))
+	_intent_label.add_theme_font_size_override("font_size", 17)
+	_intent_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.64))
+	_intent_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.95))
+	_intent_label.add_theme_constant_override("shadow_offset_x", 2)
+	_intent_label.add_theme_constant_override("shadow_offset_y", 2)
 	_intent_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_intent_label.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-	_intent_label.size = Vector2(60, 30)
+	_intent_label.size = Vector2(72, 36)
 	_intent_label.position = Vector2(32, 0)
 	_intent_bg.add_child(_intent_label)
 
@@ -247,11 +246,10 @@ func _build_intent_badge(intent_pos: Vector2) -> void:
 ## hud_pos: top-left of the HUD in entity-local space.
 func _build_health_bar(hud_pos: Vector2) -> void:
 	_hud = HUD_SCRIPT.new()
-	_hud.character_name = enemy_name
 	_hud.max_health = max_health
 	_hud.current_health = health
 	_hud.current_block = block
-	_hud.bar_width = 140
+	_hud.bar_width = 180
 	_hud.position = hud_pos
 	add_child(_hud)
 
@@ -305,65 +303,51 @@ func _update_intent_display() -> void:
 	if action_type in ["attack", "attack_status", "attack_all"]:
 		var base = int(next.get("amount", 0))
 		var display_dmg = _compute_display_attack(base)
-		var icon = "💥" if action_type == "attack_all" else "⚔"
-		label_text = "%s %d" % [icon, display_dmg]
+		label_text = str(display_dmg)
 		if action_type == "attack_status":
 			var status = str(next.get("status", ""))
 			var stacks = int(next.get("stacks", 1))
 			var status_short = _STATUS_SHORT_NAMES.get(status, status.capitalize())
 			if stacks > 1:
-				label_text += " +%s%d" % [status_short, stacks]
+				label_text += " %s%d" % [status_short, stacks]
 			else:
-				label_text += " +%s" % status_short
+				label_text += " %s" % status_short
+	elif action_type == "block":
+		label_text = str(int(next.get("amount", 0)))
+	elif action_type in ["heal", "buff"]:
+		var amount = int(next.get("amount", 0))
+		label_text = str(amount) if amount > 0 else "BUFF"
+	elif action_type == "telegraph":
+		label_text = "CHARGE"
 	else:
-		# block / heal / telegraph — JSON label is the source of truth.
 		label_text = str(next.get("label", "?"))
 
 	# Hint the player they can interrupt this attack with a shock card
 	if bool(next.get("interruptible", false)):
-		label_text += " ⚡"
+		label_text += " !"
 	_intent_label.text = label_text
 
-	# Update pill background + border colour to match intent type
 	if not _intent_bg: return
-	var pill = StyleBoxFlat.new()
-	pill.corner_radius_top_left     = 10
-	pill.corner_radius_top_right    = 10
-	pill.corner_radius_bottom_left  = 10
-	pill.corner_radius_bottom_right = 10
-	pill.border_width_left   = 1
-	pill.border_width_right  = 1
-	pill.border_width_top    = 1
-	pill.border_width_bottom = 1
 	var type = next.get("type", "")
+	var label_color := Color(1.0, 0.9, 0.64)
 	match type:
 		"attack", "attack_status", "attack_all":
-			pill.bg_color     = Color(0.55, 0.08, 0.08, 0.88)
-			pill.border_color = Color(1.0, 0.4, 0.4, 0.9)
 			_intent_icon.texture = INTENT_ICON_ATTACK
+			label_color = Color(1.0, 0.78, 0.62)
 		"block":
-			pill.bg_color     = Color(0.08, 0.25, 0.55, 0.88)
-			pill.border_color = Color(0.4, 0.65, 1.0, 0.9)
 			_intent_icon.texture = INTENT_ICON_BLOCK
+			label_color = Color(0.65, 0.86, 1.0)
 		"heal", "buff":
-			pill.bg_color     = Color(0.08, 0.40, 0.12, 0.88)
-			pill.border_color = Color(0.3, 1.0, 0.4, 0.9)
 			_intent_icon.texture = INTENT_ICON_BUFF
+			label_color = Color(0.72, 1.0, 0.62)
 		"telegraph":
-			pill.bg_color     = Color(0.45, 0.30, 0.05, 0.88)
-			pill.border_color = Color(1.0, 0.75, 0.25, 0.95)
 			_intent_icon.texture = INTENT_ICON_CHARGE
+			label_color = Color(1.0, 0.86, 0.42)
 		_:
-			pill.bg_color     = Color(0.25, 0.25, 0.25, 0.85)
-			pill.border_color = Color(0.7, 0.7, 0.7, 0.9)
-	# Shock-interruptible attacks get a bright warning border
+			_intent_icon.texture = INTENT_ICON_BUFF
 	if bool(next.get("interruptible", false)):
-		pill.border_color = Color(1.0, 0.95, 0.25, 1.0)
-		pill.border_width_left   = 2
-		pill.border_width_right  = 2
-		pill.border_width_top    = 2
-		pill.border_width_bottom = 2
-	_intent_bg.add_theme_stylebox_override("panel", pill)
+		label_color = Color(1.0, 0.94, 0.28)
+	_intent_label.add_theme_color_override("font_color", label_color)
 
 func _start_intent_float_anim() -> void:
 	if not _intent_bg: return

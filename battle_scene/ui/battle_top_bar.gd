@@ -225,9 +225,17 @@ func _make_relic_chip(relic_id: String) -> Button:
 	var data = _load_relic_data(relic_id)
 	var title = str(data.get("title", _humanize_id(relic_id)))
 	var desc = str(data.get("description", ""))
-	var chip = _make_icon_button(_short_label(title), title)
-	chip.custom_minimum_size = Vector2(38, 38)
+	var chip = Button.new()
+	chip.text = _short_label(title)
+	chip.custom_minimum_size = Vector2(42, 42)
+	chip.focus_mode = Control.FOCUS_NONE
 	chip.tooltip_text = "%s\n%s" % [title, desc] if not desc.is_empty() else title
+	chip.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	chip.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
+	chip.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
+	chip.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	chip.add_theme_color_override("font_color", T.TEXT_MAIN)
+	chip.add_theme_font_size_override("font_size", 18)
 	
 	var icon_path = str(data.get("icon", ""))
 	if not icon_path.is_empty():

@@ -3,15 +3,13 @@
 extends Control
 class_name CharacterHUD
 
-@export var character_name: String = "?"
 @export var max_health: int = 100
 @export var current_health: int = 100
 @export var current_block: int = 0
-@export var bar_width: int = 140
+@export var bar_width: int = 180
 @export var bar_height: int = 18
 
 # Internal nodes
-var _name_label: Label
 var _hp_frame: NinePatchRect
 var _hp_bar: TextureProgressBar
 var _hp_label: Label
@@ -26,16 +24,6 @@ func _ready() -> void:
 	update_stats(current_health, max_health, current_block)
 
 func _build_ui() -> void:
-	# ---- Name Label ----
-	_name_label = Label.new()
-	_name_label.text = character_name
-	_name_label.add_theme_font_size_override("font_size", 12)
-	_name_label.add_theme_color_override("font_color", Color(1, 0.95, 0.8))
-	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_name_label.size = Vector2(bar_width, 18)
-	_name_label.position = Vector2(0, -2)
-	add_child(_name_label)
-
 	# ---- HP Frame (NinePatch) ----
 	_hp_frame = NinePatchRect.new()
 	_hp_frame.texture = load(UI_PATH + "hp_bar_frame.png")
@@ -45,7 +33,7 @@ func _build_ui() -> void:
 	_hp_frame.patch_margin_right = 4
 	_hp_frame.patch_margin_bottom = 4
 	_hp_frame.size = Vector2(bar_width, bar_height)
-	_hp_frame.position = Vector2(0, 18)
+	_hp_frame.position = Vector2(0, 0)
 	add_child(_hp_frame)
 
 	# ---- HP Bar (ProgressBar) ----
@@ -53,13 +41,12 @@ func _build_ui() -> void:
 	_hp_bar.texture_progress = load(UI_PATH + "hp_bar_fill.png")
 	_hp_bar.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_hp_bar.nine_patch_stretch = true
-	_hp_bar.stretch_margin_left = 2
-	_hp_bar.stretch_margin_top = 2
-	_hp_bar.stretch_margin_right = 2
-	_hp_bar.stretch_margin_bottom = 2
-	# Inset slightly inside frame
-	_hp_bar.size = Vector2(bar_width - 4, bar_height - 4)
-	_hp_bar.position = Vector2(2, 2)
+	_hp_bar.stretch_margin_left = 4
+	_hp_bar.stretch_margin_top = 1
+	_hp_bar.stretch_margin_right = 4
+	_hp_bar.stretch_margin_bottom = 1
+	_hp_bar.size = Vector2(bar_width - 8, bar_height - 4)
+	_hp_bar.position = Vector2(4, 2)
 	_hp_frame.add_child(_hp_bar)
 
 	# ---- HP Text ----
@@ -68,7 +55,7 @@ func _build_ui() -> void:
 	_hp_label.position = Vector2.ZERO
 	_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hp_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_hp_label.add_theme_font_size_override("font_size", 10)
+	_hp_label.add_theme_font_size_override("font_size", 12)
 	_hp_label.add_theme_color_override("font_color", Color(1, 1, 1))
 	_hp_label.add_theme_color_override("font_shadow_color", Color(0,0,0,0.8))
 	_hp_frame.add_child(_hp_label)
@@ -77,9 +64,8 @@ func _build_ui() -> void:
 	_block_badge = TextureRect.new()
 	_block_badge.texture = load(UI_PATH + "block_badge.png")
 	_block_badge.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_block_badge.size = Vector2(32, 32)
-	# Center on the left side of the HP bar
-	_block_badge.position = Vector2(-16, 11)
+	_block_badge.size = Vector2(40, 40)
+	_block_badge.position = Vector2(-20, -11)
 	_block_badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_block_badge.visible = false
 	add_child(_block_badge)
@@ -88,15 +74,17 @@ func _build_ui() -> void:
 	_block_label.size = _block_badge.size
 	_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_block_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_block_label.add_theme_font_size_override("font_size", 12)
+	_block_label.add_theme_font_size_override("font_size", 16)
 	_block_label.add_theme_color_override("font_color", Color(1, 1, 1))
 	_block_label.position = Vector2(0, -1) # adjust padding inside shield
 	_block_badge.add_child(_block_label)
 
-	# ---- Status Badges ----
+	# ---- Status Badges (positioned below HP bar, centered, supports stacking) ----
 	_status_badges = HBoxContainer.new()
 	_status_badges.name = "StatusBadges"
-	_status_badges.position = Vector2(bar_width + 10, 14)
+	_status_badges.position = Vector2(0, bar_height + 6)
+	_status_badges.size = Vector2(bar_width, 24)
+	_status_badges.alignment = BoxContainer.ALIGNMENT_CENTER
 	_status_badges.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_status_badges.add_theme_constant_override("separation", 4)
 	add_child(_status_badges)

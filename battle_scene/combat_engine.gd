@@ -196,12 +196,17 @@ func _animate_player_gunshot(player: Node, target: Node) -> void:
 	if player and player.has_method("play_attack"):
 		player.play_attack()
 
-	var origin = player.global_position + Vector2(105, -145)
-	var hit = target.global_position + Vector2(-60, -120)
+	var origin := _get_player_muzzle_position(player)
+	var hit := _get_target_hit_position(target)
+	var shot_vector := hit - origin
+	var direction := Vector2.RIGHT
+	if shot_vector.length_squared() > 0.001:
+		direction = shot_vector.normalized()
 
 	var muzzle = _make_fx_sprite(MUZZLE_FLASH_TEX, origin, Vector2(0.62, 0.62))
-	var bullet = _make_fx_sprite(BULLET_TEX, origin + Vector2(24, 0), Vector2(0.42, 0.42))
-	bullet.rotation = (hit - origin).angle()
+	muzzle.rotation = direction.angle()
+	var bullet = _make_fx_sprite(BULLET_TEX, origin + direction * 18.0, Vector2(0.42, 0.42))
+	bullet.rotation = direction.angle()
 
 	await get_tree().create_timer(0.05).timeout
 	if is_instance_valid(muzzle):
@@ -221,6 +226,22 @@ func _animate_player_gunshot(player: Node, target: Node) -> void:
 	await burst.finished
 	if is_instance_valid(impact):
 		impact.queue_free()
+
+
+func _get_player_muzzle_position(player: Node) -> Vector2:
+	if player and player.has_method("get_muzzle_global_position"):
+		return player.get_muzzle_global_position()
+	if player:
+		return player.global_position + Vector2(98, -104)
+	return Vector2.ZERO
+
+
+func _get_target_hit_position(target: Node) -> Vector2:
+	if target and target.has_method("get_hit_global_position"):
+		return target.get_hit_global_position()
+	if target:
+		return target.global_position + Vector2(-60, -100)
+	return Vector2.ZERO
 
 
 ## Increment the per-turn attack counter used by combo cards like Cascade.
