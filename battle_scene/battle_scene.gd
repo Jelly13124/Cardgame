@@ -169,18 +169,11 @@ func _on_turn_started(side: String) -> void:
 	else:
 		deck_manager.draw_cards(3)
 
-## STS rule: at END of player turn, discard all remaining hand cards.
-## Exception: cards with `"retain": true` stay in hand into the next turn.
+## STS rule: at END of player turn, reset block/energy. Hand discard is handled
+## upstream in `_on_end_round_button_pressed` so the animation fully completes
+## before turn_manager switches sides.
 func _on_turn_ended(side: String) -> void:
 	if side == "player":
-		var remaining = hand.get_cards().duplicate()
-		var to_discard: Array = []
-		for c in remaining:
-			if is_instance_valid(c) and bool(c.card_info.get("retain", false)):
-				continue
-			to_discard.append(c)
-		if to_discard.size() > 0:
-			await _animate_hand_discard(to_discard)
 		player.end_turn()
 		_update_ui_labels()
 
@@ -262,6 +255,19 @@ func _start_new_game():
 
 func _on_end_round_button_pressed():
 	if turn_manager.is_player_turn:
+		# Discard hand BEFORE switching turns. turn_manager.end_turn() emits
+		# turn_ended synchronously and immediately switches sides; awaiting an
+		# animation inside the signal handler doesn't block that switch, so the
+		# next player draw would race against the in-flight discard and see an
+		# empty discard pile (breaking reshuffle when deck < draw count).
+		var remaining = hand.get_cards().duplicate()
+		var to_discard: Array = []
+		for c in remaining:
+			if is_instance_valid(c) and bool(c.card_info.get("retain", false)):
+				continue
+			to_discard.append(c)
+		if to_discard.size() > 0:
+			await _animate_hand_discard(to_discard)
 		turn_manager.end_turn()
 
 func _victory():

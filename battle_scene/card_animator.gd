@@ -83,6 +83,43 @@ func fly_to_discard(card: Control) -> void:
 		card.can_be_interacted_with = true
 
 
+## Reshuffle visual: fly a card from its current (discard pile) position to
+## the deck. Caller is expected to add the card to the deck container after
+## this returns. The card is shown face-down with a half spin to read as a
+## "shuffled back in" motion.
+func fly_to_deck(card: Control, start_pos: Vector2) -> void:
+	if not is_instance_valid(card):
+		return
+	var deck = _scene.deck
+	if not is_instance_valid(deck):
+		return
+
+	var target_pos: Vector2 = deck.global_position + Vector2(80, 110)
+	card.global_position = start_pos
+	card.visible = true
+	card.modulate.a = 1.0
+	card.scale = Vector2(0.5, 0.5)
+	card.rotation = 0.0
+	card.z_index = 80
+	if "show_front" in card:
+		card.show_front = false
+
+	var tween = create_tween().set_parallel(true)
+	var spin_dir = 1.0 if target_pos.x <= card.global_position.x else -1.0
+	tween.tween_property(card, "global_position", target_pos, 0.32) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(card, "rotation", spin_dir * TAU * 0.5, 0.32) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(card, "scale", Vector2(0.32, 0.32), 0.32) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	await tween.finished
+
+	# Reset state so the card is reusable inside the deck container.
+	card.scale = Vector2.ONE
+	card.rotation = 0.0
+	card.z_index = 0
+
+
 ## Fly an exhausted card upward and fade it out. Caller is expected to
 ## queue_free() the card after this returns.
 func fly_to_exhaust(card: Control) -> void:

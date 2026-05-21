@@ -31,13 +31,41 @@ func draw_cards(count: int) -> void:
 			if remaining > 0:
 				await battle_scene._wait(0.1)
 		elif discard_pile.get_card_count() > 0:
-			# Deck empty → reshuffle, then batch the rest in one move_cards call
+			# Deck empty → visibly fly each discard card back to the deck FIRST,
+			# then shuffle and batch-draw. Just calling deck.move_cards() would
+			# teleport invisibly (deck has hide_cards=true), so the player would
+			# see cards apparently drawn straight from the discard pile.
 			battle_scene.show_notification("RESHUFFLING", Color(0.4, 0.8, 1.0))
 			var discarded = discard_pile.get_cards().duplicate()
-			deck.move_cards(discarded)
+
+			var start_positions: Array = []
+			for c in discarded:
+				start_positions.append(c.global_position)
+
+			# Detach from discard pile so the pile's _update_target_positions
+			# stops fighting our manual transforms during the flight.
+			for c in discarded:
+				if c.card_container and c.card_container.has_card(c):
+					c.card_container.remove_card(c)
+
+			const RESHUFFLE_STAGGER := 0.04
+			const RESHUFFLE_FLIGHT := 0.34
+			for i in range(discarded.size()):
+				var c = discarded[i]
+				if not is_instance_valid(c):
+					continue
+				battle_scene.card_animator.fly_to_deck(c, start_positions[i])
+				if i < discarded.size() - 1:
+					await battle_scene._wait(RESHUFFLE_STAGGER)
+			await battle_scene._wait(RESHUFFLE_FLIGHT)
+
+			# Land all cards in the deck, then shuffle.
+			for c in discarded:
+				if is_instance_valid(c):
+					deck.add_card(c)
 			deck.shuffle()
 			battle_scene._update_ui_labels()
-			await battle_scene._wait(0.3)
+			await battle_scene._wait(0.15)
 
 			var batch_size = min(remaining, deck.get_card_count())
 			if batch_size <= 0:
