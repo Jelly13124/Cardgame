@@ -24,10 +24,13 @@ var _texture_rect: TextureRect
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(48, 48)
-	_build()
+	if not _label:
+		_build()
 
 
 func _build() -> void:
+	if _label:
+		return  # Already built (lazy-init path beat _ready)
 	# Background style — slot color
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.08, 0.07, 0.06, 1.0)
@@ -56,8 +59,11 @@ func _build() -> void:
 	add_child(_texture_rect)
 
 
-## Populate the icon. Call after _ready.
+## Populate the icon. Safe to call before the node enters the scene tree —
+## lazy-builds children if _ready hasn't fired yet.
 func set_equipment(slot: String, item_name: String, sprite_path: String = "") -> void:
+	if not _label:
+		_build()
 	# Style update
 	var style: StyleBoxFlat = get_theme_stylebox("panel") as StyleBoxFlat
 	if style:
@@ -79,8 +85,10 @@ func set_equipment(slot: String, item_name: String, sprite_path: String = "") ->
 				_label.visible = false
 
 
-## Render an "empty slot" appearance.
+## Render an "empty slot" appearance. Safe to call before _ready fires.
 func set_empty(slot: String) -> void:
+	if not _label:
+		_build()
 	var style: StyleBoxFlat = get_theme_stylebox("panel") as StyleBoxFlat
 	if style:
 		var color: Color = SLOT_COLORS.get(slot, Color(0.3, 0.3, 0.3))
