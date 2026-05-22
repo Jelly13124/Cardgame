@@ -97,6 +97,8 @@ const BOSS_ROSTER:  Array = ["junkyard_tyrant"]
 const BATTLE_SCENE: String = "res://battle_scene/battle_scene.tscn"
 const MAP_SCENE: String = "res://run_system/ui/map_scene.tscn"
 const RELIC_DATA_DIR: String = "res://run_system/data/relics/"
+const EQUIPMENT_DATA_DIR: String = "res://run_system/data/equipment/"
+const EQUIPMENT_SET_DATA_DIR: String = "res://run_system/data/equipment_sets/"
 const FIRST_MERCHANT_FLOOR_INDEX: int = 5 # Human-facing layer 6.
 const GUARANTEED_TREASURE_FLOOR_INDEX: int = 6 # Human-facing layer 7.
 ## Floors 1..EARLY_FLOOR_LAST roll combat-only (no rest / treasure / merchant).
@@ -445,6 +447,112 @@ func add_resources(g: int, c: int) -> void:
 
 # --- Items ---
 
+## Recompute player_attributes = base_attributes + sum of every equipped item's
+## bonuses. Idempotent. Emits equipment_changed.
+func recompute_attributes() -> void:
+	var totals = base_attributes.duplicate()
+	for slot in EQUIPMENT_SLOTS:
+		var item_id: String = equipped_items.get(slot, "")
+		if item_id == "":
+			continue
+		var data = get_equipment_data(item_id)
+		var bonuses = data.get("bonuses", {})
+		if typeof(bonuses) != TYPE_DICTIONARY:
+			continue
+		for attr in bonuses.keys():
+			if attr in totals:
+				totals[attr] = int(totals[attr]) + int(bonuses[attr])
+	player_attributes = totals
+	emit_signal("equipment_changed")
+
+
+## Equip item_id into slot. If slot is occupied, the previous occupant moves
+## to inventory. Returns false (no-op) if slot is occupied AND inventory is
+## full. Caller must show the inventory-full modal before retrying.
+## Calls recompute_attributes() on success.
+func equip_to_slot(item_id: String, slot: String) -> bool:
+	if not slot in EQUIPMENT_SLOTS:
+		push_error("equip_to_slot: unknown slot '%s'" % slot)
+		return false
+	if item_id == "":
+		push_error("equip_to_slot: item_id is empty")
+		return false
+	var data = get_equipment_data(item_id)
+	if data.is_empty():
+		push_error("equip_to_slot: no JSON for item '%s'" % item_id)
+		return false
+	if str(data.get("slot", "")) != slot:
+		push_error("equip_to_slot: item '%s' is slot '%s', cannot fit into '%s'" % [item_id, data.get("slot", ""), slot])
+		return false
+
+	var prev: String = equipped_items.get(slot, "")
+	if prev != "":
+		if inventory_items.size() >= MAX_INVENTORY:
+			return false
+		inventory_items.append(prev)
+
+	# Remove item_id from inventory if it was there (equipping from bag is common path)
+	var bag_idx = inventory_items.find(item_id)
+	if bag_idx >= 0:
+		inventory_items.remove_at(bag_idx)
+
+	equipped_items[slot] = item_id
+	recompute_attributes()
+	return true
+
+
+## Move the item in slot to inventory. Returns false if inventory is full.
+## Calls recompute_attributes() on success.
+func unequip_slot(slot: String) -> bool:
+	if not slot in EQUIPMENT_SLOTS:
+		push_error("unequip_slot: unknown slot '%s'" % slot)
+		return false
+	var item_id: String = equipped_items.get(slot, "")
+	if item_id == "":
+		return true  # already empty, treat as success no-op
+	if inventory_items.size() >= MAX_INVENTORY:
+		return false
+	inventory_items.append(item_id)
+	equipped_items[slot] = ""
+	recompute_attributes()
+	return true
+
+
+## Append to inventory. Returns false at MAX_INVENTORY (caller handles UI).
+func add_to_inventory(item_id: String) -> bool:
+	if item_id == "":
+		return false
+	if inventory_items.size() >= MAX_INVENTORY:
+		return false
+	inventory_items.append(item_id)
+	emit_signal("equipment_changed")
+	return true
+
+
+## Discard inventory[index]. Out-of-range = silent no-op.
+func discard_from_inventory(index: int) -> void:
+	if index < 0 or index >= inventory_items.size():
+		return
+	inventory_items.remove_at(index)
+	emit_signal("equipment_changed")
+
+
+## Returns { set_id: piece_count } over currently equipped items.
+## Sets with zero equipped pieces are omitted.
+func get_active_set_tiers() -> Dictionary:
+	var counts: Dictionary = {}
+	for slot in EQUIPMENT_SLOTS:
+		var item_id: String = equipped_items.get(slot, "")
+		if item_id == "":
+			continue
+		var data = get_equipment_data(item_id)
+		var set_id: String = str(data.get("set_id", ""))
+		if set_id == "":
+			continue
+		counts[set_id] = int(counts.get(set_id, 0)) + 1
+	return counts
+
+
 # --- Relics ---
 
 func add_relic(relic_id: String) -> bool:
@@ -483,6 +591,38 @@ func get_relic_data(relic_id: String) -> Dictionary:
 		for key in parsed.keys():
 			data[key] = parsed[key]
 	return data
+
+## Load equipment JSON by id. Returns empty dict on miss.
+func get_equipment_data(item_id: String) -> Dictionary:
+	if item_id == "":
+		return {}
+	var path = EQUIPMENT_DATA_DIR + item_id + ".json"
+	var file = FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {}
+	var text = file.get_as_text()
+	file.close()
+	var parsed = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return {}
+	return parsed
+
+
+## Load equipment set JSON by id. Returns empty dict on miss.
+func get_equipment_set_data(set_id: String) -> Dictionary:
+	if set_id == "":
+		return {}
+	var path = EQUIPMENT_SET_DATA_DIR + set_id + ".json"
+	var file = FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {}
+	var text = file.get_as_text()
+	file.close()
+	var parsed = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return {}
+	return parsed
+
 
 func get_unowned_relic_ids() -> Array[String]:
 	var ids: Array[String] = []
