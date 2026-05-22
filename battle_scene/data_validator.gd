@@ -9,9 +9,11 @@ extends RefCounted
 class_name DataValidator
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
-const CARD_DIR  = "res://battle_scene/card_info/player/"
-const ENEMY_DIR = "res://battle_scene/card_info/enemy/"
-const RELIC_DIR = "res://run_system/data/relics/"
+const CARD_DIR      = "res://battle_scene/card_info/player/"
+const ENEMY_DIR     = "res://battle_scene/card_info/enemy/"
+const RELIC_DIR     = "res://run_system/data/relics/"
+const EQUIPMENT_DIR = "res://run_system/data/equipment/"
+const SET_DIR       = "res://run_system/data/equipment_sets/"
 
 # ─── Card schema ──────────────────────────────────────────────────────────────
 const REQUIRED_CARD_KEYS = ["name", "title", "type", "cost", "effects"]
@@ -44,6 +46,21 @@ const ALLOWED_ENEMY_ACTION_TYPES = [
 # Action types that require a `status` field
 const STATUS_BEARING_ACTIONS = ["attack_status"]
 
+# ─── Equipment schema ────────────────────────────────────────────────────────
+const REQUIRED_EQUIPMENT_KEYS = ["id", "name", "slot", "rarity", "bonuses", "description", "sprite"]
+const ALLOWED_EQUIPMENT_SLOTS = ["head", "chest", "weapon", "hands", "accessory"]
+const ALLOWED_ATTRIBUTE_KEYS  = ["strength", "constitution", "intelligence", "luck", "charm"]
+const KNOWN_OPTIONAL_EQUIPMENT_KEYS = ["set_id"]
+
+# ─── Equipment set schema ────────────────────────────────────────────────────
+const REQUIRED_SET_KEYS = ["id", "name", "description", "tiers"]
+const REQUIRED_TIER_KEYS = ["count", "label", "effect"]
+const ALLOWED_SET_EFFECT_TYPES = [
+	"start_turn_block", "start_turn_energy", "start_battle_block",
+	"skill_block_bonus", "attack_damage_bonus", "attack_apply_status",
+]
+const STATUS_BEARING_SET_EFFECTS = ["attack_apply_status"]
+
 
 ## Scan all card / enemy / relic directories and validate every JSON file,
 ## plus cross-check that every enemy ID referenced by RunManager's encounter
@@ -55,6 +72,8 @@ static func validate_all_data_at_startup() -> int:
 	failures += _validate_dir(ENEMY_DIR, Callable(DataValidator, "validate_enemy"))
 	# Relic files are very small and well-tested; only validate their existence.
 	failures += _validate_dir(RELIC_DIR, Callable(DataValidator, "validate_relic"))
+	failures += _validate_dir(EQUIPMENT_DIR, Callable(DataValidator, "validate_equipment"))
+	failures += _validate_dir(SET_DIR,       Callable(DataValidator, "validate_equipment_set"))
 	# Cross-check encounter pools so a typo in RunManager constants fails at
 	# startup instead of crashing the player mid-combat in enemy_entity.create().
 	failures += validate_encounter_pools()
@@ -62,7 +81,7 @@ static func validate_all_data_at_startup() -> int:
 	if failures > 0:
 		push_error("DataValidator: %d validation failure(s). See errors above." % failures)
 	else:
-		print("DataValidator: all card/enemy/relic JSON files passed schema check.")
+		print("DataValidator: all card/enemy/relic/equipment JSON files passed schema check.")
 	return failures
 
 
@@ -245,6 +264,98 @@ static func validate_relic(data: Dictionary, source_path: String) -> bool:
 		if not effect.has("trigger"):
 			push_error("%s: effect[%d] is missing 'trigger'" % [prefix, i])
 			ok = false
+	return ok
+
+
+## Validate a single equipment JSON dictionary. Returns true on success.
+static func validate_equipment(data: Dictionary, source_path: String) -> bool:
+	var prefix := "Equipment '%s'" % source_path
+	var ok := true
+
+	for key in REQUIRED_EQUIPMENT_KEYS:
+		if not data.has(key):
+			push_error("%s: missing required key '%s'" % [prefix, key])
+			ok = false
+
+	if not ok:
+		return false
+
+	if not str(data["slot"]) in ALLOWED_EQUIPMENT_SLOTS:
+		push_error("%s: slot '%s' not in %s" % [prefix, data["slot"], ALLOWED_EQUIPMENT_SLOTS])
+		ok = false
+
+	if not str(data["rarity"]) in ALLOWED_RARITIES:
+		push_error("%s: rarity '%s' not in %s" % [prefix, data["rarity"], ALLOWED_RARITIES])
+		ok = false
+
+	var bonuses = data["bonuses"]
+	if typeof(bonuses) != TYPE_DICTIONARY:
+		push_error("%s: bonuses must be a Dictionary" % prefix)
+		ok = false
+	else:
+		for attr in bonuses.keys():
+			if not str(attr) in ALLOWED_ATTRIBUTE_KEYS:
+				push_error("%s: bonus attr '%s' not in %s" % [prefix, attr, ALLOWED_ATTRIBUTE_KEYS])
+				ok = false
+			elif typeof(bonuses[attr]) != TYPE_INT and typeof(bonuses[attr]) != TYPE_FLOAT:
+				push_error("%s: bonus '%s' must be a number, got %s" % [prefix, attr, typeof(bonuses[attr])])
+				ok = false
+
+	# Unknown top-level keys → warn (helps catch typos)
+	var known_keys = REQUIRED_EQUIPMENT_KEYS + KNOWN_OPTIONAL_EQUIPMENT_KEYS
+	for key in data.keys():
+		if not key in known_keys:
+			push_warning("%s: unknown top-level key '%s' (typo?)" % [prefix, key])
+
+	return ok
+
+
+## Validate a single equipment set JSON dictionary. Returns true on success.
+static func validate_equipment_set(data: Dictionary, source_path: String) -> bool:
+	var prefix := "Set '%s'" % source_path
+	var ok := true
+
+	for key in REQUIRED_SET_KEYS:
+		if not data.has(key):
+			push_error("%s: missing required key '%s'" % [prefix, key])
+			ok = false
+
+	if not ok:
+		return false
+
+	var tiers = data["tiers"]
+	if typeof(tiers) != TYPE_ARRAY:
+		push_error("%s: tiers must be an Array" % prefix)
+		return false
+
+	for i in range(tiers.size()):
+		var tier = tiers[i]
+		if typeof(tier) != TYPE_DICTIONARY:
+			push_error("%s: tier[%d] is not a Dictionary" % [prefix, i])
+			ok = false
+			continue
+		for key in REQUIRED_TIER_KEYS:
+			if not tier.has(key):
+				push_error("%s: tier[%d] missing key '%s'" % [prefix, i, key])
+				ok = false
+
+		var effect = tier.get("effect", {})
+		if typeof(effect) != TYPE_DICTIONARY:
+			push_error("%s: tier[%d] effect is not a Dictionary" % [prefix, i])
+			ok = false
+			continue
+		var etype = str(effect.get("type", ""))
+		if not etype in ALLOWED_SET_EFFECT_TYPES:
+			push_error("%s: tier[%d] effect type '%s' not in %s" % [prefix, i, etype, ALLOWED_SET_EFFECT_TYPES])
+			ok = false
+		if etype in STATUS_BEARING_SET_EFFECTS:
+			if not effect.has("status"):
+				push_error("%s: tier[%d] effect (%s) missing 'status'" % [prefix, i, etype])
+				ok = false
+			elif not str(effect["status"]) in ALLOWED_STATUS_NAMES:
+				push_error("%s: tier[%d] status '%s' not in %s" % [prefix, i, effect["status"], ALLOWED_STATUS_NAMES])
+				ok = false
+
 	return ok
 
 
