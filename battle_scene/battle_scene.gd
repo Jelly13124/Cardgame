@@ -17,6 +17,7 @@ extends Node
 var deck_manager: Node  # DeckManager (deck_manager.gd) instance
 var relic_effect_system: RefCounted  # RelicEffectSystem (relic_effect_system.gd) instance
 var equipment_set_system: RefCounted  # EquipmentSetSystem (equipment_set_system.gd) instance
+var current_resolving_card: Node = null  # Set by play_spell during _apply_effect; combat_engine reads it.
 # Typed via the preloaded CARD_ANIMATOR_SCRIPT below — kept as Node so this
 # file parses even before Godot has scanned the class_name registry.
 var card_animator: Node  # CardAnimator (card_animator.gd) instance
@@ -360,8 +361,12 @@ func play_spell(card: Control, target_node: Node):
 	card_animator.prepare_for_play(card)
 	await card_animator.fly_to_play_area(card, target_node)
 
-	# Resolve combat effects (may await animations)
+	# Resolve combat effects (may await animations). current_resolving_card
+	# lets combat_engine + equipment_set_system identify the card behind each
+	# effect (needed to know whether a gain_block came from a "skill" card etc.).
+	current_resolving_card = card
 	await combat_engine.resolve_card_effect(card, target_node, player)
+	current_resolving_card = null
 
 	# Release the per-card play lock NOW. The play is logically complete —
 	# what's left below is pure animation/routing. If we don't release here,

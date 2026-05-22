@@ -90,14 +90,20 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 	match effect_type:
 		"deal_damage":
 			if target and is_instance_valid(target) and target.has_method("take_damage"):
+				if main.equipment_set_system and main.current_resolving_card:
+					amount = main.equipment_set_system.modify_card_damage(main.current_resolving_card, amount)
 				var outgoing = calculate_attack_damage(amount, player, target)
 				target.take_damage(outgoing)
 				_register_player_attack()
 				main.show_notification("DEALT %d DAMAGE" % outgoing, Color(1.0, 0.4, 0.3))
+				if main.equipment_set_system and main.current_resolving_card:
+					main.equipment_set_system.on_card_damage_resolved(main.current_resolving_card, target)
 			else:
 				main.show_notification("NO TARGET!", Color(1, 0.5, 0.5))
 
 		"gain_block":
+			if main.equipment_set_system and main.current_resolving_card:
+				amount = main.equipment_set_system.modify_card_block(main.current_resolving_card, amount)
 			player.add_block(amount)
 			main.show_notification("+%d BLOCK" % amount, Color(0.4, 0.6, 1.0))
 			await get_tree().create_timer(0.2).timeout
@@ -113,9 +119,14 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			await get_tree().create_timer(0.2).timeout
 
 		"deal_damage_all":
+			var per_target_amount = amount
+			if main.equipment_set_system and main.current_resolving_card:
+				per_target_amount = main.equipment_set_system.modify_card_damage(main.current_resolving_card, per_target_amount)
 			for enemy in main.enemy_container.get_children():
 				if is_instance_valid(enemy) and enemy.has_method("take_damage"):
-					enemy.take_damage(calculate_attack_damage(amount, player, enemy))
+					enemy.take_damage(calculate_attack_damage(per_target_amount, player, enemy))
+					if main.equipment_set_system and main.current_resolving_card:
+						main.equipment_set_system.on_card_damage_resolved(main.current_resolving_card, enemy)
 			_register_player_attack()
 			main.show_notification("ALL ENEMIES HIT", Color(1.0, 0.3, 0.2))
 			await get_tree().create_timer(0.3).timeout

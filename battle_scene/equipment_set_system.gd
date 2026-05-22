@@ -73,17 +73,46 @@ func on_player_turn_started(player: Node, _round_number: int) -> void:
 					_notify("%s: +%d Energy" % [entry["tier_label"], amount], Color(0.95, 0.9, 0.25))
 
 
-## Hooks for Task 6 (placeholders so combat_engine compiles after that task).
-func modify_card_block(_card: Node, amount: int) -> int:
-	return amount
+## Add skill_block_bonus to gain_block amount when card is a skill.
+func modify_card_block(card: Node, amount: int) -> int:
+	if card == null or not card.card_info.get("type", "") == "skill":
+		return amount
+	var result = amount
+	for entry in _active_effects:
+		var effect: Dictionary = entry["effect"]
+		if str(effect.get("type", "")) == "skill_block_bonus":
+			result += int(effect.get("amount", 0))
+	return result
 
 
-func modify_card_damage(_card: Node, amount: int) -> int:
-	return amount
+## Add attack_damage_bonus to deal_damage amount when card is an attack.
+func modify_card_damage(card: Node, amount: int) -> int:
+	if card == null or not card.card_info.get("type", "") == "attack":
+		return amount
+	var result = amount
+	for entry in _active_effects:
+		var effect: Dictionary = entry["effect"]
+		if str(effect.get("type", "")) == "attack_damage_bonus":
+			result += int(effect.get("amount", 0))
+	return result
 
 
-func on_card_damage_resolved(_card: Node, _target: Node) -> void:
-	pass
+## Apply attack_apply_status to target after damage resolves on an attack card.
+func on_card_damage_resolved(card: Node, target: Node) -> void:
+	if card == null or not card.card_info.get("type", "") == "attack":
+		return
+	if target == null or not is_instance_valid(target):
+		return
+	for entry in _active_effects:
+		var effect: Dictionary = entry["effect"]
+		if str(effect.get("type", "")) == "attack_apply_status":
+			var status = str(effect.get("status", ""))
+			var stacks = int(effect.get("stacks", 0))
+			if status == "" or stacks <= 0:
+				continue
+			if target.has_method("add_status"):
+				target.add_status(status, stacks)
+				_notify("%s: %s +%d on target" % [entry["tier_label"], status.to_upper(), stacks], Color(0.85, 0.6, 1.0))
 
 
 func _notify(text: String, color: Color) -> void:
