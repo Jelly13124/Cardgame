@@ -450,13 +450,13 @@ func add_resources(g: int, c: int) -> void:
 ## Recompute player_attributes = base_attributes + sum of every equipped item's
 ## bonuses. Idempotent. Emits equipment_changed.
 func recompute_attributes() -> void:
-	var totals = base_attributes.duplicate()
+	var totals: Dictionary = base_attributes.duplicate()
 	for slot in EQUIPMENT_SLOTS:
 		var item_id: String = equipped_items.get(slot, "")
 		if item_id == "":
 			continue
-		var data = get_equipment_data(item_id)
-		var bonuses = data.get("bonuses", {})
+		var data: Dictionary = get_equipment_data(item_id)
+		var bonuses: Variant = data.get("bonuses", {})
 		if typeof(bonuses) != TYPE_DICTIONARY:
 			continue
 		for attr in bonuses.keys():
@@ -477,7 +477,7 @@ func equip_to_slot(item_id: String, slot: String) -> bool:
 	if item_id == "":
 		push_error("equip_to_slot: item_id is empty")
 		return false
-	var data = get_equipment_data(item_id)
+	var data: Dictionary = get_equipment_data(item_id)
 	if data.is_empty():
 		push_error("equip_to_slot: no JSON for item '%s'" % item_id)
 		return false
@@ -486,8 +486,11 @@ func equip_to_slot(item_id: String, slot: String) -> bool:
 		return false
 
 	var prev: String = equipped_items.get(slot, "")
+	var item_already_in_bag := item_id in inventory_items
 	if prev != "":
-		if inventory_items.size() >= MAX_INVENTORY:
+		# Skip the full-bag check when we're swapping with a bag item — that
+		# case is a net-zero change to bag size (remove item_id, add prev).
+		if not item_already_in_bag and inventory_items.size() >= MAX_INVENTORY:
 			return false
 		inventory_items.append(prev)
 
@@ -537,6 +540,8 @@ func discard_from_inventory(index: int) -> void:
 	emit_signal("equipment_changed")
 
 
+## Up to one disk read per occupied slot — call only on equip/snapshot events,
+## not per frame.
 ## Returns { set_id: piece_count } over currently equipped items.
 ## Sets with zero equipped pieces are omitted.
 func get_active_set_tiers() -> Dictionary:
@@ -545,7 +550,7 @@ func get_active_set_tiers() -> Dictionary:
 		var item_id: String = equipped_items.get(slot, "")
 		if item_id == "":
 			continue
-		var data = get_equipment_data(item_id)
+		var data: Dictionary = get_equipment_data(item_id)
 		var set_id: String = str(data.get("set_id", ""))
 		if set_id == "":
 			continue
@@ -573,8 +578,25 @@ func remove_relic(relic_id: String) -> bool:
 	emit_signal("relics_updated")
 	return true
 
+## Private helper: open dir_path+id+".json", parse and return the Dictionary.
+## Returns {} if id is empty, file is missing, or JSON is not a Dictionary.
+func _load_json_by_id(dir_path: String, id: String) -> Dictionary:
+	if id == "":
+		return {}
+	var file = FileAccess.open(dir_path + id + ".json", FileAccess.READ)
+	if file == null:
+		return {}
+	var text: String = file.get_as_text()
+	file.close()
+	var parsed = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return {}
+	return parsed
+
+
+## Returns a default-populated dict for relic_id, with any JSON fields merged in.
 func get_relic_data(relic_id: String) -> Dictionary:
-	var data = {
+	var data: Dictionary = {
 		"id": relic_id,
 		"title": _humanize_id(relic_id),
 		"description": "",
@@ -582,46 +604,20 @@ func get_relic_data(relic_id: String) -> Dictionary:
 		"rarity": "common",
 		"effects": [],
 	}
-	var file = FileAccess.open(RELIC_DATA_DIR + relic_id + ".json", FileAccess.READ)
-	if not file:
-		return data
-
-	var parsed = JSON.parse_string(file.get_as_text())
-	if typeof(parsed) == TYPE_DICTIONARY:
-		for key in parsed.keys():
-			data[key] = parsed[key]
+	var parsed: Dictionary = _load_json_by_id(RELIC_DATA_DIR, relic_id)
+	for key in parsed.keys():
+		data[key] = parsed[key]
 	return data
+
 
 ## Load equipment JSON by id. Returns empty dict on miss.
 func get_equipment_data(item_id: String) -> Dictionary:
-	if item_id == "":
-		return {}
-	var path = EQUIPMENT_DATA_DIR + item_id + ".json"
-	var file = FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {}
-	var text = file.get_as_text()
-	file.close()
-	var parsed = JSON.parse_string(text)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return {}
-	return parsed
+	return _load_json_by_id(EQUIPMENT_DATA_DIR, item_id)
 
 
 ## Load equipment set JSON by id. Returns empty dict on miss.
 func get_equipment_set_data(set_id: String) -> Dictionary:
-	if set_id == "":
-		return {}
-	var path = EQUIPMENT_SET_DATA_DIR + set_id + ".json"
-	var file = FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {}
-	var text = file.get_as_text()
-	file.close()
-	var parsed = JSON.parse_string(text)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return {}
-	return parsed
+	return _load_json_by_id(EQUIPMENT_SET_DATA_DIR, set_id)
 
 
 func get_unowned_relic_ids() -> Array[String]:
