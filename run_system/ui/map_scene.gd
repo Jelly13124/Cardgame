@@ -6,6 +6,7 @@ extends Control
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
 const MAP_RENDERER_SCRIPT = preload("res://run_system/ui/map_renderer.gd")
+const EQUIPMENT_PANEL_SCRIPT = preload("res://run_system/ui/equipment_panel.gd")
 const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_pixel_bg.png"
 const NODE_ICON_DIR = "res://run_system/assets/images/map/nodes/"
 
@@ -409,9 +410,6 @@ func _on_relic_choice_selected(relic_id: String, _source_type: String) -> void:
 
 func _humanize_id(value: String) -> String:
 	return value.replace("_", " ").capitalize()
-
-
-const EQUIPMENT_PANEL_SCRIPT = preload("res://run_system/ui/equipment_panel.gd")
 
 
 func _build_equipment_button() -> void:
