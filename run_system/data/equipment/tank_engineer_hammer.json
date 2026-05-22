@@ -1,0 +1,10 @@
+{
+  "id": "tank_engineer_hammer",
+  "name": "Pipe Hammer",
+  "slot": "weapon",
+  "rarity": "common",
+  "set_id": "tank_engineer",
+  "bonuses": { "strength": 2 },
+  "description": "Heavy enough to discourage second hits.",
+  "sprite": "equipment/tank_engineer_hammer.png"
+}

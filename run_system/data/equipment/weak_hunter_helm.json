@@ -1,0 +1,10 @@
+{
+  "id": "weak_hunter_helm",
+  "name": "Hunter's Visor",
+  "slot": "head",
+  "rarity": "common",
+  "set_id": "weak_hunter",
+  "bonuses": { "luck": 1 },
+  "description": "Cracked goggles that see what others ignore.",
+  "sprite": "equipment/weak_hunter_helm.png"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "tank_engineer_helm",
+  "name": "Reinforced Hardhat",
+  "slot": "head",
+  "rarity": "common",
+  "set_id": "tank_engineer",
+  "bonuses": { "constitution": 2 },
+  "description": "Steel-banded. Heavy. Reliable.",
+  "sprite": "equipment/tank_engineer_helm.png"
+}

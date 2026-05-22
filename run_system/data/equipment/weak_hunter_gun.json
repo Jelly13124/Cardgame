@@ -1,0 +1,10 @@
+{
+  "id": "weak_hunter_gun",
+  "name": "Marked Sidearm",
+  "slot": "weapon",
+  "rarity": "uncommon",
+  "set_id": "weak_hunter",
+  "bonuses": { "strength": 2 },
+  "description": "Notched grip — one notch per failed target.",
+  "sprite": "equipment/weak_hunter_gun.png"
+}

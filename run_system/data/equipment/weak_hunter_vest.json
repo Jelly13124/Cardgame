@@ -1,0 +1,10 @@
+{
+  "id": "weak_hunter_vest",
+  "name": "Stalker's Vest",
+  "slot": "chest",
+  "rarity": "common",
+  "set_id": "weak_hunter",
+  "bonuses": { "luck": 1, "charm": 1 },
+  "description": "Lightweight. Smells of dust and old oil.",
+  "sprite": "equipment/weak_hunter_vest.png"
+}
