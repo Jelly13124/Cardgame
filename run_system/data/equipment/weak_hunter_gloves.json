@@ -1,0 +1,10 @@
+{
+  "id": "weak_hunter_gloves",
+  "name": "Weak Hunter Gloves",
+  "slot": "hands",
+  "rarity": "common",
+  "set_id": "weak_hunter",
+  "bonuses": { "strength": 1, "luck": 1 },
+  "description": "Worn leather gloves stained with bad luck.",
+  "sprite": "equipment/weak_hunter_gloves.png"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "tank_engineer_gauntlets",
+  "name": "Iron Gauntlets",
+  "slot": "hands",
+  "rarity": "common",
+  "set_id": "tank_engineer",
+  "bonuses": { "constitution": 1, "strength": 1 },
+  "description": "Better than no gauntlets.",
+  "sprite": "equipment/tank_engineer_gauntlets.png"
+}

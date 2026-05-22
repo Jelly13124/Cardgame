@@ -1,0 +1,10 @@
+{
+  "id": "tank_engineer_vest",
+  "name": "Plated Vest",
+  "slot": "chest",
+  "rarity": "uncommon",
+  "set_id": "tank_engineer",
+  "bonuses": { "constitution": 3 },
+  "description": "Welded scrap iron over a leather core.",
+  "sprite": "equipment/tank_engineer_vest.png"
+}

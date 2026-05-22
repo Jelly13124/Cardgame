@@ -1,0 +1,10 @@
+{
+  "id": "tank_engineer_coil",
+  "name": "Power Coil",
+  "slot": "accessory",
+  "rarity": "uncommon",
+  "set_id": "tank_engineer",
+  "bonuses": { "constitution": 2, "intelligence": 1 },
+  "description": "Hums with stored kinetic energy.",
+  "sprite": "equipment/tank_engineer_coil.png"
+}

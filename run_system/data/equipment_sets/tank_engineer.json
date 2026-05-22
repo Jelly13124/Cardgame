@@ -1,0 +1,17 @@
+{
+  "id": "tank_engineer",
+  "name": "Tank Engineer",
+  "description": "Heavy plating welded from junkyard salvage.",
+  "tiers": [
+    {
+      "count": 3,
+      "label": "+1 Block at the start of every turn",
+      "effect": { "type": "start_turn_block", "amount": 1 }
+    },
+    {
+      "count": 5,
+      "label": "+2 Damage on attack cards",
+      "effect": { "type": "attack_damage_bonus", "amount": 2 }
+    }
+  ]
+}

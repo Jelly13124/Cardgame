@@ -1,0 +1,9 @@
+{
+  "id": "old_hat",
+  "name": "Old Wasteland Hat",
+  "slot": "head",
+  "rarity": "common",
+  "bonuses": { "charm": 1 },
+  "description": "Looks better than nothing.",
+  "sprite": "equipment/old_hat.png"
+}

@@ -1,0 +1,17 @@
+{
+  "id": "weak_hunter",
+  "name": "Weak Hunter",
+  "description": "A scavenged kit that punishes the vulnerable.",
+  "tiers": [
+    {
+      "count": 3,
+      "label": "+1 Block on defense cards",
+      "effect": { "type": "skill_block_bonus", "amount": 1 }
+    },
+    {
+      "count": 5,
+      "label": "Attack cards apply Weak 1",
+      "effect": { "type": "attack_apply_status", "status": "weak", "stacks": 1 }
+    }
+  ]
+}
