@@ -81,7 +81,7 @@ static func validate_all_data_at_startup() -> int:
 	if failures > 0:
 		push_error("DataValidator: %d validation failure(s). See errors above." % failures)
 	else:
-		print("DataValidator: all card/enemy/relic/equipment JSON files passed schema check.")
+		print("DataValidator: all card/enemy/relic/equipment/set JSON files passed schema check.")
 	return failures
 
 
@@ -339,6 +339,9 @@ static func validate_equipment_set(data: Dictionary, source_path: String) -> boo
 				push_error("%s: tier[%d] missing key '%s'" % [prefix, i, key])
 				ok = false
 
+		if not tier.has("effect"):
+			continue  # Missing effect already reported above; skip sub-validation to avoid double errors.
+
 		var effect = tier.get("effect", {})
 		if typeof(effect) != TYPE_DICTIONARY:
 			push_error("%s: tier[%d] effect is not a Dictionary" % [prefix, i])
@@ -355,6 +358,11 @@ static func validate_equipment_set(data: Dictionary, source_path: String) -> boo
 			elif not str(effect["status"]) in ALLOWED_STATUS_NAMES:
 				push_error("%s: tier[%d] status '%s' not in %s" % [prefix, i, effect["status"], ALLOWED_STATUS_NAMES])
 				ok = false
+
+	# Unknown top-level keys → warn (helps catch typos)
+	for key in data.keys():
+		if not key in REQUIRED_SET_KEYS:
+			push_warning("%s: unknown top-level key '%s' (typo?)" % [prefix, key])
 
 	return ok
 
