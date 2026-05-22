@@ -16,6 +16,7 @@ extends Node
 
 var deck_manager: Node  # DeckManager (deck_manager.gd) instance
 var relic_effect_system: RefCounted  # RelicEffectSystem (relic_effect_system.gd) instance
+var equipment_set_system: RefCounted  # EquipmentSetSystem (equipment_set_system.gd) instance
 # Typed via the preloaded CARD_ANIMATOR_SCRIPT below — kept as Node so this
 # file parses even before Godot has scanned the class_name registry.
 var card_animator: Node  # CardAnimator (card_animator.gd) instance
@@ -29,6 +30,7 @@ var hovered_unit:  Node    = null
 
 const TARGETING_ARROW_SCRIPT = preload("res://battle_scene/targeting_arrow.gd")
 const RELIC_EFFECT_SYSTEM = preload("res://battle_scene/relic_effect_system.gd")
+const EQUIPMENT_SET_SYSTEM = preload("res://battle_scene/equipment_set_system.gd")
 const CARD_ANIMATOR_SCRIPT = preload("res://battle_scene/card_animator.gd")
 const DECK_MANAGER_SCRIPT = preload("res://battle_scene/deck_manager.gd")
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
@@ -161,6 +163,8 @@ func _on_turn_started(side: String) -> void:
 		return
 	if relic_effect_system:
 		relic_effect_system.on_player_turn_started(player, turn_manager.current_round)
+	if equipment_set_system:
+		equipment_set_system.on_player_turn_started(player, turn_manager.current_round)
 	_update_ui_labels()
 	enemy_ai.spawn_enemy_units()
 	
@@ -234,6 +238,8 @@ func _start_new_game():
 
 	relic_effect_system = RELIC_EFFECT_SYSTEM.new()
 	relic_effect_system.setup(self)
+	equipment_set_system = EQUIPMENT_SET_SYSTEM.new()
+	equipment_set_system.setup(self)
 
 	# ── Player HP & Attributes ──────────────────────────────────────────────
 	if RunManager.is_run_active:
@@ -248,6 +254,10 @@ func _start_new_game():
 		# Enemy roster comes from the map encounter data stored in RunManager
 		if RunManager.current_encounter.size() > 0:
 			enemy_ai.enemy_roster = RunManager.current_encounter
+
+	# Snapshot active equipment set tiers (and apply start_battle_block)
+	if equipment_set_system:
+		equipment_set_system.on_battle_started(player)
 
 	# ── Deck & Turn ──────────────────────────────────────────────────────────
 	deck_manager.reset_deck()
