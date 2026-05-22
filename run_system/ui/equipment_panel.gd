@@ -1,5 +1,7 @@
-## Map-screen equipment management modal. Built dynamically; attached to a
-## CanvasLayer. Listens to RunManager.equipment_changed for live refresh.
+## Map-screen character info + equipment management modal. Shows HP, gold,
+## floor, relics, equipped gear, inventory, active set tiers, and attributes
+## in one consolidated view. Built dynamically; attached as a direct child of
+## map_scene. Listens to RunManager state signals for live refresh.
 extends Control
 class_name EquipmentPanel
 
@@ -10,6 +12,8 @@ var _slot_rows: Dictionary = {}        # slot → { icon, name_label, action_but
 var _inventory_container: VBoxContainer
 var _inventory_title: Label  # Direct field reference for the inventory header (replaces a fragile tree search).
 var _sets_container: VBoxContainer
+var _relics_container: VBoxContainer
+var _vitals_label: Label                # HP / Gold / Floor summary line
 var _stats_label: Label
 var _status_label: Label                # transient "INVENTORY FULL" etc.
 
@@ -19,6 +23,17 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build()
 	RunManager.equipment_changed.connect(_refresh)
+	RunManager.health_changed.connect(_on_health_changed)
+	RunManager.resources_changed.connect(_on_resources_changed)
+	RunManager.relics_updated.connect(_refresh)
+	_refresh()
+
+
+func _on_health_changed(_current: int, _maximum: int) -> void:
+	_refresh()
+
+
+func _on_resources_changed(_gold: int, _core: int) -> void:
 	_refresh()
 
 
@@ -55,7 +70,7 @@ func _build() -> void:
 	var header := HBoxContainer.new()
 	vroot.add_child(header)
 	var title := Label.new()
-	title.text = "EQUIPMENT"
+	title.text = "CHARACTER"
 	title.add_theme_font_size_override("font_size", 24)
 	title.add_theme_color_override("font_color", Color(1, 0.95, 0.8))
 	header.add_child(title)
@@ -65,6 +80,12 @@ func _build() -> void:
 	close_btn.custom_minimum_size = Vector2(40, 40)
 	close_btn.pressed.connect(queue_free)
 	header.add_child(close_btn)
+
+	# Vitals row (HP / Gold / Floor) — populated by _refresh
+	_vitals_label = Label.new()
+	_vitals_label.add_theme_font_size_override("font_size", 16)
+	_vitals_label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.7))
+	vroot.add_child(_vitals_label)
 
 	# Two-column body
 	var body := HBoxContainer.new()
@@ -108,6 +129,17 @@ func _build() -> void:
 	_sets_container.add_theme_constant_override("separation", 4)
 	vroot.add_child(_sets_container)
 
+	# Relics section
+	var sep_relics := HSeparator.new()
+	vroot.add_child(sep_relics)
+	var relics_title := Label.new()
+	relics_title.text = "── RELICS ──"
+	relics_title.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
+	vroot.add_child(relics_title)
+	_relics_container = VBoxContainer.new()
+	_relics_container.add_theme_constant_override("separation", 2)
+	vroot.add_child(_relics_container)
+
 	# Stats row
 	var sep2 := HSeparator.new()
 	vroot.add_child(sep2)
@@ -143,6 +175,14 @@ func _build_slot_row(slot: String, parent: VBoxContainer) -> Dictionary:
 
 
 func _refresh() -> void:
+	# Vitals: HP / Gold / Floor. Floor is 0-indexed internally; display as 1-based.
+	if _vitals_label:
+		var floor_display = max(1, RunManager.current_floor + 1)
+		_vitals_label.text = "HP %d / %d     GOLD %d     FLOOR %d" % [
+			RunManager.current_health, RunManager.max_health,
+			RunManager.gold, floor_display,
+		]
+
 	# Slots
 	for slot in RunManager.EQUIPMENT_SLOTS:
 		var row = _slot_rows[slot]
@@ -178,6 +218,18 @@ func _refresh() -> void:
 	var active_tiers: Dictionary = RunManager.get_active_set_tiers()
 	for set_id in active_tiers.keys():
 		_sets_container.add_child(_build_set_row(str(set_id), int(active_tiers[set_id])))
+
+	# Relics
+	for child in _relics_container.get_children():
+		child.queue_free()
+	if RunManager.relics.is_empty():
+		var none_lbl := Label.new()
+		none_lbl.text = "  (none yet)"
+		none_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		_relics_container.add_child(none_lbl)
+	else:
+		for relic_id in RunManager.relics:
+			_relics_container.add_child(_build_relic_row(str(relic_id)))
 
 	# Stats
 	var p = RunManager.player_attributes
@@ -218,6 +270,17 @@ func _build_inventory_row(item_id: String, index: int) -> HBoxContainer:
 	discard_btn.pressed.connect(_on_discard_pressed.bind(index, discard_btn))
 	row.add_child(discard_btn)
 
+	return row
+
+
+func _build_relic_row(relic_id: String) -> Label:
+	var data = RunManager.get_relic_data(relic_id)
+	var title = str(data.get("title", relic_id))
+	var description = str(data.get("description", ""))
+	var row := Label.new()
+	row.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
+	row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	row.text = "• %s — %s" % [title, description]
 	return row
 
 

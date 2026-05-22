@@ -420,7 +420,7 @@ func _humanize_id(value: String) -> String:
 
 func _build_equipment_button() -> void:
 	var equip_btn := Button.new()
-	equip_btn.text = "⚔ EQUIPMENT"
+	equip_btn.text = "⚔ CHARACTER"
 	equip_btn.add_theme_font_size_override("font_size", 16)
 	# Anchor to top-right corner with a small margin
 	equip_btn.anchor_left = 1.0
