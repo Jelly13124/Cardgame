@@ -7,6 +7,7 @@ const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
 const MAP_RENDERER_SCRIPT = preload("res://run_system/ui/map_renderer.gd")
 const EQUIPMENT_PANEL_SCRIPT = preload("res://run_system/ui/equipment_panel.gd")
+const INVENTORY_FULL_MODAL_FOR_TREASURE = preload("res://run_system/ui/inventory_full_modal.gd")
 const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_pixel_bg.png"
 const NODE_ICON_DIR = "res://run_system/assets/images/map/nodes/"
 
@@ -225,7 +226,10 @@ func _on_node_clicked(node: Dictionary) -> void:
 		"merchant":
 			_show_popup("The merchant waves... nothing to sell yet.")
 		"treasure":
-			_open_relic_choice("Choose a Relic", "treasure")
+			if randf() < 0.5:
+				_open_relic_choice("Choose a Relic", "treasure")
+			else:
+				_grant_treasure_equipment()
 		"unknown":
 			if randf() < 0.5:
 				rm.current_encounter = rm.select_encounter("enemy", int(node.floor))
@@ -439,3 +443,28 @@ func _open_equipment_panel() -> void:
 	var panel = EQUIPMENT_PANEL_SCRIPT.new()
 	panel.name = "EquipmentPanel"
 	add_child(panel)
+
+
+## Treasure equipment drop: 70% uncommon / 30% rare. Either adds directly to
+## inventory or opens the inventory-full modal.
+func _grant_treasure_equipment() -> void:
+	var rarity := "uncommon" if randf() < 0.7 else "rare"
+	var item_id = RunManager.roll_equipment_drop(rarity)
+	if item_id == "":
+		_show_popup("The crate was empty.")
+		return
+	var data = RunManager.get_equipment_data(item_id)
+	var item_name = str(data.get("name", item_id))
+	if RunManager.add_to_inventory(item_id):
+		_show_popup("Found %s!" % item_name)
+		return
+	# Inventory full → modal
+	var modal = INVENTORY_FULL_MODAL_FOR_TREASURE.new()
+	modal.setup(item_id)
+	modal.resolved.connect(func(took: bool):
+		if took:
+			_show_popup("Took %s." % item_name)
+		else:
+			_show_popup("Left %s behind." % item_name)
+	)
+	add_child(modal)
