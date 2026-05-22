@@ -86,6 +86,20 @@ func _ready():
 ## ONLY intercepts right-click during targeting — never keyboard events,
 ## so Q/E pile-viewer shortcuts can still reach BattleUIManager.
 func _input(event: InputEvent) -> void:
+	# Debug-only: right-click any enemy (outside targeting) → instant-kill.
+	# Routes through the normal take_damage path so the died signal fires and
+	# combat_engine declares victory once the last enemy is gone. Guarded on
+	# OS.is_debug_build() so it's stripped from exported builds.
+	if OS.is_debug_build() and not is_targeting and event is InputEventMouseButton \
+			and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
+		var mouse_pos = get_viewport().get_mouse_position()
+		var enemy = _get_unit_at_position(mouse_pos)
+		if enemy and is_instance_valid(enemy) and enemy.has_method("take_damage"):
+			show_notification("DEBUG: killed %s" % enemy.name, Color(1, 0.4, 1))
+			enemy.take_damage(99999)
+			get_viewport().set_input_as_handled()
+			return
+
 	if not is_targeting:
 		return
 	# Only handle mouse buttons, never keyboard
