@@ -5,6 +5,7 @@ signal health_changed(current: int, maximum: int)
 signal resources_changed(gold: int, core: int)
 signal deck_updated()
 signal items_updated()
+signal equipment_changed
 signal relics_updated()
 signal run_ended(victory: bool)
 
@@ -23,22 +24,45 @@ var core: int = 0
 # Progression
 var current_floor: int = 0
 var player_deck: Array = [] # Array of Dictionaries (uid, card_id, bonus_attack, bonus_health)
-var equipped_items: Array[String] = []
+
+## Equipped gear, one slot per body part. Empty string = empty slot.
+var equipped_items: Dictionary = {
+	"head": "",
+	"chest": "",
+	"weapon": "",
+	"hands": "",
+	"accessory": "",
+}
+
+## Unequipped equipment held by the player. Capped at MAX_INVENTORY.
+var inventory_items: Array[String] = []
+
 var relics: Array[String] = []
-const MAX_ITEMS: int = 5
+const MAX_INVENTORY: int = 8
+const EQUIPMENT_SLOTS: Array[String] = ["head", "chest", "weapon", "hands", "accessory"]
 const DEFAULT_STARTER_DECK = [
 	"strike", "strike", "strike", "strike",
 	"weak_strike",
 	"defend", "defend", "defend", "defend",
 ]
 
-## Five dimension RPG attributes — passed to PlayerEntity on battle start.
+## Five-dimension RPG attributes. base_attributes is the unchanging baseline
+## set at run start; player_attributes is the COMPUTED total (base + bonuses
+## from equipped items), refreshed by recompute_attributes() — never mutated
+## directly by gameplay code outside RunManager.
+var base_attributes: Dictionary = {
+	"strength": 3,
+	"constitution": 3,
+	"intelligence": 3,
+	"luck": 3,
+	"charm": 3,
+}
 var player_attributes: Dictionary = {
 	"strength": 3,
 	"constitution": 3,
 	"intelligence": 3,
 	"luck": 3,
-	"charm": 3
+	"charm": 3,
 }
 
 ## Enemy IDs to encounter in the next battle (set by MapScene before loading battle).
@@ -359,17 +383,17 @@ func start_new_run(hero_id: String, starter_deck: Array[String]) -> void:
 	core = 0
 	current_floor = 0
 	current_health = max_health
-	equipped_items.clear()
+	for slot in EQUIPMENT_SLOTS:
+		equipped_items[slot] = ""
+	inventory_items.clear()
 	relics.clear()
 	current_encounter = ["trash_robot"]
 	generate_map(12, 4)
-	player_attributes = {
-		"strength": 3,
-		"constitution": 3,
-		"intelligence": 3,
-		"luck": 3,
-		"charm": 3
+	base_attributes = {
+		"strength": 3, "constitution": 3,
+		"intelligence": 3, "luck": 3, "charm": 3,
 	}
+	player_attributes = base_attributes.duplicate()
 	is_run_active = true
 	_emit_all_state()
 
@@ -420,14 +444,6 @@ func add_resources(g: int, c: int) -> void:
 	emit_signal("resources_changed", gold, core)
 
 # --- Items ---
-
-## Returns true if the item was successfully equipped
-func equip_item(item_id: String) -> bool:
-	if equipped_items.size() < MAX_ITEMS:
-		equipped_items.append(item_id)
-		emit_signal("items_updated")
-		return true
-	return false
 
 # --- Relics ---
 
@@ -521,7 +537,7 @@ func _input(event: InputEvent) -> void:
 				print("Deck Contents: ", player_deck)
 				print("Health: ", current_health, "/", max_health)
 				print("Resources - Gold: ", gold, " Core: ", core)
-				print("Items: ", equipped_items)
+				print("Items: ", equipped_items, " Inventory: ", inventory_items)
 				print("Relics: ", relics)
 			KEY_F10:
 				print("DEBUG: +100 Gold")
