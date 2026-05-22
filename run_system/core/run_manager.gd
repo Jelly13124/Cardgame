@@ -69,6 +69,10 @@ var player_attributes: Dictionary = {
 ## Example: ["trash_robot", "wasteland_killer"]
 var current_encounter: Array[String] = ["trash_robot"]
 
+## Set by map_scene before launching a battle. Used by loot_reward to decide
+## drop rules. Values: "enemy" | "elite" | "boss".
+var last_battle_node_type: String = "enemy"
+
 ## Encounter pools by node type and floor band.
 ## MapScene calls `select_encounter(type, floor)` before loading the battle scene
 ## to populate `current_encounter`.
@@ -618,6 +622,27 @@ func get_equipment_data(item_id: String) -> Dictionary:
 ## Load equipment set JSON by id. Returns empty dict on miss.
 func get_equipment_set_data(set_id: String) -> Dictionary:
 	return _load_json_by_id(EQUIPMENT_SET_DATA_DIR, set_id)
+
+
+## Returns a random equipment id matching the given rarity. Returns "" if none.
+## rarity: "common" | "uncommon" | "rare"
+func roll_equipment_drop(rarity: String) -> String:
+	var dir = DirAccess.open(EQUIPMENT_DATA_DIR)
+	if dir == null:
+		return ""
+	var candidates: Array[String] = []
+	dir.list_dir_begin()
+	var file_name = dir.get_next()
+	while file_name != "":
+		if file_name.ends_with(".json") and not dir.current_is_dir():
+			var item_id = file_name.get_basename()
+			var data = get_equipment_data(item_id)
+			if str(data.get("rarity", "")) == rarity:
+				candidates.append(item_id)
+		file_name = dir.get_next()
+	if candidates.is_empty():
+		return ""
+	return candidates[randi() % candidates.size()]
 
 
 func get_unowned_relic_ids() -> Array[String]:
