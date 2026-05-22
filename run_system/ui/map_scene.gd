@@ -54,6 +54,7 @@ func _ready() -> void:
 	rm.relics_updated.connect(func(): queue_redraw())
 	get_viewport().size_changed.connect(_on_viewport_resized)
 	_build_relic_choice_layer()
+	_build_equipment_button()
 
 
 func _load_texture(path: String) -> Texture2D:
@@ -408,3 +409,33 @@ func _on_relic_choice_selected(relic_id: String, _source_type: String) -> void:
 
 func _humanize_id(value: String) -> String:
 	return value.replace("_", " ").capitalize()
+
+
+const EQUIPMENT_PANEL_SCRIPT = preload("res://run_system/ui/equipment_panel.gd")
+
+
+func _build_equipment_button() -> void:
+	var equip_btn := Button.new()
+	equip_btn.text = "⚔ EQUIPMENT"
+	equip_btn.add_theme_font_size_override("font_size", 16)
+	# Anchor to top-right corner with a small margin
+	equip_btn.anchor_left = 1.0
+	equip_btn.anchor_right = 1.0
+	equip_btn.anchor_top = 0.0
+	equip_btn.anchor_bottom = 0.0
+	equip_btn.offset_left = -200.0
+	equip_btn.offset_right = -12.0
+	equip_btn.offset_top = 12.0
+	equip_btn.offset_bottom = 52.0
+	equip_btn.pressed.connect(_open_equipment_panel)
+	add_child(equip_btn)
+
+
+func _open_equipment_panel() -> void:
+	var existing = get_node_or_null("EquipmentPanel")
+	if existing:
+		existing.queue_free()
+		return
+	var panel = EQUIPMENT_PANEL_SCRIPT.new()
+	panel.name = "EquipmentPanel"
+	add_child(panel)
