@@ -29,7 +29,10 @@ func on_battle_started(player: Node) -> void:
 	for set_id in tiers.keys():
 		var count: int = int(tiers[set_id])
 		var set_data: Dictionary = RunManager.get_equipment_set_data(str(set_id))
-		var tier_list = set_data.get("tiers", [])
+		# Tiers are additive: a 5-piece set grants BOTH its 3-piece tier effect AND
+		# its 5-piece tier effect simultaneously (standard RPG set-bonus pattern).
+		# This is by design, not a bug — match every tier whose threshold is met.
+		var tier_list: Variant = set_data.get("tiers", [])
 		if typeof(tier_list) != TYPE_ARRAY:
 			continue
 		for tier in tier_list:
@@ -46,17 +49,19 @@ func on_battle_started(player: Node) -> void:
 	for entry in _active_effects:
 		var effect: Dictionary = entry["effect"]
 		if str(effect.get("type", "")) == "start_battle_block":
-			var amount = int(effect.get("amount", 0))
+			var amount: int = int(effect.get("amount", 0))
 			if player and player.has_method("add_block"):
 				player.add_block(amount)
 				_notify("%s: +%d Block (battle start)" % [entry["tier_label"], amount], Color(0.45, 0.7, 1.0))
 
 
 ## Apply start_turn_block / start_turn_energy effects.
+## Note: round_number is accepted for API parity with relic_effect_system but
+## set effects intentionally fire every turn (no once-per-combat gating).
 func on_player_turn_started(player: Node, _round_number: int) -> void:
 	for entry in _active_effects:
 		var effect: Dictionary = entry["effect"]
-		var amount = int(effect.get("amount", 0))
+		var amount: int = int(effect.get("amount", 0))
 		match str(effect.get("type", "")):
 			"start_turn_block":
 				if player and player.has_method("add_block"):
