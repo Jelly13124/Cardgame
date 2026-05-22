@@ -216,6 +216,7 @@ func _on_node_clicked(node: Dictionary) -> void:
 			_open_relic_choice("Choose Your Starting Relic", "starting")
 		"enemy", "elite", "boss":
 			rm.current_encounter = rm.select_encounter(node.type, int(node.floor))
+			rm.last_battle_node_type = node.type
 			get_tree().change_scene_to_file(rm.BATTLE_SCENE)
 		"rest":
 			var heal = int(rm.max_health * 0.25)

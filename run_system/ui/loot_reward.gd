@@ -6,6 +6,8 @@ const CARD_REWARD_ICON_PATH := "res://run_system/assets/images/loot_ui/card_rewa
 # Shared palette lives in run_system/ui/theme/wasteland_theme.gd as
 # `T.PANEL_BG` etc. — see wasteland_theme.gd for all colors / builders.
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
+const INVENTORY_FULL_MODAL = preload("res://run_system/ui/inventory_full_modal.gd")
+const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 
 # Card IDs available for drafting - must match filenames in card_info/player/
 var draft_pool = [
@@ -90,6 +92,8 @@ func _populate_loot_ui() -> void:
 
 	for loot in available_loot:
 		loot_list_container.add_child(_make_loot_row(loot))
+
+	_build_equipment_drop_row(loot_list_container)
 
 
 func _make_loot_row(loot: Dictionary) -> Button:
@@ -327,6 +331,92 @@ func _on_skip_draft_pressed() -> void:
 func _close_card_draft() -> void:
 	loot_root.visible = true
 	draft_overlay.visible = false
+
+
+## Returns "" if no drop. Otherwise an equipment id.
+func _roll_drop_for_node_type(node_type: String) -> String:
+	match node_type:
+		"elite":
+			return RunManager.roll_equipment_drop("uncommon")
+		"boss":
+			return RunManager.roll_equipment_drop("rare")
+		_:
+			return ""
+
+## Build the equipment drop row. Append into the existing reward layout VBox.
+func _build_equipment_drop_row(parent: Node) -> void:
+	var drop_id = _roll_drop_for_node_type(RunManager.last_battle_node_type)
+	if drop_id == "":
+		return
+
+	var data = RunManager.get_equipment_data(drop_id)
+	var slot = str(data.get("slot", "head"))
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	parent.add_child(row)
+
+	var icon := EQUIPMENT_ICON.new()
+	icon.set_equipment(slot, str(data.get("name", drop_id)), str(data.get("sprite", "")))
+	row.add_child(icon)
+
+	var label := Label.new()
+	label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
+	var set_tag := ""
+	if str(data.get("set_id", "")) != "":
+		set_tag = "  [%s set]" % str(data.get("set_id"))
+	label.text = "EQUIPMENT DROP: %s%s\n%s" % [
+		str(data.get("name", drop_id)),
+		set_tag,
+		_format_equipment_bonuses(data.get("bonuses", {})),
+	]
+	row.add_child(label)
+
+	var take_btn := Button.new()
+	take_btn.text = "TAKE"
+	take_btn.pressed.connect(_on_take_equipment.bind(drop_id, take_btn, row))
+	row.add_child(take_btn)
+
+	var skip_btn := Button.new()
+	skip_btn.text = "SKIP"
+	skip_btn.pressed.connect(func():
+		take_btn.disabled = true
+		skip_btn.disabled = true
+		take_btn.text = "SKIPPED"
+	)
+	row.add_child(skip_btn)
+
+
+func _on_take_equipment(item_id: String, take_btn: Button, row: HBoxContainer) -> void:
+	if RunManager.add_to_inventory(item_id):
+		take_btn.disabled = true
+		take_btn.text = "TAKEN"
+		# Disable skip button alongside
+		for child in row.get_children():
+			if child is Button and child != take_btn:
+				child.disabled = true
+		return
+	# Inventory full → open modal
+	var modal = INVENTORY_FULL_MODAL.new()
+	modal.setup(item_id)
+	modal.resolved.connect(func(took_item: bool):
+		if took_item:
+			take_btn.disabled = true
+			take_btn.text = "TAKEN"
+		for child in row.get_children():
+			if child is Button and child != take_btn:
+				child.disabled = true
+	)
+	add_child(modal)
+
+
+func _format_equipment_bonuses(bonuses) -> String:
+	if typeof(bonuses) != TYPE_DICTIONARY or bonuses.is_empty():
+		return "(no bonuses)"
+	var parts: Array = []
+	for attr in bonuses.keys():
+		parts.append("+%d %s" % [int(bonuses[attr]), str(attr).substr(0, 3)])
+	return ", ".join(parts)
 
 
 func _load_texture(path: String) -> Texture2D:
