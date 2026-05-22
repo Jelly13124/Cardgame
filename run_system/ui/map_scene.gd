@@ -229,6 +229,7 @@ func _on_node_clicked(node: Dictionary) -> void:
 		"unknown":
 			if randf() < 0.5:
 				rm.current_encounter = rm.select_encounter("enemy", int(node.floor))
+				rm.last_battle_node_type = "enemy"
 				get_tree().change_scene_to_file(rm.BATTLE_SCENE)
 			else:
 				var gold = randi_range(5, 20)

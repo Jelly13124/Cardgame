@@ -394,6 +394,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String]) -> void:
 	inventory_items.clear()
 	relics.clear()
 	current_encounter = ["trash_robot"]
+	last_battle_node_type = "enemy"
 	generate_map(12, 4)
 	base_attributes = {
 		"strength": 3, "constitution": 3,
@@ -631,15 +632,13 @@ func roll_equipment_drop(rarity: String) -> String:
 	if dir == null:
 		return ""
 	var candidates: Array[String] = []
-	dir.list_dir_begin()
-	var file_name = dir.get_next()
-	while file_name != "":
-		if file_name.ends_with(".json") and not dir.current_is_dir():
-			var item_id = file_name.get_basename()
-			var data = get_equipment_data(item_id)
-			if str(data.get("rarity", "")) == rarity:
-				candidates.append(item_id)
-		file_name = dir.get_next()
+	for file_name in dir.get_files():
+		if not file_name.ends_with(".json"):
+			continue
+		var item_id = file_name.get_basename()
+		var data = get_equipment_data(item_id)
+		if str(data.get("rarity", "")) == rarity:
+			candidates.append(item_id)
 	if candidates.is_empty():
 		return ""
 	return candidates[randi() % candidates.size()]
