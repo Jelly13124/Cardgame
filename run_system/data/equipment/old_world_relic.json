@@ -1,0 +1,9 @@
+{
+  "id": "old_world_relic",
+  "name": "Old World Relic",
+  "slot": "accessory",
+  "rarity": "rare",
+  "bonuses": { "intelligence": 2, "charm": 2 },
+  "description": "Hums softly. Asks questions you can't answer.",
+  "sprite": "equipment/old_world_relic.png"
+}

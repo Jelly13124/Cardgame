@@ -8,7 +8,7 @@ const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 
 var _slot_rows: Dictionary = {}        # slot → { icon, name_label, action_button }
 var _inventory_container: VBoxContainer
-var _inventory_title: Label             # NEW
+var _inventory_title: Label  # Direct field reference for the inventory header (replaces a fragile tree search).
 var _sets_container: VBoxContainer
 var _stats_label: Label
 var _status_label: Label                # transient "INVENTORY FULL" etc.
@@ -215,7 +215,7 @@ func _build_inventory_row(item_id: String, index: int) -> HBoxContainer:
 
 	var discard_btn := Button.new()
 	discard_btn.text = "DISCARD"
-	discard_btn.pressed.connect(_on_discard_pressed.bind(index))
+	discard_btn.pressed.connect(_on_discard_pressed.bind(index, discard_btn))
 	row.add_child(discard_btn)
 
 	return row
@@ -260,7 +260,9 @@ func _on_unequip_pressed(slot: String) -> void:
 		_status_label.text = "INVENTORY FULL — discard something first to unequip"
 
 
-func _on_discard_pressed(index: int) -> void:
+func _on_discard_pressed(index: int, btn: Button) -> void:
+	if btn:
+		btn.disabled = true  # Prevent same-frame double-click discarding wrong index after refresh.
 	RunManager.discard_from_inventory(index)
 
 
