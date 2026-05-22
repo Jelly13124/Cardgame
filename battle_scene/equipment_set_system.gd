@@ -75,7 +75,7 @@ func on_player_turn_started(player: Node, _round_number: int) -> void:
 
 ## Add skill_block_bonus to gain_block amount when card is a skill.
 func modify_card_block(card: Node, amount: int) -> int:
-	if card == null or not card.card_info.get("type", "") == "skill":
+	if card == null or card.card_info.get("type", "").to_lower() != "skill":
 		return amount
 	var result = amount
 	for entry in _active_effects:
@@ -87,7 +87,7 @@ func modify_card_block(card: Node, amount: int) -> int:
 
 ## Add attack_damage_bonus to deal_damage amount when card is an attack.
 func modify_card_damage(card: Node, amount: int) -> int:
-	if card == null or not card.card_info.get("type", "") == "attack":
+	if card == null or card.card_info.get("type", "").to_lower() != "attack":
 		return amount
 	var result = amount
 	for entry in _active_effects:
@@ -99,7 +99,7 @@ func modify_card_damage(card: Node, amount: int) -> int:
 
 ## Apply attack_apply_status to target after damage resolves on an attack card.
 func on_card_damage_resolved(card: Node, target: Node) -> void:
-	if card == null or not card.card_info.get("type", "") == "attack":
+	if card == null or card.card_info.get("type", "").to_lower() != "attack":
 		return
 	if target == null or not is_instance_valid(target):
 		return
