@@ -8,6 +8,7 @@ const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 
 var _slot_rows: Dictionary = {}        # slot → { icon, name_label, action_button }
 var _inventory_container: VBoxContainer
+var _inventory_title: Label             # NEW
 var _sets_container: VBoxContainer
 var _stats_label: Label
 var _status_label: Label                # transient "INVENTORY FULL" etc.
@@ -87,11 +88,11 @@ func _build() -> void:
 	inv_col.add_theme_constant_override("separation", 8)
 	inv_col.custom_minimum_size = Vector2(420, 0)
 	body.add_child(inv_col)
-	var inv_title := Label.new()
-	inv_title.name = "InventoryTitle"
-	inv_title.text = "── INVENTORY (0/8) ──"
-	inv_title.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
-	inv_col.add_child(inv_title)
+	_inventory_title = Label.new()
+	_inventory_title.name = "InventoryTitle"
+	_inventory_title.text = "── INVENTORY (0/8) ──"
+	_inventory_title.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
+	inv_col.add_child(_inventory_title)
 	_inventory_container = VBoxContainer.new()
 	_inventory_container.add_theme_constant_override("separation", 6)
 	inv_col.add_child(_inventory_container)
@@ -160,10 +161,9 @@ func _refresh() -> void:
 			]
 			row["action_button"].visible = true
 
-	# Inventory title — find by name since the layout is nested
-	var title_label := _find_label_by_name(self, "InventoryTitle")
-	if title_label:
-		title_label.text = "── INVENTORY (%d/%d) ──" % [RunManager.inventory_items.size(), RunManager.MAX_INVENTORY]
+	# Inventory title
+	if _inventory_title:
+		_inventory_title.text = "── INVENTORY (%d/%d) ──" % [RunManager.inventory_items.size(), RunManager.MAX_INVENTORY]
 
 	# Inventory rows (rebuild every refresh — simpler than diffing)
 	for child in _inventory_container.get_children():
@@ -277,15 +277,3 @@ func _spacer() -> Control:
 	var s = Control.new()
 	s.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	return s
-
-
-## Recursively find a Label child by name. Needed because the nested layout
-## makes hardcoded paths brittle.
-func _find_label_by_name(root: Node, target_name: String) -> Label:
-	if root.name == target_name and root is Label:
-		return root
-	for child in root.get_children():
-		var found = _find_label_by_name(child, target_name)
-		if found:
-			return found
-	return null
