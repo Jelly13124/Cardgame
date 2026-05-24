@@ -425,6 +425,51 @@ func remove_card_from_deck_by_uid(uid: String) -> bool:
 	return false
 
 
+# --- Shop purchases (gold-gated wrappers) -----------------------------------
+
+## Spend gold to add a card to the deck. Returns false on insufficient gold.
+func purchase_card(card_id: String, cost: int) -> bool:
+	if gold < cost or card_id == "":
+		return false
+	add_resources(-cost, 0)
+	add_card_to_deck(card_id)
+	return true
+
+
+## Spend gold to add equipment to inventory. Returns false on insufficient
+## gold OR inventory full (caller should show inventory-full UI if relevant).
+func purchase_equipment(item_id: String, cost: int) -> bool:
+	if gold < cost or item_id == "":
+		return false
+	if inventory_items.size() >= MAX_INVENTORY:
+		return false  # caller handles UI; we don't auto-overflow paid purchases
+	add_resources(-cost, 0)
+	add_to_inventory(item_id)
+	return true
+
+
+## Spend gold to add a relic. Returns false on insufficient gold or duplicate.
+func purchase_relic(relic_id: String, cost: int) -> bool:
+	if gold < cost or relic_id == "":
+		return false
+	if relic_id in relics:
+		return false  # already owned
+	add_resources(-cost, 0)
+	add_relic(relic_id)
+	return true
+
+
+## Spend gold to remove a card from the deck. Returns false on insufficient
+## gold or unknown uid.
+func purchase_card_removal(uid: String, cost: int) -> bool:
+	if gold < cost or uid == "":
+		return false
+	if not remove_card_from_deck_by_uid(uid):
+		return false
+	add_resources(-cost, 0)
+	return true
+
+
 ## Upgrade the deck entry matching uid: swap card_id from "X" to "X_plus".
 ## Returns false if uid not found, already upgraded, or no _plus JSON exists.
 ## Card upgrade is one-shot per card within a run.

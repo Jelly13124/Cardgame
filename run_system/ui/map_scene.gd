@@ -224,7 +224,7 @@ func _on_node_clicked(node: Dictionary) -> void:
 		"rest":
 			_open_rest_choice()
 		"merchant":
-			_show_popup("The merchant waves... nothing to sell yet.")
+			get_tree().change_scene_to_file("res://run_system/ui/shop_scene.tscn")
 		"treasure":
 			if randf() < 0.5:
 				_open_relic_choice("Choose a Relic", "treasure")
