@@ -4,7 +4,7 @@
   "slot": "chest",
   "rarity": "uncommon",
   "set_id": "tank_engineer",
-  "bonuses": { "constitution": 3 },
+  "bonuses": { "constitution": 2 },
   "description": "Welded scrap iron over a leather core.",
   "sprite": "equipment/tank_engineer_vest.png"
 }

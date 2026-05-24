@@ -4,7 +4,7 @@
   "slot": "accessory",
   "rarity": "common",
   "set_id": "weak_hunter",
-  "bonuses": { "intelligence": 1, "charm": 1 },
+  "bonuses": { "intelligence": 1 },
   "description": "A pendant carved from chipped bone.",
   "sprite": "equipment/weak_hunter_trinket.png"
 }

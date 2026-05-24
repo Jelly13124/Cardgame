@@ -34,6 +34,15 @@ Color palette guidance:
 - Outlines: bold black pixel outlines
 - Shading: controlled pixel shading, not high-res cartoon brushwork
 
+### Rarity bonus budget (data contract for `bonuses` field)
+
+Equipment stat bonuses follow a tight per-rarity budget (set 2026-05-22):
+- **Common** — `+1` to a single attribute (one key in `bonuses`)
+- **Uncommon** — `+2` total (split as `{x: 1, y: 1}` OR concentrated as `{x: 2}`)
+- **Rare** — `+3` total (split as `{x: 2, y: 1}` OR concentrated as `{x: 3}`)
+
+Total stat budget per full 5-slot loadout: 5×common = +5, or mixed rarities scale up. This keeps equipment as a complementary axis to cards rather than dominating the build.
+
 ---
 
 ## 1. Pipeline Reminders
