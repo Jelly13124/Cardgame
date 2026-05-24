@@ -381,12 +381,15 @@ Final Godot assets are PNG files. Character and FX sheets use a solid `#FF00FF` 
 - Fixed starter decks with map/reward progression
 - Loot reward with equipment drops
 
-### ⬜ Phase 3 — Equipment & Relics
-- Equipment system: 5 slots, stat bonuses, swap on map screen
-- Relic system: passive run effects, JSON-driven
-- Shop scene: buy cards, equipment, relics; remove cards
-- Rest site scene: heal or upgrade a card
-- Card upgrade system
+### ✅ Phase 3 — Equipment & Relics (Complete)
+- ✅ Equipment system: 5 body-part slots, stat bonuses, swap on map screen, 2 sets with tiered bonuses (3-piece / 5-piece), 18 items (10 common / 4 uncommon / 4 rare)
+- ✅ Inventory cap (8 items) + inventory-full discard modal
+- ✅ Elite/Boss loot equipment drops; treasure node 50/50 relic or equipment (70/30 uncommon/rare)
+- ✅ Relic system: passive run effects, JSON-driven (RelicEffectSystem)
+- ✅ Shop scene (merchant node): 3 cards + 2 equipment + 1 relic + remove-card service (75g)
+- ✅ Rest site: choice between Heal 25% HP and Upgrade a Card
+- ✅ Card upgrade system: 17 `_plus` variants, `RunManager.upgrade_card_by_uid` + CardUpgradeModal; upgrade = card_id swap (e.g., `strike` → `strike_plus`)
+- ✅ Character info panel (map screen): HP / Gold / Floor + equipment slots + inventory + active sets + relics + stats — one consolidated view
 
 ### ⬜ Phase 4 — Base Building & Meta-Progression
 - Home base scene with upgrade nodes

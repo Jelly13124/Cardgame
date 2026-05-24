@@ -59,19 +59,41 @@ The old root-level `skills/` workflow docs have been removed. Project convention
 
 ### 💰 Loot & Rewards
 *   **Reward Screen**: `run_system/ui/loot_reward.gd`
-    *   *Where the **Gold Reward (10 Gold)** is set and the **Card Rarity Rolls (70/25/5)** are calculated.*
+    *   *Gold reward (10g) + card rarity rolls (70/25/5) + elite/boss equipment drop row + draft overlay.*
 *   **Card Factory**: `addons/card-framework/json_card_factory.gd`
-    *   *The technical backend that loads JSON files and converts them into Card nodes.*
+    *   *Loads `card_info/player/{card_id}.json` and returns Card nodes. Handles `_plus` variants transparently — no factory changes needed for upgrades.*
+
+### 🛒 Shop & Rest
+*   **Shop Scene**: `run_system/ui/shop_scene.tscn` + `.gd`
+    *   *Merchant map node loads this. Rolls 3 cards + 2 equipment + 1 relic + remove-card service. Prices and pools defined at the top of the script.*
+*   **Rest Choice Modal**: built inline in `map_scene.gd` (`_open_rest_choice`)
+    *   *HEAL 25% HP or UPGRADE A CARD; upgrade reuses `card_upgrade_modal.gd`.*
+
+### 🃏 Card Upgrade System
+*   **Upgrade Picker**: `run_system/ui/card_upgrade_modal.gd`
+    *   *Modal listing every non-upgraded deck card. Click → calls `RunManager.upgrade_card_by_uid(uid)`.*
+*   **Upgrade variants**: `battle_scene/card_info/player/{card_id}_plus.json`
+    *   *17 files mirror base cards with stronger numbers. Reuse base card art (`front_image` field points to the same PNG).*
+*   **Mechanic**: Upgrading swaps the deck entry's `card_id` from `"X"` to `"X_plus"`. Loader is unchanged.
+
+### 🎒 Equipment System
+*   **Data**: `run_system/data/equipment/{item_id}.json` (18 items) + `run_system/data/equipment_sets/{set_id}.json` (2 sets)
+*   **Set Effect System**: `battle_scene/equipment_set_system.gd` — snapshots active tier effects at battle start; mirrors `relic_effect_system.gd` shape.
+*   **Equipment Icon Component**: `run_system/ui/equipment_icon.gd` — reusable placeholder (colored panel + slot letter) with PNG fallback.
+*   **Character Panel**: `run_system/ui/equipment_panel.gd` — map-screen modal showing HP/Gold/Floor + slots + inventory + active sets + relics + stats. Open via `⚔ CHARACTER` button.
+*   **Inventory Full Modal**: `run_system/ui/inventory_full_modal.gd` — discard-or-skip flow when bag overflows.
 
 ### 🏃 Run Management
-*   **Global State**: `run_system/core/run_manager.gd`
-    *   *Persistent data like current Gold, Deck list, and Map progress.*
+*   **Global State**: `run_system/core/run_manager.gd` (autoload)
+    *   *Gold, deck, equipped items, inventory, base_attributes, player_attributes (computed), relics, map state. Public API: `add_card_to_deck`, `remove_card_from_deck_by_uid`, `upgrade_card_by_uid`, `equip_to_slot`, `unequip_slot`, `add_to_inventory`, `discard_from_inventory`, `purchase_*` (shop-gated wrappers), `recompute_attributes`, `get_active_set_tiers`.*
 
 ---
 
 ## 🖼️ Asset Locations
 
-*   **Card Illustrations (PNG)**: `battle_scene/assets/images/cards/player/`
+*   **Card Illustrations (PNG)**: `battle_scene/assets/images/cards/player/` (base + `_plus` reuses base art)
+*   **Equipment Icons (PNG)**: `battle_scene/assets/images/equipment/` (codex generates; falls back to placeholder if missing)
+*   **Shop Scene Art (PNG, optional)**: `run_system/assets/images/shop/` (background + shopkeeper; codex generates)
 *   **Hero Sprites (PNG/Animated)**: `battle_scene/assets/images/heroes/cowboy_bill/`
 *   **Enemy Sprites (PNG/Animated)**: `battle_scene/assets/images/enemies/`
 *   **Battle Backgrounds**: `battle_scene/assets/images/backgrounds/`
@@ -81,10 +103,12 @@ The old root-level `skills/` workflow docs have been removed. Project convention
 ---
 
 ## Data Files
-This project no longer keeps local workflow skills in the repository. Use the canonical docs in `docs/` instead:
+All gameplay content is data-driven. Add GDScript only when introducing a new shared effect, trigger, or UI surface.
 
-*   **Player Cards**: `battle_scene/card_info/player/{card_id}.json`
+*   **Player Cards**: `battle_scene/card_info/player/{card_id}.json` (base + `{card_id}_plus.json` for upgrades)
 *   **Enemies**: `battle_scene/card_info/enemy/{enemy_id}.json`
 *   **Relics**: `run_system/data/relics/{relic_id}.json`
+*   **Equipment**: `run_system/data/equipment/{item_id}.json` (rarity budget: common=+1, uncommon=+2 total, rare=+3 total)
+*   **Equipment Sets**: `run_system/data/equipment_sets/{set_id}.json` (each set has 2 tiers: 3-piece + 5-piece)
 
-New gameplay content should be data-driven first. Add GDScript only when introducing a new shared effect, trigger, or UI surface.
+All schemas validated at startup by `battle_scene/data_validator.gd`.
