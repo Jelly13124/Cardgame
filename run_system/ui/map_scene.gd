@@ -8,6 +8,8 @@ const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const MAP_RENDERER_SCRIPT = preload("res://run_system/ui/map_renderer.gd")
 const EQUIPMENT_PANEL_SCRIPT = preload("res://run_system/ui/equipment_panel.gd")
 const INVENTORY_FULL_MODAL_FOR_TREASURE = preload("res://run_system/ui/inventory_full_modal.gd")
+const CARD_UPGRADE_MODAL = preload("res://run_system/ui/card_upgrade_modal.gd")
+const T_THEME = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_pixel_bg.png"
 const NODE_ICON_DIR = "res://run_system/assets/images/map/nodes/"
 
@@ -220,9 +222,7 @@ func _on_node_clicked(node: Dictionary) -> void:
 			rm.last_battle_node_type = node.type
 			get_tree().change_scene_to_file(rm.BATTLE_SCENE)
 		"rest":
-			var heal = int(rm.max_health * 0.25)
-			rm.modify_health(heal)
-			_show_popup("Rested. Healed %d HP." % heal)
+			_open_rest_choice()
 		"merchant":
 			_show_popup("The merchant waves... nothing to sell yet.")
 		"treasure":
@@ -422,6 +422,7 @@ func _build_equipment_button() -> void:
 	var equip_btn := Button.new()
 	equip_btn.text = "⚔ CHARACTER"
 	equip_btn.add_theme_font_size_override("font_size", 16)
+	T.apply_button_theme(equip_btn)
 	# Anchor to top-right corner with a small margin
 	equip_btn.anchor_left = 1.0
 	equip_btn.anchor_right = 1.0
@@ -468,3 +469,83 @@ func _grant_treasure_equipment() -> void:
 			_show_popup("Left %s behind." % item_name)
 	)
 	add_child(modal)
+
+
+## Rest-stop choice modal. Player picks HEAL (25% HP) or UPGRADE (open card
+## picker). Cancelling the picker returns to this choice; once a path
+## resolves, the modal closes and the rest is consumed.
+func _open_rest_choice() -> void:
+	var existing = get_node_or_null("RestChoiceModal")
+	if existing:
+		return  # already open
+
+	var modal := Control.new()
+	modal.name = "RestChoiceModal"
+	modal.set_anchors_preset(Control.PRESET_FULL_RECT)
+	modal.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(modal)
+
+	var bg := ColorRect.new()
+	bg.color = Color(0, 0, 0, 0.6)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_STOP
+	modal.add_child(bg)
+
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	modal.add_child(center)
+
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", T_THEME.panel_textured("dark"))
+	panel.custom_minimum_size = Vector2(520, 220)
+	center.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_top", 18)
+	margin.add_theme_constant_override("margin_bottom", 18)
+	panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 16)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "REST STOP"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color(1, 0.95, 0.5))
+	vbox.add_child(title)
+
+	var buttons := HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	buttons.add_theme_constant_override("separation", 18)
+	vbox.add_child(buttons)
+
+	var heal_btn := Button.new()
+	heal_btn.text = "HEAL 25%% HP"  # %% escapes the % for any future format use
+	heal_btn.custom_minimum_size = Vector2(200, 60)
+	heal_btn.pressed.connect(func():
+		var heal_amount = int(rm.max_health * 0.25)
+		rm.modify_health(heal_amount)
+		_show_popup("Rested. Healed %d HP." % heal_amount)
+		modal.queue_free()
+	)
+	buttons.add_child(heal_btn)
+
+	var upgrade_btn := Button.new()
+	upgrade_btn.text = "UPGRADE A CARD"
+	upgrade_btn.custom_minimum_size = Vector2(200, 60)
+	upgrade_btn.pressed.connect(func():
+		var picker = CARD_UPGRADE_MODAL.new()
+		picker.picked.connect(func(uid: String):
+			if uid == "":
+				# Cancelled — leave rest choice open so player can pick HEAL
+				return
+			_show_popup("Card upgraded.")
+			modal.queue_free()
+		)
+		modal.add_child(picker)
+	)
+	buttons.add_child(upgrade_btn)
