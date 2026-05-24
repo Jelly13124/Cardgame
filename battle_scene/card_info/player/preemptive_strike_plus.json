@@ -1,0 +1,13 @@
+{
+	"name": "preemptive_strike_plus",
+	"title": "Preemptive Strike+",
+	"rarity": "rare",
+	"type": "skill",
+	"cost": 1,
+	"description": "Your next 2 attacks deal double damage.",
+	"front_image": "player/preemptive_strike.png",
+	"side": "player",
+	"effects": [
+		{ "type": "apply_status_self", "status": "double_damage", "stacks": 2 }
+	]
+}

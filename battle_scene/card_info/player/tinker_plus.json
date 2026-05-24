@@ -1,0 +1,14 @@
+{
+	"name": "tinker_plus",
+	"title": "Tinker+",
+	"rarity": "common",
+	"type": "skill",
+	"cost": 1,
+	"description": "Gain 1 Strength and 5 Block.",
+	"front_image": "player/tinker.png",
+	"side": "player",
+	"effects": [
+		{ "type": "gain_strength", "amount": 1 },
+		{ "type": "gain_block", "amount": 5, "scaling": "constitution" }
+	]
+}
