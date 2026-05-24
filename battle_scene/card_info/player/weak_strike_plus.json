@@ -1,0 +1,14 @@
+{
+	"name": "weak_strike_plus",
+	"title": "Weak Strike+",
+	"rarity": "common",
+	"type": "attack",
+	"cost": 1,
+	"description": "Deal [b]4+Strength[/b] damage. Apply [b]2 Weak[/b].",
+	"front_image": "player/weak_strike.png",
+	"side": "player",
+	"effects": [
+		{ "type": "deal_damage", "amount": 4, "scaling": "strength" },
+		{ "type": "apply_status", "status": "weak", "stacks": 2 }
+	]
+}

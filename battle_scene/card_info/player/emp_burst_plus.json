@@ -1,0 +1,13 @@
+{
+	"name": "emp_burst_plus",
+	"title": "EMP Burst+",
+	"rarity": "uncommon",
+	"type": "skill",
+	"cost": 2,
+	"description": "Apply 3 Shock to all enemies.",
+	"front_image": "player/emp_burst.png",
+	"side": "player",
+	"effects": [
+		{ "type": "apply_shock_all", "stacks": 3 }
+	]
+}

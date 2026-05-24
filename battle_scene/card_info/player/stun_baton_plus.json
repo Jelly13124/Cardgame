@@ -1,0 +1,14 @@
+{
+	"name": "stun_baton_plus",
+	"title": "Stun Baton+",
+	"rarity": "common",
+	"type": "attack",
+	"cost": 1,
+	"description": "Deal 6 damage. Apply 1 Shock.",
+	"front_image": "player/stun_baton.png",
+	"side": "player",
+	"effects": [
+		{ "type": "deal_damage", "amount": 6, "scaling": "strength" },
+		{ "type": "apply_shock", "stacks": 1 }
+	]
+}

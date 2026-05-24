@@ -1,0 +1,13 @@
+{
+	"name": "defend_plus",
+	"title": "Defend+",
+	"rarity": "common",
+	"type": "skill",
+	"cost": 1,
+	"description": "Gain 5+Constitution Block.",
+	"front_image": "player/defend.png",
+	"side": "player",
+	"effects": [
+		{ "type": "gain_block", "amount": 5, "scaling": "constitution" }
+	]
+}
