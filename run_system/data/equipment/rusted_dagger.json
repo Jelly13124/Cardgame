@@ -3,7 +3,7 @@
   "name": "Rusted Dagger",
   "slot": "weapon",
   "rarity": "common",
-  "bonuses": { "strength": 1, "luck": 1 },
+  "bonuses": { "strength": 1 },
   "description": "Sharp where it counts. Mostly.",
   "sprite": "equipment/rusted_dagger.png"
 }

@@ -3,7 +3,7 @@
   "name": "Wasteland Revolver",
   "slot": "weapon",
   "rarity": "rare",
-  "bonuses": { "strength": 3, "luck": 1 },
+  "bonuses": { "strength": 2, "luck": 1 },
   "description": "Six shots. Two centuries of stories.",
   "sprite": "equipment/wasteland_revolver.png"
 }

@@ -4,7 +4,7 @@
   "slot": "hands",
   "rarity": "common",
   "set_id": "tank_engineer",
-  "bonuses": { "constitution": 1, "strength": 1 },
+  "bonuses": { "constitution": 1 },
   "description": "Better than no gauntlets.",
   "sprite": "equipment/tank_engineer_gauntlets.png"
 }
