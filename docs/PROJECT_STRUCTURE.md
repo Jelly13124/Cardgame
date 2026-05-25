@@ -85,7 +85,15 @@ The old root-level `skills/` workflow docs have been removed. Project convention
 
 ### 🏃 Run Management
 *   **Global State**: `run_system/core/run_manager.gd` (autoload)
-    *   *Gold, deck, equipped items, inventory, base_attributes, player_attributes (computed), relics, map state. Public API: `add_card_to_deck`, `remove_card_from_deck_by_uid`, `upgrade_card_by_uid`, `equip_to_slot`, `unequip_slot`, `add_to_inventory`, `discard_from_inventory`, `purchase_*` (shop-gated wrappers), `recompute_attributes`, `get_active_set_tiers`.*
+    *   *Gold, deck, equipped items, inventory, base_attributes, player_attributes (computed), relics, map state. Public API: `add_card_to_deck`, `remove_card_from_deck_by_uid`, `upgrade_card_by_uid`, `equip_to_slot`, `unequip_slot`, `add_to_inventory`, `discard_from_inventory`, `purchase_*` (shop-gated wrappers), `recompute_attributes`, `get_active_set_tiers`. `start_new_run` calls `_apply_meta_upgrades` to read MetaProgress and add max HP / starting gold / starter inventory.*
+
+### 🏠 Base Building (Meta-Progression)
+*   **Persistent State**: `run_system/core/meta_progress.gd` (autoload, owns `user://meta.json`) — Core currency + per-upgrade level (0-3). API: `add_core`, `get_upgrade_level`, `can_purchase`, `purchase_upgrade`, `reset_all` (debug).
+*   **Boot Scene**: `run_system/ui/home_base_scene.{gd,tscn}` — Core counter + 5 upgrade panels + START NEW RUN
+*   **Upgrade Widget**: `run_system/ui/upgrade_panel.gd` — reusable panel (title / level dots / next-tier preview / BUY)
+*   **Extract Modal**: `run_system/ui/extract_choice_modal.gd` — F1/F2 boss post-victory prompt (extract vs continue)
+*   **Battle hook**: `battle_scene/battle_scene.gd` `_victory()` branches on `last_battle_node_type == "boss"` + floor; `_game_over()` routes to home base
+*   **Effect consumers**: `loot_reward.gd` reads `research_lab` for rarity bias; `shop_scene.gd` reads `scrap_workshop` for discount
 
 ---
 
@@ -110,5 +118,6 @@ All gameplay content is data-driven. Add GDScript only when introducing a new sh
 *   **Relics**: `run_system/data/relics/{relic_id}.json`
 *   **Equipment**: `run_system/data/equipment/{item_id}.json` (rarity budget: common=+1, uncommon=+2 total, rare=+3 total)
 *   **Equipment Sets**: `run_system/data/equipment_sets/{set_id}.json` (each set has 2 tiers: 3-piece + 5-piece)
+*   **Base Upgrades**: `run_system/data/base_upgrades/{upgrade_id}.json` (5 upgrades × 3 tiers each; effect_value schema varies per effect_key)
 
 All schemas validated at startup by `battle_scene/data_validator.gd`.
