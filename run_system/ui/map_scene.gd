@@ -214,6 +214,8 @@ func _input(event: InputEvent) -> void:
 func _on_node_clicked(node: Dictionary) -> void:
 	rm.current_node_id = node.id
 	rm.current_floor = node.floor
+	if not (node.id in rm.visited_node_ids):
+		rm.visited_node_ids.append(node.id)
 	queue_redraw()
 
 	await get_tree().create_timer(0.35).timeout

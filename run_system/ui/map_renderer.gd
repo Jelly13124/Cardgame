@@ -62,11 +62,8 @@ func _draw_map_background(vp: Vector2) -> void:
 
 
 func _draw_all_paths(vp: Vector2) -> void:
-	var current_floor = -1
-	if _scene.rm.current_node_id != "":
-		var cur = _scene.rm.get_node_by_id(_scene.rm.current_node_id)
-		if not cur.is_empty():
-			current_floor = cur.floor
+	var visited: Array = _scene.rm.visited_node_ids
+	var current_id: String = _scene.rm.current_node_id
 
 	for node in _scene.rm.map_data:
 		if node.children.is_empty():
@@ -80,22 +77,27 @@ func _draw_all_paths(vp: Vector2) -> void:
 			if from.x > vp.x + 70 and to.x > vp.x + 70:
 				continue
 
-			var color = Color(0.18, 0.72, 1.0, 0.82)
-			if node.id == _scene.rm.current_node_id:
-				color = Color(0.55, 0.95, 1.0, 0.98)
-			elif current_floor >= 0 and node.floor < current_floor:
-				color = Color(0.16, 0.44, 0.68, 0.58)
+			# Edge is "walked" only if BOTH endpoints have been visited
+			# in walk order — i.e. parent visited AND child visited.
+			var walked: bool = (node.id in visited) and (child_id in visited)
+			# Edge is "available" (next possible step) if parent is the
+			# current node and the child hasn't been entered yet.
+			var available: bool = (node.id == current_id) and not (child_id in visited)
+
+			var color: Color
+			if walked:
+				color = Color(1.0, 0.85, 0.35, 0.98)  # bright gold = walked
+			elif available:
+				color = Color(0.55, 0.95, 1.0, 0.98)  # bright cyan = next step
+			else:
+				color = Color(0.18, 0.36, 0.52, 0.32)  # very dim = unreachable
 
 			_draw_pixel_dashed_line(from, to, Color(0.02, 0.05, 0.08, color.a * 0.62), 3.2, 22.0, 12.0, Vector2(1, 2))
 			_draw_pixel_dashed_line(from, to, color, 2.1, 22.0, 12.0, Vector2.ZERO)
 
 
 func _draw_all_nodes(vp: Vector2) -> void:
-	var current_floor = -1
-	if _scene.rm.current_node_id != "":
-		var cur = _scene.rm.get_node_by_id(_scene.rm.current_node_id)
-		if not cur.is_empty():
-			current_floor = cur.floor
+	var visited_list: Array = _scene.rm.visited_node_ids
 
 	for node in _scene.rm.map_data:
 		var pos = _scene._get_screen_pos(node.id)
@@ -104,14 +106,23 @@ func _draw_all_nodes(vp: Vector2) -> void:
 
 		var accessible = _scene._is_accessible(node)
 		var is_current = node.id == _scene.rm.current_node_id
-		var visited = is_current or (current_floor >= 0 and node.floor < current_floor)
+		var visited = node.id in visited_list  # true ID-based history, not floor heuristic
 		var hovered = node.id == _scene._hovered_node_id and accessible
 
+		# Alpha tiers:
+		#   current        : 1.0  (full bright + bracket)
+		#   walked (visited): 0.75 (clearly drawn but dimmed vs current)
+		#   accessible      : 1.0  (next step — full bright so it pops)
+		#   unreachable     : 0.30 (very dim so it visually fades into background)
 		var alpha = 1.0
-		if visited and not is_current:
-			alpha = 0.52
-		elif not accessible and not visited:
-			alpha = 0.74
+		if is_current:
+			alpha = 1.0
+		elif visited:
+			alpha = 0.75
+		elif accessible:
+			alpha = 1.0
+		else:
+			alpha = 0.30
 
 		var radius = NODE_RADIUS + (4.0 if hovered else 0.0)
 		_draw_map_node(pos, node.type, radius, alpha, accessible, visited, is_current, hovered)
