@@ -400,7 +400,7 @@ Final Godot assets are PNG files. Character and FX sheets use a solid `#FF00FF` 
   - **Research Lab**: 5% / 10% / 15% chance to promote loot draft cards' rarity (Lv3 also adds +5% rare)
   - **Scrap Workshop**: 10% / 20% / 30% off all shop prices
   - **Command Center**: +50 / +120 / +200 starting gold
-- ✅ Extraction flow: F1/F2 boss kill → choose EXTRACT NOW (more Core, run ends) vs CONTINUE (less Core, push on); F3 boss completion auto-grants +150 Core
+- ✅ Boss victory grants +150 Core and returns to home base (current map has 1 boss per run; extract/continue choice deferred until map redesign adds multiple bosses)
 - ✅ Player death routes to home base (no Core gained)
 - ⬜ Hero unlock system via base upgrades (deferred — both heroes already selectable in MVP)
 

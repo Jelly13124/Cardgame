@@ -91,8 +91,7 @@ The old root-level `skills/` workflow docs have been removed. Project convention
 *   **Persistent State**: `run_system/core/meta_progress.gd` (autoload, owns `user://meta.json`) — Core currency + per-upgrade level (0-3). API: `add_core`, `get_upgrade_level`, `can_purchase`, `purchase_upgrade`, `reset_all` (debug).
 *   **Boot Scene**: `run_system/ui/home_base_scene.{gd,tscn}` — Core counter + 5 upgrade panels + START NEW RUN
 *   **Upgrade Widget**: `run_system/ui/upgrade_panel.gd` — reusable panel (title / level dots / next-tier preview / BUY)
-*   **Extract Modal**: `run_system/ui/extract_choice_modal.gd` — F1/F2 boss post-victory prompt (extract vs continue)
-*   **Battle hook**: `battle_scene/battle_scene.gd` `_victory()` branches on `last_battle_node_type == "boss"` + floor; `_game_over()` routes to home base
+*   **Battle hook**: `battle_scene/battle_scene.gd` `_victory()` grants +150 Core and routes to home base on boss kill; `_game_over()` routes to home base on death
 *   **Effect consumers**: `loot_reward.gd` reads `research_lab` for rarity bias; `shop_scene.gd` reads `scrap_workshop` for discount
 
 ---
