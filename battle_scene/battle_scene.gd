@@ -424,16 +424,42 @@ func start_spell_targeting(card: Control) -> void:
 	if not can_afford([card]):
 		show_notification("NOT ENOUGH ENERGY", Color(1, 0.2, 0.2))
 		return
-	
+
+	# Auto-target shortcut: when exactly one valid enemy is alive, skip the
+	# arrow/drag flow entirely and resolve the attack on that enemy directly.
+	# Saves the player a click-and-drag when there's no actual choice to make.
+	var sole_target = _sole_alive_enemy()
+	if sole_target:
+		if hand.has_card(card):
+			hand.remove_card(card)
+		play_spell(card, sole_target)
+		return
+
 	is_targeting = true
 	targeting_card = card
-	
+
 	if not targeting_arrow:
 		targeting_arrow = TARGETING_ARROW_SCRIPT.new()
 		add_child(targeting_arrow)
-	
+
 	var arrow_origin = card.global_position + Vector2(card.size.x * 0.5, card.size.y * 0.25)
 	targeting_arrow.start(arrow_origin)
+
+
+## Returns the single alive enemy node if exactly one exists. Otherwise null
+## (zero enemies → no target; multiple enemies → player still chooses).
+func _sole_alive_enemy() -> Node:
+	if not enemy_container:
+		return null
+	var alive: Array = []
+	for enemy in enemy_container.get_children():
+		if is_instance_valid(enemy) and enemy.has_method("take_damage"):
+			alive.append(enemy)
+			if alive.size() > 1:
+				return null  # short-circuit, more than one
+	if alive.size() == 1:
+		return alive[0]
+	return null
 
 func _cancel_spell_targeting() -> void:
 	if hovered_unit:
