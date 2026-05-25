@@ -402,6 +402,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String]) -> void:
 	}
 	player_attributes = base_attributes.duplicate()
 	is_run_active = true
+	_apply_meta_upgrades()
 	_emit_all_state()
 
 # --- Deck Management ---
@@ -652,6 +653,37 @@ func remove_relic(relic_id: String) -> bool:
 
 ## Private helper: open dir_path+id+".json", parse and return the Dictionary.
 ## Returns {} if id is empty, file is missing, or JSON is not a Dictionary.
+## Load a base-upgrade definition JSON. Returns {} if missing/invalid.
+func _load_upgrade_def(id: String) -> Dictionary:
+	var path := "res://run_system/data/base_upgrades/" + id + ".json"
+	if not FileAccess.file_exists(path):
+		return {}
+	var f := FileAccess.open(path, FileAccess.READ)
+	if not f:
+		return {}
+	var raw := f.get_as_text()
+	f.close()
+	var parsed = JSON.parse_string(raw)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return {}
+	return parsed
+
+
+## Resolve an upgrade's current-tier effect_value dictionary, or {} if not owned.
+func _get_meta_effect_value(upgrade_id: String) -> Dictionary:
+	var lvl := MetaProgress.get_upgrade_level(upgrade_id)
+	if lvl <= 0:
+		return {}
+	var def := _load_upgrade_def(upgrade_id)
+	if def.is_empty():
+		return {}
+	var tiers: Array = def.get("tiers", [])
+	if lvl > tiers.size():
+		return {}
+	var tier: Dictionary = tiers[lvl - 1]
+	return tier.get("effect_value", {})
+
+
 func _load_json_by_id(dir_path: String, id: String) -> Dictionary:
 	if id == "":
 		return {}
@@ -738,6 +770,38 @@ func roll_relic_choices(count: int = 3) -> Array[String]:
 
 func _humanize_id(value: String) -> String:
 	return value.replace("_", " ").capitalize()
+
+## Apply all owned meta-progression upgrades to the freshly-reset run state.
+## Called at the END of start_new_run (after defaults are set so we can add
+## on top of them). Pure additive — never reduces a base value.
+func _apply_meta_upgrades() -> void:
+	# Med Bay → +max HP
+	var hp := int(_get_meta_effect_value("med_bay").get("hp", 0))
+	if hp > 0:
+		max_health += hp
+		current_health = max_health
+
+	# Command Center → +starting gold
+	var bonus_gold := int(_get_meta_effect_value("command_center").get("gold", 0))
+	if bonus_gold > 0:
+		gold += bonus_gold
+
+	# Arsenal → starter inventory items
+	var arsenal := _get_meta_effect_value("arsenal")
+	if not arsenal.is_empty():
+		var commons := int(arsenal.get("commons", 0))
+		var uncommons := int(arsenal.get("uncommons", 0))
+		for i in range(commons):
+			var item_id := roll_equipment_drop("common")
+			if item_id != "":
+				add_to_inventory(item_id)
+		for i in range(uncommons):
+			var item_id := roll_equipment_drop("uncommon")
+			if item_id != "":
+				add_to_inventory(item_id)
+	# (loot_rarity_bias + shop_discount are read on-demand by loot_reward / shop_scene;
+	# nothing to apply here.)
+
 
 func _handle_run_loss() -> void:
 	is_run_active = false
