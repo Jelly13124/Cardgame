@@ -25,6 +25,18 @@ const RARITY_COLORS := {
 var _stock_cards: Array = []        # [{card_id, rarity, price}]
 var _stock_equipment: Array = []    # [{item_id, rarity, price}]
 var _stock_relic: String = ""
+var _stock_relic_price: int = 0
+var _remove_price: int = 75
+
+
+## Apply Scrap Workshop discount to a base price. Always rounds up so
+## the player never gets things free due to rounding.
+func _discounted_price(base_cost: int) -> int:
+	var bias = RunManager._get_meta_effect_value("scrap_workshop")
+	var multiplier := float(bias.get("multiplier", 1.0))
+	if multiplier >= 1.0:
+		return base_cost
+	return int(ceil(base_cost * multiplier))
 
 var _card_factory: Node
 var _gold_label: Label
@@ -56,14 +68,16 @@ func _roll_stock() -> void:
 		if pool.is_empty():
 			continue
 		var pick: String = pool[randi() % pool.size()]
-		_stock_cards.append({"card_id": pick, "rarity": rarity, "price": int(CARD_PRICE[rarity])})
+		_stock_cards.append({"card_id": pick, "rarity": rarity, "price": _discounted_price(int(CARD_PRICE[rarity]))})
 
 	for rarity in ["common", "uncommon"]:
 		var item_id = RunManager.roll_equipment_drop(rarity)
 		if item_id != "":
-			_stock_equipment.append({"item_id": item_id, "rarity": rarity, "price": int(EQUIP_PRICE[rarity])})
+			_stock_equipment.append({"item_id": item_id, "rarity": rarity, "price": _discounted_price(int(EQUIP_PRICE[rarity]))})
 
 	_stock_relic = _roll_unowned_relic()
+	_stock_relic_price = _discounted_price(RELIC_PRICE)
+	_remove_price = _discounted_price(REMOVE_CARD_PRICE)
 
 
 func _list_cards_by_rarity() -> Dictionary:
@@ -382,13 +396,13 @@ func _build_relic_stall(relic_id: String) -> Control:
 	price_row.add_theme_constant_override("separation", 10)
 	wrapper.add_child(price_row)
 	var price_lbl := Label.new()
-	price_lbl.text = "%dg" % RELIC_PRICE
+	price_lbl.text = "%dg" % _stock_relic_price
 	price_lbl.add_theme_color_override("font_color", Color(1, 0.85, 0.24))
 	price_row.add_child(price_lbl)
 	var buy_btn := Button.new()
 	buy_btn.text = "BUY"
 	buy_btn.custom_minimum_size = Vector2(100, 36)
-	buy_btn.pressed.connect(_on_buy_relic.bind(relic_id, RELIC_PRICE, buy_btn))
+	buy_btn.pressed.connect(_on_buy_relic.bind(relic_id, _stock_relic_price, buy_btn))
 	price_row.add_child(buy_btn)
 
 	return wrapper
@@ -407,7 +421,7 @@ func _build_remove_service_row() -> HBoxContainer:
 	row.add_child(info)
 
 	var price_lbl := Label.new()
-	price_lbl.text = "%dg" % REMOVE_CARD_PRICE
+	price_lbl.text = "%dg" % _remove_price
 	price_lbl.add_theme_color_override("font_color", Color(1, 0.85, 0.24))
 	row.add_child(price_lbl)
 
@@ -445,7 +459,7 @@ func _mark_sold(btn: Button) -> void:
 # --- Remove-card picker ----------------------------------------------------
 
 func _on_remove_service_pressed() -> void:
-	if RunManager.gold < REMOVE_CARD_PRICE:
+	if RunManager.gold < _remove_price:
 		return
 	if _remove_card_picker:
 		return
@@ -572,7 +586,7 @@ func _make_removal_slot(card_id: String, uid: String, modal: Control) -> Control
 
 
 func _on_remove_pick(uid: String, modal: Control) -> void:
-	if RunManager.purchase_card_removal(uid, REMOVE_CARD_PRICE):
+	if RunManager.purchase_card_removal(uid, _remove_price):
 		_mark_sold(_remove_service_btn)
 	_remove_card_picker = null
 	modal.queue_free()
