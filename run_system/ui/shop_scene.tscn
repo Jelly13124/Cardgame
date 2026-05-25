@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://d4shop2026"]
+[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://run_system/ui/shop_scene.gd" id="1_shop"]
 
