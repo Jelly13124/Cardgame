@@ -388,6 +388,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String]) -> void:
 	gold = 0
 	core = 0
 	current_floor = 0
+	max_health = 50  # base value; _apply_meta_upgrades() adds Med Bay on top
 	current_health = max_health
 	for slot in EQUIPMENT_SLOTS:
 		equipped_items[slot] = ""
