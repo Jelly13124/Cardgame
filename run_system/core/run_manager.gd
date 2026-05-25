@@ -117,6 +117,9 @@ const MAX_CHILDREN_PER_NODE: int = 3
 ## Each entry: { "id": String, "floor": int, "slot": int, "type": String, "children": Array[String] }
 var map_data: Array = []
 var current_node_id: String = "" ## "" means player hasn't chosen a floor-0 node yet
+## IDs of nodes the player has actually entered, in walk order. Used by
+## map_renderer to highlight the walked path (vs. nodes merely "below current floor").
+var visited_node_ids: Array[String] = []
 var _node_index: Dictionary = {}
 
 const DATA_VALIDATOR = preload("res://battle_scene/data_validator.gd")
@@ -141,6 +144,7 @@ func generate_map(num_floors: int = 12, width: int = 4) -> void:
 	map_data.clear()
 	_node_index.clear()
 	current_node_id = ""
+	visited_node_ids.clear()
 	
 	for f in range(num_floors):
 		# Determine how many nodes on this floor

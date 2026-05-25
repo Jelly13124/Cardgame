@@ -320,12 +320,21 @@ func _victory():
 
 
 func _show_loot_modal() -> void:
+	# Wrap in a CanvasLayer with high `layer` so the modal renders above
+	# battle_scene's TopBar/Inspect/PileViewer CanvasLayers (layers 30/100/101)
+	# AND eats mouse events so cards in hand don't react to hover.
+	var canvas := CanvasLayer.new()
+	canvas.layer = 200
+	add_child(canvas)
 	var modal = LOOT_REWARD_SCENE.instantiate()
-	modal.closed.connect(_on_loot_closed)
-	add_child(modal)
+	modal.mouse_filter = Control.MOUSE_FILTER_STOP
+	modal.closed.connect(_on_loot_closed.bind(canvas))
+	canvas.add_child(modal)
 
 
-func _on_loot_closed() -> void:
+func _on_loot_closed(canvas: CanvasLayer) -> void:
+	if is_instance_valid(canvas):
+		canvas.queue_free()
 	get_tree().change_scene_to_file(MAP_SCENE_PATH)
 
 
