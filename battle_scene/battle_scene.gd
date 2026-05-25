@@ -35,8 +35,11 @@ const EQUIPMENT_SET_SYSTEM = preload("res://battle_scene/equipment_set_system.gd
 const CARD_ANIMATOR_SCRIPT = preload("res://battle_scene/card_animator.gd")
 const DECK_MANAGER_SCRIPT = preload("res://battle_scene/deck_manager.gd")
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
-const HOME_BASE_PACKED = preload("res://run_system/ui/home_base_scene.tscn")
-const MAP_PACKED = preload("res://run_system/ui/map_scene.tscn")
+# NOTE: map_scene + home_base_scene are loaded lazily at the call site
+# (not preloaded) because doing so would create a cyclic dep
+# (map → battle → map) and the editor's static analysis chokes.
+const HOME_BASE_PATH := "res://run_system/ui/home_base_scene.tscn"
+const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 const LOOT_REWARD_SCENE = preload("res://run_system/ui/loot_reward.tscn")
 const BOSS_VICTORY_CORE := 150
 
@@ -311,7 +314,7 @@ func _victory():
 	# Boss victory → grant Core and return to home base. Non-boss → loot modal.
 	if RunManager.last_battle_node_type == "boss":
 		MetaProgress.add_core(BOSS_VICTORY_CORE)
-		get_tree().change_scene_to_packed(HOME_BASE_PACKED)
+		get_tree().change_scene_to_file(HOME_BASE_PATH)
 		return
 	_show_loot_modal()
 
@@ -323,7 +326,7 @@ func _show_loot_modal() -> void:
 
 
 func _on_loot_closed() -> void:
-	get_tree().change_scene_to_packed(MAP_PACKED)
+	get_tree().change_scene_to_file(MAP_SCENE_PATH)
 
 
 func _game_over():
@@ -332,7 +335,7 @@ func _game_over():
 	_write_hp_to_run_manager()  # Write 0 HP so RunManager knows player died
 	show_notification("DEFEAT...", Color(1, 0.1, 0.1))
 	await get_tree().create_timer(3.0).timeout
-	get_tree().change_scene_to_packed(HOME_BASE_PACKED)
+	get_tree().change_scene_to_file(HOME_BASE_PATH)
 
 ## Writes the player's current HP back to RunManager so it persists between battles.
 ## Called on both victory and defeat.
