@@ -1,5 +1,7 @@
 extends Control
 
+const MAP_PACKED = preload("res://run_system/ui/map_scene.tscn")
+
 @onready var bill_btn = $HBoxContainer/BillButton
 @onready var jerry_btn = $HBoxContainer/JerryButton
 
@@ -25,5 +27,5 @@ func _ready() -> void:
 func _select_hero(hero_id: String) -> void:
 	print("Selected Commander: ", hero_id)
 	RunManager.start_new_run(hero_id, RunManager.get_default_starter_deck())
-	get_tree().change_scene_to_file(RunManager.MAP_SCENE)
+	get_tree().change_scene_to_packed(MAP_PACKED)
 		

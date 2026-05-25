@@ -2,6 +2,7 @@ extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const RELIC_DATA_DIR := "res://run_system/data/relics/"
+const MAP_PACKED = preload("res://run_system/ui/map_scene.tscn")
 const BAR_HEIGHT := 62.0
 
 var main: Node
@@ -333,7 +334,7 @@ func _on_return_map_pressed() -> void:
 	if not (rm and rm.get("is_run_active")):
 		return
 	_hide_settings()
-	get_tree().change_scene_to_file(rm.MAP_SCENE)
+	get_tree().change_scene_to_packed(MAP_PACKED)
 
 
 func _on_relic_pressed(data: Dictionary) -> void:
