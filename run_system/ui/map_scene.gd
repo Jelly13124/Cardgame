@@ -11,6 +11,8 @@ const INVENTORY_FULL_MODAL_FOR_TREASURE = preload("res://run_system/ui/inventory
 const CARD_UPGRADE_MODAL = preload("res://run_system/ui/card_upgrade_modal.gd")
 const RUN_DECK_VIEWER_MODAL = preload("res://run_system/ui/run_deck_viewer_modal.gd")
 const T_THEME = preload("res://run_system/ui/theme/wasteland_theme.gd")
+const BATTLE_PACKED = preload("res://battle_scene/battle_scene.tscn")
+const SHOP_PACKED = preload("res://run_system/ui/shop_scene.tscn")
 const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_pixel_bg.png"
 const NODE_ICON_DIR = "res://run_system/assets/images/map/nodes/"
 
@@ -222,11 +224,11 @@ func _on_node_clicked(node: Dictionary) -> void:
 		"enemy", "elite", "boss":
 			rm.current_encounter = rm.select_encounter(node.type, int(node.floor))
 			rm.last_battle_node_type = node.type
-			get_tree().change_scene_to_file(rm.BATTLE_SCENE)
+			get_tree().change_scene_to_packed(BATTLE_PACKED)
 		"rest":
 			_open_rest_choice()
 		"merchant":
-			get_tree().change_scene_to_file("res://run_system/ui/shop_scene.tscn")
+			get_tree().change_scene_to_packed(SHOP_PACKED)
 		"treasure":
 			if randf() < 0.5:
 				_open_relic_choice("Choose a Relic", "treasure")
@@ -236,7 +238,7 @@ func _on_node_clicked(node: Dictionary) -> void:
 			if randf() < 0.5:
 				rm.current_encounter = rm.select_encounter("enemy", int(node.floor))
 				rm.last_battle_node_type = "enemy"
-				get_tree().change_scene_to_file(rm.BATTLE_SCENE)
+				get_tree().change_scene_to_packed(BATTLE_PACKED)
 			else:
 				var gold = randi_range(5, 20)
 				rm.add_resources(gold, 0)
