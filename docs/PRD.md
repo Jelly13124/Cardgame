@@ -391,12 +391,18 @@ Final Godot assets are PNG files. Character and FX sheets use a solid `#FF00FF` 
 - ✅ Card upgrade system: 17 `_plus` variants, `RunManager.upgrade_card_by_uid` + CardUpgradeModal; upgrade = card_id swap (e.g., `strike` → `strike_plus`)
 - ✅ Character info panel (map screen): HP / Gold / Floor + equipment slots + inventory + active sets + relics + stats — one consolidated view
 
-### ⬜ Phase 4 — Base Building & Meta-Progression
-- Home base scene with upgrade nodes
-- Core currency persistence across runs
-- Base upgrades: Med Bay, Arsenal, Research Lab, etc.
-- Extraction flow: post-boss choice screen → base reward
-- Hero unlock system via base upgrades
+### 🟡 Phase 4 — Base Building & Meta-Progression (MVP shipped 2026-05-25)
+- ✅ Home base scene with 5 upgrade panels + START NEW RUN button (boot scene)
+- ✅ Core currency persistence across runs via `MetaProgress` autoload (`user://meta.json`)
+- ✅ Base upgrades (5 × 3 tiers, cost 30/60/100 Core):
+  - **Med Bay**: +10/20/30 max HP at run start
+  - **Arsenal**: 1 common / 2 commons / 2 commons + 1 uncommon in starter inventory
+  - **Research Lab**: 5% / 10% / 15% chance to promote loot draft cards' rarity (Lv3 also adds +5% rare)
+  - **Scrap Workshop**: 10% / 20% / 30% off all shop prices
+  - **Command Center**: +50 / +120 / +200 starting gold
+- ✅ Extraction flow: F1/F2 boss kill → choose EXTRACT NOW (more Core, run ends) vs CONTINUE (less Core, push on); F3 boss completion auto-grants +150 Core
+- ✅ Player death routes to home base (no Core gained)
+- ⬜ Hero unlock system via base upgrades (deferred — both heroes already selectable in MVP)
 
 ### ⬜ Phase 5 — Content Expansion
 - Multiple hero archetypes with unique starting decks
