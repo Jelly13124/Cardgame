@@ -36,7 +36,7 @@ const CARD_ANIMATOR_SCRIPT = preload("res://battle_scene/card_animator.gd")
 const DECK_MANAGER_SCRIPT = preload("res://battle_scene/deck_manager.gd")
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const HOME_BASE_SCENE := "res://run_system/ui/home_base_scene.tscn"
-const LOOT_REWARD_SCENE := "res://run_system/ui/loot_reward.tscn"
+const LOOT_REWARD_SCENE = preload("res://run_system/ui/loot_reward.tscn")
 const BOSS_VICTORY_CORE := 150
 
 func _ready():
@@ -307,12 +307,22 @@ func _victory():
 	show_notification("VICTORY!", Color(0.2, 1.0, 0.2))
 	await get_tree().create_timer(3.0).timeout
 
-	# Boss victory → grant Core and return to home base. Non-boss → normal loot.
+	# Boss victory → grant Core and return to home base. Non-boss → loot modal.
 	if RunManager.last_battle_node_type == "boss":
 		MetaProgress.add_core(BOSS_VICTORY_CORE)
 		get_tree().change_scene_to_file(HOME_BASE_SCENE)
 		return
-	get_tree().change_scene_to_file(LOOT_REWARD_SCENE)
+	_show_loot_modal()
+
+
+func _show_loot_modal() -> void:
+	var modal = LOOT_REWARD_SCENE.instantiate()
+	modal.closed.connect(_on_loot_closed)
+	add_child(modal)
+
+
+func _on_loot_closed() -> void:
+	get_tree().change_scene_to_file(RunManager.MAP_SCENE)
 
 
 func _game_over():

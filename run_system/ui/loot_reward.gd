@@ -1,5 +1,11 @@
 extends Control
 
+## Emitted when player presses PROCEED. Owner (battle_scene) handles
+## the actual scene transition back to the map. When this scene is run
+## standalone (legacy path), the no-op listener falls back to the old
+## direct-change behavior in _on_proceed_pressed.
+signal closed
+
 const GOLD_ICON_PATH := "res://run_system/assets/images/loot_ui/gold_reward.png"
 const CARD_REWARD_ICON_PATH := "res://run_system/assets/images/loot_ui/card_reward.png"
 
@@ -233,7 +239,14 @@ func _on_loot_selected(loot_id: String, button: Button) -> void:
 
 
 func _on_proceed_pressed() -> void:
-	get_tree().change_scene_to_file(RunManager.MAP_SCENE)
+	# Emit signal so a parent (battle_scene) can drive the scene transition.
+	# If no one is listening (standalone use), fall back to the legacy behavior
+	# of switching scenes directly.
+	if closed.get_connections().is_empty():
+		get_tree().change_scene_to_file(RunManager.MAP_SCENE)
+		return
+	emit_signal("closed")
+	queue_free()
 
 
 func _open_card_draft() -> void:
