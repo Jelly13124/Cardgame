@@ -3,6 +3,8 @@
 extends Panel
 class_name EquipmentIcon
 
+const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
+
 const SLOT_COLORS := {
 	"head":      Color(0.66, 0.20, 0.20, 1.0),  # rust red
 	"chest":     Color(0.17, 0.35, 0.54, 1.0),  # steel blue
@@ -23,7 +25,7 @@ var _texture_rect: TextureRect
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(48, 48)
+	custom_minimum_size = Vector2(64, 64)
 	if not _label:
 		_build()
 
@@ -31,17 +33,10 @@ func _ready() -> void:
 func _build() -> void:
 	if _label:
 		return  # Already built (lazy-init path beat _ready)
-	# Background style — slot color
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.07, 0.06, 1.0)
-	style.border_color = Color(0.4, 0.32, 0.22, 1.0)
-	style.border_width_left = 2
-	style.border_width_right = 2
-	style.border_width_top = 2
-	style.border_width_bottom = 2
-	add_theme_stylebox_override("panel", style)
+	# Shared reward-style icon frame.
+	add_theme_stylebox_override("panel", T.icon_frame_style())
 
-	# Label — slot letter
+	# Label fallback for missing equipment art.
 	_label = Label.new()
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -54,23 +49,26 @@ func _build() -> void:
 	_texture_rect = TextureRect.new()
 	_texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_texture_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	_texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_texture_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_texture_rect.offset_left = 4
+	_texture_rect.offset_top = 4
+	_texture_rect.offset_right = -4
+	_texture_rect.offset_bottom = -4
 	_texture_rect.visible = false
 	add_child(_texture_rect)
 
 
-## Populate the icon. Safe to call before the node enters the scene tree —
+## Populate the icon. Safe to call before the node enters the scene tree.
 ## lazy-builds children if _ready hasn't fired yet.
 func set_equipment(slot: String, item_name: String, sprite_path: String = "") -> void:
 	if not _label:
 		_build()
-	# Style update
-	var style: StyleBoxFlat = get_theme_stylebox("panel") as StyleBoxFlat
-	if style:
-		style.bg_color = SLOT_COLORS.get(slot, Color(0.3, 0.3, 0.3))
+	add_theme_stylebox_override("panel", T.icon_frame_style())
 
 	# Label = SLOT_LETTERS preferred, else first char of item name
 	_label.text = str(SLOT_LETTERS.get(slot, item_name.substr(0, 1).to_upper()))
+	_label.modulate = Color(1, 1, 1, 1)
 	_label.visible = true
 	_texture_rect.visible = false
 
@@ -83,18 +81,28 @@ func set_equipment(slot: String, item_name: String, sprite_path: String = "") ->
 				_texture_rect.texture = tex
 				_texture_rect.visible = true
 				_label.visible = false
+				return
+
+	_apply_slot_placeholder_style(slot, 0.72)
 
 
 ## Render an "empty slot" appearance. Safe to call before _ready fires.
 func set_empty(slot: String) -> void:
 	if not _label:
 		_build()
-	var style: StyleBoxFlat = get_theme_stylebox("panel") as StyleBoxFlat
-	if style:
-		var color: Color = SLOT_COLORS.get(slot, Color(0.3, 0.3, 0.3))
-		color.a = 0.3
-		style.bg_color = color
+	_apply_slot_placeholder_style(slot, 0.26)
 	_label.text = str(SLOT_LETTERS.get(slot, "?"))
 	_label.modulate = Color(1, 1, 1, 0.4)
 	_label.visible = true
 	_texture_rect.visible = false
+
+
+func _apply_slot_placeholder_style(slot: String, alpha: float) -> void:
+	var color: Color = SLOT_COLORS.get(slot, T.DUSTY_TAUPE)
+	color.a = alpha
+	var style := T.panel_with_shadow(color, T.PANEL_BORDER, 2, 3)
+	style.content_margin_left = 2
+	style.content_margin_right = 2
+	style.content_margin_top = 2
+	style.content_margin_bottom = 2
+	add_theme_stylebox_override("panel", style)

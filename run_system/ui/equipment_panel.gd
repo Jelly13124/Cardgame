@@ -1,4 +1,4 @@
-## Map-screen character info + equipment management modal. Shows HP, gold,
+## Map-screen character info + equipment management page. Shows HP, gold,
 ## floor, relics, equipped gear, inventory, active set tiers, and attributes
 ## in one consolidated view. Built dynamically; attached as a direct child of
 ## map_scene. Listens to RunManager state signals for live refresh.
@@ -38,22 +38,26 @@ func _on_resources_changed(_gold: int, _core: int) -> void:
 
 
 func _build() -> void:
-	# Dim background
+	# Full-screen page background. This is a screen, not a modal overlay.
 	var bg := ColorRect.new()
-	bg.color = Color(0, 0, 0, 0.6)
+	bg.color = Color(0.045, 0.038, 0.030, 1.0)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(bg)
 
-	# Central panel
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(center)
+	var page_margin := MarginContainer.new()
+	page_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	page_margin.add_theme_constant_override("margin_left", 54)
+	page_margin.add_theme_constant_override("margin_right", 54)
+	page_margin.add_theme_constant_override("margin_top", 42)
+	page_margin.add_theme_constant_override("margin_bottom", 42)
+	add_child(page_margin)
 
 	var panel := PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
-	panel.custom_minimum_size = Vector2(900, 640)
-	center.add_child(panel)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	page_margin.add_child(panel)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 24)
@@ -64,6 +68,7 @@ func _build() -> void:
 
 	var vroot := VBoxContainer.new()
 	vroot.add_theme_constant_override("separation", 12)
+	vroot.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	margin.add_child(vroot)
 
 	# Title + close
@@ -71,13 +76,14 @@ func _build() -> void:
 	vroot.add_child(header)
 	var title := Label.new()
 	title.text = "CHARACTER"
-	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_font_size_override("font_size", 36)
 	title.add_theme_color_override("font_color", Color(1, 0.95, 0.8))
 	header.add_child(title)
 	header.add_child(_spacer())
 	var close_btn := Button.new()
-	close_btn.text = "X"
-	close_btn.custom_minimum_size = Vector2(40, 40)
+	close_btn.text = "BACK TO MAP"
+	close_btn.custom_minimum_size = Vector2(160, 42)
+	T.apply_button_theme(close_btn)
 	close_btn.pressed.connect(queue_free)
 	header.add_child(close_btn)
 
@@ -90,15 +96,17 @@ func _build() -> void:
 	# Two-column body
 	var body := HBoxContainer.new()
 	body.add_theme_constant_override("separation", 24)
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	vroot.add_child(body)
 
 	# Left column: slots
 	var slots_col := VBoxContainer.new()
 	slots_col.add_theme_constant_override("separation", 8)
 	slots_col.custom_minimum_size = Vector2(420, 0)
+	slots_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_child(slots_col)
 	var slots_title := Label.new()
-	slots_title.text = "── SLOTS ──"
+	slots_title.text = "SLOTS"
 	slots_title.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
 	slots_col.add_child(slots_title)
 	for slot in RunManager.EQUIPMENT_SLOTS:
@@ -108,10 +116,11 @@ func _build() -> void:
 	var inv_col := VBoxContainer.new()
 	inv_col.add_theme_constant_override("separation", 8)
 	inv_col.custom_minimum_size = Vector2(420, 0)
+	inv_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_child(inv_col)
 	_inventory_title = Label.new()
 	_inventory_title.name = "InventoryTitle"
-	_inventory_title.text = "── INVENTORY (0/8) ──"
+	_inventory_title.text = "INVENTORY (0/8)"
 	_inventory_title.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
 	inv_col.add_child(_inventory_title)
 	_inventory_container = VBoxContainer.new()
@@ -122,7 +131,7 @@ func _build() -> void:
 	var sep1 := HSeparator.new()
 	vroot.add_child(sep1)
 	var sets_title := Label.new()
-	sets_title.text = "── ACTIVE SETS ──"
+	sets_title.text = "ACTIVE SETS"
 	sets_title.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
 	vroot.add_child(sets_title)
 	_sets_container = VBoxContainer.new()
@@ -133,7 +142,7 @@ func _build() -> void:
 	var sep_relics := HSeparator.new()
 	vroot.add_child(sep_relics)
 	var relics_title := Label.new()
-	relics_title.text = "── RELICS ──"
+	relics_title.text = "RELICS"
 	relics_title.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
 	vroot.add_child(relics_title)
 	_relics_container = VBoxContainer.new()
@@ -154,9 +163,21 @@ func _build() -> void:
 
 
 func _build_slot_row(slot: String, parent: VBoxContainer) -> Dictionary:
+	var frame := PanelContainer.new()
+	frame.add_theme_stylebox_override("panel", T.reward_row_style(T.PANEL_BG, T.PANEL_BORDER))
+	frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(frame)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 10)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	frame.add_child(margin)
+
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
-	parent.add_child(row)
+	margin.add_child(row)
 
 	var icon := EQUIPMENT_ICON.new()
 	row.add_child(icon)
@@ -164,10 +185,13 @@ func _build_slot_row(slot: String, parent: VBoxContainer) -> Dictionary:
 	var label := Label.new()
 	label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
 	label.custom_minimum_size = Vector2(220, 0)
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(label)
 
 	var unequip := Button.new()
 	unequip.text = "UNEQUIP"
+	unequip.custom_minimum_size = Vector2(118, 40)
+	T.apply_button_theme(unequip)
 	unequip.pressed.connect(_on_unequip_pressed.bind(slot))
 	row.add_child(unequip)
 
@@ -189,21 +213,21 @@ func _refresh() -> void:
 		var item_id: String = RunManager.equipped_items.get(slot, "")
 		if item_id == "":
 			row["icon"].set_empty(slot)
-			row["name_label"].text = "%s — (empty)" % slot.to_upper()
+			row["name_label"].text = "%s: (empty)" % slot.to_upper()
 			row["action_button"].visible = false
 		else:
 			var data = RunManager.get_equipment_data(item_id)
 			row["icon"].set_equipment(slot, str(data.get("name", item_id)), str(data.get("sprite", "")))
-			row["name_label"].text = "%s — %s\n%s" % [
+			row["action_button"].visible = true
+			row["name_label"].text = "%s: %s\n%s" % [
 				slot.to_upper(),
 				str(data.get("name", item_id)),
 				_format_bonuses(data.get("bonuses", {})),
 			]
-			row["action_button"].visible = true
 
 	# Inventory title
 	if _inventory_title:
-		_inventory_title.text = "── INVENTORY (%d/%d) ──" % [RunManager.inventory_items.size(), RunManager.MAX_INVENTORY]
+		_inventory_title.text = "INVENTORY (%d/%d)" % [RunManager.inventory_items.size(), RunManager.MAX_INVENTORY]
 
 	# Inventory rows (rebuild every refresh — simpler than diffing)
 	for child in _inventory_container.get_children():
@@ -240,12 +264,24 @@ func _refresh() -> void:
 	_status_label.text = ""
 
 
-func _build_inventory_row(item_id: String, index: int) -> HBoxContainer:
+func _build_inventory_row(item_id: String, index: int) -> Control:
 	var data = RunManager.get_equipment_data(item_id)
 	var slot = str(data.get("slot", "head"))
 
+	var frame := PanelContainer.new()
+	frame.add_theme_stylebox_override("panel", T.reward_row_style(T.PANEL_BG, T.PANEL_BORDER))
+	frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 10)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	frame.add_child(margin)
+
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
+	margin.add_child(row)
 
 	var icon := EQUIPMENT_ICON.new()
 	icon.set_equipment(slot, str(data.get("name", item_id)), str(data.get("sprite", "")))
@@ -254,6 +290,7 @@ func _build_inventory_row(item_id: String, index: int) -> HBoxContainer:
 	var info := Label.new()
 	info.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
 	info.custom_minimum_size = Vector2(200, 0)
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var set_tag = ""
 	if str(data.get("set_id", "")) != "":
 		set_tag = "  [%s]" % str(data.get("set_id"))
@@ -262,15 +299,19 @@ func _build_inventory_row(item_id: String, index: int) -> HBoxContainer:
 
 	var equip_btn := Button.new()
 	equip_btn.text = "EQUIP"
+	equip_btn.custom_minimum_size = Vector2(96, 40)
+	T.apply_button_theme(equip_btn)
 	equip_btn.pressed.connect(_on_equip_pressed.bind(item_id, slot, index))
 	row.add_child(equip_btn)
 
 	var discard_btn := Button.new()
 	discard_btn.text = "DISCARD"
+	discard_btn.custom_minimum_size = Vector2(112, 40)
+	T.apply_button_theme(discard_btn)
 	discard_btn.pressed.connect(_on_discard_pressed.bind(index, discard_btn))
 	row.add_child(discard_btn)
 
-	return row
+	return frame
 
 
 func _build_relic_row(relic_id: String) -> Label:
@@ -280,7 +321,7 @@ func _build_relic_row(relic_id: String) -> Label:
 	var row := Label.new()
 	row.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
 	row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	row.text = "• %s — %s" % [title, description]
+	row.text = "%s: %s" % [title, description]
 	return row
 
 
