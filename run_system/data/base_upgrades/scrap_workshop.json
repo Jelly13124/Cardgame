@@ -1,0 +1,11 @@
+{
+  "id": "scrap_workshop",
+  "name": "SCRAP WORKSHOP",
+  "description": "Negotiate better prices at the merchant.",
+  "effect_key": "shop_discount",
+  "tiers": [
+    {"level": 1, "cost": 30, "effect_value": {"multiplier": 0.90}, "effect_text": "All shop prices reduced by 10%"},
+    {"level": 2, "cost": 60, "effect_value": {"multiplier": 0.80}, "effect_text": "All shop prices reduced by 20%"},
+    {"level": 3, "cost": 100, "effect_value": {"multiplier": 0.70}, "effect_text": "All shop prices reduced by 30%"}
+  ]
+}
