@@ -30,7 +30,7 @@ Phase 4 MVP closes the meta-progression loop so the game becomes a roguelite (ru
 | **Arsenal** | `starter_inventory` | 1 random common equipment in inventory at run start | 2 random commons | 2 commons + 1 uncommon |
 | **Research Lab** | `loot_rarity_bias` | Loot draft cards: +5% chance to promote one slot to uncommon | +10% promote | +15% uncommon + 5% rare |
 | **Scrap Workshop** | `shop_discount` | All shop prices ×0.90 | ×0.80 | ×0.70 |
-| **Command Center** | `map_reveal` | Reveal node types 1 floor ahead | 2 floors ahead | All floors revealed |
+| **Command Center** | `starting_gold` | +50 starting gold | +120 starting gold | +200 starting gold |
 
 ## Architecture
 
@@ -137,7 +137,7 @@ One file per upgrade. Schema:
 - `starter_inventory` → `{"commons": 2, "uncommons": 1}`
 - `loot_rarity_bias` → `{"uncommon": 0.15, "rare": 0.05}`
 - `shop_discount` → `{"multiplier": 0.70}`
-- `map_reveal` → `{"floors_ahead": 2}` (or `{"floors_ahead": -1}` for "all")
+- `starting_gold` → `{"gold": 120}`
 
 DataValidator will get a `base_upgrade` validator that checks the top-level shape (id, name, tiers array, each tier has level/cost/effect_value/effect_text) but does not enforce inner effect_value shape (per-effect consumers handle it).
 
@@ -216,7 +216,7 @@ func _apply_meta_upgrades() -> void:
 Other systems pull on demand:
 - `loot_reward.gd` — at draft roll, reads `MetaProgress.get_upgrade_level("research_lab")` → adjusts pool
 - `shop_scene.gd` — at price display, reads `scrap_workshop` level → multiplies prices
-- `map_renderer.gd` — at render, reads `command_center` level → unhides far-future nodes' icons
+- (`command_center` applies at `reset_run` — adds gold directly; no per-system hook needed)
 
 ### 6. Boot entry point (MODIFY)
 
