@@ -35,15 +35,9 @@ const EQUIPMENT_SET_SYSTEM = preload("res://battle_scene/equipment_set_system.gd
 const CARD_ANIMATOR_SCRIPT = preload("res://battle_scene/card_animator.gd")
 const DECK_MANAGER_SCRIPT = preload("res://battle_scene/deck_manager.gd")
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
-const EXTRACT_CHOICE_MODAL_SCRIPT = preload("res://run_system/ui/extract_choice_modal.gd")
-
 const HOME_BASE_SCENE := "res://run_system/ui/home_base_scene.tscn"
 const LOOT_REWARD_SCENE := "res://run_system/ui/loot_reward.tscn"
-const EXTRACT_REWARDS := {
-	1: {"continue": 25, "extract": 50},
-	2: {"continue": 50, "extract": 90},
-}
-const F3_VICTORY_CORE := 150
+const BOSS_VICTORY_CORE := 150
 
 func _ready():
 	print("BATTLE STARTING (STS Layout)")
@@ -313,36 +307,12 @@ func _victory():
 	show_notification("VICTORY!", Color(0.2, 1.0, 0.2))
 	await get_tree().create_timer(3.0).timeout
 
-	# Boss victory hook: F1/F2 → extract choice; F3 → full game complete.
+	# Boss victory → grant Core and return to home base. Non-boss → normal loot.
 	if RunManager.last_battle_node_type == "boss":
-		var floor_num: int = RunManager.current_floor
-		if floor_num >= 3:
-			MetaProgress.add_core(F3_VICTORY_CORE)
-			get_tree().change_scene_to_file(HOME_BASE_SCENE)
-			return
-		if EXTRACT_REWARDS.has(floor_num):
-			_show_extract_choice(floor_num)
-			return
-	# Non-boss → normal loot reward.
-	get_tree().change_scene_to_file(LOOT_REWARD_SCENE)
-
-
-func _show_extract_choice(floor_num: int) -> void:
-	var modal = EXTRACT_CHOICE_MODAL_SCRIPT.new()
-	modal.floor_num = floor_num
-	modal.reward_continue = int(EXTRACT_REWARDS[floor_num]["continue"])
-	modal.reward_extract = int(EXTRACT_REWARDS[floor_num]["extract"])
-	modal.chosen.connect(_on_extract_chosen.bind(floor_num))
-	add_child(modal)
-
-
-func _on_extract_chosen(extract: bool, floor_num: int) -> void:
-	if extract:
-		MetaProgress.add_core(int(EXTRACT_REWARDS[floor_num]["extract"]))
+		MetaProgress.add_core(BOSS_VICTORY_CORE)
 		get_tree().change_scene_to_file(HOME_BASE_SCENE)
-	else:
-		MetaProgress.add_core(int(EXTRACT_REWARDS[floor_num]["continue"]))
-		get_tree().change_scene_to_file(LOOT_REWARD_SCENE)
+		return
+	get_tree().change_scene_to_file(LOOT_REWARD_SCENE)
 
 
 func _game_over():
