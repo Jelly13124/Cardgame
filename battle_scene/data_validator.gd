@@ -14,6 +14,7 @@ const ENEMY_DIR     = "res://battle_scene/card_info/enemy/"
 const RELIC_DIR     = "res://run_system/data/relics/"
 const EQUIPMENT_DIR = "res://run_system/data/equipment/"
 const SET_DIR       = "res://run_system/data/equipment_sets/"
+const BASE_UPGRADE_DIR = "res://run_system/data/base_upgrades/"
 
 # ─── Card schema ──────────────────────────────────────────────────────────────
 const REQUIRED_CARD_KEYS = ["name", "title", "type", "cost", "effects"]
@@ -61,6 +62,14 @@ const ALLOWED_SET_EFFECT_TYPES = [
 ]
 const STATUS_BEARING_SET_EFFECTS = ["attack_apply_status"]
 
+# ─── Base upgrade schema ─────────────────────────────────────────────────────
+const REQUIRED_BASE_UPGRADE_KEYS = ["id", "name", "description", "effect_key", "tiers"]
+const REQUIRED_BASE_UPGRADE_TIER_KEYS = ["level", "cost", "effect_value", "effect_text"]
+const ALLOWED_BASE_UPGRADE_EFFECT_KEYS = [
+	"max_hp_bonus", "starter_inventory", "loot_rarity_bias",
+	"shop_discount", "starting_gold",
+]
+
 
 ## Scan all card / enemy / relic directories and validate every JSON file,
 ## plus cross-check that every enemy ID referenced by RunManager's encounter
@@ -74,6 +83,7 @@ static func validate_all_data_at_startup() -> int:
 	failures += _validate_dir(RELIC_DIR, Callable(DataValidator, "validate_relic"))
 	failures += _validate_dir(EQUIPMENT_DIR, Callable(DataValidator, "validate_equipment"))
 	failures += _validate_dir(SET_DIR,       Callable(DataValidator, "validate_equipment_set"))
+	failures += _validate_dir(BASE_UPGRADE_DIR, Callable(DataValidator, "validate_base_upgrade"))
 	# Cross-check encounter pools so a typo in RunManager constants fails at
 	# startup instead of crashing the player mid-combat in enemy_entity.create().
 	failures += validate_encounter_pools()
@@ -400,3 +410,35 @@ static func _read_json(path: String) -> Dictionary:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return {}
 	return parsed
+
+
+static func validate_base_upgrade(data: Dictionary, path: String) -> bool:
+	var prefix := "BaseUpgrade '%s'" % path
+	var ok := true
+	for key in REQUIRED_BASE_UPGRADE_KEYS:
+		if not data.has(key):
+			push_error("%s: missing required key '%s'" % [prefix, key])
+			ok = false
+	if not ok:
+		return false
+	if not data["effect_key"] in ALLOWED_BASE_UPGRADE_EFFECT_KEYS:
+		push_error("%s: unknown effect_key '%s' (allowed: %s)" % [prefix, data["effect_key"], ALLOWED_BASE_UPGRADE_EFFECT_KEYS])
+		ok = false
+	var tiers = data.get("tiers", [])
+	if typeof(tiers) != TYPE_ARRAY or tiers.size() == 0:
+		push_error("%s: 'tiers' must be a non-empty array" % prefix)
+		return false
+	for i in range(tiers.size()):
+		var tier = tiers[i]
+		if typeof(tier) != TYPE_DICTIONARY:
+			push_error("%s: tier %d is not a dictionary" % [prefix, i])
+			ok = false
+			continue
+		for key in REQUIRED_BASE_UPGRADE_TIER_KEYS:
+			if not tier.has(key):
+				push_error("%s: tier %d missing required key '%s'" % [prefix, i, key])
+				ok = false
+		if tier.has("effect_value") and typeof(tier["effect_value"]) != TYPE_DICTIONARY:
+			push_error("%s: tier %d 'effect_value' must be a dictionary" % [prefix, i])
+			ok = false
+	return ok
