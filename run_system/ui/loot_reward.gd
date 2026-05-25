@@ -7,7 +7,6 @@ const CARD_REWARD_ICON_PATH := "res://run_system/assets/images/loot_ui/card_rewa
 # `T.PANEL_BG` etc. — see wasteland_theme.gd for all colors / builders.
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const INVENTORY_FULL_MODAL = preload("res://run_system/ui/inventory_full_modal.gd")
-const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 
 # Card IDs available for drafting - must match filenames in card_info/player/
 var draft_pool = [
@@ -85,6 +84,22 @@ func _generate_loot() -> void:
 		"icon": CARD_REWARD_ICON_PATH
 	})
 
+	var equipment_drop_id = _roll_drop_for_node_type(RunManager.last_battle_node_type)
+	if equipment_drop_id != "":
+		var data = RunManager.get_equipment_data(equipment_drop_id)
+		var set_tag := ""
+		if str(data.get("set_id", "")) != "":
+			set_tag = " [%s set]" % str(data.get("set_id"))
+		available_loot.append({
+			"id": "equipment",
+			"type": "equipment",
+			"item_id": equipment_drop_id,
+			"title": str(data.get("name", equipment_drop_id)),
+			"subtitle": "Equipment Drop%s - %s" % [set_tag, _format_equipment_bonuses(data.get("bonuses", {}))],
+			"icon": "res://battle_scene/assets/images/%s" % str(data.get("sprite", "")),
+			"action": "TAKE"
+		})
+
 
 func _populate_loot_ui() -> void:
 	for child in loot_list_container.get_children():
@@ -92,8 +107,6 @@ func _populate_loot_ui() -> void:
 
 	for loot in available_loot:
 		loot_list_container.add_child(_make_loot_row(loot))
-
-	_build_equipment_drop_row(loot_list_container)
 
 
 func _make_loot_row(loot: Dictionary) -> Button:
@@ -146,7 +159,7 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	copy.add_child(subtitle)
 
-	row.add_child(_make_claim_plate())
+	row.add_child(_make_claim_plate(str(loot.get("action", "CLAIM"))))
 	return button
 
 
@@ -181,14 +194,14 @@ func _make_icon_well(icon_path: String) -> PanelContainer:
 	return frame
 
 
-func _make_claim_plate() -> PanelContainer:
+func _make_claim_plate(label_text: String = "CLAIM") -> PanelContainer:
 	var plate = PanelContainer.new()
 	plate.custom_minimum_size = Vector2(104, 50)
 	plate.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.08, 0.12, 0.13, 1.0), T.ACCENT_NEON_BLUE, 3))
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var label = Label.new()
-	label.text = "CLAIM"
+	label.text = label_text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 18)
@@ -215,6 +228,8 @@ func _on_loot_selected(loot_id: String, button: Button) -> void:
 	elif loot["type"] == "cards":
 		_open_card_draft()
 		button.queue_free()
+	elif loot["type"] == "equipment":
+		_claim_equipment_drop(str(loot.get("item_id", "")), button)
 
 
 func _on_proceed_pressed() -> void:
@@ -254,6 +269,8 @@ func _generate_draft_options() -> void:
 			picked_rarity = "rare"
 		elif roll < 0.30:
 			picked_rarity = "uncommon"
+
+		picked_rarity = _apply_research_lab_bias(picked_rarity)
 
 		if _rarity_pools[picked_rarity].is_empty():
 			if picked_rarity == "rare":
@@ -343,69 +360,18 @@ func _roll_drop_for_node_type(node_type: String) -> String:
 		_:
 			return ""
 
-## Build the equipment drop row. Append into the existing reward layout VBox.
-func _build_equipment_drop_row(parent: Node) -> void:
-	var drop_id = _roll_drop_for_node_type(RunManager.last_battle_node_type)
-	if drop_id == "":
+func _claim_equipment_drop(item_id: String, button: Button) -> void:
+	if item_id.is_empty():
 		return
-
-	var data = RunManager.get_equipment_data(drop_id)
-	var slot = str(data.get("slot", "head"))
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	parent.add_child(row)
-
-	var icon := EQUIPMENT_ICON.new()
-	icon.set_equipment(slot, str(data.get("name", drop_id)), str(data.get("sprite", "")))
-	row.add_child(icon)
-
-	var label := Label.new()
-	label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
-	var set_tag := ""
-	if str(data.get("set_id", "")) != "":
-		set_tag = "  [%s set]" % str(data.get("set_id"))
-	label.text = "EQUIPMENT DROP: %s%s\n%s" % [
-		str(data.get("name", drop_id)),
-		set_tag,
-		_format_equipment_bonuses(data.get("bonuses", {})),
-	]
-	row.add_child(label)
-
-	var take_btn := Button.new()
-	take_btn.text = "TAKE"
-	take_btn.pressed.connect(_on_take_equipment.bind(drop_id, take_btn, row))
-	row.add_child(take_btn)
-
-	var skip_btn := Button.new()
-	skip_btn.text = "SKIP"
-	skip_btn.pressed.connect(func():
-		take_btn.disabled = true
-		skip_btn.disabled = true
-		take_btn.text = "SKIPPED"
-	)
-	row.add_child(skip_btn)
-
-
-func _on_take_equipment(item_id: String, take_btn: Button, row: HBoxContainer) -> void:
 	if RunManager.add_to_inventory(item_id):
-		take_btn.disabled = true
-		take_btn.text = "TAKEN"
-		# Disable skip button alongside
-		for child in row.get_children():
-			if child is Button and child != take_btn:
-				child.disabled = true
+		button.queue_free()
 		return
 	# Inventory full → open modal
+	button.disabled = true
 	var modal = INVENTORY_FULL_MODAL.new()
 	modal.setup(item_id)
-	modal.resolved.connect(func(took_item: bool):
-		if took_item:
-			take_btn.disabled = true
-			take_btn.text = "TAKEN"
-		for child in row.get_children():
-			if child is Button and child != take_btn:
-				child.disabled = true
+	modal.resolved.connect(func(_took_item: bool):
+		button.queue_free()
 	)
 	add_child(modal)
 
@@ -438,3 +404,20 @@ func _load_texture(path: String) -> Texture2D:
 		return ImageTexture.create_from_image(image)
 
 	return null
+
+
+## Apply Research Lab meta-progression bias to a base rarity.
+## Returns the (possibly upgraded) rarity string. With Research Lab
+## owned, commons can promote to uncommon and uncommons to rare.
+func _apply_research_lab_bias(base_rarity: String) -> String:
+	var lvl := MetaProgress.get_upgrade_level("research_lab")
+	if lvl <= 0:
+		return base_rarity
+	var bias = RunManager._get_meta_effect_value("research_lab")
+	var uncommon_chance := float(bias.get("uncommon", 0.0))
+	var rare_chance := float(bias.get("rare", 0.0))
+	if base_rarity == "common" and randf() < uncommon_chance:
+		base_rarity = "uncommon"
+	if base_rarity == "uncommon" and randf() < rare_chance:
+		base_rarity = "rare"
+	return base_rarity
