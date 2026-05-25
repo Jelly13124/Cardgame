@@ -13,7 +13,8 @@ const CARD_REWARD_ICON_PATH := "res://run_system/assets/images/loot_ui/card_rewa
 # `T.PANEL_BG` etc. — see wasteland_theme.gd for all colors / builders.
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const INVENTORY_FULL_MODAL = preload("res://run_system/ui/inventory_full_modal.gd")
-const MAP_PACKED = preload("res://run_system/ui/map_scene.tscn")
+# Lazy-loaded at call site to avoid map→battle→loot cyclic preload.
+const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 
 # Card IDs available for drafting - must match filenames in card_info/player/
 var draft_pool = [
@@ -244,7 +245,7 @@ func _on_proceed_pressed() -> void:
 	# If no one is listening (standalone use), fall back to the legacy behavior
 	# of switching scenes directly.
 	if closed.get_connections().is_empty():
-		get_tree().change_scene_to_packed(MAP_PACKED)
+		get_tree().change_scene_to_file(MAP_SCENE_PATH)
 		return
 	emit_signal("closed")
 	queue_free()

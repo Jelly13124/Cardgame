@@ -8,7 +8,8 @@ extends Control
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 const CARD_FACTORY_SCENE = preload("res://battle_scene/my_card_factory.tscn")
-const MAP_PACKED = preload("res://run_system/ui/map_scene.tscn")
+# Lazy-loaded at call site to avoid map→shop→map cyclic preload.
+const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 
 # --- Pricing (per rarity) ---
 const CARD_PRICE := { "common": 70, "uncommon": 120, "rare": 200 }
@@ -710,7 +711,7 @@ func _on_remove_cancel(modal: Control) -> void:
 # --- Leave -----------------------------------------------------------------
 
 func _on_leave_pressed() -> void:
-	get_tree().change_scene_to_packed(MAP_PACKED)
+	get_tree().change_scene_to_file(MAP_SCENE_PATH)
 
 
 # --- Helpers ---------------------------------------------------------------
