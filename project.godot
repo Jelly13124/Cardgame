@@ -17,6 +17,7 @@ config/features=PackedStringArray("4.6", "Forward Plus")
 [autoload]
 
 RunManager="*res://run_system/core/run_manager.gd"
+MetaProgress="*res://run_system/core/meta_progress.gd"
 
 [display]
 
