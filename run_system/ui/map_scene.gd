@@ -9,6 +9,7 @@ const MAP_RENDERER_SCRIPT = preload("res://run_system/ui/map_renderer.gd")
 const EQUIPMENT_PANEL_SCRIPT = preload("res://run_system/ui/equipment_panel.gd")
 const INVENTORY_FULL_MODAL_FOR_TREASURE = preload("res://run_system/ui/inventory_full_modal.gd")
 const CARD_UPGRADE_MODAL = preload("res://run_system/ui/card_upgrade_modal.gd")
+const RUN_DECK_VIEWER_MODAL = preload("res://run_system/ui/run_deck_viewer_modal.gd")
 const T_THEME = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_pixel_bg.png"
 const NODE_ICON_DIR = "res://run_system/assets/images/map/nodes/"
@@ -59,6 +60,7 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_on_viewport_resized)
 	_build_relic_choice_layer()
 	_build_equipment_button()
+	_build_deck_button()
 
 
 func _load_texture(path: String) -> Texture2D:
@@ -444,6 +446,34 @@ func _open_equipment_panel() -> void:
 	var panel = EQUIPMENT_PANEL_SCRIPT.new()
 	panel.name = "EquipmentPanel"
 	add_child(panel)
+
+
+func _build_deck_button() -> void:
+	var deck_btn := Button.new()
+	deck_btn.text = "📚 DECK"
+	deck_btn.add_theme_font_size_override("font_size", 16)
+	T.apply_button_theme(deck_btn)
+	# Place immediately to the LEFT of the CHARACTER button
+	deck_btn.anchor_left = 1.0
+	deck_btn.anchor_right = 1.0
+	deck_btn.anchor_top = 0.0
+	deck_btn.anchor_bottom = 0.0
+	deck_btn.offset_left = -360.0
+	deck_btn.offset_right = -212.0
+	deck_btn.offset_top = 12.0
+	deck_btn.offset_bottom = 52.0
+	deck_btn.pressed.connect(_open_run_deck_viewer)
+	add_child(deck_btn)
+
+
+func _open_run_deck_viewer() -> void:
+	var existing = get_node_or_null("RunDeckViewerModal")
+	if existing:
+		existing.queue_free()
+		return
+	var modal = RUN_DECK_VIEWER_MODAL.new()
+	modal.name = "RunDeckViewerModal"
+	add_child(modal)
 
 
 ## Treasure equipment drop: 70% uncommon / 30% rare. Either adds directly to
