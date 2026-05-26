@@ -1,0 +1,16 @@
+{
+	"id": "bulk_actuator",
+	"title": "Bulk Actuator",
+	"description": "At the start of your first turn each combat, gain 10 Block.",
+	"icon": "res://run_system/assets/images/relics/steel_plating.png",
+	"rarity": "uncommon",
+	"effects": [
+		{
+			"trigger": "player_turn_start",
+			"round": 1,
+			"type": "gain_block",
+			"amount": 10,
+			"once_per_combat": true
+		}
+	]
+}

@@ -1,0 +1,14 @@
+{
+	"id": "scavenger_lens",
+	"title": "Scavenger's Lens",
+	"description": "After combat, gain 12 Gold.",
+	"icon": "res://run_system/assets/images/relics/lucky_cog.png",
+	"rarity": "uncommon",
+	"effects": [
+		{
+			"trigger": "combat_victory",
+			"type": "gain_gold",
+			"amount": 12
+		}
+	]
+}
