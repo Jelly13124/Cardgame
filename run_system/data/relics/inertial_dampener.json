@@ -1,0 +1,14 @@
+{
+	"id": "inertial_dampener",
+	"title": "Inertial Dampener",
+	"description": "Every enemy attack deals 1 less damage.",
+	"icon": "res://run_system/assets/images/relics/signal_jammer.png",
+	"rarity": "uncommon",
+	"effects": [
+		{
+			"trigger": "enemy_attack_damage",
+			"type": "reduce_damage",
+			"amount": 1
+		}
+	]
+}
