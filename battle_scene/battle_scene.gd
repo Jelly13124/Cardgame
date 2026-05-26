@@ -347,10 +347,13 @@ func _game_over():
 	get_tree().change_scene_to_file(HOME_BASE_PATH)
 
 ## Writes the player's current HP back to RunManager so it persists between battles.
-## Called on both victory and defeat.
+## Called on both victory and defeat. Emits health_changed so UI bound to the
+## signal (character panel, top bar) refreshes — previously the direct
+## assignment silently bypassed every listener.
 func _write_hp_to_run_manager() -> void:
 	if RunManager.is_run_active and player and is_instance_valid(player):
-		RunManager.current_health = player.health
+		RunManager.current_health = clampi(int(player.health), 0, RunManager.max_health)
+		RunManager.emit_signal("health_changed", RunManager.current_health, RunManager.max_health)
 
 func modify_player_attack_damage(amount: int, attacker: Node, defender: Node) -> int:
 	if relic_effect_system:
