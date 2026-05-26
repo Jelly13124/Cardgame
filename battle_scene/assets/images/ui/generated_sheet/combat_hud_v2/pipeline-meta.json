@@ -1,0 +1,15 @@
+{
+  "target": "asset",
+  "mode": "deterministic_combat_hud_v2",
+  "outputs": [
+    "battle_scene\\assets\\images\\ui\\block_badge.png",
+    "battle_scene\\assets\\images\\ui\\intent_attack.png",
+    "battle_scene\\assets\\images\\ui\\intent_block.png",
+    "battle_scene\\assets\\images\\ui\\intent_buff.png",
+    "battle_scene\\assets\\images\\ui\\intent_charge.png",
+    "battle_scene\\assets\\images\\ui\\energy_core.png",
+    "battle_scene\\assets\\images\\ui\\intent_badge_frame.png",
+    "battle_scene\\assets\\images\\ui\\energy_panel_frame.png"
+  ],
+  "note": "Small UI components drawn as integer-pixel transparent PNGs to preserve readability and avoid generated noise/white seams."
+}
