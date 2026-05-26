@@ -9,9 +9,16 @@ param(
     [Parameter(Mandatory)][string]$Description,
     [string]$IdleAction   = "breathing idle, shifting weight, staying in place",
     [string]$AttackAction = "attacking in place, striking forward without advancing, stationary attack motion",
-    [string]$ApiKey       = "af914cb9-7951-4263-aff2-9e490fb9d61d",
+    # Read API key from PIXELLAB_API_KEY env var by default; -ApiKey "..." still
+    # overrides for one-off runs. Never commit a literal key to this file.
+    [string]$ApiKey       = $env:PIXELLAB_API_KEY,
     [int]$NFrames         = 4
 )
+
+if ([string]::IsNullOrEmpty($ApiKey)) {
+    Write-Error "ApiKey not set. Either pass -ApiKey '<key>' or set the PIXELLAB_API_KEY environment variable."
+    exit 1
+}
 
 $OutDir  = "$PSScriptRoot\$SpriteId"
 $BaseUrl = "https://api.pixellab.ai/v1"

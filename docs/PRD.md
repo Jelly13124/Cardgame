@@ -261,7 +261,7 @@ BattleScene (Node)
 │   ├── Hand              — Player's current hand (fan layout)
 │   ├── Deck              — Draw pile
 │   ├── DiscardPile       — Discard pile
-│   └── BlackHolePile     — Permanent removal pile (for one-time cards, future)
+│   └── (exhaust uses queue_free directly — no dedicated removal pile)
 ├── Player (Node2D)        — PlayerEntity: HP, attributes, AnimatedSprite2D
 ├── EnemyContainer (Node2D) — Holds all EnemyEntity nodes for current encounter
 ├── TurnManager            — Round counter, energy, turn signals
@@ -418,8 +418,6 @@ Final Godot assets are PNG files. Character and FX sheets use a solid `#FF00FF` 
 | Priority | Issue |
 |---|---|
 | 🟡 | `player.gd:HERO_ID` is hardcoded to `"cowboy_bill"` — `RunManager.current_hero_id` is set by hero_select but `PlayerEntity` ignores it. Both Bill and Jerry render the same sprite + name. Blocks Phase 5 "multiple hero archetypes" — needs hero JSON schema + dynamic loader. |
-| 🟡 | `_write_hp_to_run_manager()` writes HP directly, bypassing `health_changed` signal |
-| 🟢 | API key exposed in `generate_enemy.ps1` — should use env variable |
-| 🟢 | Black Hole Pile exists in scene but has no gameplay purpose yet (note: exhaust mechanic now uses queue_free, not BlackHolePile) |
 | 🟢 | `Sharpened Scrap` relic's `_mark_used_once()` call is harmless dead code for non-`once_per_combat` relics — minor readability |
 | P3 | Some legacy generated card art may remain unused; current playable cards should reference PNG art |
+| ⚠️ | **The pre-2026-05-25 PixelLab key in `generate_enemy.ps1`** is in git history and should be rotated on the PixelLab side. The file now reads from `$env:PIXELLAB_API_KEY` but the old key remains exposed in historical commits. |
