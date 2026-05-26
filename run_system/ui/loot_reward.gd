@@ -28,6 +28,8 @@ var draft_pool = [
 	"overdrive", "charged_shot", "junk_bomb", "adrenaline",
 	# Phase 5 expansion
 	"siphon", "last_stand", "acid_splash", "focus", "carapace", "flash_bang",
+	# Phase 5 expansion wave 2
+	"brace", "double_tap", "chain_link", "iron_will", "bone_breaker", "last_breath",
 ]
 
 @onready var loot_root = $VBoxContainer

@@ -1,0 +1,15 @@
+{
+	"name": "last_breath_plus",
+	"title": "Last Breath+",
+	"rarity": "rare",
+	"type": "skill",
+	"cost": 0,
+	"description": "Gain [b]14+Constitution[/b] block. Draw 3 cards. Exhaust.",
+	"front_image": "player/adrenaline.png",
+	"side": "player",
+	"effects": [
+		{ "type": "gain_block", "amount": 14, "scaling": "constitution" },
+		{ "type": "draw_cards", "amount": 3 },
+		{ "type": "exhaust_self" }
+	]
+}

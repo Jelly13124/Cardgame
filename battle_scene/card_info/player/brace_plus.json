@@ -1,0 +1,14 @@
+{
+	"name": "brace_plus",
+	"title": "Brace+",
+	"rarity": "common",
+	"type": "skill",
+	"cost": 0,
+	"description": "Gain [b]6+Constitution[/b] block. Retain.",
+	"front_image": "player/defend.png",
+	"side": "player",
+	"retain": true,
+	"effects": [
+		{ "type": "gain_block", "amount": 6, "scaling": "constitution" }
+	]
+}
