@@ -2,6 +2,9 @@ extends Node
 
 ## BattleUIManager handles notifications, inspection, and pile viewing.
 
+const ENERGY_CORE_TEX = preload("res://battle_scene/assets/images/ui/energy_core.png")
+const ENERGY_PANEL_TEX = preload("res://battle_scene/assets/images/ui/energy_panel_frame.png")
+
 @export_group("UI Nodes")
 @export var energy_label: Label
 @export var notify_label: Label
@@ -15,6 +18,7 @@ extends Node
 
 var notify_tween: Tween
 var inspected_card: Control = null
+var _energy_display: Control = null
 
 func _ready() -> void:
 	if not pile_viewer_layer:
@@ -31,6 +35,7 @@ func _ready() -> void:
 		notify_label = main.get_node("NotificationLabel")
 	if not energy_label:
 		energy_label = main.get_node("EnergyLabel")
+	_build_energy_display.call_deferred()
 		
 	var close_btn = main.get_node_or_null("PileViewerLayer/CloseButton")
 	if close_btn:
@@ -41,7 +46,69 @@ func _ready() -> void:
 
 func update_labels(energy: int, max_energy: int) -> void:
 	if energy_label:
-		energy_label.text = "Energy: %d / %d" % [energy, max_energy]
+		energy_label.text = "%d / %d" % [energy, max_energy]
+
+func _build_energy_display() -> void:
+	if not energy_label or _energy_display:
+		return
+
+	_energy_display = Control.new()
+	_energy_display.name = "EnergyDisplay"
+	_energy_display.anchor_left = 0.0
+	_energy_display.anchor_top = 1.0
+	_energy_display.anchor_right = 0.0
+	_energy_display.anchor_bottom = 1.0
+	_energy_display.offset_left = 36.0
+	_energy_display.offset_top = -336.0
+	_energy_display.offset_right = 192.0
+	_energy_display.offset_bottom = -292.0
+	_energy_display.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_energy_display.z_index = 20
+	main.add_child(_energy_display)
+
+	var frame = NinePatchRect.new()
+	frame.name = "Frame"
+	frame.texture = ENERGY_PANEL_TEX
+	frame.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	frame.patch_margin_left = 12
+	frame.patch_margin_top = 10
+	frame.patch_margin_right = 12
+	frame.patch_margin_bottom = 10
+	frame.size = Vector2(156, 44)
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_energy_display.add_child(frame)
+
+	var core = TextureRect.new()
+	core.name = "EnergyCore"
+	core.texture = ENERGY_CORE_TEX
+	core.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	core.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	core.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	core.size = Vector2(42, 42)
+	core.position = Vector2(1, 1)
+	core.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_energy_display.add_child(core)
+
+	var old_parent = energy_label.get_parent()
+	if old_parent:
+		old_parent.remove_child(energy_label)
+	_energy_display.add_child(energy_label)
+	energy_label.anchor_left = 0.0
+	energy_label.anchor_top = 0.0
+	energy_label.anchor_right = 0.0
+	energy_label.anchor_bottom = 0.0
+	energy_label.offset_left = 50.0
+	energy_label.offset_top = 5.0
+	energy_label.offset_right = 144.0
+	energy_label.offset_bottom = 37.0
+	energy_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	energy_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	energy_label.add_theme_font_size_override("font_size", 24)
+	energy_label.add_theme_color_override("font_color", Color(0.74, 0.95, 1.0))
+	energy_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.95))
+	energy_label.add_theme_constant_override("shadow_offset_x", 2)
+	energy_label.add_theme_constant_override("shadow_offset_y", 2)
+	energy_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 func show_notification(text: String, color: Color = Color.WHITE) -> void:
 	if not notify_label: return
