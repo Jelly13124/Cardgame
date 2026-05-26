@@ -5,6 +5,7 @@ class_name PlayCard
 const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
 
 @onready var cost_label = $FrontFace/CostCircle/CostLabel
+@onready var cost_badge = $FrontFace/CostCircle
 @onready var name_label = $FrontFace/NameLabel
 @onready var desc_label = $FrontFace/DescriptionBox/DescriptionLabel
 @onready var type_label = $FrontFace/RaceBox/RaceLabel
@@ -16,6 +17,7 @@ const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
 
 const MASK_SHADER = preload("res://battle_scene/card_art_mask.gdshader")
 const UI_ASSET_PATH = "res://battle_scene/assets/images/cards/ui/"
+const COST_BADGE_PATH = UI_ASSET_PATH + "card_cost_badge.png"
 
 var _hover_tween: Tween
 var _glow_tween: Tween
@@ -29,6 +31,13 @@ func _ready() -> void:
 	var bg = load(UI_ASSET_PATH + "card_bg.png")
 	if bg and is_instance_valid(card_bg_texture):
 		card_bg_texture.texture = bg
+
+	var cost_tex = _load_texture_fallback(COST_BADGE_PATH)
+	if cost_tex and is_instance_valid(cost_badge):
+		cost_badge.texture = cost_tex
+		cost_badge.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		cost_badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		cost_badge.stretch_mode = TextureRect.STRETCH_SCALE
 	# Load card back art — shown when card is face-down (draw/discard piles)
 	var back_tex = load(UI_ASSET_PATH + "card_back.png")
 	var back_rect = get_node_or_null("BackFace/TextureRect")
@@ -55,18 +64,29 @@ func set_faces(front: Texture2D, back: Texture2D) -> void:
 	art_texture.texture = front
 	$BackFace/TextureRect.texture = back
 
+func _load_texture_fallback(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		return load(path)
+	if FileAccess.file_exists(path):
+		var image := Image.load_from_file(path)
+		if image:
+			return ImageTexture.create_from_image(image)
+	return null
+
 ## Called when the player PRESSES the left mouse button on this card.
 func _handle_mouse_pressed() -> void:
 	var main = get_tree().current_scene
 	var c_type = card_info.get("type", "skill").to_lower()
 
-	if c_type == "attack":
+	if c_type == "attack" and not _attack_should_drag(main):
 		# Start targeting mode — arrow follows mouse while button is held.
 		# Do NOT call super so the card does not enter HOLDING/drag state.
 		if main and main.has_method("start_spell_targeting"):
 			main.start_spell_targeting(self)
 	else:
-		# Skill/Ability cards are dragged up into the CardPlayZone normally.
+		# Skill / Ability — OR attack with only one valid enemy — uses the
+		# drag-up-into-CardPlayZone flow. card_play_zone.move_cards picks the
+		# sole enemy automatically when the dropped card is an attack.
 		super._handle_mouse_pressed()
 
 ## Called when the player RELEASES the left mouse button.
@@ -75,9 +95,20 @@ func _handle_mouse_released() -> void:
 	var main = get_tree().current_scene
 	var c_type = card_info.get("type", "skill").to_lower()
 
-	if c_type == "attack" and main and main.has_method("confirm_spell_targeting"):
+	if c_type == "attack" and not _attack_should_drag(main) and main and main.has_method("confirm_spell_targeting"):
 		main.confirm_spell_targeting(self)
 		return  # Do NOT call super — card stays in hand until attack fires
+	# Fall through to super so the drag path (skills, or attacks-with-sole-enemy)
+	# resolves its drop normally.
+	super._handle_mouse_released()
+
+## Attack uses drag-into-play-zone (rather than aim-arrow) when there's only
+## one valid enemy — no choice to make, so the play-zone gesture matches the
+## skill flow and saves the arrow ceremony.
+func _attack_should_drag(main) -> bool:
+	if not main or not main.has_method("sole_alive_enemy"):
+		return false
+	return main.sole_alive_enemy() != null
 
 	super._handle_mouse_released()
 
@@ -89,13 +120,16 @@ func set_card_data(data: Dictionary) -> void:
 
 	# ── Cost: always integer ──────────────────────────────────────────────────
 	cost_label.text = str(int(data.get("cost", 0)))
+	cost_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 1.0))
+	cost_label.add_theme_constant_override("shadow_offset_x", 1)
+	cost_label.add_theme_constant_override("shadow_offset_y", 2)
 
 	# ── Name ─────────────────────────────────────────────────────────────────
 	name_label.text = data.get("title", card_name).to_upper()
 
 	# ── Description: build from effects[] showing real calculated numbers ────
 	var desc = _build_description(data)
-	desc_label.parse_bbcode("[center]" + desc + "[/center]")
+	desc_label.parse_bbcode("[center][font_size=10]" + desc + "[/font_size][/center]")
 
 	# ── Rarity: swap the art FRAME texture ───────────────────────────────────
 	var rarity = data.get("rarity", "common").to_lower()
@@ -240,7 +274,7 @@ func _build_description(data: Dictionary) -> String:
 	if keywords.size() > 0:
 		lines.append("[i]%s[/i]" % " · ".join(keywords))
 
-	return "[font_size=11]" + "\n".join(lines) + "[/font_size]"
+	return "\n".join(lines)
 
 ## Refreshes the card UI with current live data
 func update_display() -> void:
@@ -301,6 +335,8 @@ func update_playable(current_energy: int) -> void:
 	var can_afford = current_energy >= cost
 	
 	playable_glow.visible = can_afford
+	if is_instance_valid(cost_badge):
+		cost_badge.modulate = Color(1, 1, 1, 1) if can_afford else Color(0.62, 0.52, 0.45, 0.86)
 	
 	if can_afford:
 		if not _glow_tween or not _glow_tween.is_running():
