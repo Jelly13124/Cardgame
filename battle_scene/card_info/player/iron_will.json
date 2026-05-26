@@ -1,0 +1,15 @@
+{
+	"name": "iron_will",
+	"title": "Iron Will",
+	"rarity": "uncommon",
+	"type": "ability",
+	"cost": 1,
+	"description": "Gain [b]1 Strength[/b] and [b]1 Constitution[/b]. Exhaust.",
+	"front_image": "player/tinker.png",
+	"side": "player",
+	"effects": [
+		{ "type": "gain_strength",     "amount": 1 },
+		{ "type": "gain_constitution", "amount": 1 },
+		{ "type": "exhaust_self" }
+	]
+}
