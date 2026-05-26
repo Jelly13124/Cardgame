@@ -237,14 +237,54 @@ func _on_node_clicked(node: Dictionary) -> void:
 			else:
 				_grant_treasure_equipment()
 		"unknown":
-			if randf() < 0.5:
-				rm.current_encounter = rm.select_encounter("enemy", int(node.floor))
-				rm.last_battle_node_type = "enemy"
-				get_tree().change_scene_to_packed(BATTLE_PACKED)
-			else:
-				var gold = randi_range(5, 20)
-				rm.add_resources(gold, 0)
-				_show_popup("Scavenged %d gold." % gold)
+			_resolve_unknown_node(int(node.floor))
+
+
+## "?" map node — rolls one of several outcomes for variety. Probabilities:
+##   40% enemy ambush       — same as before, drops into combat
+##   25% scavenge gold      — small pile of gold (5-20)
+##   15% scrap stash heal   — heal 6-12 HP (capped at max)
+##   10% free equipment     — uses the treasure-style grant path
+##   10% suspicious cache   — lose 6 HP, gain a relic (skipped if no relics left)
+func _resolve_unknown_node(floor_idx: int) -> void:
+	var roll: float = randf()
+
+	if roll < 0.40:
+		rm.current_encounter = rm.select_encounter("enemy", floor_idx)
+		rm.last_battle_node_type = "enemy"
+		get_tree().change_scene_to_packed(BATTLE_PACKED)
+		return
+
+	if roll < 0.65:
+		var gold: int = randi_range(5, 20)
+		rm.add_resources(gold, 0)
+		_show_popup("Scavenged %d gold." % gold)
+		return
+
+	if roll < 0.80:
+		var heal_amt: int = randi_range(6, 12)
+		var new_hp: int = min(rm.current_health + heal_amt, rm.max_health)
+		var actual: int = new_hp - rm.current_health
+		rm.current_health = new_hp
+		rm.emit_signal("health_changed", rm.current_health, rm.max_health)
+		_show_popup("Found a scrap medkit. Healed %d HP." % actual)
+		return
+
+	if roll < 0.90:
+		_grant_treasure_equipment()
+		return
+
+	# Tail 10%: suspicious cache.
+	if rm.get_unowned_relic_ids().is_empty():
+		# Nothing to gain — fall back to a small gold reward so the node
+		# never feels purely punishing.
+		rm.add_resources(15, 0)
+		_show_popup("Cache empty. Salvaged 15 gold.")
+		return
+	var hp_loss: int = min(6, max(1, rm.current_health - 1))
+	rm.current_health -= hp_loss
+	rm.emit_signal("health_changed", rm.current_health, rm.max_health)
+	_open_relic_choice("Pried Open the Cache (-%d HP)" % hp_loss, "treasure")
 
 
 func _show_popup(text: String) -> void:
