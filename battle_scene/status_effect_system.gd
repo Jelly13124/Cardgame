@@ -32,6 +32,16 @@ const STATUS_LABELS = {
 	"shock":       "⚡",
 }
 
+const STATUS_DESCRIPTIONS = {
+	"poison":        "Take 1 damage per stack at the start of your turn. Stacks decay by 1 each turn.",
+	"burn":          "Take damage equal to stacks at the start of your turn. All stacks consumed.",
+	"weak":          "Outgoing attack damage reduced 25% per stack. Decays 1 per turn.",
+	"vulnerable":    "Incoming attack damage increased 50% per stack. Decays 1 per turn.",
+	"strength_up":   "Outgoing attack damage increased by stack count. Persistent.",
+	"double_damage": "Next N attacks deal double damage. Consumed on use.",
+	"shock":         "Enemy skips its next turn for each stack (enemy-only).",
+}
+
 func add_status(status_name: String, stacks: int, entity: Node) -> void:
 	if stacks <= 0:
 		return
@@ -158,6 +168,7 @@ func _refresh_badges(entity: Node) -> void:
 		bg.patch_margin_top = 6
 		bg.patch_margin_right = 6
 		bg.patch_margin_bottom = 6
+		bg.mouse_filter = Control.MOUSE_FILTER_PASS
 		var lbl = Label.new()
 		lbl.text = "%s%d" % [STATUS_LABELS.get(status_name, status_name), stacks]
 		lbl.add_theme_font_size_override("font_size", 11)
@@ -165,5 +176,12 @@ func _refresh_badges(entity: Node) -> void:
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		bg.add_child(lbl)
+		# Tooltip on hover: full status name + description + current stack count.
+		var human_name: String = str(status_name).replace("_", " ").capitalize()
+		var desc: String = str(STATUS_DESCRIPTIONS.get(status_name, ""))
+		var tip: String = "[b]%s ×%d[/b]\n%s" % [human_name, stacks, desc] if desc != "" else "[b]%s ×%d[/b]" % [human_name, stacks]
+		bg.mouse_entered.connect(func(): Tooltip.show(tip, bg.global_position + Vector2(bg.size.x * 0.5, 0)))
+		bg.mouse_exited.connect(Tooltip.hide)
 		container.add_child(bg)

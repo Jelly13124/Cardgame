@@ -22,12 +22,16 @@ const SLOT_LETTERS := {
 
 var _label: Label
 var _texture_rect: TextureRect
+var _tooltip_text: String = ""
 
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(64, 64)
 	if not _label:
 		_build()
+	if not mouse_entered.is_connected(_on_mouse_entered):
+		mouse_entered.connect(_on_mouse_entered)
+		mouse_exited.connect(_on_mouse_exited)
 
 
 func _build() -> void:
@@ -57,6 +61,22 @@ func _build() -> void:
 	_texture_rect.offset_bottom = -4
 	_texture_rect.visible = false
 	add_child(_texture_rect)
+
+
+## Set the rich tooltip text shown on mouse hover. Use BBCode for emphasis.
+## Empty string disables the tooltip for this icon. (Named to avoid
+## conflict with Control.set_tooltip_text — Godot's built-in tooltip.)
+func set_hover_tooltip(text: String) -> void:
+	_tooltip_text = text
+
+
+func _on_mouse_entered() -> void:
+	if _tooltip_text != "":
+		Tooltip.show(_tooltip_text, global_position + Vector2(size.x * 0.5, 0))
+
+
+func _on_mouse_exited() -> void:
+	Tooltip.hide()
 
 
 ## Populate the icon. Safe to call before the node enters the scene tree.
