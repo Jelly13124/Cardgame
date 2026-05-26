@@ -1,0 +1,10 @@
+{
+  "id": "warden_axe",
+  "name": "Warden Axe",
+  "slot": "weapon",
+  "rarity": "uncommon",
+  "set_id": "warden",
+  "bonuses": { "strength": 2 },
+  "description": "Heavy axe head, edge still ringing from the forge.",
+  "sprite": "equipment/tank_engineer_hammer.png"
+}
