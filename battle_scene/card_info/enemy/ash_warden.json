@@ -1,0 +1,15 @@
+{
+	"id": "ash_warden",
+	"name": "Ash Warden",
+	"sprite_id": "armored_patrol",
+	"max_health": 95,
+	"action_pattern": [
+		{ "type": "attack_status", "amount": 6, "status": "burn",       "stacks": 2, "label": "🔥 6 + B2" },
+		{ "type": "attack",        "amount": 11,                                       "label": "⚔ 11" },
+		{ "type": "block",         "amount": 12,                                       "label": "🛡 12" },
+		{ "type": "attack_status", "amount": 8, "status": "vulnerable", "stacks": 1, "label": "⚔ 8 + V1" },
+		{ "type": "telegraph",                                                          "label": "💢 IGNITING" },
+		{ "type": "attack",        "amount": 20,                                       "label": "💥 BLAST 20", "interruptible": true },
+		{ "type": "attack",        "amount": 9,                                        "label": "⚔ 9" }
+	]
+}

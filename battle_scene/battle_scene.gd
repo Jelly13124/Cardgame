@@ -41,7 +41,15 @@ const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const HOME_BASE_PATH := "res://run_system/ui/home_base_scene.tscn"
 const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 const LOOT_REWARD_SCENE = preload("res://run_system/ui/loot_reward.tscn")
+const EXTRACT_CHOICE_MODAL_SCRIPT = preload("res://run_system/ui/extract_choice_modal.gd")
+
 const BOSS_VICTORY_CORE := 150
+## Extract rewards per mid-act boss floor (keyed by RunManager.current_floor).
+## continue = +Core for pushing on (less); extract = +Core for ending run now (more).
+const EXTRACT_REWARDS := {
+	4: {"continue": 25, "extract": 50},
+	8: {"continue": 50, "extract": 90},
+}
 
 func _ready():
 	print("BATTLE STARTING (STS Layout)")
@@ -311,12 +319,45 @@ func _victory():
 	show_notification("VICTORY!", Color(0.2, 1.0, 0.2))
 	await get_tree().create_timer(3.0).timeout
 
-	# Boss victory → grant Core and return to home base. Non-boss → loot modal.
+	# Boss victory routing:
+	#   - mid-act boss (floor in EXTRACT_REWARDS) → extract choice modal
+	#   - final boss → grant BOSS_VICTORY_CORE and return to home base
+	#   - non-boss → normal loot modal
 	if RunManager.last_battle_node_type == "boss":
+		var floor_num: int = RunManager.current_floor
+		if EXTRACT_REWARDS.has(floor_num):
+			_show_extract_choice(floor_num)
+			return
+		# Final boss path.
 		MetaProgress.add_core(BOSS_VICTORY_CORE)
 		get_tree().change_scene_to_file(HOME_BASE_PATH)
 		return
 	_show_loot_modal()
+
+
+func _show_extract_choice(floor_num: int) -> void:
+	var canvas := CanvasLayer.new()
+	canvas.layer = 200
+	add_child(canvas)
+	var modal = EXTRACT_CHOICE_MODAL_SCRIPT.new()
+	modal.floor_num = floor_num
+	modal.reward_continue = int(EXTRACT_REWARDS[floor_num]["continue"])
+	modal.reward_extract = int(EXTRACT_REWARDS[floor_num]["extract"])
+	modal.chosen.connect(_on_extract_chosen.bind(floor_num, canvas))
+	canvas.add_child(modal)
+
+
+func _on_extract_chosen(extract: bool, floor_num: int, canvas: CanvasLayer) -> void:
+	if is_instance_valid(canvas):
+		canvas.queue_free()
+	if extract:
+		MetaProgress.add_core(int(EXTRACT_REWARDS[floor_num]["extract"]))
+		get_tree().change_scene_to_file(HOME_BASE_PATH)
+	else:
+		# Continue: grant push-on Core then drop into normal loot flow so
+		# the player still gets gold + a card pick out of the boss kill.
+		MetaProgress.add_core(int(EXTRACT_REWARDS[floor_num]["continue"]))
+		_show_loot_modal()
 
 
 func _show_loot_modal() -> void:

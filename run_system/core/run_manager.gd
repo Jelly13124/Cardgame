@@ -96,6 +96,22 @@ const ENCOUNTER_POOLS_LATE = [
 	["rust_brute", "riot_hound"],
 ]
 const ELITE_ROSTER: Array = ["armored_patrol"]
+## Boss per "act". Maps the boss floor index → enemy id. Final-floor boss
+## stays junkyard_tyrant; mid-act bosses use placeholder sprites (rust_brute
+## and armored_patrol re-skins) until codex generates dedicated art.
+const BOSS_BY_FLOOR: Dictionary = {
+	4:  "rust_titan",
+	8:  "ash_warden",
+	11: "junkyard_tyrant",
+}
+## Floors that should generate as a single-node boss encounter.
+const MID_BOSS_FLOORS: Array[int] = [4, 8]
+## Total bosses in a run — used by battle_scene to know which boss kill
+## triggers extract vs full-game-complete. Final = highest key in BOSS_BY_FLOOR.
+## Kept here so future map-length tweaks update both places at once.
+const FINAL_BOSS_FLOOR: int = 11
+## Legacy alias — some pre-multi-boss code paths still read BOSS_ROSTER.
+## Returns the final boss only; intermediate bosses use BOSS_BY_FLOOR lookup.
 const BOSS_ROSTER:  Array = ["junkyard_tyrant"]
 
 const BATTLE_SCENE: String = "res://battle_scene/battle_scene.tscn"
@@ -149,8 +165,8 @@ func generate_map(num_floors: int = 12, width: int = 4) -> void:
 	for f in range(num_floors):
 		# Determine how many nodes on this floor
 		var num_nodes: int
-		if f == 0 or f == num_floors - 1:
-			num_nodes = 1 # Start (relic) and end (boss) are single nodes
+		if f == 0 or f == num_floors - 1 or f in MID_BOSS_FLOORS:
+			num_nodes = 1 # Start (relic), mid-act bosses, and end (final boss) are single nodes
 		else:
 			num_nodes = randi_range(2, 4)
 			num_nodes = mini(num_nodes, width) # Can't exceed +---available slots
@@ -285,8 +301,13 @@ func _pick_node_type(floor_idx: int, total: int, treasure_extras_used: int = 0) 
 	# Floor 0: starting relic choice
 	if floor_idx == 0:
 		return "relic"
-	# Last floor: boss fight
+	# Last floor: final boss fight
 	if floor_idx == total - 1:
+		return "boss"
+	# Mid-act boss floors: force a single boss node so the route narrows
+	# (the slots-assignment code above already gives floors with one node
+	# the center slot — we just declare the type here).
+	if floor_idx in MID_BOSS_FLOORS:
 		return "boss"
 	# Pre-boss floor: always rest (campfire before the boss)
 	if floor_idx == total - 2:
@@ -350,8 +371,13 @@ func select_encounter(node_type: String, floor_idx: int) -> Array[String]:
 	var result: Array[String] = []
 	match node_type:
 		"boss":
-			for id in BOSS_ROSTER:
-				result.append(str(id))
+			# Per-floor boss table. Falls back to BOSS_ROSTER if floor isn't
+			# in the table (lets future-added boss floors degrade gracefully).
+			if BOSS_BY_FLOOR.has(floor_idx):
+				result.append(str(BOSS_BY_FLOOR[floor_idx]))
+			else:
+				for id in BOSS_ROSTER:
+					result.append(str(id))
 		"elite":
 			for id in ELITE_ROSTER:
 				result.append(str(id))
