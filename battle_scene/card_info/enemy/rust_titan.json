@@ -1,0 +1,14 @@
+{
+	"id": "rust_titan",
+	"name": "Rust Titan",
+	"sprite_id": "rust_brute",
+	"max_health": 75,
+	"action_pattern": [
+		{ "type": "attack",    "amount": 8,  "label": "⚔ 8" },
+		{ "type": "block",     "amount": 10, "label": "🛡 10" },
+		{ "type": "attack",    "amount": 12, "label": "⚔ 12" },
+		{ "type": "telegraph", "label": "💢 WIND-UP" },
+		{ "type": "attack",    "amount": 18, "label": "💥 SLAM 18", "interruptible": true },
+		{ "type": "block",     "amount": 8,  "label": "🛡 8" }
+	]
+}
