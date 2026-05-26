@@ -231,7 +231,12 @@ func _make_relic_chip(relic_id: String) -> Button:
 	chip.text = _short_label(title)
 	chip.custom_minimum_size = Vector2(42, 42)
 	chip.focus_mode = Control.FOCUS_NONE
-	chip.tooltip_text = "%s\n%s" % [title, desc] if not desc.is_empty() else title
+	# Use the custom Tooltip autoload (richer styling than Godot's default
+	# tooltip_text). Anchored above the chip center so it doesn't follow
+	# the cursor across the top bar.
+	var tip_text := ("[b]%s[/b]\n%s" % [title, desc]) if not desc.is_empty() else "[b]%s[/b]" % title
+	chip.mouse_entered.connect(func(): Tooltip.show(tip_text, chip.global_position + Vector2(chip.size.x * 0.5, 0)))
+	chip.mouse_exited.connect(Tooltip.hide)
 	chip.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	chip.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
 	chip.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())

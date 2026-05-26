@@ -213,11 +213,13 @@ func _refresh() -> void:
 		var item_id: String = RunManager.equipped_items.get(slot, "")
 		if item_id == "":
 			row["icon"].set_empty(slot)
+			row["icon"].set_hover_tooltip("[b]%s[/b]\n(empty slot)" % slot.to_upper())
 			row["name_label"].text = "%s: (empty)" % slot.to_upper()
 			row["action_button"].visible = false
 		else:
 			var data = RunManager.get_equipment_data(item_id)
 			row["icon"].set_equipment(slot, str(data.get("name", item_id)), str(data.get("sprite", "")))
+			row["icon"].set_hover_tooltip(_build_equipment_tooltip(data, slot))
 			row["action_button"].visible = true
 			row["name_label"].text = "%s: %s\n%s" % [
 				slot.to_upper(),
@@ -285,6 +287,7 @@ func _build_inventory_row(item_id: String, index: int) -> Control:
 
 	var icon := EQUIPMENT_ICON.new()
 	icon.set_equipment(slot, str(data.get("name", item_id)), str(data.get("sprite", "")))
+	icon.set_hover_tooltip(_build_equipment_tooltip(data, slot))
 	row.add_child(icon)
 
 	var info := Label.new()
@@ -377,6 +380,28 @@ func _format_bonuses(bonuses) -> String:
 	for attr in bonuses.keys():
 		parts.append("+%d %s" % [int(bonuses[attr]), str(attr).substr(0, 3)])
 	return ", ".join(parts)
+
+
+## Rich tooltip text for an equipment item — name, slot, rarity, full
+## attribute bonuses, optional set tag, and description.
+func _build_equipment_tooltip(data: Dictionary, slot: String) -> String:
+	var name_str := str(data.get("name", "?"))
+	var rarity := str(data.get("rarity", "common"))
+	var desc := str(data.get("description", ""))
+	var bonuses_text := _format_bonuses(data.get("bonuses", {}))
+	var set_id := str(data.get("set_id", ""))
+
+	var lines: Array = []
+	lines.append("[b]%s[/b]" % name_str)
+	lines.append("[i]%s · %s[/i]" % [slot.to_upper(), rarity])
+	lines.append("")
+	lines.append(bonuses_text)
+	if set_id != "":
+		lines.append("[i]Set: %s[/i]" % set_id.replace("_", " "))
+	if desc != "":
+		lines.append("")
+		lines.append(desc)
+	return "\n".join(lines)
 
 
 func _spacer() -> Control:
