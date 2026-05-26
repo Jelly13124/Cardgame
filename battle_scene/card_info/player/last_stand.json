@@ -1,0 +1,14 @@
+{
+	"name": "last_stand",
+	"title": "Last Stand",
+	"rarity": "uncommon",
+	"type": "skill",
+	"cost": 2,
+	"description": "Gain [b]12+Constitution[/b] block. Draw 1 card.",
+	"front_image": "player/defend.png",
+	"side": "player",
+	"effects": [
+		{ "type": "gain_block", "amount": 12, "scaling": "constitution" },
+		{ "type": "draw_cards", "amount": 1 }
+	]
+}

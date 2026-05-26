@@ -1,0 +1,14 @@
+{
+	"name": "carapace_plus",
+	"title": "Carapace+",
+	"rarity": "rare",
+	"type": "skill",
+	"cost": 2,
+	"description": "Gain [b]20+Constitution[/b] block and [b]2 Constitution[/b].",
+	"front_image": "player/defend.png",
+	"side": "player",
+	"effects": [
+		{ "type": "gain_block",        "amount": 20, "scaling": "constitution" },
+		{ "type": "gain_constitution", "amount": 2 }
+	]
+}
