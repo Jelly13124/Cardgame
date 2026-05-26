@@ -16,6 +16,8 @@ const INTENT_ICON_BUFF   = preload("res://battle_scene/assets/images/ui/intent_b
 const INTENT_ICON_CHARGE = preload("res://battle_scene/assets/images/ui/intent_charge.png")
 const NORMAL_DISPLAY_HEIGHT := 192.0
 const BOSS_DISPLAY_HEIGHT := 288.0
+const INTENT_BADGE_WIDTH := 104.0
+const INTENT_BADGE_HEIGHT := 36.0
 
 # ─── Stats ────────────────────────────────────────────────────────────────────
 var enemy_id: String = ""
@@ -112,14 +114,15 @@ func _build_sprite_visual(sid: String) -> void:
 	var frames = SpriteFrames.new()
 	_sprite.sprite_frames = frames
 
-	var _load_tex = func(path: String) -> Texture2D:
+	var _load_tex = func(path: String, warn_missing: bool) -> Texture2D:
 		if ResourceLoader.exists(path):
 			return load(path)
 		if FileAccess.file_exists(path):
 			var image := Image.load_from_file(path)
 			if image:
 				return ImageTexture.create_from_image(image)
-		push_warning("EnemyEntity: missing frame '%s'" % path)
+		if warn_missing:
+			push_warning("EnemyEntity: missing frame '%s'" % path)
 		return null
 
 	# Per-enemy subfolder, animations live in attack/ subfolders
@@ -133,24 +136,28 @@ func _build_sprite_visual(sid: String) -> void:
 	frames.set_animation_loop("attack", false)
 	frames.set_animation_speed("attack", 8.0)
 	for idx in range(4):
-		var tex = _load_tex.call(dir + "attack/%s_attack_%d.png" % [sid, idx])
+		var tex = _load_tex.call(dir + "attack/%s_attack_%d.png" % [sid, idx], true)
 		if tex:
 			frames.add_frame("attack", tex)
 
 	# ── Charge (optional, one-shot — used by boss telegraph) ─────────────────
-	frames.add_animation("charge")
-	frames.set_animation_loop("charge", false)
-	frames.set_animation_speed("charge", 6.0)
+	var charge_frames: Array[Texture2D] = []
 	for idx in range(4):
-		var tex = _load_tex.call(dir + "charge/%s_charge_%d.png" % [sid, idx])
+		var tex = _load_tex.call(dir + "charge/%s_charge_%d.png" % [sid, idx], false)
 		if tex:
+			charge_frames.append(tex)
+	if not charge_frames.is_empty():
+		frames.add_animation("charge")
+		frames.set_animation_loop("charge", false)
+		frames.set_animation_speed("charge", 6.0)
+		for tex in charge_frames:
 			frames.add_frame("charge", tex)
 
 	var display_height := _apply_display_scale(frames)
 	add_child(_sprite)
 	_show_rest_pose()
 
-	_build_intent_badge(Vector2(-52, -display_height - 44.0))
+	_build_intent_badge(Vector2(-INTENT_BADGE_WIDTH * 0.5, -display_height - 48.0))
 	_build_health_bar(Vector2(-90, 28))      # below feet (centered with bar_width 180)
 
 
@@ -211,35 +218,37 @@ func _build_placeholder_visual() -> void:
 	body.position = Vector2(-70, -190)
 	add_child(body)
 	# Placeholder: 140×190, top y=-190, bottom y=0
-	_build_intent_badge(Vector2(-52, -228))  # above placeholder
+	_build_intent_badge(Vector2(-INTENT_BADGE_WIDTH * 0.5, -232))  # above placeholder
 	_build_health_bar(Vector2(-114, 26))     # below placeholder
 
 ## Builds a compact icon + text intent readout above the sprite.
 ## intent_pos is the top-left position in entity-local space.
 func _build_intent_badge(intent_pos: Vector2) -> void:
 	_intent_bg = Control.new()
-	_intent_bg.size = Vector2(104, 36)
+	_intent_bg.size = Vector2(INTENT_BADGE_WIDTH, INTENT_BADGE_HEIGHT)
 	_intent_bg.position = intent_pos
 	_intent_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_intent_bg.z_index = 20
 	add_child(_intent_bg)
 
 	_intent_icon = TextureRect.new()
-	_intent_icon.size = Vector2(30, 30)
-	_intent_icon.position = Vector2(0, 3)
+	_intent_icon.size = Vector2(34, 34)
+	_intent_icon.position = Vector2(0, 1)
 	_intent_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_intent_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_intent_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_intent_bg.add_child(_intent_icon)
 
 	_intent_label = Label.new()
-	_intent_label.add_theme_font_size_override("font_size", 17)
+	_intent_label.add_theme_font_size_override("font_size", 22)
 	_intent_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.64))
 	_intent_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.95))
 	_intent_label.add_theme_constant_override("shadow_offset_x", 2)
 	_intent_label.add_theme_constant_override("shadow_offset_y", 2)
 	_intent_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_intent_label.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-	_intent_label.size = Vector2(72, 36)
-	_intent_label.position = Vector2(32, 0)
+	_intent_label.size = Vector2(70, INTENT_BADGE_HEIGHT)
+	_intent_label.position = Vector2(38, -1)
 	_intent_bg.add_child(_intent_label)
 
 ## Builds the health bar (CharacterHUD) positioned below the sprite.
