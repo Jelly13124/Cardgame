@@ -1,0 +1,14 @@
+{
+	"name": "acid_splash",
+	"title": "Acid Splash",
+	"rarity": "uncommon",
+	"type": "attack",
+	"cost": 1,
+	"description": "Deal [b]4[/b] damage to ALL enemies and apply [b]2 Poison[/b] to ALL.",
+	"front_image": "player/junk_bomb.png",
+	"side": "player",
+	"effects": [
+		{ "type": "deal_damage_all",  "amount": 4 },
+		{ "type": "apply_status_all", "status": "poison", "stacks": 2 }
+	]
+}

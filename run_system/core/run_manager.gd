@@ -88,12 +88,17 @@ const ENCOUNTER_POOLS_MID = [
 	["trash_robot", "scrap_rat"],
 	["mortar_cart"],
 	["wasteland_killer", "scrap_rat"],
+	["slag_walker"],
+	["acid_spitter", "scrap_rat"],
 ]
 const ENCOUNTER_POOLS_LATE = [
 	["riot_hound", "riot_hound"],
 	["rust_brute", "scrap_rat"],
 	["mortar_cart", "scrap_rat"],
 	["rust_brute", "riot_hound"],
+	["chrome_hound"],
+	["chrome_hound", "scrap_rat"],
+	["slag_walker", "acid_spitter"],
 ]
 const ELITE_ROSTER: Array = ["armored_patrol"]
 ## Boss per "act". Maps the boss floor index → enemy id. Final-floor boss

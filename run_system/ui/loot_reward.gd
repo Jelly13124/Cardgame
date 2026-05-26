@@ -26,6 +26,8 @@ var draft_pool = [
 	"cascade", "salvo", "tinker", "hot_swap",
 	# Tactical Toolkit — Burst
 	"overdrive", "charged_shot", "junk_bomb", "adrenaline",
+	# Phase 5 expansion
+	"siphon", "last_stand", "acid_splash", "focus", "carapace", "flash_bang",
 ]
 
 @onready var loot_root = $VBoxContainer

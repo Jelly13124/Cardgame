@@ -1,0 +1,12 @@
+{
+	"id": "slag_walker",
+	"name": "Slag Walker",
+	"sprite_id": "rust_brute",
+	"max_health": 28,
+	"action_pattern": [
+		{ "type": "block",  "amount": 6, "label": "🛡 6" },
+		{ "type": "attack", "amount": 9, "label": "⚔ 9" },
+		{ "type": "attack", "amount": 6, "label": "⚔ 6" },
+		{ "type": "block",  "amount": 6, "label": "🛡 6" }
+	]
+}

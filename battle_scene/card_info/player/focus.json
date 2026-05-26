@@ -1,0 +1,15 @@
+{
+	"name": "focus",
+	"title": "Focus",
+	"rarity": "uncommon",
+	"type": "ability",
+	"cost": 1,
+	"description": "Gain [b]1 Intelligence[/b]. Draw 1 card. Exhaust.",
+	"front_image": "player/tinker.png",
+	"side": "player",
+	"effects": [
+		{ "type": "gain_intelligence", "amount": 1 },
+		{ "type": "draw_cards",        "amount": 1 },
+		{ "type": "exhaust_self" }
+	]
+}
