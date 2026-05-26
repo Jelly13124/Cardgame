@@ -1,0 +1,10 @@
+{
+  "id": "warden_vest",
+  "name": "Warden Vest",
+  "slot": "chest",
+  "rarity": "common",
+  "set_id": "warden",
+  "bonuses": { "constitution": 1 },
+  "description": "Ember-pocked plate that warms to the touch.",
+  "sprite": "equipment/tank_engineer_vest.png"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "warden_gloves",
+  "name": "Warden Gloves",
+  "slot": "hands",
+  "rarity": "common",
+  "set_id": "warden",
+  "bonuses": { "strength": 1 },
+  "description": "Heavy gauntlets — palms still smell of ash.",
+  "sprite": "equipment/tank_engineer_gauntlets.png"
+}

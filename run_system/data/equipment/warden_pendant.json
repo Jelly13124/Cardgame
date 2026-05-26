@@ -1,0 +1,10 @@
+{
+  "id": "warden_pendant",
+  "name": "Warden Pendant",
+  "slot": "accessory",
+  "rarity": "rare",
+  "set_id": "warden",
+  "bonuses": { "strength": 2, "constitution": 1 },
+  "description": "A coal still warm with the Warden's last breath.",
+  "sprite": "equipment/old_world_relic.png"
+}
