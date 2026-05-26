@@ -7,6 +7,7 @@ class_name EnemyEntity
 const HUD_SCRIPT = preload("res://battle_scene/ui/character_hud.gd")
 const ENEMY_DATA_DIR = "res://battle_scene/card_info/enemy/"
 const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
+const COMBAT_FX = preload("res://battle_scene/combat_fx.gd")
 
 # Intent badge icon textures — preloaded once instead of `load()`-ing on every
 # intent refresh (which can fire frequently as enemy / player status changes).
@@ -373,10 +374,20 @@ func notify_status_changed() -> void:
 
 func take_damage(amount: int) -> void:
 	var dmg_after_block = max(0, amount - block)
+	var blocked_amount = min(block, amount)
 	block = max(0, block - amount)
 	health -= dmg_after_block
 	health = max(0, health)
 	_refresh_hud()
+
+	# Floating damage number above the enemy + screen shake on big hits.
+	var scene := get_tree().current_scene
+	if scene:
+		var spawn_pos: Vector2 = global_position + Vector2(0, -NORMAL_DISPLAY_HEIGHT * 0.5)
+		COMBAT_FX.spawn_damage_number(scene, spawn_pos, dmg_after_block, blocked_amount)
+		if dmg_after_block >= 10:
+			COMBAT_FX.shake(self, 6.0, 0.18)
+
 	if health <= 0:
 		died.emit()
 		queue_free()

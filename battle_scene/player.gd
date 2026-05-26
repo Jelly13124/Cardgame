@@ -22,6 +22,7 @@ signal died
 
 const HUD_SCRIPT = preload("res://battle_scene/ui/character_hud.gd")
 const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
+const COMBAT_FX = preload("res://battle_scene/combat_fx.gd")
 const HERO_DIR = "res://battle_scene/assets/images/heroes/"
 const HERO_ID = "cowboy_bill"
 const TARGET_DISPLAY_HEIGHT := 256.0
@@ -215,12 +216,22 @@ func notify_status_changed() -> void:
 
 func take_damage(amount: int) -> void:
 	var dmg_after_block = max(0, amount - block)
+	var blocked_amount = min(block, amount)
 	block = max(0, block - amount)
 	health -= dmg_after_block
 	health = max(0, health)
 	block_changed.emit(block)
 	health_changed.emit(health)
 	_refresh_hud()
+
+	# Floating damage number above the player + screen shake on big hits.
+	var scene := get_tree().current_scene
+	if scene:
+		var spawn_pos: Vector2 = global_position + Vector2(0, -TARGET_DISPLAY_HEIGHT * 0.5)
+		COMBAT_FX.spawn_damage_number(scene, spawn_pos, dmg_after_block, blocked_amount)
+		if dmg_after_block >= 10:
+			COMBAT_FX.shake(self, 8.0, 0.22)
+
 	if health <= 0:
 		died.emit()
 
