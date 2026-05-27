@@ -31,16 +31,13 @@ static func spawn_damage_number(scene_root: Node, world_pos: Vector2, amount: in
 	scene_root.add_child(layer)
 	layer.add_child(label)
 
-	# Center on the spawn point. Label.size is Vector2.ZERO until the first
-	# layout pass; bind label into a deferred callable that re-measures
-	# AT DEFERRED-CALL TIME (after layout) and re-centers. Plain
-	# call_deferred("set_position", ...) would freeze label.size.x at 0
-	# because args evaluate eagerly.
-	label.position = world_pos
-	var center_at: Callable = func():
-		if is_instance_valid(label):
-			label.position = world_pos - Vector2(label.size.x * 0.5, 0)
-	center_at.call_deferred()
+	# Center on the spawn point. label.get_minimum_size() forces a
+	# synchronous text-measurement (Label normally only measures on next
+	# layout pass). Assigning that to label.size lets us subtract half-
+	# width in the SAME frame, so the first rendered frame is already
+	# centered — no deferred-callable lag or first-frame mis-position.
+	label.size = label.get_minimum_size()
+	label.position = world_pos - Vector2(label.size.x * 0.5, 0)
 
 	var tween := scene_root.create_tween()
 	tween.set_parallel(true)
@@ -49,14 +46,34 @@ static func spawn_damage_number(scene_root: Node, world_pos: Vector2, amount: in
 	tween.chain().tween_callback(layer.queue_free)
 
 
-## Briefly translate `target` (Node2D) on a decaying sine to simulate a
-## screen-shake. Caller picks `target` based on what makes sense — usually
-## the enemy container or the player.
+## Briefly translate `target` (Node2D) on a decaying sine to simulate impact.
+## Overlapping shakes (e.g. double_tap multi-hit) used to sample origin from
+## a mid-shake offset and "restore" to the wrong position, accumulating drift.
+## Now: cache the true rest position in target.meta on first call, kill any
+## prior tween, and always restore to the cached origin.
+const _SHAKE_ORIGIN_META := "_combatfx_shake_origin"
+const _SHAKE_TWEEN_META := "_combatfx_shake_tween"
+
 static func shake(target: Node2D, intensity: float = 8.0, duration: float = 0.18) -> void:
 	if not is_instance_valid(target):
 		return
-	var origin: Vector2 = target.position
+
+	# Capture origin ONCE per target — never re-sample mid-shake.
+	var origin: Vector2
+	if target.has_meta(_SHAKE_ORIGIN_META):
+		origin = target.get_meta(_SHAKE_ORIGIN_META)
+	else:
+		origin = target.position
+		target.set_meta(_SHAKE_ORIGIN_META, origin)
+
+	# Kill any in-flight shake on the same target so we don't stack tweens.
+	if target.has_meta(_SHAKE_TWEEN_META):
+		var prior = target.get_meta(_SHAKE_TWEEN_META)
+		if prior is Tween and prior.is_valid():
+			prior.kill()
+
 	var tween := target.create_tween()
+	target.set_meta(_SHAKE_TWEEN_META, tween)
 	var steps := 6
 	for i in range(steps):
 		var t := float(i + 1) / float(steps)

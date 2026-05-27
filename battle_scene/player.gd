@@ -191,6 +191,17 @@ func get_muzzle_global_position() -> Vector2:
 	return global_position + Vector2(98, -104)
 
 
+## Returns whichever sprite is actually visible right now: the AnimatedSprite2D
+## if it has playable frames, otherwise the fallback Sprite2D. Used by COMBAT_FX.shake
+## so heavy hits actually wobble the rendered art (not the invisible alternate).
+func _visible_sprite() -> Node2D:
+	if _current_sprite_texture():
+		return _sprite
+	if _fallback_sprite and is_instance_valid(_fallback_sprite) and _fallback_sprite.texture:
+		return _fallback_sprite
+	return null
+
+
 func _current_sprite_texture() -> Texture2D:
 	if not _sprite or not is_instance_valid(_sprite):
 		return null
@@ -233,10 +244,14 @@ func take_damage(amount: int, silent: bool = false) -> void:
 		if scene:
 			var spawn_pos: Vector2 = global_position + Vector2(0, -TARGET_DISPLAY_HEIGHT * 0.5)
 			COMBAT_FX.spawn_damage_number(scene, spawn_pos, dmg_after_block, blocked_amount)
-			# Shake the sprite only (not `self`) so the HUD / status badges
-			# that are children of this entity don't wobble with it.
-			if dmg_after_block >= 10 and _sprite and is_instance_valid(_sprite):
-				COMBAT_FX.shake(_sprite, 8.0, 0.22)
+			# Shake the VISIBLE sprite only (not `self`) so the HUD / status
+			# badges that are children of this entity don't wobble. If the
+			# AnimatedSprite2D has no frames loaded, the fallback Sprite2D is
+			# the actually-rendered art.
+			if dmg_after_block >= 10:
+				var shake_target: Node2D = _visible_sprite()
+				if shake_target:
+					COMBAT_FX.shake(shake_target, 8.0, 0.22)
 
 	if health <= 0:
 		died.emit()

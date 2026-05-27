@@ -75,11 +75,13 @@ func set_hover_tooltip(text: String) -> void:
 
 func _on_mouse_entered() -> void:
 	if _tooltip_text != "" and is_inside_tree():
-		Tooltip.show(_tooltip_text, global_position + Vector2(size.x * 0.5, 0))
+		Tooltip.show(_tooltip_text, global_position + Vector2(size.x * 0.5, 0), get_instance_id())
 
 
 func _on_mouse_exited() -> void:
-	Tooltip.hide()
+	# hide_if_owner so a sibling icon's freshly-opened tooltip can't get
+	# clobbered by THIS icon's tree_exited fire during a panel rebuild.
+	Tooltip.hide_if_owner(get_instance_id())
 
 
 ## Populate the icon. Safe to call before the node enters the scene tree.

@@ -845,8 +845,7 @@ func _apply_meta_upgrades() -> void:
 
 
 func _handle_run_loss() -> void:
-	is_run_active = false
-	emit_signal("run_ended", false)
+	_teardown_run(false)
 	# TODO: Trigger base-building retention logic (e.g. keep 30% of Core)
 	print("Player Hero defeated! Run ended.")
 
@@ -855,10 +854,18 @@ func _handle_run_loss() -> void:
 ## _handle_run_loss's bookkeeping but emits run_ended(true). Idempotent —
 ## calling twice is a no-op the second time.
 func end_run_victory() -> void:
+	_teardown_run(true)
+
+
+## Shared run-teardown: flips is_run_active false and emits run_ended.
+## Both win and loss paths funnel through here so any future bookkeeping
+## (clear run-scoped state, save run-history snapshot, etc.) added in ONE
+## place automatically applies to both outcomes. Idempotent.
+func _teardown_run(victory: bool) -> void:
 	if not is_run_active:
 		return
 	is_run_active = false
-	emit_signal("run_ended", true)
+	emit_signal("run_ended", victory)
 
 func _emit_all_state() -> void:
 	emit_signal("health_changed", current_health, max_health)
