@@ -263,10 +263,11 @@ func _resolve_unknown_node(floor_idx: int) -> void:
 
 	if roll < 0.80:
 		var heal_amt: int = randi_range(6, 12)
-		var new_hp: int = min(rm.current_health + heal_amt, rm.max_health)
-		var actual: int = new_hp - rm.current_health
-		rm.current_health = new_hp
-		rm.emit_signal("health_changed", rm.current_health, rm.max_health)
+		var before: int = rm.current_health
+		# Route through modify_health so listeners (HUD, character panel,
+		# any future on-heal relic) see a single canonical signal path.
+		rm.modify_health(heal_amt)
+		var actual: int = rm.current_health - before
 		_show_popup("Found a scrap medkit. Healed %d HP." % actual)
 		return
 
@@ -281,9 +282,13 @@ func _resolve_unknown_node(floor_idx: int) -> void:
 		rm.add_resources(15, 0)
 		_show_popup("Cache empty. Salvaged 15 gold.")
 		return
-	var hp_loss: int = min(6, max(1, rm.current_health - 1))
-	rm.current_health -= hp_loss
-	rm.emit_signal("health_changed", rm.current_health, rm.max_health)
+	# Cap loss so the cache can never solo-kill the player — leave at least
+	# 1 HP behind. (Old code used max(1, current-1) which was a no-op when
+	# current==1; loss became 1 and HP fell to 0 without firing _handle_run_loss
+	# because the direct assignment bypassed modify_health.)
+	var hp_loss: int = clampi(rm.current_health - 1, 0, 6)
+	if hp_loss > 0:
+		rm.modify_health(-hp_loss)
 	_open_relic_choice("Pried Open the Cache (-%d HP)" % hp_loss, "treasure")
 
 

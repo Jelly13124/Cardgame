@@ -388,13 +388,20 @@ func _game_over():
 	get_tree().change_scene_to_file(HOME_BASE_PATH)
 
 ## Writes the player's current HP back to RunManager so it persists between battles.
-## Called on both victory and defeat. Emits health_changed so UI bound to the
-## signal (character panel, top bar) refreshes — previously the direct
-## assignment silently bypassed every listener.
+## Called on both victory and defeat. Routes through modify_health(delta) so the
+## death gate (current_health <= 0 → _handle_run_loss → run_ended(false)) fires
+## on defeat AND every listener bound to health_changed refreshes.
 func _write_hp_to_run_manager() -> void:
-	if RunManager.is_run_active and player and is_instance_valid(player):
-		RunManager.current_health = clampi(int(player.health), 0, RunManager.max_health)
-		RunManager.emit_signal("health_changed", RunManager.current_health, RunManager.max_health)
+	if not (RunManager.is_run_active and player and is_instance_valid(player)):
+		return
+	var target_hp: int = clampi(int(player.health), 0, RunManager.max_health)
+	var delta: int = target_hp - RunManager.current_health
+	if delta != 0:
+		RunManager.modify_health(delta)
+	elif target_hp == 0:
+		# Edge case: RunManager was already at 0 (somehow) but we're writing 0
+		# again on defeat — force the death gate to fire.
+		RunManager.modify_health(0)
 
 func modify_player_attack_damage(amount: int, attacker: Node, defender: Node) -> int:
 	if relic_effect_system:

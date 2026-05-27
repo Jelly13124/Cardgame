@@ -15,6 +15,10 @@ var floor_num: int = 1
 var reward_continue: int = 25
 var reward_extract: int = 50
 
+var _extract_btn: Button
+var _continue_btn: Button
+var _resolved: bool = false
+
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -73,6 +77,7 @@ func _build() -> void:
 	extract_btn.add_theme_font_size_override("font_size", 20)
 	extract_btn.pressed.connect(_on_extract_pressed)
 	vbox.add_child(extract_btn)
+	_extract_btn = extract_btn
 
 	var continue_btn := Button.new()
 	continue_btn.text = "PUSH ON   ( +%d Core, continue to next act )" % reward_continue
@@ -80,13 +85,32 @@ func _build() -> void:
 	continue_btn.add_theme_font_size_override("font_size", 20)
 	continue_btn.pressed.connect(_on_continue_pressed)
 	vbox.add_child(continue_btn)
+	_continue_btn = continue_btn
 
 
+# Debounce: queue_free is deferred so without this flag a double-click on
+# the same button (or rapid clicks across both buttons) would emit `chosen`
+# more than once, leading to double Core grants and stacked loot modals.
 func _on_extract_pressed() -> void:
+	if _resolved:
+		return
+	_resolved = true
+	_disable_buttons()
 	emit_signal("chosen", true)
 	queue_free()
 
 
 func _on_continue_pressed() -> void:
+	if _resolved:
+		return
+	_resolved = true
+	_disable_buttons()
 	emit_signal("chosen", false)
 	queue_free()
+
+
+func _disable_buttons() -> void:
+	if is_instance_valid(_extract_btn):
+		_extract_btn.disabled = true
+	if is_instance_valid(_continue_btn):
+		_continue_btn.disabled = true
