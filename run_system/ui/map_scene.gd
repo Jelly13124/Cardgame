@@ -37,6 +37,11 @@ var _drag_start_scroll: float = 0.0
 var _relic_choice_layer: CanvasLayer
 var _relic_choice_box: VBoxContainer
 var _is_relic_choice_open: bool = false
+## Re-entrancy guard for _on_node_clicked. The handler awaits a 0.35s
+## timer before transitioning; without this, a rapid second click on a
+## CHILD of the just-clicked node passes _is_accessible and starts a
+## second coroutine that clobbers current_encounter / current_node_id.
+var _node_click_pending: bool = false
 var _renderer: RefCounted  # MapRenderer; kept untyped to avoid class_name parse ordering
 
 
@@ -212,6 +217,9 @@ func _input(event: InputEvent) -> void:
 
 
 func _on_node_clicked(node: Dictionary) -> void:
+	if _node_click_pending:
+		return
+	_node_click_pending = true
 	rm.current_node_id = node.id
 	rm.current_floor = node.floor
 	if not (node.id in rm.visited_node_ids):
@@ -238,6 +246,13 @@ func _on_node_clicked(node: Dictionary) -> void:
 				_grant_treasure_equipment()
 		"unknown":
 			_resolve_unknown_node(int(node.floor))
+
+	# Release the click guard. Scene-change branches will tear down the
+	# scene before this line matters; for popup-only branches, the next
+	# click is free. Modal-opening branches gate further input via their
+	# own flags (_is_relic_choice_open etc.) so re-arming the click guard
+	# here is safe.
+	_node_click_pending = false
 
 
 ## "?" map node — rolls one of several outcomes for variety. Probabilities:
