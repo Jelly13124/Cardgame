@@ -5,10 +5,18 @@
 	"type": "attack",
 	"cost": 1,
 	"description": "Deal [b]4+Strength[/b] damage and gain [b]4+Constitution[/b] block.",
-	"front_image": "player/strike.png",
+	"front_image": "player/siphon.png",
 	"side": "player",
 	"effects": [
-		{ "type": "deal_damage", "amount": 4, "scaling": "strength" },
-		{ "type": "gain_block",  "amount": 4, "scaling": "constitution" }
+		{
+			"type": "deal_damage",
+			"amount": 4,
+			"scaling": "strength"
+		},
+		{
+			"type": "gain_block",
+			"amount": 4,
+			"scaling": "constitution"
+		}
 	]
 }

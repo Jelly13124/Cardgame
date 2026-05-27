@@ -5,10 +5,14 @@
 	"type": "skill",
 	"cost": 0,
 	"description": "Gain [b]4+Constitution[/b] block. Retain.",
-	"front_image": "player/defend.png",
+	"front_image": "player/brace.png",
 	"side": "player",
 	"retain": true,
 	"effects": [
-		{ "type": "gain_block", "amount": 4, "scaling": "constitution" }
+		{
+			"type": "gain_block",
+			"amount": 4,
+			"scaling": "constitution"
+		}
 	]
 }

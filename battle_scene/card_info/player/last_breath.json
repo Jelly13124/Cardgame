@@ -5,11 +5,20 @@
 	"type": "skill",
 	"cost": 0,
 	"description": "Gain [b]10+Constitution[/b] block. Draw 2 cards. Exhaust.",
-	"front_image": "player/adrenaline.png",
+	"front_image": "player/last_breath.png",
 	"side": "player",
 	"effects": [
-		{ "type": "gain_block", "amount": 10, "scaling": "constitution" },
-		{ "type": "draw_cards", "amount": 2 },
-		{ "type": "exhaust_self" }
+		{
+			"type": "gain_block",
+			"amount": 10,
+			"scaling": "constitution"
+		},
+		{
+			"type": "draw_cards",
+			"amount": 2
+		},
+		{
+			"type": "exhaust_self"
+		}
 	]
 }

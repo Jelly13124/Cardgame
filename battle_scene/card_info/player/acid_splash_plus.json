@@ -5,10 +5,17 @@
 	"type": "attack",
 	"cost": 1,
 	"description": "Deal [b]6[/b] damage to ALL enemies and apply [b]3 Poison[/b] to ALL.",
-	"front_image": "player/junk_bomb.png",
+	"front_image": "player/acid_splash.png",
 	"side": "player",
 	"effects": [
-		{ "type": "deal_damage_all",  "amount": 6 },
-		{ "type": "apply_status_all", "status": "poison", "stacks": 3 }
+		{
+			"type": "deal_damage_all",
+			"amount": 6
+		},
+		{
+			"type": "apply_status_all",
+			"status": "poison",
+			"stacks": 3
+		}
 	]
 }

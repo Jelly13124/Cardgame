@@ -5,10 +5,17 @@
 	"type": "attack",
 	"cost": 1,
 	"description": "Deal [b]4+Strength[/b] damage. Draw 1 card.",
-	"front_image": "player/strike.png",
+	"front_image": "player/scrap_strike.png",
 	"side": "player",
 	"effects": [
-		{ "type": "deal_damage", "amount": 4, "scaling": "strength" },
-		{ "type": "draw_cards",  "amount": 1 }
+		{
+			"type": "deal_damage",
+			"amount": 4,
+			"scaling": "strength"
+		},
+		{
+			"type": "draw_cards",
+			"amount": 1
+		}
 	]
 }

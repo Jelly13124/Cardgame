@@ -6,5 +6,5 @@
   "set_id": "warden",
   "bonuses": { "strength": 2, "constitution": 1 },
   "description": "A coal still warm with the Warden's last breath.",
-  "sprite": "equipment/old_world_relic.png"
+  "sprite": "equipment/warden_pendant.png"
 }

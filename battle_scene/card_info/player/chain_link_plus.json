@@ -5,10 +5,17 @@
 	"type": "attack",
 	"cost": 1,
 	"description": "Deal [b]9+Strength[/b] damage. Draw 1 card.",
-	"front_image": "player/charged_shot.png",
+	"front_image": "player/chain_link.png",
 	"side": "player",
 	"effects": [
-		{ "type": "deal_damage", "amount": 9, "scaling": "strength" },
-		{ "type": "draw_cards",  "amount": 1 }
+		{
+			"type": "deal_damage",
+			"amount": 9,
+			"scaling": "strength"
+		},
+		{
+			"type": "draw_cards",
+			"amount": 1
+		}
 	]
 }
