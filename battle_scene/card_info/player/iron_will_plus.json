@@ -5,11 +5,19 @@
 	"type": "ability",
 	"cost": 1,
 	"description": "Gain [b]2 Strength[/b] and [b]1 Constitution[/b]. Exhaust.",
-	"front_image": "player/tinker.png",
+	"front_image": "player/iron_will.png",
 	"side": "player",
 	"effects": [
-		{ "type": "gain_strength",     "amount": 2 },
-		{ "type": "gain_constitution", "amount": 1 },
-		{ "type": "exhaust_self" }
+		{
+			"type": "gain_strength",
+			"amount": 2
+		},
+		{
+			"type": "gain_constitution",
+			"amount": 1
+		},
+		{
+			"type": "exhaust_self"
+		}
 	]
 }

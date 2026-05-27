@@ -6,5 +6,5 @@
   "set_id": "warden",
   "bonuses": { "constitution": 1 },
   "description": "Soot-blackened helm forged from cooling slag.",
-  "sprite": "equipment/tank_engineer_helm.png"
+  "sprite": "equipment/warden_helm.png"
 }

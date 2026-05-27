@@ -2,7 +2,7 @@
 	"id": "war_horn",
 	"title": "War Horn",
 	"description": "Your direct attack damage is increased by 2.",
-	"icon": "res://run_system/assets/images/relics/sharpened_scrap.png",
+	"icon": "res://run_system/assets/images/relics/war_horn.png",
 	"rarity": "rare",
 	"effects": [
 		{

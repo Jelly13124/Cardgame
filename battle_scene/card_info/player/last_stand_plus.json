@@ -5,10 +5,17 @@
 	"type": "skill",
 	"cost": 2,
 	"description": "Gain [b]17+Constitution[/b] block. Draw 2 cards.",
-	"front_image": "player/defend.png",
+	"front_image": "player/last_stand.png",
 	"side": "player",
 	"effects": [
-		{ "type": "gain_block", "amount": 17, "scaling": "constitution" },
-		{ "type": "draw_cards", "amount": 2 }
+		{
+			"type": "gain_block",
+			"amount": 17,
+			"scaling": "constitution"
+		},
+		{
+			"type": "draw_cards",
+			"amount": 2
+		}
 	]
 }
