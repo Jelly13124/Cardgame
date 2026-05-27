@@ -129,6 +129,7 @@ func _entry_key(entry: Dictionary) -> String:
 	return "%s:%s:%d" % [str(entry["relic_id"]), str(effect.get("trigger", "")), int(entry["index"])]
 
 
-func _notify(text: String, color: Color) -> void:
-	if _battle_scene and _battle_scene.has_method("show_notification"):
-		_battle_scene.show_notification(text, color)
+## Center-screen yellow text removed per UX feedback. Kept as no-op so
+## existing call sites at relic-trigger points don't break.
+func _notify(_text: String, _color: Color) -> void:
+	pass
