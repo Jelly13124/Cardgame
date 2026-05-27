@@ -69,7 +69,9 @@ func on_turn_start(entity: Node) -> void:
 	if has_status("poison"):
 		var dmg: int = _statuses["poison"]
 		if entity.has_method("take_damage"):
-			entity.take_damage(dmg)
+			# silent=true → suppress the CombatFX floating number; the
+			# "POISON N" _notify below is the canonical DoT callout.
+			entity.take_damage(dmg, true)
 		_notify(entity, "POISON %d" % dmg, STATUS_COLORS["poison"])
 		_statuses["poison"] -= 1
 		if _statuses["poison"] <= 0:
@@ -79,7 +81,7 @@ func on_turn_start(entity: Node) -> void:
 	if has_status("burn"):
 		var dmg: int = _statuses["burn"]
 		if entity.has_method("take_damage"):
-			entity.take_damage(dmg)
+			entity.take_damage(dmg, true)
 		_notify(entity, "BURN %d" % dmg, STATUS_COLORS["burn"])
 
 	if changed:
@@ -179,9 +181,20 @@ func _refresh_badges(entity: Node) -> void:
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		bg.add_child(lbl)
 		# Tooltip on hover: full status name + description + current stack count.
+		# Guard against the lambda firing after the badge is queue_freed
+		# (next _refresh_badges call frees everything; if the cursor is still
+		# over an old badge in the deferred-free window, mouse_entered can
+		# fire on a dead Object). Also fire hide on tree_exited so the
+		# tooltip can't get stuck when the badge is freed mid-hover.
 		var human_name: String = str(status_name).replace("_", " ").capitalize()
 		var desc: String = str(STATUS_DESCRIPTIONS.get(status_name, ""))
 		var tip: String = "[b]%s ×%d[/b]\n%s" % [human_name, stacks, desc] if desc != "" else "[b]%s ×%d[/b]" % [human_name, stacks]
-		bg.mouse_entered.connect(func(): Tooltip.show(tip, bg.global_position + Vector2(bg.size.x * 0.5, 0)))
+		var bg_ref: NinePatchRect = bg
+		bg.mouse_entered.connect(func():
+			if not is_instance_valid(bg_ref):
+				return
+			Tooltip.show(tip, bg_ref.global_position + Vector2(bg_ref.size.x * 0.5, 0))
+		)
 		bg.mouse_exited.connect(Tooltip.hide)
+		bg.tree_exited.connect(Tooltip.hide)
 		container.add_child(bg)

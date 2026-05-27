@@ -31,10 +31,16 @@ static func spawn_damage_number(scene_root: Node, world_pos: Vector2, amount: in
 	scene_root.add_child(layer)
 	layer.add_child(label)
 
-	# Center the label horizontally on the spawn point.
-	label.position = world_pos - Vector2(label.size.x * 0.5, 0)
-	# Defer to next frame so label.size is computed before we recenter.
-	label.call_deferred("set_position", world_pos)
+	# Center on the spawn point. Label.size is Vector2.ZERO until the first
+	# layout pass; bind label into a deferred callable that re-measures
+	# AT DEFERRED-CALL TIME (after layout) and re-centers. Plain
+	# call_deferred("set_position", ...) would freeze label.size.x at 0
+	# because args evaluate eagerly.
+	label.position = world_pos
+	var center_at: Callable = func():
+		if is_instance_valid(label):
+			label.position = world_pos - Vector2(label.size.x * 0.5, 0)
+	center_at.call_deferred()
 
 	var tween := scene_root.create_tween()
 	tween.set_parallel(true)

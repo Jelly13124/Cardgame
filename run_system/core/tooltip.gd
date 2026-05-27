@@ -20,12 +20,21 @@ var _panel: PanelContainer
 var _label: RichTextLabel
 var _visible: bool = false
 var _follow_mouse: bool = false
+var _last_scene: Node = null  # tracked so we can auto-hide on scene change
 
 
 func _ready() -> void:
 	_layer = CanvasLayer.new()
 	_layer.layer = 1000
 	add_child(_layer)
+
+	# Auto-hide on scene change so a hovered tooltip can't leak past the
+	# scene that owned the widget. Without this, a freed widget never fires
+	# mouse_exited and the panel stays floating on top of the new scene.
+	# Track current_scene via tree_changed; the check is O(1) and only
+	# actually hides when the scene reference moves.
+	_last_scene = get_tree().current_scene
+	get_tree().tree_changed.connect(_on_tree_changed)
 
 	_panel = PanelContainer.new()
 	_panel.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.06, 0.05, 0.04, 0.96), Color(0.55, 0.42, 0.20, 1.0), 4, 2))
@@ -58,6 +67,23 @@ func _ready() -> void:
 func _process(_dt: float) -> void:
 	if _visible and _follow_mouse:
 		_position_panel(_layer.get_viewport().get_mouse_position())
+
+
+func _on_tree_changed() -> void:
+	# Cheap scene-change detector. tree_changed fires often during gameplay
+	# (every add/remove), but the current_scene reference only changes on
+	# an actual change_scene_to_*. Hide once when it flips.
+	# Guard against shutdown firing this with no tree.
+	if not is_inside_tree():
+		return
+	var tree := get_tree()
+	if tree == null:
+		return
+	var current: Node = tree.current_scene
+	if current != _last_scene:
+		_last_scene = current
+		if _visible:
+			hide()
 
 
 ## Show tooltip with `text`. If `anchor_global_pos` is Vector2.ZERO the

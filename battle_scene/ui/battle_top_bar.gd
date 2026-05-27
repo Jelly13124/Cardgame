@@ -233,10 +233,18 @@ func _make_relic_chip(relic_id: String) -> Button:
 	chip.focus_mode = Control.FOCUS_NONE
 	# Use the custom Tooltip autoload (richer styling than Godot's default
 	# tooltip_text). Anchored above the chip center so it doesn't follow
-	# the cursor across the top bar.
+	# the cursor across the top bar. Guard the lambda against firing on a
+	# freed chip (e.g. relic strip refresh mid-hover), and tree_exited
+	# forces hide so a stuck tooltip can't leak past the chip's lifetime.
 	var tip_text := ("[b]%s[/b]\n%s" % [title, desc]) if not desc.is_empty() else "[b]%s[/b]" % title
-	chip.mouse_entered.connect(func(): Tooltip.show(tip_text, chip.global_position + Vector2(chip.size.x * 0.5, 0)))
+	var chip_ref: Button = chip
+	chip.mouse_entered.connect(func():
+		if not is_instance_valid(chip_ref):
+			return
+		Tooltip.show(tip_text, chip_ref.global_position + Vector2(chip_ref.size.x * 0.5, 0))
+	)
 	chip.mouse_exited.connect(Tooltip.hide)
+	chip.tree_exited.connect(Tooltip.hide)
 	chip.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	chip.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
 	chip.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())

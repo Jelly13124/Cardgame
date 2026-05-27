@@ -372,7 +372,7 @@ func notify_status_changed() -> void:
 	status_changed.emit()
 
 
-func take_damage(amount: int) -> void:
+func take_damage(amount: int, silent: bool = false) -> void:
 	var dmg_after_block = max(0, amount - block)
 	var blocked_amount = min(block, amount)
 	block = max(0, block - amount)
@@ -380,13 +380,18 @@ func take_damage(amount: int) -> void:
 	health = max(0, health)
 	_refresh_hud()
 
-	# Floating damage number above the enemy + screen shake on big hits.
-	var scene := get_tree().current_scene
-	if scene:
-		var spawn_pos: Vector2 = global_position + Vector2(0, -NORMAL_DISPLAY_HEIGHT * 0.5)
-		COMBAT_FX.spawn_damage_number(scene, spawn_pos, dmg_after_block, blocked_amount)
-		if dmg_after_block >= 10:
-			COMBAT_FX.shake(self, 6.0, 0.18)
+	# Floating damage number + shake. Caller can suppress with silent=true
+	# (e.g. status_effect_system's poison/burn ticks already show a
+	# "POISON N" notification, so the floating number would double up).
+	if not silent:
+		var scene := get_tree().current_scene
+		if scene:
+			var spawn_pos: Vector2 = global_position + Vector2(0, -NORMAL_DISPLAY_HEIGHT * 0.5)
+			COMBAT_FX.spawn_damage_number(scene, spawn_pos, dmg_after_block, blocked_amount)
+			# Shake the sprite only (not `self`) so the HUD / status badges
+			# that are children of this entity don't wobble with it.
+			if dmg_after_block >= 10 and _sprite and is_instance_valid(_sprite):
+				COMBAT_FX.shake(_sprite, 6.0, 0.18)
 
 	if health <= 0:
 		died.emit()

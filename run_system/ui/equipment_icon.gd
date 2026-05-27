@@ -32,6 +32,9 @@ func _ready() -> void:
 	if not mouse_entered.is_connected(_on_mouse_entered):
 		mouse_entered.connect(_on_mouse_entered)
 		mouse_exited.connect(_on_mouse_exited)
+		# Force-hide on tree exit so a freed icon (panel rebuild, scene
+		# change) can never leave its tooltip stranded.
+		tree_exited.connect(_on_mouse_exited)
 
 
 func _build() -> void:
@@ -71,7 +74,7 @@ func set_hover_tooltip(text: String) -> void:
 
 
 func _on_mouse_entered() -> void:
-	if _tooltip_text != "":
+	if _tooltip_text != "" and is_inside_tree():
 		Tooltip.show(_tooltip_text, global_position + Vector2(size.x * 0.5, 0))
 
 
