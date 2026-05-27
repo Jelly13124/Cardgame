@@ -104,20 +104,24 @@ const ELITE_ROSTER: Array = ["armored_patrol"]
 ## Boss per "act". Maps the boss floor index → enemy id. Final-floor boss
 ## stays junkyard_tyrant; mid-act bosses use placeholder sprites (rust_brute
 ## and armored_patrol re-skins) until codex generates dedicated art.
+##
+## Single source of truth for boss floors. `is_boss_floor()` and
+## `select_encounter()` both read from this; map_gen forces single-node
+## generation for any floor in this dict's keys. To add a mid-boss, add
+## the entry here only.
 const BOSS_BY_FLOOR: Dictionary = {
 	4:  "rust_titan",
 	8:  "ash_warden",
 	11: "junkyard_tyrant",
 }
-## Floors that should generate as a single-node boss encounter.
-const MID_BOSS_FLOORS: Array[int] = [4, 8]
-## Total bosses in a run — used by battle_scene to know which boss kill
-## triggers extract vs full-game-complete. Final = highest key in BOSS_BY_FLOOR.
-## Kept here so future map-length tweaks update both places at once.
-const FINAL_BOSS_FLOOR: int = 11
 ## Legacy alias — some pre-multi-boss code paths still read BOSS_ROSTER.
 ## Returns the final boss only; intermediate bosses use BOSS_BY_FLOOR lookup.
 const BOSS_ROSTER:  Array = ["junkyard_tyrant"]
+
+
+## True when a floor index is one of the designed boss floors.
+func is_boss_floor(floor_idx: int) -> bool:
+	return BOSS_BY_FLOOR.has(floor_idx)
 
 const BATTLE_SCENE: String = "res://battle_scene/battle_scene.tscn"
 const MAP_SCENE: String = "res://run_system/ui/map_scene.tscn"
@@ -170,17 +174,18 @@ func generate_map(num_floors: int = 12, width: int = 4) -> void:
 	for f in range(num_floors):
 		# Determine how many nodes on this floor
 		var num_nodes: int
-		if f == 0 or f == num_floors - 1 or f in MID_BOSS_FLOORS:
+		if f == 0 or f == num_floors - 1 or is_boss_floor(f):
 			num_nodes = 1 # Start (relic), mid-act bosses, and end (final boss) are single nodes
 		else:
 			num_nodes = randi_range(2, 4)
 			num_nodes = mini(num_nodes, width) # Can't exceed +---available slots
 			# Floors directly adjacent to a single-node floor must fit within
-			# the MAX_CHILDREN_PER_NODE cap of that single node, otherwise some
-			# nodes would be unreachable. Floor 1 sits below the start (single),
-			# floor N-2 sits above the pre-boss-rest if it's also single (it
-			# is not currently, but kept for symmetry / future-proofing).
-			if f == 1:
+			# the MAX_CHILDREN_PER_NODE cap of that single node, otherwise the
+			# orphan-fallback at _attach_orphan_to_under_cap_parent silently
+			# blows past the cap. Floor 1 sits below the start (relic),
+			# floor N-2 sits above the pre-boss-rest, and any floor sitting
+			# directly above a mid-boss does too.
+			if f == 1 or is_boss_floor(f - 1):
 				num_nodes = mini(num_nodes, MAX_CHILDREN_PER_NODE)
 		
 		# Pick unique random slots — single nodes always go in the center
@@ -312,7 +317,7 @@ func _pick_node_type(floor_idx: int, total: int, treasure_extras_used: int = 0) 
 	# Mid-act boss floors: force a single boss node so the route narrows
 	# (the slots-assignment code above already gives floors with one node
 	# the center slot — we just declare the type here).
-	if floor_idx in MID_BOSS_FLOORS:
+	if is_boss_floor(floor_idx):
 		return "boss"
 	# Pre-boss floor: always rest (campfire before the boss)
 	if floor_idx == total - 2:
@@ -844,6 +849,16 @@ func _handle_run_loss() -> void:
 	emit_signal("run_ended", false)
 	# TODO: Trigger base-building retention logic (e.g. keep 30% of Core)
 	print("Player Hero defeated! Run ended.")
+
+
+## Mark the run as ended cleanly (boss victory or extract). Mirrors
+## _handle_run_loss's bookkeeping but emits run_ended(true). Idempotent —
+## calling twice is a no-op the second time.
+func end_run_victory() -> void:
+	if not is_run_active:
+		return
+	is_run_active = false
+	emit_signal("run_ended", true)
 
 func _emit_all_state() -> void:
 	emit_signal("health_changed", current_health, max_health)

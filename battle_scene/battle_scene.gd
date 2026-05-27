@@ -330,6 +330,7 @@ func _victory():
 			return
 		# Final boss path.
 		MetaProgress.add_core(BOSS_VICTORY_CORE)
+		RunManager.end_run_victory()
 		get_tree().change_scene_to_file(HOME_BASE_PATH)
 		return
 	_show_loot_modal()
@@ -352,6 +353,7 @@ func _on_extract_chosen(extract: bool, floor_num: int, canvas: CanvasLayer) -> v
 		canvas.queue_free()
 	if extract:
 		MetaProgress.add_core(int(EXTRACT_REWARDS[floor_num]["extract"]))
+		RunManager.end_run_victory()
 		get_tree().change_scene_to_file(HOME_BASE_PATH)
 	else:
 		# Continue: grant push-on Core then drop into normal loot flow so
