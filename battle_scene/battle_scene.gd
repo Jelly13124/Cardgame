@@ -344,7 +344,8 @@ func _victory():
 	# modify_health(negative) would trigger _handle_run_loss → run_ended(false),
 	# and the subsequent end_run_victory() at the boss branch would no-op.
 	_write_hp_to_run_manager(false)
-	show_notification("VICTORY!", Color(0.2, 1.0, 0.2))
+	# VICTORY! banner removed per UX feedback — the loot modal / extract
+	# choice / home-base transition is sufficient signal that the fight is won.
 	await get_tree().create_timer(3.0).timeout
 
 	# Boss victory routing:
@@ -416,7 +417,8 @@ func _game_over():
 	# Defeat path: route through the death gate so _handle_run_loss fires
 	# and run_ended(false) is emitted.
 	_write_hp_to_run_manager(true)
-	show_notification("DEFEAT...", Color(1, 0.1, 0.1))
+	# DEFEAT... banner removed per UX feedback — the player.health → 0 +
+	# HUD bar drop + transition to home base communicates defeat clearly.
 	await get_tree().create_timer(3.0).timeout
 	get_tree().change_scene_to_file(HOME_BASE_PATH)
 

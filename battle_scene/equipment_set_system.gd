@@ -115,6 +115,7 @@ func on_card_damage_resolved(card: Node, target: Node) -> void:
 				_notify("%s: %s +%d on target" % [entry["tier_label"], status.to_upper(), stacks], Color(0.85, 0.6, 1.0))
 
 
-func _notify(text: String, color: Color) -> void:
-	if _battle_scene and _battle_scene.has_method("show_notification"):
-		_battle_scene.show_notification(text, color)
+## Center-screen yellow text removed per UX feedback. Kept as no-op so
+## existing call sites at set-bonus trigger points don't break.
+func _notify(_text: String, _color: Color) -> void:
+	pass

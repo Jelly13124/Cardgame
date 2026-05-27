@@ -69,10 +69,9 @@ func on_turn_start(entity: Node) -> void:
 	if has_status("poison"):
 		var dmg: int = _statuses["poison"]
 		if entity.has_method("take_damage"):
-			# silent=true → suppress the CombatFX floating number; the
-			# "POISON N" _notify below is the canonical DoT callout.
-			entity.take_damage(dmg, true)
-		_notify(entity, "POISON %d" % dmg, STATUS_COLORS["poison"])
+			# silent=false → CombatFX floating damage number IS the readout
+			# now that _notify is deleted.
+			entity.take_damage(dmg)
 		_statuses["poison"] -= 1
 		if _statuses["poison"] <= 0:
 			_statuses.erase("poison")
@@ -81,8 +80,7 @@ func on_turn_start(entity: Node) -> void:
 	if has_status("burn"):
 		var dmg: int = _statuses["burn"]
 		if entity.has_method("take_damage"):
-			entity.take_damage(dmg, true)
-		_notify(entity, "BURN %d" % dmg, STATUS_COLORS["burn"])
+			entity.take_damage(dmg)
 
 	if changed:
 		_on_statuses_changed(entity)
@@ -136,10 +134,12 @@ func get_incoming_attack_multiplier() -> float:
 func _canonicalize_status_name(status_name: String) -> String:
 	return status_name.to_lower()
 
-func _notify(entity: Node, text: String, color: Color) -> void:
-	var battle_scene = entity.get_tree().current_scene if entity.get_tree() else null
-	if battle_scene and battle_scene.has_method("show_notification"):
-		battle_scene.show_notification(text, color)
+## Center-screen yellow status text removed per UX feedback — visual
+## feedback for DoT now lives in CombatFX floating damage numbers (see
+## on_turn_start passing silent=false to take_damage). Kept as a no-op
+## so existing call sites don't error.
+func _notify(_entity: Node, _text: String, _color: Color) -> void:
+	pass
 
 func _on_statuses_changed(entity: Node) -> void:
 	_refresh_badges(entity)

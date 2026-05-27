@@ -312,19 +312,10 @@ func _resolve_unknown_node(floor_idx: int) -> void:
 	_open_relic_choice("Pried Open the Cache (-%d HP)" % hp_loss, "treasure")
 
 
-func _show_popup(text: String) -> void:
-	var label = Label.new()
-	label.text = text
-	label.add_theme_font_size_override("font_size", 26)
-	label.add_theme_color_override("font_color", Color(1, 0.95, 0.8))
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.set_anchors_preset(Control.PRESET_CENTER)
-	label.position.y += 80
-	add_child(label)
-
-	var tween = create_tween()
-	tween.tween_property(label, "modulate:a", 0.0, 2.0).set_delay(1.5)
-	tween.tween_callback(label.queue_free)
+## Map floating popup removed per UX feedback — the player can see node
+## outcomes via state changes (HP bar, gold counter, inventory icon, relic
+## strip). Kept as a no-op so existing call sites don't need surgery.
+func _show_popup(_text: String) -> void:
 	queue_redraw()
 
 
