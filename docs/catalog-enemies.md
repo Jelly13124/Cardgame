@@ -16,7 +16,7 @@
 | Spawn / runtime code | `battle_scene/enemy_entity.gd` (factory + animation), `battle_scene/enemy_ai.gd` (action exec) |
 | Schema validator | `battle_scene/data_validator.gd` `validate_enemy()` + `validate_encounter_pools()` |
 | Encounter selection | `run_system/core/run_manager.gd` `select_encounter()` |
-| Encounter pools | `run_system/core/run_manager.gd` `ENCOUNTER_POOLS_*` / `ELITE_ROSTER` / `BOSS_ROSTER` |
+| Encounter pools | `run_system/core/run_manager.gd` `ENCOUNTER_POOLS_*` / `ELITE_ROSTER` / `BOSS_BY_FLOOR` |
 
 ## Quick stats
 
@@ -73,8 +73,12 @@ Defined in `run_system/core/run_manager.gd`. `select_encounter(type, floor)` is 
 ### `ELITE_ROSTER` — elite map nodes (any floor)
 - `[armored_patrol]`
 
-### `BOSS_ROSTER` — floor 11 boss node
-- `[junkyard_tyrant]`
+### `BOSS_BY_FLOOR` — per-floor boss assignments (mid-act + final)
+- `4 → rust_titan` (act-1 boss)
+- `8 → ash_warden` (act-2 boss)
+- `11 → junkyard_tyrant` (final boss)
+
+> `BOSS_ROSTER` still exists as a legacy alias holding only the final boss; new bosses must be added to `BOSS_BY_FLOOR` to actually spawn. `is_boss_floor(floor_idx)` is the canonical check used by both map gen and `select_encounter()`.
 
 > `DataValidator.validate_encounter_pools()` checks at startup that every ID listed above has a matching `{id}.json` file. Typos fail loud at startup, not mid-combat.
 
@@ -218,7 +222,7 @@ Defined in `battle_scene/status_effect_system.gd`. Allowed names tracked in `dat
 
 1. Create `battle_scene/card_info/enemy/{id}.json` with `id`, `name`, `sprite_id`, `max_health`, `action_pattern[]`.
 2. Ensure each pattern entry's `type` is one of the supported action types above (validator will fail loud otherwise).
-3. Add `{id}` to a pool in `run_manager.gd` (`ENCOUNTER_POOLS_*` / `ELITE_ROSTER` / `BOSS_ROSTER`).
+3. Add `{id}` to a pool in `run_manager.gd`: regular → `ENCOUNTER_POOLS_*`, elite → `ELITE_ROSTER`, boss → `BOSS_BY_FLOOR[floor_idx]` (NOT the legacy `BOSS_ROSTER`).
 4. Generate sprites → `battle_scene/assets/images/enemies/{sprite_id}/{anim}/{sprite_id}_{anim}_0..3.png` (192×192 for boss, 128×128 otherwise).
 5. Restart the editor — DataValidator validates JSON + cross-checks every encounter pool ID at startup.
 

@@ -44,12 +44,36 @@ const LOOT_REWARD_SCENE = preload("res://run_system/ui/loot_reward.tscn")
 const EXTRACT_CHOICE_MODAL_SCRIPT = preload("res://run_system/ui/extract_choice_modal.gd")
 
 const BOSS_VICTORY_CORE := 150
-## Extract rewards per mid-act boss floor (keyed by RunManager.current_floor).
-## continue = +Core for pushing on (less); extract = +Core for ending run now (more).
+## Extract reward overrides per mid-act boss floor (keyed by RunManager.current_floor).
+## Any boss floor NOT in this table falls back to a formula so adding a new
+## entry to RunManager.BOSS_BY_FLOOR can't silently route to the final-boss
+## "game complete" branch.
 const EXTRACT_REWARDS := {
 	4: {"continue": 25, "extract": 50},
 	8: {"continue": 50, "extract": 90},
 }
+
+
+## Returns the {continue, extract} reward dict for a mid-act boss floor, or
+## {} if `floor_num` is the final boss floor (no extract choice — full victory).
+func _extract_rewards_for(floor_num: int) -> Dictionary:
+	if floor_num == _final_boss_floor():
+		return {}
+	if EXTRACT_REWARDS.has(floor_num):
+		return EXTRACT_REWARDS[floor_num]
+	# Fallback formula so a new mid-boss added to BOSS_BY_FLOOR can't slip
+	# through to the final-boss branch. Scales roughly with the existing
+	# floor-4 / floor-8 values (~6 continue, ~12 extract per floor index).
+	return {
+		"continue": max(25, floor_num * 6),
+		"extract":  max(50, floor_num * 12),
+	}
+
+
+func _final_boss_floor() -> int:
+	var keys: Array = RunManager.BOSS_BY_FLOOR.keys()
+	keys.sort()
+	return int(keys[-1]) if keys.size() > 0 else -1
 
 func _ready():
 	print("BATTLE STARTING (STS Layout)")
@@ -315,18 +339,23 @@ func _victory():
 	is_game_over = true
 	if relic_effect_system:
 		relic_effect_system.on_combat_victory(player)
-	_write_hp_to_run_manager()
+	# Victory path: persist HP without firing the death gate, even if the
+	# player ended the fight at 0 HP (chip damage / mutual kill). Otherwise
+	# modify_health(negative) would trigger _handle_run_loss → run_ended(false),
+	# and the subsequent end_run_victory() at the boss branch would no-op.
+	_write_hp_to_run_manager(false)
 	show_notification("VICTORY!", Color(0.2, 1.0, 0.2))
 	await get_tree().create_timer(3.0).timeout
 
 	# Boss victory routing:
-	#   - mid-act boss (floor in EXTRACT_REWARDS) → extract choice modal
-	#   - final boss → grant BOSS_VICTORY_CORE and return to home base
-	#   - non-boss → normal loot modal
+	#   - mid-act boss → extract choice modal (rewards from _extract_rewards_for)
+	#   - final boss   → grant BOSS_VICTORY_CORE and return to home base
+	#   - non-boss     → normal loot modal
 	if RunManager.last_battle_node_type == "boss":
 		var floor_num: int = RunManager.current_floor
-		if EXTRACT_REWARDS.has(floor_num):
-			_show_extract_choice(floor_num)
+		var rewards: Dictionary = _extract_rewards_for(floor_num)
+		if not rewards.is_empty():
+			_show_extract_choice(floor_num, rewards)
 			return
 		# Final boss path.
 		MetaProgress.add_core(BOSS_VICTORY_CORE)
@@ -336,29 +365,29 @@ func _victory():
 	_show_loot_modal()
 
 
-func _show_extract_choice(floor_num: int) -> void:
+func _show_extract_choice(floor_num: int, rewards: Dictionary) -> void:
 	var canvas := CanvasLayer.new()
 	canvas.layer = 200
 	add_child(canvas)
 	var modal = EXTRACT_CHOICE_MODAL_SCRIPT.new()
 	modal.floor_num = floor_num
-	modal.reward_continue = int(EXTRACT_REWARDS[floor_num]["continue"])
-	modal.reward_extract = int(EXTRACT_REWARDS[floor_num]["extract"])
-	modal.chosen.connect(_on_extract_chosen.bind(floor_num, canvas))
+	modal.reward_continue = int(rewards.get("continue", 0))
+	modal.reward_extract = int(rewards.get("extract", 0))
+	modal.chosen.connect(_on_extract_chosen.bind(rewards, canvas))
 	canvas.add_child(modal)
 
 
-func _on_extract_chosen(extract: bool, floor_num: int, canvas: CanvasLayer) -> void:
+func _on_extract_chosen(extract: bool, rewards: Dictionary, canvas: CanvasLayer) -> void:
 	if is_instance_valid(canvas):
 		canvas.queue_free()
 	if extract:
-		MetaProgress.add_core(int(EXTRACT_REWARDS[floor_num]["extract"]))
+		MetaProgress.add_core(int(rewards.get("extract", 0)))
 		RunManager.end_run_victory()
 		get_tree().change_scene_to_file(HOME_BASE_PATH)
 	else:
 		# Continue: grant push-on Core then drop into normal loot flow so
 		# the player still gets gold + a card pick out of the boss kill.
-		MetaProgress.add_core(int(EXTRACT_REWARDS[floor_num]["continue"]))
+		MetaProgress.add_core(int(rewards.get("continue", 0)))
 		_show_loot_modal()
 
 
@@ -384,26 +413,31 @@ func _on_loot_closed(canvas: CanvasLayer) -> void:
 func _game_over():
 	if is_game_over: return
 	is_game_over = true
-	_write_hp_to_run_manager()  # Write 0 HP so RunManager knows player died
+	# Defeat path: route through the death gate so _handle_run_loss fires
+	# and run_ended(false) is emitted.
+	_write_hp_to_run_manager(true)
 	show_notification("DEFEAT...", Color(1, 0.1, 0.1))
 	await get_tree().create_timer(3.0).timeout
 	get_tree().change_scene_to_file(HOME_BASE_PATH)
 
-## Writes the player's current HP back to RunManager so it persists between battles.
-## Called on both victory and defeat. Routes through modify_health(delta) so the
-## death gate (current_health <= 0 → _handle_run_loss → run_ended(false)) fires
-## on defeat AND every listener bound to health_changed refreshes.
-func _write_hp_to_run_manager() -> void:
+## Writes player.health back to RunManager so it persists between battles.
+##   triggering_defeat=true  → defeat path: route through modify_health so the
+##                              death gate fires (_handle_run_loss → run_ended(false))
+##   triggering_defeat=false → victory / inter-battle path: write + emit signal
+##                              directly, NEVER fire the death gate even at 0 HP.
+##                              Critical: victory paths must use this so a chip-
+##                              kill mutual-death doesn't pre-empt end_run_victory.
+func _write_hp_to_run_manager(triggering_defeat: bool = false) -> void:
 	if not (RunManager.is_run_active and player and is_instance_valid(player)):
 		return
 	var target_hp: int = clampi(int(player.health), 0, RunManager.max_health)
-	var delta: int = target_hp - RunManager.current_health
-	if delta != 0:
+	if triggering_defeat:
+		var delta: int = target_hp - RunManager.current_health
 		RunManager.modify_health(delta)
-	elif target_hp == 0:
-		# Edge case: RunManager was already at 0 (somehow) but we're writing 0
-		# again on defeat — force the death gate to fire.
-		RunManager.modify_health(0)
+	else:
+		# Direct write + manual emit — bypasses death gate by design.
+		RunManager.current_health = target_hp
+		RunManager.emit_signal("health_changed", target_hp, RunManager.max_health)
 
 func modify_player_attack_damage(amount: int, attacker: Node, defender: Node) -> int:
 	if relic_effect_system:

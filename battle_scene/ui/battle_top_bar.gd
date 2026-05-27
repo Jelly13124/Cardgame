@@ -238,13 +238,14 @@ func _make_relic_chip(relic_id: String) -> Button:
 	# forces hide so a stuck tooltip can't leak past the chip's lifetime.
 	var tip_text := ("[b]%s[/b]\n%s" % [title, desc]) if not desc.is_empty() else "[b]%s[/b]" % title
 	var chip_ref: Button = chip
+	var chip_id: int = chip.get_instance_id()
 	chip.mouse_entered.connect(func():
 		if not is_instance_valid(chip_ref):
 			return
-		Tooltip.show(tip_text, chip_ref.global_position + Vector2(chip_ref.size.x * 0.5, 0))
+		Tooltip.show(tip_text, chip_ref.global_position + Vector2(chip_ref.size.x * 0.5, 0), chip_id)
 	)
-	chip.mouse_exited.connect(Tooltip.hide)
-	chip.tree_exited.connect(Tooltip.hide)
+	chip.mouse_exited.connect(Tooltip.hide_if_owner.bind(chip_id))
+	chip.tree_exited.connect(Tooltip.hide_if_owner.bind(chip_id))
 	chip.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	chip.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
 	chip.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())

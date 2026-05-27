@@ -183,7 +183,12 @@ func _get_node_at(pos: Vector2) -> Dictionary:
 
 
 func _input(event: InputEvent) -> void:
-	if _is_relic_choice_open:
+	# Block ALL map input while any modal is open (relic choice, rest choice,
+	# treasure equipment grant, inventory-full, extract, etc.) OR a node-click
+	# coroutine is still resolving. Without this, a click outside a non-FULL_RECT
+	# modal can re-enter _on_node_clicked and clobber rm.current_encounter mid-
+	# transition, leaving the modal orphaned in a freed scene.
+	if _is_relic_choice_open or _node_click_pending:
 		return
 
 	if event is InputEventMouseMotion:
@@ -228,6 +233,11 @@ func _on_node_clicked(node: Dictionary) -> void:
 
 	await get_tree().create_timer(0.35).timeout
 
+	# Each branch is responsible for releasing _node_click_pending when its
+	# work is done:
+	#   - scene-change branches don't need to release (scene tears down)
+	#   - modal-opening branches release in their CLOSE callbacks
+	#   - popup-only branches release synchronously below
 	match node.type:
 		"relic":
 			_open_relic_choice("Choose Your Starting Relic", "starting")
@@ -247,13 +257,6 @@ func _on_node_clicked(node: Dictionary) -> void:
 		"unknown":
 			_resolve_unknown_node(int(node.floor))
 
-	# Release the click guard. Scene-change branches will tear down the
-	# scene before this line matters; for popup-only branches, the next
-	# click is free. Modal-opening branches gate further input via their
-	# own flags (_is_relic_choice_open etc.) so re-arming the click guard
-	# here is safe.
-	_node_click_pending = false
-
 
 ## "?" map node — rolls one of several outcomes for variety. Probabilities:
 ##   40% enemy ambush       — same as before, drops into combat
@@ -268,42 +271,44 @@ func _resolve_unknown_node(floor_idx: int) -> void:
 		rm.current_encounter = rm.select_encounter("enemy", floor_idx)
 		rm.last_battle_node_type = "enemy"
 		get_tree().change_scene_to_packed(BATTLE_PACKED)
+		# Scene change tears down — no need to reset click guard.
 		return
 
 	if roll < 0.65:
 		var gold: int = randi_range(5, 20)
 		rm.add_resources(gold, 0)
 		_show_popup("Scavenged %d gold." % gold)
+		_node_click_pending = false
 		return
 
 	if roll < 0.80:
 		var heal_amt: int = randi_range(6, 12)
 		var before: int = rm.current_health
-		# Route through modify_health so listeners (HUD, character panel,
-		# any future on-heal relic) see a single canonical signal path.
 		rm.modify_health(heal_amt)
 		var actual: int = rm.current_health - before
 		_show_popup("Found a scrap medkit. Healed %d HP." % actual)
+		_node_click_pending = false
 		return
 
 	if roll < 0.90:
+		# _grant_treasure_equipment handles its own click-guard reset
+		# (popup paths reset immediately; inventory-full modal resets on resolve).
 		_grant_treasure_equipment()
 		return
 
-	# Tail 10%: suspicious cache.
-	if rm.get_unowned_relic_ids().is_empty():
-		# Nothing to gain — fall back to a small gold reward so the node
-		# never feels purely punishing.
+	# Tail 10%: suspicious cache. Skip if no relics to grant OR player at
+	# 1 HP (no payable cost — would be a free relic + "-0 HP" copy).
+	if rm.get_unowned_relic_ids().is_empty() or rm.current_health <= 1:
 		rm.add_resources(15, 0)
 		_show_popup("Cache empty. Salvaged 15 gold.")
+		_node_click_pending = false
 		return
-	# Cap loss so the cache can never solo-kill the player — leave at least
-	# 1 HP behind. (Old code used max(1, current-1) which was a no-op when
-	# current==1; loss became 1 and HP fell to 0 without firing _handle_run_loss
-	# because the direct assignment bypassed modify_health.)
-	var hp_loss: int = clampi(rm.current_health - 1, 0, 6)
-	if hp_loss > 0:
-		rm.modify_health(-hp_loss)
+	# Cap loss at 6 and at (current_health - 1) so cache can never solo-
+	# kill the player. Routes through modify_health for death-gate safety.
+	var hp_loss: int = clampi(rm.current_health - 1, 1, 6)
+	rm.modify_health(-hp_loss)
+	# Click guard stays latched — _open_relic_choice will reset it via
+	# _on_relic_choice_selected when player picks.
 	_open_relic_choice("Pried Open the Cache (-%d HP)" % hp_loss, "treasure")
 
 
@@ -470,6 +475,7 @@ func _make_relic_choice_button(relic_id: String, source_type: String) -> Button:
 
 func _on_relic_choice_selected(relic_id: String, _source_type: String) -> void:
 	_is_relic_choice_open = false
+	_node_click_pending = false  # release click guard so the next map node is clickable
 	_relic_choice_layer.visible = false
 
 	if rm.add_relic(relic_id):
@@ -547,13 +553,15 @@ func _grant_treasure_equipment() -> void:
 	var item_id = RunManager.roll_equipment_drop(rarity)
 	if item_id == "":
 		_show_popup("The crate was empty.")
+		_node_click_pending = false
 		return
 	var data = RunManager.get_equipment_data(item_id)
 	var item_name = str(data.get("name", item_id))
 	if RunManager.add_to_inventory(item_id):
 		_show_popup("Found %s!" % item_name)
+		_node_click_pending = false
 		return
-	# Inventory full → modal
+	# Inventory full → modal. Click guard stays latched until resolved.
 	var modal = INVENTORY_FULL_MODAL_FOR_TREASURE.new()
 	modal.setup(item_id)
 	modal.resolved.connect(func(took: bool):
@@ -561,6 +569,7 @@ func _grant_treasure_equipment() -> void:
 			_show_popup("Took %s." % item_name)
 		else:
 			_show_popup("Left %s behind." % item_name)
+		_node_click_pending = false
 	)
 	add_child(modal)
 
@@ -625,6 +634,7 @@ func _open_rest_choice() -> void:
 		rm.modify_health(heal_amount)
 		_show_popup("Rested. Healed %d HP." % heal_amount)
 		modal.queue_free()
+		_node_click_pending = false  # release click guard
 	)
 	buttons.add_child(heal_btn)
 
@@ -639,6 +649,7 @@ func _open_rest_choice() -> void:
 				return
 			_show_popup("Card upgraded.")
 			modal.queue_free()
+			_node_click_pending = false  # release click guard
 		)
 		modal.add_child(picker)
 	)

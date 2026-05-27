@@ -21,6 +21,10 @@ var _label: RichTextLabel
 var _visible: bool = false
 var _follow_mouse: bool = false
 var _last_scene: Node = null  # tracked so we can auto-hide on scene change
+## Instance id of whoever called show() last. Used to prevent stale hide()
+## calls (e.g. a queue_freed badge whose tree_exited fires AFTER a sibling
+## already opened a new tooltip) from clobbering the current overlay.
+var _owner_id: int = 0
 
 
 func _ready() -> void:
@@ -29,12 +33,12 @@ func _ready() -> void:
 	add_child(_layer)
 
 	# Auto-hide on scene change so a hovered tooltip can't leak past the
-	# scene that owned the widget. Without this, a freed widget never fires
-	# mouse_exited and the panel stays floating on top of the new scene.
-	# Track current_scene via tree_changed; the check is O(1) and only
-	# actually hides when the scene reference moves.
+	# scene that owned the widget. The scene-change check happens inside
+	# _process and ONLY when the tooltip is currently visible — when no
+	# tooltip is shown there's nothing to hide and we can skip the work.
+	# Old version connected tree_changed (fires per-add-remove, dozens/sec
+	# in battle), which was wasteful when the tooltip wasn't visible.
 	_last_scene = get_tree().current_scene
-	get_tree().tree_changed.connect(_on_tree_changed)
 
 	_panel = PanelContainer.new()
 	_panel.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.06, 0.05, 0.04, 0.96), Color(0.55, 0.42, 0.20, 1.0), 4, 2))
@@ -65,15 +69,13 @@ func _ready() -> void:
 
 
 func _process(_dt: float) -> void:
-	if _visible and _follow_mouse:
+	if not _visible:
+		return  # idle: skip per-frame work entirely
+	if _follow_mouse:
 		_position_panel(_layer.get_viewport().get_mouse_position())
-
-
-func _on_tree_changed() -> void:
-	# Cheap scene-change detector. tree_changed fires often during gameplay
-	# (every add/remove), but the current_scene reference only changes on
-	# an actual change_scene_to_*. Hide once when it flips.
-	# Guard against shutdown firing this with no tree.
+	# Scene-change check only runs while tooltip is visible — no point
+	# hiding what isn't shown. Compare current_scene against the cached
+	# pointer; flip = scene actually changed → hide stale tooltip.
 	if not is_inside_tree():
 		return
 	var tree := get_tree()
@@ -82,15 +84,24 @@ func _on_tree_changed() -> void:
 	var current: Node = tree.current_scene
 	if current != _last_scene:
 		_last_scene = current
-		if _visible:
-			hide()
+		hide()
 
 
 ## Show tooltip with `text`. If `anchor_global_pos` is Vector2.ZERO the
 ## tooltip follows the mouse; otherwise it anchors above that position.
-func show(text: String, anchor_global_pos: Vector2 = Vector2.ZERO) -> void:
+## `owner_id` is the calling node's instance_id — pass it so hide_if_owner
+## can avoid clobbering this tooltip from a sibling widget's stale callback.
+func show(text: String, anchor_global_pos: Vector2 = Vector2.ZERO, owner_id: int = 0) -> void:
 	if not _panel:
 		return
+	_owner_id = owner_id
+	# Snapshot current scene so the scene-change detector in _process
+	# uses NOW as its baseline (otherwise a stale _last_scene from before
+	# the previous hide would immediately re-fire hide on this show).
+	if is_inside_tree():
+		var tree := get_tree()
+		if tree != null:
+			_last_scene = tree.current_scene
 	_label.text = text
 	_label.custom_minimum_size = Vector2(min(MAX_WIDTH, _measure_text_width(text)), 0)
 	_panel.visible = true
@@ -108,6 +119,16 @@ func hide() -> void:
 		return
 	_panel.visible = false
 	_visible = false
+	_owner_id = 0
+
+
+## Conditional hide — only hides if the caller's owner_id matches the one
+## that opened the current tooltip. Use this from tree_exited / mouse_exited
+## callbacks so a stale fire from a freed widget can't clobber a sibling's
+## freshly-opened tooltip.
+func hide_if_owner(owner_id: int) -> void:
+	if owner_id == _owner_id:
+		hide()
 
 
 func _position_panel(anchor: Vector2) -> void:

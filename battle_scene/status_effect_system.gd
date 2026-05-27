@@ -190,11 +190,14 @@ func _refresh_badges(entity: Node) -> void:
 		var desc: String = str(STATUS_DESCRIPTIONS.get(status_name, ""))
 		var tip: String = "[b]%s ×%d[/b]\n%s" % [human_name, stacks, desc] if desc != "" else "[b]%s ×%d[/b]" % [human_name, stacks]
 		var bg_ref: NinePatchRect = bg
+		var bg_id: int = bg.get_instance_id()
 		bg.mouse_entered.connect(func():
 			if not is_instance_valid(bg_ref):
 				return
-			Tooltip.show(tip, bg_ref.global_position + Vector2(bg_ref.size.x * 0.5, 0))
+			Tooltip.show(tip, bg_ref.global_position + Vector2(bg_ref.size.x * 0.5, 0), bg_id)
 		)
-		bg.mouse_exited.connect(Tooltip.hide)
-		bg.tree_exited.connect(Tooltip.hide)
+		# hide_if_owner so a stale fire (e.g. tree_exited after a sibling
+		# already opened a new tooltip) can't clobber the new overlay.
+		bg.mouse_exited.connect(Tooltip.hide_if_owner.bind(bg_id))
+		bg.tree_exited.connect(Tooltip.hide_if_owner.bind(bg_id))
 		container.add_child(bg)
