@@ -1,7 +1,7 @@
 # Enemies Catalog
 
-**Last updated:** 2026-05-18
-**Total combatants:** 8 (2 original + 4 standard + 1 elite + 1 boss)
+**Last updated:** 2026-05-28
+**Total combatants:** 13 (9 standard + 1 elite + 3 boss)
 
 ## Paths
 
@@ -22,15 +22,14 @@
 
 | Tier | Count | IDs |
 |---|---|---|
-| Original | 2 | trash_robot, wasteland_killer |
-| Standard (Tactical Toolkit) | 4 | scrap_rat, riot_hound, rust_brute, mortar_cart |
+| Standard | 9 | trash_robot, wasteland_killer, scrap_rat, riot_hound, rust_brute, mortar_cart, slag_walker, acid_spitter, chrome_hound |
 | Elite | 1 | armored_patrol |
-| Boss | 1 | junkyard_tyrant |
+| Boss | 3 | rust_titan (floor 4), ash_warden (floor 8), junkyard_tyrant (floor 11) |
 
 | Trait | Enemies |
 |---|---|
-| Applies status to player | riot_hound (Weak), armored_patrol (Vulnerable) |
-| Telegraph + interruptible big attack | mortar_cart, junkyard_tyrant |
+| Applies status to player | riot_hound (Weak), chrome_hound (Weak), armored_patrol (Vulnerable), acid_spitter (Poison), ash_warden (Burn + Vulnerable) |
+| Telegraph + interruptible big attack | mortar_cart, rust_titan, ash_warden, junkyard_tyrant |
 | AoE attack | mortar_cart (`attack_all`) |
 | Heals self | _none yet_ |
 
@@ -38,14 +37,21 @@
 
 | ID | Name | HP | Tier | Sprite ID | Pattern length | Frames |
 |---|---|---|---|---|---|---|
-| `trash_robot` | Trash Robot | 30 | original | `trash_robot` | 4 | ✅ |
-| `wasteland_killer` | Wasteland Killer | 20 | original | `wasteland_killer` | 3 | ✅ |
-| `scrap_rat` | Scrap Rat | 12 | standard | `scrap_rat` | 3 | ✅ |
+| `acid_spitter` | Acid Spitter | 18 | standard | `mortar_cart` † | 3 | ✅ |
+| `armored_patrol` | Armored Patrol | 50 | elite | `armored_patrol` | 4 | ✅ |
+| `ash_warden` | Ash Warden | 95 | boss | `armored_patrol` † | 7 | ✅ |
+| `chrome_hound` | Chrome Hound | 32 | standard | `riot_hound` † | 4 | ✅ |
+| `junkyard_tyrant` | Junkyard Tyrant | 110 | boss | `junkyard_tyrant` | 9 | ✅ |
+| `mortar_cart` | Mortar Cart | 28 | standard | `mortar_cart` | 5 | ✅ |
 | `riot_hound` | Riot Hound | 25 | standard | `riot_hound` | 3 | ✅ |
 | `rust_brute` | Rust Brute | 40 | standard | `rust_brute` | 4 | ✅ |
-| `mortar_cart` | Mortar Cart | 28 | standard | `mortar_cart` | 5 | ✅ |
-| `armored_patrol` | Armored Patrol | 50 | elite | `armored_patrol` | 4 | ✅ |
-| `junkyard_tyrant` | Junkyard Tyrant | 110 | boss | `junkyard_tyrant` | 9 | ✅ |
+| `rust_titan` | Rust Titan | 75 | boss | `rust_brute` † | 6 | ✅ |
+| `scrap_rat` | Scrap Rat | 12 | standard | `scrap_rat` | 3 | ✅ |
+| `slag_walker` | Slag Walker | 28 | standard | `rust_brute` † | 4 | ✅ |
+| `trash_robot` | Trash Robot | 30 | standard | `trash_robot` | 4 | ✅ |
+| `wasteland_killer` | Wasteland Killer | 20 | standard | `wasteland_killer` | 3 | ✅ |
+
+> † Sprite is a **placeholder** — the 5 Phase-5 enemies re-skin an existing folder (`Frames ✅` reflects the placeholder, not dedicated art) until Codex delivers per-enemy sprites per `docs/asset-spec-content-expansion.md` §3.
 
 ## Encounter pools (where each enemy spawns)
 
@@ -63,12 +69,17 @@ Defined in `run_system/core/run_manager.gd`. `select_encounter(type, floor)` is 
 - `[trash_robot, scrap_rat]`
 - `[mortar_cart]`
 - `[wasteland_killer, scrap_rat]`
+- `[slag_walker]`
+- `[acid_spitter, scrap_rat]`
 
-### `ENCOUNTER_POOLS_LATE` — floor 8-10
+### `ENCOUNTER_POOLS_LATE` — floor 8+
 - `[riot_hound, riot_hound]`
 - `[rust_brute, scrap_rat]`
 - `[mortar_cart, scrap_rat]`
 - `[rust_brute, riot_hound]`
+- `[chrome_hound]`
+- `[chrome_hound, scrap_rat]`
+- `[slag_walker, acid_spitter]`
 
 ### `ELITE_ROSTER` — elite map nodes (any floor)
 - `[armored_patrol]`
@@ -187,6 +198,76 @@ Defined in `run_system/core/run_manager.gd`. `select_encounter(type, floor)` is 
 | 9 | attack | 22 | **interruptible** | 💥 CRUSHING 22 |
 
 > Two Crushing Blow windows per cycle. Both can be cancelled with Shock during the CHARGING turn.
+
+### `rust_titan` (HP 75) — boss, floor 4 (act-1)
+- Sprite: `battle_scene/assets/images/enemies/rust_brute/` (placeholder until Codex delivers `rust_titan/`)
+- JSON: `battle_scene/card_info/enemy/rust_titan.json`
+
+**Action pattern (loops — 6 actions):**
+| # | Type | Amount | Flag | Label |
+|---|---|---|---|---|
+| 1 | attack | 8 | — | ⚔ 8 |
+| 2 | block | 10 | — | 🛡 10 |
+| 3 | attack | 12 | — | ⚔ 12 |
+| 4 | telegraph | — | — | 💢 WIND-UP |
+| 5 | attack | 18 | **interruptible** | 💥 SLAM 18 |
+| 6 | block | 8 | — | 🛡 8 |
+
+> One Slam window per cycle — cancel with Shock during WIND-UP.
+
+### `ash_warden` (HP 95) — boss, floor 8 (act-2)
+- Sprite: `battle_scene/assets/images/enemies/armored_patrol/` (placeholder until Codex delivers `ash_warden/`)
+- JSON: `battle_scene/card_info/enemy/ash_warden.json`
+
+**Action pattern (loops — 7 actions):**
+| # | Type | Amount | Status | Flag | Label |
+|---|---|---|---|---|---|
+| 1 | attack_status | 6 | burn 2 | — | 🔥 6 + B2 |
+| 2 | attack | 11 | — | — | ⚔ 11 |
+| 3 | block | 12 | — | — | 🛡 12 |
+| 4 | attack_status | 8 | vulnerable 1 | — | ⚔ 8 + V1 |
+| 5 | telegraph | — | — | — | 💢 IGNITING |
+| 6 | attack | 20 | — | **interruptible** | 💥 BLAST 20 |
+| 7 | attack | 9 | — | — | ⚔ 9 |
+
+> Status-heavy sentinel: stacks Burn + Vulnerable before the interruptible Blast. Cancel the Blast with Shock during IGNITING.
+
+### `slag_walker` (HP 28) — standard (mid)
+- Sprite: `battle_scene/assets/images/enemies/rust_brute/` (placeholder until Codex delivers `slag_walker/`)
+- JSON: `battle_scene/card_info/enemy/slag_walker.json`
+
+**Action pattern (loops):**
+| # | Type | Amount | Label |
+|---|---|---|---|
+| 1 | block | 6 | 🛡 6 |
+| 2 | attack | 9 | ⚔ 9 |
+| 3 | attack | 6 | ⚔ 6 |
+| 4 | block | 6 | 🛡 6 |
+
+### `acid_spitter` (HP 18) — standard (mid), applies Poison
+- Sprite: `battle_scene/assets/images/enemies/mortar_cart/` (placeholder until Codex delivers `acid_spitter/`)
+- JSON: `battle_scene/card_info/enemy/acid_spitter.json`
+
+**Action pattern (loops):**
+| # | Type | Amount | Status | Label |
+|---|---|---|---|---|
+| 1 | attack_status | 4 | poison 2 | ☠ 4 + P2 |
+| 2 | attack | 6 | — | ⚔ 6 |
+| 3 | attack_status | 3 | poison 3 | ☠ 3 + P3 |
+
+> Low HP, high Poison output — kill fast or the stacking damage adds up.
+
+### `chrome_hound` (HP 32) — standard (late), applies Weak
+- Sprite: `battle_scene/assets/images/enemies/riot_hound/` (placeholder until Codex delivers `chrome_hound/`)
+- JSON: `battle_scene/card_info/enemy/chrome_hound.json`
+
+**Action pattern (loops):**
+| # | Type | Amount | Status | Label |
+|---|---|---|---|---|
+| 1 | attack | 8 | — | ⚔ 8 |
+| 2 | attack | 8 | — | ⚔ 8 |
+| 3 | attack_status | 5 | weak 1 | ⚔ 5 + W1 |
+| 4 | block | 10 | — | 🛡 10 |
 
 ## Supported enemy action types
 

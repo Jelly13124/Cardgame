@@ -1,7 +1,7 @@
 # Relics Catalog
 
-**Last updated:** 2026-05-18
-**Total relics:** 6 (all common — Tactical Toolkit hasn't added any new relics)
+**Last updated:** 2026-05-28
+**Total relics:** 10 (6 common + 3 uncommon + 1 rare)
 
 ## Paths
 
@@ -20,26 +20,30 @@
 | Rarity | Count |
 |---|---|
 | Common | 6 |
-| Uncommon | 0 |
-| Rare | 0 |
+| Uncommon | 3 |
+| Rare | 1 |
 
 | Trigger | Relics |
 |---|---|
-| `player_turn_start` (round 1, once_per_combat) | cracked_battery, steel_plating |
-| `player_attack_damage` | sharpened_scrap |
-| `enemy_attack_damage` (once_per_combat) | signal_jammer |
-| `combat_victory` | lucky_cog, repair_kit |
+| `player_turn_start` (round 1, once_per_combat) | cracked_battery, steel_plating, bulk_actuator |
+| `player_attack_damage` | sharpened_scrap, war_horn |
+| `enemy_attack_damage` | signal_jammer (once_per_combat), inertial_dampener (every hit) |
+| `combat_victory` | lucky_cog, repair_kit, scavenger_lens |
 
 ## Summary table
 
 | ID | Title | Rarity | Trigger | Effect | Once/combat | Icon |
 |---|---|---|---|---|---|---|
+| `bulk_actuator` | Bulk Actuator | uncommon | player_turn_start (round 1) | gain_block 10 | ✓ | ✅ |
 | `cracked_battery` | Cracked Battery | common | player_turn_start (round 1) | gain_energy 1 | ✓ | ✅ |
-| `steel_plating` | Steel Plating | common | player_turn_start (round 1) | gain_block 6 | ✓ | ✅ |
-| `sharpened_scrap` | Sharpened Scrap | common | player_attack_damage | add_damage 1 | — | ✅ |
-| `signal_jammer` | Signal Jammer | common | enemy_attack_damage | reduce_damage 2 | ✓ | ✅ |
+| `inertial_dampener` | Inertial Dampener | uncommon | enemy_attack_damage | reduce_damage 1 | — | ✅ |
 | `lucky_cog` | Lucky Cog | common | combat_victory | gain_gold 5 | — | ✅ |
 | `repair_kit` | Repair Kit | common | combat_victory | heal 3 | — | ✅ |
+| `scavenger_lens` | Scavenger's Lens | uncommon | combat_victory | gain_gold 12 | — | ✅ |
+| `sharpened_scrap` | Sharpened Scrap | common | player_attack_damage | add_damage 1 | — | ✅ |
+| `signal_jammer` | Signal Jammer | common | enemy_attack_damage | reduce_damage 2 | ✓ | ✅ |
+| `steel_plating` | Steel Plating | common | player_turn_start (round 1) | gain_block 6 | ✓ | ✅ |
+| `war_horn` | War Horn | rare | player_attack_damage | add_damage 2 | — | ✅ |
 
 ## Per-relic details
 
@@ -84,6 +88,34 @@
 - Effect: `heal 3` (calls `player.heal(3)`)
 - JSON: `run_system/data/relics/repair_kit.json`
 - Icon: `run_system/assets/images/relics/repair_kit.png`
+
+### `bulk_actuator`
+**"At the start of your first turn each combat, gain 10 Block."** (uncommon)
+- Trigger: `player_turn_start` (round 1, once_per_combat)
+- Effect: `gain_block 10`
+- JSON: `run_system/data/relics/bulk_actuator.json`
+- Icon: `run_system/assets/images/relics/bulk_actuator.png`
+
+### `scavenger_lens`
+**"After combat, gain 12 Gold."** (uncommon) — the higher-tier `lucky_cog`.
+- Trigger: `combat_victory`
+- Effect: `gain_gold 12`
+- JSON: `run_system/data/relics/scavenger_lens.json`
+- Icon: `run_system/assets/images/relics/scavenger_lens.png`
+
+### `inertial_dampener`
+**"Every enemy attack deals 1 less damage."** (uncommon) — unlike `signal_jammer`, fires on EVERY hit, not once per combat.
+- Trigger: `enemy_attack_damage` (every hit)
+- Effect: `reduce_damage 1`
+- JSON: `run_system/data/relics/inertial_dampener.json`
+- Icon: `run_system/assets/images/relics/inertial_dampener.png`
+
+### `war_horn`
+**"Your direct attack damage is increased by 2."** (rare) — the rare-tier `sharpened_scrap`.
+- Trigger: `player_attack_damage` (every attack)
+- Effect: `add_damage 2`
+- JSON: `run_system/data/relics/war_horn.json`
+- Icon: `run_system/assets/images/relics/war_horn.png`
 
 ## Supported triggers
 
