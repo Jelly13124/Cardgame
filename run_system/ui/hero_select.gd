@@ -8,6 +8,8 @@ const HERO_DIR := "res://run_system/data/heroes/"
 
 # Map from hero_id → Button so we can lock/unlock individually.
 var _hero_buttons: Dictionary = {}
+var _ascension_slider: HSlider = null
+var _ascension_value_label: Label = null
 
 
 func _ready() -> void:
@@ -31,6 +33,49 @@ func _setup_buttons() -> void:
 			continue
 		_hero_buttons[hero_id] = btn
 		_apply_button_state(btn, hero_id, hero_data)
+
+	_build_ascension_slider()
+
+
+func _build_ascension_slider() -> void:
+	if MetaProgress.max_ascension <= 0:
+		return  # nothing to choose
+
+	# Insert below the HBoxContainer with the hero buttons.
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 6)
+	vbox.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	vbox.position.y = -100
+	add_child(vbox)
+
+	var label := Label.new()
+	label.text = "ASCENSION"
+	label.add_theme_color_override("font_color", Color(1, 0.85, 0.4))
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(label)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	vbox.add_child(row)
+
+	_ascension_slider = HSlider.new()
+	_ascension_slider.min_value = 0
+	_ascension_slider.max_value = MetaProgress.max_ascension
+	_ascension_slider.step = 1
+	_ascension_slider.value = MetaProgress.max_ascension  # default to highest
+	_ascension_slider.custom_minimum_size = Vector2(240, 24)
+	_ascension_slider.value_changed.connect(_on_ascension_changed)
+	row.add_child(_ascension_slider)
+
+	_ascension_value_label = Label.new()
+	_ascension_value_label.text = "A%d" % int(_ascension_slider.value)
+	_ascension_value_label.custom_minimum_size = Vector2(40, 0)
+	row.add_child(_ascension_value_label)
+
+
+func _on_ascension_changed(value: float) -> void:
+	if _ascension_value_label:
+		_ascension_value_label.text = "A%d" % int(value)
 
 
 func _list_hero_ids() -> Array[String]:
@@ -90,7 +135,8 @@ func _apply_button_state(btn: Button, hero_id: String, hero_data: Dictionary) ->
 
 func _select_hero(hero_id: String) -> void:
 	print("Selected Commander: ", hero_id)
-	# Ascension defaults to highest unlocked. UI slider added in S5.
 	var asc: int = MetaProgress.max_ascension
+	if _ascension_slider:
+		asc = int(_ascension_slider.value)
 	RunManager.start_new_run(hero_id, [], asc)
 	get_tree().change_scene_to_packed(MAP_PACKED)
