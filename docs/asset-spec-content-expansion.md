@@ -9,6 +9,8 @@ This document is the contract that tells codex which PNGs to generate for the co
 
 **Every asset in this spec currently uses a placeholder** — gameplay works but the visuals borrow other items' art. When you replace a placeholder, the game picks up the real art automatically (paths are fixed in the JSON).
 
+> **Generation is tool-agnostic.** This doc fixes only *what* to produce (paths, sizes, style, one neon accent per item) — not *how*. There is currently NO external image service wired in (the previous PixelLab pipeline was dropped). Use whatever image generation your session supports. If you have no image model, the documented fallback is improving the procedural generator `scripts/gen_wave3_content_assets.py`, which already drew crude geometric placeholders at every target path; you **overwrite** those finals in place. Enemy art will not render until Claude flips the 5 new enemies' `sprite_id` to their own folders post-delivery — that is Claude's follow-up, not Codex's.
+
 ---
 
 ## 0. Style Preamble (Non-Negotiable)
@@ -192,7 +194,7 @@ Bundle a `pipeline-meta.json` per asset capturing prompt + neon accent + frame s
 - Do not change frame sizes from the table in section 1.
 - Do not regenerate already-shipped art unless the per-asset entry here explicitly asks for it.
 - Do not commit `.import` files (Godot writes them on import).
-- Do not commit a leaked PixelLab API key. The generator scripts read `$env:PIXELLAB_API_KEY` now (see `battle_scene/assets/images/enemies/generate_enemy.ps1`).
+- Do not commit API keys or secrets. If your generation method calls an external service, read its credentials from an environment variable in your shell session — never bake them into a committed file.
 
 ---
 
