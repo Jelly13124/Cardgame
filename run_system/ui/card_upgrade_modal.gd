@@ -111,7 +111,9 @@ func _make_card_slot(card_id: String, uid: String) -> Control:
 
 	var frame := Panel.new()
 	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
-	frame.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.09, 0.072, 0.055, 0.92), T.PANEL_BORDER, 3))
+	frame.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(Color(0.09, 0.072, 0.055, 0.92), T.PANEL_BORDER, 3)
+	)
 	wrapper.add_child(frame)
 
 	var card = _card_factory.create_card(card_id, null)
@@ -134,15 +136,22 @@ func _make_card_slot(card_id: String, uid: String) -> Control:
 	wrapper.add_child(button)
 
 	if card:
-		button.mouse_entered.connect(func():
-			frame.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.13, 0.095, 0.062, 0.96), T.ACCENT_NEON_BLUE, 3))
-			var tween = create_tween()
-			tween.tween_property(card, "scale", Vector2(1.06, 1.06), 0.10)
+		button.mouse_entered.connect(
+			func():
+				frame.add_theme_stylebox_override(
+					"panel",
+					T.panel_with_shadow(Color(0.13, 0.095, 0.062, 0.96), T.ACCENT_NEON_BLUE, 3)
+				)
+				var tween = create_tween()
+				tween.tween_property(card, "scale", Vector2(1.06, 1.06), 0.10)
 		)
-		button.mouse_exited.connect(func():
-			frame.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.09, 0.072, 0.055, 0.92), T.PANEL_BORDER, 3))
-			var tween = create_tween()
-			tween.tween_property(card, "scale", Vector2(1.0, 1.0), 0.10)
+		button.mouse_exited.connect(
+			func():
+				frame.add_theme_stylebox_override(
+					"panel", T.panel_with_shadow(Color(0.09, 0.072, 0.055, 0.92), T.PANEL_BORDER, 3)
+				)
+				var tween = create_tween()
+				tween.tween_property(card, "scale", Vector2(1.0, 1.0), 0.10)
 		)
 
 	return wrapper

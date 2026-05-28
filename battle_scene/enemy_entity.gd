@@ -12,8 +12,8 @@ const COMBAT_FX = preload("res://battle_scene/combat_fx.gd")
 # Intent badge icon textures — preloaded once instead of `load()`-ing on every
 # intent refresh (which can fire frequently as enemy / player status changes).
 const INTENT_ICON_ATTACK = preload("res://battle_scene/assets/images/ui/intent_attack.png")
-const INTENT_ICON_BLOCK  = preload("res://battle_scene/assets/images/ui/intent_block.png")
-const INTENT_ICON_BUFF   = preload("res://battle_scene/assets/images/ui/intent_buff.png")
+const INTENT_ICON_BLOCK = preload("res://battle_scene/assets/images/ui/intent_block.png")
+const INTENT_ICON_BUFF = preload("res://battle_scene/assets/images/ui/intent_buff.png")
 const INTENT_ICON_CHARGE = preload("res://battle_scene/assets/images/ui/intent_charge.png")
 const NORMAL_DISPLAY_HEIGHT := 192.0
 const BOSS_DISPLAY_HEIGHT := 288.0
@@ -34,12 +34,12 @@ var status_system = STATUS_SYS.new()
 
 ## Short labels used inside the intent badge ("⚔ 5 +Weak" etc.).
 const _STATUS_SHORT_NAMES = {
-	"weak":          "Weak",
-	"vulnerable":    "Vuln",
-	"burn":          "Burn",
-	"poison":        "Pois",
-	"shock":         "Shock",
-	"strength_up":   "Str+",
+	"weak": "Weak",
+	"vulnerable": "Vuln",
+	"burn": "Burn",
+	"poison": "Pois",
+	"shock": "Shock",
+	"strength_up": "Str+",
 	"double_damage": "Dbl",
 }
 
@@ -48,7 +48,7 @@ const _STATUS_SHORT_NAMES = {
 var action_pattern: Array = []
 var _action_index: int = 0
 
-signal died()
+signal died
 signal status_changed
 
 # ─── Internal Nodes ───────────────────────────────────────────────────────────
@@ -65,6 +65,7 @@ const ENEMIES_DIR = "res://battle_scene/assets/images/enemies/"
 
 # ─── Factory ──────────────────────────────────────────────────────────────────
 
+
 ## Create and return a fully initialized EnemyEntity from a JSON id.
 static func create(id: String) -> EnemyEntity:
 	var entity = EnemyEntity.new()
@@ -76,20 +77,29 @@ static func create(id: String) -> EnemyEntity:
 			var data: Dictionary = JSON.parse_string(file.get_as_text())
 			file.close()
 			if data:
-				entity.enemy_name  = data.get("name",      id.to_upper())
-				entity.max_health  = int(data.get("max_health", 30))
+				entity.enemy_name = data.get("name", id.to_upper())
+				entity.max_health = int(data.get("max_health", 30))
 				# Ascension A1+: enemy HP scales +10% per level.
 				if RunManager.ascension > 0:
-					entity.max_health = int(round(entity.max_health * (1.0 + 0.1 * RunManager.ascension)))
-				entity.health      = entity.max_health
+					entity.max_health = int(
+						round(entity.max_health * (1.0 + 0.1 * RunManager.ascension))
+					)
+				entity.health = entity.max_health
 				entity.action_pattern = data.get("action_pattern", [])
-				entity.sprite_id   = data.get("sprite_id", "")
+				entity.sprite_id = data.get("sprite_id", "")
 	else:
-		push_error("EnemyEntity: JSON not found for id '%s' at '%s'. Encounter will spawn a placeholder enemy." % [id, path])
+		push_error(
+			(
+				"EnemyEntity: JSON not found for id '%s' at '%s'. Encounter will spawn a placeholder enemy."
+				% [id, path]
+			)
+		)
 		assert(false, "EnemyEntity: JSON not found for id '%s'" % id)
 	return entity
 
+
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
+
 
 func _ready() -> void:
 	_build_visual()
@@ -100,11 +110,13 @@ func _ready() -> void:
 	# are broadcast by BattleScene to every enemy via update_intent_display().
 	status_changed.connect(_update_intent_display)
 
+
 func _build_visual() -> void:
 	if sprite_id != "":
 		_build_sprite_visual(sprite_id)
 	else:
 		_build_placeholder_visual()
+
 
 ## Build an AnimatedSprite2D from generated attack frames.
 ## Frame files must be: enemies/{sid}/attack/{sid}_attack_N.png
@@ -113,7 +125,7 @@ func _build_sprite_visual(sid: String) -> void:
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_sprite.scale = Vector2.ONE
 	_sprite.position = Vector2(0, -96)
-	_sprite.flip_h = false                 # enemy PNGs already face left toward the player
+	_sprite.flip_h = false  # enemy PNGs already face left toward the player
 
 	var frames = SpriteFrames.new()
 	_sprite.sprite_frames = frames
@@ -162,7 +174,7 @@ func _build_sprite_visual(sid: String) -> void:
 	_show_rest_pose()
 
 	_build_intent_badge(Vector2(-INTENT_BADGE_WIDTH * 0.5, -display_height - 48.0))
-	_build_health_bar(Vector2(-90, 28))      # below feet (centered with bar_width 180)
+	_build_health_bar(Vector2(-90, 28))  # below feet (centered with bar_width 180)
 
 
 ## Scales the sprite to a target display height and returns the **content** height
@@ -218,12 +230,13 @@ func get_hit_global_position() -> Vector2:
 func _build_placeholder_visual() -> void:
 	var body = ColorRect.new()
 	body.color = Color(0.7, 0.15, 0.15)
-	body.size = Vector2(140, 190)         # bigger placeholder too
+	body.size = Vector2(140, 190)  # bigger placeholder too
 	body.position = Vector2(-70, -190)
 	add_child(body)
 	# Placeholder: 140×190, top y=-190, bottom y=0
 	_build_intent_badge(Vector2(-INTENT_BADGE_WIDTH * 0.5, -232))  # above placeholder
-	_build_health_bar(Vector2(-114, 26))     # below placeholder
+	_build_health_bar(Vector2(-114, 26))  # below placeholder
+
 
 ## Builds a compact icon + text intent readout above the sprite.
 ## intent_pos is the top-left position in entity-local space.
@@ -250,10 +263,11 @@ func _build_intent_badge(intent_pos: Vector2) -> void:
 	_intent_label.add_theme_constant_override("shadow_offset_x", 2)
 	_intent_label.add_theme_constant_override("shadow_offset_y", 2)
 	_intent_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	_intent_label.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	_intent_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_intent_label.size = Vector2(70, INTENT_BADGE_HEIGHT)
 	_intent_label.position = Vector2(38, -1)
 	_intent_bg.add_child(_intent_label)
+
 
 ## Builds the health bar (CharacterHUD) positioned below the sprite.
 ## hud_pos: top-left of the HUD in entity-local space.
@@ -266,7 +280,9 @@ func _build_health_bar(hud_pos: Vector2) -> void:
 	_hud.position = hud_pos
 	add_child(_hud)
 
+
 # ─── Action Pattern ───────────────────────────────────────────────────────────
+
 
 ## Returns the current action without advancing the index.
 func peek_next_action() -> Dictionary:
@@ -274,12 +290,14 @@ func peek_next_action() -> Dictionary:
 		return {"type": "attack", "amount": 6, "label": "⚔ 6"}
 	return action_pattern[_action_index % action_pattern.size()]
 
+
 ## Returns the current action AND advances to the next one.
 func consume_next_action() -> Dictionary:
 	var a = peek_next_action()
 	_action_index = (_action_index + 1) % max(1, action_pattern.size())
 	_update_intent_display()
 	return a
+
 
 ## Refreshes the intent badge to show what this enemy will do NEXT turn.
 ## Public — called by BattleScene to broadcast player-status changes
@@ -304,7 +322,8 @@ func _compute_display_attack(base_amount: int) -> int:
 
 
 func _update_intent_display() -> void:
-	if not _intent_label: return
+	if not _intent_label:
+		return
 	var next = peek_next_action()
 	var action_type = str(next.get("type", ""))
 
@@ -340,7 +359,8 @@ func _update_intent_display() -> void:
 		label_text += " !"
 	_intent_label.text = label_text
 
-	if not _intent_bg: return
+	if not _intent_bg:
+		return
 	var type = next.get("type", "")
 	var label_color := Color(1.0, 0.9, 0.64)
 	match type:
@@ -362,14 +382,20 @@ func _update_intent_display() -> void:
 		label_color = Color(1.0, 0.94, 0.28)
 	_intent_label.add_theme_color_override("font_color", label_color)
 
+
 func _start_intent_float_anim() -> void:
-	if not _intent_bg: return
+	if not _intent_bg:
+		return
 	var start_y = _intent_bg.position.y
 	_intent_tween = create_tween().set_loops()
-	_intent_tween.tween_property(_intent_bg, "position:y", start_y - 6, 1.5).set_trans(Tween.TRANS_SINE)
+	_intent_tween.tween_property(_intent_bg, "position:y", start_y - 6, 1.5).set_trans(
+		Tween.TRANS_SINE
+	)
 	_intent_tween.tween_property(_intent_bg, "position:y", start_y, 1.5).set_trans(Tween.TRANS_SINE)
 
+
 # ─── Combat ───────────────────────────────────────────────────────────────────
+
 
 func notify_status_changed() -> void:
 	status_changed.emit()
@@ -400,13 +426,16 @@ func take_damage(amount: int, silent: bool = false) -> void:
 		died.emit()
 		queue_free()
 
+
 func add_block(amount: int) -> void:
 	block += amount
 	_refresh_hud()
 
+
 func heal(amount: int) -> void:
 	health = min(health + amount, max_health)
 	_refresh_hud()
+
 
 func start_turn() -> void:
 	status_system.on_turn_start(self)
@@ -415,42 +444,55 @@ func start_turn() -> void:
 	block = 0
 	_refresh_hud()
 
+
 func end_turn() -> void:
 	status_system.on_turn_end(self)
 	_refresh_hud()
+
 
 func _refresh_hud() -> void:
 	if _hud and is_instance_valid(_hud):
 		_hud.update_stats(health, max_health, block)
 
+
 ## Delegate to StatusEffectSystem
 func add_status(status_name: String, stacks: int) -> void:
-	status_system.add_status(status_name, stacks, self )
+	status_system.add_status(status_name, stacks, self)
+
 
 func get_status_stacks(status_name: String) -> int:
 	return status_system.get_stacks(status_name)
+
 
 ## Returns true if a shock stack was consumed (action should be skipped/cancelled).
 func consume_shock_if_present() -> bool:
 	return status_system.consume_shock(self)
 
+
 func get_outgoing_multiplier() -> float:
 	return status_system.get_outgoing_multiplier()
+
 
 func get_incoming_attack_multiplier() -> float:
 	return status_system.get_incoming_attack_multiplier()
 
+
 # ─── Animation Helpers ────────────────────────────────────────────────────────
+
 
 ## Play the attack animation once, then return to the static rest pose.
 func play_attack() -> void:
 	if not _sprite or not is_instance_valid(_sprite):
 		return
-	if not _sprite.sprite_frames.has_animation("attack") or _sprite.sprite_frames.get_frame_count("attack") == 0:
+	if (
+		not _sprite.sprite_frames.has_animation("attack")
+		or _sprite.sprite_frames.get_frame_count("attack") == 0
+	):
 		return
 	if not _sprite.animation_finished.is_connected(_on_attack_finished):
 		_sprite.animation_finished.connect(_on_attack_finished, CONNECT_ONE_SHOT)
 	_sprite.play("attack")
+
 
 func _on_attack_finished() -> void:
 	_show_rest_pose()
@@ -459,7 +501,10 @@ func _on_attack_finished() -> void:
 func _show_rest_pose() -> void:
 	if not _sprite or not is_instance_valid(_sprite):
 		return
-	if not _sprite.sprite_frames.has_animation("attack") or _sprite.sprite_frames.get_frame_count("attack") == 0:
+	if (
+		not _sprite.sprite_frames.has_animation("attack")
+		or _sprite.sprite_frames.get_frame_count("attack") == 0
+	):
 		return
 	_sprite.play("attack")
 	_sprite.pause()

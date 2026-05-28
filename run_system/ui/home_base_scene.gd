@@ -8,8 +8,14 @@ const UPGRADE_PANEL_SCRIPT = preload("res://run_system/ui/upgrade_panel.gd")
 const HERO_SELECT_PACKED = preload("res://run_system/ui/hero_select.tscn")
 const UPGRADE_DIR := "res://run_system/data/base_upgrades/"
 const UPGRADE_ORDER := [
-	"med_bay", "arsenal", "research_lab", "scrap_workshop", "command_center",
-	"jerry_unlock", "starter_boost", "card_research",
+	"med_bay",
+	"arsenal",
+	"research_lab",
+	"scrap_workshop",
+	"command_center",
+	"jerry_unlock",
+	"starter_boost",
+	"card_research",
 ]
 
 var _core_label: Label
@@ -156,10 +162,13 @@ func _build_recent_runs_panel() -> Control:
 func _build_history_row(entry: Dictionary) -> Label:
 	var outcome: String = str(entry.get("outcome", "?"))
 	var icon: String = "✓" if outcome == "victory" else ("⤴" if outcome == "extracted" else "✗")
-	var color: Color = {
-		"victory": Color(0.4, 1.0, 0.5),
-		"extracted": Color(1.0, 0.9, 0.4),
-	}.get(outcome, Color(1.0, 0.4, 0.4))
+	var color: Color = (
+		{
+			"victory": Color(0.4, 1.0, 0.5),
+			"extracted": Color(1.0, 0.9, 0.4),
+		}
+		. get(outcome, Color(1.0, 0.4, 0.4))
+	)
 
 	var hero: String = _humanize_hero_id(str(entry.get("hero_id", "?")))
 	var floor: int = int(entry.get("floor", 0))

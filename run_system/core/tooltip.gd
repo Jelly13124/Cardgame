@@ -41,7 +41,10 @@ func _ready() -> void:
 	_last_scene = get_tree().current_scene
 
 	_panel = PanelContainer.new()
-	_panel.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.06, 0.05, 0.04, 0.96), Color(0.55, 0.42, 0.20, 1.0), 4, 2))
+	_panel.add_theme_stylebox_override(
+		"panel",
+		T.panel_with_shadow(Color(0.06, 0.05, 0.04, 0.96), Color(0.55, 0.42, 0.20, 1.0), 4, 2)
+	)
 	_panel.visible = false
 	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE  # never block clicks
 	_panel.z_index = 4096
@@ -148,7 +151,9 @@ func _measure_text_width(text: String) -> float:
 	# Approximate — RichTextLabel's fit_content handles real wrapping.
 	var longest_line := 0
 	for line in text.split("\n"):
-		var stripped := line.replace("[b]", "").replace("[/b]", "").replace("[i]", "").replace("[/i]", "")
+		var stripped := line.replace("[b]", "").replace("[/b]", "").replace("[i]", "").replace(
+			"[/i]", ""
+		)
 		if stripped.length() > longest_line:
 			longest_line = stripped.length()
 	return float(longest_line) * 8.5  # rough px-per-char at 16pt

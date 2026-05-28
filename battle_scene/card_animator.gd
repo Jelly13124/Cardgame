@@ -32,22 +32,39 @@ func fly_to_play_area(card: Control, target_node: Node) -> void:
 
 	var target_pos = _get_play_area_card_position(card, target_node)
 	var tween = create_tween().set_parallel(true)
-	tween.tween_property(card, "global_position", target_pos, 0.20) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(card, "rotation", 0.0, 0.20) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(card, "scale", Vector2(0.92, 0.92), 0.20) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	(
+		tween
+		. tween_property(card, "global_position", target_pos, 0.20)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	tween.tween_property(card, "rotation", 0.0, 0.20).set_trans(Tween.TRANS_QUAD).set_ease(
+		Tween.EASE_OUT
+	)
+	(
+		tween
+		. tween_property(card, "scale", Vector2(0.92, 0.92), 0.20)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 	tween.tween_property(card, "modulate:a", 1.0, 0.12)
 	await tween.finished
 
 	if not is_instance_valid(card):
 		return
 	var settle = create_tween()
-	settle.tween_property(card, "scale", Vector2(1.0, 1.0), 0.06) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	settle.tween_property(card, "scale", Vector2(0.92, 0.92), 0.08) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	(
+		settle
+		. tween_property(card, "scale", Vector2(1.0, 1.0), 0.06)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	(
+		settle
+		. tween_property(card, "scale", Vector2(0.92, 0.92), 0.08)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
 	await settle.finished
 
 
@@ -64,14 +81,27 @@ func fly_to_discard(card: Control) -> void:
 
 	var tween = create_tween().set_parallel(true)
 	var spin_dir = 1.0 if target_pos.x >= card.global_position.x else -1.0
-	tween.tween_property(card, "global_position", target_pos, 0.34) \
-		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	tween.tween_property(card, "rotation", card.rotation + spin_dir * TAU * 0.72, 0.34) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tween.tween_property(card, "scale", Vector2(0.32, 0.32), 0.34) \
-		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	tween.tween_property(card, "modulate:a", 0.0, 0.28) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	(
+		tween
+		. tween_property(card, "global_position", target_pos, 0.34)
+		. set_trans(Tween.TRANS_CUBIC)
+		. set_ease(Tween.EASE_IN)
+	)
+	(
+		tween
+		. tween_property(card, "rotation", card.rotation + spin_dir * TAU * 0.72, 0.34)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
+	(
+		tween
+		. tween_property(card, "scale", Vector2(0.32, 0.32), 0.34)
+		. set_trans(Tween.TRANS_CUBIC)
+		. set_ease(Tween.EASE_IN)
+	)
+	tween.tween_property(card, "modulate:a", 0.0, 0.28).set_trans(Tween.TRANS_QUAD).set_ease(
+		Tween.EASE_IN
+	)
 	await tween.finished
 
 	# Reset state so the card is reusable inside the discard pile container.
@@ -106,12 +136,24 @@ func fly_to_deck(card: Control, start_pos: Vector2) -> void:
 
 	var tween = create_tween().set_parallel(true)
 	var spin_dir = 1.0 if target_pos.x <= card.global_position.x else -1.0
-	tween.tween_property(card, "global_position", target_pos, 0.32) \
-		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tween.tween_property(card, "rotation", spin_dir * TAU * 0.5, 0.32) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(card, "scale", Vector2(0.32, 0.32), 0.32) \
-		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	(
+		tween
+		. tween_property(card, "global_position", target_pos, 0.32)
+		. set_trans(Tween.TRANS_CUBIC)
+		. set_ease(Tween.EASE_OUT)
+	)
+	(
+		tween
+		. tween_property(card, "rotation", spin_dir * TAU * 0.5, 0.32)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	(
+		tween
+		. tween_property(card, "scale", Vector2(0.32, 0.32), 0.32)
+		. set_trans(Tween.TRANS_CUBIC)
+		. set_ease(Tween.EASE_OUT)
+	)
 	await tween.finished
 
 	# Reset state so the card is reusable inside the deck container.
@@ -129,14 +171,30 @@ func fly_to_exhaust(card: Control) -> void:
 	card.z_index = 90
 	var rise_target = card.global_position + Vector2(0, -160)
 	var tween = create_tween().set_parallel(true)
-	tween.tween_property(card, "global_position", rise_target, 0.45) \
-		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tween.tween_property(card, "rotation", card.rotation + TAU * 0.5, 0.45) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(card, "scale", Vector2(0.5, 0.5), 0.45) \
-		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	tween.tween_property(card, "modulate", Color(1.4, 1.4, 1.7, 0.0), 0.45) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	(
+		tween
+		. tween_property(card, "global_position", rise_target, 0.45)
+		. set_trans(Tween.TRANS_CUBIC)
+		. set_ease(Tween.EASE_OUT)
+	)
+	(
+		tween
+		. tween_property(card, "rotation", card.rotation + TAU * 0.5, 0.45)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	(
+		tween
+		. tween_property(card, "scale", Vector2(0.5, 0.5), 0.45)
+		. set_trans(Tween.TRANS_CUBIC)
+		. set_ease(Tween.EASE_IN)
+	)
+	(
+		tween
+		. tween_property(card, "modulate", Color(1.4, 1.4, 1.7, 0.0), 0.45)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
 	if _scene.has_method("show_notification"):
 		_scene.show_notification("EXHAUSTED", Color(0.7, 0.7, 1.0))
 	await tween.finished
@@ -144,13 +202,19 @@ func fly_to_exhaust(card: Control) -> void:
 
 # ─── Internal ─────────────────────────────────────────────────────────────────
 
+
 func _get_play_area_card_position(card: Control, target_node: Node) -> Vector2:
 	var viewport_size = get_viewport().get_visible_rect().size
 	var card_half = card.size * 0.5
 	var play_center = Vector2(viewport_size.x * 0.5, viewport_size.y * 0.48)
 
 	var player_node = _scene.player
-	if target_node and is_instance_valid(target_node) and player_node and is_instance_valid(player_node):
+	if (
+		target_node
+		and is_instance_valid(target_node)
+		and player_node
+		and is_instance_valid(player_node)
+	):
 		play_center = player_node.global_position.lerp(target_node.global_position, 0.48)
 		play_center.y -= card.size.y * 0.12
 

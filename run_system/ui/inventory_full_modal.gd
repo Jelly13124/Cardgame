@@ -83,7 +83,11 @@ func _build() -> void:
 	incoming_box.add_child(inc_label_l)
 	var inc_data = RunManager.get_equipment_data(_incoming_item_id)
 	var inc_icon = EQUIPMENT_ICON.new()
-	inc_icon.set_equipment(str(inc_data.get("slot", "head")), str(inc_data.get("name", _incoming_item_id)), str(inc_data.get("sprite", "")))
+	inc_icon.set_equipment(
+		str(inc_data.get("slot", "head")),
+		str(inc_data.get("name", _incoming_item_id)),
+		str(inc_data.get("sprite", ""))
+	)
 	incoming_box.add_child(inc_icon)
 	var inc_label := Label.new()
 	inc_label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))

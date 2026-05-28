@@ -39,14 +39,14 @@ func _input(event: InputEvent) -> void:
 func _build_bar() -> void:
 	for child in get_children():
 		child.queue_free()
-	
+
 	var bg = ColorRect.new()
 	bg.name = "Background"
 	bg.color = Color(0.045, 0.038, 0.03, 0.94)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
-	
+
 	var bottom_line = ColorRect.new()
 	bottom_line.name = "BottomLine"
 	bottom_line.color = Color(0.65, 0.48, 0.25, 0.58)
@@ -56,7 +56,7 @@ func _build_bar() -> void:
 	bottom_line.anchor_bottom = 1.0
 	bottom_line.offset_top = -2.0
 	add_child(bottom_line)
-	
+
 	var margin = MarginContainer.new()
 	margin.name = "Margin"
 	margin.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -66,13 +66,13 @@ func _build_bar() -> void:
 	margin.add_theme_constant_override("margin_top", 7)
 	margin.add_theme_constant_override("margin_bottom", 7)
 	add_child(margin)
-	
+
 	var row = HBoxContainer.new()
 	row.name = "Row"
 	row.mouse_filter = Control.MOUSE_FILTER_PASS
 	row.add_theme_constant_override("separation", 14)
 	margin.add_child(row)
-	
+
 	status_label = Label.new()
 	status_label.name = "RunStatus"
 	status_label.custom_minimum_size = Vector2(360, 42)
@@ -80,18 +80,18 @@ func _build_bar() -> void:
 	status_label.add_theme_font_size_override("font_size", 18)
 	status_label.add_theme_color_override("font_color", Color(0.94, 0.86, 0.68))
 	row.add_child(status_label)
-	
+
 	relic_strip = HBoxContainer.new()
 	relic_strip.name = "RelicStrip"
 	relic_strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	relic_strip.mouse_filter = Control.MOUSE_FILTER_PASS
 	relic_strip.add_theme_constant_override("separation", 8)
 	row.add_child(relic_strip)
-	
+
 	deck_button = _make_icon_button("D", "View run deck")
 	deck_button.pressed.connect(_on_deck_pressed)
 	row.add_child(deck_button)
-	
+
 	settings_button = _make_icon_button("⚙", "Settings")
 	settings_button.pressed.connect(_show_settings)
 	row.add_child(settings_button)
@@ -104,52 +104,52 @@ func _build_settings_menu() -> void:
 	settings_layer.visible = false
 	settings_layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(settings_layer)
-	
+
 	var root = Control.new()
 	root.name = "SettingsRoot"
 	root.mouse_filter = Control.MOUSE_FILTER_STOP
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	settings_layer.add_child(root)
-	
+
 	var overlay = ColorRect.new()
 	overlay.name = "Overlay"
 	overlay.color = Color(0.0, 0.0, 0.0, 0.58)
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(overlay)
-	
+
 	var center = CenterContainer.new()
 	center.name = "Center"
 	center.mouse_filter = Control.MOUSE_FILTER_PASS
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(center)
-	
+
 	var panel = PanelContainer.new()
 	panel.name = "Panel"
 	panel.custom_minimum_size = Vector2(360, 250)
 	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
 	center.add_child(panel)
-	
+
 	var box = VBoxContainer.new()
 	box.name = "Content"
 	box.add_theme_constant_override("separation", 12)
 	panel.add_child(box)
-	
+
 	var title = Label.new()
 	title.text = "SETTINGS"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 28)
 	title.add_theme_color_override("font_color", Color(1.0, 0.86, 0.48))
 	box.add_child(title)
-	
+
 	var resume = _make_menu_button("Resume")
 	resume.pressed.connect(_hide_settings)
 	box.add_child(resume)
-	
+
 	return_map_button = _make_menu_button("Return to Map")
 	return_map_button.pressed.connect(_on_return_map_pressed)
 	box.add_child(return_map_button)
-	
+
 	var exit_button = _make_menu_button("Exit")
 	exit_button.disabled = true
 	exit_button.tooltip_text = "Coming soon"
@@ -163,7 +163,7 @@ func _connect_state_sources() -> void:
 		_connect_signal_once(rm, "resources_changed", "_on_resources_changed")
 		_connect_signal_once(rm, "deck_updated", "_on_deck_updated")
 		_connect_signal_once(rm, "relics_updated", "_on_relics_updated")
-	
+
 	if main and "player" in main and main.player:
 		_connect_signal_once(main.player, "health_changed", "_on_player_health_changed")
 
@@ -184,13 +184,13 @@ func _refresh_all() -> void:
 func _refresh_status() -> void:
 	if not status_label:
 		return
-	
+
 	var hp_current = 0
 	var hp_max = 0
 	if main and "player" in main and main.player and is_instance_valid(main.player):
 		hp_current = int(main.player.health)
 		hp_max = int(main.player.max_health)
-	
+
 	var rm = _get_run_manager()
 	var gold = int(rm.gold) if rm else 0
 	var floor_text = str(rm.current_floor) if rm and rm.get("is_run_active") else "-"
@@ -202,14 +202,14 @@ func _refresh_relics() -> void:
 		return
 	for child in relic_strip.get_children():
 		child.queue_free()
-	
+
 	var rm = _get_run_manager()
 	var ids: Array = []
 	if rm:
 		var raw = rm.get("relics")
 		if typeof(raw) == TYPE_ARRAY:
 			ids = raw
-	
+
 	if ids.is_empty():
 		var empty = Label.new()
 		empty.text = "No relics"
@@ -218,7 +218,7 @@ func _refresh_relics() -> void:
 		empty.add_theme_color_override("font_color", Color(0.65, 0.6, 0.5, 0.8))
 		relic_strip.add_child(empty)
 		return
-	
+
 	for relic_id in ids:
 		relic_strip.add_child(_make_relic_chip(str(relic_id)))
 
@@ -236,13 +236,18 @@ func _make_relic_chip(relic_id: String) -> Button:
 	# the cursor across the top bar. Guard the lambda against firing on a
 	# freed chip (e.g. relic strip refresh mid-hover), and tree_exited
 	# forces hide so a stuck tooltip can't leak past the chip's lifetime.
-	var tip_text := ("[b]%s[/b]\n%s" % [title, desc]) if not desc.is_empty() else "[b]%s[/b]" % title
+	var tip_text := (
+		("[b]%s[/b]\n%s" % [title, desc]) if not desc.is_empty() else "[b]%s[/b]" % title
+	)
 	var chip_ref: Button = chip
 	var chip_id: int = chip.get_instance_id()
-	chip.mouse_entered.connect(func():
-		if not is_instance_valid(chip_ref):
-			return
-		Tooltip.show(tip_text, chip_ref.global_position + Vector2(chip_ref.size.x * 0.5, 0), chip_id)
+	chip.mouse_entered.connect(
+		func():
+			if not is_instance_valid(chip_ref):
+				return
+			Tooltip.show(
+				tip_text, chip_ref.global_position + Vector2(chip_ref.size.x * 0.5, 0), chip_id
+			)
 	)
 	chip.mouse_exited.connect(Tooltip.hide_if_owner.bind(chip_id))
 	chip.tree_exited.connect(Tooltip.hide_if_owner.bind(chip_id))
@@ -252,7 +257,7 @@ func _make_relic_chip(relic_id: String) -> Button:
 	chip.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	chip.add_theme_color_override("font_color", T.TEXT_MAIN)
 	chip.add_theme_font_size_override("font_size", 18)
-	
+
 	var icon_path = str(data.get("icon", ""))
 	if not icon_path.is_empty():
 		var tex = _load_icon_texture(_resolve_relic_icon_path(icon_path))
@@ -260,7 +265,7 @@ func _make_relic_chip(relic_id: String) -> Button:
 			chip.icon = tex
 			chip.expand_icon = true
 			chip.text = ""
-	
+
 	chip.pressed.connect(_on_relic_pressed.bind(data))
 	return chip
 
@@ -310,8 +315,8 @@ func _make_icon_button(text: String, tooltip: String) -> Button:
 	button.add_theme_font_size_override("font_size", 20)
 	button.add_theme_color_override("font_color", T.TEXT_MAIN)
 	# Codex's textured 9-slice button (normal / hover / pressed PNGs)
-	button.add_theme_stylebox_override("normal",  T.button_textured("normal"))
-	button.add_theme_stylebox_override("hover",   T.button_textured("hover"))
+	button.add_theme_stylebox_override("normal", T.button_textured("normal"))
+	button.add_theme_stylebox_override("hover", T.button_textured("hover"))
 	button.add_theme_stylebox_override("pressed", T.button_textured("pressed"))
 	return button
 

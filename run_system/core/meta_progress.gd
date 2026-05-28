@@ -9,7 +9,7 @@ extends Node
 const SAVE_PATH := "user://meta.json"
 
 signal core_changed(new_value: int)
-signal upgrades_changed()
+signal upgrades_changed
 
 var core: int = 0
 var upgrades: Dictionary = {}
@@ -27,11 +27,31 @@ const ASCENSION_CAP := 5
 ## ids (flash_bang, last_breath, bone_breaker, junk_bomb, preemptive_strike)
 ## unlock via the card_research upgrade.
 const INITIAL_CARD_POOL: Array[String] = [
-	"strike", "weak_strike", "defend", "stun_baton", "static_coil",
-	"tinker", "hot_swap", "adrenaline", "brace", "double_tap",
-	"scrap_strike", "siphon", "override", "charged_shot", "emp_burst",
-	"salvo", "cascade", "last_stand", "acid_splash", "focus",
-	"chain_link", "iron_will", "overdrive", "overload", "carapace",
+	"strike",
+	"weak_strike",
+	"defend",
+	"stun_baton",
+	"static_coil",
+	"tinker",
+	"hot_swap",
+	"adrenaline",
+	"brace",
+	"double_tap",
+	"scrap_strike",
+	"siphon",
+	"override",
+	"charged_shot",
+	"emp_burst",
+	"salvo",
+	"cascade",
+	"last_stand",
+	"acid_splash",
+	"focus",
+	"chain_link",
+	"iron_will",
+	"overdrive",
+	"overload",
+	"carapace",
 ]
 
 

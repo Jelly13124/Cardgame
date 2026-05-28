@@ -4,6 +4,7 @@ class_name CardPlayZone
 const HAND_RESERVED_HEIGHT: float = 240.0
 const HORIZONTAL_OVERFLOW: float = 80.0
 
+
 func _ready():
 	_sync_play_zone_bounds()
 	super._ready()
@@ -11,27 +12,31 @@ func _ready():
 		get_viewport().size_changed.connect(_sync_play_zone_bounds)
 	_sync_play_zone_bounds()
 
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
 		_sync_play_zone_bounds()
+
 
 func _sync_play_zone_bounds() -> void:
 	var viewport_size = get_viewport_rect().size
 	if viewport_size == Vector2.ZERO and get_viewport():
 		viewport_size = get_viewport().get_visible_rect().size
-	
+
 	var play_height = maxf(180.0, viewport_size.y - HAND_RESERVED_HEIGHT)
 	sensor_position = Vector2(-HORIZONTAL_OVERFLOW, 0.0)
 	sensor_size = Vector2(viewport_size.x + HORIZONTAL_OVERFLOW * 2.0, play_height)
-	
+
 	if drop_zone:
 		drop_zone.set_sensor(sensor_size, sensor_position, sensor_texture, sensor_visibility)
+
 
 func _card_can_be_added(cards: Array) -> bool:
 	var main = get_tree().current_scene
 	if main and main.has_method("can_afford"):
 		return main.can_afford(cards)
 	return true
+
 
 # Override move_cards — this fires the moment the framework accepts the drop.
 # We intercept here instead of on_card_move_done, because CardContainer

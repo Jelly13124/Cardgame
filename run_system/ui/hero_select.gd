@@ -109,7 +109,9 @@ func _button_for_hero(hero_id: String) -> Button:
 		return bill_btn
 	if hero_id == "hero_jerry_killer":
 		return jerry_btn
-	push_warning("hero_select: no button slot for hero '%s' — add to scene if you want it visible" % hero_id)
+	push_warning(
+		"hero_select: no button slot for hero '%s' — add to scene if you want it visible" % hero_id
+	)
 	return null
 
 

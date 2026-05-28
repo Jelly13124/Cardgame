@@ -10,14 +10,16 @@ const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
 
 var _enemy_spawned := false
 
-## List of enemy IDs to spawn for this encounter. 
+## List of enemy IDs to spawn for this encounter.
 ## In the future this will be set by RunManager/MapScene before the battle starts.
 var enemy_roster: Array[String] = ["trash_robot"]
 
 # ─── Spawning ─────────────────────────────────────────────────────────────────
 
+
 func spawn_enemy_units() -> void:
-	if _enemy_spawned: return
+	if _enemy_spawned:
+		return
 	if main.enemy_container.get_child_count() > 0:
 		_enemy_spawned = true
 		return
@@ -34,17 +36,22 @@ func spawn_enemy_units() -> void:
 		enemy.died.connect(_on_enemy_died)
 		main.show_notification(enemy.enemy_name + " APPEARED!", Color(1, 0.3, 0.3))
 
+
 # ─── Enemy Turn ───────────────────────────────────────────────────────────────
 
+
 func execute_enemy_turn() -> void:
-	if main.is_game_over: return
+	if main.is_game_over:
+		return
 
 	main.show_notification("ENEMY TURN", Color(1, 0.4, 0.4))
 	await get_tree().create_timer(0.8).timeout
 
 	for enemy in main.enemy_container.get_children():
-		if not is_instance_valid(enemy): continue
-		if main.is_game_over: return
+		if not is_instance_valid(enemy):
+			continue
+		if main.is_game_over:
+			return
 
 		enemy.start_turn()
 		if main.is_game_over:
@@ -72,19 +79,22 @@ func execute_enemy_turn() -> void:
 			enemy.end_turn()
 		await get_tree().create_timer(0.25).timeout
 
-	if main.is_game_over: return
+	if main.is_game_over:
+		return
 
 	main.show_notification("YOUR TURN", Color(0.4, 0.8, 1.0))
 	await get_tree().create_timer(0.4).timeout
 	main.turn_manager.end_turn()
 
+
 # ─── Action Execution ──────────────────────────────────────────────────────────
+
 
 ## `enemy` is typed as Node2D (its parent class) instead of EnemyEntity to
 ## avoid class_name parse-ordering issues.
 func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 	var action_type: String = action.get("type", "attack")
-	var amount: int         = int(action.get("amount", 6))
+	var amount: int = int(action.get("amount", 6))
 
 	# Interruptible attacks (e.g. boss Crushing Blow after a telegraph) can be
 	# cancelled by spending 1 shock stack on the enemy. This is the shared
@@ -92,7 +102,9 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 	var is_attack_like = action_type in ["attack", "attack_status", "attack_all"]
 	if is_attack_like and bool(action.get("interruptible", false)):
 		if enemy.has_method("consume_shock_if_present") and enemy.consume_shock_if_present():
-			main.show_notification("%s — INTERRUPTED!" % str(action.get("label", "ATTACK")), Color(0.95, 0.95, 0.3))
+			main.show_notification(
+				"%s — INTERRUPTED!" % str(action.get("label", "ATTACK")), Color(0.95, 0.95, 0.3)
+			)
 			# Visual pulse so the player sees something happened
 			var pulse = create_tween()
 			pulse.tween_property(enemy, "scale", Vector2(0.9, 1.1), 0.1)
@@ -107,7 +119,9 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 				enemy.play_attack()
 			await _animate_lunge(enemy)
 			if main.player and is_instance_valid(main.player):
-				var outgoing = main.combat_engine.calculate_attack_damage(amount, enemy, main.player)
+				var outgoing = main.combat_engine.calculate_attack_damage(
+					amount, enemy, main.player
+				)
 				if main.has_method("modify_enemy_attack_damage"):
 					outgoing = main.modify_enemy_attack_damage(outgoing, enemy, main.player)
 				main.player.take_damage(outgoing)
@@ -121,7 +135,9 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 				enemy.play_attack()
 			await _animate_lunge(enemy)
 			if main.player and is_instance_valid(main.player):
-				var outgoing = main.combat_engine.calculate_attack_damage(amount, enemy, main.player)
+				var outgoing = main.combat_engine.calculate_attack_damage(
+					amount, enemy, main.player
+				)
 				if main.has_method("modify_enemy_attack_damage"):
 					outgoing = main.modify_enemy_attack_damage(outgoing, enemy, main.player)
 				main.player.take_damage(outgoing)
@@ -129,7 +145,10 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 				var stacks: int = int(action.get("stacks", 1))
 				if status != "" and main.player.has_method("add_status"):
 					main.player.add_status(status, stacks)
-				main.show_notification("ENEMY HITS %d + %s" % [outgoing, STATUS_SYS.format_name(status).to_upper()], Color(1, 0.3, 0.3))
+				main.show_notification(
+					"ENEMY HITS %d + %s" % [outgoing, STATUS_SYS.format_name(status).to_upper()],
+					Color(1, 0.3, 0.3)
+				)
 			await _animate_return(enemy)
 
 		"attack_all":
@@ -139,7 +158,9 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 				enemy.play_attack()
 			await _animate_lunge(enemy)
 			if main.player and is_instance_valid(main.player):
-				var outgoing = main.combat_engine.calculate_attack_damage(amount, enemy, main.player)
+				var outgoing = main.combat_engine.calculate_attack_damage(
+					amount, enemy, main.player
+				)
 				if main.has_method("modify_enemy_attack_damage"):
 					outgoing = main.modify_enemy_attack_damage(outgoing, enemy, main.player)
 				main.player.take_damage(outgoing)
@@ -171,27 +192,41 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 			await charge_tween.finished
 
 		_:
-			push_error("EnemyAI: unknown action type '%s' (enemy '%s'). Check enemy JSON or add the action to enemy_ai._execute_action()." % [action_type, enemy.enemy_name])
+			push_error(
+				(
+					"EnemyAI: unknown action type '%s' (enemy '%s'). Check enemy JSON or add the action to enemy_ai._execute_action()."
+					% [action_type, enemy.enemy_name]
+				)
+			)
 			assert(false, "EnemyAI: unknown action type '%s'" % action_type)
+
 
 # ─── Animations ───────────────────────────────────────────────────────────────
 
 var _enemy_start_positions: Dictionary = {}
 
+
 func _animate_lunge(enemy: Node) -> void:
 	_enemy_start_positions[enemy] = enemy.global_position
 	var t = create_tween()
-	t.tween_property(enemy, "global_position",
-		enemy.global_position + Vector2(-100, 0), 0.15).set_trans(Tween.TRANS_QUAD)
+	(
+		t
+		. tween_property(enemy, "global_position", enemy.global_position + Vector2(-100, 0), 0.15)
+		. set_trans(Tween.TRANS_QUAD)
+	)
 	await t.finished
 
+
 func _animate_return(enemy: Node) -> void:
-	if not _enemy_start_positions.has(enemy): return
+	if not _enemy_start_positions.has(enemy):
+		return
 	var t = create_tween()
 	t.tween_property(enemy, "global_position", _enemy_start_positions[enemy], 0.15)
 	await t.finished
 
+
 # ─── Victory Check ────────────────────────────────────────────────────────────
+
 
 func _on_enemy_died() -> void:
 	await get_tree().process_frame

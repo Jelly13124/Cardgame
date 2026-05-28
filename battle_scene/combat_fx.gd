@@ -10,7 +10,9 @@ class_name CombatFX
 ##   - blocked > 0  → grey-blue ("absorbed")
 ##   - amount  >= 10 → bright red ("big hit")
 ##   - default      → light red
-static func spawn_damage_number(scene_root: Node, world_pos: Vector2, amount: int, blocked: int = 0) -> void:
+static func spawn_damage_number(
+	scene_root: Node, world_pos: Vector2, amount: int, blocked: int = 0
+) -> void:
 	if not is_instance_valid(scene_root) or scene_root.get_tree() == null:
 		return
 	if amount <= 0 and blocked <= 0:
@@ -41,7 +43,12 @@ static func spawn_damage_number(scene_root: Node, world_pos: Vector2, amount: in
 
 	var tween := scene_root.create_tween()
 	tween.set_parallel(true)
-	tween.tween_property(label, "position:y", world_pos.y - 56, 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	(
+		tween
+		. tween_property(label, "position:y", world_pos.y - 56, 0.7)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 	tween.tween_property(label, "modulate:a", 0.0, 0.7).set_delay(0.15)
 	tween.chain().tween_callback(layer.queue_free)
 
@@ -53,6 +60,7 @@ static func spawn_damage_number(scene_root: Node, world_pos: Vector2, amount: in
 ## prior tween, and always restore to the cached origin.
 const _SHAKE_ORIGIN_META := "_combatfx_shake_origin"
 const _SHAKE_TWEEN_META := "_combatfx_shake_tween"
+
 
 static func shake(target: Node2D, intensity: float = 8.0, duration: float = 0.18) -> void:
 	if not is_instance_valid(target):
@@ -91,4 +99,4 @@ static func _color_for_hit(amount: int, blocked: int) -> Color:
 		return Color(0.65, 0.85, 1.0)  # fully absorbed — cool blue-grey
 	if amount >= 10:
 		return Color(1.0, 0.35, 0.25)  # big hit — saturated red
-	return Color(1.0, 0.65, 0.55)      # normal — pinkish red
+	return Color(1.0, 0.65, 0.55)  # normal — pinkish red

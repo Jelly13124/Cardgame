@@ -12,8 +12,8 @@ const CARD_FACTORY_SCENE = preload("res://battle_scene/my_card_factory.tscn")
 const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 
 # --- Pricing (per rarity) ---
-const CARD_PRICE := { "common": 70, "uncommon": 120, "rare": 200 }
-const EQUIP_PRICE := { "common": 60, "uncommon": 100, "rare": 180 }
+const CARD_PRICE := {"common": 70, "uncommon": 120, "rare": 200}
+const EQUIP_PRICE := {"common": 60, "uncommon": 100, "rare": 180}
 const RELIC_PRICE := 150
 const REMOVE_CARD_PRICE := 75
 const SHOP_BG_PATH := "res://run_system/assets/images/shop/shop_interior_bg.png"
@@ -31,8 +31,8 @@ const RARITY_COLORS := {
 }
 
 # Rolled stock — set once in _ready
-var _stock_cards: Array = []        # [{card_id, rarity, price}]
-var _stock_equipment: Array = []    # [{item_id, rarity, price}]
+var _stock_cards: Array = []  # [{card_id, rarity, price}]
+var _stock_equipment: Array = []  # [{item_id, rarity, price}]
 var _stock_relic: String = ""
 var _stock_relic_price: int = 0
 var _remove_price: int = 75
@@ -48,6 +48,7 @@ func _discounted_price(base_cost: int) -> int:
 	if RunManager.ascension >= 4:
 		price *= 1.10
 	return int(ceil(price))
+
 
 var _card_factory: Node
 var _gold_label: Label
@@ -72,6 +73,7 @@ func _on_resources_changed(_gold: int, _core: int) -> void:
 
 # --- Stock rolling ---------------------------------------------------------
 
+
 func _roll_stock() -> void:
 	var card_pool := _list_cards_by_rarity()
 	for rarity in ["common", "uncommon", "rare"]:
@@ -79,12 +81,20 @@ func _roll_stock() -> void:
 		if pool.is_empty():
 			continue
 		var pick: String = pool[randi() % pool.size()]
-		_stock_cards.append({"card_id": pick, "rarity": rarity, "price": _discounted_price(int(CARD_PRICE[rarity]))})
+		_stock_cards.append(
+			{"card_id": pick, "rarity": rarity, "price": _discounted_price(int(CARD_PRICE[rarity]))}
+		)
 
 	for rarity in ["common", "uncommon"]:
 		var item_id = RunManager.roll_equipment_drop(rarity)
 		if item_id != "":
-			_stock_equipment.append({"item_id": item_id, "rarity": rarity, "price": _discounted_price(int(EQUIP_PRICE[rarity]))})
+			_stock_equipment.append(
+				{
+					"item_id": item_id,
+					"rarity": rarity,
+					"price": _discounted_price(int(EQUIP_PRICE[rarity]))
+				}
+			)
 
 	_stock_relic = _roll_unowned_relic()
 	_stock_relic_price = _discounted_price(RELIC_PRICE)
@@ -140,6 +150,7 @@ func _load_json(path: String) -> Dictionary:
 
 # --- UI build --------------------------------------------------------------
 
+
 func _build_ui() -> void:
 	# Backdrop — solid dark with subtle warmth
 	var bg := ColorRect.new()
@@ -178,7 +189,9 @@ func _build_ui() -> void:
 
 	var board := PanelContainer.new()
 	board.custom_minimum_size = Vector2(1380, 900)
-	board.add_theme_stylebox_override("panel", T.panel_with_shadow(SHOP_BOARD_BG, SHOP_PANEL_BORDER, 4, 3))
+	board.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(SHOP_BOARD_BG, SHOP_PANEL_BORDER, 4, 3)
+	)
 	center.add_child(board)
 
 	var board_margin := MarginContainer.new()
@@ -207,7 +220,10 @@ func _build_ui() -> void:
 
 	var gold_chip := PanelContainer.new()
 	gold_chip.custom_minimum_size = Vector2(170, 46)
-	gold_chip.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.11, 0.07, 0.035, 0.96), Color(0.78, 0.48, 0.16, 1.0), 4, 2))
+	gold_chip.add_theme_stylebox_override(
+		"panel",
+		T.panel_with_shadow(Color(0.11, 0.07, 0.035, 0.96), Color(0.78, 0.48, 0.16, 1.0), 4, 2)
+	)
 	header.add_child(gold_chip)
 
 	var gold_margin := MarginContainer.new()
@@ -313,7 +329,9 @@ func _make_section_panel(title: String, min_size: Vector2 = Vector2.ZERO) -> Dic
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = min_size
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", T.panel_with_shadow(SHOP_PANEL_BG, SHOP_PANEL_BORDER, 4, 2))
+	panel.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(SHOP_PANEL_BG, SHOP_PANEL_BORDER, 4, 2)
+	)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 18)
@@ -342,6 +360,7 @@ func _make_shop_button(text: String, min_size: Vector2) -> Button:
 
 # --- Stall builders --------------------------------------------------------
 
+
 func _build_card_stall(entry: Dictionary) -> Control:
 	var wrapper := VBoxContainer.new()
 	wrapper.add_theme_constant_override("separation", 8)
@@ -350,7 +369,9 @@ func _build_card_stall(entry: Dictionary) -> Control:
 
 	var card_plate := PanelContainer.new()
 	card_plate.custom_minimum_size = Vector2(196, 236)
-	card_plate.add_theme_stylebox_override("panel", T.panel_with_shadow(SHOP_PANEL_BG_DARK, SHOP_PANEL_BORDER, 3, 2))
+	card_plate.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(SHOP_PANEL_BG_DARK, SHOP_PANEL_BORDER, 3, 2)
+	)
 	wrapper.add_child(card_plate)
 
 	var card_margin := MarginContainer.new()
@@ -393,7 +414,9 @@ func _build_card_stall(entry: Dictionary) -> Control:
 func _build_equipment_stall(entry: Dictionary) -> Control:
 	var frame := PanelContainer.new()
 	frame.custom_minimum_size = Vector2(240, 178)
-	frame.add_theme_stylebox_override("panel", T.panel_with_shadow(SHOP_PANEL_BG_DARK, Color(0.44, 0.29, 0.16, 1.0), 3, 1))
+	frame.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(SHOP_PANEL_BG_DARK, Color(0.44, 0.29, 0.16, 1.0), 3, 1)
+	)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 12)
@@ -431,7 +454,9 @@ func _build_equipment_stall(entry: Dictionary) -> Control:
 	var bonus_lbl := Label.new()
 	bonus_lbl.text = _format_bonuses(data.get("bonuses", {}))
 	bonus_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	bonus_lbl.add_theme_color_override("font_color", RARITY_COLORS.get(str(entry["rarity"]), Color.WHITE))
+	bonus_lbl.add_theme_color_override(
+		"font_color", RARITY_COLORS.get(str(entry["rarity"]), Color.WHITE)
+	)
 	wrapper.add_child(bonus_lbl)
 
 	# Set tag if any
@@ -461,7 +486,9 @@ func _build_equipment_stall(entry: Dictionary) -> Control:
 func _build_relic_stall(relic_id: String) -> Control:
 	var frame := PanelContainer.new()
 	frame.custom_minimum_size = Vector2(330, 178)
-	frame.add_theme_stylebox_override("panel", T.panel_with_shadow(SHOP_PANEL_BG_DARK, Color(0.62, 0.44, 0.22, 1.0), 3, 1))
+	frame.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(SHOP_PANEL_BG_DARK, Color(0.62, 0.44, 0.22, 1.0), 3, 1)
+	)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 14)
@@ -551,6 +578,7 @@ func _build_remove_service_row() -> HBoxContainer:
 
 # --- Purchase handlers -----------------------------------------------------
 
+
 func _on_buy_card(card_id: String, price: int, btn: Button) -> void:
 	if RunManager.purchase_card(card_id, price):
 		_mark_sold(btn)
@@ -572,6 +600,7 @@ func _mark_sold(btn: Button) -> void:
 
 
 # --- Remove-card picker ----------------------------------------------------
+
 
 func _on_remove_service_pressed() -> void:
 	if RunManager.gold < _remove_price:
@@ -662,7 +691,9 @@ func _make_removal_slot(card_id: String, uid: String, modal: Control) -> Control
 
 	var frame := Panel.new()
 	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
-	frame.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.09, 0.072, 0.055, 0.92), T.PANEL_BORDER, 3))
+	frame.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(Color(0.09, 0.072, 0.055, 0.92), T.PANEL_BORDER, 3)
+	)
 	wrapper.add_child(frame)
 
 	var card = _card_factory.create_card(card_id, null)
@@ -684,15 +715,22 @@ func _make_removal_slot(card_id: String, uid: String, modal: Control) -> Control
 	wrapper.add_child(button)
 
 	if card:
-		button.mouse_entered.connect(func():
-			frame.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.18, 0.06, 0.06, 0.96), Color(1.0, 0.4, 0.3), 3))
-			var tween = create_tween()
-			tween.tween_property(card, "scale", Vector2(1.06, 1.06), 0.10)
+		button.mouse_entered.connect(
+			func():
+				frame.add_theme_stylebox_override(
+					"panel",
+					T.panel_with_shadow(Color(0.18, 0.06, 0.06, 0.96), Color(1.0, 0.4, 0.3), 3)
+				)
+				var tween = create_tween()
+				tween.tween_property(card, "scale", Vector2(1.06, 1.06), 0.10)
 		)
-		button.mouse_exited.connect(func():
-			frame.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.09, 0.072, 0.055, 0.92), T.PANEL_BORDER, 3))
-			var tween = create_tween()
-			tween.tween_property(card, "scale", Vector2(1.0, 1.0), 0.10)
+		button.mouse_exited.connect(
+			func():
+				frame.add_theme_stylebox_override(
+					"panel", T.panel_with_shadow(Color(0.09, 0.072, 0.055, 0.92), T.PANEL_BORDER, 3)
+				)
+				var tween = create_tween()
+				tween.tween_property(card, "scale", Vector2(1.0, 1.0), 0.10)
 		)
 
 	return wrapper
@@ -712,11 +750,13 @@ func _on_remove_cancel(modal: Control) -> void:
 
 # --- Leave -----------------------------------------------------------------
 
+
 func _on_leave_pressed() -> void:
 	get_tree().change_scene_to_file(MAP_SCENE_PATH)
 
 
 # --- Helpers ---------------------------------------------------------------
+
 
 func _format_bonuses(bonuses) -> String:
 	if typeof(bonuses) != TYPE_DICTIONARY or bonuses.is_empty():

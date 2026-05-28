@@ -39,11 +39,16 @@ func on_battle_started(player: Node) -> void:
 			if typeof(tier) != TYPE_DICTIONARY:
 				continue
 			if count >= int(tier.get("count", 999)):
-				_active_effects.append({
-					"set_id": str(set_id),
-					"tier_label": str(tier.get("label", "")),
-					"effect": tier.get("effect", {}),
-				})
+				(
+					_active_effects
+					. append(
+						{
+							"set_id": str(set_id),
+							"tier_label": str(tier.get("label", "")),
+							"effect": tier.get("effect", {}),
+						}
+					)
+				)
 
 	# Apply start_battle_block effects right now
 	for entry in _active_effects:
@@ -52,7 +57,10 @@ func on_battle_started(player: Node) -> void:
 			var amount: int = int(effect.get("amount", 0))
 			if player and player.has_method("add_block"):
 				player.add_block(amount)
-				_notify("%s: +%d Block (battle start)" % [entry["tier_label"], amount], Color(0.45, 0.7, 1.0))
+				_notify(
+					"%s: +%d Block (battle start)" % [entry["tier_label"], amount],
+					Color(0.45, 0.7, 1.0)
+				)
 
 
 ## Apply start_turn_block / start_turn_energy effects.
@@ -70,7 +78,9 @@ func on_player_turn_started(player: Node, _round_number: int) -> void:
 			"start_turn_energy":
 				if player and player.has_method("pay_energy"):
 					player.pay_energy(-amount)
-					_notify("%s: +%d Energy" % [entry["tier_label"], amount], Color(0.95, 0.9, 0.25))
+					_notify(
+						"%s: +%d Energy" % [entry["tier_label"], amount], Color(0.95, 0.9, 0.25)
+					)
 
 
 ## Add skill_block_bonus to gain_block amount when card is a skill.
@@ -112,7 +122,10 @@ func on_card_damage_resolved(card: Node, target: Node) -> void:
 				continue
 			if target.has_method("add_status"):
 				target.add_status(status, stacks)
-				_notify("%s: %s +%d on target" % [entry["tier_label"], status.to_upper(), stacks], Color(0.85, 0.6, 1.0))
+				_notify(
+					"%s: %s +%d on target" % [entry["tier_label"], status.to_upper(), stacks],
+					Color(0.85, 0.6, 1.0)
+				)
 
 
 ## Center-screen yellow text removed per UX feedback. Kept as no-op so

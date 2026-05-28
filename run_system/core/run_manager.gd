@@ -3,10 +3,10 @@ extends Node
 # --- Signals ---
 signal health_changed(current: int, maximum: int)
 signal resources_changed(gold: int, core: int)
-signal deck_updated()
-signal items_updated()
+signal deck_updated
+signal items_updated
 signal equipment_changed
-signal relics_updated()
+signal relics_updated
 ## Emitted when the run ends, win or lose. `summary` is the run-history
 ## payload for MetaProgress (and any future listener):
 ##   { hero_id: String, floor: int, core_earned: int, outcome: String,
@@ -33,7 +33,7 @@ var core: int = 0
 
 # Progression
 var current_floor: int = 0
-var player_deck: Array = [] # Array of Dictionaries (uid, card_id, bonus_attack, bonus_health)
+var player_deck: Array = []  # Array of Dictionaries (uid, card_id, bonus_attack, bonus_health)
 
 ## Equipped gear, one slot per body part. Empty string = empty slot.
 var equipped_items: Dictionary = {
@@ -51,9 +51,15 @@ var relics: Array[String] = []
 const MAX_INVENTORY: int = 8
 const EQUIPMENT_SLOTS: Array[String] = ["head", "chest", "weapon", "hands", "accessory"]
 const DEFAULT_STARTER_DECK = [
-	"strike", "strike", "strike", "strike",
+	"strike",
+	"strike",
+	"strike",
+	"strike",
 	"weak_strike",
-	"defend", "defend", "defend", "defend",
+	"defend",
+	"defend",
+	"defend",
+	"defend",
 ]
 
 ## Five-dimension RPG attributes. base_attributes is the unchanging baseline
@@ -120,26 +126,27 @@ const ELITE_ROSTER: Array = ["armored_patrol"]
 ## generation for any floor in this dict's keys. To add a mid-boss, add
 ## the entry here only.
 const BOSS_BY_FLOOR: Dictionary = {
-	4:  "rust_titan",
-	8:  "ash_warden",
+	4: "rust_titan",
+	8: "ash_warden",
 	11: "junkyard_tyrant",
 }
 ## Legacy alias — some pre-multi-boss code paths still read BOSS_ROSTER.
 ## Returns the final boss only; intermediate bosses use BOSS_BY_FLOOR lookup.
-const BOSS_ROSTER:  Array = ["junkyard_tyrant"]
+const BOSS_ROSTER: Array = ["junkyard_tyrant"]
 
 
 ## True when a floor index is one of the designed boss floors.
 func is_boss_floor(floor_idx: int) -> bool:
 	return BOSS_BY_FLOOR.has(floor_idx)
 
+
 const BATTLE_SCENE: String = "res://battle_scene/battle_scene.tscn"
 const MAP_SCENE: String = "res://run_system/ui/map_scene.tscn"
 const RELIC_DATA_DIR: String = "res://run_system/data/relics/"
 const EQUIPMENT_DATA_DIR: String = "res://run_system/data/equipment/"
 const EQUIPMENT_SET_DATA_DIR: String = "res://run_system/data/equipment_sets/"
-const FIRST_MERCHANT_FLOOR_INDEX: int = 5 # Human-facing layer 6.
-const GUARANTEED_TREASURE_FLOOR_INDEX: int = 6 # Human-facing layer 7.
+const FIRST_MERCHANT_FLOOR_INDEX: int = 5  # Human-facing layer 6.
+const GUARANTEED_TREASURE_FLOOR_INDEX: int = 6  # Human-facing layer 7.
 ## Floors 1..EARLY_FLOOR_LAST roll combat-only (no rest / treasure / merchant).
 const EARLY_FLOOR_LAST: int = 4
 ## At most this many treasures spawn outside the guaranteed floor-6 chest.
@@ -151,7 +158,7 @@ const MAX_CHILDREN_PER_NODE: int = 3
 # --- Map State ---
 ## Each entry: { "id": String, "floor": int, "slot": int, "type": String, "children": Array[String] }
 var map_data: Array = []
-var current_node_id: String = "" ## "" means player hasn't chosen a floor-0 node yet
+var current_node_id: String = ""  ## "" means player hasn't chosen a floor-0 node yet
 ## IDs of nodes the player has actually entered, in walk order. Used by
 ## map_renderer to highlight the walked path (vs. nodes merely "below current floor").
 var visited_node_ids: Array[String] = []
@@ -159,13 +166,18 @@ var _node_index: Dictionary = {}
 
 const DATA_VALIDATOR = preload("res://battle_scene/data_validator.gd")
 
+
 func _ready() -> void:
 	# Load-time schema check for all card / enemy / relic JSON. Fails loud in
 	# debug builds so typos surface at startup instead of in playtest.
 	var failures = DATA_VALIDATOR.validate_all_data_at_startup()
-	assert(failures == 0, "DataValidator: %d JSON schema failure(s) — see editor output." % failures)
+	assert(
+		failures == 0, "DataValidator: %d JSON schema failure(s) — see editor output." % failures
+	)
+
 
 # --- Map Generation ---
+
 
 ## Generates a procedural map with the given number of rows and max width.
 ## Rules:
@@ -180,15 +192,15 @@ func generate_map(num_floors: int = 12, width: int = 4) -> void:
 	_node_index.clear()
 	current_node_id = ""
 	visited_node_ids.clear()
-	
+
 	for f in range(num_floors):
 		# Determine how many nodes on this floor
 		var num_nodes: int
 		if f == 0 or f == num_floors - 1 or is_boss_floor(f):
-			num_nodes = 1 # Start (relic), mid-act bosses, and end (final boss) are single nodes
+			num_nodes = 1  # Start (relic), mid-act bosses, and end (final boss) are single nodes
 		else:
 			num_nodes = randi_range(2, 4)
-			num_nodes = mini(num_nodes, width) # Can't exceed +---available slots
+			num_nodes = mini(num_nodes, width)  # Can't exceed +---available slots
 			# Floors directly adjacent to a single-node floor must fit within
 			# the MAX_CHILDREN_PER_NODE cap of that single node, otherwise the
 			# orphan-fallback at _attach_orphan_to_under_cap_parent silently
@@ -197,7 +209,7 @@ func generate_map(num_floors: int = 12, width: int = 4) -> void:
 			# directly above a mid-boss does too.
 			if f == 1 or is_boss_floor(f - 1):
 				num_nodes = mini(num_nodes, MAX_CHILDREN_PER_NODE)
-		
+
 		# Pick unique random slots — single nodes always go in the center
 		var slots: Array[int] = []
 		if num_nodes == 1:
@@ -211,7 +223,7 @@ func generate_map(num_floors: int = 12, width: int = 4) -> void:
 			for i in range(num_nodes):
 				slots.append(available[i])
 			slots.sort()
-		
+
 		# Assign node types — track treasure count across the whole run so we
 		# can enforce MAX_EXTRA_TREASURES.
 		for slot in slots:
@@ -224,7 +236,7 @@ func generate_map(num_floors: int = 12, width: int = 4) -> void:
 				"children": [] as Array[String]
 			}
 			map_data.append(node)
-	
+
 	# Connect nodes floor by floor — every node has at most MAX_CHILDREN_PER_NODE
 	# outgoing edges (fan-out cap). Convergence (many parents per child) is fine.
 	for f in range(num_floors - 1):
@@ -272,12 +284,13 @@ func generate_map(num_floors: int = 12, width: int = 4) -> void:
 	for node in map_data:
 		_node_index[node.id] = node
 
+
 ## Returns up to `count` nodes from `candidates`, ordered by slot distance to
 ## `origin_slot` (closest first).
 static func _closest_n_by_slot(candidates: Array, origin_slot: int, count: int) -> Array:
 	var with_dist: Array = []
 	for c in candidates:
-		with_dist.append({ "node": c, "dist": abs(int(c.slot) - origin_slot) })
+		with_dist.append({"node": c, "dist": abs(int(c.slot) - origin_slot)})
 	with_dist.sort_custom(func(a, b): return a.dist < b.dist)
 	var out: Array = []
 	var take = mini(count, with_dist.size())
@@ -287,12 +300,14 @@ static func _closest_n_by_slot(candidates: Array, origin_slot: int, count: int) 
 
 
 ## Same as _closest_n_by_slot but additionally requires slot distance <= max_dist.
-static func _closest_n_by_slot_within(candidates: Array, origin_slot: int, count: int, max_dist: int) -> Array:
+static func _closest_n_by_slot_within(
+	candidates: Array, origin_slot: int, count: int, max_dist: int
+) -> Array:
 	var with_dist: Array = []
 	for c in candidates:
 		var d = abs(int(c.slot) - origin_slot)
 		if d <= max_dist:
-			with_dist.append({ "node": c, "dist": d })
+			with_dist.append({"node": c, "dist": d})
 	with_dist.sort_custom(func(a, b): return a.dist < b.dist)
 	var out: Array = []
 	var take = mini(count, with_dist.size())
@@ -305,8 +320,8 @@ static func _closest_n_by_slot_within(candidates: Array, origin_slot: int, count
 ## fan-out cap. Falls back to closest parent overall if all are at cap (rare).
 static func _attach_orphan_to_under_cap_parent(orphan: Dictionary, current_nodes: Array) -> void:
 	var sorted: Array = current_nodes.duplicate()
-	sorted.sort_custom(func(a, b):
-		return abs(int(a.slot) - int(orphan.slot)) < abs(int(b.slot) - int(orphan.slot))
+	sorted.sort_custom(
+		func(a, b): return abs(int(a.slot) - int(orphan.slot)) < abs(int(b.slot) - int(orphan.slot))
 	)
 	for parent in sorted:
 		if parent.children.size() < MAX_CHILDREN_PER_NODE:
@@ -379,6 +394,7 @@ func _count_extra_treasures() -> int:
 			count += 1
 	return count
 
+
 func _get_nodes_on_floor(f: int) -> Array:
 	var result: Array = []
 	for node in map_data:
@@ -386,10 +402,13 @@ func _get_nodes_on_floor(f: int) -> Array:
 			result.append(node)
 	return result
 
+
 func get_node_by_id(id: String) -> Dictionary:
 	return _node_index.get(id, {})
 
+
 # --- Encounter Selection ---
+
 
 ## Picks an enemy roster based on node type and floor index.
 ## Called by MapScene before transitioning to the battle scene.
@@ -424,13 +443,16 @@ func select_encounter(node_type: String, floor_idx: int) -> Array[String]:
 		result.append("trash_robot")
 	return result
 
+
 # --- Run Initialization ---
+
 
 func get_default_starter_deck() -> Array[String]:
 	var deck: Array[String] = []
 	for card_id in DEFAULT_STARTER_DECK:
 		deck.append(card_id)
 	return deck
+
 
 ## Called after hero selection to begin a new run.
 func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int = 0) -> void:
@@ -477,16 +499,16 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	_apply_meta_upgrades()
 	_emit_all_state()
 
+
 # --- Deck Management ---
+
 
 func add_card_to_deck(card_id: String) -> void:
 	var uid = str(Time.get_ticks_usec()) + "_" + str(randi_range(1000, 9999))
-	var card_data = {
-		"uid": uid,
-		"card_id": card_id
-	}
+	var card_data = {"uid": uid, "card_id": card_id}
 	player_deck.append(card_data)
 	emit_signal("deck_updated")
+
 
 ## Returns true if the card was successfully removed
 func remove_card_from_deck_by_uid(uid: String) -> bool:
@@ -499,6 +521,7 @@ func remove_card_from_deck_by_uid(uid: String) -> bool:
 
 
 # --- Shop purchases (gold-gated wrappers) -----------------------------------
+
 
 ## Spend gold to add a card to the deck. Returns false on insufficient gold.
 func purchase_card(card_id: String, cost: int) -> bool:
@@ -567,13 +590,15 @@ func upgrade_card_by_uid(uid: String) -> bool:
 
 # --- Health & Damage ---
 
+
 func modify_health(amount: int) -> void:
 	current_health += amount
 	current_health = clampi(current_health, 0, max_health)
 	emit_signal("health_changed", current_health, max_health)
-	
+
 	if current_health <= 0 and is_run_active:
 		_handle_run_loss()
+
 
 func set_max_health(amount: int, heal_to_full: bool = false) -> void:
 	max_health = amount
@@ -583,14 +608,18 @@ func set_max_health(amount: int, heal_to_full: bool = false) -> void:
 		current_health = clampi(current_health, 0, max_health)
 	emit_signal("health_changed", current_health, max_health)
 
+
 # --- Resources ---
+
 
 func add_resources(g: int, c: int) -> void:
 	gold = max(0, gold + g)
 	core = max(0, core + c)
 	emit_signal("resources_changed", gold, core)
 
+
 # --- Items ---
+
 
 ## Recompute player_attributes = base_attributes + sum of every equipped item's
 ## bonuses. Idempotent. Emits equipment_changed.
@@ -627,7 +656,12 @@ func equip_to_slot(item_id: String, slot: String) -> bool:
 		push_error("equip_to_slot: no JSON for item '%s'" % item_id)
 		return false
 	if str(data.get("slot", "")) != slot:
-		push_error("equip_to_slot: item '%s' is slot '%s', cannot fit into '%s'" % [item_id, data.get("slot", ""), slot])
+		push_error(
+			(
+				"equip_to_slot: item '%s' is slot '%s', cannot fit into '%s'"
+				% [item_id, data.get("slot", ""), slot]
+			)
+		)
 		return false
 
 	var prev: String = equipped_items.get(slot, "")
@@ -705,6 +739,7 @@ func get_active_set_tiers() -> Dictionary:
 
 # --- Relics ---
 
+
 func add_relic(relic_id: String) -> bool:
 	if relic_id.is_empty() or relic_id in relics:
 		return false
@@ -712,8 +747,10 @@ func add_relic(relic_id: String) -> bool:
 	emit_signal("relics_updated")
 	return true
 
+
 func has_relic(relic_id: String) -> bool:
 	return relic_id in relics
+
 
 func remove_relic(relic_id: String) -> bool:
 	var index = relics.find(relic_id)
@@ -722,6 +759,7 @@ func remove_relic(relic_id: String) -> bool:
 	relics.remove_at(index)
 	emit_signal("relics_updated")
 	return true
+
 
 ## Private helper: open dir_path+id+".json", parse and return the Dictionary.
 ## Returns {} if id is empty, file is missing, or JSON is not a Dictionary.
@@ -847,6 +885,7 @@ func get_unowned_relic_ids() -> Array[String]:
 	ids.sort()
 	return ids
 
+
 func roll_relic_choices(count: int = 3) -> Array[String]:
 	var pool = get_unowned_relic_ids()
 	pool.shuffle()
@@ -855,10 +894,13 @@ func roll_relic_choices(count: int = 3) -> Array[String]:
 		choices.append(pool[i])
 	return choices
 
+
 # --- Internal Events ---
+
 
 func _humanize_id(value: String) -> String:
 	return value.replace("_", " ").capitalize()
+
 
 ## Apply all owned meta-progression upgrades to the freshly-reset run state.
 ## Called at the END of start_new_run (after defaults are set so we can add
@@ -942,6 +984,7 @@ func _teardown_run(victory: bool, outcome: String, core_earned: int) -> void:
 	}
 	emit_signal("run_ended", victory, summary)
 
+
 func _emit_all_state() -> void:
 	emit_signal("health_changed", current_health, max_health)
 	emit_signal("resources_changed", gold, core)
@@ -949,10 +992,12 @@ func _emit_all_state() -> void:
 	emit_signal("items_updated")
 	emit_signal("relics_updated")
 
+
 ## Debug tool testing
 func _input(event: InputEvent) -> void:
-	if not OS.is_debug_build(): return
-	
+	if not OS.is_debug_build():
+		return
+
 	if event is InputEventKey and event.pressed:
 		match event.keycode:
 			KEY_F9:

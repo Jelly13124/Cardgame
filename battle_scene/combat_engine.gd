@@ -5,14 +5,14 @@ extends Node
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
 const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
 
-signal victory_declared()
+signal victory_declared
 
 const ATTRIBUTE_COLORS = {
-	"gain_strength":     Color(1.0, 0.5, 0.2),
+	"gain_strength": Color(1.0, 0.5, 0.2),
 	"gain_constitution": Color(0.4, 0.7, 1.0),
 	"gain_intelligence": Color(0.8, 0.4, 1.0),
-	"gain_luck":         Color(1.0, 0.9, 0.2),
-	"gain_charm":        Color(1.0, 0.5, 0.8),
+	"gain_luck": Color(1.0, 0.9, 0.2),
+	"gain_charm": Color(1.0, 0.5, 0.8),
 }
 
 const MUZZLE_FLASH_TEX = preload("res://battle_scene/assets/images/fx/gunshot/muzzle_flash.png")
@@ -45,14 +45,26 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 	var type = card.card_info.get("type", "skill").to_lower()
 
 	var card_mult: float = 1.0
-	if type == "attack" and player.has_method("get_status_stacks") and player.get_status_stacks("double_damage") > 0:
+	if (
+		type == "attack"
+		and player.has_method("get_status_stacks")
+		and player.get_status_stacks("double_damage") > 0
+	):
 		card_mult = 2.0
 		player.status_system.remove_status("double_damage", player)
 		main.show_notification("DOUBLE DAMAGE ACTIVE!", Color(0.2, 0.8, 1.0))
 
 	if effects.is_empty():
-		push_error("CombatEngine: card '%s' has no effects. Card JSON must define an `effects` array." % card.card_info.get("name", "<unknown>"))
-		assert(false, "CombatEngine: card '%s' has no effects." % card.card_info.get("name", "<unknown>"))
+		push_error(
+			(
+				"CombatEngine: card '%s' has no effects. Card JSON must define an `effects` array."
+				% card.card_info.get("name", "<unknown>")
+			)
+		)
+		assert(
+			false,
+			"CombatEngine: card '%s' has no effects." % card.card_info.get("name", "<unknown>")
+		)
 		return
 
 	if type == "attack" and target and is_instance_valid(target):
@@ -91,19 +103,25 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 		"deal_damage":
 			if target and is_instance_valid(target) and target.has_method("take_damage"):
 				if main.equipment_set_system and main.current_resolving_card:
-					amount = main.equipment_set_system.modify_card_damage(main.current_resolving_card, amount)
+					amount = main.equipment_set_system.modify_card_damage(
+						main.current_resolving_card, amount
+					)
 				var outgoing = calculate_attack_damage(amount, player, target)
 				target.take_damage(outgoing)
 				_register_player_attack()
 				main.show_notification("DEALT %d DAMAGE" % outgoing, Color(1.0, 0.4, 0.3))
 				if main.equipment_set_system and main.current_resolving_card:
-					main.equipment_set_system.on_card_damage_resolved(main.current_resolving_card, target)
+					main.equipment_set_system.on_card_damage_resolved(
+						main.current_resolving_card, target
+					)
 			else:
 				main.show_notification("NO TARGET!", Color(1, 0.5, 0.5))
 
 		"gain_block":
 			if main.equipment_set_system and main.current_resolving_card:
-				amount = main.equipment_set_system.modify_card_block(main.current_resolving_card, amount)
+				amount = main.equipment_set_system.modify_card_block(
+					main.current_resolving_card, amount
+				)
 			player.add_block(amount)
 			main.show_notification("+%d BLOCK" % amount, Color(0.4, 0.6, 1.0))
 			await get_tree().create_timer(0.2).timeout
@@ -121,12 +139,16 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 		"deal_damage_all":
 			var per_target_amount = amount
 			if main.equipment_set_system and main.current_resolving_card:
-				per_target_amount = main.equipment_set_system.modify_card_damage(main.current_resolving_card, per_target_amount)
+				per_target_amount = main.equipment_set_system.modify_card_damage(
+					main.current_resolving_card, per_target_amount
+				)
 			for enemy in main.enemy_container.get_children():
 				if is_instance_valid(enemy) and enemy.has_method("take_damage"):
 					enemy.take_damage(calculate_attack_damage(per_target_amount, player, enemy))
 					if main.equipment_set_system and main.current_resolving_card:
-						main.equipment_set_system.on_card_damage_resolved(main.current_resolving_card, enemy)
+						main.equipment_set_system.on_card_damage_resolved(
+							main.current_resolving_card, enemy
+						)
 			_register_player_attack()
 			main.show_notification("ALL ENEMIES HIT", Color(1.0, 0.3, 0.2))
 			await get_tree().create_timer(0.3).timeout
@@ -176,7 +198,10 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			var stacks: int = int(effect.get("stacks", 1))
 			if target and is_instance_valid(target) and target.has_method("add_status"):
 				target.add_status(status, stacks)
-				main.show_notification("APPLIED %s x%d" % [STATUS_SYS.format_name(status).to_upper(), stacks], Color(0.6, 0.9, 0.3))
+				main.show_notification(
+					"APPLIED %s x%d" % [STATUS_SYS.format_name(status).to_upper(), stacks],
+					Color(0.6, 0.9, 0.3)
+				)
 			else:
 				main.show_notification("NO TARGET!", Color(1, 0.5, 0.5))
 			await get_tree().create_timer(0.2).timeout
@@ -186,7 +211,10 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			var stacks: int = int(effect.get("stacks", 1))
 			if player.has_method("add_status"):
 				player.add_status(status, stacks)
-				main.show_notification("APPLIED %s x%d" % [STATUS_SYS.format_name(status).to_upper(), stacks], Color(0.6, 0.9, 0.3))
+				main.show_notification(
+					"APPLIED %s x%d" % [STATUS_SYS.format_name(status).to_upper(), stacks],
+					Color(0.6, 0.9, 0.3)
+				)
 			await get_tree().create_timer(0.2).timeout
 
 		"apply_status_all":
@@ -195,11 +223,19 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			for enemy in main.enemy_container.get_children():
 				if is_instance_valid(enemy) and enemy.has_method("add_status"):
 					enemy.add_status(status, stacks)
-			main.show_notification("ALL: %s x%d" % [STATUS_SYS.format_name(status).to_upper(), stacks], Color(0.6, 0.9, 0.3))
+			main.show_notification(
+				"ALL: %s x%d" % [STATUS_SYS.format_name(status).to_upper(), stacks],
+				Color(0.6, 0.9, 0.3)
+			)
 			await get_tree().create_timer(0.2).timeout
 
 		_:
-			push_error("CombatEngine: unknown effect type '%s'. Add a handler in combat_engine._apply_effect() and update DataValidator.ALLOWED_EFFECT_TYPES." % effect_type)
+			push_error(
+				(
+					"CombatEngine: unknown effect type '%s'. Add a handler in combat_engine._apply_effect() and update DataValidator.ALLOWED_EFFECT_TYPES."
+					% effect_type
+				)
+			)
 			assert(false, "CombatEngine: unknown effect type '%s'" % effect_type)
 
 
@@ -224,16 +260,30 @@ func _animate_player_gunshot(player: Node, target: Node) -> void:
 		muzzle.queue_free()
 
 	var flight = create_tween().set_parallel(true)
-	flight.tween_property(bullet, "global_position", hit, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	flight.tween_property(bullet, "modulate:a", 0.0, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	(
+		flight
+		. tween_property(bullet, "global_position", hit, 0.16)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	flight.tween_property(bullet, "modulate:a", 0.0, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(
+		Tween.EASE_IN
+	)
 	await flight.finished
 	if is_instance_valid(bullet):
 		bullet.queue_free()
 
 	var impact = _make_fx_sprite(IMPACT_TEX, hit, Vector2(0.55, 0.55))
 	var burst = create_tween().set_parallel(true)
-	burst.tween_property(impact, "scale", Vector2(0.78, 0.78), 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	burst.tween_property(impact, "modulate:a", 0.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	(
+		burst
+		. tween_property(impact, "scale", Vector2(0.78, 0.78), 0.08)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	burst.tween_property(impact, "modulate:a", 0.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(
+		Tween.EASE_IN
+	)
 	await burst.finished
 	if is_instance_valid(impact):
 		impact.queue_free()
