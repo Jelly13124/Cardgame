@@ -858,6 +858,14 @@ func _humanize_id(value: String) -> String:
 ## Called at the END of start_new_run (after defaults are set so we can add
 ## on top of them). Pure additive — never reduces a base value.
 func _apply_meta_upgrades() -> void:
+	# Ascension A2+: -5 max HP per level. Applied BEFORE Med Bay so the
+	# upgrade can partially offset the penalty (intentional — investing
+	# in meta unlocks softer ramps).
+	if ascension >= 2:
+		var penalty: int = (ascension - 1) * 5  # A2=-5, A3=-10, A4=-15, A5=-20
+		max_health = max(10, max_health - penalty)
+		current_health = max_health
+
 	# Med Bay → +max HP
 	var hp := int(_get_meta_effect_value("med_bay").get("hp", 0))
 	if hp > 0:
