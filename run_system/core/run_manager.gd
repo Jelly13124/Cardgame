@@ -12,6 +12,11 @@ signal run_ended(victory: bool)
 # --- Run State ---
 var is_run_active: bool = false
 var current_hero_id: String = ""
+## Loaded hero JSON, populated by start_new_run. Empty until first run.
+var current_hero_data: Dictionary = {}
+## Active difficulty modifier this run (0..5). Stored on RunManager so any
+## subsystem can read it without going back to MetaProgress.
+var ascension: int = 0
 
 # Base Stats
 var max_health: int = 50
@@ -417,18 +422,27 @@ func get_default_starter_deck() -> Array[String]:
 	return deck
 
 ## Called after hero selection to begin a new run.
-func start_new_run(hero_id: String, starter_deck: Array[String]) -> void:
+func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int = 0) -> void:
 	current_hero_id = hero_id
-	
+	current_hero_data = _load_hero_def(hero_id)
+	ascension = clampi(asc, 0, 5)
+
 	player_deck.clear()
-	for card_id in starter_deck:
-		add_card_to_deck(card_id)
-	
-	# Reset resources and health
+	# Prefer the hero's starter deck if present; fall back to the explicit
+	# argument; fall back to DEFAULT_STARTER_DECK if neither given.
+	var deck_to_use: Array = starter_deck
+	if current_hero_data.has("starter_deck") and current_hero_data["starter_deck"] is Array:
+		deck_to_use = current_hero_data["starter_deck"]
+	if deck_to_use.is_empty():
+		deck_to_use = DEFAULT_STARTER_DECK
+	for card_id in deck_to_use:
+		add_card_to_deck(str(card_id))
+
+	# Reset resources and health (hero max_health overrides default 50).
 	gold = 0
 	core = 0
 	current_floor = 0
-	max_health = 50  # base value; _apply_meta_upgrades() adds Med Bay on top
+	max_health = int(current_hero_data.get("max_health", 50))
 	current_health = max_health
 	for slot in EQUIPMENT_SLOTS:
 		equipped_items[slot] = ""
@@ -437,9 +451,15 @@ func start_new_run(hero_id: String, starter_deck: Array[String]) -> void:
 	current_encounter = ["trash_robot"]
 	last_battle_node_type = "enemy"
 	generate_map(12, 4)
+
+	# Base attributes: hero JSON's starting_attributes overrides the default.
+	var attrs: Dictionary = current_hero_data.get("starting_attributes", {})
 	base_attributes = {
-		"strength": 3, "constitution": 3,
-		"intelligence": 3, "luck": 3, "charm": 3,
+		"strength": int(attrs.get("strength", 3)),
+		"constitution": int(attrs.get("constitution", 3)),
+		"intelligence": int(attrs.get("intelligence", 3)),
+		"luck": int(attrs.get("luck", 3)),
+		"charm": int(attrs.get("charm", 3)),
 	}
 	player_attributes = base_attributes.duplicate()
 	is_run_active = true
@@ -694,6 +714,23 @@ func remove_relic(relic_id: String) -> bool:
 
 ## Private helper: open dir_path+id+".json", parse and return the Dictionary.
 ## Returns {} if id is empty, file is missing, or JSON is not a Dictionary.
+## Load a hero definition JSON. Returns {} if missing/invalid.
+func _load_hero_def(id: String) -> Dictionary:
+	var path := "res://run_system/data/heroes/" + id + ".json"
+	if not FileAccess.file_exists(path):
+		push_warning("RunManager: hero JSON not found at %s" % path)
+		return {}
+	var f := FileAccess.open(path, FileAccess.READ)
+	if not f:
+		return {}
+	var raw := f.get_as_text()
+	f.close()
+	var parsed = JSON.parse_string(raw)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return {}
+	return parsed
+
+
 ## Load a base-upgrade definition JSON. Returns {} if missing/invalid.
 func _load_upgrade_def(id: String) -> Dictionary:
 	var path := "res://run_system/data/base_upgrades/" + id + ".json"
