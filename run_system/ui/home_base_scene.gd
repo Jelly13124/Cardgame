@@ -7,7 +7,10 @@ const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const UPGRADE_PANEL_SCRIPT = preload("res://run_system/ui/upgrade_panel.gd")
 const HERO_SELECT_PACKED = preload("res://run_system/ui/hero_select.tscn")
 const UPGRADE_DIR := "res://run_system/data/base_upgrades/"
-const UPGRADE_ORDER := ["med_bay", "arsenal", "research_lab", "scrap_workshop", "command_center"]
+const UPGRADE_ORDER := [
+	"med_bay", "arsenal", "research_lab", "scrap_workshop", "command_center",
+	"jerry_unlock", "starter_boost", "card_research",
+]
 
 var _core_label: Label
 
