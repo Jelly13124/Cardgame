@@ -7,7 +7,12 @@ signal deck_updated()
 signal items_updated()
 signal equipment_changed
 signal relics_updated()
-signal run_ended(victory: bool)
+## Emitted when the run ends, win or lose. `summary` is the run-history
+## payload for MetaProgress (and any future listener):
+##   { hero_id: String, floor: int, core_earned: int, outcome: String,
+##     timestamp: int (unix seconds) }
+## outcome is one of "victory" (final boss kill), "extracted", "defeat".
+signal run_ended(victory: bool, summary: Dictionary)
 
 # --- Run State ---
 var is_run_active: bool = false
@@ -881,28 +886,35 @@ func _apply_meta_upgrades() -> void:
 	# nothing to apply here.)
 
 
-func _handle_run_loss() -> void:
-	_teardown_run(false)
+func _handle_run_loss(core_earned: int = 0) -> void:
+	_teardown_run(false, "defeat", core_earned)
 	# TODO: Trigger base-building retention logic (e.g. keep 30% of Core)
 	print("Player Hero defeated! Run ended.")
 
 
-## Mark the run as ended cleanly (boss victory or extract). Mirrors
-## _handle_run_loss's bookkeeping but emits run_ended(true). Idempotent —
-## calling twice is a no-op the second time.
-func end_run_victory() -> void:
-	_teardown_run(true)
+## Mark the run as ended cleanly. `core_earned` is the Core grant for
+## THIS run (e.g. 150 for final boss, 50 for extract). `outcome` is
+## "victory" for final boss kill, "extracted" for mid-act extract.
+## Idempotent — calling twice is a no-op the second time.
+func end_run_victory(core_earned: int = 0, outcome: String = "victory") -> void:
+	_teardown_run(true, outcome, core_earned)
 
 
-## Shared run-teardown: flips is_run_active false and emits run_ended.
-## Both win and loss paths funnel through here so any future bookkeeping
-## (clear run-scoped state, save run-history snapshot, etc.) added in ONE
-## place automatically applies to both outcomes. Idempotent.
-func _teardown_run(victory: bool) -> void:
+## Shared run-teardown. Builds the summary dict, flips is_run_active false,
+## emits run_ended(victory, summary). Both win and loss paths funnel here
+## so future bookkeeping added once applies to both outcomes. Idempotent.
+func _teardown_run(victory: bool, outcome: String, core_earned: int) -> void:
 	if not is_run_active:
 		return
 	is_run_active = false
-	emit_signal("run_ended", victory)
+	var summary := {
+		"hero_id": current_hero_id,
+		"floor": current_floor,
+		"core_earned": core_earned,
+		"outcome": outcome,
+		"timestamp": int(Time.get_unix_time_from_system()),
+	}
+	emit_signal("run_ended", victory, summary)
 
 func _emit_all_state() -> void:
 	emit_signal("health_changed", current_health, max_health)
