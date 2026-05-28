@@ -72,6 +72,15 @@ func _build() -> void:
 		grid.add_child(panel)
 		panel.set_definition(definition)
 
+	# Recent runs panel — last 5 entries from MetaProgress.run_history.
+	var history_label := Label.new()
+	history_label.text = "RECENT RUNS"
+	history_label.add_theme_font_size_override("font_size", 22)
+	history_label.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
+	vbox.add_child(history_label)
+	var history_panel := _build_recent_runs_panel()
+	vbox.add_child(history_panel)
+
 	# Spacer push START to bottom
 	var grow := Control.new()
 	grow.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -111,3 +120,60 @@ func _load_upgrade(id: String) -> Dictionary:
 
 func _on_start_pressed() -> void:
 	get_tree().change_scene_to_packed(HERO_SELECT_PACKED)
+
+
+func _build_recent_runs_panel() -> Control:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_bottom", 10)
+	panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 4)
+	margin.add_child(vbox)
+
+	var history: Array = MetaProgress.run_history
+	if history.is_empty():
+		var none := Label.new()
+		none.text = "(no runs yet)"
+		none.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		vbox.add_child(none)
+		return panel
+
+	# Show newest first, max 5 entries.
+	var slice_start: int = max(0, history.size() - 5)
+	var to_show: Array = history.slice(slice_start)
+	to_show.reverse()
+	for entry in to_show:
+		vbox.add_child(_build_history_row(entry))
+	return panel
+
+
+func _build_history_row(entry: Dictionary) -> Label:
+	var outcome: String = str(entry.get("outcome", "?"))
+	var icon: String = "✓" if outcome == "victory" else ("⤴" if outcome == "extracted" else "✗")
+	var color: Color = {
+		"victory": Color(0.4, 1.0, 0.5),
+		"extracted": Color(1.0, 0.9, 0.4),
+	}.get(outcome, Color(1.0, 0.4, 0.4))
+
+	var hero: String = _humanize_hero_id(str(entry.get("hero_id", "?")))
+	var floor: int = int(entry.get("floor", 0))
+	var core_earned: int = int(entry.get("core_earned", 0))
+
+	var row := Label.new()
+	row.text = "%s  %s  Floor %d  +%d Core" % [icon, hero, floor + 1, core_earned]
+	row.add_theme_color_override("font_color", color)
+	return row
+
+
+func _humanize_hero_id(hero_id: String) -> String:
+	# Quick lookup table — covers the two heroes we ship.
+	var names := {"cowboy_bill": "Bill", "hero_jerry_killer": "Jerry"}
+	if names.has(hero_id):
+		return names[hero_id]
+	return hero_id.replace("_", " ").capitalize()
