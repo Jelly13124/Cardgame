@@ -402,7 +402,12 @@ Final Godot assets are PNG files. Character and FX sheets use a solid `#FF00FF` 
   - **Command Center**: +50 / +120 / +200 starting gold
 - ✅ Boss victory grants +150 Core and returns to home base (current map has 1 boss per run; extract/continue choice deferred until map redesign adds multiple bosses)
 - ✅ Player death routes to home base (no Core gained)
-- ⬜ Hero unlock system via base upgrades (deferred — both heroes already selectable in MVP)
+- ✅ Hero JSON schema + dynamic loader: heroes/*.json (cowboy_bill + hero_jerry_killer); player.gd reads sprite/tint/stats from RunManager.current_hero_data
+- ✅ Hero unlock: jerry_unlock base upgrade (100 Core, single tier)
+- ✅ Run history panel: home base shows last 5 runs (outcome icon + hero + floor + core)
+- ✅ Ascension difficulty: 5 levels, each adds a negative modifier (enemy HP+10%, player -5 max HP, -1 first-turn energy, +10% shop prices, elite-heavy maps)
+- ✅ Starter Boost upgrade: 3 tiers, +N random attribute points at run start
+- ✅ Card Research upgrade: 3 tiers unlocking 5 cards (flash_bang, bone_breaker, last_breath, preemptive_strike, junk_bomb)
 
 ### ⬜ Phase 5 — Content Expansion
 - Multiple hero archetypes with unique starting decks
