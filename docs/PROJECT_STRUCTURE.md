@@ -77,7 +77,7 @@ The old root-level `skills/` workflow docs have been removed. Project convention
 *   **Mechanic**: Upgrading swaps the deck entry's `card_id` from `"X"` to `"X_plus"`. Loader is unchanged.
 
 ### 🎒 Equipment System
-*   **Data**: `run_system/data/equipment/{item_id}.json` (18 items) + `run_system/data/equipment_sets/{set_id}.json` (2 sets)
+*   **Data**: `run_system/data/equipment/{item_id}.json` (21 items) + `run_system/data/equipment_sets/{set_id}.json` (3 sets)
 *   **Set Effect System**: `battle_scene/equipment_set_system.gd` — snapshots active tier effects at battle start; mirrors `relic_effect_system.gd` shape.
 *   **Equipment Icon Component**: `run_system/ui/equipment_icon.gd` — reusable placeholder (colored panel + slot letter) with PNG fallback.
 *   **Character Panel**: `run_system/ui/equipment_panel.gd` — map-screen modal showing HP/Gold/Floor + slots + inventory + active sets + relics + stats. Open via `⚔ CHARACTER` button.

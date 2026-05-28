@@ -1,7 +1,7 @@
 # Cards Catalog
 
-**Last updated:** 2026-05-18
-**Total cards:** 17 (5 original + 12 Tactical Toolkit)
+**Last updated:** 2026-05-28
+**Total cards:** 30 (5 original + 12 Tactical Toolkit + 13 Phase-5 content expansion; excludes `_plus` upgrade variants)
 
 ## Paths
 
@@ -19,42 +19,55 @@
 
 | Rarity | Count | IDs |
 |---|---|---|
-| Common | 8 | strike, weak_strike, defend, stun_baton, static_coil, tinker, hot_swap, adrenaline |
-| Uncommon | 6 | override, emp_burst, cascade, salvo, overdrive, charged_shot |
-| Rare | 3 | preemptive_strike, overload, junk_bomb |
+| Common | 12 | adrenaline, brace, defend, double_tap, hot_swap, scrap_strike, siphon, static_coil, strike, stun_baton, tinker, weak_strike |
+| Uncommon | 11 | acid_splash, cascade, chain_link, charged_shot, emp_burst, focus, iron_will, last_stand, overdrive, override, salvo |
+| Rare | 7 | bone_breaker, carapace, flash_bang, junk_bomb, last_breath, overload, preemptive_strike |
 
 | Type | Count |
 |---|---|
-| Attack | 9 |
-| Skill | 7 |
-| Ability | 1 |
+| Attack | 15 |
+| Skill | 12 |
+| Ability | 3 |
 
 | Keyword | Cards |
 |---|---|
-| Retain | cascade |
-| Exhaust | overdrive, charged_shot, junk_bomb, adrenaline |
+| Retain | brace, cascade |
+| Exhaust | adrenaline, charged_shot, flash_bang, focus, iron_will, junk_bomb, last_breath, overdrive |
 
 ## Summary table
 
 | ID | Title | Type | Cost | Rarity | Effects | Keywords | Art |
 |---|---|---|---|---|---|---|---|
-| `strike` | Strike | attack | 1 | common | deal_damage 3 (+STR) | — | ✅ |
-| `weak_strike` | Weak Strike | attack | 1 | common | deal_damage 3 (+STR); apply Weak 1 | — | ✅ |
+| `acid_splash` | Acid Splash | attack | 1 | uncommon | deal_damage_all 4; apply_status_all poison 2 | — | ✅ |
+| `adrenaline` | Adrenaline | skill | 0 | common | gain_energy 2; draw_cards 1 | Exhaust | ✅ |
+| `bone_breaker` | Bone Breaker | attack | 2 | rare | deal_damage 14 (+STR); apply_status vulnerable 2 | — | ✅ |
+| `brace` | Brace | skill | 0 | common | gain_block 4 (+CON) | Retain | ✅ |
+| `carapace` | Carapace | skill | 2 | rare | gain_block 15 (+CON); gain_constitution 1 | — | ✅ |
+| `cascade` | Cascade | attack | 1 | uncommon | scale_damage_by_attacks (base=2, per=2) | Retain | ✅ |
+| `chain_link` | Chain Link | attack | 1 | uncommon | deal_damage 6 (+STR); draw_cards 1 | — | ✅ |
+| `charged_shot` | Charged Shot | attack | 2 | uncommon | deal_damage 12 (+STR) | Exhaust | ✅ |
 | `defend` | Defend | skill | 1 | common | gain_block 3 (+CON) | — | ✅ |
+| `double_tap` | Double Tap | attack | 1 | common | deal_damage 3 (+STR); deal_damage 3 (+STR) | — | ✅ |
+| `emp_burst` | EMP Burst | skill | 2 | uncommon | apply_shock_all 2 | — | ✅ |
+| `flash_bang` | Flash Bang | skill | 1 | rare | apply_shock_all 1 | Exhaust | ✅ |
+| `focus` | Focus | ability | 1 | uncommon | gain_intelligence 1; draw_cards 1 | Exhaust | ✅ |
+| `hot_swap` | Hot Swap | skill | 1 | common | draw_cards 2 | — | ✅ |
+| `iron_will` | Iron Will | ability | 1 | uncommon | gain_strength 1; gain_constitution 1 | Exhaust | ✅ |
+| `junk_bomb` | Junk Bomb | skill | 2 | rare | deal_damage_all 6 (+STR); draw_cards 2 | Exhaust | ✅ |
+| `last_breath` | Last Breath | skill | 0 | rare | gain_block 10 (+CON); draw_cards 2 | Exhaust | ✅ |
+| `last_stand` | Last Stand | skill | 2 | uncommon | gain_block 12 (+CON); draw_cards 1 | — | ✅ |
+| `overdrive` | Overdrive | attack | 2 | uncommon | deal_damage 10 (+STR); apply_status_self vulnerable 1 | Exhaust | ✅ |
+| `overload` | Overload | attack | 2 | rare | deal_damage 8 (+STR); apply_shock 2 | — | ✅ |
 | `override` | Override | ability | 2 | uncommon | gain_strength 2 | — | ✅ |
 | `preemptive_strike` | Preemptive Strike | skill | 1 | rare | apply_status_self double_damage 1 | — | ✅ |
-| `stun_baton` | Stun Baton | attack | 1 | common | deal_damage 4 (+STR); apply Shock 1 | — | ✅ |
-| `static_coil` | Static Coil | attack | 1 | common | deal_damage 2 (+STR); gain_block 4 (+CON); apply Shock 1 | — | ✅ |
-| `emp_burst` | EMP Burst | skill | 2 | uncommon | apply_shock_all 2 | — | ✅ |
-| `overload` | Overload | attack | 2 | rare | deal_damage 8 (+STR); apply Shock 2 | — | ✅ |
-| `cascade` | Cascade | attack | 1 | uncommon | scale_damage_by_attacks (base=2, per=2) | Retain | ✅ |
 | `salvo` | Salvo | attack | 2 | uncommon | deal_damage 4 (+STR) × 3 | — | ✅ |
+| `scrap_strike` | Scrap Strike | attack | 1 | common | deal_damage 4 (+STR); draw_cards 1 | — | ✅ |
+| `siphon` | Siphon | attack | 1 | common | deal_damage 4 (+STR); gain_block 4 (+CON) | — | ✅ |
+| `static_coil` | Static Coil | attack | 1 | common | deal_damage 2 (+STR); gain_block 4 (+CON); apply Shock 1 | — | ✅ |
+| `strike` | Strike | attack | 1 | common | deal_damage 3 (+STR) | — | ✅ |
+| `stun_baton` | Stun Baton | attack | 1 | common | deal_damage 4 (+STR); apply Shock 1 | — | ✅ |
 | `tinker` | Tinker | skill | 1 | common | gain_strength 1; gain_block 3 (+CON) | — | ✅ |
-| `hot_swap` | Hot Swap | skill | 1 | common | draw_cards 2 | — | ✅ |
-| `overdrive` | Overdrive | attack | 2 | uncommon | deal_damage 10 (+STR); apply_status_self vulnerable 1 | Exhaust | ✅ |
-| `charged_shot` | Charged Shot | attack | 2 | uncommon | deal_damage 12 (+STR) | Exhaust | ✅ |
-| `junk_bomb` | Junk Bomb | skill | 2 | rare | deal_damage_all 6 (+STR); draw_cards 2 | Exhaust | ✅ |
-| `adrenaline` | Adrenaline | skill | 0 | common | gain_energy 2; draw_cards 1 | Exhaust | ✅ |
+| `weak_strike` | Weak Strike | attack | 1 | common | deal_damage 3 (+STR); apply Weak 1 | — | ✅ |
 
 ## Per-card details
 
@@ -164,6 +177,89 @@
 - Keywords: **Exhaust**
 - JSON: `battle_scene/card_info/player/adrenaline.json`
 - Art: `battle_scene/assets/images/cards/player/adrenaline.png`
+
+### `siphon`
+**Phase 5 — Common.** Cheap hybrid: chip damage plus a little block on one card.
+- Effects: `deal_damage 4` (+STR), `gain_block 4` (+CON)
+- JSON: `battle_scene/card_info/player/siphon.json`
+- Art: `battle_scene/assets/images/cards/player/siphon.png`
+
+### `brace`
+**Phase 5 — Common.** Free-cost block that Retains — bank defense for the turn you need it.
+- Effects: `gain_block 4` (+CON)
+- Keywords: **Retain**
+- JSON: `battle_scene/card_info/player/brace.json`
+- Art: `battle_scene/assets/images/cards/player/brace.png`
+
+### `double_tap`
+**Phase 5 — Common.** Two separate 3-damage hits; Strength applies to each, and both count for attack-scaling combos.
+- Effects: `deal_damage 3` (+STR) × 2
+- JSON: `battle_scene/card_info/player/double_tap.json`
+- Art: `battle_scene/assets/images/cards/player/double_tap.png`
+
+### `scrap_strike`
+**Phase 5 — Common.** Cantrip attack: small hit that replaces itself with a draw.
+- Effects: `deal_damage 4` (+STR), `draw_cards 1`
+- JSON: `battle_scene/card_info/player/scrap_strike.json`
+- Art: `battle_scene/assets/images/cards/player/scrap_strike.png`
+
+### `last_breath`
+**Phase 5 — Rare.** Free-cost panic button: heavy block + 2 draw, then Exhausts.
+- Effects: `gain_block 10` (+CON), `draw_cards 2`
+- Keywords: **Exhaust**
+- JSON: `battle_scene/card_info/player/last_breath.json`
+- Art: `battle_scene/assets/images/cards/player/last_breath.png`
+
+### `last_stand`
+**Phase 5 — Uncommon.** Big single-card defensive turn: 12 block + a draw to keep going.
+- Effects: `gain_block 12` (+CON), `draw_cards 1`
+- JSON: `battle_scene/card_info/player/last_stand.json`
+- Art: `battle_scene/assets/images/cards/player/last_stand.png`
+
+### `acid_splash`
+**Phase 5 — Uncommon.** AoE: hits every enemy for 4 and stacks 2 Poison on all of them.
+- Effects: `deal_damage_all 4`, `apply_status_all poison 2`
+- JSON: `battle_scene/card_info/player/acid_splash.json`
+- Art: `battle_scene/assets/images/cards/player/acid_splash.png`
+
+### `focus`
+**Phase 5 — Uncommon (ability).** Permanent +1 Intelligence + a draw, then Exhausts. Long-game scaling.
+- Effects: `gain_intelligence 1`, `draw_cards 1`
+- Keywords: **Exhaust**
+- JSON: `battle_scene/card_info/player/focus.json`
+- Art: `battle_scene/assets/images/cards/player/focus.png`
+
+### `chain_link`
+**Phase 5 — Uncommon.** Mid attack that cantrips: 6 damage + a draw.
+- Effects: `deal_damage 6` (+STR), `draw_cards 1`
+- JSON: `battle_scene/card_info/player/chain_link.json`
+- Art: `battle_scene/assets/images/cards/player/chain_link.png`
+
+### `iron_will`
+**Phase 5 — Uncommon (ability).** Permanent +1 Strength AND +1 Constitution, then Exhausts. Dual-stat enabler.
+- Effects: `gain_strength 1`, `gain_constitution 1`
+- Keywords: **Exhaust**
+- JSON: `battle_scene/card_info/player/iron_will.json`
+- Art: `battle_scene/assets/images/cards/player/iron_will.png`
+
+### `carapace`
+**Phase 5 — Rare.** Huge 15 block + permanent +1 Constitution — defensive scaling payoff.
+- Effects: `gain_block 15` (+CON), `gain_constitution 1`
+- JSON: `battle_scene/card_info/player/carapace.json`
+- Art: `battle_scene/assets/images/cards/player/carapace.png`
+
+### `flash_bang`
+**Phase 5 — Rare.** Cheap AoE Shock — 1 stack on every enemy, then Exhausts. Crowd interrupt tool.
+- Effects: `apply_shock_all 1`
+- Keywords: **Exhaust**
+- JSON: `battle_scene/card_info/player/flash_bang.json`
+- Art: `battle_scene/assets/images/cards/player/flash_bang.png`
+
+### `bone_breaker`
+**Phase 5 — Rare.** Heavy 14 damage + 2 Vulnerable to set up the follow-up. Boss-killer opener.
+- Effects: `deal_damage 14` (+STR), `apply_status vulnerable 2`
+- JSON: `battle_scene/card_info/player/bone_breaker.json`
+- Art: `battle_scene/assets/images/cards/player/bone_breaker.png`
 
 ## Supported effect types (current as of this slice)
 
