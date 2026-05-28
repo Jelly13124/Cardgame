@@ -78,6 +78,9 @@ static func create(id: String) -> EnemyEntity:
 			if data:
 				entity.enemy_name  = data.get("name",      id.to_upper())
 				entity.max_health  = int(data.get("max_health", 30))
+				# Ascension A1+: enemy HP scales +10% per level.
+				if RunManager.ascension > 0:
+					entity.max_health = int(round(entity.max_health * (1.0 + 0.1 * RunManager.ascension)))
 				entity.health      = entity.max_health
 				entity.action_pattern = data.get("action_pattern", [])
 				entity.sprite_id   = data.get("sprite_id", "")
