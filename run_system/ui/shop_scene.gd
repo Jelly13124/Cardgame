@@ -43,9 +43,11 @@ var _remove_price: int = 75
 func _discounted_price(base_cost: int) -> int:
 	var bias = RunManager._get_meta_effect_value("scrap_workshop")
 	var multiplier := float(bias.get("multiplier", 1.0))
-	if multiplier >= 1.0:
-		return base_cost
-	return int(ceil(base_cost * multiplier))
+	var price: float = float(base_cost) * multiplier
+	# Ascension A4+: +10% surcharge ON TOP of any Scrap Workshop discount.
+	if RunManager.ascension >= 4:
+		price *= 1.10
+	return int(ceil(price))
 
 var _card_factory: Node
 var _gold_label: Label
