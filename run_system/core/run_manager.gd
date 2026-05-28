@@ -896,6 +896,18 @@ func _apply_meta_upgrades() -> void:
 			var item_id := roll_equipment_drop("uncommon")
 			if item_id != "":
 				add_to_inventory(item_id)
+	# Starter Boost → +N random attribute points (each picks a random
+	# attribute from STR/CON/INT/LCK/CHA and increments by 1).
+	var starter := _get_meta_effect_value("starter_boost")
+	if not starter.is_empty():
+		var points: int = int(starter.get("points", 0))
+		var attr_keys: Array = ["strength", "constitution", "intelligence", "luck", "charm"]
+		for i in range(points):
+			var pick: String = attr_keys[randi() % attr_keys.size()]
+			base_attributes[pick] = int(base_attributes.get(pick, 3)) + 1
+		# Recompute derived stats after attribute mutation.
+		player_attributes = base_attributes.duplicate()
+
 	# (loot_rarity_bias + shop_discount are read on-demand by loot_reward / shop_scene;
 	# nothing to apply here.)
 
