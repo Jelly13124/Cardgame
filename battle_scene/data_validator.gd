@@ -69,6 +69,7 @@ const REQUIRED_BASE_UPGRADE_TIER_KEYS = ["level", "cost", "effect_value", "effec
 const ALLOWED_BASE_UPGRADE_EFFECT_KEYS = [
 	"max_hp_bonus", "starter_inventory", "loot_rarity_bias",
 	"shop_discount", "starting_gold",
+	"unlock_hero", "starter_attributes", "card_pool_unlock",
 ]
 
 # ─── Hero schema ─────────────────────────────────────────────────────────────
