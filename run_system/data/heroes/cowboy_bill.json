@@ -1,0 +1,11 @@
+{
+  "id": "cowboy_bill",
+  "name": "Cowboy Bill",
+  "sprite_id": "cowboy_bill",
+  "tint": "#ffffff",
+  "max_health": 50,
+  "starter_deck": ["strike", "strike", "strike", "strike", "weak_strike",
+                   "defend", "defend", "defend", "defend"],
+  "starting_attributes": {"strength": 3, "constitution": 3, "intelligence": 3, "luck": 3, "charm": 3},
+  "description": "One-eyed gunslinger. Reliable, average across the board."
+}
