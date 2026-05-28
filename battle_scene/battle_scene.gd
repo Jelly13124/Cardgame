@@ -215,6 +215,9 @@ func _on_turn_started(side: String) -> void:
 	player.start_turn()
 	if is_game_over:
 		return
+	# Ascension A3+: first turn of each combat starts with -1 energy.
+	if RunManager.ascension >= 3 and turn_manager.current_round == 1:
+		player.pay_energy(1)
 	if relic_effect_system:
 		relic_effect_system.on_player_turn_started(player, turn_manager.current_round)
 	if equipment_set_system:
