@@ -24,7 +24,7 @@ const HUD_SCRIPT = preload("res://battle_scene/ui/character_hud.gd")
 const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
 const COMBAT_FX = preload("res://battle_scene/combat_fx.gd")
 const HERO_DIR = "res://battle_scene/assets/images/heroes/"
-const HERO_ID = "cowboy_bill"
+const DEFAULT_HERO_SPRITE_ID = "cowboy_bill"  # fallback when no hero data loaded
 const TARGET_DISPLAY_HEIGHT := 256.0
 const MUZZLE_NATIVE_POSITION := Vector2(241, 73)
 
@@ -32,6 +32,25 @@ var _sprite: AnimatedSprite2D
 var _fallback_sprite: Sprite2D
 var _hud: Node
 var status_system = STATUS_SYS.new()
+
+
+## Sprite folder id for the current run's hero. Falls back to cowboy_bill
+## if no hero data is loaded (e.g. battle scene opened standalone in editor).
+func _hero_sprite_id() -> String:
+	if RunManager.current_hero_data.has("sprite_id"):
+		return str(RunManager.current_hero_data["sprite_id"])
+	return DEFAULT_HERO_SPRITE_ID
+
+
+## Modulate tint to apply to the sprite. Hero JSON's `tint` is a hex
+## string like "#dd5555" — invalid / missing → white (no tint).
+func _hero_tint() -> Color:
+	if not RunManager.current_hero_data.has("tint"):
+		return Color.WHITE
+	var hex := str(RunManager.current_hero_data["tint"])
+	if hex == "" or not hex.begins_with("#"):
+		return Color.WHITE
+	return Color.html(hex) if Color.html_is_valid(hex) else Color.WHITE
 
 
 func _ready() -> void:
@@ -54,8 +73,8 @@ func _build_visual() -> void:
 
 
 func _has_animation_frames() -> bool:
-	var dir = HERO_DIR + HERO_ID + "/"
-	return _asset_exists(dir + "attack/%s_attack_0.png" % HERO_ID)
+	var dir = HERO_DIR + _hero_sprite_id() + "/"
+	return _asset_exists(dir + "attack/%s_attack_0.png" % _hero_sprite_id())
 
 
 func _build_animated_visual() -> void:
@@ -69,12 +88,18 @@ func _build_animated_visual() -> void:
 	_sprite.sprite_frames = frames
 	_add_animation_frames(frames, "attack", false, 9.0)
 	_apply_display_scale(frames)
+	_sprite.modulate = _hero_tint()
 	add_child(_sprite)
 	_show_rest_pose()
 
 
 func _build_fallback_visual() -> void:
-	var tex_path = HERO_DIR + HERO_ID + "/cowboy_bill_block_0.png"
+	var sid := _hero_sprite_id()
+	# Try hero-specific block sprite first, then fall back to bill's so
+	# new heroes without dedicated frames still render something visible.
+	var tex_path = HERO_DIR + sid + "/%s_block_0.png" % sid
+	if not ResourceLoader.exists(tex_path):
+		tex_path = HERO_DIR + DEFAULT_HERO_SPRITE_ID + "/cowboy_bill_block_0.png"
 	_fallback_sprite = Sprite2D.new()
 	_fallback_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_fallback_sprite.scale = Vector2.ONE
@@ -85,6 +110,7 @@ func _build_fallback_visual() -> void:
 		_apply_fallback_display_scale()
 	else:
 		push_warning("PlayerEntity: missing sprite '%s'" % tex_path)
+	_fallback_sprite.modulate = _hero_tint()
 	add_child(_fallback_sprite)
 
 
@@ -95,9 +121,9 @@ func _add_animation_frames(frames: SpriteFrames, anim_name: String, loops: bool,
 
 	# Hero frames live in per-animation subfolders:
 	#   heroes/{hero_id}/{anim}/{hero_id}_{anim}_N.png
-	var dir = HERO_DIR + HERO_ID + "/"
+	var dir = HERO_DIR + _hero_sprite_id() + "/"
 	for idx in range(4):
-		var tex = _load_texture(dir + "%s/%s_%s_%d.png" % [anim_name, HERO_ID, anim_name, idx])
+		var tex = _load_texture(dir + "%s/%s_%s_%d.png" % [anim_name, _hero_sprite_id(), anim_name, idx])
 		if tex:
 			frames.add_frame(anim_name, tex)
 
