@@ -15,6 +15,7 @@ const RELIC_DIR     = "res://run_system/data/relics/"
 const EQUIPMENT_DIR = "res://run_system/data/equipment/"
 const SET_DIR       = "res://run_system/data/equipment_sets/"
 const BASE_UPGRADE_DIR = "res://run_system/data/base_upgrades/"
+const HERO_DIR      = "res://run_system/data/heroes/"
 
 # ─── Card schema ──────────────────────────────────────────────────────────────
 const REQUIRED_CARD_KEYS = ["name", "title", "type", "cost", "effects"]
@@ -70,6 +71,10 @@ const ALLOWED_BASE_UPGRADE_EFFECT_KEYS = [
 	"shop_discount", "starting_gold",
 ]
 
+# ─── Hero schema ─────────────────────────────────────────────────────────────
+const REQUIRED_HERO_KEYS = ["id", "name", "sprite_id", "max_health", "starter_deck", "starting_attributes"]
+const HERO_ATTRIBUTE_KEYS = ["strength", "constitution", "intelligence", "luck", "charm"]
+
 
 ## Scan all card / enemy / relic directories and validate every JSON file,
 ## plus cross-check that every enemy ID referenced by RunManager's encounter
@@ -84,6 +89,7 @@ static func validate_all_data_at_startup() -> int:
 	failures += _validate_dir(EQUIPMENT_DIR, Callable(DataValidator, "validate_equipment"))
 	failures += _validate_dir(SET_DIR,       Callable(DataValidator, "validate_equipment_set"))
 	failures += _validate_dir(BASE_UPGRADE_DIR, Callable(DataValidator, "validate_base_upgrade"))
+	failures += _validate_dir(HERO_DIR, Callable(DataValidator, "validate_hero"))
 	# Cross-check encounter pools so a typo in RunManager constants fails at
 	# startup instead of crashing the player mid-combat in enemy_entity.create().
 	failures += validate_encounter_pools()
@@ -441,5 +447,31 @@ static func validate_base_upgrade(data: Dictionary, path: String) -> bool:
 				ok = false
 		if tier.has("effect_value") and typeof(tier["effect_value"]) != TYPE_DICTIONARY:
 			push_error("%s: tier %d 'effect_value' must be a dictionary" % [prefix, i])
+			ok = false
+	return ok
+
+
+static func validate_hero(data: Dictionary, path: String) -> bool:
+	var prefix := "Hero '%s'" % path
+	var ok := true
+	for key in REQUIRED_HERO_KEYS:
+		if not data.has(key):
+			push_error("%s: missing required key '%s'" % [prefix, key])
+			ok = false
+	if not ok:
+		return false
+
+	if typeof(data["max_health"]) != TYPE_FLOAT and typeof(data["max_health"]) != TYPE_INT:
+		push_error("%s: max_health must be a number" % prefix)
+		ok = false
+	if typeof(data["starter_deck"]) != TYPE_ARRAY:
+		push_error("%s: starter_deck must be an Array" % prefix)
+		ok = false
+	if typeof(data["starting_attributes"]) != TYPE_DICTIONARY:
+		push_error("%s: starting_attributes must be a Dictionary" % prefix)
+		return false
+	for attr in HERO_ATTRIBUTE_KEYS:
+		if not data["starting_attributes"].has(attr):
+			push_error("%s: starting_attributes missing '%s'" % [prefix, attr])
 			ok = false
 	return ok
