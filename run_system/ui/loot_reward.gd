@@ -17,22 +17,11 @@ const INVENTORY_FULL_MODAL = preload("res://run_system/ui/inventory_full_modal.g
 const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 
 # Card IDs available for drafting - must match filenames in card_info/player/
-var draft_pool = [
-	# Existing pool
-	"strike", "defend", "override", "preemptive_strike", "weak_strike",
-	# Tactical Toolkit — Control
-	"stun_baton", "static_coil", "emp_burst", "overload",
-	# Tactical Toolkit — Combo
-	"cascade", "salvo", "tinker", "hot_swap",
-	# Tactical Toolkit — Burst
-	"overdrive", "charged_shot", "junk_bomb", "adrenaline",
-	# Phase 5 expansion
-	"siphon", "last_stand", "acid_splash", "focus", "carapace", "flash_bang",
-	# Phase 5 expansion wave 2
-	"brace", "double_tap", "chain_link", "iron_will", "bone_breaker", "last_breath",
-	# Phase 5 cap to 30
-	"scrap_strike",
-]
+## The card pool from which draft choices are rolled. Populated at _ready
+## from MetaProgress.get_unlocked_card_pool() — the union of the always-
+## available INITIAL_CARD_POOL (25 cards) and any cards unlocked via
+## card_research base upgrades.
+var draft_pool: Array = []
 
 @onready var loot_root = $VBoxContainer
 @onready var loot_list_container = $VBoxContainer/LootPanel/MarginContainer/LootList
@@ -52,6 +41,7 @@ var _rarity_pools = {
 
 func _ready() -> void:
 	randomize()
+	draft_pool = MetaProgress.get_unlocked_card_pool()
 	proceed_button.pressed.connect(_on_proceed_pressed)
 	draft_skip_button.pressed.connect(_on_skip_draft_pressed)
 	draft_overlay.visible = false
