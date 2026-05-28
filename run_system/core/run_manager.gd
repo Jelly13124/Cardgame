@@ -338,6 +338,12 @@ func _pick_node_type(floor_idx: int, total: int, treasure_extras_used: int = 0) 
 
 	var roll = randf()
 
+	# Ascension A5+: bias mid/late rolls into the high (elite/treasure)
+	# tail by compressing the roll range. Squashes 0..1 into 0.5..1.0,
+	# pushing most rolls past the elite threshold in the mid/late table.
+	if ascension >= 5:
+		roll = roll * 0.5 + 0.5
+
 	# Early floors (1..EARLY_FLOOR_LAST): combat-only — no rest, no treasure,
 	# no merchant. Player gets ramped up on encounters before resources/shops
 	# come online.
