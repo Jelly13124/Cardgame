@@ -9,7 +9,7 @@ This document is the contract that tells codex which PNGs to generate for the co
 
 **Every asset in this spec currently uses a placeholder** — gameplay works but the visuals borrow other items' art. When you replace a placeholder, the game picks up the real art automatically (paths are fixed in the JSON).
 
-> **Generation is tool-agnostic.** This doc fixes only *what* to produce (paths, sizes, style, one neon accent per item) — not *how*. There is currently NO external image service wired in (the previous PixelLab pipeline was dropped). Use whatever image generation your session supports. If you have no image model, the documented fallback is improving the procedural generator `scripts/gen_wave3_content_assets.py`, which already drew crude geometric placeholders at every target path; you **overwrite** those finals in place. Enemy art will not render until Claude flips the 5 new enemies' `sprite_id` to their own folders post-delivery — that is Claude's follow-up, not Codex's.
+> **Generation is tool-agnostic.** This doc fixes only *what* to produce (paths, sizes, style, one neon accent per item) — not *how*. There is currently NO external image service wired in (the previous one was dropped). Use whatever image generation your session supports. If you have no image model, the documented fallback is improving the procedural generator `scripts/gen_wave3_content_assets.py`, which already drew crude geometric placeholders at every target path; you **overwrite** those finals in place. Enemy art will not render until Claude flips the 5 new enemies' `sprite_id` to their own folders post-delivery — that is Claude's follow-up, not Codex's.
 
 ---
 
