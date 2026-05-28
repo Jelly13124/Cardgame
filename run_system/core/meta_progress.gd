@@ -90,9 +90,21 @@ func purchase_upgrade(id: String, definition: Dictionary) -> bool:
 	if not can_purchase(id, definition):
 		return false
 	var lvl := get_upgrade_level(id)
-	var cost := int(definition["tiers"][lvl]["cost"])
+	var tier: Dictionary = definition["tiers"][lvl]
+	var cost := int(tier["cost"])
 	core -= cost
 	upgrades[id] = lvl + 1
+
+	# Apply purchase-time side effects (currently just card_pool_unlock —
+	# everything else is read on demand at run start).
+	var effect_key: String = str(definition.get("effect_key", ""))
+	if effect_key == "card_pool_unlock":
+		var effect_value: Dictionary = tier.get("effect_value", {})
+		var unlocks: Array = effect_value.get("unlocks", [])
+		for c in unlocks:
+			if not str(c) in unlocked_cards:
+				unlocked_cards.append(str(c))
+
 	save_progress()
 	emit_signal("core_changed", core)
 	emit_signal("upgrades_changed")
