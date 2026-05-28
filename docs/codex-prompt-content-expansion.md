@@ -6,6 +6,8 @@ Copy everything below the `---` line into your codex session.
 
 You are working in the Godot 4.6 project at `C:\Users\Jerry\Desktop\Cardgame` — a roguelite deckbuilder with a strict **Hardcore 128 Pixel Wasteland Art** style. Between 2026-05-25 and 2026-05-26, Phase 5 wave 1 + wave 2 shipped a batch of new cards, a multi-act boss redesign, the Warden equipment set, and 4 new uncommon/rare relics. All gameplay, JSON, and UI work is done. **Every one of those new items currently uses a placeholder PNG** (reused art from a similar existing item). You are responsible for replacing the placeholders with real assets that match the project's art rules.
 
+**Generation method (read first):** This briefing fixes *what* to produce — paths, sizes, style, one neon accent per item — not *how*. There is currently NO external image service configured (the previous one was dropped). Generate using whatever image capability your session has; if you have none, the fallback is to improve the procedural generator `scripts/gen_wave3_content_assets.py` (it already drew crude geometric placeholders at every target path). Either way, **overwrite the existing placeholder PNGs in place**, and do not re-introduce any specific external tool dependency.
+
 ## Step 1 — Read these files before doing anything else
 
 1. **`docs/asset-spec-content-expansion.md`** — your authoritative work order. Lists every PNG you need to deliver, the exact file path, the frame size, the theme description, and the neon accent color per item. Read sections 0–8 in order.
@@ -90,7 +92,7 @@ Per ADR-0005 (Claude/Codex ownership split):
 - Do not change frame sizes from the table in spec section 1.
 - Do not regenerate already-shipped art unless the spec explicitly asks for it.
 - Do not commit `.import` files (Godot writes them on import).
-- Do not commit any literal API keys. The `generate_enemy.ps1` and `gen_*` scripts read from `$env:PIXELLAB_API_KEY`. If your generator needs the key, set it in your shell session, do not bake it into the script.
+- Do not commit any literal API keys or secrets. If your generation method calls an external service, read its credentials from an environment variable in your shell session — never bake them into a committed file.
 
 ## Step 8 — Commits
 
