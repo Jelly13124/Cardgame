@@ -27,16 +27,14 @@ var draft_pool: Array = []
 @onready var loot_list_container = $VBoxContainer/LootPanel/MarginContainer/LootList
 @onready var proceed_button = $VBoxContainer/BottomRow/MarginContainer/ProceedButton
 @onready var draft_overlay = $DraftOverlay
-@onready var draft_card_container = $DraftOverlay/VBoxContainer/DraftPanel/MarginContainer/CardsContainer
-@onready var draft_skip_button = $DraftOverlay/VBoxContainer/BottomRow/MarginContainer/SkipDraftButton
+@onready
+var draft_card_container = $DraftOverlay/VBoxContainer/DraftPanel/MarginContainer/CardsContainer
+@onready
+var draft_skip_button = $DraftOverlay/VBoxContainer/BottomRow/MarginContainer/SkipDraftButton
 
 var _card_factory: Node = null
 var available_loot = []
-var _rarity_pools = {
-	"common": [],
-	"uncommon": [],
-	"rare": []
-}
+var _rarity_pools = {"common": [], "uncommon": [], "rare": []}
 
 
 func _ready() -> void:
@@ -61,7 +59,9 @@ func _apply_static_theme() -> void:
 	# plate; dark = modal-weight) instead of the old programmatic StyleBoxFlat.
 	$VBoxContainer/BannerPanel.add_theme_stylebox_override("panel", T.panel_textured("default"))
 	$VBoxContainer/LootPanel.add_theme_stylebox_override("panel", T.panel_textured("default"))
-	$DraftOverlay/VBoxContainer/DraftPanel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	$DraftOverlay/VBoxContainer/DraftPanel.add_theme_stylebox_override(
+		"panel", T.panel_textured("dark")
+	)
 	# Buttons auto-pick up textured normal/hover/pressed via apply_button_theme.
 	T.apply_button_theme(proceed_button)
 	T.apply_button_theme(draft_skip_button)
@@ -71,22 +71,26 @@ func _generate_loot() -> void:
 	available_loot.clear()
 	var gold_amount = 10
 
-	available_loot.append({
-		"id": "gold",
-		"type": "gold",
-		"amount": gold_amount,
-		"title": "%d Gold" % gold_amount,
-		"subtitle": "Recovered from the fight",
-		"icon": GOLD_ICON_PATH
-	})
+	available_loot.append(
+		{
+			"id": "gold",
+			"type": "gold",
+			"amount": gold_amount,
+			"title": "%d Gold" % gold_amount,
+			"subtitle": "Recovered from the fight",
+			"icon": GOLD_ICON_PATH
+		}
+	)
 
-	available_loot.append({
-		"id": "cards",
-		"type": "cards",
-		"title": "Card Reward",
-		"subtitle": "Choose one card for your deck",
-		"icon": CARD_REWARD_ICON_PATH
-	})
+	available_loot.append(
+		{
+			"id": "cards",
+			"type": "cards",
+			"title": "Card Reward",
+			"subtitle": "Choose one card for your deck",
+			"icon": CARD_REWARD_ICON_PATH
+		}
+	)
 
 	var equipment_drop_id = _roll_drop_for_node_type(RunManager.last_battle_node_type)
 	if equipment_drop_id != "":
@@ -94,15 +98,21 @@ func _generate_loot() -> void:
 		var set_tag := ""
 		if str(data.get("set_id", "")) != "":
 			set_tag = " [%s set]" % str(data.get("set_id"))
-		available_loot.append({
-			"id": "equipment",
-			"type": "equipment",
-			"item_id": equipment_drop_id,
-			"title": str(data.get("name", equipment_drop_id)),
-			"subtitle": "Equipment Drop%s - %s" % [set_tag, _format_equipment_bonuses(data.get("bonuses", {}))],
-			"icon": "res://battle_scene/assets/images/%s" % str(data.get("sprite", "")),
-			"action": "TAKE"
-		})
+		available_loot.append(
+			{
+				"id": "equipment",
+				"type": "equipment",
+				"item_id": equipment_drop_id,
+				"title": str(data.get("name", equipment_drop_id)),
+				"subtitle":
+				(
+					"Equipment Drop%s - %s"
+					% [set_tag, _format_equipment_bonuses(data.get("bonuses", {}))]
+				),
+				"icon": "res://battle_scene/assets/images/%s" % str(data.get("sprite", "")),
+				"action": "TAKE"
+			}
+		)
 
 
 func _populate_loot_ui() -> void:
@@ -121,7 +131,9 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	button.text = ""
 	button.add_theme_stylebox_override("normal", T.reward_row_style(T.PANEL_BG, T.PANEL_BORDER))
 	button.add_theme_stylebox_override("hover", T.reward_row_style(T.WARM_TAN, T.ACCENT_NEON_BLUE))
-	button.add_theme_stylebox_override("pressed", T.reward_row_style(T.RUST_PRIMARY, T.ACCENT_DANGER))
+	button.add_theme_stylebox_override(
+		"pressed", T.reward_row_style(T.RUST_PRIMARY, T.ACCENT_DANGER)
+	)
 	button.pressed.connect(_on_loot_selected.bind(str(loot["id"]), button))
 
 	var margin = MarginContainer.new()
@@ -201,7 +213,9 @@ func _make_icon_well(icon_path: String) -> PanelContainer:
 func _make_claim_plate(label_text: String = "CLAIM") -> PanelContainer:
 	var plate = PanelContainer.new()
 	plate.custom_minimum_size = Vector2(104, 50)
-	plate.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.08, 0.12, 0.13, 1.0), T.ACCENT_NEON_BLUE, 3))
+	plate.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(Color(0.08, 0.12, 0.13, 1.0), T.ACCENT_NEON_BLUE, 3)
+	)
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var label = Label.new()
@@ -308,7 +322,9 @@ func _make_draft_card_slot(card_id: String) -> Control:
 
 	var frame = Panel.new()
 	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
-	frame.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.095, 0.072, 0.055, 0.92), T.PANEL_BORDER, 4))
+	frame.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(Color(0.095, 0.072, 0.055, 0.92), T.PANEL_BORDER, 4)
+	)
 	wrapper.add_child(frame)
 
 	var card = _card_factory.create_card(card_id, null)
@@ -332,15 +348,23 @@ func _make_draft_card_slot(card_id: String) -> Control:
 	wrapper.add_child(button)
 
 	if card:
-		button.mouse_entered.connect(func():
-			frame.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.13, 0.095, 0.062, 0.96), T.ACCENT_NEON_BLUE, 4))
-			var tween = create_tween()
-			tween.tween_property(card, "scale", Vector2(1.62, 1.62), 0.10)
+		button.mouse_entered.connect(
+			func():
+				frame.add_theme_stylebox_override(
+					"panel",
+					T.panel_with_shadow(Color(0.13, 0.095, 0.062, 0.96), T.ACCENT_NEON_BLUE, 4)
+				)
+				var tween = create_tween()
+				tween.tween_property(card, "scale", Vector2(1.62, 1.62), 0.10)
 		)
-		button.mouse_exited.connect(func():
-			frame.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.095, 0.072, 0.055, 0.92), T.PANEL_BORDER, 4))
-			var tween = create_tween()
-			tween.tween_property(card, "scale", Vector2(1.5, 1.5), 0.10)
+		button.mouse_exited.connect(
+			func():
+				frame.add_theme_stylebox_override(
+					"panel",
+					T.panel_with_shadow(Color(0.095, 0.072, 0.055, 0.92), T.PANEL_BORDER, 4)
+				)
+				var tween = create_tween()
+				tween.tween_property(card, "scale", Vector2(1.5, 1.5), 0.10)
 		)
 
 	return wrapper
@@ -371,6 +395,7 @@ func _roll_drop_for_node_type(node_type: String) -> String:
 		_:
 			return ""
 
+
 func _claim_equipment_drop(item_id: String, button: Button) -> void:
 	if item_id.is_empty():
 		return
@@ -381,9 +406,7 @@ func _claim_equipment_drop(item_id: String, button: Button) -> void:
 	button.disabled = true
 	var modal = INVENTORY_FULL_MODAL.new()
 	modal.setup(item_id)
-	modal.resolved.connect(func(_took_item: bool):
-		button.queue_free()
-	)
+	modal.resolved.connect(func(_took_item: bool): button.queue_free())
 	add_child(modal)
 
 

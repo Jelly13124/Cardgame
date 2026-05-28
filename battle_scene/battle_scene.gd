@@ -23,11 +23,11 @@ var current_resolving_card: Node = null  # Set by play_spell during _apply_effec
 var card_animator: Node  # CardAnimator (card_animator.gd) instance
 
 # --- Game State ---
-var is_game_over:  bool    = false
-var is_targeting:  bool    = false
+var is_game_over: bool = false
+var is_targeting: bool = false
 var targeting_card: Control = null
 var targeting_arrow: Node2D = null
-var hovered_unit:  Node    = null
+var hovered_unit: Node = null
 
 const TARGETING_ARROW_SCRIPT = preload("res://battle_scene/targeting_arrow.gd")
 const RELIC_EFFECT_SYSTEM = preload("res://battle_scene/relic_effect_system.gd")
@@ -66,7 +66,7 @@ func _extract_rewards_for(floor_num: int) -> Dictionary:
 	# floor-4 / floor-8 values (~6 continue, ~12 extract per floor index).
 	return {
 		"continue": max(25, floor_num * 6),
-		"extract":  max(50, floor_num * 12),
+		"extract": max(50, floor_num * 12),
 	}
 
 
@@ -75,11 +75,12 @@ func _final_boss_floor() -> int:
 	keys.sort()
 	return int(keys[-1]) if keys.size() > 0 else -1
 
+
 func _ready():
 	print("BATTLE STARTING (STS Layout)")
 	card_manager.debug_mode = false
 	Engine.time_scale = 1.0
-	
+
 	# Instantiate DeckManager
 	deck_manager = DECK_MANAGER_SCRIPT.new()
 	deck_manager.battle_scene = self
@@ -97,12 +98,12 @@ func _ready():
 	# Apply textured wasteland button skin to the End Round button.
 	if end_round_button:
 		T.apply_button_theme(end_round_button)
-		
+
 	# Connect TurnManager
 	turn_manager.round_changed.connect(_on_round_changed)
 	turn_manager.turn_started.connect(_on_turn_started)
 	turn_manager.turn_ended.connect(_on_turn_ended)
-	
+
 	# Connect Player Signals
 	if player:
 		player.health_changed.connect(_on_player_health_changed)
@@ -111,15 +112,17 @@ func _ready():
 		player.stats_changed.connect(_update_ui_labels)
 		player.status_changed.connect(_update_ui_labels)
 		player.died.connect(_game_over)
-	
+
 	# Combat Engine Signals
 	combat_engine.victory_declared.connect(_victory)
-	
+
 	_start_new_game()
-	
+
 	set_process(true)
 
+
 # ─── Input ────────────────────────────────────────────────────────────────────
+
 
 ## _input fires before any Control node.
 ## ONLY intercepts right-click during targeting — never keyboard events,
@@ -129,8 +132,13 @@ func _input(event: InputEvent) -> void:
 	# Routes through the normal take_damage path so the died signal fires and
 	# combat_engine declares victory once the last enemy is gone. Guarded on
 	# OS.is_debug_build() so it's stripped from exported builds.
-	if OS.is_debug_build() and not is_targeting and event is InputEventMouseButton \
-			and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
+	if (
+		OS.is_debug_build()
+		and not is_targeting
+		and event is InputEventMouseButton
+		and event.pressed
+		and event.button_index == MOUSE_BUTTON_RIGHT
+	):
 		var mouse_pos = get_viewport().get_mouse_position()
 		var enemy = _get_unit_at_position(mouse_pos)
 		if enemy and is_instance_valid(enemy) and enemy.has_method("take_damage"):
@@ -154,7 +162,9 @@ func _input(event: InputEvent) -> void:
 			_cancel_spell_targeting()
 		get_viewport().set_input_as_handled()
 
+
 # ─── Process ──────────────────────────────────────────────────────────────────
+
 
 func _process(_delta: float) -> void:
 	if not is_targeting:
@@ -162,34 +172,41 @@ func _process(_delta: float) -> void:
 			_set_hover_effect(hovered_unit, false)
 			hovered_unit = null
 		return
-	
+
 	var mouse_pos = get_viewport().get_mouse_position()
 	var unit_under_mouse = _get_unit_at_position(mouse_pos)
-	
+
 	if unit_under_mouse != hovered_unit:
-		if hovered_unit: _set_hover_effect(hovered_unit, false)
+		if hovered_unit:
+			_set_hover_effect(hovered_unit, false)
 		hovered_unit = unit_under_mouse
-		if hovered_unit: _set_hover_effect(hovered_unit, true)
-	
+		if hovered_unit:
+			_set_hover_effect(hovered_unit, true)
+
 	if targeting_arrow and targeting_arrow.has_method("set_target_valid"):
 		targeting_arrow.set_target_valid(hovered_unit != null)
 
+
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
+
 func _set_hover_effect(unit: Node, active: bool) -> void:
-	if not is_instance_valid(unit): return
+	if not is_instance_valid(unit):
+		return
 	var scale_target = Vector2(1.2, 1.2) if active else Vector2(1.0, 1.0)
 	var modulate_target = Color(1.5, 1.2, 1.2) if active else Color.WHITE
 	var tween = create_tween().set_parallel(true)
 	tween.tween_property(unit, "scale", scale_target, 0.1)
 	tween.tween_property(unit, "modulate", modulate_target, 0.1)
 
+
 ## Returns the enemy node under a screen position (viewport coords).
 ## EnemyEntity sprite is AnimatedSprite2D: 64px × 3.0 scale = 192×192.
 ## Anchored at feet: local pos (0, -96) → spans x:[-96, 96], y:[-192, 0].
 func _get_unit_at_position(pos: Vector2) -> Node:
 	for enemy in enemy_container.get_children():
-		if not is_instance_valid(enemy): continue
+		if not is_instance_valid(enemy):
+			continue
 		var ep = enemy.global_position
 		# Body rect matches the 192×192 scaled sprite anchored at feet
 		var body_rect = Rect2(ep.x - 96, ep.y - 192, 192, 192)
@@ -200,17 +217,21 @@ func _get_unit_at_position(pos: Vector2) -> Node:
 			return enemy
 	return null
 
+
 func show_notification(text: String, color: Color = Color.WHITE):
 	ui_manager.show_notification(text, color)
 
+
 # ─── Turn Events ──────────────────────────────────────────────────────────────
 
+
 func _on_turn_started(side: String) -> void:
-	if is_game_over: return
+	if is_game_over:
+		return
 	if side == "enemy":
 		enemy_ai.execute_enemy_turn()
 		return
-	
+
 	# Player turn start: reset block + energy via player.start_turn()
 	player.start_turn()
 	if is_game_over:
@@ -224,11 +245,12 @@ func _on_turn_started(side: String) -> void:
 		equipment_set_system.on_player_turn_started(player, turn_manager.current_round)
 	_update_ui_labels()
 	enemy_ai.spawn_enemy_units()
-	
+
 	if turn_manager.current_round == 1:
 		deck_manager.first_round_draw()
 	else:
 		deck_manager.draw_cards(3)
+
 
 ## STS rule: at END of player turn, reset block/energy. Hand discard is handled
 ## upstream in `_on_end_round_button_pressed` so the animation fully completes
@@ -264,10 +286,22 @@ func _animate_hand_discard(cards: Array) -> void:
 			discard_pile.add_card(card)
 			card.modulate.a = 1.0  # restore alpha after fly_to_discard faded it
 
-func _on_round_changed(_round: int) -> void: _update_ui_labels()
-func _on_player_health_changed(_hp: int) -> void: _update_ui_labels()
-func _on_player_energy_changed(_energy: int) -> void: _update_ui_labels()
-func _on_player_block_changed(_block: int) -> void: _update_ui_labels()
+
+func _on_round_changed(_round: int) -> void:
+	_update_ui_labels()
+
+
+func _on_player_health_changed(_hp: int) -> void:
+	_update_ui_labels()
+
+
+func _on_player_energy_changed(_energy: int) -> void:
+	_update_ui_labels()
+
+
+func _on_player_block_changed(_block: int) -> void:
+	_update_ui_labels()
+
 
 func _update_ui_labels():
 	if player:
@@ -276,18 +310,22 @@ func _update_ui_labels():
 	# Player status (vulnerable etc.) affects every enemy's intent display.
 	_refresh_all_enemy_intents()
 
+
 ## Tells every alive enemy to recompute its intent badge. Cheap; called on
 ## any UI refresh so weak/vulnerable changes show immediately.
 func _refresh_all_enemy_intents() -> void:
-	if not enemy_container: return
+	if not enemy_container:
+		return
 	for enemy in enemy_container.get_children():
 		if is_instance_valid(enemy) and enemy.has_method("update_intent_display"):
 			enemy.update_intent_display()
+
 
 func refresh_hand_ui():
 	for card in hand.get_cards():
 		if card.has_method("update_display"):
 			card.update_display()
+
 
 ## Initialise a new battle from RunManager state (or defaults if no run is active).
 func _start_new_game():
@@ -300,14 +338,14 @@ func _start_new_game():
 
 	# ── Player HP & Attributes ──────────────────────────────────────────────
 	if RunManager.is_run_active:
-		player.max_health  = RunManager.max_health
-		player.health      = RunManager.current_health
+		player.max_health = RunManager.max_health
+		player.health = RunManager.current_health
 		var attrs = RunManager.player_attributes
-		player.strength     = int(attrs.get("strength",     3))
+		player.strength = int(attrs.get("strength", 3))
 		player.constitution = int(attrs.get("constitution", 3))
 		player.intelligence = int(attrs.get("intelligence", 3))
-		player.luck         = int(attrs.get("luck",         3))
-		player.charm        = int(attrs.get("charm",        3))
+		player.luck = int(attrs.get("luck", 3))
+		player.charm = int(attrs.get("charm", 3))
 		# Enemy roster comes from the map encounter data stored in RunManager
 		if RunManager.current_encounter.size() > 0:
 			enemy_ai.enemy_roster = RunManager.current_encounter
@@ -319,6 +357,7 @@ func _start_new_game():
 	# ── Deck & Turn ──────────────────────────────────────────────────────────
 	deck_manager.reset_deck()
 	turn_manager.start_new_game()
+
 
 func _on_end_round_button_pressed():
 	if turn_manager.is_player_turn:
@@ -337,8 +376,10 @@ func _on_end_round_button_pressed():
 			await _animate_hand_discard(to_discard)
 		turn_manager.end_turn()
 
+
 func _victory():
-	if is_game_over: return
+	if is_game_over:
+		return
 	is_game_over = true
 	if relic_effect_system:
 		relic_effect_system.on_combat_victory(player)
@@ -416,7 +457,8 @@ func _on_loot_closed(canvas: CanvasLayer) -> void:
 
 
 func _game_over():
-	if is_game_over: return
+	if is_game_over:
+		return
 	is_game_over = true
 	# Defeat path: route through the death gate so _handle_run_loss fires
 	# and run_ended(false) is emitted.
@@ -425,6 +467,7 @@ func _game_over():
 	# HUD bar drop + transition to home base communicates defeat clearly.
 	await get_tree().create_timer(3.0).timeout
 	get_tree().change_scene_to_file(HOME_BASE_PATH)
+
 
 ## Writes player.health back to RunManager so it persists between battles.
 ##   triggering_defeat=true  → defeat path: route through modify_health so the
@@ -445,38 +488,50 @@ func _write_hp_to_run_manager(triggering_defeat: bool = false) -> void:
 		RunManager.current_health = target_hp
 		RunManager.emit_signal("health_changed", target_hp, RunManager.max_health)
 
+
 func modify_player_attack_damage(amount: int, attacker: Node, defender: Node) -> int:
 	if relic_effect_system:
 		return relic_effect_system.modify_player_attack_damage(amount, attacker, defender)
 	return amount
+
 
 func modify_enemy_attack_damage(amount: int, attacker: Node, defender: Node) -> int:
 	if relic_effect_system:
 		return relic_effect_system.modify_enemy_attack_damage(amount, attacker, defender)
 	return amount
 
+
 # ─── Energy ───────────────────────────────────────────────────────────────────
 
+
 func can_afford(cards: Array) -> bool:
-	if is_game_over or not player: return false
+	if is_game_over or not player:
+		return false
 	var total_cost = 0
-	for card in cards: total_cost += int(card.card_info.get("cost", 0))
+	for card in cards:
+		total_cost += int(card.card_info.get("cost", 0))
 	return player.energy >= total_cost
+
 
 func spend_energy(cards: Array) -> void:
 	var total_cost = 0
-	for card in cards: total_cost += int(card.card_info.get("cost", 0))
+	for card in cards:
+		total_cost += int(card.card_info.get("cost", 0))
 	player.pay_energy(total_cost)
 
+
 # ─── Card Play ────────────────────────────────────────────────────────────────
+
 
 ## Play a card. target_node is the enemy to hit (null for skill/ability).
 ## Multiple cards can be in flight simultaneously — animations overlap. A
 ## per-card `_in_play` meta lock prevents the same card from being resolved
 ## twice (e.g. double-click, double drop).
 func play_spell(card: Control, target_node: Node):
-	if is_game_over: return
-	if not is_instance_valid(card): return
+	if is_game_over:
+		return
+	if not is_instance_valid(card):
+		return
 
 	# Per-card lock — different cards can play in parallel, but the SAME
 	# card can't be played twice before its first resolution finishes.
@@ -534,6 +589,7 @@ func play_spell(card: Control, target_node: Node):
 	_update_ui_labels()
 	refresh_hand_ui()
 
+
 ## Returns true if the card has an `exhaust_self` effect entry.
 func _card_has_exhaust(card: Control) -> bool:
 	if not is_instance_valid(card):
@@ -544,7 +600,9 @@ func _card_has_exhaust(card: Control) -> bool:
 			return true
 	return false
 
+
 # ─── Targeting ────────────────────────────────────────────────────────────────
+
 
 func start_spell_targeting(card: Control) -> void:
 	if not can_afford([card]):
@@ -583,6 +641,7 @@ func _sole_alive_enemy() -> Node:
 		return alive[0]
 	return null
 
+
 func _cancel_spell_targeting() -> void:
 	if hovered_unit:
 		_set_hover_effect(hovered_unit, false)
@@ -594,6 +653,7 @@ func _cancel_spell_targeting() -> void:
 		targeting_arrow.queue_free()
 		targeting_arrow = null
 
+
 ## Called by PlayCard._handle_mouse_released() for attack cards.
 ## Fires attack at hovered enemy. Always requires hovering over an enemy.
 func confirm_spell_targeting(card: Control) -> void:
@@ -604,9 +664,11 @@ func confirm_spell_targeting(card: Control) -> void:
 
 	var unit_at_release = _get_unit_at_position(get_viewport().get_mouse_position())
 	if unit_at_release != hovered_unit:
-		if hovered_unit: _set_hover_effect(hovered_unit, false)
+		if hovered_unit:
+			_set_hover_effect(hovered_unit, false)
 		hovered_unit = unit_at_release
-		if hovered_unit: _set_hover_effect(hovered_unit, true)
+		if hovered_unit:
+			_set_hover_effect(hovered_unit, true)
 
 	if hovered_unit and is_instance_valid(hovered_unit):
 		var t = hovered_unit
@@ -618,7 +680,9 @@ func confirm_spell_targeting(card: Control) -> void:
 		show_notification("NO TARGET", Color(1, 0.6, 0.2))
 		_cancel_spell_targeting()
 
+
 # ─── Misc ─────────────────────────────────────────────────────────────────────
+
 
 func _wait(seconds: float) -> Signal:
 	return get_tree().create_timer(seconds).timeout

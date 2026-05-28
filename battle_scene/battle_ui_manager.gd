@@ -20,6 +20,7 @@ var notify_tween: Tween
 var inspected_card: Control = null
 var _energy_display: Control = null
 
+
 func _ready() -> void:
 	if not pile_viewer_layer:
 		pile_viewer_layer = main.get_node("PileViewerLayer")
@@ -36,17 +37,19 @@ func _ready() -> void:
 	if not energy_label:
 		energy_label = main.get_node("EnergyLabel")
 	_build_energy_display.call_deferred()
-		
+
 	var close_btn = main.get_node_or_null("PileViewerLayer/CloseButton")
 	if close_btn:
 		close_btn.pressed.connect(hide_pile_viewer)
-		
+
 	if notify_label:
 		notify_label.modulate.a = 0
+
 
 func update_labels(energy: int, max_energy: int) -> void:
 	if energy_label:
 		energy_label.text = "%d / %d" % [energy, max_energy]
+
 
 func _build_energy_display() -> void:
 	if not energy_label or _energy_display:
@@ -110,33 +113,39 @@ func _build_energy_display() -> void:
 	energy_label.add_theme_constant_override("shadow_offset_y", 2)
 	energy_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
+
 func show_notification(text: String, color: Color = Color.WHITE) -> void:
-	if not notify_label: return
-	
+	if not notify_label:
+		return
+
 	notify_label.text = text
 	notify_label.add_theme_color_override("font_color", color)
 	notify_label.modulate.a = 1.0
-	
+
 	if notify_tween and notify_tween.is_valid():
 		notify_tween.kill()
-	
+
 	notify_tween = create_tween()
 	notify_tween.tween_interval(1.5)
 	notify_tween.tween_property(notify_label, "modulate:a", 0.0, 0.5)
 
+
 # --- Inspection UI ---
 
+
 func inspect_card(card: Control) -> void:
-	if main.is_game_over: return
+	if main.is_game_over:
+		return
 	if inspect_layer and inspect_pivot:
 		inspect_layer.visible = true
-		
+
 		# Clear existing if any
 		if inspected_card:
 			inspected_card.queue_free()
-		
+
 		var card_name = card.card_info.get("name", "")
-		if card_name.is_empty(): return
+		if card_name.is_empty():
+			return
 		inspected_card = main.card_factory.create_card(card_name, null)
 		if inspected_card:
 			if inspected_card.get_parent():
@@ -148,9 +157,11 @@ func inspect_card(card: Control) -> void:
 			inspected_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			inspected_card.global_position = Vector2(760, 265)
 
+
 func _on_inspect_overlay_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		close_inspection()
+
 
 func close_inspection() -> void:
 	if inspected_card:
@@ -159,26 +170,32 @@ func close_inspection() -> void:
 	if inspect_layer:
 		inspect_layer.visible = false
 
+
 # --- Pile Viewer UI ---
 
+
 func show_pile_viewer(title: String, pile_container: CardContainer) -> void:
-	if not pile_viewer_layer: return
-	
+	if not pile_viewer_layer:
+		return
+
 	pile_viewer_title.text = title
-	
+
 	# Clear existing cards
 	_clear_pile_viewer_grid()
-		
+
 	# Populate with cards from the pile
 	for card_data in pile_container.get_cards():
 		var card_name = card_data.card_info.get("name", "")
-		if card_name.is_empty(): continue
+		if card_name.is_empty():
+			continue
 		_add_card_to_viewer(card_name)
-			
+
 	pile_viewer_layer.visible = true
 
+
 func show_run_deck_viewer(title: String = "Run Deck", deck_entries: Array = []) -> void:
-	if not pile_viewer_layer: return
+	if not pile_viewer_layer:
+		return
 
 	# If no entries were passed, build them: prefer RunManager.player_deck if a run
 	# is active, otherwise fall back to the live battle's hand+deck+discard.
@@ -203,18 +220,24 @@ func show_run_deck_viewer(title: String = "Run Deck", deck_entries: Array = []) 
 
 	pile_viewer_layer.visible = true
 
+
 func hide_pile_viewer() -> void:
-	if not pile_viewer_layer: return
+	if not pile_viewer_layer:
+		return
 	pile_viewer_layer.visible = false
 	_clear_pile_viewer_grid()
 
+
 func _clear_pile_viewer_grid() -> void:
-	if not pile_viewer_grid: return
+	if not pile_viewer_grid:
+		return
 	for child in pile_viewer_grid.get_children():
 		child.queue_free()
 
+
 func _add_card_to_viewer(card_name: String) -> void:
-	if card_name.is_empty(): return
+	if card_name.is_empty():
+		return
 	var card_instance = main.card_factory.create_card(card_name, null)
 	if card_instance:
 		if card_instance.get_parent():
@@ -225,6 +248,7 @@ func _add_card_to_viewer(card_name: String) -> void:
 		card_instance.scale = Vector2(0.7, 0.7)
 		pile_viewer_grid.add_child(card_instance)
 
+
 func _card_id_from_deck_entry(entry) -> String:
 	if typeof(entry) == TYPE_STRING:
 		return entry
@@ -234,24 +258,34 @@ func _card_id_from_deck_entry(entry) -> String:
 		return str(entry.card_info.get("name", ""))
 	return ""
 
+
 func _input(event: InputEvent) -> void:
-	if main.is_game_over: return
-	
+	if main.is_game_over:
+		return
+
 	if event.is_action_pressed("ui_cancel"):
 		if inspect_layer and inspect_layer.visible:
 			close_inspection()
 		elif pile_viewer_layer and pile_viewer_layer.visible:
 			hide_pile_viewer()
-	
+
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_Q:
-			if pile_viewer_layer and pile_viewer_layer.visible and pile_viewer_title.text == "Draw Pile":
+			if (
+				pile_viewer_layer
+				and pile_viewer_layer.visible
+				and pile_viewer_title.text == "Draw Pile"
+			):
 				hide_pile_viewer()
 			else:
 				show_pile_viewer("Draw Pile", main.deck)
-				
+
 		elif event.keycode == KEY_E:
-			if pile_viewer_layer and pile_viewer_layer.visible and pile_viewer_title.text == "Discard Pile":
+			if (
+				pile_viewer_layer
+				and pile_viewer_layer.visible
+				and pile_viewer_title.text == "Discard Pile"
+			):
 				hide_pile_viewer()
 			else:
 				show_pile_viewer("Discard Pile", main.discard_pile)

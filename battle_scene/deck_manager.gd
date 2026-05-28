@@ -6,9 +6,11 @@ var discard_pile: Node
 var hand: Node
 var card_factory: Node
 
+
 # Special opening hand logic
 func first_round_draw() -> void:
 	draw_cards(3)
+
 
 # Moves a specific number of cards from the top of the Deck to the Hand.
 ## Single-card draws use a 0.1s stagger for visual feedback. After a reshuffle,
@@ -81,6 +83,7 @@ func draw_cards(count: int) -> void:
 			# Both piles empty
 			break
 
+
 # Clears the deck and refills it with a fresh, shuffled list of cards
 func reset_deck() -> void:
 	var list = []
@@ -88,7 +91,7 @@ func reset_deck() -> void:
 		list = RunManager.player_deck.duplicate()
 	else:
 		list = get_randomized_card_list()
-	
+
 	deck.clear_cards()
 	discard_pile.clear_cards()
 	for item in list:
@@ -96,17 +99,25 @@ func reset_deck() -> void:
 		var card = card_factory.create_card(card_name, deck)
 		if card and typeof(item) == TYPE_DICTIONARY:
 			card.set_meta("uid", item.get("uid", ""))
-	
+
 	deck.shuffle()
 	battle_scene._update_ui_labels()
+
 
 # Returns the master list of all available cards in the deck
 func get_randomized_card_list() -> Array:
 	var list = [
-		"strike", "strike", "strike", "strike",
+		"strike",
+		"strike",
+		"strike",
+		"strike",
 		"weak_strike",
-		"defend", "defend", "defend", "defend",
-		"override", "preemptive_strike"
+		"defend",
+		"defend",
+		"defend",
+		"defend",
+		"override",
+		"preemptive_strike"
 	]
 	list.shuffle()
 	return list

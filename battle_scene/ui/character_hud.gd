@@ -19,9 +19,11 @@ var _status_badges: HBoxContainer
 
 const UI_PATH = "res://battle_scene/assets/images/ui/"
 
+
 func _ready() -> void:
 	_build_ui()
 	update_stats(current_health, max_health, current_block)
+
 
 func _build_ui() -> void:
 	# ---- HP Frame (NinePatch) ----
@@ -57,7 +59,7 @@ func _build_ui() -> void:
 	_hp_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_hp_label.add_theme_font_size_override("font_size", 12)
 	_hp_label.add_theme_color_override("font_color", Color(1, 1, 1))
-	_hp_label.add_theme_color_override("font_shadow_color", Color(0,0,0,0.8))
+	_hp_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
 	_hp_frame.add_child(_hp_label)
 
 	# ---- Block Badge (Shield) ----
@@ -76,7 +78,7 @@ func _build_ui() -> void:
 	_block_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_block_label.add_theme_font_size_override("font_size", 16)
 	_block_label.add_theme_color_override("font_color", Color(1, 1, 1))
-	_block_label.position = Vector2(0, -1) # adjust padding inside shield
+	_block_label.position = Vector2(0, -1)  # adjust padding inside shield
 	_block_badge.add_child(_block_label)
 
 	# ---- Status Badges (positioned below HP bar, centered, supports stacking) ----
@@ -89,16 +91,19 @@ func _build_ui() -> void:
 	_status_badges.add_theme_constant_override("separation", 4)
 	add_child(_status_badges)
 
+
 func get_status_badge_container() -> HBoxContainer:
 	return _status_badges
+
 
 ## Call this whenever stats change to refresh all visuals.
 func update_stats(hp: int, max_hp: int, blk: int) -> void:
 	current_health = hp
 	max_health = max_hp
 	current_block = blk
-	
-	if not _hp_bar: return
+
+	if not _hp_bar:
+		return
 
 	# HP bar update — fixed tint regardless of HP. (HP-based color grading was
 	# removed because the green→yellow→red transition felt jarring.)

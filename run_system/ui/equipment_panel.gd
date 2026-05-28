@@ -8,14 +8,14 @@ class_name EquipmentPanel
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 
-var _slot_rows: Dictionary = {}        # slot → { icon, name_label, action_button }
+var _slot_rows: Dictionary = {}  # slot → { icon, name_label, action_button }
 var _inventory_container: VBoxContainer
 var _inventory_title: Label  # Direct field reference for the inventory header (replaces a fragile tree search).
 var _sets_container: VBoxContainer
 var _relics_container: VBoxContainer
-var _vitals_label: Label                # HP / Gold / Floor summary line
+var _vitals_label: Label  # HP / Gold / Floor summary line
 var _stats_label: Label
-var _status_label: Label                # transient "INVENTORY FULL" etc.
+var _status_label: Label  # transient "INVENTORY FULL" etc.
 
 
 func _ready() -> void:
@@ -195,17 +195,22 @@ func _build_slot_row(slot: String, parent: VBoxContainer) -> Dictionary:
 	unequip.pressed.connect(_on_unequip_pressed.bind(slot))
 	row.add_child(unequip)
 
-	return { "icon": icon, "name_label": label, "action_button": unequip }
+	return {"icon": icon, "name_label": label, "action_button": unequip}
 
 
 func _refresh() -> void:
 	# Vitals: HP / Gold / Floor. Floor is 0-indexed internally; display as 1-based.
 	if _vitals_label:
 		var floor_display = max(1, RunManager.current_floor + 1)
-		_vitals_label.text = "HP %d / %d     GOLD %d     FLOOR %d" % [
-			RunManager.current_health, RunManager.max_health,
-			RunManager.gold, floor_display,
-		]
+		_vitals_label.text = (
+			"HP %d / %d     GOLD %d     FLOOR %d"
+			% [
+				RunManager.current_health,
+				RunManager.max_health,
+				RunManager.gold,
+				floor_display,
+			]
+		)
 
 	# Slots
 	for slot in RunManager.EQUIPMENT_SLOTS:
@@ -218,18 +223,25 @@ func _refresh() -> void:
 			row["action_button"].visible = false
 		else:
 			var data = RunManager.get_equipment_data(item_id)
-			row["icon"].set_equipment(slot, str(data.get("name", item_id)), str(data.get("sprite", "")))
+			row["icon"].set_equipment(
+				slot, str(data.get("name", item_id)), str(data.get("sprite", ""))
+			)
 			row["icon"].set_hover_tooltip(_build_equipment_tooltip(data, slot))
 			row["action_button"].visible = true
-			row["name_label"].text = "%s: %s\n%s" % [
-				slot.to_upper(),
-				str(data.get("name", item_id)),
-				_format_bonuses(data.get("bonuses", {})),
-			]
+			row["name_label"].text = (
+				"%s: %s\n%s"
+				% [
+					slot.to_upper(),
+					str(data.get("name", item_id)),
+					_format_bonuses(data.get("bonuses", {})),
+				]
+			)
 
 	# Inventory title
 	if _inventory_title:
-		_inventory_title.text = "INVENTORY (%d/%d)" % [RunManager.inventory_items.size(), RunManager.MAX_INVENTORY]
+		_inventory_title.text = (
+			"INVENTORY (%d/%d)" % [RunManager.inventory_items.size(), RunManager.MAX_INVENTORY]
+		)
 
 	# Inventory rows (rebuild every refresh — simpler than diffing)
 	for child in _inventory_container.get_children():
@@ -259,10 +271,16 @@ func _refresh() -> void:
 
 	# Stats
 	var p = RunManager.player_attributes
-	_stats_label.text = "STR:%d  CON:%d  INT:%d  LUC:%d  CHA:%d" % [
-		int(p.get("strength", 0)), int(p.get("constitution", 0)),
-		int(p.get("intelligence", 0)), int(p.get("luck", 0)), int(p.get("charm", 0)),
-	]
+	_stats_label.text = (
+		"STR:%d  CON:%d  INT:%d  LUC:%d  CHA:%d"
+		% [
+			int(p.get("strength", 0)),
+			int(p.get("constitution", 0)),
+			int(p.get("intelligence", 0)),
+			int(p.get("luck", 0)),
+			int(p.get("charm", 0)),
+		]
+	)
 	_status_label.text = ""
 
 
@@ -297,7 +315,10 @@ func _build_inventory_row(item_id: String, index: int) -> Control:
 	var set_tag = ""
 	if str(data.get("set_id", "")) != "":
 		set_tag = "  [%s]" % str(data.get("set_id"))
-	info.text = "%s\n%s%s" % [str(data.get("name", item_id)), _format_bonuses(data.get("bonuses", {})), set_tag]
+	info.text = (
+		"%s\n%s%s"
+		% [str(data.get("name", item_id)), _format_bonuses(data.get("bonuses", {})), set_tag]
+	)
 	row.add_child(info)
 
 	var equip_btn := Button.new()

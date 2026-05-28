@@ -25,7 +25,9 @@ func on_player_turn_started(player: Node, round_number: int) -> void:
 			"gain_energy":
 				if player and player.has_method("pay_energy"):
 					player.pay_energy(-amount)
-					_notify("%s: +%d Energy" % [str(entry["title"]), amount], Color(0.95, 0.9, 0.25))
+					_notify(
+						"%s: +%d Energy" % [str(entry["title"]), amount], Color(0.95, 0.9, 0.25)
+					)
 					_mark_used_once(entry)
 			"gain_block":
 				if player and player.has_method("add_block"):
@@ -73,7 +75,9 @@ func on_combat_victory(player: Node) -> void:
 			"heal":
 				if player and player.has_method("heal"):
 					player.heal(amount)
-					_notify("%s: healed %d HP" % [str(entry["title"]), amount], Color(0.3, 1.0, 0.45))
+					_notify(
+						"%s: healed %d HP" % [str(entry["title"]), amount], Color(0.3, 1.0, 0.45)
+					)
 					_mark_used_once(entry)
 			"gain_gold":
 				RunManager.add_resources(amount, 0)
@@ -102,12 +106,17 @@ func _get_effect_entries(trigger: String) -> Array:
 				continue
 			if str(effect.get("trigger", "")) != trigger:
 				continue
-			entries.append({
-				"relic_id": str(relic_id),
-				"title": str(data.get("title", str(relic_id))),
-				"index": i,
-				"effect": effect,
-			})
+			(
+				entries
+				. append(
+					{
+						"relic_id": str(relic_id),
+						"title": str(data.get("title", str(relic_id))),
+						"index": i,
+						"effect": effect,
+					}
+				)
+			)
 	return entries
 
 
@@ -126,7 +135,9 @@ func _mark_used_once(entry: Dictionary) -> void:
 
 func _entry_key(entry: Dictionary) -> String:
 	var effect: Dictionary = entry["effect"]
-	return "%s:%s:%d" % [str(entry["relic_id"]), str(effect.get("trigger", "")), int(entry["index"])]
+	return (
+		"%s:%s:%d" % [str(entry["relic_id"]), str(effect.get("trigger", "")), int(entry["index"])]
+	)
 
 
 ## Center-screen yellow text removed per UX feedback. Kept as no-op so

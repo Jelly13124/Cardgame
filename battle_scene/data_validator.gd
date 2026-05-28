@@ -9,41 +9,70 @@ extends RefCounted
 class_name DataValidator
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
-const CARD_DIR      = "res://battle_scene/card_info/player/"
-const ENEMY_DIR     = "res://battle_scene/card_info/enemy/"
-const RELIC_DIR     = "res://run_system/data/relics/"
+const CARD_DIR = "res://battle_scene/card_info/player/"
+const ENEMY_DIR = "res://battle_scene/card_info/enemy/"
+const RELIC_DIR = "res://run_system/data/relics/"
 const EQUIPMENT_DIR = "res://run_system/data/equipment/"
-const SET_DIR       = "res://run_system/data/equipment_sets/"
+const SET_DIR = "res://run_system/data/equipment_sets/"
 const BASE_UPGRADE_DIR = "res://run_system/data/base_upgrades/"
-const HERO_DIR      = "res://run_system/data/heroes/"
+const HERO_DIR = "res://run_system/data/heroes/"
 
 # ─── Card schema ──────────────────────────────────────────────────────────────
 const REQUIRED_CARD_KEYS = ["name", "title", "type", "cost", "effects"]
 const ALLOWED_CARD_TYPES = ["attack", "skill", "ability"]
-const ALLOWED_RARITIES   = ["common", "uncommon", "rare"]
+const ALLOWED_RARITIES = ["common", "uncommon", "rare"]
 const ALLOWED_EFFECT_TYPES = [
-	"deal_damage", "deal_damage_all", "scale_damage_by_attacks",
-	"gain_block", "gain_energy", "draw_cards",
-	"gain_strength", "gain_constitution", "gain_intelligence", "gain_luck", "gain_charm",
-	"apply_status", "apply_status_self", "apply_status_all",
-	"apply_shock", "apply_shock_all", "exhaust_self",
+	"deal_damage",
+	"deal_damage_all",
+	"scale_damage_by_attacks",
+	"gain_block",
+	"gain_energy",
+	"draw_cards",
+	"gain_strength",
+	"gain_constitution",
+	"gain_intelligence",
+	"gain_luck",
+	"gain_charm",
+	"apply_status",
+	"apply_status_self",
+	"apply_status_all",
+	"apply_shock",
+	"apply_shock_all",
+	"exhaust_self",
 ]
 const ALLOWED_STATUS_NAMES = [
-	"poison", "burn", "weak", "vulnerable", "strength_up", "double_damage", "shock",
+	"poison",
+	"burn",
+	"weak",
+	"vulnerable",
+	"strength_up",
+	"double_damage",
+	"shock",
 ]
 # Effect types that require a `status` field
 const STATUS_BEARING_EFFECTS = [
-	"apply_status", "apply_status_self", "apply_status_all",
+	"apply_status",
+	"apply_status_self",
+	"apply_status_all",
 ]
 # Optional flags that are allowed at the card root level
 const KNOWN_OPTIONAL_CARD_KEYS = [
-	"description", "front_image", "side", "rarity", "retain",
+	"description",
+	"front_image",
+	"side",
+	"rarity",
+	"retain",
 ]
 
 # ─── Enemy schema ─────────────────────────────────────────────────────────────
 const REQUIRED_ENEMY_KEYS = ["id", "name", "sprite_id", "max_health", "action_pattern"]
 const ALLOWED_ENEMY_ACTION_TYPES = [
-	"attack", "attack_status", "attack_all", "block", "heal", "telegraph",
+	"attack",
+	"attack_status",
+	"attack_all",
+	"block",
+	"heal",
+	"telegraph",
 ]
 # Action types that require a `status` field
 const STATUS_BEARING_ACTIONS = ["attack_status"]
@@ -51,15 +80,19 @@ const STATUS_BEARING_ACTIONS = ["attack_status"]
 # ─── Equipment schema ────────────────────────────────────────────────────────
 const REQUIRED_EQUIPMENT_KEYS = ["id", "name", "slot", "rarity", "bonuses", "description", "sprite"]
 const ALLOWED_EQUIPMENT_SLOTS = ["head", "chest", "weapon", "hands", "accessory"]
-const ALLOWED_ATTRIBUTE_KEYS  = ["strength", "constitution", "intelligence", "luck", "charm"]
+const ALLOWED_ATTRIBUTE_KEYS = ["strength", "constitution", "intelligence", "luck", "charm"]
 const KNOWN_OPTIONAL_EQUIPMENT_KEYS = ["set_id"]
 
 # ─── Equipment set schema ────────────────────────────────────────────────────
 const REQUIRED_SET_KEYS = ["id", "name", "description", "tiers"]
 const REQUIRED_TIER_KEYS = ["count", "label", "effect"]
 const ALLOWED_SET_EFFECT_TYPES = [
-	"start_turn_block", "start_turn_energy", "start_battle_block",
-	"skill_block_bonus", "attack_damage_bonus", "attack_apply_status",
+	"start_turn_block",
+	"start_turn_energy",
+	"start_battle_block",
+	"skill_block_bonus",
+	"attack_damage_bonus",
+	"attack_apply_status",
 ]
 const STATUS_BEARING_SET_EFFECTS = ["attack_apply_status"]
 
@@ -67,13 +100,20 @@ const STATUS_BEARING_SET_EFFECTS = ["attack_apply_status"]
 const REQUIRED_BASE_UPGRADE_KEYS = ["id", "name", "description", "effect_key", "tiers"]
 const REQUIRED_BASE_UPGRADE_TIER_KEYS = ["level", "cost", "effect_value", "effect_text"]
 const ALLOWED_BASE_UPGRADE_EFFECT_KEYS = [
-	"max_hp_bonus", "starter_inventory", "loot_rarity_bias",
-	"shop_discount", "starting_gold",
-	"unlock_hero", "starter_attributes", "card_pool_unlock",
+	"max_hp_bonus",
+	"starter_inventory",
+	"loot_rarity_bias",
+	"shop_discount",
+	"starting_gold",
+	"unlock_hero",
+	"starter_attributes",
+	"card_pool_unlock",
 ]
 
 # ─── Hero schema ─────────────────────────────────────────────────────────────
-const REQUIRED_HERO_KEYS = ["id", "name", "sprite_id", "max_health", "starter_deck", "starting_attributes"]
+const REQUIRED_HERO_KEYS = [
+	"id", "name", "sprite_id", "max_health", "starter_deck", "starting_attributes"
+]
 const HERO_ATTRIBUTE_KEYS = ["strength", "constitution", "intelligence", "luck", "charm"]
 
 
@@ -83,12 +123,12 @@ const HERO_ATTRIBUTE_KEYS = ["strength", "constitution", "intelligence", "luck",
 ## Returns the number of validation failures.
 static func validate_all_data_at_startup() -> int:
 	var failures = 0
-	failures += _validate_dir(CARD_DIR,  Callable(DataValidator, "validate_card"))
+	failures += _validate_dir(CARD_DIR, Callable(DataValidator, "validate_card"))
 	failures += _validate_dir(ENEMY_DIR, Callable(DataValidator, "validate_enemy"))
 	# Relic files are very small and well-tested; only validate their existence.
 	failures += _validate_dir(RELIC_DIR, Callable(DataValidator, "validate_relic"))
 	failures += _validate_dir(EQUIPMENT_DIR, Callable(DataValidator, "validate_equipment"))
-	failures += _validate_dir(SET_DIR,       Callable(DataValidator, "validate_equipment_set"))
+	failures += _validate_dir(SET_DIR, Callable(DataValidator, "validate_equipment_set"))
 	failures += _validate_dir(BASE_UPGRADE_DIR, Callable(DataValidator, "validate_base_upgrade"))
 	failures += _validate_dir(HERO_DIR, Callable(DataValidator, "validate_hero"))
 	# Cross-check encounter pools so a typo in RunManager constants fails at
@@ -111,18 +151,23 @@ static func validate_encounter_pools() -> int:
 
 	var sources = {
 		"ENCOUNTER_POOLS_EARLY": RunManager.ENCOUNTER_POOLS_EARLY,
-		"ENCOUNTER_POOLS_MID":   RunManager.ENCOUNTER_POOLS_MID,
-		"ENCOUNTER_POOLS_LATE":  RunManager.ENCOUNTER_POOLS_LATE,
-		"ELITE_ROSTER":          [RunManager.ELITE_ROSTER],
-		"BOSS_ROSTER":           [RunManager.BOSS_ROSTER],
-		"BOSS_BY_FLOOR":         [RunManager.BOSS_BY_FLOOR.values()],
+		"ENCOUNTER_POOLS_MID": RunManager.ENCOUNTER_POOLS_MID,
+		"ENCOUNTER_POOLS_LATE": RunManager.ENCOUNTER_POOLS_LATE,
+		"ELITE_ROSTER": [RunManager.ELITE_ROSTER],
+		"BOSS_ROSTER": [RunManager.BOSS_ROSTER],
+		"BOSS_BY_FLOOR": [RunManager.BOSS_BY_FLOOR.values()],
 	}
 	for source_name in sources:
 		var pools = sources[source_name]
 		for pool in pools:
 			for enemy_id in pool:
 				if not known_ids.has(str(enemy_id)):
-					push_error("DataValidator: %s references unknown enemy id '%s' — add %s%s.json or fix the constant." % [source_name, enemy_id, ENEMY_DIR, enemy_id])
+					push_error(
+						(
+							"DataValidator: %s references unknown enemy id '%s' — add %s%s.json or fix the constant."
+							% [source_name, enemy_id, ENEMY_DIR, enemy_id]
+						)
+					)
 					failures += 1
 	return failures
 
@@ -186,7 +231,9 @@ static func validate_card(data: Dictionary, source_path: String) -> bool:
 			continue
 		var etype = str(effect["type"])
 		if not etype in ALLOWED_EFFECT_TYPES:
-			push_error("%s: effect[%d] type '%s' not in %s" % [prefix, i, etype, ALLOWED_EFFECT_TYPES])
+			push_error(
+				"%s: effect[%d] type '%s' not in %s" % [prefix, i, etype, ALLOWED_EFFECT_TYPES]
+			)
 			ok = false
 		# Effects that reference a status name must carry a valid status
 		if etype in STATUS_BEARING_EFFECTS:
@@ -194,17 +241,32 @@ static func validate_card(data: Dictionary, source_path: String) -> bool:
 				push_error("%s: effect[%d] (%s) is missing 'status'" % [prefix, i, etype])
 				ok = false
 			elif not str(effect["status"]) in ALLOWED_STATUS_NAMES:
-				push_error("%s: effect[%d] status '%s' not in %s" % [prefix, i, effect["status"], ALLOWED_STATUS_NAMES])
+				push_error(
+					(
+						"%s: effect[%d] status '%s' not in %s"
+						% [prefix, i, effect["status"], ALLOWED_STATUS_NAMES]
+					)
+				)
 				ok = false
 		# ADR-0004: shock is enemy-only. Reject applying it to the player.
 		if etype == "apply_status_self" and str(effect.get("status", "")) == "shock":
-			push_error("%s: effect[%d] tries to apply 'shock' to self — shock is enemy-only (see docs/adr/0004-shock-enemy-only.md)" % [prefix, i])
+			push_error(
+				(
+					"%s: effect[%d] tries to apply 'shock' to self — shock is enemy-only (see docs/adr/0004-shock-enemy-only.md)"
+					% [prefix, i]
+				)
+			)
 			ok = false
 		# `scale_damage_by_attacks` needs explicit base + per (both ints/floats)
 		if etype == "scale_damage_by_attacks":
 			for required_key in ["base", "per"]:
 				if not effect.has(required_key):
-					push_error("%s: effect[%d] (scale_damage_by_attacks) is missing '%s'" % [prefix, i, required_key])
+					push_error(
+						(
+							"%s: effect[%d] (scale_damage_by_attacks) is missing '%s'"
+							% [prefix, i, required_key]
+						)
+					)
 					ok = false
 		# `apply_shock` / `apply_shock_all` need stacks (or amount as fallback)
 		if etype in ["apply_shock", "apply_shock_all"]:
@@ -251,14 +313,24 @@ static func validate_enemy(data: Dictionary, source_path: String) -> bool:
 			continue
 		var atype = str(action["type"])
 		if not atype in ALLOWED_ENEMY_ACTION_TYPES:
-			push_error("%s: action[%d] type '%s' not in %s" % [prefix, i, atype, ALLOWED_ENEMY_ACTION_TYPES])
+			push_error(
+				(
+					"%s: action[%d] type '%s' not in %s"
+					% [prefix, i, atype, ALLOWED_ENEMY_ACTION_TYPES]
+				)
+			)
 			ok = false
 		if atype in STATUS_BEARING_ACTIONS:
 			if not action.has("status"):
 				push_error("%s: action[%d] (%s) is missing 'status'" % [prefix, i, atype])
 				ok = false
 			elif not str(action["status"]) in ALLOWED_STATUS_NAMES:
-				push_error("%s: action[%d] status '%s' not in %s" % [prefix, i, action["status"], ALLOWED_STATUS_NAMES])
+				push_error(
+					(
+						"%s: action[%d] status '%s' not in %s"
+						% [prefix, i, action["status"], ALLOWED_STATUS_NAMES]
+					)
+				)
 				ok = false
 
 	return ok
@@ -316,7 +388,12 @@ static func validate_equipment(data: Dictionary, source_path: String) -> bool:
 				push_error("%s: bonus attr '%s' not in %s" % [prefix, attr, ALLOWED_ATTRIBUTE_KEYS])
 				ok = false
 			elif typeof(bonuses[attr]) != TYPE_INT and typeof(bonuses[attr]) != TYPE_FLOAT:
-				push_error("%s: bonus '%s' must be a number, got %s" % [prefix, attr, typeof(bonuses[attr])])
+				push_error(
+					(
+						"%s: bonus '%s' must be a number, got %s"
+						% [prefix, attr, typeof(bonuses[attr])]
+					)
+				)
 				ok = false
 
 	# Unknown top-level keys → warn (helps catch typos)
@@ -367,14 +444,24 @@ static func validate_equipment_set(data: Dictionary, source_path: String) -> boo
 			continue
 		var etype = str(effect.get("type", ""))
 		if not etype in ALLOWED_SET_EFFECT_TYPES:
-			push_error("%s: tier[%d] effect type '%s' not in %s" % [prefix, i, etype, ALLOWED_SET_EFFECT_TYPES])
+			push_error(
+				(
+					"%s: tier[%d] effect type '%s' not in %s"
+					% [prefix, i, etype, ALLOWED_SET_EFFECT_TYPES]
+				)
+			)
 			ok = false
 		if etype in STATUS_BEARING_SET_EFFECTS:
 			if not effect.has("status"):
 				push_error("%s: tier[%d] effect (%s) missing 'status'" % [prefix, i, etype])
 				ok = false
 			elif not str(effect["status"]) in ALLOWED_STATUS_NAMES:
-				push_error("%s: tier[%d] status '%s' not in %s" % [prefix, i, effect["status"], ALLOWED_STATUS_NAMES])
+				push_error(
+					(
+						"%s: tier[%d] status '%s' not in %s"
+						% [prefix, i, effect["status"], ALLOWED_STATUS_NAMES]
+					)
+				)
 				ok = false
 
 	# Unknown top-level keys → warn (helps catch typos)
@@ -386,6 +473,7 @@ static func validate_equipment_set(data: Dictionary, source_path: String) -> boo
 
 
 # ─── Internal ─────────────────────────────────────────────────────────────────
+
 
 static func _validate_dir(dir_path: String, validator: Callable) -> int:
 	var failures = 0
@@ -430,7 +518,12 @@ static func validate_base_upgrade(data: Dictionary, path: String) -> bool:
 	if not ok:
 		return false
 	if not data["effect_key"] in ALLOWED_BASE_UPGRADE_EFFECT_KEYS:
-		push_error("%s: unknown effect_key '%s' (allowed: %s)" % [prefix, data["effect_key"], ALLOWED_BASE_UPGRADE_EFFECT_KEYS])
+		push_error(
+			(
+				"%s: unknown effect_key '%s' (allowed: %s)"
+				% [prefix, data["effect_key"], ALLOWED_BASE_UPGRADE_EFFECT_KEYS]
+			)
+		)
 		ok = false
 	var tiers = data.get("tiers", [])
 	if typeof(tiers) != TYPE_ARRAY or tiers.size() == 0:

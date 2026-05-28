@@ -114,7 +114,9 @@ func _build_fallback_visual() -> void:
 	add_child(_fallback_sprite)
 
 
-func _add_animation_frames(frames: SpriteFrames, anim_name: String, loops: bool, speed: float) -> void:
+func _add_animation_frames(
+	frames: SpriteFrames, anim_name: String, loops: bool, speed: float
+) -> void:
 	frames.add_animation(anim_name)
 	frames.set_animation_loop(anim_name, loops)
 	frames.set_animation_speed(anim_name, speed)
@@ -123,7 +125,9 @@ func _add_animation_frames(frames: SpriteFrames, anim_name: String, loops: bool,
 	#   heroes/{hero_id}/{anim}/{hero_id}_{anim}_N.png
 	var dir = HERO_DIR + _hero_sprite_id() + "/"
 	for idx in range(4):
-		var tex = _load_texture(dir + "%s/%s_%s_%d.png" % [anim_name, _hero_sprite_id(), anim_name, idx])
+		var tex = _load_texture(
+			dir + "%s/%s_%s_%d.png" % [anim_name, _hero_sprite_id(), anim_name, idx]
+		)
 		if tex:
 			frames.add_frame(anim_name, tex)
 
@@ -212,7 +216,10 @@ func get_muzzle_global_position() -> Vector2:
 		var native_origin := Vector2(tex.get_width(), tex.get_height()) * 0.5
 		return _sprite.to_global(MUZZLE_NATIVE_POSITION - native_origin)
 	if _fallback_sprite and is_instance_valid(_fallback_sprite) and _fallback_sprite.texture:
-		var native_origin := Vector2(_fallback_sprite.texture.get_width(), _fallback_sprite.texture.get_height()) * 0.5
+		var native_origin := (
+			Vector2(_fallback_sprite.texture.get_width(), _fallback_sprite.texture.get_height())
+			* 0.5
+		)
 		return _fallback_sprite.to_global(MUZZLE_NATIVE_POSITION - native_origin)
 	return global_position + Vector2(98, -104)
 

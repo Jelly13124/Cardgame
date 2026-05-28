@@ -198,7 +198,9 @@ func _input(event: InputEvent) -> void:
 			_hovered_node_id = new_id
 			queue_redraw()
 		if _is_dragging:
-			_scroll_offset = clampf(_drag_start_scroll - (event.position.x - _drag_start_x), 0.0, _max_scroll)
+			_scroll_offset = clampf(
+				_drag_start_scroll - (event.position.x - _drag_start_x), 0.0, _max_scroll
+			)
 			queue_redraw()
 
 	elif event is InputEventMouseButton:
@@ -404,8 +406,8 @@ func _make_relic_choice_button(relic_id: String, source_type: String) -> Button:
 	button.custom_minimum_size = Vector2(620, 82)
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.add_theme_stylebox_override("normal",  T.button_textured("normal"))
-	button.add_theme_stylebox_override("hover",   T.button_textured("hover"))
+	button.add_theme_stylebox_override("normal", T.button_textured("normal"))
+	button.add_theme_stylebox_override("hover", T.button_textured("hover"))
 	button.add_theme_stylebox_override("pressed", T.button_textured("pressed"))
 	button.pressed.connect(_on_relic_choice_selected.bind(relic_id, source_type))
 
@@ -555,12 +557,13 @@ func _grant_treasure_equipment() -> void:
 	# Inventory full → modal. Click guard stays latched until resolved.
 	var modal = INVENTORY_FULL_MODAL_FOR_TREASURE.new()
 	modal.setup(item_id)
-	modal.resolved.connect(func(took: bool):
-		if took:
-			_show_popup("Took %s." % item_name)
-		else:
-			_show_popup("Left %s behind." % item_name)
-		_node_click_pending = false
+	modal.resolved.connect(
+		func(took: bool):
+			if took:
+				_show_popup("Took %s." % item_name)
+			else:
+				_show_popup("Left %s behind." % item_name)
+			_node_click_pending = false
 	)
 	add_child(modal)
 
@@ -620,28 +623,31 @@ func _open_rest_choice() -> void:
 	var heal_btn := Button.new()
 	heal_btn.text = "HEAL 25%% HP"  # %% escapes the % for any future format use
 	heal_btn.custom_minimum_size = Vector2(200, 60)
-	heal_btn.pressed.connect(func():
-		var heal_amount = int(rm.max_health * 0.25)
-		rm.modify_health(heal_amount)
-		_show_popup("Rested. Healed %d HP." % heal_amount)
-		modal.queue_free()
-		_node_click_pending = false  # release click guard
+	heal_btn.pressed.connect(
+		func():
+			var heal_amount = int(rm.max_health * 0.25)
+			rm.modify_health(heal_amount)
+			_show_popup("Rested. Healed %d HP." % heal_amount)
+			modal.queue_free()
+			_node_click_pending = false  # release click guard
 	)
 	buttons.add_child(heal_btn)
 
 	var upgrade_btn := Button.new()
 	upgrade_btn.text = "UPGRADE A CARD"
 	upgrade_btn.custom_minimum_size = Vector2(200, 60)
-	upgrade_btn.pressed.connect(func():
-		var picker = CARD_UPGRADE_MODAL.new()
-		picker.picked.connect(func(uid: String):
-			if uid == "":
-				# Cancelled — leave rest choice open so player can pick HEAL
-				return
-			_show_popup("Card upgraded.")
-			modal.queue_free()
-			_node_click_pending = false  # release click guard
-		)
-		modal.add_child(picker)
+	upgrade_btn.pressed.connect(
+		func():
+			var picker = CARD_UPGRADE_MODAL.new()
+			picker.picked.connect(
+				func(uid: String):
+					if uid == "":
+						# Cancelled — leave rest choice open so player can pick HEAL
+						return
+					_show_popup("Card upgraded.")
+					modal.queue_free()
+					_node_click_pending = false  # release click guard
+			)
+			modal.add_child(picker)
 	)
 	buttons.add_child(upgrade_btn)

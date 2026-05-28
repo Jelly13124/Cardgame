@@ -6,10 +6,10 @@ class_name EquipmentIcon
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 
 const SLOT_COLORS := {
-	"head":      Color(0.66, 0.20, 0.20, 1.0),  # rust red
-	"chest":     Color(0.17, 0.35, 0.54, 1.0),  # steel blue
-	"weapon":    Color(0.76, 0.66, 0.23, 1.0),  # brass yellow
-	"hands":     Color(0.24, 0.48, 0.24, 1.0),  # olive green
+	"head": Color(0.66, 0.20, 0.20, 1.0),  # rust red
+	"chest": Color(0.17, 0.35, 0.54, 1.0),  # steel blue
+	"weapon": Color(0.76, 0.66, 0.23, 1.0),  # brass yellow
+	"hands": Color(0.24, 0.48, 0.24, 1.0),  # olive green
 	"accessory": Color(0.48, 0.23, 0.56, 1.0),  # faded violet
 }
 const SLOT_LETTERS := {

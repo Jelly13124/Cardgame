@@ -7,8 +7,8 @@
 extends RefCounted
 class_name MapRenderer
 
-const NODE_RADIUS: float       = 34.0
-const NODE_ICON_SIZE: float    = 64.0
+const NODE_RADIUS: float = 34.0
+const NODE_ICON_SIZE: float = 64.0
 const LEGEND_NODE_ICON_SIZE: float = 20.0
 
 const LEGEND_ENTRIES = [
@@ -23,14 +23,14 @@ const LEGEND_ENTRIES = [
 ]
 
 const TYPE_COLORS = {
-	"relic":    Color(0.35, 0.95, 1.0),
-	"unknown":  Color(0.72, 0.82, 0.9),
+	"relic": Color(0.35, 0.95, 1.0),
+	"unknown": Color(0.72, 0.82, 0.9),
 	"merchant": Color(1.0, 0.82, 0.18),
 	"treasure": Color(0.34, 1.0, 0.46),
-	"rest":     Color(1.0, 0.56, 0.2),
-	"enemy":    Color(1.0, 0.22, 0.26),
-	"elite":    Color(1.0, 0.18, 0.72),
-	"boss":     Color(1.0, 0.08, 0.12),
+	"rest": Color(1.0, 0.56, 0.2),
+	"enemy": Color(1.0, 0.22, 0.26),
+	"elite": Color(1.0, 0.18, 0.72),
+	"boss": Color(1.0, 0.08, 0.12),
 }
 
 var _scene: Control
@@ -92,7 +92,9 @@ func _draw_all_paths(vp: Vector2) -> void:
 			else:
 				color = Color(0.18, 0.36, 0.52, 0.32)  # very dim = unreachable
 
-			_draw_pixel_dashed_line(from, to, Color(0.02, 0.05, 0.08, color.a * 0.62), 3.2, 22.0, 12.0, Vector2(1, 2))
+			_draw_pixel_dashed_line(
+				from, to, Color(0.02, 0.05, 0.08, color.a * 0.62), 3.2, 22.0, 12.0, Vector2(1, 2)
+			)
 			_draw_pixel_dashed_line(from, to, color, 2.1, 22.0, 12.0, Vector2.ZERO)
 
 
@@ -128,7 +130,16 @@ func _draw_all_nodes(vp: Vector2) -> void:
 		_draw_map_node(pos, node.type, radius, alpha, accessible, visited, is_current, hovered)
 
 
-func _draw_map_node(pos: Vector2, node_type: String, radius: float, alpha: float, accessible: bool, visited: bool, is_current: bool, hovered: bool) -> void:
+func _draw_map_node(
+	pos: Vector2,
+	node_type: String,
+	radius: float,
+	alpha: float,
+	accessible: bool,
+	visited: bool,
+	is_current: bool,
+	hovered: bool
+) -> void:
 	# Hover affordance is pure passive — bigger icon + slightly brighter tint.
 	# No overlay rectangle / brackets / accessibility dot. The current node
 	# still gets a yellow bracket so "you are here" reads at a glance.
@@ -142,10 +153,7 @@ func _draw_map_node(pos: Vector2, node_type: String, radius: float, alpha: float
 		# Subtle warm brightness boost — combined with the +8px icon growth
 		# this reads as "this node is highlighted" without any overlay.
 		tint = Color(
-			minf(1.0, tint.r * 1.18),
-			minf(1.0, tint.g * 1.12),
-			minf(1.0, tint.b * 1.04),
-			tint.a
+			minf(1.0, tint.r * 1.18), minf(1.0, tint.g * 1.12), minf(1.0, tint.b * 1.04), tint.a
 		)
 
 	if is_current:
@@ -157,7 +165,9 @@ func _draw_map_node(pos: Vector2, node_type: String, radius: float, alpha: float
 func _draw_node_texture(pos: Vector2, node_type: String, icon_size: float, tint: Color) -> void:
 	var texture: Texture2D = _scene._node_icon_textures.get(node_type, null)
 	if texture:
-		var rect = Rect2(pos - Vector2(icon_size * 0.5, icon_size * 0.5), Vector2(icon_size, icon_size))
+		var rect = Rect2(
+			pos - Vector2(icon_size * 0.5, icon_size * 0.5), Vector2(icon_size, icon_size)
+		)
 		var outline = Color(0.04, 0.025, 0.012, tint.a * 0.58)
 		_draw_node_texture_rect(texture, rect, Vector2(2, 2), outline)
 		_draw_node_texture_rect(texture, rect, Vector2(-1, 0), outline)
@@ -168,7 +178,15 @@ func _draw_node_texture(pos: Vector2, node_type: String, icon_size: float, tint:
 		return
 
 	var type_color: Color = TYPE_COLORS.get(node_type, Color.GRAY)
-	_scene.draw_string(_font, pos + Vector2(-5, 7), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, int(icon_size), Color(type_color.r, type_color.g, type_color.b, tint.a))
+	_scene.draw_string(
+		_font,
+		pos + Vector2(-5, 7),
+		"?",
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		int(icon_size),
+		Color(type_color.r, type_color.g, type_color.b, tint.a)
+	)
 
 
 func _draw_node_texture_rect(texture: Texture2D, rect: Rect2, offset: Vector2, tint: Color) -> void:
@@ -200,19 +218,41 @@ func _draw_legend(vp: Vector2) -> void:
 	var py = 68.0
 	var rect = Rect2(px, py, pw, ph)
 
-	_scene.draw_rect(Rect2(rect.position + Vector2(5, 6), rect.size), Color(0.02, 0.012, 0.006, 0.42))
+	_scene.draw_rect(
+		Rect2(rect.position + Vector2(5, 6), rect.size), Color(0.02, 0.012, 0.006, 0.42)
+	)
 	_scene.draw_rect(rect, Color(0.70, 0.58, 0.39, 0.92))
 	_scene.draw_rect(rect, Color(0.22, 0.16, 0.10, 0.9), false, 2.0)
 
 	var y = py + 26.0
-	_scene.draw_string(_font, Vector2(px + 45, y), "Legend", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color(0.18, 0.12, 0.08))
+	_scene.draw_string(
+		_font,
+		Vector2(px + 45, y),
+		"Legend",
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		17,
+		Color(0.18, 0.12, 0.08)
+	)
 	y += 8.0
-	_scene.draw_line(Vector2(px + 10, y), Vector2(px + pw - 10, y), Color(0.26, 0.18, 0.11, 0.78), 2.0)
+	_scene.draw_line(
+		Vector2(px + 10, y), Vector2(px + pw - 10, y), Color(0.26, 0.18, 0.11, 0.78), 2.0
+	)
 	y += 18.0
 
 	for entry in LEGEND_ENTRIES:
-		_draw_node_texture(Vector2(px + 22, y - 6), str(entry[0]), LEGEND_NODE_ICON_SIZE, Color(1.0, 1.0, 1.0, 1.0))
-		_scene.draw_string(_font, Vector2(px + 38, y), str(entry[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(0.18, 0.12, 0.08))
+		_draw_node_texture(
+			Vector2(px + 22, y - 6), str(entry[0]), LEGEND_NODE_ICON_SIZE, Color(1.0, 1.0, 1.0, 1.0)
+		)
+		_scene.draw_string(
+			_font,
+			Vector2(px + 38, y),
+			str(entry[1]),
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			14,
+			Color(0.18, 0.12, 0.08)
+		)
 		y += 26.0
 
 
@@ -220,12 +260,38 @@ func _draw_top_bar(vp: Vector2) -> void:
 	_scene.draw_rect(Rect2(0, 0, vp.x, 52), Color(0.05, 0.028, 0.018, 0.94))
 	_scene.draw_rect(Rect2(0, 50, vp.x, 4), Color(0.62, 0.42, 0.2, 0.78))
 
-	_scene.draw_string(_font, Vector2(20, 35),  "HP: %d/%d" % [_scene.rm.current_health, _scene.rm.max_health], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(1.0, 0.42, 0.34))
-	_scene.draw_string(_font, Vector2(200, 35), "Gold: %d" % _scene.rm.gold, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(1.0, 0.86, 0.24))
-	_scene.draw_string(_font, Vector2(380, 35), "Floor: %d" % _scene.rm.current_floor, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(0.85, 0.82, 0.72))
+	_scene.draw_string(
+		_font,
+		Vector2(20, 35),
+		"HP: %d/%d" % [_scene.rm.current_health, _scene.rm.max_health],
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		22,
+		Color(1.0, 0.42, 0.34)
+	)
+	_scene.draw_string(
+		_font,
+		Vector2(200, 35),
+		"Gold: %d" % _scene.rm.gold,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		22,
+		Color(1.0, 0.86, 0.24)
+	)
+	_scene.draw_string(
+		_font,
+		Vector2(380, 35),
+		"Floor: %d" % _scene.rm.current_floor,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		22,
+		Color(0.85, 0.82, 0.72)
+	)
 
 
-func _draw_pixel_dashed_line(from: Vector2, to: Vector2, color: Color, width: float, dash: float, gap: float, offset: Vector2) -> void:
+func _draw_pixel_dashed_line(
+	from: Vector2, to: Vector2, color: Color, width: float, dash: float, gap: float, offset: Vector2
+) -> void:
 	var length = from.distance_to(to)
 	if length < 1.0:
 		return

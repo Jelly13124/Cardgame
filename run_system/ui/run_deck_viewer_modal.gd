@@ -105,7 +105,9 @@ func _make_card_slot(card_id: String) -> Control:
 	# Upgraded cards get a subtle gold tint to stand out
 	var is_upgraded := card_id.ends_with("_plus")
 	var border := Color(1.0, 0.85, 0.35) if is_upgraded else T.PANEL_BORDER
-	frame.add_theme_stylebox_override("panel", T.panel_with_shadow(Color(0.09, 0.072, 0.055, 0.92), border, 3))
+	frame.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(Color(0.09, 0.072, 0.055, 0.92), border, 3)
+	)
 	wrapper.add_child(frame)
 
 	var card = _card_factory.create_card(card_id, null)
