@@ -48,7 +48,7 @@ var equipped_items: Dictionary = {
 var inventory_items: Array[String] = []
 
 var relics: Array[String] = []
-const MAX_INVENTORY: int = 8
+const MAX_INVENTORY: int = 20
 const EQUIPMENT_SLOTS: Array[String] = ["head", "chest", "weapon", "hands", "accessory"]
 const DEFAULT_STARTER_DECK = [
 	"strike",
