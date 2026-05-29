@@ -4,7 +4,7 @@ Copy everything below the `---` line into your codex session.
 
 ---
 
-You are working in the Godot 4.6 project at `C:\Users\Jerry\Desktop\Cardgame` — a roguelite deckbuilder with a strict **Hardcore 128 Pixel Wasteland Art** style. Between 2026-05-25 and 2026-05-26, Phase 5 wave 1 + wave 2 shipped a batch of new cards, a multi-act boss redesign, the Warden equipment set, and 4 new uncommon/rare relics. All gameplay, JSON, and UI work is done. **Every one of those new items currently uses a placeholder PNG** (reused art from a similar existing item). You are responsible for replacing the placeholders with real assets that match the project's art rules.
+You are working in the Godot 4.6 project at `C:\Users\Jerry\Desktop\Cardgame` — a roguelite deckbuilder with a strict **Hardcore Wasteland Sprite Art** style. Between 2026-05-25 and 2026-05-26, Phase 5 wave 1 + wave 2 shipped a batch of new cards, a multi-act boss redesign, the Warden equipment set, and 4 new uncommon/rare relics. All gameplay, JSON, and UI work is done. **Every one of those new items currently uses a placeholder PNG** (reused art from a similar existing item). You are responsible for replacing the placeholders with real assets that match the project's art rules.
 
 **Generation method (read first):** This briefing fixes *what* to produce — paths, sizes, style, one neon accent per item — not *how*. There is currently NO external image service configured (the previous one was dropped). Generate using whatever image capability your session has; if you have none, the fallback is to improve the procedural generator `scripts/gen_wave3_content_assets.py` (it already drew crude geometric placeholders at every target path). Either way, **overwrite the existing placeholder PNGs in place**, and do not re-introduce any specific external tool dependency.
 
@@ -17,7 +17,7 @@ Match his exact treatment: warm rust / leather / brass / dusty-tan palette; bold
 ## Step 1 — Read these files before doing anything else
 
 1. **`docs/asset-spec-content-expansion.md`** — your authoritative work order. Lists every PNG you need to deliver, the exact file path, the frame size, the theme description, and the neon accent color per item. Read sections 0–8 in order.
-2. **`docs/art-style-reference.md`** — the approved Hardcore 128 Pixel Wasteland Art visual reference translated into concrete art rules.
+2. **`docs/art-style-reference.md`** — the approved Hardcore Wasteland Sprite Art visual reference translated into concrete art rules.
 3. **`docs/project-rules.md`** §1–§5 — the non-negotiable style anchor, sprite pipeline (`#FF00FF` chroma key → transparent PNG), and folder/naming conventions.
 4. **`docs/adr/0008-art-pivot-to-hardcore-128-pixel-wasteland.md`** — the ADR locking in the current art direction. Confirms native sizes (128 for regular, 192 for bosses), reference image path, palette and outline rules.
 5. **`docs/catalog-all.md`** — the bilingual content catalog, for cross-referencing what each card / enemy / item actually does in-game (helps the art match the mechanic).
@@ -48,7 +48,7 @@ All single-frame (except enemy attack sequences, which are 4 frames each), trans
 
 These come from `docs/project-rules.md` §2–§5 and the asset spec section 1. Follow exactly:
 
-1. **Every prompt** must preserve the Hardcore 128 Pixel Wasteland Art prompt anchor (verbatim from asset spec §0).
+1. **Every prompt** must preserve the Hardcore Wasteland Sprite Art prompt anchor (verbatim from asset spec §0).
 2. **Item / icon assets are item-only** — no character holding the item, no UI frame, no background scene, no rarity badges, no text. Just the item, centered, on transparent background.
 3. **Card art is composition-only** — no UI frame, no cost circle, no title text. The card-framework script overlays those.
 4. **Enemy / boss sprites face LEFT** in source PNGs. (Heroes face right; enemies face left.)

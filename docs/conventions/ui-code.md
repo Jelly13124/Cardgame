@@ -15,7 +15,7 @@ Light conventions for UI scripts. UI is currently the messiest part of the codeb
 | Map interaction + relic modal | `run_system/ui/map_scene.gd` |
 | Loot reward screen + card draft | `run_system/ui/loot_reward.gd` |
 | Hero selection | `run_system/ui/hero_select.gd` |
-| Shared theme | `run_system/ui/theme/wasteland_theme.gd` (legacy filename; palette must follow Hardcore 128 Pixel Wasteland Art) |
+| Shared theme | `run_system/ui/theme/wasteland_theme.gd` (legacy filename; palette must follow Hardcore Wasteland Sprite Art) |
 
 ---
 
@@ -110,4 +110,4 @@ When a file approaches 400 lines, the responsibilities are usually entangled. Co
 ## When in doubt
 
 - The most-recent ADRs in `docs/adr/` cover style / structure decisions.
-- The shared theme palette lives in `run_system/ui/theme/wasteland_theme.gd` - read its constants before defining new colors locally, but keep new colors aligned with Hardcore 128 Pixel Wasteland Art.
+- The shared theme palette lives in `run_system/ui/theme/wasteland_theme.gd` - read its constants before defining new colors locally, but keep new colors aligned with Hardcore Wasteland Sprite Art.

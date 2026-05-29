@@ -18,21 +18,21 @@ Do not reintroduce root-level local workflow docs such as `skills/`; shared proj
 
 ---
 
-## 1. Art Style - Hardcore 128 Pixel Wasteland Art (Non-Negotiable)
+## 1. Art Style - Hardcore Wasteland Sprite Art (Non-Negotiable)
 
-All visual assets in this project **must** follow the approved **Hardcore 128 Pixel Wasteland Art** direction in `docs/art-style-reference.md`.
+All visual assets in this project **must** follow the approved **Hardcore Wasteland Sprite Art** direction in `docs/art-style-reference.md`. (Renamed from "Hardcore 128 Pixel Wasteland Art" — see ADR-0011.)
 
-The canonical reference is `docs/art/hardcore-128-pixel-wasteland-reference.png`: a one-eyed robot cowboy in a gritty 128-native wasteland pixel style, with bold black pixel outlines, rusted scrap materials, dusty leather colors, controlled pixel shading, and sparse neon accents.
+The ground-truth reference is Cowboy Bill (`battle_scene/assets/images/heroes/cowboy_bill/`): a one-eyed robot cowboy as a **detailed, fully-rendered sprite** — bold dark outlines, rusted scrap materials, warm leather/brass colors, rich highlight-mid-shadow shading, and one small glowing neon accent. The look is rendered sprite art, NOT lo-fi pixel art. When wording conflicts with how Bill looks, Bill wins.
 
 ### Visual Rules
 
-- **Native resolution:** Combat heroes and standard enemies are authored as 128x128 pixel-art frames unless a spec explicitly marks a larger boss scale.
+- **Native resolution:** Combat heroes and standard enemies are authored at 128×128 (192×192 bosses) unless a spec marks a larger scale. This is the in-game display/detail budget — NOT a lo-fi pixel-art aesthetic; the look is a detailed fully-rendered sprite.
 - **Silhouettes:** Compact, tough, battle-ready, and readable at gameplay size. One glance should identify the unit or item.
 - **Materials:** Scrap metal, duct tape, bolts, dents, rubber, cracked glass, worn leather, patched cloth, and exposed wiring. Everything is salvaged and used.
 - **Color palette:** Warm earth-tone base: leather brown, rust orange, dusty tan, muted olive, dark steel, faded brass, and desaturated charcoal.
 - **Accent color:** One small high-contrast accent per character, item, or UI icon.
-- **Outlines:** Bold black pixel outlines with deliberate pixel clusters. Do not use thin realistic lines or high-resolution cartoon brushwork.
-- **Shading:** Controlled pixel shading with readable highlight/mid/shadow clusters. Avoid photorealism and noisy dithering.
+- **Outlines:** Bold dark outlines that read at gameplay size. Do not use thin realistic hairlines or pure minimalist line art.
+- **Shading:** Rich, controlled shading with a clear highlight/mid/shadow read (a fully-rendered sprite). Avoid flat fills, photorealism, and noisy dithering.
 - **Background:** Character, card, UI, and FX sprites use transparent backgrounds; full-scene map and battle backgrounds are scene-ready PNGs with no UI baked in.
 
 ### Character Anchors
@@ -45,10 +45,11 @@ The canonical reference is `docs/art/hardcore-128-pixel-wasteland-reference.png`
 Every generated asset prompt must preserve this wording unless the asset type makes a clause impossible:
 
 ```text
-hardcore 128 pixel wasteland art style, native 128x128 pixel game sprite readability,
-bold black pixel outlines, gritty rusted scrap metal, worn leather and patched cloth,
-dusty desert palette, controlled pixel shading, salvaged bolts dents tubes and cracked glass,
-one small neon accent, transparent background, no high-resolution cartoon brushwork
+hardcore wasteland sprite art, detailed fully-rendered game sprite, bold dark outlines,
+rich controlled shading with clear highlight-mid-shadow, warm rust / leather / brass / dark-steel / dusty-tan palette,
+salvaged scrap metal with bolts dents tubes and cracked glass, worn leather and patched cloth,
+one small glowing neon accent, authored at 128px native (192px bosses) for in-game readability,
+transparent background, match the Cowboy Bill reference fidelity, not lo-fi pixel art, not flat
 ```
 
 For combat unit sheets, also include:
@@ -63,16 +64,16 @@ side view, full body, shared baseline, consistent scale, hero faces right or ene
 - No clean, shiny, or futuristic-clean aesthetics.
 - No direct copies of copyrighted characters or named IP styles.
 - No realistic shading, photorealistic lighting, vector art, or hard-surface concept art.
-- No high-resolution cartoon output for final Godot assets.
+- No flat, vector, or cel-shaded output with no material texture.
 - No tiny 16x16 or 32x32 lo-fi sprites for combat units.
-- No dense pixel noise that makes the sprite unreadable at gameplay size.
-- No assets that do not visually fit the same hardcore 128 pixel wasteland world.
+- No dense noise or over-rendering that makes the sprite unreadable at gameplay size.
+- No assets that do not visually fit the same Hardcore Wasteland Sprite Art world (match Cowboy Bill).
 
 ---
 
 ## 2. Asset Generation - Production Pipeline
 
-All final in-project visual assets must be PNG art that follows the Hardcore 128 Pixel Wasteland Art rules above. Source generation can use the available image-generation pipeline, but generated sheets must be post-processed into transparent or scene-ready PNGs before being referenced by Godot.
+All final in-project visual assets must be PNG art that follows the Hardcore Wasteland Sprite Art rules above. Source generation can use the available image-generation pipeline, but generated sheets must be post-processed into transparent or scene-ready PNGs before being referenced by Godot.
 
 ### Required Outputs
 
@@ -85,7 +86,7 @@ All final in-project visual assets must be PNG art that follows the Hardcore 128
 
 ### Prompt Requirements
 
-- Preserve the exact Hardcore 128 Pixel Wasteland Art language from section 1 and `docs/art-style-reference.md`.
+- Preserve the exact Hardcore Wasteland Sprite Art language from section 1 and `docs/art-style-reference.md`.
 - Prefer side-view full-body sprites for combat units.
 - Final enemy frames must face left toward the player. Do not rely on a global runtime flip to correct mixed source orientations.
 - Hero frames must face right toward enemies.

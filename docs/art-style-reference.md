@@ -1,21 +1,23 @@
 # Art Style Reference
 
-**Canonical style name:** Hardcore 128 Pixel Wasteland Art
-**Approved reference:** `docs/art/hardcore-128-pixel-wasteland-reference.png`, chosen by the project owner on 2026-05-19.
+**Canonical style name:** Hardcore Wasteland Sprite Art
+**Approved reference:** `docs/art/hardcore-128-pixel-wasteland-reference.png`, chosen by the project owner on 2026-05-19. (Filename predates the ADR-0011 rename and is kept as-is.)
+**Ground truth:** `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_portrait.png` + `heroes/cowboy_bill/attack/cowboy_bill_attack_0.png` — Cowboy Bill is the canonical character and the single source of truth for fidelity. **When this doc's wording conflicts with how Bill actually looks, Bill's sprite wins.**
 
-![Hardcore 128 Pixel Wasteland Art reference](art/hardcore-128-pixel-wasteland-reference.png)
+![Hardcore Wasteland Sprite Art reference](art/hardcore-128-pixel-wasteland-reference.png)
 
-This is the source of truth for visual direction. New art should look like it belongs in the same world as this reference: gritty 128-native pixel characters with strong silhouettes, black pixel outlines, rusty wasteland materials, and sparse neon accents.
+This is the source of truth for visual direction. New art should look like it belongs in the same world as Cowboy Bill: a detailed, fully-rendered wasteland sprite with strong silhouettes, bold dark outlines, rusty salvaged materials, and one sparse neon accent. See ADR-0011 for why this is "Sprite Art," not pixel art.
 
 ## Core Look
 
-- **Native resolution:** combat characters and enemies are designed on a 128x128 pixel-art canvas unless a spec explicitly marks a larger boss scale.
+- **Native resolution:** combat characters and enemies are authored at 128×128 (192×192 for bosses) unless a spec marks a larger scale. This is the in-game **display/detail budget** — NOT a lo-fi pixel-art aesthetic.
+- **Medium:** a polished, fully-rendered illustrated sprite (like Cowboy Bill, the Junkyard Tyrant boss, and the `strike` card) — not flat, not chunky pixel art, not minimalist.
 - **Shape language:** readable, compact, and tough. Silhouettes may be stylized, but they should feel hardcore and battle-ready rather than soft toy-like.
-- **Linework:** bold black pixel outlines with deliberate pixel clusters. Avoid thin realistic lines and avoid high-resolution cartoon brushwork.
-- **Shading:** controlled pixel shading with readable highlight/mid/shadow clusters. Avoid noisy dithering that muddies the silhouette.
+- **Linework:** bold dark outlines that read at gameplay size. Avoid thin realistic hairlines and avoid pure minimalist line art.
+- **Shading:** rich, controlled shading with a clear highlight / mid / shadow read. Avoid flat fills and avoid noisy dithering that muddies the silhouette.
 - **Materials:** rusted scrap metal, worn leather, patched cloth, bolts, dents, tubes, tape, cracked glass, oil stains, and salvaged weapon parts.
 - **Palette:** warm wasteland base: leather brown, rust orange, dusty tan, muted olive, dark steel, faded brass, and desaturated charcoal.
-- **Accent color:** one small high-contrast accent per character or item, such as toxic green, cyan, amber, or red sensor light.
+- **Accent color:** one small high-contrast glowing accent per character or item, such as toxic green, cyan, amber, or a red sensor light.
 - **Mood:** harsh, tactical, and scrapyard-hardened. The designs can stay readable and appealing, but they should not become cute mascot art.
 
 ## Character Reference Rules
@@ -26,7 +28,7 @@ This is the source of truth for visual direction. New art should look like it be
 - Exactly **one** large central camera eye. No second eye, no paired human eyes.
 - Oversized battered cowboy hat, red bandana, patched duster or poncho, chunky boots, and a salvaged revolver or hand cannon.
 - Faces right in combat.
-- Should read as a gritty wasteland gunslinger with clear 128-pixel readability.
+- Should read as a gritty wasteland gunslinger, fully rendered with clear in-game readability.
 
 ### Trash Bot
 
@@ -41,7 +43,7 @@ This is the source of truth for visual direction. New art should look like it be
 Use this prompt anchor for generated character, enemy, relic, card, and UI icon assets:
 
 ```text
-hardcore 128 pixel wasteland art style, native 128x128 pixel game sprite readability, bold black pixel outlines, gritty rusted scrap metal, worn leather and patched cloth, dusty desert palette, controlled pixel shading, salvaged bolts dents tubes and cracked glass, one small neon accent, transparent background, no high-resolution cartoon brushwork
+hardcore wasteland sprite art, detailed fully-rendered game sprite, bold dark outlines, rich controlled shading with clear highlight-mid-shadow, warm rust / leather / brass / dark-steel / dusty-tan wasteland palette, salvaged scrap metal with bolts dents tubes and cracked glass, worn leather and patched cloth, one small glowing neon accent, authored at 128px native (192px bosses) for in-game readability, transparent background, match the Cowboy Bill reference fidelity, not lo-fi pixel art, not flat, not minimalist
 ```
 
 For combat unit sheets, add:
@@ -56,8 +58,8 @@ For card illustrations, keep the same style but do not force side-view/full-body
 
 - Directly copying or imitating copyrighted characters or named IP styles.
 - Clean futuristic sci-fi, glossy mechs, realistic military hardware, or hard-surface concept art.
-- High-resolution cartoon, vector, painterly, or cel-shaded output that does not read as pixel art.
-- Tiny lo-fi 16x16 or 32x32 sprites that lose the 128-pixel detail budget.
-- Dense pixel noise that makes the silhouette unreadable.
+- Flat or vector output, or cel-shaded output with no material texture.
+- Lo-fi 16×16 or 32×32 sprites, or anything that throws away the detail budget.
+- Dense noise or over-rendering that makes the silhouette unreadable.
 - Pure minimalist line art without wasteland material texture.
 - Cute mascot proportions that undermine the hardcore wasteland tone.

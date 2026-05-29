@@ -2,7 +2,7 @@
 
 **Audience:** codex (asset generation pipeline)
 **Owner of code/JSON:** Claude (already implemented)
-**Project:** Cardgame (Godot 4.6, Hardcore 128 Pixel Wasteland Art roguelite)
+**Project:** Cardgame (Godot 4.6, Hardcore Wasteland Sprite Art roguelite)
 **Created:** 2026-05-26
 
 This document is the contract that tells codex which PNGs to generate for the content shipped 2026-05-25 → 2026-05-26 (Phase 5 wave 1 + wave 2 cards, the multi-boss map redesign, the Warden equipment set, and the new uncommon/rare relics).
@@ -15,13 +15,14 @@ This document is the contract that tells codex which PNGs to generate for the co
 
 ## 0. Style Preamble (Non-Negotiable)
 
-Every prompt for every asset in this doc **must** preserve the approved Hardcore 128 Pixel Wasteland Art prompt anchor from `docs/project-rules.md` §1 and `docs/art-style-reference.md`:
+Every prompt for every asset in this doc **must** preserve the approved Hardcore Wasteland Sprite Art prompt anchor from `docs/project-rules.md` §1 and `docs/art-style-reference.md`:
 
 ```
-hardcore 128 pixel wasteland art style, native 128x128 pixel game sprite readability,
-bold black pixel outlines, gritty rusted scrap metal, worn leather and patched cloth,
-dusty desert palette, controlled pixel shading, salvaged bolts dents tubes and cracked glass,
-one small neon accent, transparent background, no high-resolution cartoon brushwork
+hardcore wasteland sprite art, detailed fully-rendered game sprite, bold dark outlines,
+rich controlled shading with clear highlight-mid-shadow, warm rust / leather / brass / dark-steel / dusty-tan palette,
+salvaged scrap metal with bolts dents tubes and cracked glass, worn leather and patched cloth,
+one small glowing neon accent, authored at 128px native (192px bosses) for in-game readability,
+transparent background, match the Cowboy Bill reference fidelity, not lo-fi pixel art, not flat
 ```
 
 Color palette guidance:
