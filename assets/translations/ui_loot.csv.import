@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://dgetxchg7h4xn"
+
+[deps]
+
+files=["res://assets/translations/ui_loot.en.translation", "res://assets/translations/ui_loot.en.translation"]
+
+source_file="res://assets/translations/ui_loot.csv"
+dest_files=["res://assets/translations/ui_loot.en.translation", "res://assets/translations/ui_loot.en.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

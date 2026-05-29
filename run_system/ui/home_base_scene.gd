@@ -6,6 +6,7 @@ extends Control
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const UPGRADE_PANEL_SCRIPT = preload("res://run_system/ui/upgrade_panel.gd")
 const HERO_SELECT_PACKED = preload("res://run_system/ui/hero_select.tscn")
+const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
 const UPGRADE_DIR := "res://run_system/data/base_upgrades/"
 const UPGRADE_ORDER := [
 	"med_bay",
@@ -96,12 +97,67 @@ func _build() -> void:
 	var actions := HBoxContainer.new()
 	actions.alignment = BoxContainer.ALIGNMENT_END
 	vbox.add_child(actions)
+	var settings_btn := Button.new()
+	settings_btn.text = "⚙ " + TranslationServer.translate("SETTINGS_BUTTON")
+	settings_btn.custom_minimum_size = Vector2(160, 60)
+	settings_btn.add_theme_font_size_override("font_size", 20)
+	settings_btn.pressed.connect(_open_settings)
+	actions.add_child(settings_btn)
+
 	var start_btn := Button.new()
-	start_btn.text = "START NEW RUN"
+	start_btn.text = TranslationServer.translate("UI_HOME_START_RUN")
 	start_btn.custom_minimum_size = Vector2(260, 60)
 	start_btn.add_theme_font_size_override("font_size", 24)
 	start_btn.pressed.connect(_on_start_pressed)
 	actions.add_child(start_btn)
+
+
+## Settings overlay (Language / Fullscreen / Volume). Language change reloads
+## the home base so all labels pick up the new locale.
+func _open_settings() -> void:
+	if get_node_or_null("SettingsOverlay") != null:
+		return
+	var layer := CanvasLayer.new()
+	layer.name = "SettingsOverlay"
+	layer.layer = 130
+	add_child(layer)
+
+	var overlay := ColorRect.new()
+	overlay.color = Color(0.0, 0.0, 0.0, 0.6)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(overlay)
+
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(center)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(420, 380)
+	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	center.add_child(panel)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 12)
+	panel.add_child(box)
+
+	var title := Label.new()
+	title.text = TranslationServer.translate("SETTINGS_TITLE")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", Color(1.0, 0.86, 0.48))
+	box.add_child(title)
+
+	SETTINGS_PANEL.add_controls(box, func() -> void: get_tree().reload_current_scene(), false)
+
+	box.add_child(HSeparator.new())
+
+	var close_btn := Button.new()
+	close_btn.text = TranslationServer.translate("SETTINGS_RESUME")
+	close_btn.custom_minimum_size = Vector2(300, 44)
+	close_btn.focus_mode = Control.FOCUS_NONE
+	close_btn.pressed.connect(layer.queue_free)
+	box.add_child(close_btn)
 
 
 func _refresh_core() -> void:

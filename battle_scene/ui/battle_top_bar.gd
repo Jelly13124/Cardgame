@@ -1,6 +1,7 @@
 extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
+const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
 const RELIC_DATA_DIR := "res://run_system/data/relics/"
 # Lazy-loaded at call site to avoid map→battle→map cyclic preload.
 const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
@@ -92,7 +93,7 @@ func _build_bar() -> void:
 	deck_button.pressed.connect(_on_deck_pressed)
 	row.add_child(deck_button)
 
-	settings_button = _make_icon_button("⚙", "Settings")
+	settings_button = _make_icon_button("⚙", TranslationServer.translate("SETTINGS_BUTTON"))
 	settings_button.pressed.connect(_show_settings)
 	row.add_child(settings_button)
 
@@ -126,7 +127,7 @@ func _build_settings_menu() -> void:
 
 	var panel = PanelContainer.new()
 	panel.name = "Panel"
-	panel.custom_minimum_size = Vector2(360, 250)
+	panel.custom_minimum_size = Vector2(420, 420)
 	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
 	center.add_child(panel)
 
@@ -136,23 +137,28 @@ func _build_settings_menu() -> void:
 	panel.add_child(box)
 
 	var title = Label.new()
-	title.text = "SETTINGS"
+	title.text = TranslationServer.translate("SETTINGS_TITLE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 28)
 	title.add_theme_color_override("font_color", Color(1.0, 0.86, 0.48))
 	box.add_child(title)
 
-	var resume = _make_menu_button("Resume")
+	# Language / Fullscreen / Volume. Language change reloads the battle scene.
+	SETTINGS_PANEL.add_controls(box, func() -> void: get_tree().reload_current_scene(), true)
+
+	var sep = HSeparator.new()
+	box.add_child(sep)
+
+	var resume = _make_menu_button(TranslationServer.translate("SETTINGS_RESUME"))
 	resume.pressed.connect(_hide_settings)
 	box.add_child(resume)
 
-	return_map_button = _make_menu_button("Return to Map")
+	return_map_button = _make_menu_button(TranslationServer.translate("SETTINGS_RETURN_MAP"))
 	return_map_button.pressed.connect(_on_return_map_pressed)
 	box.add_child(return_map_button)
 
-	var exit_button = _make_menu_button("Exit")
+	var exit_button = _make_menu_button(TranslationServer.translate("SETTINGS_EXIT"))
 	exit_button.disabled = true
-	exit_button.tooltip_text = "Coming soon"
 	box.add_child(exit_button)
 
 

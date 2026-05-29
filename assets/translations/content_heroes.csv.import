@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://c4vq3vthpti03"
+
+[deps]
+
+files=["res://assets/translations/content_heroes.en.translation", "res://assets/translations/content_heroes.en.translation"]
+
+source_file="res://assets/translations/content_heroes.csv"
+dest_files=["res://assets/translations/content_heroes.en.translation", "res://assets/translations/content_heroes.en.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true
