@@ -6,10 +6,10 @@ uid="uid://dgetxchg7h4xn"
 
 [deps]
 
-files=["res://assets/translations/ui_loot.en.translation", "res://assets/translations/ui_loot.en.translation"]
+files=["res://assets/translations/ui_loot.en.translation", "res://assets/translations/ui_loot.zh.translation"]
 
 source_file="res://assets/translations/ui_loot.csv"
-dest_files=["res://assets/translations/ui_loot.en.translation", "res://assets/translations/ui_loot.en.translation"]
+dest_files=["res://assets/translations/ui_loot.en.translation", "res://assets/translations/ui_loot.zh.translation"]
 
 [params]
 

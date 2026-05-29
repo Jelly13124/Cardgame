@@ -1,2 +1,15 @@
 keys,en,zh
 UI_HOME_START_RUN,START NEW RUN,开始新征程
+UI_HOME_TITLE,HOME BASE,大本营
+UI_HOME_CORE,CORE: {n},核心：{n}
+UI_HOME_RECENT_RUNS,RECENT RUNS,近期征程
+UI_HOME_NO_RUNS,(no runs yet),（暂无征程记录）
+UI_HOME_RUN_ROW,{icon}  {hero}  Floor {floor}  +{core} Core,{icon}  {hero}  第{floor}层  +{core} 核心
+UI_HOME_HERO_BILL,Bill,比尔
+UI_HOME_HERO_JERRY,Jerry,杰瑞
+UI_HOME_UPGRADE_LEVEL,Level: {dots}  ({cur}/{max}),等级：{dots}  ({cur}/{max})
+UI_HOME_UPGRADE_FULLY_UPGRADED,Fully upgraded.,已强化至满级。
+UI_HOME_UPGRADE_MAXED,MAXED,满级
+UI_HOME_UPGRADE_NEXT,Next: {text},下一级：{text}
+UI_HOME_UPGRADE_COST,Cost: {n} Core,花费：{n} 核心
+UI_HOME_UPGRADE_BUY,BUY,购买

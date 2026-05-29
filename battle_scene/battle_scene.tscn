@@ -159,7 +159,7 @@ offset_bottom = -285.0
 grow_vertical = 0
 theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.2, 0.6, 1, 1)
-text = "Energy: 3 / 3"
+text = "UI_BATTLE_ENERGY"
 horizontal_alignment = 1
 
 [node name="EndRoundButton" type="Button" parent="." unique_id=1608834043]
@@ -176,7 +176,7 @@ grow_horizontal = 0
 grow_vertical = 0
 theme_override_colors/font_color = Color(1, 0.8, 0, 1)
 theme_override_font_sizes/font_size = 18
-text = "END ROUND"
+text = "UI_BATTLE_END_ROUND"
 
 [node name="NotificationLabel" type="Label" parent="." unique_id=659079838]
 anchors_preset = 8
@@ -251,7 +251,7 @@ offset_right = 200.0
 offset_bottom = 120.0
 grow_horizontal = 2
 theme_override_font_sizes/font_size = 48
-text = "Pile Viewer"
+text = "UI_BATTLE_PILE_VIEWER"
 horizontal_alignment = 1
 
 [node name="CloseButton" type="Button" parent="PileViewerLayer" unique_id=1849204857]

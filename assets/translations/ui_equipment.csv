@@ -1,1 +1,29 @@
 keys,en,zh
+UI_EQUIP_TITLE_CHARACTER,CHARACTER,角色
+UI_EQUIP_BACK_TO_MAP,BACK TO MAP,返回地图
+UI_EQUIP_SLOTS,SLOTS,装备槽
+UI_EQUIP_ACTIVE_SETS,ACTIVE SETS,激活套装
+UI_EQUIP_RELICS,RELICS,遗物
+UI_EQUIP_UNEQUIP,UNEQUIP,卸下
+UI_EQUIP_EQUIP,EQUIP,装备
+UI_EQUIP_DISCARD,DISCARD,丢弃
+UI_EQUIP_VITALS,HP {hp} / {max}     GOLD {gold}     FLOOR {floor},生命 {hp} / {max}     金币 {gold}     层数 {floor}
+UI_EQUIP_INVENTORY_COUNT,INVENTORY ({n}/{max}),背包 ({n}/{max})
+UI_EQUIP_EMPTY,(empty),(空)
+UI_EQUIP_EMPTY_SLOT,(empty slot),(空槽)
+UI_EQUIP_NONE_YET,"  (none yet)","  (暂无)"
+UI_EQUIP_STATS,STR:{str}  CON:{con}  INT:{int}  LUC:{luc}  CHA:{cha},力量:{str}  体质:{con}  智力:{int}  幸运:{luc}  魅力:{cha}
+UI_EQUIP_NO_BONUSES,(no bonuses),(无加成)
+UI_EQUIP_FULL_SWAP,INVENTORY FULL — discard something first to swap,背包已满 — 请先丢弃物品再替换
+UI_EQUIP_FULL_UNEQUIP,INVENTORY FULL — discard something first to unequip,背包已满 — 请先丢弃物品再卸下
+UI_EQUIP_SET_PREFIX,Set: {name},套装：{name}
+UI_EQUIP_SLOT_HEAD,HEAD,头部
+UI_EQUIP_SLOT_CHEST,CHEST,胸甲
+UI_EQUIP_SLOT_WEAPON,WEAPON,武器
+UI_EQUIP_SLOT_HANDS,HANDS,手部
+UI_EQUIP_SLOT_ACCESSORY,ACCESSORY,饰品
+UI_EQUIP_MODAL_FULL_TITLE,INVENTORY FULL,背包已满
+UI_EQUIP_MODAL_FULL_SUBTITLE,"Pick something to discard, or skip the new equipment:",选择一件丢弃，或跳过新装备：
+UI_EQUIP_MODAL_INCOMING,── INCOMING ──,── 新装备 ──
+UI_EQUIP_MODAL_DISCARD_SELECTED,DISCARD SELECTED,丢弃所选
+UI_EQUIP_MODAL_SKIP,SKIP NEW ITEM,跳过新物品

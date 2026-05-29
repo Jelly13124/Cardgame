@@ -6,10 +6,10 @@ uid="uid://d0kcrl7n774tg"
 
 [deps]
 
-files=["res://assets/translations/ui_battle.en.translation", "res://assets/translations/ui_battle.en.translation"]
+files=["res://assets/translations/ui_battle.en.translation", "res://assets/translations/ui_battle.zh.translation"]
 
 source_file="res://assets/translations/ui_battle.csv"
-dest_files=["res://assets/translations/ui_battle.en.translation", "res://assets/translations/ui_battle.en.translation"]
+dest_files=["res://assets/translations/ui_battle.en.translation", "res://assets/translations/ui_battle.zh.translation"]
 
 [params]
 

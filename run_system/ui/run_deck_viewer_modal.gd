@@ -51,7 +51,7 @@ func _build() -> void:
 	var header := HBoxContainer.new()
 	vbox.add_child(header)
 	var title := Label.new()
-	title.text = "RUN DECK (%d cards)" % RunManager.player_deck.size()
+	title.text = tr("UI_COMMON_RUN_DECK_TITLE").format({"n": RunManager.player_deck.size()})
 	title.add_theme_font_size_override("font_size", 28)
 	title.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
 	header.add_child(title)
@@ -66,7 +66,7 @@ func _build() -> void:
 
 	# Subtitle hint about upgrades
 	var subtitle := Label.new()
-	subtitle.text = "Upgraded cards show a [+] suffix on their name."
+	subtitle.text = tr("UI_COMMON_DECK_UPGRADE_HINT")
 	subtitle.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
 	vbox.add_child(subtitle)
 
@@ -84,7 +84,7 @@ func _build() -> void:
 
 	if RunManager.player_deck.is_empty():
 		var none_lbl := Label.new()
-		none_lbl.text = "(Deck is empty.)"
+		none_lbl.text = tr("UI_COMMON_DECK_EMPTY")
 		none_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 		vbox.add_child(none_lbl)
 		return

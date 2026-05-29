@@ -50,7 +50,7 @@ func _build() -> void:
 	var header := HBoxContainer.new()
 	vbox.add_child(header)
 	var title := Label.new()
-	title.text = "HOME BASE"
+	title.text = tr("UI_HOME_TITLE")
 	title.add_theme_font_size_override("font_size", 42)
 	title.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
 	header.add_child(title)
@@ -81,7 +81,7 @@ func _build() -> void:
 
 	# Recent runs panel — last 5 entries from MetaProgress.run_history.
 	var history_label := Label.new()
-	history_label.text = "RECENT RUNS"
+	history_label.text = tr("UI_HOME_RECENT_RUNS")
 	history_label.add_theme_font_size_override("font_size", 22)
 	history_label.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
 	vbox.add_child(history_label)
@@ -162,7 +162,7 @@ func _open_settings() -> void:
 
 func _refresh_core() -> void:
 	if _core_label:
-		_core_label.text = "CORE: %d" % MetaProgress.core
+		_core_label.text = tr("UI_HOME_CORE").format({"n": MetaProgress.core})
 
 
 func _load_upgrade(id: String) -> Dictionary:
@@ -201,7 +201,7 @@ func _build_recent_runs_panel() -> Control:
 	var history: Array = MetaProgress.run_history
 	if history.is_empty():
 		var none := Label.new()
-		none.text = "(no runs yet)"
+		none.text = tr("UI_HOME_NO_RUNS")
 		none.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 		vbox.add_child(none)
 		return panel
@@ -231,14 +231,21 @@ func _build_history_row(entry: Dictionary) -> Label:
 	var core_earned: int = int(entry.get("core_earned", 0))
 
 	var row := Label.new()
-	row.text = "%s  %s  Floor %d  +%d Core" % [icon, hero, floor + 1, core_earned]
+	row.text = (tr("UI_HOME_RUN_ROW").format(
+		{"icon": icon, "hero": hero, "floor": floor + 1, "core": core_earned}
+	))
 	row.add_theme_color_override("font_color", color)
 	return row
 
 
 func _humanize_hero_id(hero_id: String) -> String:
-	# Quick lookup table — covers the two heroes we ship.
-	var names := {"cowboy_bill": "Bill", "hero_jerry_killer": "Jerry"}
+	# Quick lookup table — covers the two heroes we ship. These are compact
+	# run-history nicknames (not the canonical hero name), so they are local UI
+	# labels owned by ui_home, not the HERO_<id>_NAME content key.
+	var names := {
+		"cowboy_bill": tr("UI_HOME_HERO_BILL"),
+		"hero_jerry_killer": tr("UI_HOME_HERO_JERRY"),
+	}
 	if names.has(hero_id):
 		return names[hero_id]
 	return hero_id.replace("_", " ").capitalize()

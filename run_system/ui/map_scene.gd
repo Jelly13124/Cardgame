@@ -242,7 +242,7 @@ func _on_node_clicked(node: Dictionary) -> void:
 	#   - popup-only branches release synchronously below
 	match node.type:
 		"relic":
-			_open_relic_choice("Choose Your Starting Relic", "starting")
+			_open_relic_choice(tr("UI_MAP_CHOOSE_STARTING_RELIC"), "starting")
 		"enemy", "elite", "boss":
 			rm.current_encounter = rm.select_encounter(node.type, int(node.floor))
 			rm.last_battle_node_type = node.type
@@ -253,7 +253,7 @@ func _on_node_clicked(node: Dictionary) -> void:
 			get_tree().change_scene_to_packed(SHOP_PACKED)
 		"treasure":
 			if randf() < 0.5:
-				_open_relic_choice("Choose a Relic", "treasure")
+				_open_relic_choice(tr("UI_MAP_CHOOSE_A_RELIC"), "treasure")
 			else:
 				_grant_treasure_equipment()
 		"unknown":
@@ -284,7 +284,7 @@ func _resolve_unknown_node(floor_idx: int) -> void:
 	if roll < 0.65:
 		var gold: int = randi_range(5, 20)
 		rm.add_resources(gold, 0)
-		_show_popup("Scavenged %d gold." % gold)
+		_show_popup(tr("UI_MAP_SCAVENGED_GOLD").format({"n": gold}))
 		_node_click_pending = false
 		return
 
@@ -293,7 +293,7 @@ func _resolve_unknown_node(floor_idx: int) -> void:
 		var before: int = rm.current_health
 		rm.modify_health(heal_amt)
 		var actual: int = rm.current_health - before
-		_show_popup("Found a scrap medkit. Healed %d HP." % actual)
+		_show_popup(tr("UI_MAP_SCRAP_MEDKIT_HEAL").format({"n": actual}))
 		_node_click_pending = false
 		return
 
@@ -307,7 +307,7 @@ func _resolve_unknown_node(floor_idx: int) -> void:
 	# 1 HP (no payable cost — would be a free relic + "-0 HP" copy).
 	if rm.get_unowned_relic_ids().is_empty() or rm.current_health <= 1:
 		rm.add_resources(15, 0)
-		_show_popup("Cache empty. Salvaged 15 gold.")
+		_show_popup(tr("UI_MAP_CACHE_EMPTY_GOLD").format({"n": 15}))
 		_node_click_pending = false
 		return
 	# Cap loss at 6 and at (current_health - 1) so cache can never solo-
@@ -316,7 +316,7 @@ func _resolve_unknown_node(floor_idx: int) -> void:
 	rm.modify_health(-hp_loss)
 	# Click guard stays latched — _open_relic_choice will reset it via
 	# _on_relic_choice_selected when player picks.
-	_open_relic_choice("Pried Open the Cache (-%d HP)" % hp_loss, "treasure")
+	_open_relic_choice(tr("UI_MAP_CACHE_PRIED_OPEN").format({"n": hp_loss}), "treasure")
 
 
 ## Brief on-map toast for node outcomes that have no other obvious result
@@ -394,9 +394,9 @@ func _open_relic_choice(title: String, source_type: String) -> void:
 		if source_type == "treasure":
 			var gold = randi_range(20, 45)
 			rm.add_resources(gold, 0)
-			_show_popup("No relics remain. Found %d gold!" % gold)
+			_show_popup(tr("UI_MAP_NO_RELICS_FOUND_GOLD").format({"n": gold}))
 		else:
-			_show_popup("No relics remain.")
+			_show_popup(tr("UI_MAP_NO_RELICS_REMAIN"))
 		_node_click_pending = false
 		return
 
@@ -411,7 +411,7 @@ func _open_relic_choice(title: String, source_type: String) -> void:
 	_relic_choice_box.add_child(title_label)
 
 	var hint = Label.new()
-	hint.text = "Pick one. Relics are unique for this run."
+	hint.text = tr("UI_MAP_RELIC_PICK_HINT")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_font_size_override("font_size", 16)
 	hint.add_theme_color_override("font_color", Color(0.78, 0.72, 0.62))
@@ -426,8 +426,10 @@ func _open_relic_choice(title: String, source_type: String) -> void:
 
 func _make_relic_choice_button(relic_id: String, source_type: String) -> Button:
 	var data = rm.get_relic_data(relic_id)
-	var title = str(data.get("title", _humanize_id(relic_id)))
-	var description = str(data.get("description", ""))
+	var title = Settings.t(
+		"RELIC_%s_TITLE" % relic_id, str(data.get("title", _humanize_id(relic_id)))
+	)
+	var description = Settings.t("RELIC_%s_DESC" % relic_id, str(data.get("description", "")))
 
 	var button = Button.new()
 	button.custom_minimum_size = Vector2(620, 82)
@@ -500,9 +502,12 @@ func _on_relic_choice_selected(relic_id: String, _source_type: String) -> void:
 
 	if rm.add_relic(relic_id):
 		var data = rm.get_relic_data(relic_id)
-		_show_popup("Gained relic: %s" % str(data.get("title", _humanize_id(relic_id))))
+		var relic_title = Settings.t(
+			"RELIC_%s_TITLE" % relic_id, str(data.get("title", _humanize_id(relic_id)))
+		)
+		_show_popup(tr("UI_MAP_GAINED_RELIC").format({"n": relic_title}))
 	else:
-		_show_popup("Already have that relic.")
+		_show_popup(tr("UI_MAP_ALREADY_HAVE_RELIC"))
 	queue_redraw()
 
 
@@ -512,7 +517,7 @@ func _humanize_id(value: String) -> String:
 
 func _build_equipment_button() -> void:
 	var equip_btn := Button.new()
-	equip_btn.text = "⚔ CHARACTER"
+	equip_btn.text = tr("UI_MAP_CHARACTER_BTN")
 	equip_btn.add_theme_font_size_override("font_size", 16)
 	T.apply_button_theme(equip_btn)
 	# Anchor to top-right corner with a small margin
@@ -540,7 +545,7 @@ func _open_equipment_panel() -> void:
 
 func _build_deck_button() -> void:
 	var deck_btn := Button.new()
-	deck_btn.text = "📚 DECK"
+	deck_btn.text = tr("UI_MAP_DECK_BTN")
 	deck_btn.add_theme_font_size_override("font_size", 16)
 	T.apply_button_theme(deck_btn)
 	# Place immediately to the LEFT of the CHARACTER button
@@ -572,13 +577,13 @@ func _grant_treasure_equipment() -> void:
 	var rarity := "uncommon" if randf() < 0.7 else "rare"
 	var item_id = RunManager.roll_equipment_drop(rarity)
 	if item_id == "":
-		_show_popup("The crate was empty.")
+		_show_popup(tr("UI_MAP_CRATE_EMPTY"))
 		_node_click_pending = false
 		return
 	var data = RunManager.get_equipment_data(item_id)
-	var item_name = str(data.get("name", item_id))
+	var item_name = Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
 	if RunManager.add_to_inventory(item_id):
-		_show_popup("Found %s!" % item_name)
+		_show_popup(tr("UI_MAP_FOUND_EQUIPMENT").format({"n": item_name}))
 		_node_click_pending = false
 		return
 	# Inventory full → modal. Click guard stays latched until resolved.
@@ -587,9 +592,9 @@ func _grant_treasure_equipment() -> void:
 	modal.resolved.connect(
 		func(took: bool):
 			if took:
-				_show_popup("Took %s." % item_name)
+				_show_popup(tr("UI_MAP_TOOK_EQUIPMENT").format({"n": item_name}))
 			else:
-				_show_popup("Left %s behind." % item_name)
+				_show_popup(tr("UI_MAP_LEFT_EQUIPMENT").format({"n": item_name}))
 			_node_click_pending = false
 	)
 	add_child(modal)
@@ -636,7 +641,7 @@ func _open_rest_choice() -> void:
 	margin.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "REST STOP"
+	title.text = tr("UI_MAP_REST_STOP")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 22)
 	title.add_theme_color_override("font_color", Color(1, 0.95, 0.5))
@@ -648,20 +653,20 @@ func _open_rest_choice() -> void:
 	vbox.add_child(buttons)
 
 	var heal_btn := Button.new()
-	heal_btn.text = "HEAL 25%% HP"  # %% escapes the % for any future format use
+	heal_btn.text = tr("UI_MAP_REST_HEAL_BTN")
 	heal_btn.custom_minimum_size = Vector2(200, 60)
 	heal_btn.pressed.connect(
 		func():
 			var heal_amount = int(rm.max_health * 0.25)
 			rm.modify_health(heal_amount)
-			_show_popup("Rested. Healed %d HP." % heal_amount)
+			_show_popup(tr("UI_MAP_RESTED_HEAL").format({"n": heal_amount}))
 			modal.queue_free()
 			_node_click_pending = false  # release click guard
 	)
 	buttons.add_child(heal_btn)
 
 	var upgrade_btn := Button.new()
-	upgrade_btn.text = "UPGRADE A CARD"
+	upgrade_btn.text = tr("UI_MAP_REST_UPGRADE_BTN")
 	upgrade_btn.custom_minimum_size = Vector2(200, 60)
 	upgrade_btn.pressed.connect(
 		func():
@@ -671,7 +676,7 @@ func _open_rest_choice() -> void:
 					if uid == "":
 						# Cancelled — leave rest choice open so player can pick HEAL
 						return
-					_show_popup("Card upgraded.")
+					_show_popup(tr("UI_MAP_CARD_UPGRADED"))
 					modal.queue_free()
 					_node_click_pending = false  # release click guard
 			)

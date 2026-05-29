@@ -6,10 +6,10 @@ uid="uid://pikh0vkcctjq"
 
 [deps]
 
-files=["res://assets/translations/ui_shop.en.translation", "res://assets/translations/ui_shop.en.translation"]
+files=["res://assets/translations/ui_shop.en.translation", "res://assets/translations/ui_shop.zh.translation"]
 
 source_file="res://assets/translations/ui_shop.csv"
-dest_files=["res://assets/translations/ui_shop.en.translation", "res://assets/translations/ui_shop.en.translation"]
+dest_files=["res://assets/translations/ui_shop.en.translation", "res://assets/translations/ui_shop.zh.translation"]
 
 [params]
 

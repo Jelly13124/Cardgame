@@ -50,13 +50,13 @@ func _build() -> void:
 	margin.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "INVENTORY FULL"
+	title.text = tr("UI_EQUIP_MODAL_FULL_TITLE")
 	title.add_theme_font_size_override("font_size", 22)
 	title.add_theme_color_override("font_color", Color(1, 0.85, 0.4))
 	vbox.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "Pick something to discard, or skip the new equipment:"
+	subtitle.text = tr("UI_EQUIP_MODAL_FULL_SUBTITLE")
 	subtitle.add_theme_color_override("font_color", Color(0.9, 0.88, 0.8))
 	vbox.add_child(subtitle)
 
@@ -67,8 +67,9 @@ func _build() -> void:
 	vbox.add_child(bag_grid)
 	for i in range(RunManager.inventory_items.size()):
 		var btn := Button.new()
-		var data = RunManager.get_equipment_data(RunManager.inventory_items[i])
-		btn.text = str(data.get("name", RunManager.inventory_items[i]))
+		var bag_id: String = RunManager.inventory_items[i]
+		var data = RunManager.get_equipment_data(bag_id)
+		btn.text = Settings.t("EQUIP_%s_NAME" % bag_id, str(data.get("name", bag_id)))
 		btn.toggle_mode = true
 		btn.pressed.connect(_on_bag_pressed.bind(i, btn))
 		bag_grid.add_child(btn)
@@ -78,34 +79,36 @@ func _build() -> void:
 	incoming_box.add_theme_constant_override("separation", 8)
 	vbox.add_child(incoming_box)
 	var inc_label_l := Label.new()
-	inc_label_l.text = "── INCOMING ──"
+	inc_label_l.text = tr("UI_EQUIP_MODAL_INCOMING")
 	inc_label_l.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
 	incoming_box.add_child(inc_label_l)
 	var inc_data = RunManager.get_equipment_data(_incoming_item_id)
+	var inc_name := Settings.t(
+		"EQUIP_%s_NAME" % _incoming_item_id, str(inc_data.get("name", _incoming_item_id))
+	)
 	var inc_icon = EQUIPMENT_ICON.new()
 	inc_icon.set_equipment(
-		str(inc_data.get("slot", "head")),
-		str(inc_data.get("name", _incoming_item_id)),
-		str(inc_data.get("sprite", ""))
+		str(inc_data.get("slot", "head")), inc_name, str(inc_data.get("sprite", ""))
 	)
 	incoming_box.add_child(inc_icon)
 	var inc_label := Label.new()
 	inc_label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
 	var set_tag := ""
-	if str(inc_data.get("set_id", "")) != "":
-		set_tag = "  [%s]" % str(inc_data.get("set_id"))
-	inc_label.text = "%s%s" % [str(inc_data.get("name", _incoming_item_id)), set_tag]
+	var inc_set_id := str(inc_data.get("set_id", ""))
+	if inc_set_id != "":
+		set_tag = "  [%s]" % Settings.t("EQUIP_SET_%s_NAME" % inc_set_id, inc_set_id)
+	inc_label.text = "%s%s" % [inc_name, set_tag]
 	incoming_box.add_child(inc_label)
 
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 12)
 	vbox.add_child(actions)
 	var discard_btn := Button.new()
-	discard_btn.text = "DISCARD SELECTED"
+	discard_btn.text = tr("UI_EQUIP_MODAL_DISCARD_SELECTED")
 	discard_btn.pressed.connect(_on_discard_selected)
 	actions.add_child(discard_btn)
 	var skip_btn := Button.new()
-	skip_btn.text = "SKIP NEW ITEM"
+	skip_btn.text = tr("UI_EQUIP_MODAL_SKIP")
 	skip_btn.pressed.connect(_on_skip)
 	actions.add_child(skip_btn)
 

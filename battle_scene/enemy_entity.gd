@@ -77,7 +77,12 @@ static func create(id: String) -> EnemyEntity:
 			var data: Dictionary = JSON.parse_string(file.get_as_text())
 			file.close()
 			if data:
-				entity.enemy_name = data.get("name", id.to_upper())
+				# Display name routes through the content-translation table; the
+				# English JSON `name` is the source/fallback (content agents own
+				# the ENEMY_<id>_NAME rows in content_enemies.csv).
+				entity.enemy_name = Settings.t(
+					"ENEMY_%s_NAME" % id, str(data.get("name", id.to_upper()))
+				)
 				entity.max_health = int(data.get("max_health", 30))
 				# Ascension A1+: enemy HP scales +10% per level.
 				if RunManager.ascension > 0:
@@ -321,6 +326,16 @@ func _compute_display_attack(base_amount: int) -> int:
 	return int(round(float(base_amount) * outgoing * incoming))
 
 
+## Localized short status label for the intent badge. Falls back to the English
+## _STATUS_SHORT_NAMES table (then capitalized id) when no translation exists.
+func _localized_status_short(status: String) -> String:
+	var key := "UI_COMBAT_SHORT_%s" % status.to_upper()
+	var localized := tr(key)
+	if localized != key:
+		return localized
+	return _STATUS_SHORT_NAMES.get(status, status.capitalize())
+
+
 func _update_intent_display() -> void:
 	if not _intent_label:
 		return
@@ -339,7 +354,7 @@ func _update_intent_display() -> void:
 		if action_type == "attack_status":
 			var status = str(next.get("status", ""))
 			var stacks = int(next.get("stacks", 1))
-			var status_short = _STATUS_SHORT_NAMES.get(status, status.capitalize())
+			var status_short = _localized_status_short(status)
 			if stacks > 1:
 				label_text += " %s%d" % [status_short, stacks]
 			else:
@@ -348,9 +363,9 @@ func _update_intent_display() -> void:
 		label_text = str(int(next.get("amount", 0)))
 	elif action_type in ["heal", "buff"]:
 		var amount = int(next.get("amount", 0))
-		label_text = str(amount) if amount > 0 else "BUFF"
+		label_text = str(amount) if amount > 0 else tr("UI_COMBAT_INTENT_BUFF")
 	elif action_type == "telegraph":
-		label_text = "CHARGE"
+		label_text = tr("UI_COMBAT_INTENT_CHARGE")
 	else:
 		label_text = str(next.get("label", "?"))
 

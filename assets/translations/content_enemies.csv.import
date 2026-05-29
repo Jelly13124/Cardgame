@@ -6,10 +6,10 @@ uid="uid://b3st8ffn3j558"
 
 [deps]
 
-files=["res://assets/translations/content_enemies.en.translation", "res://assets/translations/content_enemies.en.translation"]
+files=["res://assets/translations/content_enemies.en.translation", "res://assets/translations/content_enemies.zh.translation"]
 
 source_file="res://assets/translations/content_enemies.csv"
-dest_files=["res://assets/translations/content_enemies.en.translation", "res://assets/translations/content_enemies.en.translation"]
+dest_files=["res://assets/translations/content_enemies.en.translation", "res://assets/translations/content_enemies.zh.translation"]
 
 [params]
 

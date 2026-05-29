@@ -49,7 +49,7 @@ func _build_ascension_slider() -> void:
 	add_child(vbox)
 
 	var label := Label.new()
-	label.text = "ASCENSION"
+	label.text = tr("UI_HERO_ASCENSION")
 	label.add_theme_color_override("font_color", Color(1, 0.85, 0.4))
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(label)
@@ -68,14 +68,16 @@ func _build_ascension_slider() -> void:
 	row.add_child(_ascension_slider)
 
 	_ascension_value_label = Label.new()
-	_ascension_value_label.text = "A%d" % int(_ascension_slider.value)
+	_ascension_value_label.text = tr("UI_HERO_ASCENSION_VALUE").format(
+		{"n": int(_ascension_slider.value)}
+	)
 	_ascension_value_label.custom_minimum_size = Vector2(40, 0)
 	row.add_child(_ascension_value_label)
 
 
 func _on_ascension_changed(value: float) -> void:
 	if _ascension_value_label:
-		_ascension_value_label.text = "A%d" % int(value)
+		_ascension_value_label.text = tr("UI_HERO_ASCENSION_VALUE").format({"n": int(value)})
 
 
 func _list_hero_ids() -> Array[String]:
@@ -116,19 +118,20 @@ func _button_for_hero(hero_id: String) -> Button:
 
 
 func _apply_button_state(btn: Button, hero_id: String, hero_data: Dictionary) -> void:
-	var hero_name := str(hero_data.get("name", hero_id))
+	var english_name := str(hero_data.get("name", hero_id))
+	var hero_name := Settings.t("HERO_%s_NAME" % hero_id, english_name).to_upper()
 	# Jerry-style lock: gated on the jerry_unlock meta upgrade.
 	if hero_id == "hero_jerry_killer":
 		var unlocked: bool = MetaProgress.get_upgrade_level("jerry_unlock") > 0
 		if not unlocked:
-			btn.text = "🔒 %s\n(UNLOCK 100 CORE)" % hero_name.to_upper()
+			btn.text = tr("UI_HERO_LOCKED").format({"name": hero_name})
 			btn.disabled = true
 			# Disconnect any existing handler — we don't want clicks to fire.
 			for cb in btn.pressed.get_connections():
 				btn.pressed.disconnect(cb["callable"])
 			return
 	# Unlocked path
-	btn.text = hero_name.to_upper()
+	btn.text = hero_name
 	btn.disabled = false
 	for cb in btn.pressed.get_connections():
 		btn.pressed.disconnect(cb["callable"])

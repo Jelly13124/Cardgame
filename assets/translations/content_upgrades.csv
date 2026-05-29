@@ -1,1 +1,39 @@
 keys,en,zh
+UPGRADE_med_bay_NAME,MED BAY,医疗舱
+UPGRADE_med_bay_DESC,Permanently increase starting max HP.,永久提升初始最大生命。
+UPGRADE_med_bay_TIER1,+10 max HP at run start,开局时最大生命+10
+UPGRADE_med_bay_TIER2,+20 max HP at run start,开局时最大生命+20
+UPGRADE_med_bay_TIER3,+30 max HP at run start,开局时最大生命+30
+UPGRADE_arsenal_NAME,ARSENAL,军械库
+UPGRADE_arsenal_DESC,Start runs with bonus equipment in your inventory.,开局时库存中附带额外装备。
+UPGRADE_arsenal_TIER1,1 random common equipment in inventory at run start,开局时库存中获得1件随机普通装备
+UPGRADE_arsenal_TIER2,2 random common equipment in inventory at run start,开局时库存中获得2件随机普通装备
+UPGRADE_arsenal_TIER3,2 commons + 1 uncommon in inventory at run start,开局时库存中获得2件普通+1件罕见装备
+UPGRADE_research_lab_NAME,RESEARCH LAB,研究实验室
+UPGRADE_research_lab_DESC,Improve the quality of cards offered after battles.,提升战斗后提供的卡牌品质。
+UPGRADE_research_lab_TIER1,+5% chance to upgrade a draft card to uncommon,抽取卡牌升为罕见的几率+5%
+UPGRADE_research_lab_TIER2,+10% chance to upgrade a draft card to uncommon,抽取卡牌升为罕见的几率+10%
+UPGRADE_research_lab_TIER3,+15% uncommon and +5% rare in draft cards,抽取卡牌中罕见+15%、稀有+5%
+UPGRADE_scrap_workshop_NAME,SCRAP WORKSHOP,废料工坊
+UPGRADE_scrap_workshop_DESC,Negotiate better prices at the merchant.,在商人处谈出更优惠的价格。
+UPGRADE_scrap_workshop_TIER1,All shop prices reduced by 10%,所有商店价格降低10%
+UPGRADE_scrap_workshop_TIER2,All shop prices reduced by 20%,所有商店价格降低20%
+UPGRADE_scrap_workshop_TIER3,All shop prices reduced by 30%,所有商店价格降低30%
+UPGRADE_command_center_NAME,COMMAND CENTER,指挥中心
+UPGRADE_command_center_DESC,Begin each run with extra gold from your stockpile.,每场冒险开局时从储备中获得额外金币。
+UPGRADE_command_center_TIER1,+50 starting gold,初始金币+50
+UPGRADE_command_center_TIER2,+120 starting gold,初始金币+120
+UPGRADE_command_center_TIER3,+200 starting gold,初始金币+200
+UPGRADE_jerry_unlock_NAME,JERRY UNLOCK,解锁杰瑞
+UPGRADE_jerry_unlock_DESC,Unlock a second playable hero — Jerry the wasteland killer.,解锁第二名可操作英雄——废土杀手杰瑞。
+UPGRADE_jerry_unlock_TIER1,Permanently unlock Jerry,永久解锁杰瑞
+UPGRADE_starter_boost_NAME,STARTER BOOST,起步强化
+UPGRADE_starter_boost_DESC,Distribute extra attribute points at the start of each run.,每场冒险开局时分配额外属性点。
+UPGRADE_starter_boost_TIER1,+1 random attribute point at run start,开局时随机属性点+1
+UPGRADE_starter_boost_TIER2,+2 random attribute points at run start,开局时随机属性点+2
+UPGRADE_starter_boost_TIER3,+3 random attribute points at run start,开局时随机属性点+3
+UPGRADE_card_research_NAME,CARD RESEARCH,卡牌研究
+UPGRADE_card_research_DESC,Salvage research notes to add stronger cards to the draft pool.,回收研究笔记，将更强的卡牌加入抽取池。
+UPGRADE_card_research_TIER1,Unlock Flash Bang + Bone Breaker,解锁闪光弹+碎骨者
+UPGRADE_card_research_TIER2,Unlock Last Breath + Preemptive Strike,解锁垂死一搏+先发制人
+UPGRADE_card_research_TIER3,Unlock Junk Bomb,解锁废料炸弹

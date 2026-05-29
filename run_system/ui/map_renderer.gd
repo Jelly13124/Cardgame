@@ -11,15 +11,17 @@ const NODE_RADIUS: float = 34.0
 const NODE_ICON_SIZE: float = 64.0
 const LEGEND_NODE_ICON_SIZE: float = 20.0
 
+# Legend labels are localized at draw time via tr() (see _draw_legend); the
+# second column is the translation key, not the display string.
 const LEGEND_ENTRIES = [
-	["relic", "Relic"],
-	["unknown", "Unknown"],
-	["merchant", "Merchant"],
-	["treasure", "Treasure"],
-	["rest", "Rest"],
-	["enemy", "Enemy"],
-	["elite", "Elite"],
-	["boss", "Boss"],
+	["relic", "UI_MAP_LEGEND_RELIC"],
+	["unknown", "UI_MAP_LEGEND_UNKNOWN"],
+	["merchant", "UI_MAP_LEGEND_MERCHANT"],
+	["treasure", "UI_MAP_LEGEND_TREASURE"],
+	["rest", "UI_MAP_LEGEND_REST"],
+	["enemy", "UI_MAP_LEGEND_ENEMY"],
+	["elite", "UI_MAP_LEGEND_ELITE"],
+	["boss", "UI_MAP_LEGEND_BOSS"],
 ]
 
 const TYPE_COLORS = {
@@ -228,7 +230,7 @@ func _draw_legend(vp: Vector2) -> void:
 	_scene.draw_string(
 		_font,
 		Vector2(px + 45, y),
-		"Legend",
+		tr("UI_MAP_LEGEND_TITLE"),
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
 		17,
@@ -247,7 +249,7 @@ func _draw_legend(vp: Vector2) -> void:
 		_scene.draw_string(
 			_font,
 			Vector2(px + 38, y),
-			str(entry[1]),
+			tr(str(entry[1])),
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1,
 			14,
@@ -263,7 +265,9 @@ func _draw_top_bar(vp: Vector2) -> void:
 	_scene.draw_string(
 		_font,
 		Vector2(20, 35),
-		"HP: %d/%d" % [_scene.rm.current_health, _scene.rm.max_health],
+		tr("UI_MAP_TOPBAR_HP").format(
+			{"cur": _scene.rm.current_health, "max": _scene.rm.max_health}
+		),
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
 		22,
@@ -272,7 +276,7 @@ func _draw_top_bar(vp: Vector2) -> void:
 	_scene.draw_string(
 		_font,
 		Vector2(200, 35),
-		"Gold: %d" % _scene.rm.gold,
+		tr("UI_MAP_TOPBAR_GOLD").format({"n": _scene.rm.gold}),
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
 		22,
@@ -281,7 +285,7 @@ func _draw_top_bar(vp: Vector2) -> void:
 	_scene.draw_string(
 		_font,
 		Vector2(380, 35),
-		"Floor: %d" % _scene.rm.current_floor,
+		tr("UI_MAP_TOPBAR_FLOOR").format({"n": _scene.rm.current_floor}),
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
 		22,

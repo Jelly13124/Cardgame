@@ -6,10 +6,10 @@ uid="uid://c1qrukxy0fr7"
 
 [deps]
 
-files=["res://assets/translations/ui_hero.en.translation", "res://assets/translations/ui_hero.en.translation"]
+files=["res://assets/translations/ui_hero.en.translation", "res://assets/translations/ui_hero.zh.translation"]
 
 source_file="res://assets/translations/ui_hero.csv"
-dest_files=["res://assets/translations/ui_hero.en.translation", "res://assets/translations/ui_hero.en.translation"]
+dest_files=["res://assets/translations/ui_hero.en.translation", "res://assets/translations/ui_hero.zh.translation"]
 
 [params]
 

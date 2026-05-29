@@ -1,1 +1,40 @@
 keys,en,zh
+UI_BATTLE_MUST_TARGET_ENEMY,MUST TARGET ENEMY,必须选择敌人
+UI_BATTLE_NOT_ENOUGH_ENERGY,NOT ENOUGH ENERGY,能量不足
+UI_BATTLE_NO_TARGET,NO TARGET,没有目标
+UI_BATTLE_DRAW_PILE,Draw Pile,抽牌堆
+UI_BATTLE_DISCARD_PILE,Discard Pile,弃牌堆
+UI_BATTLE_RUN_DECK,Run Deck,本局牌组
+UI_BATTLE_VIEW_RUN_DECK,View run deck,查看本局牌组
+UI_BATTLE_RUN_STATUS,HP {hp}/{max}    Gold {gold}    Floor {floor},生命 {hp}/{max}    金币 {gold}    层 {floor}
+UI_BATTLE_NO_RELICS,No relics,无遗物
+UI_BATTLE_END_ROUND,END ROUND,结束回合
+UI_BATTLE_ENERGY,Energy: 3 / 3,能量：3 / 3
+UI_BATTLE_PILE_VIEWER,Pile Viewer,牌堆查看
+UI_BATTLE_CARD_TYPE_ATTACK,ATTACK,攻击
+UI_BATTLE_CARD_TYPE_SKILL,SKILL,技能
+UI_BATTLE_CARD_TYPE_ABILITY,ABILITY,能力
+UI_BATTLE_DESC_DEAL,Deal {val} dmg,造成 {val} 伤害
+UI_BATTLE_DESC_DEAL_SCALING,Deal {val} ([i]{base}+[color=#8b0000]{stat}[/color][/i]) dmg,造成 {val} ([i]{base}+[color=#8b0000]{stat}[/color][/i]) 伤害
+UI_BATTLE_DESC_DEAL_ALL,Deal {val} dmg to all enemies,对所有敌人造成 {val} 伤害
+UI_BATTLE_DESC_DEAL_ALL_SCALING,Deal {val} ([i]{base}+[color=#8b0000]{stat}[/color][/i]) to ALL enemies,对所有敌人造成 {val} ([i]{base}+[color=#8b0000]{stat}[/color][/i]) 伤害
+UI_BATTLE_DESC_BLOCK,Gain {val} block,获得 {val} 格挡
+UI_BATTLE_DESC_BLOCK_SCALING,Gain {val} ([i]{base}+[color=#4444ff]{stat}[/color][/i]) block,获得 {val} ([i]{base}+[color=#4444ff]{stat}[/color][/i]) 格挡
+UI_BATTLE_DESC_STRENGTH,Gain {n} Strength,获得 {n} 力量
+UI_BATTLE_DESC_STRENGTH_MULT,Gain {n} ({mult}×{stat}) Strength,获得 {n} ({mult}×{stat}) 力量
+UI_BATTLE_DESC_STRENGTH_SCALING,Gain {n} ({base}+[color=#8b0000]{stat}[/color]) Strength,获得 {n} ({base}+[color=#8b0000]{stat}[/color]) 力量
+UI_BATTLE_DESC_GAIN_ATTR,Gain {n} {attr},获得 {n} {attr}
+UI_BATTLE_DESC_DRAW,Draw {n} cards,抽 {n} 张牌
+UI_BATTLE_DESC_APPLY_STATUS,Apply {status} x{n},施加 {status} x{n}
+UI_BATTLE_DESC_APPLY_STATUS_ALL,Apply {status} x{n} to all enemies,对所有敌人施加 {status} x{n}
+UI_BATTLE_DESC_APPLY_STATUS_SELF,Apply {status} x{n} to self,对自身施加 {status} x{n}
+UI_BATTLE_DESC_APPLY_SHOCK,Apply [color=#f0e040]Shock[/color] x{n},施加 [color=#f0e040]感电[/color] x{n}
+UI_BATTLE_DESC_APPLY_SHOCK_ALL,Apply [color=#f0e040]Shock[/color] x{n} to all enemies,对所有敌人施加 [color=#f0e040]感电[/color] x{n}
+UI_BATTLE_DESC_SCALE_BY_ATTACKS,Deal {base} + {per} per Attack played this turn,造成 {base} + {per}（本回合每打出一张攻击牌）
+UI_BATTLE_KEYWORD_RETAIN,[color=#9ec1ff]Retain[/color],[color=#9ec1ff]保留[/color]
+UI_BATTLE_KEYWORD_EXHAUST,[color=#cfa9ff]Exhaust[/color],[color=#cfa9ff]消耗[/color]
+UI_BATTLE_ATTR_CONSTITUTION,Constitution,体质
+UI_BATTLE_ATTR_INTELLIGENCE,Intelligence,智力
+UI_BATTLE_ATTR_LUCK,Luck,幸运
+UI_BATTLE_ATTR_CHARM,Charm,魅力
+UI_BATTLE_ATTR_ENERGY,Energy,能量

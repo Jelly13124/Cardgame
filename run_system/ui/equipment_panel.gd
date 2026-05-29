@@ -75,13 +75,13 @@ func _build() -> void:
 	var header := HBoxContainer.new()
 	vroot.add_child(header)
 	var title := Label.new()
-	title.text = "CHARACTER"
+	title.text = tr("UI_EQUIP_TITLE_CHARACTER")
 	title.add_theme_font_size_override("font_size", 36)
 	title.add_theme_color_override("font_color", Color(1, 0.95, 0.8))
 	header.add_child(title)
 	header.add_child(_spacer())
 	var close_btn := Button.new()
-	close_btn.text = "BACK TO MAP"
+	close_btn.text = tr("UI_EQUIP_BACK_TO_MAP")
 	close_btn.custom_minimum_size = Vector2(160, 42)
 	T.apply_button_theme(close_btn)
 	close_btn.pressed.connect(queue_free)
@@ -106,7 +106,7 @@ func _build() -> void:
 	slots_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_child(slots_col)
 	var slots_title := Label.new()
-	slots_title.text = "SLOTS"
+	slots_title.text = tr("UI_EQUIP_SLOTS")
 	slots_title.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
 	slots_col.add_child(slots_title)
 	for slot in RunManager.EQUIPMENT_SLOTS:
@@ -120,7 +120,9 @@ func _build() -> void:
 	body.add_child(inv_col)
 	_inventory_title = Label.new()
 	_inventory_title.name = "InventoryTitle"
-	_inventory_title.text = "INVENTORY (0/8)"
+	_inventory_title.text = tr("UI_EQUIP_INVENTORY_COUNT").format(
+		{"n": 0, "max": RunManager.MAX_INVENTORY}
+	)
 	_inventory_title.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
 	inv_col.add_child(_inventory_title)
 	_inventory_container = VBoxContainer.new()
@@ -131,7 +133,7 @@ func _build() -> void:
 	var sep1 := HSeparator.new()
 	vroot.add_child(sep1)
 	var sets_title := Label.new()
-	sets_title.text = "ACTIVE SETS"
+	sets_title.text = tr("UI_EQUIP_ACTIVE_SETS")
 	sets_title.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
 	vroot.add_child(sets_title)
 	_sets_container = VBoxContainer.new()
@@ -142,7 +144,7 @@ func _build() -> void:
 	var sep_relics := HSeparator.new()
 	vroot.add_child(sep_relics)
 	var relics_title := Label.new()
-	relics_title.text = "RELICS"
+	relics_title.text = tr("UI_EQUIP_RELICS")
 	relics_title.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
 	vroot.add_child(relics_title)
 	_relics_container = VBoxContainer.new()
@@ -189,7 +191,7 @@ func _build_slot_row(slot: String, parent: VBoxContainer) -> Dictionary:
 	row.add_child(label)
 
 	var unequip := Button.new()
-	unequip.text = "UNEQUIP"
+	unequip.text = tr("UI_EQUIP_UNEQUIP")
 	unequip.custom_minimum_size = Vector2(118, 40)
 	T.apply_button_theme(unequip)
 	unequip.pressed.connect(_on_unequip_pressed.bind(slot))
@@ -203,44 +205,46 @@ func _refresh() -> void:
 	if _vitals_label:
 		var floor_display = max(1, RunManager.current_floor + 1)
 		_vitals_label.text = (
-			"HP %d / %d     GOLD %d     FLOOR %d"
-			% [
-				RunManager.current_health,
-				RunManager.max_health,
-				RunManager.gold,
-				floor_display,
-			]
+			tr("UI_EQUIP_VITALS")
+			. format(
+				{
+					"hp": RunManager.current_health,
+					"max": RunManager.max_health,
+					"gold": RunManager.gold,
+					"floor": floor_display,
+				}
+			)
 		)
 
 	# Slots
 	for slot in RunManager.EQUIPMENT_SLOTS:
 		var row = _slot_rows[slot]
 		var item_id: String = RunManager.equipped_items.get(slot, "")
+		var slot_label := _slot_label(slot)
 		if item_id == "":
 			row["icon"].set_empty(slot)
-			row["icon"].set_hover_tooltip("[b]%s[/b]\n(empty slot)" % slot.to_upper())
-			row["name_label"].text = "%s: (empty)" % slot.to_upper()
+			row["icon"].set_hover_tooltip("[b]%s[/b]\n%s" % [slot_label, tr("UI_EQUIP_EMPTY_SLOT")])
+			row["name_label"].text = "%s: %s" % [slot_label, tr("UI_EQUIP_EMPTY")]
 			row["action_button"].visible = false
 		else:
 			var data = RunManager.get_equipment_data(item_id)
-			row["icon"].set_equipment(
-				slot, str(data.get("name", item_id)), str(data.get("sprite", ""))
-			)
+			var item_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
+			row["icon"].set_equipment(slot, item_name, str(data.get("sprite", "")))
 			row["icon"].set_hover_tooltip(_build_equipment_tooltip(data, slot))
 			row["action_button"].visible = true
 			row["name_label"].text = (
 				"%s: %s\n%s"
 				% [
-					slot.to_upper(),
-					str(data.get("name", item_id)),
+					slot_label,
+					item_name,
 					_format_bonuses(data.get("bonuses", {})),
 				]
 			)
 
 	# Inventory title
 	if _inventory_title:
-		_inventory_title.text = (
-			"INVENTORY (%d/%d)" % [RunManager.inventory_items.size(), RunManager.MAX_INVENTORY]
+		_inventory_title.text = tr("UI_EQUIP_INVENTORY_COUNT").format(
+			{"n": RunManager.inventory_items.size(), "max": RunManager.MAX_INVENTORY}
 		)
 
 	# Inventory rows (rebuild every refresh — simpler than diffing)
@@ -262,7 +266,7 @@ func _refresh() -> void:
 		child.queue_free()
 	if RunManager.relics.is_empty():
 		var none_lbl := Label.new()
-		none_lbl.text = "  (none yet)"
+		none_lbl.text = tr("UI_EQUIP_NONE_YET")
 		none_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 		_relics_container.add_child(none_lbl)
 	else:
@@ -272,14 +276,16 @@ func _refresh() -> void:
 	# Stats
 	var p = RunManager.player_attributes
 	_stats_label.text = (
-		"STR:%d  CON:%d  INT:%d  LUC:%d  CHA:%d"
-		% [
-			int(p.get("strength", 0)),
-			int(p.get("constitution", 0)),
-			int(p.get("intelligence", 0)),
-			int(p.get("luck", 0)),
-			int(p.get("charm", 0)),
-		]
+		tr("UI_EQUIP_STATS")
+		. format(
+			{
+				"str": int(p.get("strength", 0)),
+				"con": int(p.get("constitution", 0)),
+				"int": int(p.get("intelligence", 0)),
+				"luc": int(p.get("luck", 0)),
+				"cha": int(p.get("charm", 0)),
+			}
+		)
 	)
 	_status_label.text = ""
 
@@ -303,8 +309,9 @@ func _build_inventory_row(item_id: String, index: int) -> Control:
 	row.add_theme_constant_override("separation", 8)
 	margin.add_child(row)
 
+	var item_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
 	var icon := EQUIPMENT_ICON.new()
-	icon.set_equipment(slot, str(data.get("name", item_id)), str(data.get("sprite", "")))
+	icon.set_equipment(slot, item_name, str(data.get("sprite", "")))
 	icon.set_hover_tooltip(_build_equipment_tooltip(data, slot))
 	row.add_child(icon)
 
@@ -313,23 +320,21 @@ func _build_inventory_row(item_id: String, index: int) -> Control:
 	info.custom_minimum_size = Vector2(200, 0)
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var set_tag = ""
-	if str(data.get("set_id", "")) != "":
-		set_tag = "  [%s]" % str(data.get("set_id"))
-	info.text = (
-		"%s\n%s%s"
-		% [str(data.get("name", item_id)), _format_bonuses(data.get("bonuses", {})), set_tag]
-	)
+	var set_id_str := str(data.get("set_id", ""))
+	if set_id_str != "":
+		set_tag = "  [%s]" % Settings.t("EQUIP_SET_%s_NAME" % set_id_str, set_id_str)
+	info.text = "%s\n%s%s" % [item_name, _format_bonuses(data.get("bonuses", {})), set_tag]
 	row.add_child(info)
 
 	var equip_btn := Button.new()
-	equip_btn.text = "EQUIP"
+	equip_btn.text = tr("UI_EQUIP_EQUIP")
 	equip_btn.custom_minimum_size = Vector2(96, 40)
 	T.apply_button_theme(equip_btn)
 	equip_btn.pressed.connect(_on_equip_pressed.bind(item_id, slot, index))
 	row.add_child(equip_btn)
 
 	var discard_btn := Button.new()
-	discard_btn.text = "DISCARD"
+	discard_btn.text = tr("UI_EQUIP_DISCARD")
 	discard_btn.custom_minimum_size = Vector2(112, 40)
 	T.apply_button_theme(discard_btn)
 	discard_btn.pressed.connect(_on_discard_pressed.bind(index, discard_btn))
@@ -340,8 +345,8 @@ func _build_inventory_row(item_id: String, index: int) -> Control:
 
 func _build_relic_row(relic_id: String) -> Label:
 	var data = RunManager.get_relic_data(relic_id)
-	var title = str(data.get("title", relic_id))
-	var description = str(data.get("description", ""))
+	var title = Settings.t("RELIC_%s_TITLE" % relic_id, str(data.get("title", relic_id)))
+	var description = Settings.t("RELIC_%s_DESC" % relic_id, str(data.get("description", "")))
 	var row := Label.new()
 	row.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
 	row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -354,8 +359,9 @@ func _build_set_row(set_id: String, count: int) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 
+	var set_name := Settings.t("EQUIP_SET_%s_NAME" % set_id, str(set_data.get("name", set_id)))
 	var name_lbl := Label.new()
-	name_lbl.text = "%s  %d/5" % [str(set_data.get("name", set_id)), count]
+	name_lbl.text = "%s  %d/5" % [set_name, count]
 	name_lbl.add_theme_color_override("font_color", Color(1, 0.95, 0.5))
 	name_lbl.custom_minimum_size = Vector2(180, 0)
 	row.add_child(name_lbl)
@@ -367,8 +373,11 @@ func _build_set_row(set_id: String, count: int) -> HBoxContainer:
 			if typeof(tier) != TYPE_DICTIONARY:
 				continue
 			var threshold = int(tier.get("count", 0))
+			var tier_label := Settings.t(
+				"EQUIP_SET_%s_TIER_%d" % [set_id, threshold], str(tier.get("label", ""))
+			)
 			var label = Label.new()
-			label.text = "[%d] %s" % [threshold, str(tier.get("label", ""))]
+			label.text = "[%d] %s" % [threshold, tier_label]
 			if count >= threshold:
 				label.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
 			else:
@@ -380,12 +389,12 @@ func _build_set_row(set_id: String, count: int) -> HBoxContainer:
 
 func _on_equip_pressed(item_id: String, slot: String, _inventory_index: int) -> void:
 	if not RunManager.equip_to_slot(item_id, slot):
-		_status_label.text = "INVENTORY FULL — discard something first to swap"
+		_status_label.text = tr("UI_EQUIP_FULL_SWAP")
 
 
 func _on_unequip_pressed(slot: String) -> void:
 	if not RunManager.unequip_slot(slot):
-		_status_label.text = "INVENTORY FULL — discard something first to unequip"
+		_status_label.text = tr("UI_EQUIP_FULL_UNEQUIP")
 
 
 func _on_discard_pressed(index: int, btn: Button) -> void:
@@ -396,7 +405,7 @@ func _on_discard_pressed(index: int, btn: Button) -> void:
 
 func _format_bonuses(bonuses) -> String:
 	if typeof(bonuses) != TYPE_DICTIONARY or bonuses.is_empty():
-		return "(no bonuses)"
+		return tr("UI_EQUIP_NO_BONUSES")
 	var parts: Array = []
 	for attr in bonuses.keys():
 		parts.append("+%d %s" % [int(bonuses[attr]), str(attr).substr(0, 3)])
@@ -406,23 +415,44 @@ func _format_bonuses(bonuses) -> String:
 ## Rich tooltip text for an equipment item — name, slot, rarity, full
 ## attribute bonuses, optional set tag, and description.
 func _build_equipment_tooltip(data: Dictionary, slot: String) -> String:
-	var name_str := str(data.get("name", "?"))
+	var item_id := str(data.get("id", ""))
+	var name_str := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", "?")))
 	var rarity := str(data.get("rarity", "common"))
-	var desc := str(data.get("description", ""))
+	var rarity_str := Settings.t("EQUIP_RARITY_%s" % rarity, rarity)
+	var desc := Settings.t("EQUIP_%s_DESC" % item_id, str(data.get("description", "")))
 	var bonuses_text := _format_bonuses(data.get("bonuses", {}))
 	var set_id := str(data.get("set_id", ""))
 
 	var lines: Array = []
 	lines.append("[b]%s[/b]" % name_str)
-	lines.append("[i]%s · %s[/i]" % [slot.to_upper(), rarity])
+	lines.append("[i]%s · %s[/i]" % [_slot_label(slot), rarity_str])
 	lines.append("")
 	lines.append(bonuses_text)
 	if set_id != "":
-		lines.append("[i]Set: %s[/i]" % set_id.replace("_", " "))
+		var set_name := Settings.t("EQUIP_SET_%s_NAME" % set_id, set_id.replace("_", " "))
+		lines.append("[i]%s[/i]" % tr("UI_EQUIP_SET_PREFIX").format({"name": set_name}))
 	if desc != "":
 		lines.append("")
 		lines.append(desc)
 	return "\n".join(lines)
+
+
+## Localized display label for an equipment slot id (head/chest/weapon/hands/
+## accessory). Falls back to the upper-cased raw id for any unknown slot.
+func _slot_label(slot: String) -> String:
+	match slot:
+		"head":
+			return tr("UI_EQUIP_SLOT_HEAD")
+		"chest":
+			return tr("UI_EQUIP_SLOT_CHEST")
+		"weapon":
+			return tr("UI_EQUIP_SLOT_WEAPON")
+		"hands":
+			return tr("UI_EQUIP_SLOT_HANDS")
+		"accessory":
+			return tr("UI_EQUIP_SLOT_ACCESSORY")
+		_:
+			return slot.to_upper()
 
 
 func _spacer() -> Control:
