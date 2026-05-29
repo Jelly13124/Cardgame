@@ -10,6 +10,8 @@ const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 const CARD_FACTORY_SCENE = preload("res://battle_scene/my_card_factory.tscn")
 # Lazy-loaded at call site to avoid map→shop→map cyclic preload.
 const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
+const SHOP_BACKGROUND_PATH := "res://run_system/assets/images/shop/shop_interior_bg.png"
+const SHOPKEEPER_PATH := "res://run_system/assets/images/shop/shopkeeper.png"
 
 # --- Pricing (per rarity) ---
 const CARD_PRICE := {"common": 70, "uncommon": 120, "rare": 200}
@@ -152,15 +154,7 @@ func _load_json(path: String) -> Dictionary:
 
 func _build_ui() -> void:
 	# Backdrop — solid dark with subtle warmth
-	var bg := ColorRect.new()
-	bg.color = Color(0.025, 0.020, 0.016, 1.0)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
-
-	var shade := ColorRect.new()
-	shade.color = Color(0.0, 0.0, 0.0, 0.46)
-	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(shade)
+	_add_scene_art()
 
 	var root := MarginContainer.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -304,6 +298,46 @@ func _build_ui() -> void:
 	var leave_btn := _make_shop_button(tr("UI_SHOP_LEAVE"), Vector2(180, 48))
 	leave_btn.pressed.connect(_on_leave_pressed)
 	footer.add_child(leave_btn)
+
+
+func _add_scene_art() -> void:
+	if ResourceLoader.exists(SHOP_BACKGROUND_PATH):
+		var bg := TextureRect.new()
+		bg.texture = load(SHOP_BACKGROUND_PATH)
+		bg.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(bg)
+	else:
+		var bg := ColorRect.new()
+		bg.color = Color(0.025, 0.020, 0.016, 1.0)
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(bg)
+
+	var shade := ColorRect.new()
+	shade.color = Color(0.0, 0.0, 0.0, 0.40)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(shade)
+
+	if ResourceLoader.exists(SHOPKEEPER_PATH):
+		var keeper := TextureRect.new()
+		keeper.texture = load(SHOPKEEPER_PATH)
+		keeper.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		keeper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		keeper.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		keeper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		keeper.anchor_left = 1.0
+		keeper.anchor_top = 1.0
+		keeper.anchor_right = 1.0
+		keeper.anchor_bottom = 1.0
+		keeper.offset_left = -330
+		keeper.offset_top = -520
+		keeper.offset_right = -36
+		keeper.offset_bottom = -32
+		add_child(keeper)
 
 
 func _section_header(text: String) -> Label:

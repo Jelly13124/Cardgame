@@ -7,6 +7,7 @@ const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const UPGRADE_PANEL_SCRIPT = preload("res://run_system/ui/upgrade_panel.gd")
 const HERO_SELECT_PACKED = preload("res://run_system/ui/hero_select.tscn")
 const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
+const HOME_BACKGROUND_PATH := "res://run_system/assets/images/home/home_base_bg.png"
 const UPGRADE_DIR := "res://run_system/data/base_upgrades/"
 const UPGRADE_ORDER := [
 	"med_bay",
@@ -29,10 +30,7 @@ func _ready() -> void:
 
 
 func _build() -> void:
-	var bg := ColorRect.new()
-	bg.color = Color(0.08, 0.07, 0.05, 1.0)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
+	_add_background()
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -110,6 +108,29 @@ func _build() -> void:
 	start_btn.add_theme_font_size_override("font_size", 24)
 	start_btn.pressed.connect(_on_start_pressed)
 	actions.add_child(start_btn)
+
+
+func _add_background() -> void:
+	if ResourceLoader.exists(HOME_BACKGROUND_PATH):
+		var bg := TextureRect.new()
+		bg.texture = load(HOME_BACKGROUND_PATH)
+		bg.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(bg)
+	else:
+		var bg := ColorRect.new()
+		bg.color = Color(0.08, 0.07, 0.05, 1.0)
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(bg)
+
+	var shade := ColorRect.new()
+	shade.color = Color(0.0, 0.0, 0.0, 0.28)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(shade)
 
 
 ## Settings overlay (Language / Fullscreen / Volume). Language change reloads
