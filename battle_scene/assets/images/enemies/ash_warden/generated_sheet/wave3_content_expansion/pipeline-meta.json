@@ -1,0 +1,68 @@
+{
+  "target": "wave3_content_expansion_assets",
+  "source_spec": "docs/asset-spec-content-expansion.md",
+  "generated_at": "2026-05-29T00:13:55.647257+00:00",
+  "style_anchor": "hardcore 128 pixel wasteland art style, native 128x128 pixel game sprite readability, bold black pixel outlines, gritty rusted scrap metal, worn leather and patched cloth, dusty desert palette, controlled pixel shading, salvaged bolts dents tubes and cracked glass, one small neon accent, transparent background, no high-resolution cartoon brushwork",
+  "entries": [
+    {
+      "id": "ash_warden_attack_0",
+      "raw": "battle_scene/assets/images/enemies/ash_warden/generated_sheet/wave3_content_expansion/ash_warden_attack_0-raw.png",
+      "final": "battle_scene/assets/images/enemies/ash_warden/attack/ash_warden_attack_0.png",
+      "size": [
+        192,
+        192
+      ],
+      "processing": "deterministic low-resolution pixel pass, #FF00FF raw composite, transparent final PNG",
+      "sprite_id": "ash_warden",
+      "frame": 0,
+      "theme": "Tall soot-black armored sentinel with ember cracks and a poleaxe",
+      "neon_accent": "ember red-orange",
+      "prompt": "ash_warden: Tall soot-black armored sentinel with ember cracks and a poleaxe; enemy faces left; four attack frames wind-up, strike, impact/recoil, settle; one small neon accent: ember red-orange; side view, full body, shared baseline, consistent scale. hardcore 128 pixel wasteland art style, native 128x128 pixel game sprite readability, bold black pixel outlines, gritty rusted scrap metal, worn leather and patched cloth, dusty desert palette, controlled pixel shading, salvaged bolts dents tubes and cracked glass, one small neon accent, transparent background, no high-resolution cartoon brushwork"
+    },
+    {
+      "id": "ash_warden_attack_1",
+      "raw": "battle_scene/assets/images/enemies/ash_warden/generated_sheet/wave3_content_expansion/ash_warden_attack_1-raw.png",
+      "final": "battle_scene/assets/images/enemies/ash_warden/attack/ash_warden_attack_1.png",
+      "size": [
+        192,
+        192
+      ],
+      "processing": "deterministic low-resolution pixel pass, #FF00FF raw composite, transparent final PNG",
+      "sprite_id": "ash_warden",
+      "frame": 1,
+      "theme": "Tall soot-black armored sentinel with ember cracks and a poleaxe",
+      "neon_accent": "ember red-orange",
+      "prompt": "ash_warden: Tall soot-black armored sentinel with ember cracks and a poleaxe; enemy faces left; four attack frames wind-up, strike, impact/recoil, settle; one small neon accent: ember red-orange; side view, full body, shared baseline, consistent scale. hardcore 128 pixel wasteland art style, native 128x128 pixel game sprite readability, bold black pixel outlines, gritty rusted scrap metal, worn leather and patched cloth, dusty desert palette, controlled pixel shading, salvaged bolts dents tubes and cracked glass, one small neon accent, transparent background, no high-resolution cartoon brushwork"
+    },
+    {
+      "id": "ash_warden_attack_2",
+      "raw": "battle_scene/assets/images/enemies/ash_warden/generated_sheet/wave3_content_expansion/ash_warden_attack_2-raw.png",
+      "final": "battle_scene/assets/images/enemies/ash_warden/attack/ash_warden_attack_2.png",
+      "size": [
+        192,
+        192
+      ],
+      "processing": "deterministic low-resolution pixel pass, #FF00FF raw composite, transparent final PNG",
+      "sprite_id": "ash_warden",
+      "frame": 2,
+      "theme": "Tall soot-black armored sentinel with ember cracks and a poleaxe",
+      "neon_accent": "ember red-orange",
+      "prompt": "ash_warden: Tall soot-black armored sentinel with ember cracks and a poleaxe; enemy faces left; four attack frames wind-up, strike, impact/recoil, settle; one small neon accent: ember red-orange; side view, full body, shared baseline, consistent scale. hardcore 128 pixel wasteland art style, native 128x128 pixel game sprite readability, bold black pixel outlines, gritty rusted scrap metal, worn leather and patched cloth, dusty desert palette, controlled pixel shading, salvaged bolts dents tubes and cracked glass, one small neon accent, transparent background, no high-resolution cartoon brushwork"
+    },
+    {
+      "id": "ash_warden_attack_3",
+      "raw": "battle_scene/assets/images/enemies/ash_warden/generated_sheet/wave3_content_expansion/ash_warden_attack_3-raw.png",
+      "final": "battle_scene/assets/images/enemies/ash_warden/attack/ash_warden_attack_3.png",
+      "size": [
+        192,
+        192
+      ],
+      "processing": "deterministic low-resolution pixel pass, #FF00FF raw composite, transparent final PNG",
+      "sprite_id": "ash_warden",
+      "frame": 3,
+      "theme": "Tall soot-black armored sentinel with ember cracks and a poleaxe",
+      "neon_accent": "ember red-orange",
+      "prompt": "ash_warden: Tall soot-black armored sentinel with ember cracks and a poleaxe; enemy faces left; four attack frames wind-up, strike, impact/recoil, settle; one small neon accent: ember red-orange; side view, full body, shared baseline, consistent scale. hardcore 128 pixel wasteland art style, native 128x128 pixel game sprite readability, bold black pixel outlines, gritty rusted scrap metal, worn leather and patched cloth, dusty desert palette, controlled pixel shading, salvaged bolts dents tubes and cracked glass, one small neon accent, transparent background, no high-resolution cartoon brushwork"
+    }
+  ]
+}

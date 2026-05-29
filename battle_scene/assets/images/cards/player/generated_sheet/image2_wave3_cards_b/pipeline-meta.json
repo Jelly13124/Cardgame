@@ -1,0 +1,15 @@
+{
+  "asset_ids": [
+    "chain_link",
+    "double_tap",
+    "flash_bang",
+    "focus"
+  ],
+  "source": "image2 via built-in image_gen",
+  "postprocess": "crop/transparent cleanup only",
+  "frame_size": [
+    512,
+    320
+  ],
+  "generated_at": "2026-05-29T06:33:42.907402+00:00"
+}

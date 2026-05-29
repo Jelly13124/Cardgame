@@ -1,0 +1,1 @@
+Wave 3 card art regenerated with image2 / built-in image_gen, using Cowboy Bill hardcore wasteland sprite art reference. Local postprocess only removed baked checkerboard background and preserved transparent 512x320 PNGs.
