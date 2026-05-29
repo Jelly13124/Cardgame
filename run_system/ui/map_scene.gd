@@ -413,7 +413,7 @@ func _open_relic_choice(title: String, source_type: String) -> void:
 	var hint = Label.new()
 	hint.text = tr("UI_MAP_RELIC_PICK_HINT")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.add_theme_font_size_override("font_size", 16)
+	hint.add_theme_font_size_override("font_size", 20)
 	hint.add_theme_color_override("font_color", Color(0.78, 0.72, 0.62))
 	_relic_choice_box.add_child(hint)
 
@@ -488,7 +488,7 @@ func _make_relic_choice_button(relic_id: String, source_type: String) -> Button:
 	var desc_text = Label.new()
 	desc_text.text = description
 	desc_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc_text.add_theme_font_size_override("font_size", 15)
+	desc_text.add_theme_font_size_override("font_size", 20)
 	desc_text.add_theme_color_override("font_color", Color(0.88, 0.82, 0.70))
 	text_box.add_child(desc_text)
 
@@ -518,7 +518,7 @@ func _humanize_id(value: String) -> String:
 func _build_equipment_button() -> void:
 	var equip_btn := Button.new()
 	equip_btn.text = tr("UI_MAP_CHARACTER_BTN")
-	equip_btn.add_theme_font_size_override("font_size", 16)
+	equip_btn.add_theme_font_size_override("font_size", 20)
 	T.apply_button_theme(equip_btn)
 	# Anchor to top-right corner with a small margin
 	equip_btn.anchor_left = 1.0
@@ -546,7 +546,7 @@ func _open_equipment_panel() -> void:
 func _build_deck_button() -> void:
 	var deck_btn := Button.new()
 	deck_btn.text = tr("UI_MAP_DECK_BTN")
-	deck_btn.add_theme_font_size_override("font_size", 16)
+	deck_btn.add_theme_font_size_override("font_size", 20)
 	T.apply_button_theme(deck_btn)
 	# Place immediately to the LEFT of the CHARACTER button
 	deck_btn.anchor_left = 1.0

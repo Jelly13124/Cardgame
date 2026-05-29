@@ -43,7 +43,7 @@ func _build() -> void:
 	vbox.add_child(_title_label)
 
 	_level_label = Label.new()
-	_level_label.add_theme_font_size_override("font_size", 18)
+	_level_label.add_theme_font_size_override("font_size", 20)
 	_level_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
 	vbox.add_child(_level_label)
 
@@ -58,7 +58,7 @@ func _build() -> void:
 	vbox.add_child(bottom)
 
 	_cost_label = Label.new()
-	_cost_label.add_theme_font_size_override("font_size", 18)
+	_cost_label.add_theme_font_size_override("font_size", 20)
 	_cost_label.add_theme_color_override("font_color", Color(0.6, 0.85, 1.0))
 	bottom.add_child(_cost_label)
 

@@ -1,51 +1,109 @@
 extends Control
 
+## Hero selection — portrait-based, data-driven. Builds one clickable portrait
+## card per hero discovered in run_system/data/heroes/. No hardcoded scene
+## button slots (a new hero JSON appears automatically). Portrait is the hero's
+## sprite portrait, tinted by the hero's `tint`; locked heroes are dimmed.
+
 const MAP_PACKED = preload("res://run_system/ui/map_scene.tscn")
 const HERO_DIR := "res://run_system/data/heroes/"
+const HERO_SPRITE_DIR := "res://battle_scene/assets/images/heroes/"
 
-@onready var bill_btn = $HBoxContainer/BillButton
-@onready var jerry_btn = $HBoxContainer/JerryButton
+@onready var hero_row: HBoxContainer = $HeroRow
 
-# Map from hero_id → Button so we can lock/unlock individually.
-var _hero_buttons: Dictionary = {}
 var _ascension_slider: HSlider = null
 var _ascension_value_label: Label = null
 
 
 func _ready() -> void:
-	_setup_buttons()
+	_build_hero_cards()
+	_build_ascension_slider()
 
 
-func _setup_buttons() -> void:
-	# Discover heroes from JSON dir. The existing scene has BillButton and
-	# JerryButton hardcoded; we keep them as anchors and rebind to the heroes
-	# we actually find, in alphabetical id order.
+func _build_hero_cards() -> void:
+	for child in hero_row.get_children():
+		child.queue_free()
+
 	var hero_ids := _list_hero_ids()
 	hero_ids.sort()
-
-	_hero_buttons.clear()
-
-	# Bill always exists; Jerry is gated on the jerry_unlock meta upgrade.
 	for hero_id in hero_ids:
-		var hero_data := _load_hero(hero_id)
-		var btn: Button = _button_for_hero(hero_id)
-		if not btn:
-			continue
-		_hero_buttons[hero_id] = btn
-		_apply_button_state(btn, hero_id, hero_data)
+		hero_row.add_child(_make_hero_card(hero_id, _load_hero(hero_id)))
 
-	_build_ascension_slider()
+
+func _make_hero_card(hero_id: String, hero_data: Dictionary) -> Control:
+	var card := VBoxContainer.new()
+	card.add_theme_constant_override("separation", 12)
+	card.alignment = BoxContainer.ALIGNMENT_CENTER
+
+	var english_name := str(hero_data.get("name", hero_id))
+	var hero_name := Settings.t("HERO_%s_NAME" % hero_id, english_name).to_upper()
+	var tint := _parse_tint(str(hero_data.get("tint", "#ffffff")))
+	var locked: bool = (
+		hero_id == "hero_jerry_killer" and MetaProgress.get_upgrade_level("jerry_unlock") <= 0
+	)
+
+	var portrait := TextureButton.new()
+	portrait.custom_minimum_size = Vector2(280, 380)
+	portrait.ignore_texture_size = true
+	portrait.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	var tex := _load_portrait(str(hero_data.get("sprite_id", hero_id)))
+	if tex:
+		portrait.texture_normal = tex
+	if locked:
+		portrait.modulate = Color(0.28, 0.28, 0.30)
+		portrait.mouse_default_cursor_shape = Control.CURSOR_ARROW
+	else:
+		portrait.modulate = tint
+		portrait.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		portrait.pressed.connect(func() -> void: _select_hero(hero_id))
+		portrait.mouse_entered.connect(func() -> void: portrait.modulate = tint.lightened(0.15))
+		portrait.mouse_exited.connect(func() -> void: portrait.modulate = tint)
+	card.add_child(portrait)
+
+	var name_label := Label.new()
+	name_label.text = hero_name
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.add_theme_font_size_override("font_size", 30)
+	name_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.62) if locked else tint)
+	card.add_child(name_label)
+
+	if locked:
+		var lock := Label.new()
+		lock.text = tr("UI_HERO_LOCKED_SHORT")
+		lock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lock.add_theme_font_size_override("font_size", 20)
+		lock.add_theme_color_override("font_color", Color(0.85, 0.62, 0.32))
+		card.add_child(lock)
+
+	return card
+
+
+func _parse_tint(hex: String) -> Color:
+	if hex.is_valid_html_color():
+		return Color(hex)
+	return Color.WHITE
+
+
+func _load_portrait(sprite_id: String) -> Texture2D:
+	var path := "%s%s/%s_portrait.png" % [HERO_SPRITE_DIR, sprite_id, sprite_id]
+	if ResourceLoader.exists(path):
+		return load(path)
+	if FileAccess.file_exists(path):
+		var img := Image.load_from_file(path)
+		if img:
+			return ImageTexture.create_from_image(img)
+	push_warning("hero_select: missing portrait '%s'" % path)
+	return null
 
 
 func _build_ascension_slider() -> void:
 	if MetaProgress.max_ascension <= 0:
 		return  # nothing to choose
 
-	# Insert below the HBoxContainer with the hero buttons.
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 6)
 	vbox.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	vbox.position.y = -100
+	vbox.position.y = -110
 	add_child(vbox)
 
 	var label := Label.new()
@@ -104,42 +162,7 @@ func _load_hero(hero_id: String) -> Dictionary:
 	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
 
 
-## Map well-known hero ids to the existing scene buttons. Heroes beyond
-## these two need a UI redesign — flag at runtime.
-func _button_for_hero(hero_id: String) -> Button:
-	if hero_id == "cowboy_bill":
-		return bill_btn
-	if hero_id == "hero_jerry_killer":
-		return jerry_btn
-	push_warning(
-		"hero_select: no button slot for hero '%s' — add to scene if you want it visible" % hero_id
-	)
-	return null
-
-
-func _apply_button_state(btn: Button, hero_id: String, hero_data: Dictionary) -> void:
-	var english_name := str(hero_data.get("name", hero_id))
-	var hero_name := Settings.t("HERO_%s_NAME" % hero_id, english_name).to_upper()
-	# Jerry-style lock: gated on the jerry_unlock meta upgrade.
-	if hero_id == "hero_jerry_killer":
-		var unlocked: bool = MetaProgress.get_upgrade_level("jerry_unlock") > 0
-		if not unlocked:
-			btn.text = tr("UI_HERO_LOCKED").format({"name": hero_name})
-			btn.disabled = true
-			# Disconnect any existing handler — we don't want clicks to fire.
-			for cb in btn.pressed.get_connections():
-				btn.pressed.disconnect(cb["callable"])
-			return
-	# Unlocked path
-	btn.text = hero_name
-	btn.disabled = false
-	for cb in btn.pressed.get_connections():
-		btn.pressed.disconnect(cb["callable"])
-	btn.pressed.connect(func(): _select_hero(hero_id))
-
-
 func _select_hero(hero_id: String) -> void:
-	print("Selected Commander: ", hero_id)
 	var asc: int = MetaProgress.max_ascension
 	if _ascension_slider:
 		asc = int(_ascension_slider.value)
