@@ -8,6 +8,12 @@ You are working in the Godot 4.6 project at `C:\Users\Jerry\Desktop\Cardgame` �
 
 **Generation method (read first):** This briefing fixes *what* to produce — paths, sizes, style, one neon accent per item — not *how*. There is currently NO external image service configured (the previous one was dropped). Generate using whatever image capability your session has; if you have none, the fallback is to improve the procedural generator `scripts/gen_wave3_content_assets.py` (it already drew crude geometric placeholders at every target path). Either way, **overwrite the existing placeholder PNGs in place**, and do not re-introduce any specific external tool dependency.
 
+**Style ground truth — study these BEFORE generating anything, and match them.** Cowboy Bill is the canonical character and the single source of truth for the look:
+- `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_portrait.png`
+- `battle_scene/assets/images/heroes/cowboy_bill/attack/cowboy_bill_attack_0.png`
+
+Match his exact treatment: warm rust / leather / brass / dusty-tan palette; bold dark outlines; rich controlled shading with a clear highlight-mid-shadow read (a polished, fully-rendered sprite — NOT flat, lo-fi, or crude geometric shapes); riveted salvaged-metal and patched-cloth materials; and exactly one small glowing neon accent (like Bill's amber eye and cyan chest light). Every new card, enemy, equipment, and relic must look like it belongs in the same set as Bill — same line weight, same rendering fidelity, same palette family. **If the "hardcore 128 pixel wasteland" wording in these docs ever seems to conflict with how Bill actually looks, Bill's sprite wins** — it is the real target; the text is only shorthand.
+
 ## Step 1 — Read these files before doing anything else
 
 1. **`docs/asset-spec-content-expansion.md`** — your authoritative work order. Lists every PNG you need to deliver, the exact file path, the frame size, the theme description, and the neon accent color per item. Read sections 0–8 in order.
@@ -20,6 +26,7 @@ Also look at one reference of each existing asset type so your output matches th
 
 | Reference for | File |
 |---|---|
+| **Overall style anchor (study FIRST)** | `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_portrait.png` + `heroes/cowboy_bill/attack/cowboy_bill_attack_0.png` |
 | Card front art      | `battle_scene/assets/images/cards/player/strike.png` (512×320) |
 | Regular enemy frame | `battle_scene/assets/images/enemies/trash_robot/attack/trash_robot_attack_0.png` (128×128) |
 | Boss enemy frame    | `battle_scene/assets/images/enemies/junkyard_tyrant/attack/junkyard_tyrant_attack_0.png` (192×192) |

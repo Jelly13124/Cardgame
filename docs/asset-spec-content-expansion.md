@@ -30,6 +30,7 @@ Color palette guidance:
 - **Outlines:** bold black pixel outlines
 - **Shading:** controlled pixel shading, not high-res cartoon brushwork
 - **Reference image:** `docs/art/hardcore-128-pixel-wasteland-reference.png`
+- **Style ground truth (match this above all):** `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_portrait.png` and `heroes/cowboy_bill/attack/cowboy_bill_attack_0.png`. Cowboy Bill is the canonical look — a polished, fully-rendered sprite with bold outlines, warm rust/leather/brass palette, rich highlight-mid-shadow shading, and one small glowing neon accent. New art must sit in the same set as Bill. The "hardcore 128 pixel" wording is shorthand; **if it conflicts with how Bill actually looks, Bill's sprite wins.**
 
 ---
 
