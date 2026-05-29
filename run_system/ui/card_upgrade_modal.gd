@@ -50,14 +50,14 @@ func _build() -> void:
 	margin.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "UPGRADE A CARD"
+	title.text = tr("UI_COMMON_UPGRADE_A_CARD")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 28)
 	title.add_theme_color_override("font_color", Color(1, 0.95, 0.5))
 	vbox.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "Pick a card to permanently upgrade for the rest of the run."
+	subtitle.text = tr("UI_COMMON_UPGRADE_PICK_HINT")
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.add_theme_color_override("font_color", Color(0.9, 0.88, 0.8))
 	vbox.add_child(subtitle)
@@ -90,7 +90,7 @@ func _build() -> void:
 
 	if candidates_added == 0:
 		var none_lbl := Label.new()
-		none_lbl.text = "(All cards in your deck are already upgraded.)"
+		none_lbl.text = tr("UI_COMMON_UPGRADE_NONE_AVAILABLE")
 		none_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 		vbox.add_child(none_lbl)
 
@@ -99,7 +99,7 @@ func _build() -> void:
 	actions.alignment = BoxContainer.ALIGNMENT_END
 	vbox.add_child(actions)
 	var cancel := Button.new()
-	cancel.text = "CANCEL"
+	cancel.text = tr("UI_COMMON_CANCEL")
 	cancel.custom_minimum_size = Vector2(140, 42)
 	cancel.pressed.connect(_on_cancel)
 	actions.add_child(cancel)

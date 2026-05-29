@@ -6,10 +6,10 @@ uid="uid://ygbue40quvpl"
 
 [deps]
 
-files=["res://assets/translations/ui_equipment.en.translation", "res://assets/translations/ui_equipment.en.translation"]
+files=["res://assets/translations/ui_equipment.en.translation", "res://assets/translations/ui_equipment.zh.translation"]
 
 source_file="res://assets/translations/ui_equipment.csv"
-dest_files=["res://assets/translations/ui_equipment.en.translation", "res://assets/translations/ui_equipment.en.translation"]
+dest_files=["res://assets/translations/ui_equipment.en.translation", "res://assets/translations/ui_equipment.zh.translation"]
 
 [params]
 

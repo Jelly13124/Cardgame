@@ -76,8 +76,8 @@ func _generate_loot() -> void:
 			"id": "gold",
 			"type": "gold",
 			"amount": gold_amount,
-			"title": "%d Gold" % gold_amount,
-			"subtitle": "Recovered from the fight",
+			"title": tr("UI_LOOT_GOLD_TITLE").format({"n": gold_amount}),
+			"subtitle": tr("UI_LOOT_GOLD_SUBTITLE"),
 			"icon": GOLD_ICON_PATH
 		}
 	)
@@ -86,8 +86,8 @@ func _generate_loot() -> void:
 		{
 			"id": "cards",
 			"type": "cards",
-			"title": "Card Reward",
-			"subtitle": "Choose one card for your deck",
+			"title": tr("UI_LOOT_CARD_TITLE"),
+			"subtitle": tr("UI_LOOT_CARD_SUBTITLE"),
 			"icon": CARD_REWARD_ICON_PATH
 		}
 	)
@@ -97,20 +97,22 @@ func _generate_loot() -> void:
 		var data = RunManager.get_equipment_data(equipment_drop_id)
 		var set_tag := ""
 		if str(data.get("set_id", "")) != "":
-			set_tag = " [%s set]" % str(data.get("set_id"))
+			set_tag = tr("UI_LOOT_EQUIP_SET_TAG").format({"set": str(data.get("set_id"))})
 		available_loot.append(
 			{
 				"id": "equipment",
 				"type": "equipment",
 				"item_id": equipment_drop_id,
-				"title": str(data.get("name", equipment_drop_id)),
+				"title":
+				Settings.t(
+					"EQUIP_%s_NAME" % equipment_drop_id, str(data.get("name", equipment_drop_id))
+				),
 				"subtitle":
-				(
-					"Equipment Drop%s - %s"
-					% [set_tag, _format_equipment_bonuses(data.get("bonuses", {}))]
+				tr("UI_LOOT_EQUIP_SUBTITLE").format(
+					{"set": set_tag, "bonuses": _format_equipment_bonuses(data.get("bonuses", {}))}
 				),
 				"icon": "res://battle_scene/assets/images/%s" % str(data.get("sprite", "")),
-				"action": "TAKE"
+				"action": tr("UI_LOOT_ACTION_TAKE")
 			}
 		)
 
@@ -161,7 +163,7 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	row.add_child(copy)
 
 	var title = Label.new()
-	title.text = str(loot.get("title", "Reward"))
+	title.text = str(loot.get("title", tr("UI_LOOT_DEFAULT_TITLE")))
 	title.add_theme_color_override("font_color", T.TEXT_MAIN)
 	title.add_theme_font_size_override("font_size", 31)
 	title.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
@@ -175,7 +177,7 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	copy.add_child(subtitle)
 
-	row.add_child(_make_claim_plate(str(loot.get("action", "CLAIM"))))
+	row.add_child(_make_claim_plate(str(loot.get("action", tr("UI_LOOT_ACTION_CLAIM")))))
 	return button
 
 
@@ -210,7 +212,7 @@ func _make_icon_well(icon_path: String) -> PanelContainer:
 	return frame
 
 
-func _make_claim_plate(label_text: String = "CLAIM") -> PanelContainer:
+func _make_claim_plate(label_text: String = "") -> PanelContainer:
 	var plate = PanelContainer.new()
 	plate.custom_minimum_size = Vector2(104, 50)
 	plate.add_theme_stylebox_override(
@@ -219,7 +221,7 @@ func _make_claim_plate(label_text: String = "CLAIM") -> PanelContainer:
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var label = Label.new()
-	label.text = label_text
+	label.text = label_text if label_text != "" else tr("UI_LOOT_ACTION_CLAIM")
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 18)
@@ -412,7 +414,7 @@ func _claim_equipment_drop(item_id: String, button: Button) -> void:
 
 func _format_equipment_bonuses(bonuses) -> String:
 	if typeof(bonuses) != TYPE_DICTIONARY or bonuses.is_empty():
-		return "(no bonuses)"
+		return tr("UI_LOOT_NO_BONUSES")
 	var parts: Array = []
 	for attr in bonuses.keys():
 		parts.append("+%d %s" % [int(bonuses[attr]), str(attr).substr(0, 3)])

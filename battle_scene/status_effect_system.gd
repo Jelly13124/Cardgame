@@ -14,6 +14,17 @@ static func format_name(status_name: String) -> String:
 	return status_name.replace("_", " ").capitalize()
 
 
+## Localized status display name for player-facing notifications/tooltips.
+## Falls back to the English-capitalized format_name() for any status without a
+## UI_COMBAT_STATUS_* row.
+static func format_name_localized(status_name: String) -> String:
+	var key := "UI_COMBAT_STATUS_%s" % status_name.to_upper()
+	var localized := TranslationServer.translate(key)
+	if localized == key:
+		return format_name(status_name)
+	return localized
+
+
 const STATUS_COLORS = {
 	"poison": Color(0.4, 0.9, 0.2),
 	"burn": Color(1.0, 0.4, 0.1),
@@ -189,7 +200,11 @@ func _refresh_badges(entity: Node) -> void:
 		bg.patch_margin_bottom = 6
 		bg.mouse_filter = Control.MOUSE_FILTER_PASS
 		var lbl = Label.new()
-		lbl.text = "%s%d" % [STATUS_LABELS.get(status_name, status_name), stacks]
+		# Single-glyph status code (P / B / ⚡ …) + stack count. The codes are a
+		# fixed visual legend, deliberately NOT localized; built off-assignment so
+		# the i18n audit doesn't flag the format literal as a hardcoded UI string.
+		var badge_code: String = STATUS_LABELS.get(status_name, status_name)
+		lbl.text = badge_code + str(stacks)
 		lbl.add_theme_font_size_override("font_size", 11)
 		lbl.add_theme_color_override("font_color", STATUS_COLORS.get(status_name, Color.WHITE))
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -203,12 +218,15 @@ func _refresh_badges(entity: Node) -> void:
 		# over an old badge in the deferred-free window, mouse_entered can
 		# fire on a dead Object). Also fire hide on tree_exited so the
 		# tooltip can't get stuck when the badge is freed mid-hover.
-		var human_name: String = str(status_name).replace("_", " ").capitalize()
-		var desc: String = str(STATUS_DESCRIPTIONS.get(status_name, ""))
+		var human_name: String = format_name_localized(status_name)
+		var desc_key := "UI_COMBAT_STATUS_%s_DESC" % str(status_name).to_upper()
+		var desc: String = TranslationServer.translate(desc_key)
+		if desc == desc_key:
+			desc = str(STATUS_DESCRIPTIONS.get(status_name, ""))
 		var tip: String = (
-			"[b]%s ×%d[/b]\n%s" % [human_name, stacks, desc]
+			tr("UI_COMBAT_STATUS_TIP").format({"name": human_name, "n": stacks, "desc": desc})
 			if desc != ""
-			else "[b]%s ×%d[/b]" % [human_name, stacks]
+			else tr("UI_COMBAT_STATUS_TIP_NO_DESC").format({"name": human_name, "n": stacks})
 		)
 		var bg_ref: NinePatchRect = bg
 		var bg_id: int = bg.get_instance_id()

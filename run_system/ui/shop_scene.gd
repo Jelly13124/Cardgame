@@ -210,7 +210,7 @@ func _build_ui() -> void:
 	header.alignment = BoxContainer.ALIGNMENT_CENTER
 	vroot.add_child(header)
 	var title := Label.new()
-	title.text = "THE MERCHANT"
+	title.text = tr("UI_SHOP_TITLE")
 	title.add_theme_font_size_override("font_size", 34)
 	title.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
 	header.add_child(title)
@@ -239,7 +239,7 @@ func _build_ui() -> void:
 	gold_margin.add_child(gold_row)
 
 	var gold_title := Label.new()
-	gold_title.text = "GOLD"
+	gold_title.text = tr("UI_SHOP_GOLD")
 	gold_title.add_theme_font_size_override("font_size", 18)
 	gold_title.add_theme_color_override("font_color", T.TEXT_MAIN)
 	gold_row.add_child(gold_title)
@@ -262,7 +262,7 @@ func _build_ui() -> void:
 	scroll.add_child(body)
 
 	# Cards section
-	var cards_section := _make_section_panel("CARDS", Vector2(0, 338))
+	var cards_section := _make_section_panel(tr("UI_SHOP_SECTION_CARDS"), Vector2(0, 338))
 	body.add_child(cards_section["panel"] as Control)
 	var cards_body := cards_section["body"] as VBoxContainer
 	var cards_row := HBoxContainer.new()
@@ -282,7 +282,9 @@ func _build_ui() -> void:
 		body.add_child(mid_row)
 
 		if not _stock_equipment.is_empty():
-			var equip_section := _make_section_panel("EQUIPMENT", Vector2(560, 238))
+			var equip_section := _make_section_panel(
+				tr("UI_SHOP_SECTION_EQUIPMENT"), Vector2(560, 238)
+			)
 			mid_row.add_child(equip_section["panel"] as Control)
 			var equip_body := equip_section["body"] as VBoxContainer
 			var equip_row := HBoxContainer.new()
@@ -294,13 +296,13 @@ func _build_ui() -> void:
 				equip_row.add_child(_build_equipment_stall(entry))
 
 		if _stock_relic != "":
-			var relic_section := _make_section_panel("RELIC", Vector2(390, 238))
+			var relic_section := _make_section_panel(tr("UI_SHOP_SECTION_RELIC"), Vector2(390, 238))
 			mid_row.add_child(relic_section["panel"] as Control)
 			var relic_body := relic_section["body"] as VBoxContainer
 			relic_body.add_child(_build_relic_stall(_stock_relic))
 
 	# Services
-	var services_section := _make_section_panel("SERVICES", Vector2(0, 98))
+	var services_section := _make_section_panel(tr("UI_SHOP_SECTION_SERVICES"), Vector2(0, 98))
 	body.add_child(services_section["panel"] as Control)
 	var services_body := services_section["body"] as VBoxContainer
 	services_body.add_child(_build_remove_service_row())
@@ -311,7 +313,7 @@ func _build_ui() -> void:
 	var fspacer := Control.new()
 	fspacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer.add_child(fspacer)
-	var leave_btn := _make_shop_button("LEAVE", Vector2(180, 48))
+	var leave_btn := _make_shop_button(tr("UI_SHOP_LEAVE"), Vector2(180, 48))
 	leave_btn.pressed.connect(_on_leave_pressed)
 	footer.add_child(leave_btn)
 
@@ -400,11 +402,11 @@ func _build_card_stall(entry: Dictionary) -> Control:
 	price_row.add_theme_constant_override("separation", 10)
 	wrapper.add_child(price_row)
 	var price_lbl := Label.new()
-	price_lbl.text = "%dg" % int(entry["price"])
+	price_lbl.text = tr("UI_SHOP_PRICE").format({"n": int(entry["price"])})
 	price_lbl.add_theme_font_size_override("font_size", 18)
 	price_lbl.add_theme_color_override("font_color", SHOP_PRICE)
 	price_row.add_child(price_lbl)
-	var buy_btn := _make_shop_button("BUY", Vector2(104, 36))
+	var buy_btn := _make_shop_button(tr("UI_SHOP_BUY"), Vector2(104, 36))
 	buy_btn.pressed.connect(_on_buy_card.bind(card_id, int(entry["price"]), buy_btn))
 	price_row.add_child(buy_btn)
 
@@ -433,6 +435,7 @@ func _build_equipment_stall(entry: Dictionary) -> Control:
 	var item_id: String = str(entry["item_id"])
 	var data := RunManager.get_equipment_data(item_id)
 	var slot := str(data.get("slot", "head"))
+	var equip_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
 
 	# Icon centered
 	var icon_holder := HBoxContainer.new()
@@ -441,11 +444,11 @@ func _build_equipment_stall(entry: Dictionary) -> Control:
 	var icon := EQUIPMENT_ICON.new()
 	icon.custom_minimum_size = Vector2(64, 64)
 	icon_holder.add_child(icon)
-	icon.set_equipment(slot, str(data.get("name", item_id)), str(data.get("sprite", "")))
+	icon.set_equipment(slot, equip_name, str(data.get("sprite", "")))
 
 	# Name
 	var name_lbl := Label.new()
-	name_lbl.text = str(data.get("name", item_id))
+	name_lbl.text = equip_name
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
 	wrapper.add_child(name_lbl)
@@ -460,9 +463,10 @@ func _build_equipment_stall(entry: Dictionary) -> Control:
 	wrapper.add_child(bonus_lbl)
 
 	# Set tag if any
-	if str(data.get("set_id", "")) != "":
+	var set_id := str(data.get("set_id", ""))
+	if set_id != "":
 		var set_lbl := Label.new()
-		set_lbl.text = "[%s]" % str(data.get("set_id"))
+		set_lbl.text = "[%s]" % Settings.t("SET_%s_NAME" % set_id, set_id)
 		set_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		set_lbl.add_theme_color_override("font_color", Color(0.7, 0.6, 0.4))
 		wrapper.add_child(set_lbl)
@@ -473,10 +477,10 @@ func _build_equipment_stall(entry: Dictionary) -> Control:
 	price_row.add_theme_constant_override("separation", 8)
 	wrapper.add_child(price_row)
 	var price_lbl := Label.new()
-	price_lbl.text = "%dg" % int(entry["price"])
+	price_lbl.text = tr("UI_SHOP_PRICE").format({"n": int(entry["price"])})
 	price_lbl.add_theme_color_override("font_color", SHOP_PRICE)
 	price_row.add_child(price_lbl)
-	var buy_btn := _make_shop_button("BUY", Vector2(92, 34))
+	var buy_btn := _make_shop_button(tr("UI_SHOP_BUY"), Vector2(92, 34))
 	buy_btn.pressed.connect(_on_buy_equipment.bind(item_id, int(entry["price"]), buy_btn))
 	price_row.add_child(buy_btn)
 
@@ -519,7 +523,7 @@ func _build_relic_stall(relic_id: String) -> Control:
 
 	# Title
 	var title := Label.new()
-	title.text = str(data.get("title", relic_id))
+	title.text = Settings.t("RELIC_%s_TITLE" % relic_id, str(data.get("title", relic_id)))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 16)
 	title.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
@@ -527,7 +531,7 @@ func _build_relic_stall(relic_id: String) -> Control:
 
 	# Description
 	var desc := Label.new()
-	desc.text = str(data.get("description", ""))
+	desc.text = Settings.t("RELIC_%s_DESC" % relic_id, str(data.get("description", "")))
 	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.custom_minimum_size = Vector2(285, 0)
@@ -540,10 +544,10 @@ func _build_relic_stall(relic_id: String) -> Control:
 	price_row.add_theme_constant_override("separation", 10)
 	wrapper.add_child(price_row)
 	var price_lbl := Label.new()
-	price_lbl.text = "%dg" % _stock_relic_price
+	price_lbl.text = tr("UI_SHOP_PRICE").format({"n": _stock_relic_price})
 	price_lbl.add_theme_color_override("font_color", SHOP_PRICE)
 	price_row.add_child(price_lbl)
-	var buy_btn := _make_shop_button("BUY", Vector2(100, 36))
+	var buy_btn := _make_shop_button(tr("UI_SHOP_BUY"), Vector2(100, 36))
 	buy_btn.pressed.connect(_on_buy_relic.bind(relic_id, _stock_relic_price, buy_btn))
 	price_row.add_child(buy_btn)
 
@@ -557,19 +561,19 @@ func _build_remove_service_row() -> HBoxContainer:
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 
 	var info := Label.new()
-	info.text = "Remove a card from your deck"
+	info.text = tr("UI_SHOP_REMOVE_SERVICE_INFO")
 	info.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
 	info.custom_minimum_size = Vector2(300, 0)
 	info.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	row.add_child(info)
 
 	var price_lbl := Label.new()
-	price_lbl.text = "%dg" % _remove_price
+	price_lbl.text = tr("UI_SHOP_PRICE").format({"n": _remove_price})
 	price_lbl.add_theme_font_size_override("font_size", 18)
 	price_lbl.add_theme_color_override("font_color", SHOP_PRICE)
 	row.add_child(price_lbl)
 
-	_remove_service_btn = _make_shop_button("REMOVE", Vector2(126, 38))
+	_remove_service_btn = _make_shop_button(tr("UI_SHOP_REMOVE"), Vector2(126, 38))
 	_remove_service_btn.pressed.connect(_on_remove_service_pressed)
 	row.add_child(_remove_service_btn)
 
@@ -596,7 +600,7 @@ func _on_buy_relic(relic_id: String, price: int, btn: Button) -> void:
 
 func _mark_sold(btn: Button) -> void:
 	btn.disabled = true
-	btn.text = "SOLD"
+	btn.text = tr("UI_SHOP_SOLD")
 
 
 # --- Remove-card picker ----------------------------------------------------
@@ -645,14 +649,14 @@ func _build_card_remove_picker() -> Control:
 	margin.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "REMOVE A CARD"
+	title.text = tr("UI_SHOP_REMOVE_MODAL_TITLE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 28)
 	title.add_theme_color_override("font_color", Color(1, 0.55, 0.55))
 	vbox.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "Pick a card to permanently remove from your deck."
+	subtitle.text = tr("UI_SHOP_REMOVE_MODAL_SUBTITLE")
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.add_theme_color_override("font_color", Color(0.9, 0.88, 0.8))
 	vbox.add_child(subtitle)
@@ -678,7 +682,7 @@ func _build_card_remove_picker() -> Control:
 	var actions := HBoxContainer.new()
 	actions.alignment = BoxContainer.ALIGNMENT_END
 	vbox.add_child(actions)
-	var cancel := _make_shop_button("CANCEL", Vector2(140, 42))
+	var cancel := _make_shop_button(tr("UI_SHOP_CANCEL"), Vector2(140, 42))
 	cancel.pressed.connect(_on_remove_cancel.bind(modal))
 	actions.add_child(cancel)
 
@@ -760,7 +764,7 @@ func _on_leave_pressed() -> void:
 
 func _format_bonuses(bonuses) -> String:
 	if typeof(bonuses) != TYPE_DICTIONARY or bonuses.is_empty():
-		return "(no bonuses)"
+		return tr("UI_SHOP_NO_BONUSES")
 	var parts: Array = []
 	for attr in bonuses.keys():
 		parts.append("+%d %s" % [int(bonuses[attr]), str(attr).substr(0, 3).to_upper()])

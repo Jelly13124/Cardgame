@@ -52,7 +52,7 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 	):
 		card_mult = 2.0
 		player.status_system.remove_status("double_damage", player)
-		main.show_notification("DOUBLE DAMAGE ACTIVE!", Color(0.2, 0.8, 1.0))
+		main.show_notification(tr("UI_COMBAT_DOUBLE_DAMAGE_ACTIVE"), Color(0.2, 0.8, 1.0))
 
 	if effects.is_empty():
 		push_error(
@@ -95,7 +95,12 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 		player.set(attr, int(player.get(attr)) + amount)
 		if player.has_method("notify_stats_changed"):
 			player.notify_stats_changed()
-		main.show_notification("%s +%d" % [attr.to_upper(), amount], ATTRIBUTE_COLORS[effect_type])
+		main.show_notification(
+			tr("UI_COMBAT_ATTR_GAIN").format(
+				{"attr": tr("UI_COMBAT_ATTR_%s" % attr.to_upper()), "n": amount}
+			),
+			ATTRIBUTE_COLORS[effect_type]
+		)
 		await get_tree().create_timer(0.2).timeout
 		return
 
@@ -109,13 +114,15 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				var outgoing = calculate_attack_damage(amount, player, target)
 				target.take_damage(outgoing)
 				_register_player_attack()
-				main.show_notification("DEALT %d DAMAGE" % outgoing, Color(1.0, 0.4, 0.3))
+				main.show_notification(
+					tr("UI_COMBAT_DEALT_DAMAGE").format({"n": outgoing}), Color(1.0, 0.4, 0.3)
+				)
 				if main.equipment_set_system and main.current_resolving_card:
 					main.equipment_set_system.on_card_damage_resolved(
 						main.current_resolving_card, target
 					)
 			else:
-				main.show_notification("NO TARGET!", Color(1, 0.5, 0.5))
+				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
 
 		"gain_block":
 			if main.equipment_set_system and main.current_resolving_card:
@@ -123,17 +130,21 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 					main.current_resolving_card, amount
 				)
 			player.add_block(amount)
-			main.show_notification("+%d BLOCK" % amount, Color(0.4, 0.6, 1.0))
+			main.show_notification(
+				tr("UI_COMBAT_GAIN_BLOCK").format({"n": amount}), Color(0.4, 0.6, 1.0)
+			)
 			await get_tree().create_timer(0.2).timeout
 
 		"gain_energy":
 			player.pay_energy(-amount)
-			main.show_notification("+%d ENERGY" % amount, Color(0.9, 0.9, 0.3))
+			main.show_notification(
+				tr("UI_COMBAT_GAIN_ENERGY").format({"n": amount}), Color(0.9, 0.9, 0.3)
+			)
 			await get_tree().create_timer(0.1).timeout
 
 		"draw_cards":
 			main.deck_manager.draw_cards(amount)
-			main.show_notification("DRAW %d" % amount, Color(0.7, 1.0, 0.7))
+			main.show_notification(tr("UI_COMBAT_DRAW").format({"n": amount}), Color(0.7, 1.0, 0.7))
 			await get_tree().create_timer(0.2).timeout
 
 		"deal_damage_all":
@@ -150,7 +161,7 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 							main.current_resolving_card, enemy
 						)
 			_register_player_attack()
-			main.show_notification("ALL ENEMIES HIT", Color(1.0, 0.3, 0.2))
+			main.show_notification(tr("UI_COMBAT_ALL_ENEMIES_HIT"), Color(1.0, 0.3, 0.2))
 			await get_tree().create_timer(0.3).timeout
 
 		"scale_damage_by_attacks":
@@ -166,18 +177,22 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				var outgoing = calculate_attack_damage(dynamic, player, target)
 				target.take_damage(outgoing)
 				_register_player_attack()
-				main.show_notification("DEALT %d DAMAGE" % outgoing, Color(1.0, 0.4, 0.3))
+				main.show_notification(
+					tr("UI_COMBAT_DEALT_DAMAGE").format({"n": outgoing}), Color(1.0, 0.4, 0.3)
+				)
 			else:
-				main.show_notification("NO TARGET!", Color(1, 0.5, 0.5))
+				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
 			await get_tree().create_timer(0.2).timeout
 
 		"apply_shock":
 			var s_stacks: int = int(effect.get("stacks", int(effect.get("amount", 1))))
 			if target and is_instance_valid(target) and target.has_method("add_status"):
 				target.add_status("shock", s_stacks)
-				main.show_notification("SHOCK x%d" % s_stacks, Color(0.95, 0.95, 0.3))
+				main.show_notification(
+					tr("UI_COMBAT_SHOCK_X").format({"n": s_stacks}), Color(0.95, 0.95, 0.3)
+				)
 			else:
-				main.show_notification("NO TARGET!", Color(1, 0.5, 0.5))
+				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
 			await get_tree().create_timer(0.2).timeout
 
 		"apply_shock_all":
@@ -185,7 +200,9 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			for enemy in main.enemy_container.get_children():
 				if is_instance_valid(enemy) and enemy.has_method("add_status"):
 					enemy.add_status("shock", s_stacks_all)
-			main.show_notification("ALL: SHOCK x%d" % s_stacks_all, Color(0.95, 0.95, 0.3))
+			main.show_notification(
+				tr("UI_COMBAT_ALL_SHOCK_X").format({"n": s_stacks_all}), Color(0.95, 0.95, 0.3)
+			)
 			await get_tree().create_timer(0.2).timeout
 
 		"exhaust_self":
@@ -199,11 +216,13 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			if target and is_instance_valid(target) and target.has_method("add_status"):
 				target.add_status(status, stacks)
 				main.show_notification(
-					"APPLIED %s x%d" % [STATUS_SYS.format_name(status).to_upper(), stacks],
+					tr("UI_COMBAT_APPLIED_STATUS").format(
+						{"status": STATUS_SYS.format_name_localized(status), "n": stacks}
+					),
 					Color(0.6, 0.9, 0.3)
 				)
 			else:
-				main.show_notification("NO TARGET!", Color(1, 0.5, 0.5))
+				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
 			await get_tree().create_timer(0.2).timeout
 
 		"apply_status_self":
@@ -212,7 +231,9 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			if player.has_method("add_status"):
 				player.add_status(status, stacks)
 				main.show_notification(
-					"APPLIED %s x%d" % [STATUS_SYS.format_name(status).to_upper(), stacks],
+					tr("UI_COMBAT_APPLIED_STATUS").format(
+						{"status": STATUS_SYS.format_name_localized(status), "n": stacks}
+					),
 					Color(0.6, 0.9, 0.3)
 				)
 			await get_tree().create_timer(0.2).timeout
@@ -224,7 +245,9 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				if is_instance_valid(enemy) and enemy.has_method("add_status"):
 					enemy.add_status(status, stacks)
 			main.show_notification(
-				"ALL: %s x%d" % [STATUS_SYS.format_name(status).to_upper(), stacks],
+				tr("UI_COMBAT_ALL_STATUS").format(
+					{"status": STATUS_SYS.format_name_localized(status), "n": stacks}
+				),
 				Color(0.6, 0.9, 0.3)
 			)
 			await get_tree().create_timer(0.2).timeout

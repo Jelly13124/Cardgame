@@ -137,8 +137,13 @@ func set_card_data(data: Dictionary) -> void:
 	cost_label.add_theme_constant_override("shadow_offset_x", 1)
 	cost_label.add_theme_constant_override("shadow_offset_y", 2)
 
-	# ── Name ─────────────────────────────────────────────────────────────────
-	name_label.text = data.get("title", card_name).to_upper()
+	# ── Name (CONTENT) ───────────────────────────────────────────────────────
+	# Title comes from card data — route through Settings.t with the card's
+	# deterministic content key (CARD_<id>_TITLE), English fallback.
+	var card_id: String = str(data.get("name", card_name))
+	name_label.text = (
+		Settings.t("CARD_%s_TITLE" % card_id, str(data.get("title", card_name))).to_upper()
+	)
 
 	# ── Description: build from effects[] showing real calculated numbers ────
 	var desc = _build_description(data)
@@ -164,13 +169,13 @@ func set_card_data(data: Dictionary) -> void:
 	_mask_material.set_shader_parameter("is_attack", is_atk)
 
 	if is_atk:
-		type_label.text = "ATTACK"
+		type_label.text = tr("UI_BATTLE_CARD_TYPE_ATTACK")
 		type_label.modulate = Color(1, 0.4, 0.4)
 	elif c_type == "skill":
-		type_label.text = "SKILL"
+		type_label.text = tr("UI_BATTLE_CARD_TYPE_SKILL")
 		type_label.modulate = Color(0.4, 0.8, 1.0)
 	elif c_type == "ability":
-		type_label.text = "ABILITY"
+		type_label.text = tr("UI_BATTLE_CARD_TYPE_ABILITY")
 		type_label.modulate = Color(0.8, 0.4, 1.0)
 	else:
 		type_label.text = c_type.to_upper()
@@ -180,10 +185,12 @@ func set_card_data(data: Dictionary) -> void:
 ## Shows calculated totals e.g. "Deal 6 (3+Strength) dmg" when player has 3 STR.
 ## Falls back to the raw "description" field if no effects array exists.
 func _build_description(data: Dictionary) -> String:
+	var card_id: String = str(data.get("name", ""))
 	var effects: Array = data.get("effects", [])
 	if effects.is_empty():
-		# Strip BBCode tags from the raw description
-		var raw: String = data.get("description", "")
+		# Raw description is CONTENT — route through Settings.t (CARD_<id>_DESC)
+		# with the English source as fallback, THEN strip BBCode for plain display.
+		var raw: String = Settings.t("CARD_%s_DESC" % card_id, str(data.get("description", "")))
 		return (
 			raw
 			. replace("[b]", "")
@@ -227,87 +234,94 @@ func _build_description(data: Dictionary) -> String:
 				var label_val = _color_num(final_damage, total)
 				if scaling != "" and stat_val > 0:
 					lines.append(
-						(
-							"Deal %s ([i]%d+[color=#8b0000]%d[/color][/i]) dmg"
-							% [label_val, base, stat_val]
+						tr("UI_BATTLE_DESC_DEAL_SCALING").format(
+							{"val": label_val, "base": base, "stat": stat_val}
 						)
 					)
 				else:
-					lines.append("Deal %s dmg" % label_val)
+					lines.append(tr("UI_BATTLE_DESC_DEAL").format({"val": label_val}))
 
 			"deal_damage_all":
 				var label_val = _color_num(final_damage, total)
 				if scaling != "" and stat_val > 0:
 					lines.append(
-						(
-							"Deal %s ([i]%d+[color=#8b0000]%d[/color][/i]) to ALL enemies"
-							% [label_val, base, stat_val]
+						tr("UI_BATTLE_DESC_DEAL_ALL_SCALING").format(
+							{"val": label_val, "base": base, "stat": stat_val}
 						)
 					)
 				else:
-					lines.append("Deal %s dmg to all enemies" % label_val)
+					lines.append(tr("UI_BATTLE_DESC_DEAL_ALL").format({"val": label_val}))
 
 			"gain_block":
 				var label_val = _color_num(final_block, total)
 				if scaling != "" and stat_val > 0:
 					lines.append(
-						(
-							"Gain %s ([i]%d+[color=#4444ff]%d[/color][/i]) block"
-							% [label_val, base, stat_val]
+						tr("UI_BATTLE_DESC_BLOCK_SCALING").format(
+							{"val": label_val, "base": base, "stat": stat_val}
 						)
 					)
 				else:
-					lines.append("Gain %s block" % label_val)
+					lines.append(tr("UI_BATTLE_DESC_BLOCK").format({"val": label_val}))
 
 			"gain_strength":
 				if mult != 1:
 					lines.append(
-						"Gain %d (%d×%s) Strength" % [total, int(mult), scaling.capitalize()]
+						tr("UI_BATTLE_DESC_STRENGTH_MULT").format(
+							{"n": total, "mult": int(mult), "stat": scaling.capitalize()}
+						)
 					)
 				elif scaling != "" and stat_val > 0:
 					lines.append(
-						"Gain %d (%d+[color=#8b0000]%d[/color]) Strength" % [total, base, stat_val]
+						tr("UI_BATTLE_DESC_STRENGTH_SCALING").format(
+							{"n": total, "base": base, "stat": stat_val}
+						)
 					)
 				else:
-					lines.append("Gain %d Strength" % total)
+					lines.append(tr("UI_BATTLE_DESC_STRENGTH").format({"n": total}))
 
 			"gain_constitution", "gain_intelligence", "gain_luck", "gain_charm", "gain_energy":
-				lines.append("Gain %d %s" % [total, etype.trim_prefix("gain_").capitalize()])
+				# Localize the attribute term itself (glossary), then frame it.
+				var attr_key := "UI_BATTLE_ATTR_" + etype.trim_prefix("gain_").to_upper()
+				lines.append(
+					tr("UI_BATTLE_DESC_GAIN_ATTR").format({"n": total, "attr": tr(attr_key)})
+				)
 
 			"draw_cards":
-				lines.append("Draw %d card%s" % [base, "s" if base != 1 else ""])
+				lines.append(tr("UI_BATTLE_DESC_DRAW").format({"n": base}))
 
 			"apply_status":
 				lines.append(
-					"Apply %s x%d" % [STATUS_SYS.format_name(effect.get("status", "")), stacks]
+					tr("UI_BATTLE_DESC_APPLY_STATUS").format(
+						{"status": STATUS_SYS.format_name(effect.get("status", "")), "n": stacks}
+					)
 				)
 
 			"apply_status_all":
 				lines.append(
-					(
-						"Apply %s x%d to all enemies"
-						% [STATUS_SYS.format_name(effect.get("status", "")), stacks]
+					tr("UI_BATTLE_DESC_APPLY_STATUS_ALL").format(
+						{"status": STATUS_SYS.format_name(effect.get("status", "")), "n": stacks}
 					)
 				)
 
 			"apply_status_self":
 				lines.append(
-					(
-						"Apply %s x%d to self"
-						% [STATUS_SYS.format_name(effect.get("status", "")), stacks]
+					tr("UI_BATTLE_DESC_APPLY_STATUS_SELF").format(
+						{"status": STATUS_SYS.format_name(effect.get("status", "")), "n": stacks}
 					)
 				)
 
 			"apply_shock":
-				lines.append("Apply [color=#f0e040]Shock[/color] x%d" % stacks)
+				lines.append(tr("UI_BATTLE_DESC_APPLY_SHOCK").format({"n": stacks}))
 
 			"apply_shock_all":
-				lines.append("Apply [color=#f0e040]Shock[/color] x%d to all enemies" % stacks)
+				lines.append(tr("UI_BATTLE_DESC_APPLY_SHOCK_ALL").format({"n": stacks}))
 
 			"scale_damage_by_attacks":
 				var s_base: int = int(effect.get("base", 0))
 				var s_per: int = int(effect.get("per", 0))
-				lines.append("Deal %d + %d per Attack played this turn" % [s_base, s_per])
+				lines.append(
+					tr("UI_BATTLE_DESC_SCALE_BY_ATTACKS").format({"base": s_base, "per": s_per})
+				)
 
 			"exhaust_self":
 				# Rendered separately as a keyword tag below
@@ -319,10 +333,10 @@ func _build_description(data: Dictionary) -> String:
 	# Keyword tags (Retain / Exhaust) appear on their own line, dimmer than effects.
 	var keywords: PackedStringArray = []
 	if bool(data.get("retain", false)):
-		keywords.append("[color=#9ec1ff]Retain[/color]")
+		keywords.append(tr("UI_BATTLE_KEYWORD_RETAIN"))
 	for e in effects:
 		if typeof(e) == TYPE_DICTIONARY and str(e.get("type", "")) == "exhaust_self":
-			keywords.append("[color=#cfa9ff]Exhaust[/color]")
+			keywords.append(tr("UI_BATTLE_KEYWORD_EXHAUST"))
 			break
 	if keywords.size() > 0:
 		lines.append("[i]%s[/i]" % " · ".join(keywords))

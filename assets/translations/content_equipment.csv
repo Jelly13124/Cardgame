@@ -1,1 +1,46 @@
 keys,en,zh
+EQUIP_weak_hunter_helm_NAME,Hunter's Visor,猎人面罩
+EQUIP_weak_hunter_helm_DESC,Cracked goggles that see what others ignore.,看穿他人忽视之物的破裂护目镜。
+EQUIP_weak_hunter_gun_NAME,Marked Sidearm,标记手枪
+EQUIP_weak_hunter_gun_DESC,Notched grip — one notch per failed target.,刻痕累累的握柄——每道刻痕代表一个失手的目标。
+EQUIP_old_hat_NAME,Old Wasteland Hat,破旧废土帽
+EQUIP_old_hat_DESC,Looks better than nothing.,聊胜于无。
+EQUIP_scrap_breastplate_NAME,Scrap Breastplate,废料胸甲
+EQUIP_scrap_breastplate_DESC,Rivets going every which way.,铆钉胡乱钉得到处都是。
+EQUIP_lucky_charm_NAME,Lucky Charm,幸运符
+EQUIP_lucky_charm_DESC,Definitely magic. Probably.,绝对有魔力。大概吧。
+EQUIP_weak_hunter_vest_NAME,Stalker's Vest,潜行者背心
+EQUIP_weak_hunter_vest_DESC,Lightweight. Smells of dust and old oil.,轻便。散发着尘土与陈油的气味。
+EQUIP_weak_hunter_gloves_NAME,Weak Hunter Gloves,弱猎人手套
+EQUIP_weak_hunter_gloves_DESC,Worn leather gloves stained with bad luck.,沾满霉运的破旧皮手套。
+EQUIP_weak_hunter_trinket_NAME,Faded Sigil,褪色符印
+EQUIP_weak_hunter_trinket_DESC,A pendant carved from chipped bone.,用残缺骨头雕成的吊坠。
+EQUIP_tank_engineer_helm_NAME,Reinforced Hardhat,加固安全帽
+EQUIP_tank_engineer_helm_DESC,Steel-banded. Heavy. Reliable.,钢箍加固。沉重。可靠。
+EQUIP_tank_engineer_vest_NAME,Plated Vest,镶板背心
+EQUIP_tank_engineer_vest_DESC,Welded scrap iron over a leather core.,皮芯外焊上废铁。
+EQUIP_tank_engineer_hammer_NAME,Pipe Hammer,管锤
+EQUIP_tank_engineer_hammer_DESC,Heavy enough to discourage second hits.,沉得让人不想挨第二下。
+EQUIP_tank_engineer_gauntlets_NAME,Iron Gauntlets,铁护手
+EQUIP_tank_engineer_gauntlets_DESC,Better than no gauntlets.,有总比没有强。
+EQUIP_tank_engineer_coil_NAME,Power Coil,动力线圈
+EQUIP_tank_engineer_coil_DESC,Hums with stored kinetic energy.,蕴藏动能，嗡嗡作响。
+EQUIP_rusted_dagger_NAME,Rusted Dagger,生锈匕首
+EQUIP_rusted_dagger_DESC,Sharp where it counts. Mostly.,关键处够利。大体上。
+EQUIP_wasteland_revolver_NAME,Wasteland Revolver,废土左轮
+EQUIP_wasteland_revolver_DESC,Six shots. Two centuries of stories.,六发子弹。两个世纪的故事。
+EQUIP_old_world_relic_NAME,Old World Relic,旧世遗物
+EQUIP_old_world_relic_DESC,Hums softly. Asks questions you can't answer.,轻声低鸣。问出你答不上的问题。
+EQUIP_warden_helm_NAME,Warden Helm,守望者头盔
+EQUIP_warden_helm_DESC,Soot-blackened helm forged from cooling slag.,用冷却熔渣锻成的烟熏黑头盔。
+EQUIP_warden_vest_NAME,Warden Vest,守望者背心
+EQUIP_warden_vest_DESC,Ember-pocked plate that warms to the touch.,布满余烬灼痕的护甲，触手生温。
+EQUIP_warden_axe_NAME,Warden Axe,守望者战斧
+EQUIP_warden_axe_DESC,"Heavy axe head, edge still ringing from the forge.","沉重的斧头，刃口仍带着炉火的余鸣。"
+EQUIP_warden_gloves_NAME,Warden Gloves,守望者手套
+EQUIP_warden_gloves_DESC,Heavy gauntlets — palms still smell of ash.,沉重的护手——掌心仍残留灰烬的气味。
+EQUIP_warden_pendant_NAME,Warden Pendant,守望者吊坠
+EQUIP_warden_pendant_DESC,A coal still warm with the Warden's last breath.,一块余温尚存的煤，凝着守望者的最后一息。
+SET_weak_hunter_NAME,Weak Hunter,弱猎人
+SET_tank_engineer_NAME,Tank Engineer,坦克工程师
+SET_warden_NAME,Warden,守望者

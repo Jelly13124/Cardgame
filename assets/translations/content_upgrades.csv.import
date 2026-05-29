@@ -6,10 +6,10 @@ uid="uid://pgfoo1kg00ic"
 
 [deps]
 
-files=["res://assets/translations/content_upgrades.en.translation", "res://assets/translations/content_upgrades.en.translation"]
+files=["res://assets/translations/content_upgrades.en.translation", "res://assets/translations/content_upgrades.zh.translation"]
 
 source_file="res://assets/translations/content_upgrades.csv"
-dest_files=["res://assets/translations/content_upgrades.en.translation", "res://assets/translations/content_upgrades.en.translation"]
+dest_files=["res://assets/translations/content_upgrades.en.translation", "res://assets/translations/content_upgrades.zh.translation"]
 
 [params]
 

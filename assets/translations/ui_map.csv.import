@@ -6,10 +6,10 @@ uid="uid://bboudf2nbqrex"
 
 [deps]
 
-files=["res://assets/translations/ui_map.en.translation", "res://assets/translations/ui_map.en.translation"]
+files=["res://assets/translations/ui_map.en.translation", "res://assets/translations/ui_map.zh.translation"]
 
 source_file="res://assets/translations/ui_map.csv"
-dest_files=["res://assets/translations/ui_map.en.translation", "res://assets/translations/ui_map.en.translation"]
+dest_files=["res://assets/translations/ui_map.en.translation", "res://assets/translations/ui_map.zh.translation"]
 
 [params]
 

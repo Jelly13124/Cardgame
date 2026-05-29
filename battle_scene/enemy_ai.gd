@@ -34,7 +34,9 @@ func spawn_enemy_units() -> void:
 
 		# Wire death → victory check
 		enemy.died.connect(_on_enemy_died)
-		main.show_notification(enemy.enemy_name + " APPEARED!", Color(1, 0.3, 0.3))
+		main.show_notification(
+			tr("UI_COMBAT_ENEMY_APPEARED").format({"name": enemy.enemy_name}), Color(1, 0.3, 0.3)
+		)
 
 
 # ─── Enemy Turn ───────────────────────────────────────────────────────────────
@@ -44,7 +46,7 @@ func execute_enemy_turn() -> void:
 	if main.is_game_over:
 		return
 
-	main.show_notification("ENEMY TURN", Color(1, 0.4, 0.4))
+	main.show_notification(tr("UI_COMBAT_ENEMY_TURN"), Color(1, 0.4, 0.4))
 	await get_tree().create_timer(0.8).timeout
 
 	for enemy in main.enemy_container.get_children():
@@ -66,7 +68,10 @@ func execute_enemy_turn() -> void:
 		# its action. The action pointer still advances so the enemy doesn't
 		# build up a backlog of skipped moves.
 		if enemy.has_method("consume_shock_if_present") and enemy.consume_shock_if_present():
-			main.show_notification("%s SHOCKED!" % enemy.enemy_name, Color(0.95, 0.95, 0.3))
+			main.show_notification(
+				tr("UI_COMBAT_ENEMY_SHOCKED").format({"name": enemy.enemy_name}),
+				Color(0.95, 0.95, 0.3)
+			)
 			enemy.consume_next_action()
 			if is_instance_valid(enemy):
 				enemy.end_turn()
@@ -82,7 +87,7 @@ func execute_enemy_turn() -> void:
 	if main.is_game_over:
 		return
 
-	main.show_notification("YOUR TURN", Color(0.4, 0.8, 1.0))
+	main.show_notification(tr("UI_COMBAT_YOUR_TURN"), Color(0.4, 0.8, 1.0))
 	await get_tree().create_timer(0.4).timeout
 	main.turn_manager.end_turn()
 
@@ -102,8 +107,10 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 	var is_attack_like = action_type in ["attack", "attack_status", "attack_all"]
 	if is_attack_like and bool(action.get("interruptible", false)):
 		if enemy.has_method("consume_shock_if_present") and enemy.consume_shock_if_present():
+			var interrupt_label := str(action.get("label", tr("UI_COMBAT_INTERRUPT_DEFAULT_LABEL")))
 			main.show_notification(
-				"%s — INTERRUPTED!" % str(action.get("label", "ATTACK")), Color(0.95, 0.95, 0.3)
+				tr("UI_COMBAT_INTERRUPTED").format({"label": interrupt_label}),
+				Color(0.95, 0.95, 0.3)
 			)
 			# Visual pulse so the player sees something happened
 			var pulse = create_tween()
@@ -125,7 +132,9 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 				if main.has_method("modify_enemy_attack_damage"):
 					outgoing = main.modify_enemy_attack_damage(outgoing, enemy, main.player)
 				main.player.take_damage(outgoing)
-				main.show_notification("ENEMY ATTACKS %d!" % outgoing, Color(1, 0.3, 0.3))
+				main.show_notification(
+					tr("UI_COMBAT_ENEMY_ATTACKS").format({"n": outgoing}), Color(1, 0.3, 0.3)
+				)
 			await _animate_return(enemy)
 
 		"attack_status":
@@ -146,7 +155,9 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 				if status != "" and main.player.has_method("add_status"):
 					main.player.add_status(status, stacks)
 				main.show_notification(
-					"ENEMY HITS %d + %s" % [outgoing, STATUS_SYS.format_name(status).to_upper()],
+					tr("UI_COMBAT_ENEMY_HITS_STATUS").format(
+						{"n": outgoing, "status": STATUS_SYS.format_name_localized(status)}
+					),
 					Color(1, 0.3, 0.3)
 				)
 			await _animate_return(enemy)
@@ -164,12 +175,16 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 				if main.has_method("modify_enemy_attack_damage"):
 					outgoing = main.modify_enemy_attack_damage(outgoing, enemy, main.player)
 				main.player.take_damage(outgoing)
-				main.show_notification("BIG HIT: %d!" % outgoing, Color(1.0, 0.2, 0.2))
+				main.show_notification(
+					tr("UI_COMBAT_BIG_HIT").format({"n": outgoing}), Color(1.0, 0.2, 0.2)
+				)
 			await _animate_return(enemy)
 
 		"block":
 			enemy.add_block(amount)
-			main.show_notification("ENEMY DEFENDS +%d" % amount, Color(0.4, 0.6, 1.0))
+			main.show_notification(
+				tr("UI_COMBAT_ENEMY_DEFENDS").format({"n": amount}), Color(0.4, 0.6, 1.0)
+			)
 			# Small visual pulse
 			var t = create_tween()
 			t.tween_property(enemy, "scale", Vector2(1.2, 1.2), 0.1)
@@ -179,13 +194,18 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 		"heal":
 			if enemy.has_method("heal"):
 				enemy.heal(amount)
-			main.show_notification("ENEMY HEALS %d" % amount, Color(0.2, 1.0, 0.4))
+			main.show_notification(
+				tr("UI_COMBAT_ENEMY_HEALS").format({"n": amount}), Color(0.2, 1.0, 0.4)
+			)
 
 		"telegraph":
 			# Flavor-only action: enemy charges up for a follow-up attack.
 			# No damage, no block. The intent badge already shows "CHARGING".
 			# The next action (typically marked interruptible:true) is the payoff.
-			main.show_notification("%s CHARGING..." % enemy.enemy_name, Color(1.0, 0.7, 0.2))
+			main.show_notification(
+				tr("UI_COMBAT_ENEMY_CHARGING").format({"name": enemy.enemy_name}),
+				Color(1.0, 0.7, 0.2)
+			)
 			var charge_tween = create_tween()
 			charge_tween.tween_property(enemy, "modulate", Color(1.4, 1.1, 0.4), 0.25)
 			charge_tween.tween_property(enemy, "modulate", Color.WHITE, 0.25)

@@ -19,6 +19,9 @@ const ENERGY_PANEL_TEX = preload("res://battle_scene/assets/images/ui/energy_pan
 var notify_tween: Tween
 var inspected_card: Control = null
 var _energy_display: Control = null
+## Tracks which pile the viewer is currently showing ("draw"/"discard"/"deck"/"")
+## so the Q/E toggle logic doesn't compare against the (now localized) title text.
+var _current_pile_kind: String = ""
 
 
 func _ready() -> void:
@@ -193,9 +196,12 @@ func show_pile_viewer(title: String, pile_container: CardContainer) -> void:
 	pile_viewer_layer.visible = true
 
 
-func show_run_deck_viewer(title: String = "Run Deck", deck_entries: Array = []) -> void:
+func show_run_deck_viewer(title: String = "", deck_entries: Array = []) -> void:
 	if not pile_viewer_layer:
 		return
+	if title.is_empty():
+		title = tr("UI_BATTLE_RUN_DECK")
+	_current_pile_kind = "deck"
 
 	# If no entries were passed, build them: prefer RunManager.player_deck if a run
 	# is active, otherwise fall back to the live battle's hand+deck+discard.
@@ -225,6 +231,7 @@ func hide_pile_viewer() -> void:
 	if not pile_viewer_layer:
 		return
 	pile_viewer_layer.visible = false
+	_current_pile_kind = ""
 	_clear_pile_viewer_grid()
 
 
@@ -271,21 +278,15 @@ func _input(event: InputEvent) -> void:
 
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_Q:
-			if (
-				pile_viewer_layer
-				and pile_viewer_layer.visible
-				and pile_viewer_title.text == "Draw Pile"
-			):
+			if pile_viewer_layer and pile_viewer_layer.visible and _current_pile_kind == "draw":
 				hide_pile_viewer()
 			else:
-				show_pile_viewer("Draw Pile", main.deck)
+				_current_pile_kind = "draw"
+				show_pile_viewer(tr("UI_BATTLE_DRAW_PILE"), main.deck)
 
 		elif event.keycode == KEY_E:
-			if (
-				pile_viewer_layer
-				and pile_viewer_layer.visible
-				and pile_viewer_title.text == "Discard Pile"
-			):
+			if pile_viewer_layer and pile_viewer_layer.visible and _current_pile_kind == "discard":
 				hide_pile_viewer()
 			else:
-				show_pile_viewer("Discard Pile", main.discard_pile)
+				_current_pile_kind = "discard"
+				show_pile_viewer(tr("UI_BATTLE_DISCARD_PILE"), main.discard_pile)

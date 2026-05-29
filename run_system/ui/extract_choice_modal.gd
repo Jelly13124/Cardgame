@@ -54,14 +54,14 @@ func _build() -> void:
 	margin.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "EXTRACT?"
+	title.text = tr("UI_HERO_EXTRACT_TITLE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 32)
 	title.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
 	vbox.add_child(title)
 
 	var summary := Label.new()
-	summary.text = "You killed the act %d boss." % floor_num
+	summary.text = tr("UI_HERO_EXTRACT_SUMMARY").format({"n": floor_num})
 	summary.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	summary.add_theme_font_size_override("font_size", 20)
 	summary.add_theme_color_override("font_color", Color(0.92, 0.9, 0.78))
@@ -72,7 +72,7 @@ func _build() -> void:
 	vbox.add_child(spacer)
 
 	var extract_btn := Button.new()
-	extract_btn.text = "EXTRACT NOW   ( +%d Core, end run )" % reward_extract
+	extract_btn.text = tr("UI_HERO_EXTRACT_NOW").format({"n": reward_extract})
 	extract_btn.custom_minimum_size = Vector2(560, 56)
 	extract_btn.add_theme_font_size_override("font_size", 20)
 	extract_btn.pressed.connect(_on_extract_pressed)
@@ -80,7 +80,7 @@ func _build() -> void:
 	_extract_btn = extract_btn
 
 	var continue_btn := Button.new()
-	continue_btn.text = "PUSH ON   ( +%d Core, continue to next act )" % reward_continue
+	continue_btn.text = tr("UI_HERO_PUSH_ON").format({"n": reward_continue})
 	continue_btn.custom_minimum_size = Vector2(560, 56)
 	continue_btn.add_theme_font_size_override("font_size", 20)
 	continue_btn.pressed.connect(_on_continue_pressed)

@@ -1,1 +1,35 @@
 keys,en,zh
+UI_MAP_LEGEND_TITLE,Legend,图例
+UI_MAP_LEGEND_RELIC,Relic,遗物
+UI_MAP_LEGEND_UNKNOWN,Unknown,未知
+UI_MAP_LEGEND_MERCHANT,Merchant,商人
+UI_MAP_LEGEND_TREASURE,Treasure,宝箱
+UI_MAP_LEGEND_REST,Rest,休整
+UI_MAP_LEGEND_ENEMY,Enemy,敌人
+UI_MAP_LEGEND_ELITE,Elite,精英
+UI_MAP_LEGEND_BOSS,Boss,首领
+UI_MAP_TOPBAR_HP,HP: {cur}/{max},生命：{cur}/{max}
+UI_MAP_TOPBAR_GOLD,Gold: {n},金币：{n}
+UI_MAP_TOPBAR_FLOOR,Floor: {n},层数：{n}
+UI_MAP_CHOOSE_STARTING_RELIC,Choose Your Starting Relic,选择起始遗物
+UI_MAP_CHOOSE_A_RELIC,Choose a Relic,选择一件遗物
+UI_MAP_RELIC_PICK_HINT,Pick one. Relics are unique for this run.,选择一件。遗物在本局中唯一。
+UI_MAP_SCAVENGED_GOLD,Scavenged {n} gold.,搜刮到{n}金币。
+UI_MAP_SCRAP_MEDKIT_HEAL,Found a scrap medkit. Healed {n} HP.,找到一个废料医疗包。治疗{n}生命。
+UI_MAP_CACHE_EMPTY_GOLD,Cache empty. Salvaged {n} gold.,暗格空空如也。回收到{n}金币。
+UI_MAP_CACHE_PRIED_OPEN,Pried Open the Cache (-{n} HP),撬开暗格（-{n}生命）
+UI_MAP_NO_RELICS_FOUND_GOLD,No relics remain. Found {n} gold!,已无遗物可得。找到{n}金币！
+UI_MAP_NO_RELICS_REMAIN,No relics remain.,已无遗物可得。
+UI_MAP_GAINED_RELIC,Gained relic: {n},获得遗物：{n}
+UI_MAP_ALREADY_HAVE_RELIC,Already have that relic.,已拥有该遗物。
+UI_MAP_CHARACTER_BTN,⚔ CHARACTER,⚔ 角色
+UI_MAP_DECK_BTN,📚 DECK,📚 牌组
+UI_MAP_CRATE_EMPTY,The crate was empty.,箱子是空的。
+UI_MAP_FOUND_EQUIPMENT,Found {n}!,找到{n}！
+UI_MAP_TOOK_EQUIPMENT,Took {n}.,拿取了{n}。
+UI_MAP_LEFT_EQUIPMENT,Left {n} behind.,留下了{n}。
+UI_MAP_REST_STOP,REST STOP,休整点
+UI_MAP_REST_HEAL_BTN,HEAL 25% HP,治疗25%生命
+UI_MAP_RESTED_HEAL,Rested. Healed {n} HP.,休整完毕。治疗{n}生命。
+UI_MAP_REST_UPGRADE_BTN,UPGRADE A CARD,强化一张卡牌
+UI_MAP_CARD_UPGRADED,Card upgraded.,卡牌已强化。

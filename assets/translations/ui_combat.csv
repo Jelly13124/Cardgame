@@ -1,0 +1,57 @@
+keys,en,zh
+UI_COMBAT_DOUBLE_DAMAGE_ACTIVE,DOUBLE DAMAGE ACTIVE!,双倍伤害已激活！
+UI_COMBAT_ATTR_GAIN,{attr} +{n},{attr} +{n}
+UI_COMBAT_ATTR_STRENGTH,STRENGTH,力量
+UI_COMBAT_ATTR_CONSTITUTION,CONSTITUTION,体质
+UI_COMBAT_ATTR_INTELLIGENCE,INTELLIGENCE,智力
+UI_COMBAT_ATTR_LUCK,LUCK,幸运
+UI_COMBAT_ATTR_CHARM,CHARM,魅力
+UI_COMBAT_DEALT_DAMAGE,DEALT {n} DAMAGE,造成 {n} 点伤害
+UI_COMBAT_NO_TARGET,NO TARGET!,没有目标！
+UI_COMBAT_GAIN_BLOCK,+{n} BLOCK,+{n} 格挡
+UI_COMBAT_GAIN_ENERGY,+{n} ENERGY,+{n} 能量
+UI_COMBAT_DRAW,DRAW {n},抽 {n} 张
+UI_COMBAT_ALL_ENEMIES_HIT,ALL ENEMIES HIT,命中全体敌人
+UI_COMBAT_SHOCK_X,SHOCK x{n},感电 x{n}
+UI_COMBAT_ALL_SHOCK_X,ALL: SHOCK x{n},全体：感电 x{n}
+UI_COMBAT_APPLIED_STATUS,APPLIED {status} x{n},施加 {status} x{n}
+UI_COMBAT_ALL_STATUS,ALL: {status} x{n},全体：{status} x{n}
+UI_COMBAT_STATUS_POISON,Poison,中毒
+UI_COMBAT_STATUS_BURN,Burn,灼烧
+UI_COMBAT_STATUS_WEAK,Weak,虚弱
+UI_COMBAT_STATUS_VULNERABLE,Vulnerable,易伤
+UI_COMBAT_STATUS_STRENGTH_UP,Strength up,力量提升
+UI_COMBAT_STATUS_DOUBLE_DAMAGE,Double damage,双倍伤害
+UI_COMBAT_STATUS_SHOCK,Shock,感电
+UI_COMBAT_STATUS_POISON_DESC,Take 1 damage per stack at the start of your turn. Stacks decay by 1 each turn.,每回合开始时每层造成 1 点伤害。每回合衰减 1 层。
+UI_COMBAT_STATUS_BURN_DESC,Take damage equal to stacks at the start of your turn. All stacks consumed.,每回合开始时造成等同层数的伤害。消耗所有层数。
+UI_COMBAT_STATUS_WEAK_DESC,Outgoing attack damage reduced 25% per stack. Decays 1 per turn.,每层使造成的攻击伤害降低 25%。每回合衰减 1 层。
+UI_COMBAT_STATUS_VULNERABLE_DESC,Incoming attack damage increased 50% per stack. Decays 1 per turn.,每层使受到的攻击伤害提高 50%。每回合衰减 1 层。
+UI_COMBAT_STATUS_STRENGTH_UP_DESC,Outgoing attack damage increased by stack count. Persistent.,造成的攻击伤害提高等同层数。持续存在。
+UI_COMBAT_STATUS_DOUBLE_DAMAGE_DESC,Next N attacks deal double damage. Consumed on use.,接下来 N 次攻击造成双倍伤害。使用后消耗。
+UI_COMBAT_STATUS_SHOCK_DESC,Enemy skips its next turn for each stack (enemy-only).,每层使敌人跳过其下一回合（仅敌人）。
+UI_COMBAT_STATUS_TIP,"[b]{name} ×{n}[/b]
+{desc}","[b]{name} ×{n}[/b]
+{desc}"
+UI_COMBAT_STATUS_TIP_NO_DESC,[b]{name} ×{n}[/b],[b]{name} ×{n}[/b]
+UI_COMBAT_INTENT_BUFF,BUFF,增益
+UI_COMBAT_INTENT_CHARGE,CHARGE,蓄力
+UI_COMBAT_SHORT_WEAK,Weak,虚弱
+UI_COMBAT_SHORT_VULNERABLE,Vuln,易伤
+UI_COMBAT_SHORT_BURN,Burn,灼烧
+UI_COMBAT_SHORT_POISON,Pois,中毒
+UI_COMBAT_SHORT_SHOCK,Shock,感电
+UI_COMBAT_SHORT_STRENGTH_UP,Str+,力+
+UI_COMBAT_SHORT_DOUBLE_DAMAGE,Dbl,双倍
+UI_COMBAT_ENEMY_APPEARED,{name} APPEARED!,{name} 出现了！
+UI_COMBAT_ENEMY_TURN,ENEMY TURN,敌方回合
+UI_COMBAT_YOUR_TURN,YOUR TURN,你的回合
+UI_COMBAT_ENEMY_SHOCKED,{name} SHOCKED!,{name} 被感电！
+UI_COMBAT_INTERRUPTED,{label} — INTERRUPTED!,{label} —— 被打断！
+UI_COMBAT_INTERRUPT_DEFAULT_LABEL,ATTACK,攻击
+UI_COMBAT_ENEMY_ATTACKS,ENEMY ATTACKS {n}!,敌人攻击 {n}！
+UI_COMBAT_ENEMY_HITS_STATUS,ENEMY HITS {n} + {status},敌人命中 {n} + {status}
+UI_COMBAT_BIG_HIT,BIG HIT: {n}!,重击：{n}！
+UI_COMBAT_ENEMY_DEFENDS,ENEMY DEFENDS +{n},敌人防御 +{n}
+UI_COMBAT_ENEMY_HEALS,ENEMY HEALS {n},敌人治疗 {n}
+UI_COMBAT_ENEMY_CHARGING,{name} CHARGING...,{name} 蓄力中……

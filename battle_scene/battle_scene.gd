@@ -543,7 +543,7 @@ func play_spell(card: Control, target_node: Node):
 
 	if type == "attack":
 		if not target_node or not is_instance_valid(target_node):
-			show_notification("MUST TARGET ENEMY", Color(0.8, 0.4, 0.4))
+			show_notification(tr("UI_BATTLE_MUST_TARGET_ENEMY"), Color(0.8, 0.4, 0.4))
 			hand.add_card(card)
 			card.remove_meta("_in_play")
 			return
@@ -606,7 +606,7 @@ func _card_has_exhaust(card: Control) -> bool:
 
 func start_spell_targeting(card: Control) -> void:
 	if not can_afford([card]):
-		show_notification("NOT ENOUGH ENERGY", Color(1, 0.2, 0.2))
+		show_notification(tr("UI_BATTLE_NOT_ENOUGH_ENERGY"), Color(1, 0.2, 0.2))
 		return
 
 	is_targeting = true
@@ -677,7 +677,7 @@ func confirm_spell_targeting(card: Control) -> void:
 			hand.remove_card(card)
 		play_spell(card, t)
 	else:
-		show_notification("NO TARGET", Color(1, 0.6, 0.2))
+		show_notification(tr("UI_BATTLE_NO_TARGET"), Color(1, 0.6, 0.2))
 		_cancel_spell_targeting()
 
 

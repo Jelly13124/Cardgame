@@ -89,25 +89,32 @@ func _refresh() -> void:
 	var tiers: Array = _definition.get("tiers", [])
 	var lvl := MetaProgress.get_upgrade_level(id)
 
-	_title_label.text = str(_definition.get("name", id)).to_upper()
+	var upgrade_name := Settings.t("UPGRADE_%s_NAME" % id, str(_definition.get("name", id)))
+	_title_label.text = upgrade_name.to_upper()
 
 	# Level dots: ●●○ for 2/3, etc.
 	var dots := ""
 	for i in range(tiers.size()):
 		dots += "●" if i < lvl else "○"
-	_level_label.text = "Level: %s  (%d/%d)" % [dots, lvl, tiers.size()]
+	_level_label.text = tr("UI_HOME_UPGRADE_LEVEL").format(
+		{"dots": dots, "cur": lvl, "max": tiers.size()}
+	)
 
 	if lvl >= tiers.size():
-		_effect_label.text = "Fully upgraded."
+		_effect_label.text = tr("UI_HOME_UPGRADE_FULLY_UPGRADED")
 		_cost_label.text = ""
-		_buy_button.text = "MAXED"
+		_buy_button.text = tr("UI_HOME_UPGRADE_MAXED")
 		_buy_button.disabled = true
 		return
 
 	var next_tier: Dictionary = tiers[lvl]
-	_effect_label.text = "Next: %s" % str(next_tier.get("effect_text", ""))
-	_cost_label.text = "Cost: %d Core" % int(next_tier.get("cost", 0))
-	_buy_button.text = "BUY"
+	var effect_text := Settings.t(
+		"UPGRADE_%s_TIER%d" % [id, int(next_tier.get("level", lvl + 1))],
+		str(next_tier.get("effect_text", ""))
+	)
+	_effect_label.text = tr("UI_HOME_UPGRADE_NEXT").format({"text": effect_text})
+	_cost_label.text = tr("UI_HOME_UPGRADE_COST").format({"n": int(next_tier.get("cost", 0))})
+	_buy_button.text = tr("UI_HOME_UPGRADE_BUY")
 	_buy_button.disabled = not MetaProgress.can_purchase(id, _definition)
 
 

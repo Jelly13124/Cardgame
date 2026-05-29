@@ -89,7 +89,7 @@ func _build_bar() -> void:
 	relic_strip.add_theme_constant_override("separation", 8)
 	row.add_child(relic_strip)
 
-	deck_button = _make_icon_button("D", "View run deck")
+	deck_button = _make_icon_button("D", tr("UI_BATTLE_VIEW_RUN_DECK"))
 	deck_button.pressed.connect(_on_deck_pressed)
 	row.add_child(deck_button)
 
@@ -200,7 +200,9 @@ func _refresh_status() -> void:
 	var rm = _get_run_manager()
 	var gold = int(rm.gold) if rm else 0
 	var floor_text = str(rm.current_floor) if rm and rm.get("is_run_active") else "-"
-	status_label.text = "HP %d/%d    Gold %d    Floor %s" % [hp_current, hp_max, gold, floor_text]
+	status_label.text = tr("UI_BATTLE_RUN_STATUS").format(
+		{"hp": hp_current, "max": hp_max, "gold": gold, "floor": floor_text}
+	)
 
 
 func _refresh_relics() -> void:
@@ -218,7 +220,7 @@ func _refresh_relics() -> void:
 
 	if ids.is_empty():
 		var empty = Label.new()
-		empty.text = "No relics"
+		empty.text = tr("UI_BATTLE_NO_RELICS")
 		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		empty.add_theme_font_size_override("font_size", 16)
 		empty.add_theme_color_override("font_color", Color(0.65, 0.6, 0.5, 0.8))
@@ -231,8 +233,12 @@ func _refresh_relics() -> void:
 
 func _make_relic_chip(relic_id: String) -> Button:
 	var data = _load_relic_data(relic_id)
-	var title = str(data.get("title", _humanize_id(relic_id)))
-	var desc = str(data.get("description", ""))
+	# Relic title/description are CONTENT (owned by the content_relics CSV) —
+	# route through Settings.t with the deterministic content keys, English fallback.
+	var title = Settings.t(
+		"RELIC_%s_TITLE" % relic_id, str(data.get("title", _humanize_id(relic_id)))
+	)
+	var desc = Settings.t("RELIC_%s_DESC" % relic_id, str(data.get("description", "")))
 	var chip = Button.new()
 	chip.text = _short_label(title)
 	chip.custom_minimum_size = Vector2(42, 42)
@@ -364,8 +370,9 @@ func _on_return_map_pressed() -> void:
 
 
 func _on_relic_pressed(data: Dictionary) -> void:
-	var title = str(data.get("title", "Relic"))
-	var desc = str(data.get("description", ""))
+	var relic_id = str(data.get("id", ""))
+	var title = Settings.t("RELIC_%s_TITLE" % relic_id, str(data.get("title", "Relic")))
+	var desc = Settings.t("RELIC_%s_DESC" % relic_id, str(data.get("description", "")))
 	var text = title if desc.is_empty() else "%s: %s" % [title, desc]
 	if main and main.has_method("show_notification"):
 		main.show_notification(text, Color(1.0, 0.86, 0.45))
