@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://bboudf2nbqrex"
+
+[deps]
+
+files=["res://assets/translations/ui_map.en.translation", "res://assets/translations/ui_map.en.translation"]
+
+source_file="res://assets/translations/ui_map.csv"
+dest_files=["res://assets/translations/ui_map.en.translation", "res://assets/translations/ui_map.en.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

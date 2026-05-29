@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://pgfoo1kg00ic"
+
+[deps]
+
+files=["res://assets/translations/content_upgrades.en.translation", "res://assets/translations/content_upgrades.en.translation"]
+
+source_file="res://assets/translations/content_upgrades.csv"
+dest_files=["res://assets/translations/content_upgrades.en.translation", "res://assets/translations/content_upgrades.en.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

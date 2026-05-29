@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://d0kcrl7n774tg"
+
+[deps]
+
+files=["res://assets/translations/ui_battle.en.translation", "res://assets/translations/ui_battle.en.translation"]
+
+source_file="res://assets/translations/ui_battle.csv"
+dest_files=["res://assets/translations/ui_battle.en.translation", "res://assets/translations/ui_battle.en.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true
