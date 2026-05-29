@@ -1,0 +1,3 @@
+Shop background: dim salvage merchant stall, no UI/text/characters, calm darker center, warm amber lamp accent.
+Shopkeeper: distinct merchant robot, no cowboy hat/red bandana/gun, transparent, one cyan lens accent.
+hardcore wasteland sprite art, detailed fully-rendered illustration, bold dark outlines, rich controlled shading with clear highlight-mid-shadow, warm rust / leather / brass / dark-steel / dusty-tan palette, salvaged scrap metal with bolts dents tubes and cracked glass, worn leather and patched cloth, one small glowing neon accent, match Cowboy Bill reference fidelity, not lo-fi pixel art, not flat

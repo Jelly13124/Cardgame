@@ -1,0 +1,16 @@
+{
+  "generated_at": "2026-05-29T21:58:22.038903+00:00",
+  "asset": "home_base_bg",
+  "source": "image2 via built-in image_gen; local postprocess for resize/color cleanup/center readability only",
+  "style_anchor": "hardcore wasteland sprite art, detailed fully-rendered illustration, bold dark outlines, rich controlled shading with clear highlight-mid-shadow, warm rust / leather / brass / dark-steel / dusty-tan palette, salvaged scrap metal with bolts dents tubes and cracked glass, worn leather and patched cloth, one small glowing neon accent, match Cowboy Bill reference fidelity, not lo-fi pixel art, not flat",
+  "meta": {
+    "raw": "C:\\Users\\Jerry\\.codex\\generated_images\\019e5d53-1d16-7021-b0e1-dd7866d95f4c\\ig_0963706dd537d937016a1a09f9275c8190bb545b8a55780fa7.png",
+    "out": "C:\\Users\\Jerry\\Desktop\\Cardgame\\run_system\\assets\\images\\home\\home_base_bg.png",
+    "changed_neon_pixels": 469,
+    "size": [
+      1920,
+      1080
+    ],
+    "mode": "RGB"
+  }
+}
