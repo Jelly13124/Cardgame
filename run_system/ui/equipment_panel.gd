@@ -1,21 +1,34 @@
-## Map-screen character info + equipment management page. Shows HP, gold,
-## floor, relics, equipped gear, inventory, active set tiers, and attributes
-## in one consolidated view. Built dynamically; attached as a direct child of
-## map_scene. Listens to RunManager state signals for live refresh.
+## Character page — Diablo-style 3-zone layout, full screen:
+##   LEFT   = hero portrait + attributes
+##   MIDDLE = the 5 equipment slots (vertical column)
+##   RIGHT  = the backpack as a grid of cells
+##   BOTTOM = active sets + relics strip
+## Built dynamically; attached as a direct child of map_scene. Listens to
+## RunManager state signals for live refresh.
+##
+## The backpack grid is built "stack-ready": each cell is produced by
+## _make_grid_cell(index) so a future economy pass (gold/core stacks occupying
+## cells) only has to extend that one method, not restructure the grid.
 extends Control
 class_name EquipmentPanel
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
+const HERO_SPRITE_DIR := "res://battle_scene/assets/images/heroes/"
 
-var _slot_rows: Dictionary = {}  # slot → { icon, name_label, action_button }
-var _inventory_container: VBoxContainer
-var _inventory_title: Label  # Direct field reference for the inventory header (replaces a fragile tree search).
+const GRID_COLUMNS := 5
+const CELL_SIZE := Vector2(76, 76)
+
+var _slot_icons: Dictionary = {}  # slot → EquipmentIcon
+var _slot_labels: Dictionary = {}  # slot → Label (slot/item name)
+var _grid: GridContainer
+var _portrait_rect: TextureRect
+var _attrs_label: Label
+var _vitals_label: Label
+var _inv_title: Label
 var _sets_container: VBoxContainer
-var _relics_container: VBoxContainer
-var _vitals_label: Label  # HP / Gold / Floor summary line
-var _stats_label: Label
-var _status_label: Label  # transient "INVENTORY FULL" etc.
+var _relics_container: HFlowContainer
+var _status_label: Label
 
 
 func _ready() -> void:
@@ -38,172 +51,166 @@ func _on_resources_changed(_gold: int, _core: int) -> void:
 
 
 func _build() -> void:
-	# Full-screen page background. This is a screen, not a modal overlay.
 	var bg := ColorRect.new()
 	bg.color = Color(0.045, 0.038, 0.030, 1.0)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(bg)
 
-	var page_margin := MarginContainer.new()
-	page_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	page_margin.add_theme_constant_override("margin_left", 54)
-	page_margin.add_theme_constant_override("margin_right", 54)
-	page_margin.add_theme_constant_override("margin_top", 42)
-	page_margin.add_theme_constant_override("margin_bottom", 42)
-	add_child(page_margin)
-
-	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	page_margin.add_child(panel)
-
+	# Edge-to-edge page (small margin only).
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 24)
-	margin.add_theme_constant_override("margin_right", 24)
-	margin.add_theme_constant_override("margin_top", 20)
-	margin.add_theme_constant_override("margin_bottom", 20)
-	panel.add_child(margin)
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		margin.add_theme_constant_override(side, 22)
+	add_child(margin)
 
 	var vroot := VBoxContainer.new()
-	vroot.add_theme_constant_override("separation", 12)
-	vroot.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vroot.add_theme_constant_override("separation", 14)
 	margin.add_child(vroot)
 
-	# Title + close
+	# ── Header: title + vitals + back ──
 	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 16)
 	vroot.add_child(header)
 	var title := Label.new()
 	title.text = tr("UI_EQUIP_TITLE_CHARACTER")
 	title.add_theme_font_size_override("font_size", 36)
 	title.add_theme_color_override("font_color", Color(1, 0.95, 0.8))
 	header.add_child(title)
+	_vitals_label = Label.new()
+	_vitals_label.add_theme_font_size_override("font_size", 20)
+	_vitals_label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.7))
+	_vitals_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	header.add_child(_vitals_label)
 	header.add_child(_spacer())
 	var close_btn := Button.new()
 	close_btn.text = tr("UI_EQUIP_BACK_TO_MAP")
-	close_btn.custom_minimum_size = Vector2(160, 42)
+	close_btn.custom_minimum_size = Vector2(170, 44)
 	T.apply_button_theme(close_btn)
 	close_btn.pressed.connect(queue_free)
 	header.add_child(close_btn)
 
-	# Vitals row (HP / Gold / Floor) — populated by _refresh
-	_vitals_label = Label.new()
-	_vitals_label.add_theme_font_size_override("font_size", 20)
-	_vitals_label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.7))
-	vroot.add_child(_vitals_label)
-
-	# Two-column body
+	# ── Body: 3 zones ──
 	var body := HBoxContainer.new()
-	body.add_theme_constant_override("separation", 24)
+	body.add_theme_constant_override("separation", 22)
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	vroot.add_child(body)
 
-	# Left column: slots
-	var slots_col := VBoxContainer.new()
-	slots_col.add_theme_constant_override("separation", 8)
-	slots_col.custom_minimum_size = Vector2(420, 0)
-	slots_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_child(slots_col)
-	var slots_title := Label.new()
-	slots_title.text = tr("UI_EQUIP_SLOTS")
-	slots_title.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
-	slots_col.add_child(slots_title)
-	for slot in RunManager.EQUIPMENT_SLOTS:
-		_slot_rows[slot] = _build_slot_row(slot, slots_col)
+	body.add_child(_build_character_zone())
+	body.add_child(_build_equipment_zone())
+	body.add_child(_build_backpack_zone())
 
-	# Right column: inventory
-	var inv_col := VBoxContainer.new()
-	inv_col.add_theme_constant_override("separation", 8)
-	inv_col.custom_minimum_size = Vector2(420, 0)
-	inv_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_child(inv_col)
-	_inventory_title = Label.new()
-	_inventory_title.name = "InventoryTitle"
-	_inventory_title.text = tr("UI_EQUIP_INVENTORY_COUNT").format(
-		{"n": 0, "max": RunManager.MAX_INVENTORY}
-	)
-	_inventory_title.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
-	inv_col.add_child(_inventory_title)
-	_inventory_container = VBoxContainer.new()
-	_inventory_container.add_theme_constant_override("separation", 6)
-	inv_col.add_child(_inventory_container)
+	# ── Bottom strip: sets + relics ──
+	vroot.add_child(HSeparator.new())
+	var strip := HBoxContainer.new()
+	strip.add_theme_constant_override("separation", 40)
+	vroot.add_child(strip)
 
-	# Active sets section
-	var sep1 := HSeparator.new()
-	vroot.add_child(sep1)
-	var sets_title := Label.new()
-	sets_title.text = tr("UI_EQUIP_ACTIVE_SETS")
-	sets_title.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
-	vroot.add_child(sets_title)
+	var sets_col := VBoxContainer.new()
+	sets_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	strip.add_child(sets_col)
+	sets_col.add_child(_section_title(tr("UI_EQUIP_ACTIVE_SETS")))
 	_sets_container = VBoxContainer.new()
 	_sets_container.add_theme_constant_override("separation", 4)
-	vroot.add_child(_sets_container)
+	sets_col.add_child(_sets_container)
 
-	# Relics section
-	var sep_relics := HSeparator.new()
-	vroot.add_child(sep_relics)
-	var relics_title := Label.new()
-	relics_title.text = tr("UI_EQUIP_RELICS")
-	relics_title.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
-	vroot.add_child(relics_title)
-	_relics_container = VBoxContainer.new()
-	_relics_container.add_theme_constant_override("separation", 2)
-	vroot.add_child(_relics_container)
+	var relics_col := VBoxContainer.new()
+	relics_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	strip.add_child(relics_col)
+	relics_col.add_child(_section_title(tr("UI_EQUIP_RELICS")))
+	_relics_container = HFlowContainer.new()
+	_relics_container.add_theme_constant_override("h_separation", 8)
+	_relics_container.add_theme_constant_override("v_separation", 6)
+	relics_col.add_child(_relics_container)
 
-	# Stats row
-	var sep2 := HSeparator.new()
-	vroot.add_child(sep2)
-	_stats_label = Label.new()
-	_stats_label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
-	vroot.add_child(_stats_label)
-
-	# Transient status (errors)
 	_status_label = Label.new()
 	_status_label.add_theme_color_override("font_color", Color(1, 0.4, 0.3))
 	vroot.add_child(_status_label)
 
 
-func _build_slot_row(slot: String, parent: VBoxContainer) -> Dictionary:
+func _build_character_zone() -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 12)
+	col.custom_minimum_size = Vector2(360, 0)
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+
 	var frame := PanelContainer.new()
-	frame.add_theme_stylebox_override("panel", T.reward_row_style(T.PANEL_BG, T.PANEL_BORDER))
-	frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	parent.add_child(frame)
+	frame.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(frame)
 
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 10)
-	margin.add_theme_constant_override("margin_right", 10)
-	margin.add_theme_constant_override("margin_top", 6)
-	margin.add_theme_constant_override("margin_bottom", 6)
-	frame.add_child(margin)
+	var inner := VBoxContainer.new()
+	inner.add_theme_constant_override("separation", 10)
+	inner.alignment = BoxContainer.ALIGNMENT_CENTER
+	frame.add_child(inner)
 
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	margin.add_child(row)
+	_portrait_rect = TextureRect.new()
+	_portrait_rect.custom_minimum_size = Vector2(300, 420)
+	_portrait_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_portrait_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_portrait_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_portrait_rect.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	inner.add_child(_portrait_rect)
 
-	var icon := EQUIPMENT_ICON.new()
-	row.add_child(icon)
+	_attrs_label = Label.new()
+	_attrs_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_attrs_label.add_theme_font_size_override("font_size", 20)
+	_attrs_label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
+	inner.add_child(_attrs_label)
 
-	var label := Label.new()
-	label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
-	label.custom_minimum_size = Vector2(220, 0)
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(label)
+	return col
 
-	var unequip := Button.new()
-	unequip.text = tr("UI_EQUIP_UNEQUIP")
-	unequip.custom_minimum_size = Vector2(118, 40)
-	T.apply_button_theme(unequip)
-	unequip.pressed.connect(_on_unequip_pressed.bind(slot))
-	row.add_child(unequip)
 
-	return {"icon": icon, "name_label": label, "action_button": unequip}
+func _build_equipment_zone() -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	col.custom_minimum_size = Vector2(300, 0)
+	col.add_child(_section_title(tr("UI_EQUIP_SLOTS")))
+
+	for slot in RunManager.EQUIPMENT_SLOTS:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		col.add_child(row)
+
+		var icon := EQUIPMENT_ICON.new()
+		icon.custom_minimum_size = CELL_SIZE
+		icon.gui_input.connect(_on_slot_input.bind(slot))
+		icon.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		row.add_child(icon)
+		_slot_icons[slot] = icon
+
+		var label := Label.new()
+		label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(label)
+		_slot_labels[slot] = label
+
+	return col
+
+
+func _build_backpack_zone() -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_inv_title = _section_title("")
+	col.add_child(_inv_title)
+	_grid = GridContainer.new()
+	_grid.columns = GRID_COLUMNS
+	_grid.add_theme_constant_override("h_separation", 8)
+	_grid.add_theme_constant_override("v_separation", 8)
+	col.add_child(_grid)
+	var hint := Label.new()
+	hint.text = tr("UI_EQUIP_BACKPACK_HINT")
+	hint.add_theme_font_size_override("font_size", 16)
+	hint.add_theme_color_override("font_color", Color(0.65, 0.6, 0.5))
+	col.add_child(hint)
+	return col
 
 
 func _refresh() -> void:
-	# Vitals: HP / Gold / Floor. Floor is 0-indexed internally; display as 1-based.
+	# Vitals (floor is 0-indexed internally; display 1-based)
 	if _vitals_label:
-		var floor_display = max(1, RunManager.current_floor + 1)
 		_vitals_label.text = (
 			tr("UI_EQUIP_VITALS")
 			. format(
@@ -211,147 +218,161 @@ func _refresh() -> void:
 					"hp": RunManager.current_health,
 					"max": RunManager.max_health,
 					"gold": RunManager.gold,
-					"floor": floor_display,
+					"floor": max(1, RunManager.current_floor + 1),
 				}
 			)
 		)
 
-	# Slots
+	# Character portrait + attributes
+	if _portrait_rect:
+		var sprite_id := str(RunManager.current_hero_data.get("sprite_id", "cowboy_bill"))
+		var tex := _load_portrait(sprite_id)
+		if tex:
+			_portrait_rect.texture = tex
+		_portrait_rect.modulate = _parse_tint(
+			str(RunManager.current_hero_data.get("tint", "#ffffff"))
+		)
+	if _attrs_label:
+		var p = RunManager.player_attributes
+		_attrs_label.text = (
+			tr("UI_EQUIP_STATS")
+			. format(
+				{
+					"str": int(p.get("strength", 0)),
+					"con": int(p.get("constitution", 0)),
+					"int": int(p.get("intelligence", 0)),
+					"luc": int(p.get("luck", 0)),
+					"cha": int(p.get("charm", 0)),
+				}
+			)
+		)
+
+	# Equipment slots
 	for slot in RunManager.EQUIPMENT_SLOTS:
-		var row = _slot_rows[slot]
+		var icon: EquipmentIcon = _slot_icons[slot]
+		var label: Label = _slot_labels[slot]
 		var item_id: String = RunManager.equipped_items.get(slot, "")
 		var slot_label := _slot_label(slot)
 		if item_id == "":
-			row["icon"].set_empty(slot)
-			row["icon"].set_hover_tooltip("[b]%s[/b]\n%s" % [slot_label, tr("UI_EQUIP_EMPTY_SLOT")])
-			row["name_label"].text = "%s: %s" % [slot_label, tr("UI_EQUIP_EMPTY")]
-			row["action_button"].visible = false
+			icon.set_empty(slot)
+			icon.set_hover_tooltip("[b]%s[/b]\n%s" % [slot_label, tr("UI_EQUIP_EMPTY_SLOT")])
+			label.text = "%s: %s" % [slot_label, tr("UI_EQUIP_EMPTY")]
 		else:
 			var data = RunManager.get_equipment_data(item_id)
 			var item_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
-			row["icon"].set_equipment(slot, item_name, str(data.get("sprite", "")))
-			row["icon"].set_hover_tooltip(_build_equipment_tooltip(data, slot))
-			row["action_button"].visible = true
-			row["name_label"].text = (
-				"%s: %s\n%s"
-				% [
-					slot_label,
-					item_name,
-					_format_bonuses(data.get("bonuses", {})),
-				]
-			)
+			icon.set_equipment(slot, item_name, str(data.get("sprite", "")))
+			icon.set_hover_tooltip(_build_equipment_tooltip(data, slot))
+			label.text = "%s: %s" % [slot_label, item_name]
 
-	# Inventory title
-	if _inventory_title:
-		_inventory_title.text = tr("UI_EQUIP_INVENTORY_COUNT").format(
+	# Backpack grid (rebuild every refresh)
+	if _inv_title:
+		_inv_title.text = tr("UI_EQUIP_INVENTORY_COUNT").format(
 			{"n": RunManager.inventory_items.size(), "max": RunManager.MAX_INVENTORY}
 		)
-
-	# Inventory rows (rebuild every refresh — simpler than diffing)
-	for child in _inventory_container.get_children():
+	for child in _grid.get_children():
 		child.queue_free()
-	for i in range(RunManager.inventory_items.size()):
-		var item_id: String = RunManager.inventory_items[i]
-		_inventory_container.add_child(_build_inventory_row(item_id, i))
+	for i in range(RunManager.MAX_INVENTORY):
+		_grid.add_child(_make_grid_cell(i))
 
 	# Active sets
 	for child in _sets_container.get_children():
 		child.queue_free()
 	var active_tiers: Dictionary = RunManager.get_active_set_tiers()
-	for set_id in active_tiers.keys():
-		_sets_container.add_child(_build_set_row(str(set_id), int(active_tiers[set_id])))
+	if active_tiers.is_empty():
+		var none := Label.new()
+		none.text = tr("UI_EQUIP_NONE_YET")
+		none.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		_sets_container.add_child(none)
+	else:
+		for set_id in active_tiers.keys():
+			_sets_container.add_child(_build_set_row(str(set_id), int(active_tiers[set_id])))
 
-	# Relics
+	# Relics (chips with hover tooltip)
 	for child in _relics_container.get_children():
 		child.queue_free()
 	if RunManager.relics.is_empty():
-		var none_lbl := Label.new()
-		none_lbl.text = tr("UI_EQUIP_NONE_YET")
-		none_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
-		_relics_container.add_child(none_lbl)
+		var none := Label.new()
+		none.text = tr("UI_EQUIP_NONE_YET")
+		none.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		_relics_container.add_child(none)
 	else:
 		for relic_id in RunManager.relics:
-			_relics_container.add_child(_build_relic_row(str(relic_id)))
+			_relics_container.add_child(_build_relic_chip(str(relic_id)))
 
-	# Stats
-	var p = RunManager.player_attributes
-	_stats_label.text = (
-		tr("UI_EQUIP_STATS")
-		. format(
-			{
-				"str": int(p.get("strength", 0)),
-				"con": int(p.get("constitution", 0)),
-				"int": int(p.get("intelligence", 0)),
-				"luc": int(p.get("luck", 0)),
-				"cha": int(p.get("charm", 0)),
-			}
-		)
-	)
 	_status_label.text = ""
 
 
-func _build_inventory_row(item_id: String, index: int) -> Control:
-	var data = RunManager.get_equipment_data(item_id)
-	var slot = str(data.get("slot", "head"))
-
-	var frame := PanelContainer.new()
-	frame.add_theme_stylebox_override("panel", T.reward_row_style(T.PANEL_BG, T.PANEL_BORDER))
-	frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 10)
-	margin.add_theme_constant_override("margin_right", 10)
-	margin.add_theme_constant_override("margin_top", 6)
-	margin.add_theme_constant_override("margin_bottom", 6)
-	frame.add_child(margin)
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	margin.add_child(row)
-
-	var item_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
-	var icon := EQUIPMENT_ICON.new()
-	icon.set_equipment(slot, item_name, str(data.get("sprite", "")))
-	icon.set_hover_tooltip(_build_equipment_tooltip(data, slot))
-	row.add_child(icon)
-
-	var info := Label.new()
-	info.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
-	info.custom_minimum_size = Vector2(200, 0)
-	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var set_tag = ""
-	var set_id_str := str(data.get("set_id", ""))
-	if set_id_str != "":
-		set_tag = "  [%s]" % Settings.t("EQUIP_SET_%s_NAME" % set_id_str, set_id_str)
-	info.text = "%s\n%s%s" % [item_name, _format_bonuses(data.get("bonuses", {})), set_tag]
-	row.add_child(info)
-
-	var equip_btn := Button.new()
-	equip_btn.text = tr("UI_EQUIP_EQUIP")
-	equip_btn.custom_minimum_size = Vector2(96, 40)
-	T.apply_button_theme(equip_btn)
-	equip_btn.pressed.connect(_on_equip_pressed.bind(item_id, slot, index))
-	row.add_child(equip_btn)
-
-	var discard_btn := Button.new()
-	discard_btn.text = tr("UI_EQUIP_DISCARD")
-	discard_btn.custom_minimum_size = Vector2(112, 40)
-	T.apply_button_theme(discard_btn)
-	discard_btn.pressed.connect(_on_discard_pressed.bind(index, discard_btn))
-	row.add_child(discard_btn)
-
-	return frame
+## Build one backpack cell. STACK-READY: today a cell is either an equipment
+## item or empty; a future economy pass extends this to gold/core stacks.
+func _make_grid_cell(index: int) -> Control:
+	if index < RunManager.inventory_items.size():
+		var item_id: String = RunManager.inventory_items[index]
+		var data = RunManager.get_equipment_data(item_id)
+		var slot := str(data.get("slot", "head"))
+		var item_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
+		var icon := EQUIPMENT_ICON.new()
+		icon.custom_minimum_size = CELL_SIZE
+		icon.set_equipment(slot, item_name, str(data.get("sprite", "")))
+		icon.set_hover_tooltip(_build_equipment_tooltip(data, slot))
+		icon.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		icon.gui_input.connect(_on_cell_input.bind(item_id, slot, index))
+		return icon
+	# Empty cell — dim placeholder panel.
+	var blank := Panel.new()
+	blank.custom_minimum_size = CELL_SIZE
+	var style := T.panel_with_shadow(Color(0.10, 0.085, 0.07, 0.6), T.PANEL_BORDER, 2, 1)
+	blank.add_theme_stylebox_override("panel", style)
+	return blank
 
 
-func _build_relic_row(relic_id: String) -> Label:
+func _on_slot_input(event: InputEvent, slot: String) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_on_unequip_pressed(slot)
+
+
+func _on_cell_input(event: InputEvent, item_id: String, slot: String, index: int) -> void:
+	if not (event is InputEventMouseButton and event.pressed):
+		return
+	if event.button_index == MOUSE_BUTTON_LEFT:
+		_on_equip_pressed(item_id, slot, index)
+	elif event.button_index == MOUSE_BUTTON_RIGHT:
+		RunManager.discard_from_inventory(index)
+
+
+func _on_equip_pressed(item_id: String, slot: String, _index: int) -> void:
+	if not RunManager.equip_to_slot(item_id, slot):
+		_status_label.text = tr("UI_EQUIP_FULL_SWAP")
+
+
+func _on_unequip_pressed(slot: String) -> void:
+	if RunManager.equipped_items.get(slot, "") == "":
+		return
+	if not RunManager.unequip_slot(slot):
+		_status_label.text = tr("UI_EQUIP_FULL_UNEQUIP")
+
+
+func _build_relic_chip(relic_id: String) -> Control:
 	var data = RunManager.get_relic_data(relic_id)
 	var title = Settings.t("RELIC_%s_TITLE" % relic_id, str(data.get("title", relic_id)))
 	var description = Settings.t("RELIC_%s_DESC" % relic_id, str(data.get("description", "")))
-	var row := Label.new()
-	row.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
-	row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	row.text = "%s: %s" % [title, description]
-	return row
+	var chip := PanelContainer.new()
+	chip.add_theme_stylebox_override("panel", T.reward_row_style(T.PANEL_BG, T.PANEL_BORDER))
+	chip.mouse_filter = Control.MOUSE_FILTER_STOP
+	var lbl := Label.new()
+	lbl.text = title
+	lbl.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
+	chip.add_child(lbl)
+	chip.mouse_entered.connect(
+		func() -> void:
+			Tooltip.show(
+				"[b]%s[/b]\n%s" % [title, description],
+				chip.global_position + Vector2(chip.size.x * 0.5, 0),
+				chip.get_instance_id()
+			)
+	)
+	chip.mouse_exited.connect(func() -> void: Tooltip.hide_if_owner(chip.get_instance_id()))
+	chip.tree_exited.connect(func() -> void: Tooltip.hide_if_owner(chip.get_instance_id()))
+	return chip
 
 
 func _build_set_row(set_id: String, count: int) -> HBoxContainer:
@@ -366,7 +387,6 @@ func _build_set_row(set_id: String, count: int) -> HBoxContainer:
 	name_lbl.custom_minimum_size = Vector2(180, 0)
 	row.add_child(name_lbl)
 
-	# Tier descriptions, highlighted if active
 	var tier_list = set_data.get("tiers", [])
 	if typeof(tier_list) == TYPE_ARRAY:
 		for tier in tier_list:
@@ -387,20 +407,21 @@ func _build_set_row(set_id: String, count: int) -> HBoxContainer:
 	return row
 
 
-func _on_equip_pressed(item_id: String, slot: String, _inventory_index: int) -> void:
-	if not RunManager.equip_to_slot(item_id, slot):
-		_status_label.text = tr("UI_EQUIP_FULL_SWAP")
+func _load_portrait(sprite_id: String) -> Texture2D:
+	var path := "%s%s/%s_portrait.png" % [HERO_SPRITE_DIR, sprite_id, sprite_id]
+	if ResourceLoader.exists(path):
+		return load(path)
+	if FileAccess.file_exists(path):
+		var img := Image.load_from_file(path)
+		if img:
+			return ImageTexture.create_from_image(img)
+	return null
 
 
-func _on_unequip_pressed(slot: String) -> void:
-	if not RunManager.unequip_slot(slot):
-		_status_label.text = tr("UI_EQUIP_FULL_UNEQUIP")
-
-
-func _on_discard_pressed(index: int, btn: Button) -> void:
-	if btn:
-		btn.disabled = true  # Prevent same-frame double-click discarding wrong index after refresh.
-	RunManager.discard_from_inventory(index)
+func _parse_tint(hex: String) -> Color:
+	if hex.is_valid_html_color():
+		return Color(hex)
+	return Color.WHITE
 
 
 func _format_bonuses(bonuses) -> String:
@@ -412,8 +433,7 @@ func _format_bonuses(bonuses) -> String:
 	return ", ".join(parts)
 
 
-## Rich tooltip text for an equipment item — name, slot, rarity, full
-## attribute bonuses, optional set tag, and description.
+## Rich tooltip text for an equipment item.
 func _build_equipment_tooltip(data: Dictionary, slot: String) -> String:
 	var item_id := str(data.get("id", ""))
 	var name_str := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", "?")))
@@ -437,8 +457,6 @@ func _build_equipment_tooltip(data: Dictionary, slot: String) -> String:
 	return "\n".join(lines)
 
 
-## Localized display label for an equipment slot id (head/chest/weapon/hands/
-## accessory). Falls back to the upper-cased raw id for any unknown slot.
 func _slot_label(slot: String) -> String:
 	match slot:
 		"head":
@@ -453,6 +471,13 @@ func _slot_label(slot: String) -> String:
 			return tr("UI_EQUIP_SLOT_ACCESSORY")
 		_:
 			return slot.to_upper()
+
+
+func _section_title(text: String) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
+	return l
 
 
 func _spacer() -> Control:
