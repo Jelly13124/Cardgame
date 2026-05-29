@@ -51,17 +51,18 @@ Sections, in order:
 last-2. **Delivery order** — highest-visibility first (cards → enemies → equipment → relics).
 last-1. **What NOT to do** — no editing `.gd`/`.tscn`/`.json`; no inventing/renaming ids;
    no UI frames/badges/text baked in; no frame-size changes; no committing `.import`
-   or API keys (`$env:PIXELLAB_API_KEY`).
+   or API keys / secrets (read any external-service credentials from an env var, never commit them).
 last. **Acceptance** — exact path exists, correct dims, transparent bg (no magenta
    leftover), silhouette reads at in-game scale, one neon accent only, set cohesion.
 
 ### Mandatory style anchor (paste verbatim)
 
 ```
-hardcore 128 pixel wasteland art style, native 128x128 pixel game sprite readability,
-bold black pixel outlines, gritty rusted scrap metal, worn leather and patched cloth,
-dusty desert palette, controlled pixel shading, salvaged bolts dents tubes and cracked glass,
-one small neon accent, transparent background, no high-resolution cartoon brushwork
+hardcore wasteland sprite art, detailed fully-rendered game sprite, bold dark outlines,
+rich controlled shading with clear highlight-mid-shadow, warm rust / leather / brass / dark-steel / dusty-tan palette,
+salvaged scrap metal with bolts dents tubes and cracked glass, worn leather and patched cloth,
+one small glowing neon accent, authored at 128px native (192px bosses) for in-game readability,
+transparent background, match the Cowboy Bill reference fidelity, not lo-fi pixel art, not flat
 ```
 
 For combat-unit sheets also append:
@@ -69,6 +70,8 @@ For combat-unit sheets also append:
 side view, full body, shared baseline, consistent scale, hero faces right or enemy faces left,
 4 attack frames, attack frame 0 doubles as the static rest pose, no separate idle animation
 ```
+
+**Ground truth (always include):** point Codex at Cowboy Bill (`battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_portrait.png`) as the fidelity reference — a detailed, fully-rendered sprite, NOT lo-fi pixel art. When wording conflicts with how Bill looks, Bill wins. (See ADR-0011 / `art-style-reference.md`.)
 
 ### Frame-size / output-path table
 

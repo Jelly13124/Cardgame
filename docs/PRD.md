@@ -1,6 +1,6 @@
 # Product Requirements Document
 **Project:** Unnamed Sci-Fi Roguelite Card Game  
-**Art Style:** Hardcore 128 Pixel Wasteland Art
+**Art Style:** Hardcore Wasteland Sprite Art
 **Engine:** Godot 4.6  
 **Last Updated:** 2026-05-19
 
@@ -8,7 +8,7 @@
 
 ## Overview
 
-A single-player roguelite deckbuilder set in a post-apocalyptic scrapyard wasteland. Players collect cards, relics, and equipment while fighting through escalating routes toward bosses. The visual language is locked to Hardcore 128 Pixel Wasteland Art: native 128x128 pixel sprites, bold black pixel outlines, gritty rusted scrap materials, dusty leather/earth tones, controlled pixel shading, and sparse neon accents.
+A single-player roguelite deckbuilder set in a post-apocalyptic scrapyard wasteland. Players collect cards, relics, and equipment while fighting through escalating routes toward bosses. The visual language is locked to Hardcore Wasteland Sprite Art: detailed fully-rendered sprites authored at 128×128 native, bold dark outlines, gritty rusted scrap materials, dusty leather/earth tones, rich controlled shading, and sparse glowing neon accents.
 
 Combat is **Slay the Spire style**: the player has a hand of cards, limited energy, and must choose each turn which cards to play to survive enemy attacks while defeating them.
 
@@ -16,7 +16,7 @@ Project documentation is centralized in `docs/`:
 - `docs/PRD.md` is the product and systems source of truth.
 - `docs/PROJECT_STRUCTURE.md` maps scenes, scripts, data, and assets.
 - `docs/project-rules.md` defines art, asset, naming, and architecture rules.
-- `docs/art-style-reference.md` defines the approved Hardcore 128 Pixel Wasteland Art reference.
+- `docs/art-style-reference.md` defines the approved Hardcore Wasteland Sprite Art reference.
 
 ---
 
@@ -316,9 +316,9 @@ BattleScene (Node)
 
 ---
 
-## Art Style - Hardcore 128 Pixel Wasteland Art
+## Art Style - Hardcore Wasteland Sprite Art
 
-The game's definitive art direction is **Hardcore 128 Pixel Wasteland Art**, based on the approved reference image in `docs/art-style-reference.md`: native 128x128 pixel sprites, bold black pixel outlines, gritty wasteland materials, warm rust/leather colors, controlled pixel shading, and one small neon accent.
+The game's definitive art direction is **Hardcore Wasteland Sprite Art**, with Cowboy Bill as the ground-truth reference (`docs/art-style-reference.md`): detailed fully-rendered sprites authored at 128×128 native, bold dark outlines, gritty wasteland materials, warm rust/leather colors, rich controlled shading, and one small glowing neon accent. (Renamed/clarified — see ADR-0011.)
 
 ### Visual Rules
 | Element | Rule |
