@@ -28,7 +28,15 @@ var max_health: int = 50
 var current_health: int = 50
 
 # Resources
-var gold: int = 0
+## Gold is derived from the backpack now. Read-only computed property kept for
+## compatibility (UI reads RunManager.gold); mutate via add_gold()/spend_gold().
+var gold: int:
+	get:
+		return total_gold()
+	set(_v):
+		push_warning("RunManager.gold is read-only — use add_gold()/spend_gold()")
+## Vestigial in-run core counter (kept for add_resources compat). Run-core that
+## matters now lives in the backpack as core stacks; see total_run_core().
 var core: int = 0
 
 # Progression
@@ -44,8 +52,23 @@ var equipped_items: Dictionary = {
 	"accessory": "",
 }
 
-## Unequipped equipment held by the player. Capped at MAX_INVENTORY.
-var inventory_items: Array[String] = []
+## Backpack — the definitive store for unequipped loot. Fixed length
+## MAX_INVENTORY. Each cell is one of:
+##   null | {"kind":"equip","id":String} | {"kind":"gold","amount":int} | {"kind":"core","amount":int}
+## Gold / Core / equipment all compete for these cells.
+var backpack: Array = []
+signal backpack_changed
+const GOLD_PER_CELL := 100
+const CORE_PER_CELL := 30
+## Equipment item_ids queued (from the base stash) to inject into the backpack
+## at the next start_new_run. Filled by the Phase-3 loadout UI; empty otherwise.
+var pending_loadout: Array[String] = []
+
+## Compatibility read-only view: the equip item_ids currently in the backpack
+## (cell order). Mutate via add_to_inventory/discard_from_inventory/equip_to_slot.
+var inventory_items: Array[String]:
+	get:
+		return backpack_equip_ids()
 
 var relics: Array[String] = []
 const MAX_INVENTORY: int = 20
@@ -174,6 +197,7 @@ func _ready() -> void:
 	assert(
 		failures == 0, "DataValidator: %d JSON schema failure(s) — see editor output." % failures
 	)
+	_ensure_backpack()
 
 
 # --- Map Generation ---
@@ -472,14 +496,20 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 		add_card_to_deck(str(card_id))
 
 	# Reset resources and health (hero max_health overrides default 50).
-	gold = 0
+	# gold is derived from the backpack — clearing the backpack zeroes it.
 	core = 0
 	current_floor = 0
 	max_health = int(current_hero_data.get("max_health", 50))
 	current_health = max_health
 	for slot in EQUIPMENT_SLOTS:
 		equipped_items[slot] = ""
-	inventory_items.clear()
+	_ensure_backpack()
+	for i in range(MAX_INVENTORY):
+		backpack[i] = null
+	# Inject any pending loadout from the base stash (Phase 3 fills this).
+	for item_id in pending_loadout:
+		add_equip_to_backpack(str(item_id))
+	pending_loadout.clear()
 	relics.clear()
 	current_encounter = ["trash_robot"]
 	last_battle_node_type = "enemy"
@@ -613,9 +643,168 @@ func set_max_health(amount: int, heal_to_full: bool = false) -> void:
 
 
 func add_resources(g: int, c: int) -> void:
-	gold = max(0, gold + g)
+	# Gold now lives in the backpack; route through add_gold/spend_gold.
+	if g > 0:
+		add_gold(g)
+	elif g < 0:
+		spend_gold(-g)
 	core = max(0, core + c)
-	emit_signal("resources_changed", gold, core)
+	emit_signal("resources_changed", total_gold(), core)
+
+
+# --- Backpack (cell model) -------------------------------------------------
+
+
+func _ensure_backpack() -> void:
+	if backpack.size() != MAX_INVENTORY:
+		backpack.resize(MAX_INVENTORY)  # new slots are null-filled
+
+
+func _first_null_cell() -> int:
+	for i in range(MAX_INVENTORY):
+		if backpack[i] == null:
+			return i
+	return -1
+
+
+func free_cells() -> int:
+	var n := 0
+	for c in backpack:
+		if c == null:
+			n += 1
+	return n
+
+
+func backpack_count_used() -> int:
+	return MAX_INVENTORY - free_cells()
+
+
+func backpack_equip_ids() -> Array[String]:
+	var out: Array[String] = []
+	for c in backpack:
+		if c != null and c.get("kind") == "equip":
+			out.append(str(c["id"]))
+	return out
+
+
+func _find_equip_cell(item_id: String) -> int:
+	for i in range(MAX_INVENTORY):
+		var c = backpack[i]
+		if c != null and c.get("kind") == "equip" and str(c["id"]) == item_id:
+			return i
+	return -1
+
+
+func total_gold() -> int:
+	var t := 0
+	for c in backpack:
+		if c != null and c.get("kind") == "gold":
+			t += int(c["amount"])
+	return t
+
+
+func total_run_core() -> int:
+	var t := 0
+	for c in backpack:
+		if c != null and c.get("kind") == "core":
+			t += int(c["amount"])
+	return t
+
+
+## Add gold to the backpack (fills partial stacks, then opens new cells).
+## Returns the amount actually stored (< n if the backpack ran out of room).
+func add_gold(n: int) -> int:
+	return _add_stacked("gold", n, GOLD_PER_CELL)
+
+
+## Add run-core to the backpack (≤CORE_PER_CELL per cell). Returns amount stored.
+func add_core_to_backpack(n: int) -> int:
+	return _add_stacked("core", n, CORE_PER_CELL)
+
+
+func _add_stacked(kind: String, n: int, per: int) -> int:
+	_ensure_backpack()
+	var remaining := n
+	for c in backpack:
+		if remaining <= 0:
+			break
+		if c != null and c.get("kind") == kind and int(c["amount"]) < per:
+			var room := per - int(c["amount"])
+			var put := mini(room, remaining)
+			c["amount"] = int(c["amount"]) + put
+			remaining -= put
+	while remaining > 0:
+		var idx := _first_null_cell()
+		if idx == -1:
+			break
+		var put := mini(per, remaining)
+		backpack[idx] = {"kind": kind, "amount": put}
+		remaining -= put
+	if remaining != n:
+		emit_signal("backpack_changed")
+	return n - remaining
+
+
+## Spend gold from the backpack, then re-normalize to fewest cells (the result
+## of "making change"). Returns false if the player can't afford `cost`.
+func spend_gold(cost: int) -> bool:
+	if cost <= 0:
+		return true
+	if total_gold() < cost:
+		return false
+	var remaining := cost
+	for i in range(MAX_INVENTORY):
+		if remaining <= 0:
+			break
+		var c = backpack[i]
+		if c != null and c.get("kind") == "gold":
+			var take := mini(int(c["amount"]), remaining)
+			c["amount"] = int(c["amount"]) - take
+			remaining -= take
+			if int(c["amount"]) <= 0:
+				backpack[i] = null
+	_normalize_gold()
+	emit_signal("backpack_changed")
+	return true
+
+
+## Compact all gold into the fewest cells.
+func _normalize_gold() -> void:
+	var g := total_gold()
+	for i in range(MAX_INVENTORY):
+		if backpack[i] != null and backpack[i].get("kind") == "gold":
+			backpack[i] = null
+	var idx := 0
+	while g > 0 and idx < MAX_INVENTORY:
+		if backpack[idx] == null:
+			var put := mini(GOLD_PER_CELL, g)
+			backpack[idx] = {"kind": "gold", "amount": put}
+			g -= put
+		idx += 1
+
+
+## Put an equipment item into the first free cell. Returns false if full.
+func add_equip_to_backpack(item_id: String) -> bool:
+	if item_id == "":
+		return false
+	_ensure_backpack()
+	var idx := _first_null_cell()
+	if idx == -1:
+		return false
+	backpack[idx] = {"kind": "equip", "id": item_id}
+	emit_signal("backpack_changed")
+	return true
+
+
+## Swap two backpack cells (panel uses this to move an item into/out of a safe
+## cell). Safe-cell range is index 0..safe_cells-1.
+func move_cell(from_idx: int, to_idx: int) -> void:
+	if from_idx < 0 or to_idx < 0 or from_idx >= MAX_INVENTORY or to_idx >= MAX_INVENTORY:
+		return
+	var tmp = backpack[from_idx]
+	backpack[from_idx] = backpack[to_idx]
+	backpack[to_idx] = tmp
+	emit_signal("backpack_changed")
 
 
 # --- Items ---
@@ -665,26 +854,24 @@ func equip_to_slot(item_id: String, slot: String) -> bool:
 		return false
 
 	var prev: String = equipped_items.get(slot, "")
-	var item_already_in_bag := item_id in inventory_items
-	if prev != "":
-		# Skip the full-bag check when we're swapping with a bag item — that
-		# case is a net-zero change to bag size (remove item_id, add prev).
-		if not item_already_in_bag and inventory_items.size() >= MAX_INVENTORY:
-			return false
-		inventory_items.append(prev)
-
-	# Remove item_id from inventory if it was there (equipping from bag is common path)
-	var bag_idx = inventory_items.find(item_id)
+	var bag_idx := _find_equip_cell(item_id)
+	# Equipping from the backpack frees that cell, so swapping with a slot item
+	# is net-zero; only a NEW item (not already in the bag) needs a free cell
+	# to receive `prev`.
+	if prev != "" and bag_idx == -1 and free_cells() <= 0:
+		return false
 	if bag_idx >= 0:
-		inventory_items.remove_at(bag_idx)
-
+		backpack[bag_idx] = null  # take the chosen item out of the bag
 	equipped_items[slot] = item_id
+	if prev != "":
+		add_equip_to_backpack(prev)  # space guaranteed (freed bag_idx or checked free_cells)
+	emit_signal("backpack_changed")
 	recompute_attributes()
 	return true
 
 
-## Move the item in slot to inventory. Returns false if inventory is full.
-## Calls recompute_attributes() on success.
+## Move the item in slot back to the backpack. Returns false if the backpack
+## is full. Calls recompute_attributes() on success.
 func unequip_slot(slot: String) -> bool:
 	if not slot in EQUIPMENT_SLOTS:
 		push_error("unequip_slot: unknown slot '%s'" % slot)
@@ -692,31 +879,28 @@ func unequip_slot(slot: String) -> bool:
 	var item_id: String = equipped_items.get(slot, "")
 	if item_id == "":
 		return true  # already empty, treat as success no-op
-	if inventory_items.size() >= MAX_INVENTORY:
-		return false
-	inventory_items.append(item_id)
+	if not add_equip_to_backpack(item_id):
+		return false  # backpack full
 	equipped_items[slot] = ""
 	recompute_attributes()
 	return true
 
 
-## Append to inventory. Returns false at MAX_INVENTORY (caller handles UI).
+## Add an equipment item to the backpack. Returns false at capacity.
 func add_to_inventory(item_id: String) -> bool:
-	if item_id == "":
-		return false
-	if inventory_items.size() >= MAX_INVENTORY:
-		return false
-	inventory_items.append(item_id)
-	emit_signal("equipment_changed")
-	return true
+	return add_equip_to_backpack(item_id)
 
 
-## Discard inventory[index]. Out-of-range = silent no-op.
+## Clear backpack cell `index` (only if it holds equipment). NOTE: `index` is a
+## backpack CELL index (0..MAX_INVENTORY-1), not a position in the equip list.
+## Out-of-range or non-equip cells are a silent no-op.
 func discard_from_inventory(index: int) -> void:
-	if index < 0 or index >= inventory_items.size():
+	if index < 0 or index >= MAX_INVENTORY:
 		return
-	inventory_items.remove_at(index)
-	emit_signal("equipment_changed")
+	var c = backpack[index]
+	if c != null and c.get("kind") == "equip":
+		backpack[index] = null
+		emit_signal("backpack_changed")
 
 
 ## Up to one disk read per occupied slot — call only on equip/snapshot events,
@@ -923,7 +1107,7 @@ func _apply_meta_upgrades() -> void:
 	# Command Center → +starting gold
 	var bonus_gold := int(_get_meta_effect_value("command_center").get("gold", 0))
 	if bonus_gold > 0:
-		gold += bonus_gold
+		add_gold(bonus_gold)
 
 	# Arsenal → starter inventory items
 	var arsenal := _get_meta_effect_value("arsenal")
@@ -974,6 +1158,7 @@ func end_run_victory(core_earned: int = 0, outcome: String = "victory") -> void:
 func _teardown_run(victory: bool, outcome: String, core_earned: int) -> void:
 	if not is_run_active:
 		return
+	_settle_backpack(victory, outcome)
 	is_run_active = false
 	var summary := {
 		"hero_id": current_hero_id,
@@ -983,6 +1168,17 @@ func _teardown_run(victory: bool, outcome: String, core_earned: int) -> void:
 		"timestamp": int(Time.get_unix_time_from_system()),
 	}
 	emit_signal("run_ended", victory, summary)
+
+
+## Settle the backpack at run end.
+## Phase 1: extract/victory banks ALL carried run-core into permanent
+## MetaProgress.core; death banks nothing. (Phase 2 adds safe-cell survival on
+## death; Phase 3 adds the permanent equipment stash.)
+func _settle_backpack(victory: bool, outcome: String) -> void:
+	if victory or outcome == "extracted":
+		var carried := total_run_core()
+		if carried > 0:
+			MetaProgress.add_core(carried)
 
 
 func _emit_all_state() -> void:
