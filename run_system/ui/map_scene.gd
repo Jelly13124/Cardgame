@@ -258,6 +258,11 @@ func _on_node_clicked(node: Dictionary) -> void:
 				_grant_treasure_equipment()
 		"unknown":
 			_resolve_unknown_node(int(node.floor))
+		_:
+			# Defense-in-depth: an unrecognized node type must still release the
+			# click guard, or the whole map locks up (the stuck-guard class of bug).
+			push_warning("map: unhandled node type '%s'" % str(node.type))
+			_node_click_pending = false
 
 
 ## "?" map node — rolls one of several outcomes for variety. Probabilities:
@@ -314,11 +319,31 @@ func _resolve_unknown_node(floor_idx: int) -> void:
 	_open_relic_choice("Pried Open the Cache (-%d HP)" % hp_loss, "treasure")
 
 
-## Map floating popup removed per UX feedback — the player can see node
-## outcomes via state changes (HP bar, gold counter, inventory icon, relic
-## strip). Kept as a no-op so existing call sites don't need surgery.
-func _show_popup(_text: String) -> void:
-	queue_redraw()
+## Brief on-map toast for node outcomes that have no other obvious result
+## (?-room scavenge/heal/cache, treasure equipment grant, "nothing remains").
+## The earlier popup-strip turned this into a no-op, which silently dropped the
+## ONLY feedback for those outcomes — they read as dead clicks. Restored, but
+## restrained: small, top-of-screen, fast auto-fade (not the old center banner).
+func _show_popup(text: String) -> void:
+	if text.is_empty():
+		return
+	var layer := CanvasLayer.new()
+	layer.layer = 90
+	add_child(layer)
+	var label := Label.new()
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 20)
+	label.add_theme_color_override("font_color", Color(1, 0.95, 0.8))
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	label.add_theme_constant_override("outline_size", 6)
+	label.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	label.offset_top = 96
+	layer.add_child(label)
+	var tween := create_tween()
+	tween.tween_interval(1.4)
+	tween.tween_property(label, "modulate:a", 0.0, 0.6)
+	tween.tween_callback(layer.queue_free)
 
 
 func _build_relic_choice_layer() -> void:
@@ -361,6 +386,7 @@ func _build_relic_choice_layer() -> void:
 
 func _open_relic_choice(title: String, source_type: String) -> void:
 	if not rm:
+		_node_click_pending = false
 		return
 
 	var choices: Array[String] = rm.roll_relic_choices(3)
@@ -371,6 +397,7 @@ func _open_relic_choice(title: String, source_type: String) -> void:
 			_show_popup("No relics remain. Found %d gold!" % gold)
 		else:
 			_show_popup("No relics remain.")
+		_node_click_pending = false
 		return
 
 	for child in _relic_choice_box.get_children():
