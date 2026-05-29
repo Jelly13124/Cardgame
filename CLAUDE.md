@@ -1,5 +1,8 @@
 # CardFramework — roguelite deckbuilder (Godot 4.6)
 
+> **始终用中文回复用户(prose、说明、提问全用中文)。** 代码、标识符、文件名、
+> commit message、JSON 等仍按项目惯例(多为英文)。这是项目主的硬性要求。
+
 Data-driven roguelite deckbuilder. Gameplay content is JSON, validated at boot by
 `battle_scene/data_validator.gd`. GDScript adds behavior only when a new shared
 effect / trigger / UI surface is needed.
