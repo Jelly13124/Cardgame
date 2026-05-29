@@ -1,7 +1,7 @@
 {
 	"id": "acid_spitter",
 	"name": "Acid Spitter",
-	"sprite_id": "mortar_cart",
+	"sprite_id": "acid_spitter",
 	"max_health": 18,
 	"action_pattern": [
 		{ "type": "attack_status", "amount": 4, "status": "poison", "stacks": 2, "label": "☠ 4 + P2" },

@@ -37,21 +37,21 @@
 
 | ID | Name | HP | Tier | Sprite ID | Pattern length | Frames |
 |---|---|---|---|---|---|---|
-| `acid_spitter` | Acid Spitter | 18 | standard | `mortar_cart` † | 3 | ✅ |
+| `acid_spitter` | Acid Spitter | 18 | standard | `acid_spitter` | 3 | ✅ |
 | `armored_patrol` | Armored Patrol | 50 | elite | `armored_patrol` | 4 | ✅ |
-| `ash_warden` | Ash Warden | 95 | boss | `armored_patrol` † | 7 | ✅ |
-| `chrome_hound` | Chrome Hound | 32 | standard | `riot_hound` † | 4 | ✅ |
+| `ash_warden` | Ash Warden | 95 | boss | `ash_warden` | 7 | ✅ |
+| `chrome_hound` | Chrome Hound | 32 | standard | `chrome_hound` | 4 | ✅ |
 | `junkyard_tyrant` | Junkyard Tyrant | 110 | boss | `junkyard_tyrant` | 9 | ✅ |
 | `mortar_cart` | Mortar Cart | 28 | standard | `mortar_cart` | 5 | ✅ |
 | `riot_hound` | Riot Hound | 25 | standard | `riot_hound` | 3 | ✅ |
 | `rust_brute` | Rust Brute | 40 | standard | `rust_brute` | 4 | ✅ |
-| `rust_titan` | Rust Titan | 75 | boss | `rust_brute` † | 6 | ✅ |
+| `rust_titan` | Rust Titan | 75 | boss | `rust_titan` | 6 | ✅ |
 | `scrap_rat` | Scrap Rat | 12 | standard | `scrap_rat` | 3 | ✅ |
-| `slag_walker` | Slag Walker | 28 | standard | `rust_brute` † | 4 | ✅ |
+| `slag_walker` | Slag Walker | 28 | standard | `slag_walker` | 4 | ✅ |
 | `trash_robot` | Trash Robot | 30 | standard | `trash_robot` | 4 | ✅ |
 | `wasteland_killer` | Wasteland Killer | 20 | standard | `wasteland_killer` | 3 | ✅ |
 
-> † Sprite is a **placeholder** — the 5 Phase-5 enemies re-skin an existing folder (`Frames ✅` reflects the placeholder, not dedicated art) until Codex delivers per-enemy sprites per `docs/asset-spec-content-expansion.md` §3.
+> All enemies now use dedicated per-enemy sprite art (Codex wave-3 delivery, 2026-05-29).
 
 ## Encounter pools (where each enemy spawns)
 
@@ -200,7 +200,7 @@ Defined in `run_system/core/run_manager.gd`. `select_encounter(type, floor)` is 
 > Two Crushing Blow windows per cycle. Both can be cancelled with Shock during the CHARGING turn.
 
 ### `rust_titan` (HP 75) — boss, floor 4 (act-1)
-- Sprite: `battle_scene/assets/images/enemies/rust_brute/` (placeholder until Codex delivers `rust_titan/`)
+- Sprite: `battle_scene/assets/images/enemies/rust_titan/`
 - JSON: `battle_scene/card_info/enemy/rust_titan.json`
 
 **Action pattern (loops — 6 actions):**
@@ -216,7 +216,7 @@ Defined in `run_system/core/run_manager.gd`. `select_encounter(type, floor)` is 
 > One Slam window per cycle — cancel with Shock during WIND-UP.
 
 ### `ash_warden` (HP 95) — boss, floor 8 (act-2)
-- Sprite: `battle_scene/assets/images/enemies/armored_patrol/` (placeholder until Codex delivers `ash_warden/`)
+- Sprite: `battle_scene/assets/images/enemies/ash_warden/`
 - JSON: `battle_scene/card_info/enemy/ash_warden.json`
 
 **Action pattern (loops — 7 actions):**
@@ -233,7 +233,7 @@ Defined in `run_system/core/run_manager.gd`. `select_encounter(type, floor)` is 
 > Status-heavy sentinel: stacks Burn + Vulnerable before the interruptible Blast. Cancel the Blast with Shock during IGNITING.
 
 ### `slag_walker` (HP 28) — standard (mid)
-- Sprite: `battle_scene/assets/images/enemies/rust_brute/` (placeholder until Codex delivers `slag_walker/`)
+- Sprite: `battle_scene/assets/images/enemies/slag_walker/`
 - JSON: `battle_scene/card_info/enemy/slag_walker.json`
 
 **Action pattern (loops):**
@@ -245,7 +245,7 @@ Defined in `run_system/core/run_manager.gd`. `select_encounter(type, floor)` is 
 | 4 | block | 6 | 🛡 6 |
 
 ### `acid_spitter` (HP 18) — standard (mid), applies Poison
-- Sprite: `battle_scene/assets/images/enemies/mortar_cart/` (placeholder until Codex delivers `acid_spitter/`)
+- Sprite: `battle_scene/assets/images/enemies/acid_spitter/`
 - JSON: `battle_scene/card_info/enemy/acid_spitter.json`
 
 **Action pattern (loops):**
@@ -258,7 +258,7 @@ Defined in `run_system/core/run_manager.gd`. `select_encounter(type, floor)` is 
 > Low HP, high Poison output — kill fast or the stacking damage adds up.
 
 ### `chrome_hound` (HP 32) — standard (late), applies Weak
-- Sprite: `battle_scene/assets/images/enemies/riot_hound/` (placeholder until Codex delivers `chrome_hound/`)
+- Sprite: `battle_scene/assets/images/enemies/chrome_hound/`
 - JSON: `battle_scene/card_info/enemy/chrome_hound.json`
 
 **Action pattern (loops):**

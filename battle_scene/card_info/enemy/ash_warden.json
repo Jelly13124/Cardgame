@@ -1,7 +1,7 @@
 {
 	"id": "ash_warden",
 	"name": "Ash Warden",
-	"sprite_id": "armored_patrol",
+	"sprite_id": "ash_warden",
 	"max_health": 95,
 	"action_pattern": [
 		{ "type": "attack_status", "amount": 6, "status": "burn",       "stacks": 2, "label": "🔥 6 + B2" },

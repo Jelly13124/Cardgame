@@ -1,7 +1,7 @@
 {
 	"id": "rust_titan",
 	"name": "Rust Titan",
-	"sprite_id": "rust_brute",
+	"sprite_id": "rust_titan",
 	"max_health": 75,
 	"action_pattern": [
 		{ "type": "attack",    "amount": 8,  "label": "⚔ 8" },
