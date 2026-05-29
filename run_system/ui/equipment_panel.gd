@@ -89,7 +89,7 @@ func _build() -> void:
 
 	# Vitals row (HP / Gold / Floor) — populated by _refresh
 	_vitals_label = Label.new()
-	_vitals_label.add_theme_font_size_override("font_size", 16)
+	_vitals_label.add_theme_font_size_override("font_size", 20)
 	_vitals_label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.7))
 	vroot.add_child(_vitals_label)
 

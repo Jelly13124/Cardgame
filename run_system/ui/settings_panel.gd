@@ -35,7 +35,7 @@ static func add_controls(
 	lang_row.add_child(lang_btn)
 	if in_battle:
 		var note := _label(TranslationServer.translate("SETTINGS_LANG_NOTE"))
-		note.add_theme_font_size_override("font_size", 12)
+		note.add_theme_font_size_override("font_size", 16)
 		note.add_theme_color_override("font_color", T.TEXT_SECONDARY)
 		box.add_child(note)
 
@@ -67,7 +67,7 @@ static func _label(text: String) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.add_theme_color_override("font_color", T.TEXT_MAIN)
-	l.add_theme_font_size_override("font_size", 16)
+	l.add_theme_font_size_override("font_size", 20)
 	return l
 
 

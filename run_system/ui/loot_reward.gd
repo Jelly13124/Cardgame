@@ -173,7 +173,7 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	var subtitle = Label.new()
 	subtitle.text = str(loot.get("subtitle", ""))
 	subtitle.add_theme_color_override("font_color", T.TEXT_SECONDARY)
-	subtitle.add_theme_font_size_override("font_size", 17)
+	subtitle.add_theme_font_size_override("font_size", 20)
 	subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	copy.add_child(subtitle)
 
@@ -224,7 +224,7 @@ func _make_claim_plate(label_text: String = "") -> PanelContainer:
 	label.text = label_text if label_text != "" else tr("UI_LOOT_ACTION_CLAIM")
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_font_size_override("font_size", 20)
 	label.add_theme_color_override("font_color", Color(0.76, 0.96, 1.0, 1.0))
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	plate.add_child(label)

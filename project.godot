@@ -36,3 +36,4 @@ project/assembly_name="CardFramework"
 [gui]
 
 theme/custom_font="res://assets/fonts/NotoSansCJKsc-Regular.otf"
+theme/default_font_size=20

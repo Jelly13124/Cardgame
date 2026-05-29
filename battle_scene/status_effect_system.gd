@@ -205,7 +205,7 @@ func _refresh_badges(entity: Node) -> void:
 		# the i18n audit doesn't flag the format literal as a hardcoded UI string.
 		var badge_code: String = STATUS_LABELS.get(status_name, status_name)
 		lbl.text = badge_code + str(stacks)
-		lbl.add_theme_font_size_override("font_size", 11)
+		lbl.add_theme_font_size_override("font_size", 16)
 		lbl.add_theme_color_override("font_color", STATUS_COLORS.get(status_name, Color.WHITE))
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

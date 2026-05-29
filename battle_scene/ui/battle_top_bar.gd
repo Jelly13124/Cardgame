@@ -78,7 +78,7 @@ func _build_bar() -> void:
 	status_label.name = "RunStatus"
 	status_label.custom_minimum_size = Vector2(360, 42)
 	status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	status_label.add_theme_font_size_override("font_size", 18)
+	status_label.add_theme_font_size_override("font_size", 20)
 	status_label.add_theme_color_override("font_color", Color(0.94, 0.86, 0.68))
 	row.add_child(status_label)
 
@@ -222,7 +222,7 @@ func _refresh_relics() -> void:
 		var empty = Label.new()
 		empty.text = tr("UI_BATTLE_NO_RELICS")
 		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		empty.add_theme_font_size_override("font_size", 16)
+		empty.add_theme_font_size_override("font_size", 20)
 		empty.add_theme_color_override("font_color", Color(0.65, 0.6, 0.5, 0.8))
 		relic_strip.add_child(empty)
 		return
@@ -268,7 +268,7 @@ func _make_relic_chip(relic_id: String) -> Button:
 	chip.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
 	chip.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	chip.add_theme_color_override("font_color", T.TEXT_MAIN)
-	chip.add_theme_font_size_override("font_size", 18)
+	chip.add_theme_font_size_override("font_size", 20)
 
 	var icon_path = str(data.get("icon", ""))
 	if not icon_path.is_empty():
@@ -336,7 +336,7 @@ func _make_icon_button(text: String, tooltip: String) -> Button:
 func _make_menu_button(text: String) -> Button:
 	var button = _make_icon_button(text, text)
 	button.custom_minimum_size = Vector2(300, 44)
-	button.add_theme_font_size_override("font_size", 18)
+	button.add_theme_font_size_override("font_size", 20)
 	return button
 
 

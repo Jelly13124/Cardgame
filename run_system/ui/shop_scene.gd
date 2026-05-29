@@ -16,7 +16,6 @@ const CARD_PRICE := {"common": 70, "uncommon": 120, "rare": 200}
 const EQUIP_PRICE := {"common": 60, "uncommon": 100, "rare": 180}
 const RELIC_PRICE := 150
 const REMOVE_CARD_PRICE := 75
-const SHOP_BG_PATH := "res://run_system/assets/images/shop/shop_interior_bg.png"
 
 const SHOP_BOARD_BG := Color(0.055, 0.040, 0.032, 0.94)
 const SHOP_PANEL_BG := Color(0.080, 0.055, 0.040, 0.92)
@@ -158,17 +157,6 @@ func _build_ui() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	var bg_tex := _load_texture(SHOP_BG_PATH)
-	if bg_tex:
-		var bg_img := TextureRect.new()
-		bg_img.texture = bg_tex
-		bg_img.set_anchors_preset(Control.PRESET_FULL_RECT)
-		bg_img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		bg_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		bg_img.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		bg_img.modulate = Color(1, 1, 1, 0.92)
-		add_child(bg_img)
-
 	var shade := ColorRect.new()
 	shade.color = Color(0.0, 0.0, 0.0, 0.46)
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -240,7 +228,7 @@ func _build_ui() -> void:
 
 	var gold_title := Label.new()
 	gold_title.text = tr("UI_SHOP_GOLD")
-	gold_title.add_theme_font_size_override("font_size", 18)
+	gold_title.add_theme_font_size_override("font_size", 20)
 	gold_title.add_theme_color_override("font_color", T.TEXT_MAIN)
 	gold_row.add_child(gold_title)
 
@@ -321,7 +309,7 @@ func _build_ui() -> void:
 func _section_header(text: String) -> Label:
 	var lbl := Label.new()
 	lbl.text = text
-	lbl.add_theme_font_size_override("font_size", 18)
+	lbl.add_theme_font_size_override("font_size", 20)
 	lbl.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return lbl
@@ -355,7 +343,7 @@ func _make_shop_button(text: String, min_size: Vector2) -> Button:
 	var btn := Button.new()
 	btn.text = text
 	btn.custom_minimum_size = min_size
-	btn.add_theme_font_size_override("font_size", 18)
+	btn.add_theme_font_size_override("font_size", 20)
 	T.apply_button_theme(btn)
 	return btn
 
@@ -403,7 +391,7 @@ func _build_card_stall(entry: Dictionary) -> Control:
 	wrapper.add_child(price_row)
 	var price_lbl := Label.new()
 	price_lbl.text = tr("UI_SHOP_PRICE").format({"n": int(entry["price"])})
-	price_lbl.add_theme_font_size_override("font_size", 18)
+	price_lbl.add_theme_font_size_override("font_size", 20)
 	price_lbl.add_theme_color_override("font_color", SHOP_PRICE)
 	price_row.add_child(price_lbl)
 	var buy_btn := _make_shop_button(tr("UI_SHOP_BUY"), Vector2(104, 36))
@@ -525,7 +513,7 @@ func _build_relic_stall(relic_id: String) -> Control:
 	var title := Label.new()
 	title.text = Settings.t("RELIC_%s_TITLE" % relic_id, str(data.get("title", relic_id)))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_font_size_override("font_size", 20)
 	title.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
 	wrapper.add_child(title)
 
@@ -569,7 +557,7 @@ func _build_remove_service_row() -> HBoxContainer:
 
 	var price_lbl := Label.new()
 	price_lbl.text = tr("UI_SHOP_PRICE").format({"n": _remove_price})
-	price_lbl.add_theme_font_size_override("font_size", 18)
+	price_lbl.add_theme_font_size_override("font_size", 20)
 	price_lbl.add_theme_color_override("font_color", SHOP_PRICE)
 	row.add_child(price_lbl)
 

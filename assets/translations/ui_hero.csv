@@ -1,14 +1,9 @@
 keys,en,zh
 UI_HERO_SELECT_TITLE,SELECT YOUR COMMANDER,选择你的指挥官
-UI_HERO_BILL_NAME,Robot Bill,机器人比尔
-UI_HERO_BILL_STATS,ATK: 10 | HP: 20,攻击: 10 | 生命: 20
-UI_HERO_BILL_DESC,Standard assault commander. Balanced pool.,标准突击指挥官。卡池均衡。
-UI_HERO_JERRY_NAME,Jerry Killer,杀手杰瑞
-UI_HERO_JERRY_STATS,ATK: 30 | HP: 5,攻击: 30 | 生命: 5
-UI_HERO_JERRY_DESC,Savage glass cannon. Aggressive pool.,残暴的玻璃大炮。卡池激进。
 UI_HERO_ASCENSION,ASCENSION,进阶
 UI_HERO_ASCENSION_VALUE,A{n},A{n}
 UI_HERO_LOCKED,"🔒 {name}\n(UNLOCK 100 CORE)","🔒 {name}\n(解锁需 100 核心)"
+UI_HERO_LOCKED_SHORT,🔒 LOCKED,🔒 已锁定
 UI_HERO_EXTRACT_TITLE,EXTRACT?,撤离？
 UI_HERO_EXTRACT_SUMMARY,You killed the act {n} boss.,你击杀了第{n}幕首领。
 UI_HERO_EXTRACT_NOW,"EXTRACT NOW   ( +{n} Core, end run )","立即撤离   ( +{n} 核心，结束本局 )"

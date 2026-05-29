@@ -57,7 +57,7 @@ func _build_ui() -> void:
 	_hp_label.position = Vector2.ZERO
 	_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hp_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_hp_label.add_theme_font_size_override("font_size", 12)
+	_hp_label.add_theme_font_size_override("font_size", 16)
 	_hp_label.add_theme_color_override("font_color", Color(1, 1, 1))
 	_hp_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
 	_hp_frame.add_child(_hp_label)
@@ -76,7 +76,7 @@ func _build_ui() -> void:
 	_block_label.size = _block_badge.size
 	_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_block_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_block_label.add_theme_font_size_override("font_size", 16)
+	_block_label.add_theme_font_size_override("font_size", 20)
 	_block_label.add_theme_color_override("font_color", Color(1, 1, 1))
 	_block_label.position = Vector2(0, -1)  # adjust padding inside shield
 	_block_badge.add_child(_block_label)
