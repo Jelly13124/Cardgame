@@ -84,7 +84,7 @@ Pick the section for the requested `<type>`. Write the JSON to the exact path, t
 ```
 - Required keys enforced by `validate_hero` in `data_validator.gd`.
 - `tint` red-shifts a placeholder sprite until codex makes a real folder; `sprite_id` points at `battle_scene/assets/images/heroes/<folder>/`.
-- **Wiring:** `hero_select.gd` only has scene-button slots for `cowboy_bill` and `hero_jerry_killer`. A THIRD hero needs a new button in `hero_select.tscn` + a branch in `_button_for_hero()`. A locked hero needs a `*_unlock` base upgrade (see below) + a gate check in `_apply_button_state`.
+- **Wiring:** `hero_select.gd` is data-driven — it auto-discovers every hero JSON and renders a clickable portrait card, so a new hero appears with **no scene/code change**. Just provide the `sprite_id` portrait (`heroes/<sprite_id>/<sprite_id>_portrait.png`; falls back to a warning if missing). A locked hero needs a `*_unlock` base upgrade (see below) + a lock branch in `_make_hero_card` (currently only `hero_jerry_killer` is gated on `jerry_unlock`).
 
 ## base_upgrade → `run_system/data/base_upgrades/<id>.json`
 
