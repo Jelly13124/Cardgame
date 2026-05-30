@@ -18,6 +18,7 @@ const UPGRADE_ORDER := [
 	"jerry_unlock",
 	"starter_boost",
 	"card_research",
+	"blacksmith",
 ]
 
 var _core_label: Label

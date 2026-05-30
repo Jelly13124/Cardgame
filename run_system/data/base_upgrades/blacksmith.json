@@ -1,0 +1,11 @@
+{
+  "id": "blacksmith",
+  "name": "BLACKSMITH",
+  "description": "Reinforce backpack cells into safe cells — their contents survive death.",
+  "effect_key": "safe_cells_bonus",
+  "tiers": [
+    {"level": 1, "cost": 40, "effect_value": {"cells": 1}, "effect_text": "+1 safe cell (3 total)"},
+    {"level": 2, "cost": 80, "effect_value": {"cells": 2}, "effect_text": "+2 safe cells (4 total)"},
+    {"level": 3, "cost": 140, "effect_value": {"cells": 3}, "effect_text": "+3 safe cells (5 total)"}
+  ]
+}
