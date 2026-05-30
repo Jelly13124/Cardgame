@@ -28,6 +28,8 @@ UI_MAP_CRATE_EMPTY,The crate was empty.,箱子是空的。
 UI_MAP_FOUND_EQUIPMENT,Found {n}!,找到{n}！
 UI_MAP_TOOK_EQUIPMENT,Took {n}.,拿取了{n}。
 UI_MAP_LEFT_EQUIPMENT,Left {n} behind.,留下了{n}。
+UI_MAP_BACKPACK_FULL,"Backpack full. Left {n} behind.","背包已满，留下了{n}。"
+UI_MAP_CORE_DROP,"Found {n} Core (bank it by extracting)","获得 {n} Core(撤离才入账)"
 UI_MAP_REST_STOP,REST STOP,休整点
 UI_MAP_REST_HEAL_BTN,HEAL 25% HP,治疗25%生命
 UI_MAP_RESTED_HEAL,Rested. Healed {n} HP.,休整完毕。治疗{n}生命。

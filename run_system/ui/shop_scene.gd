@@ -65,11 +65,18 @@ func _ready() -> void:
 	_roll_stock()
 	_build_ui()
 	RunManager.resources_changed.connect(_on_resources_changed)
+	# Gold now lives in the backpack — refresh the label whenever the backpack
+	# changes (a purchase spends gold via backpack mutation, not resources_changed).
+	RunManager.backpack_changed.connect(_refresh_gold_label)
 
 
 func _on_resources_changed(_gold: int, _core: int) -> void:
+	_refresh_gold_label()
+
+
+func _refresh_gold_label() -> void:
 	if _gold_label:
-		_gold_label.text = "%d" % RunManager.gold
+		_gold_label.text = "%d" % RunManager.total_gold()
 
 
 # --- Stock rolling ---------------------------------------------------------
@@ -227,7 +234,7 @@ func _build_ui() -> void:
 	gold_row.add_child(gold_title)
 
 	_gold_label = Label.new()
-	_gold_label.text = "%d" % RunManager.gold
+	_gold_label.text = "%d" % RunManager.total_gold()
 	_gold_label.add_theme_font_size_override("font_size", 24)
 	_gold_label.add_theme_color_override("font_color", SHOP_PRICE)
 	gold_row.add_child(_gold_label)
@@ -629,7 +636,7 @@ func _mark_sold(btn: Button) -> void:
 
 
 func _on_remove_service_pressed() -> void:
-	if RunManager.gold < _remove_price:
+	if RunManager.total_gold() < _remove_price:
 		return
 	if _remove_card_picker:
 		return

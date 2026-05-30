@@ -402,11 +402,17 @@ func _victory():
 		if not rewards.is_empty():
 			_show_extract_choice(floor_num, rewards)
 			return
-		# Final boss path.
-		MetaProgress.add_core(BOSS_VICTORY_CORE)
-		RunManager.end_run_victory(BOSS_VICTORY_CORE, "victory")
+		# Final boss path: Core drops into the backpack; _settle_backpack
+		# banks it during _teardown_run, so end_run_victory's banked-core arg
+		# is 0 to avoid double-counting.
+		RunManager.add_core_to_backpack(BOSS_VICTORY_CORE)
+		RunManager.end_run_victory(0, "victory")
 		get_tree().change_scene_to_file(HOME_BASE_PATH)
 		return
+	# Elite kills drop a small amount of Core into the backpack (still at
+	# death risk until extraction); the normal loot flow handles the rest.
+	if RunManager.last_battle_node_type == "elite":
+		RunManager.add_core_to_backpack(randi_range(8, 16))
 	_show_loot_modal()
 
 
@@ -426,14 +432,17 @@ func _on_extract_chosen(extract: bool, rewards: Dictionary, canvas: CanvasLayer)
 	if is_instance_valid(canvas):
 		canvas.queue_free()
 	if extract:
+		# Extract: Core is already in the backpack from the boss kill, and
+		# _settle_backpack banks it during _teardown_run, so pass 0 here.
 		var earned: int = int(rewards.get("extract", 0))
-		MetaProgress.add_core(earned)
-		RunManager.end_run_victory(earned, "extracted")
+		RunManager.add_core_to_backpack(earned)
+		RunManager.end_run_victory(0, "extracted")
 		get_tree().change_scene_to_file(HOME_BASE_PATH)
 	else:
-		# Continue: grant push-on Core then drop into normal loot flow so
-		# the player still gets gold + a card pick out of the boss kill.
-		MetaProgress.add_core(int(rewards.get("continue", 0)))
+		# Continue: push-on Core drops into the backpack (still at death risk),
+		# then drop into normal loot flow so the player still gets gold + a
+		# card pick out of the boss kill.
+		RunManager.add_core_to_backpack(int(rewards.get("continue", 0)))
 		_show_loot_modal()
 
 

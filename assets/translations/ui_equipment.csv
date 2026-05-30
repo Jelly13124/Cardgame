@@ -9,6 +9,8 @@ UI_EQUIP_EQUIP,EQUIP,装备
 UI_EQUIP_DISCARD,DISCARD,丢弃
 UI_EQUIP_VITALS,HP {hp} / {max}     GOLD {gold}     FLOOR {floor},生命 {hp} / {max}     金币 {gold}     层数 {floor}
 UI_EQUIP_INVENTORY_COUNT,INVENTORY ({n}/{max}),背包 ({n}/{max})
+UI_EQUIP_CELL_GOLD,GOLD,金币
+UI_EQUIP_CELL_CORE,CORE,Core
 UI_EQUIP_BACKPACK_HINT,Left-click: equip   ·   Right-click: discard   ·   Hover: details,左键装备   ·   右键丢弃   ·   悬停查看详情
 UI_EQUIP_EMPTY,(empty),(空)
 UI_EQUIP_EMPTY_SLOT,(empty slot),(空槽)

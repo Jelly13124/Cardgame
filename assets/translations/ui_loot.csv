@@ -13,3 +13,4 @@ UI_LOOT_ACTION_TAKE,TAKE,拾取
 UI_LOOT_ACTION_CLAIM,CLAIM,领取
 UI_LOOT_DEFAULT_TITLE,Reward,奖励
 UI_LOOT_NO_BONUSES,(no bonuses),（无加成）
+UI_LOOT_BACKPACK_FULL,"Backpack full — left it behind","背包已满 —— 只能放弃"

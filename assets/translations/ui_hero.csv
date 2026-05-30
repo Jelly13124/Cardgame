@@ -6,5 +6,5 @@ UI_HERO_LOCKED,"🔒 {name}\n(UNLOCK 100 CORE)","🔒 {name}\n(解锁需 100 核
 UI_HERO_LOCKED_SHORT,🔒 LOCKED,🔒 已锁定
 UI_HERO_EXTRACT_TITLE,EXTRACT?,撤离？
 UI_HERO_EXTRACT_SUMMARY,You killed the act {n} boss.,你击杀了第{n}幕首领。
-UI_HERO_EXTRACT_NOW,"EXTRACT NOW   ( +{n} Core, end run )","立即撤离   ( +{n} 核心，结束本局 )"
-UI_HERO_PUSH_ON,"PUSH ON   ( +{n} Core, continue to next act )","继续深入   ( +{n} 核心，前往下一幕 )"
+UI_HERO_EXTRACT_NOW,"EXTRACT NOW   ( take the {n} Core in your backpack, end run )","立即撤离   ( 带走背包里的 {n} Core，结束本局 )"
+UI_HERO_PUSH_ON,"PUSH ON   ( +{n} Core to backpack, still at death risk )","继续深入   ( +{n} Core 进背包，背包 Core 仍有死亡风险 )"

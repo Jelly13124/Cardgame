@@ -242,8 +242,14 @@ func _on_loot_selected(loot_id: String, button: Button) -> void:
 		return
 
 	if loot["type"] == "gold":
-		RunManager.add_resources(loot["amount"], 0)
-		print("Claimed %d Gold" % loot["amount"])
+		var amount: int = int(loot["amount"])
+		var put: int = RunManager.add_gold(amount)
+		print("Claimed %d Gold" % put)
+		if put < amount:
+			# Backpack couldn't hold the full reward — leave the row so the
+			# player can retry after freeing a cell, and warn them.
+			_show_backpack_full_toast()
+			return
 		button.queue_free()
 	elif loot["type"] == "cards":
 		_open_card_draft()
@@ -404,12 +410,45 @@ func _claim_equipment_drop(item_id: String, button: Button) -> void:
 	if RunManager.add_to_inventory(item_id):
 		button.queue_free()
 		return
-	# Inventory full → open modal
+	# Backpack full → warn, then open the discard-one-to-take modal.
+	_show_backpack_full_toast()
 	button.disabled = true
 	var modal = INVENTORY_FULL_MODAL.new()
 	modal.setup(item_id)
 	modal.resolved.connect(func(_took_item: bool): button.queue_free())
 	add_child(modal)
+
+
+## Transient bottom-centered notice used when the backpack can't hold a reward
+## (gold overflow or a full equipment bag). Self-frees after a short fade.
+func _show_backpack_full_toast() -> void:
+	# Avoid stacking duplicates if the player spams a blocked reward.
+	var existing = get_node_or_null("BackpackFullToast")
+	if existing:
+		existing.queue_free()
+
+	var toast = Label.new()
+	toast.name = "BackpackFullToast"
+	toast.text = tr("UI_LOOT_BACKPACK_FULL")
+	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	toast.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	toast.add_theme_font_size_override("font_size", 24)
+	toast.add_theme_color_override("font_color", T.ACCENT_DANGER)
+	toast.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	toast.add_theme_constant_override("outline_size", 6)
+	toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	toast.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	toast.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	toast.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	toast.position = Vector2(0, -120)
+	add_child(toast)
+
+	# Bind the tween to the toast (not self) so replacing the toast auto-kills
+	# its tween — avoids a callback firing on an already-freed label.
+	var tween = toast.create_tween()
+	tween.tween_interval(1.4)
+	tween.tween_property(toast, "modulate:a", 0.0, 0.5)
+	tween.tween_callback(toast.queue_free)
 
 
 func _format_equipment_bonuses(bonuses) -> String:
