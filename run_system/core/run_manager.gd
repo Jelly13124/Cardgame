@@ -41,6 +41,10 @@ var core: int = 0
 
 # Progression
 var current_floor: int = 0
+## Which act (大层) the player is on, 1..ACTS_TOTAL. Each act is its own
+## FLOORS_PER_ACT-tall map ending in a single boss. Reset to 1 by start_new_run,
+## bumped by advance_act() after a mid-act extract "push on".
+var current_act: int = 1
 var player_deck: Array = []  # Array of Dictionaries (uid, card_id, bonus_attack, bonus_health)
 
 ## Equipped gear, one slot per body part. Empty string = empty slot.
@@ -144,23 +148,45 @@ const ELITE_ROSTER: Array = ["armored_patrol"]
 ## stays junkyard_tyrant; mid-act bosses use placeholder sprites (rust_brute
 ## and armored_patrol re-skins) until codex generates dedicated art.
 ##
-## Single source of truth for boss floors. `is_boss_floor()` and
-## `select_encounter()` both read from this; map_gen forces single-node
-## generation for any floor in this dict's keys. To add a mid-boss, add
-## the entry here only.
-const BOSS_BY_FLOOR: Dictionary = {
-	4: "rust_titan",
-	8: "ash_warden",
-	11: "junkyard_tyrant",
-}
-## Legacy alias — some pre-multi-boss code paths still read BOSS_ROSTER.
-## Returns the final boss only; intermediate bosses use BOSS_BY_FLOOR lookup.
+## Acts (大层). Each act is its OWN FLOORS_PER_ACT-tall map ending in a single
+## boss at the top floor — there are no mid-map bosses. Clearing a non-final
+## act's boss offers an extract choice; clearing the final act's boss wins the
+## run. ACT_BOSSES[i] is the boss enemy id for act i+1. To retune, edit here.
+const ACTS_TOTAL: int = 3
+const ACT_BOSSES: Array[String] = ["rust_titan", "ash_warden", "junkyard_tyrant"]
+## Floors per act map (indices 0..FLOORS_PER_ACT-1); the top floor is the boss.
+const FLOORS_PER_ACT: int = 12
+## Legacy alias — some pre-act code paths still read BOSS_ROSTER as a fallback.
 const BOSS_ROSTER: Array = ["junkyard_tyrant"]
 
 
-## True when a floor index is one of the designed boss floors.
+## True when a floor index is the boss floor — always the top floor of an act.
 func is_boss_floor(floor_idx: int) -> bool:
-	return BOSS_BY_FLOOR.has(floor_idx)
+	return floor_idx == FLOORS_PER_ACT - 1
+
+
+## The boss enemy id for the act the player is currently on.
+func current_act_boss() -> String:
+	var idx: int = clampi(current_act - 1, 0, ACT_BOSSES.size() - 1)
+	return ACT_BOSSES[idx]
+
+
+## True when the player is on the final act (its boss wins the run — no extract).
+func is_final_act() -> bool:
+	return current_act >= ACTS_TOTAL
+
+
+## Advance to the next act: bump current_act, reset map position, and generate a
+## fresh map for the new act. Returns false (no-op) if already on the final act.
+func advance_act() -> bool:
+	if current_act >= ACTS_TOTAL:
+		return false
+	current_act += 1
+	current_floor = 0
+	current_node_id = ""
+	visited_node_ids.clear()
+	generate_map(FLOORS_PER_ACT, 4)
+	return true
 
 
 const BATTLE_SCENE: String = "res://battle_scene/battle_scene.tscn"
@@ -440,13 +466,8 @@ func select_encounter(node_type: String, floor_idx: int) -> Array[String]:
 	var result: Array[String] = []
 	match node_type:
 		"boss":
-			# Per-floor boss table. Falls back to BOSS_ROSTER if floor isn't
-			# in the table (lets future-added boss floors degrade gracefully).
-			if BOSS_BY_FLOOR.has(floor_idx):
-				result.append(str(BOSS_BY_FLOOR[floor_idx]))
-			else:
-				for id in BOSS_ROSTER:
-					result.append(str(id))
+			# Boss is the current act's boss (floor_idx is always the top floor).
+			result.append(current_act_boss())
 		"elite":
 			for id in ELITE_ROSTER:
 				result.append(str(id))
@@ -499,6 +520,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	# gold is derived from the backpack — clearing the backpack zeroes it.
 	core = 0
 	current_floor = 0
+	current_act = 1
 	max_health = int(current_hero_data.get("max_health", 50))
 	current_health = max_health
 	for slot in EQUIPMENT_SLOTS:
@@ -515,7 +537,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	relics.clear()
 	current_encounter = ["trash_robot"]
 	last_battle_node_type = "enemy"
-	generate_map(12, 4)
+	generate_map(FLOORS_PER_ACT, 4)
 
 	# Base attributes: hero JSON's starting_attributes overrides the default.
 	var attrs: Dictionary = current_hero_data.get("starting_attributes", {})
@@ -1165,6 +1187,7 @@ func _teardown_run(victory: bool, outcome: String, core_earned: int) -> void:
 	var summary := {
 		"hero_id": current_hero_id,
 		"floor": current_floor,
+		"act": current_act,
 		"core_earned": core_earned,
 		"outcome": outcome,
 		"timestamp": int(Time.get_unix_time_from_system()),

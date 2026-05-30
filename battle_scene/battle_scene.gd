@@ -44,36 +44,27 @@ const LOOT_REWARD_SCENE = preload("res://run_system/ui/loot_reward.tscn")
 const EXTRACT_CHOICE_MODAL_SCRIPT = preload("res://run_system/ui/extract_choice_modal.gd")
 
 const BOSS_VICTORY_CORE := 150
-## Extract reward overrides per mid-act boss floor (keyed by RunManager.current_floor).
-## Any boss floor NOT in this table falls back to a formula so adding a new
-## entry to RunManager.BOSS_BY_FLOOR can't silently route to the final-boss
-## "game complete" branch.
+## Extract reward per act (keyed by RunManager.current_act). The final act has
+## NO entry — clearing its boss wins the run outright (no extract choice). Any
+## non-final act missing here falls back to a formula so adding a future act
+## can't silently route to the "game complete" branch.
 const EXTRACT_REWARDS := {
-	4: {"continue": 25, "extract": 50},
-	8: {"continue": 50, "extract": 90},
+	1: {"continue": 25, "extract": 50},
+	2: {"continue": 50, "extract": 90},
 }
 
 
-## Returns the {continue, extract} reward dict for a mid-act boss floor, or
-## {} if `floor_num` is the final boss floor (no extract choice — full victory).
-func _extract_rewards_for(floor_num: int) -> Dictionary:
-	if floor_num == _final_boss_floor():
+## Returns the {continue, extract} reward dict for the given act's boss, or
+## {} if `act` is the final act (no extract choice — full victory).
+func _extract_rewards_for_act(act: int) -> Dictionary:
+	if act >= RunManager.ACTS_TOTAL:
 		return {}
-	if EXTRACT_REWARDS.has(floor_num):
-		return EXTRACT_REWARDS[floor_num]
-	# Fallback formula so a new mid-boss added to BOSS_BY_FLOOR can't slip
-	# through to the final-boss branch. Scales roughly with the existing
-	# floor-4 / floor-8 values (~6 continue, ~12 extract per floor index).
+	if EXTRACT_REWARDS.has(act):
+		return EXTRACT_REWARDS[act]
 	return {
-		"continue": max(25, floor_num * 6),
-		"extract": max(50, floor_num * 12),
+		"continue": max(25, act * 25),
+		"extract": max(50, act * 45),
 	}
-
-
-func _final_boss_floor() -> int:
-	var keys: Array = RunManager.BOSS_BY_FLOOR.keys()
-	keys.sort()
-	return int(keys[-1]) if keys.size() > 0 else -1
 
 
 func _ready():
@@ -393,14 +384,14 @@ func _victory():
 	await get_tree().create_timer(3.0).timeout
 
 	# Boss victory routing:
-	#   - mid-act boss → extract choice modal (rewards from _extract_rewards_for)
+	#   - non-final act boss → extract choice modal (rewards by current_act)
 	#   - final boss   → grant BOSS_VICTORY_CORE and return to home base
 	#   - non-boss     → normal loot modal
 	if RunManager.last_battle_node_type == "boss":
-		var floor_num: int = RunManager.current_floor
-		var rewards: Dictionary = _extract_rewards_for(floor_num)
+		var act: int = RunManager.current_act
+		var rewards: Dictionary = _extract_rewards_for_act(act)
 		if not rewards.is_empty():
-			_show_extract_choice(floor_num, rewards)
+			_show_extract_choice(act, rewards)
 			return
 		# Final boss path: Core drops into the backpack; _settle_backpack
 		# banks it during _teardown_run, so end_run_victory's banked-core arg
@@ -416,12 +407,12 @@ func _victory():
 	_show_loot_modal()
 
 
-func _show_extract_choice(floor_num: int, rewards: Dictionary) -> void:
+func _show_extract_choice(act: int, rewards: Dictionary) -> void:
 	var canvas := CanvasLayer.new()
 	canvas.layer = 200
 	add_child(canvas)
 	var modal = EXTRACT_CHOICE_MODAL_SCRIPT.new()
-	modal.floor_num = floor_num
+	modal.act_num = act
 	modal.reward_continue = int(rewards.get("continue", 0))
 	modal.reward_extract = int(rewards.get("extract", 0))
 	modal.chosen.connect(_on_extract_chosen.bind(rewards, canvas))
@@ -439,10 +430,12 @@ func _on_extract_chosen(extract: bool, rewards: Dictionary, canvas: CanvasLayer)
 		RunManager.end_run_victory(0, "extracted")
 		get_tree().change_scene_to_file(HOME_BASE_PATH)
 	else:
-		# Continue: push-on Core drops into the backpack (still at death risk),
-		# then drop into normal loot flow so the player still gets gold + a
-		# card pick out of the boss kill.
+		# Push on: push-on Core drops into the backpack (still at death risk),
+		# advance to the next act (regenerates its fresh map), then drop into the
+		# normal loot flow so the player still gets gold + a card pick out of the
+		# boss kill. Loot closes → MAP_SCENE shows the new act's map.
 		RunManager.add_core_to_backpack(int(rewards.get("continue", 0)))
+		RunManager.advance_act()
 		_show_loot_modal()
 
 
