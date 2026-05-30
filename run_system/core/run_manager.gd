@@ -1179,6 +1179,18 @@ func _settle_backpack(victory: bool, outcome: String) -> void:
 		var carried := total_run_core()
 		if carried > 0:
 			MetaProgress.add_core(carried)
+	else:
+		# Death: only the contents of safe cells (index 0..safe-1) survive.
+		# Bank Core held in safe cells; everything else is lost.
+		# (Phase 3 also moves safe-cell equipment into the permanent stash.)
+		var safe := mini(MetaProgress.effective_safe_cells(), MAX_INVENTORY)
+		var saved := 0
+		for i in range(safe):
+			var c = backpack[i]
+			if c != null and c.get("kind") == "core":
+				saved += int(c["amount"])
+		if saved > 0:
+			MetaProgress.add_core(saved)
 
 
 func _emit_all_state() -> void:
