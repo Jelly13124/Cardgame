@@ -7,7 +7,6 @@ const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
 const MAP_RENDERER_SCRIPT = preload("res://run_system/ui/map_renderer.gd")
 const EQUIPMENT_PANEL_SCRIPT = preload("res://run_system/ui/equipment_panel.gd")
-const INVENTORY_FULL_MODAL_FOR_TREASURE = preload("res://run_system/ui/inventory_full_modal.gd")
 const CARD_UPGRADE_MODAL = preload("res://run_system/ui/card_upgrade_modal.gd")
 const RUN_DECK_VIEWER_MODAL = preload("res://run_system/ui/run_deck_viewer_modal.gd")
 const T_THEME = preload("res://run_system/ui/theme/wasteland_theme.gd")
@@ -63,6 +62,9 @@ func _ready() -> void:
 
 	rm.health_changed.connect(func(_c, _m): queue_redraw())
 	rm.resources_changed.connect(func(_g, _co): queue_redraw())
+	# Gold / Core / equipment drops mutate the backpack directly (no
+	# resources_changed), so the top-bar gold readout needs this too.
+	rm.backpack_changed.connect(func(): queue_redraw())
 	rm.relics_updated.connect(func(): queue_redraw())
 	get_viewport().size_changed.connect(_on_viewport_resized)
 	_build_relic_choice_layer()
@@ -252,10 +254,18 @@ func _on_node_clicked(node: Dictionary) -> void:
 		"merchant":
 			get_tree().change_scene_to_packed(SHOP_PACKED)
 		"treasure":
-			if randf() < 0.5:
+			var treasure_roll := randf()
+			if treasure_roll < 0.40:
 				_open_relic_choice(tr("UI_MAP_CHOOSE_A_RELIC"), "treasure")
-			else:
+			elif treasure_roll < 0.70:
 				_grant_treasure_equipment()
+			else:
+				# Core never enters the run wallet directly — it only banks on a
+				# successful extraction, so the popup spells that out.
+				var amt := randi_range(10, 30)
+				RunManager.add_core_to_backpack(amt)
+				_show_popup(tr("UI_MAP_CORE_DROP").format({"n": amt}))
+				_node_click_pending = false
 		"unknown":
 			_resolve_unknown_node(int(node.floor))
 		_:
@@ -267,10 +277,11 @@ func _on_node_clicked(node: Dictionary) -> void:
 
 ## "?" map node — rolls one of several outcomes for variety. Probabilities:
 ##   40% enemy ambush       — same as before, drops into combat
-##   25% scavenge gold      — small pile of gold (5-20)
-##   15% scrap stash heal   — heal 6-12 HP (capped at max)
-##   10% free equipment     — uses the treasure-style grant path
-##   10% suspicious cache   — lose 6 HP, gain a relic (skipped if no relics left)
+##   18% scavenge gold      — small pile of gold (5-20), into the backpack
+##   15% core cache         — 10-30 Core (only banks on extraction)
+##   12% scrap stash heal   — heal 6-12 HP (capped at max)
+##    7% free equipment     — uses the treasure-style grant path
+##    8% suspicious cache    — lose 6 HP, gain a relic (skipped if no relics left)
 func _resolve_unknown_node(floor_idx: int) -> void:
 	var roll: float = randf()
 
@@ -281,14 +292,22 @@ func _resolve_unknown_node(floor_idx: int) -> void:
 		# Scene change tears down — no need to reset click guard.
 		return
 
-	if roll < 0.65:
+	if roll < 0.58:
 		var gold: int = randi_range(5, 20)
-		rm.add_resources(gold, 0)
+		RunManager.add_gold(gold)
 		_show_popup(tr("UI_MAP_SCAVENGED_GOLD").format({"n": gold}))
 		_node_click_pending = false
 		return
 
-	if roll < 0.80:
+	if roll < 0.73:
+		# Core stays in the backpack and only counts on a successful extraction.
+		var amt: int = randi_range(10, 30)
+		RunManager.add_core_to_backpack(amt)
+		_show_popup(tr("UI_MAP_CORE_DROP").format({"n": amt}))
+		_node_click_pending = false
+		return
+
+	if roll < 0.85:
 		var heal_amt: int = randi_range(6, 12)
 		var before: int = rm.current_health
 		rm.modify_health(heal_amt)
@@ -297,16 +316,16 @@ func _resolve_unknown_node(floor_idx: int) -> void:
 		_node_click_pending = false
 		return
 
-	if roll < 0.90:
-		# _grant_treasure_equipment handles its own click-guard reset
-		# (popup paths reset immediately; inventory-full modal resets on resolve).
+	if roll < 0.92:
+		# _grant_treasure_equipment resets the click guard on every path
+		# (popup-only paths reset synchronously).
 		_grant_treasure_equipment()
 		return
 
-	# Tail 10%: suspicious cache. Skip if no relics to grant OR player at
+	# Tail 8%: suspicious cache. Skip if no relics to grant OR player at
 	# 1 HP (no payable cost — would be a free relic + "-0 HP" copy).
 	if rm.get_unowned_relic_ids().is_empty() or rm.current_health <= 1:
-		rm.add_resources(15, 0)
+		RunManager.add_gold(15)
 		_show_popup(tr("UI_MAP_CACHE_EMPTY_GOLD").format({"n": 15}))
 		_node_click_pending = false
 		return
@@ -393,7 +412,7 @@ func _open_relic_choice(title: String, source_type: String) -> void:
 	if choices.is_empty():
 		if source_type == "treasure":
 			var gold = randi_range(20, 45)
-			rm.add_resources(gold, 0)
+			RunManager.add_gold(gold)
 			_show_popup(tr("UI_MAP_NO_RELICS_FOUND_GOLD").format({"n": gold}))
 		else:
 			_show_popup(tr("UI_MAP_NO_RELICS_REMAIN"))
@@ -571,8 +590,8 @@ func _open_run_deck_viewer() -> void:
 	add_child(modal)
 
 
-## Treasure equipment drop: 70% uncommon / 30% rare. Either adds directly to
-## inventory or opens the inventory-full modal.
+## Treasure equipment drop: 70% uncommon / 30% rare. Drops straight into the
+## backpack; if every cell is taken the item is left behind with a notice.
 func _grant_treasure_equipment() -> void:
 	var rarity := "uncommon" if randf() < 0.7 else "rare"
 	var item_id = RunManager.roll_equipment_drop(rarity)
@@ -582,22 +601,13 @@ func _grant_treasure_equipment() -> void:
 		return
 	var data = RunManager.get_equipment_data(item_id)
 	var item_name = Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
-	if RunManager.add_to_inventory(item_id):
+	if RunManager.add_equip_to_backpack(item_id):
 		_show_popup(tr("UI_MAP_FOUND_EQUIPMENT").format({"n": item_name}))
-		_node_click_pending = false
-		return
-	# Inventory full → modal. Click guard stays latched until resolved.
-	var modal = INVENTORY_FULL_MODAL_FOR_TREASURE.new()
-	modal.setup(item_id)
-	modal.resolved.connect(
-		func(took: bool):
-			if took:
-				_show_popup(tr("UI_MAP_TOOK_EQUIPMENT").format({"n": item_name}))
-			else:
-				_show_popup(tr("UI_MAP_LEFT_EQUIPMENT").format({"n": item_name}))
-			_node_click_pending = false
-	)
-	add_child(modal)
+	else:
+		# Backpack full — gold/core/equipment all share the 20 cells now, so
+		# there is no dedicated equip overflow. Leave the item behind.
+		_show_popup(tr("UI_MAP_BACKPACK_FULL").format({"n": item_name}))
+	_node_click_pending = false
 
 
 ## Rest-stop choice modal. Player picks HEAL (25% HP) or UPGRADE (open card

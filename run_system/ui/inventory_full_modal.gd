@@ -9,8 +9,10 @@ const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 signal resolved(took_item: bool)
 
 var _incoming_item_id: String
+## Real backpack CELL index (0..MAX_INVENTORY-1) of the chosen equip, or -1.
 var _selected_bag_index: int = -1
 var _bag_buttons: Array[Button] = []
+var _bag_grid: GridContainer = null
 
 
 func setup(incoming_item_id: String) -> void:
@@ -21,6 +23,7 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build()
+	RunManager.backpack_changed.connect(_rebuild_bag_grid)
 
 
 func _build() -> void:
@@ -60,20 +63,12 @@ func _build() -> void:
 	subtitle.add_theme_color_override("font_color", Color(0.9, 0.88, 0.8))
 	vbox.add_child(subtitle)
 
-	var bag_grid := GridContainer.new()
-	bag_grid.columns = 4
-	bag_grid.add_theme_constant_override("h_separation", 6)
-	bag_grid.add_theme_constant_override("v_separation", 6)
-	vbox.add_child(bag_grid)
-	for i in range(RunManager.inventory_items.size()):
-		var btn := Button.new()
-		var bag_id: String = RunManager.inventory_items[i]
-		var data = RunManager.get_equipment_data(bag_id)
-		btn.text = Settings.t("EQUIP_%s_NAME" % bag_id, str(data.get("name", bag_id)))
-		btn.toggle_mode = true
-		btn.pressed.connect(_on_bag_pressed.bind(i, btn))
-		bag_grid.add_child(btn)
-		_bag_buttons.append(btn)
+	_bag_grid = GridContainer.new()
+	_bag_grid.columns = 4
+	_bag_grid.add_theme_constant_override("h_separation", 6)
+	_bag_grid.add_theme_constant_override("v_separation", 6)
+	vbox.add_child(_bag_grid)
+	_rebuild_bag_grid()
 
 	var incoming_box := HBoxContainer.new()
 	incoming_box.add_theme_constant_override("separation", 8)
@@ -113,8 +108,38 @@ func _build() -> void:
 	actions.add_child(skip_btn)
 
 
-func _on_bag_pressed(index: int, btn: Button) -> void:
-	_selected_bag_index = index
+## Repopulate the bag grid from the backpack. We walk RunManager.backpack by
+## real CELL index (0..MAX_INVENTORY-1) and show only equip cells, binding each
+## button to its true cell index — discard_from_inventory expects a cell index,
+## not a position in the filtered equip list.
+func _rebuild_bag_grid() -> void:
+	if _bag_grid == null:
+		return
+	for child in _bag_grid.get_children():
+		child.queue_free()
+	_bag_buttons.clear()
+	var still_selected := false
+	for cell_idx in range(RunManager.backpack.size()):
+		var cell = RunManager.backpack[cell_idx]
+		if cell == null or cell.get("kind") != "equip":
+			continue
+		var bag_id: String = str(cell["id"])
+		var data = RunManager.get_equipment_data(bag_id)
+		var btn := Button.new()
+		btn.text = Settings.t("EQUIP_%s_NAME" % bag_id, str(data.get("name", bag_id)))
+		btn.toggle_mode = true
+		if cell_idx == _selected_bag_index:
+			btn.set_pressed_no_signal(true)
+			still_selected = true
+		btn.pressed.connect(_on_bag_pressed.bind(cell_idx, btn))
+		_bag_grid.add_child(btn)
+		_bag_buttons.append(btn)
+	if not still_selected:
+		_selected_bag_index = -1
+
+
+func _on_bag_pressed(cell_index: int, btn: Button) -> void:
+	_selected_bag_index = cell_index
 	# Single-select: clear others
 	for other in _bag_buttons:
 		if other != btn and other.button_pressed:
@@ -124,6 +149,9 @@ func _on_bag_pressed(index: int, btn: Button) -> void:
 func _on_discard_selected() -> void:
 	if _selected_bag_index < 0:
 		return  # nothing selected, ignore
+	# Stop reacting to our own backpack mutations during teardown.
+	if RunManager.backpack_changed.is_connected(_rebuild_bag_grid):
+		RunManager.backpack_changed.disconnect(_rebuild_bag_grid)
 	RunManager.discard_from_inventory(_selected_bag_index)
 	RunManager.add_to_inventory(_incoming_item_id)
 	emit_signal("resolved", true)
@@ -131,5 +159,7 @@ func _on_discard_selected() -> void:
 
 
 func _on_skip() -> void:
+	if RunManager.backpack_changed.is_connected(_rebuild_bag_grid):
+		RunManager.backpack_changed.disconnect(_rebuild_bag_grid)
 	emit_signal("resolved", false)
 	queue_free()

@@ -39,6 +39,7 @@ func _ready() -> void:
 	RunManager.health_changed.connect(_on_health_changed)
 	RunManager.resources_changed.connect(_on_resources_changed)
 	RunManager.relics_updated.connect(_refresh)
+	RunManager.backpack_changed.connect(_refresh)
 	_refresh()
 
 
@@ -267,7 +268,7 @@ func _refresh() -> void:
 	# Backpack grid (rebuild every refresh)
 	if _inv_title:
 		_inv_title.text = tr("UI_EQUIP_INVENTORY_COUNT").format(
-			{"n": RunManager.inventory_items.size(), "max": RunManager.MAX_INVENTORY}
+			{"n": RunManager.backpack_count_used(), "max": RunManager.MAX_INVENTORY}
 		)
 	for child in _grid.get_children():
 		child.queue_free()
@@ -302,27 +303,73 @@ func _refresh() -> void:
 	_status_label.text = ""
 
 
-## Build one backpack cell. STACK-READY: today a cell is either an equipment
-## item or empty; a future economy pass extends this to gold/core stacks.
+## Build one backpack cell from RunManager.backpack[index] — the four cell
+## states: null = empty, {"kind":"equip"} = interactive gear icon,
+## {"kind":"gold"} / {"kind":"core"} = non-interactive resource stack.
 func _make_grid_cell(index: int) -> Control:
-	if index < RunManager.inventory_items.size():
-		var item_id: String = RunManager.inventory_items[index]
-		var data = RunManager.get_equipment_data(item_id)
-		var slot := str(data.get("slot", "head"))
-		var item_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
-		var icon := EQUIPMENT_ICON.new()
-		icon.custom_minimum_size = CELL_SIZE
-		icon.set_equipment(slot, item_name, str(data.get("sprite", "")))
-		icon.set_hover_tooltip(_build_equipment_tooltip(data, slot))
-		icon.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		icon.gui_input.connect(_on_cell_input.bind(item_id, slot, index))
-		return icon
+	var cell = RunManager.backpack[index] if index < RunManager.backpack.size() else null
+	if typeof(cell) == TYPE_DICTIONARY:
+		match str(cell.get("kind", "")):
+			"equip":
+				return _make_equip_cell(str(cell.get("id", "")), index)
+			"gold":
+				return _make_resource_cell(
+					tr("UI_EQUIP_CELL_GOLD"), int(cell.get("amount", 0)), T.SAND_LIGHT
+				)
+			"core":
+				return _make_resource_cell(
+					tr("UI_EQUIP_CELL_CORE"), int(cell.get("amount", 0)), T.ACCENT_NEON_BLUE
+				)
 	# Empty cell — dim placeholder panel.
 	var blank := Panel.new()
 	blank.custom_minimum_size = CELL_SIZE
 	var style := T.panel_with_shadow(Color(0.10, 0.085, 0.07, 0.6), T.PANEL_BORDER, 2, 1)
 	blank.add_theme_stylebox_override("panel", style)
 	return blank
+
+
+## An equipment cell: gear icon, left-click equips, right-click discards (by the
+## backpack CELL index — NOT a position in the equip list).
+func _make_equip_cell(item_id: String, index: int) -> Control:
+	var data = RunManager.get_equipment_data(item_id)
+	var slot := str(data.get("slot", "head"))
+	var item_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
+	var icon := EQUIPMENT_ICON.new()
+	icon.custom_minimum_size = CELL_SIZE
+	icon.set_equipment(slot, item_name, str(data.get("sprite", "")))
+	icon.set_hover_tooltip(_build_equipment_tooltip(data, slot))
+	icon.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	icon.gui_input.connect(_on_cell_input.bind(item_id, slot, index))
+	return icon
+
+
+## A gold / Core resource stack cell. Non-interactive: a labelled count tile.
+func _make_resource_cell(label_text: String, amount: int, tint: Color) -> Control:
+	var panel := Panel.new()
+	panel.custom_minimum_size = CELL_SIZE
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override("panel", T.icon_frame_style())
+
+	var box := VBoxContainer.new()
+	box.set_anchors_preset(Control.PRESET_FULL_RECT)
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(box)
+
+	var kind_lbl := Label.new()
+	kind_lbl.text = label_text
+	kind_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	kind_lbl.add_theme_font_size_override("font_size", 14)
+	kind_lbl.add_theme_color_override("font_color", tint)
+	box.add_child(kind_lbl)
+
+	var amount_lbl := Label.new()
+	amount_lbl.text = "x%d" % amount
+	amount_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	amount_lbl.add_theme_font_size_override("font_size", 22)
+	amount_lbl.add_theme_color_override("font_color", Color(0.98, 0.96, 0.9))
+	box.add_child(amount_lbl)
+	return panel
 
 
 func _on_slot_input(event: InputEvent, slot: String) -> void:
