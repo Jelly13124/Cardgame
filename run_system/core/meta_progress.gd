@@ -20,11 +20,16 @@ var run_history: Array = []
 var max_ascension: int = 0
 ## Card ids unlocked beyond the INITIAL_CARD_POOL (added via card_research).
 var unlocked_cards: Array[String] = []
+## Permanent equipment stash — gear carried out by extracting/surviving (in a
+## safe cell). Persists across runs; loaded into a run via the loadout step.
+var stash: Array[String] = []
 
 const RUN_HISTORY_CAP := 50
 const ASCENSION_CAP := 5
 ## Safe-cell baseline; effective count = this + the blacksmith upgrade level.
 const SAFE_CELLS_BASE := 2
+## Permanent equipment stash capacity (gear carried out of runs).
+const STASH_CAP := 40
 ## Cards available before any card_research is purchased. The 5 omitted
 ## ids (flash_bang, last_breath, bone_breaker, junk_bomb, preemptive_strike)
 ## unlock via the card_research upgrade.
@@ -106,6 +111,25 @@ func effective_safe_cells() -> int:
 	return SAFE_CELLS_BASE + get_upgrade_level("blacksmith")
 
 
+## Add an item to the permanent stash. Returns false if the stash is full.
+func add_to_stash(item_id: String) -> bool:
+	if item_id == "" or stash.size() >= STASH_CAP:
+		return false
+	stash.append(item_id)
+	save_progress()
+	return true
+
+
+## Remove one occurrence of item_id from the stash. Returns false if absent.
+func remove_from_stash(item_id: String) -> bool:
+	var idx := stash.find(item_id)
+	if idx < 0:
+		return false
+	stash.remove_at(idx)
+	save_progress()
+	return true
+
+
 func can_purchase(id: String, definition: Dictionary) -> bool:
 	var tiers: Array = definition.get("tiers", [])
 	var lvl := get_upgrade_level(id)
@@ -158,6 +182,7 @@ func save_progress() -> void:
 		"run_history": run_history,
 		"max_ascension": max_ascension,
 		"unlocked_cards": unlocked_cards,
+		"stash": stash,
 	}
 	f.store_string(JSON.stringify(payload, "  "))
 	f.close()
@@ -189,3 +214,8 @@ func load_progress() -> void:
 		unlocked_cards.clear()
 		for c in raw_unlocked:
 			unlocked_cards.append(str(c))
+	var raw_stash = parsed.get("stash", [])
+	if typeof(raw_stash) == TYPE_ARRAY:
+		stash.clear()
+		for s in raw_stash:
+			stash.append(str(s))
