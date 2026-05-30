@@ -506,9 +506,11 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	_ensure_backpack()
 	for i in range(MAX_INVENTORY):
 		backpack[i] = null
-	# Inject any pending loadout from the base stash (Phase 3 fills this).
+	# Inject the pending loadout (selected from the base stash) into the backpack,
+	# removing each taken item from the permanent stash so it isn't duplicated.
 	for item_id in pending_loadout:
-		add_equip_to_backpack(str(item_id))
+		if add_equip_to_backpack(str(item_id)):
+			MetaProgress.remove_from_stash(str(item_id))
 	pending_loadout.clear()
 	relics.clear()
 	current_encounter = ["trash_robot"]
@@ -1176,19 +1178,31 @@ func _teardown_run(victory: bool, outcome: String, core_earned: int) -> void:
 ## death; Phase 3 adds the permanent equipment stash.)
 func _settle_backpack(victory: bool, outcome: String) -> void:
 	if victory or outcome == "extracted":
+		# Extract / final victory: ALL carried Core banks, ALL backpack equipment
+		# AND all equipped gear are carried out into the permanent stash.
 		var carried := total_run_core()
 		if carried > 0:
 			MetaProgress.add_core(carried)
+		for c in backpack:
+			if c != null and c.get("kind") == "equip":
+				MetaProgress.add_to_stash(str(c["id"]))
+		for slot in EQUIPMENT_SLOTS:
+			var eq: String = equipped_items.get(slot, "")
+			if eq != "":
+				MetaProgress.add_to_stash(eq)
 	else:
-		# Death: only the contents of safe cells (index 0..safe-1) survive.
-		# Bank Core held in safe cells; everything else is lost.
-		# (Phase 3 also moves safe-cell equipment into the permanent stash.)
+		# Death: ONLY safe-cell contents (index 0..safe-1) survive — Core banks,
+		# equipment goes to the stash. Everything else + all equipped gear is lost.
 		var safe := mini(MetaProgress.effective_safe_cells(), MAX_INVENTORY)
 		var saved := 0
 		for i in range(safe):
 			var c = backpack[i]
-			if c != null and c.get("kind") == "core":
+			if c == null:
+				continue
+			if c.get("kind") == "core":
 				saved += int(c["amount"])
+			elif c.get("kind") == "equip":
+				MetaProgress.add_to_stash(str(c["id"]))
 		if saved > 0:
 			MetaProgress.add_core(saved)
 
