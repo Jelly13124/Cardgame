@@ -307,6 +307,14 @@ func _refresh() -> void:
 ## states: null = empty, {"kind":"equip"} = interactive gear icon,
 ## {"kind":"gold"} / {"kind":"core"} = non-interactive resource stack.
 func _make_grid_cell(index: int) -> Control:
+	var cell := _build_cell_content(index)
+	# Safe cells (index 0..safe-1) get a gold border; their contents survive death.
+	if index < MetaProgress.effective_safe_cells():
+		_add_safe_border(cell)
+	return cell
+
+
+func _build_cell_content(index: int) -> Control:
 	var cell = RunManager.backpack[index] if index < RunManager.backpack.size() else null
 	if typeof(cell) == TYPE_DICTIONARY:
 		match str(cell.get("kind", "")):
@@ -314,11 +322,11 @@ func _make_grid_cell(index: int) -> Control:
 				return _make_equip_cell(str(cell.get("id", "")), index)
 			"gold":
 				return _make_resource_cell(
-					tr("UI_EQUIP_CELL_GOLD"), int(cell.get("amount", 0)), T.SAND_LIGHT
+					tr("UI_EQUIP_CELL_GOLD"), int(cell.get("amount", 0)), T.SAND_LIGHT, index
 				)
 			"core":
 				return _make_resource_cell(
-					tr("UI_EQUIP_CELL_CORE"), int(cell.get("amount", 0)), T.ACCENT_NEON_BLUE
+					tr("UI_EQUIP_CELL_CORE"), int(cell.get("amount", 0)), T.ACCENT_NEON_BLUE, index
 				)
 	# Empty cell — dim placeholder panel.
 	var blank := Panel.new()
@@ -326,6 +334,20 @@ func _make_grid_cell(index: int) -> Control:
 	var style := T.panel_with_shadow(Color(0.10, 0.085, 0.07, 0.6), T.PANEL_BORDER, 2, 1)
 	blank.add_theme_stylebox_override("panel", style)
 	return blank
+
+
+## Overlay a gold border on a safe-cell tile (visual only; ignores mouse).
+func _add_safe_border(cell: Control) -> void:
+	var border := Panel.new()
+	border.set_anchors_preset(Control.PRESET_FULL_RECT)
+	border.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0, 0, 0, 0)
+	sb.border_color = Color(1.0, 0.82, 0.3)
+	sb.set_border_width_all(3)
+	sb.set_corner_radius_all(2)
+	border.add_theme_stylebox_override("panel", sb)
+	cell.add_child(border)
 
 
 ## An equipment cell: gear icon, left-click equips, right-click discards (by the
@@ -344,11 +366,12 @@ func _make_equip_cell(item_id: String, index: int) -> Control:
 
 
 ## A gold / Core resource stack cell. Non-interactive: a labelled count tile.
-func _make_resource_cell(label_text: String, amount: int, tint: Color) -> Control:
+func _make_resource_cell(label_text: String, amount: int, tint: Color, index: int) -> Control:
 	var panel := Panel.new()
 	panel.custom_minimum_size = CELL_SIZE
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	panel.add_theme_stylebox_override("panel", T.icon_frame_style())
+	panel.gui_input.connect(_on_resource_input.bind(index))
 
 	var box := VBoxContainer.new()
 	box.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -384,6 +407,40 @@ func _on_cell_input(event: InputEvent, item_id: String, slot: String, index: int
 		_on_equip_pressed(item_id, slot, index)
 	elif event.button_index == MOUSE_BUTTON_RIGHT:
 		RunManager.discard_from_inventory(index)
+	elif event.button_index == MOUSE_BUTTON_MIDDLE:
+		_toggle_safe(index)
+
+
+## Middle-click a gold/core stack to move it into/out of a safe cell.
+func _on_resource_input(event: InputEvent, index: int) -> void:
+	if (
+		event is InputEventMouseButton
+		and event.pressed
+		and event.button_index == MOUSE_BUTTON_MIDDLE
+	):
+		_toggle_safe(index)
+
+
+## Move the stack at `index` between the safe zone (cells 0..safe-1) and the
+## normal zone — into the first empty cell of the target zone. No-op if full.
+func _toggle_safe(index: int) -> void:
+	var safe := MetaProgress.effective_safe_cells()
+	var dst := -1
+	if index < safe:
+		dst = _first_empty_in_range(safe, RunManager.MAX_INVENTORY)
+	else:
+		dst = _first_empty_in_range(0, safe)
+	if dst != -1:
+		RunManager.move_cell(index, dst)
+	else:
+		_status_label.text = tr("UI_EQUIP_SAFE_FULL")
+
+
+func _first_empty_in_range(lo: int, hi: int) -> int:
+	for i in range(lo, mini(hi, RunManager.MAX_INVENTORY)):
+		if RunManager.backpack[i] == null:
+			return i
+	return -1
 
 
 func _on_equip_pressed(item_id: String, slot: String, _index: int) -> void:

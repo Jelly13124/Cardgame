@@ -108,6 +108,7 @@ const ALLOWED_BASE_UPGRADE_EFFECT_KEYS = [
 	"unlock_hero",
 	"starter_attributes",
 	"card_pool_unlock",
+	"safe_cells_bonus",
 ]
 
 # ─── Hero schema ─────────────────────────────────────────────────────────────

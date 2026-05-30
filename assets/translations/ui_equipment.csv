@@ -11,7 +11,8 @@ UI_EQUIP_VITALS,HP {hp} / {max}     GOLD {gold}     FLOOR {floor},生命 {hp} / 
 UI_EQUIP_INVENTORY_COUNT,INVENTORY ({n}/{max}),背包 ({n}/{max})
 UI_EQUIP_CELL_GOLD,GOLD,金币
 UI_EQUIP_CELL_CORE,CORE,Core
-UI_EQUIP_BACKPACK_HINT,Left-click: equip   ·   Right-click: discard   ·   Hover: details,左键装备   ·   右键丢弃   ·   悬停查看详情
+UI_EQUIP_SAFE_FULL,Safe cells are full,安全格已满
+UI_EQUIP_BACKPACK_HINT,"Left-click equip · Right-click discard · Middle-click to (un)safe · gold border = safe","左键装备 · 右键丢弃 · 中键移入/出安全格 · 金边=安全格(死亡不丢)"
 UI_EQUIP_EMPTY,(empty),(空)
 UI_EQUIP_EMPTY_SLOT,(empty slot),(空槽)
 UI_EQUIP_NONE_YET,"  (none yet)","  (暂无)"
