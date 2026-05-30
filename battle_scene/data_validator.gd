@@ -156,7 +156,7 @@ static func validate_encounter_pools() -> int:
 		"ENCOUNTER_POOLS_LATE": RunManager.ENCOUNTER_POOLS_LATE,
 		"ELITE_ROSTER": [RunManager.ELITE_ROSTER],
 		"BOSS_ROSTER": [RunManager.BOSS_ROSTER],
-		"BOSS_BY_FLOOR": [RunManager.BOSS_BY_FLOOR.values()],
+		"ACT_BOSSES": [RunManager.ACT_BOSSES],
 	}
 	for source_name in sources:
 		var pools = sources[source_name]

@@ -11,6 +11,7 @@ UI_MAP_LEGEND_BOSS,Boss,首领
 UI_MAP_TOPBAR_HP,HP: {cur}/{max},生命：{cur}/{max}
 UI_MAP_TOPBAR_GOLD,Gold: {n},金币：{n}
 UI_MAP_TOPBAR_FLOOR,Floor: {n},层数：{n}
+UI_MAP_TOPBAR_ACT,Act: {cur}/{max},幕：{cur}/{max}
 UI_MAP_CHOOSE_STARTING_RELIC,Choose Your Starting Relic,选择起始遗物
 UI_MAP_CHOOSE_A_RELIC,Choose a Relic,选择一件遗物
 UI_MAP_RELIC_PICK_HINT,Pick one. Relics are unique for this run.,选择一件。遗物在本局中唯一。

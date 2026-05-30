@@ -2,7 +2,7 @@
 ## (more Core, run ends, return to home base) or push deeper (less Core
 ## now, continue to next act).
 ##
-## Owner instantiates, sets reward_continue / reward_extract / floor_num,
+## Owner instantiates, sets reward_continue / reward_extract / act_num,
 ## then calls add_child. Listens to `chosen(extract: bool)` signal.
 extends Control
 class_name ExtractChoiceModal
@@ -11,7 +11,7 @@ const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 
 signal chosen(extract: bool)
 
-var floor_num: int = 1
+var act_num: int = 1
 var reward_continue: int = 25
 var reward_extract: int = 50
 
@@ -61,7 +61,7 @@ func _build() -> void:
 	vbox.add_child(title)
 
 	var summary := Label.new()
-	summary.text = tr("UI_HERO_EXTRACT_SUMMARY").format({"n": floor_num})
+	summary.text = tr("UI_HERO_EXTRACT_SUMMARY").format({"n": act_num})
 	summary.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	summary.add_theme_font_size_override("font_size", 20)
 	summary.add_theme_color_override("font_color", Color(0.92, 0.9, 0.78))
