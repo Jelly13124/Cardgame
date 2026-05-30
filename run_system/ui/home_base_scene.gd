@@ -7,6 +7,7 @@ const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const UPGRADE_PANEL_SCRIPT = preload("res://run_system/ui/upgrade_panel.gd")
 const HERO_SELECT_PACKED = preload("res://run_system/ui/hero_select.tscn")
 const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
+const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 const HOME_BACKGROUND_PATH := "res://run_system/assets/images/home/home_base_bg.png"
 const UPGRADE_DIR := "res://run_system/data/base_upgrades/"
 const UPGRADE_ORDER := [
@@ -22,6 +23,10 @@ const UPGRADE_ORDER := [
 ]
 
 var _core_label: Label
+## Stash indices the player has marked to carry into the next run (rebuilt into
+## RunManager.pending_loadout on every toggle). Reset when the scene reloads.
+var _stash_selected: Array[int] = []
+var _stash_rebuild: Callable = Callable()
 
 
 func _ready() -> void:
@@ -50,15 +55,13 @@ func _build() -> void:
 	vbox.add_child(header)
 	var title := Label.new()
 	title.text = tr("UI_HOME_TITLE")
-	title.add_theme_font_size_override("font_size", 42)
-	title.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
+	_style_readable_label(title, 42, Color(1, 0.92, 0.55), 3)
 	header.add_child(title)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(spacer)
 	_core_label = Label.new()
-	_core_label.add_theme_font_size_override("font_size", 32)
-	_core_label.add_theme_color_override("font_color", Color(0.6, 0.85, 1.0))
+	_style_readable_label(_core_label, 32, Color(0.64, 0.90, 1.0), 3)
 	header.add_child(_core_label)
 	_refresh_core()
 
@@ -81,8 +84,7 @@ func _build() -> void:
 	# Recent runs panel — last 5 entries from MetaProgress.run_history.
 	var history_label := Label.new()
 	history_label.text = tr("UI_HOME_RECENT_RUNS")
-	history_label.add_theme_font_size_override("font_size", 22)
-	history_label.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
+	_style_readable_label(history_label, 22, Color(1, 0.92, 0.55), 2)
 	vbox.add_child(history_label)
 	var history_panel := _build_recent_runs_panel()
 	vbox.add_child(history_panel)
@@ -100,13 +102,23 @@ func _build() -> void:
 	settings_btn.text = "⚙ " + TranslationServer.translate("SETTINGS_BUTTON")
 	settings_btn.custom_minimum_size = Vector2(160, 60)
 	settings_btn.add_theme_font_size_override("font_size", 20)
+	T.apply_button_theme(settings_btn)
 	settings_btn.pressed.connect(_open_settings)
 	actions.add_child(settings_btn)
+
+	var stash_btn := Button.new()
+	stash_btn.text = "⚒ " + TranslationServer.translate("UI_HOME_STASH_BTN")
+	stash_btn.custom_minimum_size = Vector2(180, 60)
+	stash_btn.add_theme_font_size_override("font_size", 20)
+	T.apply_button_theme(stash_btn)
+	stash_btn.pressed.connect(_open_stash)
+	actions.add_child(stash_btn)
 
 	var start_btn := Button.new()
 	start_btn.text = TranslationServer.translate("UI_HOME_START_RUN")
 	start_btn.custom_minimum_size = Vector2(260, 60)
 	start_btn.add_theme_font_size_override("font_size", 24)
+	T.apply_button_theme(start_btn)
 	start_btn.pressed.connect(_on_start_pressed)
 	actions.add_child(start_btn)
 
@@ -128,10 +140,17 @@ func _add_background() -> void:
 		add_child(bg)
 
 	var shade := ColorRect.new()
-	shade.color = Color(0.0, 0.0, 0.0, 0.28)
+	shade.color = Color(0.0, 0.0, 0.0, 0.36)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(shade)
+
+
+func _style_readable_label(label: Label, font_size: int, color: Color, outline_size: int) -> void:
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.90))
+	label.add_theme_constant_override("outline_size", outline_size)
 
 
 ## Settings overlay (Language / Fullscreen / Volume). Language change reloads
@@ -200,6 +219,129 @@ func _load_upgrade(id: String) -> Dictionary:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return {}
 	return parsed
+
+
+## Stash & loadout overlay: shows the permanent equipment stash; left-click an
+## item to mark it for the next run (rebuilt into RunManager.pending_loadout).
+func _open_stash() -> void:
+	if get_node_or_null("StashOverlay") != null:
+		return
+	var layer := CanvasLayer.new()
+	layer.name = "StashOverlay"
+	layer.layer = 130
+	add_child(layer)
+
+	var overlay := ColorRect.new()
+	overlay.color = Color(0.0, 0.0, 0.0, 0.66)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(overlay)
+
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(center)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(940, 620)
+	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	center.add_child(panel)
+
+	var margin := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		margin.add_theme_constant_override(side, 24)
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 12)
+	margin.add_child(box)
+
+	var title := Label.new()
+	title.text = TranslationServer.translate("UI_HOME_STASH")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 30)
+	title.add_theme_color_override("font_color", Color(1.0, 0.86, 0.48))
+	box.add_child(title)
+
+	var hint := Label.new()
+	hint.text = TranslationServer.translate("UI_HOME_STASH_HINT")
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_color_override("font_color", Color(0.8, 0.74, 0.6))
+	box.add_child(hint)
+
+	var count_lbl := Label.new()
+	count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	count_lbl.add_theme_color_override("font_color", Color(0.6, 1.0, 0.6))
+	box.add_child(count_lbl)
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.custom_minimum_size = Vector2(0, 380)
+	box.add_child(scroll)
+	var grid := GridContainer.new()
+	grid.columns = 6
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(grid)
+
+	_stash_rebuild = func() -> void:
+		if not is_instance_valid(grid) or not is_instance_valid(count_lbl):
+			return
+		for c in grid.get_children():
+			c.queue_free()
+		var st: Array = MetaProgress.stash
+		if st.is_empty():
+			var empty := Label.new()
+			empty.text = TranslationServer.translate("UI_HOME_STASH_EMPTY")
+			empty.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+			grid.add_child(empty)
+		else:
+			for i in range(st.size()):
+				grid.add_child(_make_stash_cell(int(i), str(st[i])))
+		count_lbl.text = TranslationServer.translate("UI_HOME_STASH_SELECTED").format(
+			{"n": _stash_selected.size()}
+		)
+	_stash_rebuild.call()
+
+	var close := Button.new()
+	close.text = TranslationServer.translate("SETTINGS_RESUME")
+	close.custom_minimum_size = Vector2(300, 44)
+	close.pressed.connect(layer.queue_free)
+	box.add_child(close)
+
+
+func _make_stash_cell(index: int, item_id: String) -> Control:
+	var data = RunManager.get_equipment_data(item_id)
+	var slot := str(data.get("slot", "head"))
+	var item_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
+	var icon := EQUIPMENT_ICON.new()
+	icon.custom_minimum_size = Vector2(76, 76)
+	icon.set_equipment(slot, item_name, str(data.get("sprite", "")))
+	icon.set_hover_tooltip("[b]%s[/b]" % item_name)
+	icon.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	if index in _stash_selected:
+		icon.modulate = Color(0.5, 1.0, 0.5)
+	icon.gui_input.connect(
+		func(ev: InputEvent) -> void:
+			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+				_toggle_stash_select(index)
+	)
+	return icon
+
+
+## Toggle whether stash item `index` is carried into the next run, keeping
+## RunManager.pending_loadout in sync. Capped at MAX_INVENTORY items.
+func _toggle_stash_select(index: int) -> void:
+	if index in _stash_selected:
+		_stash_selected.erase(index)
+	elif _stash_selected.size() < RunManager.MAX_INVENTORY:
+		_stash_selected.append(index)
+	RunManager.pending_loadout.clear()
+	for i in _stash_selected:
+		if i < MetaProgress.stash.size():
+			RunManager.pending_loadout.append(str(MetaProgress.stash[i]))
+	if _stash_rebuild.is_valid():
+		_stash_rebuild.call()
 
 
 func _on_start_pressed() -> void:

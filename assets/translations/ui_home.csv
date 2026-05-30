@@ -1,5 +1,10 @@
 keys,en,zh
 UI_HOME_START_RUN,START NEW RUN,开始新征程
+UI_HOME_STASH_BTN,STASH,仓库
+UI_HOME_STASH,EQUIPMENT STASH,装备仓库
+UI_HOME_STASH_HINT,Click an item to carry it into your next run.,点击装备,带入下一局征程。
+UI_HOME_STASH_EMPTY,Stash is empty — extract from a run to keep gear.,仓库空空 —— 撤离才能保住装备。
+UI_HOME_STASH_SELECTED,Carrying: {n},已选带走：{n}
 UI_HOME_TITLE,HOME BASE,大本营
 UI_HOME_CORE,CORE: {n},核心：{n}
 UI_HOME_RECENT_RUNS,RECENT RUNS,近期征程
