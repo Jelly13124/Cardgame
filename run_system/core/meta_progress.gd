@@ -23,6 +23,8 @@ var unlocked_cards: Array[String] = []
 
 const RUN_HISTORY_CAP := 50
 const ASCENSION_CAP := 5
+## Safe-cell baseline; effective count = this + the blacksmith upgrade level.
+const SAFE_CELLS_BASE := 2
 ## Cards available before any card_research is purchased. The 5 omitted
 ## ids (flash_bang, last_breath, bone_breaker, junk_bomb, preemptive_strike)
 ## unlock via the card_research upgrade.
@@ -96,6 +98,12 @@ func add_core(amount: int) -> void:
 
 func get_upgrade_level(id: String) -> int:
 	return int(upgrades.get(id, 0))
+
+
+## Number of safe backpack cells (index 0..N-1) whose contents survive death.
+## Derived from the blacksmith upgrade level (persisted in `upgrades`).
+func effective_safe_cells() -> int:
+	return SAFE_CELLS_BASE + get_upgrade_level("blacksmith")
 
 
 func can_purchase(id: String, definition: Dictionary) -> bool:
