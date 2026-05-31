@@ -884,6 +884,38 @@ func recompute_attributes() -> void:
 	emit_signal("equipment_changed")
 
 
+# --- Attribute gameplay helpers (luck/charm) ---
+# Pure, single-sourced so consumers (crit/loot/gold/shop) stay testable.
+
+const CRIT_PER_LUCK := 0.03
+const CRIT_CAP := 0.40
+const CRIT_MULT := 1.5
+const GOLD_PER_LUCK := 0.03
+const RARITY_PER_LUCK := 0.015
+const SHOP_PER_CHARM := 0.02
+const SHOP_FLOOR := 0.60
+
+
+func _attr(name: String) -> int:
+	return int(player_attributes.get(name, 0))
+
+
+func crit_chance() -> float:
+	return clampf(_attr("luck") * CRIT_PER_LUCK, 0.0, CRIT_CAP)
+
+
+func luck_gold_mult() -> float:
+	return 1.0 + _attr("luck") * GOLD_PER_LUCK
+
+
+func luck_rarity_bonus() -> float:
+	return _attr("luck") * RARITY_PER_LUCK
+
+
+func charm_shop_mult() -> float:
+	return maxf(SHOP_FLOOR, 1.0 - _attr("charm") * SHOP_PER_CHARM)
+
+
 ## Equip item_id into slot. If slot is occupied, the previous occupant moves
 ## to inventory. Returns false (no-op) if slot is occupied AND inventory is
 ## full. Caller must show the inventory-full modal before retrying.
