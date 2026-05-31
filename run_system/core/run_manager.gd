@@ -189,6 +189,40 @@ func advance_act() -> bool:
 	return true
 
 
+## Per-act enemy stat multipliers (index = act-1). Bosses (ids in ACT_BOSSES)
+## are exempt — their power is tuned per-boss in sub-project C, not this curve.
+const ACT_HP_MULT: Array[float] = [1.0, 1.25, 1.5]
+const ACT_DMG_MULT: Array[float] = [1.0, 1.15, 1.30]
+## Enemy-pool tier offset per act: act N draws from a tier `(N-1)*offset` floors
+## deeper, so act 2 opens at the MID pool and act 3 at the LATE pool.
+const ACT_POOL_OFFSET: int = 4
+
+
+func act_hp_mult() -> float:
+	return ACT_HP_MULT[clampi(current_act - 1, 0, ACT_HP_MULT.size() - 1)]
+
+
+func act_dmg_mult() -> float:
+	return ACT_DMG_MULT[clampi(current_act - 1, 0, ACT_DMG_MULT.size() - 1)]
+
+
+## Scale a non-boss enemy's base HP by the current act multiplier. Bosses pass
+## through unchanged. Stacks multiplicatively with ascension scaling, which is
+## applied separately at the enemy_entity spawn site.
+func scale_enemy_hp(base_hp: int, enemy_id: String) -> int:
+	if enemy_id in ACT_BOSSES:
+		return base_hp
+	return int(round(base_hp * act_hp_mult()))
+
+
+## Scale a non-boss enemy's outgoing attack damage by the current act
+## multiplier. Bosses pass through unchanged.
+func scale_enemy_damage(amount: int, enemy_id: String) -> int:
+	if enemy_id in ACT_BOSSES:
+		return amount
+	return int(round(amount * act_dmg_mult()))
+
+
 const BATTLE_SCENE: String = "res://battle_scene/battle_scene.tscn"
 const MAP_SCENE: String = "res://run_system/ui/map_scene.tscn"
 const RELIC_DATA_DIR: String = "res://run_system/data/relics/"
@@ -473,9 +507,10 @@ func select_encounter(node_type: String, floor_idx: int) -> Array[String]:
 				result.append(str(id))
 		"enemy", "unknown":
 			var pool: Array
-			if floor_idx <= 3:
+			var tier_floor: int = floor_idx + (current_act - 1) * ACT_POOL_OFFSET
+			if tier_floor <= 3:
 				pool = ENCOUNTER_POOLS_EARLY
-			elif floor_idx <= 7:
+			elif tier_floor <= 7:
 				pool = ENCOUNTER_POOLS_MID
 			else:
 				pool = ENCOUNTER_POOLS_LATE
