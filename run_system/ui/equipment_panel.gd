@@ -219,6 +219,7 @@ func _refresh() -> void:
 					"hp": RunManager.current_health,
 					"max": RunManager.max_health,
 					"gold": RunManager.gold,
+					"act": RunManager.current_act,
 					"floor": max(1, RunManager.current_floor + 1),
 				}
 			)
