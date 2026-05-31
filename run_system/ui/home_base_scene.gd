@@ -52,6 +52,7 @@ func _build() -> void:
 
 	# Header
 	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 14)
 	vbox.add_child(header)
 	var title := Label.new()
 	title.text = tr("UI_HOME_TITLE")
@@ -64,6 +65,30 @@ func _build() -> void:
 	_style_readable_label(_core_label, 32, Color(0.64, 0.90, 1.0), 3)
 	header.add_child(_core_label)
 	_refresh_core()
+
+	var settings_btn := Button.new()
+	settings_btn.text = "⚙ " + TranslationServer.translate("SETTINGS_BUTTON")
+	settings_btn.custom_minimum_size = Vector2(136, 48)
+	settings_btn.add_theme_font_size_override("font_size", 18)
+	T.apply_button_theme(settings_btn)
+	settings_btn.pressed.connect(_open_settings)
+	header.add_child(settings_btn)
+
+	var stash_btn := Button.new()
+	stash_btn.text = "⚒ " + TranslationServer.translate("UI_HOME_STASH_BTN")
+	stash_btn.custom_minimum_size = Vector2(150, 48)
+	stash_btn.add_theme_font_size_override("font_size", 18)
+	T.apply_button_theme(stash_btn)
+	stash_btn.pressed.connect(_open_stash)
+	header.add_child(stash_btn)
+
+	var start_btn := Button.new()
+	start_btn.text = TranslationServer.translate("UI_HOME_START_RUN")
+	start_btn.custom_minimum_size = Vector2(220, 52)
+	start_btn.add_theme_font_size_override("font_size", 22)
+	T.apply_button_theme(start_btn)
+	start_btn.pressed.connect(_on_start_pressed)
+	header.add_child(start_btn)
 
 	# Upgrade grid (3 cols)
 	var grid := GridContainer.new()
@@ -88,39 +113,6 @@ func _build() -> void:
 	vbox.add_child(history_label)
 	var history_panel := _build_recent_runs_panel()
 	vbox.add_child(history_panel)
-
-	# Spacer push START to bottom
-	var grow := Control.new()
-	grow.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	vbox.add_child(grow)
-
-	# Action row
-	var actions := HBoxContainer.new()
-	actions.alignment = BoxContainer.ALIGNMENT_END
-	vbox.add_child(actions)
-	var settings_btn := Button.new()
-	settings_btn.text = "⚙ " + TranslationServer.translate("SETTINGS_BUTTON")
-	settings_btn.custom_minimum_size = Vector2(160, 60)
-	settings_btn.add_theme_font_size_override("font_size", 20)
-	T.apply_button_theme(settings_btn)
-	settings_btn.pressed.connect(_open_settings)
-	actions.add_child(settings_btn)
-
-	var stash_btn := Button.new()
-	stash_btn.text = "⚒ " + TranslationServer.translate("UI_HOME_STASH_BTN")
-	stash_btn.custom_minimum_size = Vector2(180, 60)
-	stash_btn.add_theme_font_size_override("font_size", 20)
-	T.apply_button_theme(stash_btn)
-	stash_btn.pressed.connect(_open_stash)
-	actions.add_child(stash_btn)
-
-	var start_btn := Button.new()
-	start_btn.text = TranslationServer.translate("UI_HOME_START_RUN")
-	start_btn.custom_minimum_size = Vector2(260, 60)
-	start_btn.add_theme_font_size_override("font_size", 24)
-	T.apply_button_theme(start_btn)
-	start_btn.pressed.connect(_on_start_pressed)
-	actions.add_child(start_btn)
 
 
 func _add_background() -> void:
@@ -392,11 +384,12 @@ func _build_history_row(entry: Dictionary) -> Label:
 
 	var hero: String = _humanize_hero_id(str(entry.get("hero_id", "?")))
 	var floor: int = int(entry.get("floor", 0))
+	var act: int = int(entry.get("act", 1))  # legacy summaries predate `act`
 	var core_earned: int = int(entry.get("core_earned", 0))
 
 	var row := Label.new()
 	row.text = (tr("UI_HOME_RUN_ROW").format(
-		{"icon": icon, "hero": hero, "floor": floor + 1, "core": core_earned}
+		{"icon": icon, "hero": hero, "act": act, "floor": floor + 1, "core": core_earned}
 	))
 	row.add_theme_color_override("font_color", color)
 	return row
