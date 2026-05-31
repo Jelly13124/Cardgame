@@ -9,6 +9,7 @@ const MAP_RENDERER_SCRIPT = preload("res://run_system/ui/map_renderer.gd")
 const EQUIPMENT_PANEL_SCRIPT = preload("res://run_system/ui/equipment_panel.gd")
 const CARD_UPGRADE_MODAL = preload("res://run_system/ui/card_upgrade_modal.gd")
 const RUN_DECK_VIEWER_MODAL = preload("res://run_system/ui/run_deck_viewer_modal.gd")
+const EVENT_MODAL_SCRIPT = preload("res://run_system/ui/event_modal.gd")
 const T_THEME = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const BATTLE_PACKED = preload("res://battle_scene/battle_scene.tscn")
 const SHOP_PACKED = preload("res://run_system/ui/shop_scene.tscn")
@@ -273,12 +274,38 @@ func _on_node_clicked(node: Dictionary) -> void:
 				_show_popup(tr("UI_MAP_CORE_DROP").format({"n": amt}))
 				_node_click_pending = false
 		"unknown":
-			_resolve_unknown_node(int(node.floor))
+			_open_event_node(int(node.floor))
 		_:
 			# Defense-in-depth: an unrecognized node type must still release the
 			# click guard, or the whole map locks up (the stuck-guard class of bug).
 			push_warning("map: unhandled node type '%s'" % str(node.type))
 			_node_click_pending = false
+
+
+## "?" map node — try to open a data-driven random event. If no events are
+## loaded, fall back to the legacy random-outcome roll (the safety net). The
+## click guard is released by the modal's `resolved` callback (mirroring
+## _on_relic_choice_selected); the fallback releases it on its own paths.
+func _open_event_node(floor_idx: int) -> void:
+	var event: Dictionary = rm.pick_random_event()
+	if event.is_empty():
+		_resolve_unknown_node(floor_idx)
+		return
+
+	var layer := CanvasLayer.new()
+	layer.name = "EventModalLayer"
+	layer.layer = 120
+	add_child(layer)
+
+	var modal = EVENT_MODAL_SCRIPT.new()
+	modal.event_data = event
+	modal.resolved.connect(
+		func():
+			_node_click_pending = false  # release click guard so next node is clickable
+			layer.queue_free()
+			queue_redraw()
+	)
+	layer.add_child(modal)
 
 
 ## "?" map node — rolls one of several outcomes for variety. Probabilities:
