@@ -46,6 +46,12 @@ func modify_player_attack_damage(amount: int, _attacker: Node, _defender: Node) 
 			"add_damage":
 				result += int(effect.get("amount", 0))
 				_mark_used_once(entry)
+			"crit_chance":
+				if randf() < RunManager.crit_chance():
+					result = int(round(result * RunManager.CRIT_MULT))
+					if _battle_scene and _battle_scene.has_method("show_notification"):
+						_battle_scene.show_notification("CRIT!", Color(1, 0.85, 0.2))
+				_mark_used_once(entry)
 	return max(0, result)
 
 
