@@ -15,8 +15,8 @@ const INTENT_ICON_ATTACK = preload("res://battle_scene/assets/images/ui/intent_a
 const INTENT_ICON_BLOCK = preload("res://battle_scene/assets/images/ui/intent_block.png")
 const INTENT_ICON_BUFF = preload("res://battle_scene/assets/images/ui/intent_buff.png")
 const INTENT_ICON_CHARGE = preload("res://battle_scene/assets/images/ui/intent_charge.png")
-const NORMAL_DISPLAY_HEIGHT := 192.0
-const BOSS_DISPLAY_HEIGHT := 288.0
+const NORMAL_DISPLAY_HEIGHT := 256.0
+const BOSS_DISPLAY_HEIGHT := 384.0
 const INTENT_BADGE_WIDTH := 104.0
 const INTENT_BADGE_HEIGHT := 36.0
 
@@ -59,6 +59,8 @@ var _intent_label: Label
 var _intent_icon: TextureRect
 var _intent_bg: Control
 var _intent_tween: Tween
+var _display_size := Vector2(NORMAL_DISPLAY_HEIGHT, NORMAL_DISPLAY_HEIGHT)
+var _content_height := NORMAL_DISPLAY_HEIGHT
 
 ## Base path for enemy sprite assets — each enemy gets its own subfolder: {ENEMIES_DIR}{sprite_id}/
 const ENEMIES_DIR = "res://battle_scene/assets/images/enemies/"
@@ -89,6 +91,8 @@ static func create(id: String) -> EnemyEntity:
 					entity.max_health = int(
 						round(entity.max_health * (1.0 + 0.1 * RunManager.ascension))
 					)
+				# Per-act scaling (bosses exempt — see RunManager.scale_enemy_hp).
+				entity.max_health = RunManager.scale_enemy_hp(entity.max_health, id)
 				entity.health = entity.max_health
 				entity.action_pattern = data.get("action_pattern", [])
 				entity.sprite_id = data.get("sprite_id", "")
@@ -179,7 +183,7 @@ func _build_sprite_visual(sid: String) -> void:
 	_show_rest_pose()
 
 	_build_intent_badge(Vector2(-INTENT_BADGE_WIDTH * 0.5, -display_height - 48.0))
-	_build_health_bar(Vector2(-90, 28))  # below feet (centered with bar_width 180)
+	_build_health_bar(Vector2(-112.5, 28))
 
 
 ## Scales the sprite to a target display height and returns the **content** height
@@ -198,6 +202,7 @@ func _apply_display_scale(frames: SpriteFrames) -> float:
 	var display_scale := target_height / native_height
 	_sprite.scale = Vector2(display_scale, display_scale)
 	_sprite.position = Vector2(0, -target_height * 0.5)
+	_display_size = Vector2(float(tex.get_width()) * display_scale, target_height)
 
 	# Detect where the actual sprite content starts (vs how big the canvas is).
 	# get_used_rect returns the bounding box of non-transparent pixels in
@@ -210,7 +215,8 @@ func _apply_display_scale(frames: SpriteFrames) -> float:
 	if img:
 		var used := img.get_used_rect()
 		top_offset_displayed = float(used.position.y) * display_scale
-	return target_height - top_offset_displayed
+	_content_height = target_height - top_offset_displayed
+	return _content_height
 
 
 func _first_frame_texture(frames: SpriteFrames) -> Texture2D:
@@ -231,16 +237,27 @@ func get_hit_global_position() -> Vector2:
 	return _sprite.to_global(native_hit - native_origin)
 
 
+func get_targeting_rect() -> Rect2:
+	var width: float = _display_size.x * 0.75
+	if width < 84.0:
+		width = 84.0
+	var height: float = _content_height
+	if height < 84.0:
+		height = 84.0
+	return Rect2(global_position.x - width * 0.5, global_position.y - height, width, height)
+
+
 ## Fallback: procedural colored rectangle for enemies without sprite art yet.
 func _build_placeholder_visual() -> void:
 	var body = ColorRect.new()
 	body.color = Color(0.7, 0.15, 0.15)
-	body.size = Vector2(140, 190)  # bigger placeholder too
-	body.position = Vector2(-70, -190)
+	body.size = Vector2(256, 256)
+	body.position = Vector2(-128, -256)
 	add_child(body)
-	# Placeholder: 140×190, top y=-190, bottom y=0
-	_build_intent_badge(Vector2(-INTENT_BADGE_WIDTH * 0.5, -232))  # above placeholder
-	_build_health_bar(Vector2(-114, 26))  # below placeholder
+	_display_size = body.size
+	_content_height = body.size.y
+	_build_intent_badge(Vector2(-INTENT_BADGE_WIDTH * 0.5, -304))
+	_build_health_bar(Vector2(-112.5, 28))
 
 
 ## Builds a compact icon + text intent readout above the sprite.
@@ -281,7 +298,7 @@ func _build_health_bar(hud_pos: Vector2) -> void:
 	_hud.max_health = max_health
 	_hud.current_health = health
 	_hud.current_block = block
-	_hud.bar_width = 180
+	_hud.bar_width = 225
 	_hud.position = hud_pos
 	add_child(_hud)
 
@@ -430,7 +447,7 @@ func take_damage(amount: int, silent: bool = false) -> void:
 	if not silent:
 		var scene := get_tree().current_scene
 		if scene:
-			var spawn_pos: Vector2 = global_position + Vector2(0, -NORMAL_DISPLAY_HEIGHT * 0.5)
+			var spawn_pos: Vector2 = global_position + Vector2(0, -_content_height * 0.5)
 			COMBAT_FX.spawn_damage_number(scene, spawn_pos, dmg_after_block, blocked_amount)
 			# Shake the sprite only (not `self`) so the HUD / status badges
 			# that are children of this entity don't wobble with it.
