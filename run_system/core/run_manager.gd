@@ -9,8 +9,8 @@ signal equipment_changed
 signal relics_updated
 ## Emitted when the run ends, win or lose. `summary` is the run-history
 ## payload for MetaProgress (and any future listener):
-##   { hero_id: String, floor: int, core_earned: int, outcome: String,
-##     timestamp: int (unix seconds) }
+##   { hero_id: String, floor: int, act: int, core_earned: int,
+##     outcome: String, timestamp: int (unix seconds) }
 ## outcome is one of "victory" (final boss kill), "extracted", "defeat".
 signal run_ended(victory: bool, summary: Dictionary)
 
