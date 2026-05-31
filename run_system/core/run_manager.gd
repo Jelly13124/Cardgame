@@ -144,10 +144,6 @@ const ENCOUNTER_POOLS_LATE = [
 	["slag_walker", "acid_spitter"],
 ]
 const ELITE_ROSTER: Array = ["armored_patrol"]
-## Boss per "act". Maps the boss floor index → enemy id. Final-floor boss
-## stays junkyard_tyrant; mid-act bosses use placeholder sprites (rust_brute
-## and armored_patrol re-skins) until codex generates dedicated art.
-##
 ## Acts (大层). Each act is its OWN FLOORS_PER_ACT-tall map ending in a single
 ## boss at the top floor — there are no mid-map bosses. Clearing a non-final
 ## act's boss offers an extract choice; clearing the final act's boss wins the
