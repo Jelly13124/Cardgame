@@ -258,6 +258,7 @@ func _ready() -> void:
 	assert(
 		failures == 0, "DataValidator: %d JSON schema failure(s) — see editor output." % failures
 	)
+	load_random_events()
 	_ensure_backpack()
 
 
