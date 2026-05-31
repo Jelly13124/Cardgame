@@ -69,7 +69,7 @@ func _apply_static_theme() -> void:
 
 func _generate_loot() -> void:
 	available_loot.clear()
-	var gold_amount = 10
+	var gold_amount = int(round(10 * RunManager.luck_gold_mult()))
 
 	available_loot.append(
 		{
@@ -304,6 +304,8 @@ func _generate_draft_options() -> void:
 			picked_rarity = "uncommon"
 
 		picked_rarity = _apply_research_lab_bias(picked_rarity)
+		if picked_rarity != "rare" and randf() < RunManager.luck_rarity_bonus():
+			picked_rarity = "rare" if picked_rarity == "uncommon" else "uncommon"
 
 		if _rarity_pools[picked_rarity].is_empty():
 			if picked_rarity == "rare":
