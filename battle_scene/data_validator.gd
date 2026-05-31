@@ -16,6 +16,7 @@ const EQUIPMENT_DIR = "res://run_system/data/equipment/"
 const SET_DIR = "res://run_system/data/equipment_sets/"
 const BASE_UPGRADE_DIR = "res://run_system/data/base_upgrades/"
 const HERO_DIR = "res://run_system/data/heroes/"
+const RANDOM_EVENT_DIR = "res://run_system/data/random_events/"
 
 # ─── Card schema ──────────────────────────────────────────────────────────────
 const REQUIRED_CARD_KEYS = ["name", "title", "type", "cost", "effects"]
@@ -117,6 +118,18 @@ const REQUIRED_HERO_KEYS = [
 ]
 const HERO_ATTRIBUTE_KEYS = ["strength", "constitution", "intelligence", "luck", "charm"]
 
+# ─── Random event schema ─────────────────────────────────────────────────────
+const REQUIRED_EVENT_KEYS = ["id", "title", "options"]
+const ALLOWED_EVENT_EFFECT_TYPES = [
+	"gain_gold",
+	"lose_hp",
+	"heal",
+	"gain_core",
+	"gain_relic",
+	"gain_equipment",
+	"gain_attribute",
+]
+
 
 ## Scan all card / enemy / relic directories and validate every JSON file,
 ## plus cross-check that every enemy ID referenced by RunManager's encounter
@@ -132,6 +145,11 @@ static func validate_all_data_at_startup() -> int:
 	failures += _validate_dir(SET_DIR, Callable(DataValidator, "validate_equipment_set"))
 	failures += _validate_dir(BASE_UPGRADE_DIR, Callable(DataValidator, "validate_base_upgrade"))
 	failures += _validate_dir(HERO_DIR, Callable(DataValidator, "validate_hero"))
+	# Random events are optional content (the "?" node falls back gracefully when
+	# none exist); only validate the dir when it is present so a missing/empty dir
+	# does not fail boot. _validate_dir reports a missing dir as a failure.
+	if DirAccess.dir_exists_absolute(RANDOM_EVENT_DIR):
+		failures += _validate_dir(RANDOM_EVENT_DIR, Callable(DataValidator, "validate_event"))
 	# Cross-check encounter pools so a typo in RunManager constants fails at
 	# startup instead of crashing the player mid-combat in enemy_entity.create().
 	failures += validate_encounter_pools()
@@ -569,4 +587,90 @@ static func validate_hero(data: Dictionary, path: String) -> bool:
 		if not data["starting_attributes"].has(attr):
 			push_error("%s: starting_attributes missing '%s'" % [prefix, attr])
 			ok = false
+	return ok
+
+
+## Validate a single random-event JSON dictionary. Returns true on success.
+## Requires id/title/options; each option needs `text` and either an `effects`
+## array OR the luck_check trio (effects_success + effects_fail). Every effect's
+## `type` must be in ALLOWED_EVENT_EFFECT_TYPES with its required params present.
+static func validate_event(data: Dictionary, source_path: String) -> bool:
+	var prefix := "Event '%s'" % source_path
+	var ok := true
+
+	for key in REQUIRED_EVENT_KEYS:
+		if not data.has(key):
+			push_error("%s: missing required key '%s'" % [prefix, key])
+			ok = false
+
+	if not ok:
+		return false
+
+	var options = data["options"]
+	if typeof(options) != TYPE_ARRAY or options.is_empty():
+		push_error("%s: 'options' must be a non-empty Array" % prefix)
+		return false
+
+	for i in range(options.size()):
+		var option = options[i]
+		if typeof(option) != TYPE_DICTIONARY:
+			push_error("%s: option[%d] is not a Dictionary" % [prefix, i])
+			ok = false
+			continue
+		if not option.has("text"):
+			push_error("%s: option[%d] is missing 'text'" % [prefix, i])
+			ok = false
+
+		var has_effects: bool = option.has("effects")
+		var has_luck_trio: bool = option.has("effects_success") and option.has("effects_fail")
+		if not has_effects and not has_luck_trio:
+			push_error(
+				(
+					"%s: option[%d] needs 'effects' OR both 'effects_success' and 'effects_fail'"
+					% [prefix, i]
+				)
+			)
+			ok = false
+
+		for effect_key in ["effects", "effects_success", "effects_fail"]:
+			if not option.has(effect_key):
+				continue
+			var effects = option[effect_key]
+			if typeof(effects) != TYPE_ARRAY:
+				push_error("%s: option[%d] '%s' must be an Array" % [prefix, i, effect_key])
+				ok = false
+				continue
+			for j in range(effects.size()):
+				if not _validate_event_effect(
+					effects[j], "%s option[%d] %s[%d]" % [prefix, i, effect_key, j]
+				):
+					ok = false
+
+	return ok
+
+
+## Validate a single event effect dictionary. Returns true on success.
+static func _validate_event_effect(effect: Variant, prefix: String) -> bool:
+	var ok := true
+	if typeof(effect) != TYPE_DICTIONARY:
+		push_error("%s: effect is not a Dictionary" % prefix)
+		return false
+	var etype := str(effect.get("type", ""))
+	if not etype in ALLOWED_EVENT_EFFECT_TYPES:
+		push_error("%s: effect type '%s' not in %s" % [prefix, etype, ALLOWED_EVENT_EFFECT_TYPES])
+		return false
+	match etype:
+		"gain_relic":
+			if not effect.has("id"):
+				push_error("%s: gain_relic effect is missing 'id'" % prefix)
+				ok = false
+		"gain_equipment":
+			if not effect.has("rarity"):
+				push_error("%s: gain_equipment effect is missing 'rarity'" % prefix)
+				ok = false
+		"gain_attribute":
+			for required_key in ["attr", "amount"]:
+				if not effect.has(required_key):
+					push_error("%s: gain_attribute effect is missing '%s'" % [prefix, required_key])
+					ok = false
 	return ok
