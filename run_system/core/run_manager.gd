@@ -108,6 +108,10 @@ var player_attributes: Dictionary = {
 	"charm": 3,
 }
 
+## Cached random-event definitions (loaded from RANDOM_EVENT_DATA_DIR). Each entry
+## is the parsed JSON Dictionary. Populated by load_random_events().
+var _random_events: Array = []
+
 ## Enemy IDs to encounter in the next battle (set by MapScene before loading battle).
 ## Example: ["trash_robot", "wasteland_killer"]
 var current_encounter: Array[String] = ["trash_robot"]
@@ -224,6 +228,7 @@ const MAP_SCENE: String = "res://run_system/ui/map_scene.tscn"
 const RELIC_DATA_DIR: String = "res://run_system/data/relics/"
 const EQUIPMENT_DATA_DIR: String = "res://run_system/data/equipment/"
 const EQUIPMENT_SET_DATA_DIR: String = "res://run_system/data/equipment_sets/"
+const RANDOM_EVENT_DATA_DIR: String = "res://run_system/data/random_events/"
 const FIRST_MERCHANT_FLOOR_INDEX: int = 5  # Human-facing layer 6.
 const GUARANTEED_TREASURE_FLOOR_INDEX: int = 6  # Human-facing layer 7.
 ## Floors 1..EARLY_FLOOR_LAST roll combat-only (no rest / treasure / merchant).
@@ -917,6 +922,95 @@ func luck_rarity_bonus() -> float:
 
 func charm_shop_mult() -> float:
 	return maxf(SHOP_FLOOR, 1.0 - _attr("charm") * SHOP_PER_CHARM)
+
+
+# --- Random events (luck/charm driven "?" node) ----------------------------
+# Data schema + validator live in data_validator.gd. Effect types are dispatched
+# by apply_event_effects() to the matching RunManager mutation.
+
+const EVENT_LUCK_CHECK_BASE := 0.35
+const EVENT_LUCK_CHECK_PER_LUCK := 0.04
+const EVENT_LUCK_CHECK_CAP := 0.90
+
+
+## Load (and cache) every random-event JSON from RANDOM_EVENT_DATA_DIR.
+## Gracefully no-ops if the directory is missing or empty.
+func load_random_events() -> void:
+	_random_events = []
+	if not DirAccess.dir_exists_absolute(RANDOM_EVENT_DATA_DIR):
+		return
+	var dir = DirAccess.open(RANDOM_EVENT_DATA_DIR)
+	if dir == null:
+		return
+	for file_name in dir.get_files():
+		if not file_name.ends_with(".json"):
+			continue
+		var path: String = RANDOM_EVENT_DATA_DIR + file_name
+		var f := FileAccess.open(path, FileAccess.READ)
+		if f == null:
+			continue
+		var raw := f.get_as_text()
+		f.close()
+		var parsed = JSON.parse_string(raw)
+		if typeof(parsed) == TYPE_DICTIONARY:
+			_random_events.append(parsed)
+
+
+## Pick a uniformly random cached event. Returns {} when none are loaded.
+func pick_random_event() -> Dictionary:
+	if _random_events.is_empty():
+		return {}
+	return _random_events[randi() % _random_events.size()]
+
+
+## True if an event option's `requires` (luck/charm) gate is met by current
+## attributes. Options with no `requires` are always unlocked.
+func option_unlocked(option: Dictionary) -> bool:
+	var requires: Variant = option.get("requires", {})
+	if typeof(requires) != TYPE_DICTIONARY:
+		return true
+	for attr in requires.keys():
+		if _attr(str(attr)) < int(requires[attr]):
+			return false
+	return true
+
+
+## Success probability for a luck_check option. clamp(0.35 + luck*0.04, 0, 0.9).
+func luck_check_chance() -> float:
+	return clampf(
+		EVENT_LUCK_CHECK_BASE + _attr("luck") * EVENT_LUCK_CHECK_PER_LUCK, 0.0, EVENT_LUCK_CHECK_CAP
+	)
+
+
+## Apply each effect in an event option's effects array to the matching
+## RunManager mutation. Unknown effect types are ignored (validator gates them).
+func apply_event_effects(effects: Array) -> void:
+	for effect in effects:
+		if typeof(effect) != TYPE_DICTIONARY:
+			continue
+		var etype := str(effect.get("type", ""))
+		match etype:
+			"gain_gold":
+				add_gold(int(effect.get("amount", 0)))
+			"lose_hp":
+				modify_health(-int(effect.get("amount", 0)))
+			"heal":
+				modify_health(int(effect.get("amount", 0)))
+			"gain_core":
+				add_core_to_backpack(int(effect.get("amount", 0)))
+			"gain_relic":
+				add_relic(str(effect.get("id", "")))
+			"gain_equipment":
+				var item_id := roll_equipment_drop(str(effect.get("rarity", "")))
+				if item_id != "":
+					add_equip_to_backpack(item_id)
+			"gain_attribute":
+				var attr := str(effect.get("attr", ""))
+				if attr != "":
+					base_attributes[attr] = (
+						int(base_attributes.get(attr, 0)) + int(effect.get("amount", 0))
+					)
+					recompute_attributes()
 
 
 ## Equip item_id into slot. If slot is occupied, the previous occupant moves
