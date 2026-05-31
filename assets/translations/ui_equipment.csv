@@ -7,7 +7,7 @@ UI_EQUIP_RELICS,RELICS,遗物
 UI_EQUIP_UNEQUIP,UNEQUIP,卸下
 UI_EQUIP_EQUIP,EQUIP,装备
 UI_EQUIP_DISCARD,DISCARD,丢弃
-UI_EQUIP_VITALS,HP {hp} / {max}     GOLD {gold}     FLOOR {floor},生命 {hp} / {max}     金币 {gold}     层数 {floor}
+UI_EQUIP_VITALS,HP {hp} / {max}     GOLD {gold}     ACT {act} · FLOOR {floor},生命 {hp} / {max}     金币 {gold}     第{act}幕 · {floor}层
 UI_EQUIP_INVENTORY_COUNT,INVENTORY ({n}/{max}),背包 ({n}/{max})
 UI_EQUIP_CELL_GOLD,GOLD,金币
 UI_EQUIP_CELL_CORE,CORE,Core
