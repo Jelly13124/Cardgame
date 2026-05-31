@@ -71,6 +71,12 @@ func _ready() -> void:
 	_build_equipment_button()
 	_build_deck_button()
 
+	# Act-transition toast: only when the map scene loads on a freshly generated
+	# act > 1 (advance_act cleared the walk + node selection). Act 1's first map
+	# is excluded by the act>1 guard.
+	if rm.current_act > 1 and rm.current_node_id == "" and rm.visited_node_ids.is_empty():
+		_show_popup(tr("UI_MAP_ENTER_ACT").format({"n": rm.current_act}))
+
 
 func _load_texture(path: String) -> Texture2D:
 	if ResourceLoader.exists(path):
