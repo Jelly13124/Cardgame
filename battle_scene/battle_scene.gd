@@ -43,14 +43,14 @@ const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 const LOOT_REWARD_SCENE = preload("res://run_system/ui/loot_reward.tscn")
 const EXTRACT_CHOICE_MODAL_SCRIPT = preload("res://run_system/ui/extract_choice_modal.gd")
 
-const BOSS_VICTORY_CORE := 150
+const BOSS_VICTORY_CORE := 200
 ## Extract reward per act (keyed by RunManager.current_act). The final act has
 ## NO entry — clearing its boss wins the run outright (no extract choice). Any
 ## non-final act missing here falls back to a formula so adding a future act
 ## can't silently route to the "game complete" branch.
 const EXTRACT_REWARDS := {
-	1: {"continue": 25, "extract": 50},
-	2: {"continue": 50, "extract": 90},
+	1: {"continue": 40, "extract": 60},
+	2: {"continue": 80, "extract": 130},
 }
 
 
