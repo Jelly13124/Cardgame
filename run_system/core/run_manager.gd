@@ -566,6 +566,9 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 			MetaProgress.remove_from_stash(str(item_id))
 	pending_loadout.clear()
 	relics.clear()
+	var starting_relic: String = str(current_hero_data.get("starting_relic", ""))
+	if starting_relic != "":
+		add_relic(starting_relic)
 	current_encounter = ["trash_robot"]
 	last_battle_node_type = "enemy"
 	generate_map(FLOORS_PER_ACT, 4)

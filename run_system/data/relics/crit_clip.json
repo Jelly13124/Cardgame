@@ -1,0 +1,13 @@
+{
+  "id": "crit_clip",
+  "title": "Crit Clip",
+  "description": "Bill's attack cards have a luck-scaled chance to deal 1.5x damage.",
+  "icon": "res://run_system/assets/images/relics/crit_clip.png",
+  "rarity": "common",
+  "effects": [
+    {
+      "trigger": "player_attack_damage",
+      "type": "crit_chance"
+    }
+  ]
+}
