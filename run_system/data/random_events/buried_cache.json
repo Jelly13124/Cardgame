@@ -1,0 +1,27 @@
+{
+  "id": "buried_cache",
+  "title": "Buried Cache",
+  "description": "A rusted hatch juts from the dune, half-swallowed by sand. Old militia markings warn of a sealed supply vault beneath. The lock looks ready to give.",
+  "options": [
+    {
+      "text": "Pry it open and grab the gear",
+      "effects": [
+        { "type": "gain_equipment", "rarity": "uncommon" }
+      ],
+      "result": "The hatch shrieks open. Inside, vacuum-sealed and waiting, sits a piece of pre-collapse equipment."
+    },
+    {
+      "text": "[Luck] Trust the rotting floor and dive deep",
+      "luck_check": true,
+      "effects_success": [
+        { "type": "gain_equipment", "rarity": "rare" },
+        { "type": "gain_gold", "amount": 25 }
+      ],
+      "effects_fail": [
+        { "type": "lose_hp", "amount": 8 }
+      ],
+      "result_success": "The boards hold. In the deepest locker you find a rare relic of the old world and a cache of coin.",
+      "result_fail": "The floor caves. You crash through onto twisted rebar and crawl out empty-handed and bleeding."
+    }
+  ]
+}

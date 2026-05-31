@@ -1,0 +1,34 @@
+{
+  "id": "stranded_trader",
+  "title": "Stranded Trader",
+  "description": "A merchant's rig sits dead in the cracked salt-flat, one wheel buried. He squints at you over a dust-caked scarf, hand never far from his holster.",
+  "options": [
+    {
+      "text": "Help dig the rig free (he pays you +40 gold)",
+      "effects": [
+        { "type": "gain_gold", "amount": 40 }
+      ],
+      "result": "Hours of shoveling later the rig lurches loose. He counts forty into your palm and rolls off into the haze."
+    },
+    {
+      "text": "[Charm 5] Sweet-talk a parting gift from his crate",
+      "requires": { "charm": 5 },
+      "effects": [
+        { "type": "gain_relic", "id": "lucky_cog" }
+      ],
+      "result": "Your easy smile wins him over. He digs out a Lucky Cog and presses it into your hand for the company."
+    },
+    {
+      "text": "[Luck] Roll his weighted dice for the strongbox",
+      "luck_check": true,
+      "effects_success": [
+        { "type": "gain_core", "amount": 30 }
+      ],
+      "effects_fail": [
+        { "type": "lose_hp", "amount": 6 }
+      ],
+      "result_success": "The bones come up sevens. He grumbles and tosses you the core from the strongbox.",
+      "result_fail": "Snake eyes. He laughs, draws iron, and clips your shoulder before you back off."
+    }
+  ]
+}

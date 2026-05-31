@@ -1,0 +1,36 @@
+{
+  "id": "hooded_stranger",
+  "title": "The Hooded Stranger",
+  "description": "By a guttering fire sits a figure swathed in grey rags, face lost in shadow. A cracked deck of fortune cards waits face-down on a flat stone between you.",
+  "options": [
+    {
+      "text": "Share your rations and your story",
+      "effects": [
+        { "type": "heal", "amount": 8 },
+        { "type": "gain_attribute", "attr": "charm", "amount": 1 }
+      ],
+      "result": "The stranger listens, mends your wounds with a salve, and something in the telling leaves you steadier with people."
+    },
+    {
+      "text": "[Charm 5] Read the future in their cards",
+      "requires": { "charm": 5 },
+      "effects": [
+        { "type": "gain_attribute", "attr": "luck", "amount": 2 }
+      ],
+      "result": "They deal three cards, nod slowly, and trace your fortune. You leave feeling the dice will fall your way."
+    },
+    {
+      "text": "[Luck] Cut the deck and take what fate gives",
+      "luck_check": true,
+      "effects_success": [
+        { "type": "gain_relic", "id": "scavenger_lens" }
+      ],
+      "effects_fail": [
+        { "type": "lose_hp", "amount": 5 },
+        { "type": "gain_gold", "amount": 10 }
+      ],
+      "result_success": "You turn the Sun. The stranger gifts you a keen Scavenger Lens and vanishes into the dark.",
+      "result_fail": "You turn the Tower. A cold dread bleeds your vigor, though a few coins spill from the deck as consolation."
+    }
+  ]
+}

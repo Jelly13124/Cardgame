@@ -1,0 +1,36 @@
+{
+  "id": "rad_storm",
+  "title": "Rad Storm",
+  "description": "The sky bruises green and a screaming wind drives glowing dust toward you. There is no outrunning it — only a choice of how to weather the surge.",
+  "options": [
+    {
+      "text": "Hunker down and ride it out (lose 4 HP)",
+      "effects": [
+        { "type": "lose_hp", "amount": 4 }
+      ],
+      "result": "You wrap up tight and breathe through your scarf. The storm flays your skin raw but passes you by."
+    },
+    {
+      "text": "[Charm 5] Wave down a passing convoy for shelter",
+      "requires": { "charm": 5 },
+      "effects": [
+        { "type": "heal", "amount": 6 },
+        { "type": "gain_gold", "amount": 15 }
+      ],
+      "result": "Your frantic charm earns a wave back. They haul you into a sealed truck, patch you up, and slip you some coin for the road."
+    },
+    {
+      "text": "[Luck] Sprint through the glow toward a bunker",
+      "luck_check": true,
+      "effects_success": [
+        { "type": "gain_core", "amount": 20 },
+        { "type": "gain_attribute", "attr": "luck", "amount": 1 }
+      ],
+      "effects_fail": [
+        { "type": "lose_hp", "amount": 10 }
+      ],
+      "result_success": "You thread the worst of it and slam the bunker hatch. Inside, an intact core hums in the dark — and you feel charmed.",
+      "result_fail": "The storm catches you in the open. You reach the bunker scorched and retching, the dose still burning in your lungs."
+    }
+  ]
+}
