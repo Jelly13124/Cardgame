@@ -192,19 +192,21 @@ func _set_hover_effect(unit: Node, active: bool) -> void:
 
 
 ## Returns the enemy node under a screen position (viewport coords).
-## EnemyEntity sprite is AnimatedSprite2D: 64px × 3.0 scale = 192×192.
-## Anchored at feet: local pos (0, -96) → spans x:[-96, 96], y:[-192, 0].
+## EnemyEntity reports its rendered body rect so targeting matches current sprite scale.
 func _get_unit_at_position(pos: Vector2) -> Node:
 	for enemy in enemy_container.get_children():
 		if not is_instance_valid(enemy):
 			continue
 		var ep = enemy.global_position
-		# Body rect matches the 192×192 scaled sprite anchored at feet
-		var body_rect = Rect2(ep.x - 96, ep.y - 192, 192, 192)
+		var body_rect := Rect2(ep.x - 128, ep.y - 256, 256, 256)
+		if enemy.has_method("get_targeting_rect"):
+			var reported_rect: Variant = enemy.call("get_targeting_rect")
+			if typeof(reported_rect) == TYPE_RECT2:
+				body_rect = reported_rect
 		if body_rect.has_point(pos):
 			return enemy
 		# Fallback: catch clicks near the HUD/center area
-		if ep.distance_to(pos) < 110.0:
+		if ep.distance_to(pos) < 164.0:
 			return enemy
 	return null
 
@@ -498,9 +500,14 @@ func modify_player_attack_damage(amount: int, attacker: Node, defender: Node) ->
 
 
 func modify_enemy_attack_damage(amount: int, attacker: Node, defender: Node) -> int:
+	var result := amount
 	if relic_effect_system:
-		return relic_effect_system.modify_enemy_attack_damage(amount, attacker, defender)
-	return amount
+		result = relic_effect_system.modify_enemy_attack_damage(result, attacker, defender)
+	# Per-act enemy damage scaling (bosses exempt). Applied after relic
+	# modifiers so relic flat-reductions read against the pre-act number.
+	if attacker and "enemy_id" in attacker:
+		result = RunManager.scale_enemy_damage(result, str(attacker.enemy_id))
+	return result
 
 
 # ─── Energy ───────────────────────────────────────────────────────────────────
