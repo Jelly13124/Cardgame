@@ -9,7 +9,7 @@ UI_HOME_TITLE,HOME BASE,大本营
 UI_HOME_CORE,CORE: {n},核心：{n}
 UI_HOME_RECENT_RUNS,RECENT RUNS,近期征程
 UI_HOME_NO_RUNS,(no runs yet),（暂无征程记录）
-UI_HOME_RUN_ROW,{icon}  {hero}  Floor {floor}  +{core} Core,{icon}  {hero}  第{floor}层  +{core} 核心
+UI_HOME_RUN_ROW,{icon}  {hero}  Act {act}·F{floor}  +{core} Core,{icon}  {hero}  第{act}幕·{floor}层  +{core} 核心
 UI_HOME_HERO_BILL,Bill,比尔
 UI_HOME_HERO_JERRY,Jerry,杰瑞
 UI_HOME_UPGRADE_LEVEL,Level: {dots}  ({cur}/{max}),等级：{dots}  ({cur}/{max})
