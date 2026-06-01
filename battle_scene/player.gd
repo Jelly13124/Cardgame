@@ -67,8 +67,8 @@ func _build_visual() -> void:
 	_hud.max_health = max_health
 	_hud.current_health = health
 	_hud.current_block = block
-	_hud.bar_width = 180
-	_hud.position = Vector2(-90, 28)
+	_hud.bar_width = 225
+	_hud.position = Vector2(-112.5, 28)
 	add_child(_hud)
 
 
@@ -221,7 +221,7 @@ func get_muzzle_global_position() -> Vector2:
 			* 0.5
 		)
 		return _fallback_sprite.to_global(MUZZLE_NATIVE_POSITION - native_origin)
-	return global_position + Vector2(98, -104)
+	return global_position + Vector2(TARGET_DISPLAY_HEIGHT * 0.38, -TARGET_DISPLAY_HEIGHT * 0.41)
 
 
 ## Returns whichever sprite is actually visible right now: the AnimatedSprite2D

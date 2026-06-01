@@ -17,7 +17,7 @@ var _buy_button: Button
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(320, 200)
+	custom_minimum_size = Vector2(320, 204)
 	add_theme_stylebox_override("panel", T.panel_textured("dark"))
 	if not _title_label:
 		_build()
@@ -27,30 +27,29 @@ func _build() -> void:
 	if _title_label:
 		return
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 16)
-	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 14)
+	margin.add_theme_constant_override("margin_bottom", 14)
 	add_child(margin)
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
+	vbox.add_theme_constant_override("separation", 7)
 	margin.add_child(vbox)
 
 	_title_label = Label.new()
-	_title_label.add_theme_font_size_override("font_size", 22)
-	_title_label.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
+	_style_label(_title_label, 22, Color(1, 0.92, 0.55), 2)
 	vbox.add_child(_title_label)
 
 	_level_label = Label.new()
-	_level_label.add_theme_font_size_override("font_size", 20)
-	_level_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
+	_style_label(_level_label, 20, Color(0.90, 0.90, 0.86), 1)
 	vbox.add_child(_level_label)
 
 	_effect_label = Label.new()
 	_effect_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_effect_label.add_theme_color_override("font_color", Color(0.9, 0.88, 0.75))
-	_effect_label.custom_minimum_size = Vector2(280, 0)
+	_style_label(_effect_label, 18, Color(0.94, 0.90, 0.78), 1)
+	_effect_label.custom_minimum_size = Vector2(250, 44)
+	_effect_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	vbox.add_child(_effect_label)
 
 	var bottom := HBoxContainer.new()
@@ -58,8 +57,7 @@ func _build() -> void:
 	vbox.add_child(bottom)
 
 	_cost_label = Label.new()
-	_cost_label.add_theme_font_size_override("font_size", 20)
-	_cost_label.add_theme_color_override("font_color", Color(0.6, 0.85, 1.0))
+	_style_label(_cost_label, 20, Color(0.64, 0.90, 1.0), 1)
 	bottom.add_child(_cost_label)
 
 	var spacer := Control.new()
@@ -68,6 +66,8 @@ func _build() -> void:
 
 	_buy_button = Button.new()
 	_buy_button.custom_minimum_size = Vector2(96, 36)
+	T.apply_button_theme(_buy_button)
+	_buy_button.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
 	_buy_button.pressed.connect(_on_buy_pressed)
 	bottom.add_child(_buy_button)
 
@@ -80,6 +80,13 @@ func set_definition(definition: Dictionary) -> void:
 	if not _title_label:
 		_build()
 	_refresh()
+
+
+func _style_label(label: Label, font_size: int, color: Color, outline_size: int) -> void:
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.88))
+	label.add_theme_constant_override("outline_size", outline_size)
 
 
 func _refresh() -> void:
