@@ -59,6 +59,11 @@ const INITIAL_CARD_POOL: Array[String] = [
 	"overdrive",
 	"overload",
 	"carapace",
+	"lucky_shot",
+	"silver_tongue",
+	"gunslinger",
+	"windfall",
+	"executioner",
 ]
 
 
