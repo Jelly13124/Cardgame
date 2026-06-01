@@ -3,6 +3,8 @@
 ## Status
 Accepted (supersedes the style **naming and description** in ADR-0008 and ADR-0010; their decisions otherwise stand)
 
+Historical only for current art generation. ADR-0013 and `docs/art-style-reference.md` now define the active Rick-and-Morty-like wasteland cartoon style, and older Cowboy Bill runtime frames are not reference material.
+
 ## Date
 2026-05-28
 

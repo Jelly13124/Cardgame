@@ -2,10 +2,12 @@
 
 **Audience:** codex (asset generation pipeline)
 **Owner of code/JSON:** Claude (already implemented)
-**Project:** Cardgame (Godot 4.6, Hardcore Wasteland Sprite Art roguelite)
+**Project:** Cardgame (Godot 4.6, Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland roguelite)
 **Created:** 2026-05-26
 
 This document is the contract that tells codex which PNGs to generate for the content shipped 2026-05-25 → 2026-05-26 (Phase 5 wave 1 + wave 2 cards, the multi-boss map redesign, the Warden equipment set, and the new uncommon/rare relics).
+
+**Current style as of 2026-05-31:** this spec inherits `docs/art-style-reference.md` and ADR-0012. New generations must use the Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland prompt anchor from `docs/project-rules.md` section 1. File dimensions below are output sizes only, not pixel-art style constraints.
 
 **Every asset in this spec currently uses a placeholder** — gameplay works but the visuals borrow other items' art. When you replace a placeholder, the game picks up the real art automatically (paths are fixed in the JSON).
 
@@ -15,23 +17,18 @@ This document is the contract that tells codex which PNGs to generate for the co
 
 ## 0. Style Preamble (Non-Negotiable)
 
-Every prompt for every asset in this doc **must** preserve the approved Hardcore Wasteland Sprite Art prompt anchor from `docs/project-rules.md` §1 and `docs/art-style-reference.md`:
+Every prompt for every asset in this doc must preserve the current art direction from `docs/art-style-reference.md` and `docs/project-rules.md` section 1:
 
-```
-hardcore wasteland sprite art, detailed fully-rendered game sprite, bold dark outlines,
-rich controlled shading with clear highlight-mid-shadow, warm rust / leather / brass / dark-steel / dusty-tan palette,
-salvaged scrap metal with bolts dents tubes and cracked glass, worn leather and patched cloth,
-one small glowing neon accent, authored at 128px native (192px bosses) for in-game readability,
-transparent background, match the Cowboy Bill reference fidelity, not lo-fi pixel art, not flat
+```text
+original offbeat adult sci-fi cartoon wasteland game art, Rick-and-Morty-like broad adult sci-fi animation energy without copying named characters or exact show designs, thick dark rubbery outlines, flat bright color blocks, simple cel shading, exaggerated asymmetrical proportions, weird junk-tech silhouette, dusty western leather and brass, dented steel, exposed springs, patched cloth, one or two small glowing neon accents, crisp sprite-ready edges, solid #FF00FF magenta background for cleanup or transparent final PNG, no text, no UI frame, no logo
 ```
 
-Color palette guidance:
-- **Base:** leather brown, rusted orange, dusty tan, muted olive, dark steel, faded brass
-- **Each item gets ONE neon accent color** — listed per asset below
-- **Outlines:** bold black pixel outlines
-- **Shading:** controlled pixel shading, not high-res cartoon brushwork
-- **Reference image:** `docs/art/hardcore-128-pixel-wasteland-reference.png`
-- **Style ground truth (match this above all):** `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_portrait.png` and `heroes/cowboy_bill/attack/cowboy_bill_attack_0.png`. Cowboy Bill is the canonical look — a polished, fully-rendered sprite with bold outlines, warm rust/leather/brass palette, rich highlight-mid-shadow shading, and one small glowing neon accent. New art must sit in the same set as Bill. The "hardcore 128 pixel" wording is shorthand; **if it conflicts with how Bill actually looks, Bill's sprite wins.**
+Style notes:
+- File dimensions in the tables below are output-size requirements only; they do not imply pixel art.
+- Use clean cartoon silhouettes, thick dark outlines, flat bright color blocks, and simple cel shading.
+- Keep the wasteland-western junk-tech materials: dusty leather, brass, dented steel, exposed springs, patched cloth, rubber hoses, cracked glass.
+- Use one or two small neon accents per item or character; do not flood the asset with glow.
+- Keep designs original and do not copy named characters or exact show-specific designs.
 
 ---
 

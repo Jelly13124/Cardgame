@@ -2,7 +2,7 @@
 
 **Audience:** Codex (asset generation)
 **Owner of code/JSON:** Claude
-**Project:** Cardgame (Godot 4.6, Hardcore Wasteland Sprite Art)
+**Project:** Cardgame (Godot 4.6, Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland)
 **Created:** 2026-05-29
 
 This is the contract for the home-base and shop scene art. Both scenes currently
@@ -10,18 +10,18 @@ render a plain dark background; this delivers real scene art + a shopkeeper.
 
 ## 0. Style Preamble (Non-Negotiable)
 
-Match the project's **Hardcore Wasteland Sprite Art** direction (see `docs/art-style-reference.md`, ADR-0011).
+Every prompt for every asset in this doc must preserve the current art direction from `docs/art-style-reference.md` and `docs/project-rules.md` section 1:
 
-**Style ground truth — study before generating:** `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_portrait.png`. New art must sit in the same world: detailed, fully-rendered illustration; bold dark outlines; warm rust / leather / brass / dusty-tan wasteland palette; rich highlight-mid-shadow shading; one small glowing neon accent. **NOT lo-fi pixel art, not flat.** If wording conflicts with how Bill looks, Bill wins.
-
-Prompt anchor (preserve in every prompt):
-```
-hardcore wasteland sprite art, detailed fully-rendered illustration, bold dark outlines,
-rich controlled shading with clear highlight-mid-shadow, warm rust / leather / brass / dark-steel / dusty-tan palette,
-salvaged scrap metal with bolts dents tubes and cracked glass, worn leather and patched cloth,
-one small glowing neon accent, match the Cowboy Bill reference fidelity, not lo-fi pixel art, not flat
+```text
+original offbeat adult sci-fi cartoon wasteland game art, Rick-and-Morty-like broad adult sci-fi animation energy without copying named characters or exact show designs, thick dark rubbery outlines, flat bright color blocks, simple cel shading, exaggerated asymmetrical proportions, weird junk-tech silhouette, dusty western leather and brass, dented steel, exposed springs, patched cloth, one or two small glowing neon accents, crisp sprite-ready edges, solid #FF00FF magenta background for cleanup or transparent final PNG, no text, no UI frame, no logo
 ```
 
+Style notes:
+- File dimensions in the tables below are output-size requirements only; they do not imply pixel art.
+- Use clean cartoon silhouettes, thick dark outlines, flat bright color blocks, and simple cel shading.
+- Keep the wasteland-western junk-tech materials: dusty leather, brass, dented steel, exposed springs, patched cloth, rubber hoses, cracked glass.
+- Use one or two small neon accents per item or character; do not flood the asset with glow.
+- Keep designs original and do not copy named characters or exact show-specific designs.
 ## 1. Pipeline
 
 | Asset | Size | Transparent? | Output path |
@@ -49,7 +49,7 @@ Rules:
 
 ## 4. Shopkeeper character
 
-- **Theme:** a wasteland trader to stand in the shop — e.g. a scrap-built merchant robot or a goggled human trader in a patched coat, with a money pouch / scale / ware satchel, salvaged jewelry or trinkets. Should read as a friendly-but-shrewd merchant, same world as Cowboy Bill. One large camera-eye is on-theme if a robot (matches the Bill/Trash-Bot robot motif), but a human trader is also fine.
+- **Theme:** a wasteland trader to stand in the shop — e.g. a scrap-built merchant robot, mutant scavenger, or goggled human trader in a patched coat, with a money pouch / scale / ware satchel, salvaged jewelry or trinkets. Should read as a friendly-but-shrewd merchant in the same radiation-rat style world. A large expressive lens/eye is on-theme if a robot, but a human or mutant trader is also fine.
 - **Pose:** standing, facing the player, welcoming gesture or arms-crossed; single static sprite.
 - **Neon accent:** one small glow (e.g. cyan eye/lens or amber lantern).
 
@@ -63,5 +63,5 @@ Rules:
 ## 6. Acceptance
 - Each path exists at the listed size; backgrounds opaque, shopkeeper transparent (no leftover matte).
 - Reads at 1920×1080 with a UI panel overlaying the center.
-- One neon accent per asset; matches the Cowboy Bill fidelity (rendered, not lo-fi).
+- One neon accent per asset; matches the approved cartoon wasteland reference.
 - Claude wires `home_base_scene.gd` / `shop_scene.gd` to display them (graceful fallback if missing).

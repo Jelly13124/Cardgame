@@ -28,7 +28,9 @@ When you (or a collaborator, or Codex) look at e.g. `RunManager` being an autolo
 | [0005](0005-claude-codex-ownership-split.md) | Claude owns code/JSON, Codex owns art | Accepted |
 | [0006](0006-class-name-via-preload.md) | Reference custom classes via `const X = preload(...)`, not `class_name` global | Accepted |
 | [0007](0007-art-pivot-to-cute-wasteland-cartoon.md) | Art direction pivot: Pixel Punk → Cute Wasteland Cartoon | Superseded by ADR-0008 |
-| [0008](0008-art-pivot-to-hardcore-128-pixel-wasteland.md) | Art direction pivot: Cute Wasteland Cartoon → Hardcore 128 Pixel Wasteland Art | Accepted (style renamed/clarified by ADR-0011) |
+| [0008](0008-art-pivot-to-hardcore-128-pixel-wasteland.md) | Art direction pivot: Cute Wasteland Cartoon -> Hardcore 128 Pixel Wasteland Art | Superseded by ADR-0012 |
 | [0009](0009-remove-idle-animation-assets.md) | Remove separate idle animation assets | Accepted |
 | [0010](0010-third-palette-recalibration.md) | Third palette recalibration via script-sampling; theme renamed to `wasteland_theme.gd` (no style suffix) | Accepted (style name clarified by ADR-0011) |
-| [0011](0011-art-style-rename-to-rendered-sprite.md) | Art style renamed to "Hardcore Wasteland Sprite Art"; pixel-art wording corrected to detailed rendered sprites | Accepted |
+| [0011](0011-art-style-rename-to-rendered-sprite.md) | Art style renamed to "Hardcore Wasteland Sprite Art"; pixel-art wording corrected to detailed rendered sprites | Superseded by ADR-0012 |
+| [0012](0012-art-pivot-to-offbeat-sci-fi-cartoon-wasteland.md) | Art direction pivot to Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland | Reference choice superseded by ADR-0013 |
+| [0013](0013-art-reference-standard-radiation-rat.md) | Art reference standard: radiation rat | Accepted |

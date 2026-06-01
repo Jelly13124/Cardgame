@@ -1,0 +1,126 @@
+{
+  "source": "docs\\art\\previews\\new-style-card-art-six-pack-preview.png",
+  "outputs": [
+    {
+      "card": "strike",
+      "path": "battle_scene\\assets\\images\\cards\\player\\strike.png",
+      "info": {
+        "bbox": [
+          3,
+          115,
+          532,
+          483
+        ],
+        "scaled_size": [
+          419,
+          292
+        ],
+        "paste": [
+          46,
+          14
+        ]
+      }
+    },
+    {
+      "card": "defend",
+      "path": "battle_scene\\assets\\images\\cards\\player\\defend.png",
+      "info": {
+        "bbox": [
+          0,
+          57,
+          533,
+          479
+        ],
+        "scaled_size": [
+          369,
+          292
+        ],
+        "paste": [
+          71,
+          14
+        ]
+      }
+    },
+    {
+      "card": "junk_bomb",
+      "path": "battle_scene\\assets\\images\\cards\\player\\junk_bomb.png",
+      "info": {
+        "bbox": [
+          28,
+          35,
+          514,
+          466
+        ],
+        "scaled_size": [
+          329,
+          292
+        ],
+        "paste": [
+          91,
+          14
+        ]
+      }
+    },
+    {
+      "card": "weak_strike",
+      "path": "battle_scene\\assets\\images\\cards\\player\\weak_strike.png",
+      "info": {
+        "bbox": [
+          2,
+          25,
+          532,
+          398
+        ],
+        "scaled_size": [
+          415,
+          292
+        ],
+        "paste": [
+          48,
+          14
+        ]
+      }
+    },
+    {
+      "card": "salvo",
+      "path": "battle_scene\\assets\\images\\cards\\player\\salvo.png",
+      "info": {
+        "bbox": [
+          0,
+          0,
+          533,
+          407
+        ],
+        "scaled_size": [
+          382,
+          292
+        ],
+        "paste": [
+          65,
+          14
+        ]
+      }
+    },
+    {
+      "card": "preemptive_strike",
+      "path": "battle_scene\\assets\\images\\cards\\player\\preemptive_strike.png",
+      "info": {
+        "bbox": [
+          0,
+          32,
+          509,
+          432
+        ],
+        "scaled_size": [
+          371,
+          292
+        ],
+        "paste": [
+          70,
+          14
+        ]
+      }
+    }
+  ],
+  "preview": "docs\\art\\previews\\installed-card-art-six-pack.png"
+}

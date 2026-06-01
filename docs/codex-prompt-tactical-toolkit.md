@@ -1,17 +1,19 @@
 # Codex Prompt — Tactical Toolkit Asset Generation
 
+**Current style:** use `docs/art-style-reference.md` and ADR-0012. The current art style is **Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland**. Any older sprite-art or 128-pixel wording is superseded and must not be used as a style constraint.
+
 Copy everything below the `---` line into your codex session.
 
 ---
 
-You are working in the Godot 4.6 project at `C:\Users\Jerry\Desktop\Cardgame` — a roguelite deckbuilder with a strict **Hardcore 128 Pixel Wasteland Art** style. The gameplay code and JSON for a new content slice ("Tactical Toolkit") are already done. You are responsible for generating the sprite assets and frame animations that those JSON files reference.
+You are working in the Godot 4.6 project at `C:\Users\Jerry\Desktop\Cardgame` — a roguelite deckbuilder with a strict **Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland** style. The gameplay code and JSON for a new content slice ("Tactical Toolkit") are already done. You are responsible for generating the sprite assets and frame animations that those JSON files reference.
 
 ## Step 1 — Read these files before doing anything else
 
 1. **`docs/asset-spec-tactical-toolkit.md`** — your authoritative work order. It lists every PNG you need to deliver, the exact file path, the prompt theme, the neon accent color, and the frame count.
-2. **`docs/art-style-reference.md`** — the approved Hardcore 128 Pixel Wasteland Art visual reference translated into concrete art rules.
-3. **`docs/project-rules.md`** §1–§5 — the non-negotiable Hardcore 128 Pixel Wasteland Art style rules, prompt anchor, sprite pipeline (`#FF00FF` chroma key → transparent PNG frames), and folder/naming conventions.
-4. **`docs/PRD.md`** §"Art Style - Hardcore 128 Pixel Wasteland Art" — high-level visual direction if you need more context.
+2. **`docs/art-style-reference.md`** — the approved Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland visual reference translated into concrete art rules.
+3. **`docs/project-rules.md`** §1–§5 — the non-negotiable Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland style rules, prompt anchor, sprite pipeline (`#FF00FF` chroma key → transparent PNG frames), and folder/naming conventions.
+4. **`docs/PRD.md`** §"Art Style - Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland" — high-level visual direction if you need more context.
 
 Also look at one reference of each asset type that already exists, so your output matches the project's visual scale and silhouette weight:
 - Card art reference: `battle_scene/assets/images/cards/player/strike.png`
@@ -31,7 +33,7 @@ Also look at one reference of each asset type that already exists, so your outpu
 
 These come from `docs/project-rules.md` §2–§5. Follow exactly:
 
-1. **Every prompt** sent to your image model **must** preserve the Hardcore 128 Pixel Wasteland Art prompt anchor from §1 of project-rules.md. This style anchor is what keeps the project visually coherent.
+1. **Every prompt** sent to your image model **must** preserve the current Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland prompt anchor from `docs/project-rules.md` section 1. This style anchor is what keeps the project visually coherent.
 2. **One subfolder per enemy** under `battle_scene/assets/images/enemies/{sprite_id}/`, and within that, **one subfolder per animation** (`attack/`, optional `charge/`). The `sprite_id` MUST match the JSON exactly — the gameplay code resolves frame paths as `{ENEMIES_DIR}{sprite_id}/{anim}/{sprite_id}_{anim}_{n}.png`. Wrong folder name (or skipping the animation subfolder) = no sprite loads.
 3. **Sheet generation uses a solid `#FF00FF` (magenta) background** for chroma-key cleanup. Final per-frame outputs must be transparent PNG.
 4. **Per-frame file naming + path** is exact: `attack/{sprite_id}_attack_0..3.png`. Boss adds `charge/junkyard_tyrant_charge_0..3.png`.
@@ -79,4 +81,4 @@ These already exist and must NOT be regenerated or modified:
 2. Highlight any asset you skipped or couldn't generate, with the reason.
 3. Do NOT commit. Leave the staged/unstaged state alone — the human will review and commit.
 
-If anything in the spec is ambiguous, stop and ask the human before making a creative call. Hardcore 128 Pixel Wasteland Art style consistency matters more than throughput.
+If anything in the spec is ambiguous, stop and ask the human before making a creative call. Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland style consistency matters more than throughput.

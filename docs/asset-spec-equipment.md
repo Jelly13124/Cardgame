@@ -2,7 +2,7 @@
 
 **Audience:** codex (asset generation pipeline)
 **Owner of code/JSON:** Claude (already implemented)
-**Project:** Cardgame (Godot 4.6, Hardcore 128 Pixel Wasteland Art roguelite)
+**Project:** Cardgame (Godot 4.6, Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland roguelite)
 
 This document is the contract that tells codex which equipment item icons to
 generate for the Equipment v1 slice. Gameplay code, JSON data files, and the
@@ -17,23 +17,18 @@ crashes; it just looks bare.
 
 ## 0. Style Preamble (Non-Negotiable)
 
-Every prompt for every asset in this doc **must** preserve the approved
-Hardcore 128 Pixel Wasteland Art prompt anchor from
-`docs/project-rules.md` §1 and `docs/art-style-reference.md`:
+Every prompt for every asset in this doc must preserve the current art direction from `docs/art-style-reference.md` and `docs/project-rules.md` section 1:
 
-```
-hardcore 128 pixel wasteland art style, native 128x128 pixel game sprite readability,
-bold black pixel outlines, gritty rusted scrap metal, worn leather and patched cloth,
-dusty desert palette, controlled pixel shading, salvaged bolts dents tubes and cracked glass,
-one small neon accent, transparent background, no high-resolution cartoon brushwork
+```text
+original offbeat adult sci-fi cartoon wasteland game art, Rick-and-Morty-like broad adult sci-fi animation energy without copying named characters or exact show designs, thick dark rubbery outlines, flat bright color blocks, simple cel shading, exaggerated asymmetrical proportions, weird junk-tech silhouette, dusty western leather and brass, dented steel, exposed springs, patched cloth, one or two small glowing neon accents, crisp sprite-ready edges, solid #FF00FF magenta background for cleanup or transparent final PNG, no text, no UI frame, no logo
 ```
 
-Color palette guidance:
-- **Base:** leather brown, rusted orange, dusty tan, muted olive, dark steel, faded brass
-- **Each item gets ONE neon accent color** — listed per asset below
-- Outlines: bold black pixel outlines
-- Shading: controlled pixel shading, not high-res cartoon brushwork
-
+Style notes:
+- File dimensions in the tables below are output-size requirements only; they do not imply pixel art.
+- Use clean cartoon silhouettes, thick dark outlines, flat bright color blocks, and simple cel shading.
+- Keep the wasteland-western junk-tech materials: dusty leather, brass, dented steel, exposed springs, patched cloth, rubber hoses, cracked glass.
+- Use one or two small neon accents per item or character; do not flood the asset with glow.
+- Keep designs original and do not copy named characters or exact show-specific designs.
 ### Rarity bonus budget (data contract for `bonuses` field)
 
 Equipment stat bonuses follow a tight per-rarity budget (set 2026-05-22):
