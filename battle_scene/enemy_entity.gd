@@ -48,6 +48,20 @@ const _STATUS_SHORT_NAMES = {
 var action_pattern: Array = []
 var _action_index: int = 0
 
+# ─── HP-threshold phases (spec A2) ──────────────────────────────────────────────
+## Optional phase definitions parsed from JSON, e.g.
+##   { "hp_below": 0.5, "on_enter": [..actions..], "action_pattern": [..moves..] }
+## Sorted on parse by DESCENDING hp_below so the deepest crossed phase wins.
+var phases: Array = []
+## Indices (into `phases`) of phases already entered — each fires at most once.
+var _entered_phases: Dictionary = {}
+## on_enter actions queued by a phase transition, drained by enemy_ai at turn
+## start and run through _execute_action (so summon/buff visuals + notifications
+## reuse the existing action handlers). Entity-side we only swap the pattern and
+## reset the pointer synchronously in take_damage; scene-routed effects wait for
+## the next enemy turn (no scene access needed mid-damage). See ADR notes in spec.
+var _pending_on_enter: Array = []
+
 signal died
 signal status_changed
 
@@ -96,6 +110,16 @@ static func create(id: String) -> EnemyEntity:
 				entity.health = entity.max_health
 				entity.action_pattern = data.get("action_pattern", [])
 				entity.sprite_id = data.get("sprite_id", "")
+				# Optional HP-threshold phases (spec A2). Copy + sort by
+				# descending hp_below so the deepest crossed phase wins.
+				var raw_phases = data.get("phases", [])
+				if typeof(raw_phases) == TYPE_ARRAY and not raw_phases.is_empty():
+					var sorted_phases: Array = raw_phases.duplicate()
+					sorted_phases.sort_custom(
+						func(a, b):
+							return float(a.get("hp_below", 0.0)) > float(b.get("hp_below", 0.0))
+					)
+					entity.phases = sorted_phases
 	else:
 		push_error(
 			(
@@ -457,6 +481,62 @@ func take_damage(amount: int, silent: bool = false) -> void:
 	if health <= 0:
 		died.emit()
 		queue_free()
+		return
+
+	# Phase transitions only matter while alive (spec A2: never fire during death
+	# / HP<=0). Checked here on the damage path so the swap happens the moment HP
+	# first crosses a threshold.
+	_check_phase_transitions()
+
+
+## After taking damage, if current HP has first dropped below `hp_below*max_health`
+## for an un-entered phase, enter the DEEPEST such phase: queue its on_enter
+## actions, replace the live action_pattern with the phase's, and reset the
+## action pointer. Each phase fires at most once. `phases` is pre-sorted by
+## descending hp_below, so the first un-entered crossed phase is the deepest.
+func _check_phase_transitions() -> void:
+	if phases.is_empty() or health <= 0 or max_health <= 0:
+		return
+	var hp_ratio := float(health) / float(max_health)
+	var target_index := -1
+	for i in range(phases.size()):
+		if _entered_phases.has(i):
+			continue
+		var hp_below := float(phases[i].get("hp_below", 0.0))
+		if hp_ratio < hp_below:
+			# phases sorted descending by hp_below → first crossed un-entered
+			# entry is the deepest threshold we just crossed.
+			target_index = i
+			break
+	if target_index < 0:
+		return
+	# Mark every crossed un-entered phase as entered so a single big hit that
+	# blows past multiple thresholds only triggers the deepest one, and shallower
+	# ones never fire retroactively.
+	for i in range(phases.size()):
+		if _entered_phases.has(i):
+			continue
+		if hp_ratio < float(phases[i].get("hp_below", 0.0)):
+			_entered_phases[i] = true
+	var phase: Dictionary = phases[target_index]
+	var on_enter = phase.get("on_enter", [])
+	if typeof(on_enter) == TYPE_ARRAY and not on_enter.is_empty():
+		_pending_on_enter.append_array(on_enter)
+	var new_pattern = phase.get("action_pattern", [])
+	if typeof(new_pattern) == TYPE_ARRAY and not new_pattern.is_empty():
+		action_pattern = new_pattern
+		_action_index = 0
+		_update_intent_display()
+
+
+## Drains queued on_enter actions from a just-entered phase. Called by enemy_ai
+## at the start of this enemy's turn so the actions run through _execute_action
+## (reusing summon/buff_self visuals + notifications). Returns the queued actions
+## and clears the queue.
+func consume_pending_on_enter() -> Array:
+	var pending := _pending_on_enter
+	_pending_on_enter = []
+	return pending
 
 
 func add_block(amount: int) -> void:
