@@ -1,12 +1,12 @@
 # Catalog — All Content / 全内容表
 
-**Last updated / 最后更新:** 2026-05-26
-**Counts / 数量:** 30 cards (base) + 30 (`_plus`) · 10 relics · 21 equipment items · 3 equipment sets
+**Last updated / 最后更新:** 2026-06-01
+**Counts / 数量:** 35 cards (base) + 30 (`_plus`) · 14 relics · 21 equipment items · 3 equipment sets
 
 > Bilingual reference. The single English column on the right is the in-game string;
 > the Chinese is for the design table. Detailed per-domain catalogs still live at
 > `catalog-cards.md`, `catalog-relics.md`, `catalog-enemies.md` (may be stale —
-> this file is the source of truth as of 2026-05-26).
+> this file is the source of truth as of 2026-06-01).
 
 ---
 
@@ -16,14 +16,14 @@
 
 | Rarity 稀有 | Count 数量 |
 |---|---|
-| Common 普通    | 11 |
-| Uncommon 罕见  | 12 |
-| Rare 稀有      | 7  |
-| **Total 合计** | **30** |
+| Common 普通    | 14 |
+| Uncommon 罕见  | 13 |
+| Rare 稀有      | 8  |
+| **Total 合计** | **35** |
 
-All 30 base cards have a `_plus` upgrade variant unlocked at rest sites; numbers in the **+** column show post-upgrade values. Costs are energy ⚡.
+The 30 original base cards each have a `_plus` upgrade variant unlocked at rest sites; numbers in the **+** column show post-upgrade values. The 5 attribute-wave cards (`lucky_shot`, `silver_tongue`, `gunslinger`, `windfall`, `executioner`) have no `_plus` variant yet (— in the **+** column). Costs are energy ⚡.
 
-### Common / 普通 (11)
+### Common / 普通 (14)
 
 | ID | Name / 名称 | Type / 类型 | Cost / 费 | Effect / 效果 | + / 升级 |
 |---|---|---|---|---|---|
@@ -39,8 +39,10 @@ All 30 base cards have a `_plus` upgrade variant unlocked at rest sites; numbers
 | `double_tap`    | Double Tap / 双发     | attack / 攻击 | 1 | 3+STR dmg ×2 / 3+力量 伤害 ×2 | 3→4 dmg |
 | `scrap_strike`  | Scrap Strike / 废料打击| attack / 攻击 | 1 | 4+STR dmg + draw 1 / 4+力量 伤害+抽 1 | 4→6 dmg |
 | `siphon`        | Siphon / 汲取         | attack / 攻击 | 1 | 4+STR dmg + 4+CON block / 4+力量 伤害+4+体质 格挡 | 4→6 both |
+| `lucky_shot`    | Lucky Shot / 幸运一击 | attack / 攻击 | 1 | 4+LUCK dmg / 4+幸运 伤害 | — |
+| `silver_tongue` | Silver Tongue / 巧舌  | skill / 技能  | 1 | 2 Weak + 3 block / 2 虚弱+3 格挡 | — |
 
-### Uncommon / 罕见 (12)
+### Uncommon / 罕见 (13)
 
 | ID | Name / 名称 | Type / 类型 | Cost / 费 | Effect / 效果 | + / 升级 |
 |---|---|---|---|---|---|
@@ -55,8 +57,10 @@ All 30 base cards have a `_plus` upgrade variant unlocked at rest sites; numbers
 | `chain_link`    | Chain Link / 连锁     | attack / 攻击 | 1 | 6+STR dmg + draw 1 / 6+力量 伤害+抽 1 | 6→9 dmg |
 | `iron_will`     | Iron Will / 铁意志    | ability / 能力 | 1 | +1 STR +1 CON, exhaust / +1 力量+1 体质, 消耗 | +1→+2 STR |
 | `overdrive`     | Overdrive / 爆发      | attack / 攻击 | 2 | 10 dmg, 1 Vulnerable self, exhaust / 10 伤害, 自身 1 易伤, 消耗 | 10→14 dmg |
+| `gunslinger`    | Gunslinger / 枪手     | attack / 攻击 | 1 | 6 dmg + draw 1 / 6 伤害+抽 1 | — |
+| `windfall`      | Windfall / 横财       | skill / 技能  | 1 | 4+LUCK block + draw 1 / 4+幸运 格挡+抽 1 | — |
 
-### Rare / 稀有 (7)
+### Rare / 稀有 (8)
 
 | ID | Name / 名称 | Type / 类型 | Cost / 费 | Effect / 效果 | + / 升级 |
 |---|---|---|---|---|---|
@@ -67,10 +71,11 @@ All 30 base cards have a `_plus` upgrade variant unlocked at rest sites; numbers
 | `carapace`     | Carapace / 护甲        | skill / 技能  | 2 | 15+CON block + 1 CON / 15+体质 格挡+1 体质 | 15→20 blk, 1→2 CON |
 | `flash_bang`   | Flash Bang / 闪光弹    | skill / 技能  | 1 | 1 Shock AoE, exhaust / 全体 1 麻痹, 消耗 | 1→2 shock |
 | `last_breath`  | Last Breath / 最后一搏 | skill / 技能  | 0 | 10+CON block + draw 2, exhaust / 10+体质 格挡+抽 2, 消耗 | 10→14 blk, 2→3 draw |
+| `executioner`  | Executioner / 处决者   | attack / 攻击 | 2 | 9+STR dmg / 9+力量 伤害 | — |
 
 ---
 
-## 💎 Relics / 遗物 (10)
+## 💎 Relics / 遗物 (14)
 
 | ID | Name / 名称 | Rarity / 稀有 | Trigger / 触发 | Effect / 效果 |
 |---|---|---|---|---|
@@ -80,9 +85,13 @@ All 30 base cards have a `_plus` upgrade variant unlocked at rest sites; numbers
 | `sharpened_scrap`   | Sharpened Scrap / 磨利废刃        | common 普通   | every attack / 每次攻击 | +1 dmg / +1 伤害 |
 | `signal_jammer`     | Signal Jammer / 信号干扰器        | common 普通   | first enemy hit / 首次受击 | −2 dmg / −2 伤害 |
 | `steel_plating`     | Steel Plating / 钢板装甲          | common 普通   | turn 1 start / 首回合 | +6 block / +6 格挡 |
+| `crit_clip`         | Crit Clip / 暴击弹夹              | common 普通   | every attack / 每次攻击 | Luck-scaled 1.5× crit / 幸运缩放 1.5× 暴击 |
+| `rabbits_foot`      | Rabbit's Foot / 兔脚              | common 普通   | combat win / 战斗胜利 | +6 gold / +6 金币 |
 | `bulk_actuator`     | Bulk Actuator / 重型驱动器        | uncommon 罕见 | turn 1 start / 首回合 | +10 block / +10 格挡 |
 | `scavenger_lens`    | Scavenger's Lens / 拾荒者透镜     | uncommon 罕见 | combat win / 战斗胜利 | +12 gold / +12 金币 |
 | `inertial_dampener` | Inertial Dampener / 惯性阻尼器    | uncommon 罕见 | every enemy hit / 每次受击 | −1 dmg / −1 伤害 |
+| `bounty_tags`       | Bounty Tags / 赏金标签            | uncommon 罕见 | combat win / 战斗胜利 | +12 gold + heal 3 / +12 金币+回 3 血 |
+| `adrenaline_pump`   | Adrenaline Pump / 肾上腺泵        | uncommon 罕见 | turn 1 start / 首回合 | +1 energy / +1 能量 |
 | `war_horn`          | War Horn / 战号                   | rare 稀有     | every attack / 每次攻击 | +2 dmg / +2 伤害 |
 
 ---
