@@ -53,7 +53,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("3_urm3r")
-card_size = Vector2(160, 220)
+card_size = Vector2(208, 286)
 card_factory_scene = ExtResource("3_l4bd6")
 
 [node name="CardPlayZone" type="Control" parent="CardManager"]
@@ -75,15 +75,15 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -300.0
-offset_top = -200.0
-offset_right = 300.0
+offset_left = -380.0
+offset_top = -290.0
+offset_right = 380.0
 offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 1
 script = ExtResource("10_wrush")
-max_hand_spread = 600
+max_hand_spread = 760
 hand_rotation_curve = SubResource("Curve_lsli3")
 hand_vertical_curve = SubResource("Curve_8dbo5")
 
