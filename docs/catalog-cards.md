@@ -1,7 +1,7 @@
 # Cards Catalog
 
-**Last updated:** 2026-05-28
-**Total cards:** 30 (5 original + 12 Tactical Toolkit + 13 Phase-5 content expansion; excludes `_plus` upgrade variants)
+**Last updated:** 2026-06-01
+**Total cards:** 35 (excludes `_plus` upgrade variants)
 
 ## Paths
 
@@ -19,15 +19,15 @@
 
 | Rarity | Count | IDs |
 |---|---|---|
-| Common | 12 | adrenaline, brace, defend, double_tap, hot_swap, scrap_strike, siphon, static_coil, strike, stun_baton, tinker, weak_strike |
-| Uncommon | 11 | acid_splash, cascade, chain_link, charged_shot, emp_burst, focus, iron_will, last_stand, overdrive, override, salvo |
-| Rare | 7 | bone_breaker, carapace, flash_bang, junk_bomb, last_breath, overload, preemptive_strike |
+| Common | 14 | adrenaline, brace, defend, double_tap, hot_swap, lucky_shot, scrap_strike, silver_tongue, siphon, static_coil, strike, stun_baton, tinker, weak_strike |
+| Uncommon | 13 | acid_splash, cascade, chain_link, charged_shot, emp_burst, focus, gunslinger, iron_will, last_stand, overdrive, override, salvo, windfall |
+| Rare | 8 | bone_breaker, carapace, executioner, flash_bang, junk_bomb, last_breath, overload, preemptive_strike |
 
 | Type | Count |
 |---|---|
-| Attack | 15 |
-| Skill | 12 |
 | Ability | 3 |
+| Attack | 18 |
+| Skill | 14 |
 
 | Keyword | Cards |
 |---|---|
@@ -49,25 +49,30 @@
 | `defend` | Defend | skill | 1 | common | gain_block 3 (+CON) | — | ✅ |
 | `double_tap` | Double Tap | attack | 1 | common | deal_damage 3 (+STR); deal_damage 3 (+STR) | — | ✅ |
 | `emp_burst` | EMP Burst | skill | 2 | uncommon | apply_shock_all 2 | — | ✅ |
+| `executioner` | Executioner | attack | 2 | rare | deal_damage 9 (+STR) | — | ✅ |
 | `flash_bang` | Flash Bang | skill | 1 | rare | apply_shock_all 1 | Exhaust | ✅ |
 | `focus` | Focus | ability | 1 | uncommon | gain_intelligence 1; draw_cards 1 | Exhaust | ✅ |
+| `gunslinger` | Gunslinger | attack | 1 | uncommon | deal_damage 6; draw_cards 1 | — | ✅ |
 | `hot_swap` | Hot Swap | skill | 1 | common | draw_cards 2 | — | ✅ |
 | `iron_will` | Iron Will | ability | 1 | uncommon | gain_strength 1; gain_constitution 1 | Exhaust | ✅ |
 | `junk_bomb` | Junk Bomb | skill | 2 | rare | deal_damage_all 6 (+STR); draw_cards 2 | Exhaust | ✅ |
 | `last_breath` | Last Breath | skill | 0 | rare | gain_block 10 (+CON); draw_cards 2 | Exhaust | ✅ |
 | `last_stand` | Last Stand | skill | 2 | uncommon | gain_block 12 (+CON); draw_cards 1 | — | ✅ |
+| `lucky_shot` | Lucky Shot | attack | 1 | common | deal_damage 4 (+LUCK) | — | ✅ |
 | `overdrive` | Overdrive | attack | 2 | uncommon | deal_damage 10 (+STR); apply_status_self vulnerable 1 | Exhaust | ✅ |
 | `overload` | Overload | attack | 2 | rare | deal_damage 8 (+STR); apply_shock 2 | — | ✅ |
 | `override` | Override | ability | 2 | uncommon | gain_strength 2 | — | ✅ |
 | `preemptive_strike` | Preemptive Strike | skill | 1 | rare | apply_status_self double_damage 1 | — | ✅ |
-| `salvo` | Salvo | attack | 2 | uncommon | deal_damage 4 (+STR) × 3 | — | ✅ |
+| `salvo` | Salvo | attack | 2 | uncommon | deal_damage 4 (+STR); deal_damage 4 (+STR); deal_damage 4 (+STR) | — | ✅ |
 | `scrap_strike` | Scrap Strike | attack | 1 | common | deal_damage 4 (+STR); draw_cards 1 | — | ✅ |
+| `silver_tongue` | Silver Tongue | skill | 1 | common | apply_status weak 2; gain_block 3 | — | ✅ |
 | `siphon` | Siphon | attack | 1 | common | deal_damage 4 (+STR); gain_block 4 (+CON) | — | ✅ |
-| `static_coil` | Static Coil | attack | 1 | common | deal_damage 2 (+STR); gain_block 4 (+CON); apply Shock 1 | — | ✅ |
+| `static_coil` | Static Coil | attack | 1 | common | deal_damage 2 (+STR); gain_block 4 (+CON); apply_shock 1 | — | ✅ |
 | `strike` | Strike | attack | 1 | common | deal_damage 3 (+STR) | — | ✅ |
-| `stun_baton` | Stun Baton | attack | 1 | common | deal_damage 4 (+STR); apply Shock 1 | — | ✅ |
+| `stun_baton` | Stun Baton | attack | 1 | common | deal_damage 4 (+STR); apply_shock 1 | — | ✅ |
 | `tinker` | Tinker | skill | 1 | common | gain_strength 1; gain_block 3 (+CON) | — | ✅ |
-| `weak_strike` | Weak Strike | attack | 1 | common | deal_damage 3 (+STR); apply Weak 1 | — | ✅ |
+| `weak_strike` | Weak Strike | attack | 1 | common | deal_damage 3 (+STR); apply_status weak 1 | — | ✅ |
+| `windfall` | Windfall | skill | 1 | uncommon | gain_block 4 (+LUCK); draw_cards 1 | — | ✅ |
 
 ## Per-card details
 
@@ -260,6 +265,36 @@
 - Effects: `deal_damage 14` (+STR), `apply_status vulnerable 2`
 - JSON: `battle_scene/card_info/player/bone_breaker.json`
 - Art: `battle_scene/assets/images/cards/player/bone_breaker.png`
+
+### `lucky_shot`
+**Attributes wave — Common.** Luck-scaling attack: rewards a high-Luck (crit) build with bigger hits.
+- Effects: `deal_damage 4` scaling `luck`
+- JSON: `battle_scene/card_info/player/lucky_shot.json`
+- Art: `battle_scene/assets/images/cards/player/lucky_shot.png`
+
+### `silver_tongue`
+**Attributes wave — Common.** Charm-flavored control: applies Weak and a little block.
+- Effects: `apply_status weak 2`, `gain_block 3`
+- JSON: `battle_scene/card_info/player/silver_tongue.json`
+- Art: `battle_scene/assets/images/cards/player/silver_tongue.png`
+
+### `gunslinger`
+**Attributes wave — Uncommon.** Cantrip attack: solid 6 damage that replaces itself with a draw.
+- Effects: `deal_damage 6`, `draw_cards 1`
+- JSON: `battle_scene/card_info/player/gunslinger.json`
+- Art: `battle_scene/assets/images/cards/player/gunslinger.png`
+
+### `windfall`
+**Attributes wave — Uncommon.** Luck-scaling block + a draw; defensive payoff for a Luck build.
+- Effects: `gain_block 4` scaling `luck`, `draw_cards 1`
+- JSON: `battle_scene/card_info/player/windfall.json`
+- Art: `battle_scene/assets/images/cards/player/windfall.png`
+
+### `executioner`
+**Attributes wave — Rare.** Strength-scaling finisher: heavy single hit for Jerry / high-STR builds.
+- Effects: `deal_damage 9` (+STR)
+- JSON: `battle_scene/card_info/player/executioner.json`
+- Art: `battle_scene/assets/images/cards/player/executioner.png`
 
 ## Supported effect types (current as of this slice)
 
