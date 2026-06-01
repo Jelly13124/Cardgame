@@ -1,0 +1,14 @@
+{
+	"name": "gunslinger",
+	"title": "Gunslinger",
+	"rarity": "uncommon",
+	"type": "attack",
+	"cost": 1,
+	"description": "Deal [b]6[/b] damage. Draw 1 card.",
+	"front_image": "player/gunslinger.png",
+	"side": "player",
+	"effects": [
+		{ "type": "deal_damage", "amount": 6 },
+		{ "type": "draw_cards", "amount": 1 }
+	]
+}
