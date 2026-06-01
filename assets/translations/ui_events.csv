@@ -1,0 +1,41 @@
+keys,en,zh
+UI_EVENT_CONTINUE,Continue,继续
+ATTR_LUCK,Luck,幸运
+ATTR_CHARM,Charm,魅力
+ATTR_STRENGTH,Strength,力量
+ATTR_CONSTITUTION,Constitution,体质
+ATTR_INTELLIGENCE,Intelligence,智力
+EVENT_STRANDED_TRADER_TITLE,Stranded Trader,困在荒野的商人
+EVENT_STRANDED_TRADER_DESC,"A merchant's rig sits dead in the cracked salt-flat, one wheel buried. He squints at you over a dust-caked scarf, hand never far from his holster.","一辆商队车死在龟裂的盐碱地上，一只轮子陷进沙里。他从蒙尘的围巾上方眯眼打量你，手始终没离开枪套。"
+EVENT_STRANDED_TRADER_OPT0_TEXT,Help dig the rig free (he pays you +40 gold),帮他把车挖出来（他付你 +40 金币）
+EVENT_STRANDED_TRADER_OPT0_RESULT,"Hours of shoveling later the rig lurches loose. He counts forty into your palm and rolls off into the haze.","铲了几个钟头，车终于猛地松脱。他数了四十枚塞进你掌心，碾着尘雾扬长而去。"
+EVENT_STRANDED_TRADER_OPT1_TEXT,[Charm 5] Sweet-talk a parting gift from his crate,[魅力 5] 甜言蜜语，从他的货箱里讨件临别礼
+EVENT_STRANDED_TRADER_OPT1_RESULT,"Your easy smile wins him over. He digs out a Lucky Cog and presses it into your hand for the company.","你随和的笑容打动了他。他翻出一枚幸运齿轮，塞进你手里，谢你一路作伴。"
+EVENT_STRANDED_TRADER_OPT2_TEXT,[Luck] Roll his weighted dice for the strongbox,[幸运] 用他灌了铅的骰子赌那只保险箱
+EVENT_STRANDED_TRADER_OPT2_RESULT_OK,The bones come up sevens. He grumbles and tosses you the core from the strongbox.,骰子掷出七点。他嘟囔着，把保险箱里的核心抛给你。
+EVENT_STRANDED_TRADER_OPT2_RESULT_FAIL,"Snake eyes. He laughs, draws iron, and clips your shoulder before you back off.","两个一点。他大笑，拔枪，在你退开前擦伤了你的肩膀。"
+EVENT_BURIED_CACHE_TITLE,Buried Cache,埋藏的暗格
+EVENT_BURIED_CACHE_DESC,"A rusted hatch juts from the dune, half-swallowed by sand. Old militia markings warn of a sealed supply vault beneath. The lock looks ready to give.","一扇锈蚀的舱盖从沙丘里探出，半埋在沙中。旧民兵的标记警告下方封着一座补给库。那把锁看起来快撑不住了。"
+EVENT_BURIED_CACHE_OPT0_TEXT,Pry it open and grab the gear,撬开它，把装备拿走
+EVENT_BURIED_CACHE_OPT0_RESULT,"The hatch shrieks open. Inside, vacuum-sealed and waiting, sits a piece of pre-collapse equipment.","舱盖刺耳地弹开。里头真空封存着一件大崩溃前的装备，静静等着。"
+EVENT_BURIED_CACHE_OPT1_TEXT,[Luck] Trust the rotting floor and dive deep,[幸运] 赌那腐朽的地板，深入下去
+EVENT_BURIED_CACHE_OPT1_RESULT_OK,"The boards hold. In the deepest locker you find a rare relic of the old world and a cache of coin.","木板撑住了。在最深处的储物柜里，你找到一件旧世界的稀有遗物，还有一小笔藏起来的钱。"
+EVENT_BURIED_CACHE_OPT1_RESULT_FAIL,"The floor caves. You crash through onto twisted rebar and crawl out empty-handed and bleeding.","地板塌了。你摔在扭曲的钢筋上，空着手、淌着血爬了出来。"
+EVENT_HOODED_STRANGER_TITLE,The Hooded Stranger,兜帽下的陌生人
+EVENT_HOODED_STRANGER_DESC,"By a guttering fire sits a figure swathed in grey rags, face lost in shadow. A cracked deck of fortune cards waits face-down on a flat stone between you.","将熄的篝火旁坐着一个裹着灰布的身影，脸隐在阴影里。你们之间的一块平石上，扣着一副残破的命运卡。"
+EVENT_HOODED_STRANGER_OPT0_TEXT,Share your rations and your story,分享你的口粮和你的故事
+EVENT_HOODED_STRANGER_OPT0_RESULT,"The stranger listens, mends your wounds with a salve, and something in the telling leaves you steadier with people.","陌生人静静听着，用药膏替你敷好伤口；讲述之间，你与人相处也多了几分从容。"
+EVENT_HOODED_STRANGER_OPT1_TEXT,[Charm 5] Read the future in their cards,[魅力 5] 请他用卡牌为你卜算未来
+EVENT_HOODED_STRANGER_OPT1_RESULT,"They deal three cards, nod slowly, and trace your fortune. You leave feeling the dice will fall your way.","他发出三张牌，缓缓点头，为你描出命数。你离开时，只觉骰子都会向着你落。"
+EVENT_HOODED_STRANGER_OPT2_TEXT,[Luck] Cut the deck and take what fate gives,[幸运] 切牌，听凭命运给什么就拿什么
+EVENT_HOODED_STRANGER_OPT2_RESULT_OK,You turn the Sun. The stranger gifts you a keen Scavenger Lens and vanishes into the dark.,你翻出『太阳』。陌生人赠你一具精良的拾荒者透镜，随即没入黑暗。
+EVENT_HOODED_STRANGER_OPT2_RESULT_FAIL,"You turn the Tower. A cold dread bleeds your vigor, though a few coins spill from the deck as consolation.","你翻出『高塔』。一阵彻骨的不安抽走你的精气，所幸牌堆里散落几枚硬币，权当安慰。"
+EVENT_RAD_STORM_TITLE,Rad Storm,辐射风暴
+EVENT_RAD_STORM_DESC,"The sky bruises green and a screaming wind drives glowing dust toward you. There is no outrunning it — only a choice of how to weather the surge.","天空泛起淤青般的绿，呼啸的狂风卷着发光的尘埃扑面而来。你跑不赢它——只能选择如何熬过这阵浪潮。"
+EVENT_RAD_STORM_OPT0_TEXT,Hunker down and ride it out (lose 4 HP),蜷下身子硬扛过去（失去 4 点生命）
+EVENT_RAD_STORM_OPT0_RESULT,"You wrap up tight and breathe through your scarf. The storm flays your skin raw but passes you by.","你裹紧自己，隔着围巾呼吸。风暴把你的皮肤刮得生疼，但终究放过了你。"
+EVENT_RAD_STORM_OPT1_TEXT,[Charm 5] Wave down a passing convoy for shelter,[魅力 5] 拦下过路的车队求个庇护
+EVENT_RAD_STORM_OPT1_RESULT,"Your frantic charm earns a wave back. They haul you into a sealed truck, patch you up, and slip you some coin for the road.","你拼命挥手、巧言相求，换来对方回应。他们把你拽进密封货车，替你包扎，还塞给你些路费。"
+EVENT_RAD_STORM_OPT2_TEXT,[Luck] Sprint through the glow toward a bunker,[幸运] 冲过辉光，奔向一座地堡
+EVENT_RAD_STORM_OPT2_RESULT_OK,"You thread the worst of it and slam the bunker hatch. Inside, an intact core hums in the dark — and you feel charmed.","你穿过最凶的一段，砰地关上地堡舱门。黑暗里，一枚完好的核心嗡嗡作响——你只觉时运在身。"
+EVENT_RAD_STORM_OPT2_RESULT_FAIL,"The storm catches you in the open. You reach the bunker scorched and retching, the dose still burning in your lungs.","风暴在旷野里逮住了你。你抵达地堡时焦灼欲呕，那股辐射还在肺里灼烧。"
