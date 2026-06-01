@@ -39,6 +39,7 @@ func _ready() -> void:
 		cost_badge.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		cost_badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		cost_badge.stretch_mode = TextureRect.STRETCH_SCALE
+	_style_cost_label()
 	# Load card back art — shown when card is face-down (draw/discard piles)
 	var back_tex = load(UI_ASSET_PATH + "card_back.png")
 	var back_rect = get_node_or_null("BackFace/TextureRect")
@@ -60,6 +61,22 @@ func _ready() -> void:
 	mouse_exited.connect(_on_mouse_exited)
 
 	pivot_offset = size / 2.0  # Ensure we scale from center
+
+
+func _style_cost_label() -> void:
+	if not is_instance_valid(cost_label):
+		return
+	cost_label.position = Vector2.ZERO
+	cost_label.size = Vector2(44.0, 44.0)
+	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	cost_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.58, 1.0))
+	cost_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 1.0))
+	cost_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.0))
+	cost_label.add_theme_constant_override("outline_size", 2)
+	cost_label.add_theme_constant_override("shadow_offset_x", 0)
+	cost_label.add_theme_constant_override("shadow_offset_y", 0)
+	cost_label.add_theme_font_size_override("font_size", 23)
 
 
 func set_faces(front: Texture2D, back: Texture2D) -> void:
@@ -133,9 +150,7 @@ func set_card_data(data: Dictionary) -> void:
 
 	# ── Cost: always integer ──────────────────────────────────────────────────
 	cost_label.text = str(int(data.get("cost", 0)))
-	cost_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 1.0))
-	cost_label.add_theme_constant_override("shadow_offset_x", 1)
-	cost_label.add_theme_constant_override("shadow_offset_y", 2)
+	_style_cost_label()
 
 	# ── Name (CONTENT) ───────────────────────────────────────────────────────
 	# Title comes from card data — route through Settings.t with the card's
@@ -147,7 +162,7 @@ func set_card_data(data: Dictionary) -> void:
 
 	# ── Description: build from effects[] showing real calculated numbers ────
 	var desc = _build_description(data)
-	desc_label.parse_bbcode("[center][font_size=10]" + desc + "[/font_size][/center]")
+	desc_label.parse_bbcode("[center][font_size=13]" + desc + "[/font_size][/center]")
 
 	# ── Rarity: swap the art FRAME texture ───────────────────────────────────
 	var rarity = data.get("rarity", "common").to_lower()
