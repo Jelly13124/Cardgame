@@ -8,7 +8,15 @@ const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
 
 @onready var main = get_parent()
 
+## Hard cap on simultaneous enemies. `summon` actions skip any spawn that would
+## exceed this so a boss can't flood the field (and the turn loop) indefinitely.
+const MAX_ENEMIES_ON_FIELD := 4
+
 var _enemy_spawned := false
+
+## Round-robin cursor into a summon action's `enemy_ids` so repeated summons of
+## the same action cycle through the list rather than always spawning the first.
+var _summon_cursor: int = 0
 
 ## List of enemy IDs to spawn for this encounter.
 ## In the future this will be set by RunManager/MapScene before the battle starts.
@@ -37,6 +45,24 @@ func spawn_enemy_units() -> void:
 		main.show_notification(
 			tr("UI_COMBAT_ENEMY_APPEARED").format({"name": enemy.enemy_name}), Color(1, 0.3, 0.3)
 		)
+
+
+## Instantiate a single add mid-combat, position it after the existing enemies,
+## add it to the enemy container, and wire its death → victory check. Honors the
+## MAX_ENEMIES_ON_FIELD cap (caller should already check, but we guard here too).
+## Returns the spawned EnemyEntity, or null if the field is full.
+func spawn_summon(enemy_id: String) -> Node2D:
+	if main.enemy_container.get_child_count() >= MAX_ENEMIES_ON_FIELD:
+		return null
+	var enemy = ENEMY_ENTITY_SCRIPT.create(enemy_id)
+	var idx = main.enemy_container.get_child_count()
+	enemy.position = Vector2(idx * 260, 0)
+	main.enemy_container.add_child(enemy)
+	enemy.died.connect(_on_enemy_died)
+	main.show_notification(
+		tr("UI_COMBAT_ENEMY_APPEARED").format({"name": enemy.enemy_name}), Color(1, 0.3, 0.3)
+	)
+	return enemy
 
 
 # ─── Enemy Turn ───────────────────────────────────────────────────────────────
@@ -210,6 +236,50 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 			charge_tween.tween_property(enemy, "modulate", Color(1.4, 1.1, 0.4), 0.25)
 			charge_tween.tween_property(enemy, "modulate", Color.WHITE, 0.25)
 			await charge_tween.finished
+
+		"summon":
+			# Spawn `count` adds, cycling through `enemy_ids`. Skips spawns that
+			# would push the field past MAX_ENEMIES_ON_FIELD.
+			# JSON: {"type":"summon","enemy_ids":["scrap_shard"],"count":2,"label":"☠ SUMMON"}
+			var enemy_ids: Array = action.get("enemy_ids", [])
+			var count: int = int(action.get("count", 1))
+			if enemy_ids.is_empty():
+				return
+			var summoned := 0
+			for n in range(count):
+				if main.enemy_container.get_child_count() >= MAX_ENEMIES_ON_FIELD:
+					break
+				var add_id := str(enemy_ids[_summon_cursor % enemy_ids.size()])
+				_summon_cursor += 1
+				spawn_summon(add_id)
+				summoned += 1
+			if summoned > 0:
+				main.show_notification(
+					tr("UI_COMBAT_ENEMY_SUMMONS").format({"name": enemy.enemy_name}),
+					Color(0.8, 0.4, 1.0)
+				)
+				var pulse = create_tween()
+				pulse.tween_property(enemy, "scale", Vector2(1.15, 1.15), 0.12)
+				pulse.tween_property(enemy, "scale", Vector2(1.0, 1.0), 0.12)
+				await pulse.finished
+
+		"buff_self":
+			# Apply a status to the acting enemy itself (e.g. strength_up to ramp).
+			# JSON: {"type":"buff_self","status":"strength_up","stacks":3,"label":"💪 ENRAGE"}
+			var status: String = str(action.get("status", ""))
+			var stacks: int = int(action.get("stacks", 1))
+			if status != "" and enemy.has_method("add_status"):
+				enemy.add_status(status, stacks)
+			main.show_notification(
+				tr("UI_COMBAT_ENEMY_BUFFS_SELF").format(
+					{"name": enemy.enemy_name, "status": STATUS_SYS.format_name_localized(status)}
+				),
+				Color(1.0, 0.6, 0.2)
+			)
+			var buff_tween = create_tween()
+			buff_tween.tween_property(enemy, "modulate", Color(1.5, 0.7, 0.7), 0.2)
+			buff_tween.tween_property(enemy, "modulate", Color.WHITE, 0.2)
+			await buff_tween.finished
 
 		_:
 			push_error(
