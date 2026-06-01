@@ -1,0 +1,30 @@
+{
+  "id": "mutant_bazaar",
+  "title": "The Mutant Bazaar",
+  "description": "Under a tarp of stitched hides, a four-armed trader fans out salvage across a battered table. Every price is a starting price — if you can talk fast enough.",
+  "options": [
+    {
+      "text": "Pay full price for a charm trinket",
+      "effects": [
+        { "type": "gain_equipment", "rarity": "common" }
+      ],
+      "result": "You count out the coin without quibbling. The trader's four hands wrap your purchase and slide it across the table."
+    },
+    {
+      "text": "[Charm 6] Haggle him down to a steal",
+      "requires": { "charm": 6 },
+      "effects": [
+        { "type": "gain_relic", "id": "rabbits_foot" },
+        { "type": "gain_gold", "amount": 8 }
+      ],
+      "result": "Your patter is silk. He laughs, throws in a Rabbit's Foot for the company, and even refunds a handful of coin to keep your favor."
+    },
+    {
+      "text": "Browse and move on",
+      "effects": [
+        { "type": "gain_attribute", "attr": "charm", "amount": 1 }
+      ],
+      "result": "You drift the stalls, trade a few quiet words, and leave a touch more practiced at reading a room."
+    }
+  ]
+}
