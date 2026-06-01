@@ -1,7 +1,7 @@
 # Enemies Catalog
 
-**Last updated:** 2026-05-28
-**Total combatants:** 13 (9 standard + 1 elite + 3 boss)
+**Last updated:** 2026-06-01
+**Total combatants:** 15
 
 ## Paths
 
@@ -25,15 +25,23 @@
 | Standard | 9 | trash_robot, wasteland_killer, scrap_rat, riot_hound, rust_brute, mortar_cart, slag_walker, acid_spitter, chrome_hound |
 | Elite | 1 | armored_patrol |
 | Boss | 3 | rust_titan (floor 4), ash_warden (floor 8), junkyard_tyrant (floor 11) |
+| Summon-only add | 2 | scrap_shard (Junkyard Tyrant), ember_wisp (Ash Warden) |
+
+> Summon-only adds have no encounter-pool entry — they spawn only via a boss `summon` action mid-fight, so the generator flags them UNLISTED. That is expected.
 
 | Trait | Enemies |
 |---|---|
-| Applies status to player | riot_hound (Weak), chrome_hound (Weak), armored_patrol (Vulnerable), acid_spitter (Poison), ash_warden (Burn + Vulnerable) |
+| Applies status to player | riot_hound (Weak), chrome_hound (Weak), armored_patrol (Vulnerable), acid_spitter (Poison), ash_warden (Burn + Weak + Vulnerable), ember_wisp (Burn) |
 | Telegraph + interruptible big attack | mortar_cart, rust_titan, ash_warden, junkyard_tyrant |
-| AoE attack | mortar_cart (`attack_all`) |
-| Heals self | _none yet_ |
+| AoE attack | mortar_cart, junkyard_tyrant (`attack_all`) |
+| HP-threshold phase transition | rust_titan, ash_warden, junkyard_tyrant (all enrage at 50% HP) |
+| Summons adds | ash_warden (ember_wisp), junkyard_tyrant (scrap_shard) |
+| Buffs own Strength | rust_titan, junkyard_tyrant (`buff_self` strength_up) |
+| Heals self | junkyard_tyrant (phase-2 `heal`) |
 
 ## Summary table
+
+_Tier is a best-effort read of `run_manager.gd` encounter constants — `UNLISTED` means the enemy JSON exists but is in no pool/roster. For the two summon-only adds (scrap_shard, ember_wisp) that is expected: they spawn only via a boss `summon` action. Pattern length is the BASE `action_pattern` only; bosses also carry a phase-2 `action_pattern` (see per-enemy details)._
 
 | ID | Name | HP | Tier | Sprite ID | Pattern length | Frames |
 |---|---|---|---|---|---|---|
@@ -41,17 +49,19 @@
 | `armored_patrol` | Armored Patrol | 50 | elite | `armored_patrol` | 4 | ✅ |
 | `ash_warden` | Ash Warden | 95 | boss | `ash_warden` | 7 | ✅ |
 | `chrome_hound` | Chrome Hound | 32 | standard | `chrome_hound` | 4 | ✅ |
-| `junkyard_tyrant` | Junkyard Tyrant | 110 | boss | `junkyard_tyrant` | 9 | ✅ |
+| `ember_wisp` | Ember Wisp | 8 | summon-only | `ember_wisp` | 1 | ❌ |
+| `junkyard_tyrant` | Junkyard Tyrant | 110 | boss | `junkyard_tyrant` | 8 | ✅ |
 | `mortar_cart` | Mortar Cart | 28 | standard | `mortar_cart` | 5 | ✅ |
 | `riot_hound` | Riot Hound | 25 | standard | `riot_hound` | 3 | ✅ |
 | `rust_brute` | Rust Brute | 40 | standard | `rust_brute` | 4 | ✅ |
 | `rust_titan` | Rust Titan | 75 | boss | `rust_titan` | 6 | ✅ |
 | `scrap_rat` | Scrap Rat | 12 | standard | `scrap_rat` | 3 | ✅ |
+| `scrap_shard` | Scrap Shard | 10 | summon-only | `scrap_shard` | 1 | ❌ |
 | `slag_walker` | Slag Walker | 28 | standard | `slag_walker` | 4 | ✅ |
 | `trash_robot` | Trash Robot | 30 | standard | `trash_robot` | 4 | ✅ |
 | `wasteland_killer` | Wasteland Killer | 20 | standard | `wasteland_killer` | 3 | ✅ |
 
-> All enemies now use dedicated per-enemy sprite art (Codex wave-3 delivery, 2026-05-29).
+> All non-add enemies use dedicated per-enemy sprite art (Codex wave-3 delivery, 2026-05-29). The two summon-only adds (scrap_shard, ember_wisp) still await art from Codex (❌ above).
 
 ## Encounter pools (where each enemy spawns)
 
@@ -179,31 +189,64 @@ Defined in `run_system/core/run_manager.gd`. `select_encounter(type, floor)` is 
 | 3 | block | 12 | — | 🛡 12 |
 | 4 | attack_status | 10 | vulnerable 1 | ⚔ 10 +Vuln |
 
-### `junkyard_tyrant` (HP 110) — boss, single phase
+### `scrap_shard` (HP 10) — summon-only add
+- Sprite: `battle_scene/assets/images/enemies/scrap_shard/` (art pending — Codex)
+- JSON: `battle_scene/card_info/enemy/scrap_shard.json`
+- Spawned only by Junkyard Tyrant's `summon` action; never appears in an encounter pool.
+
+**Action pattern (loops):**
+| # | Type | Amount | Label |
+|---|---|---|---|
+| 1 | attack | 4 | ⚔ 4 |
+
+### `ember_wisp` (HP 8) — summon-only add
+- Sprite: `battle_scene/assets/images/enemies/ember_wisp/` (art pending — Codex)
+- JSON: `battle_scene/card_info/enemy/ember_wisp.json`
+- Spawned only by Ash Warden's `summon` action; never appears in an encounter pool.
+
+**Action pattern (loops):**
+| # | Type | Amount | Status | Label |
+|---|---|---|---|---|
+| 1 | attack_status | 3 | burn 2 | 🔥 3 + B2 |
+
+### `junkyard_tyrant` (HP 110) — boss, floor 11 (final), two phases
 - Sprite: `battle_scene/assets/images/enemies/junkyard_tyrant/`
 - JSON: `battle_scene/card_info/enemy/junkyard_tyrant.json`
 - Native frame size: 192×192 (1.5× normal scale under the 128-native art rule).
+- Bespoke kit: summons `scrap_shard` adds, an interruptible `attack_all` Scrapstorm, and a phase-2 self-`heal`. Killing the Tyrant ends the fight even if its summoned adds are still alive.
 
-**Action pattern (loops — 9 actions):**
+**Phase 1 — base `action_pattern` (HP ≥ 50%, loops — 8 actions):**
 | # | Type | Amount | Flag | Label |
 |---|---|---|---|---|
 | 1 | attack | 10 | — | ⚔ 10 |
-| 2 | attack | 12 | — | ⚔ 12 |
-| 3 | block | 12 | — | 🛡 12 |
-| 4 | telegraph | — | — | 💢 CHARGING |
-| 5 | attack | 22 | **interruptible** | 💥 CRUSHING 22 |
-| 6 | attack | 14 | — | ⚔ 14 |
-| 7 | block | 10 | — | 🛡 10 |
-| 8 | telegraph | — | — | 💢 CHARGING |
-| 9 | attack | 22 | **interruptible** | 💥 CRUSHING 22 |
+| 2 | summon | scrap_shard ×1 | — | ☠ SCRAP x1 |
+| 3 | attack | 12 | — | ⚔ 12 |
+| 4 | block | 12 | — | 🛡 12 |
+| 5 | telegraph | — | — | 💢 CHARGING |
+| 6 | attack_all | 14 | **interruptible** | 💥 SCRAPSTORM 14 |
+| 7 | attack | 14 | — | ⚔ 14 |
+| 8 | block | 10 | — | 🛡 10 |
 
-> Two Crushing Blow windows per cycle. Both can be cancelled with Shock during the CHARGING turn.
+**Phase 2 — on dropping below 50% HP (`hp_below: 0.5`):**
+- `on_enter` (one-shot): summon `scrap_shard` ×2 (☠ SCRAP x2) + `buff_self` strength_up 2 (💢 ENRAGE).
+- Then loops a new 5-action pattern:
 
-### `rust_titan` (HP 75) — boss, floor 4 (act-1)
+| # | Type | Amount | Flag | Label |
+|---|---|---|---|---|
+| 1 | telegraph | — | — | 💢 OVERLOAD |
+| 2 | attack_all | 18 | **interruptible** | 💥 SCRAPSTORM 18 |
+| 3 | summon | scrap_shard ×1 | — | ☠ SCRAP x1 |
+| 4 | heal | 12 | — | ✚ 12 |
+| 5 | attack | 16 | — | ⚔ 16 |
+
+> Cancel either Scrapstorm with Shock during the preceding CHARGING / OVERLOAD turn. The phase-2 ENRAGE permanently raises its Strength, and its self-heal can stall an under-tuned deck — race the kill.
+
+### `rust_titan` (HP 75) — boss, floor 4 (act-1), two phases
 - Sprite: `battle_scene/assets/images/enemies/rust_titan/`
 - JSON: `battle_scene/card_info/enemy/rust_titan.json`
+- Bespoke kit: enrages at 50% HP, gaining a big stack of `buff_self` strength_up and a harder phase-2 loop.
 
-**Action pattern (loops — 6 actions):**
+**Phase 1 — base `action_pattern` (HP ≥ 50%, loops — 6 actions):**
 | # | Type | Amount | Flag | Label |
 |---|---|---|---|---|
 | 1 | attack | 8 | — | ⚔ 8 |
@@ -213,24 +256,50 @@ Defined in `run_system/core/run_manager.gd`. `select_encounter(type, floor)` is 
 | 5 | attack | 18 | **interruptible** | 💥 SLAM 18 |
 | 6 | block | 8 | — | 🛡 8 |
 
-> One Slam window per cycle — cancel with Shock during WIND-UP.
+**Phase 2 — on dropping below 50% HP (`hp_below: 0.5`):**
+- `on_enter` (one-shot): `buff_self` strength_up 3 (💢 ENRAGE).
+- Then loops a new 5-action pattern:
 
-### `ash_warden` (HP 95) — boss, floor 8 (act-2)
+| # | Type | Amount | Flag | Label |
+|---|---|---|---|---|
+| 1 | telegraph | — | — | 💢 OVERLOAD |
+| 2 | attack | 22 | **interruptible** | 💥 RUIN 22 |
+| 3 | block | 12 | — | 🛡 12 |
+| 4 | buff_self | strength_up 2 | — | 💢 RAGE +2 |
+| 5 | attack | 14 | — | ⚔ 14 |
+
+> Once enraged, its `strength_up` stacks (3 on enter, +2 every cycle) make every attack scale up fast — burst it down rather than out-lasting it. Cancel Ruin with Shock during OVERLOAD.
+
+### `ash_warden` (HP 95) — boss, floor 8 (act-2), two phases
 - Sprite: `battle_scene/assets/images/enemies/ash_warden/`
 - JSON: `battle_scene/card_info/enemy/ash_warden.json`
+- Bespoke kit: stacks heavy Burn / Weak / Vulnerable debuffs and `summon`s `ember_wisp` adds at the phase break.
 
-**Action pattern (loops — 7 actions):**
+**Phase 1 — base `action_pattern` (HP ≥ 50%, loops — 7 actions):**
 | # | Type | Amount | Status | Flag | Label |
 |---|---|---|---|---|---|
 | 1 | attack_status | 6 | burn 2 | — | 🔥 6 + B2 |
-| 2 | attack | 11 | — | — | ⚔ 11 |
+| 2 | attack_status | 7 | weak 1 | — | ⚔ 7 + W1 |
 | 3 | block | 12 | — | — | 🛡 12 |
 | 4 | attack_status | 8 | vulnerable 1 | — | ⚔ 8 + V1 |
 | 5 | telegraph | — | — | — | 💢 IGNITING |
-| 6 | attack | 20 | — | **interruptible** | 💥 BLAST 20 |
+| 6 | attack | 18 | — | **interruptible** | 💥 BLAST 18 |
 | 7 | attack | 9 | — | — | ⚔ 9 |
 
-> Status-heavy sentinel: stacks Burn + Vulnerable before the interruptible Blast. Cancel the Blast with Shock during IGNITING.
+**Phase 2 — on dropping below 50% HP (`hp_below: 0.5`):**
+- `on_enter` (one-shot): summon `ember_wisp` ×1 (☠ EMBER SUMMON).
+- Then loops a new 6-action pattern with heavier debuffs and a second summon:
+
+| # | Type | Amount | Status | Label |
+|---|---|---|---|---|
+| 1 | attack_status | 8 | burn 3 | 🔥 8 + B3 |
+| 2 | attack_status | 6 | weak 2 | ⚔ 6 + W2 |
+| 3 | attack_status | 9 | vulnerable 2 | ⚔ 9 + V2 |
+| 4 | block | 10 | — | 🛡 10 |
+| 5 | summon | ember_wisp ×1 | — | ☠ EMBER SUMMON |
+| 6 | attack_status | 10 | burn 3 | 🔥 10 + B3 |
+
+> Status-heavy sentinel: stacks Burn + Weak + Vulnerable, then summons Ember Wisps that pile on more Burn. Cancel the phase-1 Blast with Shock during IGNITING; in phase 2 the pressure is the stacking status, not a single big hit.
 
 ### `slag_walker` (HP 28) — standard (mid)
 - Sprite: `battle_scene/assets/images/enemies/slag_walker/`
@@ -281,9 +350,16 @@ Defined in `enemy_ai.gd` `_execute_action()`. Allowed types tracked in `data_val
 | `block` | Self-block + scale pulse. | `{type, amount, label}` |
 | `heal` | Self-heal. | `{type, amount, label}` |
 | `telegraph` | No damage. Flashes "CHARGING" tint. Sets up next-turn interruptible attack. | `{type, label}` |
+| `summon` | Spawns one or more new enemies mid-fight (the listed adds). | `{type, enemy_ids[] (required), count (optional, default 1), label}` |
+| `buff_self` | Applies a status to the acting enemy (e.g. `strength_up` to enrage). | `{type, status (required, ∈ status names), stacks, label}` |
 
 ### Action flags
 - `interruptible: true` on any attack — if the enemy has ≥1 Shock stack when the action fires, consume 1 Shock and cancel the attack. Used on the action AFTER a telegraph for mortar_cart and the Boss.
+
+### HP-threshold phases (`phases[]`)
+- A boss JSON may carry an optional `phases[]` array. Each phase has `hp_below` (fraction, e.g. `0.5`), an optional one-shot `on_enter[]` action list (e.g. summon adds + `buff_self` enrage), and a replacement `action_pattern[]` that loops for the rest of the fight.
+- When current HP first drops below `hp_below`, the enemy fires `on_enter` and switches to the phase's `action_pattern`. All three bosses (rust_titan, ash_warden, junkyard_tyrant) use a single 50%-HP phase.
+- Killing the boss ends the fight immediately, even if its summoned adds (scrap_shard / ember_wisp) are still alive.
 
 ## Status effects
 
@@ -309,8 +385,5 @@ Defined in `battle_scene/status_effect_system.gd`. Allowed names tracked in `dat
 
 ## Known limitations (deferred)
 
-- Enemies can't `gain_strength` mid-combat (would need `gain_strength_self` action type).
-- Enemies can't summon other enemies (would need `summon` action type + AI rework for new spawns mid-fight).
-- No HP-threshold phase transitions for any enemy yet (Boss is single-phase).
 - No enemy steals gold (would need `steal_gold` action type and Map-screen feedback).
 - Enemy block resets to 0 at the start of each enemy turn (`enemy_entity.start_turn()`). If you want persistent block, that needs a flag.
