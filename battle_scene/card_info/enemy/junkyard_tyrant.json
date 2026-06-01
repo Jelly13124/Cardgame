@@ -4,14 +4,29 @@
 	"sprite_id": "junkyard_tyrant",
 	"max_health": 110,
 	"action_pattern": [
-		{ "type": "attack",    "amount": 10, "label": "⚔ 10" },
-		{ "type": "attack",    "amount": 12, "label": "⚔ 12" },
-		{ "type": "block",     "amount": 12, "label": "🛡 12" },
-		{ "type": "telegraph", "label": "💢 CHARGING" },
-		{ "type": "attack",    "amount": 22, "label": "💥 CRUSHING 22", "interruptible": true },
-		{ "type": "attack",    "amount": 14, "label": "⚔ 14" },
-		{ "type": "block",     "amount": 10, "label": "🛡 10" },
-		{ "type": "telegraph", "label": "💢 CHARGING" },
-		{ "type": "attack",    "amount": 22, "label": "💥 CRUSHING 22", "interruptible": true }
+		{ "type": "attack",     "amount": 10,                                  "label": "⚔ 10" },
+		{ "type": "summon",     "enemy_ids": ["scrap_shard"], "count": 1,      "label": "☠ SCRAP x1" },
+		{ "type": "attack",     "amount": 12,                                  "label": "⚔ 12" },
+		{ "type": "block",      "amount": 12,                                  "label": "🛡 12" },
+		{ "type": "telegraph",                                                 "label": "💢 CHARGING" },
+		{ "type": "attack_all", "amount": 14, "label": "💥 SCRAPSTORM 14", "interruptible": true },
+		{ "type": "attack",     "amount": 14,                                  "label": "⚔ 14" },
+		{ "type": "block",      "amount": 10,                                  "label": "🛡 10" }
+	],
+	"phases": [
+		{
+			"hp_below": 0.5,
+			"on_enter": [
+				{ "type": "summon",    "enemy_ids": ["scrap_shard"], "count": 2, "label": "☠ SCRAP x2" },
+				{ "type": "buff_self", "status": "strength_up", "stacks": 2,     "label": "💢 ENRAGE" }
+			],
+			"action_pattern": [
+				{ "type": "telegraph",                                            "label": "💢 OVERLOAD" },
+				{ "type": "attack_all", "amount": 18, "label": "💥 SCRAPSTORM 18", "interruptible": true },
+				{ "type": "summon",     "enemy_ids": ["scrap_shard"], "count": 1, "label": "☠ SCRAP x1" },
+				{ "type": "heal",       "amount": 12,                             "label": "✚ 12" },
+				{ "type": "attack",     "amount": 16,                             "label": "⚔ 16" }
+			]
+		}
 	]
 }
