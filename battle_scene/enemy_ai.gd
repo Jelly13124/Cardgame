@@ -14,6 +14,15 @@ const MAX_ENEMIES_ON_FIELD := 4
 
 var _enemy_spawned := false
 
+## True once the initial encounter has spawned at least one boss entity (spec A3).
+## A boss's death ends the fight even with summoned adds alive, so once we've seen
+## a boss we watch for "no living boss remains" in _on_enemy_died.
+var _encounter_has_boss := false
+
+## Guards against declaring victory twice (a boss death frees adds whose own
+## died signals would otherwise re-enter the victory path).
+var _victory_declared := false
+
 ## Round-robin cursor into a summon action's `enemy_ids` so repeated summons of
 ## the same action cycle through the list rather than always spawning the first.
 var _summon_cursor: int = 0
@@ -39,6 +48,9 @@ func spawn_enemy_units() -> void:
 		var idx = main.enemy_container.get_child_count()
 		enemy.position = Vector2(idx * 260, 0)
 		main.enemy_container.add_child(enemy)
+
+		if enemy.is_boss:
+			_encounter_has_boss = true
 
 		# Wire death → victory check
 		enemy.died.connect(_on_enemy_died)
@@ -334,5 +346,35 @@ func _animate_return(enemy: Node) -> void:
 
 func _on_enemy_died() -> void:
 	await get_tree().process_frame
-	if main.enemy_container.get_child_count() == 0:
+	if _victory_declared:
+		return
+
+	# Boss-death rule (spec A3): a boss dying ends the fight even with summoned
+	# adds still on the field. The dying boss queue_free()s itself before this
+	# runs, so after the awaited frame we detect "the boss is gone" as: the
+	# encounter had a boss AND no living boss entity remains in the container.
+	# When that's true, free every remaining add FIRST (so the count check below
+	# and the adds' own died signals can't race a second victory) then declare
+	# victory exactly once.
+	if _encounter_has_boss and not _living_boss_present():
+		for child in main.enemy_container.get_children():
+			if is_instance_valid(child):
+				child.queue_free()
+		_victory_declared = true
 		main.combat_engine.declare_victory()
+		return
+
+	if main.enemy_container.get_child_count() == 0:
+		_victory_declared = true
+		main.combat_engine.declare_victory()
+
+
+## True if a living boss EnemyEntity is still in the enemy container. A boss that
+## just died has already queue_free()d itself, so it won't be counted here.
+func _living_boss_present() -> bool:
+	for child in main.enemy_container.get_children():
+		if not is_instance_valid(child):
+			continue
+		if child.get("is_boss") == true and child.get("health") > 0:
+			return true
+	return false

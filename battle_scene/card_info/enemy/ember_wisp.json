@@ -1,0 +1,9 @@
+{
+	"id": "ember_wisp",
+	"name": "Ember Wisp",
+	"sprite_id": "ember_wisp",
+	"max_health": 8,
+	"action_pattern": [
+		{ "type": "attack_status", "amount": 3, "status": "burn", "stacks": 2, "label": "🔥 3 + B2" }
+	]
+}
