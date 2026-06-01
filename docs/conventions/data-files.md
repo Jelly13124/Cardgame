@@ -49,6 +49,8 @@ Optional: `description`, `front_image`, `side`, `rarity` (`common|uncommon|rare`
 ```
 Each action entry needs `type` (one of `ALLOWED_ENEMY_ACTION_TYPES`). `attack_status` actions also need `status` + `stacks`. Attacks marked `"interruptible": true` can be cancelled by 1 stack of shock.
 
+Optional `phases` (array) — HP-threshold phase transitions. Each phase has `hp_below` (fraction in `(0, 1]`), an `action_pattern` (validated like the top-level one), and an optional `on_enter` array of actions fired once on entering the phase.
+
 ### Relics
 ```json
 {
@@ -87,6 +89,8 @@ Authoritative list in `DataValidator.ALLOWED_ENEMY_ACTION_TYPES`:
 - `block` — self-block
 - `heal` — self-heal
 - `telegraph` — no-op + "CHARGING" intent badge, sets up next action as interruptible
+- `summon` — spawns add enemies mid-combat. Required: `enemy_ids` (array of enemy ids); optional `count` (default 1). Capped at `MAX_ENEMIES_ON_FIELD` (4) — spawns past the cap are skipped. e.g. `{"type":"summon","enemy_ids":["scrap_shard"],"count":2}`
+- `buff_self` — applies a status to the acting enemy itself. Required: `status` (∈ `ALLOWED_STATUS_NAMES`, e.g. `strength_up`), `stacks`. e.g. `{"type":"buff_self","status":"strength_up","stacks":3}`
 
 ---
 
