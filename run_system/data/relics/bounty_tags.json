@@ -1,0 +1,19 @@
+{
+  "id": "bounty_tags",
+  "title": "Bounty Tags",
+  "description": "After combat, gain 12 Gold and heal 3 HP.",
+  "icon": "res://run_system/assets/images/relics/bounty_tags.png",
+  "rarity": "uncommon",
+  "effects": [
+    {
+      "trigger": "combat_victory",
+      "type": "gain_gold",
+      "amount": 12
+    },
+    {
+      "trigger": "combat_victory",
+      "type": "heal",
+      "amount": 3
+    }
+  ]
+}

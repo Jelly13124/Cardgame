@@ -4,9 +4,10 @@
   "sprite_id": "cowboy_bill",
   "tint": "#dd5555",
   "max_health": 45,
-  "starter_deck": ["strike", "strike", "strike", "weak_strike", "weak_strike",
-                   "defend", "defend", "acid_splash"],
-  "starting_attributes": {"strength": 4, "constitution": 2, "intelligence": 3, "luck": 3, "charm": 3},
-  "description": "Wasteland predator. Lower HP, harder hits, opens with poison.",
+  "starter_deck": ["strike", "strike", "strike", "strike", "double_tap",
+                   "scrap_strike", "defend", "defend", "brace"],
+  "starting_attributes": {"strength": 5, "constitution": 3, "intelligence": 2, "luck": 2, "charm": 3},
+  "starting_relic": "bounty_tags",
+  "description": "Wasteland predator. High STR, aggressive multi-hit kit; every kill pays and patches you up.",
   "_codex_todo": "Generate dedicated sprite folder at battle_scene/assets/images/heroes/hero_jerry_killer/ then update sprite_id."
 }
