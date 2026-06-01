@@ -1,1 +1,0 @@
-Wave 3 card batch generated with image2 / built-in image_gen, matching Cowboy Bill hardcore wasteland sprite art reference; postprocessed only for crop and transparent background cleanup.

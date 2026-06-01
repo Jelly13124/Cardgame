@@ -1,1 +1,0 @@
-Generated final UI components from docs/asset-spec-ui-overhaul.md using the canonical palette and deterministic low-resolution pixel construction.
