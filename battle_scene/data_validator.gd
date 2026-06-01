@@ -74,6 +74,8 @@ const ALLOWED_ENEMY_ACTION_TYPES = [
 	"block",
 	"heal",
 	"telegraph",
+	"summon",
+	"buff_self",
 ]
 # Action types that require a `status` field
 const STATUS_BEARING_ACTIONS = ["attack_status"]
@@ -349,6 +351,29 @@ static func validate_enemy(data: Dictionary, source_path: String) -> bool:
 						"%s: action[%d] status '%s' not in %s"
 						% [prefix, i, action["status"], ALLOWED_STATUS_NAMES]
 					)
+				)
+				ok = false
+		# `buff_self` applies a status to the acting enemy → needs a valid status.
+		if atype == "buff_self":
+			if not action.has("status"):
+				push_error("%s: action[%d] (buff_self) is missing 'status'" % [prefix, i])
+				ok = false
+			elif not str(action["status"]) in ALLOWED_STATUS_NAMES:
+				push_error(
+					(
+						"%s: action[%d] (buff_self) status '%s' not in %s"
+						% [prefix, i, action["status"], ALLOWED_STATUS_NAMES]
+					)
+				)
+				ok = false
+		# `summon` needs a non-empty `enemy_ids` array of strings.
+		if atype == "summon":
+			if not action.has("enemy_ids"):
+				push_error("%s: action[%d] (summon) is missing 'enemy_ids'" % [prefix, i])
+				ok = false
+			elif typeof(action["enemy_ids"]) != TYPE_ARRAY or action["enemy_ids"].is_empty():
+				push_error(
+					"%s: action[%d] (summon) 'enemy_ids' must be a non-empty Array" % [prefix, i]
 				)
 				ok = false
 
