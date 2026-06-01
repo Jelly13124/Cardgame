@@ -322,61 +322,110 @@ static func validate_enemy(data: Dictionary, source_path: String) -> bool:
 		push_error("%s: action_pattern must be an Array" % prefix)
 		return false
 
-	for i in range(pattern.size()):
-		var action = pattern[i]
+	if not _validate_enemy_actions(pattern, prefix, "action"):
+		ok = false
+
+	# Optional `phases`: HP-threshold phase transitions (spec A2). Each entry needs
+	# `hp_below` in (0,1] and an `action_pattern` (validated like the top-level one);
+	# `on_enter` is optional and validated as actions too.
+	if data.has("phases"):
+		if typeof(data["phases"]) != TYPE_ARRAY:
+			push_error("%s: phases must be an Array" % prefix)
+			ok = false
+		else:
+			var phases = data["phases"]
+			for pi in range(phases.size()):
+				var phase = phases[pi]
+				var pprefix := "%s phase[%d]" % [prefix, pi]
+				if typeof(phase) != TYPE_DICTIONARY:
+					push_error("%s: phase is not a Dictionary" % pprefix)
+					ok = false
+					continue
+				if not phase.has("hp_below"):
+					push_error("%s: missing 'hp_below'" % pprefix)
+					ok = false
+				else:
+					var hb := float(phase["hp_below"])
+					if hb <= 0.0 or hb > 1.0:
+						push_error("%s: hp_below %s must be in (0, 1]" % [pprefix, hb])
+						ok = false
+				if not phase.has("action_pattern"):
+					push_error("%s: missing 'action_pattern'" % pprefix)
+					ok = false
+				elif typeof(phase["action_pattern"]) != TYPE_ARRAY:
+					push_error("%s: action_pattern must be an Array" % pprefix)
+					ok = false
+				elif not _validate_enemy_actions(phase["action_pattern"], pprefix, "action"):
+					ok = false
+				if phase.has("on_enter"):
+					if typeof(phase["on_enter"]) != TYPE_ARRAY:
+						push_error("%s: on_enter must be an Array" % pprefix)
+						ok = false
+					elif not _validate_enemy_actions(phase["on_enter"], pprefix, "on_enter"):
+						ok = false
+
+	return ok
+
+
+## Validates an array of enemy actions (used by both `action_pattern` and phase
+## `on_enter`/`action_pattern`). `label` is used in error messages (e.g. "action"
+## or "on_enter"). Returns true when all entries are valid.
+static func _validate_enemy_actions(actions: Array, prefix: String, label: String) -> bool:
+	var ok := true
+	for i in range(actions.size()):
+		var action = actions[i]
 		if typeof(action) != TYPE_DICTIONARY:
-			push_error("%s: action[%d] is not a Dictionary" % [prefix, i])
+			push_error("%s: %s[%d] is not a Dictionary" % [prefix, label, i])
 			ok = false
 			continue
 		if not action.has("type"):
-			push_error("%s: action[%d] is missing 'type'" % [prefix, i])
+			push_error("%s: %s[%d] is missing 'type'" % [prefix, label, i])
 			ok = false
 			continue
 		var atype = str(action["type"])
 		if not atype in ALLOWED_ENEMY_ACTION_TYPES:
 			push_error(
 				(
-					"%s: action[%d] type '%s' not in %s"
-					% [prefix, i, atype, ALLOWED_ENEMY_ACTION_TYPES]
+					"%s: %s[%d] type '%s' not in %s"
+					% [prefix, label, i, atype, ALLOWED_ENEMY_ACTION_TYPES]
 				)
 			)
 			ok = false
 		if atype in STATUS_BEARING_ACTIONS:
 			if not action.has("status"):
-				push_error("%s: action[%d] (%s) is missing 'status'" % [prefix, i, atype])
+				push_error("%s: %s[%d] (%s) is missing 'status'" % [prefix, label, i, atype])
 				ok = false
 			elif not str(action["status"]) in ALLOWED_STATUS_NAMES:
 				push_error(
 					(
-						"%s: action[%d] status '%s' not in %s"
-						% [prefix, i, action["status"], ALLOWED_STATUS_NAMES]
+						"%s: %s[%d] status '%s' not in %s"
+						% [prefix, label, i, action["status"], ALLOWED_STATUS_NAMES]
 					)
 				)
 				ok = false
 		# `buff_self` applies a status to the acting enemy → needs a valid status.
 		if atype == "buff_self":
 			if not action.has("status"):
-				push_error("%s: action[%d] (buff_self) is missing 'status'" % [prefix, i])
+				push_error("%s: %s[%d] (buff_self) is missing 'status'" % [prefix, label, i])
 				ok = false
 			elif not str(action["status"]) in ALLOWED_STATUS_NAMES:
 				push_error(
 					(
-						"%s: action[%d] (buff_self) status '%s' not in %s"
-						% [prefix, i, action["status"], ALLOWED_STATUS_NAMES]
+						"%s: %s[%d] (buff_self) status '%s' not in %s"
+						% [prefix, label, i, action["status"], ALLOWED_STATUS_NAMES]
 					)
 				)
 				ok = false
 		# `summon` needs a non-empty `enemy_ids` array of strings.
 		if atype == "summon":
 			if not action.has("enemy_ids"):
-				push_error("%s: action[%d] (summon) is missing 'enemy_ids'" % [prefix, i])
+				push_error("%s: %s[%d] (summon) is missing 'enemy_ids'" % [prefix, label, i])
 				ok = false
 			elif typeof(action["enemy_ids"]) != TYPE_ARRAY or action["enemy_ids"].is_empty():
 				push_error(
-					"%s: action[%d] (summon) 'enemy_ids' must be a non-empty Array" % [prefix, i]
+					"%s: %s[%d] (summon) 'enemy_ids' must be a non-empty Array" % [prefix, label, i]
 				)
 				ok = false
-
 	return ok
 
 

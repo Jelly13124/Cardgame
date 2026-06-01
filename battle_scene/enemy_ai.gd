@@ -90,6 +90,20 @@ func execute_enemy_turn() -> void:
 				return
 			continue
 
+		# Phase-transition on_enter (spec A2): if this enemy crossed an HP
+		# threshold on the player's turn, the entity queued the phase's on_enter
+		# actions. Run them here (start of its turn) through _execute_action so
+		# summon/buff_self reuse the existing visuals + notifications.
+		if enemy.has_method("consume_pending_on_enter"):
+			for on_enter_action in enemy.consume_pending_on_enter():
+				if main.is_game_over or not is_instance_valid(enemy) or enemy.health <= 0:
+					break
+				await _execute_action(enemy, on_enter_action)
+			if main.is_game_over:
+				return
+			if not is_instance_valid(enemy) or enemy.health <= 0:
+				continue
+
 		# Shock check: if the enemy is shocked, consume one stack and skip
 		# its action. The action pointer still advances so the enemy doesn't
 		# build up a backlog of skipped moves.
