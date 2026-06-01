@@ -1,0 +1,27 @@
+{
+  "id": "fortune_shrine",
+  "title": "The Fortune Shrine",
+  "description": "A crude altar of welded scrap leans in the dust, ringed with offered coins and spent shell casings. A cracked dice cup sits at its center, daring you.",
+  "options": [
+    {
+      "text": "Leave a coin offering and walk on",
+      "effects": [
+        { "type": "gain_attribute", "attr": "luck", "amount": 1 }
+      ],
+      "result": "You drop a coin in the dust and bow your head. Something in the gesture leaves you feeling the odds bend a little your way."
+    },
+    {
+      "text": "[Luck] Roll the cracked dice for the shrine's hoard",
+      "luck_check": true,
+      "effects_success": [
+        { "type": "gain_relic", "id": "lucky_cog" },
+        { "type": "gain_gold", "amount": 15 }
+      ],
+      "effects_fail": [
+        { "type": "lose_hp", "amount": 6 }
+      ],
+      "result_success": "The dice come up blessed. The altar's false floor gives, spilling a Lucky Cog and a scatter of coin into your hands.",
+      "result_fail": "Snake eyes. The scrap altar lurches and a hidden spike rakes your arm as you snatch your hand back empty."
+    }
+  ]
+}
