@@ -6,8 +6,8 @@ class_name CharacterHUD
 @export var max_health: int = 100
 @export var current_health: int = 100
 @export var current_block: int = 0
-@export var bar_width: int = 180
-@export var bar_height: int = 18
+@export var bar_width: int = 225
+@export var bar_height: int = 33
 
 # Internal nodes
 var _hp_frame: NinePatchRect
@@ -55,19 +55,21 @@ func _build_ui() -> void:
 	_hp_label = Label.new()
 	_hp_label.size = _hp_frame.size
 	_hp_label.position = Vector2.ZERO
+	_hp_label.clip_text = true
 	_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hp_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_hp_label.add_theme_font_size_override("font_size", 16)
+	_hp_label.add_theme_font_size_override("font_size", 21)
 	_hp_label.add_theme_color_override("font_color", Color(1, 1, 1))
 	_hp_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+	_hp_label.add_theme_constant_override("shadow_outline_size", 3)
 	_hp_frame.add_child(_hp_label)
 
 	# ---- Block Badge (Shield) ----
 	_block_badge = TextureRect.new()
 	_block_badge.texture = load(UI_PATH + "block_badge.png")
 	_block_badge.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_block_badge.size = Vector2(40, 40)
-	_block_badge.position = Vector2(-20, -11)
+	_block_badge.size = Vector2(60, 60)
+	_block_badge.position = Vector2(-30, -17)
 	_block_badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_block_badge.visible = false
 	add_child(_block_badge)
@@ -76,19 +78,19 @@ func _build_ui() -> void:
 	_block_label.size = _block_badge.size
 	_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_block_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_block_label.add_theme_font_size_override("font_size", 20)
+	_block_label.add_theme_font_size_override("font_size", 30)
 	_block_label.add_theme_color_override("font_color", Color(1, 1, 1))
-	_block_label.position = Vector2(0, -1)  # adjust padding inside shield
+	_block_label.position = Vector2(0, -2)  # adjust padding inside shield
 	_block_badge.add_child(_block_label)
 
 	# ---- Status Badges (positioned below HP bar, centered, supports stacking) ----
 	_status_badges = HBoxContainer.new()
 	_status_badges.name = "StatusBadges"
-	_status_badges.position = Vector2(0, bar_height + 6)
-	_status_badges.size = Vector2(bar_width, 24)
+	_status_badges.position = Vector2(0, bar_height + 9)
+	_status_badges.size = Vector2(bar_width, 36)
 	_status_badges.alignment = BoxContainer.ALIGNMENT_CENTER
 	_status_badges.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_status_badges.add_theme_constant_override("separation", 4)
+	_status_badges.add_theme_constant_override("separation", 6)
 	add_child(_status_badges)
 
 

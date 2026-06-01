@@ -99,6 +99,10 @@ static func apply_button_theme(
 	button.add_theme_stylebox_override("pressed", button_textured("pressed"))
 	button.add_theme_color_override("font_color", TEXT_MAIN)
 	button.add_theme_color_override("font_hover_color", SAND_LIGHT)
+	button.add_theme_color_override("font_pressed_color", SAND_LIGHT)
+	button.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
+	button.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.82))
+	button.add_theme_constant_override("outline_size", 1)
 
 
 # ─── Textured (PNG-based) builders ────────────────────────────────────────────
