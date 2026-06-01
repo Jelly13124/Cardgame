@@ -1,14 +1,14 @@
 # Product Requirements Document
 **Project:** Unnamed Sci-Fi Roguelite Card Game  
-**Art Style:** Hardcore Wasteland Sprite Art
+**Art Style:** Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland
 **Engine:** Godot 4.6  
-**Last Updated:** 2026-05-19
+**Last Updated:** 2026-06-01
 
 ---
 
 ## Overview
 
-A single-player roguelite deckbuilder set in a post-apocalyptic scrapyard wasteland. Players collect cards, relics, and equipment while fighting through escalating routes toward bosses. The visual language is locked to Hardcore Wasteland Sprite Art: detailed fully-rendered sprites authored at 128×128 native, bold dark outlines, gritty rusted scrap materials, dusty leather/earth tones, rich controlled shading, and sparse glowing neon accents.
+A single-player roguelite deckbuilder set in a post-apocalyptic scrapyard wasteland. Players collect cards, relics, and equipment while fighting through escalating routes toward bosses. The visual language is locked to a Rick-and-Morty-like adult sci-fi cartoon wasteland style: thick rubbery dark outlines, flat bright color blocks, simple cel shading, exaggerated odd proportions, dusty western junk-tech materials, and weird comic sci-fi energy.
 
 Combat is **Slay the Spire style**: the player has a hand of cards, limited energy, and must choose each turn which cards to play to survive enemy attacks while defeating them.
 
@@ -16,29 +16,29 @@ Project documentation is centralized in `docs/`:
 - `docs/PRD.md` is the product and systems source of truth.
 - `docs/PROJECT_STRUCTURE.md` maps scenes, scripts, data, and assets.
 - `docs/project-rules.md` defines art, asset, naming, and architecture rules.
-- `docs/art-style-reference.md` defines the approved Hardcore Wasteland Sprite Art reference.
+- `docs/art-style-reference.md` defines the approved Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland reference.
 
 ---
 
 ## Core Gameplay Loop
 
 ```
-Hero Select -> Floor 1 Map -> Battle -> Loot -> Map -> ... -> Boss
+Hero Select + Loadout -> Act 1 Map -> Battle -> Loot -> Map -> ... -> Act Boss
                                                                               ↓
-                                                              Extract OR Push to Floor 2
+                                                              Extract OR Push on to Act 2
                                                                               ↓
-                                                              Floor 2 → ... → Boss
+                                                              Act 2 → ... → Boss
                                                                               ↓
-                                                              Extract OR Push to Floor 3
+                                                              Extract OR Push on to Act 3
                                                                               ↓
-                                                              Floor 3 → Final Boss → Victory
+                                                              Act 3 → Final Boss → Victory
 ```
 
-1. **Hero Select** - Choose a hero archetype with a fixed starter deck and attribute spread
-2. **Map** - Choose the next encounter node (normal / elite / rest site / shop / boss)
+1. **Hero Select + Loadout** - Pick a hero (fixed starter deck + attribute spread) and inject stashed gear into the backpack
+2. **Map** - Choose the next encounter node (normal / elite / rest / shop / treasure / ? event / boss) within the act's ~12-floor map
 3. **Battle** - STS-style card combat
-4. **Loot Reward** - Post-battle: claim gold and optionally draft 1 new card
-5. **Boss Extraction Choice** _(after each boss)_ - Continue to the next floor OR extract with current loot
+4. **Loot Reward** - Post-battle: claim gold/Core and optionally draft 1 new card
+5. **Boss Extraction Choice** _(after each non-final act boss)_ - Push on to the next act OR extract (bank carried Core, gear → permanent stash)
 6. **Base Building** - Between runs, spend Core to permanently upgrade the home base
 
 ---
@@ -84,8 +84,8 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 | **Strength** | 力量 | Added to attack card damage |
 | **Constitution** | 体质 | Added to skill card block; replaces old "Defense" |
 | **Intelligence** | 智力 | Used by Ability cards and special scaling (e.g. Overdrive) |
-| **Luck** | 幸运 | Affects reward quality, crit chance (future) |
-| **Charm** | 魅力 | Affects shop prices, NPC interactions (future) |
+| **Luck** | 幸运 | Crit chance (1.5× hits via Cowboy Bill's Crit Clip relic, ≈luck×3% capped 40%) + post-battle gold + loot rarity |
+| **Charm** | 魅力 | Lowers shop prices (≈2%/point, floored at 0.6×) + unlocks high-Charm options in random events |
 
 > Equipment boosts these five stats. Attributes persist within a run via `RunManager.player_attributes`.
 
@@ -100,10 +100,11 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 | **Strength Up** | Bonus strength for stacks turns then expires |
 
 ### Enemy System
-- Each enemy loads from `card_info/enemy/{id}.json` — includes a `sprite_id` for the final sprite art
-- Enemies have an `action_pattern` array that cycles: `attack`, `block`, `heal`
-- **Intent badge** displayed above enemy HUD with emoji (⚔/🛡/♥)
-- Multiple enemies per encounter are supported
+- Each enemy loads from `card_info/enemy/{id}.json` — includes a `sprite_id` for the art
+- Action types: `attack`, `attack_status`, `attack_all`, `block`, `heal`, `telegraph`, plus `summon` (spawn add enemies, capped at 4 on the field) and `buff_self` (apply a status to itself, e.g. `strength_up`)
+- **Bosses have bespoke mechanics** via an optional `phases` field: at an HP threshold the boss runs one-time `on_enter` actions and swaps to a tougher `action_pattern`. The three act bosses: **rust_titan** (enrage at 50% — stacks Strength), **ash_warden** (debuff + summons `ember_wisp`), **junkyard_tyrant** (summons `scrap_shard` + AoE + self-heal). Killing the boss ends the fight even if summoned adds are still alive.
+- **Per-act difficulty scaling**: non-boss enemy HP ×[1.0, 1.25, 1.5] and damage ×[1.0, 1.15, 1.3] by act; the enemy pool also shifts tougher each act. Bosses are exempt (tuned per-boss).
+- **Intent badge** displayed above enemy HUD with emoji; multiple enemies per encounter supported
 
 ---
 
@@ -160,36 +161,34 @@ Relics are **passive effects that persist for the entire run**. Unlike equipment
 
 ---
 
-## Tarkov Extraction System (撤离机制)
+## Extraction Backpack Economy (撤离背包经济)
 
-The run is divided into **3 floors**. After each boss, the player faces an extraction choice.
+The run is **3 self-contained acts**, each its own ~12-floor map ending in a single boss (`ACT_BOSSES = [rust_titan, ash_warden, junkyard_tyrant]`; tracked by `RunManager.current_act` / `advance_act()`). Clearing a non-final act's boss opens an extract-vs-push choice; clearing the final act's boss wins the run.
 
-### Floor Structure
-```
-Floor 1: Normal encounters → Elite → Boss
-Floor 2: Harder encounters → Elite → Boss  
-Floor 3: Hardest encounters → Elite → Final Boss → Victory
-```
+### The backpack (20 cells)
+All loot lives in a single **20-cell backpack** where **Gold, Core, and equipment compete for space**:
+- **Gold** — physical stacks (≤100/cell, auto-merge, used for shop change-making). Gold does **NOT** carry across runs.
+- **Core** — in-run meta-currency dropped by elites / bosses / treasure / events (≤30/cell). Not spendable in-run; banks to permanent `MetaProgress.core` **only on extract or final victory**.
+- **Equipment** — one item per cell.
 
-### Extraction Choice (after each Floor 1 and Floor 2 boss)
-When a boss is defeated, the player sees a choice screen:
+### Death, safe cells, and the permanent stash
+- **Death forfeits the entire backpack AND equipped gear — EXCEPT "safe cells."** The first N cells are safe (base 2, +1 per Blacksmith base-upgrade level); their contents survive death.
+- **Extract / final victory** banks all carried Core and sends all carried + equipped gear to a **permanent base stash** (`MetaProgress.stash`).
+- A **loadout step** at the base injects chosen stashed gear into the next run's backpack (`RunManager.pending_loadout`).
 
-> **🚪 EXTRACT** — Leave now. Keep all gold, equipment, relics, and cards collected so far. Return to base.
+### Extraction choice (after each non-final act boss)
+> **🚪 EXTRACT** — bank the Core in your backpack now and return to base (lower, but guaranteed).
 >
-> **⬆ PUSH DEEPER** — Continue to the next floor. Higher risk, higher reward. If you die, you lose everything.
-
-- Extracting triggers **base-building reward** (carry-in loot saved)
-- Dying on a deeper floor means losing everything above the floor you extracted at
-- Players who push all 3 floors and win get the **full victory bonus**
+> **⬆ PUSH ON** — take more Core (into the backpack, still at death risk) and continue to the next act (regenerates a fresh act map).
 
 ### End States
 
 | Outcome | Result |
 |---|---|
-| Extract after Floor 1 boss | Save Floor 1 loot → base building |
-| Extract after Floor 2 boss | Save Floor 1+2 loot → base building |
-| Complete Floor 3 boss | Full victory, maximum reward |
-| Die on any floor | Lose all loot from that floor onward |
+| Extract after an act boss | Carried Core banks to `MetaProgress.core`; all gear → stash; run ends |
+| Push on | More Core into the backpack (still at death risk); next act map generated |
+| Clear the final-act boss | Full victory — everything banks |
+| Die on any floor | Lose the backpack + equipped gear, EXCEPT safe-cell contents |
 
 ---
 
@@ -316,36 +315,36 @@ BattleScene (Node)
 
 ---
 
-## Art Style - Hardcore Wasteland Sprite Art
+## Art Style - Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland
 
-The game's definitive art direction is **Hardcore Wasteland Sprite Art**, with Cowboy Bill as the ground-truth reference (`docs/art-style-reference.md`): detailed fully-rendered sprites authored at 128×128 native, bold dark outlines, gritty wasteland materials, warm rust/leather colors, rich controlled shading, and one small glowing neon accent. (Renamed/clarified — see ADR-0011.)
+The game's definitive art direction is **Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland**, with `docs/art/rick-morty-radiation-rat-style-reference.png` as the ground-truth reference. The style target is original adult sci-fi animation adapted into game assets: thick rubbery dark outlines, flat bright color blocks, simple cel shading, exaggerated awkward proportions, toxic-green radiation accents, dusty western junk-tech materials, and weird comic tone.
+
+The project is no longer a 128-pixel or pixel-art style. Any frame sizes in asset specs are engine output contracts only.
 
 ### Visual Rules
 | Element | Rule |
 |---|---|
-| **Native resolution** | Combat heroes and standard enemies are authored as 128x128 pixel-art frames unless a spec marks a larger boss scale. |
-| **Silhouette** | Compact, tough, battle-ready, and instantly readable at gameplay size. |
-| **Materials** | Scrap metal, duct tape, bolts, dents, rubber, cracked glass, worn leather, patched cloth, exposed wiring - salvaged and corroded. Nothing clean or new. |
-| **Color palette** | Warm earth-tone base: leather brown, rust orange, dusty tan, muted olive, dark steel, faded brass + **one neon accent per character** |
-| **Outlines** | Bold black pixel outlines with deliberate pixel clusters |
-| **Shading** | Controlled pixel shading with readable highlight/mid/shadow clusters - NOT photorealistic |
-| **Background** | Sprites and FX are transparent; full-scene map and battle backgrounds are scene-ready PNGs with no UI baked in |
+| **Style target** | Rick-and-Morty-like adult sci-fi cartoon wasteland game art; original designs only, no copying named characters or exact show designs. |
+| **Output sizes** | Use the dimensions required by each asset spec; size does not define the art style. |
+| **Silhouette** | Exaggerated, asymmetrical, and immediately readable: bulging eyes, huge teeth, warped bodies, lanky limbs, crooked antennas, glowing pustules, and awkward junk-tech proportions. |
+| **Materials** | Mutant skin, patchy fur, dusty leather, brass cuffs, dented steel, exposed springs, patched cloth, rubber hoses, cracked glass, radioactive slime, and cheap improvised sci-fi parts. |
+| **Color palette** | Sickly radioactive green and yellow-green accents over dusty tan, dirty pink skin, leather brown, rust, brass, dark steel, and occasional cyan or magenta. |
+| **Outlines** | Thick black or very dark brown rubbery outlines with confident interior contour lines. |
+| **Shading** | Simple two-to-three value cel shading; use shadow shapes to clarify volume instead of detailed painterly texture. |
+| **Background** | Character, card, UI, and FX sprites use transparent backgrounds; full-scene map and battle backgrounds are scene-ready PNGs with no UI baked in. |
 
 ### Character Anchors
-- Cowboy Bill: robot cowboy hero with exactly one large central camera eye, oversized battered hat, red bandana, patched duster/poncho, chunky boots, salvaged hand cannon, facing right.
-- Trash Bot: compact trash-bin robot enemy with compactor body, camera-eye face, tiny treads or scrap wheels, grabber arms, dents/tape/bolts, small neon light, facing left.
+- Cowboy Bill: robot cowboy hero with exactly one large orange camera eye, oversized battered hat with star badge, red scarf, patched duster or poncho, chunky boots, salvaged revolver, facing right.
+- Enemies: original junk-tech cartoon creatures, drones, mutants, or robots, facing left, with strong comic silhouettes and one or two small neon accents.
 
 ### Mandatory Prompt Anchor
 Every generated asset prompt should preserve this wording:
-```
-hardcore 128 pixel wasteland art style, native 128x128 pixel game sprite readability,
-bold black pixel outlines, gritty rusted scrap metal, worn leather and patched cloth,
-dusty desert palette, controlled pixel shading, salvaged bolts dents tubes and cracked glass,
-one small neon accent, transparent background, no high-resolution cartoon brushwork
+```text
+original offbeat adult sci-fi cartoon wasteland game art, Rick-and-Morty-like broad adult sci-fi animation energy without copying named characters or exact show designs, thick dark rubbery outlines, flat bright color blocks, simple cel shading, exaggerated asymmetrical proportions, bulging expressive eyes, weird mutant or junk-tech silhouette, dusty western leather and brass, dented steel, exposed springs, patched cloth, radioactive slime, one or two small toxic-green glowing accents, crisp sprite-ready edges, solid #FF00FF magenta background for cleanup or transparent final PNG, no text, no UI frame, no logo
 ```
 
 ### Generation Pipeline
-Final Godot assets are PNG files. Character and FX sheets use a solid `#FF00FF` background for cleanup, then are split into transparent frames. Card illustrations and battle backgrounds are scene-ready PNGs with no text, logos, or UI baked in.
+Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00FF` background for cleanup, then be split into transparent frames. Card illustrations and battle backgrounds are scene-ready PNGs with no text, logos, or UI baked in.
 
 ### Sprite Pipeline
 1. Generate a contained sheet with consistent character scale and a shared baseline.
@@ -355,9 +354,8 @@ Final Godot assets are PNG files. Character and FX sheets use a solid `#FF00FF` 
 
 - **Folder:** `enemies/{sprite_id}/{anim}/{sprite_id}_{anim}_{n}.png` or `heroes/{hero_id}/{anim}/{hero_id}_{anim}_{n}.png`.
 - **Frame counts:** 4 attack frames; `attack_0` is also the static rest pose. There are no separate idle animation assets.
-- **Scale:** frames render with nearest filtering in Godot and are sized per entity.
+- **Scale:** frames render at the size set by gameplay/UI code; scale does not change the art direction.
 - **Source sheets:** keep raw/generated sheets in `generated_sheet/` folders only.
-
 ---
 
 ## Development Roadmap
@@ -371,7 +369,7 @@ Final Godot assets are PNG files. Character and FX sheets use a solid `#FF00FF` 
 - Player HP / block / energy UI (CharacterHUD)
 - Draw pile / discard pile viewer (Q/E shortcuts)
 - Status effect system (poison, burn, weak, vulnerable, strength_up)
-- Pixel art combat sprites with static rest poses and attack animations
+- Combat sprites with static rest poses and attack animations
 
 ### 🔄 Phase 2 — Run System & Content (Active)
 - Map scene with selectable encounter nodes per floor
@@ -383,7 +381,7 @@ Final Godot assets are PNG files. Character and FX sheets use a solid `#FF00FF` 
 
 ### ✅ Phase 3 — Equipment & Relics (Complete)
 - ✅ Equipment system: 5 body-part slots, stat bonuses, swap on map screen, 2 sets with tiered bonuses (3-piece / 5-piece), 18 items (10 common / 4 uncommon / 4 rare)
-- ✅ Inventory cap (8 items) + inventory-full discard modal
+- ✅ Inventory (8-item cap) — later superseded by the 20-cell Extraction Backpack where Gold/Core/equipment share cells (see Extraction Backpack Economy)
 - ✅ Elite/Boss loot equipment drops; treasure node 50/50 relic or equipment (70/30 uncommon/rare)
 - ✅ Relic system: passive run effects, JSON-driven (RelicEffectSystem)
 - ✅ Shop scene (merchant node): 3 cards + 2 equipment + 1 relic + remove-card service (75g)
@@ -400,7 +398,7 @@ Final Godot assets are PNG files. Character and FX sheets use a solid `#FF00FF` 
   - **Research Lab**: 5% / 10% / 15% chance to promote loot draft cards' rarity (Lv3 also adds +5% rare)
   - **Scrap Workshop**: 10% / 20% / 30% off all shop prices
   - **Command Center**: +50 / +120 / +200 starting gold
-- ✅ Boss victory grants +150 Core and returns to home base (current map has 1 boss per run; extract/continue choice deferred until map redesign adds multiple bosses)
+- ✅ Boss victory grants Core and returns to home base. (Superseded by the 3-act map: each act ends in a boss, and the extract-vs-push-on choice now ships after each non-final act boss — see Extraction Backpack Economy.)
 - ✅ Player death routes to home base (no Core gained)
 - ✅ Hero JSON schema + dynamic loader: heroes/*.json (cowboy_bill + hero_jerry_killer); player.gd reads sprite/tint/stats from RunManager.current_hero_data
 - ✅ Hero unlock: jerry_unlock base upgrade (100 Core, single tier)
@@ -409,12 +407,20 @@ Final Godot assets are PNG files. Character and FX sheets use a solid `#FF00FF` 
 - ✅ Starter Boost upgrade: 3 tiers, +N random attribute points at run start
 - ✅ Card Research upgrade: 3 tiers unlocking 5 cards (flash_bang, bone_breaker, last_breath, preemptive_strike, junk_bomb)
 
-### ⬜ Phase 5 — Content Expansion
-- Multiple hero archetypes with unique starting decks
-- 30+ unique cards
-- 10+ enemy types with final sprite art
-- 3 boss encounters (one per floor) with multi-phase patterns
-- Final boss with unique mechanics
+### 🟡 Phase 5 — Content Expansion (in progress)
+- ✅ Second hero with a distinct kit: **Jerry the Killer** (aggressive high-STR, `bounty_tags` starting relic); Cowboy Bill = luck/crit (`crit_clip`)
+- ✅ 35 cards (excl. `_plus`), including luck/charm/strength-scaling cards
+- ✅ 13 enemy types (+2 summon-only adds); art migrating to the new style (ADR-0012)
+- ✅ 3 boss encounters (one per act) with multi-phase patterns + bespoke mechanics (enrage / summon / AoE)
+- ⬜ More heroes, more enemies, deeper boss gimmicks
+
+### ✅ Phase 6 — Three-Act Maps · Extraction Economy · Active Attributes (shipped 2026-05–06)
+- ✅ **3-act map**: each act is its own ~12-floor map ending in a boss (`current_act` / `advance_act()`), with per-act enemy stat + pool scaling
+- ✅ **Extraction Backpack Economy**: 20-cell backpack (Gold/Core/equipment share cells), safe cells survive death, permanent base stash + next-run loadout, extract-vs-push choice after each non-final act boss
+- ✅ **Active attributes**: Luck → crit (`crit_clip`) + post-battle gold + loot rarity; Charm → shop discount + event gating
+- ✅ **Boss bespoke mechanics**: HP-threshold `phases` + `summon` / `buff_self` enemy actions
+- ✅ **Random events**: the "?" map node opens a full event scene (2–3 attribute-gated options); 6 events
+- ✅ Act-aware UI (map top bar / vitals / run history show the act) + i18n (zh) for events
 
 ---
 
@@ -422,7 +428,6 @@ Final Godot assets are PNG files. Character and FX sheets use a solid `#FF00FF` 
 
 | Priority | Issue |
 |---|---|
-| 🟡 | `player.gd:HERO_ID` is hardcoded to `"cowboy_bill"` — `RunManager.current_hero_id` is set by hero_select but `PlayerEntity` ignores it. Both Bill and Jerry render the same sprite + name. Blocks Phase 5 "multiple hero archetypes" — needs hero JSON schema + dynamic loader. |
 | 🟢 | `Sharpened Scrap` relic's `_mark_used_once()` call is harmless dead code for non-`once_per_combat` relics — minor readability |
 | P3 | Some legacy generated card art may remain unused; current playable cards should reference PNG art |
 | ⚠️ | **The pre-2026-05-25 PixelLab key in `generate_enemy.ps1`** is in git history and should be rotated on the PixelLab side. The file now reads from `$env:PIXELLAB_API_KEY` but the old key remains exposed in historical commits. |
