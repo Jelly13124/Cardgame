@@ -114,7 +114,9 @@ func _lock_hint(opt: Dictionary) -> String:
 		return ""
 	var parts: Array[String] = []
 	for attr in requires.keys():
-		var attr_name := Settings.t("ATTR_%s" % str(attr).to_upper(), str(attr).capitalize())
+		var attr_name := Settings.t(
+			"UI_BATTLE_ATTR_%s" % str(attr).to_upper(), str(attr).capitalize()
+		)
 		parts.append("[%s %d]" % [attr_name, int(requires[attr])])
 	return " ".join(parts)
 
@@ -133,30 +135,24 @@ func _on_option_pressed(index: int) -> void:
 		return
 
 	_resolved = true
-	_disable_buttons()
 
-	var result_text := ""
+	# Pick the (effects, key-suffix, english-fallback) triple, then apply + render
+	# once — the plain and luck_check success/fail paths differ only in these three.
+	var effects_key := "effects"
+	var suffix := "RESULT"
+	var fallback := str(opt.get("result", opt.get("result_text", "")))
 	if bool(opt.get("luck_check", false)):
 		if randf() < RunManager.luck_check_chance():
-			RunManager.apply_event_effects(opt.get("effects_success", []))
-			result_text = Settings.t(
-				"EVENT_%s_OPT%d_RESULT_OK" % [_eid, index],
-				str(opt.get("result_success", opt.get("result", "")))
-			)
+			effects_key = "effects_success"
+			suffix = "RESULT_OK"
+			fallback = str(opt.get("result_success", opt.get("result", "")))
 		else:
-			RunManager.apply_event_effects(opt.get("effects_fail", []))
-			result_text = Settings.t(
-				"EVENT_%s_OPT%d_RESULT_FAIL" % [_eid, index],
-				str(opt.get("result_fail", opt.get("result", "")))
-			)
-	else:
-		RunManager.apply_event_effects(opt.get("effects", []))
-		result_text = Settings.t(
-			"EVENT_%s_OPT%d_RESULT" % [_eid, index],
-			str(opt.get("result", opt.get("result_text", "")))
-		)
+			effects_key = "effects_fail"
+			suffix = "RESULT_FAIL"
+			fallback = str(opt.get("result_fail", opt.get("result", "")))
 
-	_show_result(result_text)
+	RunManager.apply_event_effects(opt.get(effects_key, []))
+	_show_result(Settings.t("EVENT_%s_OPT%d_%s" % [_eid, index, suffix], fallback))
 
 
 ## Replace the options with the outcome text + a Continue button that finalizes.
@@ -183,11 +179,5 @@ func _show_result(text: String) -> void:
 
 
 func _finalize() -> void:
-	emit_signal("resolved")
+	resolved.emit()
 	queue_free()
-
-
-func _disable_buttons() -> void:
-	for button in _option_buttons:
-		if is_instance_valid(button):
-			button.disabled = true

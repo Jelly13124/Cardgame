@@ -1,10 +1,5 @@
 keys,en,zh
 UI_EVENT_CONTINUE,Continue,继续
-ATTR_LUCK,Luck,幸运
-ATTR_CHARM,Charm,魅力
-ATTR_STRENGTH,Strength,力量
-ATTR_CONSTITUTION,Constitution,体质
-ATTR_INTELLIGENCE,Intelligence,智力
 EVENT_STRANDED_TRADER_TITLE,Stranded Trader,困在荒野的商人
 EVENT_STRANDED_TRADER_DESC,"A merchant's rig sits dead in the cracked salt-flat, one wheel buried. He squints at you over a dust-caked scarf, hand never far from his holster.","一辆商队车死在龟裂的盐碱地上，一只轮子陷进沙里。他从蒙尘的围巾上方眯眼打量你，手始终没离开枪套。"
 EVENT_STRANDED_TRADER_OPT0_TEXT,Help dig the rig free (he pays you +40 gold),帮他把车挖出来（他付你 +40 金币）

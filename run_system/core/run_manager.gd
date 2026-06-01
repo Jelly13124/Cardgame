@@ -112,6 +112,10 @@ var player_attributes: Dictionary = {
 ## is the parsed JSON Dictionary. Populated by load_random_events().
 var _random_events: Array = []
 
+## Memoized relic JSON by id. Relic data is immutable at runtime, so get_relic_data
+## parses each file at most once — the relic effect system reads this per attack hit.
+var _relic_data_cache: Dictionary = {}
+
 ## Enemy IDs to encounter in the next battle (set by MapScene before loading battle).
 ## Example: ["trash_robot", "wasteland_killer"]
 var current_encounter: Array[String] = ["trash_robot"]
@@ -925,6 +929,15 @@ func charm_shop_mult() -> float:
 	return maxf(SHOP_FLOOR, 1.0 - _attr("charm") * SHOP_PER_CHARM)
 
 
+## Permanently raise a BASE attribute by `amount` and refresh derived totals.
+## Single-sources the "bump a base attribute" idiom (random events + starter_boost).
+func grant_attribute(attr: String, amount: int) -> void:
+	if attr == "":
+		return
+	base_attributes[attr] = int(base_attributes.get(attr, 3)) + amount
+	recompute_attributes()
+
+
 # --- Random events (luck/charm driven "?" node) ----------------------------
 # Data schema + validator live in data_validator.gd. Effect types are dispatched
 # by apply_event_effects() to the matching RunManager mutation.
@@ -1006,12 +1019,7 @@ func apply_event_effects(effects: Array) -> void:
 				if item_id != "":
 					add_equip_to_backpack(item_id)
 			"gain_attribute":
-				var attr := str(effect.get("attr", ""))
-				if attr != "":
-					base_attributes[attr] = (
-						int(base_attributes.get(attr, 0)) + int(effect.get("amount", 0))
-					)
-					recompute_attributes()
+				grant_attribute(str(effect.get("attr", "")), int(effect.get("amount", 0)))
 
 
 ## Equip item_id into slot. If slot is occupied, the previous occupant moves
@@ -1196,6 +1204,8 @@ func _load_json_by_id(dir_path: String, id: String) -> Dictionary:
 
 ## Returns a default-populated dict for relic_id, with any JSON fields merged in.
 func get_relic_data(relic_id: String) -> Dictionary:
+	if _relic_data_cache.has(relic_id):
+		return _relic_data_cache[relic_id]
 	var data: Dictionary = {
 		"id": relic_id,
 		"title": _humanize_id(relic_id),
@@ -1207,6 +1217,7 @@ func get_relic_data(relic_id: String) -> Dictionary:
 	var parsed: Dictionary = _load_json_by_id(RELIC_DATA_DIR, relic_id)
 	for key in parsed.keys():
 		data[key] = parsed[key]
+	_relic_data_cache[relic_id] = data
 	return data
 
 
@@ -1315,9 +1326,7 @@ func _apply_meta_upgrades() -> void:
 		var attr_keys: Array = ["strength", "constitution", "intelligence", "luck", "charm"]
 		for i in range(points):
 			var pick: String = attr_keys[randi() % attr_keys.size()]
-			base_attributes[pick] = int(base_attributes.get(pick, 3)) + 1
-		# Recompute derived stats after attribute mutation.
-		player_attributes = base_attributes.duplicate()
+			grant_attribute(pick, 1)
 
 	# (loot_rarity_bias + shop_discount are read on-demand by loot_reward / shop_scene;
 	# nothing to apply here.)
