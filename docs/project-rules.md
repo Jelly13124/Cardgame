@@ -1,7 +1,7 @@
 # Project Rules
 
 **Project:** Unnamed Sci-Fi Roguelite Card Game  
-**Last Updated:** 2026-05-19
+**Last Updated:** 2026-05-31
 
 ---
 
@@ -18,62 +18,64 @@ Do not reintroduce root-level local workflow docs such as `skills/`; shared proj
 
 ---
 
-## 1. Art Style - Hardcore Wasteland Sprite Art (Non-Negotiable)
+## 1. Art Style - Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland (Non-Negotiable)
 
-All visual assets in this project **must** follow the approved **Hardcore Wasteland Sprite Art** direction in `docs/art-style-reference.md`. (Renamed from "Hardcore 128 Pixel Wasteland Art" — see ADR-0011.)
+All visual assets in this project **must** follow the approved **Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland** direction in `docs/art-style-reference.md`. The owner's shorthand is "Rick and Morty style": broad adult sci-fi cartoon energy, rubbery outlines, flat colors, absurd proportions, and weird sci-fi comedy. Designs must stay original and must not copy named characters, exact show designs, logos, or proprietary story elements. This supersedes the old sprite-art direction; see ADR-0012.
 
-The ground-truth reference is Cowboy Bill (`battle_scene/assets/images/heroes/cowboy_bill/`): a one-eyed robot cowboy as a **detailed, fully-rendered sprite** — bold dark outlines, rusted scrap materials, warm leather/brass colors, rich highlight-mid-shadow shading, and one small glowing neon accent. The look is rendered sprite art, NOT lo-fi pixel art. When wording conflicts with how Bill looks, Bill wins.
+The ground-truth reference is `docs/art/rick-morty-radiation-rat-style-reference.png`: a mutated radiation rat sheet with thick rubbery cartoon outlines, flat bright color blocks, simple cel shading, bulging expressive eyes, gross-comic proportions, dusty wasteland junk straps, and toxic-green radioactive accents. The current Cowboy Bill identity/card-scene reference is `docs/art/current-cowboy-bill-style-reference.png`. When older docs, previous sprites, or old Cowboy Bill references conflict with these references, these references win.
 
 ### Visual Rules
 
-- **Native resolution:** Combat heroes and standard enemies are authored at 128×128 (192×192 bosses) unless a spec marks a larger scale. This is the in-game display/detail budget — NOT a lo-fi pixel-art aesthetic; the look is a detailed fully-rendered sprite.
-- **Silhouettes:** Compact, tough, battle-ready, and readable at gameplay size. One glance should identify the unit or item.
-- **Materials:** Scrap metal, duct tape, bolts, dents, rubber, cracked glass, worn leather, patched cloth, and exposed wiring. Everything is salvaged and used.
-- **Color palette:** Warm earth-tone base: leather brown, rust orange, dusty tan, muted olive, dark steel, faded brass, and desaturated charcoal.
-- **Accent color:** One small high-contrast accent per character, item, or UI icon.
-- **Outlines:** Bold dark outlines that read at gameplay size. Do not use thin realistic hairlines or pure minimalist line art.
-- **Shading:** Rich, controlled shading with a clear highlight/mid/shadow read (a fully-rendered sprite). Avoid flat fills, photorealism, and noisy dithering.
+- **Resolution policy:** Frame sizes are technical output requirements only. A 128x128, 192x192, 256x256, or 512x320 target is a file-size contract, not a style constraint.
+- **Silhouettes:** Exaggerated, asymmetrical, and immediately readable. Bulging eyes, huge teeth, warped bodies, lanky limbs, crooked antennas, glowing pustules, and awkward junk-tech proportions are encouraged.
+- **Materials:** Mutant skin, patchy fur, dusty western leather, brass cuffs, dented steel, exposed springs, patched cloth, rubber hoses, cracked glass, radioactive slime, and cheap improvised sci-fi parts.
+- **Color palette:** Sickly radioactive green and yellow-green accents over dusty tan, dirty pink skin, leather brown, rust, brass, dark steel, and occasional cyan or magenta.
+- **Accent color:** Toxic green is the primary world accent. Use one or two small high-contrast glowing accents per character, item, or UI icon.
+- **Outlines:** Thick black or very dark brown rubbery outlines. Do not use thin realistic hairlines or pure minimalist line art.
+- **Shading:** Simple two-to-three value cel shading. Avoid high-detail painterly rendering, photorealism, and noisy dithering.
 - **Background:** Character, card, UI, and FX sprites use transparent backgrounds; full-scene map and battle backgrounds are scene-ready PNGs with no UI baked in.
 
 ### Character Anchors
 
-- **Cowboy Bill:** robot cowboy hero, exactly one large central camera eye, oversized battered hat, red bandana, patched duster/poncho, chunky boots, salvaged hand cannon, faces right.
-- **Trash Bot:** compact trash-collecting robot enemy, trash-bin or compactor body, camera-eye face, tiny tank treads or scrap wheels, stubby grabber arms, dents/tape/bolts, small neon light, faces left.
+- **Style standard:** the radiation rat reference defines the current line weight, flatness, eye treatment, radioactive palette, and gross-comic silhouette language.
+- **Cowboy Bill:** robot cowboy hero, exactly one large orange camera eye, oversized hat with star badge, red scarf, patched duster/poncho, chunky boots, salvaged revolver, faces right. Use `docs/art/current-cowboy-bill-style-reference.png` for his current look. Do not use older standalone Bill renders.
+- **Enemies:** original junk-tech cartoon creatures, radiation mutants, drones, or robots; enemies face left and should share the new cartoon silhouette language.
 
 ### Mandatory Prompt Anchor
 
 Every generated asset prompt must preserve this wording unless the asset type makes a clause impossible:
 
 ```text
-hardcore wasteland sprite art, detailed fully-rendered game sprite, bold dark outlines,
-rich controlled shading with clear highlight-mid-shadow, warm rust / leather / brass / dark-steel / dusty-tan palette,
-salvaged scrap metal with bolts dents tubes and cracked glass, worn leather and patched cloth,
-one small glowing neon accent, authored at 128px native (192px bosses) for in-game readability,
-transparent background, match the Cowboy Bill reference fidelity, not lo-fi pixel art, not flat
+original offbeat adult sci-fi cartoon wasteland game art, Rick-and-Morty-like broad adult sci-fi animation energy without copying named characters or exact show designs,
+thick dark rubbery outlines, flat bright color blocks, simple cel shading, exaggerated asymmetrical proportions,
+bulging expressive eyes, weird mutant or junk-tech silhouette, dusty western leather and brass, dented steel, exposed springs, patched cloth, radioactive slime,
+one or two small toxic-green glowing accents, crisp sprite-ready edges,
+solid #FF00FF magenta background for cleanup or transparent final PNG, no text, no UI frame, no logo
 ```
 
 For combat unit sheets, also include:
 
 ```text
-side view, full body, shared baseline, consistent scale, hero faces right or enemy faces left,
-4 attack frames, attack frame 0 doubles as the static rest pose, no separate idle animation
+side view full body, shared baseline, consistent scale, hero faces right or enemy faces left,
+4 attack frames, attack frame 0 doubles as the static rest pose, no separate idle animation,
+contained inside each frame with safe margins
 ```
 
 ### Prohibited
 
+- No direct copies of copyrighted characters, named show characters, logos, or exact show-specific designs.
 - No clean, shiny, or futuristic-clean aesthetics.
-- No direct copies of copyrighted characters or named IP styles.
 - No realistic shading, photorealistic lighting, vector art, or hard-surface concept art.
-- No flat, vector, or cel-shaded output with no material texture.
-- No tiny 16x16 or 32x32 lo-fi sprites for combat units.
-- No dense noise or over-rendering that makes the sprite unreadable at gameplay size.
-- No assets that do not visually fit the same Hardcore Wasteland Sprite Art world (match Cowboy Bill).
+- No high-detail painterly rendered sprites as the new target.
+- No prompt language that treats file dimensions as the art style. Use the current cartoon anchor instead of earlier sprite-art anchors unless the owner explicitly asks for a one-off different style.
+- No dense noise or over-rendering that hides the cartoon silhouette.
+- No assets that do not visually fit the same Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland world.
 
 ---
 
 ## 2. Asset Generation - Production Pipeline
 
-All final in-project visual assets must be PNG art that follows the Hardcore Wasteland Sprite Art rules above. Source generation can use the available image-generation pipeline, but generated sheets must be post-processed into transparent or scene-ready PNGs before being referenced by Godot.
+All final in-project visual assets must be PNG art that follows the Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland rules above. Source generation can use the available image-generation pipeline, but generated sheets must be post-processed into transparent or scene-ready PNGs before being referenced by Godot.
 
 ### Required Outputs
 
@@ -86,7 +88,7 @@ All final in-project visual assets must be PNG art that follows the Hardcore Was
 
 ### Prompt Requirements
 
-- Preserve the exact Hardcore Wasteland Sprite Art language from section 1 and `docs/art-style-reference.md`.
+- Preserve the exact Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland language from section 1 and `docs/art-style-reference.md`.
 - Prefer side-view full-body sprites for combat units.
 - Final enemy frames must face left toward the player. Do not rely on a global runtime flip to correct mixed source orientations.
 - Hero frames must face right toward enemies.

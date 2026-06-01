@@ -3,6 +3,8 @@
 ## Status
 Accepted - Supersedes ADR-0007
 
+Historical only. Current forward-looking art generation is superseded by ADR-0013 and `docs/art-style-reference.md`; do not use the old Hardcore 128 Pixel Wasteland reference as current style guidance.
+
 ## Date
 2026-05-19
 

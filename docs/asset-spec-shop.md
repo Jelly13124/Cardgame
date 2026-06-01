@@ -2,7 +2,7 @@
 
 **Audience:** codex (asset generation pipeline)
 **Owner of code/scene:** Claude (already implemented)
-**Project:** Cardgame (Godot 4.6, Hardcore 128 Pixel Wasteland Art roguelite)
+**Project:** Cardgame (Godot 4.6, Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland roguelite)
 **Status:** All-optional. The shop scene is functional with a plain dark background; these assets are visual polish.
 
 This document tells codex what art assets would make the shop scene feel
@@ -14,21 +14,20 @@ with no shopkeeper — still fully playable.
 
 ## 0. Style Preamble (Non-Negotiable)
 
-Every prompt for every asset must preserve the approved Hardcore 128 Pixel
-Wasteland Art prompt anchor from `docs/project-rules.md` §1 and
-`docs/art-style-reference.md`:
+Every prompt for every asset in this doc must preserve the current art direction from `docs/art-style-reference.md` and `docs/project-rules.md` section 1:
 
-```
-hardcore 128 pixel wasteland art style, native 128x128 pixel game sprite readability,
-bold black pixel outlines, gritty rusted scrap metal, worn leather and patched cloth,
-dusty desert palette, controlled pixel shading, salvaged bolts dents tubes and cracked glass,
-one small neon accent, transparent background, no high-resolution cartoon brushwork
+```text
+original offbeat adult sci-fi cartoon wasteland game art, Rick-and-Morty-like broad adult sci-fi animation energy without copying named characters or exact show designs, thick dark rubbery outlines, flat bright color blocks, simple cel shading, exaggerated asymmetrical proportions, weird junk-tech silhouette, dusty western leather and brass, dented steel, exposed springs, patched cloth, one or two small glowing neon accents, crisp sprite-ready edges, solid #FF00FF magenta background for cleanup or transparent final PNG, no text, no UI frame, no logo
 ```
 
-For background assets, drop "transparent background" — backgrounds are opaque
-scene wallpaper.
+Style notes:
+- File dimensions in the tables below are output-size requirements only; they do not imply pixel art.
+- Use clean cartoon silhouettes, thick dark outlines, flat bright color blocks, and simple cel shading.
+- Keep the wasteland-western junk-tech materials: dusty leather, brass, dented steel, exposed springs, patched cloth, rubber hoses, cracked glass.
+- Use one or two small neon accents per item or character; do not flood the asset with glow.
+- Keep designs original and do not copy named characters or exact show-specific designs.
 
----
+For opaque background assets, drop the transparent/final PNG clause and generate scene-ready art with no UI baked in.
 
 ## 1. Pipeline Reminders
 
@@ -53,7 +52,7 @@ scene wallpaper.
 - Dust motes in air; gritty, lived-in feel
 - Composition leaves CENTRAL/UPPER area visually quieter so the UI panel reads clearly on top
 
-**Composition reference:** Think Fallout: New Vegas trading post interior, or STS-style screen layer with bias toward atmospheric backdrop rather than playable scene.
+**Composition reference:** Think an offbeat adult sci-fi cartoon salvage shop screen layer with bias toward atmospheric backdrop rather than playable scene.
 
 ### 2.2 Shopkeeper NPC sprite
 

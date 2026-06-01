@@ -4,19 +4,19 @@ Copy everything below the `---` line into your Codex session.
 
 ---
 
-You are working in the Godot 4.6 project at `C:\Users\Jerry\Desktop\Cardgame` — a roguelite deckbuilder with a strict **Hardcore 128 Pixel Wasteland Art** style. The game has 87 sprite assets you already generated (cards, enemies, heroes, FX, backgrounds). Now we are entering a UI overhaul: **redoing the 2D UI components (panels, buttons, HP bars, card frames, intent icons)** to match the rest of the art.
+You are working in the Godot 4.6 project at `C:\Users\Jerry\Desktop\Cardgame` — a roguelite deckbuilder with a strict **Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland** style. The game has 87 sprite assets you already generated (cards, enemies, heroes, FX, backgrounds). Now we are entering a UI overhaul: **redoing the 2D UI components (panels, buttons, HP bars, card frames, intent icons)** to match the rest of the art.
 
 ## Step 1 — Read these files before doing anything else
 
 1. **`docs/asset-spec-ui-overhaul.md`** — your authoritative work order. Lists every PNG, exact paths, dimensions, 9-slice margins, palette to anchor against, per-component prompt hints. This is the canonical spec.
 2. **`tools/palette_report.md`** — the canonical 14-color palette sampled from your existing art. Every new UI component must visually anchor on these colors. The palette is **already final**; do not propose new colors.
-3. **`docs/adr/0008-art-pivot-to-hardcore-128-pixel-wasteland.md`** — the style ADR you've been working against.
+3. **`docs/adr/0012-art-pivot-to-offbeat-sci-fi-cartoon-wasteland.md`** — the current style ADR.
 4. **`docs/adr/0010-third-palette-recalibration.md`** — why this palette was chosen and from which sprites.
 5. **`docs/project-rules.md`** §1–§5 — non-negotiable wasteland style rules + pipeline conventions.
 
 Also look at one reference of each asset type that already exists in the project, so component-level detail matches existing scale and weight:
 - Existing card art: `battle_scene/assets/images/cards/player/strike.png`
-- Existing enemy sprite: `battle_scene/assets/images/enemies/trash_robot/idle/trash_robot_idle_0.png`
+- Existing enemy sprite: `battle_scene/assets/images/enemies/trash_robot/attack/trash_robot_attack_0.png`
 - Existing UI components (the **OLD STYLE** ones you are replacing): `battle_scene/assets/images/ui/` and `battle_scene/assets/images/cards/ui/`
 
 ## Step 2 — Deliverables
@@ -37,8 +37,8 @@ Full per-component spec (dimensions, 9-slice margins, prompt hints, file paths):
 
 These come from `docs/project-rules.md` §2–§5. Follow exactly:
 
-1. **Every prompt** must preserve the Hardcore 128 Pixel Wasteland Art style anchor. The palette in `tools/palette_report.md` is the **authoritative color reference** — your generated UI must visually anchor on those hex codes. Don't introduce colors outside the palette unless the prompt hint in §2 explicitly says so.
-2. **Native resolution**: 128 px for hand-painted UI components (panels, frames). 64 px or 32 px is OK for small icons (status badges, intent icons) where 128 wastes space — see per-component spec.
+1. **Every prompt** must preserve the Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland style anchor. The palette in `tools/palette_report.md` is the **authoritative color reference** — your generated UI must visually anchor on those hex codes. Don't introduce colors outside the palette unless the prompt hint in §2 explicitly says so.
+2. **Output dimensions**: use the component sizes in the spec. These are texture-size contracts only and do not imply a pixel-art style.
 3. **9-slice components** (anything that needs to stretch — panels, buttons, bar frames) MUST have art-safe corner margins. Recommended: 16 px corners for 128 px components, 8 px corners for 64 px, 4 px corners for very small. The middle row/column should be tileable WITHOUT visible seams.
 4. **Sheet generation background**: solid `#FF00FF` (magenta) for chroma-key cleanup during generation. Final per-frame PNG outputs must be **transparent PNG**.
 5. **Card art has no text, no logos baked in** — text is rendered by Godot at runtime.
@@ -50,7 +50,7 @@ These come from `docs/project-rules.md` §2–§5. Follow exactly:
 
 For every component, before submitting:
 - [ ] Color palette is anchored on the 14 canonical colors from `palette_report.md`
-- [ ] Style matches the existing card art (`strike.png`) and enemy sprite (`trash_robot/idle/0.png`)
+- [ ] Style matches the existing card art (`strike.png`) and enemy sprite (`trash_robot/attack/trash_robot_attack_0.png`)
 - [ ] Bold dark outlines (LEATHER_DARK `#302010` or close) on all visible edges
 - [ ] 9-slice components have stretchable middle (no detail crossing the corner margins)
 - [ ] Wasteland aesthetic: rivets, dents, weathering, NOT clean modern UI
@@ -89,4 +89,4 @@ While you generate art, Claude is writing Slice 1A's code-side deliverables (the
 - **REPLACE assets** light up immediately in-game on next editor open
 - **NEW assets** sit in the folder until Claude wires them in (Slice 1B/1C/1D)
 
-If you find a component too ambiguous to draw without a follow-up question, stop and ask the human — don't guess. Hardcore 128 Pixel Wasteland style consistency matters more than throughput.
+If you find a component too ambiguous to draw without a follow-up question, stop and ask the human — don't guess. Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland style consistency matters more than throughput.

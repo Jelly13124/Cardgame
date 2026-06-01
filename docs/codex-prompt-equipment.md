@@ -4,12 +4,12 @@ Copy everything below the `---` line into your codex session.
 
 ---
 
-You are working in the Godot 4.6 project at `C:\Users\Jerry\Desktop\Cardgame` — a roguelite deckbuilder with a strict **Hardcore 128 Pixel Wasteland Art** style. The gameplay code, JSON data, and equipment-panel UI for a new content slice ("Equipment v1") are already done. You are responsible for generating the 18 equipment item icons that those JSON files reference.
+You are working in the Godot 4.6 project at `C:\Users\Jerry\Desktop\Cardgame` — a roguelite deckbuilder with a strict **Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland** style. The gameplay code, JSON data, and equipment-panel UI for a new content slice ("Equipment v1") are already done. You are responsible for generating the 18 equipment item icons that those JSON files reference.
 
 ## Step 1 — Read these files before doing anything else
 
 1. **`docs/asset-spec-equipment.md`** — your authoritative work order. Lists every PNG you need to deliver, the exact file path, the theme description, and the neon accent color per item.
-2. **`docs/art-style-reference.md`** — the approved Hardcore 128 Pixel Wasteland Art visual reference translated into concrete art rules.
+2. **`docs/art-style-reference.md`** — the approved Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland visual reference translated into concrete art rules.
 3. **`docs/project-rules.md`** §1–§5 — the non-negotiable style anchor, sprite pipeline (`#FF00FF` chroma key → transparent PNG), and folder/naming conventions.
 
 Also look at one reference of each existing asset type so your output matches the project's visual weight:
@@ -31,7 +31,7 @@ All single-frame, transparent background, 128×128 native, no animation.
 
 These come from `docs/project-rules.md` §2–§5. Follow exactly:
 
-1. **Every prompt** must preserve the Hardcore 128 Pixel Wasteland Art prompt anchor (see asset spec §0).
+1. **Every prompt** must preserve the current Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland prompt anchor from `docs/project-rules.md` section 1.
 2. **Item icons are item-only** — no character holding the item, no UI frame, no background scene, no rarity badges, no text. Just the item, centered, on transparent background.
 3. **Sheet generation uses `#FF00FF` (magenta) background** for chroma-key cleanup. Final per-item output must be transparent PNG.
 4. **Output path is exact**: `battle_scene/assets/images/equipment/{item_id}.png` where `item_id` matches the JSON's `id` field exactly. Wrong filename = icon doesn't load (placeholder fallback).
@@ -74,4 +74,4 @@ These already exist and must NOT be regenerated or modified:
 2. Highlight any item you skipped or couldn't generate, with the reason.
 3. Do NOT commit. Leave the staged/unstaged state alone — the human will review the icons in-game (open `⚔ CHARACTER` panel after grabbing items via debugger) and commit.
 
-If anything in the spec is ambiguous, stop and ask the human before making a creative call. Hardcore 128 Pixel Wasteland Art style consistency matters more than throughput.
+If anything in the spec is ambiguous, stop and ask the human before making a creative call. Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland style consistency matters more than throughput.

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ce8nkbx47vbay"
-path="res://.godot/imported/hardcore-128-pixel-wasteland-reference.png-1ecd252791b30af35c665428b2cc7938.ctex"
+uid="uid://drplbqsukesny"
+path="res://.godot/imported/card_ui_preview.png-52603916853c13dc5bcdc7bd438eb98c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://docs/art/hardcore-128-pixel-wasteland-reference.png"
-dest_files=["res://.godot/imported/hardcore-128-pixel-wasteland-reference.png-1ecd252791b30af35c665428b2cc7938.ctex"]
+source_file="res://docs/card_ui_preview.png"
+dest_files=["res://.godot/imported/card_ui_preview.png-52603916853c13dc5bcdc7bd438eb98c.ctex"]
 
 [params]
 

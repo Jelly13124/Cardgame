@@ -2,9 +2,11 @@
 
 **Audience:** codex (asset generation pipeline)
 **Owner of code/JSON:** Claude (already implemented)
-**Project:** Cardgame (Godot 4.6, Hardcore 128 Pixel Wasteland Art roguelite)
+**Project:** Cardgame (Godot 4.6, Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland roguelite)
 
 This document is the contract that tells codex which sprites and card illustrations to generate for the Tactical Toolkit content slice. All gameplay code and JSON are already in place; the only thing blocking the slice from looking right in-game is the art listed here.
+
+**Current style as of 2026-05-31:** this spec inherits `docs/art-style-reference.md` and ADR-0012. New generations must use the Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland prompt anchor from `docs/project-rules.md` section 1. File dimensions below are output sizes only, not pixel-art style constraints.
 
 If a sprite is missing, the game falls back to a colored `ColorRect` placeholder (enemies) or a missing-texture warning (cards). Nothing crashes — but it looks bad.
 
@@ -12,20 +14,18 @@ If a sprite is missing, the game falls back to a colored `ColorRect` placeholder
 
 ## 0. Style Preamble (Non-Negotiable)
 
-Every prompt for every asset in this doc **must** preserve the approved Hardcore 128 Pixel Wasteland Art prompt anchor from `docs/project-rules.md` §1 and `docs/art-style-reference.md`:
+Every prompt for every asset in this doc must preserve the current art direction from `docs/art-style-reference.md` and `docs/project-rules.md` section 1:
 
-```
-hardcore 128 pixel wasteland art style, native 128x128 pixel game sprite readability,
-bold black pixel outlines, gritty rusted scrap metal, worn leather and patched cloth,
-dusty desert palette, controlled pixel shading, salvaged bolts dents tubes and cracked glass,
-one small neon accent, transparent background, no high-resolution cartoon brushwork
+```text
+original offbeat adult sci-fi cartoon wasteland game art, Rick-and-Morty-like broad adult sci-fi animation energy without copying named characters or exact show designs, thick dark rubbery outlines, flat bright color blocks, simple cel shading, exaggerated asymmetrical proportions, weird junk-tech silhouette, dusty western leather and brass, dented steel, exposed springs, patched cloth, one or two small glowing neon accents, crisp sprite-ready edges, solid #FF00FF magenta background for cleanup or transparent final PNG, no text, no UI frame, no logo
 ```
 
-Color palette guidance:
-- **Base:** leather brown, rusted orange, dusty tan, muted olive, dark steel, faded brass
-- **Each character gets ONE neon accent color** - pick from yellow-green, electric blue, magenta, toxic-green, hot-orange. Listed per asset below.
-- Outlines: bold black pixel outlines, confident and readable.
-- Shading: controlled pixel shading, not high-resolution cartoon brushwork.
+Style notes:
+- File dimensions in the tables below are output-size requirements only; they do not imply pixel art.
+- Use clean cartoon silhouettes, thick dark outlines, flat bright color blocks, and simple cel shading.
+- Keep the wasteland-western junk-tech materials: dusty leather, brass, dented steel, exposed springs, patched cloth, rubber hoses, cracked glass.
+- Use one or two small neon accents per item or character; do not flood the asset with glow.
+- Keep designs original and do not copy named characters or exact show-specific designs.
 
 ---
 

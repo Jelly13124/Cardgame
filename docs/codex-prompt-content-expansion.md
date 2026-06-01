@@ -1,32 +1,32 @@
 # Codex Prompt — Content Expansion (Wave 3) Asset Generation
 
+**Current style:** use `docs/art-style-reference.md` and ADR-0012. The current art style is **Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland**. Any older sprite-art or 128-pixel wording is superseded and must not be used as a style constraint.
+
 Copy everything below the `---` line into your codex session.
 
 ---
 
-You are working in the Godot 4.6 project at `C:\Users\Jerry\Desktop\Cardgame` — a roguelite deckbuilder with a strict **Hardcore Wasteland Sprite Art** style. Between 2026-05-25 and 2026-05-26, Phase 5 wave 1 + wave 2 shipped a batch of new cards, a multi-act boss redesign, the Warden equipment set, and 4 new uncommon/rare relics. All gameplay, JSON, and UI work is done. **Every one of those new items currently uses a placeholder PNG** (reused art from a similar existing item). You are responsible for replacing the placeholders with real assets that match the project's art rules.
+You are working in the Godot 4.6 project at `C:\Users\Jerry\Desktop\Cardgame` — a roguelite deckbuilder with a strict **Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland** style. Between 2026-05-25 and 2026-05-26, Phase 5 wave 1 + wave 2 shipped a batch of new cards, a multi-act boss redesign, the Warden equipment set, and 4 new uncommon/rare relics. All gameplay, JSON, and UI work is done. **Every one of those new items currently uses a placeholder PNG** (reused art from a similar existing item). You are responsible for replacing the placeholders with real assets that match the project's art rules.
 
 **Generation method (read first):** This briefing fixes *what* to produce — paths, sizes, style, one neon accent per item — not *how*. There is currently NO external image service configured (the previous one was dropped). Generate using whatever image capability your session has; if you have none, the fallback is to improve the procedural generator `scripts/gen_wave3_content_assets.py` (it already drew crude geometric placeholders at every target path). Either way, **overwrite the existing placeholder PNGs in place**, and do not re-introduce any specific external tool dependency.
 
-**Style ground truth — study these BEFORE generating anything, and match them.** Cowboy Bill is the canonical character and the single source of truth for the look:
-- `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_portrait.png`
-- `battle_scene/assets/images/heroes/cowboy_bill/attack/cowboy_bill_attack_0.png`
+**Style ground truth - study this before generating anything.** The current source of truth is `docs/art/rick-morty-radiation-rat-style-reference.png`. For Cowboy Bill specifically, use `docs/art/current-cowboy-bill-style-reference.png`. Do not use older standalone Cowboy Bill runtime frames as references.
 
-Match his exact treatment: warm rust / leather / brass / dusty-tan palette; bold dark outlines; rich controlled shading with a clear highlight-mid-shadow read (a polished, fully-rendered sprite — NOT flat, lo-fi, or crude geometric shapes); riveted salvaged-metal and patched-cloth materials; and exactly one small glowing neon accent (like Bill's amber eye and cyan chest light). Every new card, enemy, equipment, and relic must look like it belongs in the same set as Bill — same line weight, same rendering fidelity, same palette family. **If the "hardcore 128 pixel wasteland" wording in these docs ever seems to conflict with how Bill actually looks, Bill's sprite wins** — it is the real target; the text is only shorthand.
+Match the new treatment: thick rubbery dark outlines, flat bright color blocks, simple cel shading, exaggerated awkward proportions, bulging expressive eyes, toxic-green radiation accents, dusty western leather/brass/dented-steel junk-tech, readable cartoon silhouettes, and one or two small neon accents. Every new card, enemy, equipment, and relic must look like it belongs in this Rick-and-Morty-like adult sci-fi cartoon wasteland world. File dimensions are output requirements only; do not use them as pixel-art style instructions.
 
 ## Step 1 — Read these files before doing anything else
 
 1. **`docs/asset-spec-content-expansion.md`** — your authoritative work order. Lists every PNG you need to deliver, the exact file path, the frame size, the theme description, and the neon accent color per item. Read sections 0–8 in order.
-2. **`docs/art-style-reference.md`** — the approved Hardcore Wasteland Sprite Art visual reference translated into concrete art rules.
+2. **`docs/art-style-reference.md`** — the approved Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland visual reference translated into concrete art rules.
 3. **`docs/project-rules.md`** §1–§5 — the non-negotiable style anchor, sprite pipeline (`#FF00FF` chroma key → transparent PNG), and folder/naming conventions.
-4. **`docs/adr/0008-art-pivot-to-hardcore-128-pixel-wasteland.md`** — the ADR locking in the current art direction. Confirms native sizes (128 for regular, 192 for bosses), reference image path, palette and outline rules.
+4. **`docs/adr/0012-art-pivot-to-offbeat-sci-fi-cartoon-wasteland.md`** — the ADR locking in the current art direction. Confirms current output sizes, reference image path, palette, and outline rules.
 5. **`docs/catalog-all.md`** — the bilingual content catalog, for cross-referencing what each card / enemy / item actually does in-game (helps the art match the mechanic).
 
 Also look at one reference of each existing asset type so your output matches the project's visual weight:
 
 | Reference for | File |
 |---|---|
-| **Overall style anchor (study FIRST)** | `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_portrait.png` + `heroes/cowboy_bill/attack/cowboy_bill_attack_0.png` |
+| **Overall style anchor (study FIRST)** | `docs/art/rick-morty-radiation-rat-style-reference.png` |
 | Card front art      | `battle_scene/assets/images/cards/player/strike.png` (512×320) |
 | Regular enemy frame | `battle_scene/assets/images/enemies/trash_robot/attack/trash_robot_attack_0.png` (128×128) |
 | Boss enemy frame    | `battle_scene/assets/images/enemies/junkyard_tyrant/attack/junkyard_tyrant_attack_0.png` (192×192) |
@@ -48,7 +48,7 @@ All single-frame (except enemy attack sequences, which are 4 frames each), trans
 
 These come from `docs/project-rules.md` §2–§5 and the asset spec section 1. Follow exactly:
 
-1. **Every prompt** must preserve the Hardcore Wasteland Sprite Art prompt anchor (verbatim from asset spec §0).
+1. **Every prompt** must preserve the current Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland prompt anchor from `docs/project-rules.md` section 1.
 2. **Item / icon assets are item-only** — no character holding the item, no UI frame, no background scene, no rarity badges, no text. Just the item, centered, on transparent background.
 3. **Card art is composition-only** — no UI frame, no cost circle, no title text. The card-framework script overlays those.
 4. **Enemy / boss sprites face LEFT** in source PNGs. (Heroes face right; enemies face left.)
@@ -109,7 +109,7 @@ One commit per asset category is fine (one for all 13 cards, one for all 5 enemi
 Codex: Wave-3 art — <category> (<N> items)
 
 Generated per docs/asset-spec-content-expansion.md §<section>.
-Each item: <neon-accent>, <frame-size>, hardcore-128-pixel-wasteland anchor.
+Each item: <neon-accent>, <frame-size>, Rick-and-Morty-like cartoon wasteland anchor.
 
 <bulleted per-item list with id + one-line theme>
 ```
