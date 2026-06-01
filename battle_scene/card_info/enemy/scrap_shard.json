@@ -1,0 +1,9 @@
+{
+	"id": "scrap_shard",
+	"name": "Scrap Shard",
+	"sprite_id": "scrap_shard",
+	"max_health": 10,
+	"action_pattern": [
+		{ "type": "attack", "amount": 4, "label": "⚔ 4" }
+	]
+}

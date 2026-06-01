@@ -23,6 +23,11 @@ const INTENT_BADGE_HEIGHT := 36.0
 # ─── Stats ────────────────────────────────────────────────────────────────────
 var enemy_id: String = ""
 var enemy_name: String = "ENEMY"
+## True for act bosses (spec A3). A boss dying ends the fight even if summoned
+## adds remain (enemy_ai._on_enemy_died frees the rest + declares victory).
+## Bosses are always solo-spawned at the act top, so "a boss died" = "the act
+## boss died". Summoned adds are never bosses.
+var is_boss: bool = false
 var max_health: int = 30
 var health: int = 30
 var block: int = 0
@@ -86,6 +91,7 @@ const ENEMIES_DIR = "res://battle_scene/assets/images/enemies/"
 static func create(id: String) -> EnemyEntity:
 	var entity = EnemyEntity.new()
 	entity.enemy_id = id
+	entity.is_boss = id in RunManager.ACT_BOSSES
 	var path = ENEMY_DATA_DIR + id + ".json"
 	if ResourceLoader.exists(path):
 		var file = FileAccess.open(path, FileAccess.READ)
