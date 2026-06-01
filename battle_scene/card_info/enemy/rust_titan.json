@@ -10,5 +10,20 @@
 		{ "type": "telegraph", "label": "💢 WIND-UP" },
 		{ "type": "attack",    "amount": 18, "label": "💥 SLAM 18", "interruptible": true },
 		{ "type": "block",     "amount": 8,  "label": "🛡 8" }
+	],
+	"phases": [
+		{
+			"hp_below": 0.5,
+			"on_enter": [
+				{ "type": "buff_self", "status": "strength_up", "stacks": 3, "label": "💢 ENRAGE" }
+			],
+			"action_pattern": [
+				{ "type": "telegraph", "label": "💢 OVERLOAD" },
+				{ "type": "attack",    "amount": 22, "label": "💥 RUIN 22", "interruptible": true },
+				{ "type": "block",     "amount": 12, "label": "🛡 12" },
+				{ "type": "buff_self", "status": "strength_up", "stacks": 2, "label": "💢 RAGE +2" },
+				{ "type": "attack",    "amount": 14, "label": "⚔ 14" }
+			]
+		}
 	]
 }
