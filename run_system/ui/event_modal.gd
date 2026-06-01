@@ -18,6 +18,11 @@ signal resolved
 
 var event_data: Dictionary = {}
 
+## Upper-cased event id; builds EVENT_<ID>_* translation keys. Strings render via
+## Settings.t(key, english_fallback) — the JSON text is the English fallback, the
+## localized columns live in assets/translations/ui_events.csv.
+var _eid: String = ""
+
 var _resolved: bool = false
 var _option_buttons: Array[Button] = []
 var _result_label: Label
@@ -31,6 +36,7 @@ func _ready() -> void:
 
 
 func _build() -> void:
+	_eid = str(event_data.get("id", "")).to_upper()
 	var bg := ColorRect.new()
 	bg.color = Color(0, 0, 0, 0.78)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -58,14 +64,14 @@ func _build() -> void:
 	margin.add_child(_vbox)
 
 	var title := Label.new()
-	title.text = str(event_data.get("title", "Event"))
+	title.text = Settings.t("EVENT_%s_TITLE" % _eid, str(event_data.get("title", "Event")))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 30)
 	title.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
 	_vbox.add_child(title)
 
 	var desc := Label.new()
-	desc.text = str(event_data.get("description", ""))
+	desc.text = Settings.t("EVENT_%s_DESC" % _eid, str(event_data.get("description", "")))
 	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.add_theme_font_size_override("font_size", 19)
@@ -87,7 +93,7 @@ func _build() -> void:
 
 func _make_option_button(opt: Dictionary, index: int) -> Button:
 	var button := Button.new()
-	button.text = str(opt.get("text", "..."))
+	button.text = Settings.t("EVENT_%s_OPT%d_TEXT" % [_eid, index], str(opt.get("text", "...")))
 	button.custom_minimum_size = Vector2(600, 56)
 	button.add_theme_font_size_override("font_size", 19)
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -108,7 +114,8 @@ func _lock_hint(opt: Dictionary) -> String:
 		return ""
 	var parts: Array[String] = []
 	for attr in requires.keys():
-		parts.append("[%s %d]" % [str(attr).capitalize(), int(requires[attr])])
+		var attr_name := Settings.t("ATTR_%s" % str(attr).to_upper(), str(attr).capitalize())
+		parts.append("[%s %d]" % [attr_name, int(requires[attr])])
 	return " ".join(parts)
 
 
@@ -132,13 +139,22 @@ func _on_option_pressed(index: int) -> void:
 	if bool(opt.get("luck_check", false)):
 		if randf() < RunManager.luck_check_chance():
 			RunManager.apply_event_effects(opt.get("effects_success", []))
-			result_text = str(opt.get("result_success", opt.get("result", "")))
+			result_text = Settings.t(
+				"EVENT_%s_OPT%d_RESULT_OK" % [_eid, index],
+				str(opt.get("result_success", opt.get("result", "")))
+			)
 		else:
 			RunManager.apply_event_effects(opt.get("effects_fail", []))
-			result_text = str(opt.get("result_fail", opt.get("result", "")))
+			result_text = Settings.t(
+				"EVENT_%s_OPT%d_RESULT_FAIL" % [_eid, index],
+				str(opt.get("result_fail", opt.get("result", "")))
+			)
 	else:
 		RunManager.apply_event_effects(opt.get("effects", []))
-		result_text = str(opt.get("result", opt.get("result_text", "")))
+		result_text = Settings.t(
+			"EVENT_%s_OPT%d_RESULT" % [_eid, index],
+			str(opt.get("result", opt.get("result_text", "")))
+		)
 
 	_show_result(result_text)
 
@@ -159,7 +175,7 @@ func _show_result(text: String) -> void:
 	_vbox.add_child(_result_label)
 
 	var continue_btn := Button.new()
-	continue_btn.text = "Continue"
+	continue_btn.text = Settings.t("UI_EVENT_CONTINUE", "Continue")
 	continue_btn.custom_minimum_size = Vector2(600, 56)
 	continue_btn.add_theme_font_size_override("font_size", 20)
 	continue_btn.pressed.connect(_finalize)
