@@ -1,4 +1,4 @@
-# Project Structure - Roguelite Card Game (Hardcore Wasteland Sprite Art)
+# Project Structure - Roguelite Card Game (Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland)
 
 This guide provides a precise map of the codebase for adjusting the UI, logic, and assets.
 
@@ -13,7 +13,7 @@ All first-party project documentation lives in `docs/`.
 *   **Project Rules**: `docs/project-rules.md`
     *   *Non-negotiable art direction, asset pipeline, naming, and architecture rules.*
 *   **Art Style Reference**: `docs/art-style-reference.md`
-    *   *Approved Hardcore Wasteland Sprite Art reference direction for all future assets.*
+    *   *Approved Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland reference direction for all future assets.*
 
 The old root-level `skills/` workflow docs have been removed. Project conventions should be documented here or in `docs/project-rules.md`.
 
@@ -83,7 +83,12 @@ The old root-level `skills/` workflow docs have been removed. Project convention
 *   **Character Panel**: `run_system/ui/equipment_panel.gd` — map-screen modal showing HP/Gold/Floor + slots + inventory + active sets + relics + stats. Open via `⚔ CHARACTER` button.
 *   **Inventory Full Modal**: `run_system/ui/inventory_full_modal.gd` — discard-or-skip flow when bag overflows.
 
+### ❓ Random Events
+*   **Event Modal**: `run_system/ui/event_modal.gd`
+    *   *The "?" map-node event scene. Loads an event from `run_system/data/random_events/*.json`, presents the choices, and applies the chosen outcome.*
+
 ### 🏃 Run Management
+*   **Run Shape**: a run is **3 self-contained acts**, each a ~12-floor map ending in a boss. Loot lives in a **20-cell backpack** where Gold / Core / equipment compete for space, with safe-cells preserved on death, a permanent base stash, and a next-run loadout (`RunManager.backpack` / `RunManager.pending_loadout`; `MetaProgress.stash`).
 *   **Global State**: `run_system/core/run_manager.gd` (autoload)
     *   *Gold, deck, equipped items, inventory, base_attributes, player_attributes (computed), relics, map state. Public API: `add_card_to_deck`, `remove_card_from_deck_by_uid`, `upgrade_card_by_uid`, `equip_to_slot`, `unequip_slot`, `add_to_inventory`, `discard_from_inventory`, `purchase_*` (shop-gated wrappers), `recompute_attributes`, `get_active_set_tiers`. `start_new_run` calls `_apply_meta_upgrades` to read MetaProgress and add max HP / starting gold / starter inventory.*
 
@@ -101,7 +106,7 @@ The old root-level `skills/` workflow docs have been removed. Project convention
 *   **Card Illustrations (PNG)**: `battle_scene/assets/images/cards/player/` (base + `_plus` reuses base art)
 *   **Equipment Icons (PNG)**: `battle_scene/assets/images/equipment/` (codex generates; falls back to placeholder if missing)
 *   **Shop Scene Art (PNG, optional)**: `run_system/assets/images/shop/` (background + shopkeeper; codex generates)
-*   **Hero Sprites (PNG/Animated)**: `battle_scene/assets/images/heroes/cowboy_bill/`
+*   **Hero Sprites (PNG/Animated)**: `battle_scene/assets/images/heroes/{sprite_id}/` (e.g. `cowboy_bill/`; the active hero's `sprite_id` comes from its `run_system/data/heroes/` JSON)
 *   **Enemy Sprites (PNG/Animated)**: `battle_scene/assets/images/enemies/`
 *   **Battle Backgrounds**: `battle_scene/assets/images/backgrounds/`
 *   **Map Art and Node Icons**: `run_system/assets/images/map/`
@@ -118,5 +123,7 @@ All gameplay content is data-driven. Add GDScript only when introducing a new sh
 *   **Equipment**: `run_system/data/equipment/{item_id}.json` (rarity budget: common=+1, uncommon=+2 total, rare=+3 total)
 *   **Equipment Sets**: `run_system/data/equipment_sets/{set_id}.json` (each set has 2 tiers: 3-piece + 5-piece)
 *   **Base Upgrades**: `run_system/data/base_upgrades/{upgrade_id}.json` (5 upgrades × 3 tiers each; effect_value schema varies per effect_key)
+*   **Heroes**: `run_system/data/heroes/{hero_id}.json` (`cowboy_bill.json`, `hero_jerry_killer.json`) — `player.gd` reads `sprite_id` / `tint` / starting stats dynamically from the selected hero's JSON (`RunManager.current_hero_data`), falling back to `cowboy_bill` when none is loaded.
+*   **Random Events**: `run_system/data/random_events/{event_id}.json` — content (choices, outcomes) for the "?" map node, surfaced by `run_system/ui/event_modal.gd`.
 
 All schemas validated at startup by `battle_scene/data_validator.gd`.
