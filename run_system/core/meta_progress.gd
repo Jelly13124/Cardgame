@@ -30,40 +30,25 @@ const ASCENSION_CAP := 5
 const SAFE_CELLS_BASE := 2
 ## Permanent equipment stash capacity (gear carried out of runs).
 const STASH_CAP := 40
-## Cards available before any card_research is purchased. The 5 omitted
-## ids (flash_bang, last_breath, bone_breaker, junk_bomb, preemptive_strike)
+## Cards available before any card_research is purchased. The omitted
+## ids (bone_breaker, last_breath, preemptive_strike, chain_link, last_stand)
 ## unlock via the card_research upgrade.
 const INITIAL_CARD_POOL: Array[String] = [
 	"strike",
 	"weak_strike",
 	"defend",
 	"stun_baton",
-	"static_coil",
-	"tinker",
 	"hot_swap",
 	"adrenaline",
 	"brace",
 	"double_tap",
-	"scrap_strike",
 	"siphon",
-	"override",
 	"charged_shot",
-	"emp_burst",
-	"salvo",
 	"cascade",
 	"last_stand",
 	"acid_splash",
 	"focus",
 	"chain_link",
-	"iron_will",
-	"overdrive",
-	"overload",
-	"carapace",
-	"lucky_shot",
-	"silver_tongue",
-	"gunslinger",
-	"windfall",
-	"executioner",
 ]
 
 

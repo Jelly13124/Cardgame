@@ -4,8 +4,7 @@
   "description": "Salvage research notes to add stronger cards to the draft pool.",
   "effect_key": "card_pool_unlock",
   "tiers": [
-    {"level": 1, "cost": 30, "effect_value": {"unlocks": ["flash_bang", "bone_breaker"]}, "effect_text": "Unlock Flash Bang + Bone Breaker"},
-    {"level": 2, "cost": 60, "effect_value": {"unlocks": ["last_breath", "preemptive_strike"]}, "effect_text": "Unlock Last Breath + Preemptive Strike"},
-    {"level": 3, "cost": 100, "effect_value": {"unlocks": ["junk_bomb"]}, "effect_text": "Unlock Junk Bomb"}
+    {"level": 1, "cost": 30, "effect_value": {"unlocks": ["bone_breaker"]}, "effect_text": "Unlock Bone Breaker"},
+    {"level": 2, "cost": 60, "effect_value": {"unlocks": ["last_breath", "preemptive_strike"]}, "effect_text": "Unlock Last Breath + Preemptive Strike"}
   ]
 }
