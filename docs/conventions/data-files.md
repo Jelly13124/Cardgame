@@ -47,7 +47,7 @@ Optional: `description`, `front_image`, `side`, `rarity` (`common|uncommon|rare`
   "action_pattern": [ ... ]
 }
 ```
-Each action entry needs `type` (one of `ALLOWED_ENEMY_ACTION_TYPES`). `attack_status` actions also need `status` + `stacks`. Attacks marked `"interruptible": true` can be cancelled by 1 stack of shock.
+Each action entry needs `type` (one of `ALLOWED_ENEMY_ACTION_TYPES`). `attack_status` actions also need `status` + `stacks`. Attacks marked `"interruptible": true` can be cancelled by 1 stack of stun.
 
 Optional `phases` (array) — HP-threshold phase transitions. Each phase has `hp_below` (fraction in `(0, 1]`), an `action_pattern` (validated like the top-level one), and an optional `on_enter` array of actions fired once on entering the phase.
 
@@ -68,12 +68,14 @@ Optional `phases` (array) — HP-threshold phase transitions. Each phase has `hp
 
 Authoritative list in `DataValidator.ALLOWED_EFFECT_TYPES`. As of this writing:
 
-- Damage: `deal_damage`, `deal_damage_all`, `scale_damage_by_attacks`
+- Damage: `deal_damage`, `deal_damage_all`, `deal_damage_str_mult` (damage = `mult` × Strength; needs `mult`), `scale_damage_by_attacks`
 - Defense: `gain_block`
 - Resources: `gain_energy`, `draw_cards`
 - Attributes: `gain_strength`, `gain_constitution`, `gain_intelligence`, `gain_luck`, `gain_charm`
-- Status: `apply_status`, `apply_status_self`, `apply_status_all`, `apply_shock`, `apply_shock_all`
+- Status: `apply_status`, `apply_status_self`, `apply_status_all`, `apply_stun`, `apply_stun_all`
 - Marker: `exhaust_self`
+
+**Global attributes:** STR is auto-added to all attack damage and CON to all block (`combat_engine._apply_effect()`, default +3 each). The per-card `scaling` field is **deprecated** — combat_engine no longer reads it. Card JSON carries the BASE number only. (`deal_damage_str_mult` and `scale_damage_by_attacks` compute their own damage and do NOT receive the global +STR.)
 
 When adding a new effect type, update **both** `combat_engine._apply_effect()` and `DataValidator.ALLOWED_EFFECT_TYPES`.
 
@@ -98,9 +100,9 @@ Authoritative list in `DataValidator.ALLOWED_ENEMY_ACTION_TYPES`:
 
 Authoritative list in `DataValidator.ALLOWED_STATUS_NAMES`:
 
-`poison`, `burn`, `weak`, `vulnerable`, `strength_up`, `double_damage`, `shock`
+`poison`, `burn`, `weak`, `vulnerable`, `strength_up`, `double_damage`, `stun`
 
-**Shock is enemy-only** (see `docs/adr/0004-shock-enemy-only.md`).
+**Stun is enemy-only** (see `docs/adr/0004-shock-enemy-only.md`). Enemy skips its next turn per stack.
 
 ---
 
