@@ -1,6 +1,6 @@
 # Product Requirements Document
 **Project:** Unnamed Sci-Fi Roguelite Card Game  
-**Art Style:** Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland
+**Art Style:** Cute Absurd Wasteland Sci-Fi Western
 **Engine:** Godot 4.6  
 **Last Updated:** 2026-06-01
 
@@ -16,7 +16,7 @@ Project documentation is centralized in `docs/`:
 - `docs/PRD.md` is the product and systems source of truth.
 - `docs/PROJECT_STRUCTURE.md` maps scenes, scripts, data, and assets.
 - `docs/project-rules.md` defines art, asset, naming, and architecture rules.
-- `docs/art-style-reference.md` defines the approved Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland reference.
+- `docs/art-style-reference.md` defines the approved Cute Absurd Wasteland Sci-Fi Western reference.
 
 ---
 
@@ -81,8 +81,8 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 
 | Attribute | 属性 | Effect |
 |---|---|---|
-| **Strength** | 力量 | Added to attack card damage |
-| **Constitution** | 体质 | Added to skill card block; replaces old "Defense" |
+| **Strength** | 力量 | Added GLOBALLY to ALL attack damage (`combat_engine._apply_effect()`, default +3); per-card `scaling` is deprecated |
+| **Constitution** | 体质 | Added GLOBALLY to ALL block (default +3); replaces old "Defense" |
 | **Intelligence** | 智力 | Used by Ability cards and special scaling (e.g. Overdrive) |
 | **Luck** | 幸运 | Crit chance (1.5× hits via Cowboy Bill's Crit Clip relic, ≈luck×3% capped 40%) + post-battle gold + loot rarity |
 | **Charm** | 魅力 | Lowers shop prices (≈2%/point, floored at 0.6×) + unlocks high-Charm options in random events |
@@ -98,6 +98,7 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 | **Weak** | Direct attack damage dealt is reduced by 50%; stacks decrement at end of affected character turn |
 | **Vulnerable** | Direct attack damage taken is increased by 50%; stacks decrement at end of affected character turn |
 | **Strength Up** | Bonus strength for stacks turns then expires |
+| **Stun** ⚡ | Enemy skips its next turn per stack; manual-consume, no decay; enemy-only; can interrupt a telegraphed attack |
 
 ### Enemy System
 - Each enemy loads from `card_info/enemy/{id}.json` — includes a `sprite_id` for the art
@@ -315,16 +316,16 @@ BattleScene (Node)
 
 ---
 
-## Art Style - Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland
+## Art Style - Cute Absurd Wasteland Sci-Fi Western
 
-The game's definitive art direction is **Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland**, with `docs/art/rick-morty-radiation-rat-style-reference.png` as the ground-truth reference. The style target is original adult sci-fi animation adapted into game assets: thick rubbery dark outlines, flat bright color blocks, simple cel shading, exaggerated awkward proportions, toxic-green radiation accents, dusty western junk-tech materials, and weird comic tone.
+The game's definitive art direction is **Cute Absurd Wasteland Sci-Fi Western**, with `docs/art/rick-morty-radiation-rat-style-reference.png` as the creature/world reference and `docs/art/cowboy-bill-character-sheet-reference.png` as Cowboy Bill's primary character sheet. The style target is original flat adult sci-fi TV animation adapted into game assets: clean dark outlines, flat bright color blocks, simple cel shading, exaggerated awkward proportions, toxic-green radiation accents, dusty western junk-tech materials, and weird comic tone.
 
 The project is no longer a 128-pixel or pixel-art style. Any frame sizes in asset specs are engine output contracts only.
 
 ### Visual Rules
 | Element | Rule |
 |---|---|
-| **Style target** | Rick-and-Morty-like adult sci-fi cartoon wasteland game art; original designs only, no copying named characters or exact show designs. |
+| **Style target** | Cute Absurd Wasteland Sci-Fi Western game art with Rick-and-Morty-style flat adult sci-fi TV-animation grammar; original designs only, no copying named characters or exact show designs. |
 | **Output sizes** | Use the dimensions required by each asset spec; size does not define the art style. |
 | **Silhouette** | Exaggerated, asymmetrical, and immediately readable: bulging eyes, huge teeth, warped bodies, lanky limbs, crooked antennas, glowing pustules, and awkward junk-tech proportions. |
 | **Materials** | Mutant skin, patchy fur, dusty leather, brass cuffs, dented steel, exposed springs, patched cloth, rubber hoses, cracked glass, radioactive slime, and cheap improvised sci-fi parts. |
@@ -340,7 +341,7 @@ The project is no longer a 128-pixel or pixel-art style. Any frame sizes in asse
 ### Mandatory Prompt Anchor
 Every generated asset prompt should preserve this wording:
 ```text
-original offbeat adult sci-fi cartoon wasteland game art, Rick-and-Morty-like broad adult sci-fi animation energy without copying named characters or exact show designs, thick dark rubbery outlines, flat bright color blocks, simple cel shading, exaggerated asymmetrical proportions, bulging expressive eyes, weird mutant or junk-tech silhouette, dusty western leather and brass, dented steel, exposed springs, patched cloth, radioactive slime, one or two small toxic-green glowing accents, crisp sprite-ready edges, solid #FF00FF magenta background for cleanup or transparent final PNG, no text, no UI frame, no logo
+original Cute Absurd Wasteland Sci-Fi Western game art, Rick-and-Morty-style flat adult sci-fi TV-animation energy without copying named characters or exact show designs, clean dark cartoon outlines, flat bright color blocks, simple cel shading, exaggerated asymmetrical proportions, bulging expressive eyes, weird mutant or junk-tech silhouette, cute gross wasteland humor, dusty western leather and brass, dented steel, exposed springs, patched cloth, radioactive slime, one or two small toxic-green glowing accents, crisp game-ready edges, solid #FF00FF magenta background for cleanup or transparent final PNG, no text, no UI frame, no logo
 ```
 
 ### Generation Pipeline

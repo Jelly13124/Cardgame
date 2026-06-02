@@ -1,7 +1,7 @@
 # Catalog — All Content / 全内容表
 
 **Last updated / 最后更新:** 2026-06-01
-**Counts / 数量:** 35 cards (base) + 30 (`_plus`) · 14 relics · 21 equipment items · 3 equipment sets
+**Counts / 数量:** 21 cards (base) · 14 relics · 21 equipment items · 3 equipment sets
 
 > Bilingual reference. The single English column on the right is the in-game string;
 > the Chinese is for the design table. Detailed per-domain catalogs still live at
@@ -16,62 +16,48 @@
 
 | Rarity 稀有 | Count 数量 |
 |---|---|
-| Common 普通    | 14 |
-| Uncommon 罕见  | 13 |
-| Rare 稀有      | 8  |
-| **Total 合计** | **35** |
+| Common 普通    | 7 |
+| Uncommon 罕见  | 7 |
+| Rare 稀有      | 7 |
+| **Total 合计** | **21** |
 
-The 30 original base cards each have a `_plus` upgrade variant unlocked at rest sites; numbers in the **+** column show post-upgrade values. The 5 attribute-wave cards (`lucky_shot`, `silver_tongue`, `gunslinger`, `windfall`, `executioner`) have no `_plus` variant yet (— in the **+** column). Costs are energy ⚡.
+> **STR is auto-added to all attack damage and CON to all block, globally** (default +3 each); card faces show the BASE number only. The per-card `scaling` field is deprecated/removed. Costs are energy ⚡. The `+ / 升级` column lists the `_plus` rest-site upgrade where one exists.
 
-### Common / 普通 (14)
+### Common / 普通 (7)
 
 | ID | Name / 名称 | Type / 类型 | Cost / 费 | Effect / 效果 | + / 升级 |
 |---|---|---|---|---|---|
-| `strike`        | Strike / 打击         | attack / 攻击 | 1 | Deal 3+STR dmg / 造成 3+力量 伤害 | 3→5 |
-| `weak_strike`   | Weak Strike / 虚弱打击 | attack / 攻击 | 1 | Deal 3+STR + apply 1 Weak / 3+力量 伤害+施加 1 虚弱 | 3→4 dmg, 1→2 weak |
-| `defend`        | Defend / 防御         | skill / 技能  | 1 | Gain 3+CON block / 获得 3+体质 格挡 | 3→5 |
-| `stun_baton`    | Stun Baton / 电棍     | attack / 攻击 | 1 | Deal 4 + apply 1 Shock / 4 伤害+施加 1 麻痹 | 4→6 |
-| `static_coil`   | Static Coil / 静电线圈 | attack / 攻击 | 1 | 2 dmg + 4 block + 1 Shock / 2 伤+4 格挡+1 麻痹 | 2→3 dmg, 4→5 blk |
-| `tinker`        | Tinker / 修补         | skill / 技能  | 1 | +1 STR + 3 block / +1 力量+3 格挡 | 3→5 block |
+| `strike`        | Strike / 打击         | attack / 攻击 | 1 | Deal 3 dmg (+STR) / 造成 3 伤害 (+力量) | 3→5 |
+| `weak_strike`   | Weak Strike / 虚弱打击 | attack / 攻击 | 1 | Deal 3 (+STR) + apply 1 Weak / 3 伤害 (+力量)+施加 1 虚弱 | 3→4 dmg, 1→2 weak |
+| `defend`        | Defend / 防御         | skill / 技能  | 1 | Gain 3 block (+CON) / 获得 3 格挡 (+体质) | 3→5 |
 | `hot_swap`      | Hot Swap / 热交换     | skill / 技能  | 1 | Draw 2 / 抽 2 牌 | 2→3 draw |
-| `adrenaline`    | Adrenaline / 肾上腺素 | skill / 技能  | 0 | +2 energy + draw 1, exhaust / +2 能量+抽 1, 消耗 | 1→2 draw |
-| `brace`         | Brace / 撑住          | skill / 技能  | 0 | 4+CON block, retain / 4+体质 格挡, 保留 | 4→6 |
-| `double_tap`    | Double Tap / 双发     | attack / 攻击 | 1 | 3+STR dmg ×2 / 3+力量 伤害 ×2 | 3→4 dmg |
-| `scrap_strike`  | Scrap Strike / 废料打击| attack / 攻击 | 1 | 4+STR dmg + draw 1 / 4+力量 伤害+抽 1 | 4→6 dmg |
-| `siphon`        | Siphon / 汲取         | attack / 攻击 | 1 | 4+STR dmg + 4+CON block / 4+力量 伤害+4+体质 格挡 | 4→6 both |
-| `lucky_shot`    | Lucky Shot / 幸运一击 | attack / 攻击 | 1 | 4+LUCK dmg / 4+幸运 伤害 | — |
-| `silver_tongue` | Silver Tongue / 巧舌  | skill / 技能  | 1 | 2 Weak + 3 block / 2 虚弱+3 格挡 | — |
+| `brace`         | Brace / 撑住          | skill / 技能  | 0 | 4 block (+CON), retain / 4 格挡 (+体质), 保留 | 4→6 |
+| `siphon`        | Siphon / 汲取         | attack / 攻击 | 1 | 4 dmg (+STR) + 4 block (+CON) / 4 伤害 (+力量)+4 格挡 (+体质) | 4→6 both |
+| `reinforce`     | Reinforce / 加固      | skill / 技能  | 1 | Gain 7 block (+CON) / 获得 7 格挡 (+体质) | — |
 
-### Uncommon / 罕见 (13)
+### Uncommon / 罕见 (7)
 
 | ID | Name / 名称 | Type / 类型 | Cost / 费 | Effect / 效果 | + / 升级 |
 |---|---|---|---|---|---|
-| `override`      | Override / 超载       | ability / 能力 | 2 | +2 STR permanent / 永久 +2 力量 | +2→+3 STR |
-| `charged_shot`  | Charged Shot / 蓄能射击| attack / 攻击 | 2 | 12 dmg, exhaust / 12 伤害, 消耗 | 12→16 |
-| `emp_burst`     | EMP Burst / 电磁脉冲  | skill / 技能  | 2 | Apply 2 Shock to ALL / 全体 2 麻痹 | 2→3 shock |
-| `salvo`         | Salvo / 齐射          | attack / 攻击 | 2 | 4 dmg ×3 / 4 伤害 ×3 | 4→5 dmg ×3 |
+| `charged_shot`  | Charged Shot / 蓄能射击| attack / 攻击 | 1 | Deal 2× STR dmg, exhaust / 造成 2 倍力量伤害, 消耗 | — |
 | `cascade`       | Cascade / 连击        | attack / 攻击 | 1 | 2 + 2/attack this turn, retain / 2+ 本回合每张攻击 +2, 保留 | base 2→3 |
-| `last_stand`    | Last Stand / 最后防线 | skill / 技能  | 2 | 12+CON block + draw 1 / 12+体质 格挡+抽 1 | 12→17 blk, 1→2 draw |
-| `acid_splash`   | Acid Splash / 酸液飞溅| attack / 攻击 | 1 | 4 AoE dmg + 2 Poison AoE / 全体 4 伤害+2 中毒 | 4→6 dmg, 2→3 poison |
+| `last_stand`    | Last Stand / 最后防线 | skill / 技能  | 2 | 12 block (+CON) + draw 1 / 12 格挡 (+体质)+抽 1 | 12→17 blk, 1→2 draw |
+| `acid_splash`   | Acid Splash / 酸液飞溅| attack / 攻击 | 1 | 4 AoE dmg (+STR) + 2 Poison AoE / 全体 4 伤害 (+力量)+2 中毒 | 4→6 dmg, 2→3 poison |
 | `focus`         | Focus / 专注          | ability / 能力 | 1 | +1 INT + draw 1, exhaust / +1 智力+抽 1, 消耗 | +1→+2 INT |
-| `chain_link`    | Chain Link / 连锁     | attack / 攻击 | 1 | 6+STR dmg + draw 1 / 6+力量 伤害+抽 1 | 6→9 dmg |
-| `iron_will`     | Iron Will / 铁意志    | ability / 能力 | 1 | +1 STR +1 CON, exhaust / +1 力量+1 体质, 消耗 | +1→+2 STR |
-| `overdrive`     | Overdrive / 爆发      | attack / 攻击 | 2 | 10 dmg, 1 Vulnerable self, exhaust / 10 伤害, 自身 1 易伤, 消耗 | 10→14 dmg |
-| `gunslinger`    | Gunslinger / 枪手     | attack / 攻击 | 1 | 6 dmg + draw 1 / 6 伤害+抽 1 | — |
-| `windfall`      | Windfall / 横财       | skill / 技能  | 1 | 4+LUCK block + draw 1 / 4+幸运 格挡+抽 1 | — |
+| `chain_link`    | Chain Link / 连锁     | attack / 攻击 | 1 | 6 dmg (+STR) + draw 1 / 6 伤害 (+力量)+抽 1 | 6→9 dmg |
+| `deflector`     | Deflector / 偏导护盾  | skill / 技能  | 1 | 5 block (+CON) + 1 Weak / 5 格挡 (+体质)+1 虚弱 | — |
 
-### Rare / 稀有 (8)
+### Rare / 稀有 (7)
 
 | ID | Name / 名称 | Type / 类型 | Cost / 费 | Effect / 效果 | + / 升级 |
 |---|---|---|---|---|---|
 | `preemptive_strike` | Preemptive Strike / 先发制人 | skill / 技能 | 1 | Next attack doubles dmg / 下次攻击翻倍 | 1→2 stacks |
-| `overload`     | Overload / 过载        | attack / 攻击 | 2 | 8 dmg + 2 Shock / 8 伤害+2 麻痹 | 8→11 dmg |
-| `junk_bomb`    | Junk Bomb / 废铁炸弹   | skill / 技能  | 2 | 6 AoE dmg + draw 2, exhaust / 全体 6 伤+抽 2, 消耗 | 6→9 dmg |
-| `bone_breaker` | Bone Breaker / 碎骨者  | attack / 攻击 | 2 | 14+STR dmg + 2 Vulnerable / 14+力量 伤+2 易伤 | 14→19 dmg, 2→3 vuln |
-| `carapace`     | Carapace / 护甲        | skill / 技能  | 2 | 15+CON block + 1 CON / 15+体质 格挡+1 体质 | 15→20 blk, 1→2 CON |
-| `flash_bang`   | Flash Bang / 闪光弹    | skill / 技能  | 1 | 1 Shock AoE, exhaust / 全体 1 麻痹, 消耗 | 1→2 shock |
-| `last_breath`  | Last Breath / 最后一搏 | skill / 技能  | 0 | 10+CON block + draw 2, exhaust / 10+体质 格挡+抽 2, 消耗 | 10→14 blk, 2→3 draw |
-| `executioner`  | Executioner / 处决者   | attack / 攻击 | 2 | 9+STR dmg / 9+力量 伤害 | — |
+| `adrenaline`    | Adrenaline / 肾上腺素 | skill / 技能  | 0 | +2 energy + draw 1, exhaust / +2 能量+抽 1, 消耗 | 1→2 draw |
+| `double_tap`    | Double Tap / 双发     | attack / 攻击 | 2 | 1 dmg (+STR) ×2 / 1 伤害 (+力量) ×2 | — |
+| `stun_baton`    | Stun Baton / 电棍     | attack / 攻击 | 1 | Deal 1 (+STR) + apply 1 Stun / 1 伤害 (+力量)+施加 1 眩晕 | — |
+| `bone_breaker` | Bone Breaker / 碎骨者  | attack / 攻击 | 2 | 14 dmg (+STR) + 2 Vulnerable / 14 伤害 (+力量)+2 易伤 | 14→19 dmg, 2→3 vuln |
+| `last_breath`  | Last Breath / 最后一搏 | skill / 技能  | 0 | 10 block (+CON) + draw 2, exhaust / 10 格挡 (+体质)+抽 2, 消耗 | 10→14 blk, 2→3 draw |
+| `bulwark`      | Bulwark / 壁垒        | skill / 技能  | 2 | 12 block (+CON) + 1 energy / 12 格挡 (+体质)+1 能量 | — |
 
 ---
 

@@ -325,6 +325,13 @@ func _build_description(data: Dictionary) -> String:
 					)
 				)
 
+			"deal_damage_str_mult":
+				lines.append(
+					tr("UI_BATTLE_DESC_DAMAGE_STR_MULT").format(
+						{"mult": int(effect.get("mult", 1))}
+					)
+				)
+
 			"apply_stun":
 				lines.append(tr("UI_BATTLE_DESC_APPLY_STUN").format({"n": stacks}))
 
