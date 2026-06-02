@@ -224,5 +224,5 @@ See `combat_engine.gd` `_apply_effect()` for the full match. Allowed types track
 1. Create `battle_scene/card_info/player/{id}.json` matching the schema.
 2. Add `{id}` to `run_system/ui/loot_reward.gd` `draft_pool` so it can be drafted.
 3. If introducing a new effect type, add a handler in `combat_engine.gd` `_apply_effect()` AND add the type to `data_validator.gd` `ALLOWED_EFFECT_TYPES`.
-4. Generate art (see `docs/asset-spec-tactical-toolkit.md` for the codex prompt format) → `battle_scene/assets/images/cards/player/{id}.png`.
+4. Generate art via the `/codex-handoff` skill (art contract per ADR-0005; style in `docs/art-style-reference.md`) → `battle_scene/assets/images/cards/player/{id}.png`.
 5. Restart the editor — DataValidator scans on `RunManager._ready()` and will fail loud if the JSON has a typo.
