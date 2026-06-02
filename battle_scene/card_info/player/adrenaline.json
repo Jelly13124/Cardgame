@@ -1,7 +1,7 @@
 {
 	"name": "adrenaline",
 	"title": "Adrenaline",
-	"rarity": "common",
+	"rarity": "rare",
 	"type": "skill",
 	"cost": 0,
 	"description": "Gain 2 Energy. Draw 1 card. Exhaust.",

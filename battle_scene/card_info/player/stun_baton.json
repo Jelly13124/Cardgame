@@ -1,14 +1,14 @@
 {
 	"name": "stun_baton",
 	"title": "Stun Baton",
-	"rarity": "common",
+	"rarity": "rare",
 	"type": "attack",
 	"cost": 1,
-	"description": "Deal 4 damage. Apply 1 Stun.",
+	"description": "Deal 1 damage. Apply 1 Stun.",
 	"front_image": "player/stun_baton.png",
 	"side": "player",
 	"effects": [
-		{ "type": "deal_damage", "amount": 4, "scaling": "strength" },
+		{ "type": "deal_damage", "amount": 1 },
 		{ "type": "apply_stun", "stacks": 1 }
 	]
 }

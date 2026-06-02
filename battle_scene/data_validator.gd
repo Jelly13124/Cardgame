@@ -295,19 +295,27 @@ static func validate_card(data: Dictionary, source_path: String) -> bool:
 			if not effect.has("stacks") and not effect.has("amount"):
 				push_error("%s: effect[%d] (%s) needs 'stacks' (or 'amount')" % [prefix, i, etype])
 				ok = false
-		# `deal_damage_str_mult` requires an int `mult` (damage = strength * mult).
+		# `deal_damage_str_mult` requires a numeric `mult` (damage = strength * mult).
+		# Godot's JSON parser yields every number as a float, so accept TYPE_INT or
+		# a whole-valued TYPE_FLOAT and reject only non-numeric / fractional values.
 		if etype == "deal_damage_str_mult":
 			if not effect.has("mult"):
 				push_error("%s: effect[%d] (deal_damage_str_mult) is missing 'mult'" % [prefix, i])
 				ok = false
-			elif typeof(effect["mult"]) != TYPE_INT:
-				push_error(
-					(
-						"%s: effect[%d] (deal_damage_str_mult) 'mult' must be an int, got %s"
-						% [prefix, i, typeof(effect["mult"])]
-					)
+			else:
+				var mult_val = effect["mult"]
+				var mult_ok: bool = (
+					typeof(mult_val) == TYPE_INT
+					or (typeof(mult_val) == TYPE_FLOAT and mult_val == floor(mult_val))
 				)
-				ok = false
+				if not mult_ok:
+					push_error(
+						(
+							"%s: effect[%d] (deal_damage_str_mult) 'mult' must be a whole number, got %s"
+							% [prefix, i, mult_val]
+						)
+					)
+					ok = false
 
 	# Unknown top-level keys → warn (not fatal) — helps catch typos like "retian"
 	var known_keys = REQUIRED_CARD_KEYS + KNOWN_OPTIONAL_CARD_KEYS

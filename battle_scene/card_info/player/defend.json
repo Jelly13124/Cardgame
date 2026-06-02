@@ -4,10 +4,10 @@
 	"rarity": "common",
 	"type": "skill",
 	"cost": 1,
-	"description": "Gain 3+Constitution Block.",
+	"description": "Gain 3 Block.",
 	"front_image": "player/defend.png",
 	"side": "player",
 	"effects": [
-		{ "type": "gain_block", "amount": 3, "scaling": "constitution" }
+		{ "type": "gain_block", "amount": 3 }
 	]
 }

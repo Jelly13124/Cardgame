@@ -3,12 +3,12 @@
 	"title": "Charged Shot",
 	"rarity": "uncommon",
 	"type": "attack",
-	"cost": 2,
-	"description": "Deal 12 damage. Exhaust.",
+	"cost": 1,
+	"description": "Deal damage equal to 2× your Strength. Exhaust.",
 	"front_image": "player/charged_shot.png",
 	"side": "player",
 	"effects": [
-		{ "type": "deal_damage", "amount": 12, "scaling": "strength" },
+		{ "type": "deal_damage_str_mult", "mult": 2 },
 		{ "type": "exhaust_self" }
 	]
 }

@@ -3,7 +3,7 @@
 	"title": "Preemptive Strike+",
 	"rarity": "rare",
 	"type": "skill",
-	"cost": 1,
+	"cost": 0,
 	"description": "Your next 2 attacks deal double damage.",
 	"front_image": "player/preemptive_strike.png",
 	"side": "player",
