@@ -28,8 +28,8 @@ UI_BATTLE_DESC_DRAW,Draw {n} cards,抽 {n} 张牌
 UI_BATTLE_DESC_APPLY_STATUS,Apply {status} x{n},施加 {status} x{n}
 UI_BATTLE_DESC_APPLY_STATUS_ALL,Apply {status} x{n} to all enemies,对所有敌人施加 {status} x{n}
 UI_BATTLE_DESC_APPLY_STATUS_SELF,Apply {status} x{n} to self,对自身施加 {status} x{n}
-UI_BATTLE_DESC_APPLY_SHOCK,Apply [color=#f0e040]Shock[/color] x{n},施加 [color=#f0e040]感电[/color] x{n}
-UI_BATTLE_DESC_APPLY_SHOCK_ALL,Apply [color=#f0e040]Shock[/color] x{n} to all enemies,对所有敌人施加 [color=#f0e040]感电[/color] x{n}
+UI_BATTLE_DESC_APPLY_STUN,Apply [color=#f0e040]Stun[/color] x{n},施加 [color=#f0e040]眩晕[/color] x{n}
+UI_BATTLE_DESC_APPLY_STUN_ALL,Apply [color=#f0e040]Stun[/color] x{n} to all enemies,对所有敌人施加 [color=#f0e040]眩晕[/color] x{n}
 UI_BATTLE_DESC_SCALE_BY_ATTACKS,Deal {base} + {per} per Attack played this turn,造成 {base} + {per}（本回合每打出一张攻击牌）
 UI_BATTLE_KEYWORD_RETAIN,[color=#9ec1ff]Retain[/color],[color=#9ec1ff]保留[/color]
 UI_BATTLE_KEYWORD_EXHAUST,[color=#cfa9ff]Exhaust[/color],[color=#cfa9ff]消耗[/color]

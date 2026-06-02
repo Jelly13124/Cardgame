@@ -77,14 +77,20 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: float = 1.0) -> void:
 	var effect_type: String = effect.get("type", "")
 	var amount: int = int(effect.get("amount", 0))
-	var scaling: String = effect.get("scaling", "")
 	var multiplier: float = float(effect.get("multiplier", 1))
-
-	if scaling != "" and scaling in player:
-		amount += int(player.get(scaling))
 
 	if multiplier != 1:
 		amount = int(amount * multiplier)
+
+	# Global attributes: STR auto-adds to all attack damage, CON to all block.
+	# Card JSON carries the BASE number only — the old per-card `scaling` field is
+	# gone. `scale_damage_by_attacks` (cascade) and `deal_damage_str_mult`
+	# (charged_shot) compute their own damage and must NOT receive the global +STR.
+	if player:
+		if effect_type == "deal_damage" or effect_type == "deal_damage_all":
+			amount += int(player.get("strength"))
+		elif effect_type == "gain_block":
+			amount += int(player.get("constitution"))
 
 	var is_damage = effect_type == "deal_damage" or effect_type == "deal_damage_all"
 	if is_damage and card_mult != 1.0:
@@ -184,24 +190,51 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
 			await get_tree().create_timer(0.2).timeout
 
-		"apply_shock":
+		"deal_damage_str_mult":
+			# Damage scales purely off the player's STR (charged_shot: mult 2).
+			# Does NOT receive the global +STR — it already scales off STR.
+			# JSON: {"type":"deal_damage_str_mult", "mult":2}
+			var mult: float = float(effect.get("mult", 1))
+			var str_dmg: int = int(player.get("strength") * mult) if player else 0
+			if target and is_instance_valid(target) and target.has_method("take_damage"):
+				if main.equipment_set_system and main.current_resolving_card:
+					str_dmg = main.equipment_set_system.modify_card_damage(
+						main.current_resolving_card, str_dmg
+					)
+				if card_mult != 1.0:
+					str_dmg = int(str_dmg * card_mult)
+				var outgoing = calculate_attack_damage(str_dmg, player, target)
+				target.take_damage(outgoing)
+				_register_player_attack()
+				main.show_notification(
+					tr("UI_COMBAT_DEALT_DAMAGE").format({"n": outgoing}), Color(1.0, 0.4, 0.3)
+				)
+				if main.equipment_set_system and main.current_resolving_card:
+					main.equipment_set_system.on_card_damage_resolved(
+						main.current_resolving_card, target
+					)
+			else:
+				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
+			await get_tree().create_timer(0.2).timeout
+
+		"apply_stun":
 			var s_stacks: int = int(effect.get("stacks", int(effect.get("amount", 1))))
 			if target and is_instance_valid(target) and target.has_method("add_status"):
-				target.add_status("shock", s_stacks)
+				target.add_status("stun", s_stacks)
 				main.show_notification(
-					tr("UI_COMBAT_SHOCK_X").format({"n": s_stacks}), Color(0.95, 0.95, 0.3)
+					tr("UI_COMBAT_STUN_X").format({"n": s_stacks}), Color(0.95, 0.95, 0.3)
 				)
 			else:
 				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
 			await get_tree().create_timer(0.2).timeout
 
-		"apply_shock_all":
+		"apply_stun_all":
 			var s_stacks_all: int = int(effect.get("stacks", int(effect.get("amount", 1))))
 			for enemy in main.enemy_container.get_children():
 				if is_instance_valid(enemy) and enemy.has_method("add_status"):
-					enemy.add_status("shock", s_stacks_all)
+					enemy.add_status("stun", s_stacks_all)
 			main.show_notification(
-				tr("UI_COMBAT_ALL_SHOCK_X").format({"n": s_stacks_all}), Color(0.95, 0.95, 0.3)
+				tr("UI_COMBAT_ALL_STUN_X").format({"n": s_stacks_all}), Color(0.95, 0.95, 0.3)
 			)
 			await get_tree().create_timer(0.2).timeout
 
