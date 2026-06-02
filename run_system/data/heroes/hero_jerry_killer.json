@@ -5,7 +5,7 @@
   "tint": "#dd5555",
   "max_health": 45,
   "starter_deck": ["strike", "strike", "strike", "strike", "double_tap",
-                   "scrap_strike", "defend", "defend", "brace"],
+                   "siphon", "defend", "defend", "brace"],
   "starting_attributes": {"strength": 5, "constitution": 3, "intelligence": 2, "luck": 2, "charm": 3},
   "starting_relic": "bounty_tags",
   "description": "Wasteland predator. High STR, aggressive multi-hit kit; every kill pays and patches you up.",
