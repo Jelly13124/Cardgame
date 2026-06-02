@@ -43,7 +43,7 @@ const _STATUS_SHORT_NAMES = {
 	"vulnerable": "Vuln",
 	"burn": "Burn",
 	"poison": "Pois",
-	"shock": "Shock",
+	"stun": "Stun",
 	"strength_up": "Str+",
 	"double_damage": "Dbl",
 }
@@ -144,7 +144,7 @@ func _ready() -> void:
 	_build_visual()
 	_update_intent_display()
 	_start_intent_float_anim()
-	# Refresh intent whenever this enemy's own status changes (e.g. shock /
+	# Refresh intent whenever this enemy's own status changes (e.g. stun /
 	# weak landed). Player-status changes (e.g. vulnerable applied to player)
 	# are broadcast by BattleScene to every enemy via update_intent_display().
 	status_changed.connect(_update_intent_display)
@@ -416,7 +416,7 @@ func _update_intent_display() -> void:
 	else:
 		label_text = str(next.get("label", "?"))
 
-	# Hint the player they can interrupt this attack with a shock card
+	# Hint the player they can interrupt this attack with a stun card
 	if bool(next.get("interruptible", false)):
 		label_text += " !"
 	_intent_label.text = label_text
@@ -582,9 +582,9 @@ func get_status_stacks(status_name: String) -> int:
 	return status_system.get_stacks(status_name)
 
 
-## Returns true if a shock stack was consumed (action should be skipped/cancelled).
-func consume_shock_if_present() -> bool:
-	return status_system.consume_shock(self)
+## Returns true if a stun stack was consumed (action should be skipped/cancelled).
+func consume_stun_if_present() -> bool:
+	return status_system.consume_stun(self)
 
 
 func get_outgoing_multiplier() -> float:

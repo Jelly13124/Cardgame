@@ -325,11 +325,11 @@ func _build_description(data: Dictionary) -> String:
 					)
 				)
 
-			"apply_shock":
-				lines.append(tr("UI_BATTLE_DESC_APPLY_SHOCK").format({"n": stacks}))
+			"apply_stun":
+				lines.append(tr("UI_BATTLE_DESC_APPLY_STUN").format({"n": stacks}))
 
-			"apply_shock_all":
-				lines.append(tr("UI_BATTLE_DESC_APPLY_SHOCK_ALL").format({"n": stacks}))
+			"apply_stun_all":
+				lines.append(tr("UI_BATTLE_DESC_APPLY_STUN_ALL").format({"n": stacks}))
 
 			"scale_damage_by_attacks":
 				var s_base: int = int(effect.get("base", 0))

@@ -4,11 +4,11 @@
 	"rarity": "common",
 	"type": "attack",
 	"cost": 1,
-	"description": "Deal 6 damage. Apply 1 Shock.",
+	"description": "Deal 6 damage. Apply 1 Stun.",
 	"front_image": "player/stun_baton.png",
 	"side": "player",
 	"effects": [
 		{ "type": "deal_damage", "amount": 6, "scaling": "strength" },
-		{ "type": "apply_shock", "stacks": 1 }
+		{ "type": "apply_stun", "stacks": 1 }
 	]
 }

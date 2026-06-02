@@ -25,6 +25,7 @@ const ALLOWED_RARITIES = ["common", "uncommon", "rare"]
 const ALLOWED_EFFECT_TYPES = [
 	"deal_damage",
 	"deal_damage_all",
+	"deal_damage_str_mult",
 	"scale_damage_by_attacks",
 	"gain_block",
 	"gain_energy",
@@ -37,8 +38,8 @@ const ALLOWED_EFFECT_TYPES = [
 	"apply_status",
 	"apply_status_self",
 	"apply_status_all",
-	"apply_shock",
-	"apply_shock_all",
+	"apply_stun",
+	"apply_stun_all",
 	"exhaust_self",
 ]
 const ALLOWED_STATUS_NAMES = [
@@ -48,7 +49,7 @@ const ALLOWED_STATUS_NAMES = [
 	"vulnerable",
 	"strength_up",
 	"double_damage",
-	"shock",
+	"stun",
 ]
 # Effect types that require a `status` field
 const STATUS_BEARING_EFFECTS = [
@@ -269,11 +270,11 @@ static func validate_card(data: Dictionary, source_path: String) -> bool:
 					)
 				)
 				ok = false
-		# ADR-0004: shock is enemy-only. Reject applying it to the player.
-		if etype == "apply_status_self" and str(effect.get("status", "")) == "shock":
+		# ADR-0004: stun is enemy-only. Reject applying it to the player.
+		if etype == "apply_status_self" and str(effect.get("status", "")) == "stun":
 			push_error(
 				(
-					"%s: effect[%d] tries to apply 'shock' to self — shock is enemy-only (see docs/adr/0004-shock-enemy-only.md)"
+					"%s: effect[%d] tries to apply 'stun' to self — stun is enemy-only (see docs/adr/0004-shock-enemy-only.md)"
 					% [prefix, i]
 				)
 			)
@@ -289,10 +290,23 @@ static func validate_card(data: Dictionary, source_path: String) -> bool:
 						)
 					)
 					ok = false
-		# `apply_shock` / `apply_shock_all` need stacks (or amount as fallback)
-		if etype in ["apply_shock", "apply_shock_all"]:
+		# `apply_stun` / `apply_stun_all` need stacks (or amount as fallback)
+		if etype in ["apply_stun", "apply_stun_all"]:
 			if not effect.has("stacks") and not effect.has("amount"):
 				push_error("%s: effect[%d] (%s) needs 'stacks' (or 'amount')" % [prefix, i, etype])
+				ok = false
+		# `deal_damage_str_mult` requires an int `mult` (damage = strength * mult).
+		if etype == "deal_damage_str_mult":
+			if not effect.has("mult"):
+				push_error("%s: effect[%d] (deal_damage_str_mult) is missing 'mult'" % [prefix, i])
+				ok = false
+			elif typeof(effect["mult"]) != TYPE_INT:
+				push_error(
+					(
+						"%s: effect[%d] (deal_damage_str_mult) 'mult' must be an int, got %s"
+						% [prefix, i, typeof(effect["mult"])]
+					)
+				)
 				ok = false
 
 	# Unknown top-level keys → warn (not fatal) — helps catch typos like "retian"

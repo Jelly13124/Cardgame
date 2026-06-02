@@ -116,12 +116,12 @@ func execute_enemy_turn() -> void:
 			if not is_instance_valid(enemy) or enemy.health <= 0:
 				continue
 
-		# Shock check: if the enemy is shocked, consume one stack and skip
+		# Stun check: if the enemy is stunned, consume one stack and skip
 		# its action. The action pointer still advances so the enemy doesn't
 		# build up a backlog of skipped moves.
-		if enemy.has_method("consume_shock_if_present") and enemy.consume_shock_if_present():
+		if enemy.has_method("consume_stun_if_present") and enemy.consume_stun_if_present():
 			main.show_notification(
-				tr("UI_COMBAT_ENEMY_SHOCKED").format({"name": enemy.enemy_name}),
+				tr("UI_COMBAT_ENEMY_STUNNED").format({"name": enemy.enemy_name}),
 				Color(0.95, 0.95, 0.3)
 			)
 			enemy.consume_next_action()
@@ -154,11 +154,11 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 	var amount: int = int(action.get("amount", 6))
 
 	# Interruptible attacks (e.g. boss Crushing Blow after a telegraph) can be
-	# cancelled by spending 1 shock stack on the enemy. This is the shared
+	# cancelled by spending 1 stun stack on the enemy. This is the shared
 	# cancel logic for mortar_cart and the Junkyard Tyrant Boss.
 	var is_attack_like = action_type in ["attack", "attack_status", "attack_all"]
 	if is_attack_like and bool(action.get("interruptible", false)):
-		if enemy.has_method("consume_shock_if_present") and enemy.consume_shock_if_present():
+		if enemy.has_method("consume_stun_if_present") and enemy.consume_stun_if_present():
 			var interrupt_label := str(action.get("label", tr("UI_COMBAT_INTERRUPT_DEFAULT_LABEL")))
 			main.show_notification(
 				tr("UI_COMBAT_INTERRUPTED").format({"label": interrupt_label}),
