@@ -4,14 +4,13 @@
 	"rarity": "uncommon",
 	"type": "attack",
 	"cost": 1,
-	"description": "Deal [b]6+Strength[/b] damage. Draw 1 card.",
+	"description": "Deal [b]6[/b] damage. Draw 1 card.",
 	"front_image": "player/chain_link.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "deal_damage",
-			"amount": 6,
-			"scaling": "strength"
+			"amount": 6
 		},
 		{
 			"type": "draw_cards",

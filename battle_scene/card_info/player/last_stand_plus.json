@@ -4,14 +4,13 @@
 	"rarity": "uncommon",
 	"type": "skill",
 	"cost": 2,
-	"description": "Gain [b]17+Constitution[/b] block. Draw 2 cards.",
+	"description": "Gain [b]17[/b] block. Draw 2 cards.",
 	"front_image": "player/last_stand.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "gain_block",
-			"amount": 17,
-			"scaling": "constitution"
+			"amount": 17
 		},
 		{
 			"type": "draw_cards",

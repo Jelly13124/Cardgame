@@ -1,22 +1,20 @@
 {
 	"name": "double_tap_plus",
 	"title": "Double Tap+",
-	"rarity": "common",
+	"rarity": "rare",
 	"type": "attack",
-	"cost": 1,
-	"description": "Deal [b]4+Strength[/b] damage twice.",
+	"cost": 2,
+	"description": "Deal [b]2[/b] damage twice.",
 	"front_image": "player/double_tap.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "deal_damage",
-			"amount": 4,
-			"scaling": "strength"
+			"amount": 2
 		},
 		{
 			"type": "deal_damage",
-			"amount": 4,
-			"scaling": "strength"
+			"amount": 2
 		}
 	]
 }
