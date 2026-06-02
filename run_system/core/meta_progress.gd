@@ -49,6 +49,9 @@ const INITIAL_CARD_POOL: Array[String] = [
 	"acid_splash",
 	"focus",
 	"chain_link",
+	"reinforce",
+	"deflector",
+	"bulwark",
 ]
 
 
