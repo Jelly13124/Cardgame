@@ -1,0 +1,14 @@
+{
+	"name": "bulwark",
+	"title": "Bulwark",
+	"rarity": "rare",
+	"type": "skill",
+	"cost": 2,
+	"description": "Gain 12 Block. Gain 1 Energy.",
+	"front_image": "player/bulwark.png",
+	"side": "player",
+	"effects": [
+		{ "type": "gain_block", "amount": 12 },
+		{ "type": "gain_energy", "amount": 1 }
+	]
+}
