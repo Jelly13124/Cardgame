@@ -28,6 +28,7 @@ var is_targeting: bool = false
 var targeting_card: Control = null
 var targeting_arrow: Node2D = null
 var hovered_unit: Node = null
+var _dmg_preview: Label = null
 
 const TARGETING_ARROW_SCRIPT = preload("res://battle_scene/targeting_arrow.gd")
 const RELIC_EFFECT_SYSTEM = preload("res://battle_scene/relic_effect_system.gd")
@@ -162,6 +163,7 @@ func _process(_delta: float) -> void:
 		if hovered_unit:
 			_set_hover_effect(hovered_unit, false)
 			hovered_unit = null
+		_hide_damage_preview()
 		return
 
 	var mouse_pos = get_viewport().get_mouse_position()
@@ -176,6 +178,75 @@ func _process(_delta: float) -> void:
 
 	if targeting_arrow and targeting_arrow.has_method("set_target_valid"):
 		targeting_arrow.set_target_valid(hovered_unit != null)
+
+	# Damage preview: show the number this attack would actually deal. Prefer the
+	# hovered enemy; if exactly one enemy is on the field, show it for that enemy
+	# even before the player hovers it.
+	var preview_target: Node = hovered_unit if hovered_unit else _sole_alive_enemy()
+	if preview_target and is_instance_valid(preview_target):
+		var dmg := _card_preview_damage(targeting_card, preview_target)
+		if dmg >= 0:
+			_show_damage_preview(preview_target, dmg)
+		else:
+			_hide_damage_preview()
+	else:
+		_hide_damage_preview()
+
+
+## Predicted post-mitigation damage `card` would deal to `target` (incl. global
+## STR, weak/vulnerable, relics via calculate_attack_damage). -1 if not a damage card.
+func _card_preview_damage(card: Control, target: Node) -> int:
+	if not (card and is_instance_valid(card) and "card_info" in card):
+		return -1
+	var effects: Array = card.card_info.get("effects", [])
+	var str_val := int(player.get("strength")) if player else 0
+	var base_total := 0
+	var has_damage := false
+	for effect in effects:
+		var etype := str(effect.get("type", ""))
+		match etype:
+			"deal_damage", "deal_damage_all":
+				var amt := int(effect.get("amount", 0))
+				var mult := float(effect.get("multiplier", 1))
+				if mult != 1:
+					amt = int(amt * mult)
+				base_total += amt + str_val
+				has_damage = true
+			"deal_damage_str_mult":
+				base_total += int(str_val * float(effect.get("mult", 1)))
+				has_damage = true
+			"scale_damage_by_attacks":
+				var count := int(turn_manager.attacks_played_this_turn) if turn_manager else 0
+				base_total += int(effect.get("base", 0)) + int(effect.get("per", 0)) * count
+				has_damage = true
+	if not has_damage:
+		return -1
+	return combat_engine.calculate_attack_damage(base_total, player, target)
+
+
+func _show_damage_preview(target: Node, dmg: int) -> void:
+	if not _dmg_preview:
+		_dmg_preview = Label.new()
+		_dmg_preview.add_theme_font_size_override("font_size", 38)
+		_dmg_preview.add_theme_color_override("font_color", Color(1.0, 0.86, 0.3))
+		_dmg_preview.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.95))
+		_dmg_preview.add_theme_constant_override("shadow_offset_x", 2)
+		_dmg_preview.add_theme_constant_override("shadow_offset_y", 2)
+		_dmg_preview.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_dmg_preview.z_index = 200
+		_dmg_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_dmg_preview)
+	_dmg_preview.visible = true
+	_dmg_preview.text = str(dmg)
+	_dmg_preview.reset_size()
+	_dmg_preview.global_position = (
+		target.global_position + Vector2(-_dmg_preview.size.x * 0.5, -290)
+	)
+
+
+func _hide_damage_preview() -> void:
+	if _dmg_preview:
+		_dmg_preview.visible = false
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
