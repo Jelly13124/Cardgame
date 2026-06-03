@@ -75,7 +75,7 @@ func _build_energy_display() -> void:
 	var frame = NinePatchRect.new()
 	frame.name = "Frame"
 	frame.texture = ENERGY_PANEL_TEX
-	frame.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	frame.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	frame.patch_margin_left = 12
 	frame.patch_margin_top = 10
 	frame.patch_margin_right = 12
@@ -87,7 +87,7 @@ func _build_energy_display() -> void:
 	var core = TextureRect.new()
 	core.name = "EnergyCore"
 	core.texture = ENERGY_CORE_TEX
-	core.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	core.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	core.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	core.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	core.size = Vector2(42, 42)

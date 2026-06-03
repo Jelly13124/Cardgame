@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c3uo5nqfhc58v"
-path="res://.godot/imported/preemptive_strike.jpg-dbf0cd2c3e744890ea72c469f4c1d037.ctex"
+uid="uid://ccj72kcnd7dkf"
+path="res://.godot/imported/ember_wisp_attack_0.png-0ae9e32cecf91126f39854dd59d637dd.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/cards/player/preemptive_strike.jpg"
-dest_files=["res://.godot/imported/preemptive_strike.jpg-dbf0cd2c3e744890ea72c469f4c1d037.ctex"]
+source_file="res://battle_scene/assets/images/enemies/ember_wisp/attack/ember_wisp_attack_0.png"
+dest_files=["res://.godot/imported/ember_wisp_attack_0.png-0ae9e32cecf91126f39854dd59d637dd.ctex"]
 
 [params]
 

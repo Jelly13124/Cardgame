@@ -1,7 +1,7 @@
 # Cards Catalog
 
-**Last updated:** 2026-06-01
-**Total cards:** 21 (excludes `_plus` upgrade variants)
+**Last updated:** 2026-06-03
+**Total cards:** 24 (excludes `_plus` upgrade variants)
 
 ## Paths
 
@@ -19,15 +19,15 @@
 
 | Rarity | Count | IDs |
 |---|---|---|
-| Common | 7 | brace, defend, hot_swap, reinforce, siphon, strike, weak_strike |
-| Uncommon | 7 | acid_splash, cascade, chain_link, charged_shot, deflector, focus, last_stand |
+| Common | 9 | brace, corrode, defend, hot_swap, patch_kit, reinforce, siphon, strike, weak_strike |
+| Uncommon | 8 | acid_splash, cascade, chain_link, charged_shot, deflector, focus, last_stand, spiked_guard |
 | Rare | 7 | adrenaline, bone_breaker, bulwark, double_tap, last_breath, preemptive_strike, stun_baton |
 
 | Type | Count |
 |---|---|
 | Ability | 1 |
 | Attack | 10 |
-| Skill | 10 |
+| Skill | 13 |
 
 | Keyword | Cards |
 |---|---|
@@ -42,20 +42,23 @@
 | `adrenaline` | Adrenaline | skill | 0 | rare | gain_energy 2; draw_cards 1 | Exhaust | ✅ |
 | `bone_breaker` | Bone Breaker | attack | 2 | rare | deal_damage 14; apply_status vulnerable 2 | — | ✅ |
 | `brace` | Brace | skill | 0 | common | gain_block 4 | Retain | ✅ |
-| `bulwark` | Bulwark | skill | 2 | rare | gain_block 12; gain_energy 1 | — | ❌ |
+| `bulwark` | Bulwark | skill | 2 | rare | gain_block 12; gain_energy 1 | — | ✅ |
 | `cascade` | Cascade | attack | 1 | uncommon | scale_damage_by_attacks (base=2, per=2) | Retain | ✅ |
 | `chain_link` | Chain Link | attack | 1 | uncommon | deal_damage 6; draw_cards 1 | — | ✅ |
 | `charged_shot` | Charged Shot | attack | 1 | uncommon | deal_damage_str_mult {'mult': 2} | Exhaust | ✅ |
+| `corrode` | Corrode | skill | 1 | common | apply_status frail 2 | — | ✅ |
 | `defend` | Defend | skill | 1 | common | gain_block 3 | — | ✅ |
-| `deflector` | Deflector | skill | 1 | uncommon | gain_block 5; apply_status weak 1 | — | ❌ |
+| `deflector` | Deflector | skill | 1 | uncommon | gain_block 5; apply_status weak 1 | — | ✅ |
 | `double_tap` | Double Tap | attack | 2 | rare | deal_damage 1; deal_damage 1 | — | ✅ |
 | `focus` | Focus | ability | 1 | uncommon | gain_intelligence 1; draw_cards 1 | Exhaust | ✅ |
 | `hot_swap` | Hot Swap | skill | 1 | common | draw_cards 2 | — | ✅ |
 | `last_breath` | Last Breath | skill | 0 | rare | gain_block 10; draw_cards 2 | Exhaust | ✅ |
 | `last_stand` | Last Stand | skill | 2 | uncommon | gain_block 12; draw_cards 1 | — | ✅ |
+| `patch_kit` | Patch Kit | skill | 1 | common | apply_status_self regen 3 | — | ✅ |
 | `preemptive_strike` | Preemptive Strike | skill | 1 | rare | apply_status_self double_damage 1 | — | ✅ |
-| `reinforce` | Reinforce | skill | 1 | common | gain_block 7 | — | ❌ |
+| `reinforce` | Reinforce | skill | 1 | common | gain_block 7 | — | ✅ |
 | `siphon` | Siphon | attack | 1 | common | deal_damage 4; gain_block 4 | — | ✅ |
+| `spiked_guard` | Spiked Guard | skill | 1 | uncommon | gain_block 5; apply_status_self thorns 2 | — | ✅ |
 | `strike` | Strike | attack | 1 | common | deal_damage 3 | — | ✅ |
 | `stun_baton` | Stun Baton | attack | 1 | rare | deal_damage 1; apply_stun {'stacks': 1} | — | ✅ |
 | `weak_strike` | Weak Strike | attack | 1 | common | deal_damage 3; apply_status weak 1 | — | ✅ |
@@ -86,19 +89,19 @@
 **NEW (Phase E) — Common.** Solid single-card block; CON is added globally on top.
 - Effects: `gain_block 7`
 - JSON: `battle_scene/card_info/player/reinforce.json`
-- Art: `battle_scene/assets/images/cards/player/reinforce.png` (pending Codex)
+- Art: `battle_scene/assets/images/cards/player/reinforce.png`
 
 ### `deflector`
 **NEW (Phase E) — Uncommon.** Block plus a Weak debuff on the target — defensive tempo card.
 - Effects: `gain_block 5`, `apply_status weak 1`
 - JSON: `battle_scene/card_info/player/deflector.json`
-- Art: `battle_scene/assets/images/cards/player/deflector.png` (pending Codex)
+- Art: `battle_scene/assets/images/cards/player/deflector.png`
 
 ### `bulwark`
 **NEW (Phase E) — Rare.** Big defensive turn that refunds energy: 12 block + 1 energy back.
 - Effects: `gain_block 12`, `gain_energy 1`
 - JSON: `battle_scene/card_info/player/bulwark.json`
-- Art: `battle_scene/assets/images/cards/player/bulwark.png` (pending Codex)
+- Art: `battle_scene/assets/images/cards/player/bulwark.png`
 
 ### `preemptive_strike`
 **Loot draft (rare).** Doubles damage on the next attack played.
@@ -131,6 +134,12 @@
 - Keywords: **Exhaust**
 - JSON: `battle_scene/card_info/player/charged_shot.json`
 - Art: `battle_scene/assets/images/cards/player/charged_shot.png`
+
+### `corrode`
+**Common control skill.** Applies Frail so the enemy's future block/defense is weaker.
+- Effects: `apply_status frail 2`
+- JSON: `battle_scene/card_info/player/corrode.json`
+- Art: `battle_scene/assets/images/cards/player/corrode.png`
 
 ### `adrenaline`
 **Burst (rare).** Free-cost energy + draw. Exhausts. Enables combo turns.
@@ -171,6 +180,12 @@
 - JSON: `battle_scene/card_info/player/last_stand.json`
 - Art: `battle_scene/assets/images/cards/player/last_stand.png`
 
+### `patch_kit`
+**Common sustain skill.** Applies Regen to the player for delayed recovery.
+- Effects: `apply_status_self regen 3`
+- JSON: `battle_scene/card_info/player/patch_kit.json`
+- Art: `battle_scene/assets/images/cards/player/patch_kit.png`
+
 ### `acid_splash`
 **Uncommon.** AoE: hits every enemy for 4 and stacks 2 Poison on all of them.
 - Effects: `deal_damage_all 4`, `apply_status_all poison 2`
@@ -189,6 +204,12 @@
 - Effects: `deal_damage 6`, `draw_cards 1`
 - JSON: `battle_scene/card_info/player/chain_link.json`
 - Art: `battle_scene/assets/images/cards/player/chain_link.png`
+
+### `spiked_guard`
+**Uncommon defense skill.** Blocks immediately and adds Thorns for retaliation.
+- Effects: `gain_block 5`, `apply_status_self thorns 2`
+- JSON: `battle_scene/card_info/player/spiked_guard.json`
+- Art: `battle_scene/assets/images/cards/player/spiked_guard.png`
 
 ### `bone_breaker`
 **Rare.** Heavy 14 damage + 2 Vulnerable to set up the follow-up. Boss-killer opener.
@@ -224,5 +245,5 @@ See `combat_engine.gd` `_apply_effect()` for the full match. Allowed types track
 1. Create `battle_scene/card_info/player/{id}.json` matching the schema.
 2. Add `{id}` to `run_system/ui/loot_reward.gd` `draft_pool` so it can be drafted.
 3. If introducing a new effect type, add a handler in `combat_engine.gd` `_apply_effect()` AND add the type to `data_validator.gd` `ALLOWED_EFFECT_TYPES`.
-4. Generate art via the `/codex-handoff` skill (art contract per ADR-0005; style in `docs/art-style-reference.md`) → `battle_scene/assets/images/cards/player/{id}.png`.
+4. Generate a `512x320` landscape PNG illustration using the active art contract in `docs/art-style-reference.md` and ADR-0018 → `battle_scene/assets/images/cards/player/{id}.png`. Do not bake in card UI, labels, cost, title, rarity, type, or description text.
 5. Restart the editor — DataValidator scans on `RunManager._ready()` and will fail loud if the JSON has a typo.

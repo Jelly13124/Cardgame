@@ -72,7 +72,6 @@
 | `signal_jammer`     | Signal Jammer / 信号干扰器        | common 普通   | first enemy hit / 首次受击 | −2 dmg / −2 伤害 |
 | `steel_plating`     | Steel Plating / 钢板装甲          | common 普通   | turn 1 start / 首回合 | +6 block / +6 格挡 |
 | `crit_clip`         | Crit Clip / 暴击弹夹              | common 普通   | every attack / 每次攻击 | Luck-scaled 1.5× crit / 幸运缩放 1.5× 暴击 |
-| `rabbits_foot`      | Rabbit's Foot / 兔脚              | common 普通   | combat win / 战斗胜利 | +6 gold / +6 金币 |
 | `bulk_actuator`     | Bulk Actuator / 重型驱动器        | uncommon 罕见 | turn 1 start / 首回合 | +10 block / +10 格挡 |
 | `scavenger_lens`    | Scavenger's Lens / 拾荒者透镜     | uncommon 罕见 | combat win / 战斗胜利 | +12 gold / +12 金币 |
 | `inertial_dampener` | Inertial Dampener / 惯性阻尼器    | uncommon 罕见 | every enemy hit / 每次受击 | −1 dmg / −1 伤害 |

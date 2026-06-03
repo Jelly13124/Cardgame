@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://l44d64mt60fj"
-path="res://.godot/imported/parchment_bg.png-cc564c956db283110a5a2693fea5c81b.ctex"
+uid="uid://bmpqymo8mjf8n"
+path="res://.godot/imported/scrap_shard_attack_3.png-8d8edce6c921c4698aff129e6be72335.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://run_system/assets/images/map/parchment_bg.png"
-dest_files=["res://.godot/imported/parchment_bg.png-cc564c956db283110a5a2693fea5c81b.ctex"]
+source_file="res://battle_scene/assets/images/enemies/scrap_shard/attack/scrap_shard_attack_3.png"
+dest_files=["res://.godot/imported/scrap_shard_attack_3.png-8d8edce6c921c4698aff129e6be72335.ctex"]
 
 [params]
 

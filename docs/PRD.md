@@ -2,7 +2,7 @@
 **Project:** Unnamed Sci-Fi Roguelite Card Game  
 **Art Style:** Offbeat Adult Sci-Fi Cartoon Wasteland
 **Engine:** Godot 4.6  
-**Last Updated:** 2026-06-02
+**Last Updated:** 2026-06-03
 
 ---
 
@@ -329,8 +329,11 @@ The approved production exemplars are Cowboy Bill's current runtime art and the 
 - `battle_scene/assets/images/heroes/cowboy_bill/attack/`
 - `battle_scene/assets/images/backgrounds/wasteland_battlefield.png`
 - `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`
+- `battle_scene/assets/images/cards/player/*.png`
 
 The project is no longer a 128-pixel or pixel-art style. Any frame sizes in asset specs are engine output contracts only.
+
+All current playable player cards use `512x320` landscape PNG illustrations under `battle_scene/assets/images/cards/player/`. These are pure illustrations for the card art slot; UI framing, cost, title, rarity, type, and description are rendered by the card scene, never baked into the illustration.
 
 ### Visual Rules
 | Element | Rule |
@@ -343,6 +346,7 @@ The project is no longer a 128-pixel or pixel-art style. Any frame sizes in asse
 | **Outlines** | Thick black or very dark cartoon outlines with sparse interior contour lines. |
 | **Shading** | Simple two-to-three value cel shading; use broad shadow shapes instead of detailed painterly texture, hatching, dithering, or noisy grunge. |
 | **Background** | Character, card, UI, and FX sprites use transparent backgrounds; full-scene map and battle backgrounds are scene-ready PNGs with no UI, text, labels, or characters baked in. |
+| **Card illustration** | `512x320` landscape PNG, no UI frame, no title, no cost, no rarity/type text, no description box, no speech bubble, no baked labels. |
 
 ### Character Anchors
 - Cowboy Bill: robot cowboy hero with exactly one large orange camera eye, oversized battered hat with star badge, red scarf, patched duster or poncho, chunky boots, salvaged revolver, facing right. Preserve identity from the Bill sheet but render him in the active flatter cartoon style.
@@ -440,5 +444,5 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 | Priority | Issue |
 |---|---|
 | 🟢 | `Sharpened Scrap` relic's `_mark_used_once()` call is harmless dead code for non-`once_per_combat` relics — minor readability |
-| P3 | Some legacy generated card art may remain unused; current playable cards should reference PNG art |
+| P3 | Some historical generated-sheet intermediates remain for traceability; current playable cards reference PNG art only |
 | ⚠️ | **The pre-2026-05-25 PixelLab key in `generate_enemy.ps1`** is in git history and should be rotated on the PixelLab side. The file now reads from `$env:PIXELLAB_API_KEY` but the old key remains exposed in historical commits. |

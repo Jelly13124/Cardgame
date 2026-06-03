@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c6vuvpda4tcit"
-path="res://.godot/imported/strike.jpg-dff62d66e605373e62ccbf0f2545d69d.ctex"
+uid="uid://b8qvgeismomha"
+path="res://.godot/imported/corrode.png-d56f3a3431f88b6cd2dcbba229bbb6ce.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/cards/player/strike.jpg"
-dest_files=["res://.godot/imported/strike.jpg-dff62d66e605373e62ccbf0f2545d69d.ctex"]
+source_file="res://battle_scene/assets/images/cards/player/corrode.png"
+dest_files=["res://.godot/imported/corrode.png-d56f3a3431f88b6cd2dcbba229bbb6ce.ctex"]
 
 [params]
 

@@ -1,7 +1,7 @@
 # Relics Catalog
 
-**Last updated:** 2026-06-01
-**Total relics:** 14
+**Last updated:** 2026-06-03
+**Total relics:** 13
 
 ## Paths
 
@@ -19,7 +19,7 @@
 
 | Rarity | Count |
 |---|---|
-| Common | 8 |
+| Common | 7 |
 | Uncommon | 5 |
 | Rare | 1 |
 
@@ -28,20 +28,19 @@
 | `player_turn_start` (round 1, once_per_combat) | cracked_battery, steel_plating, bulk_actuator, adrenaline_pump |
 | `player_attack_damage` | sharpened_scrap, war_horn, crit_clip (crit_chance) |
 | `enemy_attack_damage` | signal_jammer (once_per_combat), inertial_dampener (every hit) |
-| `combat_victory` | lucky_cog, repair_kit, scavenger_lens, rabbits_foot, bounty_tags (gold + heal) |
+| `combat_victory` | lucky_cog, repair_kit, scavenger_lens, bounty_tags (gold + heal) |
 
 ## Summary table
 
 | ID | Title | Rarity | Trigger | Effect | Once/combat | Icon |
 |---|---|---|---|---|---|---|
-| `adrenaline_pump` | Adrenaline Pump | uncommon | player_turn_start (round 1) | gain_energy 1 | ✓ | ❌ |
+| `adrenaline_pump` | Adrenaline Pump | uncommon | player_turn_start (round 1) | gain_energy 1 | ✓ | ✅ |
 | `bounty_tags` | Bounty Tags | uncommon | combat_victory | gain_gold 12 | — | ✅ |
 | `bulk_actuator` | Bulk Actuator | uncommon | player_turn_start (round 1) | gain_block 10 | ✓ | ✅ |
 | `cracked_battery` | Cracked Battery | common | player_turn_start (round 1) | gain_energy 1 | ✓ | ✅ |
-| `crit_clip` | Crit Clip | common | player_attack_damage | crit_chance | — | ❌ |
+| `crit_clip` | Crit Clip | common | player_attack_damage | crit_chance | — | ✅ |
 | `inertial_dampener` | Inertial Dampener | uncommon | enemy_attack_damage | reduce_damage 1 | — | ✅ |
 | `lucky_cog` | Lucky Cog | common | combat_victory | gain_gold 5 | — | ✅ |
-| `rabbits_foot` | Rabbit's Foot | common | combat_victory | gain_gold 6 | — | ❌ |
 | `repair_kit` | Repair Kit | common | combat_victory | heal 3 | — | ✅ |
 | `scavenger_lens` | Scavenger's Lens | uncommon | combat_victory | gain_gold 12 | — | ✅ |
 | `sharpened_scrap` | Sharpened Scrap | common | player_attack_damage | add_damage 1 | — | ✅ |
@@ -126,7 +125,7 @@
 - Trigger: `player_attack_damage` (every attack)
 - Effect: `crit_chance` — rolls `RunManager.crit_chance()` (scales with Luck); on a hit, multiplies damage by `RunManager.CRIT_MULT` (1.5×).
 - JSON: `run_system/data/relics/crit_clip.json`
-- Icon: `run_system/assets/images/relics/crit_clip.png` (art pending — Codex)
+- Icon: `run_system/assets/images/relics/crit_clip.png`
 
 ### `bounty_tags`
 **"After combat, gain 12 Gold and heal 3 HP."** (uncommon) — Jerry's starting relic. Two effects on the same `combat_victory` trigger.
@@ -135,19 +134,12 @@
 - JSON: `run_system/data/relics/bounty_tags.json`
 - Icon: `run_system/assets/images/relics/bounty_tags.png`
 
-### `rabbits_foot`
-**"After combat, gain 6 Gold. Luck favors the lucky."** (common) — between `lucky_cog` (+5) and `scavenger_lens` (+12).
-- Trigger: `combat_victory`
-- Effect: `gain_gold 6`
-- JSON: `run_system/data/relics/rabbits_foot.json`
-- Icon: `run_system/assets/images/relics/rabbits_foot.png` (art pending — Codex)
-
 ### `adrenaline_pump`
 **"At the start of your first turn each combat, gain 1 Energy."** (uncommon) — same effect as `cracked_battery` at a higher rarity tier.
 - Trigger: `player_turn_start` (round 1, once_per_combat)
 - Effect: `gain_energy 1`
 - JSON: `run_system/data/relics/adrenaline_pump.json`
-- Icon: `run_system/assets/images/relics/adrenaline_pump.png` (art pending — Codex)
+- Icon: `run_system/assets/images/relics/adrenaline_pump.png`
 
 ## Supported triggers
 

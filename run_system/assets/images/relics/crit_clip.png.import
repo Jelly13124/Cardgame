@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cj2vtg0dcevnc"
-path="res://.godot/imported/junkyard_tyrant_charge_0.png-c573ab7477b5abacdb8abad14df6bcc9.ctex"
+uid="uid://no5eeru6w4st"
+path="res://.godot/imported/crit_clip.png-b2425204f49c249a8bc0762766f88c07.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/enemies/junkyard_tyrant/charge/junkyard_tyrant_charge_0.png"
-dest_files=["res://.godot/imported/junkyard_tyrant_charge_0.png-c573ab7477b5abacdb8abad14df6bcc9.ctex"]
+source_file="res://run_system/assets/images/relics/crit_clip.png"
+dest_files=["res://.godot/imported/crit_clip.png-b2425204f49c249a8bc0762766f88c07.ctex"]
 
 [params]
 

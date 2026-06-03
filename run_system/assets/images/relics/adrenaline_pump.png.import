@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bi6rmurig0h7o"
-path="res://.godot/imported/defend.jpg-6d762c1a107ef22e0aa239a593b1d95b.ctex"
+uid="uid://e5ujh0oceqx4"
+path="res://.godot/imported/adrenaline_pump.png-dac881afce1aab15e6bcaecf0981a249.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/cards/player/defend.jpg"
-dest_files=["res://.godot/imported/defend.jpg-6d762c1a107ef22e0aa239a593b1d95b.ctex"]
+source_file="res://run_system/assets/images/relics/adrenaline_pump.png"
+dest_files=["res://.godot/imported/adrenaline_pump.png-dac881afce1aab15e6bcaecf0981a249.ctex"]
 
 [params]
 

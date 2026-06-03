@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ntcpcvxoa1yl"
-path="res://.godot/imported/holographic_shield.jpg-d1b820b5b318d26bc356ffce61dddd1a.ctex"
+uid="uid://braf7alq11lwi"
+path="res://.godot/imported/scrap_shard_attack_2.png-3c8d933b1d6c75c0b3baf5e9d6201c90.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/cards/player/holographic_shield.jpg"
-dest_files=["res://.godot/imported/holographic_shield.jpg-d1b820b5b318d26bc356ffce61dddd1a.ctex"]
+source_file="res://battle_scene/assets/images/enemies/scrap_shard/attack/scrap_shard_attack_2.png"
+dest_files=["res://.godot/imported/scrap_shard_attack_2.png-3c8d933b1d6c75c0b3baf5e9d6201c90.ctex"]
 
 [params]
 

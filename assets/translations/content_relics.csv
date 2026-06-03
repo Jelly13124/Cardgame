@@ -21,7 +21,5 @@ RELIC_war_horn_TITLE,War Horn,战争号角
 RELIC_war_horn_DESC,Your direct attack damage is increased by 2.,你的直接攻击伤害提升2点。
 RELIC_bounty_tags_TITLE,Bounty Tags,赏金标牌
 RELIC_bounty_tags_DESC,"After combat, gain 12 Gold and heal 3 HP.",战斗结束后，获得12金币并治疗3点生命。
-RELIC_rabbits_foot_TITLE,Rabbit's Foot,兔脚
-RELIC_rabbits_foot_DESC,"After combat, gain 6 Gold. Luck favors the lucky.",战斗结束后，获得6金币。幸运眷顾有运之人。
 RELIC_adrenaline_pump_TITLE,Adrenaline Pump,肾上腺素泵
 RELIC_adrenaline_pump_DESC,"At the start of your first turn each combat, gain 1 Energy.",每场战斗首回合开始时，获得1点能量。

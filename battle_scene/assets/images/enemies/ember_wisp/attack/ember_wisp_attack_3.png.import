@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ekykicjojeao"
-path="res://.godot/imported/junkyard_tyrant_charge_3.png-e489a93011295bf94bba18114c2464ca.ctex"
+uid="uid://d2vtl04lsgfa0"
+path="res://.godot/imported/ember_wisp_attack_3.png-5dd7c4623e6a2366bde63d31d606b480.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/enemies/junkyard_tyrant/charge/junkyard_tyrant_charge_3.png"
-dest_files=["res://.godot/imported/junkyard_tyrant_charge_3.png-e489a93011295bf94bba18114c2464ca.ctex"]
+source_file="res://battle_scene/assets/images/enemies/ember_wisp/attack/ember_wisp_attack_3.png"
+dest_files=["res://.godot/imported/ember_wisp_attack_3.png-5dd7c4623e6a2366bde63d31d606b480.ctex"]
 
 [params]
 

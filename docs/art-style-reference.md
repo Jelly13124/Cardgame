@@ -3,7 +3,7 @@
 **Canonical style name:** Offbeat Adult Sci-Fi Cartoon Wasteland  
 **Active style source:** this written style contract. Do not use old project reference images as global style references.  
 **Character identity note:** `docs/art/cowboy-bill-character-sheet-reference.png` may be used only to preserve Cowboy Bill's identity markers, not as the global art style.
-**Approved in-game exemplars:** `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`, `battle_scene/assets/images/backgrounds/wasteland_battlefield.png`, and `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`.
+**Approved in-game exemplars:** `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`, `battle_scene/assets/images/backgrounds/wasteland_battlefield.png`, `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`, and the current playable card illustrations in `battle_scene/assets/images/cards/player/*.png`.
 
 This file defines the locked art direction. The target is original adult sci-fi western cartoon game art: clean flat 2D animation shapes, thick dark outlines, strange desert sci-fi props, absurd salvage-tech silhouettes, simple cel shading, and bright toxic accent colors. The project is not pixel art and should not use gritty rendered concept-art texture.
 
@@ -20,6 +20,8 @@ Do not copy named show characters, logos, exact scene layouts, or franchise-spec
 - **Palette:** dusty tan and warm brown base colors, muted red cloth, grey-green metal, pale desert sand, sickly toxic green, cyan plasma, warm orange glows, and off-white UI/negative space where needed.
 - **Accent color:** use one or two bright high-contrast accents per asset. Toxic green, cyan, and orange are the primary glow accents.
 - **Background policy:** scene backgrounds are full-scene PNGs with no UI, text, labels, or characters baked in. Sprites, card objects, icons, and FX use transparent PNGs or solid `#FF00FF` cleanup backgrounds.
+- **Card illustration policy:** player card art is a `512x320` landscape illustration PNG. The image is art only: no cost badge, no title label, no rarity text, no type label, no description box, no speech bubble, and no card frame baked into the illustration.
+- **UI icon policy:** UI components and combat intent icons must be as simple as possible. Prefer one clear silhouette and one main color: red sword for attack, blue shield for block, green arrow/glow for buff, orange warning mark for charge. Do not add character faces, skulls, props, texture, or extra salvage detail unless the icon's gameplay meaning requires it.
 
 ## Approved Exemplars
 
@@ -28,6 +30,7 @@ These files are the current production look. New art should match their flatness
 - **Cowboy Bill runtime style:** `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`
 - **Battle background style:** `battle_scene/assets/images/backgrounds/wasteland_battlefield.png`
 - **Route map background style:** `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`
+- **Playable card illustration style:** `battle_scene/assets/images/cards/player/strike.png`, `battle_scene/assets/images/cards/player/charged_shot.png`, `battle_scene/assets/images/cards/player/deflector.png`, and the rest of `battle_scene/assets/images/cards/player/*.png`
 
 The old Cowboy Bill character sheet is identity documentation only. It is useful for checking Bill's one orange eye, hat/star, red scarf, patched duster, boots, revolver, and gadget motifs. It must not pull new assets back toward rendered concept-sheet detail.
 
@@ -59,6 +62,16 @@ Map and battle backgrounds must be simple, graphic, and readable behind UI.
 - Enemies should be original junk-tech western robots, mutants, drones, creatures, or wasteland devices. They must not be direct copies of named show characters or existing franchise designs.
 - Enemies face left in combat.
 - Prioritize funny-gross silhouettes, bulging lenses/eyes, odd proportions, simple body masses, bright toxic accents, and clear gameplay readability.
+
+## UI Rules
+
+UI icons are readability tools first and illustrations second.
+
+- Combat intent icons must stay extremely minimal and readable at 24x24 to 34x34.
+- Attack intent uses a simple red sword silhouette.
+- Block intent uses a simple blue shield silhouette.
+- Avoid ornate frames, skull motifs, tiny bolts, dense linework, or themed props in small UI icons.
+- If a UI asset becomes less readable when styled, simplify it before adding project-world detail.
 
 ## Prompt Anchor
 
@@ -92,7 +105,7 @@ flat smooth color fills, simple cel shadows, clean black outlines,
 no pixel art, no retro tiles, no dithering, no painterly rendering, no gritty texture, no dense tiny rocks, no clutter
 ```
 
-For card illustrations, keep the same style but do not force side-view/full-body if the card art is an object, weapon, or action scene. Card art must not include card frames, cost badges, titles, labels, speech bubbles, or UI elements.
+For card illustrations, keep the same style but do not force side-view/full-body if the card art is an object, weapon, or action scene. Card art must be `512x320`, landscape, production-cropped for the current Godot card art slot, and must not include card frames, cost badges, titles, labels, speech bubbles, rarity text, type text, description boxes, or UI elements.
 
 ## Avoid
 

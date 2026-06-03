@@ -14,10 +14,10 @@
       "text": "[Charm 6] Haggle him down to a steal",
       "requires": { "charm": 6 },
       "effects": [
-        { "type": "gain_relic", "id": "rabbits_foot" },
+        { "type": "gain_relic", "id": "repair_kit" },
         { "type": "gain_gold", "amount": 8 }
       ],
-      "result": "Your patter is silk. He laughs, throws in a Rabbit's Foot for the company, and even refunds a handful of coin to keep your favor."
+      "result": "Your patter is silk. He laughs, throws in a Repair Kit for the road, and even refunds a handful of coin to keep your favor."
     },
     {
       "text": "Browse and move on",

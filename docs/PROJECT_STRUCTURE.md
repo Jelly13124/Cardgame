@@ -103,7 +103,7 @@ The old root-level `skills/` workflow docs have been removed. Project convention
 
 ## 🖼️ Asset Locations
 
-*   **Card Illustrations (PNG)**: `battle_scene/assets/images/cards/player/` (base + `_plus` reuses base art)
+*   **Card Illustrations (PNG)**: `battle_scene/assets/images/cards/player/` (`512x320` landscape art-only PNGs; base + `_plus` reuses base art)
 *   **Equipment Icons (PNG)**: `battle_scene/assets/images/equipment/` (codex generates; falls back to placeholder if missing)
 *   **Shop Scene Art (PNG, optional)**: `run_system/assets/images/shop/` (background + shopkeeper; codex generates)
 *   **Hero Sprites (PNG/Animated)**: `battle_scene/assets/images/heroes/{sprite_id}/` (e.g. `cowboy_bill/`; the active hero's `sprite_id` comes from its `run_system/data/heroes/` JSON)

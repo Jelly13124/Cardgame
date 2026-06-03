@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://db0skesqnwl6d"
-path="res://.godot/imported/laser_gun.jpg-059dee9e169ec97136972d0eb89a950f.ctex"
+uid="uid://dy7wd33ftpwwn"
+path="res://.godot/imported/scrap_shard_attack_1.png-3d3301652797ab74bbbbf3288d5b58aa.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/cards/player/laser_gun.jpg"
-dest_files=["res://.godot/imported/laser_gun.jpg-059dee9e169ec97136972d0eb89a950f.ctex"]
+source_file="res://battle_scene/assets/images/enemies/scrap_shard/attack/scrap_shard_attack_1.png"
+dest_files=["res://.godot/imported/scrap_shard_attack_1.png-3d3301652797ab74bbbbf3288d5b58aa.ctex"]
 
 [params]
 
