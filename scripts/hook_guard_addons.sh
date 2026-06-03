@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # PreToolUse guard. Blocks Edit/Write/NotebookEdit on machine-generated files
 # that must never be hand-edited:
-#   - addons/                  vendored (card-framework, godot_mcp) per ADR-0005
+#   - addons/                  vendored (card-framework) per ADR-0005
 #   - **/generated_sheet/**    Codex art-pipeline intermediates (ADR-0005: Codex
 #                              owns assets/images/**, Claude must not touch them)
 #   - *.import                 Godot writes these on import (project-rules §4)
@@ -37,7 +37,7 @@ NORM="${TARGET//\\//}"
 
 case "$NORM" in
     */addons/*|addons/*)
-        echo "[hook_guard_addons] BLOCKED: '$TARGET' is under addons/ (vendored — card-framework / godot_mcp). Per ADR-0005 these are never hand-edited. If you genuinely need to change vendored code, do it outside Claude or update the ADR first." >&2
+        echo "[hook_guard_addons] BLOCKED: '$TARGET' is under addons/ (vendored — card-framework). Per ADR-0005 these are never hand-edited. If you genuinely need to change vendored code, do it outside Claude or update the ADR first." >&2
         exit 2
         ;;
     */generated_sheet/*)

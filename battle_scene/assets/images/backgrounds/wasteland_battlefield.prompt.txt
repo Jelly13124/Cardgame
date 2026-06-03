@@ -1,0 +1,5 @@
+16:9 scene-ready 2D game battle background, 1920x1080 composition. Original Offbeat Adult Sci-Fi Cartoon Wasteland, flat 2D adult sci-fi TV-animation look, thick clean dark cartoon outlines, large simple shape blocks, sparse interior lines, broad two-to-three value cel shading.
+
+Composition: weird sci-fi western alien desert battlefield with a wide empty sandy center ground plane for combat characters and FX. Simple pale tan horizon, strange rounded mesas in the distance, one crooked pipe and one small odd antenna at far edges, a tiny toxic-green sludge puddle near a corner, cyan/orange glow accents used sparingly.
+
+Hard negatives: no characters, no UI, no text, no labels, no logo, no named show characters, no franchise-specific props, no exact scene copies, no pixel art, no retro tiles, no dithering, no chunky pixels, no painterly rendering, no gritty texture, no dense tiny rocks, no clutter, no realistic ruins, no comic-book hatching.

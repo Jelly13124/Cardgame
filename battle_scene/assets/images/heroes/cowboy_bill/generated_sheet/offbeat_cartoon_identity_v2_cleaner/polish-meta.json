@@ -1,0 +1,18 @@
+{
+  "source": "battle_scene\\assets\\images\\heroes\\cowboy_bill\\generated_sheet\\offbeat_cartoon_identity_v2_cleaner\\clean.png",
+  "output_512": "battle_scene\\assets\\images\\heroes\\cowboy_bill\\cowboy_bill_identity_offbeat_v2.png",
+  "output_256": "battle_scene\\assets\\images\\heroes\\cowboy_bill\\cowboy_bill_identity_offbeat_v2_256.png",
+  "preview": "battle_scene\\assets\\images\\heroes\\cowboy_bill\\cowboy_bill_identity_offbeat_v2_battle_preview.png",
+  "removed_magenta_pixels": 4603,
+  "darkened_magenta_pixels": 7456,
+  "crop_bbox": [
+    55,
+    26,
+    456,
+    486
+  ],
+  "source_size": [
+    512,
+    512
+  ]
+}

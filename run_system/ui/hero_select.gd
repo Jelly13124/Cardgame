@@ -8,6 +8,9 @@ extends Control
 const MAP_PACKED = preload("res://run_system/ui/map_scene.tscn")
 const HERO_DIR := "res://run_system/data/heroes/"
 const HERO_SPRITE_DIR := "res://battle_scene/assets/images/heroes/"
+const HERO_PREVIEW_SIZE := Vector2(280, 380)
+const HERO_PREVIEW_NATIVE_SIZE := 256.0
+const MAX_ANIMATION_FRAMES := 16
 
 @onready var hero_row: HBoxContainer = $HeroRow
 
@@ -42,13 +45,18 @@ func _make_hero_card(hero_id: String, hero_data: Dictionary) -> Control:
 		hero_id == "hero_jerry_killer" and MetaProgress.get_upgrade_level("jerry_unlock") <= 0
 	)
 
+	var sprite_id := str(hero_data.get("sprite_id", hero_id))
 	var portrait := TextureButton.new()
-	portrait.custom_minimum_size = Vector2(280, 380)
+	portrait.custom_minimum_size = HERO_PREVIEW_SIZE
 	portrait.ignore_texture_size = true
 	portrait.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-	var tex := _load_portrait(str(hero_data.get("sprite_id", hero_id)))
+	portrait.clip_contents = true
+	var tex := _load_portrait(sprite_id)
 	if tex:
 		portrait.texture_normal = tex
+	var idle_preview := _make_idle_preview(sprite_id)
+	if idle_preview:
+		portrait.add_child(idle_preview)
 	if locked:
 		portrait.modulate = Color(0.28, 0.28, 0.30)
 		portrait.mouse_default_cursor_shape = Control.CURSOR_ARROW
@@ -56,8 +64,22 @@ func _make_hero_card(hero_id: String, hero_data: Dictionary) -> Control:
 		portrait.modulate = tint
 		portrait.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		portrait.pressed.connect(func() -> void: _select_hero(hero_id))
-		portrait.mouse_entered.connect(func() -> void: portrait.modulate = tint.lightened(0.15))
-		portrait.mouse_exited.connect(func() -> void: portrait.modulate = tint)
+		portrait.mouse_entered.connect(
+			func() -> void:
+				portrait.modulate = tint.lightened(0.15)
+				if idle_preview:
+					portrait.texture_normal = null
+					idle_preview.visible = true
+					idle_preview.play("idle")
+		)
+		portrait.mouse_exited.connect(
+			func() -> void:
+				portrait.modulate = tint
+				if idle_preview:
+					idle_preview.stop()
+					idle_preview.visible = false
+					portrait.texture_normal = tex
+		)
 	card.add_child(portrait)
 
 	var name_label := Label.new()
@@ -93,6 +115,56 @@ func _load_portrait(sprite_id: String) -> Texture2D:
 		if img:
 			return ImageTexture.create_from_image(img)
 	push_warning("hero_select: missing portrait '%s'" % path)
+	return null
+
+
+func _make_idle_preview(sprite_id: String) -> AnimatedSprite2D:
+	var frames := SpriteFrames.new()
+	frames.add_animation("idle")
+	frames.set_animation_loop("idle", true)
+	frames.set_animation_speed("idle", 12.0)
+
+	for idx in range(MAX_ANIMATION_FRAMES):
+		var path := "%s%s/idle/%s_idle_%d.png" % [HERO_SPRITE_DIR, sprite_id, sprite_id, idx]
+		if not _asset_exists(path):
+			break
+		var tex := _load_texture(path)
+		if tex:
+			frames.add_frame("idle", tex)
+
+	if frames.get_frame_count("idle") == 0:
+		return null
+
+	var preview := AnimatedSprite2D.new()
+	preview.name = "IdlePreview"
+	preview.sprite_frames = frames
+	preview.animation = "idle"
+	preview.visible = false
+	preview.centered = true
+	preview.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	preview.position = HERO_PREVIEW_SIZE * 0.5
+	var preview_scale := HERO_PREVIEW_SIZE.x / HERO_PREVIEW_NATIVE_SIZE
+	preview.scale = Vector2(preview_scale, preview_scale)
+	return preview
+
+
+func _asset_exists(path: String) -> bool:
+	if ResourceLoader.exists(path):
+		return true
+	if path.begins_with("res://"):
+		return FileAccess.file_exists(ProjectSettings.globalize_path(path))
+	return FileAccess.file_exists(path)
+
+
+func _load_texture(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		return load(path) as Texture2D
+	var file_path := path
+	if path.begins_with("res://"):
+		file_path = ProjectSettings.globalize_path(path)
+	var image := Image.new()
+	if image.load(file_path) == OK:
+		return ImageTexture.create_from_image(image)
 	return null
 
 

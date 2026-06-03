@@ -66,7 +66,9 @@ var _remove_card_picker: Control = null
 func _ready() -> void:
 	_card_factory = CARD_FACTORY_SCENE.instantiate()
 	add_child(_card_factory)
-	_card_factory.card_size = Vector2(160, 220)
+	# play_card.tscn is intrinsically 208x286; match it (cards scaled back to the old
+	# 160x220 footprint at placement so the stalls/remove-service layout still fits).
+	_card_factory.card_size = Vector2(208, 286)
 
 	_roll_stock()
 	_build_ui()
@@ -505,6 +507,8 @@ func _build_card_stall(entry: Dictionary) -> Control:
 		card.can_be_interacted_with = false
 		card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card.position = Vector2(2, 0)
+		card.pivot_offset = Vector2(0, 0)
+		card.scale = Vector2(160.0 / 208.0, 160.0 / 208.0)
 		card_box.add_child(card)
 
 	var price_row := HBoxContainer.new()
@@ -832,7 +836,8 @@ func _make_removal_slot(card_id: String, uid: String, modal: Control) -> Control
 		card.can_be_interacted_with = false
 		card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card.position = Vector2(10, 20)
-		card.pivot_offset = Vector2(80, 110)
+		card.pivot_offset = Vector2(0, 0)
+		card.scale = Vector2(160.0 / 208.0, 160.0 / 208.0)
 		wrapper.add_child(card)
 
 	var button := Button.new()

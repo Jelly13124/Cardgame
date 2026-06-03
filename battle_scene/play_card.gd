@@ -10,6 +10,8 @@ const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
 @onready var desc_label = $FrontFace/DescriptionBox/DescriptionLabel
 @onready var type_label = $FrontFace/RaceBox/RaceLabel
 @onready var card_bg_texture = $FrontFace/TextureRect
+@onready var desc_box_texture = $FrontFace/DescriptionBox
+@onready var type_badge_texture = $FrontFace/RaceBox
 @onready var playable_glow = $FrontFace/PlayableGlow
 @onready var art_frame_texture = $FrontFace/ArtFrameTexture
 @onready var art_bg = $FrontFace/ArtBackground
@@ -18,6 +20,8 @@ const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
 const MASK_SHADER = preload("res://battle_scene/card_art_mask.gdshader")
 const UI_ASSET_PATH = "res://battle_scene/assets/images/cards/ui/"
 const COST_BADGE_PATH = UI_ASSET_PATH + "card_cost_badge.png"
+const DESC_BOX_PATH = UI_ASSET_PATH + "card_description_box.png"
+const TYPE_BADGE_PATH = UI_ASSET_PATH + "card_type_badge.png"
 
 var _hover_tween: Tween
 var _glow_tween: Tween
@@ -32,11 +36,28 @@ func _ready() -> void:
 	var bg = load(UI_ASSET_PATH + "card_bg.png")
 	if bg and is_instance_valid(card_bg_texture):
 		card_bg_texture.texture = bg
+		card_bg_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		card_bg_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		card_bg_texture.stretch_mode = TextureRect.STRETCH_SCALE
+
+	var desc_tex = _load_texture_fallback(DESC_BOX_PATH)
+	if desc_tex and is_instance_valid(desc_box_texture):
+		desc_box_texture.texture = desc_tex
+		desc_box_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		desc_box_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		desc_box_texture.stretch_mode = TextureRect.STRETCH_SCALE
+
+	var type_tex = _load_texture_fallback(TYPE_BADGE_PATH)
+	if type_tex and is_instance_valid(type_badge_texture):
+		type_badge_texture.texture = type_tex
+		type_badge_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		type_badge_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		type_badge_texture.stretch_mode = TextureRect.STRETCH_SCALE
 
 	var cost_tex = _load_texture_fallback(COST_BADGE_PATH)
 	if cost_tex and is_instance_valid(cost_badge):
 		cost_badge.texture = cost_tex
-		cost_badge.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		cost_badge.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		cost_badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		cost_badge.stretch_mode = TextureRect.STRETCH_SCALE
 	_style_cost_label()
@@ -67,7 +88,7 @@ func _style_cost_label() -> void:
 	if not is_instance_valid(cost_label):
 		return
 	cost_label.position = Vector2.ZERO
-	cost_label.size = Vector2(44.0, 44.0)
+	cost_label.size = cost_badge.size
 	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	cost_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.58, 1.0))
@@ -76,7 +97,7 @@ func _style_cost_label() -> void:
 	cost_label.add_theme_constant_override("outline_size", 2)
 	cost_label.add_theme_constant_override("shadow_offset_x", 0)
 	cost_label.add_theme_constant_override("shadow_offset_y", 0)
-	cost_label.add_theme_font_size_override("font_size", 23)
+	cost_label.add_theme_font_size_override("font_size", 19)
 
 
 func set_faces(front: Texture2D, back: Texture2D) -> void:
@@ -170,6 +191,7 @@ func set_card_data(data: Dictionary) -> void:
 		art_frame_texture.texture = _rarity_frames[rarity]
 	else:
 		art_frame_texture.texture = _rarity_frames.get("common")
+	art_frame_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 
 	# ── Type & Shape ──────────────────────────────────────────────────────────
 	var c_type = data.get("type", "skill").to_lower()

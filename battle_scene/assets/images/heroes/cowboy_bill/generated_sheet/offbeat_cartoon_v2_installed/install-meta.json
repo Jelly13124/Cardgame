@@ -1,0 +1,31 @@
+{
+  "identity_source": "battle_scene\\assets\\images\\heroes\\cowboy_bill\\cowboy_bill_identity_offbeat_v2_256.png",
+  "attack_source": "battle_scene\\assets\\images\\heroes\\cowboy_bill\\generated_sheet\\offbeat_cartoon_v2_attack_8f_256_fit092",
+  "installed_idle": [
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\idle\\cowboy_bill_idle_0.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\idle\\cowboy_bill_idle_1.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\idle\\cowboy_bill_idle_2.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\idle\\cowboy_bill_idle_3.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\idle\\cowboy_bill_idle_4.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\idle\\cowboy_bill_idle_5.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\idle\\cowboy_bill_idle_6.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\idle\\cowboy_bill_idle_7.png"
+  ],
+  "installed_attack": [
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\attack\\cowboy_bill_attack_0.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\attack\\cowboy_bill_attack_1.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\attack\\cowboy_bill_attack_2.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\attack\\cowboy_bill_attack_3.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\attack\\cowboy_bill_attack_4.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\attack\\cowboy_bill_attack_5.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\attack\\cowboy_bill_attack_6.png",
+    "battle_scene\\assets\\images\\heroes\\cowboy_bill\\attack\\cowboy_bill_attack_7.png"
+  ],
+  "portrait": "battle_scene\\assets\\images\\heroes\\cowboy_bill\\cowboy_bill_portrait.png",
+  "block": "battle_scene\\assets\\images\\heroes\\cowboy_bill\\cowboy_bill_block_0.png",
+  "eye_center_estimate": [
+    100.49596774193549,
+    96.5725806451613
+  ],
+  "idle_note": "Installed idle frames are subtle transforms of the approved identity image; extra eye glow removed after QC."
+}

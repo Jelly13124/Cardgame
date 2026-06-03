@@ -1,0 +1,21 @@
+{
+  "style": "Offbeat Adult Sci-Fi Cartoon Wasteland procedural preview because image_gen was not exposed in this turn",
+  "installed": [
+    "battle_scene\\assets\\images\\cards\\player\\bulwark.png",
+    "battle_scene\\assets\\images\\cards\\player\\deflector.png",
+    "battle_scene\\assets\\images\\cards\\player\\reinforce.png"
+  ],
+  "preview": "docs\\art\\previews\\offbeat_card_rework_trial\\offbeat_card_rework_preview.png",
+  "in_game_mockup": "docs\\art\\previews\\offbeat_card_rework_trial\\offbeat_card_rework_ingame_mockup.png",
+  "non_pixel_card_frame_concept": "docs\\art\\previews\\offbeat_card_rework_trial\\offbeat_card_rework_concept_sheet.png",
+  "square_cost_no_rarity_label_concept": "docs\\art\\previews\\offbeat_card_rework_trial\\offbeat_card_ui_square_cost_no_rarity_label_sheet.png",
+  "larger_art_clean_skill_lane_concept": "docs\\art\\previews\\offbeat_card_rework_trial\\offbeat_card_ui_larger_art_clean_skill_lane_sheet.png",
+  "filled_title_and_type_lanes_concept": "docs\\art\\previews\\offbeat_card_rework_trial\\offbeat_card_ui_filled_title_and_type_lanes_sheet.png",
+  "skill_docked_to_text_and_layer_boundary_concept": "docs\\art\\previews\\offbeat_card_rework_trial\\offbeat_card_ui_skill_docked_to_text_and_layer_boundary_sheet.png",
+  "dimensions": [
+    512,
+    320
+  ],
+  "installed_images_no_text_no_card_frame": true,
+  "global_card_ui_replaced": false
+}

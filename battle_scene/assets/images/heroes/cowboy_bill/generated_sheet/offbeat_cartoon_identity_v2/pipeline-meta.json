@@ -1,0 +1,11 @@
+{
+  "target": "asset",
+  "mode": "single",
+  "prompt": "original Offbeat Adult Sci-Fi Cartoon Wasteland Cowboy Bill identity sprite, flat 2D adult sci-fi TV-animation look, thick clean dark outlines, large simple shape blocks, one orange camera eye, cowboy hat star badge, red scarf, patched duster, chunky boots, revolver, solid #FF00FF cleanup background, no pixel art",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_076d4075ab7afcf0016a1f543edb84819aa2dfb54c64fe2bda.png",
+  "threshold": 32,
+  "edge_threshold": 48,
+  "duration": 200,
+  "single_size": 512
+}

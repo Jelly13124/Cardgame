@@ -18,6 +18,7 @@ const ATTRIBUTE_COLORS = {
 const MUZZLE_FLASH_TEX = preload("res://battle_scene/assets/images/fx/gunshot/muzzle_flash.png")
 const BULLET_TEX = preload("res://battle_scene/assets/images/fx/gunshot/bullet.png")
 const IMPACT_TEX = preload("res://battle_scene/assets/images/fx/gunshot/impact.png")
+const PLAYER_GUNSHOT_WINDUP_SECONDS := 0.22
 
 @onready var main = get_parent()
 
@@ -298,6 +299,8 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 func _animate_player_gunshot(player: Node, target: Node) -> void:
 	if player and player.has_method("play_attack"):
 		player.play_attack()
+
+	await get_tree().create_timer(PLAYER_GUNSHOT_WINDUP_SECONDS).timeout
 
 	var origin := _get_player_muzzle_position(player)
 	var hit := _get_target_hit_position(target)

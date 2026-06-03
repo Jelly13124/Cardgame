@@ -1,0 +1,100 @@
+{
+  "source_identity": "battle_scene\\assets\\images\\heroes\\cowboy_bill\\cowboy_bill_identity_offbeat_v2_256.png",
+  "method": "local postprocess from approved generated identity; body locked, weapon layer animated",
+  "idle": "8 frames, normal low-amplitude idle; no gun spin, no pose change, only 0-1 px breathing/bob.",
+  "attack": "8 frames, shoot/recoil/smoke only, no body bob",
+  "pivot": [
+    160,
+    109
+  ],
+  "gun_poly": [
+    [
+      150,
+      84
+    ],
+    [
+      231,
+      84
+    ],
+    [
+      232,
+      108
+    ],
+    [
+      198,
+      112
+    ],
+    [
+      180,
+      113
+    ],
+    [
+      169,
+      123
+    ],
+    [
+      158,
+      121
+    ],
+    [
+      162,
+      111
+    ],
+    [
+      151,
+      107
+    ]
+  ],
+  "hand_poly": [
+    [
+      149,
+      99
+    ],
+    [
+      178,
+      100
+    ],
+    [
+      181,
+      124
+    ],
+    [
+      152,
+      126
+    ],
+    [
+      143,
+      113
+    ]
+  ],
+  "outputs": {
+    "contact": "battle_scene\\assets\\images\\heroes\\cowboy_bill\\generated_sheet\\offbeat_cartoon_v2_low_motion\\cowboy_bill_low_motion_contact.png",
+    "idle_gif": "battle_scene\\assets\\images\\heroes\\cowboy_bill\\generated_sheet\\offbeat_cartoon_v2_low_motion\\cowboy_bill_idle_low_motion_preview.gif",
+    "attack_gif": "battle_scene\\assets\\images\\heroes\\cowboy_bill\\generated_sheet\\offbeat_cartoon_v2_low_motion\\cowboy_bill_attack_low_motion_preview.gif",
+    "battle_preview": "battle_scene\\assets\\images\\heroes\\cowboy_bill\\generated_sheet\\offbeat_cartoon_v2_low_motion\\cowboy_bill_low_motion_battle_preview_game_scale.png"
+  },
+  "idle_spin_pivot": [
+    187,
+    101
+  ],
+  "idle_offsets": [
+    0,
+    -1,
+    -1,
+    0,
+    0,
+    1,
+    1,
+    0
+  ],
+  "idle_scales": [
+    1.0,
+    1.002,
+    1.003,
+    1.002,
+    1.0,
+    0.999,
+    0.998,
+    0.999
+  ]
+}

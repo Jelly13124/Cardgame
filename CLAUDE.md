@@ -36,7 +36,7 @@ effect / trigger / UI surface is needed.
    `Tooltip`) are the exception — reference them directly, never via `get_node_or_null`.
 5. **Fail loud at startup for shipped data** (`push_error`/`assert`); warn-only
    with fallback for Codex assets that may still be regenerating.
-6. **`addons/` is vendored — never hand-edit it** (card-framework, godot_mcp).
+6. **`addons/` is vendored — never hand-edit it** (card-framework).
    Same for `*.import` / `*.uid` sidecars and `generated_sheet/` intermediates.
    A PreToolUse hook blocks these.
 

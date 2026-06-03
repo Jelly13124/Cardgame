@@ -26,7 +26,8 @@ const COMBAT_FX = preload("res://battle_scene/combat_fx.gd")
 const HERO_DIR = "res://battle_scene/assets/images/heroes/"
 const DEFAULT_HERO_SPRITE_ID = "cowboy_bill"  # fallback when no hero data loaded
 const TARGET_DISPLAY_HEIGHT := 256.0
-const MUZZLE_NATIVE_POSITION := Vector2(241, 73)
+const MUZZLE_NATIVE_POSITION := Vector2(224, 94)
+const MAX_ANIMATION_FRAMES := 16
 
 var _sprite: AnimatedSprite2D
 var _fallback_sprite: Sprite2D
@@ -74,19 +75,23 @@ func _build_visual() -> void:
 
 func _has_animation_frames() -> bool:
 	var dir = HERO_DIR + _hero_sprite_id() + "/"
-	return _asset_exists(dir + "attack/%s_attack_0.png" % _hero_sprite_id())
+	return (
+		_asset_exists(dir + "idle/%s_idle_0.png" % _hero_sprite_id())
+		or _asset_exists(dir + "attack/%s_attack_0.png" % _hero_sprite_id())
+	)
 
 
 func _build_animated_visual() -> void:
 	_sprite = AnimatedSprite2D.new()
-	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_sprite.scale = Vector2.ONE
 	_sprite.position = Vector2(0, -120)
 	_sprite.flip_h = false
 
 	var frames = SpriteFrames.new()
 	_sprite.sprite_frames = frames
-	_add_animation_frames(frames, "attack", false, 9.0)
+	_add_animation_frames(frames, "idle", true, 12.0)
+	_add_animation_frames(frames, "attack", false, 18.0)
 	_apply_display_scale(frames)
 	_sprite.modulate = _hero_tint()
 	add_child(_sprite)
@@ -101,7 +106,7 @@ func _build_fallback_visual() -> void:
 	if not ResourceLoader.exists(tex_path):
 		tex_path = HERO_DIR + DEFAULT_HERO_SPRITE_ID + "/cowboy_bill_block_0.png"
 	_fallback_sprite = Sprite2D.new()
-	_fallback_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_fallback_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_fallback_sprite.scale = Vector2.ONE
 	_fallback_sprite.position = Vector2(0, -96)
 	_fallback_sprite.flip_h = true
@@ -124,10 +129,11 @@ func _add_animation_frames(
 	# Hero frames live in per-animation subfolders:
 	#   heroes/{hero_id}/{anim}/{hero_id}_{anim}_N.png
 	var dir = HERO_DIR + _hero_sprite_id() + "/"
-	for idx in range(4):
-		var tex = _load_texture(
-			dir + "%s/%s_%s_%d.png" % [anim_name, _hero_sprite_id(), anim_name, idx]
-		)
+	for idx in range(MAX_ANIMATION_FRAMES):
+		var path = dir + "%s/%s_%s_%d.png" % [anim_name, _hero_sprite_id(), anim_name, idx]
+		if not _asset_exists(path):
+			break
+		var tex = _load_texture(path)
 		if tex:
 			frames.add_frame(anim_name, tex)
 
@@ -156,6 +162,8 @@ func _apply_fallback_display_scale() -> void:
 
 
 func _first_frame_texture(frames: SpriteFrames) -> Texture2D:
+	if frames.has_animation("idle") and frames.get_frame_count("idle") > 0:
+		return frames.get_frame_texture("idle", 0)
 	if frames.has_animation("attack") and frames.get_frame_count("attack") > 0:
 		return frames.get_frame_texture("attack", 0)
 	return null
@@ -189,6 +197,11 @@ func _show_rest_pose() -> void:
 	if not _sprite or not is_instance_valid(_sprite):
 		return
 	var frames = _sprite.sprite_frames
+	if frames and frames.has_animation("idle") and frames.get_frame_count("idle") > 0:
+		_sprite.play("idle")
+		_sprite.pause()
+		_sprite.frame = 0
+		return
 	if frames and frames.has_animation("attack") and frames.get_frame_count("attack") > 0:
 		_sprite.play("attack")
 		_sprite.pause()
@@ -204,6 +217,7 @@ func play_attack() -> void:
 	if not _sprite.animation_finished.is_connected(_on_attack_finished):
 		_sprite.animation_finished.connect(_on_attack_finished, CONNECT_ONE_SHOT)
 	_sprite.play("attack")
+	_sprite.frame = 0
 
 
 func _on_attack_finished() -> void:
@@ -243,6 +257,8 @@ func _current_sprite_texture() -> Texture2D:
 		return null
 	var anim := _sprite.animation
 	if anim == "" or not frames.has_animation(anim) or frames.get_frame_count(anim) == 0:
+		anim = "idle"
+	if not frames.has_animation(anim) or frames.get_frame_count(anim) == 0:
 		anim = "attack"
 	if not frames.has_animation(anim) or frames.get_frame_count(anim) == 0:
 		return null

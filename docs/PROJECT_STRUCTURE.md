@@ -1,4 +1,4 @@
-# Project Structure - Roguelite Card Game (Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland)
+# Project Structure - Roguelite Card Game (Offbeat Adult Sci-Fi Cartoon Wasteland)
 
 This guide provides a precise map of the codebase for adjusting the UI, logic, and assets.
 
@@ -13,7 +13,7 @@ All first-party project documentation lives in `docs/`.
 *   **Project Rules**: `docs/project-rules.md`
     *   *Non-negotiable art direction, asset pipeline, naming, and architecture rules.*
 *   **Art Style Reference**: `docs/art-style-reference.md`
-    *   *Approved Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland reference direction for all future assets.*
+    *   *Approved Offbeat Adult Sci-Fi Cartoon Wasteland style contract for all future assets.*
 
 The old root-level `skills/` workflow docs have been removed. Project conventions should be documented here or in `docs/project-rules.md`.
 
