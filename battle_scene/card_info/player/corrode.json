@@ -1,0 +1,13 @@
+{
+	"name": "corrode",
+	"title": "Corrode",
+	"rarity": "common",
+	"type": "skill",
+	"cost": 1,
+	"description": "Apply [b]2 Frail[/b].",
+	"front_image": "player/corrode.png",
+	"side": "player",
+	"effects": [
+		{ "type": "apply_status", "status": "frail", "stacks": 2 }
+	]
+}
