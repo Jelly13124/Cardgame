@@ -33,4 +33,8 @@ When you (or a collaborator, or Codex) look at e.g. `RunManager` being an autolo
 | [0010](0010-third-palette-recalibration.md) | Third palette recalibration via script-sampling; theme renamed to `wasteland_theme.gd` (no style suffix) | Accepted (style name clarified by ADR-0011) |
 | [0011](0011-art-style-rename-to-rendered-sprite.md) | Art style renamed to "Hardcore Wasteland Sprite Art"; pixel-art wording corrected to detailed rendered sprites | Superseded by ADR-0012 |
 | [0012](0012-art-pivot-to-offbeat-sci-fi-cartoon-wasteland.md) | Art direction pivot to Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland | Reference choice superseded by ADR-0013 |
-| [0013](0013-art-reference-standard-radiation-rat.md) | Art reference standard: radiation rat | Accepted |
+| [0013](0013-art-reference-standard-radiation-rat.md) | Art reference standard: radiation rat | Superseded by ADR-0015 |
+| [0014](0014-cowboy-bill-character-sheet-reference.md) | Cowboy Bill character sheet is the primary Bill reference | Superseded by ADR-0015 |
+| [0015](0015-single-cowboy-bill-reference.md) | Single art reference: Cowboy Bill character sheet | Superseded by ADR-0016 |
+| [0016](0016-art-pivot-to-offbeat-adult-sci-fi-cartoon.md) | Art direction pivot to Offbeat Adult Sci-Fi Cartoon Wasteland | Superseded by ADR-0017 |
+| [0017](0017-formal-art-style-lock-offbeat-adult-sci-fi-cartoon.md) | Formal art style lock: Offbeat Adult Sci-Fi Cartoon Wasteland | Accepted |

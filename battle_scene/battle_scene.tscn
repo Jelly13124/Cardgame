@@ -43,7 +43,7 @@ mouse_filter = 2
 texture = ExtResource("22_bg")
 expand_mode = 1
 stretch_mode = 6
-texture_filter = 1
+texture_filter = 2
 
 [node name="CardManager" type="Control" parent="." unique_id=1234809607 instance=ExtResource("1_rurpr")]
 layout_mode = 3

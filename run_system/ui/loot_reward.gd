@@ -46,7 +46,10 @@ func _ready() -> void:
 
 	_card_factory = preload("res://battle_scene/my_card_factory.tscn").instantiate()
 	add_child(_card_factory)
-	_card_factory.card_size = Vector2(160, 220)
+	# play_card.tscn is intrinsically 208x286; match it so the bg lines up with the
+	# (208-laid-out) frame/art/labels. Draft cards are scaled back down below to
+	# keep their original on-screen footprint.
+	_card_factory.card_size = Vector2(208, 286)
 
 	_apply_static_theme()
 	_categorize_cards()
@@ -343,9 +346,11 @@ func _make_draft_card_slot(card_id: String) -> Control:
 			card.get_parent().remove_child(card)
 		card.can_be_interacted_with = false
 		card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		card.position = Vector2(70, 88)
-		card.scale = Vector2(1.5, 1.5)
-		card.pivot_offset = Vector2(80, 110)
+		# Compensate for the 208x286 card so the draft slot renders identically to
+		# the old 160x220 @1.5 footprint (160/208 ≈ 0.769), zoomed from the new center.
+		card.position = Vector2(46, 55)
+		card.scale = Vector2(1.5 * 160.0 / 208.0, 1.5 * 160.0 / 208.0)
+		card.pivot_offset = Vector2(104, 143)
 		wrapper.add_child(card)
 
 	var button = Button.new()
@@ -365,7 +370,9 @@ func _make_draft_card_slot(card_id: String) -> Control:
 					T.panel_with_shadow(Color(0.13, 0.095, 0.062, 0.96), T.ACCENT_NEON_BLUE, 4)
 				)
 				var tween = create_tween()
-				tween.tween_property(card, "scale", Vector2(1.62, 1.62), 0.10)
+				tween.tween_property(
+					card, "scale", Vector2(1.62 * 160.0 / 208.0, 1.62 * 160.0 / 208.0), 0.10
+				)
 		)
 		button.mouse_exited.connect(
 			func():
@@ -374,7 +381,9 @@ func _make_draft_card_slot(card_id: String) -> Control:
 					T.panel_with_shadow(Color(0.095, 0.072, 0.055, 0.92), T.PANEL_BORDER, 4)
 				)
 				var tween = create_tween()
-				tween.tween_property(card, "scale", Vector2(1.5, 1.5), 0.10)
+				tween.tween_property(
+					card, "scale", Vector2(1.5 * 160.0 / 208.0, 1.5 * 160.0 / 208.0), 0.10
+				)
 		)
 
 	return wrapper

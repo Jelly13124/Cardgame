@@ -1,73 +1,104 @@
 # Art Style Reference
 
-**Canonical style name:** Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland
-**Owner shorthand:** "Rick and Morty style" is the active art direction: broad adult sci-fi animation energy, rubbery dark outlines, flat color blocks, absurd proportions, weird sci-fi comedy, and readable cartoon silhouettes. Keep every design original: do not copy named characters, exact show designs, logos, or proprietary story elements.
-**Approved reference:** `docs/art/rick-morty-radiation-rat-style-reference.png`, chosen by the project owner on 2026-05-31.
-**Ground truth:** the approved radiation rat reference image above is now the visual source of truth for the whole project. When older docs, previous sprites, Cowboy Bill references, or historical prompt logs conflict with this document, this document wins.
-**Current Cowboy Bill reference:** `docs/art/current-cowboy-bill-style-reference.png`. Use this for Bill's current identity and card-scene treatment; do not use older standalone Cowboy Bill renders as a style or identity reference.
+**Canonical style name:** Offbeat Adult Sci-Fi Cartoon Wasteland  
+**Active style source:** this written style contract. Do not use old project reference images as global style references.  
+**Character identity note:** `docs/art/cowboy-bill-character-sheet-reference.png` may be used only to preserve Cowboy Bill's identity markers, not as the global art style.
+**Approved in-game exemplars:** `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`, `battle_scene/assets/images/backgrounds/wasteland_battlefield.png`, and `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`.
 
-![Rick-and-Morty-like Offbeat Adult Sci-Fi Cartoon Wasteland reference](art/rick-morty-radiation-rat-style-reference.png)
+This file defines the locked art direction. The target is original adult sci-fi western cartoon game art: clean flat 2D animation shapes, thick dark outlines, strange desert sci-fi props, absurd salvage-tech silhouettes, simple cel shading, and bright toxic accent colors. The project is not pixel art and should not use gritty rendered concept-art texture.
 
-This is the source of truth for visual direction. New art should feel like an original Rick-and-Morty-like adult sci-fi cartoon wasteland game: rubbery black outlines, flat bright color blocks, simple readable shading, exaggerated weird proportions, sickly radioactive greens, grimy wasteland salvage details, and a strange comic tone. The project is no longer constrained to the old 128-pixel sprite-art direction, and older standalone Cowboy Bill renders must not be used as references.
+Do not copy named show characters, logos, exact scene layouts, or franchise-specific props. The goal is an original game world with the same broad production language: graphic TV-animation clarity, weird sci-fi comedy, and readable game silhouettes.
 
 ## Core Look
 
-- **Medium:** clean 2D cartoon game art with crisp edges, heavy dark outlines, flat color planes, and simple cel shading. It should read like a strange adult sci-fi animation screenshot adapted into game assets.
-- **Resolution policy:** asset dimensions such as 128x128, 192x192, 256x256, or 512x320 are only engine output sizes. They are never a prompt style, rendering style, brush style, or pixel-art restriction.
-- **Shape language:** exaggerated, asymmetrical, and readable. Characters can have bulging eyes, lanky limbs, warped bodies, oversized teeth, awkward silhouettes, and slightly absurd mutant or mechanical details.
-- **Linework:** thick black or very dark brown outlines with confident interior contour lines. Avoid thin realistic hairlines and avoid sketchy over-rendering.
-- **Shading:** simple two-to-three value cel shading. Use clean shadow shapes to clarify volume; do not over-render fur, metal, leather, or scratches.
-- **Materials:** mutant skin, patchy fur, dusty leather, brass cuffs, dented steel, cheap sci-fi sensors, exposed springs, cracked glass, patched cloth, rubber hoses, improvised junk-tech, and radioactive slime.
-- **Palette:** sickly radioactive green and yellow-green accents over dusty tan, dirty pink skin, leather brown, rust, brass, dark steel, and occasional cyan or magenta.
-- **Accent color:** toxic green is the primary world accent. Use one or two small high-contrast glowing details per character or item; the glow should support readability, not flood the sprite.
-- **Mood:** weird, comic, dangerous, and wasteland-western. Keep the game harsh enough for combat, but embrace absurd sci-fi cartoon personality.
-- **Background policy:** sprites, cards, relics, equipment, UI icons, and FX should be generated on solid `#FF00FF` for cleanup or delivered as transparent PNGs. Scene backgrounds may be full-scene images without UI baked in.
+- **Medium:** flat 2D TV-animation-like game art with clean black or very dark outlines, large simple shape blocks, sparse interior contour lines, and smooth cel shading.
+- **Resolution policy:** asset dimensions such as 128x128, 192x192, 256x256, 512x320, or 1920x1080 are technical output sizes only. They never imply pixel art.
+- **Shape language:** exaggerated sci-fi western silhouettes, rubbery props, odd alien desert forms, chunky salvage devices, crooked antennas, bulbous lenses, patched cloth, simple boots, oversized hats, awkward gadgets, and readable one-glance poses.
+- **Linework:** confident dark cartoon outlines with minimal interior line clutter. Avoid sketchy concept-art hatching, comic-book crosshatching, tiny scratches, and realistic hard-surface line density.
+- **Shading:** two-to-three value cel shading with broad shadow shapes. Avoid painterly rendering, photoreal lighting, gritty texture, noisy grunge, dithering, and dense material detail.
+- **Materials:** simplified dusty leather, brass, dented robot metal, patched cloth, rubber hoses, glass lenses, toxic sludge, glowing sci-fi canisters, and flat alien terrain.
+- **Palette:** dusty tan and warm brown base colors, muted red cloth, grey-green metal, pale desert sand, sickly toxic green, cyan plasma, warm orange glows, and off-white UI/negative space where needed.
+- **Accent color:** use one or two bright high-contrast accents per asset. Toxic green, cyan, and orange are the primary glow accents.
+- **Background policy:** scene backgrounds are full-scene PNGs with no UI, text, labels, or characters baked in. Sprites, card objects, icons, and FX use transparent PNGs or solid `#FF00FF` cleanup backgrounds.
 
-## Character Reference Rules
+## Approved Exemplars
 
-### Primary Style Standard - Radiation Rat
+These files are the current production look. New art should match their flatness, line weight, color handling, and low-noise finish:
 
-- The radiation rat reference is the project-wide style standard.
-- Key traits to copy across future assets: rubbery black outlines, flat bright fills, simple cel shading, bulging expressive eyes, gross-comic proportions, toxic green radioactive accents, and clean animation-like readability.
-- The three-pose sheet is a style reference, not a final sliced animation contract. For production enemies, still generate clean contained frames at the required output size.
+- **Cowboy Bill runtime style:** `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`
+- **Battle background style:** `battle_scene/assets/images/backgrounds/wasteland_battlefield.png`
+- **Route map background style:** `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`
+
+The old Cowboy Bill character sheet is identity documentation only. It is useful for checking Bill's one orange eye, hat/star, red scarf, patched duster, boots, revolver, and gadget motifs. It must not pull new assets back toward rendered concept-sheet detail.
+
+## Background Rules
+
+Map and battle backgrounds must be simple, graphic, and readable behind UI.
+
+- **No pixel art:** no chunky pixels, retro tile seams, dithered pixel shading, pixelated rock clusters, or 16-bit map language.
+- **No clutter:** keep the playable/readable center low-detail. Put props at edges and corners only.
+- **No gritty rendering:** avoid detailed cracks, tiny repeated stones, dense trash piles, heavy texture overlays, and realistic ruined-building detail.
+- **Roads and paths:** use broad, smooth, flat-color path shapes. The current route map uses a horizontal path across the middle, not a vertical or diagonal main road.
+- **Battle arena:** leave a wide empty center ground plane for combat silhouettes, card FX, and UI readability.
+- **Props:** use a few weird cartoon props only: crooked pipes, simple cactus silhouettes, slime puddles, odd antennas, small sci-fi shacks, portal-green glow, and simple alien mesas.
+
+## Character Rules
 
 ### Cowboy Bill
 
-- Robot cowboy hero.
-- Exactly **one** large orange camera eye. No second eye, no paired human eyes.
-- Oversized cowboy hat with star badge, red scarf, patched duster or poncho, large boots, belt pouches, and a salvaged revolver.
-- Mechanical face can be simplified into a tube, canister, or mask shape, but the single orange eye must remain the read.
+- Robot cowboy hero, exactly one large orange camera eye. No second eye, no paired human eyes.
+- Cylindrical robot head, oversized cowboy hat with star badge, red scarf, patched duster or poncho, large boots, belt pouches, skull belt badge, and salvaged revolver.
+- Preserve the identity markers from `docs/art/cowboy-bill-character-sheet-reference.png`: single orange eye, hat/star, red scarf, patched duster, chunky boots, revolver, plasma/acid/shield gadget language, and sci-fi western silhouette.
+- Reinterpret Bill into the active Offbeat Adult Sci-Fi Cartoon Wasteland style: flatter shapes, cleaner outlines, less rendered metal, fewer tiny scratches, and stronger animation-read poses.
+- The approved Bill implementation is `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png` plus the current 8-frame `idle/` and `attack/` runtime folders.
 - Combat hero frames face right.
-- Use `docs/art/current-cowboy-bill-style-reference.png` as the current Bill reference. When Cowboy Bill is regenerated, preserve the identity markers above and match the flatter radiation-rat style. Do not use older Bill renders.
 
-### Enemies
+### Enemies And Other Characters
 
-- Enemies should feel like original junk-tech cartoon creatures, radiation mutants, drones, or robots.
-- Use strong silhouette comedy: bulging eyes, huge teeth, too many legs, tiny body with huge jaw, giant shield on small legs, oversized weapon, crooked antenna, glowing pustules, or awkward welded parts.
+- Enemies, NPCs, equipment, relics, cards, and UI icons must share the active flat adult sci-fi cartoon language.
+- Enemies should be original junk-tech western robots, mutants, drones, creatures, or wasteland devices. They must not be direct copies of named show characters or existing franchise designs.
 - Enemies face left in combat.
-- Avoid making enemies too painterly or realistic; they should sit next to the radiation rat reference.
+- Prioritize funny-gross silhouettes, bulging lenses/eyes, odd proportions, simple body masses, bright toxic accents, and clear gameplay readability.
 
 ## Prompt Anchor
 
-Use this prompt anchor for generated character, enemy, relic, card, and UI icon assets:
+Use this prompt anchor for generated character, enemy, relic, card, UI icon, FX, map, and battle background assets:
 
 ```text
-original offbeat adult sci-fi cartoon wasteland game art, Rick-and-Morty-like broad adult sci-fi animation energy without copying named characters or exact show designs, thick dark rubbery outlines, flat bright color blocks, simple cel shading, exaggerated asymmetrical proportions, bulging expressive eyes, weird mutant or junk-tech silhouette, dusty western leather and brass, dented steel, exposed springs, patched cloth, radioactive slime, one or two small toxic-green glowing accents, crisp sprite-ready edges, solid #FF00FF magenta background for cleanup or transparent final PNG, no text, no UI frame, no logo
+original Offbeat Adult Sci-Fi Cartoon Wasteland game art,
+matching the approved in-game exemplars in battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png, battle_scene/assets/images/backgrounds/wasteland_battlefield.png, and run_system/assets/images/map/wasteland_route_map_pixel_bg.png,
+flat 2D adult sci-fi TV-animation look, thick clean dark cartoon outlines, large simple shape blocks, sparse interior lines, broad two-to-three value cel shading,
+weird sci-fi western wasteland, rubbery alien desert shapes, absurd salvage-tech silhouettes, dusty leather, brass, dented grey-green robot metal, patched red cloth, hoses, antennas, odd gadgets,
+bright toxic green, cyan, and warm orange glow accents used sparingly,
+clean game-ready edges, readable silhouettes, low texture noise,
+no text, no labels, no UI frame, no logo, no named show characters, no franchise-specific props, no exact scene copies
 ```
 
 For combat unit sheets, add:
 
 ```text
-side view full body, shared baseline, consistent scale, hero faces right or enemy faces left, 4 attack frames, attack frame 0 doubles as the static rest pose, no separate idle animation, contained inside each frame with safe margins
+side view full body, shared baseline, consistent scale, hero faces right or enemy faces left,
+for Cowboy Bill and hero combat sprites use 8 idle frames plus 8 attack frames when generated,
+idle is a seamless subtle loop, attack is a one-shot readable wind-up / fire / recoil / recovery sequence,
+contained inside each frame with safe margins
 ```
 
-For card illustrations, keep the same style but do not force side-view/full-body if the card art is an object, weapon, or action scene. Card art must not include card frames, cost badges, titles, labels, or UI elements.
+For scene backgrounds, add:
+
+```text
+16:9 scene-ready game background, no characters, no UI, no text,
+wide low-detail center area for gameplay readability, sparse props only at the edges,
+flat smooth color fills, simple cel shadows, clean black outlines,
+no pixel art, no retro tiles, no dithering, no painterly rendering, no gritty texture, no dense tiny rocks, no clutter
+```
+
+For card illustrations, keep the same style but do not force side-view/full-body if the card art is an object, weapon, or action scene. Card art must not include card frames, cost badges, titles, labels, speech bubbles, or UI elements.
 
 ## Avoid
 
-- Directly copying copyrighted characters, named show characters, logos, or exact show-specific designs.
-- The previous high-detail rendered sprite look as the target for new art.
-- Old prompt language that treats asset dimensions as a visual style. Use the current cartoon anchor instead of earlier sprite-art anchors.
-- Photorealistic lighting, realistic military hard-surface rendering, glossy clean sci-fi, or serious concept-art mechs.
-- Dense scratch/noise texture that hides the cartoon silhouette.
-- UI text baked into art, card frames baked into card art, or background scenes behind item-only icons.
+- Any old visual reference image as a global style source.
+- Direct copies of named characters, logos, exact show-specific designs, or franchise-specific props.
+- Pixel art, retro tiles, chunky pixels, dithering, and pixelated texture clusters.
+- Realistic military hard-surface rendering, photorealistic lighting, glossy concept-art mechs, and high-detail painterly surfaces.
+- Dense scratches, noisy grunge, comic-book hatching, tiny repeated debris, or over-rendering that hides the clear cartoon silhouette.
+- UI text baked into art, card frames baked into card art, or characters baked into battle/map backgrounds.

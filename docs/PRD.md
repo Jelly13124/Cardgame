@@ -1,14 +1,14 @@
 # Product Requirements Document
 **Project:** Unnamed Sci-Fi Roguelite Card Game  
-**Art Style:** Cute Absurd Wasteland Sci-Fi Western
+**Art Style:** Offbeat Adult Sci-Fi Cartoon Wasteland
 **Engine:** Godot 4.6  
-**Last Updated:** 2026-06-01
+**Last Updated:** 2026-06-02
 
 ---
 
 ## Overview
 
-A single-player roguelite deckbuilder set in a post-apocalyptic scrapyard wasteland. Players collect cards, relics, and equipment while fighting through escalating routes toward bosses. The visual language is locked to a Rick-and-Morty-like adult sci-fi cartoon wasteland style: thick rubbery dark outlines, flat bright color blocks, simple cel shading, exaggerated odd proportions, dusty western junk-tech materials, and weird comic sci-fi energy.
+A single-player roguelite deckbuilder set in a post-apocalyptic scrapyard wasteland. Players collect cards, relics, and equipment while fighting through escalating routes toward bosses. The visual language is locked to an original flat adult sci-fi cartoon direction: thick clean dark outlines, large simple shape blocks, weird sci-fi western silhouettes, broad cel shading, sparse texture, and bright toxic accent colors.
 
 Combat is **Slay the Spire style**: the player has a hand of cards, limited energy, and must choose each turn which cards to play to survive enemy attacks while defeating them.
 
@@ -16,7 +16,7 @@ Project documentation is centralized in `docs/`:
 - `docs/PRD.md` is the product and systems source of truth.
 - `docs/PROJECT_STRUCTURE.md` maps scenes, scripts, data, and assets.
 - `docs/project-rules.md` defines art, asset, naming, and architecture rules.
-- `docs/art-style-reference.md` defines the approved Cute Absurd Wasteland Sci-Fi Western reference.
+- `docs/art-style-reference.md` defines the approved Offbeat Adult Sci-Fi Cartoon Wasteland style contract and in-game visual exemplars.
 
 ---
 
@@ -316,32 +316,42 @@ BattleScene (Node)
 
 ---
 
-## Art Style - Cute Absurd Wasteland Sci-Fi Western
+## Art Style - Offbeat Adult Sci-Fi Cartoon Wasteland
 
-The game's definitive art direction is **Cute Absurd Wasteland Sci-Fi Western**, with `docs/art/rick-morty-radiation-rat-style-reference.png` as the creature/world reference and `docs/art/cowboy-bill-character-sheet-reference.png` as Cowboy Bill's primary character sheet. The style target is original flat adult sci-fi TV animation adapted into game assets: clean dark outlines, flat bright color blocks, simple cel shading, exaggerated awkward proportions, toxic-green radiation accents, dusty western junk-tech materials, and weird comic tone.
+The game's definitive art direction is **Offbeat Adult Sci-Fi Cartoon Wasteland**. The style target is original flat adult sci-fi western cartoon game art: thick clean dark outlines, large simple shape blocks, sparse interior linework, broad two-to-three value cel shading, weird alien desert forms, absurd salvage-tech silhouettes, dusty leather and brass, dented grey-green robot metal, patched red cloth, hoses, antennas, odd gadgets, and one or two bright toxic/cyan/orange glow accents.
+
+Do not use old project reference images as global style anchors. `docs/art/cowboy-bill-character-sheet-reference.png` may be used only to preserve Cowboy Bill's identity markers. Do not copy named show characters, logos, exact show-specific designs, franchise-specific props, or exact scene layouts.
+
+The approved production exemplars are Cowboy Bill's current runtime art and the new non-pixel backgrounds:
+
+- `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`
+- `battle_scene/assets/images/heroes/cowboy_bill/idle/`
+- `battle_scene/assets/images/heroes/cowboy_bill/attack/`
+- `battle_scene/assets/images/backgrounds/wasteland_battlefield.png`
+- `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`
 
 The project is no longer a 128-pixel or pixel-art style. Any frame sizes in asset specs are engine output contracts only.
 
 ### Visual Rules
 | Element | Rule |
 |---|---|
-| **Style target** | Cute Absurd Wasteland Sci-Fi Western game art with Rick-and-Morty-style flat adult sci-fi TV-animation grammar; original designs only, no copying named characters or exact show designs. |
+| **Style target** | Original Offbeat Adult Sci-Fi Cartoon Wasteland game art matching the approved in-game exemplars; flat 2D adult sci-fi TV-animation-like look, clean outlines, broad simple shapes, sparse texture, original designs only, no copying named show characters, logos, exact scene layouts, or franchise-specific props. |
 | **Output sizes** | Use the dimensions required by each asset spec; size does not define the art style. |
-| **Silhouette** | Exaggerated, asymmetrical, and immediately readable: bulging eyes, huge teeth, warped bodies, lanky limbs, crooked antennas, glowing pustules, and awkward junk-tech proportions. |
-| **Materials** | Mutant skin, patchy fur, dusty leather, brass cuffs, dented steel, exposed springs, patched cloth, rubber hoses, cracked glass, radioactive slime, and cheap improvised sci-fi parts. |
-| **Color palette** | Sickly radioactive green and yellow-green accents over dusty tan, dirty pink skin, leather brown, rust, brass, dark steel, and occasional cyan or magenta. |
-| **Outlines** | Thick black or very dark brown rubbery outlines with confident interior contour lines. |
-| **Shading** | Simple two-to-three value cel shading; use shadow shapes to clarify volume instead of detailed painterly texture. |
-| **Background** | Character, card, UI, and FX sprites use transparent backgrounds; full-scene map and battle backgrounds are scene-ready PNGs with no UI baked in. |
+| **Silhouette** | Exaggerated and immediately readable: oversized hats, cylindrical robot heads, chunky boots, lanky limbs, patched capes, bulbous lenses, crooked antennas, rubbery alien shapes, bulky salvaged weapons, hoses, and improvised gadgets. |
+| **Materials** | Simplified dusty leather, red cloth scarf, brass cuffs, dented grey-green metal, patched fabric, rubber hoses, glass lenses, exposed springs, toxic sludge, glowing canisters, and flat alien terrain. |
+| **Color palette** | Dusty tan and warm brown base colors, muted red cloth, grey-green metal, pale desert sand, sickly toxic green, cyan plasma, and warm orange glows. |
+| **Outlines** | Thick black or very dark cartoon outlines with sparse interior contour lines. |
+| **Shading** | Simple two-to-three value cel shading; use broad shadow shapes instead of detailed painterly texture, hatching, dithering, or noisy grunge. |
+| **Background** | Character, card, UI, and FX sprites use transparent backgrounds; full-scene map and battle backgrounds are scene-ready PNGs with no UI, text, labels, or characters baked in. |
 
 ### Character Anchors
-- Cowboy Bill: robot cowboy hero with exactly one large orange camera eye, oversized battered hat with star badge, red scarf, patched duster or poncho, chunky boots, salvaged revolver, facing right.
-- Enemies: original junk-tech cartoon creatures, drones, mutants, or robots, facing left, with strong comic silhouettes and one or two small neon accents.
+- Cowboy Bill: robot cowboy hero with exactly one large orange camera eye, oversized battered hat with star badge, red scarf, patched duster or poncho, chunky boots, salvaged revolver, facing right. Preserve identity from the Bill sheet but render him in the active flatter cartoon style.
+- Enemies: original junk-tech western robots, mutants, drones, creatures, or wasteland devices, facing left, with funny-gross silhouettes and one or two small glowing accents.
 
 ### Mandatory Prompt Anchor
 Every generated asset prompt should preserve this wording:
 ```text
-original Cute Absurd Wasteland Sci-Fi Western game art, Rick-and-Morty-style flat adult sci-fi TV-animation energy without copying named characters or exact show designs, clean dark cartoon outlines, flat bright color blocks, simple cel shading, exaggerated asymmetrical proportions, bulging expressive eyes, weird mutant or junk-tech silhouette, cute gross wasteland humor, dusty western leather and brass, dented steel, exposed springs, patched cloth, radioactive slime, one or two small toxic-green glowing accents, crisp game-ready edges, solid #FF00FF magenta background for cleanup or transparent final PNG, no text, no UI frame, no logo
+original Offbeat Adult Sci-Fi Cartoon Wasteland game art, matching the approved in-game exemplars in battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png, battle_scene/assets/images/backgrounds/wasteland_battlefield.png, and run_system/assets/images/map/wasteland_route_map_pixel_bg.png, flat 2D adult sci-fi TV-animation look, thick clean dark cartoon outlines, large simple shape blocks, sparse interior lines, broad two-to-three value cel shading, weird sci-fi western wasteland, rubbery alien desert shapes, absurd salvage-tech silhouettes, dusty leather, brass, dented grey-green robot metal, patched red cloth, hoses, antennas, odd gadgets, bright toxic green, cyan, and warm orange glow accents used sparingly, clean game-ready edges, readable silhouettes, low texture noise, no text, no labels, no UI frame, no logo, no named show characters, no franchise-specific props, no exact scene copies
 ```
 
 ### Generation Pipeline
@@ -354,7 +364,7 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 4. Reference final PNGs from JSON or runtime loaders; gameplay must not reference raw sheets.
 
 - **Folder:** `enemies/{sprite_id}/{anim}/{sprite_id}_{anim}_{n}.png` or `heroes/{hero_id}/{anim}/{hero_id}_{anim}_{n}.png`.
-- **Frame counts:** 4 attack frames; `attack_0` is also the static rest pose. There are no separate idle animation assets.
+- **Frame counts:** Cowboy Bill uses 8 idle frames plus 8 attack frames. Older enemies may still use 4 attack frames with `attack_0` as the static rest pose until they are regenerated.
 - **Scale:** frames render at the size set by gameplay/UI code; scale does not change the art direction.
 - **Source sheets:** keep raw/generated sheets in `generated_sheet/` folders only.
 ---
