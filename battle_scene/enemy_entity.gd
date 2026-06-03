@@ -78,6 +78,7 @@ var _intent_label: Label
 var _intent_icon: TextureRect
 var _intent_bg: Control
 var _intent_tween: Tween
+var _intent_tooltip: String = ""
 var _display_size := Vector2(NORMAL_DISPLAY_HEIGHT, NORMAL_DISPLAY_HEIGHT)
 var _content_height := NORMAL_DISPLAY_HEIGHT
 
@@ -296,9 +297,24 @@ func _build_intent_badge(intent_pos: Vector2) -> void:
 	_intent_bg = Control.new()
 	_intent_bg.size = Vector2(INTENT_BADGE_WIDTH, INTENT_BADGE_HEIGHT)
 	_intent_bg.position = intent_pos
-	_intent_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# STOP (not IGNORE) so the badge can detect hover for its tooltip.
+	_intent_bg.mouse_filter = Control.MOUSE_FILTER_STOP
 	_intent_bg.z_index = 20
 	add_child(_intent_bg)
+	# Tooltip on hover: a plain-language read of what the enemy will do next.
+	# Same stale-guard pattern as the status badges.
+	var bg_ref: Control = _intent_bg
+	var bg_id: int = _intent_bg.get_instance_id()
+	_intent_bg.mouse_entered.connect(
+		func():
+			if not is_instance_valid(bg_ref) or _intent_tooltip == "":
+				return
+			Tooltip.show(
+				_intent_tooltip, bg_ref.global_position + Vector2(bg_ref.size.x * 0.5, 0), bg_id
+			)
+	)
+	_intent_bg.mouse_exited.connect(Tooltip.hide_if_owner.bind(bg_id))
+	_intent_bg.tree_exited.connect(Tooltip.hide_if_owner.bind(bg_id))
 
 	_intent_icon = TextureRect.new()
 	_intent_icon.size = Vector2(34, 34)
@@ -306,6 +322,7 @@ func _build_intent_badge(intent_pos: Vector2) -> void:
 	_intent_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_intent_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_intent_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_intent_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_intent_bg.add_child(_intent_icon)
 
 	_intent_label = Label.new()
@@ -318,6 +335,7 @@ func _build_intent_badge(intent_pos: Vector2) -> void:
 	_intent_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_intent_label.size = Vector2(70, INTENT_BADGE_HEIGHT)
 	_intent_label.position = Vector2(38, -1)
+	_intent_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_intent_bg.add_child(_intent_label)
 
 
@@ -443,6 +461,41 @@ func _update_intent_display() -> void:
 	if bool(next.get("interruptible", false)):
 		label_color = Color(1.0, 0.94, 0.28)
 	_intent_label.add_theme_color_override("font_color", label_color)
+
+	_intent_tooltip = _build_intent_tooltip(next)
+
+
+## Plain-language description of the enemy's next action, for the intent tooltip.
+func _build_intent_tooltip(next: Dictionary) -> String:
+	var action_type := str(next.get("type", ""))
+	match action_type:
+		"attack", "attack_all":
+			var dmg := _compute_display_attack(int(next.get("amount", 0)))
+			return tr("UI_COMBAT_INTENT_TIP_ATTACK").format({"n": dmg})
+		"attack_status":
+			var dmg := _compute_display_attack(int(next.get("amount", 0)))
+			var status := _localized_status_short(str(next.get("status", "")))
+			var k := int(next.get("stacks", 1))
+			return tr("UI_COMBAT_INTENT_TIP_ATTACK_STATUS").format(
+				{"n": dmg, "status": status, "k": k}
+			)
+		"block":
+			return tr("UI_COMBAT_INTENT_TIP_DEFEND").format({"n": int(next.get("amount", 0))})
+		"heal":
+			return tr("UI_COMBAT_INTENT_TIP_HEAL").format({"n": int(next.get("amount", 0))})
+		"buff_self", "buff":
+			var status_id := str(next.get("status", ""))
+			if status_id != "":
+				return tr("UI_COMBAT_INTENT_TIP_BUFF_STATUS").format(
+					{"status": _localized_status_short(status_id), "k": int(next.get("stacks", 1))}
+				)
+			return tr("UI_COMBAT_INTENT_TIP_BUFF")
+		"telegraph":
+			return tr("UI_COMBAT_INTENT_TIP_CHARGE")
+		"summon":
+			return tr("UI_COMBAT_INTENT_TIP_SUMMON")
+		_:
+			return tr("UI_COMBAT_INTENT_TIP_UNKNOWN")
 
 
 func _start_intent_float_anim() -> void:
