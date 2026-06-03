@@ -149,6 +149,22 @@ func execute_enemy_turn() -> void:
 
 ## `enemy` is typed as Node2D (its parent class) instead of EnemyEntity to
 ## avoid class_name parse-ordering issues.
+## Resolve an enemy attack landing on the player: Dodge negates it (consuming a
+## stack), otherwise the player takes `outgoing` and Thorns reflects back at the
+## attacker. Returns true if the hit landed, false if it was dodged.
+func _resolve_enemy_hit(enemy: Node, outgoing: int) -> bool:
+	if not (main.player and is_instance_valid(main.player)):
+		return false
+	if "status_system" in main.player and main.player.status_system:
+		if main.player.status_system.try_consume_dodge(main.player):
+			main.show_notification(tr("UI_COMBAT_DODGE"), Color(0.6, 0.95, 1.0))
+			return false
+	main.player.take_damage(outgoing)
+	if main.combat_engine:
+		main.combat_engine.apply_thorns_reflection(enemy, main.player)
+	return true
+
+
 func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 	var action_type: String = action.get("type", "attack")
 	var amount: int = int(action.get("amount", 6))
@@ -183,10 +199,10 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 				)
 				if main.has_method("modify_enemy_attack_damage"):
 					outgoing = main.modify_enemy_attack_damage(outgoing, enemy, main.player)
-				main.player.take_damage(outgoing)
-				main.show_notification(
-					tr("UI_COMBAT_ENEMY_ATTACKS").format({"n": outgoing}), Color(1, 0.3, 0.3)
-				)
+				if _resolve_enemy_hit(enemy, outgoing):
+					main.show_notification(
+						tr("UI_COMBAT_ENEMY_ATTACKS").format({"n": outgoing}), Color(1, 0.3, 0.3)
+					)
 			await _animate_return(enemy)
 
 		"attack_status":
@@ -201,17 +217,17 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 				)
 				if main.has_method("modify_enemy_attack_damage"):
 					outgoing = main.modify_enemy_attack_damage(outgoing, enemy, main.player)
-				main.player.take_damage(outgoing)
-				var status: String = str(action.get("status", ""))
-				var stacks: int = int(action.get("stacks", 1))
-				if status != "" and main.player.has_method("add_status"):
-					main.player.add_status(status, stacks)
-				main.show_notification(
-					tr("UI_COMBAT_ENEMY_HITS_STATUS").format(
-						{"n": outgoing, "status": STATUS_SYS.format_name_localized(status)}
-					),
-					Color(1, 0.3, 0.3)
-				)
+				if _resolve_enemy_hit(enemy, outgoing):
+					var status: String = str(action.get("status", ""))
+					var stacks: int = int(action.get("stacks", 1))
+					if status != "" and main.player.has_method("add_status"):
+						main.player.add_status(status, stacks)
+					main.show_notification(
+						tr("UI_COMBAT_ENEMY_HITS_STATUS").format(
+							{"n": outgoing, "status": STATUS_SYS.format_name_localized(status)}
+						),
+						Color(1, 0.3, 0.3)
+					)
 			await _animate_return(enemy)
 
 		"attack_all":
@@ -226,13 +242,15 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 				)
 				if main.has_method("modify_enemy_attack_damage"):
 					outgoing = main.modify_enemy_attack_damage(outgoing, enemy, main.player)
-				main.player.take_damage(outgoing)
-				main.show_notification(
-					tr("UI_COMBAT_BIG_HIT").format({"n": outgoing}), Color(1.0, 0.2, 0.2)
-				)
+				if _resolve_enemy_hit(enemy, outgoing):
+					main.show_notification(
+						tr("UI_COMBAT_BIG_HIT").format({"n": outgoing}), Color(1.0, 0.2, 0.2)
+					)
 			await _animate_return(enemy)
 
 		"block":
+			if "status_system" in enemy and enemy.status_system:
+				amount = int(amount * enemy.status_system.get_block_multiplier())
 			enemy.add_block(amount)
 			main.show_notification(
 				tr("UI_COMBAT_ENEMY_DEFENDS").format({"n": amount}), Color(0.4, 0.6, 1.0)
