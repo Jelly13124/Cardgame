@@ -157,6 +157,22 @@ func _build_character_zone() -> Control:
 	_attrs_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_attrs_label.add_theme_font_size_override("font_size", 20)
 	_attrs_label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
+	_attrs_label.mouse_filter = Control.MOUSE_FILTER_STOP
+	# Tooltip on hover: what each of the five attributes does.
+	var attrs_ref: Label = _attrs_label
+	var attrs_id: int = _attrs_label.get_instance_id()
+	_attrs_label.mouse_entered.connect(
+		func():
+			if not is_instance_valid(attrs_ref):
+				return
+			Tooltip.show(
+				tr("UI_EQUIP_ATTR_TIP"),
+				attrs_ref.global_position + Vector2(attrs_ref.size.x * 0.5, 0),
+				attrs_id
+			)
+	)
+	_attrs_label.mouse_exited.connect(Tooltip.hide_if_owner.bind(attrs_id))
+	_attrs_label.tree_exited.connect(Tooltip.hide_if_owner.bind(attrs_id))
 	inner.add_child(_attrs_label)
 
 	return col

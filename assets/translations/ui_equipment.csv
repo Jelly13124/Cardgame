@@ -17,6 +17,15 @@ UI_EQUIP_EMPTY,(empty),(空)
 UI_EQUIP_EMPTY_SLOT,(empty slot),(空槽)
 UI_EQUIP_NONE_YET,"  (none yet)","  (暂无)"
 UI_EQUIP_STATS,STR:{str}  CON:{con}  INT:{int}  LUC:{luc}  CHA:{cha},力量:{str}  体质:{con}  智力:{int}  幸运:{luc}  魅力:{cha}
+UI_EQUIP_ATTR_TIP,"[b]Strength[/b]: +1 attack damage each.
+[b]Constitution[/b]: +1 Block gained each.
+[b]Intelligence[/b]: reserved attribute, no active effect yet.
+[b]Luck[/b]: +3% crit chance, +3% gold, +1.5% loot rarity each.
+[b]Charm[/b]: -2% shop prices each (down to -40%).","[b]力量[/b]：每点 +1 攻击伤害。
+[b]体质[/b]：每点 +1 获得的格挡。
+[b]智力[/b]：保留属性，暂无主动效果。
+[b]幸运[/b]：每点 +3% 暴击率、+3% 金币、+1.5% 战利品稀有度。
+[b]魅力[/b]：每点 -2% 商店价格（最低 -40%）。"
 UI_EQUIP_NO_BONUSES,(no bonuses),(无加成)
 UI_EQUIP_FULL_SWAP,INVENTORY FULL — discard something first to swap,背包已满 — 请先丢弃物品再替换
 UI_EQUIP_FULL_UNEQUIP,INVENTORY FULL — discard something first to unequip,背包已满 — 请先丢弃物品再卸下
