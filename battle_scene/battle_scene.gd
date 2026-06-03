@@ -221,6 +221,13 @@ func _card_preview_damage(card: Control, target: Node) -> int:
 				has_damage = true
 	if not has_damage:
 		return -1
+	# Double Damage status doubles the hit (combat_engine applies card_mult=2).
+	if (
+		player
+		and player.has_method("get_status_stacks")
+		and player.get_status_stacks("double_damage") > 0
+	):
+		base_total *= 2
 	return combat_engine.calculate_attack_damage(base_total, player, target)
 
 
