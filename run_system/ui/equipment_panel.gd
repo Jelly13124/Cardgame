@@ -14,12 +14,15 @@ class_name EquipmentPanel
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
+const BACKPACK_CELL = preload("res://run_system/ui/backpack_cell.gd")
 const HERO_SPRITE_DIR := "res://battle_scene/assets/images/heroes/"
 
 const GRID_COLUMNS := 5
 const CELL_SIZE := Vector2(76, 76)
+const SLOT_LETTERS := {"head": "H", "chest": "C", "weapon": "W", "hands": "Hd", "accessory": "Ac"}
 
 var _slot_icons: Dictionary = {}  # slot → EquipmentIcon
+var _slot_cells: Dictionary = {}  # slot → BackpackCell (drag/drop wrapper)
 var _slot_labels: Dictionary = {}  # slot → Label (slot/item name)
 var _grid: GridContainer
 var _portrait_rect: TextureRect
@@ -189,12 +192,27 @@ func _build_equipment_zone() -> Control:
 		row.add_theme_constant_override("separation", 12)
 		col.add_child(row)
 
+		# BackpackCell wrapper owns drag/drop/click; the EquipmentIcon is a
+		# mouse-ignoring cosmetic child filling it.
+		var cell := BACKPACK_CELL.new()
+		cell.custom_minimum_size = CELL_SIZE
+		cell.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		var icon := EQUIPMENT_ICON.new()
-		icon.custom_minimum_size = CELL_SIZE
-		icon.gui_input.connect(_on_slot_input.bind(slot))
-		icon.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		row.add_child(icon)
+		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cell.add_child(icon)
+		# Drop target: accept a matching-slot equipment dragged from the backpack.
+		var s := slot
+		cell.can_accept = func(data): return (
+			data.get("src") == "backpack"
+			and data.get("kind") == "equip"
+			and data.get("slot") == s
+		)
+		cell.perform_drop = func(data): _on_equip_pressed(str(data.get("item_id", "")), s, -1)
+		cell.click_handler = func(btn): if btn == MOUSE_BUTTON_LEFT: _on_unequip_pressed(s)
+		row.add_child(cell)
 		_slot_icons[slot] = icon
+		_slot_cells[slot] = cell
 
 		var label := Label.new()
 		label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
@@ -268,18 +286,25 @@ func _refresh() -> void:
 	# Equipment slots
 	for slot in RunManager.EQUIPMENT_SLOTS:
 		var icon: EquipmentIcon = _slot_icons[slot]
+		var cell = _slot_cells[slot]
 		var label: Label = _slot_labels[slot]
 		var item_id: String = RunManager.equipped_items.get(slot, "")
 		var slot_label := _slot_label(slot)
 		if item_id == "":
 			icon.set_empty(slot)
-			icon.set_hover_tooltip("[b]%s[/b]\n%s" % [slot_label, tr("UI_EQUIP_EMPTY_SLOT")])
+			# Empty slot: not a drag source; tooltip explains it.
+			cell.drag_payload = {}
+			cell.hover_tip = "[b]%s[/b]\n%s" % [slot_label, tr("UI_EQUIP_EMPTY_SLOT")]
 			label.text = "%s: %s" % [slot_label, tr("UI_EQUIP_EMPTY")]
 		else:
 			var data = RunManager.get_equipment_data(item_id)
 			var item_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
 			icon.set_equipment(slot, item_name, str(data.get("sprite", "")))
-			icon.set_hover_tooltip(_build_equipment_tooltip(data, slot))
+			# Equipped item is draggable back into the backpack (unequip).
+			cell.drag_payload = {"src": "slot", "slot": slot, "item_id": item_id}
+			cell.preview_text = str(SLOT_LETTERS.get(slot, "?"))
+			cell.preview_color = Color(1.0, 0.86, 0.4)
+			cell.hover_tip = _build_equipment_tooltip(data, slot)
 			label.text = "%s: %s" % [slot_label, item_name]
 
 	# Backpack grid (rebuild every refresh)
@@ -339,18 +364,27 @@ func _build_cell_content(index: int) -> Control:
 				return _make_equip_cell(str(cell.get("id", "")), index)
 			"gold":
 				return _make_resource_cell(
-					tr("UI_EQUIP_CELL_GOLD"), int(cell.get("amount", 0)), T.SAND_LIGHT, index
+					tr("UI_EQUIP_CELL_GOLD"), int(cell.get("amount", 0)), T.SAND_LIGHT, index, "gold"
 				)
 			"core":
 				return _make_resource_cell(
-					tr("UI_EQUIP_CELL_CORE"), int(cell.get("amount", 0)), T.ACCENT_NEON_BLUE, index
+					tr("UI_EQUIP_CELL_CORE"),
+					int(cell.get("amount", 0)),
+					T.ACCENT_NEON_BLUE,
+					index,
+					"core"
 				)
-	# Empty cell — dim placeholder panel.
+	# Empty cell — dim placeholder panel, still a valid drop target.
+	var wrapper := BACKPACK_CELL.new()
+	wrapper.custom_minimum_size = CELL_SIZE
 	var blank := Panel.new()
-	blank.custom_minimum_size = CELL_SIZE
+	blank.set_anchors_preset(Control.PRESET_FULL_RECT)
+	blank.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style := T.panel_with_shadow(Color(0.10, 0.085, 0.07, 0.6), T.PANEL_BORDER, 2, 1)
 	blank.add_theme_stylebox_override("panel", style)
-	return blank
+	wrapper.add_child(blank)
+	_wire_backpack_drop(wrapper, index)
+	return wrapper
 
 
 ## Overlay a gold border on a safe-cell tile (visual only; ignores mouse).
@@ -367,28 +401,63 @@ func _add_safe_border(cell: Control) -> void:
 	cell.add_child(border)
 
 
-## An equipment cell: gear icon, left-click equips, right-click discards (by the
-## backpack CELL index — NOT a position in the equip list).
+## Wire a backpack cell as a drop target: accepts another backpack cell (swap via
+## move_cell) or an equipped item dragged from a slot (unequip into the bag).
+func _wire_backpack_drop(cell, index: int) -> void:
+	cell.can_accept = func(data): return (
+		(data.get("src") == "backpack" and int(data.get("index", -1)) != index)
+		or data.get("src") == "slot"
+	)
+	cell.perform_drop = func(data):
+		if data.get("src") == "backpack":
+			RunManager.move_cell(int(data.get("index", 0)), index)
+		elif data.get("src") == "slot":
+			_on_unequip_pressed(str(data.get("slot", "")))
+
+
+## An equipment cell: gear icon. Drag onto a slot to equip / onto another cell to
+## move. Click fallback: left = equip, right = discard, middle = toggle safe.
 func _make_equip_cell(item_id: String, index: int) -> Control:
 	var data = RunManager.get_equipment_data(item_id)
 	var slot := str(data.get("slot", "head"))
 	var item_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
+	var cell := BACKPACK_CELL.new()
+	cell.custom_minimum_size = CELL_SIZE
+	cell.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var icon := EQUIPMENT_ICON.new()
-	icon.custom_minimum_size = CELL_SIZE
+	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon.set_equipment(slot, item_name, str(data.get("sprite", "")))
-	icon.set_hover_tooltip(_build_equipment_tooltip(data, slot))
-	icon.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	icon.gui_input.connect(_on_cell_input.bind(item_id, slot, index))
-	return icon
+	cell.add_child(icon)
+	cell.hover_tip = _build_equipment_tooltip(data, slot)
+	cell.drag_payload = {
+		"src": "backpack", "index": index, "kind": "equip", "item_id": item_id, "slot": slot
+	}
+	cell.preview_text = str(SLOT_LETTERS.get(slot, "?"))
+	cell.preview_color = Color(1.0, 0.86, 0.4)
+	_wire_backpack_drop(cell, index)
+	cell.click_handler = func(btn):
+		if btn == MOUSE_BUTTON_LEFT:
+			_on_equip_pressed(item_id, slot, index)
+		elif btn == MOUSE_BUTTON_RIGHT:
+			RunManager.discard_from_inventory(index)
+		elif btn == MOUSE_BUTTON_MIDDLE:
+			_toggle_safe(index)
+	return cell
 
 
-## A gold / Core resource stack cell. Non-interactive: a labelled count tile.
-func _make_resource_cell(label_text: String, amount: int, tint: Color, index: int) -> Control:
+## A gold / Core resource stack cell. Draggable as a whole stack (move/swap via
+## move_cell); middle-click still toggles safe.
+func _make_resource_cell(
+	label_text: String, amount: int, tint: Color, index: int, kind: String
+) -> Control:
+	var cell := BACKPACK_CELL.new()
+	cell.custom_minimum_size = CELL_SIZE
 	var panel := Panel.new()
-	panel.custom_minimum_size = CELL_SIZE
-	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_theme_stylebox_override("panel", T.icon_frame_style())
-	panel.gui_input.connect(_on_resource_input.bind(index))
+	cell.add_child(panel)
 
 	var box := VBoxContainer.new()
 	box.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -409,33 +478,13 @@ func _make_resource_cell(label_text: String, amount: int, tint: Color, index: in
 	amount_lbl.add_theme_font_size_override("font_size", 22)
 	amount_lbl.add_theme_color_override("font_color", Color(0.98, 0.96, 0.9))
 	box.add_child(amount_lbl)
-	return panel
 
-
-func _on_slot_input(event: InputEvent, slot: String) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		_on_unequip_pressed(slot)
-
-
-func _on_cell_input(event: InputEvent, item_id: String, slot: String, index: int) -> void:
-	if not (event is InputEventMouseButton and event.pressed):
-		return
-	if event.button_index == MOUSE_BUTTON_LEFT:
-		_on_equip_pressed(item_id, slot, index)
-	elif event.button_index == MOUSE_BUTTON_RIGHT:
-		RunManager.discard_from_inventory(index)
-	elif event.button_index == MOUSE_BUTTON_MIDDLE:
-		_toggle_safe(index)
-
-
-## Middle-click a gold/core stack to move it into/out of a safe cell.
-func _on_resource_input(event: InputEvent, index: int) -> void:
-	if (
-		event is InputEventMouseButton
-		and event.pressed
-		and event.button_index == MOUSE_BUTTON_MIDDLE
-	):
-		_toggle_safe(index)
+	cell.drag_payload = {"src": "backpack", "index": index, "kind": kind}
+	cell.preview_text = "x%d" % amount
+	cell.preview_color = tint
+	_wire_backpack_drop(cell, index)
+	cell.click_handler = func(btn): if btn == MOUSE_BUTTON_MIDDLE: _toggle_safe(index)
+	return cell
 
 
 ## Move the stack at `index` between the safe zone (cells 0..safe-1) and the
