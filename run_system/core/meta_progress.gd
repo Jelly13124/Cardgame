@@ -52,6 +52,9 @@ const INITIAL_CARD_POOL: Array[String] = [
 	"reinforce",
 	"deflector",
 	"bulwark",
+	"patch_kit",
+	"spiked_guard",
+	"corrode",
 ]
 
 
