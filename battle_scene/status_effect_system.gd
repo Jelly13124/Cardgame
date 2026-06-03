@@ -7,7 +7,7 @@ class_name StatusEffectSystem
 
 var _statuses: Dictionary = {}
 
-const TURN_END_DECAY = ["weak", "vulnerable", "strength_up"]
+const TURN_END_DECAY = ["weak", "vulnerable", "strength_up", "frail"]
 
 
 static func format_name(status_name: String) -> String:
@@ -33,6 +33,10 @@ const STATUS_COLORS = {
 	"strength_up": Color(1.0, 0.5, 0.2),
 	"double_damage": Color(0.2, 0.8, 1.0),
 	"stun": Color(0.95, 0.95, 0.3),
+	"regen": Color(0.3, 1.0, 0.6),
+	"thorns": Color(0.7, 0.75, 0.8),
+	"frail": Color(0.6, 0.5, 0.7),
+	"dodge": Color(0.6, 0.95, 1.0),
 }
 
 const STATUS_LABELS = {
@@ -43,6 +47,10 @@ const STATUS_LABELS = {
 	"strength_up": "S",
 	"double_damage": "D",
 	"stun": "⚡",
+	"regen": "R",
+	"thorns": "T",
+	"frail": "F",
+	"dodge": "E",
 }
 
 const STATUS_DESCRIPTIONS = {
@@ -53,6 +61,10 @@ const STATUS_DESCRIPTIONS = {
 	"strength_up": "Outgoing attack damage increased by stack count. Persistent.",
 	"double_damage": "Next N attacks deal double damage. Consumed on use.",
 	"stun": "Enemy skips its next turn for each stack (enemy-only).",
+	"regen": "Heal stacks HP at the start of your turn. Stacks decay by 1 each turn.",
+	"thorns": "When hit by an attack, the attacker takes stacks damage. Persistent.",
+	"frail": "Block gained is reduced 25%. Decays 1 per turn.",
+	"dodge": "Completely negates incoming attacks, one stack consumed per attack.",
 }
 
 
@@ -99,6 +111,15 @@ func on_turn_start(entity: Node) -> void:
 		var dmg: int = _statuses["burn"]
 		if entity.has_method("take_damage"):
 			entity.take_damage(dmg)
+
+	if has_status("regen"):
+		var amt: int = _statuses["regen"]
+		if entity.has_method("heal"):
+			entity.heal(amt)
+		_statuses["regen"] -= 1
+		if _statuses["regen"] <= 0:
+			_statuses.erase("regen")
+		changed = true
 
 	if changed:
 		_on_statuses_changed(entity)
@@ -152,6 +173,25 @@ func get_incoming_attack_multiplier() -> float:
 	if has_status("vulnerable"):
 		return 1.5
 	return 1.0
+
+
+## Block gained is reduced while Frail. Flat 25% (mirrors weak's flat model).
+func get_block_multiplier() -> float:
+	if has_status("frail"):
+		return 0.75
+	return 1.0
+
+
+## Dodge negates an incoming attack and consumes one stack. Returns true if a
+## stack was consumed (caller should treat the attack as fully negated).
+func try_consume_dodge(entity: Node) -> bool:
+	if not has_status("dodge"):
+		return false
+	_statuses["dodge"] -= 1
+	if _statuses["dodge"] <= 0:
+		_statuses.erase("dodge")
+	_on_statuses_changed(entity)
+	return true
 
 
 func _canonicalize_status_name(status_name: String) -> String:
