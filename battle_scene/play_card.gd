@@ -17,7 +17,6 @@ const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
 @onready var art_bg = $FrontFace/ArtBackground
 @onready var art_texture = $FrontFace/ArtContainer/ArtTexture
 
-const MASK_SHADER = preload("res://battle_scene/card_art_mask.gdshader")
 const UI_ASSET_PATH = "res://battle_scene/assets/images/cards/ui/"
 const COST_BADGE_PATH = UI_ASSET_PATH + "card_cost_badge.png"
 const DESC_BOX_PATH = UI_ASSET_PATH + "card_description_box.png"
@@ -26,7 +25,6 @@ const TYPE_BADGE_PATH = UI_ASSET_PATH + "card_type_badge.png"
 var _hover_tween: Tween
 var _glow_tween: Tween
 
-var _mask_material: ShaderMaterial = null
 var _rarity_frames: Dictionary = {}
 
 
@@ -193,17 +191,10 @@ func set_card_data(data: Dictionary) -> void:
 		art_frame_texture.texture = _rarity_frames.get("common")
 	art_frame_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 
-	# ── Type & Shape ──────────────────────────────────────────────────────────
+	# ── Type label ────────────────────────────────────────────────────────────
+	# Card art is uniformly square now; the old attack-card V-shape mask was removed.
 	var c_type = data.get("type", "skill").to_lower()
 	var is_atk = c_type == "attack"
-
-	# Apply/Update Shader Mask to ArtTexture only
-	if _mask_material == null:
-		_mask_material = ShaderMaterial.new()
-		_mask_material.shader = MASK_SHADER
-		art_texture.material = _mask_material
-
-	_mask_material.set_shader_parameter("is_attack", is_atk)
 
 	if is_atk:
 		type_label.text = tr("UI_BATTLE_CARD_TYPE_ATTACK")
