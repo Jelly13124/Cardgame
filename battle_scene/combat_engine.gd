@@ -41,6 +41,32 @@ func calculate_attack_damage(base_damage: int, attacker: Node, defender: Node) -
 	return int(modified_base * outgoing_mult * incoming_mult)
 
 
+## Dodge: if `target` has a Dodge stack, consume one and negate the attack.
+## Returns true when the attack was dodged (caller must skip the damage).
+func _check_dodge(target: Node) -> bool:
+	if not (target and is_instance_valid(target) and "status_system" in target):
+		return false
+	if target.status_system and target.status_system.try_consume_dodge(target):
+		if main and main.has_method("show_notification"):
+			main.show_notification(tr("UI_COMBAT_DODGE"), Color(0.6, 0.95, 1.0))
+		return true
+	return false
+
+
+## Thorns: when `defender` is hit, the `attacker` takes Thorns-stack damage.
+func apply_thorns_reflection(attacker: Node, defender: Node) -> void:
+	if not (defender and is_instance_valid(defender) and defender.has_method("get_status_stacks")):
+		return
+	var thorns: int = defender.get_status_stacks("thorns")
+	if (
+		thorns > 0
+		and attacker
+		and is_instance_valid(attacker)
+		and attacker.has_method("take_damage")
+	):
+		attacker.take_damage(thorns)
+
+
 func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 	var effects: Array = card.card_info.get("effects", [])
 	var type = card.card_info.get("type", "skill").to_lower()
@@ -114,20 +140,24 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 	match effect_type:
 		"deal_damage":
 			if target and is_instance_valid(target) and target.has_method("take_damage"):
-				if main.equipment_set_system and main.current_resolving_card:
-					amount = main.equipment_set_system.modify_card_damage(
-						main.current_resolving_card, amount
+				if _check_dodge(target):
+					pass  # attack negated by Dodge
+				else:
+					if main.equipment_set_system and main.current_resolving_card:
+						amount = main.equipment_set_system.modify_card_damage(
+							main.current_resolving_card, amount
+						)
+					var outgoing = calculate_attack_damage(amount, player, target)
+					target.take_damage(outgoing)
+					_register_player_attack()
+					main.show_notification(
+						tr("UI_COMBAT_DEALT_DAMAGE").format({"n": outgoing}), Color(1.0, 0.4, 0.3)
 					)
-				var outgoing = calculate_attack_damage(amount, player, target)
-				target.take_damage(outgoing)
-				_register_player_attack()
-				main.show_notification(
-					tr("UI_COMBAT_DEALT_DAMAGE").format({"n": outgoing}), Color(1.0, 0.4, 0.3)
-				)
-				if main.equipment_set_system and main.current_resolving_card:
-					main.equipment_set_system.on_card_damage_resolved(
-						main.current_resolving_card, target
-					)
+					if main.equipment_set_system and main.current_resolving_card:
+						main.equipment_set_system.on_card_damage_resolved(
+							main.current_resolving_card, target
+						)
+					apply_thorns_reflection(player, target)
 			else:
 				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
 
@@ -136,6 +166,8 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				amount = main.equipment_set_system.modify_card_block(
 					main.current_resolving_card, amount
 				)
+			if player and "status_system" in player and player.status_system:
+				amount = int(amount * player.status_system.get_block_multiplier())
 			player.add_block(amount)
 			main.show_notification(
 				tr("UI_COMBAT_GAIN_BLOCK").format({"n": amount}), Color(0.4, 0.6, 1.0)
@@ -162,11 +194,14 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				)
 			for enemy in main.enemy_container.get_children():
 				if is_instance_valid(enemy) and enemy.has_method("take_damage"):
+					if _check_dodge(enemy):
+						continue  # this enemy dodged
 					enemy.take_damage(calculate_attack_damage(per_target_amount, player, enemy))
 					if main.equipment_set_system and main.current_resolving_card:
 						main.equipment_set_system.on_card_damage_resolved(
 							main.current_resolving_card, enemy
 						)
+					apply_thorns_reflection(player, enemy)
 			_register_player_attack()
 			main.show_notification(tr("UI_COMBAT_ALL_ENEMIES_HIT"), Color(1.0, 0.3, 0.2))
 			await get_tree().create_timer(0.3).timeout
@@ -181,12 +216,16 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				count = int(main.turn_manager.attacks_played_this_turn)
 			var dynamic = base_dmg + per * count
 			if target and is_instance_valid(target) and target.has_method("take_damage"):
-				var outgoing = calculate_attack_damage(dynamic, player, target)
-				target.take_damage(outgoing)
-				_register_player_attack()
-				main.show_notification(
-					tr("UI_COMBAT_DEALT_DAMAGE").format({"n": outgoing}), Color(1.0, 0.4, 0.3)
-				)
+				if _check_dodge(target):
+					pass  # attack negated by Dodge
+				else:
+					var outgoing = calculate_attack_damage(dynamic, player, target)
+					target.take_damage(outgoing)
+					_register_player_attack()
+					main.show_notification(
+						tr("UI_COMBAT_DEALT_DAMAGE").format({"n": outgoing}), Color(1.0, 0.4, 0.3)
+					)
+					apply_thorns_reflection(player, target)
 			else:
 				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
 			await get_tree().create_timer(0.2).timeout
@@ -198,22 +237,26 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			var mult: float = float(effect.get("mult", 1))
 			var str_dmg: int = int(player.get("strength") * mult) if player else 0
 			if target and is_instance_valid(target) and target.has_method("take_damage"):
-				if main.equipment_set_system and main.current_resolving_card:
-					str_dmg = main.equipment_set_system.modify_card_damage(
-						main.current_resolving_card, str_dmg
+				if _check_dodge(target):
+					pass  # attack negated by Dodge
+				else:
+					if main.equipment_set_system and main.current_resolving_card:
+						str_dmg = main.equipment_set_system.modify_card_damage(
+							main.current_resolving_card, str_dmg
+						)
+					if card_mult != 1.0:
+						str_dmg = int(str_dmg * card_mult)
+					var outgoing = calculate_attack_damage(str_dmg, player, target)
+					target.take_damage(outgoing)
+					_register_player_attack()
+					main.show_notification(
+						tr("UI_COMBAT_DEALT_DAMAGE").format({"n": outgoing}), Color(1.0, 0.4, 0.3)
 					)
-				if card_mult != 1.0:
-					str_dmg = int(str_dmg * card_mult)
-				var outgoing = calculate_attack_damage(str_dmg, player, target)
-				target.take_damage(outgoing)
-				_register_player_attack()
-				main.show_notification(
-					tr("UI_COMBAT_DEALT_DAMAGE").format({"n": outgoing}), Color(1.0, 0.4, 0.3)
-				)
-				if main.equipment_set_system and main.current_resolving_card:
-					main.equipment_set_system.on_card_damage_resolved(
-						main.current_resolving_card, target
-					)
+					if main.equipment_set_system and main.current_resolving_card:
+						main.equipment_set_system.on_card_damage_resolved(
+							main.current_resolving_card, target
+						)
+					apply_thorns_reflection(player, target)
 			else:
 				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
 			await get_tree().create_timer(0.2).timeout
