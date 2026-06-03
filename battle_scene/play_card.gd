@@ -236,17 +236,21 @@ func _build_description(data: Dictionary) -> String:
 	for effect in effects:
 		var etype: String = effect.get("type", "")
 		var base: int = int(effect.get("amount", 0))
-		var scaling: String = effect.get("scaling", "")
+		var scaling: String = effect.get("scaling", "")  # legacy; effectively always "" now
 		var mult: float = float(effect.get("multiplier", 1))
 		var stacks: int = int(effect.get("stacks", 1))
 
+		# Global attributes mirror combat_engine._apply_effect: the multiplier hits
+		# the BASE first, THEN STR auto-adds to attack damage / CON to block. The old
+		# per-card `scaling` field is gone, so the breakdown is driven purely by etype.
+		var base_after_mult: int = int(base * mult) if mult != 1 else base
 		var stat_val: int = 0
-		if scaling != "":
-			stat_val = int(stats.get(scaling, 0))
+		if etype == "deal_damage" or etype == "deal_damage_all":
+			stat_val = int(stats.get("strength", 0))
+		elif etype == "gain_block":
+			stat_val = int(stats.get("constitution", 0))
 
-		var total: int = base + stat_val
-		if mult != 1:
-			total = int(total * mult)
+		var total: int = base_after_mult + stat_val
 
 		# Apply status effect multipliers for display
 		var final_damage: int = total
@@ -260,10 +264,10 @@ func _build_description(data: Dictionary) -> String:
 		match etype:
 			"deal_damage":
 				var label_val = _color_num(final_damage, total)
-				if scaling != "" and stat_val > 0:
+				if stat_val > 0:
 					lines.append(
 						tr("UI_BATTLE_DESC_DEAL_SCALING").format(
-							{"val": label_val, "base": base, "stat": stat_val}
+							{"val": label_val, "base": base_after_mult, "stat": stat_val}
 						)
 					)
 				else:
@@ -271,10 +275,10 @@ func _build_description(data: Dictionary) -> String:
 
 			"deal_damage_all":
 				var label_val = _color_num(final_damage, total)
-				if scaling != "" and stat_val > 0:
+				if stat_val > 0:
 					lines.append(
 						tr("UI_BATTLE_DESC_DEAL_ALL_SCALING").format(
-							{"val": label_val, "base": base, "stat": stat_val}
+							{"val": label_val, "base": base_after_mult, "stat": stat_val}
 						)
 					)
 				else:
@@ -282,10 +286,10 @@ func _build_description(data: Dictionary) -> String:
 
 			"gain_block":
 				var label_val = _color_num(final_block, total)
-				if scaling != "" and stat_val > 0:
+				if stat_val > 0:
 					lines.append(
 						tr("UI_BATTLE_DESC_BLOCK_SCALING").format(
-							{"val": label_val, "base": base, "stat": stat_val}
+							{"val": label_val, "base": base_after_mult, "stat": stat_val}
 						)
 					)
 				else:
