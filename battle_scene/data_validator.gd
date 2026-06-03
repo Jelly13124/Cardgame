@@ -50,6 +50,10 @@ const ALLOWED_STATUS_NAMES = [
 	"strength_up",
 	"double_damage",
 	"stun",
+	"regen",
+	"thorns",
+	"frail",
+	"dodge",
 ]
 # Effect types that require a `status` field
 const STATUS_BEARING_EFFECTS = [
