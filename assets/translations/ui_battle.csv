@@ -34,6 +34,8 @@ UI_BATTLE_DESC_DAMAGE_STR_MULT,Deal damage equal to {mult}× Strength.,造成等
 UI_BATTLE_DESC_SCALE_BY_ATTACKS,Deal {base} + {per} per Attack played this turn,造成 {base} + {per}（本回合每打出一张攻击牌）
 UI_BATTLE_KEYWORD_RETAIN,[color=#9ec1ff]Retain[/color],[color=#9ec1ff]保留[/color]
 UI_BATTLE_KEYWORD_EXHAUST,[color=#cfa9ff]Exhaust[/color],[color=#cfa9ff]消耗[/color]
+UI_BATTLE_KEYWORD_STRENGTH_DESC,Each point of Strength adds 1 to attack damage.,每点力量使攻击伤害增加 1。
+UI_BATTLE_KEYWORD_CONSTITUTION_DESC,Each point of Constitution adds 1 to Block gained.,每点体质使获得的格挡增加 1。
 UI_BATTLE_ATTR_CONSTITUTION,Constitution,体质
 UI_BATTLE_ATTR_INTELLIGENCE,Intelligence,智力
 UI_BATTLE_ATTR_LUCK,Luck,幸运

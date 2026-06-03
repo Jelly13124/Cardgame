@@ -436,6 +436,11 @@ func _on_mouse_entered() -> void:
 	_hover_tween.tween_property(self, "scale", Vector2(1.12, 1.12), 0.15)
 	z_index = 10  # bring to front
 
+	# Keyword glossary tooltip: explain any statuses / attributes this card uses.
+	var glossary := _build_keyword_glossary()
+	if glossary != "":
+		Tooltip.show(glossary, global_position + Vector2(size.x * 0.5, 0), get_instance_id())
+
 
 func _on_mouse_exited() -> void:
 	if _hover_tween:
@@ -443,6 +448,57 @@ func _on_mouse_exited() -> void:
 	_hover_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_hover_tween.tween_property(self, "scale", Vector2(1.0, 1.0), 0.15)
 	z_index = 1
+	Tooltip.hide_if_owner(get_instance_id())
+
+
+## Builds a "[b]Keyword[/b]: definition" glossary for the statuses and global
+## attributes this card's effects touch, sourced from the localized status rows
+## (falling back to StatusEffectSystem.STATUS_DESCRIPTIONS). Empty if none apply.
+func _build_keyword_glossary() -> String:
+	var effects: Array = card_info.get("effects", [])
+	if effects.is_empty():
+		return ""
+	var seen: Dictionary = {}
+	var lines: PackedStringArray = []
+
+	# Global attributes first (Strength on attacks, Constitution on block).
+	var uses_str := false
+	var uses_con := false
+	for effect in effects:
+		var etype := str(effect.get("type", ""))
+		if etype in ["deal_damage", "deal_damage_all", "deal_damage_str_mult"]:
+			uses_str = true
+		elif etype == "gain_block":
+			uses_con = true
+	if uses_str:
+		lines.append(
+			"[b]%s[/b]: %s" % [tr("UI_COMBAT_ATTR_STRENGTH"), tr("UI_BATTLE_KEYWORD_STRENGTH_DESC")]
+		)
+	if uses_con:
+		lines.append(
+			(
+				"[b]%s[/b]: %s"
+				% [tr("UI_COMBAT_ATTR_CONSTITUTION"), tr("UI_BATTLE_KEYWORD_CONSTITUTION_DESC")]
+			)
+		)
+
+	# Then any statuses the card applies.
+	for effect in effects:
+		var status := str(effect.get("status", ""))
+		if status == "" or seen.has(status):
+			continue
+		seen[status] = true
+		var up := status.to_upper()
+		var kw_name := tr("UI_COMBAT_STATUS_%s" % up)
+		if kw_name == "UI_COMBAT_STATUS_%s" % up:
+			kw_name = STATUS_SYS.format_name(status)
+		var desc := tr("UI_COMBAT_STATUS_%s_DESC" % up)
+		if desc == "UI_COMBAT_STATUS_%s_DESC" % up:
+			desc = str(STATUS_SYS.STATUS_DESCRIPTIONS.get(status, ""))
+		if desc != "":
+			lines.append("[b]%s[/b]: %s" % [kw_name, desc])
+
+	return "\n".join(lines)
 
 
 ## Toggles the "can afford" glow and pulse animation.
