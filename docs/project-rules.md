@@ -1,7 +1,7 @@
 # Project Rules
 
 **Project:** Unnamed Sci-Fi Roguelite Card Game  
-**Last Updated:** 2026-06-02
+**Last Updated:** 2026-06-03
 
 ---
 
@@ -31,6 +31,7 @@ The approved production exemplars are:
 - `battle_scene/assets/images/heroes/cowboy_bill/attack/`
 - `battle_scene/assets/images/backgrounds/wasteland_battlefield.png`
 - `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`
+- `battle_scene/assets/images/cards/player/*.png`
 
 ### Visual Rules
 
@@ -42,6 +43,8 @@ The approved production exemplars are:
 - **Outlines:** Thick black or very dark hand-drawn cartoon outlines. Do not use thin realistic hairlines, sketchy concept-art hatching, or dense interior scratches.
 - **Shading:** Simple two-to-three value cel shading with broad shadow shapes. Avoid painterly rendering, photorealism, gritty texture, noisy grunge, dithering, and dense material detail.
 - **Background:** Character, card, UI, and FX sprites use transparent backgrounds; full-scene map and battle backgrounds are scene-ready PNGs with no UI, text, labels, or characters baked in. Background centers must stay low-detail and readable behind gameplay.
+- **Card illustrations:** Player card art must be `512x320` landscape PNGs. They are illustrations only and must not bake in card borders, cost badges, titles, rarity labels, type labels, description boxes, speech bubbles, UI, or text.
+- **UI icons:** Small UI components and combat intent icons must prioritize simple readability over themed detail. Attack is a simple red sword, block is a simple blue shield, buff is a simple green arrow/glow, and charge is a simple orange warning mark. Avoid skulls, character faces, clutter, and tiny salvage decoration in these icons.
 
 ### Character Anchors
 
@@ -107,6 +110,7 @@ All final in-project visual assets must be PNG art that follows the Offbeat Adul
 - Hero frames must face right toward enemies.
 - Keep animation sheets on a solid `#FF00FF` background for chroma-key cleanup.
 - Keep card and background art free of text, logos, UI labels, and baked-in characters unless the asset is specifically a character illustration.
+- Keep player card illustrations at `512x320` unless the card scene layout is intentionally changed at the same time.
 
 ---
 
@@ -137,9 +141,8 @@ battle_scene/assets/images/
 |   |   |   |-- trash_robot_attack_1.png
 |   |   |   |-- trash_robot_attack_2.png
 |   |   |   `-- trash_robot_attack_3.png
-|   |-- junkyard_tyrant/          <- boss may also have a charge/ subfolder
-|   |   |-- attack/               (4 frames)
-|   |   `-- charge/               (4 frames - telegraph wind-up)
+|   |-- junkyard_tyrant/
+|   |   `-- attack/               (4 frames)
 |   `-- wasteland_robber/         <- future enemy, same pattern
 |       `-- ...
 |-- heroes/
@@ -156,7 +159,7 @@ battle_scene/assets/images/
 
 - **One subfolder per entity** - never put two enemies' frames in the same folder.
 - **Subfolder name = `sprite_id`** - must match exactly what is in the enemy JSON.
-- **Animation frames go in per-animation subfolders** - `idle/`, `attack/`, and optional `charge/`.
+- **Animation frames go in per-animation subfolders** - `idle/` and `attack/`; add optional future animation folders only when runtime actually plays them.
 - **Hero idle assets are allowed** - Cowboy Bill uses `idle/` as the static and looping rest animation. Enemies may still use `attack_0` as the static rest pose unless they are explicitly regenerated with idle frames.
 - **One-off images stay at the entity root** - portraits and single static images do not need animation subfolders.
 - **No loose animation PNGs at the parent `/enemies/` folder or entity root** - always use a named animation subfolder.

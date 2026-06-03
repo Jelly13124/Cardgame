@@ -1,0 +1,175 @@
+{
+  "target": "asset",
+  "mode": "single",
+  "prompt": "scrap_rat early enemy 4-frame attack sheet, clean no edge-touch, offbeat adult sci-fi cartoon",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0e3729ba8a7526ec016a200260e2348199b72f9475e9a6829a.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 125,
+  "rows": 1,
+  "cols": 4,
+  "cell_size": 128,
+  "fit_scale": 0.88,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "bottom",
+  "shared_scale": true,
+  "component_mode": "largest",
+  "component_padding": 6,
+  "min_component_area": 100,
+  "edge_touch_margin": 5,
+  "frame_labels": [
+    "scrap_rat_attack-1",
+    "scrap_rat_attack-2",
+    "scrap_rat_attack-3",
+    "scrap_rat_attack-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        543,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 52564,
+      "selected_component_bbox": [
+        61,
+        313,
+        533,
+        527
+      ],
+      "crop_bbox": [
+        55,
+        307,
+        535,
+        533
+      ],
+      "edge_touch": false,
+      "output_size": [
+        102,
+        48
+      ],
+      "paste_position": [
+        13,
+        73
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        543,
+        0,
+        1086,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 64555,
+      "selected_component_bbox": [
+        57,
+        246,
+        485,
+        534
+      ],
+      "crop_bbox": [
+        51,
+        240,
+        491,
+        540
+      ],
+      "edge_touch": false,
+      "output_size": [
+        94,
+        64
+      ],
+      "paste_position": [
+        17,
+        57
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1086,
+        0,
+        1629,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 2,
+      "selected_component_area": 52861,
+      "selected_component_bbox": [
+        14,
+        344,
+        535,
+        529
+      ],
+      "crop_bbox": [
+        8,
+        338,
+        535,
+        535
+      ],
+      "edge_touch": false,
+      "output_size": [
+        112,
+        42
+      ],
+      "paste_position": [
+        8,
+        79
+      ]
+    },
+    {
+      "grid": [
+        0,
+        3
+      ],
+      "source_box": [
+        1629,
+        0,
+        2172,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 2,
+      "selected_component_area": 53046,
+      "selected_component_bbox": [
+        57,
+        287,
+        482,
+        528
+      ],
+      "crop_bbox": [
+        51,
+        281,
+        488,
+        534
+      ],
+      "edge_touch": false,
+      "output_size": [
+        93,
+        54
+      ],
+      "paste_position": [
+        17,
+        67
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

@@ -162,7 +162,7 @@ func _build_visual() -> void:
 ## Frame files must be: enemies/{sid}/attack/{sid}_attack_N.png
 func _build_sprite_visual(sid: String) -> void:
 	_sprite = AnimatedSprite2D.new()
-	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_sprite.scale = Vector2.ONE
 	_sprite.position = Vector2(0, -96)
 	_sprite.flip_h = false  # enemy PNGs already face left toward the player
@@ -229,7 +229,7 @@ func _apply_display_scale(frames: SpriteFrames) -> float:
 	var native_height := float(tex.get_height())
 	if native_height <= 0.0:
 		return NORMAL_DISPLAY_HEIGHT
-	var target_height := BOSS_DISPLAY_HEIGHT if native_height >= 160.0 else NORMAL_DISPLAY_HEIGHT
+	var target_height := BOSS_DISPLAY_HEIGHT if is_boss else NORMAL_DISPLAY_HEIGHT
 	var display_scale := target_height / native_height
 	_sprite.scale = Vector2(display_scale, display_scale)
 	_sprite.position = Vector2(0, -target_height * 0.5)
@@ -321,7 +321,7 @@ func _build_intent_badge(intent_pos: Vector2) -> void:
 	_intent_icon.position = Vector2(0, 1)
 	_intent_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_intent_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_intent_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_intent_icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_intent_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_intent_bg.add_child(_intent_icon)
 

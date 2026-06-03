@@ -1,0 +1,219 @@
+{
+  "target": "asset",
+  "mode": "single",
+  "prompt": "six simple offbeat adult sci-fi western cartoon relic icons, magenta background",
+  "role": "",
+  "input": "run_system\\assets\\images\\relics\\generated_sheet\\offbeat_common_relics_6\\raw-sheet.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 200,
+  "rows": 2,
+  "cols": 3,
+  "cell_size": 128,
+  "fit_scale": 0.86,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 28,
+  "min_component_area": 1,
+  "edge_touch_margin": 4,
+  "frame_labels": [
+    "relic-1",
+    "relic-2",
+    "relic-3",
+    "relic-4",
+    "relic-5",
+    "relic-6"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        131,
+        97,
+        414,
+        455
+      ],
+      "edge_touch": false,
+      "output_size": [
+        87,
+        110
+      ],
+      "paste_position": [
+        20,
+        9
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        512,
+        0,
+        1024,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        105,
+        111,
+        386,
+        449
+      ],
+      "edge_touch": false,
+      "output_size": [
+        86,
+        103
+      ],
+      "paste_position": [
+        21,
+        12
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1024,
+        0,
+        1536,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        33,
+        104,
+        341,
+        451
+      ],
+      "edge_touch": false,
+      "output_size": [
+        94,
+        106
+      ],
+      "paste_position": [
+        17,
+        11
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        512,
+        512,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 9,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        114,
+        41,
+        414,
+        383
+      ],
+      "edge_touch": false,
+      "output_size": [
+        92,
+        105
+      ],
+      "paste_position": [
+        18,
+        11
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        512,
+        512,
+        1024,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        75,
+        36,
+        389,
+        364
+      ],
+      "edge_touch": false,
+      "output_size": [
+        96,
+        100
+      ],
+      "paste_position": [
+        16,
+        14
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        1024,
+        512,
+        1536,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        10,
+        72,
+        365,
+        387
+      ],
+      "edge_touch": false,
+      "output_size": [
+        109,
+        96
+      ],
+      "paste_position": [
+        9,
+        16
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

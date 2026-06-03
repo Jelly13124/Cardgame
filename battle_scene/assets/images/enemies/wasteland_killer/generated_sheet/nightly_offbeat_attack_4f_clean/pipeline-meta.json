@@ -1,0 +1,175 @@
+{
+  "target": "asset",
+  "mode": "single",
+  "prompt": "wasteland_killer early enemy clean safe-margin 4-frame attack sheet, offbeat adult sci-fi cartoon, enemy faces left",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0e3729ba8a7526ec016a20055f606081999c1343de36a2fb8c.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 125,
+  "rows": 1,
+  "cols": 4,
+  "cell_size": 128,
+  "fit_scale": 0.9,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "bottom",
+  "shared_scale": true,
+  "component_mode": "largest",
+  "component_padding": 8,
+  "min_component_area": 100,
+  "edge_touch_margin": 5,
+  "frame_labels": [
+    "wasteland_killer_attack-1",
+    "wasteland_killer_attack-2",
+    "wasteland_killer_attack-3",
+    "wasteland_killer_attack-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        543,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 31207,
+      "selected_component_bbox": [
+        214,
+        234,
+        415,
+        519
+      ],
+      "crop_bbox": [
+        206,
+        226,
+        423,
+        527
+      ],
+      "edge_touch": false,
+      "output_size": [
+        64,
+        89
+      ],
+      "paste_position": [
+        32,
+        33
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        543,
+        0,
+        1086,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 29104,
+      "selected_component_bbox": [
+        184,
+        226,
+        355,
+        519
+      ],
+      "crop_bbox": [
+        176,
+        218,
+        363,
+        527
+      ],
+      "edge_touch": false,
+      "output_size": [
+        55,
+        91
+      ],
+      "paste_position": [
+        36,
+        31
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1086,
+        0,
+        1629,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 36079,
+      "selected_component_bbox": [
+        32,
+        246,
+        404,
+        519
+      ],
+      "crop_bbox": [
+        24,
+        238,
+        412,
+        527
+      ],
+      "edge_touch": false,
+      "output_size": [
+        115,
+        85
+      ],
+      "paste_position": [
+        6,
+        37
+      ]
+    },
+    {
+      "grid": [
+        0,
+        3
+      ],
+      "source_box": [
+        1629,
+        0,
+        2172,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 29918,
+      "selected_component_bbox": [
+        135,
+        237,
+        327,
+        519
+      ],
+      "crop_bbox": [
+        127,
+        229,
+        335,
+        527
+      ],
+      "edge_touch": false,
+      "output_size": [
+        61,
+        88
+      ],
+      "paste_position": [
+        33,
+        34
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

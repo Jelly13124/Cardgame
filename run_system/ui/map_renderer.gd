@@ -7,9 +7,9 @@
 extends RefCounted
 class_name MapRenderer
 
-const NODE_RADIUS: float = 34.0
-const NODE_ICON_SIZE: float = 64.0
-const LEGEND_NODE_ICON_SIZE: float = 20.0
+const NODE_RADIUS: float = 40.0
+const NODE_ICON_SIZE: float = 78.0
+const LEGEND_NODE_ICON_SIZE: float = 24.0
 
 # Legend labels are localized at draw time via tr() (see _draw_legend); the
 # second column is the translation key, not the display string.

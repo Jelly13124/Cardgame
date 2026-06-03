@@ -1,0 +1,175 @@
+{
+  "target": "asset",
+  "mode": "single",
+  "prompt": "rust_brute standard enemy ground-slam safe-margin 4-frame attack sheet, offbeat adult sci-fi cartoon, enemy faces left",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0e3729ba8a7526ec016a200ae794908199b756804c2b61c395.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 125,
+  "rows": 1,
+  "cols": 4,
+  "cell_size": 128,
+  "fit_scale": 0.88,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "bottom",
+  "shared_scale": true,
+  "component_mode": "largest",
+  "component_padding": 8,
+  "min_component_area": 100,
+  "edge_touch_margin": 5,
+  "frame_labels": [
+    "rust_brute_attack-1",
+    "rust_brute_attack-2",
+    "rust_brute_attack-3",
+    "rust_brute_attack-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        543,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 68424,
+      "selected_component_bbox": [
+        147,
+        222,
+        473,
+        566
+      ],
+      "crop_bbox": [
+        139,
+        214,
+        481,
+        574
+      ],
+      "edge_touch": false,
+      "output_size": [
+        96,
+        101
+      ],
+      "paste_position": [
+        16,
+        20
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        543,
+        0,
+        1086,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 69049,
+      "selected_component_bbox": [
+        90,
+        217,
+        418,
+        568
+      ],
+      "crop_bbox": [
+        82,
+        209,
+        426,
+        576
+      ],
+      "edge_touch": false,
+      "output_size": [
+        97,
+        103
+      ],
+      "paste_position": [
+        15,
+        18
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1086,
+        0,
+        1629,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 62895,
+      "selected_component_bbox": [
+        65,
+        268,
+        447,
+        591
+      ],
+      "crop_bbox": [
+        57,
+        260,
+        455,
+        599
+      ],
+      "edge_touch": false,
+      "output_size": [
+        112,
+        95
+      ],
+      "paste_position": [
+        8,
+        26
+      ]
+    },
+    {
+      "grid": [
+        0,
+        3
+      ],
+      "source_box": [
+        1629,
+        0,
+        2172,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 68118,
+      "selected_component_bbox": [
+        60,
+        223,
+        378,
+        570
+      ],
+      "crop_bbox": [
+        52,
+        215,
+        386,
+        578
+      ],
+      "edge_touch": false,
+      "output_size": [
+        94,
+        102
+      ],
+      "paste_position": [
+        17,
+        19
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

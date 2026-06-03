@@ -1,0 +1,155 @@
+{
+  "target": "asset",
+  "mode": "single",
+  "prompt": "ash_warden boss centered ember-flare 192px 4-frame attack sheet, offbeat adult sci-fi cartoon, enemy faces left",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0e3729ba8a7526ec016a20160a8a888199ac7cd5a7f2f85419.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 125,
+  "rows": 1,
+  "cols": 4,
+  "cell_size": 192,
+  "fit_scale": 0.92,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "bottom",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 8,
+  "min_component_area": 80,
+  "edge_touch_margin": 5,
+  "frame_labels": [
+    "ash_warden_attack-1",
+    "ash_warden_attack-2",
+    "ash_warden_attack-3",
+    "ash_warden_attack-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        543,
+        724
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        161,
+        142,
+        457,
+        573
+      ],
+      "edge_touch": false,
+      "output_size": [
+        121,
+        176
+      ],
+      "paste_position": [
+        35,
+        9
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        543,
+        0,
+        1086,
+        724
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        116,
+        142,
+        424,
+        573
+      ],
+      "edge_touch": false,
+      "output_size": [
+        126,
+        176
+      ],
+      "paste_position": [
+        33,
+        9
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1086,
+        0,
+        1629,
+        724
+      ],
+      "component_mode": "all",
+      "component_count": 8,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        111,
+        142,
+        431,
+        573
+      ],
+      "edge_touch": false,
+      "output_size": [
+        131,
+        176
+      ],
+      "paste_position": [
+        30,
+        9
+      ]
+    },
+    {
+      "grid": [
+        0,
+        3
+      ],
+      "source_box": [
+        1629,
+        0,
+        2172,
+        724
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        99,
+        142,
+        399,
+        573
+      ],
+      "edge_touch": false,
+      "output_size": [
+        122,
+        176
+      ],
+      "paste_position": [
+        35,
+        9
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

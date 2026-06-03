@@ -39,7 +39,7 @@ EVENT_MUTANT_BAZAAR_DESC,"Under a tarp of stitched hides, a four-armed trader fa
 EVENT_MUTANT_BAZAAR_OPT0_TEXT,Pay full price for a charm trinket,照单全价买下一件饰物
 EVENT_MUTANT_BAZAAR_OPT0_RESULT,"You count out the coin without quibbling. The trader's four hands wrap your purchase and slide it across the table.","你二话不说数出钱来。商人四只手裹好你买的东西，推过桌面。"
 EVENT_MUTANT_BAZAAR_OPT1_TEXT,[Charm 6] Haggle him down to a steal,[魅力 6] 把他砍到血亏价
-EVENT_MUTANT_BAZAAR_OPT1_RESULT,"Your patter is silk. He laughs, throws in a Rabbit's Foot for the company, and even refunds a handful of coin to keep your favor.","你说得天花乱坠。他大笑，搭送一只兔脚作伴，还退你一把硬币，只为讨你欢心。"
+EVENT_MUTANT_BAZAAR_OPT1_RESULT,"Your patter is silk. He laughs, throws in a Repair Kit for the road, and even refunds a handful of coin to keep your favor.","你说得天花乱坠。他大笑，搭送一只修理包上路用，还退你一把硬币，只为讨你欢心。"
 EVENT_MUTANT_BAZAAR_OPT2_TEXT,Browse and move on,随便看看就走
 EVENT_MUTANT_BAZAAR_OPT2_RESULT,"You drift the stalls, trade a few quiet words, and leave a touch more practiced at reading a room.","你在摊位间游荡，低声寒暄几句，离开时识人察色又老练了几分。"
 EVENT_FORTUNE_SHRINE_TITLE,The Fortune Shrine,命运神龛

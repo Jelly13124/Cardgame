@@ -66,7 +66,7 @@ func _ready() -> void:
 		back_rect.texture = back_tex
 		back_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		back_rect.stretch_mode = TextureRect.STRETCH_SCALE
-		back_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		back_rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	# Pre-cache rarity frame textures
 	for r in ["common", "uncommon", "rare"]:
 		var tex = load(UI_ASSET_PATH + "art_frame_%s.png" % r)

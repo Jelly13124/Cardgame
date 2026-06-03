@@ -1,0 +1,175 @@
+{
+  "target": "asset",
+  "mode": "single",
+  "prompt": "riot_hound early enemy 4-frame attack sheet, offbeat adult sci-fi cartoon, enemy faces left",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0e3729ba8a7526ec016a20062b75e881998fdb52742f8bef4f.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 125,
+  "rows": 1,
+  "cols": 4,
+  "cell_size": 128,
+  "fit_scale": 0.9,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "bottom",
+  "shared_scale": true,
+  "component_mode": "largest",
+  "component_padding": 8,
+  "min_component_area": 100,
+  "edge_touch_margin": 5,
+  "frame_labels": [
+    "riot_hound_attack-1",
+    "riot_hound_attack-2",
+    "riot_hound_attack-3",
+    "riot_hound_attack-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        543,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 42808,
+      "selected_component_bbox": [
+        112,
+        327,
+        472,
+        499
+      ],
+      "crop_bbox": [
+        104,
+        319,
+        480,
+        507
+      ],
+      "edge_touch": false,
+      "output_size": [
+        97,
+        48
+      ],
+      "paste_position": [
+        15,
+        74
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        543,
+        0,
+        1086,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 51838,
+      "selected_component_bbox": [
+        82,
+        264,
+        444,
+        499
+      ],
+      "crop_bbox": [
+        74,
+        256,
+        452,
+        507
+      ],
+      "edge_touch": false,
+      "output_size": [
+        98,
+        65
+      ],
+      "paste_position": [
+        15,
+        57
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1086,
+        0,
+        1629,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 2,
+      "selected_component_area": 52335,
+      "selected_component_bbox": [
+        58,
+        313,
+        486,
+        505
+      ],
+      "crop_bbox": [
+        50,
+        305,
+        494,
+        513
+      ],
+      "edge_touch": false,
+      "output_size": [
+        115,
+        53
+      ],
+      "paste_position": [
+        6,
+        69
+      ]
+    },
+    {
+      "grid": [
+        0,
+        3
+      ],
+      "source_box": [
+        1629,
+        0,
+        2172,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 3,
+      "selected_component_area": 46677,
+      "selected_component_bbox": [
+        108,
+        246,
+        443,
+        507
+      ],
+      "crop_bbox": [
+        100,
+        238,
+        451,
+        515
+      ],
+      "edge_touch": false,
+      "output_size": [
+        91,
+        71
+      ],
+      "paste_position": [
+        18,
+        51
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

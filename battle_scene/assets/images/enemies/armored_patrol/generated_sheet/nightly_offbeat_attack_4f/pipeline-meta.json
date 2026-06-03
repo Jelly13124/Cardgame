@@ -1,0 +1,155 @@
+{
+  "target": "asset",
+  "mode": "single",
+  "prompt": "armored_patrol elite enemy 4-frame attack sheet, keep impact spark, offbeat adult sci-fi cartoon, enemy faces left",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0e3729ba8a7526ec016a200f912fa08199ab34c8f76c1a86ac.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 125,
+  "rows": 1,
+  "cols": 4,
+  "cell_size": 128,
+  "fit_scale": 0.86,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "bottom",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 8,
+  "min_component_area": 60,
+  "edge_touch_margin": 5,
+  "frame_labels": [
+    "armored_patrol_attack-1",
+    "armored_patrol_attack-2",
+    "armored_patrol_attack-3",
+    "armored_patrol_attack-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        543,
+        724
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        124,
+        172,
+        422,
+        538
+      ],
+      "edge_touch": false,
+      "output_size": [
+        74,
+        90
+      ],
+      "paste_position": [
+        27,
+        30
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        543,
+        0,
+        1086,
+        724
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        63,
+        177,
+        476,
+        537
+      ],
+      "edge_touch": false,
+      "output_size": [
+        102,
+        89
+      ],
+      "paste_position": [
+        13,
+        31
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1086,
+        0,
+        1629,
+        724
+      ],
+      "component_mode": "all",
+      "component_count": 2,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        19,
+        188,
+        462,
+        539
+      ],
+      "edge_touch": false,
+      "output_size": [
+        110,
+        87
+      ],
+      "paste_position": [
+        9,
+        33
+      ]
+    },
+    {
+      "grid": [
+        0,
+        3
+      ],
+      "source_box": [
+        1629,
+        0,
+        2172,
+        724
+      ],
+      "component_mode": "all",
+      "component_count": 3,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        97,
+        171,
+        395,
+        539
+      ],
+      "edge_touch": false,
+      "output_size": [
+        74,
+        91
+      ],
+      "paste_position": [
+        27,
+        29
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

@@ -1,6 +1,6 @@
 # Enemies Catalog
 
-**Last updated:** 2026-06-01
+**Last updated:** 2026-06-03
 **Total combatants:** 15
 
 ## Paths
@@ -9,10 +9,10 @@
 |---|---|
 | Enemy JSON definitions | `battle_scene/card_info/enemy/{id}.json` |
 | Sprite folder (per enemy) | `battle_scene/assets/images/enemies/{sprite_id}/` |
-| Animation subfolders | `attack/`, optional `charge/` (boss telegraph) |
-| Frame naming | `attack/{sprite_id}_attack_{0-3}.png` (+ optional `charge/{sprite_id}_charge_{0-3}.png`) |
+| Animation subfolders | Current runtime uses `attack/`; `charge/` is a future optional animation hook and is not required |
+| Frame naming | `attack/{sprite_id}_attack_{0-3}.png` |
 | Rest pose | `attack/{sprite_id}_attack_0.png`; no separate `idle/` assets |
-| Generated art pipeline (intermediates) | Optional, but must not contain canceled animation outputs |
+| Generated art pipeline (intermediates) | Optional, but must not contain canceled animation outputs or unused old-style animation folders |
 | Spawn / runtime code | `battle_scene/enemy_entity.gd` (factory + animation), `battle_scene/enemy_ai.gd` (action exec) |
 | Schema validator | `battle_scene/data_validator.gd` `validate_enemy()` + `validate_encounter_pools()` |
 | Encounter selection | `run_system/core/run_manager.gd` `select_encounter()` |
@@ -49,19 +49,19 @@ _Tier is a best-effort read of `run_manager.gd` encounter constants — `UNLISTE
 | `armored_patrol` | Armored Patrol | 50 | elite | `armored_patrol` | 4 | ✅ |
 | `ash_warden` | Ash Warden | 95 | boss | `ash_warden` | 7 | ✅ |
 | `chrome_hound` | Chrome Hound | 32 | standard | `chrome_hound` | 4 | ✅ |
-| `ember_wisp` | Ember Wisp | 8 | summon-only | `ember_wisp` | 1 | ❌ |
+| `ember_wisp` | Ember Wisp | 8 | summon-only | `ember_wisp` | 1 | ✅ |
 | `junkyard_tyrant` | Junkyard Tyrant | 110 | boss | `junkyard_tyrant` | 8 | ✅ |
 | `mortar_cart` | Mortar Cart | 28 | standard | `mortar_cart` | 5 | ✅ |
 | `riot_hound` | Riot Hound | 25 | standard | `riot_hound` | 3 | ✅ |
 | `rust_brute` | Rust Brute | 40 | standard | `rust_brute` | 4 | ✅ |
 | `rust_titan` | Rust Titan | 75 | boss | `rust_titan` | 6 | ✅ |
 | `scrap_rat` | Scrap Rat | 12 | standard | `scrap_rat` | 3 | ✅ |
-| `scrap_shard` | Scrap Shard | 10 | summon-only | `scrap_shard` | 1 | ❌ |
+| `scrap_shard` | Scrap Shard | 10 | summon-only | `scrap_shard` | 1 | ✅ |
 | `slag_walker` | Slag Walker | 28 | standard | `slag_walker` | 4 | ✅ |
 | `trash_robot` | Trash Robot | 30 | standard | `trash_robot` | 4 | ✅ |
 | `wasteland_killer` | Wasteland Killer | 20 | standard | `wasteland_killer` | 3 | ✅ |
 
-> All non-add enemies use dedicated per-enemy sprite art (Codex wave-3 delivery, 2026-05-29). The two summon-only adds (scrap_shard, ember_wisp) still await art from Codex (❌ above).
+> All enemies, including summon-only adds, now use dedicated per-enemy sprite art. Existing older enemy sets may still be regenerated in future passes for flatter linework, but no combatant relies on placeholder art.
 
 ## Encounter pools (where each enemy spawns)
 
@@ -190,7 +190,7 @@ Defined in `run_system/core/run_manager.gd`. `select_encounter(type, floor)` is 
 | 4 | attack_status | 10 | vulnerable 1 | ⚔ 10 +Vuln |
 
 ### `scrap_shard` (HP 10) — summon-only add
-- Sprite: `battle_scene/assets/images/enemies/scrap_shard/` (art pending — Codex)
+- Sprite: `battle_scene/assets/images/enemies/scrap_shard/`
 - JSON: `battle_scene/card_info/enemy/scrap_shard.json`
 - Spawned only by Junkyard Tyrant's `summon` action; never appears in an encounter pool.
 
@@ -200,7 +200,7 @@ Defined in `run_system/core/run_manager.gd`. `select_encounter(type, floor)` is 
 | 1 | attack | 4 | ⚔ 4 |
 
 ### `ember_wisp` (HP 8) — summon-only add
-- Sprite: `battle_scene/assets/images/enemies/ember_wisp/` (art pending — Codex)
+- Sprite: `battle_scene/assets/images/enemies/ember_wisp/`
 - JSON: `battle_scene/card_info/enemy/ember_wisp.json`
 - Spawned only by Ash Warden's `summon` action; never appears in an encounter pool.
 

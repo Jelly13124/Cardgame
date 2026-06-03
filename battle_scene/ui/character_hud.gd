@@ -29,7 +29,7 @@ func _build_ui() -> void:
 	# ---- HP Frame (NinePatch) ----
 	_hp_frame = NinePatchRect.new()
 	_hp_frame.texture = load(UI_PATH + "hp_bar_frame.png")
-	_hp_frame.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_hp_frame.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_hp_frame.patch_margin_left = 4
 	_hp_frame.patch_margin_top = 4
 	_hp_frame.patch_margin_right = 4
@@ -41,7 +41,7 @@ func _build_ui() -> void:
 	# ---- HP Bar (ProgressBar) ----
 	_hp_bar = TextureProgressBar.new()
 	_hp_bar.texture_progress = load(UI_PATH + "hp_bar_fill.png")
-	_hp_bar.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_hp_bar.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_hp_bar.nine_patch_stretch = true
 	_hp_bar.stretch_margin_left = 4
 	_hp_bar.stretch_margin_top = 1
@@ -67,7 +67,7 @@ func _build_ui() -> void:
 	# ---- Block Badge (Shield) ----
 	_block_badge = TextureRect.new()
 	_block_badge.texture = load(UI_PATH + "block_badge.png")
-	_block_badge.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_block_badge.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_block_badge.size = Vector2(60, 60)
 	_block_badge.position = Vector2(-30, -17)
 	_block_badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE

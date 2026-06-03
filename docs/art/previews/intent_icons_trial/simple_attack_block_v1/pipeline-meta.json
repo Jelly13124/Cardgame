@@ -1,0 +1,101 @@
+{
+  "target": "asset",
+  "mode": "single",
+  "prompt": "simple attack red sword and defense blue shield intent icons, solid magenta background",
+  "role": "",
+  "input": "docs\\art\\previews\\intent_icons_trial\\simple_attack_block_v1\\raw-sheet.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 200,
+  "rows": 1,
+  "cols": 2,
+  "cell_size": 128,
+  "fit_scale": 0.82,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "largest",
+  "component_padding": 28,
+  "min_component_area": 1,
+  "edge_touch_margin": 4,
+  "frame_labels": [
+    "intent-1",
+    "intent-2"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        887,
+        887
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 38399,
+      "selected_component_bbox": [
+        337,
+        284,
+        620,
+        578
+      ],
+      "crop_bbox": [
+        309,
+        256,
+        648,
+        606
+      ],
+      "edge_touch": false,
+      "output_size": [
+        98,
+        101
+      ],
+      "paste_position": [
+        15,
+        13
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        887,
+        0,
+        1774,
+        887
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 56756,
+      "selected_component_bbox": [
+        283,
+        281,
+        538,
+        586
+      ],
+      "crop_bbox": [
+        255,
+        253,
+        566,
+        614
+      ],
+      "edge_touch": false,
+      "output_size": [
+        90,
+        104
+      ],
+      "paste_position": [
+        19,
+        12
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

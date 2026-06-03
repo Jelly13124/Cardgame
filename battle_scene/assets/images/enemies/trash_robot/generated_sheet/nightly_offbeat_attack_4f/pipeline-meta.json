@@ -1,0 +1,175 @@
+{
+  "target": "asset",
+  "mode": "single",
+  "prompt": "trash_robot early enemy 4-frame attack sheet, offbeat adult sci-fi cartoon, enemy faces left",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0e3729ba8a7526ec016a2003b430148199b8ca194ad41a5f6c.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 125,
+  "rows": 1,
+  "cols": 4,
+  "cell_size": 128,
+  "fit_scale": 0.9,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "bottom",
+  "shared_scale": true,
+  "component_mode": "largest",
+  "component_padding": 8,
+  "min_component_area": 100,
+  "edge_touch_margin": 5,
+  "frame_labels": [
+    "trash_robot_attack-1",
+    "trash_robot_attack-2",
+    "trash_robot_attack-3",
+    "trash_robot_attack-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        543,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 57050,
+      "selected_component_bbox": [
+        68,
+        222,
+        381,
+        549
+      ],
+      "crop_bbox": [
+        60,
+        214,
+        389,
+        557
+      ],
+      "edge_touch": false,
+      "output_size": [
+        87,
+        91
+      ],
+      "paste_position": [
+        20,
+        31
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        543,
+        0,
+        1086,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 55933,
+      "selected_component_bbox": [
+        67,
+        237,
+        381,
+        550
+      ],
+      "crop_bbox": [
+        59,
+        229,
+        389,
+        558
+      ],
+      "edge_touch": false,
+      "output_size": [
+        88,
+        87
+      ],
+      "paste_position": [
+        20,
+        35
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1086,
+        0,
+        1629,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 2,
+      "selected_component_area": 59720,
+      "selected_component_bbox": [
+        25,
+        231,
+        440,
+        551
+      ],
+      "crop_bbox": [
+        17,
+        223,
+        448,
+        559
+      ],
+      "edge_touch": false,
+      "output_size": [
+        115,
+        89
+      ],
+      "paste_position": [
+        6,
+        33
+      ]
+    },
+    {
+      "grid": [
+        0,
+        3
+      ],
+      "source_box": [
+        1629,
+        0,
+        2172,
+        724
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 56373,
+      "selected_component_bbox": [
+        69,
+        229,
+        395,
+        549
+      ],
+      "crop_bbox": [
+        61,
+        221,
+        403,
+        557
+      ],
+      "edge_touch": false,
+      "output_size": [
+        91,
+        89
+      ],
+      "paste_position": [
+        18,
+        33
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}
