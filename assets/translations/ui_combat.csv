@@ -45,6 +45,15 @@ UI_COMBAT_STATUS_TIP,"[b]{name} ×{n}[/b]
 UI_COMBAT_STATUS_TIP_NO_DESC,[b]{name} ×{n}[/b],[b]{name} ×{n}[/b]
 UI_COMBAT_INTENT_BUFF,BUFF,增益
 UI_COMBAT_INTENT_CHARGE,CHARGE,蓄力
+UI_COMBAT_INTENT_TIP_ATTACK,Attack — deals {n} damage,攻击 — 造成 {n} 点伤害
+UI_COMBAT_INTENT_TIP_ATTACK_STATUS,Attack — deals {n} damage and applies {status} {k},攻击 — 造成 {n} 点伤害并施加 {status} {k}
+UI_COMBAT_INTENT_TIP_DEFEND,Defend — gains {n} Block,防御 — 获得 {n} 点格挡
+UI_COMBAT_INTENT_TIP_HEAL,Heal — restores {n} HP,治疗 — 回复 {n} 点生命
+UI_COMBAT_INTENT_TIP_BUFF,Buff — strengthening itself,增益 — 正在强化自身
+UI_COMBAT_INTENT_TIP_BUFF_STATUS,Buff — gains {status} {k},增益 — 获得 {status} {k}
+UI_COMBAT_INTENT_TIP_CHARGE,Charging a powerful attack,正在蓄力强力攻击
+UI_COMBAT_INTENT_TIP_SUMMON,Summon — calls reinforcements,召唤 — 呼叫增援
+UI_COMBAT_INTENT_TIP_UNKNOWN,Preparing an action,正在准备行动
 UI_COMBAT_SHORT_WEAK,Weak,虚弱
 UI_COMBAT_SHORT_VULNERABLE,Vuln,易伤
 UI_COMBAT_SHORT_BURN,Burn,灼烧
@@ -52,6 +61,10 @@ UI_COMBAT_SHORT_POISON,Pois,中毒
 UI_COMBAT_SHORT_STUN,Stun,眩晕
 UI_COMBAT_SHORT_STRENGTH_UP,Str+,力+
 UI_COMBAT_SHORT_DOUBLE_DAMAGE,Dbl,双倍
+UI_COMBAT_SHORT_DODGE,Dodge,闪避
+UI_COMBAT_SHORT_REGEN,Regen,再生
+UI_COMBAT_SHORT_THORNS,Thorns,荆棘
+UI_COMBAT_SHORT_FRAIL,Frail,脆弱
 UI_COMBAT_ENEMY_APPEARED,{name} APPEARED!,{name} 出现了！
 UI_COMBAT_ENEMY_TURN,ENEMY TURN,敌方回合
 UI_COMBAT_YOUR_TURN,YOUR TURN,你的回合
