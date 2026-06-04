@@ -41,6 +41,7 @@ const ALLOWED_EFFECT_TYPES = [
 	"apply_stun",
 	"apply_stun_all",
 	"exhaust_self",
+	"flip_polarity",
 ]
 const ALLOWED_STATUS_NAMES = [
 	"poison",
@@ -68,6 +69,24 @@ const KNOWN_OPTIONAL_CARD_KEYS = [
 	"side",
 	"rarity",
 	"retain",
+	"polarity",
+	"matched_bonus",
+]
+# Yin/Yang polarity values a card may declare (absent = treated as "neutral")
+const ALLOWED_CARD_POLARITIES = ["yin", "yang", "neutral"]
+
+# ─── Relic schema ─────────────────────────────────────────────────────────────
+# Effect `type`s a relic effect may declare. Each is handled by
+# `relic_effect_system` at its trigger point (the two-place rule).
+const ALLOWED_RELIC_EFFECT_TYPES = [
+	"add_damage",
+	"crit_chance",
+	"gain_block",
+	"gain_energy",
+	"gain_gold",
+	"heal",
+	"reduce_damage",
+	"set_polarity_alternating",
 ]
 
 # ─── Enemy schema ─────────────────────────────────────────────────────────────
@@ -246,79 +265,26 @@ static func validate_card(data: Dictionary, source_path: String) -> bool:
 		return false
 
 	for i in range(effects.size()):
-		var effect = effects[i]
-		if typeof(effect) != TYPE_DICTIONARY:
-			push_error("%s: effect[%d] is not a Dictionary" % [prefix, i])
+		if not _validate_card_effect(effects[i], prefix, "effect", i):
 			ok = false
-			continue
-		if not effect.has("type"):
-			push_error("%s: effect[%d] is missing 'type'" % [prefix, i])
+
+	# Optional `polarity` (Yin/Yang hero). Absent = neutral; validate only if present.
+	if data.has("polarity") and not str(data["polarity"]) in ALLOWED_CARD_POLARITIES:
+		push_error(
+			"%s: polarity '%s' not in %s" % [prefix, data["polarity"], ALLOWED_CARD_POLARITIES]
+		)
+		ok = false
+
+	# Optional `matched_bonus`: effects applied only when the card resolves matched.
+	# Same shape/validation as the `effects` array.
+	if data.has("matched_bonus"):
+		var bonus = data["matched_bonus"]
+		if typeof(bonus) != TYPE_ARRAY:
+			push_error("%s: matched_bonus must be an Array, got %s" % [prefix, typeof(bonus)])
 			ok = false
-			continue
-		var etype = str(effect["type"])
-		if not etype in ALLOWED_EFFECT_TYPES:
-			push_error(
-				"%s: effect[%d] type '%s' not in %s" % [prefix, i, etype, ALLOWED_EFFECT_TYPES]
-			)
-			ok = false
-		# Effects that reference a status name must carry a valid status
-		if etype in STATUS_BEARING_EFFECTS:
-			if not effect.has("status"):
-				push_error("%s: effect[%d] (%s) is missing 'status'" % [prefix, i, etype])
-				ok = false
-			elif not str(effect["status"]) in ALLOWED_STATUS_NAMES:
-				push_error(
-					(
-						"%s: effect[%d] status '%s' not in %s"
-						% [prefix, i, effect["status"], ALLOWED_STATUS_NAMES]
-					)
-				)
-				ok = false
-		# ADR-0004: stun is enemy-only. Reject applying it to the player.
-		if etype == "apply_status_self" and str(effect.get("status", "")) == "stun":
-			push_error(
-				(
-					"%s: effect[%d] tries to apply 'stun' to self — stun is enemy-only (see docs/adr/0004-shock-enemy-only.md)"
-					% [prefix, i]
-				)
-			)
-			ok = false
-		# `scale_damage_by_attacks` needs explicit base + per (both ints/floats)
-		if etype == "scale_damage_by_attacks":
-			for required_key in ["base", "per"]:
-				if not effect.has(required_key):
-					push_error(
-						(
-							"%s: effect[%d] (scale_damage_by_attacks) is missing '%s'"
-							% [prefix, i, required_key]
-						)
-					)
-					ok = false
-		# `apply_stun` / `apply_stun_all` need stacks (or amount as fallback)
-		if etype in ["apply_stun", "apply_stun_all"]:
-			if not effect.has("stacks") and not effect.has("amount"):
-				push_error("%s: effect[%d] (%s) needs 'stacks' (or 'amount')" % [prefix, i, etype])
-				ok = false
-		# `deal_damage_str_mult` requires a numeric `mult` (damage = strength * mult).
-		# Godot's JSON parser yields every number as a float, so accept TYPE_INT or
-		# a whole-valued TYPE_FLOAT and reject only non-numeric / fractional values.
-		if etype == "deal_damage_str_mult":
-			if not effect.has("mult"):
-				push_error("%s: effect[%d] (deal_damage_str_mult) is missing 'mult'" % [prefix, i])
-				ok = false
-			else:
-				var mult_val = effect["mult"]
-				var mult_ok: bool = (
-					typeof(mult_val) == TYPE_INT
-					or (typeof(mult_val) == TYPE_FLOAT and mult_val == floor(mult_val))
-				)
-				if not mult_ok:
-					push_error(
-						(
-							"%s: effect[%d] (deal_damage_str_mult) 'mult' must be a whole number, got %s"
-							% [prefix, i, mult_val]
-						)
-					)
+		else:
+			for i in range(bonus.size()):
+				if not _validate_card_effect(bonus[i], prefix, "matched_bonus", i):
 					ok = false
 
 	# Unknown top-level keys → warn (not fatal) — helps catch typos like "retian"
@@ -327,6 +293,88 @@ static func validate_card(data: Dictionary, source_path: String) -> bool:
 		if not key in known_keys:
 			push_warning("%s: unknown top-level key '%s' (typo?)" % [prefix, key])
 
+	return ok
+
+
+## Validate one card effect dictionary (shared by the `effects` array and the
+## Yin/Yang `matched_bonus` array). `label`/`i` build the error location, e.g.
+## "effect[2]" or "matched_bonus[0]". Returns true on success.
+##
+## Field-less effects (exhaust_self, flip_polarity, …) only need a valid `type`;
+## the per-type checks below add requirements only for the effects that need them.
+static func _validate_card_effect(effect: Variant, prefix: String, label: String, i: int) -> bool:
+	var ok := true
+	if typeof(effect) != TYPE_DICTIONARY:
+		push_error("%s: %s[%d] is not a Dictionary" % [prefix, label, i])
+		return false
+	if not effect.has("type"):
+		push_error("%s: %s[%d] is missing 'type'" % [prefix, label, i])
+		return false
+	var etype = str(effect["type"])
+	if not etype in ALLOWED_EFFECT_TYPES:
+		push_error(
+			"%s: %s[%d] type '%s' not in %s" % [prefix, label, i, etype, ALLOWED_EFFECT_TYPES]
+		)
+		ok = false
+	# Effects that reference a status name must carry a valid status
+	if etype in STATUS_BEARING_EFFECTS:
+		if not effect.has("status"):
+			push_error("%s: %s[%d] (%s) is missing 'status'" % [prefix, label, i, etype])
+			ok = false
+		elif not str(effect["status"]) in ALLOWED_STATUS_NAMES:
+			push_error(
+				(
+					"%s: %s[%d] status '%s' not in %s"
+					% [prefix, label, i, effect["status"], ALLOWED_STATUS_NAMES]
+				)
+			)
+			ok = false
+	# ADR-0004: stun is enemy-only. Reject applying it to the player.
+	if etype == "apply_status_self" and str(effect.get("status", "")) == "stun":
+		push_error(
+			(
+				"%s: %s[%d] tries to apply 'stun' to self — stun is enemy-only (see docs/adr/0004-shock-enemy-only.md)"
+				% [prefix, label, i]
+			)
+		)
+		ok = false
+	# `scale_damage_by_attacks` needs explicit base + per (both ints/floats)
+	if etype == "scale_damage_by_attacks":
+		for required_key in ["base", "per"]:
+			if not effect.has(required_key):
+				push_error(
+					(
+						"%s: %s[%d] (scale_damage_by_attacks) is missing '%s'"
+						% [prefix, label, i, required_key]
+					)
+				)
+				ok = false
+	# `apply_stun` / `apply_stun_all` need stacks (or amount as fallback)
+	if etype in ["apply_stun", "apply_stun_all"]:
+		if not effect.has("stacks") and not effect.has("amount"):
+			push_error("%s: %s[%d] (%s) needs 'stacks' (or 'amount')" % [prefix, label, i, etype])
+			ok = false
+	# `deal_damage_str_mult` requires a numeric `mult` (damage = strength * mult).
+	# Godot's JSON parser yields every number as a float, so accept TYPE_INT or
+	# a whole-valued TYPE_FLOAT and reject only non-numeric / fractional values.
+	if etype == "deal_damage_str_mult":
+		if not effect.has("mult"):
+			push_error("%s: %s[%d] (deal_damage_str_mult) is missing 'mult'" % [prefix, label, i])
+			ok = false
+		else:
+			var mult_val = effect["mult"]
+			var mult_ok: bool = (
+				typeof(mult_val) == TYPE_INT
+				or (typeof(mult_val) == TYPE_FLOAT and mult_val == floor(mult_val))
+			)
+			if not mult_ok:
+				push_error(
+					(
+						"%s: %s[%d] (deal_damage_str_mult) 'mult' must be a whole number, got %s"
+						% [prefix, label, i, mult_val]
+					)
+				)
+				ok = false
 	return ok
 
 
@@ -472,6 +520,15 @@ static func validate_relic(data: Dictionary, source_path: String) -> bool:
 			continue
 		if not effect.has("trigger"):
 			push_error("%s: effect[%d] is missing 'trigger'" % [prefix, i])
+			ok = false
+		# Effect `type` (when present) must be a handled relic effect type.
+		if effect.has("type") and not str(effect["type"]) in ALLOWED_RELIC_EFFECT_TYPES:
+			push_error(
+				(
+					"%s: effect[%d] type '%s' not in %s"
+					% [prefix, i, effect["type"], ALLOWED_RELIC_EFFECT_TYPES]
+				)
+			)
 			ok = false
 	return ok
 
