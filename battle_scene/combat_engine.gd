@@ -100,6 +100,17 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 	for effect in effects:
 		await _apply_effect(effect, target, player, card_mult)
 
+	# Polarity matched bonus — resolved after the normal effects (so any
+	# flip_polarity earlier in this same card has already applied). Reuses every
+	# existing effect handler, so bonuses get global STR/CON, dodge, thorns, etc.
+	var polarity := str(card.card_info.get("polarity", "neutral"))
+	if player and player.has_method("is_card_matched") and player.is_card_matched(polarity):
+		var bonus = card.card_info.get("matched_bonus", [])
+		if bonus is Array:
+			for be in bonus:
+				if typeof(be) == TYPE_DICTIONARY:
+					await _apply_effect(be, target, player, card_mult)
+
 
 func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: float = 1.0) -> void:
 	var effect_type: String = effect.get("type", "")
@@ -281,6 +292,19 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				tr("UI_COMBAT_ALL_STUN_X").format({"n": s_stacks_all}), Color(0.95, 0.95, 0.3)
 			)
 			await get_tree().create_timer(0.2).timeout
+
+		"flip_polarity":
+			if player and player.has_method("flip_polarity"):
+				var was_harmony := bool(player.harmony_active)
+				player.flip_polarity()
+				if player.harmony_active and not was_harmony:
+					# Yin-Yang Harmony entry reward — granted once.
+					player.pay_energy(-1)
+					main.deck_manager.draw_cards(1)
+					main.show_notification(tr("UI_COMBAT_HARMONY"), Color(1, 0.85, 0.3))
+				if main.has_method("update_polarity_hud"):
+					main.update_polarity_hud()
+				await get_tree().create_timer(0.1).timeout
 
 		"exhaust_self":
 			# Marker effect. The card is routed to exhaust (queue_free)
