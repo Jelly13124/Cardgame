@@ -1,6 +1,6 @@
 # Enemies Catalog
 
-**Last updated:** 2026-06-03
+**Last updated:** 2026-06-04
 **Total combatants:** 15
 
 ## Paths
@@ -9,8 +9,8 @@
 |---|---|
 | Enemy JSON definitions | `battle_scene/card_info/enemy/{id}.json` |
 | Sprite folder (per enemy) | `battle_scene/assets/images/enemies/{sprite_id}/` |
-| Animation subfolders | Current runtime uses `attack/`; `charge/` is a future optional animation hook and is not required |
-| Frame naming | `attack/{sprite_id}_attack_{0-3}.png` |
+| Animation subfolders | Runtime uses `attack/`; `hurt/` is optional and plays on real damage; `charge/` is optional for telegraphs |
+| Frame naming | `attack/{sprite_id}_attack_{N}.png`, `hurt/{sprite_id}_hurt_{N}.png`, `charge/{sprite_id}_charge_{N}.png` |
 | Rest pose | `attack/{sprite_id}_attack_0.png`; no separate `idle/` assets |
 | Generated art pipeline (intermediates) | Optional, but must not contain canceled animation outputs or unused old-style animation folders |
 | Spawn / runtime code | `battle_scene/enemy_entity.gd` (factory + animation), `battle_scene/enemy_ai.gd` (action exec) |
@@ -61,7 +61,7 @@ _Tier is a best-effort read of `run_manager.gd` encounter constants — `UNLISTE
 | `trash_robot` | Trash Robot | 30 | standard | `trash_robot` | 4 | ✅ |
 | `wasteland_killer` | Wasteland Killer | 20 | standard | `wasteland_killer` | 3 | ✅ |
 
-> All enemies, including summon-only adds, now use dedicated per-enemy sprite art. Existing older enemy sets may still be regenerated in future passes for flatter linework, but no combatant relies on placeholder art.
+> All enemies, including summon-only adds, now use dedicated per-enemy sprite art. The runtime supports continuous 4-to-16-frame attack, hurt, and charge folders. Newly refactored enemies should target 8-frame attack and 8-frame hurt sheets in the active Offbeat Adult Sci-Fi Cartoon Wasteland style.
 
 ## Encounter pools (where each enemy spawns)
 

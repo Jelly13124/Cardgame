@@ -17,6 +17,7 @@ const INTENT_ICON_BUFF = preload("res://battle_scene/assets/images/ui/intent_buf
 const INTENT_ICON_CHARGE = preload("res://battle_scene/assets/images/ui/intent_charge.png")
 const NORMAL_DISPLAY_HEIGHT := 256.0
 const BOSS_DISPLAY_HEIGHT := 384.0
+const MAX_ANIMATION_FRAMES := 16
 const INTENT_BADGE_WIDTH := 104.0
 const INTENT_BADGE_HEIGHT := 36.0
 
@@ -190,24 +191,42 @@ func _build_sprite_visual(sid: String) -> void:
 	# ── Attack (one-shot, non-looping) ────────────────────────────────────────
 	frames.add_animation("attack")
 	frames.set_animation_loop("attack", false)
-	frames.set_animation_speed("attack", 8.0)
-	for idx in range(4):
-		var tex = _load_tex.call(dir + "attack/%s_attack_%d.png" % [sid, idx], true)
+	frames.set_animation_speed("attack", 12.0)
+	for idx in range(MAX_ANIMATION_FRAMES):
+		var tex = _load_tex.call(dir + "attack/%s_attack_%d.png" % [sid, idx], idx == 0)
 		if tex:
 			frames.add_frame("attack", tex)
+		elif idx > 0:
+			break
 
 	# ── Charge (optional, one-shot — used by boss telegraph) ─────────────────
 	var charge_frames: Array[Texture2D] = []
-	for idx in range(4):
+	for idx in range(MAX_ANIMATION_FRAMES):
 		var tex = _load_tex.call(dir + "charge/%s_charge_%d.png" % [sid, idx], false)
 		if tex:
 			charge_frames.append(tex)
+		elif idx > 0:
+			break
 	if not charge_frames.is_empty():
 		frames.add_animation("charge")
 		frames.set_animation_loop("charge", false)
 		frames.set_animation_speed("charge", 6.0)
 		for tex in charge_frames:
 			frames.add_frame("charge", tex)
+
+	var hurt_frames: Array[Texture2D] = []
+	for idx in range(MAX_ANIMATION_FRAMES):
+		var tex = _load_tex.call(dir + "hurt/%s_hurt_%d.png" % [sid, idx], false)
+		if tex:
+			hurt_frames.append(tex)
+		elif idx > 0:
+			break
+	if not hurt_frames.is_empty():
+		frames.add_animation("hurt")
+		frames.set_animation_loop("hurt", false)
+		frames.set_animation_speed("hurt", 12.0)
+		for tex in hurt_frames:
+			frames.add_frame("hurt", tex)
 
 	var display_height := _apply_display_scale(frames)
 	add_child(_sprite)
@@ -523,6 +542,8 @@ func take_damage(amount: int, silent: bool = false) -> void:
 	health -= dmg_after_block
 	health = max(0, health)
 	_refresh_hud()
+	if dmg_after_block > 0:
+		play_hurt()
 
 	# Floating damage number + shake. Caller can suppress with silent=true
 	# (e.g. status_effect_system's poison/burn ticks already show a
@@ -666,6 +687,23 @@ func play_attack() -> void:
 
 
 func _on_attack_finished() -> void:
+	_show_rest_pose()
+
+
+func play_hurt() -> void:
+	if not _sprite or not is_instance_valid(_sprite):
+		return
+	if (
+		not _sprite.sprite_frames.has_animation("hurt")
+		or _sprite.sprite_frames.get_frame_count("hurt") == 0
+	):
+		return
+	if not _sprite.animation_finished.is_connected(_on_hurt_finished):
+		_sprite.animation_finished.connect(_on_hurt_finished, CONNECT_ONE_SHOT)
+	_sprite.play("hurt")
+
+
+func _on_hurt_finished() -> void:
 	_show_rest_pose()
 
 

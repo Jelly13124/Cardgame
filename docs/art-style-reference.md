@@ -92,6 +92,7 @@ For combat unit sheets, add:
 ```text
 side view full body, shared baseline, consistent scale, hero faces right or enemy faces left,
 for Cowboy Bill and hero combat sprites use 8 idle frames plus 8 attack frames when generated,
+for enemies use 8 attack frames and, when the enemy is being fully refactored, 8 hurt frames,
 idle is a seamless subtle loop, attack is a one-shot readable wind-up / fire / recoil / recovery sequence,
 contained inside each frame with safe margins
 ```
