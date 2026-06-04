@@ -34,6 +34,66 @@ var _fallback_sprite: Sprite2D
 var _hud: Node
 var status_system = STATUS_SYS.new()
 
+# ─── Yin/Yang polarity (Feng Shui Master hero) ────────────────────────────────
+## Per-battle polarity state. A polarity hero's deck is split into Yin (阴) and
+## Yang (阳) cards; the starting relic alternates `current_polarity` each turn.
+## A card whose polarity matches the active state resolves its `matched_bonus`.
+## `flip_polarity` cards switch the active polarity mid-turn — reaching BOTH
+## polarities in one turn triggers Yin-Yang Harmony (`harmony_active`), which
+## lasts to end of turn and makes BOTH polarities count as matched.
+##
+## `current_polarity == ""` means a non-polarity hero (e.g. Cowboy Bill); the
+## whole mechanic stays dormant for them.
+var current_polarity: String = ""  # "yin"/"yang"/"" (empty = non-polarity hero)
+var _polarities_seen: Array = []  # polarities active this turn
+var harmony_active: bool = false
+
+
+## Start-of-turn reset, driven by the starting relic. `p` is the turn's polarity.
+func reset_polarity_turn(p: String) -> void:
+	current_polarity = p
+	_polarities_seen = [p]
+	harmony_active = false
+
+
+## Set the active polarity, tracking newly-seen polarities and (re)checking for
+## Yin-Yang Harmony.
+func set_polarity(p: String) -> void:
+	current_polarity = p
+	if not p in _polarities_seen:
+		_polarities_seen.append(p)
+	_check_harmony()
+
+
+## Flip yin↔yang. No-op for a non-polarity hero (current_polarity == "").
+func flip_polarity() -> void:
+	if current_polarity == "yin":
+		set_polarity("yang")
+	elif current_polarity == "yang":
+		set_polarity("yin")
+
+
+## Returns true the first time both Yin and Yang have been active this turn
+## (so the caller can grant the Harmony entry reward exactly once).
+func _check_harmony() -> bool:
+	if not harmony_active and ("yin" in _polarities_seen) and ("yang" in _polarities_seen):
+		harmony_active = true
+		return true
+	return false
+
+
+## Does a card of the given polarity count as "matched" right now? Harmony makes
+## everything match; otherwise the card's polarity must equal the active one
+## (neutral/empty polarities never match).
+func is_card_matched(polarity: String) -> bool:
+	return (
+		harmony_active
+		or (polarity != "" and polarity != "neutral" and polarity == current_polarity)
+	)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+
 
 ## Sprite folder id for the current run's hero. Falls back to cowboy_bill
 ## if no hero data is loaded (e.g. battle scene opened standalone in editor).
