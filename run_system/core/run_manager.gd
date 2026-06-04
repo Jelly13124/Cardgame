@@ -606,6 +606,13 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 		"luck": int(attrs.get("luck", 3)),
 		"charm": int(attrs.get("charm", 3)),
 	}
+	# Cyber Doctor caps perks → permanent +1 per level to the mapped attribute.
+	# Applied after the hero's starting_attributes baseline, before recompute.
+	for perk_id in MetaProgress.CYBER_DOC_PERKS:
+		var attr := str(MetaProgress.CYBER_DOC_PERKS[perk_id])
+		var lvl := MetaProgress.get_caps_perk_level(perk_id)
+		if lvl > 0 and attr in base_attributes:
+			base_attributes[attr] = int(base_attributes[attr]) + lvl
 	player_attributes = base_attributes.duplicate()
 	is_run_active = true
 	_apply_meta_upgrades()

@@ -17,6 +17,10 @@ var core: int = 0
 ## Second permanent currency. Spent at base facilities; earned via E2.
 var caps: int = 0
 var upgrades: Dictionary = {}
+## Facilities unlocked with Core (one-time). facility_id → true once unlocked.
+var facilities: Dictionary = {}
+## Tiered perks bought with Caps inside a facility. perk_id → int level.
+var caps_perk_levels: Dictionary = {}
 ## Last 50 run summaries (newest at end). Persisted to meta.json.
 ## Each entry: { hero_id, floor, core_earned, outcome, timestamp }
 var run_history: Array = []
@@ -30,6 +34,20 @@ var stash: Array[String] = []
 
 const RUN_HISTORY_CAP := 50
 const ASCENSION_CAP := 5
+## Two-layer base model: facilities are unlocked once with Core, then Caps buy
+## tiered perks inside them.
+const FACILITY_UNLOCK_COSTS := {"cyber_doc": 300}
+const CAPS_PERK_BASE_COST := 300
+const CAPS_PERK_COST_STEP := 150
+const CAPS_PERK_MAX_LEVEL := 3
+## Cyber Doctor perks: perk_id → the base attribute each level boosts by +1.
+const CYBER_DOC_PERKS := {
+	"cyber_str": "strength",
+	"cyber_con": "constitution",
+	"cyber_int": "intelligence",
+	"cyber_luck": "luck",
+	"cyber_charm": "charm",
+}
 ## Safe-cell baseline; effective count = this + the blacksmith upgrade level.
 const SAFE_CELLS_BASE := 2
 ## Permanent equipment stash capacity (gear carried out of runs).
@@ -126,6 +144,63 @@ func get_upgrade_level(id: String) -> int:
 	return int(upgrades.get(id, 0))
 
 
+## --- Two-layer base model: facilities (Core) + caps perks (Caps) ---
+
+
+func is_facility_unlocked(id: String) -> bool:
+	return bool(facilities.get(id, false))
+
+
+## Spend Core to permanently unlock a facility. Idempotent (returns true if
+## already unlocked). Returns false if the id is unknown or Core is insufficient.
+func unlock_facility(id: String) -> bool:
+	if is_facility_unlocked(id):
+		return true
+	var cost := int(FACILITY_UNLOCK_COSTS.get(id, -1))
+	if cost < 0 or core < cost:
+		return false
+	core -= cost
+	facilities[id] = true
+	save_progress()
+	emit_signal("core_changed", core)
+	emit_signal("upgrades_changed")
+	return true
+
+
+func get_caps_perk_level(perk_id: String) -> int:
+	return int(caps_perk_levels.get(perk_id, 0))
+
+
+func caps_perk_cost(perk_id: String) -> int:
+	return CAPS_PERK_BASE_COST + CAPS_PERK_COST_STEP * get_caps_perk_level(perk_id)
+
+
+## Returns the facility id a perk belongs to, or "" if unknown.
+func _facility_for_perk(perk_id: String) -> String:
+	if perk_id in CYBER_DOC_PERKS:
+		return "cyber_doc"
+	return ""
+
+
+## Spend Caps to buy one level of a perk. Requires the perk's facility unlocked,
+## the perk below its max level, and enough Caps. Returns false otherwise.
+func buy_caps_perk(perk_id: String) -> bool:
+	var facility := _facility_for_perk(perk_id)
+	if facility == "" or not is_facility_unlocked(facility):
+		return false
+	if get_caps_perk_level(perk_id) >= CAPS_PERK_MAX_LEVEL:
+		return false
+	var cost := caps_perk_cost(perk_id)
+	if caps < cost:
+		return false
+	caps -= cost
+	caps_perk_levels[perk_id] = get_caps_perk_level(perk_id) + 1
+	save_progress()
+	emit_signal("caps_changed", caps)
+	emit_signal("upgrades_changed")
+	return true
+
+
 ## Number of safe backpack cells (index 0..N-1) whose contents survive death.
 ## Derived from the blacksmith upgrade level (persisted in `upgrades`).
 func effective_safe_cells() -> int:
@@ -188,6 +263,8 @@ func reset_all() -> void:
 	core = 0
 	caps = 0
 	upgrades.clear()
+	facilities.clear()
+	caps_perk_levels.clear()
 	save_progress()
 	emit_signal("core_changed", core)
 	emit_signal("caps_changed", caps)
@@ -203,6 +280,8 @@ func save_progress() -> void:
 		"core": core,
 		"caps": caps,
 		"upgrades": upgrades,
+		"facilities": facilities,
+		"caps_perk_levels": caps_perk_levels,
 		"run_history": run_history,
 		"max_ascension": max_ascension,
 		"unlocked_cards": unlocked_cards,
@@ -230,6 +309,14 @@ func load_progress() -> void:
 	var raw_upgrades = parsed.get("upgrades", {})
 	if typeof(raw_upgrades) == TYPE_DICTIONARY:
 		upgrades = raw_upgrades
+	# Back-compat: old saves predate the two-layer base model. Missing keys →
+	# empty (cyber_doc locked, no perks bought).
+	var rf = parsed.get("facilities", {})
+	if typeof(rf) == TYPE_DICTIONARY:
+		facilities = rf
+	var rp = parsed.get("caps_perk_levels", {})
+	if typeof(rp) == TYPE_DICTIONARY:
+		caps_perk_levels = rp
 	var raw_history = parsed.get("run_history", [])
 	if typeof(raw_history) == TYPE_ARRAY:
 		run_history = raw_history
