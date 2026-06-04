@@ -1,0 +1,67 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Keywords · 关键词</title><style>
+:root{--bg:#13100c;--panel:#1d1812;--panel2:#262019;--line:#3a3026;--gold:#ffcf45;--txt:#e7ddc8;--dim:#9c917c;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:"Segoe UI",system-ui,sans-serif;}
+header{position:sticky;top:0;background:linear-gradient(180deg,#1d1812,#171309);border-bottom:2px solid var(--line);padding:16px 28px;z-index:10;}
+h1{margin:0;font-size:23px;color:var(--gold);letter-spacing:.5px}
+.sub{color:var(--dim);font-size:13px;margin-top:4px}
+.bar{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input[type=search]{background:#0e0b07;border:1px solid var(--line);color:var(--txt);padding:8px 12px;border-radius:8px;min-width:220px;font-size:14px}
+.tag{font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:20px;padding:3px 10px;cursor:pointer;user-select:none}
+.tag.active{color:#13100c;background:var(--gold);border-color:var(--gold)}
+.nav{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.nav a{color:var(--dim);text-decoration:none;font-size:13px;border:1px solid var(--line);padding:4px 12px;border-radius:6px}
+.nav a:hover,.nav a.cur{color:var(--gold);border-color:var(--gold)}
+.section{padding:18px 28px 2px;}
+.section h2{color:var(--gold);font-size:17px;margin:0 0 2px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.section .cnt{color:var(--dim);font-size:12px;font-weight:400}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;padding:14px 28px 4px;}
+.card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:14px 16px;transition:.12s}
+.card:hover{background:var(--panel2);transform:translateY(-2px)}
+.card h3{margin:0 0 2px;font-size:17px}
+.zh{color:var(--gold);font-size:15px;font-weight:600}
+.meta{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;font-size:11px}
+.pill{border-radius:5px;padding:2px 8px;background:#0e0b07;border:1px solid var(--line);color:var(--dim)}
+.desc{color:#c9bfa8;font-size:13px;font-style:italic;margin:6px 0}
+.eff{list-style:none;padding:0;margin:8px 0 0}
+.eff li{font-size:13px;color:var(--txt);padding:3px 0 3px 16px;position:relative}
+.eff li:before{content:"▸";position:absolute;left:0;color:var(--gold)}
+.eff li.bonus:before{content:"☯";color:#ffcf45}
+.hp{color:#ff8b6b;font-weight:700}
+.kw{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;padding:14px 28px}
+.kwc{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:9px;padding:12px 15px}
+.kwc h3{margin:0 0 4px;font-size:16px}
+.kwc .en{color:var(--dim);font-size:12px;font-weight:400}
+.kwc p{margin:6px 0 0;font-size:13px;color:#d7cdb6;line-height:1.5}
+.kwc .zhd{color:#c9bfa8;font-size:12.5px;margin-top:3px}
+</style></head><body>
+<header><h1>Keywords · 关键词</h1><div class="sub">Statuses, Yin-Yang, card keywords &amp; attributes · <span>22 entries</span></div>
+<div class="nav"><a class="" href="cards.html">Cards 卡牌</a><a class="" href="relics.html">Relics 遗物</a><a class="" href="equipment.html">Equipment 装备</a><a class="" href="enemies.html">Enemies 敌人</a><a class="cur" href="keywords.html">Keywords 关键词</a></div>
+<div class="bar"><input id="q" type="search" placeholder="Search / 搜索…"></div>
+</header>
+<div class="section"><h2>Status Effects 状态效果 <span class="cnt">(11)</span></h2></div><div class="kw"><div class="kwc" data-search="poison 中毒 poison" style="border-left-color:#66e533"><h3 style="color:#66e533">中毒 <span class="en">Poison</span></h3><p>Take 1 damage per stack at the start of your turn. Stacks decay by 1 each turn.</p><p class="zhd">每回合开始时每层造成 1 点伤害。每回合衰减 1 层。</p></div><div class="kwc" data-search="burn 灼烧 burn" style="border-left-color:#ff6619"><h3 style="color:#ff6619">灼烧 <span class="en">Burn</span></h3><p>Take damage equal to stacks at the start of your turn. All stacks consumed.</p><p class="zhd">每回合开始时造成等同层数的伤害。消耗所有层数。</p></div><div class="kwc" data-search="weak 虚弱 weak" style="border-left-color:#b380e6"><h3 style="color:#b380e6">虚弱 <span class="en">Weak</span></h3><p>Outgoing attack damage reduced 25% per stack. Decays 1 per turn.</p><p class="zhd">每层使造成的攻击伤害降低 25%。每回合衰减 1 层。</p></div><div class="kwc" data-search="vulnerable 易伤 vulnerable" style="border-left-color:#f27333"><h3 style="color:#f27333">易伤 <span class="en">Vulnerable</span></h3><p>Incoming attack damage increased 50% per stack. Decays 1 per turn.</p><p class="zhd">每层使受到的攻击伤害提高 50%。每回合衰减 1 层。</p></div><div class="kwc" data-search="strength up 力量提升 strength_up" style="border-left-color:#ff8033"><h3 style="color:#ff8033">力量提升 <span class="en">Strength up</span></h3><p>Outgoing attack damage increased by stack count. Persistent.</p><p class="zhd">造成的攻击伤害提高等同层数。持续存在。</p></div><div class="kwc" data-search="double damage 双倍伤害 double_damage" style="border-left-color:#33ccff"><h3 style="color:#33ccff">双倍伤害 <span class="en">Double damage</span></h3><p>Next N attacks deal double damage. Consumed on use.</p><p class="zhd">接下来 N 次攻击造成双倍伤害。使用后消耗。</p></div><div class="kwc" data-search="stun 眩晕 stun" style="border-left-color:#f2f24d"><h3 style="color:#f2f24d">眩晕 <span class="en">Stun</span></h3><p>Enemy skips its next turn for each stack (enemy-only).</p><p class="zhd">每层使敌人跳过其下一回合（仅敌人）。</p></div><div class="kwc" data-search="regen 再生 regen" style="border-left-color:#4dffa6"><h3 style="color:#4dffa6">再生 <span class="en">Regen</span></h3><p>Heal stacks HP at the start of your turn. Stacks decay by 1 each turn.</p><p class="zhd">每回合开始时回复等同层数的生命值。每回合衰减 1 层。</p></div><div class="kwc" data-search="thorns 荆棘 thorns" style="border-left-color:#b3bfcc"><h3 style="color:#b3bfcc">荆棘 <span class="en">Thorns</span></h3><p>When hit by an attack, the attacker takes stacks damage. Persistent.</p><p class="zhd">被攻击命中时，攻击者受到等同层数的伤害。持续存在。</p></div><div class="kwc" data-search="frail 脆弱 frail" style="border-left-color:#9980b3"><h3 style="color:#9980b3">脆弱 <span class="en">Frail</span></h3><p>Block gained is reduced 25%. Decays 1 per turn.</p><p class="zhd">获得的格挡降低 25%。每回合衰减 1 层。</p></div><div class="kwc" data-search="dodge 闪避 dodge" style="border-left-color:#99f2ff"><h3 style="color:#99f2ff">闪避 <span class="en">Dodge</span></h3><p>Completely negates incoming attacks, one stack consumed per attack.</p><p class="zhd">完全抵消受到的攻击，每次攻击消耗一层。</p></div></div><div class="section"><h2>Yin-Yang Mechanic 阴阳机制 <span class="cnt">(4)</span></h2></div><div class="kw"><div class="kwc" data-search="☯ yin ☯ 阴 yin polarity" style="border-left-color:#6fa8dc"><h3 style="color:#6fa8dc">☯ 阴 <span class="en">☯ YIN</span></h3><p>Active on odd turns (Feng Shui Master). While Yin, your Yin cards trigger their matched bonus.</p><p class="zhd">奇数回合激活(风水大师)。阴态下,打出阴卡会触发其匹配加成。</p></div><div class="kwc" data-search="☯ yang ☯ 阳 yang polarity" style="border-left-color:#ff9e4a"><h3 style="color:#ff9e4a">☯ 阳 <span class="en">☯ YANG</span></h3><p>Active on even turns. While Yang, your Yang cards trigger their matched bonus.</p><p class="zhd">偶数回合激活。阳态下,打出阳卡会触发其匹配加成。</p></div><div class="kwc" data-search="☯ harmony ☯ 阴阳调和 harmony" style="border-left-color:#ff9e4a"><h3 style="color:#ff9e4a">☯ 阴阳调和 <span class="en">☯ HARMONY</span></h3><p>Reached by experiencing BOTH Yin and Yang in one turn (via flip cards). Grants +1 Energy and draws 1 card, and for the rest of the turn BOTH Yin and Yang cards count as matched.</p><p class="zhd">一回合内同时经历阴与阳(靠翻转卡)即进入。立即 +1 能量并抽 1 张,且该回合内阴卡阳卡都视为匹配。</p></div><div class="kwc" data-search="flip polarity 翻转极性 flip polarity taiji" style="border-left-color:#ffcf45"><h3 style="color:#ffcf45">翻转极性 <span class="en">Flip Polarity</span></h3><p>Card effect that switches your current polarity (Yin↔Yang) — the tool for reaching Harmony.</p><p class="zhd">翻转当前阴阳极性的卡牌效果 —— 触发调和的关键。</p></div></div><div class="section"><h2>Card Keywords 卡牌关键词 <span class="cnt">(2)</span></h2></div><div class="kw"><div class="kwc" data-search="exhaust 消耗 exhaust" style="border-left-color:#cfa9ff"><h3 style="color:#cfa9ff">消耗 <span class="en">Exhaust</span></h3><p>The card is removed from the deck for the rest of the combat after it&#x27;s played.</p><p class="zhd">打出后,该卡在本场战斗中被移除(不再回到牌库)。</p></div><div class="kwc" data-search="retain 保留 retain" style="border-left-color:#9ec1ff"><h3 style="color:#9ec1ff">保留 <span class="en">Retain</span></h3><p>The card is NOT discarded at end of turn — it stays in your hand.</p><p class="zhd">回合结束时不弃掉,保留在手牌中。</p></div></div><div class="section"><h2>Attributes 属性 <span class="cnt">(5)</span></h2></div><div class="kw"><div class="kwc" data-search="strength 力量 strength" style="border-left-color:#ff8033"><h3 style="color:#ff8033">力量 <span class="en">Strength</span></h3><p>Each point adds +1 to attack-card damage.</p><p class="zhd">每点 +1 攻击牌伤害。</p></div><div class="kwc" data-search="constitution 体质 constitution" style="border-left-color:#4da6ff"><h3 style="color:#4da6ff">体质 <span class="en">Constitution</span></h3><p>Each point adds +1 to Block gained.</p><p class="zhd">每点 +1 获得的格挡。</p></div><div class="kwc" data-search="intelligence 智力 intelligence" style="border-left-color:#b366ff"><h3 style="color:#b366ff">智力 <span class="en">Intelligence</span></h3><p>Reserved attribute — no active effect yet.</p><p class="zhd">保留属性 —— 暂无主动效果。</p></div><div class="kwc" data-search="luck 幸运 luck" style="border-left-color:#ffe14d"><h3 style="color:#ffe14d">幸运 <span class="en">Luck</span></h3><p>Each point: +3% crit chance, +3% gold, +1.5% loot rarity.</p><p class="zhd">每点:+3% 暴击、+3% 金币、+1.5% 战利品稀有度。</p></div><div class="kwc" data-search="charm 魅力 charm" style="border-left-color:#ff80c4"><h3 style="color:#ff80c4">魅力 <span class="en">Charm</span></h3><p>Each point: -2% shop prices (down to -40%); gates some event options.</p><p class="zhd">每点:-2% 商店价格(最低 -40%);并解锁部分事件选项。</p></div></div>
+<script>
+const q=document.getElementById('q');
+function applyFilter(){
+  const t=(q?q.value:'').toLowerCase();
+  const af=document.querySelector('.tag.active');
+  const f=af?af.dataset.f:''; const fk=af?af.dataset.k:'';
+  document.querySelectorAll('.card,.kwc').forEach(c=>{
+    const okt=!t||(c.dataset.search||'').includes(t);
+    const okf=!f||(c.dataset[fk]===f);
+    c.style.display=(okt&&okf)?'':'none';
+  });
+  document.querySelectorAll('.section').forEach(s=>{
+    const any=[...s.parentElement.querySelectorAll('.card,.kwc')];
+  });
+}
+if(q)q.addEventListener('input',applyFilter);
+document.querySelectorAll('.tag').forEach(tag=>tag.addEventListener('click',()=>{
+  const was=tag.classList.contains('active');
+  document.querySelectorAll('.tag').forEach(t=>t.classList.remove('active'));
+  if(!was)tag.classList.add('active');
+  applyFilter();
+}));
+</script></body></html>
