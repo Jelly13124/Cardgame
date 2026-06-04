@@ -1,0 +1,36 @@
+{
+  "id": "caravan_checkpoint",
+  "title": "The Caravan Checkpoint",
+  "description": "A makeshift toll gate of oil drums and razor wire blocks the dry riverbed. Two guards in mismatched armor lounge in the shade, rifles across their knees, watching you approach.",
+  "options": [
+    {
+      "text": "Help the guards reset a fallen drum to earn passage",
+      "effects": [
+        { "type": "gain_gold", "amount": 15 }
+      ],
+      "result": "You heave the toppled oil drum back onto the wire. The lead guard grunts, flips you a few coins for the trouble, and waves you through."
+    },
+    {
+      "text": "[Charm 5] Talk your way past — and out of an old contact's debt",
+      "requires": { "charm": 5 },
+      "effects": [
+        { "type": "gain_gold", "amount": 30 },
+        { "type": "gain_attribute", "attr": "charm", "amount": 1 }
+      ],
+      "result": "Turns out you know the lead guard's cousin. A few right names later he not only waves you through, he settles an old marker in your favor."
+    },
+    {
+      "text": "[Luck] Bluff a hidden escort and dare them to stop you",
+      "luck_check": true,
+      "effects_success": [
+        { "type": "gain_gold", "amount": 25 },
+        { "type": "gain_core", "amount": 10 }
+      ],
+      "effects_fail": [
+        { "type": "lose_hp", "amount": 7 }
+      ],
+      "result_success": "You let your eyes flick to the ridgeline like backup waits there. They blink first, lower the wire, and even toss you a toll refund to stay friendly.",
+      "result_fail": "They call your bluff. A warning shot goes wide but the second clips you before you're back over the riverbank."
+    }
+  ]
+}
