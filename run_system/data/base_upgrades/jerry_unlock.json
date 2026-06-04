@@ -4,6 +4,6 @@
   "description": "Unlock a second playable hero — the Feng Shui Master of balance.",
   "effect_key": "unlock_hero",
   "tiers": [
-    {"level": 1, "cost": 100, "effect_value": {"hero_id": "hero_fengshui_master"}, "effect_text": "Permanently unlock the Feng Shui Master"}
+    {"level": 1, "cost": 180, "effect_value": {"hero_id": "hero_fengshui_master"}, "effect_text": "Permanently unlock the Feng Shui Master"}
   ]
 }

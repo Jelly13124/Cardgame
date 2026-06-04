@@ -4,8 +4,8 @@
   "description": "Start runs with bonus equipment in your inventory.",
   "effect_key": "starter_inventory",
   "tiers": [
-    {"level": 1, "cost": 30, "effect_value": {"commons": 1, "uncommons": 0}, "effect_text": "1 random common equipment in inventory at run start"},
-    {"level": 2, "cost": 60, "effect_value": {"commons": 2, "uncommons": 0}, "effect_text": "2 random common equipment in inventory at run start"},
-    {"level": 3, "cost": 100, "effect_value": {"commons": 2, "uncommons": 1}, "effect_text": "2 commons + 1 uncommon in inventory at run start"}
+    {"level": 1, "cost": 50, "effect_value": {"commons": 1, "uncommons": 0}, "effect_text": "1 random common equipment in inventory at run start"},
+    {"level": 2, "cost": 110, "effect_value": {"commons": 2, "uncommons": 0}, "effect_text": "2 random common equipment in inventory at run start"},
+    {"level": 3, "cost": 180, "effect_value": {"commons": 2, "uncommons": 1}, "effect_text": "2 commons + 1 uncommon in inventory at run start"}
   ]
 }

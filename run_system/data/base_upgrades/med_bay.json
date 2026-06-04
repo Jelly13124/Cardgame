@@ -4,8 +4,8 @@
   "description": "Permanently increase starting max HP.",
   "effect_key": "max_hp_bonus",
   "tiers": [
-    {"level": 1, "cost": 30, "effect_value": {"hp": 10}, "effect_text": "+10 max HP at run start"},
-    {"level": 2, "cost": 60, "effect_value": {"hp": 20}, "effect_text": "+20 max HP at run start"},
-    {"level": 3, "cost": 100, "effect_value": {"hp": 30}, "effect_text": "+30 max HP at run start"}
+    {"level": 1, "cost": 50, "effect_value": {"hp": 10}, "effect_text": "+10 max HP at run start"},
+    {"level": 2, "cost": 110, "effect_value": {"hp": 20}, "effect_text": "+20 max HP at run start"},
+    {"level": 3, "cost": 180, "effect_value": {"hp": 30}, "effect_text": "+30 max HP at run start"}
   ]
 }

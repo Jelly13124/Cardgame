@@ -4,7 +4,7 @@
   "description": "Salvage research notes to add stronger cards to the draft pool.",
   "effect_key": "card_pool_unlock",
   "tiers": [
-    {"level": 1, "cost": 30, "effect_value": {"unlocks": ["bone_breaker"]}, "effect_text": "Unlock Bone Breaker"},
-    {"level": 2, "cost": 60, "effect_value": {"unlocks": ["last_breath", "preemptive_strike"]}, "effect_text": "Unlock Last Breath + Preemptive Strike"}
+    {"level": 1, "cost": 50, "effect_value": {"unlocks": ["bone_breaker"]}, "effect_text": "Unlock Bone Breaker"},
+    {"level": 2, "cost": 110, "effect_value": {"unlocks": ["last_breath", "preemptive_strike"]}, "effect_text": "Unlock Last Breath + Preemptive Strike"}
   ]
 }

@@ -4,8 +4,8 @@
   "description": "Distribute extra attribute points at the start of each run.",
   "effect_key": "starter_attributes",
   "tiers": [
-    {"level": 1, "cost": 30, "effect_value": {"points": 1}, "effect_text": "+1 random attribute point at run start"},
-    {"level": 2, "cost": 60, "effect_value": {"points": 2}, "effect_text": "+2 random attribute points at run start"},
-    {"level": 3, "cost": 100, "effect_value": {"points": 3}, "effect_text": "+3 random attribute points at run start"}
+    {"level": 1, "cost": 50, "effect_value": {"points": 1}, "effect_text": "+1 random attribute point at run start"},
+    {"level": 2, "cost": 110, "effect_value": {"points": 2}, "effect_text": "+2 random attribute points at run start"},
+    {"level": 3, "cost": 180, "effect_value": {"points": 3}, "effect_text": "+3 random attribute points at run start"}
   ]
 }

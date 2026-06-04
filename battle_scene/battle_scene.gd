@@ -47,14 +47,14 @@ const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 const LOOT_REWARD_SCENE = preload("res://run_system/ui/loot_reward.tscn")
 const EXTRACT_CHOICE_MODAL_SCRIPT = preload("res://run_system/ui/extract_choice_modal.gd")
 
-const BOSS_VICTORY_CORE := 200
+const BOSS_VICTORY_CORE := 130
 ## Extract reward per act (keyed by RunManager.current_act). The final act has
 ## NO entry — clearing its boss wins the run outright (no extract choice). Any
 ## non-final act missing here falls back to a formula so adding a future act
 ## can't silently route to the "game complete" branch.
 const EXTRACT_REWARDS := {
-	1: {"continue": 40, "extract": 60},
-	2: {"continue": 80, "extract": 130},
+	1: {"continue": 26, "extract": 40},
+	2: {"continue": 52, "extract": 85},
 }
 
 
@@ -66,8 +66,8 @@ func _extract_rewards_for_act(act: int) -> Dictionary:
 	if EXTRACT_REWARDS.has(act):
 		return EXTRACT_REWARDS[act]
 	return {
-		"continue": max(25, act * 25),
-		"extract": max(50, act * 45),
+		"continue": max(16, act * 16),
+		"extract": max(33, act * 29),
 	}
 
 
