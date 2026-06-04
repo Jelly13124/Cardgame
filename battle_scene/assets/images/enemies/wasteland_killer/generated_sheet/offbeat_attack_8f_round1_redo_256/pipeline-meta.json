@@ -1,0 +1,288 @@
+{
+  "target": "creature",
+  "mode": "attack",
+  "prompt": "8-frame offbeat cartoon wasteland killer restrained knife attack",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0ea7b7e76ffd17c0016a20c6c8e1108198b9581e90defe6501.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 70,
+  "rows": 2,
+  "cols": 4,
+  "cell_size": 256,
+  "fit_scale": 0.88,
+  "trim_border": 4,
+  "edge_clean_depth": 5,
+  "align": "feet",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 8,
+  "min_component_area": 1,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "wasteland_killer_attack-1",
+    "wasteland_killer_attack-2",
+    "wasteland_killer_attack-3",
+    "wasteland_killer_attack-4",
+    "wasteland_killer_attack-5",
+    "wasteland_killer_attack-6",
+    "wasteland_killer_attack-7",
+    "wasteland_killer_attack-8"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        384,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        74,
+        101,
+        327,
+        422
+      ],
+      "edge_touch": false,
+      "output_size": [
+        167,
+        212
+      ],
+      "paste_position": [
+        44,
+        29
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        384,
+        0,
+        768,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        20,
+        180,
+        314,
+        420
+      ],
+      "edge_touch": false,
+      "output_size": [
+        194,
+        159
+      ],
+      "paste_position": [
+        31,
+        82
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        768,
+        0,
+        1152,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 5,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        36,
+        129,
+        376,
+        421
+      ],
+      "edge_touch": false,
+      "output_size": [
+        225,
+        193
+      ],
+      "paste_position": [
+        15,
+        48
+      ]
+    },
+    {
+      "grid": [
+        0,
+        3
+      ],
+      "source_box": [
+        1152,
+        0,
+        1536,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 4,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        0,
+        154,
+        321,
+        422
+      ],
+      "edge_touch": true,
+      "output_size": [
+        212,
+        177
+      ],
+      "paste_position": [
+        22,
+        64
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        512,
+        384,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 4,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        63,
+        59,
+        360,
+        349
+      ],
+      "edge_touch": false,
+      "output_size": [
+        196,
+        192
+      ],
+      "paste_position": [
+        30,
+        49
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        384,
+        512,
+        768,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        31,
+        119,
+        329,
+        348
+      ],
+      "edge_touch": false,
+      "output_size": [
+        197,
+        151
+      ],
+      "paste_position": [
+        29,
+        90
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        768,
+        512,
+        1152,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        33,
+        20,
+        285,
+        345
+      ],
+      "edge_touch": false,
+      "output_size": [
+        166,
+        215
+      ],
+      "paste_position": [
+        45,
+        26
+      ]
+    },
+    {
+      "grid": [
+        1,
+        3
+      ],
+      "source_box": [
+        1152,
+        512,
+        1536,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        36,
+        34,
+        281,
+        347
+      ],
+      "edge_touch": false,
+      "output_size": [
+        162,
+        207
+      ],
+      "paste_position": [
+        47,
+        34
+      ]
+    }
+  ],
+  "edge_touch_frames": [
+    [
+      0,
+      3
+    ]
+  ]
+}

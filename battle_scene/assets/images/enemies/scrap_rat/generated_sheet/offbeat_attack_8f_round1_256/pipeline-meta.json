@@ -1,0 +1,292 @@
+{
+  "target": "creature",
+  "mode": "attack",
+  "prompt": "8-frame offbeat cartoon scrap rat lunge bite attack",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0ea7b7e76ffd17c0016a20c3e6c314819882ab9ebef9e19057.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 70,
+  "rows": 2,
+  "cols": 4,
+  "cell_size": 256,
+  "fit_scale": 0.88,
+  "trim_border": 4,
+  "edge_clean_depth": 5,
+  "align": "feet",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 10,
+  "min_component_area": 1,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "scrap_rat_attack-1",
+    "scrap_rat_attack-2",
+    "scrap_rat_attack-3",
+    "scrap_rat_attack-4",
+    "scrap_rat_attack-5",
+    "scrap_rat_attack-6",
+    "scrap_rat_attack-7",
+    "scrap_rat_attack-8"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        384,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 7,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        48,
+        203,
+        376,
+        425
+      ],
+      "edge_touch": false,
+      "output_size": [
+        219,
+        148
+      ],
+      "paste_position": [
+        18,
+        93
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        384,
+        0,
+        768,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 6,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        40,
+        199,
+        376,
+        424
+      ],
+      "edge_touch": false,
+      "output_size": [
+        225,
+        150
+      ],
+      "paste_position": [
+        15,
+        91
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        768,
+        0,
+        1152,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 14,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        0,
+        196,
+        330,
+        417
+      ],
+      "edge_touch": true,
+      "output_size": [
+        221,
+        148
+      ],
+      "paste_position": [
+        17,
+        93
+      ]
+    },
+    {
+      "grid": [
+        0,
+        3
+      ],
+      "source_box": [
+        1152,
+        0,
+        1536,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 10,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        12,
+        195,
+        306,
+        427
+      ],
+      "edge_touch": false,
+      "output_size": [
+        197,
+        155
+      ],
+      "paste_position": [
+        29,
+        86
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        512,
+        384,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 5,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        45,
+        78,
+        367,
+        304
+      ],
+      "edge_touch": false,
+      "output_size": [
+        215,
+        151
+      ],
+      "paste_position": [
+        20,
+        90
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        384,
+        512,
+        768,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 2,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        10,
+        82,
+        344,
+        306
+      ],
+      "edge_touch": false,
+      "output_size": [
+        223,
+        150
+      ],
+      "paste_position": [
+        16,
+        91
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        768,
+        512,
+        1152,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        10,
+        88,
+        335,
+        307
+      ],
+      "edge_touch": false,
+      "output_size": [
+        217,
+        146
+      ],
+      "paste_position": [
+        19,
+        95
+      ]
+    },
+    {
+      "grid": [
+        1,
+        3
+      ],
+      "source_box": [
+        1152,
+        512,
+        1536,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 7,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        0,
+        97,
+        315,
+        308
+      ],
+      "edge_touch": true,
+      "output_size": [
+        211,
+        141
+      ],
+      "paste_position": [
+        22,
+        100
+      ]
+    }
+  ],
+  "edge_touch_frames": [
+    [
+      0,
+      2
+    ],
+    [
+      1,
+      3
+    ]
+  ]
+}

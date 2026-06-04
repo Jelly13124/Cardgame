@@ -1,0 +1,288 @@
+{
+  "target": "creature",
+  "mode": "hurt",
+  "prompt": "8-frame offbeat cartoon riot hound hurt flinch",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0ea7b7e76ffd17c0016a20f192f190819889e8bc1798049e83.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 70,
+  "rows": 2,
+  "cols": 4,
+  "cell_size": 256,
+  "fit_scale": 0.88,
+  "trim_border": 4,
+  "edge_clean_depth": 5,
+  "align": "feet",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 8,
+  "min_component_area": 1,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "riot_hound_hurt-1",
+    "riot_hound_hurt-2",
+    "riot_hound_hurt-3",
+    "riot_hound_hurt-4",
+    "riot_hound_hurt-5",
+    "riot_hound_hurt-6",
+    "riot_hound_hurt-7",
+    "riot_hound_hurt-8"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        384,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 6,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        52,
+        182,
+        376,
+        433
+      ],
+      "edge_touch": false,
+      "output_size": [
+        196,
+        152
+      ],
+      "paste_position": [
+        30,
+        89
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        384,
+        0,
+        768,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 14,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        0,
+        181,
+        371,
+        428
+      ],
+      "edge_touch": true,
+      "output_size": [
+        225,
+        149
+      ],
+      "paste_position": [
+        15,
+        92
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        768,
+        0,
+        1152,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 4,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        50,
+        162,
+        355,
+        428
+      ],
+      "edge_touch": false,
+      "output_size": [
+        185,
+        161
+      ],
+      "paste_position": [
+        35,
+        80
+      ]
+    },
+    {
+      "grid": [
+        0,
+        3
+      ],
+      "source_box": [
+        1152,
+        0,
+        1536,
+        512
+      ],
+      "component_mode": "all",
+      "component_count": 4,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        21,
+        185,
+        334,
+        430
+      ],
+      "edge_touch": false,
+      "output_size": [
+        190,
+        148
+      ],
+      "paste_position": [
+        33,
+        93
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        512,
+        384,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 6,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        33,
+        90,
+        352,
+        336
+      ],
+      "edge_touch": false,
+      "output_size": [
+        193,
+        149
+      ],
+      "paste_position": [
+        31,
+        92
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        384,
+        512,
+        768,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        34,
+        95,
+        369,
+        338
+      ],
+      "edge_touch": false,
+      "output_size": [
+        203,
+        147
+      ],
+      "paste_position": [
+        26,
+        94
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        768,
+        512,
+        1152,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        23,
+        104,
+        357,
+        339
+      ],
+      "edge_touch": false,
+      "output_size": [
+        202,
+        142
+      ],
+      "paste_position": [
+        27,
+        99
+      ]
+    },
+    {
+      "grid": [
+        1,
+        3
+      ],
+      "source_box": [
+        1152,
+        512,
+        1536,
+        1024
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        16,
+        90,
+        351,
+        341
+      ],
+      "edge_touch": false,
+      "output_size": [
+        203,
+        152
+      ],
+      "paste_position": [
+        26,
+        89
+      ]
+    }
+  ],
+  "edge_touch_frames": [
+    [
+      0,
+      1
+    ]
+  ]
+}
