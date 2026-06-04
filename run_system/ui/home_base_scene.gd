@@ -23,6 +23,9 @@ const UPGRADE_ORDER := [
 ]
 
 var _core_label: Label
+var _caps_label: Label
+## Cyber Doctor facility panel root — rebuilt whenever facility/perk state changes.
+var _cyber_doc_panel: PanelContainer
 ## Stash indices the player has marked to carry into the next run (rebuilt into
 ## RunManager.pending_loadout on every toggle). Reset when the scene reloads.
 var _stash_selected: Array[int] = []
@@ -33,6 +36,10 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	_build()
 	MetaProgress.core_changed.connect(func(_v): _refresh_core())
+	MetaProgress.caps_changed.connect(func(_v): _refresh_caps())
+	# Facility unlock + perk purchases emit upgrades_changed; rebuild the panel so
+	# the locked→unlocked transition and perk levels stay in sync.
+	MetaProgress.upgrades_changed.connect(_rebuild_cyber_doc_panel)
 
 
 func _build() -> void:
@@ -65,6 +72,12 @@ func _build() -> void:
 	_style_readable_label(_core_label, 32, Color(0.64, 0.90, 1.0), 3)
 	header.add_child(_core_label)
 	_refresh_core()
+
+	_caps_label = Label.new()
+	# Caps icon is a Codex deliverable; the "🔩" glyph is a placeholder prefix.
+	_style_readable_label(_caps_label, 32, Color(1.0, 0.82, 0.45), 3)
+	header.add_child(_caps_label)
+	_refresh_caps()
 
 	var settings_btn := Button.new()
 	settings_btn.text = "⚙ " + TranslationServer.translate("SETTINGS_BUTTON")
@@ -105,6 +118,12 @@ func _build() -> void:
 		var panel := UPGRADE_PANEL_SCRIPT.new()
 		grid.add_child(panel)
 		panel.set_definition(definition)
+
+	# Cyber Doctor facility (two-layer base: Core unlocks it, Caps buy perks).
+	_cyber_doc_panel = PanelContainer.new()
+	_cyber_doc_panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	vbox.add_child(_cyber_doc_panel)
+	_rebuild_cyber_doc_panel()
 
 	# Recent runs panel — last 5 entries from MetaProgress.run_history.
 	var history_label := Label.new()
@@ -196,6 +215,121 @@ func _open_settings() -> void:
 func _refresh_core() -> void:
 	if _core_label:
 		_core_label.text = tr("UI_HOME_CORE").format({"n": MetaProgress.core})
+
+
+func _refresh_caps() -> void:
+	if _caps_label:
+		_caps_label.text = tr("UI_HOME_CAPS").format({"n": MetaProgress.caps})
+
+
+## Rebuild the Cyber Doctor facility panel. Two states: LOCKED (Core unlock
+## button) and UNLOCKED (the 5 caps-perk rows). Called on build + whenever
+## MetaProgress.upgrades_changed fires (facility unlock / perk purchase).
+func _rebuild_cyber_doc_panel() -> void:
+	if not is_instance_valid(_cyber_doc_panel):
+		return
+	for c in _cyber_doc_panel.get_children():
+		c.queue_free()
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 14)
+	margin.add_theme_constant_override("margin_bottom", 14)
+	_cyber_doc_panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = tr("UI_HOME_CYBERDOC_NAME").to_upper()
+	_style_readable_label(title, 24, Color(1, 0.92, 0.55), 2)
+	vbox.add_child(title)
+
+	if MetaProgress.is_facility_unlocked("cyber_doc"):
+		_build_cyber_doc_unlocked(vbox)
+	else:
+		_build_cyber_doc_locked(vbox)
+
+
+func _build_cyber_doc_locked(vbox: VBoxContainer) -> void:
+	var desc := Label.new()
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.text = tr("UI_HOME_CYBERDOC_DESC")
+	_style_readable_label(desc, 18, Color(0.94, 0.90, 0.78), 1)
+	vbox.add_child(desc)
+
+	var cost := int(MetaProgress.FACILITY_UNLOCK_COSTS.get("cyber_doc", 300))
+	var unlock_btn := Button.new()
+	unlock_btn.text = tr("UI_HOME_CYBERDOC_UNLOCK").format({"n": cost})
+	unlock_btn.custom_minimum_size = Vector2(260, 40)
+	T.apply_button_theme(unlock_btn)
+	unlock_btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
+	unlock_btn.disabled = MetaProgress.core < cost
+	unlock_btn.pressed.connect(func() -> void: MetaProgress.unlock_facility("cyber_doc"))
+	vbox.add_child(unlock_btn)
+
+
+func _build_cyber_doc_unlocked(vbox: VBoxContainer) -> void:
+	var desc := Label.new()
+	desc.text = tr("UI_HOME_CYBERDOC_PERKS_HINT")
+	_style_readable_label(desc, 16, Color(0.8, 0.74, 0.6), 1)
+	vbox.add_child(desc)
+
+	# Stable perk order so rows don't reshuffle between rebuilds.
+	for perk_id in MetaProgress.CYBER_DOC_PERKS.keys():
+		vbox.add_child(_build_perk_row(str(perk_id)))
+
+
+func _build_perk_row(perk_id: String) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+
+	var lvl := MetaProgress.get_caps_perk_level(perk_id)
+	var max_lvl := MetaProgress.CAPS_PERK_MAX_LEVEL
+	var maxed := lvl >= max_lvl
+
+	var name_lbl := Label.new()
+	name_lbl.text = tr("UI_HOME_PERK_%s" % perk_id.to_upper())
+	_style_readable_label(name_lbl, 18, Color(1, 0.92, 0.55), 1)
+	name_lbl.custom_minimum_size = Vector2(220, 0)
+	row.add_child(name_lbl)
+
+	var lvl_lbl := Label.new()
+	lvl_lbl.text = tr("UI_HOME_PERK_LEVEL").format({"cur": lvl, "max": max_lvl})
+	_style_readable_label(lvl_lbl, 18, Color(0.90, 0.90, 0.86), 1)
+	lvl_lbl.custom_minimum_size = Vector2(110, 0)
+	row.add_child(lvl_lbl)
+
+	var cost := MetaProgress.caps_perk_cost(perk_id)
+	var cost_lbl := Label.new()
+	if maxed:
+		cost_lbl.text = ""
+	else:
+		cost_lbl.text = tr("UI_HOME_PERK_COST").format({"n": cost})
+	_style_readable_label(cost_lbl, 18, Color(1.0, 0.82, 0.45), 1)
+	cost_lbl.custom_minimum_size = Vector2(150, 0)
+	row.add_child(cost_lbl)
+
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(spacer)
+
+	var buy_btn := Button.new()
+	buy_btn.custom_minimum_size = Vector2(110, 36)
+	T.apply_button_theme(buy_btn)
+	buy_btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
+	if maxed:
+		buy_btn.text = tr("UI_HOME_PERK_MAX")
+		buy_btn.disabled = true
+	else:
+		buy_btn.text = tr("UI_HOME_UPGRADE_BUY")
+		buy_btn.disabled = MetaProgress.caps < cost
+		buy_btn.pressed.connect(func() -> void: MetaProgress.buy_caps_perk(perk_id))
+	row.add_child(buy_btn)
+
+	return row
 
 
 func _load_upgrade(id: String) -> Dictionary:
