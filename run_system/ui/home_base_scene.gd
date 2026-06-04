@@ -401,7 +401,7 @@ func _humanize_hero_id(hero_id: String) -> String:
 	# labels owned by ui_home, not the HERO_<id>_NAME content key.
 	var names := {
 		"cowboy_bill": tr("UI_HOME_HERO_BILL"),
-		"hero_jerry_killer": tr("UI_HOME_HERO_JERRY"),
+		"hero_fengshui_master": tr("UI_HOME_HERO_FENGSHUI"),
 	}
 	if names.has(hero_id):
 		return names[hero_id]

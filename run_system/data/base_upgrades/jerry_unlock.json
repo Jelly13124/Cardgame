@@ -1,9 +1,9 @@
 {
   "id": "jerry_unlock",
-  "name": "JERRY UNLOCK",
-  "description": "Unlock a second playable hero — Jerry the wasteland killer.",
+  "name": "FENG SHUI MASTER UNLOCK",
+  "description": "Unlock a second playable hero — the Feng Shui Master of balance.",
   "effect_key": "unlock_hero",
   "tiers": [
-    {"level": 1, "cost": 100, "effect_value": {"hero_id": "hero_jerry_killer"}, "effect_text": "Permanently unlock Jerry"}
+    {"level": 1, "cost": 100, "effect_value": {"hero_id": "hero_fengshui_master"}, "effect_text": "Permanently unlock the Feng Shui Master"}
   ]
 }
