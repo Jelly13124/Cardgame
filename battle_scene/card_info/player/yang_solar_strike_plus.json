@@ -1,0 +1,17 @@
+{
+	"name": "yang_solar_strike_plus",
+	"title": "Solar Strike+",
+	"rarity": "common",
+	"type": "attack",
+	"cost": 1,
+	"polarity": "yang",
+	"description": "[Yang] Deal 11 damage. Matched: deal 4 more damage.",
+	"front_image": "player/yang_solar_strike.png",
+	"side": "player",
+	"effects": [
+		{ "type": "deal_damage", "amount": 11 }
+	],
+	"matched_bonus": [
+		{ "type": "deal_damage", "amount": 4 }
+	]
+}

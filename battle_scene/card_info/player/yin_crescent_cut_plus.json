@@ -1,0 +1,17 @@
+{
+	"name": "yin_crescent_cut_plus",
+	"title": "Crescent Cut+",
+	"rarity": "common",
+	"type": "attack",
+	"cost": 1,
+	"polarity": "yin",
+	"description": "[Yin] Deal 9 damage. Matched: gain 5 Block.",
+	"front_image": "player/yin_crescent_cut.png",
+	"side": "player",
+	"effects": [
+		{ "type": "deal_damage", "amount": 9 }
+	],
+	"matched_bonus": [
+		{ "type": "gain_block", "amount": 5 }
+	]
+}

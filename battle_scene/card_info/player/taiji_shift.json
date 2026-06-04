@@ -1,0 +1,15 @@
+{
+	"name": "taiji_shift",
+	"title": "Taiji Shift",
+	"rarity": "common",
+	"type": "skill",
+	"cost": 1,
+	"polarity": "neutral",
+	"description": "Flip your polarity (Yin↔Yang). Gain 4 Block.",
+	"front_image": "player/taiji_shift.png",
+	"side": "player",
+	"effects": [
+		{ "type": "flip_polarity" },
+		{ "type": "gain_block", "amount": 4 }
+	]
+}

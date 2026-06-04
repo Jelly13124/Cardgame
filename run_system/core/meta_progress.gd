@@ -55,6 +55,12 @@ const INITIAL_CARD_POOL: Array[String] = [
 	"patch_kit",
 	"spiked_guard",
 	"corrode",
+	"yin_crescent_cut",
+	"yin_still_water",
+	"yang_solar_strike",
+	"yang_ember_will",
+	"taiji_shift",
+	"taiji_pivot",
 ]
 
 
