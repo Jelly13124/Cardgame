@@ -557,6 +557,12 @@ func _victory():
 	# choice / home-base transition is sufficient signal that the fight is won.
 	await get_tree().create_timer(3.0).timeout
 
+	# Caps award (Phase E2): accrue run-scoped caps sized by fight type. Like
+	# Core, caps stay at death-risk until banked by _settle_backpack on
+	# extract/victory. award_caps_for_combat dispatches boss/elite/normal so a
+	# boss fight grants ONLY the boss award (no boss + normal double-count).
+	RunManager.award_caps_for_combat(RunManager.last_battle_node_type)
+
 	# Boss victory routing:
 	#   - non-final act boss → extract choice modal (rewards by current_act)
 	#   - final boss   → grant BOSS_VICTORY_CORE and return to home base
