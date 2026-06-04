@@ -22,6 +22,7 @@ var click_handler: Callable = Callable()
 var hover_tip: String = ""
 var preview_text: String = ""
 var preview_color: Color = Color(1, 1, 1)
+var preview_tex: Texture2D = null
 
 
 func _ready() -> void:
@@ -78,12 +79,26 @@ func _make_preview() -> Control:
 	sb.set_border_width_all(2)
 	sb.set_corner_radius_all(3)
 	p.add_theme_stylebox_override("panel", sb)
-	var l := Label.new()
-	l.text = preview_text
-	l.set_anchors_preset(Control.PRESET_FULL_RECT)
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	l.add_theme_font_size_override("font_size", 20)
-	l.add_theme_color_override("font_color", preview_color)
-	p.add_child(l)
+	# Prefer the real sprite; fall back to the letter glyph when there's no art.
+	if preview_tex:
+		var tr := TextureRect.new()
+		tr.texture = preview_tex
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.set_anchors_preset(Control.PRESET_FULL_RECT)
+		tr.offset_left = 4
+		tr.offset_top = 4
+		tr.offset_right = -4
+		tr.offset_bottom = -4
+		p.add_child(tr)
+	else:
+		var l := Label.new()
+		l.text = preview_text
+		l.set_anchors_preset(Control.PRESET_FULL_RECT)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		l.add_theme_font_size_override("font_size", 20)
+		l.add_theme_color_override("font_color", preview_color)
+		p.add_child(l)
 	return p

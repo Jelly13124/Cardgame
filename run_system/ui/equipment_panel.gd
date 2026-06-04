@@ -304,6 +304,7 @@ func _refresh() -> void:
 			cell.drag_payload = {"src": "slot", "slot": slot, "item_id": item_id}
 			cell.preview_text = str(SLOT_LETTERS.get(slot, "?"))
 			cell.preview_color = Color(1.0, 0.86, 0.4)
+			cell.preview_tex = _load_equip_tex(str(data.get("sprite", "")))
 			cell.hover_tip = _build_equipment_tooltip(data, slot)
 			label.text = "%s: %s" % [slot_label, item_name]
 
@@ -401,6 +402,21 @@ func _add_safe_border(cell: Control) -> void:
 	cell.add_child(border)
 
 
+## Load an equipment sprite texture (same resolution rule as EquipmentIcon), or
+## null if the art is missing. Used for the drag preview.
+func _load_equip_tex(sprite_path: String) -> Texture2D:
+	if sprite_path == "":
+		return null
+	var full := "res://battle_scene/assets/images/" + sprite_path
+	if ResourceLoader.exists(full):
+		return load(full) as Texture2D
+	if FileAccess.file_exists(full):
+		var img := Image.load_from_file(full)
+		if img:
+			return ImageTexture.create_from_image(img)
+	return null
+
+
 ## Wire a backpack cell as a drop target: accepts another backpack cell (swap via
 ## move_cell) or an equipped item dragged from a slot (unequip into the bag).
 func _wire_backpack_drop(cell, index: int) -> void:
@@ -435,6 +451,7 @@ func _make_equip_cell(item_id: String, index: int) -> Control:
 	}
 	cell.preview_text = str(SLOT_LETTERS.get(slot, "?"))
 	cell.preview_color = Color(1.0, 0.86, 0.4)
+	cell.preview_tex = _load_equip_tex(str(data.get("sprite", "")))
 	_wire_backpack_drop(cell, index)
 	cell.click_handler = func(btn):
 		if btn == MOUSE_BUTTON_LEFT:

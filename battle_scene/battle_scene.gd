@@ -29,6 +29,8 @@ var targeting_card: Control = null
 var targeting_arrow: Node2D = null
 var hovered_unit: Node = null
 var _dmg_preview: Label = null
+var _auto_ending: bool = false  # guards the auto-end-turn beat from re-entry
+var _ending_turn: bool = false  # guards end_turn across the discard animation await
 
 const TARGETING_ARROW_SCRIPT = preload("res://battle_scene/targeting_arrow.gd")
 const RELIC_EFFECT_SYSTEM = preload("res://battle_scene/relic_effect_system.gd")
@@ -317,10 +319,14 @@ func _on_turn_started(side: String) -> void:
 	_update_ui_labels()
 	enemy_ai.spawn_enemy_units()
 
+	_auto_ending = false  # re-arm auto-end for the new player turn
+	_ending_turn = false  # re-arm the end-turn guard
 	if turn_manager.current_round == 1:
 		deck_manager.first_round_draw()
 	else:
 		deck_manager.draw_cards(3)
+	# Rare: drew a hand with nothing affordable → end immediately after a beat.
+	_maybe_auto_end_turn()
 
 
 ## STS rule: at END of player turn, reset block/energy. Hand discard is handled
@@ -431,6 +437,11 @@ func _start_new_game():
 
 
 func _on_end_round_button_pressed():
+	# Guard against double-fire across the discard-animation await (auto-end +
+	# manual click, or two fast clicks). Reset at the next player turn start.
+	if _ending_turn or not turn_manager.is_player_turn:
+		return
+	_ending_turn = true
 	if turn_manager.is_player_turn:
 		# Discard hand BEFORE switching turns. turn_manager.end_turn() emits
 		# turn_ended synchronously and immediately switches sides; awaiting an
@@ -446,6 +457,44 @@ func _on_end_round_button_pressed():
 		if to_discard.size() > 0:
 			await _animate_hand_discard(to_discard)
 		turn_manager.end_turn()
+
+
+## True if any card in hand is currently affordable (cost <= energy).
+func _has_playable_card() -> bool:
+	if not player:
+		return false
+	for card in hand.get_cards():
+		if is_instance_valid(card) and int(card.card_info.get("cost", 0)) <= player.energy:
+			return true
+	return false
+
+
+## True while any hand card is mid-resolution (animation in flight).
+func _cards_resolving() -> bool:
+	for card in hand.get_cards():
+		if is_instance_valid(card) and card.has_meta("_in_play"):
+			return true
+	return false
+
+
+## Auto-end the player turn when nothing in hand can be played. Fires only during
+## the player's turn, after a short beat, and never while a card is resolving.
+## Re-validates after the beat so a mid-air change cancels it. `_auto_ending` is
+## reset at each player turn start.
+func _maybe_auto_end_turn() -> void:
+	if _auto_ending or is_game_over or not turn_manager.is_player_turn:
+		return
+	if _has_playable_card() or _cards_resolving():
+		return
+	_auto_ending = true
+	await _wait(0.55)
+	if is_game_over or not turn_manager.is_player_turn:
+		_auto_ending = false
+		return
+	if _has_playable_card() or _cards_resolving():
+		_auto_ending = false
+		return
+	_on_end_round_button_pressed()
 
 
 func _victory():
@@ -675,6 +724,8 @@ func play_spell(card: Control, target_node: Node):
 
 	_update_ui_labels()
 	refresh_hand_ui()
+	# Nothing left to play? End the turn for the player.
+	_maybe_auto_end_turn()
 
 
 ## Returns true if the card has an `exhaust_self` effect entry.
