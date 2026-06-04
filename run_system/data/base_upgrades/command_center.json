@@ -4,8 +4,8 @@
   "description": "Begin each run with extra gold from your stockpile.",
   "effect_key": "starting_gold",
   "tiers": [
-    {"level": 1, "cost": 30, "effect_value": {"gold": 50}, "effect_text": "+50 starting gold"},
-    {"level": 2, "cost": 60, "effect_value": {"gold": 120}, "effect_text": "+120 starting gold"},
-    {"level": 3, "cost": 100, "effect_value": {"gold": 200}, "effect_text": "+200 starting gold"}
+    {"level": 1, "cost": 50, "effect_value": {"gold": 50}, "effect_text": "+50 starting gold"},
+    {"level": 2, "cost": 110, "effect_value": {"gold": 120}, "effect_text": "+120 starting gold"},
+    {"level": 3, "cost": 180, "effect_value": {"gold": 200}, "effect_text": "+200 starting gold"}
   ]
 }
