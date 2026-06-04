@@ -42,6 +42,15 @@ func on_player_turn_started(player: Node, round_number: int) -> void:
 					player.reset_polarity_turn(polarity)
 				if _battle_scene and _battle_scene.has_method("update_polarity_hud"):
 					_battle_scene.update_polarity_hud()
+			"apply_self_status":
+				# Applies a self-buff status (e.g. thorns) at turn start.
+				# Fires every turn unless the relic marks once_per_combat.
+				var status := str(effect.get("status", ""))
+				var n := int(effect.get("amount", effect.get("stacks", 1)))
+				if player and player.has_method("add_status"):
+					player.add_status(status, n)
+					_notify("%s: +%d %s" % [str(entry["title"]), n, status], Color(0.85, 0.4, 0.4))
+					_mark_used_once(entry)
 
 
 func modify_player_attack_damage(amount: int, _attacker: Node, _defender: Node) -> int:

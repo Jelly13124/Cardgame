@@ -80,6 +80,7 @@ const ALLOWED_CARD_POLARITIES = ["yin", "yang", "neutral"]
 # `relic_effect_system` at its trigger point (the two-place rule).
 const ALLOWED_RELIC_EFFECT_TYPES = [
 	"add_damage",
+	"apply_self_status",
 	"crit_chance",
 	"gain_block",
 	"gain_energy",
