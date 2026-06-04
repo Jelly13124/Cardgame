@@ -1,17 +1,21 @@
 ## Persistent meta-progression. Survives across runs. Loaded from
 ## user://meta.json at autoload _ready; saved on every mutation.
 ##
-## Schema: { "core": int, "upgrades": { "<id>": int } }
+## Schema: { "core": int, "caps": int, "upgrades": { "<id>": int } }
 ##   - core: current spendable Core currency
+##   - caps: current spendable Caps currency (second permanent currency)
 ##   - upgrades: id → current level (0..3)
 extends Node
 
 const SAVE_PATH := "user://meta.json"
 
 signal core_changed(new_value: int)
+signal caps_changed(new_value: int)
 signal upgrades_changed
 
 var core: int = 0
+## Second permanent currency. Spent at base facilities; earned via E2.
+var caps: int = 0
 var upgrades: Dictionary = {}
 ## Last 50 run summaries (newest at end). Persisted to meta.json.
 ## Each entry: { hero_id, floor, core_earned, outcome, timestamp }
@@ -103,6 +107,21 @@ func add_core(amount: int) -> void:
 	emit_signal("core_changed", core)
 
 
+func add_caps(amount: int) -> void:
+	caps = max(0, caps + amount)
+	save_progress()
+	emit_signal("caps_changed", caps)
+
+
+func spend_caps(amount: int) -> bool:
+	if caps < amount:
+		return false
+	caps -= amount
+	save_progress()
+	emit_signal("caps_changed", caps)
+	return true
+
+
 func get_upgrade_level(id: String) -> int:
 	return int(upgrades.get(id, 0))
 
@@ -167,9 +186,11 @@ func purchase_upgrade(id: String, definition: Dictionary) -> bool:
 
 func reset_all() -> void:
 	core = 0
+	caps = 0
 	upgrades.clear()
 	save_progress()
 	emit_signal("core_changed", core)
+	emit_signal("caps_changed", caps)
 	emit_signal("upgrades_changed")
 
 
@@ -180,6 +201,7 @@ func save_progress() -> void:
 		return
 	var payload := {
 		"core": core,
+		"caps": caps,
 		"upgrades": upgrades,
 		"run_history": run_history,
 		"max_ascension": max_ascension,
@@ -204,6 +226,7 @@ func load_progress() -> void:
 		DirAccess.rename_absolute(SAVE_PATH, SAVE_PATH + ".bak")
 		return
 	core = int(parsed.get("core", 0))
+	caps = int(parsed.get("caps", 0))
 	var raw_upgrades = parsed.get("upgrades", {})
 	if typeof(raw_upgrades) == TYPE_DICTIONARY:
 		upgrades = raw_upgrades
