@@ -1,0 +1,36 @@
+{
+  "id": "collapsed_overpass",
+  "title": "The Collapsed Overpass",
+  "description": "A highway overpass lies snapped across the canyon, its rusted rebar clawing at the sky. A glint of an old supply cache shows in the rubble — but the whole slab groans whenever the wind shifts.",
+  "options": [
+    {
+      "text": "Pick the wreckage clean, slow and careful",
+      "effects": [
+        { "type": "gain_gold", "amount": 25 }
+      ],
+      "result": "You spend the afternoon prying loose what won't bring the slab down. A modest haul of scrap and coin, and all your fingers intact."
+    },
+    {
+      "text": "[Charm 5] Flag down a passing scav crew to brace it for a cut",
+      "requires": { "charm": 5 },
+      "effects": [
+        { "type": "gain_gold", "amount": 50 },
+        { "type": "gain_core", "amount": 15 }
+      ],
+      "result": "Your easy patter wins over the scav crew. They jack the slab on hydraulics, you split the cache, and everyone walks away richer."
+    },
+    {
+      "text": "[Luck] Crawl under the groaning slab for the deep cache",
+      "luck_check": true,
+      "effects_success": [
+        { "type": "gain_core", "amount": 35 },
+        { "type": "gain_gold", "amount": 20 }
+      ],
+      "effects_fail": [
+        { "type": "lose_hp", "amount": 8 }
+      ],
+      "result_success": "The slab holds. You drag out a sealed crate of refined core and a fat purse before scrambling clear.",
+      "result_fail": "The wind shifts. Concrete shears loose and pins your leg — you wrench free bleeding, the cache buried for good."
+    }
+  ]
+}
