@@ -1,0 +1,14 @@
+{
+  "id": "hero_fengshui_master",
+  "name": "Feng Shui Master",
+  "sprite_id": "cowboy_bill",
+  "tint": "#7fb6c4",
+  "max_health": 52,
+  "starter_deck": ["strike", "strike", "defend", "defend",
+                   "yin_crescent_cut", "yin_still_water",
+                   "yang_solar_strike", "yang_ember_will",
+                   "taiji_shift", "taiji_pivot"],
+  "starting_attributes": {"strength": 3, "constitution": 3, "intelligence": 4, "luck": 3, "charm": 3},
+  "starting_relic": "yin_yang_compass",
+  "description": "Master of balance. Alternates Yin and Yang each turn; matched cards bloom, and harmony rewards those who walk both paths."
+}

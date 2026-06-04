@@ -42,7 +42,7 @@ func _make_hero_card(hero_id: String, hero_data: Dictionary) -> Control:
 	var hero_name := Settings.t("HERO_%s_NAME" % hero_id, english_name).to_upper()
 	var tint := _parse_tint(str(hero_data.get("tint", "#ffffff")))
 	var locked: bool = (
-		hero_id == "hero_jerry_killer" and MetaProgress.get_upgrade_level("jerry_unlock") <= 0
+		hero_id == "hero_fengshui_master" and MetaProgress.get_upgrade_level("jerry_unlock") <= 0
 	)
 
 	var sprite_id := str(hero_data.get("sprite_id", hero_id))

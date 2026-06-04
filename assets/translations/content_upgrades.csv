@@ -24,9 +24,9 @@ UPGRADE_command_center_DESC,Begin each run with extra gold from your stockpile.,
 UPGRADE_command_center_TIER1,+50 starting gold,初始金币+50
 UPGRADE_command_center_TIER2,+120 starting gold,初始金币+120
 UPGRADE_command_center_TIER3,+200 starting gold,初始金币+200
-UPGRADE_jerry_unlock_NAME,JERRY UNLOCK,解锁杰瑞
-UPGRADE_jerry_unlock_DESC,Unlock a second playable hero — Jerry the wasteland killer.,解锁第二名可操作英雄——废土杀手杰瑞。
-UPGRADE_jerry_unlock_TIER1,Permanently unlock Jerry,永久解锁杰瑞
+UPGRADE_jerry_unlock_NAME,FENG SHUI MASTER UNLOCK,解锁风水大师
+UPGRADE_jerry_unlock_DESC,Unlock a second playable hero — the Feng Shui Master of balance.,解锁第二名可操作英雄——平衡之道的风水大师。
+UPGRADE_jerry_unlock_TIER1,Permanently unlock the Feng Shui Master,永久解锁风水大师
 UPGRADE_starter_boost_NAME,STARTER BOOST,起步强化
 UPGRADE_starter_boost_DESC,Distribute extra attribute points at the start of each run.,每场冒险开局时分配额外属性点。
 UPGRADE_starter_boost_TIER1,+1 random attribute point at run start,开局时随机属性点+1
