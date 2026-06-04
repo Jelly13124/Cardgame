@@ -1,0 +1,14 @@
+{
+	"name": "venom_coat",
+	"title": "Venom Coat",
+	"rarity": "common",
+	"type": "skill",
+	"cost": 1,
+	"description": "Gain 4 Block. Gain [b]2 Thorns[/b].",
+	"front_image": "player/venom_coat.png",
+	"side": "player",
+	"effects": [
+		{ "type": "gain_block", "amount": 4 },
+		{ "type": "apply_status_self", "status": "thorns", "stacks": 2 }
+	]
+}
