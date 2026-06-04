@@ -64,6 +64,19 @@ var backpack: Array = []
 signal backpack_changed
 const GOLD_PER_CELL := 100
 const CORE_PER_CELL := 30
+
+## ── Caps (瓶盖) earning — Phase E2 ──────────────────────────────────────────
+## Caps mirror Core's banking semantics: they accrue into a run-scoped counter
+## during the run and are banked to MetaProgress ONLY on extract / full victory
+## (see _settle_backpack). A death banks nothing — unbanked caps are lost, the
+## same rule Core follows for everything outside the safe cells.
+## Tunables (grouped for easy balance):
+const CAPS_PER_COMBAT := 6  # normal (non-elite, non-boss) combat win
+const CAPS_PER_ELITE := 18  # elite win
+const CAPS_PER_BOSS := 45  # boss win (granted alongside BOSS_VICTORY_CORE)
+const GOLD_PER_CAP := 10  # extraction: floor(run gold / GOLD_PER_CAP) → caps
+## Run-scoped caps accrued so far this run (banked on extract/victory only).
+var _run_caps: int = 0
 ## Equipment item_ids queued (from the base stash) to inject into the backpack
 ## at the next start_new_run. Filled by the Phase-3 loadout UI; empty otherwise.
 var pending_loadout: Array[String] = []
@@ -560,6 +573,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	# Reset resources and health (hero max_health overrides default 50).
 	# gold is derived from the backpack — clearing the backpack zeroes it.
 	core = 0
+	_run_caps = 0
 	current_floor = 0
 	current_act = 1
 	max_health = int(current_hero_data.get("max_health", 50))
@@ -788,6 +802,28 @@ func add_gold(n: int) -> int:
 ## Add run-core to the backpack (≤CORE_PER_CELL per cell). Returns amount stored.
 func add_core_to_backpack(n: int) -> int:
 	return _add_stacked("core", n, CORE_PER_CELL)
+
+
+## ── Caps earning helpers (Phase E2) ─────────────────────────────────────────
+## Accrue caps into the run-scoped counter. Banked to MetaProgress only at
+## extract / victory (see _settle_backpack) — mirrors Core's backpack semantics.
+func award_run_caps(n: int) -> void:
+	if n <= 0:
+		return
+	_run_caps += n
+
+
+## Award caps for a combat win, sized by the battle node type. Called from the
+## victory path the same way Core is dropped per fight type, so a boss fight
+## grants the boss award only (never boss + normal).
+func award_caps_for_combat(node_type: String) -> void:
+	match node_type:
+		"boss":
+			award_run_caps(CAPS_PER_BOSS)
+		"elite":
+			award_run_caps(CAPS_PER_ELITE)
+		_:
+			award_run_caps(CAPS_PER_COMBAT)
 
 
 func _add_stacked(kind: String, n: int, per: int) -> int:
@@ -1376,6 +1412,13 @@ func _settle_backpack(victory: bool, outcome: String) -> void:
 		var carried := total_run_core()
 		if carried > 0:
 			MetaProgress.add_core(carried)
+		# Caps bank alongside Core: accrued per-fight caps + leftover run gold
+		# converted at GOLD_PER_CAP (floor). Mirrors Core — banked on extract /
+		# victory only; a death (else-branch below) banks no caps.
+		var banked_caps := _run_caps + int(total_gold() / GOLD_PER_CAP)
+		if banked_caps > 0:
+			MetaProgress.add_caps(banked_caps)
+		_run_caps = 0
 		for c in backpack:
 			if c != null and c.get("kind") == "equip":
 				MetaProgress.add_to_stash(str(c["id"]))
