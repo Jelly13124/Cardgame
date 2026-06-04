@@ -236,7 +236,6 @@ func _build_description(data: Dictionary) -> String:
 	for effect in effects:
 		var etype: String = effect.get("type", "")
 		var base: int = int(effect.get("amount", 0))
-		var scaling: String = effect.get("scaling", "")  # legacy; effectively always "" now
 		var mult: float = float(effect.get("multiplier", 1))
 		var stacks: int = int(effect.get("stacks", 1))
 
@@ -299,13 +298,7 @@ func _build_description(data: Dictionary) -> String:
 				if mult != 1:
 					lines.append(
 						tr("UI_BATTLE_DESC_STRENGTH_MULT").format(
-							{"n": total, "mult": int(mult), "stat": scaling.capitalize()}
-						)
-					)
-				elif scaling != "" and stat_val > 0:
-					lines.append(
-						tr("UI_BATTLE_DESC_STRENGTH_SCALING").format(
-							{"n": total, "base": base, "stat": stat_val}
+							{"n": total, "mult": int(mult), "stat": ""}
 						)
 					)
 				else:
