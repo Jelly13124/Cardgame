@@ -543,7 +543,11 @@ func take_damage(amount: int, silent: bool = false) -> void:
 	health = max(0, health)
 	_refresh_hud()
 	if dmg_after_block > 0:
-		play_hurt()
+		# Frame-by-frame hurt animation if this enemy has one; otherwise a quick
+		# red hit-flash so every enemy visibly reacts (most enemies don't have
+		# dedicated hurt frames yet — Codex art gap).
+		if not play_hurt():
+			_hit_flash()
 
 	# Floating damage number + shake. Caller can suppress with silent=true
 	# (e.g. status_effect_system's poison/burn ticks already show a
@@ -690,17 +694,29 @@ func _on_attack_finished() -> void:
 	_show_rest_pose()
 
 
-func play_hurt() -> void:
+## Plays the frame-by-frame hurt animation. Returns false (so the caller can
+## fall back to a flash) when this enemy has no hurt frames.
+func play_hurt() -> bool:
 	if not _sprite or not is_instance_valid(_sprite):
-		return
+		return false
 	if (
 		not _sprite.sprite_frames.has_animation("hurt")
 		or _sprite.sprite_frames.get_frame_count("hurt") == 0
 	):
-		return
+		return false
 	if not _sprite.animation_finished.is_connected(_on_hurt_finished):
 		_sprite.animation_finished.connect(_on_hurt_finished, CONNECT_ONE_SHOT)
 	_sprite.play("hurt")
+	return true
+
+
+## Quick red flash hit-reaction for enemies that lack dedicated hurt frames.
+func _hit_flash() -> void:
+	if not _sprite or not is_instance_valid(_sprite):
+		return
+	_sprite.modulate = Color(1.7, 0.55, 0.5)
+	var tw := create_tween()
+	tw.tween_property(_sprite, "modulate", Color(1, 1, 1, 1), 0.22).set_trans(Tween.TRANS_QUAD)
 
 
 func _on_hurt_finished() -> void:

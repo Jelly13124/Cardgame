@@ -20,10 +20,8 @@ mouse_filter = 1
 [node name="PlayableGlow" type="ColorRect" parent="FrontFace"]
 visible = false
 layout_mode = 0
-offset_left = -3.9
-offset_top = -3.9
-offset_right = 211.9
-offset_bottom = 289.9
+offset_right = 208.0
+offset_bottom = 286.0
 mouse_filter = 2
 color = Color(0, 1, 1, 0.4)
 
