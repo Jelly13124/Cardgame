@@ -1,0 +1,15 @@
+{
+  "id": "barbed_plating",
+  "title": "Barbed Plating",
+  "description": "At the start of each turn, gain 1 Thorns.",
+  "icon": "res://run_system/assets/images/relics/barbed_plating.png",
+  "rarity": "common",
+  "effects": [
+    {
+      "trigger": "player_turn_start",
+      "type": "apply_self_status",
+      "status": "thorns",
+      "amount": 1
+    }
+  ]
+}

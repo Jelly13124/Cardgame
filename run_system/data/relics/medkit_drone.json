@@ -1,0 +1,14 @@
+{
+  "id": "medkit_drone",
+  "title": "Medkit Drone",
+  "description": "After combat, heal 4 HP.",
+  "icon": "res://run_system/assets/images/relics/medkit_drone.png",
+  "rarity": "uncommon",
+  "effects": [
+    {
+      "trigger": "combat_victory",
+      "type": "heal",
+      "amount": 4
+    }
+  ]
+}
