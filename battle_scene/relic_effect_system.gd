@@ -34,6 +34,14 @@ func on_player_turn_started(player: Node, round_number: int) -> void:
 					player.add_block(amount)
 					_notify("%s: +%d Block" % [str(entry["title"]), amount], Color(0.45, 0.7, 1.0))
 					_mark_used_once(entry)
+			"set_polarity_alternating":
+				# Alternates the active polarity each player turn (round 1=Yin,
+				# 2=Yang, 3=Yin…). Fires every turn — not once_per_combat.
+				var polarity := "yin" if round_number % 2 == 1 else "yang"
+				if player and player.has_method("reset_polarity_turn"):
+					player.reset_polarity_turn(polarity)
+				if _battle_scene and _battle_scene.has_method("update_polarity_hud"):
+					_battle_scene.update_polarity_hud()
 
 
 func modify_player_attack_damage(amount: int, _attacker: Node, _defender: Node) -> int:
