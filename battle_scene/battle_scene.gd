@@ -29,6 +29,7 @@ var targeting_card: Control = null
 var targeting_arrow: Node2D = null
 var hovered_unit: Node = null
 var _dmg_preview: Label = null
+var _polarity_badge: Label = null  # H5: lazily-created HUD badge for yin/yang hero polarity
 var _auto_ending: bool = false  # guards the auto-end-turn beat from re-entry
 var _ending_turn: bool = false  # guards end_turn across the discard animation await
 
@@ -258,6 +259,49 @@ func _hide_damage_preview() -> void:
 		_dmg_preview.visible = false
 
 
+## H5: Battle HUD badge for the Yin/Yang hero polarity. Called on turn-start /
+## flip / harmony by combat_engine + relic_effect_system (guarded by has_method),
+## and once at battle start. Non-polarity heroes (current_polarity == "") show
+## nothing. Owner fine-tunes the on-screen position visually.
+func update_polarity_hud() -> void:
+	if not is_instance_valid(player):
+		return
+	if not _polarity_badge:
+		_polarity_badge = Label.new()
+		_polarity_badge.add_theme_font_size_override("font_size", 28)
+		_polarity_badge.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.95))
+		_polarity_badge.add_theme_constant_override("shadow_offset_x", 2)
+		_polarity_badge.add_theme_constant_override("shadow_offset_y", 2)
+		_polarity_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		_polarity_badge.z_index = 200
+		_polarity_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Top-left, near the player HP/energy HUD. Owner will fine-tune.
+		_polarity_badge.position = Vector2(40, 40)
+		add_child(_polarity_badge)
+
+	var polarity: String = str(player.current_polarity)
+	if polarity == "":
+		_polarity_badge.visible = false
+		return
+
+	var harmony: bool = bool(player.harmony_active)
+	if harmony:
+		_polarity_badge.text = tr("UI_BATTLE_POLARITY_HARMONY")
+		_polarity_badge.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+	elif polarity == "yin":
+		_polarity_badge.text = tr("UI_BATTLE_POLARITY_YIN")
+		_polarity_badge.add_theme_color_override("font_color", Color(0.45, 0.7, 1.0))
+	elif polarity == "yang":
+		_polarity_badge.text = tr("UI_BATTLE_POLARITY_YANG")
+		_polarity_badge.add_theme_color_override("font_color", Color(1.0, 0.55, 0.2))
+	else:
+		_polarity_badge.visible = false
+		return
+
+	_polarity_badge.reset_size()
+	_polarity_badge.visible = true
+
+
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 
@@ -317,6 +361,7 @@ func _on_turn_started(side: String) -> void:
 	if equipment_set_system:
 		equipment_set_system.on_player_turn_started(player, turn_manager.current_round)
 	_update_ui_labels()
+	update_polarity_hud()  # H5: reflect opening polarity state on the HUD badge
 	enemy_ai.spawn_enemy_units()
 
 	_auto_ending = false  # re-arm auto-end for the new player turn
