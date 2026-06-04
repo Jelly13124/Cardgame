@@ -1,0 +1,14 @@
+{
+	"name": "purge",
+	"title": "Purge",
+	"rarity": "uncommon",
+	"type": "skill",
+	"cost": 1,
+	"description": "Apply [b]2 Frail[/b]. Apply [b]1 Weak[/b].",
+	"front_image": "player/purge.png",
+	"side": "player",
+	"effects": [
+		{ "type": "apply_status", "status": "frail", "stacks": 2 },
+		{ "type": "apply_status", "status": "weak", "stacks": 1 }
+	]
+}

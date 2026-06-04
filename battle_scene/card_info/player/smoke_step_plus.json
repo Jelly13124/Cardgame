@@ -1,0 +1,13 @@
+{
+	"name": "smoke_step_plus",
+	"title": "Smoke Step+",
+	"rarity": "rare",
+	"type": "skill",
+	"cost": 1,
+	"description": "Gain [b]1 Dodge[/b].",
+	"front_image": "player/smoke_step.png",
+	"side": "player",
+	"effects": [
+		{ "type": "apply_status_self", "status": "dodge", "stacks": 1 }
+	]
+}
