@@ -1,6 +1,18 @@
-[gd_scene load_steps=6 format=3 uid="uid://custom_unit_card"]
+[gd_scene load_steps=7 format=3 uid="uid://custom_unit_card"]
 
 [ext_resource type="Script" path="res://battle_scene/play_card.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_glow"]
+bg_color = Color(0, 1, 1, 0.1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0, 1, 1, 0.9)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 
 [node name="PlayCard" type="Control"]
 custom_minimum_size = Vector2(208, 286)
@@ -17,13 +29,16 @@ offset_right = 208
 offset_bottom = 286
 mouse_filter = 1
 
-[node name="PlayableGlow" type="ColorRect" parent="FrontFace"]
+[node name="PlayableGlow" type="Panel" parent="FrontFace"]
 visible = false
+z_index = 5
 layout_mode = 0
-offset_right = 208.0
-offset_bottom = 286.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 204.0
+offset_bottom = 282.0
 mouse_filter = 2
-color = Color(0, 1, 1, 0.4)
+theme_override_styles/panel = SubResource("StyleBoxFlat_glow")
 
 [node name="TextureRect" type="TextureRect" parent="FrontFace"]
 visible = true

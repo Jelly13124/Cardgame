@@ -214,19 +214,7 @@ func _build_sprite_visual(sid: String) -> void:
 		for tex in charge_frames:
 			frames.add_frame("charge", tex)
 
-	var hurt_frames: Array[Texture2D] = []
-	for idx in range(MAX_ANIMATION_FRAMES):
-		var tex = _load_tex.call(dir + "hurt/%s_hurt_%d.png" % [sid, idx], false)
-		if tex:
-			hurt_frames.append(tex)
-		elif idx > 0:
-			break
-	if not hurt_frames.is_empty():
-		frames.add_animation("hurt")
-		frames.set_animation_loop("hurt", false)
-		frames.set_animation_speed("hurt", 12.0)
-		for tex in hurt_frames:
-			frames.add_frame("hurt", tex)
+	# Hurt frames are no longer used — hit feedback is a red flash (see _hit_flash).
 
 	var display_height := _apply_display_scale(frames)
 	add_child(_sprite)
@@ -542,12 +530,11 @@ func take_damage(amount: int, silent: bool = false) -> void:
 	health -= dmg_after_block
 	health = max(0, health)
 	_refresh_hud()
+	# Hit reaction: a red flash, ONLY when HP damage actually lands. A hit fully
+	# absorbed by block (dmg_after_block == 0) does NOT flash. Hurt-frame
+	# animations were dropped by design — the flash is the universal feedback.
 	if dmg_after_block > 0:
-		# Frame-by-frame hurt animation if this enemy has one; otherwise a quick
-		# red hit-flash so every enemy visibly reacts (most enemies don't have
-		# dedicated hurt frames yet — Codex art gap).
-		if not play_hurt():
-			_hit_flash()
+		_hit_flash()
 
 	# Floating damage number + shake. Caller can suppress with silent=true
 	# (e.g. status_effect_system's poison/burn ticks already show a
@@ -694,33 +681,13 @@ func _on_attack_finished() -> void:
 	_show_rest_pose()
 
 
-## Plays the frame-by-frame hurt animation. Returns false (so the caller can
-## fall back to a flash) when this enemy has no hurt frames.
-func play_hurt() -> bool:
-	if not _sprite or not is_instance_valid(_sprite):
-		return false
-	if (
-		not _sprite.sprite_frames.has_animation("hurt")
-		or _sprite.sprite_frames.get_frame_count("hurt") == 0
-	):
-		return false
-	if not _sprite.animation_finished.is_connected(_on_hurt_finished):
-		_sprite.animation_finished.connect(_on_hurt_finished, CONNECT_ONE_SHOT)
-	_sprite.play("hurt")
-	return true
-
-
-## Quick red flash hit-reaction for enemies that lack dedicated hurt frames.
+## Quick red flash hit-reaction, the universal "took damage" feedback.
 func _hit_flash() -> void:
 	if not _sprite or not is_instance_valid(_sprite):
 		return
 	_sprite.modulate = Color(1.7, 0.55, 0.5)
 	var tw := create_tween()
 	tw.tween_property(_sprite, "modulate", Color(1, 1, 1, 1), 0.22).set_trans(Tween.TRANS_QUAD)
-
-
-func _on_hurt_finished() -> void:
-	_show_rest_pose()
 
 
 func _show_rest_pose() -> void:
