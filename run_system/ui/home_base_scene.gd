@@ -26,6 +26,8 @@ var _core_label: Label
 var _caps_label: Label
 ## Cyber Doctor facility panel root — rebuilt whenever facility/perk state changes.
 var _cyber_doc_panel: PanelContainer
+## Blacksmith station panel root — rebuilt whenever stash/scrap state changes.
+var _blacksmith_panel: PanelContainer
 ## Stash indices the player has marked to carry into the next run (rebuilt into
 ## RunManager.pending_loadout on every toggle). Reset when the scene reloads.
 var _stash_selected: Array[int] = []
@@ -40,6 +42,10 @@ func _ready() -> void:
 	# Facility unlock + perk purchases emit upgrades_changed; rebuild the panel so
 	# the locked→unlocked transition and perk levels stay in sync.
 	MetaProgress.upgrades_changed.connect(_rebuild_cyber_doc_panel)
+	# Blacksmith rebuilds on stash changes (dismantle/reforge emit upgrades_changed)
+	# and on any scrap balance change (affordability of reforge buttons).
+	MetaProgress.upgrades_changed.connect(_rebuild_blacksmith_panel)
+	MetaProgress.scrap_changed.connect(func(_v): _rebuild_blacksmith_panel())
 
 
 func _build() -> void:
@@ -124,6 +130,13 @@ func _build() -> void:
 	_cyber_doc_panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
 	vbox.add_child(_cyber_doc_panel)
 	_rebuild_cyber_doc_panel()
+
+	# Blacksmith station: dismantle stash gear → Scrap; spend Scrap to reforge.
+	# Separate from the `blacksmith` base UPGRADE (safe cells) above.
+	_blacksmith_panel = PanelContainer.new()
+	_blacksmith_panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	vbox.add_child(_blacksmith_panel)
+	_rebuild_blacksmith_panel()
 
 	# Recent runs panel — last 5 entries from MetaProgress.run_history.
 	var history_label := Label.new()
@@ -328,6 +341,127 @@ func _build_perk_row(perk_id: String) -> Control:
 		buy_btn.disabled = MetaProgress.caps < cost
 		buy_btn.pressed.connect(func() -> void: MetaProgress.buy_caps_perk(perk_id))
 	row.add_child(buy_btn)
+
+	return row
+
+
+## Rebuild the Blacksmith station panel: Scrap balance + one row per stash item
+## (name, rarity, affixes, Dismantle + Reforge buttons). Called on build and on
+## every stash/scrap change. Affordability of Reforge tracks the live Scrap total.
+func _rebuild_blacksmith_panel() -> void:
+	if not is_instance_valid(_blacksmith_panel):
+		return
+	for c in _blacksmith_panel.get_children():
+		c.queue_free()
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 14)
+	margin.add_theme_constant_override("margin_bottom", 14)
+	_blacksmith_panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	margin.add_child(vbox)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 16)
+	vbox.add_child(header)
+
+	var title := Label.new()
+	title.text = tr("UI_HOME_BLACKSMITH_TITLE").to_upper()
+	_style_readable_label(title, 24, Color(1, 0.92, 0.55), 2)
+	header.add_child(title)
+
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(spacer)
+
+	var scrap_lbl := Label.new()
+	scrap_lbl.text = tr("UI_HOME_BLACKSMITH_SCRAP").format({"n": MetaProgress.scrap})
+	_style_readable_label(scrap_lbl, 22, Color(0.78, 0.86, 0.62), 2)
+	header.add_child(scrap_lbl)
+
+	if MetaProgress.stash.is_empty():
+		var empty := Label.new()
+		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		empty.text = tr("UI_HOME_BLACKSMITH_EMPTY")
+		_style_readable_label(empty, 16, Color(0.8, 0.74, 0.6), 1)
+		vbox.add_child(empty)
+		return
+
+	for i in range(MetaProgress.stash.size()):
+		vbox.add_child(_build_blacksmith_row(int(i)))
+
+
+func _build_blacksmith_row(index: int) -> Control:
+	var inst := RunManager.as_equip_instance(MetaProgress.stash[index])
+	var base_id := str(inst.get("base", ""))
+	var rarity := str(inst.get("rarity", "common"))
+	var cursed := bool(inst.get("cursed", false))
+	var data = RunManager.get_equipment_data(base_id)
+	var item_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+
+	var name_lbl := Label.new()
+	name_lbl.text = "%s [%s]" % [item_name, rarity.capitalize()]
+	_style_readable_label(name_lbl, 18, Color(1, 0.92, 0.55), 1)
+	name_lbl.custom_minimum_size = Vector2(260, 0)
+	row.add_child(name_lbl)
+
+	# Affixes, comma-separated; curses tinted red. Built as a single label per
+	# affix so curse coloring stays per-affix.
+	var affix_box := HBoxContainer.new()
+	affix_box.add_theme_constant_override("separation", 8)
+	affix_box.custom_minimum_size = Vector2(300, 0)
+	var affixes := RunManager.equip_affixes(inst)
+	if affixes.is_empty():
+		var none := Label.new()
+		none.text = "—"
+		_style_readable_label(none, 16, Color(0.7, 0.7, 0.68), 1)
+		affix_box.add_child(none)
+	else:
+		for affix in affixes:
+			var a := affix as Dictionary
+			var lbl := Label.new()
+			lbl.text = MetaProgress.AFFIX_POOL.describe(a)
+			var is_curse := MetaProgress.AFFIX_POOL.is_curse(a)
+			_style_readable_label(
+				lbl, 16, Color(1.0, 0.42, 0.42) if is_curse else Color(0.7, 0.92, 0.7), 1
+			)
+			affix_box.add_child(lbl)
+	row.add_child(affix_box)
+
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(spacer)
+
+	var dismantle_scrap := int(
+		MetaProgress.DISMANTLE_SCRAP.get(rarity, MetaProgress.DISMANTLE_SCRAP["common"])
+	)
+	if cursed:
+		dismantle_scrap += 5
+	var dismantle_btn := Button.new()
+	dismantle_btn.text = tr("UI_HOME_BLACKSMITH_DISMANTLE").format({"n": dismantle_scrap})
+	dismantle_btn.custom_minimum_size = Vector2(160, 36)
+	T.apply_button_theme(dismantle_btn)
+	dismantle_btn.pressed.connect(func() -> void: MetaProgress.dismantle_stash_item(index))
+	row.add_child(dismantle_btn)
+
+	var reforge_cost := int(
+		MetaProgress.REFORGE_COST.get(rarity, MetaProgress.REFORGE_COST["common"])
+	)
+	var reforge_btn := Button.new()
+	reforge_btn.text = tr("UI_HOME_BLACKSMITH_REFORGE").format({"n": reforge_cost})
+	reforge_btn.custom_minimum_size = Vector2(170, 36)
+	T.apply_button_theme(reforge_btn)
+	reforge_btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
+	reforge_btn.disabled = MetaProgress.scrap < reforge_cost
+	reforge_btn.pressed.connect(func() -> void: MetaProgress.reforge_stash_item(index))
+	row.add_child(reforge_btn)
 
 	return row
 

@@ -60,6 +60,13 @@ const CYBER_DOC_PERKS := {
 const SAFE_CELLS_BASE := 2
 ## Permanent equipment stash capacity (gear carried out of runs).
 const STASH_CAP := 40
+## Blacksmith: scrap yielded by dismantling a stash item, by rarity. Cursed items
+## yield +5 extra (the curse is "recycled").
+const DISMANTLE_SCRAP := {"common": 5, "uncommon": 12, "rare": 25}
+## Blacksmith: scrap cost to reforge (reroll one affix on) a stash item, by rarity.
+const REFORGE_COST := {"common": 15, "uncommon": 30, "rare": 50}
+## Affix roller (per-instance equipment); used by reforge_stash_item.
+const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
 ## Cards available before any card_research is purchased. The omitted
 ## ids (bone_breaker, last_breath, preemptive_strike, chain_link, last_stand)
 ## unlock via the card_research upgrade.
@@ -276,6 +283,48 @@ func remove_from_stash(item: Variant) -> bool:
 		return false
 	stash.remove_at(idx)
 	save_progress()
+	return true
+
+
+## --- Blacksmith: dismantle (→ scrap) + reforge (spend scrap, reroll affix) ---
+
+
+## Dismantle stash item `index`: remove it and grant scrap based on its rarity
+## (+5 if cursed). Emits scrap_changed (via add_scrap) and upgrades_changed so the
+## blacksmith panel rebuilds. Returns false for an out-of-range index.
+func dismantle_stash_item(index: int) -> bool:
+	if index < 0 or index >= stash.size():
+		return false
+	var inst: Dictionary = RunManager.as_equip_instance(stash[index])
+	var rarity: String = str(inst.get("rarity", "common"))
+	var amount: int = int(DISMANTLE_SCRAP.get(rarity, DISMANTLE_SCRAP["common"]))
+	if bool(inst.get("cursed", false)):
+		amount += 5
+	stash.remove_at(index)
+	add_scrap(amount)  # saves + emits scrap_changed
+	save_progress()
+	emit_signal("upgrades_changed")
+	return true
+
+
+## Reforge stash item `index`: spend the rarity's REFORGE_COST in scrap to reroll
+## one (non-curse) affix. Stores the result back as a full instance dict. Returns
+## false on bad index or insufficient scrap.
+func reforge_stash_item(index: int) -> bool:
+	if index < 0 or index >= stash.size():
+		return false
+	var inst: Dictionary = RunManager.as_equip_instance(stash[index])
+	if inst.is_empty():
+		return false
+	var rarity: String = str(inst.get("rarity", "common"))
+	var cost: int = int(REFORGE_COST.get(rarity, REFORGE_COST["common"]))
+	if scrap < cost:
+		return false
+	spend_scrap(cost)  # saves + emits scrap_changed
+	inst["affixes"] = AFFIX_POOL.reroll_one(RunManager.equip_affixes(inst))
+	stash[index] = inst  # ensure a full instance dict (converts legacy strings)
+	save_progress()
+	emit_signal("upgrades_changed")
 	return true
 
 

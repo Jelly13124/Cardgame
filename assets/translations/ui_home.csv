@@ -31,3 +31,8 @@ UI_HOME_PERK_CYBER_CHARM,Charm Augment (+CHARM),魅力强化（+魅力）
 UI_HOME_PERK_LEVEL,Lv {cur}/{max},等级 {cur}/{max}
 UI_HOME_PERK_COST,Cost: {n} Caps,花费：{n} 瓶盖
 UI_HOME_PERK_MAX,MAX,满级
+UI_HOME_BLACKSMITH_TITLE,Blacksmith,铁匠铺
+UI_HOME_BLACKSMITH_SCRAP,⚙ SCRAP: {n},⚙ 废料：{n}
+UI_HOME_BLACKSMITH_EMPTY,Stash is empty — extract gear from a run to dismantle or reforge it here.,仓库空空 —— 撤离带回装备后，方可在此拆解或重铸。
+UI_HOME_BLACKSMITH_DISMANTLE,Dismantle (+{n}),拆解（+{n}）
+UI_HOME_BLACKSMITH_REFORGE,Reforge ({n} Scrap),重铸（{n} 废料）
