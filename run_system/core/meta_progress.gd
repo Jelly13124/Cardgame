@@ -1,9 +1,11 @@
 ## Persistent meta-progression. Survives across runs. Loaded from
 ## user://meta.json at autoload _ready; saved on every mutation.
 ##
-## Schema: { "core": int, "caps": int, "upgrades": { "<id>": int } }
+## Schema: { "core": int, "caps": int, "scrap": int, "upgrades": { "<id>": int } }
 ##   - core: current spendable Core currency
 ##   - caps: current spendable Caps currency (second permanent currency)
+##   - scrap: current spendable Scrap currency (third permanent currency; earned by
+##     dismantling equipment at the blacksmith, spent on reforging)
 ##   - upgrades: id → current level (0..3)
 extends Node
 
@@ -11,11 +13,15 @@ const SAVE_PATH := "user://meta.json"
 
 signal core_changed(new_value: int)
 signal caps_changed(new_value: int)
+signal scrap_changed(new_value: int)
 signal upgrades_changed
 
 var core: int = 0
 ## Second permanent currency. Spent at base facilities; earned via E2.
 var caps: int = 0
+## Third permanent currency. Earned by dismantling equipment at the blacksmith;
+## spent on reforging.
+var scrap: int = 0
 var upgrades: Dictionary = {}
 ## Facilities unlocked with Core (one-time). facility_id → true once unlocked.
 var facilities: Dictionary = {}
@@ -161,6 +167,21 @@ func spend_caps(amount: int) -> bool:
 	return true
 
 
+func add_scrap(amount: int) -> void:
+	scrap = max(0, scrap + amount)
+	save_progress()
+	emit_signal("scrap_changed", scrap)
+
+
+func spend_scrap(amount: int) -> bool:
+	if scrap < amount:
+		return false
+	scrap -= amount
+	save_progress()
+	emit_signal("scrap_changed", scrap)
+	return true
+
+
 func get_upgrade_level(id: String) -> int:
 	return int(upgrades.get(id, 0))
 
@@ -294,12 +315,14 @@ func purchase_upgrade(id: String, definition: Dictionary) -> bool:
 func reset_all() -> void:
 	core = 0
 	caps = 0
+	scrap = 0
 	upgrades.clear()
 	facilities.clear()
 	caps_perk_levels.clear()
 	save_progress()
 	emit_signal("core_changed", core)
 	emit_signal("caps_changed", caps)
+	emit_signal("scrap_changed", scrap)
 	emit_signal("upgrades_changed")
 
 
@@ -311,6 +334,7 @@ func save_progress() -> void:
 	var payload := {
 		"core": core,
 		"caps": caps,
+		"scrap": scrap,
 		"upgrades": upgrades,
 		"facilities": facilities,
 		"caps_perk_levels": caps_perk_levels,
@@ -338,6 +362,7 @@ func load_progress() -> void:
 		return
 	core = int(parsed.get("core", 0))
 	caps = int(parsed.get("caps", 0))
+	scrap = int(parsed.get("scrap", 0))
 	var raw_upgrades = parsed.get("upgrades", {})
 	if typeof(raw_upgrades) == TYPE_DICTIONARY:
 		upgrades = raw_upgrades
