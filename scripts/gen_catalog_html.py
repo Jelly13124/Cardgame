@@ -46,6 +46,7 @@ equip_tr = load_tr("content_equipment.csv")
 enemy_tr = load_tr("content_enemies.csv")
 combat_tr = load_tr("ui_combat.csv")
 battle_tr = load_tr("ui_battle.csv")
+uiequip_tr = load_tr("ui_equipment.csv")
 
 
 def esc(s):
@@ -125,7 +126,7 @@ document.querySelectorAll('.tag').forEach(tag=>tag.addEventListener('click',()=>
 def nav(cur):
     items = [("cards.html", "Cards 卡牌"), ("relics.html", "Relics 遗物"),
              ("equipment.html", "Equipment 装备"), ("enemies.html", "Enemies 敌人"),
-             ("keywords.html", "Keywords 关键词")]
+             ("affixes.html", "Affixes 词条"), ("keywords.html", "Keywords 关键词")]
     return '<div class="nav">' + "".join(
         '<a class="%s" href="%s">%s</a>' % ("cur" if f == cur else "", f, esc(t))
         for f, t in items
@@ -445,9 +446,59 @@ def build_keywords():
          "", "".join(body), total)
 
 
+# ── Affixes (parsed from affix_pool.gd) ─────────────────────────────────────
+def _affix_text(affix_type, value):
+    key = "UI_AFFIX_" + affix_type.upper()
+    tr = uiequip_tr.get(key, {})
+    en = tr.get("en", "") or ("%+d %s" % (value, cap(affix_type)))
+    zh = tr.get("zh", "")
+    fmt = lambda s: s.replace("{value}", str(value)).replace("{abs}", str(abs(value)))
+    return fmt(en), fmt(zh)
+
+
+def build_affixes():
+    import re
+    src = open(os.path.join(ROOT, "run_system", "core", "affix_pool.gd"), encoding="utf-8").read()
+
+    def parse_block(name):
+        m = re.search(name + r"\s*:=\s*\[(.*?)\]", src, re.S)
+        if not m:
+            return []
+        return [(t, int(v)) for t, v in
+                re.findall(r'\{"type":\s*"([^"]+)",\s*"value":\s*(-?\d+)\}', m.group(1))]
+
+    positive = parse_block("POSITIVE")
+    curse = parse_block("CURSE")
+    cm = re.search(r'AFFIX_COUNT\s*:=\s*\{([^}]*)\}', src)
+    count_rule = cm.group(1).strip() if cm else "common:1, uncommon:2, rare:2"
+
+    def affix_card(t, v, curse_flag):
+        en, zh = _affix_text(t, v)
+        color = "#e0584c" if curse_flag else "#5fd06a"
+        search = ("%s %s %s" % (t, en, zh)).lower()
+        return (f'<div class="kwc" data-search="{esc(search)}" style="border-left-color:{color}">'
+                f'<h3 style="color:{color}">{esc(zh) or esc(en)} <span class="en">{esc(en)}</span></h3>'
+                f'<div class="meta"><span class="pill" style="color:#6b6256">{esc(t)}</span>'
+                f'<span class="pill">value {esc(v)}</span></div></div>')
+
+    body = []
+    note = (f'<div class="section"><h2>Positive Affixes 正向词条 '
+            f'<span class="cnt">({len(positive)}) · roll count by rarity: {esc(count_rule)} '
+            f'(cursed = +1 positive + 1 curse)</span></h2></div>')
+    body.append(note)
+    body.append('<div class="kw">' + "".join(affix_card(t, v, False) for t, v in positive) + "</div>")
+    body.append(f'<div class="section"><h2>Curse Affixes 诅咒词条 <span class="cnt">({len(curse)}) · '
+                f'high-ascension cursed gear: 1 curse + up to 3 positives</span></h2></div>')
+    body.append('<div class="kw">' + "".join(affix_card(t, v, True) for t, v in curse) + "</div>")
+    page("affixes.html", "Affixes · 词条",
+         "Equipment affixes — rolled per item by rarity (common 1 / uncommon 2 / rare 2 + set)",
+         "", "".join(body), len(positive) + len(curse))
+
+
 build_cards()
 build_relics()
 build_equipment()
 build_enemies()
+build_affixes()
 build_keywords()
 print("Done ->", OUT)
