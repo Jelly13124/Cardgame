@@ -463,10 +463,27 @@ func _make_equip_cell(item_id: String, index: int, instance: Dictionary = {}) ->
 		if btn == MOUSE_BUTTON_LEFT:
 			_on_equip_pressed(item_id, slot, index)
 		elif btn == MOUSE_BUTTON_RIGHT:
-			RunManager.discard_from_inventory(index)
+			_confirm_discard(index, item_id)
 		elif btn == MOUSE_BUTTON_MIDDLE:
 			_toggle_safe(index)
 	return cell
+
+
+## Right-click discard now asks first — affixed gear is permanently lost otherwise.
+func _confirm_discard(index: int, item_id: String) -> void:
+	var item_name := Settings.t("EQUIP_%s_NAME" % item_id, item_id)
+	var dlg := ConfirmationDialog.new()
+	dlg.title = tr("UI_EQUIP_DISCARD_TITLE")
+	dlg.dialog_text = tr("UI_EQUIP_DISCARD_CONFIRM").format({"item": item_name})
+	dlg.exclusive = true  # block backpack interaction so `index` stays valid
+	dlg.confirmed.connect(
+		func():
+			RunManager.discard_from_inventory(index)
+			dlg.queue_free()
+	)
+	dlg.canceled.connect(dlg.queue_free)
+	add_child(dlg)
+	dlg.popup_centered()
 
 
 ## A gold / Core resource stack cell. Draggable as a whole stack (move/swap via
@@ -573,9 +590,9 @@ func _build_set_row(set_id: String, count: int) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 
-	var set_name := Settings.t("EQUIP_SET_%s_NAME" % set_id, str(set_data.get("name", set_id)))
+	var equipment_set_name := Settings.t("EQUIP_SET_%s_NAME" % set_id, str(set_data.get("name", set_id)))
 	var name_lbl := Label.new()
-	name_lbl.text = "%s  %d/5" % [set_name, count]
+	name_lbl.text = "%s  %d/5" % [equipment_set_name, count]
 	name_lbl.add_theme_color_override("font_color", Color(1, 0.95, 0.5))
 	name_lbl.custom_minimum_size = Vector2(180, 0)
 	row.add_child(name_lbl)
@@ -656,8 +673,8 @@ func _build_equipment_tooltip(data: Dictionary, slot: String, instance: Dictiona
 			else:
 				lines.append("[color=#5fd06a]%s[/color]" % label)
 	if set_id != "":
-		var set_name := Settings.t("EQUIP_SET_%s_NAME" % set_id, set_id.replace("_", " "))
-		lines.append("[i]%s[/i]" % tr("UI_EQUIP_SET_PREFIX").format({"name": set_name}))
+		var equipment_set_name := Settings.t("EQUIP_SET_%s_NAME" % set_id, set_id.replace("_", " "))
+		lines.append("[i]%s[/i]" % tr("UI_EQUIP_SET_PREFIX").format({"name": equipment_set_name}))
 	if desc != "":
 		lines.append("")
 		lines.append(desc)

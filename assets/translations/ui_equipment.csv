@@ -40,6 +40,8 @@ UI_EQUIP_MODAL_FULL_SUBTITLE,"Pick something to discard, or skip the new equipme
 UI_EQUIP_MODAL_INCOMING,── INCOMING ──,── 新装备 ──
 UI_EQUIP_MODAL_DISCARD_SELECTED,DISCARD SELECTED,丢弃所选
 UI_EQUIP_MODAL_SKIP,SKIP NEW ITEM,跳过新物品
+UI_EQUIP_DISCARD_TITLE,Discard Equipment,丢弃装备
+UI_EQUIP_DISCARD_CONFIRM,Discard {item}? It will be lost permanently.,丢弃 {item}？将永久失去。
 UI_AFFIX_ATTR_STRENGTH,+{value} Strength,+{value} 力量
 UI_AFFIX_ATTR_CONSTITUTION,+{value} Constitution,+{value} 体质
 UI_AFFIX_ATTR_INTELLIGENCE,+{value} Intelligence,+{value} 智力
