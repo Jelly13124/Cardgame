@@ -118,6 +118,26 @@ const REQUIRED_EQUIPMENT_KEYS = ["id", "name", "slot", "rarity", "bonuses", "des
 const ALLOWED_EQUIPMENT_SLOTS = ["head", "chest", "weapon", "hands", "accessory"]
 const ALLOWED_ATTRIBUTE_KEYS = ["strength", "constitution", "intelligence", "luck", "charm"]
 const KNOWN_OPTIONAL_EQUIPMENT_KEYS = ["set_id"]
+## Affix `type` strings rolled at RUNTIME by affix_pool.gd (Phase 2 affix model).
+## Affixes are not shipped in JSON, so they are not boot-validated; this list
+## exists to honor the two-place rule — when E_B/E_C consume affix types they are
+## documented/enumerated here alongside the affix pool definitions.
+const ALLOWED_AFFIX_TYPES = [
+	"attr_strength",
+	"attr_constitution",
+	"attr_intelligence",
+	"attr_luck",
+	"attr_charm",
+	"crit_pct",
+	"max_hp",
+	"curse_attr_strength",
+	"curse_attr_constitution",
+	"curse_attr_intelligence",
+	"curse_attr_luck",
+	"curse_attr_charm",
+	"curse_max_hp",
+	"curse_crit",
+]
 
 # ─── Equipment set schema ────────────────────────────────────────────────────
 const REQUIRED_SET_KEYS = ["id", "name", "description", "tiers"]
