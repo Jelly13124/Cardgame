@@ -9,14 +9,23 @@ const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 signal resolved(took_item: bool)
 
 var _incoming_item_id: String
+## The rolled equip instance to actually re-add on discard (preserves affixes).
+## Empty {} → fall back to re-adding by bare item_id (legacy/derived affixes).
+var _incoming_instance: Dictionary = {}
 ## Real backpack CELL index (0..MAX_INVENTORY-1) of the chosen equip, or -1.
 var _selected_bag_index: int = -1
 var _bag_buttons: Array[Button] = []
 var _bag_grid: GridContainer = null
 
 
-func setup(incoming_item_id: String) -> void:
-	_incoming_item_id = incoming_item_id
+## `incoming` may be a bare item_id String (display + re-add by id) or a rolled
+## instance Dictionary (display via its base, re-add the instance to keep affixes).
+func setup(incoming: Variant) -> void:
+	if typeof(incoming) == TYPE_DICTIONARY:
+		_incoming_instance = incoming
+		_incoming_item_id = RunManager.equip_base(incoming)
+	else:
+		_incoming_item_id = str(incoming)
 
 
 func _ready() -> void:
@@ -154,7 +163,9 @@ func _on_discard_selected() -> void:
 	if RunManager.backpack_changed.is_connected(_rebuild_bag_grid):
 		RunManager.backpack_changed.disconnect(_rebuild_bag_grid)
 	RunManager.discard_from_inventory(_selected_bag_index)
-	RunManager.add_to_inventory(_incoming_item_id)
+	RunManager.add_to_inventory(
+		_incoming_instance if not _incoming_instance.is_empty() else _incoming_item_id
+	)
 	emit_signal("resolved", true)
 	queue_free()
 

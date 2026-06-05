@@ -999,6 +999,25 @@ func as_equip_instance(x: Variant) -> Dictionary:
 	return {}
 
 
+## Build a FRESH rolled equipment instance for a base item_id. Reads slot/set_id
+## from the item JSON and rolls real affixes via AFFIX_POOL.roll(rarity, cursed).
+## This is the grant path (drops / events / starter inventory) — unlike
+## as_equip_instance (which derives affixes from legacy `bonuses` for back-compat),
+## here affixes are rolled anew. Returns {} for an empty/unknown base.
+func make_equip_instance(base_id: String, rarity: String, cursed: bool = false) -> Dictionary:
+	if base_id == "":
+		return {}
+	var data: Dictionary = get_equipment_data(base_id)
+	var resolved_rarity: String = rarity if rarity != "" else str(data.get("rarity", "common"))
+	return {
+		"base": base_id,
+		"rarity": resolved_rarity,
+		"affixes": AFFIX_POOL.roll(resolved_rarity, cursed),
+		"cursed": cursed,
+		"set_id": str(data.get("set_id", "")),
+	}
+
+
 ## The base item_id of an equip (instance / String / {}). "" when empty.
 func equip_base(inst: Variant) -> String:
 	var d := as_equip_instance(inst)
@@ -1194,9 +1213,10 @@ func apply_event_effects(effects: Array) -> void:
 			"gain_relic":
 				add_relic(str(effect.get("id", "")))
 			"gain_equipment":
-				var item_id := roll_equipment_drop(str(effect.get("rarity", "")))
+				var rarity := str(effect.get("rarity", ""))
+				var item_id := roll_equipment_drop(rarity)
 				if item_id != "":
-					add_equip_to_backpack(item_id)
+					add_equip_to_backpack(make_equip_instance(item_id, rarity))
 			"gain_attribute":
 				grant_attribute(str(effect.get("attr", "")), int(effect.get("amount", 0)))
 
@@ -1510,11 +1530,11 @@ func _apply_meta_upgrades() -> void:
 		for i in range(commons):
 			var item_id := roll_equipment_drop("common")
 			if item_id != "":
-				add_to_inventory(item_id)
+				add_to_inventory(make_equip_instance(item_id, "common"))
 		for i in range(uncommons):
 			var item_id := roll_equipment_drop("uncommon")
 			if item_id != "":
-				add_to_inventory(item_id)
+				add_to_inventory(make_equip_instance(item_id, "uncommon"))
 	# Starter Boost → +N random attribute points (each picks a random
 	# attribute from STR/CON/INT/LCK/CHA and increments by 1).
 	var starter := _get_meta_effect_value("starter_boost")

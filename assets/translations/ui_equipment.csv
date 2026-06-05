@@ -40,3 +40,14 @@ UI_EQUIP_MODAL_FULL_SUBTITLE,"Pick something to discard, or skip the new equipme
 UI_EQUIP_MODAL_INCOMING,── INCOMING ──,── 新装备 ──
 UI_EQUIP_MODAL_DISCARD_SELECTED,DISCARD SELECTED,丢弃所选
 UI_EQUIP_MODAL_SKIP,SKIP NEW ITEM,跳过新物品
+UI_AFFIX_ATTR_STRENGTH,+{value} Strength,+{value} 力量
+UI_AFFIX_ATTR_CONSTITUTION,+{value} Constitution,+{value} 体质
+UI_AFFIX_ATTR_INTELLIGENCE,+{value} Intelligence,+{value} 智力
+UI_AFFIX_ATTR_LUCK,+{value} Luck,+{value} 幸运
+UI_AFFIX_ATTR_CHARM,+{value} Charm,+{value} 魅力
+UI_AFFIX_CRIT_PCT,+{value}% Crit,+{value}% 暴击
+UI_AFFIX_MAX_HP,+{value} Max HP,+{value} 生命上限
+UI_AFFIX_CURSE_ATTR_STRENGTH,{value} Strength (Curse),{value} 力量（诅咒）
+UI_AFFIX_CURSE_ATTR_CONSTITUTION,{value} Constitution (Curse),{value} 体质（诅咒）
+UI_AFFIX_CURSE_MAX_HP,{value} Max HP (Curse),{value} 生命上限（诅咒）
+UI_AFFIX_CURSE_CRIT,{value}% Crit (Curse),{value}% 暴击（诅咒）
