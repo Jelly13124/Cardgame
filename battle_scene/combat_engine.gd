@@ -180,6 +180,8 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			if player and "status_system" in player and player.status_system:
 				amount = int(amount * player.status_system.get_block_multiplier())
 			player.add_block(amount)
+			if player.has_method("play_block_pulse"):
+				player.play_block_pulse()  # grow-and-shrink, like the enemy's block
 			main.show_notification(
 				tr("UI_COMBAT_GAIN_BLOCK").format({"n": amount}), Color(0.4, 0.6, 1.0)
 			)

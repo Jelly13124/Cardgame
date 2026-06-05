@@ -378,6 +378,20 @@ func add_block(amount: int) -> void:
 	_refresh_hud()
 
 
+## Quick scale pulse when gaining block — mirrors the enemy's block-action pulse
+## (enemy_ai "block"). Killed/reset if it overlaps so scale always lands at 1.
+var _block_pulse_tween: Tween
+
+
+func play_block_pulse() -> void:
+	if _block_pulse_tween and _block_pulse_tween.is_valid():
+		_block_pulse_tween.kill()
+	scale = Vector2.ONE
+	_block_pulse_tween = create_tween()
+	_block_pulse_tween.tween_property(self, "scale", Vector2(1.2, 1.2), 0.1)
+	_block_pulse_tween.tween_property(self, "scale", Vector2.ONE, 0.1)
+
+
 func start_turn() -> void:
 	status_system.on_turn_start(self)
 	if health <= 0:

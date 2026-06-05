@@ -65,14 +65,11 @@ func _build_ui() -> void:
 	_hp_frame.add_child(_hp_label)
 
 	# ---- Block Badge (Shield) ----
-	# Enlarged 60→80 so block reads clearly (player + enemy share this HUD, so
-	# both grow together and stay visually consistent). Position recomputed to
-	# keep the badge centered on the same anchor point as the old 60px badge.
 	_block_badge = TextureRect.new()
 	_block_badge.texture = load(UI_PATH + "block_badge.png")
 	_block_badge.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	_block_badge.size = Vector2(80, 80)
-	_block_badge.position = Vector2(-40, -27)
+	_block_badge.size = Vector2(60, 60)
+	_block_badge.position = Vector2(-30, -17)
 	_block_badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_block_badge.visible = false
 	add_child(_block_badge)
@@ -81,9 +78,9 @@ func _build_ui() -> void:
 	_block_label.size = _block_badge.size
 	_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_block_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_block_label.add_theme_font_size_override("font_size", 42)
+	_block_label.add_theme_font_size_override("font_size", 30)
 	_block_label.add_theme_color_override("font_color", Color(1, 1, 1))
-	_block_label.position = Vector2(0, -3)  # adjust padding inside shield
+	_block_label.position = Vector2(0, -2)  # adjust padding inside shield
 	_block_badge.add_child(_block_label)
 
 	# ---- Status Badges (positioned below HP bar, centered, supports stacking) ----
