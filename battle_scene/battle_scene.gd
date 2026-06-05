@@ -370,8 +370,10 @@ func _on_turn_started(side: String) -> void:
 		deck_manager.first_round_draw()
 	else:
 		deck_manager.draw_cards(3)
-	# Rare: drew a hand with nothing affordable → end immediately after a beat.
-	_maybe_auto_end_turn()
+	# NOTE: deliberately NOT calling _maybe_auto_end_turn() here. The opening draw
+	# (esp. with a reshuffle) leaves the hand briefly empty, which used to trip a
+	# premature auto-end → turn flip → re-draw (the "draws 6 at turn start" bug).
+	# Auto-end only runs after a card is PLAYED (see play_spell tail).
 
 
 ## STS rule: at END of player turn, reset block/energy. Hand discard is handled
@@ -529,14 +531,16 @@ func _cards_resolving() -> bool:
 func _maybe_auto_end_turn() -> void:
 	if _auto_ending or is_game_over or not turn_manager.is_player_turn:
 		return
-	if _has_playable_card() or _cards_resolving():
+	# Never auto-end while a draw is in flight (a slow reshuffle leaves the hand
+	# momentarily empty — that is NOT "nothing to play").
+	if _has_playable_card() or _cards_resolving() or deck_manager.is_drawing():
 		return
 	_auto_ending = true
 	await _wait(0.55)
 	if is_game_over or not turn_manager.is_player_turn:
 		_auto_ending = false
 		return
-	if _has_playable_card() or _cards_resolving():
+	if _has_playable_card() or _cards_resolving() or deck_manager.is_drawing():
 		_auto_ending = false
 		return
 	_on_end_round_button_pressed()

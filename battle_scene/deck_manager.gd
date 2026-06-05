@@ -27,6 +27,12 @@ var _drawing: bool = false
 var _pending_draw: int = 0
 
 
+## True while a draw (incl. a slow reshuffle) is in flight. Callers like the
+## auto-end-turn check must NOT treat an empty hand as "unplayable" mid-draw.
+func is_drawing() -> bool:
+	return _drawing or _pending_draw > 0
+
+
 func draw_cards(count: int) -> void:
 	if count <= 0:
 		return
