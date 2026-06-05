@@ -52,6 +52,18 @@ bash scripts/smoke_test.sh    # GODOT_BIN overrides the godot binary if not on P
 Expected tail: `[OK] DataValidator: all schemas passed.` On this machine Godot is
 `C:/Program Files/Godot/Godot_v4.6-stable_win64_console.exe`.
 
+**Keep the HTML catalogs in sync.** Whenever you add or remove content
+(cards / relics / equipment / enemies / affixes) or change its numbers, regenerate
+the browsable reference tables before finishing:
+
+```bash
+python scripts/gen_catalog_html.py   # → docs/catalog_html/{cards,relics,equipment,enemies,keywords,affixes}.html
+```
+
+The generator reads the JSON data + translation CSVs + `affix_pool.gd`, so it
+reflects the new values automatically. Cards are grouped by type, relics by
+rarity, equipment by slot, enemies by tier; affixes have their own page.
+
 ## Project-tuned tooling
 
 - `/new-content <type> <id>` — scaffold a card/enemy/relic/hero/base_upgrade with schema + wiring.
