@@ -1,0 +1,20 @@
+keys,en,zh
+UI_CLINIC_CAPS,Caps: {n},瓶盖：{n}
+UI_CLINIC_ATTR_TITLE,Attribute Augments,属性强化
+UI_CLINIC_HP_TITLE,Vitality,生命强化
+UI_CLINIC_CAP_TITLE,Augment Cap,强化上限
+UI_CLINIC_PERK_CYBER_STR,Strength Augment (+STR),力量强化（+力量）
+UI_CLINIC_PERK_CYBER_CON,Constitution Augment (+CON),体质强化（+体质）
+UI_CLINIC_PERK_CYBER_INT,Intelligence Augment (+INT),智力强化（+智力）
+UI_CLINIC_PERK_CYBER_LUCK,Luck Augment (+LUCK),幸运强化（+幸运）
+UI_CLINIC_PERK_CYBER_CHARM,Charm Augment (+CHARM),魅力强化（+魅力）
+UI_CLINIC_PERK_LEVEL,Lv {cur}/{max},等级 {cur}/{max}
+UI_CLINIC_PERK_COST,Cost: {n} Caps,花费：{n} 瓶盖
+UI_CLINIC_PERK_MAX,MAX,满级
+UI_CLINIC_BUY,Buy,购买
+UI_CLINIC_COMING,Coming,即将到来
+UI_CLINIC_HP_PERK,Max-HP Augment (+{hp} HP),生命强化（+{hp} 生命）
+UI_CLINIC_LOCKED_ATTR,"Unlock the Clinic (T1) to install attribute augments.",解锁义体诊所（T1）以安装属性强化。
+UI_CLINIC_LOCKED_HP,"Upgrade the Clinic to T2 to unlock the Max-HP augment.",升级义体诊所至 T2 以解锁生命强化。
+UI_CLINIC_CAP_BASE,"Augment level cap is {cap}. Upgrade the Clinic to T3 to raise it to {high}.","强化等级上限为 {cap}。升级义体诊所至 T3 可提升至 {high}。"
+UI_CLINIC_CAP_HIGH,Augment level cap raised to {cap} (Clinic T3).,强化等级上限已提升至 {cap}（义体诊所 T3）。

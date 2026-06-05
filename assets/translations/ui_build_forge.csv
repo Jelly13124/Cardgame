@@ -1,0 +1,21 @@
+keys,en,zh
+UI_FORGE_SCRAP,Scrap: {n},废料：{n}
+UI_FORGE_EMPTY,Stash is empty — extract gear from a run to dismantle, reforge or curse it here.,仓库空空 —— 撤离带回装备后，方可在此拆解、重铸或诅咒。
+UI_FORGE_DISMANTLE,Dismantle ({n} Scrap),拆解（{n} 废料）
+UI_FORGE_REFORGE,Reforge ({n} Scrap),重铸（{n} 废料）
+UI_FORGE_CURSE,Curse ({n} Scrap),诅咒（{n} 废料）
+UI_FORGE_CRAFT,Craft ({n} Scrap),锻造（{n} 废料）
+UI_FORGE_CRAFT_TITLE,Craft Equipment,锻造装备
+UI_FORGE_SLOT,Slot,部位
+UI_FORGE_RARITY,Rarity,品质
+UI_FORGE_SLOT_HEAD,Head,头部
+UI_FORGE_SLOT_CHEST,Chest,胸甲
+UI_FORGE_SLOT_WEAPON,Weapon,武器
+UI_FORGE_SLOT_HANDS,Hands,手部
+UI_FORGE_SLOT_ACCESSORY,Accessory,饰品
+UI_FORGE_RARITY_COMMON,Common,普通
+UI_FORGE_RARITY_UNCOMMON,Uncommon,优良
+UI_FORGE_RARITY_RARE,Rare,稀有
+UI_FORGE_CRAFT_LOCKED,Craft unlocks at Forge T2.,锻造在铁匠铺 T2 解锁。
+UI_FORGE_REFORGE_LOCKED,Reforge unlocks at Forge T2.,重铸在铁匠铺 T2 解锁。
+UI_FORGE_CURSE_LOCKED,Curse unlocks at Forge T3.,诅咒在铁匠铺 T3 解锁。

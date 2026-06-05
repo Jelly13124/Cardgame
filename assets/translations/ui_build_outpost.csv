@@ -1,0 +1,21 @@
+keys,en,zh
+UI_OUTPOST_CORE_BALANCE,"Core: {n}","核心:{n}"
+UI_OUTPOST_LOCKED_BUILDING,Unlock the Outpost (above) to access its functions.,先解锁前哨站(上方)才能使用其功能。
+UI_OUTPOST_SECT_GOLD,Starting Gold,起始金币
+UI_OUTPOST_SECT_DISCOUNT,Merchant Discount,商人折扣
+UI_OUTPOST_SECT_DIFFICULTY,Difficulty,难度
+UI_OUTPOST_SECT_SAFE_CELLS,Safe Cells,安全格
+UI_OUTPOST_SECT_DECK,Starter Deck Editor,初始牌组编辑
+UI_OUTPOST_UPGRADE_MISSING,"Upgrade definition missing: {id}","缺少升级定义:{id}"
+UI_OUTPOST_DIFFICULTY_NOTE,Choose the ascension difficulty for your next run. Higher difficulty means tougher enemies.,选择下一局的进阶难度。难度越高,敌人越强。
+UI_OUTPOST_DIFFICULTY_CHOSEN,"Selected: Ascension {n}","已选:进阶 {n}"
+UI_OUTPOST_LOCK_SAFE_CELLS,Reach Outpost Tier 2 to upgrade safe cells.,升级前哨站至 T2 才能强化安全格。
+UI_OUTPOST_LOCK_DECK,Reach Outpost Tier 3 to edit your starter deck.,升级前哨站至 T3 才能编辑初始牌组。
+UI_OUTPOST_DECK_NO_HERO,Select a hero first to edit a starter deck.,请先选择英雄,再编辑初始牌组。
+UI_OUTPOST_DECK_HERO,"Hero: {hero}","英雄:{hero}"
+UI_OUTPOST_DECK_SWAPS,"Swaps used: {cur} / {max}","已替换:{cur} / {max}"
+UI_OUTPOST_DECK_CURRENT,Current deck (click a card to replace):,当前牌组(点击卡牌进行替换):
+UI_OUTPOST_DECK_REPLACE,Replace with an unlocked card:,选择已解锁卡牌替换:
+UI_OUTPOST_DECK_RESET,RESET,重置
+UI_OUTPOST_DECK_SAVE,SAVE,保存
+UI_OUTPOST_DECK_SAVE_DISABLED,"Saving is not available yet — the per-hero deck override is not implemented. Edits here are preview-only.","暂不支持保存 —— 尚未实现每位英雄的牌组覆盖。此处编辑仅为预览。"
