@@ -123,7 +123,8 @@ func _rebuild_bag_grid() -> void:
 		var cell = RunManager.backpack[cell_idx]
 		if cell == null or cell.get("kind") != "equip":
 			continue
-		var bag_id: String = str(cell["id"])
+		# Tolerant: equip cells carry an instance under "item" (legacy: "id").
+		var bag_id: String = RunManager.equip_base(cell.get("item", cell.get("id", "")))
 		var data = RunManager.get_equipment_data(bag_id)
 		var btn := Button.new()
 		btn.text = Settings.t("EQUIP_%s_NAME" % bag_id, str(data.get("name", bag_id)))

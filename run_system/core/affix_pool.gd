@@ -121,7 +121,8 @@ static func describe(affix: Dictionary) -> String:
 	var type: String = String(affix.get("type", ""))
 	var value: int = int(affix.get("value", 0))
 	var key := "UI_AFFIX_" + type.to_upper()
-	var localized := tr(key)
+	# Static context: tr() is an instance method, so use TranslationServer directly.
+	var localized := TranslationServer.translate(key)
 	if localized != key:
 		return localized.format({"value": value, "abs": abs(value)})
 	var sign := "+" if value >= 0 else ""
