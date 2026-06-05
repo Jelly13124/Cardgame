@@ -343,7 +343,15 @@ func _make_building_tile(building_id: String) -> Control:
 func _open_building_screen(building_id: String) -> void:
 	if get_node_or_null("BuildingOverlay") != null:
 		return
-	var screen := BUILDING_SCREEN_BASE.new()
+	# Convention: load run_system/ui/buildings/<id>_screen.gd (a BUILDING_SCREEN_BASE
+	# subclass) if it exists, else fall back to the shared base (placeholder content).
+	# This lets each building screen be added as its own isolated file.
+	var script_path := "res://run_system/ui/buildings/%s_screen.gd" % building_id
+	var screen = (
+		load(script_path).new()
+		if ResourceLoader.exists(script_path)
+		else BUILDING_SCREEN_BASE.new()
+	)
 	screen.name = "BuildingOverlay"
 	screen.building_id = building_id
 	screen.accent = BUILDING_ACCENTS.get(building_id, Color(0.86, 0.78, 0.52))
