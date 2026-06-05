@@ -183,6 +183,14 @@ func _make_equipment_stock_entry(item_id: String, rarity: String) -> Dictionary:
 
 func _list_cards_by_rarity() -> Dictionary:
 	var result := {"common": [], "uncommon": [], "rare": []}
+	# Block other heroes' exclusive cards (e.g. the Feng Shui Master's yin/yang
+	# cards must not appear in Cowboy Bill's shop).
+	var hero_id := str(RunManager.current_hero_id)
+	var blocked := {}
+	for h in MetaProgress.HERO_EXCLUSIVE_CARDS:
+		if h != hero_id:
+			for cid in MetaProgress.HERO_EXCLUSIVE_CARDS[h]:
+				blocked[str(cid)] = true
 	var dir = DirAccess.open("res://battle_scene/card_info/player/")
 	if dir == null:
 		return result
@@ -191,6 +199,8 @@ func _list_cards_by_rarity() -> Dictionary:
 			continue
 		var card_id := file_name.get_basename()
 		if card_id.ends_with("_plus"):
+			continue
+		if blocked.has(card_id):
 			continue
 		var data := _load_json("res://battle_scene/card_info/player/" + file_name)
 		var rarity := str(data.get("rarity", "common"))
@@ -394,7 +404,7 @@ func _add_scene_art() -> void:
 	if ResourceLoader.exists(SHOP_BACKGROUND_PATH):
 		var bg := TextureRect.new()
 		bg.texture = load(SHOP_BACKGROUND_PATH)
-		bg.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		bg.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -415,7 +425,7 @@ func _add_scene_art() -> void:
 	if ResourceLoader.exists(SHOPKEEPER_PATH):
 		var keeper := TextureRect.new()
 		keeper.texture = load(SHOPKEEPER_PATH)
-		keeper.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		keeper.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		keeper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		keeper.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		keeper.mouse_filter = Control.MOUSE_FILTER_IGNORE

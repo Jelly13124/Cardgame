@@ -18,7 +18,31 @@ func first_round_draw() -> void:
 ## one-by-one would re-fan the hand on every add, so any cards still in hand
 ## (drawn before deck depleted) visibly shift positions N times. Batching makes
 ## the hand re-fan only once to its final layout.
+## Serialized draw guard. draw_cards is an async coroutine but most callers
+## fire-and-forget it (card draw effects, turn-start draw, relic/harmony draws).
+## If a second draw is requested while one is running (e.g. during a reshuffle's
+## ~0.5s animation), running both concurrently double-draws / corrupts the piles.
+## So: queue the extra count and draw it AFTER the current draw finishes.
+var _drawing: bool = false
+var _pending_draw: int = 0
+
+
 func draw_cards(count: int) -> void:
+	if count <= 0:
+		return
+	if _drawing:
+		_pending_draw += count
+		return
+	_drawing = true
+	await _draw_internal(count)
+	while _pending_draw > 0:
+		var n: int = _pending_draw
+		_pending_draw = 0
+		await _draw_internal(n)
+	_drawing = false
+
+
+func _draw_internal(count: int) -> void:
 	var remaining = count
 	while remaining > 0:
 		if deck.get_card_count() > 0:

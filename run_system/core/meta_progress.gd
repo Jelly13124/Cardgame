@@ -81,13 +81,22 @@ const INITIAL_CARD_POOL: Array[String] = [
 	"purge",
 	"second_wind",
 	"smoke_step",
-	"yin_crescent_cut",
-	"yin_still_water",
-	"yang_solar_strike",
-	"yang_ember_will",
-	"taiji_shift",
-	"taiji_pivot",
 ]
+
+## Hero-exclusive draft cards: only offered (loot/shop) when that hero is active.
+## The Feng Shui Master's yin/yang/flip cards make no sense for a non-polarity
+## hero (Cowboy Bill), so they must NOT roll in his card rewards.
+const HERO_EXCLUSIVE_CARDS := {
+	"hero_fengshui_master":
+	[
+		"yin_crescent_cut",
+		"yin_still_water",
+		"yang_solar_strike",
+		"yang_ember_will",
+		"taiji_shift",
+		"taiji_pivot",
+	],
+}
 
 
 func _ready() -> void:
@@ -114,12 +123,18 @@ func append_run_history(entry: Dictionary) -> void:
 	save_progress()
 
 
-## Returns the union of INITIAL_CARD_POOL and unlocked_cards.
+## Returns the union of INITIAL_CARD_POOL, unlocked_cards, and the ACTIVE hero's
+## exclusive cards (so e.g. the Feng Shui Master's yin/yang cards are draftable
+## for him but never for Cowboy Bill).
 func get_unlocked_card_pool() -> Array[String]:
 	var pool: Array[String] = INITIAL_CARD_POOL.duplicate()
 	for c in unlocked_cards:
 		if not c in pool:
 			pool.append(c)
+	var hero_id: String = str(RunManager.current_hero_id) if RunManager else ""
+	for c in HERO_EXCLUSIVE_CARDS.get(hero_id, []):
+		if not str(c) in pool:
+			pool.append(str(c))
 	return pool
 
 
