@@ -474,6 +474,11 @@ func _start_new_game():
 		if RunManager.current_encounter.size() > 0:
 			enemy_ai.enemy_roster = RunManager.current_encounter
 
+	# Passive relic stat grants at battle start (war_horn +STR, bulk_actuator).
+	# Runs after player attributes are seeded above so it stacks on the base.
+	if relic_effect_system:
+		relic_effect_system.on_battle_started(player)
+
 	# Snapshot active equipment set tiers (and apply start_battle_block)
 	if equipment_set_system:
 		equipment_set_system.on_battle_started(player)

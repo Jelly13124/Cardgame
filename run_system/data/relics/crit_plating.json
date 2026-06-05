@@ -1,0 +1,13 @@
+{
+  "id": "crit_plating",
+  "title": "Crit Plating",
+  "description": "Whenever you gain Block, a luck-scaled chance to gain 1.5x as much.",
+  "icon": "res://run_system/assets/images/relics/crit_plating.png",
+  "rarity": "rare",
+  "effects": [
+    {
+      "trigger": "player_gain_block",
+      "type": "gain_block_crit"
+    }
+  ]
+}

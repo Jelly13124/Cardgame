@@ -1,14 +1,14 @@
 {
 	"id": "scavenger_lens",
 	"title": "Scavenger's Lens",
-	"description": "After combat, gain 12 Gold.",
+	"description": "Whenever you gain Block, deal 3 damage to a random enemy.",
 	"icon": "res://run_system/assets/images/relics/scavenger_lens.png",
 	"rarity": "uncommon",
 	"effects": [
 		{
-			"trigger": "combat_victory",
-			"type": "gain_gold",
-			"amount": 12
+			"trigger": "player_gain_block",
+			"type": "block_gain_damage",
+			"amount": 3
 		}
 	]
 }

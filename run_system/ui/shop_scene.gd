@@ -236,6 +236,9 @@ func _list_unowned_relics() -> Array:
 		var relic_id := file_name.get_basename()
 		if relic_id in RunManager.relics:
 			continue
+		# "unique" relics are hero-starting only — never stock them in the shop.
+		if str(RunManager.get_relic_data(relic_id).get("rarity", "common")) == "unique":
+			continue
 		candidates.append(relic_id)
 	return candidates
 

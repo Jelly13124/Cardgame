@@ -1303,8 +1303,13 @@ func get_unowned_relic_ids() -> Array[String]:
 		if not file_name.ends_with(".json"):
 			continue
 		var relic_id = file_name.get_basename()
-		if not has_relic(relic_id):
-			ids.append(relic_id)
+		if has_relic(relic_id):
+			continue
+		# "unique" relics are hero-starting only and must never roll as loot/
+		# relic-choice. They are not part of the common/uncommon/rare buckets.
+		if str(get_relic_data(relic_id).get("rarity", "common")) == "unique":
+			continue
+		ids.append(relic_id)
 	ids.sort()
 	return ids
 
