@@ -30,7 +30,9 @@ var max_ascension: int = 0
 var unlocked_cards: Array[String] = []
 ## Permanent equipment stash — gear carried out by extracting/surviving (in a
 ## safe cell). Persists across runs; loaded into a run via the loadout step.
-var stash: Array[String] = []
+## Each entry is an equip INSTANCE dict (see RunManager.as_equip_instance), or a
+## legacy item_id String from an older save — both are tolerated on read.
+var stash: Array = []
 
 const RUN_HISTORY_CAP := 50
 const ASCENSION_CAP := 5
@@ -226,18 +228,29 @@ func effective_safe_cells() -> int:
 	return SAFE_CELLS_BASE + get_upgrade_level("blacksmith")
 
 
-## Add an item to the permanent stash. Returns false if the stash is full.
-func add_to_stash(item_id: String) -> bool:
-	if item_id == "" or stash.size() >= STASH_CAP:
+## Add an equip to the permanent stash. Accepts an instance dict or a legacy
+## item_id String; an empty instance / "" is rejected. Returns false if the
+## stash is full or the entry is empty.
+func add_to_stash(item: Variant) -> bool:
+	if stash.size() >= STASH_CAP:
 		return false
-	stash.append(item_id)
+	if typeof(item) == TYPE_STRING:
+		if str(item) == "":
+			return false
+	elif typeof(item) == TYPE_DICTIONARY:
+		if (item as Dictionary).is_empty():
+			return false
+	else:
+		return false
+	stash.append(item)
 	save_progress()
 	return true
 
 
-## Remove one occurrence of item_id from the stash. Returns false if absent.
-func remove_from_stash(item_id: String) -> bool:
-	var idx := stash.find(item_id)
+## Remove one occurrence of `item` from the stash. Matches instances by VALUE
+## (and legacy strings by equality). Returns false if absent.
+func remove_from_stash(item: Variant) -> bool:
+	var idx := stash.find(item)
 	if idx < 0:
 		return false
 	stash.remove_at(idx)
@@ -345,8 +358,15 @@ func load_progress() -> void:
 		unlocked_cards.clear()
 		for c in raw_unlocked:
 			unlocked_cards.append(str(c))
+	# Stash entries may be equip INSTANCE dicts (new) or legacy item_id Strings
+	# (old saves). Preserve both as-is — RunManager.as_equip_instance converts
+	# strings on read; no normalization needed here (lower-risk than rewriting
+	# the save). Anything that isn't a dict/string is coerced to a string id.
 	var raw_stash = parsed.get("stash", [])
 	if typeof(raw_stash) == TYPE_ARRAY:
 		stash.clear()
 		for s in raw_stash:
-			stash.append(str(s))
+			if typeof(s) == TYPE_DICTIONARY or typeof(s) == TYPE_STRING:
+				stash.append(s)
+			else:
+				stash.append(str(s))

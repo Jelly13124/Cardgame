@@ -288,7 +288,8 @@ func _refresh() -> void:
 		var icon: EquipmentIcon = _slot_icons[slot]
 		var cell = _slot_cells[slot]
 		var label: Label = _slot_labels[slot]
-		var item_id: String = RunManager.equipped_items.get(slot, "")
+		# Tolerant read: slot may hold an instance dict (new) or a legacy String.
+		var item_id: String = RunManager.equip_base(RunManager.equipped_items.get(slot, {}))
 		var slot_label := _slot_label(slot)
 		if item_id == "":
 			icon.set_empty(slot)
@@ -362,7 +363,10 @@ func _build_cell_content(index: int) -> Control:
 	if typeof(cell) == TYPE_DICTIONARY:
 		match str(cell.get("kind", "")):
 			"equip":
-				return _make_equip_cell(str(cell.get("id", "")), index)
+				# Tolerant: equip cells now carry an instance under "item"; older
+				# cells carried a bare "id" String. equip_base handles both.
+				var base_id := RunManager.equip_base(cell.get("item", cell.get("id", "")))
+				return _make_equip_cell(base_id, index)
 			"gold":
 				return _make_resource_cell(
 					tr("UI_EQUIP_CELL_GOLD"), int(cell.get("amount", 0)), T.SAND_LIGHT, index, "gold"
@@ -532,7 +536,7 @@ func _on_equip_pressed(item_id: String, slot: String, _index: int) -> void:
 
 
 func _on_unequip_pressed(slot: String) -> void:
-	if RunManager.equipped_items.get(slot, "") == "":
+	if RunManager.equip_base(RunManager.equipped_items.get(slot, {})) == "":
 		return
 	if not RunManager.unequip_slot(slot):
 		_status_label.text = tr("UI_EQUIP_FULL_UNEQUIP")

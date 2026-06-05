@@ -423,7 +423,9 @@ func _open_stash() -> void:
 			grid.add_child(empty)
 		else:
 			for i in range(st.size()):
-				grid.add_child(_make_stash_cell(int(i), str(st[i])))
+				# Stash entries may be instances or legacy strings; resolve the
+				# display base id tolerantly.
+				grid.add_child(_make_stash_cell(int(i), RunManager.equip_base(st[i])))
 		count_lbl.text = TranslationServer.translate("UI_HOME_STASH_SELECTED").format(
 			{"n": _stash_selected.size()}
 		)
@@ -465,7 +467,9 @@ func _toggle_stash_select(index: int) -> void:
 	RunManager.pending_loadout.clear()
 	for i in _stash_selected:
 		if i < MetaProgress.stash.size():
-			RunManager.pending_loadout.append(str(MetaProgress.stash[i]))
+			# Push the actual stash entry (instance dict, or legacy string) so
+			# its rolled affixes travel into the run intact.
+			RunManager.pending_loadout.append(MetaProgress.stash[i])
 	if _stash_rebuild.is_valid():
 		_stash_rebuild.call()
 
