@@ -8,6 +8,17 @@ const UPGRADE_PANEL_SCRIPT = preload("res://run_system/ui/upgrade_panel.gd")
 const HERO_SELECT_PACKED = preload("res://run_system/ui/hero_select.tscn")
 const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
 const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
+const BUILDING_SCREEN_BASE = preload("res://run_system/ui/buildings/building_screen_base.gd")
+## Building selector order + per-building placeholder accent (Codex art swaps the
+## tile sprite later; the accent keeps the 5 tiles visually distinct meanwhile).
+const BUILDING_ORDER := ["forge", "clinic", "market", "outpost", "warehouse"]
+const BUILDING_ACCENTS := {
+	"forge": Color(0.92, 0.55, 0.32),
+	"clinic": Color(0.46, 0.86, 0.78),
+	"market": Color(0.95, 0.82, 0.40),
+	"outpost": Color(0.62, 0.78, 0.96),
+	"warehouse": Color(0.78, 0.72, 0.60),
+}
 const HOME_BACKGROUND_PATH := "res://run_system/assets/images/home/home_base_bg.png"
 const UPGRADE_DIR := "res://run_system/data/base_upgrades/"
 const UPGRADE_ORDER := [
@@ -24,6 +35,9 @@ const UPGRADE_ORDER := [
 
 var _core_label: Label
 var _caps_label: Label
+var _scrap_label: Label
+## Building selector tiles, keyed by building_id, rebuilt on buildings_changed.
+var _building_grid: GridContainer
 ## Cyber Doctor facility panel root — rebuilt whenever facility/perk state changes.
 var _cyber_doc_panel: PanelContainer
 ## Blacksmith station panel root — rebuilt whenever stash/scrap state changes.
@@ -46,6 +60,9 @@ func _ready() -> void:
 	# and on any scrap balance change (affordability of reforge buttons).
 	MetaProgress.upgrades_changed.connect(_rebuild_blacksmith_panel)
 	MetaProgress.scrap_changed.connect(func(_v): _rebuild_blacksmith_panel())
+	# Building selector: top-bar Scrap + tile lock/tier badges track these.
+	MetaProgress.scrap_changed.connect(func(_v): _refresh_scrap())
+	MetaProgress.buildings_changed.connect(_rebuild_building_tiles)
 
 
 func _build() -> void:
@@ -85,6 +102,11 @@ func _build() -> void:
 	header.add_child(_caps_label)
 	_refresh_caps()
 
+	_scrap_label = Label.new()
+	_style_readable_label(_scrap_label, 32, Color(0.78, 0.86, 0.62), 3)
+	header.add_child(_scrap_label)
+	_refresh_scrap()
+
 	var settings_btn := Button.new()
 	settings_btn.text = "⚙ " + TranslationServer.translate("SETTINGS_BUTTON")
 	settings_btn.custom_minimum_size = Vector2(136, 48)
@@ -108,6 +130,20 @@ func _build() -> void:
 	T.apply_button_theme(start_btn)
 	start_btn.pressed.connect(_on_start_pressed)
 	header.add_child(start_btn)
+
+	# Building selector — the new primary view (5 clickable tiles). Sits above the
+	# legacy upgrade/facility panels, which stay reachable below during Phase 1.
+	var buildings_label := Label.new()
+	buildings_label.text = tr("UI_HOME_BUILDINGS")
+	_style_readable_label(buildings_label, 24, Color(1, 0.92, 0.55), 2)
+	vbox.add_child(buildings_label)
+
+	_building_grid = GridContainer.new()
+	_building_grid.columns = 5
+	_building_grid.add_theme_constant_override("h_separation", 18)
+	_building_grid.add_theme_constant_override("v_separation", 18)
+	vbox.add_child(_building_grid)
+	_rebuild_building_tiles()
 
 	# Upgrade grid (3 cols)
 	var grid := GridContainer.new()
@@ -233,6 +269,89 @@ func _refresh_core() -> void:
 func _refresh_caps() -> void:
 	if _caps_label:
 		_caps_label.text = tr("UI_HOME_CAPS").format({"n": MetaProgress.caps})
+
+
+func _refresh_scrap() -> void:
+	if _scrap_label:
+		_scrap_label.text = tr("UI_HOME_SCRAP").format({"n": MetaProgress.scrap})
+
+
+## Rebuild the 5 building selector tiles (placeholder: a themed Panel with an
+## accent strip + name + lock/tier badge). Called on build and on every
+## buildings_changed so locked→unlocked / tier-up transitions repaint live.
+func _rebuild_building_tiles() -> void:
+	if not is_instance_valid(_building_grid):
+		return
+	for c in _building_grid.get_children():
+		c.queue_free()
+	for building_id in BUILDING_ORDER:
+		_building_grid.add_child(_make_building_tile(str(building_id)))
+
+
+func _make_building_tile(building_id: String) -> Control:
+	var accent: Color = BUILDING_ACCENTS.get(building_id, Color(0.86, 0.78, 0.52))
+	var tier := MetaProgress.get_building_tier(building_id)
+
+	var tile := PanelContainer.new()
+	tile.custom_minimum_size = Vector2(180, 150)
+	tile.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	tile.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+	var margin := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		margin.add_theme_constant_override(side, 12)
+	tile.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	margin.add_child(box)
+
+	# Placeholder "sprite": a flat accent-colored block (Codex art swaps this).
+	var accent_block := ColorRect.new()
+	accent_block.color = accent
+	accent_block.custom_minimum_size = Vector2(0, 56)
+	accent_block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_child(accent_block)
+
+	var name_lbl := Label.new()
+	name_lbl.text = tr("UI_BUILD_%s_NAME" % building_id.to_upper())
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_style_readable_label(name_lbl, 18, Color(1, 0.92, 0.55), 1)
+	box.add_child(name_lbl)
+
+	var badge := Label.new()
+	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if tier <= 0:
+		badge.text = "🔒"
+		_style_readable_label(badge, 18, Color(0.82, 0.6, 0.55), 1)
+	else:
+		badge.text = "T%d" % tier
+		_style_readable_label(badge, 18, Color(0.7, 0.92, 0.7), 1)
+	box.add_child(badge)
+
+	tile.gui_input.connect(
+		func(ev: InputEvent) -> void:
+			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+				_open_building_screen(building_id)
+	)
+	return tile
+
+
+## Open a building's screen as a full-rect overlay child. Phase 1 swaps in
+## per-building subclasses of BUILDING_SCREEN_BASE; for now every tile opens the
+## shared base screen (real unlock/upgrade buttons, placeholder content).
+func _open_building_screen(building_id: String) -> void:
+	if get_node_or_null("BuildingOverlay") != null:
+		return
+	var screen := BUILDING_SCREEN_BASE.new()
+	screen.name = "BuildingOverlay"
+	screen.building_id = building_id
+	screen.accent = BUILDING_ACCENTS.get(building_id, Color(0.86, 0.78, 0.52))
+	screen.on_close = func() -> void:
+		if is_instance_valid(screen):
+			screen.queue_free()
+	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(screen)
 
 
 ## Rebuild the Cyber Doctor facility panel. Two states: LOCKED (Core unlock
@@ -655,13 +774,13 @@ func _build_history_row(entry: Dictionary) -> Label:
 	)
 
 	var hero: String = _humanize_hero_id(str(entry.get("hero_id", "?")))
-	var floor: int = int(entry.get("floor", 0))
+	var floor_index: int = int(entry.get("floor", 0))
 	var act: int = int(entry.get("act", 1))  # legacy summaries predate `act`
 	var core_earned: int = int(entry.get("core_earned", 0))
 
 	var row := Label.new()
 	row.text = (tr("UI_HOME_RUN_ROW").format(
-		{"icon": icon, "hero": hero, "act": act, "floor": floor + 1, "core": core_earned}
+		{"icon": icon, "hero": hero, "act": act, "floor": floor_index + 1, "core": core_earned}
 	))
 	row.add_theme_color_override("font_color", color)
 	return row
