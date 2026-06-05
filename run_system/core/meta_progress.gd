@@ -15,6 +15,8 @@ signal core_changed(new_value: int)
 signal caps_changed(new_value: int)
 signal scrap_changed(new_value: int)
 signal upgrades_changed
+## Emitted when a building's tier changes (unlock/upgrade/reset/migration).
+signal buildings_changed
 
 var core: int = 0
 ## Second permanent currency. Spent at base facilities; earned via E2.
@@ -39,6 +41,10 @@ var unlocked_cards: Array[String] = []
 ## Each entry is an equip INSTANCE dict (see RunManager.as_equip_instance), or a
 ## legacy item_id String from an older save — both are tolerated on read.
 var stash: Array = []
+## Buildings refactor (5 clickable base buildings). building_id → tier int
+## (0=locked, 1=unlocked, 2, 3). Persisted; back-compat default {}. Warehouse
+## reads as tier 1 by default (free) via get_building_tier even when absent here.
+var buildings: Dictionary = {}
 
 const RUN_HISTORY_CAP := 50
 const ASCENSION_CAP := 5
@@ -56,6 +62,51 @@ const CYBER_DOC_PERKS := {
 	"cyber_luck": "luck",
 	"cyber_charm": "charm",
 }
+## --- Buildings refactor: single source of truth for the 5 base buildings ---
+## Each entry: unlock_cost (Core to go locked→T1), tier_costs ([T2 cost, T3 cost]
+## in Core), functions (function key → minimum tier that gates it). Warehouse
+## unlock_cost is 0 (free) and it defaults to tier 1 via get_building_tier.
+const BUILDING_DEFS := {
+	"forge":
+	{
+		"unlock_cost": 60,
+		"tier_costs": [100, 180],
+		"functions": {"dismantle": 1, "craft": 2, "reforge": 2, "curse": 3},
+	},
+	"clinic":
+	{
+		"unlock_cost": 80,
+		"tier_costs": [120, 200],
+		"functions": {"attr_perks": 1, "max_hp_perk": 2, "high_cap": 3},
+	},
+	"market":
+	{
+		"unlock_cost": 100,
+		"tier_costs": [140, 240],
+		"functions": {"equip_shop": 1, "card_unlock": 1, "better_stock": 2, "card_shop": 3},
+	},
+	"outpost":
+	{
+		"unlock_cost": 70,
+		"tier_costs": [100, 180],
+		"functions":
+		{
+			"gold": 1,
+			"discount": 1,
+			"difficulty": 1,
+			"safe_cells": 2,
+			"deck_editor": 3,
+		},
+	},
+	"warehouse":
+	{
+		"unlock_cost": 0,
+		"tier_costs": [80, 150],
+		"functions": {"hero_select": 1, "loadout": 1, "more_slots": 2, "conversion": 3},
+	},
+}
+## Building tier bounds. Tier 0 = locked, MAX_BUILDING_TIER = fully upgraded.
+const MAX_BUILDING_TIER := 3
 ## Safe-cell baseline; effective count = this + the blacksmith upgrade level.
 const SAFE_CELLS_BASE := 2
 ## Permanent equipment stash capacity (gear carried out of runs).
@@ -256,6 +307,98 @@ func effective_safe_cells() -> int:
 	return SAFE_CELLS_BASE + get_upgrade_level("blacksmith")
 
 
+## --- Buildings refactor: tiered Core-gated buildings ---
+
+
+## Current tier of a building (0=locked, 1=unlocked, 2, 3). Warehouse defaults to
+## tier 1 (free) when absent; all others default to 0 (locked).
+func get_building_tier(id: String) -> int:
+	return int(buildings.get(id, 1 if id == "warehouse" else 0))
+
+
+func is_building_unlocked(id: String) -> bool:
+	return get_building_tier(id) >= 1
+
+
+## Spend Core to unlock a building (locked → T1). Idempotent (returns true if
+## already unlocked). Returns false on unknown id or insufficient Core.
+func unlock_building(id: String) -> bool:
+	if not BUILDING_DEFS.has(id):
+		return false
+	if is_building_unlocked(id):
+		return true
+	var cost := int(BUILDING_DEFS[id].get("unlock_cost", -1))
+	if cost < 0 or core < cost:
+		return false
+	core -= cost
+	buildings[id] = 1
+	save_progress()
+	emit_signal("core_changed", core)
+	emit_signal("buildings_changed")
+	return true
+
+
+## Spend Core to upgrade a building one tier (T1→T2 or T2→T3). Returns false if
+## locked, already maxed, unknown id, or insufficient Core.
+func upgrade_building(id: String) -> bool:
+	if not BUILDING_DEFS.has(id):
+		return false
+	var cur := get_building_tier(id)
+	if cur < 1 or cur >= MAX_BUILDING_TIER:
+		return false
+	var tier_costs: Array = BUILDING_DEFS[id].get("tier_costs", [])
+	if cur - 1 >= tier_costs.size():
+		return false
+	var cost := int(tier_costs[cur - 1])
+	if core < cost:
+		return false
+	core -= cost
+	buildings[id] = cur + 1
+	save_progress()
+	emit_signal("core_changed", core)
+	emit_signal("buildings_changed")
+	return true
+
+
+## True if the building's current tier is high enough to gate `function`. Unknown
+## functions are treated as ungated-by-an-impossible-tier (never available).
+func building_can(id: String, function: String) -> bool:
+	if not BUILDING_DEFS.has(id):
+		return false
+	var functions: Dictionary = BUILDING_DEFS[id].get("functions", {})
+	return get_building_tier(id) >= int(functions.get(function, 99))
+
+
+## Cost (Core) of the next action on a building: its unlock cost if locked, else
+## the next tier-up cost, else -1 if maxed or unknown. For UI button labels.
+func next_building_cost(id: String) -> int:
+	if not BUILDING_DEFS.has(id):
+		return -1
+	var cur := get_building_tier(id)
+	if cur < 1:
+		return int(BUILDING_DEFS[id].get("unlock_cost", -1))
+	if cur >= MAX_BUILDING_TIER:
+		return -1
+	var tier_costs: Array = BUILDING_DEFS[id].get("tier_costs", [])
+	if cur - 1 >= tier_costs.size():
+		return -1
+	return int(tier_costs[cur - 1])
+
+
+## One-time migration: seed `buildings` from legacy facility/upgrade state so no
+## progress is lost when the buildings refactor lands. Idempotent — only ever
+## RAISES a building's tier (never lowers it). Legacy fields are NOT deleted (the
+## Phase-1 building screens still read caps_perk_levels / upgrades).
+func _normalize_buildings() -> void:
+	# Cyber Doctor facility unlocked → Clinic is at least tier 1.
+	if bool(facilities.get("cyber_doc", false)):
+		buildings["clinic"] = maxi(get_building_tier("clinic"), 1)
+	# Blacksmith safe-cell upgrade owned → Outpost at least tier 2 (safe_cells is
+	# an Outpost T2 function).
+	if get_upgrade_level("blacksmith") > 0:
+		buildings["outpost"] = maxi(get_building_tier("outpost"), 2)
+
+
 ## Add an equip to the permanent stash. Accepts an instance dict or a legacy
 ## item_id String; an empty instance / "" is rejected. Returns false if the
 ## stash is full or the entry is empty.
@@ -368,11 +511,13 @@ func reset_all() -> void:
 	upgrades.clear()
 	facilities.clear()
 	caps_perk_levels.clear()
+	buildings.clear()
 	save_progress()
 	emit_signal("core_changed", core)
 	emit_signal("caps_changed", caps)
 	emit_signal("scrap_changed", scrap)
 	emit_signal("upgrades_changed")
+	emit_signal("buildings_changed")
 
 
 func save_progress() -> void:
@@ -391,6 +536,7 @@ func save_progress() -> void:
 		"max_ascension": max_ascension,
 		"unlocked_cards": unlocked_cards,
 		"stash": stash,
+		"buildings": buildings,
 	}
 	f.store_string(JSON.stringify(payload, "  "))
 	f.close()
@@ -444,3 +590,14 @@ func load_progress() -> void:
 				stash.append(s)
 			else:
 				stash.append(str(s))
+	# Back-compat: old saves predate the buildings refactor. Missing key →
+	# empty {} (all locked except warehouse, which reads tier 1 by default).
+	# JSON int keys round-trip as Strings; values may parse as float, so coerce.
+	var raw_buildings = parsed.get("buildings", {})
+	buildings.clear()
+	if typeof(raw_buildings) == TYPE_DICTIONARY:
+		for bid in raw_buildings:
+			buildings[str(bid)] = int(raw_buildings[bid])
+	# One-time migration: seed building tiers from legacy facility/upgrade state
+	# so no progress is lost. Idempotent (only raises tiers); legacy fields kept.
+	_normalize_buildings()
