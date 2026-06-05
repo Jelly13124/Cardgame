@@ -634,7 +634,7 @@ func _grant_treasure_equipment() -> void:
 		return
 	var data = RunManager.get_equipment_data(item_id)
 	var item_name = Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
-	if RunManager.add_equip_to_backpack(item_id):
+	if RunManager.add_equip_to_backpack(RunManager.make_equip_instance(item_id, rarity)):
 		_show_popup(tr("UI_MAP_FOUND_EQUIPMENT").format({"n": item_name}))
 	else:
 		# Backpack full — gold/core/equipment all share the 20 cells now, so

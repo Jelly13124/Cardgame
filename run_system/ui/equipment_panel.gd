@@ -15,6 +15,7 @@ class_name EquipmentPanel
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 const BACKPACK_CELL = preload("res://run_system/ui/backpack_cell.gd")
+const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
 const HERO_SPRITE_DIR := "res://battle_scene/assets/images/heroes/"
 
 const GRID_COLUMNS := 5
@@ -289,7 +290,8 @@ func _refresh() -> void:
 		var cell = _slot_cells[slot]
 		var label: Label = _slot_labels[slot]
 		# Tolerant read: slot may hold an instance dict (new) or a legacy String.
-		var item_id: String = RunManager.equip_base(RunManager.equipped_items.get(slot, {}))
+		var slot_inst: Dictionary = RunManager.as_equip_instance(RunManager.equipped_items.get(slot, {}))
+		var item_id: String = RunManager.equip_base(slot_inst)
 		var slot_label := _slot_label(slot)
 		if item_id == "":
 			icon.set_empty(slot)
@@ -306,7 +308,7 @@ func _refresh() -> void:
 			cell.preview_text = str(SLOT_LETTERS.get(slot, "?"))
 			cell.preview_color = Color(1.0, 0.86, 0.4)
 			cell.preview_tex = _load_equip_tex(str(data.get("sprite", "")))
-			cell.hover_tip = _build_equipment_tooltip(data, slot)
+			cell.hover_tip = _build_equipment_tooltip(data, slot, slot_inst)
 			label.text = "%s: %s" % [slot_label, item_name]
 
 	# Backpack grid (rebuild every refresh)
@@ -364,9 +366,9 @@ func _build_cell_content(index: int) -> Control:
 		match str(cell.get("kind", "")):
 			"equip":
 				# Tolerant: equip cells now carry an instance under "item"; older
-				# cells carried a bare "id" String. equip_base handles both.
-				var base_id := RunManager.equip_base(cell.get("item", cell.get("id", "")))
-				return _make_equip_cell(base_id, index)
+				# cells carried a bare "id" String. as_equip_instance handles both.
+				var inst := RunManager.as_equip_instance(cell.get("item", cell.get("id", "")))
+				return _make_equip_cell(RunManager.equip_base(inst), index, inst)
 			"gold":
 				return _make_resource_cell(
 					tr("UI_EQUIP_CELL_GOLD"), int(cell.get("amount", 0)), T.SAND_LIGHT, index, "gold"
@@ -437,7 +439,7 @@ func _wire_backpack_drop(cell, index: int) -> void:
 
 ## An equipment cell: gear icon. Drag onto a slot to equip / onto another cell to
 ## move. Click fallback: left = equip, right = discard, middle = toggle safe.
-func _make_equip_cell(item_id: String, index: int) -> Control:
+func _make_equip_cell(item_id: String, index: int, instance: Dictionary = {}) -> Control:
 	var data = RunManager.get_equipment_data(item_id)
 	var slot := str(data.get("slot", "head"))
 	var item_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
@@ -449,7 +451,7 @@ func _make_equip_cell(item_id: String, index: int) -> Control:
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon.set_equipment(slot, item_name, str(data.get("sprite", "")))
 	cell.add_child(icon)
-	cell.hover_tip = _build_equipment_tooltip(data, slot)
+	cell.hover_tip = _build_equipment_tooltip(data, slot, instance)
 	cell.drag_payload = {
 		"src": "backpack", "index": index, "kind": "equip", "item_id": item_id, "slot": slot
 	}
@@ -624,21 +626,35 @@ func _format_bonuses(bonuses) -> String:
 	return ", ".join(parts)
 
 
-## Rich tooltip text for an equipment item.
-func _build_equipment_tooltip(data: Dictionary, slot: String) -> String:
+## Rich tooltip text for an equipment item. `instance` is the per-instance equip
+## dict (E_B) whose rolled affixes are listed one-per-line; pass {} to fall back
+## to the base JSON `bonuses` summary (legacy / no instance available). Curse
+## affixes render red, positives green.
+func _build_equipment_tooltip(data: Dictionary, slot: String, instance: Dictionary = {}) -> String:
 	var item_id := str(data.get("id", ""))
 	var name_str := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", "?")))
-	var rarity := str(data.get("rarity", "common"))
+	# Prefer the instance's rolled rarity; fall back to the base JSON rarity.
+	var rarity := str(instance.get("rarity", data.get("rarity", "common")))
 	var rarity_str := Settings.t("EQUIP_RARITY_%s" % rarity, rarity)
 	var desc := Settings.t("EQUIP_%s_DESC" % item_id, str(data.get("description", "")))
-	var bonuses_text := _format_bonuses(data.get("bonuses", {}))
-	var set_id := str(data.get("set_id", ""))
+	# Prefer the instance's set_id (rolled), fall back to the base JSON.
+	var set_id := str(instance.get("set_id", data.get("set_id", "")))
 
 	var lines: Array = []
 	lines.append("[b]%s[/b]" % name_str)
 	lines.append("[i]%s · %s[/i]" % [_slot_label(slot), rarity_str])
 	lines.append("")
-	lines.append(bonuses_text)
+	# Affix block: one localized line per rolled affix (curses red, positives green).
+	var affixes: Array = RunManager.equip_affixes(instance) if not instance.is_empty() else []
+	if affixes.is_empty():
+		lines.append(_format_bonuses(data.get("bonuses", {})))
+	else:
+		for affix in affixes:
+			var label := AFFIX_POOL.describe(affix as Dictionary)
+			if AFFIX_POOL.is_curse(affix as Dictionary):
+				lines.append("[color=#e0584c]%s[/color]" % label)
+			else:
+				lines.append("[color=#5fd06a]%s[/color]" % label)
 	if set_id != "":
 		var set_name := Settings.t("EQUIP_SET_%s_NAME" % set_id, set_id.replace("_", " "))
 		lines.append("[i]%s[/i]" % tr("UI_EQUIP_SET_PREFIX").format({"name": set_name}))

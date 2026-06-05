@@ -58,10 +58,34 @@ func _ready() -> void:
 
 
 func _apply_static_theme() -> void:
-	# Main background panels use codex's textured 9-slice (default = riveted
-	# plate; dark = modal-weight) instead of the old programmatic StyleBoxFlat.
-	$VBoxContainer/BannerPanel.add_theme_stylebox_override("panel", T.panel_textured("default"))
-	$VBoxContainer/LootPanel.add_theme_stylebox_override("panel", T.panel_textured("default"))
+	$BackgroundColor.color = Color(0.035, 0.027, 0.020, 0.72)
+	$VBoxContainer.add_theme_constant_override("separation", 14)
+	$VBoxContainer/BannerPanel.custom_minimum_size = Vector2(520, 104)
+	$VBoxContainer/LootPanel.custom_minimum_size = Vector2(760, 278)
+	$VBoxContainer/BannerPanel/MarginContainer.add_theme_constant_override("margin_left", 58)
+	$VBoxContainer/BannerPanel/MarginContainer.add_theme_constant_override("margin_right", 58)
+	$VBoxContainer/BannerPanel/MarginContainer.add_theme_constant_override("margin_top", 16)
+	$VBoxContainer/BannerPanel/MarginContainer.add_theme_constant_override("margin_bottom", 16)
+	$VBoxContainer/BannerPanel/MarginContainer/TitleLabel.add_theme_font_size_override(
+		"font_size", 44
+	)
+	$VBoxContainer/BannerPanel/MarginContainer/TitleLabel.add_theme_color_override(
+		"font_color", Color(1.0, 0.84, 0.48, 1.0)
+	)
+	$VBoxContainer/BannerPanel/MarginContainer/TitleLabel.add_theme_color_override(
+		"font_outline_color", Color(0.0, 0.0, 0.0, 0.72)
+	)
+	$VBoxContainer/BannerPanel/MarginContainer/TitleLabel.add_theme_constant_override(
+		"outline_size", 3
+	)
+	$VBoxContainer/LootPanel/MarginContainer.add_theme_constant_override("margin_left", 28)
+	$VBoxContainer/LootPanel/MarginContainer.add_theme_constant_override("margin_right", 28)
+	$VBoxContainer/LootPanel/MarginContainer.add_theme_constant_override("margin_top", 24)
+	$VBoxContainer/LootPanel/MarginContainer.add_theme_constant_override("margin_bottom", 24)
+	loot_list_container.add_theme_constant_override("separation", 12)
+
+	$VBoxContainer/BannerPanel.add_theme_stylebox_override("panel", _make_banner_style())
+	$VBoxContainer/LootPanel.add_theme_stylebox_override("panel", _make_loot_panel_style())
 	$DraftOverlay/VBoxContainer/DraftPanel.add_theme_stylebox_override(
 		"panel", T.panel_textured("dark")
 	)
@@ -95,7 +119,10 @@ func _generate_loot() -> void:
 		}
 	)
 
-	var equipment_drop_id = _roll_drop_for_node_type(RunManager.last_battle_node_type)
+	var equipment_drop_rarity = _drop_rarity_for_node_type(RunManager.last_battle_node_type)
+	var equipment_drop_id = (
+		RunManager.roll_equipment_drop(equipment_drop_rarity) if equipment_drop_rarity != "" else ""
+	)
 	if equipment_drop_id != "":
 		var data = RunManager.get_equipment_data(equipment_drop_id)
 		var set_tag := ""
@@ -106,6 +133,7 @@ func _generate_loot() -> void:
 				"id": "equipment",
 				"type": "equipment",
 				"item_id": equipment_drop_id,
+				"rarity": equipment_drop_rarity,
 				"title":
 				Settings.t(
 					"EQUIP_%s_NAME" % equipment_drop_id, str(data.get("name", equipment_drop_id))
@@ -130,33 +158,31 @@ func _populate_loot_ui() -> void:
 
 func _make_loot_row(loot: Dictionary) -> Button:
 	var button = Button.new()
-	button.custom_minimum_size = Vector2(660, 104)
+	button.custom_minimum_size = Vector2(704, 104)
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.focus_mode = Control.FOCUS_NONE
 	button.text = ""
-	button.add_theme_stylebox_override("normal", T.reward_row_style(T.PANEL_BG, T.PANEL_BORDER))
-	button.add_theme_stylebox_override("hover", T.reward_row_style(T.WARM_TAN, T.ACCENT_NEON_BLUE))
-	button.add_theme_stylebox_override(
-		"pressed", T.reward_row_style(T.RUST_PRIMARY, T.ACCENT_DANGER)
-	)
+	button.add_theme_stylebox_override("normal", _make_reward_row_style(false))
+	button.add_theme_stylebox_override("hover", _make_reward_row_style(true))
+	button.add_theme_stylebox_override("pressed", _make_reward_row_pressed_style())
 	button.pressed.connect(_on_loot_selected.bind(str(loot["id"]), button))
 
 	var margin = MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_right", 18)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_bottom", 10)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(margin)
 
 	var row = HBoxContainer.new()
-	row.add_theme_constant_override("separation", 18)
+	row.add_theme_constant_override("separation", 16)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(row)
 
-	row.add_child(_make_icon_well(str(loot.get("icon", ""))))
+	row.add_child(_make_icon_well(str(loot.get("icon", "")), str(loot.get("type", ""))))
 
 	var copy = VBoxContainer.new()
 	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -168,7 +194,9 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	var title = Label.new()
 	title.text = str(loot.get("title", tr("UI_LOOT_DEFAULT_TITLE")))
 	title.add_theme_color_override("font_color", T.TEXT_MAIN)
-	title.add_theme_font_size_override("font_size", 31)
+	title.add_theme_font_size_override("font_size", 29)
+	title.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.72))
+	title.add_theme_constant_override("outline_size", 2)
 	title.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	copy.add_child(title)
@@ -176,7 +204,7 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	var subtitle = Label.new()
 	subtitle.text = str(loot.get("subtitle", ""))
 	subtitle.add_theme_color_override("font_color", T.TEXT_SECONDARY)
-	subtitle.add_theme_font_size_override("font_size", 20)
+	subtitle.add_theme_font_size_override("font_size", 18)
 	subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	copy.add_child(subtitle)
 
@@ -184,10 +212,11 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	return button
 
 
-func _make_icon_well(icon_path: String) -> PanelContainer:
+func _make_icon_well(icon_path: String, loot_type: String = "") -> PanelContainer:
 	var frame = PanelContainer.new()
-	frame.custom_minimum_size = Vector2(82, 82)
-	frame.add_theme_stylebox_override("panel", T.icon_frame_style())
+	var is_primary_reward := loot_type in ["gold", "cards"]
+	frame.custom_minimum_size = Vector2(88, 88) if is_primary_reward else Vector2(76, 76)
+	frame.add_theme_stylebox_override("panel", _make_icon_well_style())
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var center = CenterContainer.new()
@@ -197,11 +226,11 @@ func _make_icon_well(icon_path: String) -> PanelContainer:
 	var texture = _load_texture(icon_path)
 	if texture:
 		var icon = TextureRect.new()
-		icon.custom_minimum_size = Vector2(68, 68)
+		icon.custom_minimum_size = Vector2(78, 78) if is_primary_reward else Vector2(62, 62)
 		icon.texture = texture
 		icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		center.add_child(icon)
 	else:
@@ -217,10 +246,8 @@ func _make_icon_well(icon_path: String) -> PanelContainer:
 
 func _make_claim_plate(label_text: String = "") -> PanelContainer:
 	var plate = PanelContainer.new()
-	plate.custom_minimum_size = Vector2(104, 50)
-	plate.add_theme_stylebox_override(
-		"panel", T.panel_with_shadow(Color(0.08, 0.12, 0.13, 1.0), T.ACCENT_NEON_BLUE, 3)
-	)
+	plate.custom_minimum_size = Vector2(112, 54)
+	plate.add_theme_stylebox_override("panel", _make_claim_plate_style())
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var label = Label.new()
@@ -228,10 +255,71 @@ func _make_claim_plate(label_text: String = "") -> PanelContainer:
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 20)
-	label.add_theme_color_override("font_color", Color(0.76, 0.96, 1.0, 1.0))
+	label.add_theme_color_override("font_color", Color(0.80, 0.98, 1.0, 1.0))
+	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.80))
+	label.add_theme_constant_override("outline_size", 2)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	plate.add_child(label)
 	return plate
+
+
+func _make_banner_style() -> StyleBoxFlat:
+	var style := T.panel_with_shadow(
+		Color(0.13, 0.075, 0.045, 0.98), Color(0.78, 0.38, 0.16, 1.0), 6, 3
+	)
+	style.shadow_size = 12
+	style.shadow_offset = Vector2(3, 5)
+	style.content_margin_left = 18.0
+	style.content_margin_right = 18.0
+	style.content_margin_top = 8.0
+	style.content_margin_bottom = 8.0
+	return style
+
+
+func _make_loot_panel_style() -> StyleBoxFlat:
+	var style := T.panel_with_shadow(
+		Color(0.075, 0.046, 0.030, 0.96), Color(0.60, 0.30, 0.14, 1.0), 6, 3
+	)
+	style.shadow_size = 14
+	style.shadow_offset = Vector2(5, 7)
+	return style
+
+
+func _make_reward_row_style(hovered: bool) -> StyleBoxFlat:
+	var bg := Color(0.105, 0.065, 0.042, 0.96) if not hovered else Color(0.145, 0.088, 0.050, 0.98)
+	var border := Color(0.55, 0.29, 0.14, 1.0) if not hovered else T.ACCENT_NEON_BLUE
+	var style := T.panel_with_shadow(bg, border, 5, 2)
+	style.shadow_size = 6
+	style.shadow_offset = Vector2(3, 4)
+	style.content_margin_left = 12.0
+	style.content_margin_right = 12.0
+	style.content_margin_top = 8.0
+	style.content_margin_bottom = 8.0
+	return style
+
+
+func _make_reward_row_pressed_style() -> StyleBoxFlat:
+	var style := _make_reward_row_style(true)
+	style.bg_color = Color(0.16, 0.082, 0.044, 1.0)
+	style.border_color = T.ACCENT_DANGER
+	return style
+
+
+func _make_icon_well_style() -> StyleBoxFlat:
+	var style := T.panel_with_shadow(
+		Color(0.035, 0.029, 0.023, 1.0), Color(0.80, 0.50, 0.20, 1.0), 4, 2
+	)
+	style.shadow_size = 4
+	style.shadow_offset = Vector2(2, 2)
+	return style
+
+
+func _make_claim_plate_style() -> StyleBoxFlat:
+	var style := T.panel_with_shadow(Color(0.035, 0.145, 0.165, 0.98), T.ACCENT_NEON_BLUE, 5, 3)
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.45)
+	style.shadow_size = 5
+	style.shadow_offset = Vector2(2, 3)
+	return style
 
 
 func _on_loot_selected(loot_id: String, button: Button) -> void:
@@ -258,7 +346,7 @@ func _on_loot_selected(loot_id: String, button: Button) -> void:
 		_open_card_draft()
 		button.queue_free()
 	elif loot["type"] == "equipment":
-		_claim_equipment_drop(str(loot.get("item_id", "")), button)
+		_claim_equipment_drop(str(loot.get("item_id", "")), str(loot.get("rarity", "")), button)
 
 
 func _on_proceed_pressed() -> void:
@@ -404,28 +492,31 @@ func _close_card_draft() -> void:
 	draft_overlay.visible = false
 
 
-## Returns "" if no drop. Otherwise an equipment id.
-func _roll_drop_for_node_type(node_type: String) -> String:
+## Returns "" if no drop. Otherwise the drop rarity for this node type.
+func _drop_rarity_for_node_type(node_type: String) -> String:
 	match node_type:
 		"elite":
-			return RunManager.roll_equipment_drop("uncommon")
+			return "uncommon"
 		"boss":
-			return RunManager.roll_equipment_drop("rare")
+			return "rare"
 		_:
 			return ""
 
 
-func _claim_equipment_drop(item_id: String, button: Button) -> void:
+func _claim_equipment_drop(item_id: String, rarity: String, button: Button) -> void:
 	if item_id.is_empty():
 		return
-	if RunManager.add_to_inventory(item_id):
+	# Roll a fresh per-instance affix loadout for the drop (cursed stays false
+	# until Phase 5). The whole instance is what gets stored / re-added.
+	var instance := RunManager.make_equip_instance(item_id, rarity)
+	if RunManager.add_to_inventory(instance):
 		button.queue_free()
 		return
 	# Backpack full → warn, then open the discard-one-to-take modal.
 	_show_backpack_full_toast()
 	button.disabled = true
 	var modal = INVENTORY_FULL_MODAL.new()
-	modal.setup(item_id)
+	modal.setup(instance)
 	modal.resolved.connect(func(_took_item: bool): button.queue_free())
 	add_child(modal)
 
