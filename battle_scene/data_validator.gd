@@ -21,7 +21,10 @@ const RANDOM_EVENT_DIR = "res://run_system/data/random_events/"
 # ─── Card schema ──────────────────────────────────────────────────────────────
 const REQUIRED_CARD_KEYS = ["name", "title", "type", "cost", "effects"]
 const ALLOWED_CARD_TYPES = ["attack", "skill", "ability"]
-const ALLOWED_RARITIES = ["common", "uncommon", "rare"]
+# "unique" = hero-starting relics (e.g. crit_clip). Drop/shop pools bucket by
+# common/uncommon/rare and must never surface a unique relic (see
+# get_unowned_relic_ids / shop_scene._list_unowned_relics, which exclude it).
+const ALLOWED_RARITIES = ["common", "uncommon", "rare", "unique"]
 const ALLOWED_EFFECT_TYPES = [
 	"deal_damage",
 	"deal_damage_all",
@@ -81,13 +84,18 @@ const ALLOWED_CARD_POLARITIES = ["yin", "yang", "neutral"]
 const ALLOWED_RELIC_EFFECT_TYPES = [
 	"add_damage",
 	"apply_self_status",
+	"block_gain_damage",
 	"crit_chance",
+	"deal_damage_all",
 	"gain_block",
+	"gain_block_crit",
 	"gain_energy",
 	"gain_gold",
+	"gain_strength",
 	"heal",
 	"reduce_damage",
 	"set_polarity_alternating",
+	"set_strength",
 ]
 
 # ─── Enemy schema ─────────────────────────────────────────────────────────────

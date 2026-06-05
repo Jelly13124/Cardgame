@@ -1,6 +1,6 @@
 keys,en,zh
 RELIC_cracked_battery_TITLE,Cracked Battery,破裂电池
-RELIC_cracked_battery_DESC,"At the start of your first turn each combat, gain 1 Energy.",每场战斗首个回合开始时，获得1点能量。
+RELIC_cracked_battery_DESC,"At the start of each turn, deal 1 damage to ALL enemies.",每回合开始时，对所有敌人造成1点伤害。
 RELIC_steel_plating_TITLE,Steel Plating,钢制镀层
 RELIC_steel_plating_DESC,"At the start of your first turn each combat, gain 6 Block.",每场战斗首个回合开始时，获得6点格挡。
 RELIC_sharpened_scrap_TITLE,Sharpened Scrap,磨利废铁
@@ -12,13 +12,13 @@ RELIC_repair_kit_DESC,"After combat, heal 3 HP.",战斗结束后，治疗3点生
 RELIC_lucky_cog_TITLE,Lucky Cog,幸运齿轮
 RELIC_lucky_cog_DESC,"After combat, gain 5 Gold.",战斗结束后，获得5金币。
 RELIC_bulk_actuator_TITLE,Bulk Actuator,重型作动器
-RELIC_bulk_actuator_DESC,"At the start of your first turn each combat, gain 10 Block.",每场战斗首个回合开始时，获得10点格挡。
+RELIC_bulk_actuator_DESC,"At the start of each combat, set your Strength to 4 (if lower).",每场战斗开始时，将你的力量设为4（若低于4）。
 RELIC_inertial_dampener_TITLE,Inertial Dampener,惯性阻尼器
 RELIC_inertial_dampener_DESC,Every enemy attack deals 1 less damage.,敌人的每次攻击少造成1点伤害。
 RELIC_scavenger_lens_TITLE,Scavenger's Lens,拾荒者透镜
-RELIC_scavenger_lens_DESC,"After combat, gain 12 Gold.",战斗结束后，获得12金币。
+RELIC_scavenger_lens_DESC,"Whenever you gain Block, deal 3 damage to a random enemy.",每当你获得格挡时，对一个随机敌人造成3点伤害。
 RELIC_war_horn_TITLE,War Horn,战争号角
-RELIC_war_horn_DESC,Your direct attack damage is increased by 2.,你的直接攻击伤害提升2点。
+RELIC_war_horn_DESC,"At the start of each combat, gain 1 Strength.",每场战斗开始时，获得1点力量。
 RELIC_bounty_tags_TITLE,Bounty Tags,赏金标牌
 RELIC_bounty_tags_DESC,"After combat, gain 12 Gold and heal 3 HP.",战斗结束后，获得12金币并治疗3点生命。
 RELIC_adrenaline_pump_TITLE,Adrenaline Pump,肾上腺素泵
@@ -29,3 +29,7 @@ RELIC_barbed_plating_TITLE,Barbed Plating,倒刺镀层
 RELIC_barbed_plating_DESC,"At the start of each turn, gain 1 Thorns.",每回合开始时，获得1点荆棘。
 RELIC_medkit_drone_TITLE,Medkit Drone,医疗无人机
 RELIC_medkit_drone_DESC,"After combat, heal 4 HP.",战斗结束后，治疗4点生命。
+RELIC_crit_plating_TITLE,Crit Plating,暴击镀层
+RELIC_crit_plating_DESC,"Whenever you gain Block, a luck-scaled chance to gain 1.5x as much.",每当你获得格挡时，有受幸运影响的几率改为获得1.5倍格挡。
+RELIC_crit_clip_TITLE,Crit Clip,暴击弹夹
+RELIC_crit_clip_DESC,"Bill's attack cards have a luck-scaled chance to deal 1.5x damage.",比尔的攻击牌有受幸运影响的几率造成1.5倍伤害。

@@ -51,6 +51,11 @@ func on_player_turn_started(player: Node, round_number: int) -> void:
 					player.add_status(status, n)
 					_notify("%s: +%d %s" % [str(entry["title"]), n, status], Color(0.85, 0.4, 0.4))
 					_mark_used_once(entry)
+			"deal_damage_all":
+				# Chip every alive enemy at turn start (e.g. cracked_battery).
+				if _deal_to_all_enemies(amount):
+					_notify("%s: %d to all" % [str(entry["title"]), amount], Color(1.0, 0.4, 0.3))
+					_mark_used_once(entry)
 
 
 func modify_player_attack_damage(amount: int, _attacker: Node, _defender: Node) -> int:
@@ -106,6 +111,91 @@ func on_combat_victory(player: Node) -> void:
 				RunManager.add_resources(amount, 0)
 				_notify("%s: +%d Gold" % [str(entry["title"]), amount], Color(1.0, 0.85, 0.24))
 				_mark_used_once(entry)
+
+
+## Passive stat grants fired once at battle start (war_horn +1 STR,
+## bulk_actuator set STR to a floor). Called from battle_scene._start_new_game.
+func on_battle_started(player: Node) -> void:
+	if player == null:
+		return
+	for entry in _get_effect_entries("battle_start"):
+		var effect: Dictionary = entry["effect"]
+		var amount: int = int(effect.get("amount", 0))
+		match str(effect.get("type", "")):
+			"gain_strength":
+				player.strength += amount
+				if player.has_signal("stats_changed"):
+					player.stats_changed.emit()
+				_notify("%s: +%d Strength" % [str(entry["title"]), amount], Color(1.0, 0.5, 0.3))
+			"set_strength":
+				# Raise Strength to a floor; never lowers a higher base. `max`
+				# caps the set value so stacking sources can't overshoot.
+				var target := amount
+				if effect.has("max"):
+					target = mini(target, int(effect.get("max", amount)))
+				if player.strength < target:
+					player.strength = target
+					if player.has_signal("stats_changed"):
+						player.stats_changed.emit()
+					_notify("%s: Strength %d" % [str(entry["title"]), target], Color(1.0, 0.5, 0.3))
+
+
+## Fired from combat_engine's gain_block case with the post-multiplier block
+## amount. Returns the (possibly modified) block to actually apply, so a relic
+## like crit_plating can multiply it. Side-effects (scavenger_lens chip) leave
+## the amount unchanged.
+func on_player_gain_block(_player: Node, amount: int) -> int:
+	var result := amount
+	for entry in _get_effect_entries("player_gain_block"):
+		var effect: Dictionary = entry["effect"]
+		if not _can_use_once(entry):
+			continue
+		match str(effect.get("type", "")):
+			"gain_block_crit":
+				if randf() < RunManager.crit_chance():
+					result = int(round(result * 1.5))
+					if _battle_scene and _battle_scene.has_method("show_notification"):
+						_battle_scene.show_notification("BLOCK CRIT!", Color(0.45, 0.7, 1.0))
+				_mark_used_once(entry)
+			"block_gain_damage":
+				_deal_to_random_enemy(int(effect.get("amount", 0)))
+				_mark_used_once(entry)
+	return result
+
+
+## Deal `amount` to every alive enemy. Returns true if at least one enemy was hit
+## (so the caller can gate its notification / once_per_combat marking).
+func _deal_to_all_enemies(amount: int) -> bool:
+	if amount <= 0 or _battle_scene == null:
+		return false
+	var container = _battle_scene.get("enemy_container")
+	if container == null or not is_instance_valid(container):
+		return false
+	var hit := false
+	for enemy in container.get_children():
+		if is_instance_valid(enemy) and enemy.has_method("take_damage"):
+			enemy.take_damage(amount)
+			hit = true
+	return hit
+
+
+## Deal `amount` to one random alive enemy (scavenger_lens). No-op when no
+## enemies remain. The chosen enemy may die; we touch it only once.
+func _deal_to_random_enemy(amount: int) -> void:
+	if amount <= 0 or _battle_scene == null:
+		return
+	var container = _battle_scene.get("enemy_container")
+	if container == null or not is_instance_valid(container):
+		return
+	var alive: Array = []
+	for enemy in container.get_children():
+		if is_instance_valid(enemy) and enemy.has_method("take_damage"):
+			alive.append(enemy)
+	if alive.is_empty():
+		return
+	var target: Node = alive[randi() % alive.size()]
+	if is_instance_valid(target):
+		target.take_damage(amount)
 
 
 func _get_effect_entries(trigger: String) -> Array:

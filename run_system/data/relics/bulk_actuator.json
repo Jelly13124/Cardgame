@@ -1,16 +1,15 @@
 {
 	"id": "bulk_actuator",
 	"title": "Bulk Actuator",
-	"description": "At the start of your first turn each combat, gain 10 Block.",
+	"description": "At the start of each combat, set your Strength to 4 (if lower).",
 	"icon": "res://run_system/assets/images/relics/bulk_actuator.png",
 	"rarity": "uncommon",
 	"effects": [
 		{
-			"trigger": "player_turn_start",
-			"round": 1,
-			"type": "gain_block",
-			"amount": 10,
-			"once_per_combat": true
+			"trigger": "battle_start",
+			"type": "set_strength",
+			"amount": 4,
+			"max": 4
 		}
 	]
 }

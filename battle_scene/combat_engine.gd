@@ -179,6 +179,10 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				)
 			if player and "status_system" in player and player.status_system:
 				amount = int(amount * player.status_system.get_block_multiplier())
+			# Relic on-gain-block trigger: may crit-multiply the block (crit_plating)
+			# and/or chip a random enemy (scavenger_lens). Use the returned amount.
+			if main.relic_effect_system:
+				amount = main.relic_effect_system.on_player_gain_block(player, amount)
 			player.add_block(amount)
 			if player.has_method("play_block_pulse"):
 				player.play_block_pulse()  # grow-and-shrink, like the enemy's block
