@@ -14,6 +14,13 @@ extends "res://run_system/ui/buildings/building_screen_base.gd"
 const MAX_HP_PER_LEVEL := 5
 ## Effective attribute level cap with clinic at T3 (spec: 3 → 5). Display-only here.
 const HIGH_CAP_LEVEL := 5
+## Legacy Core base-upgrade tracks surfaced in the clinic (Core, not Caps): the
+## directory the JSON defs live in, plus the two upgrade ids to render. These are
+## the classic stat upgrades — med_bay (+max HP at run start) and starter_boost
+## (+starting attribute points) — driven exactly like the outpost's Core rows.
+const UPGRADE_DIR := "res://run_system/data/base_upgrades/"
+const MED_BAY_UPGRADE_ID := "med_bay"
+const STARTER_BOOST_UPGRADE_ID := "starter_boost"
 
 
 func _build_content(container: VBoxContainer) -> void:
@@ -21,6 +28,9 @@ func _build_content(container: VBoxContainer) -> void:
 	MetaProgress.caps_changed.connect(func(_v: int) -> void: _rebuild(container))
 	MetaProgress.buildings_changed.connect(func() -> void: _rebuild(container))
 	MetaProgress.upgrades_changed.connect(func() -> void: _rebuild(container))
+	# Core upgrades (med_bay / starter_boost) spend Core; rebuild on core_changed too
+	# so the Core balance label and Buy gating stay live after a purchase.
+	MetaProgress.core_changed.connect(func(_v: int) -> void: _rebuild(container))
 	_rebuild(container)
 
 
@@ -71,6 +81,126 @@ func _rebuild(container: VBoxContainer) -> void:
 		))
 	_style_label(cap_note, 16, Color(0.8, 0.74, 0.6), 1)
 	container.add_child(cap_note)
+
+	# --- Core Upgrades (legacy Core stat tracks) ---
+	# Visible whenever the clinic is unlocked (tier >= 1). These spend Core (not
+	# Caps) and are driven like the outpost's Core rows: load the base-upgrade JSON
+	# def, show name / level / next-tier effect+cost, BUY → MetaProgress.purchase_upgrade.
+	if MetaProgress.get_building_tier("clinic") >= 1:
+		container.add_child(HSeparator.new())
+		_add_section_title(container, tr("UI_CLINIC_CORE_TITLE"))
+
+		# Core balance for this section (Core is a separate currency from Caps).
+		var core_lbl := Label.new()
+		core_lbl.text = tr("UI_CLINIC_CORE_BALANCE").format({"n": MetaProgress.core})
+		_style_label(core_lbl, 18, Color(0.64, 0.90, 1.0), 1)
+		container.add_child(core_lbl)
+
+		_add_core_upgrade_row(container, MED_BAY_UPGRADE_ID)
+		_add_core_upgrade_row(container, STARTER_BOOST_UPGRADE_ID)
+
+
+## A single legacy Core upgrade row (med_bay / starter_boost). Ported from the
+## outpost screen: loads the base-upgrade JSON by id and shows title, level dots,
+## next-tier effect, cost, and a BUY button gated by MetaProgress.can_purchase and
+## driven by MetaProgress.purchase_upgrade (which emits core_changed + upgrades_changed
+## → _rebuild). Spends Core, not Caps.
+func _add_core_upgrade_row(container: VBoxContainer, upgrade_id: String) -> void:
+	var def: Dictionary = _load_json(UPGRADE_DIR + upgrade_id + ".json")
+	if def.is_empty():
+		var err := Label.new()
+		_style_label(err, 18, Color(0.86, 0.5, 0.5), 1)
+		err.text = tr("UI_CLINIC_CORE_MISSING").format({"id": upgrade_id})
+		container.add_child(err)
+		return
+
+	var tiers: Array = def.get("tiers", [])
+	var lvl: int = MetaProgress.get_upgrade_level(upgrade_id)
+
+	var row := PanelContainer.new()
+	row.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	container.add_child(row)
+
+	var margin := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		margin.add_theme_constant_override(side, 14)
+	row.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 6)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	_style_label(title, 21, Color(1, 0.92, 0.55), 2)
+	title.text = (
+		Settings.t("UPGRADE_%s_NAME" % upgrade_id, str(def.get("name", upgrade_id))).to_upper()
+	)
+	vbox.add_child(title)
+
+	var dots := ""
+	for i in range(tiers.size()):
+		dots += "●" if i < lvl else "○"
+	var level_lbl := Label.new()
+	_style_label(level_lbl, 18, Color(0.90, 0.90, 0.86), 1)
+	level_lbl.text = tr("UI_HOME_UPGRADE_LEVEL").format(
+		{"dots": dots, "cur": lvl, "max": tiers.size()}
+	)
+	vbox.add_child(level_lbl)
+
+	var effect_lbl := Label.new()
+	effect_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(effect_lbl, 17, Color(0.94, 0.90, 0.78), 1)
+	vbox.add_child(effect_lbl)
+
+	var bottom := HBoxContainer.new()
+	bottom.add_theme_constant_override("separation", 12)
+	vbox.add_child(bottom)
+
+	var cost_lbl := Label.new()
+	_style_label(cost_lbl, 18, Color(0.64, 0.90, 1.0), 1)
+	bottom.add_child(cost_lbl)
+
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bottom.add_child(spacer)
+
+	var buy := Button.new()
+	buy.custom_minimum_size = Vector2(120, 36)
+	T.apply_button_theme(buy)
+	buy.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
+	bottom.add_child(buy)
+
+	if lvl >= tiers.size():
+		effect_lbl.text = tr("UI_HOME_UPGRADE_FULLY_UPGRADED")
+		cost_lbl.text = ""
+		buy.text = tr("UI_HOME_UPGRADE_MAXED")
+		buy.disabled = true
+	else:
+		var next_tier: Dictionary = tiers[lvl]
+		var effect_text := Settings.t(
+			"UPGRADE_%s_TIER%d" % [upgrade_id, int(next_tier.get("level", lvl + 1))],
+			str(next_tier.get("effect_text", ""))
+		)
+		effect_lbl.text = tr("UI_HOME_UPGRADE_NEXT").format({"text": effect_text})
+		cost_lbl.text = tr("UI_HOME_UPGRADE_COST").format({"n": int(next_tier.get("cost", 0))})
+		buy.text = tr("UI_HOME_UPGRADE_BUY")
+		buy.disabled = not MetaProgress.can_purchase(upgrade_id, def)
+		# purchase_upgrade emits core_changed + upgrades_changed → _rebuild.
+		buy.pressed.connect(func() -> void: MetaProgress.purchase_upgrade(upgrade_id, def))
+
+
+## Minimal JSON loader (mirrors the outpost screen). Returns {} when the file is
+## absent or not a JSON object, so callers can render a missing-def fallback.
+func _load_json(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {}
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return {}
+	var raw := f.get_as_text()
+	f.close()
+	var parsed: Variant = JSON.parse_string(raw)
+	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
 
 
 func _build_attr_perk_row(perk_id: String) -> Control:

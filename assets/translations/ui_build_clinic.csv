@@ -18,3 +18,6 @@ UI_CLINIC_LOCKED_ATTR,"Unlock the Clinic (T1) to install attribute augments.",�
 UI_CLINIC_LOCKED_HP,"Upgrade the Clinic to T2 to unlock the Max-HP augment.",升级义体诊所至 T2 以解锁生命强化。
 UI_CLINIC_CAP_BASE,"Augment level cap is {cap}. Upgrade the Clinic to T3 to raise it to {high}.","强化等级上限为 {cap}。升级义体诊所至 T3 可提升至 {high}。"
 UI_CLINIC_CAP_HIGH,Augment level cap raised to {cap} (Clinic T3).,强化等级上限已提升至 {cap}（义体诊所 T3）。
+UI_CLINIC_CORE_TITLE,Core Upgrades,核心强化
+UI_CLINIC_CORE_BALANCE,Core: {n},核心：{n}
+UI_CLINIC_CORE_MISSING,"Missing upgrade definition: {id}",缺少强化定义：{id}

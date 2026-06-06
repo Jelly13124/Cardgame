@@ -157,13 +157,10 @@ const REQUIRED_BASE_UPGRADE_KEYS = ["id", "name", "description", "effect_key", "
 const REQUIRED_BASE_UPGRADE_TIER_KEYS = ["level", "cost", "effect_value", "effect_text"]
 const ALLOWED_BASE_UPGRADE_EFFECT_KEYS = [
 	"max_hp_bonus",
-	"starter_inventory",
-	"loot_rarity_bias",
 	"shop_discount",
 	"starting_gold",
 	"unlock_hero",
 	"starter_attributes",
-	"card_pool_unlock",
 	"safe_cells_bonus",
 ]
 

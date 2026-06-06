@@ -20,7 +20,7 @@ const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 ## The card pool from which draft choices are rolled. Populated at _ready
 ## from MetaProgress.get_unlocked_card_pool() — the union of the always-
 ## available INITIAL_CARD_POOL (25 cards) and any cards unlocked via
-## card_research base upgrades.
+## the Market screen's per-card unlock.
 var draft_pool: Array = []
 
 @onready var loot_root = $VBoxContainer
@@ -394,7 +394,6 @@ func _generate_draft_options() -> void:
 		elif roll < 0.30:
 			picked_rarity = "uncommon"
 
-		picked_rarity = _apply_research_lab_bias(picked_rarity)
 		if picked_rarity != "rare" and randf() < RunManager.luck_rarity_bonus():
 			picked_rarity = "rare" if picked_rarity == "uncommon" else "uncommon"
 
@@ -581,20 +580,3 @@ func _load_texture(path: String) -> Texture2D:
 		return ImageTexture.create_from_image(image)
 
 	return null
-
-
-## Apply Research Lab meta-progression bias to a base rarity.
-## Returns the (possibly upgraded) rarity string. With Research Lab
-## owned, commons can promote to uncommon and uncommons to rare.
-func _apply_research_lab_bias(base_rarity: String) -> String:
-	var lvl := MetaProgress.get_upgrade_level("research_lab")
-	if lvl <= 0:
-		return base_rarity
-	var bias = RunManager._get_meta_effect_value("research_lab")
-	var uncommon_chance := float(bias.get("uncommon", 0.0))
-	var rare_chance := float(bias.get("rare", 0.0))
-	if base_rarity == "common" and randf() < uncommon_chance:
-		base_rarity = "uncommon"
-	if base_rarity == "uncommon" and randf() < rare_chance:
-		base_rarity = "rare"
-	return base_rarity
