@@ -48,3 +48,4 @@ UI_BUILD_UPGRADE,Upgrade T{n} — {c} Core,升级 T{n} —— {c} 核心
 UI_BUILD_MAX,Max tier,已满级
 UI_BUILD_LOCKED,Locked,未解锁
 UI_BUILD_COMING,Functions coming soon,功能即将到来
+UI_BUILD_LEAVE,Leave,离开
