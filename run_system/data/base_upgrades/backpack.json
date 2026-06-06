@@ -1,0 +1,11 @@
+{
+  "id": "backpack",
+  "name": "EXPANDED BACKPACK",
+  "description": "Carry more loot out of the wasteland — adds backpack cells.",
+  "effect_key": "backpack_cells",
+  "tiers": [
+    {"level": 1, "cost": 50, "effect_value": {"cells": 3}, "effect_text": "+3 backpack cells (13 total)"},
+    {"level": 2, "cost": 110, "effect_value": {"cells": 6}, "effect_text": "+6 backpack cells (16 total)"},
+    {"level": 3, "cost": 180, "effect_value": {"cells": 10}, "effect_text": "+10 backpack cells (20 total)"}
+  ]
+}

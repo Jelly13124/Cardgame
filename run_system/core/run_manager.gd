@@ -26,7 +26,8 @@ var ascension: int = 0
 ## Run-scoped INTENT set by base building screens (warehouse hero-select / outpost
 ## difficulty) before a run starts. NOT persisted — cleared after start_new_run
 ## consumes them. They are FALLBACKS only: an explicit hero_id / asc passed into
-## start_new_run (e.g. from hero_select.gd) always wins. "" / -1 mean "unset".
+## start_new_run (e.g. from home_base_scene._on_start_pressed) always wins.
+## "" / -1 mean "unset".
 var pending_hero_id: String = ""
 var pending_ascension: int = -1
 
@@ -102,7 +103,13 @@ var inventory_items: Array[String]:
 		return backpack_equip_ids()
 
 var relics: Array[String] = []
+## Hard ceiling on backpack cells. The backpack ARRAY is always this length (so
+## cell/safe-cell indices stay stable across saves); the USABLE cell count is the
+## dynamic effective_backpack_size() below, which grows from BASE_BACKPACK toward
+## this cap via the Outpost "backpack" upgrade.
 const MAX_INVENTORY: int = 20
+## Base usable backpack cells with no Outpost backpack upgrade purchased.
+const BASE_BACKPACK: int = 10
 const EQUIPMENT_SLOTS: Array[String] = ["head", "chest", "weapon", "hands", "accessory"]
 const DEFAULT_STARTER_DECK = [
 	"strike",
@@ -577,13 +584,14 @@ func get_default_starter_deck() -> Array[String]:
 ## `hero_id` "" falls back to RunManager.pending_hero_id (set by the warehouse
 ## hero-select screen). `asc` < 0 falls back to pending_ascension (set by the
 ## outpost difficulty selector). An explicit hero_id / asc from the caller (e.g.
-## hero_select.gd) always wins. Both pending_* are consumed (reset) here.
+## home_base_scene._on_start_pressed) always wins. Both pending_* are consumed
+## (reset) here.
 func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int = -1) -> void:
 	# Fallback to the warehouse-screen intent only when no hero was passed.
 	if hero_id == "" and pending_hero_id != "":
 		hero_id = pending_hero_id
 	# Fallback to the outpost-screen intent only when the caller left asc unset
-	# (< 0). hero_select always passes its slider value (>= 0), so it wins.
+	# (< 0). The start button passes its resolved value (>= 0), so it wins.
 	var resolved_asc: int = asc
 	if resolved_asc < 0:
 		resolved_asc = pending_ascension if pending_ascension >= 0 else 0
@@ -706,7 +714,7 @@ func purchase_card(card_id: String, cost: int) -> bool:
 func purchase_equipment(item_id: String, cost: int) -> bool:
 	if gold < cost or item_id == "":
 		return false
-	if inventory_items.size() >= MAX_INVENTORY:
+	if free_cells() <= 0:
 		return false  # caller handles UI; we don't auto-overflow paid purchases
 	add_resources(-cost, 0)
 	add_to_inventory(item_id)
@@ -799,8 +807,19 @@ func _ensure_backpack() -> void:
 		backpack.resize(MAX_INVENTORY)  # new slots are null-filled
 
 
+## Usable backpack cell count this run: BASE_BACKPACK plus the purchased Outpost
+## "backpack" upgrade's cells, clamped to [BASE_BACKPACK, MAX_INVENTORY]. The
+## underlying array is always MAX_INVENTORY long; only cells [0, size) are usable.
+## Read on-demand (no per-run snapshot) like other meta effects, so buying the
+## upgrade between runs takes effect immediately. Old saves without the upgrade
+## return BASE_BACKPACK.
+func effective_backpack_size() -> int:
+	var bonus := int(_get_meta_effect_value("backpack").get("cells", 0))
+	return clampi(BASE_BACKPACK + bonus, BASE_BACKPACK, MAX_INVENTORY)
+
+
 func _first_null_cell() -> int:
-	for i in range(MAX_INVENTORY):
+	for i in range(effective_backpack_size()):
 		if backpack[i] == null:
 			return i
 	return -1
@@ -808,14 +827,14 @@ func _first_null_cell() -> int:
 
 func free_cells() -> int:
 	var n := 0
-	for c in backpack:
-		if c == null:
+	for i in range(effective_backpack_size()):
+		if backpack[i] == null:
 			n += 1
 	return n
 
 
 func backpack_count_used() -> int:
-	return MAX_INVENTORY - free_cells()
+	return effective_backpack_size() - free_cells()
 
 
 ## Base item_ids of every equip cell (cell order). Tolerant of both the new
@@ -950,8 +969,9 @@ func _normalize_gold() -> void:
 	for i in range(MAX_INVENTORY):
 		if backpack[i] != null and backpack[i].get("kind") == "gold":
 			backpack[i] = null
+	var size := effective_backpack_size()
 	var idx := 0
-	while g > 0 and idx < MAX_INVENTORY:
+	while g > 0 and idx < size:
 		if backpack[idx] == null:
 			var put := mini(GOLD_PER_CELL, g)
 			backpack[idx] = {"kind": "gold", "amount": put}
@@ -1572,7 +1592,8 @@ func _apply_meta_upgrades() -> void:
 			var pick: String = attr_keys[randi() % attr_keys.size()]
 			grant_attribute(pick, 1)
 
-	# (shop_discount is read on-demand by shop_scene; nothing to apply here.)
+	# (shop_discount is read on-demand by shop_scene; backpack_cells is read
+	# on-demand by effective_backpack_size(); nothing to apply here.)
 
 
 func _handle_run_loss(core_earned: int = 0) -> void:
@@ -1637,7 +1658,8 @@ func _settle_backpack(victory: bool, outcome: String) -> void:
 	else:
 		# Death: ONLY safe-cell contents (index 0..safe-1) survive — Core banks,
 		# equipment goes to the stash. Everything else + all equipped gear is lost.
-		var safe := mini(MetaProgress.effective_safe_cells(), MAX_INVENTORY)
+		# Safe cells can never exceed the usable backpack size (or the array length).
+		var safe := mini(MetaProgress.effective_safe_cells(), effective_backpack_size())
 		var saved := 0
 		for i in range(safe):
 			var c = backpack[i]

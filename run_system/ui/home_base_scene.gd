@@ -5,8 +5,11 @@
 extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
-const HERO_SELECT_PACKED = preload("res://run_system/ui/hero_select.tscn")
+const MAP_PACKED = preload("res://run_system/ui/map_scene.tscn")
 const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
+## Fallback hero when no Warehouse selection has been made — the base hero, always
+## available. Keeps START NEW RUN robust (a run never begins with an empty hero).
+const DEFAULT_HERO_ID := "cowboy_bill"
 const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 const BUILDING_SCREEN_BASE = preload("res://run_system/ui/buildings/building_screen_base.gd")
 ## Building selector order + per-building placeholder accent (Codex art swaps the
@@ -440,11 +443,11 @@ func _make_stash_cell(index: int, item_id: String) -> Control:
 
 
 ## Toggle whether stash item `index` is carried into the next run, keeping
-## RunManager.pending_loadout in sync. Capped at MAX_INVENTORY items.
+## RunManager.pending_loadout in sync. Capped at the usable backpack size.
 func _toggle_stash_select(index: int) -> void:
 	if index in _stash_selected:
 		_stash_selected.erase(index)
-	elif _stash_selected.size() < RunManager.MAX_INVENTORY:
+	elif _stash_selected.size() < RunManager.effective_backpack_size():
 		_stash_selected.append(index)
 	RunManager.pending_loadout.clear()
 	for i in _stash_selected:
@@ -456,8 +459,18 @@ func _toggle_stash_select(index: int) -> void:
 		_stash_rebuild.call()
 
 
+## START NEW RUN launches the run directly (the hero-select screen was removed).
+## Hero + ascension come from the pending intent set by the Warehouse (hero) and
+## Outpost (difficulty) building screens; both fall back to safe defaults so a run
+## never starts with an empty hero. start_new_run also resolves these pending
+## values internally — passing them explicitly here keeps the behavior obvious.
 func _on_start_pressed() -> void:
-	get_tree().change_scene_to_packed(HERO_SELECT_PACKED)
+	var hero: String = (
+		RunManager.pending_hero_id if RunManager.pending_hero_id != "" else DEFAULT_HERO_ID
+	)
+	var asc: int = RunManager.pending_ascension if RunManager.pending_ascension >= 0 else 0
+	RunManager.start_new_run(hero, [], asc)
+	get_tree().change_scene_to_packed(MAP_PACKED)
 
 
 func _build_recent_runs_panel() -> Control:

@@ -22,6 +22,7 @@ const UPGRADE_DIR := "res://run_system/data/base_upgrades/"
 ## Outpost Core-upgrade ids → the base-upgrade JSON that drives each row.
 const GOLD_UPGRADE_ID := "command_center"
 const DISCOUNT_UPGRADE_ID := "scrap_workshop"
+const BACKPACK_UPGRADE_ID := "backpack"
 const SAFE_CELLS_UPGRADE_ID := "blacksmith"
 ## Max cards swappable in the starter-deck editor (spec: <=2).
 const MAX_DECK_SWAPS := 2
@@ -87,6 +88,12 @@ func _populate(container: VBoxContainer) -> void:
 	# --- T1: merchant discount (Core upgrade row). ---
 	_add_section_header(container, tr("UI_OUTPOST_SECT_DISCOUNT"))
 	_add_upgrade_row(container, DISCOUNT_UPGRADE_ID)
+
+	# --- T1: backpack capacity (Core upgrade row). Available at T1 alongside the
+	# other basic Core upgrades; raises RunManager.effective_backpack_size() from
+	# the base 10 toward the 20-cell ceiling. ---
+	_add_section_header(container, tr("UI_OUTPOST_SECT_BACKPACK"))
+	_add_upgrade_row(container, BACKPACK_UPGRADE_ID)
 
 	# --- T1: difficulty selector. ---
 	_add_section_header(container, tr("UI_OUTPOST_SECT_DIFFICULTY"))

@@ -3,6 +3,7 @@ UI_OUTPOST_CORE_BALANCE,"Core: {n}","核心:{n}"
 UI_OUTPOST_LOCKED_BUILDING,Unlock the Outpost (above) to access its functions.,先解锁前哨站(上方)才能使用其功能。
 UI_OUTPOST_SECT_GOLD,Starting Gold,起始金币
 UI_OUTPOST_SECT_DISCOUNT,Merchant Discount,商人折扣
+UI_OUTPOST_SECT_BACKPACK,Backpack Capacity,背包容量
 UI_OUTPOST_SECT_DIFFICULTY,Difficulty,难度
 UI_OUTPOST_SECT_SAFE_CELLS,Safe Cells,安全格
 UI_OUTPOST_SECT_DECK,Starter Deck Editor,初始牌组编辑
