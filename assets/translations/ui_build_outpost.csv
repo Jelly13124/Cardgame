@@ -18,4 +18,5 @@ UI_OUTPOST_DECK_CURRENT,Current deck (click a card to replace):,当前牌组(点
 UI_OUTPOST_DECK_REPLACE,Replace with an unlocked card:,选择已解锁卡牌替换:
 UI_OUTPOST_DECK_RESET,RESET,重置
 UI_OUTPOST_DECK_SAVE,SAVE,保存
-UI_OUTPOST_DECK_SAVE_DISABLED,"Saving is not available yet — the per-hero deck override is not implemented. Edits here are preview-only.","暂不支持保存 —— 尚未实现每位英雄的牌组覆盖。此处编辑仅为预览。"
+UI_OUTPOST_DECK_SAVE_HINT,"Save to apply this deck to the hero's future runs (up to 2 swaps).","保存后,此牌组将应用于该英雄今后的征程(最多替换 2 张)。"
+UI_OUTPOST_DECK_SAVED,"Saved. This deck will be used in the hero's next run.","已保存。此牌组将用于该英雄的下一局征程。"

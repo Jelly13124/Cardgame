@@ -18,7 +18,10 @@ const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
 
 ## Scrap cost to craft a fresh item, by target rarity (spec: 40/80/140).
 const CRAFT_COST := {"common": 40, "uncommon": 80, "rare": 140}
-## Scrap cost to curse an item (spec: 100; re-rolls to 1 curse + AFFIX_COUNT+1 positives).
+## Scrap cost to curse an item. The actual spend is owned by the backend
+## (MetaProgress.curse_stash_item / MetaProgress.CURSE_SCRAP_COST); this mirrors it
+## for the button label + gating. (Autoload consts can't seed a GDScript const, so
+## this is kept as a literal and must match MetaProgress.CURSE_SCRAP_COST.)
 const CURSE_COST := 100
 ## Slot → a representative base equipment item_id used when crafting that slot.
 ## (Scanned from run_system/data/equipment/*.json; one base per slot.)
@@ -261,30 +264,13 @@ func _on_craft_pressed() -> void:
 	_rebuild_body()
 
 
-## Curse a stash item in place (T3). There is no MetaProgress curse helper, so we
-## mutate stash[index] directly: normalize to a full instance, re-roll affixes as
-## cursed for its rarity, flag cursed=true, persist, and emit scrap_changed so the
-## body rebuilds. (See report: a `curse_stash_item(index)` MetaProgress method
-## would be the clean home for this.)
+## Curse a stash item in place (T3) via the backend. MetaProgress.curse_stash_item
+## handles the CURSE_SCRAP_COST spend, the cursed re-roll, the cursed flag, the save,
+## and emits scrap_changed (→ _rebuild_body). Rebuild explicitly too in case the
+## scrap math no-ops, so the new cursed affixes show immediately.
 func _curse_item(index: int) -> void:
-	if index < 0 or index >= MetaProgress.stash.size():
+	if not MetaProgress.curse_stash_item(index):
 		return
-	if int(MetaProgress.scrap) < CURSE_COST:
-		return
-	var inst := RunManager.as_equip_instance(MetaProgress.stash[index])
-	if inst.is_empty():
-		return
-	if bool(inst.get("cursed", false)):
-		return
-	if not MetaProgress.spend_scrap(CURSE_COST):
-		return
-	var rarity := str(inst.get("rarity", "common"))
-	inst["affixes"] = AFFIX_POOL.roll(rarity, true)
-	inst["cursed"] = true
-	MetaProgress.stash[index] = inst
-	MetaProgress.save_progress()
-	# spend_scrap already emitted scrap_changed (→ _rebuild_body). Rebuild
-	# explicitly as well so the cursed affixes show even if scrap math no-ops.
 	_rebuild_body()
 
 

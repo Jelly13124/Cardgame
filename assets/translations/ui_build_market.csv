@@ -15,4 +15,4 @@ UI_MARKET_RARITY_COMMON,Common,普通
 UI_MARKET_RARITY_UNCOMMON,Uncommon,精良
 UI_MARKET_RARITY_RARE,Rare,稀有
 UI_MARKET_LOCKED_HINT,"Upgrade the Market to tier {t} to unlock this.","将黑市升级至 T{t} 以解锁此功能。"
-UI_MARKET_CARD_SHOP_NOTE,"Preview only: buying cards into a deck needs run/deck integration that does not exist yet.","仅供预览:将卡牌购入卡组需要尚未实现的征程/卡组对接。"
+UI_MARKET_CARD_SHOP_NOTE,"Purchased cards join your next run's deck.","已购买的卡牌将加入你下一局的卡组。"
