@@ -36,7 +36,7 @@ var _equip_stock: Array = []
 
 ## Live-refresh handles so balances + buttons repaint without a full rebuild.
 var _caps_label: Label = null
-var _core_label: Label = null
+var _mkt_core_label: Label = null
 ## The whole content host, so currency/building changes can rebuild the lists.
 var _market_box: VBoxContainer = null
 
@@ -76,8 +76,8 @@ func _rebuild_market() -> void:
 func _refresh_balances() -> void:
 	if is_instance_valid(_caps_label):
 		_caps_label.text = "%d" % MetaProgress.caps
-	if is_instance_valid(_core_label):
-		_core_label.text = "%d" % MetaProgress.core
+	if is_instance_valid(_mkt_core_label):
+		_mkt_core_label.text = "%d" % MetaProgress.core
 
 
 func _populate(container: VBoxContainer) -> void:
@@ -124,10 +124,10 @@ func _build_balances_row() -> Control:
 	_style_label(core_title, 20, Color(0.90, 0.86, 0.70), 1)
 	row.add_child(core_title)
 
-	_core_label = Label.new()
-	_core_label.text = "%d" % MetaProgress.core
-	_style_label(_core_label, 22, Color(0.55, 0.85, 1.0), 2)
-	row.add_child(_core_label)
+	_mkt_core_label = Label.new()
+	_mkt_core_label.text = "%d" % MetaProgress.core
+	_style_label(_mkt_core_label, 22, Color(0.55, 0.85, 1.0), 2)
+	row.add_child(_mkt_core_label)
 
 	return row
 

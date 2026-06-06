@@ -28,9 +28,6 @@ func _build_content(container: VBoxContainer) -> void:
 	MetaProgress.caps_changed.connect(func(_v: int) -> void: _rebuild(container))
 	MetaProgress.buildings_changed.connect(func() -> void: _rebuild(container))
 	MetaProgress.upgrades_changed.connect(func() -> void: _rebuild(container))
-	# Core upgrades (med_bay / starter_boost) spend Core; rebuild on core_changed too
-	# so the Core balance label and Buy gating stay live after a purchase.
-	MetaProgress.core_changed.connect(func(_v: int) -> void: _rebuild(container))
 	_rebuild(container)
 
 
@@ -81,23 +78,6 @@ func _rebuild(container: VBoxContainer) -> void:
 		))
 	_style_label(cap_note, 16, Color(0.8, 0.74, 0.6), 1)
 	container.add_child(cap_note)
-
-	# --- Core Upgrades (legacy Core stat tracks) ---
-	# Visible whenever the clinic is unlocked (tier >= 1). These spend Core (not
-	# Caps) and are driven like the outpost's Core rows: load the base-upgrade JSON
-	# def, show name / level / next-tier effect+cost, BUY → MetaProgress.purchase_upgrade.
-	if MetaProgress.get_building_tier("clinic") >= 1:
-		container.add_child(HSeparator.new())
-		_add_section_title(container, tr("UI_CLINIC_CORE_TITLE"))
-
-		# Core balance for this section (Core is a separate currency from Caps).
-		var core_lbl := Label.new()
-		core_lbl.text = tr("UI_CLINIC_CORE_BALANCE").format({"n": MetaProgress.core})
-		_style_label(core_lbl, 18, Color(0.64, 0.90, 1.0), 1)
-		container.add_child(core_lbl)
-
-		_add_core_upgrade_row(container, MED_BAY_UPGRADE_ID)
-		_add_core_upgrade_row(container, STARTER_BOOST_UPGRADE_ID)
 
 
 ## A single legacy Core upgrade row (med_bay / starter_boost). Ported from the
