@@ -110,9 +110,10 @@ func _build() -> void:
 	vbox.add_child(buildings_label)
 
 	_building_grid = GridContainer.new()
-	_building_grid.columns = 5
-	_building_grid.add_theme_constant_override("h_separation", 18)
-	_building_grid.add_theme_constant_override("v_separation", 18)
+	# 3 columns reads as a cleaner, larger grid than the old cramped 5-wide row.
+	_building_grid.columns = 3
+	_building_grid.add_theme_constant_override("h_separation", 24)
+	_building_grid.add_theme_constant_override("v_separation", 24)
 	vbox.add_child(_building_grid)
 	_rebuild_building_tiles()
 
@@ -234,42 +235,66 @@ func _make_building_tile(building_id: String) -> Control:
 	var accent: Color = BUILDING_ACCENTS.get(building_id, Color(0.86, 0.78, 0.52))
 	var tier := MetaProgress.get_building_tier(building_id)
 
+	# Big, intentional tile: accent border + a bold accent header strip, a large
+	# placeholder sprite well (Codex art swaps later), the name, and a lock/tier badge.
 	var tile := PanelContainer.new()
-	tile.custom_minimum_size = Vector2(180, 150)
-	tile.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	tile.custom_minimum_size = Vector2(300, 220)
+	var border := accent
+	border.a = 1.0
+	tile.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(Color(0.075, 0.060, 0.048, 0.96), border, 6, 3)
+	)
 	tile.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
-	var margin := MarginContainer.new()
-	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		margin.add_theme_constant_override(side, 12)
-	tile.add_child(margin)
-
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 8)
-	margin.add_child(box)
+	box.add_theme_constant_override("separation", 0)
+	tile.add_child(box)
 
-	# Placeholder "sprite": a flat accent-colored block (Codex art swaps this).
-	var accent_block := ColorRect.new()
-	accent_block.color = accent
-	accent_block.custom_minimum_size = Vector2(0, 56)
-	accent_block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	box.add_child(accent_block)
-
+	# Accent header strip across the top with the building name (prominent, distinct).
+	var header_strip := PanelContainer.new()
+	header_strip.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(Color(accent.r, accent.g, accent.b, 0.92), border, 4, 0)
+	)
+	box.add_child(header_strip)
+	var header_margin := MarginContainer.new()
+	header_margin.add_theme_constant_override("margin_left", 12)
+	header_margin.add_theme_constant_override("margin_right", 12)
+	header_margin.add_theme_constant_override("margin_top", 8)
+	header_margin.add_theme_constant_override("margin_bottom", 8)
+	header_strip.add_child(header_margin)
 	var name_lbl := Label.new()
 	name_lbl.text = tr("UI_BUILD_%s_NAME" % building_id.to_upper())
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_style_readable_label(name_lbl, 18, Color(1, 0.92, 0.55), 1)
-	box.add_child(name_lbl)
+	# Dark text on the bright accent strip reads cleanly.
+	_style_readable_label(name_lbl, 24, Color(0.10, 0.08, 0.06), 0)
+	header_margin.add_child(name_lbl)
+
+	var body_margin := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		body_margin.add_theme_constant_override(side, 14)
+	body_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(body_margin)
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 10)
+	body_margin.add_child(body)
+
+	# Placeholder "sprite" well: a large flat accent-tinted block (Codex art swaps this).
+	var accent_block := ColorRect.new()
+	accent_block.color = Color(accent.r * 0.55, accent.g * 0.55, accent.b * 0.55, 1.0)
+	accent_block.custom_minimum_size = Vector2(0, 96)
+	accent_block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	accent_block.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(accent_block)
 
 	var badge := Label.new()
 	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if tier <= 0:
-		badge.text = "🔒"
-		_style_readable_label(badge, 18, Color(0.82, 0.6, 0.55), 1)
+		badge.text = "🔒 " + tr("UI_BUILD_LOCKED")
+		_style_readable_label(badge, 20, Color(0.86, 0.62, 0.56), 1)
 	else:
 		badge.text = "T%d" % tier
-		_style_readable_label(badge, 18, Color(0.7, 0.92, 0.7), 1)
-	box.add_child(badge)
+		_style_readable_label(badge, 20, Color(0.7, 0.92, 0.7), 1)
+	body.add_child(badge)
 
 	tile.gui_input.connect(
 		func(ev: InputEvent) -> void:
