@@ -9,8 +9,8 @@
 ##   T3 conversion  — currency exchange (Core→Caps, Caps→Scrap) with a ~10% tax.
 ##
 ## This file only READS the MetaProgress building API + existing add/spend
-## currency methods and writes RunManager.pending_loadout / current_hero_id. It
-## owns its own i18n block (assets/translations/ui_build_warehouse.csv).
+## currency methods and writes RunManager.pending_loadout / pending_hero_id /
+## current_hero_id. It owns its own i18n block (ui_build_warehouse.csv).
 extends "res://run_system/ui/buildings/building_screen_base.gd"
 
 const HERO_DIR := "res://run_system/data/heroes/"
@@ -106,10 +106,10 @@ func _build_hero_select(container: VBoxContainer) -> void:
 
 
 func _on_hero_picked(hero_id: String, hero_name: String) -> void:
-	# NOTE: there is no persistent "pending_hero_id" to thread into start_new_run
-	# (heroes are chosen at run start via hero_select.gd). We store the choice into
-	# RunManager.current_hero_id as a visible marker — it is harmless because
-	# start_new_run overwrites it with its hero_id argument. See REPORT.
+	# Persist the choice into RunManager.pending_hero_id; start_new_run reads it as
+	# the next run's hero when no explicit hero_id is passed. Also set
+	# current_hero_id so the "selected" marker + deck editor reflect it immediately.
+	RunManager.pending_hero_id = hero_id
 	RunManager.current_hero_id = hero_id
 	_flash_status(tr("UI_WAREHOUSE_HERO_PICK_OK").format({"hero": hero_name}))
 	_refresh()
@@ -204,19 +204,19 @@ func _build_more_slots(container: VBoxContainer) -> void:
 		container.add_child(_locked_note("more_slots"))
 		return
 
-	# STASH_CAP is a const and there is no persistent warehouse_slot_bonus field, so
-	# the upgrade cannot actually raise capacity yet. Show the current cap and a
-	# clear note (see REPORT). The row is intentionally non-functional rather than
-	# silently spending Core for no effect.
+	# Stash capacity is derived from the warehouse tier: MetaProgress.effective_stash_cap()
+	# = STASH_CAP + 5 per tier above T1 (T2 → +5, T3 → +10). The header unlock/upgrade
+	# button (base class, driving upgrade_building("warehouse")) IS the slot raise — no
+	# separate spend here. Show the current cap + how it grows.
 	var cap_lbl := Label.new()
-	cap_lbl.text = tr("UI_WAREHOUSE_SLOTS_CAP").format({"cap": MetaProgress.STASH_CAP})
+	cap_lbl.text = tr("UI_WAREHOUSE_SLOTS_CAP").format({"cap": MetaProgress.effective_stash_cap()})
 	_style_label(cap_lbl, 18, Color(0.88, 0.82, 0.62), 1)
 	container.add_child(cap_lbl)
 
 	var note := Label.new()
-	note.text = tr("UI_WAREHOUSE_SLOTS_TODO")
+	note.text = tr("UI_WAREHOUSE_SLOTS_INFO")
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(note, 16, Color(0.82, 0.62, 0.40), 1)
+	_style_label(note, 16, Color(0.82, 0.74, 0.56), 1)
 	container.add_child(note)
 
 

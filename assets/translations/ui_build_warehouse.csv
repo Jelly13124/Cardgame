@@ -16,7 +16,7 @@ UI_WAREHOUSE_LOADOUT_ADD,Carry,带上
 UI_WAREHOUSE_LOADOUT_REMOVE,Leave,留下
 UI_WAREHOUSE_SLOTS_TITLE,More Warehouse Slots,扩充仓库
 UI_WAREHOUSE_SLOTS_CAP,"Current stash capacity: {cap}","当前仓库容量: {cap}"
-UI_WAREHOUSE_SLOTS_TODO,"Capacity increase pending: needs a persistent warehouse slot bonus in MetaProgress.","容量提升待实现：需要在 MetaProgress 中新增持久化的仓库槽位加成。"
+UI_WAREHOUSE_SLOTS_INFO,"Capacity rises with the warehouse tier: +5 slots at T2, +10 at T3. Upgrade the warehouse above to raise it.","容量随仓库等级提升：T2 +5 槽位,T3 +10。升级上方的仓库即可提升。"
 UI_WAREHOUSE_CONVERT_TITLE,Resource Conversion,资源兑换
 UI_WAREHOUSE_CONVERT_CORE,"{src} Core  →  {dst} Caps (after 10% tax)","{src} 核心  →  {dst} 瓶盖（已扣 10% 税）"
 UI_WAREHOUSE_CONVERT_CAPS,"{src} Caps  →  {dst} Scrap (after 10% tax)","{src} 瓶盖  →  {dst} 废料（已扣 10% 税）"

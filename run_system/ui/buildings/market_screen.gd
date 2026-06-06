@@ -55,6 +55,8 @@ func _build_content(container: VBoxContainer) -> void:
 		MetaProgress.core_changed.connect(_on_market_changed)
 	if not MetaProgress.buildings_changed.is_connected(_rebuild_market):
 		MetaProgress.buildings_changed.connect(_rebuild_market)
+	if not MetaProgress.upgrades_changed.is_connected(_rebuild_market):
+		MetaProgress.upgrades_changed.connect(_rebuild_market)
 
 	_populate(container)
 
@@ -266,16 +268,9 @@ func _build_card_unlock_row(card: Dictionary) -> Control:
 
 
 func _on_unlock_card(card_id: String, btn: Button) -> void:
-	# No MetaProgress.unlock_card() exists yet — implement inline per the spec:
-	# check core>=cost, add_core(-cost), append to unlocked_cards, save. (REPORT:
-	# a MetaProgress.unlock_card(id)->bool would be cleaner.)
-	if card_id == "" or MetaProgress.core < CARD_UNLOCK_CORE:
+	# MetaProgress.unlock_card handles the 40-Core spend + append + save.
+	if not MetaProgress.unlock_card(card_id):
 		return
-	if card_id in MetaProgress.unlocked_cards:
-		return
-	MetaProgress.add_core(-CARD_UNLOCK_CORE)  # saves + emits core_changed
-	MetaProgress.unlocked_cards.append(card_id)
-	MetaProgress.save_progress()
 	if is_instance_valid(btn):
 		btn.disabled = true
 		btn.text = tr("UI_MARKET_UNLOCKED")
@@ -333,11 +328,8 @@ func _build_card_shop_section() -> Control:
 	var section := _make_section(tr("UI_MARKET_CARD_SHOP_SECTION"))
 	var body := section.get_meta("body") as VBoxContainer
 
-	# There is no out-of-run "add card to starting deck" target: player_deck is a
-	# per-RUN structure (RunManager.player_deck), and the persistent starting deck
-	# lives in the hero JSON, not in MetaProgress. So this T3 function cannot yet
-	# deposit a bought card anywhere meaningful. Show it as a disabled preview
-	# listing unlocked cards + their Caps price, with an explanatory note.
+	# Spend Caps to add an unlocked card onto the permanent run deck via
+	# MetaProgress.buy_card_caps; purchased cards join every future run's deck.
 	var note := Label.new()
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.text = tr("UI_MARKET_CARD_SHOP_NOTE")
@@ -380,7 +372,8 @@ func _build_card_shop_section() -> Control:
 		buy_btn.add_theme_font_size_override("font_size", 18)
 		T.apply_button_theme(buy_btn)
 		buy_btn.text = tr("UI_MARKET_BUY_CAPS").format({"n": price})
-		buy_btn.disabled = true  # no deck target yet — see REPORT.
+		buy_btn.disabled = MetaProgress.caps < price
+		buy_btn.pressed.connect(_on_buy_card_caps.bind(card_id, price, buy_btn))
 		row.add_child(buy_btn)
 
 		body.add_child(row)
@@ -389,6 +382,18 @@ func _build_card_shop_section() -> Control:
 			break
 
 	return section
+
+
+func _on_buy_card_caps(card_id: String, price: int, btn: Button) -> void:
+	# buy_card_caps spends the Caps + appends to purchased_cards (injected into
+	# every future run's deck) + saves. Returns false on insufficient Caps.
+	if not MetaProgress.buy_card_caps(card_id, price):
+		return
+	if is_instance_valid(btn):
+		btn.text = tr("UI_MARKET_BOUGHT")
+	# caps_changed → _on_market_changed repaints balances + the row buttons'
+	# disabled state via _refresh_balances; rebuild so prices re-gate cleanly.
+	_rebuild_market()
 
 
 # --- Section / helpers ------------------------------------------------------

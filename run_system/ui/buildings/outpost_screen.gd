@@ -10,18 +10,11 @@
 ## shared file. NO class_name (ADR-0006) — instantiate via the base preload and
 ## subclass through the path string below.
 ##
-## IMPORTANT (reported, not yet wired into shared code):
-##   * difficulty: the next run's ascension is chosen in hero_select (a slider that
-##     defaults to MetaProgress.max_ascension and is passed as `asc` into
-##     start_new_run). There is NO persistent "pending_ascension" that hero_select
-##     reads, so this selector writes RunManager.ascension directly as a best-effort
-##     hint; start_new_run currently OVERWRITES it from hero_select's slider. A
-##     `pending_ascension` field threaded into start_new_run is needed for this to
-##     stick — see the morning report.
-##   * deck_editor: there is no per-hero persistent starter-deck override. The editor
-##     below is fully functional IN-MEMORY (preview + <=2 swaps) but cannot persist;
-##     it needs MetaProgress.starter_deck_override (hero_id -> Array) + a setter, and
-##     start_new_run must apply <=2 swaps. The SAVE button is disabled with a note.
+## Wiring (F0d backends):
+##   * difficulty: writes RunManager.pending_ascension; start_new_run reads it as the
+##     next run's ascension when no explicit `asc` is passed.
+##   * deck_editor: SAVE persists the edited deck (≤2 swaps) via
+##     MetaProgress.set_starter_deck_override(hero_id, deck); start_new_run applies it.
 extends "res://run_system/ui/buildings/building_screen_base.gd"
 
 const CARD_DIR := "res://battle_scene/card_info/player/"
@@ -44,6 +37,8 @@ var _deck_default: Array = []
 var _deck_working: Array = []
 ## Index in `_deck_working` the player has selected to replace (-1 = none).
 var _deck_selected_slot: int = -1
+## True once the current working deck has been saved (clears on any further edit).
+var _deck_saved: bool = false
 
 
 ## Fill the content area. Called once by the base `_build()`; rebuilt wholesale by
@@ -205,8 +200,8 @@ func _add_upgrade_row(container: VBoxContainer, upgrade_id: String) -> void:
 
 
 ## Ascension selector: a row of 0..MetaProgress.max_ascension buttons. Selecting a
-## value writes RunManager.ascension as a best-effort hint for the next run (see
-## header note — this is NOT persisted and start_new_run overwrites it).
+## value sets RunManager.pending_ascension, which start_new_run reads as the next
+## run's difficulty (it falls back to this when no explicit `asc` is passed).
 func _add_difficulty_selector(container: VBoxContainer) -> void:
 	var max_asc: int = int(MetaProgress.max_ascension)
 
@@ -216,9 +211,10 @@ func _add_difficulty_selector(container: VBoxContainer) -> void:
 	note.text = tr("UI_OUTPOST_DIFFICULTY_NOTE")
 	container.add_child(note)
 
-	# Current effective selection: the session choice if made, else RunManager's
-	# live value (clamped to the unlocked range).
-	var current: int = _chosen_ascension if _chosen_ascension >= 0 else int(RunManager.ascension)
+	# Current effective selection: the session choice if made, else the pending
+	# ascension (clamped to the unlocked range; -1 pending → default 0).
+	var pending: int = int(RunManager.pending_ascension)
+	var current: int = _chosen_ascension if _chosen_ascension >= 0 else maxi(pending, 0)
 	current = clampi(current, 0, max_asc)
 
 	var row := HBoxContainer.new()
@@ -245,9 +241,9 @@ func _add_difficulty_selector(container: VBoxContainer) -> void:
 
 func _on_difficulty_chosen(value: int) -> void:
 	_chosen_ascension = value
-	# Best-effort hint: store onto RunManager so any pre-run consumer that reads it
-	# sees the choice. Clamp to the engine's accepted 0..5 ascension range.
-	RunManager.ascension = clampi(value, 0, 5)
+	# Persist the choice into RunManager.pending_ascension; start_new_run reads it
+	# as the next run's difficulty. Clamp to the engine's accepted 0..5 range.
+	RunManager.pending_ascension = clampi(value, 0, 5)
 	_rebuild_content()
 
 
@@ -347,13 +343,15 @@ func _add_deck_editor(container: VBoxContainer) -> void:
 	T.apply_button_theme(save_btn)
 	save_btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
 	save_btn.text = tr("UI_OUTPOST_DECK_SAVE")
-	save_btn.disabled = true  # No persistence yet — see header note.
+	# Persist the edited deck (≤2 swaps already enforced) onto this hero via
+	# MetaProgress.set_starter_deck_override; start_new_run applies it.
+	save_btn.pressed.connect(_on_deck_save.bind(hero_id))
 	controls.add_child(save_btn)
 
 	var save_note := Label.new()
 	save_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(save_note, 15, Color(0.86, 0.62, 0.5), 1)
-	save_note.text = tr("UI_OUTPOST_DECK_SAVE_DISABLED")
+	_style_label(save_note, 15, Color(0.7, 0.92, 0.7) if _deck_saved else Color(0.86, 0.78, 0.6), 1)
+	save_note.text = tr("UI_OUTPOST_DECK_SAVED") if _deck_saved else tr("UI_OUTPOST_DECK_SAVE_HINT")
 	container.add_child(save_note)
 
 
@@ -420,12 +418,24 @@ func _on_replacement_chosen(card_id: String) -> void:
 		return
 	_deck_working[_deck_selected_slot] = card_id
 	_deck_selected_slot = -1
+	_deck_saved = false
 	_rebuild_content()
 
 
 func _on_deck_reset() -> void:
 	_deck_working = _deck_default.duplicate()
 	_deck_selected_slot = -1
+	_deck_saved = false
+	_rebuild_content()
+
+
+## Persist the edited deck for `hero_id`. The editor already caps swaps at ≤2, so
+## the working array is safe to hand straight to MetaProgress.set_starter_deck_override.
+func _on_deck_save(hero_id: String) -> void:
+	if hero_id == "":
+		return
+	MetaProgress.set_starter_deck_override(hero_id, _deck_working)
+	_deck_saved = true
 	_rebuild_content()
 
 

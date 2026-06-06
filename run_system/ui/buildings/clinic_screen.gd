@@ -9,11 +9,9 @@
 ## Reads ONLY the shared MetaProgress building/caps-perk API; edits no shared file.
 extends "res://run_system/ui/buildings/building_screen_base.gd"
 
-## Proposed Max-HP perk numbers (spec): +5 max HP per level, cost 200 + 150/level.
-## NOTE: not yet wired into MetaProgress (see REPORT) — shown disabled for now.
+## Max-HP perk (cyber_hp): +5 max HP per level. Cost/level is sourced from
+## MetaProgress.caps_perk_cost(CYBER_HP_PERK); the +HP value is display-only here.
 const MAX_HP_PER_LEVEL := 5
-const MAX_HP_BASE_COST := 200
-const MAX_HP_COST_STEP := 150
 ## Effective attribute level cap with clinic at T3 (spec: 3 → 5). Display-only here.
 const HIGH_CAP_LEVEL := 5
 
@@ -62,7 +60,7 @@ func _rebuild(container: VBoxContainer) -> void:
 
 	# --- T3: raised attribute level cap (display-only here) ---
 	_add_section_title(container, tr("UI_CLINIC_CAP_TITLE"))
-	var effective_cap := _effective_attr_cap()
+	var effective_cap := MetaProgress.attr_perk_cap()
 	var cap_note := Label.new()
 	cap_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if MetaProgress.building_can("clinic", "high_cap"):
@@ -75,19 +73,12 @@ func _rebuild(container: VBoxContainer) -> void:
 	container.add_child(cap_note)
 
 
-## The currently effective attribute perk level cap. buy_caps_perk uses the const
-## CAPS_PERK_MAX_LEVEL (3); the T3 high_cap raise is not yet enforced in
-## MetaProgress (see REPORT), so this reports the const today.
-func _effective_attr_cap() -> int:
-	return MetaProgress.CAPS_PERK_MAX_LEVEL
-
-
 func _build_attr_perk_row(perk_id: String) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 
 	var lvl := MetaProgress.get_caps_perk_level(perk_id)
-	var max_lvl := _effective_attr_cap()
+	var max_lvl := MetaProgress.attr_perk_cap()
 	var maxed := lvl >= max_lvl
 
 	var name_lbl := Label.new()
@@ -129,12 +120,16 @@ func _build_attr_perk_row(perk_id: String) -> Control:
 	return row
 
 
-## Max-HP perk row. NOTE: MetaProgress.buy_caps_perk only resolves CYBER_DOC_PERKS,
-## so a "cyber_hp" perk currently can't be bought (no facility mapping, no run-start
-## consumer). Until that's wired (see REPORT), this row is informational + disabled.
+## Max-HP perk row (cyber_hp). Buys one level via MetaProgress.buy_caps_perk, which
+## gates on the clinic's T2 max_hp_perk function and the shared attr_perk_cap().
 func _build_max_hp_row() -> Control:
+	var perk_id := MetaProgress.CYBER_HP_PERK
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
+
+	var lvl := MetaProgress.get_caps_perk_level(perk_id)
+	var max_lvl := MetaProgress.attr_perk_cap()
+	var maxed := lvl >= max_lvl
 
 	var name_lbl := Label.new()
 	name_lbl.text = tr("UI_CLINIC_HP_PERK").format({"hp": MAX_HP_PER_LEVEL})
@@ -142,9 +137,15 @@ func _build_max_hp_row() -> Control:
 	name_lbl.custom_minimum_size = Vector2(240, 0)
 	row.add_child(name_lbl)
 
-	var cost := MAX_HP_BASE_COST
+	var lvl_lbl := Label.new()
+	lvl_lbl.text = tr("UI_CLINIC_PERK_LEVEL").format({"cur": lvl, "max": max_lvl})
+	_style_label(lvl_lbl, 18, Color(0.90, 0.90, 0.86), 1)
+	lvl_lbl.custom_minimum_size = Vector2(110, 0)
+	row.add_child(lvl_lbl)
+
+	var cost := MetaProgress.caps_perk_cost(perk_id)
 	var cost_lbl := Label.new()
-	cost_lbl.text = tr("UI_CLINIC_PERK_COST").format({"n": cost})
+	cost_lbl.text = "" if maxed else tr("UI_CLINIC_PERK_COST").format({"n": cost})
 	_style_label(cost_lbl, 18, Color(1.0, 0.82, 0.45), 1)
 	cost_lbl.custom_minimum_size = Vector2(150, 0)
 	row.add_child(cost_lbl)
@@ -153,13 +154,17 @@ func _build_max_hp_row() -> Control:
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(spacer)
 
-	# Disabled "coming" — the perk needs a MetaProgress id + run-start consumer.
 	var buy_btn := Button.new()
 	buy_btn.custom_minimum_size = Vector2(120, 36)
 	T.apply_button_theme(buy_btn)
 	buy_btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
-	buy_btn.text = tr("UI_CLINIC_COMING")
-	buy_btn.disabled = true
+	if maxed:
+		buy_btn.text = tr("UI_CLINIC_PERK_MAX")
+		buy_btn.disabled = true
+	else:
+		buy_btn.text = tr("UI_CLINIC_BUY")
+		buy_btn.disabled = MetaProgress.caps < cost
+		buy_btn.pressed.connect(func() -> void: MetaProgress.buy_caps_perk(perk_id))
 	row.add_child(buy_btn)
 
 	return row
