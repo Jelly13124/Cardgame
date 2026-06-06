@@ -10,10 +10,13 @@ UI_WAREHOUSE_HERO_SELECTED,Selected,已选择
 UI_WAREHOUSE_HERO_LOCKED,Locked,未解锁
 UI_WAREHOUSE_HERO_PICK_OK,"{hero} will lead the next run.","下一局将由 {hero} 出战。"
 UI_WAREHOUSE_LOADOUT_TITLE,Departure Loadout,出征装备
-UI_WAREHOUSE_LOADOUT_COUNT,"Marked: {n} / {cap}","已选: {n} / {cap}"
+UI_WAREHOUSE_LOADOUT_HINT,"Drag gear from the stash onto a slot to start the run wearing it. Drag a slot back to the stash to remove it.","把仓库里的装备拖到槽位上,即可在出征时直接装备。把槽位拖回仓库则取下。"
 UI_WAREHOUSE_LOADOUT_EMPTY,No gear in the stash yet.,仓库里还没有装备。
+UI_WAREHOUSE_LOADOUT_COUNT,"Marked: {n} / {cap}","已选: {n} / {cap}"
 UI_WAREHOUSE_LOADOUT_ADD,Carry,带上
 UI_WAREHOUSE_LOADOUT_REMOVE,Leave,留下
+UI_WAREHOUSE_SLOTS_HEADER,Equipment Slots,装备槽位
+UI_WAREHOUSE_STASH_HEADER,"Stash ({n} / {cap})","仓库 ({n} / {cap})"
 UI_WAREHOUSE_SLOTS_TITLE,More Warehouse Slots,扩充仓库
 UI_WAREHOUSE_SLOTS_CAP,"Current stash capacity: {cap}","当前仓库容量: {cap}"
 UI_WAREHOUSE_SLOTS_INFO,"Capacity rises with the warehouse tier: +5 slots at T2, +10 at T3. Upgrade the warehouse above to raise it.","容量随仓库等级提升：T2 +5 槽位,T3 +10。升级上方的仓库即可提升。"
