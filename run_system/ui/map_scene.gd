@@ -261,18 +261,9 @@ func _on_node_clicked(node: Dictionary) -> void:
 		"merchant":
 			get_tree().change_scene_to_packed(SHOP_PACKED)
 		"treasure":
-			var treasure_roll := randf()
-			if treasure_roll < 0.40:
-				_open_relic_choice(tr("UI_MAP_CHOOSE_A_RELIC"), "treasure")
-			elif treasure_roll < 0.70:
-				_grant_treasure_equipment()
-			else:
-				# Core never enters the run wallet directly — it only banks on a
-				# successful extraction, so the popup spells that out.
-				var amt := randi_range(10, 30)
-				RunManager.add_core_to_backpack(amt)
-				_show_popup(tr("UI_MAP_CORE_DROP").format({"n": amt}))
-				_node_click_pending = false
+			# Treasure is always a 3-choose-1 relic pick. _open_relic_choice handles
+			# the empty-pool fallback (gold) and manages the click guard.
+			_open_relic_choice(tr("UI_MAP_CHOOSE_A_RELIC"), "treasure")
 		"unknown":
 			_open_event_node(int(node.floor))
 		_:
@@ -508,23 +499,27 @@ func _make_relic_choice_button(relic_id: String, source_type: String) -> Button:
 
 	var icon_path = str(data.get("icon", ""))
 	var icon_texture = _load_texture(icon_path) if not icon_path.is_empty() else null
+	var icon_slot := CenterContainer.new()
+	icon_slot.custom_minimum_size = Vector2(62, 62)
+	icon_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(icon_slot)
 	if icon_texture:
 		var icon = TextureRect.new()
-		icon.custom_minimum_size = Vector2(58, 58)
+		icon.custom_minimum_size = Vector2(50, 50)
 		icon.texture = icon_texture
-		icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		row.add_child(icon)
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		icon_slot.add_child(icon)
 	else:
 		var icon = Label.new()
-		icon.custom_minimum_size = Vector2(54, 54)
+		icon.custom_minimum_size = Vector2(50, 50)
 		icon.text = title.substr(0, 1).to_upper()
 		icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		icon.add_theme_font_size_override("font_size", 28)
 		icon.add_theme_color_override("font_color", Color(0.35, 0.95, 1.0))
-		row.add_child(icon)
+		icon_slot.add_child(icon)
 
 	var text_box = VBoxContainer.new()
 	text_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
