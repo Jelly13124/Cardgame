@@ -146,7 +146,10 @@ func _make_card_slot(card_id: String, uid: String) -> Control:
 					T.panel_with_shadow(Color(0.13, 0.095, 0.062, 0.96), T.ACCENT_NEON_BLUE, 3)
 				)
 				var tween = create_tween()
-				tween.tween_property(card, "scale", Vector2(1.06, 1.06), 0.10)
+				# Hover compensates for the card's base 160/208 scale so it doesn't
+				# balloon to full size and overlap neighbors.
+				var hov := 160.0 / 208.0 * 1.06
+				tween.tween_property(card, "scale", Vector2(hov, hov), 0.10)
 		)
 		button.mouse_exited.connect(
 			func():
@@ -154,7 +157,8 @@ func _make_card_slot(card_id: String, uid: String) -> Control:
 					"panel", T.panel_with_shadow(Color(0.09, 0.072, 0.055, 0.92), T.PANEL_BORDER, 3)
 				)
 				var tween = create_tween()
-				tween.tween_property(card, "scale", Vector2(1.0, 1.0), 0.10)
+				var base := 160.0 / 208.0
+				tween.tween_property(card, "scale", Vector2(base, base), 0.10)
 		)
 
 	return wrapper

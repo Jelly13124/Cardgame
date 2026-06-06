@@ -92,13 +92,7 @@ func _build() -> void:
 	settings_btn.pressed.connect(_open_settings)
 	header.add_child(settings_btn)
 
-	var stash_btn := Button.new()
-	stash_btn.text = "⚒ " + TranslationServer.translate("UI_HOME_STASH_BTN")
-	stash_btn.custom_minimum_size = Vector2(150, 48)
-	stash_btn.add_theme_font_size_override("font_size", 18)
-	T.apply_button_theme(stash_btn)
-	stash_btn.pressed.connect(_open_stash)
-	header.add_child(stash_btn)
+	# (Stash/loadout button removed — the Warehouse building now owns hero + loadout.)
 
 	var start_btn := Button.new()
 	start_btn.text = TranslationServer.translate("UI_HOME_START_RUN")
