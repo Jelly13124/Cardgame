@@ -23,6 +23,13 @@ var current_hero_data: Dictionary = {}
 ## subsystem can read it without going back to MetaProgress.
 var ascension: int = 0
 
+## Run-scoped INTENT set by base building screens (warehouse hero-select / outpost
+## difficulty) before a run starts. NOT persisted — cleared after start_new_run
+## consumes them. They are FALLBACKS only: an explicit hero_id / asc passed into
+## start_new_run (e.g. from hero_select.gd) always wins. "" / -1 mean "unset".
+var pending_hero_id: String = ""
+var pending_ascension: int = -1
+
 # Base Stats
 var max_health: int = 50
 var current_health: int = 50
@@ -567,20 +574,45 @@ func get_default_starter_deck() -> Array[String]:
 
 
 ## Called after hero selection to begin a new run.
-func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int = 0) -> void:
+## `hero_id` "" falls back to RunManager.pending_hero_id (set by the warehouse
+## hero-select screen). `asc` < 0 falls back to pending_ascension (set by the
+## outpost difficulty selector). An explicit hero_id / asc from the caller (e.g.
+## hero_select.gd) always wins. Both pending_* are consumed (reset) here.
+func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int = -1) -> void:
+	# Fallback to the warehouse-screen intent only when no hero was passed.
+	if hero_id == "" and pending_hero_id != "":
+		hero_id = pending_hero_id
+	# Fallback to the outpost-screen intent only when the caller left asc unset
+	# (< 0). hero_select always passes its slider value (>= 0), so it wins.
+	var resolved_asc: int = asc
+	if resolved_asc < 0:
+		resolved_asc = pending_ascension if pending_ascension >= 0 else 0
+	# Consume the run-scoped intent so it never leaks into a later run.
+	pending_hero_id = ""
+	pending_ascension = -1
+
 	current_hero_id = hero_id
 	current_hero_data = _load_hero_def(hero_id)
-	ascension = clampi(asc, 0, 5)
+	ascension = clampi(resolved_asc, 0, 5)
 
 	player_deck.clear()
-	# Prefer the hero's starter deck if present; fall back to the explicit
-	# argument; fall back to DEFAULT_STARTER_DECK if neither given.
+	# Base deck = explicit `starter_deck` arg, else hero JSON's starter_deck, else
+	# DEFAULT_STARTER_DECK. A persistent per-hero starter-deck override (outpost deck
+	# editor) takes precedence over ALL of the above when set (it already encodes the
+	# hero default + ≤2 swaps). Finally the permanent purchased_cards (market card
+	# shop) are appended on top of whichever base/override deck was chosen.
 	var deck_to_use: Array = starter_deck
 	if current_hero_data.has("starter_deck") and current_hero_data["starter_deck"] is Array:
 		deck_to_use = current_hero_data["starter_deck"]
 	if deck_to_use.is_empty():
 		deck_to_use = DEFAULT_STARTER_DECK
+	var override: Array = MetaProgress.starter_deck_override.get(hero_id, [])
+	if not override.is_empty():
+		deck_to_use = override
 	for card_id in deck_to_use:
+		add_card_to_deck(str(card_id))
+	# Permanent extra cards bought at the market card shop, appended to every run.
+	for card_id in MetaProgress.purchased_cards:
 		add_card_to_deck(str(card_id))
 
 	# Reset resources and health (hero max_health overrides default 50).
@@ -1094,8 +1126,8 @@ const SHOP_PER_CHARM := 0.02
 const SHOP_FLOOR := 0.60
 
 
-func _attr(name: String) -> int:
-	return int(player_attributes.get(name, 0))
+func _attr(attr_name: String) -> int:
+	return int(player_attributes.get(attr_name, 0))
 
 
 ## Equipment-affix max-HP bonus currently applied to max_health (cached by
@@ -1108,7 +1140,7 @@ func equipment_max_hp_bonus() -> int:
 ## Equipment-affix crit bonus as a fraction (e.g. +5% crit → 0.05). Summed from
 ## crit_pct affixes and folded into crit_chance().
 func equipment_crit_pct_bonus() -> float:
-	return _equipment_crit_pct_bonus / 100.0
+	return float(_equipment_crit_pct_bonus) / 100.0
 
 
 func crit_chance() -> float:
@@ -1515,6 +1547,14 @@ func _apply_meta_upgrades() -> void:
 	var hp := int(_get_meta_effect_value("med_bay").get("hp", 0))
 	if hp > 0:
 		max_health += hp
+		current_health = max_health
+
+	# Clinic Max-HP caps perk (cyber_hp) → +CYBER_HP_PER_LEVEL max HP per level.
+	# Applied here (alongside Med Bay) so it stacks additively and is consumed
+	# exactly once per run — start_new_run calls _apply_meta_upgrades() once.
+	var cyber_hp_lvl := MetaProgress.get_caps_perk_level(MetaProgress.CYBER_HP_PERK)
+	if cyber_hp_lvl > 0:
+		max_health += cyber_hp_lvl * MetaProgress.CYBER_HP_PER_LEVEL
 		current_health = max_health
 
 	# Command Center → +starting gold

@@ -36,6 +36,15 @@ var run_history: Array = []
 var max_ascension: int = 0
 ## Card ids unlocked beyond the INITIAL_CARD_POOL (added via card_research).
 var unlocked_cards: Array[String] = []
+## Cards bought (with Caps) at the market T3 card shop. Persistent; appended to
+## the run deck at start_new_run (on TOP of the starter/override deck). Back-compat
+## default []. These are permanent extra deck cards, NOT consumed on use.
+var purchased_cards: Array = []
+## Per-hero starter-deck override set by the outpost deck editor. hero_id → Array
+## of card_id Strings (the full, ≤2-swap deck). When non-empty for the run's hero,
+## start_new_run uses it instead of the hero JSON / DEFAULT_STARTER_DECK. Persistent;
+## back-compat default {}.
+var starter_deck_override: Dictionary = {}
 ## Permanent equipment stash — gear carried out by extracting/surviving (in a
 ## safe cell). Persists across runs; loaded into a run via the loadout step.
 ## Each entry is an equip INSTANCE dict (see RunManager.as_equip_instance), or a
@@ -54,6 +63,9 @@ const FACILITY_UNLOCK_COSTS := {"cyber_doc": 300}
 const CAPS_PERK_BASE_COST := 300
 const CAPS_PERK_COST_STEP := 150
 const CAPS_PERK_MAX_LEVEL := 3
+## Per-perk base-cost overrides for caps_perk_cost. Perks absent here use
+## CAPS_PERK_BASE_COST (300). The clinic Max-HP perk (cyber_hp) is cheaper (200).
+const CAPS_PERK_BASE_BY_ID := {"cyber_hp": 200}
 ## Cyber Doctor perks: perk_id → the base attribute each level boosts by +1.
 const CYBER_DOC_PERKS := {
 	"cyber_str": "strength",
@@ -62,6 +74,13 @@ const CYBER_DOC_PERKS := {
 	"cyber_luck": "luck",
 	"cyber_charm": "charm",
 }
+## Clinic Max-HP caps perk. Bought with Caps in the clinic (facility "clinic"),
+## each level grants +5 max HP at run start (consumed in RunManager.start_new_run).
+## Costs 200 + 150*level (cheaper base than the attribute perks). Capped by
+## attr_perk_cap() (3 by default, 5 once the clinic reaches T3 high_cap), same as
+## the attribute perks — a single tier-aware cap keeps the clinic's perk model uniform.
+const CYBER_HP_PERK := "cyber_hp"
+const CYBER_HP_PER_LEVEL := 5
 ## --- Buildings refactor: single source of truth for the 5 base buildings ---
 ## Each entry: unlock_cost (Core to go locked→T1), tier_costs ([T2 cost, T3 cost]
 ## in Core), functions (function key → minimum tier that gates it). Warehouse
@@ -204,10 +223,72 @@ func get_unlocked_card_pool() -> Array[String]:
 	return pool
 
 
+## --- Market: card unlock (Core) + card shop (Caps) + starter-deck override ---
+
+
+## Spend Core to permanently unlock a card (market T1 card_unlock). Returns false
+## if the id is empty, already unlocked (present in unlocked_cards), already part
+## of the base pool, or Core is insufficient. Cost is a flat 40 Core.
+func unlock_card(id: String) -> bool:
+	if id == "":
+		return false
+	if id in unlocked_cards or id in INITIAL_CARD_POOL:
+		return false
+	if not spend_core(40):  # saves + emits core_changed
+		return false
+	unlocked_cards.append(id)
+	save_progress()
+	emit_signal("upgrades_changed")
+	return true
+
+
+## Spend Caps to buy a card onto the permanent run deck (market T3 card_shop). The
+## bought id is appended to purchased_cards and injected into every future run's
+## deck at start_new_run. Returns false on insufficient Caps. Duplicates are
+## allowed (buying the same card twice adds two copies). Cost is caller-supplied
+## (rarity-priced in the market screen).
+func buy_card_caps(id: String, cost: int) -> bool:
+	if id == "":
+		return false
+	if not spend_caps(cost):  # saves + emits caps_changed
+		return false
+	purchased_cards.append(id)
+	save_progress()
+	emit_signal("upgrades_changed")
+	return true
+
+
+## Persist a per-hero starter-deck override (outpost deck editor). `deck` is the
+## full edited deck (Array of card_id Strings, encoding ≤2 swaps off the hero
+## default). Stored under hero_id; consumed by start_new_run. An empty `deck`
+## clears the override for that hero.
+func set_starter_deck_override(hero_id: String, deck: Array) -> void:
+	if hero_id == "":
+		return
+	if deck.is_empty():
+		starter_deck_override.erase(hero_id)
+	else:
+		var out: Array = []
+		for c in deck:
+			out.append(str(c))
+		starter_deck_override[hero_id] = out
+	save_progress()
+
+
 func add_core(amount: int) -> void:
 	core = max(0, core + amount)
 	save_progress()
 	emit_signal("core_changed", core)
+
+
+## Spend Core (symmetric to spend_caps). Returns false if balance < amount.
+func spend_core(amount: int) -> bool:
+	if core < amount:
+		return false
+	core -= amount
+	save_progress()
+	emit_signal("core_changed", core)
+	return true
 
 
 func add_caps(amount: int) -> void:
@@ -272,23 +353,46 @@ func get_caps_perk_level(perk_id: String) -> int:
 
 
 func caps_perk_cost(perk_id: String) -> int:
-	return CAPS_PERK_BASE_COST + CAPS_PERK_COST_STEP * get_caps_perk_level(perk_id)
+	var base := int(CAPS_PERK_BASE_BY_ID.get(perk_id, CAPS_PERK_BASE_COST))
+	return base + CAPS_PERK_COST_STEP * get_caps_perk_level(perk_id)
 
 
-## Returns the facility id a perk belongs to, or "" if unknown.
+## The effective level cap for clinic caps perks (attribute perks AND the Max-HP
+## perk). The clinic's T3 high_cap function raises it from 3 to 5; below T3 it is
+## the const default. buy_caps_perk gates every clinic perk by this so the cap is
+## tier-aware and single-sourced (the const CAPS_PERK_MAX_LEVEL remains the floor).
+func attr_perk_cap() -> int:
+	return 5 if building_can("clinic", "high_cap") else CAPS_PERK_MAX_LEVEL
+
+
+## Returns the facility id a perk belongs to, or "" if unknown. Both the Cyber
+## Doctor attribute perks and the Max-HP perk live in the "clinic" facility (the
+## ported Cyber Doctor model — facility id "cyber_doc" for the attribute perks,
+## building id "clinic" for tier gating; they refer to the same base building).
 func _facility_for_perk(perk_id: String) -> String:
 	if perk_id in CYBER_DOC_PERKS:
 		return "cyber_doc"
+	if perk_id == CYBER_HP_PERK:
+		return "clinic"
 	return ""
 
 
 ## Spend Caps to buy one level of a perk. Requires the perk's facility unlocked,
-## the perk below its max level, and enough Caps. Returns false otherwise.
+## the perk below its (tier-aware) max level, and enough Caps. Returns false
+## otherwise. The attribute perks live under the "cyber_doc" facility (Core-
+## unlocked); the Max-HP perk (cyber_hp) lives under the "clinic" building and
+## requires it at T2 (max_hp_perk). Both share the attr_perk_cap() level ceiling.
 func buy_caps_perk(perk_id: String) -> bool:
 	var facility := _facility_for_perk(perk_id)
-	if facility == "" or not is_facility_unlocked(facility):
+	if facility == "":
 		return false
-	if get_caps_perk_level(perk_id) >= CAPS_PERK_MAX_LEVEL:
+	if facility == "clinic":
+		# cyber_hp: gated by the clinic building's max_hp_perk function (T2).
+		if not building_can("clinic", "max_hp_perk"):
+			return false
+	elif not is_facility_unlocked(facility):
+		return false
+	if get_caps_perk_level(perk_id) >= attr_perk_cap():
 		return false
 	var cost := caps_perk_cost(perk_id)
 	if caps < cost:
@@ -399,11 +503,19 @@ func _normalize_buildings() -> void:
 		buildings["outpost"] = maxi(get_building_tier("outpost"), 2)
 
 
+## Effective permanent-stash capacity. Derived from the warehouse building tier so
+## there is no separate persistent field to migrate: T1 (default) = STASH_CAP, each
+## tier above T1 adds 5 slots (T2 → +5, T3 → +10). The warehouse "more_slots"
+## function (T2) is exactly this raise, so upgrading the warehouse IS the slot raise.
+func effective_stash_cap() -> int:
+	return STASH_CAP + 5 * max(0, get_building_tier("warehouse") - 1)
+
+
 ## Add an equip to the permanent stash. Accepts an instance dict or a legacy
 ## item_id String; an empty instance / "" is rejected. Returns false if the
-## stash is full or the entry is empty.
+## stash is full (effective_stash_cap) or the entry is empty.
 func add_to_stash(item: Variant) -> bool:
-	if stash.size() >= STASH_CAP:
+	if stash.size() >= effective_stash_cap():
 		return false
 	if typeof(item) == TYPE_STRING:
 		if str(item) == "":
@@ -471,6 +583,32 @@ func reforge_stash_item(index: int) -> bool:
 	return true
 
 
+## Curse stash item `index` (forge T3): spend 100 scrap to re-roll its affixes as
+## a cursed set for its rarity and flag cursed=true. Stores the result back as a
+## full instance dict (converts legacy strings). Returns false on bad index, an
+## already-cursed item, or insufficient scrap. Emits scrap_changed (via spend_scrap).
+const CURSE_SCRAP_COST := 100
+
+
+func curse_stash_item(index: int) -> bool:
+	if index < 0 or index >= stash.size():
+		return false
+	var inst: Dictionary = RunManager.as_equip_instance(stash[index])
+	if inst.is_empty():
+		return false
+	if bool(inst.get("cursed", false)):
+		return false
+	var rarity: String = str(inst.get("rarity", "common"))
+	if not spend_scrap(CURSE_SCRAP_COST):  # saves + emits scrap_changed
+		return false
+	inst["affixes"] = AFFIX_POOL.roll(rarity, true)
+	inst["cursed"] = true
+	stash[index] = inst
+	save_progress()
+	emit_signal("upgrades_changed")
+	return true
+
+
 func can_purchase(id: String, definition: Dictionary) -> bool:
 	var tiers: Array = definition.get("tiers", [])
 	var lvl := get_upgrade_level(id)
@@ -512,6 +650,8 @@ func reset_all() -> void:
 	facilities.clear()
 	caps_perk_levels.clear()
 	buildings.clear()
+	purchased_cards.clear()
+	starter_deck_override.clear()
 	save_progress()
 	emit_signal("core_changed", core)
 	emit_signal("caps_changed", caps)
@@ -535,6 +675,8 @@ func save_progress() -> void:
 		"run_history": run_history,
 		"max_ascension": max_ascension,
 		"unlocked_cards": unlocked_cards,
+		"purchased_cards": purchased_cards,
+		"starter_deck_override": starter_deck_override,
 		"stash": stash,
 		"buildings": buildings,
 	}
@@ -578,6 +720,23 @@ func load_progress() -> void:
 		unlocked_cards.clear()
 		for c in raw_unlocked:
 			unlocked_cards.append(str(c))
+	# Back-compat: old saves predate the market card-shop / deck-override. Missing
+	# keys → empty (no purchased cards, no per-hero deck overrides).
+	var raw_purchased = parsed.get("purchased_cards", [])
+	purchased_cards.clear()
+	if typeof(raw_purchased) == TYPE_ARRAY:
+		for c in raw_purchased:
+			purchased_cards.append(str(c))
+	var raw_override = parsed.get("starter_deck_override", {})
+	starter_deck_override.clear()
+	if typeof(raw_override) == TYPE_DICTIONARY:
+		for hid in raw_override:
+			var deck = raw_override[hid]
+			if typeof(deck) == TYPE_ARRAY:
+				var out: Array = []
+				for c in deck:
+					out.append(str(c))
+				starter_deck_override[str(hid)] = out
 	# Stash entries may be equip INSTANCE dicts (new) or legacy item_id Strings
 	# (old saves). Preserve both as-is — RunManager.as_equip_instance converts
 	# strings on read; no normalization needed here (lower-risk than rewriting
