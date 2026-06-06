@@ -96,6 +96,14 @@ var _run_caps: int = 0
 ## String — tolerated via as_equip_instance). Filled by the Phase-3 loadout UI.
 var pending_loadout: Array = []
 
+## Equipment queued (from the base stash) to start the run already EQUIPPED into
+## a slot. Maps slot (one of EQUIPMENT_SLOTS) → equip instance (or legacy String).
+## Filled by the warehouse loadout screen's drag-to-equip; consumed + cleared in
+## start_new_run AFTER pending_loadout, removing each placed entry from the stash
+## so it is granted exactly once. Run-scoped, NOT persisted — defaults to {} so
+## back-compat callers that never touch it behave exactly as before.
+var pending_equipped: Dictionary = {}
+
 ## Compatibility read-only view: the equip item_ids currently in the backpack
 ## (cell order). Mutate via add_to_inventory/discard_from_inventory/equip_to_slot.
 var inventory_items: Array[String]:
@@ -647,6 +655,34 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 		if add_equip_to_backpack(entry):
 			MetaProgress.remove_from_stash(entry)
 	pending_loadout.clear()
+	# Inject the warehouse's slot loadout: each pending_equipped entry starts the
+	# run already EQUIPPED into its slot (not in the backpack), so it is never
+	# double-granted. We write the slot DIRECTLY rather than via equip_to_slot:
+	# the slots were reset to {} just above (no prev to bounce) and the queued item
+	# is NOT in the backpack, so a direct assignment equips the EXACT queued instance
+	# (with its rolled affixes) instead of equip_to_slot's base-id bag-search, which
+	# could otherwise grab a same-base loadout copy from the backpack. We re-validate
+	# the JSON slot here (the UI gates it, but start_new_run is the trust boundary)
+	# and remove the consumed instance from the permanent stash exactly once.
+	var equipped_any := false
+	for slot in EQUIPMENT_SLOTS:
+		var queued: Variant = pending_equipped.get(slot, null)
+		if queued == null:
+			continue
+		var inst := as_equip_instance(queued)
+		if inst.is_empty():
+			continue
+		var base_id := equip_base(inst)
+		var data: Dictionary = get_equipment_data(base_id)
+		if str(data.get("slot", "")) != slot:
+			continue  # slot mismatch / unknown item — leave it in the stash
+		equipped_items[slot] = inst
+		MetaProgress.remove_from_stash(queued)
+		equipped_any = true
+	pending_equipped.clear()
+	# NOTE: equipment attributes are folded in by recompute_attributes() further
+	# below — AFTER player_attributes is reset from base_attributes — so we do NOT
+	# recompute here (it would be clobbered by that reset).
 	relics.clear()
 	var starting_relic: String = str(current_hero_data.get("starting_relic", ""))
 	if starting_relic != "":
@@ -672,6 +708,12 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 		if lvl > 0 and attr in base_attributes:
 			base_attributes[attr] = int(base_attributes[attr]) + lvl
 	player_attributes = base_attributes.duplicate()
+	# Fold in any warehouse-loadout gear equipped above: recompute rebuilds
+	# player_attributes from base + equipped affixes and applies the equipment
+	# max_hp/crit bonuses (its delta math starts clean — _equipment_*_bonus were
+	# zeroed before the slot reset). A no-op when no gear was placed.
+	if equipped_any:
+		recompute_attributes()
 	is_run_active = true
 	_apply_meta_upgrades()
 	_emit_all_state()
