@@ -34,7 +34,8 @@ var caps_perk_levels: Dictionary = {}
 var run_history: Array = []
 ## Highest difficulty completed. 0 means no ascension cleared.
 var max_ascension: int = 0
-## Card ids unlocked beyond the INITIAL_CARD_POOL (added via card_research).
+## Card ids unlocked beyond the INITIAL_CARD_POOL (added via the Market screen's
+## per-card unlock, MetaProgress.unlock_card).
 var unlocked_cards: Array[String] = []
 ## Cards bought (with Caps) at the market T3 card shop. Persistent; appended to
 ## the run deck at start_new_run (on TOP of the starter/override deck). Back-compat
@@ -137,9 +138,9 @@ const DISMANTLE_SCRAP := {"common": 5, "uncommon": 12, "rare": 25}
 const REFORGE_COST := {"common": 15, "uncommon": 30, "rare": 50}
 ## Affix roller (per-instance equipment); used by reforge_stash_item.
 const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
-## Cards available before any card_research is purchased. The omitted
+## Cards available before any are unlocked at the Market. The omitted
 ## ids (bone_breaker, last_breath, preemptive_strike, chain_link, last_stand)
-## unlock via the card_research upgrade.
+## unlock via the Market screen's per-card unlock (unlock_card).
 const INITIAL_CARD_POOL: Array[String] = [
 	"strike",
 	"weak_strike",
@@ -626,15 +627,8 @@ func purchase_upgrade(id: String, definition: Dictionary) -> bool:
 	core -= cost
 	upgrades[id] = lvl + 1
 
-	# Apply purchase-time side effects (currently just card_pool_unlock —
-	# everything else is read on demand at run start).
-	var effect_key: String = str(definition.get("effect_key", ""))
-	if effect_key == "card_pool_unlock":
-		var effect_value: Dictionary = tier.get("effect_value", {})
-		var unlocks: Array = effect_value.get("unlocks", [])
-		for c in unlocks:
-			if not str(c) in unlocked_cards:
-				unlocked_cards.append(str(c))
+	# All surviving base upgrades' effects are read on demand at run start; none
+	# carry a purchase-time side effect anymore.
 
 	save_progress()
 	emit_signal("core_changed", core)

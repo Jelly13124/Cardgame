@@ -1,10 +1,10 @@
 ## Home base scene — the boot scene + post-run return point.
-## Shows Core balance + 5 UpgradePanels + START NEW RUN button.
-## Loads upgrade definitions from run_system/data/base_upgrades/.
+## Shows the Core/Caps/Scrap balance bar, the 5 building selector tiles, the
+## stash/loadout button, START NEW RUN, and the recent-runs panel. The base's
+## actual functions now live in the per-building screens (run_system/ui/buildings/).
 extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
-const UPGRADE_PANEL_SCRIPT = preload("res://run_system/ui/upgrade_panel.gd")
 const HERO_SELECT_PACKED = preload("res://run_system/ui/hero_select.tscn")
 const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
 const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
@@ -20,28 +20,12 @@ const BUILDING_ACCENTS := {
 	"warehouse": Color(0.78, 0.72, 0.60),
 }
 const HOME_BACKGROUND_PATH := "res://run_system/assets/images/home/home_base_bg.png"
-const UPGRADE_DIR := "res://run_system/data/base_upgrades/"
-const UPGRADE_ORDER := [
-	"med_bay",
-	"arsenal",
-	"research_lab",
-	"scrap_workshop",
-	"command_center",
-	"jerry_unlock",
-	"starter_boost",
-	"card_research",
-	"blacksmith",
-]
 
 var _core_label: Label
 var _caps_label: Label
 var _scrap_label: Label
 ## Building selector tiles, keyed by building_id, rebuilt on buildings_changed.
 var _building_grid: GridContainer
-## Cyber Doctor facility panel root — rebuilt whenever facility/perk state changes.
-var _cyber_doc_panel: PanelContainer
-## Blacksmith station panel root — rebuilt whenever stash/scrap state changes.
-var _blacksmith_panel: PanelContainer
 ## Stash indices the player has marked to carry into the next run (rebuilt into
 ## RunManager.pending_loadout on every toggle). Reset when the scene reloads.
 var _stash_selected: Array[int] = []
@@ -53,13 +37,6 @@ func _ready() -> void:
 	_build()
 	MetaProgress.core_changed.connect(func(_v): _refresh_core())
 	MetaProgress.caps_changed.connect(func(_v): _refresh_caps())
-	# Facility unlock + perk purchases emit upgrades_changed; rebuild the panel so
-	# the locked→unlocked transition and perk levels stay in sync.
-	MetaProgress.upgrades_changed.connect(_rebuild_cyber_doc_panel)
-	# Blacksmith rebuilds on stash changes (dismantle/reforge emit upgrades_changed)
-	# and on any scrap balance change (affordability of reforge buttons).
-	MetaProgress.upgrades_changed.connect(_rebuild_blacksmith_panel)
-	MetaProgress.scrap_changed.connect(func(_v): _rebuild_blacksmith_panel())
 	# Building selector: top-bar Scrap + tile lock/tier badges track these.
 	MetaProgress.scrap_changed.connect(func(_v): _refresh_scrap())
 	MetaProgress.buildings_changed.connect(_rebuild_building_tiles)
@@ -131,8 +108,8 @@ func _build() -> void:
 	start_btn.pressed.connect(_on_start_pressed)
 	header.add_child(start_btn)
 
-	# Building selector — the new primary view (5 clickable tiles). Sits above the
-	# legacy upgrade/facility panels, which stay reachable below during Phase 1.
+	# Building selector — the primary view (5 clickable tiles). Each tile opens its
+	# building screen, which surfaces that building's functions.
 	var buildings_label := Label.new()
 	buildings_label.text = tr("UI_HOME_BUILDINGS")
 	_style_readable_label(buildings_label, 24, Color(1, 0.92, 0.55), 2)
@@ -144,35 +121,6 @@ func _build() -> void:
 	_building_grid.add_theme_constant_override("v_separation", 18)
 	vbox.add_child(_building_grid)
 	_rebuild_building_tiles()
-
-	# Upgrade grid (3 cols)
-	var grid := GridContainer.new()
-	grid.columns = 3
-	grid.add_theme_constant_override("h_separation", 24)
-	grid.add_theme_constant_override("v_separation", 20)
-	vbox.add_child(grid)
-
-	for upgrade_id in UPGRADE_ORDER:
-		var definition := _load_upgrade(upgrade_id)
-		if definition.is_empty():
-			push_warning("HomeBaseScene: missing upgrade JSON for '%s'" % upgrade_id)
-			continue
-		var panel := UPGRADE_PANEL_SCRIPT.new()
-		grid.add_child(panel)
-		panel.set_definition(definition)
-
-	# Cyber Doctor facility (two-layer base: Core unlocks it, Caps buy perks).
-	_cyber_doc_panel = PanelContainer.new()
-	_cyber_doc_panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
-	vbox.add_child(_cyber_doc_panel)
-	_rebuild_cyber_doc_panel()
-
-	# Blacksmith station: dismantle stash gear → Scrap; spend Scrap to reforge.
-	# Separate from the `blacksmith` base UPGRADE (safe cells) above.
-	_blacksmith_panel = PanelContainer.new()
-	_blacksmith_panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
-	vbox.add_child(_blacksmith_panel)
-	_rebuild_blacksmith_panel()
 
 	# Recent runs panel — last 5 entries from MetaProgress.run_history.
 	var history_label := Label.new()
@@ -360,252 +308,6 @@ func _open_building_screen(building_id: String) -> void:
 			screen.queue_free()
 	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(screen)
-
-
-## Rebuild the Cyber Doctor facility panel. Two states: LOCKED (Core unlock
-## button) and UNLOCKED (the 5 caps-perk rows). Called on build + whenever
-## MetaProgress.upgrades_changed fires (facility unlock / perk purchase).
-func _rebuild_cyber_doc_panel() -> void:
-	if not is_instance_valid(_cyber_doc_panel):
-		return
-	for c in _cyber_doc_panel.get_children():
-		c.queue_free()
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_right", 18)
-	margin.add_theme_constant_override("margin_top", 14)
-	margin.add_theme_constant_override("margin_bottom", 14)
-	_cyber_doc_panel.add_child(margin)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
-	margin.add_child(vbox)
-
-	var title := Label.new()
-	title.text = tr("UI_HOME_CYBERDOC_NAME").to_upper()
-	_style_readable_label(title, 24, Color(1, 0.92, 0.55), 2)
-	vbox.add_child(title)
-
-	if MetaProgress.is_facility_unlocked("cyber_doc"):
-		_build_cyber_doc_unlocked(vbox)
-	else:
-		_build_cyber_doc_locked(vbox)
-
-
-func _build_cyber_doc_locked(vbox: VBoxContainer) -> void:
-	var desc := Label.new()
-	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc.text = tr("UI_HOME_CYBERDOC_DESC")
-	_style_readable_label(desc, 18, Color(0.94, 0.90, 0.78), 1)
-	vbox.add_child(desc)
-
-	var cost := int(MetaProgress.FACILITY_UNLOCK_COSTS.get("cyber_doc", 300))
-	var unlock_btn := Button.new()
-	unlock_btn.text = tr("UI_HOME_CYBERDOC_UNLOCK").format({"n": cost})
-	unlock_btn.custom_minimum_size = Vector2(260, 40)
-	T.apply_button_theme(unlock_btn)
-	unlock_btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
-	unlock_btn.disabled = MetaProgress.core < cost
-	unlock_btn.pressed.connect(func() -> void: MetaProgress.unlock_facility("cyber_doc"))
-	vbox.add_child(unlock_btn)
-
-
-func _build_cyber_doc_unlocked(vbox: VBoxContainer) -> void:
-	var desc := Label.new()
-	desc.text = tr("UI_HOME_CYBERDOC_PERKS_HINT")
-	_style_readable_label(desc, 16, Color(0.8, 0.74, 0.6), 1)
-	vbox.add_child(desc)
-
-	# Stable perk order so rows don't reshuffle between rebuilds.
-	for perk_id in MetaProgress.CYBER_DOC_PERKS.keys():
-		vbox.add_child(_build_perk_row(str(perk_id)))
-
-
-func _build_perk_row(perk_id: String) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-
-	var lvl := MetaProgress.get_caps_perk_level(perk_id)
-	var max_lvl := MetaProgress.CAPS_PERK_MAX_LEVEL
-	var maxed := lvl >= max_lvl
-
-	var name_lbl := Label.new()
-	name_lbl.text = tr("UI_HOME_PERK_%s" % perk_id.to_upper())
-	_style_readable_label(name_lbl, 18, Color(1, 0.92, 0.55), 1)
-	name_lbl.custom_minimum_size = Vector2(220, 0)
-	row.add_child(name_lbl)
-
-	var lvl_lbl := Label.new()
-	lvl_lbl.text = tr("UI_HOME_PERK_LEVEL").format({"cur": lvl, "max": max_lvl})
-	_style_readable_label(lvl_lbl, 18, Color(0.90, 0.90, 0.86), 1)
-	lvl_lbl.custom_minimum_size = Vector2(110, 0)
-	row.add_child(lvl_lbl)
-
-	var cost := MetaProgress.caps_perk_cost(perk_id)
-	var cost_lbl := Label.new()
-	if maxed:
-		cost_lbl.text = ""
-	else:
-		cost_lbl.text = tr("UI_HOME_PERK_COST").format({"n": cost})
-	_style_readable_label(cost_lbl, 18, Color(1.0, 0.82, 0.45), 1)
-	cost_lbl.custom_minimum_size = Vector2(150, 0)
-	row.add_child(cost_lbl)
-
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(spacer)
-
-	var buy_btn := Button.new()
-	buy_btn.custom_minimum_size = Vector2(110, 36)
-	T.apply_button_theme(buy_btn)
-	buy_btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
-	if maxed:
-		buy_btn.text = tr("UI_HOME_PERK_MAX")
-		buy_btn.disabled = true
-	else:
-		buy_btn.text = tr("UI_HOME_UPGRADE_BUY")
-		buy_btn.disabled = MetaProgress.caps < cost
-		buy_btn.pressed.connect(func() -> void: MetaProgress.buy_caps_perk(perk_id))
-	row.add_child(buy_btn)
-
-	return row
-
-
-## Rebuild the Blacksmith station panel: Scrap balance + one row per stash item
-## (name, rarity, affixes, Dismantle + Reforge buttons). Called on build and on
-## every stash/scrap change. Affordability of Reforge tracks the live Scrap total.
-func _rebuild_blacksmith_panel() -> void:
-	if not is_instance_valid(_blacksmith_panel):
-		return
-	for c in _blacksmith_panel.get_children():
-		c.queue_free()
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_right", 18)
-	margin.add_theme_constant_override("margin_top", 14)
-	margin.add_theme_constant_override("margin_bottom", 14)
-	_blacksmith_panel.add_child(margin)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
-	margin.add_child(vbox)
-
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 16)
-	vbox.add_child(header)
-
-	var title := Label.new()
-	title.text = tr("UI_HOME_BLACKSMITH_TITLE").to_upper()
-	_style_readable_label(title, 24, Color(1, 0.92, 0.55), 2)
-	header.add_child(title)
-
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(spacer)
-
-	var scrap_lbl := Label.new()
-	scrap_lbl.text = tr("UI_HOME_BLACKSMITH_SCRAP").format({"n": MetaProgress.scrap})
-	_style_readable_label(scrap_lbl, 22, Color(0.78, 0.86, 0.62), 2)
-	header.add_child(scrap_lbl)
-
-	if MetaProgress.stash.is_empty():
-		var empty := Label.new()
-		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		empty.text = tr("UI_HOME_BLACKSMITH_EMPTY")
-		_style_readable_label(empty, 16, Color(0.8, 0.74, 0.6), 1)
-		vbox.add_child(empty)
-		return
-
-	for i in range(MetaProgress.stash.size()):
-		vbox.add_child(_build_blacksmith_row(int(i)))
-
-
-func _build_blacksmith_row(index: int) -> Control:
-	var inst := RunManager.as_equip_instance(MetaProgress.stash[index])
-	var base_id := str(inst.get("base", ""))
-	var rarity := str(inst.get("rarity", "common"))
-	var cursed := bool(inst.get("cursed", false))
-	var data = RunManager.get_equipment_data(base_id)
-	var item_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-
-	var name_lbl := Label.new()
-	name_lbl.text = "%s [%s]" % [item_name, rarity.capitalize()]
-	_style_readable_label(name_lbl, 18, Color(1, 0.92, 0.55), 1)
-	name_lbl.custom_minimum_size = Vector2(260, 0)
-	row.add_child(name_lbl)
-
-	# Affixes, comma-separated; curses tinted red. Built as a single label per
-	# affix so curse coloring stays per-affix.
-	var affix_box := HBoxContainer.new()
-	affix_box.add_theme_constant_override("separation", 8)
-	affix_box.custom_minimum_size = Vector2(300, 0)
-	var affixes := RunManager.equip_affixes(inst)
-	if affixes.is_empty():
-		var none := Label.new()
-		none.text = "—"
-		_style_readable_label(none, 16, Color(0.7, 0.7, 0.68), 1)
-		affix_box.add_child(none)
-	else:
-		for affix in affixes:
-			var a := affix as Dictionary
-			var lbl := Label.new()
-			lbl.text = MetaProgress.AFFIX_POOL.describe(a)
-			var is_curse := MetaProgress.AFFIX_POOL.is_curse(a)
-			_style_readable_label(
-				lbl, 16, Color(1.0, 0.42, 0.42) if is_curse else Color(0.7, 0.92, 0.7), 1
-			)
-			affix_box.add_child(lbl)
-	row.add_child(affix_box)
-
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(spacer)
-
-	var dismantle_scrap := int(
-		MetaProgress.DISMANTLE_SCRAP.get(rarity, MetaProgress.DISMANTLE_SCRAP["common"])
-	)
-	if cursed:
-		dismantle_scrap += 5
-	var dismantle_btn := Button.new()
-	dismantle_btn.text = tr("UI_HOME_BLACKSMITH_DISMANTLE").format({"n": dismantle_scrap})
-	dismantle_btn.custom_minimum_size = Vector2(160, 36)
-	T.apply_button_theme(dismantle_btn)
-	dismantle_btn.pressed.connect(func() -> void: MetaProgress.dismantle_stash_item(index))
-	row.add_child(dismantle_btn)
-
-	var reforge_cost := int(
-		MetaProgress.REFORGE_COST.get(rarity, MetaProgress.REFORGE_COST["common"])
-	)
-	var reforge_btn := Button.new()
-	reforge_btn.text = tr("UI_HOME_BLACKSMITH_REFORGE").format({"n": reforge_cost})
-	reforge_btn.custom_minimum_size = Vector2(170, 36)
-	T.apply_button_theme(reforge_btn)
-	reforge_btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
-	reforge_btn.disabled = MetaProgress.scrap < reforge_cost
-	reforge_btn.pressed.connect(func() -> void: MetaProgress.reforge_stash_item(index))
-	row.add_child(reforge_btn)
-
-	return row
-
-
-func _load_upgrade(id: String) -> Dictionary:
-	var path := UPGRADE_DIR + id + ".json"
-	if not FileAccess.file_exists(path):
-		return {}
-	var f := FileAccess.open(path, FileAccess.READ)
-	if not f:
-		return {}
-	var raw := f.get_as_text()
-	f.close()
-	var parsed = JSON.parse_string(raw)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return {}
-	return parsed
 
 
 ## Stash & loadout overlay: shows the permanent equipment stash; left-click an

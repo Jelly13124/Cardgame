@@ -1562,19 +1562,6 @@ func _apply_meta_upgrades() -> void:
 	if bonus_gold > 0:
 		add_gold(bonus_gold)
 
-	# Arsenal → starter inventory items
-	var arsenal := _get_meta_effect_value("arsenal")
-	if not arsenal.is_empty():
-		var commons := int(arsenal.get("commons", 0))
-		var uncommons := int(arsenal.get("uncommons", 0))
-		for i in range(commons):
-			var item_id := roll_equipment_drop("common")
-			if item_id != "":
-				add_to_inventory(make_equip_instance(item_id, "common"))
-		for i in range(uncommons):
-			var item_id := roll_equipment_drop("uncommon")
-			if item_id != "":
-				add_to_inventory(make_equip_instance(item_id, "uncommon"))
 	# Starter Boost → +N random attribute points (each picks a random
 	# attribute from STR/CON/INT/LCK/CHA and increments by 1).
 	var starter := _get_meta_effect_value("starter_boost")
@@ -1585,8 +1572,7 @@ func _apply_meta_upgrades() -> void:
 			var pick: String = attr_keys[randi() % attr_keys.size()]
 			grant_attribute(pick, 1)
 
-	# (loot_rarity_bias + shop_discount are read on-demand by loot_reward / shop_scene;
-	# nothing to apply here.)
+	# (shop_discount is read on-demand by shop_scene; nothing to apply here.)
 
 
 func _handle_run_loss(core_earned: int = 0) -> void:
