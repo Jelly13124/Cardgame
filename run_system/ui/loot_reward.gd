@@ -13,6 +13,7 @@ const CARD_REWARD_ICON_PATH := "res://run_system/assets/images/loot_ui/card_rewa
 # `T.PANEL_BG` etc. — see wasteland_theme.gd for all colors / builders.
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const INVENTORY_FULL_MODAL = preload("res://run_system/ui/inventory_full_modal.gd")
+const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
 # Lazy-loaded at call site to avoid map→battle→loot cyclic preload.
 const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 
@@ -128,19 +129,24 @@ func _generate_loot() -> void:
 		var set_tag := ""
 		if str(data.get("set_id", "")) != "":
 			set_tag = tr("UI_LOOT_EQUIP_SET_TAG").format({"set": str(data.get("set_id"))})
+		# Roll the affix instance UP FRONT so the reward shows the actual rolled
+		# affixes (the new system) — not the obsolete static JSON bonuses — and the
+		# claim grants this exact instance.
+		var instance := RunManager.make_equip_instance(equipment_drop_id, equipment_drop_rarity)
 		available_loot.append(
 			{
 				"id": "equipment",
 				"type": "equipment",
 				"item_id": equipment_drop_id,
 				"rarity": equipment_drop_rarity,
+				"instance": instance,
 				"title":
 				Settings.t(
 					"EQUIP_%s_NAME" % equipment_drop_id, str(data.get("name", equipment_drop_id))
 				),
 				"subtitle":
 				tr("UI_LOOT_EQUIP_SUBTITLE").format(
-					{"set": set_tag, "bonuses": _format_equipment_bonuses(data.get("bonuses", {}))}
+					{"set": set_tag, "bonuses": _format_affixes(instance)}
 				),
 				"icon": "res://battle_scene/assets/images/%s" % str(data.get("sprite", "")),
 				"action": tr("UI_LOOT_ACTION_TAKE")
@@ -346,7 +352,7 @@ func _on_loot_selected(loot_id: String, button: Button) -> void:
 		_open_card_draft()
 		button.queue_free()
 	elif loot["type"] == "equipment":
-		_claim_equipment_drop(str(loot.get("item_id", "")), str(loot.get("rarity", "")), button)
+		_claim_equipment_drop(loot.get("instance", {}), button)
 
 
 func _on_proceed_pressed() -> void:
@@ -502,12 +508,11 @@ func _drop_rarity_for_node_type(node_type: String) -> String:
 			return ""
 
 
-func _claim_equipment_drop(item_id: String, rarity: String, button: Button) -> void:
-	if item_id.is_empty():
+func _claim_equipment_drop(instance: Dictionary, button: Button) -> void:
+	if instance.is_empty():
 		return
-	# Roll a fresh per-instance affix loadout for the drop (cursed stays false
-	# until Phase 5). The whole instance is what gets stored / re-added.
-	var instance := RunManager.make_equip_instance(item_id, rarity)
+	# The instance (with its rolled affixes) was already created when the loot was
+	# built, so what the player saw is exactly what they get.
 	if RunManager.add_to_inventory(instance):
 		button.queue_free()
 		return
@@ -552,12 +557,15 @@ func _show_backpack_full_toast() -> void:
 	tween.tween_callback(toast.queue_free)
 
 
-func _format_equipment_bonuses(bonuses) -> String:
-	if typeof(bonuses) != TYPE_DICTIONARY or bonuses.is_empty():
+## Affix list for an equipment instance (the new system; replaces the old static
+## `bonuses` summary). Shows each rolled affix via AFFIX_POOL.describe.
+func _format_affixes(instance: Dictionary) -> String:
+	var affixes: Array = RunManager.equip_affixes(instance)
+	if affixes.is_empty():
 		return tr("UI_LOOT_NO_BONUSES")
 	var parts: Array = []
-	for attr in bonuses.keys():
-		parts.append("+%d %s" % [int(bonuses[attr]), str(attr).substr(0, 3)])
+	for a in affixes:
+		parts.append(AFFIX_POOL.describe(a))
 	return ", ".join(parts)
 
 

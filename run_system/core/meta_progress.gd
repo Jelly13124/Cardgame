@@ -141,10 +141,11 @@ const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
 ## Cards available before any are unlocked at the Market. The omitted
 ## ids (bone_breaker, last_breath, preemptive_strike, chain_link, last_stand)
 ## unlock via the Market screen's per-card unlock (unlock_card).
+# NOTE: strike + defend are basic starter cards (in hero starter decks) and are
+# deliberately NOT in the reward/draft pool — getting more of them as rewards is
+# pointless and dilutes the pool.
 const INITIAL_CARD_POOL: Array[String] = [
-	"strike",
 	"weak_strike",
-	"defend",
 	"stun_baton",
 	"hot_swap",
 	"adrenaline",
