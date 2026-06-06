@@ -162,6 +162,7 @@ const ALLOWED_BASE_UPGRADE_EFFECT_KEYS = [
 	"unlock_hero",
 	"starter_attributes",
 	"safe_cells_bonus",
+	"backpack_cells",
 ]
 
 # ─── Hero schema ─────────────────────────────────────────────────────────────

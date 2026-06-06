@@ -37,3 +37,8 @@ UPGRADE_card_research_DESC,Salvage research notes to add stronger cards to the d
 UPGRADE_card_research_TIER1,Unlock Flash Bang + Bone Breaker,解锁闪光弹+碎骨者
 UPGRADE_card_research_TIER2,Unlock Last Breath + Preemptive Strike,解锁垂死一搏+先发制人
 UPGRADE_card_research_TIER3,Unlock Junk Bomb,解锁废料炸弹
+UPGRADE_backpack_NAME,EXPANDED BACKPACK,扩容背包
+UPGRADE_backpack_DESC,Carry more loot out of the wasteland — adds backpack cells.,从废土带走更多战利品——增加背包格子。
+UPGRADE_backpack_TIER1,+3 backpack cells (13 total),背包格子+3（共13格）
+UPGRADE_backpack_TIER2,+6 backpack cells (16 total),背包格子+6（共16格）
+UPGRADE_backpack_TIER3,+10 backpack cells (20 total),背包格子+10（共20格）

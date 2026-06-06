@@ -314,11 +314,11 @@ func _refresh() -> void:
 	# Backpack grid (rebuild every refresh)
 	if _inv_title:
 		_inv_title.text = tr("UI_EQUIP_INVENTORY_COUNT").format(
-			{"n": RunManager.backpack_count_used(), "max": RunManager.MAX_INVENTORY}
+			{"n": RunManager.backpack_count_used(), "max": RunManager.effective_backpack_size()}
 		)
 	for child in _grid.get_children():
 		child.queue_free()
-	for i in range(RunManager.MAX_INVENTORY):
+	for i in range(RunManager.effective_backpack_size()):
 		_grid.add_child(_make_grid_cell(i))
 
 	# Active sets
@@ -533,7 +533,7 @@ func _toggle_safe(index: int) -> void:
 	var safe := MetaProgress.effective_safe_cells()
 	var dst := -1
 	if index < safe:
-		dst = _first_empty_in_range(safe, RunManager.MAX_INVENTORY)
+		dst = _first_empty_in_range(safe, RunManager.effective_backpack_size())
 	else:
 		dst = _first_empty_in_range(0, safe)
 	if dst != -1:
@@ -543,7 +543,7 @@ func _toggle_safe(index: int) -> void:
 
 
 func _first_empty_in_range(lo: int, hi: int) -> int:
-	for i in range(lo, mini(hi, RunManager.MAX_INVENTORY)):
+	for i in range(lo, mini(hi, RunManager.effective_backpack_size())):
 		if RunManager.backpack[i] == null:
 			return i
 	return -1

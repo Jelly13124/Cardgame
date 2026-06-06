@@ -192,7 +192,7 @@ func _pending_index_of(stash_entry: Variant) -> int:
 
 ## Sane cap: never queue more gear than the backpack can hold at run start.
 func _loadout_cap() -> int:
-	return RunManager.MAX_INVENTORY
+	return RunManager.effective_backpack_size()
 
 
 # --- T2: more slots --------------------------------------------------------
