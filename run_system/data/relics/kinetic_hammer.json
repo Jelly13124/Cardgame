@@ -1,0 +1,14 @@
+{
+  "id": "kinetic_hammer",
+  "title": "Kinetic Hammer",
+  "description": "At the start of each combat, gain 1 Strength.",
+  "icon": "res://run_system/assets/images/relics/war_horn.png",
+  "rarity": "common",
+  "effects": [
+    {
+      "trigger": "battle_start",
+      "type": "gain_strength",
+      "amount": 1
+    }
+  ]
+}
