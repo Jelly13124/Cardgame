@@ -15,6 +15,12 @@ const BUILDING_SCREEN_BASE = preload("res://run_system/ui/buildings/building_scr
 ## Building selector order + per-building placeholder accent (Codex art swaps the
 ## tile sprite later; the accent keeps the 5 tiles visually distinct meanwhile).
 const BUILDING_ORDER := ["forge", "clinic", "market", "outpost", "warehouse"]
+## Entry-screen arrangement: two flank columns + a centre column. The centre
+## column stacks the Warehouse tile above the START "door", so the layout reads
+## as "2 buildings left / 2 right / depart-door centre" (warehouse = loadout prep,
+## naturally the thing you touch last before leaving).
+const LEFT_BUILDINGS := ["forge", "clinic"]
+const RIGHT_BUILDINGS := ["market", "outpost"]
 const BUILDING_ACCENTS := {
 	"forge": Color(0.92, 0.55, 0.32),
 	"clinic": Color(0.46, 0.86, 0.78),
@@ -27,8 +33,9 @@ const HOME_BACKGROUND_PATH := "res://run_system/assets/images/home/home_base_bg.
 var _core_label: Label
 var _caps_label: Label
 var _scrap_label: Label
-## Building selector tiles, keyed by building_id, rebuilt on buildings_changed.
-var _building_grid: GridContainer
+## Three-column building area (left flank / centre door / right flank), rebuilt
+## on buildings_changed.
+var _building_area: HBoxContainer
 ## Stash indices the player has marked to carry into the next run (rebuilt into
 ## RunManager.pending_loadout on every toggle). Reset when the scene reloads.
 var _stash_selected: Array[int] = []
@@ -95,29 +102,20 @@ func _build() -> void:
 	settings_btn.pressed.connect(_open_settings)
 	header.add_child(settings_btn)
 
-	# (Stash/loadout button removed — the Warehouse building now owns hero + loadout.)
+	# (Stash/loadout button + header START removed — START now lives in the centre
+	# "door" of the building layout below; the Warehouse owns hero + loadout.)
 
-	var start_btn := Button.new()
-	start_btn.text = TranslationServer.translate("UI_HOME_START_RUN")
-	start_btn.custom_minimum_size = Vector2(220, 52)
-	start_btn.add_theme_font_size_override("font_size", 22)
-	T.apply_button_theme(start_btn)
-	start_btn.pressed.connect(_on_start_pressed)
-	header.add_child(start_btn)
-
-	# Building selector — the primary view (5 clickable tiles). Each tile opens its
-	# building screen, which surfaces that building's functions.
+	# Building selector — the primary view. Three columns: two flank buildings left,
+	# two right, and a centre column with the Warehouse above the START door.
 	var buildings_label := Label.new()
 	buildings_label.text = tr("UI_HOME_BUILDINGS")
 	_style_readable_label(buildings_label, 24, Color(1, 0.92, 0.55), 2)
 	vbox.add_child(buildings_label)
 
-	_building_grid = GridContainer.new()
-	# 3 columns reads as a cleaner, larger grid than the old cramped 5-wide row.
-	_building_grid.columns = 3
-	_building_grid.add_theme_constant_override("h_separation", 24)
-	_building_grid.add_theme_constant_override("v_separation", 24)
-	vbox.add_child(_building_grid)
+	_building_area = HBoxContainer.new()
+	_building_area.alignment = BoxContainer.ALIGNMENT_CENTER
+	_building_area.add_theme_constant_override("separation", 28)
+	vbox.add_child(_building_area)
 	_rebuild_building_tiles()
 
 	# Recent runs panel — last 5 entries from MetaProgress.run_history.
@@ -222,16 +220,74 @@ func _refresh_scrap() -> void:
 		_scrap_label.text = tr("UI_HOME_SCRAP").format({"n": MetaProgress.scrap})
 
 
-## Rebuild the 5 building selector tiles (placeholder: a themed Panel with an
-## accent strip + name + lock/tier badge). Called on build and on every
-## buildings_changed so locked→unlocked / tier-up transitions repaint live.
+## Rebuild the three-column building area: left flank (Forge/Clinic), centre
+## column (Warehouse tile + START door), right flank (Market/Outpost). Called on
+## build and on every buildings_changed so lock→unlock / tier-up repaint live.
 func _rebuild_building_tiles() -> void:
-	if not is_instance_valid(_building_grid):
+	if not is_instance_valid(_building_area):
 		return
-	for c in _building_grid.get_children():
+	for c in _building_area.get_children():
 		c.queue_free()
-	for building_id in BUILDING_ORDER:
-		_building_grid.add_child(_make_building_tile(str(building_id)))
+	_building_area.add_child(_make_building_column(LEFT_BUILDINGS))
+	_building_area.add_child(_make_center_column())
+	_building_area.add_child(_make_building_column(RIGHT_BUILDINGS))
+
+
+## A flank column: stacked building tiles.
+func _make_building_column(building_ids: Array) -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 24)
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	for building_id in building_ids:
+		col.add_child(_make_building_tile(str(building_id)))
+	return col
+
+
+## The centre column: the Warehouse tile sits directly above the START "door".
+func _make_center_column() -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 24)
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_child(_make_building_tile("warehouse"))
+	col.add_child(_make_start_door())
+	return col
+
+
+## The START "door": a tall, golden, clickable tile that launches the run. Visually
+## distinct from the building tiles (warm gradient + DEPART label) so it reads as
+## the way out, not another building.
+func _make_start_door() -> Control:
+	var accent := Color(1.0, 0.82, 0.36)
+	var door := PanelContainer.new()
+	door.custom_minimum_size = Vector2(300, 196)
+	door.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(Color(0.16, 0.12, 0.05, 0.97), accent, 6, 4)
+	)
+	door.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+	var box := VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 10)
+	door.add_child(box)
+
+	var glyph := Label.new()
+	glyph.text = "🚪"
+	glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	glyph.add_theme_font_size_override("font_size", 64)
+	box.add_child(glyph)
+
+	var label := Label.new()
+	label.text = TranslationServer.translate("UI_HOME_START_RUN")
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_style_readable_label(label, 28, Color(1.0, 0.92, 0.55), 3)
+	box.add_child(label)
+
+	door.gui_input.connect(
+		func(ev: InputEvent) -> void:
+			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+				_on_start_pressed()
+	)
+	return door
 
 
 func _make_building_tile(building_id: String) -> Control:
