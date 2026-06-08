@@ -345,7 +345,7 @@ func take_damage(amount: int, silent: bool = false) -> void:
 	_refresh_hud()
 
 	# Floating damage number + shake. silent=true skips both — DoT ticks
-	# (poison/burn) already produce a "POISON N" / "BURN N" notification
+	# (bleed/burn) already produce a "BLEED N" / "BURN N" notification
 	# from status_effect_system, so showing a floating number too would
 	# stack two damage callouts on every tick.
 	if not silent:

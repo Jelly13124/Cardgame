@@ -26,7 +26,7 @@ static func format_name_localized(status_name: String) -> String:
 
 
 const STATUS_COLORS = {
-	"poison": Color(0.4, 0.9, 0.2),
+	"bleed": Color(1.0, 0.30, 0.37),
 	"burn": Color(1.0, 0.4, 0.1),
 	"weak": Color(0.7, 0.5, 0.9),
 	"vulnerable": Color(0.95, 0.45, 0.2),
@@ -42,7 +42,7 @@ const STATUS_COLORS = {
 }
 
 const STATUS_LABELS = {
-	"poison": "P",
+	"bleed": "Bl",
 	"burn": "B",
 	"weak": "W",
 	"vulnerable": "V",
@@ -57,9 +57,14 @@ const STATUS_LABELS = {
 	"dark_embrace": "◆",
 }
 
+const STATUS_ICON_DIR := "res://battle_scene/assets/images/ui/status/"
+const STATUS_ICON_SIZE := 30.0
+
 const STATUS_DESCRIPTIONS = {
-	"poison": "Take 1 damage per stack at the start of your turn. Stacks decay by 1 each turn.",
-	"burn": "Take damage equal to stacks at the start of your turn. All stacks consumed.",
+	"bleed":
+	"Take damage equal to stacks at the start of your turn, then stacks are halved (rounded down).",
+	"burn":
+	"Take damage equal to stacks at the end of your turn. Lose 1 stack at the start of each turn.",
 	"weak": "Outgoing attack damage reduced 25% per stack. Decays 1 per turn.",
 	"vulnerable": "Incoming attack damage increased 50% per stack. Decays 1 per turn.",
 	"double_damage": "Next N attacks deal double damage. Consumed on use.",
@@ -102,21 +107,25 @@ func has_status(status_name: String) -> bool:
 
 func on_turn_start(entity: Node) -> void:
 	var changed := false
-	if has_status("poison"):
-		var dmg: int = _statuses["poison"]
+	if has_status("bleed"):
+		var dmg: int = _statuses["bleed"]
 		if entity.has_method("take_damage"):
 			# silent=false → CombatFX floating damage number IS the readout
 			# now that _notify is deleted.
 			entity.take_damage(dmg)
-		_statuses["poison"] -= 1
-		if _statuses["poison"] <= 0:
-			_statuses.erase("poison")
+		# Halve remaining stacks, rounded down (int division floors for positives).
+		_statuses["bleed"] = _statuses["bleed"] / 2
+		if _statuses["bleed"] <= 0:
+			_statuses.erase("bleed")
 		changed = true
 
+	# Burn now ticks at END of turn (see on_turn_end); the start of turn only
+	# decays it by 1 stack.
 	if has_status("burn"):
-		var dmg: int = _statuses["burn"]
-		if entity.has_method("take_damage"):
-			entity.take_damage(dmg)
+		_statuses["burn"] -= 1
+		if _statuses["burn"] <= 0:
+			_statuses.erase("burn")
+		changed = true
 
 	if has_status("regen"):
 		var amt: int = _statuses["regen"]
@@ -133,6 +142,13 @@ func on_turn_start(entity: Node) -> void:
 
 func on_turn_end(entity: Node) -> void:
 	var changed := false
+	# Burn deals its damage at the END of the turn (stacks are decayed at the next
+	# turn start). Does not consume stacks here — the start-of-turn −1 handles decay.
+	if has_status("burn"):
+		var burn_dmg: int = _statuses["burn"]
+		if entity.has_method("take_damage"):
+			entity.take_damage(burn_dmg)
+
 	for status_name in TURN_END_DECAY:
 		if not has_status(status_name):
 			continue
@@ -221,7 +237,7 @@ func _on_statuses_changed(entity: Node) -> void:
 const STATUS_BADGE_BG = preload("res://battle_scene/assets/images/ui/status_badge_bg.png")
 
 
-func _refresh_badges(entity: Node) -> void:
+func _refresh_badges_legacy(entity: Node) -> void:
 	var container = entity.find_child("StatusBadges", true, false)
 	if not container:
 		return
@@ -285,3 +301,100 @@ func _refresh_badges(entity: Node) -> void:
 		bg.mouse_exited.connect(Tooltip.hide_if_owner.bind(bg_id))
 		bg.tree_exited.connect(Tooltip.hide_if_owner.bind(bg_id))
 		container.add_child(bg)
+
+
+func _refresh_badges(entity: Node) -> void:
+	var container = entity.find_child("StatusBadges", true, false)
+	if not container:
+		return
+
+	for child in container.get_children():
+		child.queue_free()
+
+	for status_name in _statuses:
+		var stacks = _statuses[status_name]
+		if stacks <= 0:
+			continue
+
+		var badge = _make_status_badge(status_name, stacks)
+		var human_name: String = format_name_localized(status_name)
+		var desc_key := "UI_COMBAT_STATUS_%s_DESC" % str(status_name).to_upper()
+		var desc: String = TranslationServer.translate(desc_key)
+		if desc == desc_key:
+			desc = str(STATUS_DESCRIPTIONS.get(status_name, ""))
+		var tip: String = (
+			tr("UI_COMBAT_STATUS_TIP").format({"name": human_name, "n": stacks, "desc": desc})
+			if desc != ""
+			else tr("UI_COMBAT_STATUS_TIP_NO_DESC").format({"name": human_name, "n": stacks})
+		)
+		var badge_ref: Control = badge
+		var badge_id: int = badge.get_instance_id()
+		badge.mouse_entered.connect(
+			func():
+				if not is_instance_valid(badge_ref):
+					return
+				Tooltip.show(
+					tip, badge_ref.global_position + Vector2(badge_ref.size.x * 0.5, 0), badge_id
+				)
+		)
+		badge.mouse_exited.connect(Tooltip.hide_if_owner.bind(badge_id))
+		badge.tree_exited.connect(Tooltip.hide_if_owner.bind(badge_id))
+		container.add_child(badge)
+
+
+func _make_status_badge(status_name: String, stacks: int) -> Control:
+	var badge = Control.new()
+	badge.custom_minimum_size = Vector2(STATUS_ICON_SIZE, STATUS_ICON_SIZE)
+	badge.size = Vector2(STATUS_ICON_SIZE, STATUS_ICON_SIZE)
+	badge.mouse_filter = Control.MOUSE_FILTER_PASS
+
+	var icon_texture := _load_status_icon(status_name)
+	if icon_texture:
+		var icon = TextureRect.new()
+		icon.texture = icon_texture
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+		badge.add_child(icon)
+	else:
+		var fallback = Label.new()
+		fallback.text = str(STATUS_LABELS.get(status_name, status_name))
+		fallback.add_theme_font_size_override("font_size", 18)
+		fallback.add_theme_color_override("font_color", STATUS_COLORS.get(status_name, Color.WHITE))
+		fallback.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		fallback.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		fallback.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		fallback.set_anchors_preset(Control.PRESET_FULL_RECT)
+		badge.add_child(fallback)
+
+	var stack_label = Label.new()
+	stack_label.text = str(stacks)
+	stack_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stack_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	stack_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	stack_label.add_theme_font_size_override("font_size", 13)
+	stack_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.72))
+	stack_label.add_theme_color_override("font_outline_color", Color(0.05, 0.025, 0.012, 1.0))
+	stack_label.add_theme_constant_override("outline_size", 3)
+	stack_label.anchor_left = 0.0
+	stack_label.anchor_top = 0.0
+	stack_label.anchor_right = 1.0
+	stack_label.anchor_bottom = 1.0
+	stack_label.offset_left = 0.0
+	stack_label.offset_top = 0.0
+	stack_label.offset_right = 3.0
+	stack_label.offset_bottom = 2.0
+	badge.add_child(stack_label)
+	return badge
+
+
+func _load_status_icon(status_name: String) -> Texture2D:
+	var path := "%s%s.png" % [STATUS_ICON_DIR, status_name]
+	if not ResourceLoader.exists(path):
+		return null
+	var loaded = load(path)
+	if loaded is Texture2D:
+		return loaded
+	return null

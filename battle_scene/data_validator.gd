@@ -50,7 +50,7 @@ const ALLOWED_EFFECT_TYPES = [
 	"deal_damage_block_mult",
 ]
 const ALLOWED_STATUS_NAMES = [
-	"poison",
+	"bleed",
 	"burn",
 	"weak",
 	"vulnerable",
