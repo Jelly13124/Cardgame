@@ -1,0 +1,19 @@
+{
+	"name": "limit_break",
+	"title": "Limit Break",
+	"rarity": "rare",
+	"type": "skill",
+	"cost": 1,
+	"polarity": "neutral",
+	"description": "Double your Strength. Exhaust.",
+	"front_image": "player/defend.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "double_strength"
+		},
+		{
+			"type": "exhaust_self"
+		}
+	]
+}

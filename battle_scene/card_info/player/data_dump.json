@@ -1,0 +1,17 @@
+{
+	"name": "data_dump",
+	"title": "Data Dump",
+	"rarity": "uncommon",
+	"type": "skill",
+	"cost": 0,
+	"polarity": "neutral",
+	"description": "Draw 3 cards.",
+	"front_image": "player/defend.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "draw_cards",
+			"amount": 3
+		}
+	]
+}

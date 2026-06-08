@@ -1,0 +1,21 @@
+{
+	"name": "recoil_shot",
+	"title": "Recoil Shot",
+	"rarity": "common",
+	"type": "attack",
+	"cost": 1,
+	"polarity": "neutral",
+	"description": "Deal 9 damage. Draw 1 card.",
+	"front_image": "player/strike.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "deal_damage",
+			"amount": 9
+		},
+		{
+			"type": "draw_cards",
+			"amount": 1
+		}
+	]
+}

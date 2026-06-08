@@ -1,0 +1,16 @@
+{
+	"name": "limit_break_plus",
+	"title": "Limit Break+",
+	"rarity": "rare",
+	"type": "skill",
+	"cost": 1,
+	"polarity": "neutral",
+	"description": "Double your Strength.",
+	"front_image": "player/defend.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "double_strength"
+		}
+	]
+}

@@ -1,0 +1,20 @@
+{
+	"name": "tape_patch_plus",
+	"title": "Tape Patch+",
+	"rarity": "common",
+	"type": "skill",
+	"cost": 1,
+	"polarity": "neutral",
+	"description": "Gain 11 Block. Exhaust.",
+	"front_image": "player/defend.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "gain_block",
+			"amount": 11
+		},
+		{
+			"type": "exhaust_self"
+		}
+	]
+}

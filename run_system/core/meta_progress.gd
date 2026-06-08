@@ -168,6 +168,18 @@ const INITIAL_CARD_POOL: Array[String] = [
 	"purge",
 	"second_wind",
 	"smoke_step",
+	# StS2 port — colourless (no attribute lean, draftable by every hero).
+	"rebar_wave",
+	"recoil_shot",
+	"arc_flash",
+	"vent_plating",
+	"phase_plating",
+	"brace_protocol",
+	"static_shout",
+	"data_dump",
+	"sweep_arc",
+	"tape_patch",
+	"crowbar_smash",
 ]
 
 ## Hero-exclusive draft cards: only offered (loot/shop) when that hero is active.
@@ -182,6 +194,33 @@ const HERO_EXCLUSIVE_CARDS := {
 		"yang_ember_will",
 		"taiji_shift",
 		"taiji_pivot",
+		# StS2 port — yin defensive / block-counter cards (polarity-flavoured).
+		"kinetic_barrier",
+		"plating_loop",
+		"slam_dunk",
+	],
+	# Cowboy Bill — the StS2 Ironclad bruiser kit (strength / blood / exhaust).
+	# These have no polarity, so they must never roll for the Feng Shui Master.
+	"cowboy_bill":
+	[
+		"piston_jab",
+		"pipe_swing",
+		"haymaker",
+		"scrap_maul",
+		"overclock_swing",
+		"combat_stim",
+		"power_surge",
+		"mark_target",
+		"incinerate",
+		"focusing_blow",
+		"siphon_valve",
+		"bulkhead_bleed",
+		"hemo_drive",
+		"breach_charge",
+		"overdrive_core",
+		"limit_break",
+		"pain_damper",
+		"salvage_loop",
 	],
 }
 

@@ -1,0 +1,21 @@
+{
+	"name": "hemo_drive",
+	"title": "Hemo Drive",
+	"rarity": "uncommon",
+	"type": "attack",
+	"cost": 1,
+	"polarity": "neutral",
+	"description": "Lose 2 HP. Deal 15 damage.",
+	"front_image": "player/strike.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "lose_hp",
+			"amount": 2
+		},
+		{
+			"type": "deal_damage",
+			"amount": 15
+		}
+	]
+}

@@ -1,0 +1,21 @@
+{
+	"name": "vent_plating_plus",
+	"title": "Vent Plating+",
+	"rarity": "common",
+	"type": "skill",
+	"cost": 1,
+	"polarity": "neutral",
+	"description": "Gain 11 Block. Draw 1 card.",
+	"front_image": "player/defend.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "gain_block",
+			"amount": 11
+		},
+		{
+			"type": "draw_cards",
+			"amount": 1
+		}
+	]
+}

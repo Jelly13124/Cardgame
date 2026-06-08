@@ -1,0 +1,22 @@
+{
+	"name": "crowbar_smash_plus",
+	"title": "Crowbar Smash+",
+	"rarity": "common",
+	"type": "attack",
+	"cost": 2,
+	"polarity": "neutral",
+	"description": "Deal 10 damage. Apply 3 Vulnerable.",
+	"front_image": "player/strike.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "deal_damage",
+			"amount": 10
+		},
+		{
+			"type": "apply_status",
+			"status": "vulnerable",
+			"stacks": 3
+		}
+	]
+}

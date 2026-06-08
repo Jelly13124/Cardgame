@@ -1,0 +1,21 @@
+{
+	"name": "bulkhead_bleed",
+	"title": "Bulkhead Bleed",
+	"rarity": "uncommon",
+	"type": "skill",
+	"cost": 2,
+	"polarity": "neutral",
+	"description": "Lose 2 HP. Gain 16 Block.",
+	"front_image": "player/defend.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "lose_hp",
+			"amount": 2
+		},
+		{
+			"type": "gain_block",
+			"amount": 16
+		}
+	]
+}

@@ -1,0 +1,17 @@
+{
+	"name": "sweep_arc",
+	"title": "Sweep Arc",
+	"rarity": "common",
+	"type": "attack",
+	"cost": 1,
+	"polarity": "neutral",
+	"description": "Deal 8 damage to ALL enemies.",
+	"front_image": "player/strike.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "deal_damage_all",
+			"amount": 8
+		}
+	]
+}

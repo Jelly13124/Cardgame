@@ -1,0 +1,25 @@
+{
+	"name": "plating_loop",
+	"title": "Plating Loop",
+	"rarity": "uncommon",
+	"type": "ability",
+	"cost": 1,
+	"polarity": "yin",
+	"description": "[Yin] At the start of each turn, gain 3 Block. Matched: +1 Block per turn.",
+	"front_image": "player/brace.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "apply_status_self",
+			"status": "metallicize",
+			"stacks": 3
+		}
+	],
+	"matched_bonus": [
+		{
+			"type": "apply_status_self",
+			"status": "metallicize",
+			"stacks": 1
+		}
+	]
+}
