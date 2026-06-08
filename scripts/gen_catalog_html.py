@@ -373,11 +373,13 @@ def build_enemies():
 # ── Keyword glossary ────────────────────────────────────────────────────────
 STATUS_COLORS = {
     "poison": "#66e533", "burn": "#ff6619", "weak": "#b380e6", "vulnerable": "#f27333",
-    "strength_up": "#ff8033", "double_damage": "#33ccff", "stun": "#f2f24d",
+    "double_damage": "#33ccff", "stun": "#f2f24d",
     "regen": "#4dffa6", "thorns": "#b3bfcc", "frail": "#9980b3", "dodge": "#99f2ff",
+    "metallicize": "#b8ccdb", "feel_no_pain": "#8cccf2", "dark_embrace": "#b86bdb",
 }
-STATUSES = ["poison", "burn", "weak", "vulnerable", "strength_up", "double_damage", "stun",
-            "regen", "thorns", "frail", "dodge"]
+STATUSES = ["poison", "burn", "weak", "vulnerable", "double_damage", "stun",
+            "regen", "thorns", "frail", "dodge",
+            "metallicize", "feel_no_pain", "dark_embrace"]
 
 
 def kw_card(name_en, name_zh, desc_en, desc_zh, color, ident=""):
