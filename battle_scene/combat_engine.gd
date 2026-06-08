@@ -359,6 +359,53 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			)
 			await get_tree().create_timer(0.2).timeout
 
+		"lose_hp":
+			# Self HP cost (blood mechanic) — bypasses Block, can't be dodged.
+			if player and player.has_method("lose_hp"):
+				player.lose_hp(amount)
+				main.show_notification(
+					tr("UI_COMBAT_LOSE_HP").format({"n": amount}), Color(0.85, 0.3, 0.3)
+				)
+			await get_tree().create_timer(0.15).timeout
+
+		"double_strength":
+			# Limit Break — double current Strength (attribute payoff).
+			if player:
+				var cur_str := int(player.get("strength"))
+				player.set("strength", cur_str * 2)
+				if player.has_method("notify_stats_changed"):
+					player.notify_stats_changed()
+				main.show_notification(
+					tr("UI_COMBAT_DOUBLE_STRENGTH"), ATTRIBUTE_COLORS["gain_strength"]
+				)
+			await get_tree().create_timer(0.2).timeout
+
+		"deal_damage_block_mult":
+			# Body Slam — deal damage equal to current Block × mult. Scales off the
+			# CON-driven block pool, so it does NOT receive the global +STR.
+			var bmult: float = float(effect.get("mult", 1))
+			var block_dmg: int = int(player.get("block") * bmult) if player else 0
+			if target and is_instance_valid(target) and target.has_method("take_damage"):
+				if _check_dodge(target):
+					pass  # attack negated by Dodge
+				else:
+					if main.equipment_set_system and main.current_resolving_card:
+						block_dmg = main.equipment_set_system.modify_card_damage(
+							main.current_resolving_card, block_dmg
+						)
+					if card_mult != 1.0:
+						block_dmg = int(block_dmg * card_mult)
+					var outgoing = calculate_attack_damage(block_dmg, player, target)
+					target.take_damage(outgoing)
+					_register_player_attack()
+					main.show_notification(
+						tr("UI_COMBAT_DEALT_DAMAGE").format({"n": outgoing}), Color(1.0, 0.4, 0.3)
+					)
+					apply_thorns_reflection(player, target)
+			else:
+				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
+			await get_tree().create_timer(0.2).timeout
+
 		_:
 			push_error(
 				(

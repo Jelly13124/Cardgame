@@ -45,6 +45,9 @@ const ALLOWED_EFFECT_TYPES = [
 	"apply_stun_all",
 	"exhaust_self",
 	"flip_polarity",
+	"lose_hp",
+	"double_strength",
+	"deal_damage_block_mult",
 ]
 const ALLOWED_STATUS_NAMES = [
 	"poison",
@@ -58,6 +61,10 @@ const ALLOWED_STATUS_NAMES = [
 	"thorns",
 	"frail",
 	"dodge",
+	"strength_per_turn",
+	"metallicize",
+	"feel_no_pain",
+	"dark_embrace",
 ]
 # Effect types that require a `status` field
 const STATUS_BEARING_EFFECTS = [
