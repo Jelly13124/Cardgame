@@ -185,7 +185,9 @@ func _process(_delta: float) -> void:
 	# Damage preview: show the number this attack would actually deal. Prefer the
 	# hovered enemy; if exactly one enemy is on the field, show it for that enemy
 	# even before the player hovers it.
-	var preview_target: Node = hovered_unit if hovered_unit else _sole_alive_enemy()
+	var preview_target: Node = hovered_unit
+	if preview_target == null:
+		preview_target = _sole_alive_enemy()
 	if preview_target and is_instance_valid(preview_target):
 		var dmg := _card_preview_damage(targeting_card, preview_target)
 		if dmg >= 0:
@@ -773,6 +775,7 @@ func play_spell(card: Control, target_node: Node):
 		if card.card_container and card.card_container.has_card(card):
 			card.card_container.remove_card(card)
 		if should_exhaust:
+			_trigger_exhaust_powers()
 			await card_animator.fly_to_exhaust(card)
 			if is_instance_valid(card):
 				card.queue_free()
@@ -786,6 +789,21 @@ func play_spell(card: Control, target_node: Node):
 	refresh_hand_ui()
 	# Nothing left to play? End the turn for the player.
 	_maybe_auto_end_turn()
+
+
+## Fire the player's on-exhaust power triggers when a card routes to Exhaust:
+## feel_no_pain → gain Block, dark_embrace → draw. Called once per exhausted card.
+func _trigger_exhaust_powers() -> void:
+	if not is_instance_valid(player) or not player.status_system:
+		return
+	var fnp: int = player.status_system.get_stacks("feel_no_pain")
+	if fnp > 0:
+		player.add_block(fnp)
+		if player.has_method("play_block_pulse"):
+			player.play_block_pulse()
+	var de: int = player.status_system.get_stacks("dark_embrace")
+	if de > 0 and deck_manager:
+		deck_manager.draw_cards(de)
 
 
 ## Returns true if the card has an `exhaust_self` effect entry.

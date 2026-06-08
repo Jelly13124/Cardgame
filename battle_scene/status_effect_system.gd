@@ -37,6 +37,10 @@ const STATUS_COLORS = {
 	"thorns": Color(0.7, 0.75, 0.8),
 	"frail": Color(0.6, 0.5, 0.7),
 	"dodge": Color(0.6, 0.95, 1.0),
+	"strength_per_turn": Color(1.0, 0.45, 0.15),
+	"metallicize": Color(0.72, 0.80, 0.86),
+	"feel_no_pain": Color(0.55, 0.80, 0.95),
+	"dark_embrace": Color(0.72, 0.42, 0.86),
 }
 
 const STATUS_LABELS = {
@@ -51,6 +55,10 @@ const STATUS_LABELS = {
 	"thorns": "T",
 	"frail": "F",
 	"dodge": "E",
+	"strength_per_turn": "↑",
+	"metallicize": "M",
+	"feel_no_pain": "¤",
+	"dark_embrace": "◆",
 }
 
 const STATUS_DESCRIPTIONS = {
@@ -65,6 +73,10 @@ const STATUS_DESCRIPTIONS = {
 	"thorns": "When hit by an attack, the attacker takes stacks damage. Persistent.",
 	"frail": "Block gained is reduced 25%. Decays 1 per turn.",
 	"dodge": "Completely negates incoming attacks, one stack consumed per attack.",
+	"strength_per_turn": "At the start of your turn, gain stacks Strength. Persistent.",
+	"metallicize": "At the start of your turn, gain stacks Block. Persistent.",
+	"feel_no_pain": "Whenever a card is Exhausted, gain stacks Block. Persistent.",
+	"dark_embrace": "Whenever a card is Exhausted, draw stacks card(s). Persistent.",
 }
 
 

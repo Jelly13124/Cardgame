@@ -80,3 +80,13 @@ UI_COMBAT_ENEMY_HEALS,ENEMY HEALS {n},敌人治疗 {n}
 UI_COMBAT_ENEMY_CHARGING,{name} CHARGING...,{name} 蓄力中……
 UI_COMBAT_ENEMY_SUMMONS,{name} SUMMONS REINFORCEMENTS!,{name} 召唤了援军！
 UI_COMBAT_ENEMY_BUFFS_SELF,{name} EMPOWERS ITSELF (+{status})!,{name} 强化了自身（+{status}）！
+UI_COMBAT_LOSE_HP,Lose {n} HP,失去 {n} 生命
+UI_COMBAT_DOUBLE_STRENGTH,STRENGTH DOUBLED!,力量翻倍！
+UI_COMBAT_STATUS_STRENGTH_PER_TURN,Overdrive,超频
+UI_COMBAT_STATUS_STRENGTH_PER_TURN_DESC,At the start of your turn gain Strength equal to stacks. Persistent.,每回合开始获得等同层数的力量。持续。
+UI_COMBAT_STATUS_METALLICIZE,Plating,镀装
+UI_COMBAT_STATUS_METALLICIZE_DESC,At the start of your turn gain Block equal to stacks. Persistent.,每回合开始获得等同层数的格挡。持续。
+UI_COMBAT_STATUS_FEEL_NO_PAIN,Numb,镇痛
+UI_COMBAT_STATUS_FEEL_NO_PAIN_DESC,Whenever a card is Exhausted gain Block equal to stacks. Persistent.,每当一张牌被消耗时获得等同层数的格挡。持续。
+UI_COMBAT_STATUS_DARK_EMBRACE,Salvage,回收
+UI_COMBAT_STATUS_DARK_EMBRACE_DESC,Whenever a card is Exhausted draw cards equal to stacks. Persistent.,每当一张牌被消耗时抽取等同层数的牌。持续。

@@ -372,6 +372,22 @@ func heal(amount: int) -> void:
 	_refresh_hud()
 
 
+## Direct HP loss that bypasses Block (blood-cost cards: Siphon Valve, Hemo Drive,
+## …). Shows a floating damage number like take_damage but ignores Block/Dodge.
+func lose_hp(amount: int) -> void:
+	if amount <= 0:
+		return
+	health = max(0, health - amount)
+	health_changed.emit(health)
+	_refresh_hud()
+	var scene := get_tree().current_scene
+	if scene:
+		var spawn_pos: Vector2 = global_position + Vector2(0, -TARGET_DISPLAY_HEIGHT * 0.5)
+		COMBAT_FX.spawn_damage_number(scene, spawn_pos, amount, 0)
+	if health <= 0:
+		died.emit()
+
+
 func add_block(amount: int) -> void:
 	block += amount
 	block_changed.emit(block)
@@ -400,6 +416,16 @@ func start_turn() -> void:
 	block = 0
 	energy_changed.emit(energy)
 	block_changed.emit(block)
+	# Power upkeep that must run AFTER the block reset, else it gets wiped:
+	#  - metallicize: gain Block each turn (Plating Loop)
+	#  - strength_per_turn: gain Strength each turn (Overdrive Core / Demon Form)
+	var mtl: int = status_system.get_stacks("metallicize")
+	if mtl > 0:
+		add_block(mtl)
+	var spt: int = status_system.get_stacks("strength_per_turn")
+	if spt > 0:
+		strength += spt
+		notify_stats_changed()
 	_refresh_hud()
 
 
