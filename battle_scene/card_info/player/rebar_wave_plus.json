@@ -1,0 +1,21 @@
+{
+	"name": "rebar_wave_plus",
+	"title": "Rebar Wave+",
+	"rarity": "common",
+	"type": "attack",
+	"cost": 1,
+	"polarity": "neutral",
+	"description": "Gain 8 Block. Deal 7 damage.",
+	"front_image": "player/strike.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "gain_block",
+			"amount": 8
+		},
+		{
+			"type": "deal_damage",
+			"amount": 7
+		}
+	]
+}

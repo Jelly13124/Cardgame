@@ -1,0 +1,28 @@
+{
+	"name": "kinetic_barrier",
+	"title": "Kinetic Barrier",
+	"rarity": "uncommon",
+	"type": "skill",
+	"cost": 2,
+	"polarity": "yin",
+	"description": "[Yin] Gain 12 Block. Gain 3 Thorns. Matched: gain 4 Block.",
+	"front_image": "player/defend.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "gain_block",
+			"amount": 12
+		},
+		{
+			"type": "apply_status_self",
+			"status": "thorns",
+			"stacks": 3
+		}
+	],
+	"matched_bonus": [
+		{
+			"type": "gain_block",
+			"amount": 4
+		}
+	]
+}

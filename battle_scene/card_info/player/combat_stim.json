@@ -1,0 +1,17 @@
+{
+	"name": "combat_stim",
+	"title": "Combat Stim",
+	"rarity": "uncommon",
+	"type": "ability",
+	"cost": 1,
+	"polarity": "neutral",
+	"description": "Gain 2 Strength.",
+	"front_image": "player/brace.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "gain_strength",
+			"amount": 2
+		}
+	]
+}

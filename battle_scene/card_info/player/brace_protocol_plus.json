@@ -1,0 +1,17 @@
+{
+	"name": "brace_protocol_plus",
+	"title": "Brace Protocol+",
+	"rarity": "common",
+	"type": "skill",
+	"cost": 1,
+	"polarity": "neutral",
+	"description": "Gain 20 Block.",
+	"front_image": "player/defend.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "gain_block",
+			"amount": 20
+		}
+	]
+}

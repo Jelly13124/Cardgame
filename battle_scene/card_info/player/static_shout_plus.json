@@ -1,0 +1,21 @@
+{
+	"name": "static_shout_plus",
+	"title": "Static Shout+",
+	"rarity": "uncommon",
+	"type": "skill",
+	"cost": 0,
+	"polarity": "neutral",
+	"description": "Apply 2 Weak to ALL enemies. Exhaust.",
+	"front_image": "player/defend.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "apply_status_all",
+			"status": "weak",
+			"stacks": 2
+		},
+		{
+			"type": "exhaust_self"
+		}
+	]
+}

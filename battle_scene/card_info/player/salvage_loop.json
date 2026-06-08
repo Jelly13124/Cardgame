@@ -1,0 +1,18 @@
+{
+	"name": "salvage_loop",
+	"title": "Salvage Loop",
+	"rarity": "rare",
+	"type": "ability",
+	"cost": 2,
+	"polarity": "neutral",
+	"description": "Whenever a card is Exhausted, draw 1 card.",
+	"front_image": "player/brace.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "apply_status_self",
+			"status": "dark_embrace",
+			"stacks": 1
+		}
+	]
+}

@@ -1,0 +1,17 @@
+{
+	"name": "overclock_swing_plus",
+	"title": "Overclock Swing+",
+	"rarity": "uncommon",
+	"type": "attack",
+	"cost": 1,
+	"polarity": "neutral",
+	"description": "Deal damage equal to 4x your Strength.",
+	"front_image": "player/strike.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "deal_damage_str_mult",
+			"mult": 4
+		}
+	]
+}

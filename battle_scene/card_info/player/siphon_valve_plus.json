@@ -1,0 +1,21 @@
+{
+	"name": "siphon_valve_plus",
+	"title": "Siphon Valve+",
+	"rarity": "uncommon",
+	"type": "skill",
+	"cost": 0,
+	"polarity": "neutral",
+	"description": "Lose 3 HP. Gain 3 Energy.",
+	"front_image": "player/defend.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "lose_hp",
+			"amount": 3
+		},
+		{
+			"type": "gain_energy",
+			"amount": 3
+		}
+	]
+}

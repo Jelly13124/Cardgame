@@ -1,0 +1,22 @@
+{
+	"name": "incinerate",
+	"title": "Incinerate",
+	"rarity": "rare",
+	"type": "attack",
+	"cost": 2,
+	"polarity": "neutral",
+	"description": "Deal 18 damage to ALL enemies. Apply 2 Burn to all.",
+	"front_image": "player/strike.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "deal_damage_all",
+			"amount": 18
+		},
+		{
+			"type": "apply_status_all",
+			"status": "burn",
+			"stacks": 2
+		}
+	]
+}
