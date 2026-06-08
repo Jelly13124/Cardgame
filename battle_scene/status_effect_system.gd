@@ -7,7 +7,7 @@ class_name StatusEffectSystem
 
 var _statuses: Dictionary = {}
 
-const TURN_END_DECAY = ["weak", "vulnerable", "strength_up", "frail"]
+const TURN_END_DECAY = ["weak", "vulnerable", "frail"]
 
 
 static func format_name(status_name: String) -> String:
@@ -30,14 +30,12 @@ const STATUS_COLORS = {
 	"burn": Color(1.0, 0.4, 0.1),
 	"weak": Color(0.7, 0.5, 0.9),
 	"vulnerable": Color(0.95, 0.45, 0.2),
-	"strength_up": Color(1.0, 0.5, 0.2),
 	"double_damage": Color(0.2, 0.8, 1.0),
 	"stun": Color(0.95, 0.95, 0.3),
 	"regen": Color(0.3, 1.0, 0.6),
 	"thorns": Color(0.7, 0.75, 0.8),
 	"frail": Color(0.6, 0.5, 0.7),
 	"dodge": Color(0.6, 0.95, 1.0),
-	"strength_per_turn": Color(1.0, 0.45, 0.15),
 	"metallicize": Color(0.72, 0.80, 0.86),
 	"feel_no_pain": Color(0.55, 0.80, 0.95),
 	"dark_embrace": Color(0.72, 0.42, 0.86),
@@ -48,14 +46,12 @@ const STATUS_LABELS = {
 	"burn": "B",
 	"weak": "W",
 	"vulnerable": "V",
-	"strength_up": "S",
 	"double_damage": "D",
 	"stun": "⚡",
 	"regen": "R",
 	"thorns": "T",
 	"frail": "F",
 	"dodge": "E",
-	"strength_per_turn": "↑",
 	"metallicize": "M",
 	"feel_no_pain": "¤",
 	"dark_embrace": "◆",
@@ -66,14 +62,12 @@ const STATUS_DESCRIPTIONS = {
 	"burn": "Take damage equal to stacks at the start of your turn. All stacks consumed.",
 	"weak": "Outgoing attack damage reduced 25% per stack. Decays 1 per turn.",
 	"vulnerable": "Incoming attack damage increased 50% per stack. Decays 1 per turn.",
-	"strength_up": "Outgoing attack damage increased by stack count. Persistent.",
 	"double_damage": "Next N attacks deal double damage. Consumed on use.",
 	"stun": "Enemy skips its next turn for each stack (enemy-only).",
 	"regen": "Heal stacks HP at the start of your turn. Stacks decay by 1 each turn.",
 	"thorns": "When hit by an attack, the attacker takes stacks damage. Persistent.",
 	"frail": "Block gained is reduced 25%. Decays 1 per turn.",
 	"dodge": "Completely negates incoming attacks, one stack consumed per attack.",
-	"strength_per_turn": "At the start of your turn, gain stacks Strength. Persistent.",
 	"metallicize": "At the start of your turn, gain stacks Block. Persistent.",
 	"feel_no_pain": "Whenever a card is Exhausted, gain stacks Block. Persistent.",
 	"dark_embrace": "Whenever a card is Exhausted, draw stacks card(s). Persistent.",
@@ -154,8 +148,6 @@ func on_turn_end(entity: Node) -> void:
 				_notify(entity, "WEAK FADED", STATUS_COLORS["weak"])
 			"vulnerable":
 				_notify(entity, "VULNERABLE FADED", STATUS_COLORS["vulnerable"])
-			"strength_up":
-				_notify(entity, "STRENGTH UP FADED", STATUS_COLORS["strength_up"])
 
 	if changed:
 		_on_statuses_changed(entity)

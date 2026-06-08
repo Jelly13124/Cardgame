@@ -17,8 +17,7 @@
 		{
 			"hp_below": 0.5,
 			"on_enter": [
-				{ "type": "summon",    "enemy_ids": ["scrap_shard"], "count": 2, "label": "☠ SCRAP x2" },
-				{ "type": "buff_self", "status": "strength_up", "stacks": 2,     "label": "💢 ENRAGE" }
+				{ "type": "summon",    "enemy_ids": ["scrap_shard"], "count": 2, "label": "☠ SCRAP x2" }
 			],
 			"action_pattern": [
 				{ "type": "telegraph",                                            "label": "💢 OVERLOAD" },

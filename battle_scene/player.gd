@@ -418,14 +418,9 @@ func start_turn() -> void:
 	block_changed.emit(block)
 	# Power upkeep that must run AFTER the block reset, else it gets wiped:
 	#  - metallicize: gain Block each turn (Plating Loop)
-	#  - strength_per_turn: gain Strength each turn (Overdrive Core / Demon Form)
 	var mtl: int = status_system.get_stacks("metallicize")
 	if mtl > 0:
 		add_block(mtl)
-	var spt: int = status_system.get_stacks("strength_per_turn")
-	if spt > 0:
-		strength += spt
-		notify_stats_changed()
 	_refresh_hud()
 
 

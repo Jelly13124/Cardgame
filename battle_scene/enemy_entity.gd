@@ -16,6 +16,7 @@ const INTENT_ICON_BLOCK = preload("res://battle_scene/assets/images/ui/intent_bl
 const INTENT_ICON_BUFF = preload("res://battle_scene/assets/images/ui/intent_buff.png")
 const INTENT_ICON_CHARGE = preload("res://battle_scene/assets/images/ui/intent_charge.png")
 const NORMAL_DISPLAY_HEIGHT := 256.0
+const ELITE_DISPLAY_HEIGHT := 320.0
 const BOSS_DISPLAY_HEIGHT := 384.0
 const MAX_ANIMATION_FRAMES := 16
 const INTENT_BADGE_WIDTH := 104.0
@@ -24,6 +25,7 @@ const INTENT_BADGE_HEIGHT := 36.0
 # ─── Stats ────────────────────────────────────────────────────────────────────
 var enemy_id: String = ""
 var enemy_name: String = "ENEMY"
+var is_elite: bool = false
 ## True for act bosses (spec A3). A boss dying ends the fight even if summoned
 ## adds remain (enemy_ai._on_enemy_died frees the rest + declares victory).
 ## Bosses are always solo-spawned at the act top, so "a boss died" = "the act
@@ -45,7 +47,6 @@ const _STATUS_SHORT_NAMES = {
 	"burn": "Burn",
 	"poison": "Pois",
 	"stun": "Stun",
-	"strength_up": "Str+",
 	"double_damage": "Dbl",
 }
 
@@ -70,6 +71,7 @@ var _pending_on_enter: Array = []
 
 signal died
 signal status_changed
+signal attack_animation_finished
 
 # ─── Internal Nodes ───────────────────────────────────────────────────────────
 var _hud: Node
@@ -93,6 +95,7 @@ const ENEMIES_DIR = "res://battle_scene/assets/images/enemies/"
 static func create(id: String) -> EnemyEntity:
 	var entity = EnemyEntity.new()
 	entity.enemy_id = id
+	entity.is_elite = id in RunManager.ELITE_ROSTER
 	entity.is_boss = id in RunManager.ACT_BOSSES
 	var path = ENEMY_DATA_DIR + id + ".json"
 	if ResourceLoader.exists(path):
@@ -236,7 +239,11 @@ func _apply_display_scale(frames: SpriteFrames) -> float:
 	var native_height := float(tex.get_height())
 	if native_height <= 0.0:
 		return NORMAL_DISPLAY_HEIGHT
-	var target_height := BOSS_DISPLAY_HEIGHT if is_boss else NORMAL_DISPLAY_HEIGHT
+	var target_height := NORMAL_DISPLAY_HEIGHT
+	if is_boss:
+		target_height = BOSS_DISPLAY_HEIGHT
+	elif is_elite:
+		target_height = ELITE_DISPLAY_HEIGHT
 	var display_scale := target_height / native_height
 	_sprite.scale = Vector2(display_scale, display_scale)
 	_sprite.position = Vector2(0, -target_height * 0.5)
@@ -663,22 +670,32 @@ func get_incoming_attack_multiplier() -> float:
 # ─── Animation Helpers ────────────────────────────────────────────────────────
 
 
+func has_attack_animation() -> bool:
+	return (
+		_sprite
+		and is_instance_valid(_sprite)
+		and _sprite.sprite_frames.has_animation("attack")
+		and _sprite.sprite_frames.get_frame_count("attack") > 0
+	)
+
+
 ## Play the attack animation once, then return to the static rest pose.
 func play_attack() -> void:
-	if not _sprite or not is_instance_valid(_sprite):
-		return
-	if (
-		not _sprite.sprite_frames.has_animation("attack")
-		or _sprite.sprite_frames.get_frame_count("attack") == 0
-	):
+	if not has_attack_animation():
+		emit_signal("attack_animation_finished")
 		return
 	if not _sprite.animation_finished.is_connected(_on_attack_finished):
 		_sprite.animation_finished.connect(_on_attack_finished, CONNECT_ONE_SHOT)
+	_sprite.stop()
+	_sprite.animation = "attack"
+	_sprite.frame = 0
+	_sprite.frame_progress = 0.0
 	_sprite.play("attack")
 
 
 func _on_attack_finished() -> void:
 	_show_rest_pose()
+	emit_signal("attack_animation_finished")
 
 
 ## Quick red flash hit-reaction, the universal "took damage" feedback.

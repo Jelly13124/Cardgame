@@ -189,10 +189,7 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 
 	match action_type:
 		"attack":
-			# Play sprite attack anim at the same time as the lunge tween
-			if enemy.has_method("play_attack"):
-				enemy.play_attack()
-			await _animate_lunge(enemy)
+			await _play_enemy_attack_once(enemy)
 			if main.player and is_instance_valid(main.player):
 				var outgoing = main.combat_engine.calculate_attack_damage(
 					amount, enemy, main.player
@@ -203,14 +200,10 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 					main.show_notification(
 						tr("UI_COMBAT_ENEMY_ATTACKS").format({"n": outgoing}), Color(1, 0.3, 0.3)
 					)
-			await _animate_return(enemy)
-
 		"attack_status":
 			# Damage + apply a status to the player.
 			# JSON: {"type":"attack_status", "amount":5, "status":"weak", "stacks":1, "label":"⚔ 5 +Weak"}
-			if enemy.has_method("play_attack"):
-				enemy.play_attack()
-			await _animate_lunge(enemy)
+			await _play_enemy_attack_once(enemy)
 			if main.player and is_instance_valid(main.player):
 				var outgoing = main.combat_engine.calculate_attack_damage(
 					amount, enemy, main.player
@@ -228,14 +221,10 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 						),
 						Color(1, 0.3, 0.3)
 					)
-			await _animate_return(enemy)
-
 		"attack_all":
 			# AoE attack hitting only the player (we have a single player).
-			# Same flow as attack but with louder messaging and a bigger lunge.
-			if enemy.has_method("play_attack"):
-				enemy.play_attack()
-			await _animate_lunge(enemy)
+			# Same flow as attack but with louder messaging.
+			await _play_enemy_attack_once(enemy)
 			if main.player and is_instance_valid(main.player):
 				var outgoing = main.combat_engine.calculate_attack_damage(
 					amount, enemy, main.player
@@ -246,8 +235,6 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 					main.show_notification(
 						tr("UI_COMBAT_BIG_HIT").format({"n": outgoing}), Color(1.0, 0.2, 0.2)
 					)
-			await _animate_return(enemy)
-
 		"block":
 			if "status_system" in enemy and enemy.status_system:
 				amount = int(amount * enemy.status_system.get_block_multiplier())
@@ -308,8 +295,8 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 				await pulse.finished
 
 		"buff_self":
-			# Apply a status to the acting enemy itself (e.g. strength_up to ramp).
-			# JSON: {"type":"buff_self","status":"strength_up","stacks":3,"label":"💪 ENRAGE"}
+			# Apply a status to the acting enemy itself (e.g. thorns to ramp).
+			# JSON: {"type":"buff_self","status":"thorns","stacks":3,"label":"💪 ENRAGE"}
 			var status: String = str(action.get("status", ""))
 			var stacks: int = int(action.get("stacks", 1))
 			if status != "" and enemy.has_method("add_status"):
@@ -337,26 +324,19 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 
 # ─── Animations ───────────────────────────────────────────────────────────────
 
-var _enemy_start_positions: Dictionary = {}
 
-
-func _animate_lunge(enemy: Node) -> void:
-	_enemy_start_positions[enemy] = enemy.global_position
-	var t = create_tween()
-	(
-		t
-		. tween_property(enemy, "global_position", enemy.global_position + Vector2(-100, 0), 0.15)
-		. set_trans(Tween.TRANS_QUAD)
-	)
-	await t.finished
-
-
-func _animate_return(enemy: Node) -> void:
-	if not _enemy_start_positions.has(enemy):
+func _play_enemy_attack_once(enemy: Node) -> void:
+	if not is_instance_valid(enemy):
 		return
-	var t = create_tween()
-	t.tween_property(enemy, "global_position", _enemy_start_positions[enemy], 0.15)
-	await t.finished
+	if (
+		enemy.has_method("play_attack")
+		and (not enemy.has_method("has_attack_animation") or enemy.has_attack_animation())
+	):
+		enemy.play_attack()
+		if enemy.has_signal("attack_animation_finished"):
+			await enemy.attack_animation_finished
+			return
+	await get_tree().create_timer(0.35).timeout
 
 
 # ─── Victory Check ────────────────────────────────────────────────────────────

@@ -217,7 +217,6 @@ const HERO_EXCLUSIVE_CARDS := {
 		"bulkhead_bleed",
 		"hemo_drive",
 		"breach_charge",
-		"overdrive_core",
 		"limit_break",
 		"pain_damper",
 		"salvage_loop",
