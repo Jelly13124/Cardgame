@@ -1,0 +1,16 @@
+{
+  "id": "thorn_harness",
+  "title": "Thorn Harness",
+  "description": "At the start of combat, gain 3 Thorns.",
+  "icon": "res://run_system/assets/images/relics/barbed_plating.png",
+  "rarity": "uncommon",
+  "effects": [
+    {
+      "trigger": "player_turn_start",
+      "type": "apply_self_status",
+      "status": "thorns",
+      "amount": 3,
+      "once_per_combat": true
+    }
+  ]
+}

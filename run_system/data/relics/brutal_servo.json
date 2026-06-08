@@ -1,0 +1,14 @@
+{
+  "id": "brutal_servo",
+  "title": "Brutal Servo",
+  "description": "Your attacks deal 2 additional damage.",
+  "icon": "res://run_system/assets/images/relics/sharpened_scrap.png",
+  "rarity": "uncommon",
+  "effects": [
+    {
+      "trigger": "player_attack_damage",
+      "type": "add_damage",
+      "amount": 2
+    }
+  ]
+}
