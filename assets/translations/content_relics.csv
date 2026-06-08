@@ -4,23 +4,23 @@ RELIC_cracked_battery_DESC,"At the start of each turn, deal 1 damage to ALL enem
 RELIC_steel_plating_TITLE,Steel Plating,钢制镀层
 RELIC_steel_plating_DESC,"At the start of your first turn each combat, gain 6 Block.",每场战斗首个回合开始时，获得6点格挡。
 RELIC_sharpened_scrap_TITLE,Sharpened Scrap,磨利废铁
-RELIC_sharpened_scrap_DESC,Your direct attack damage is increased by 1.,你的直接攻击伤害提升1点。
+RELIC_sharpened_scrap_DESC,Your attack cards apply 1 Bleed to the target.,你的攻击牌对目标施加 1 层流血。
 RELIC_signal_jammer_TITLE,Signal Jammer,信号干扰器
 RELIC_signal_jammer_DESC,The first enemy attack each combat deals 2 less damage.,每场战斗中敌人的首次攻击少造成2点伤害。
 RELIC_repair_kit_TITLE,Repair Kit,修理工具包
-RELIC_repair_kit_DESC,"After combat, heal 3 HP.",战斗结束后，治疗3点生命。
+RELIC_repair_kit_DESC,"After each combat, heal 2 HP.",战斗结束后，治疗2点生命。
 RELIC_lucky_cog_TITLE,Lucky Cog,幸运齿轮
 RELIC_lucky_cog_DESC,"After combat, gain 5 Gold.",战斗结束后，获得5金币。
 RELIC_bulk_actuator_TITLE,Bulk Actuator,重型作动器
 RELIC_bulk_actuator_DESC,"At the start of each combat, set your Strength to 4 (if lower).",每场战斗开始时，将你的力量设为4（若低于4）。
 RELIC_inertial_dampener_TITLE,Inertial Dampener,惯性阻尼器
-RELIC_inertial_dampener_DESC,Every enemy attack deals 1 less damage.,敌人的每次攻击少造成1点伤害。
+RELIC_inertial_dampener_DESC,"Whenever you gain Block, gain 2 additional Block.",每当你获得格挡时，额外获得 2 点格挡。
 RELIC_scavenger_lens_TITLE,Scavenger's Lens,拾荒者透镜
 RELIC_scavenger_lens_DESC,"Whenever you gain Block, deal 3 damage to a random enemy.",每当你获得格挡时，对一个随机敌人造成3点伤害。
 RELIC_war_horn_TITLE,War Horn,战争号角
 RELIC_war_horn_DESC,"At the start of each combat, gain 1 Strength.",每场战斗开始时，获得1点力量。
 RELIC_bounty_tags_TITLE,Bounty Tags,赏金标牌
-RELIC_bounty_tags_DESC,"After combat, gain 12 Gold and heal 3 HP.",战斗结束后，获得12金币并治疗3点生命。
+RELIC_bounty_tags_DESC,"A random card in your deck gains Wealthy (when played, gain 5 gold; up to 3 times per combat).",使你卡组中的一张随机卡牌获得「富裕」（打出该牌时获得 5 金币，每场战斗最多 3 次）。
 RELIC_adrenaline_pump_TITLE,Adrenaline Pump,肾上腺素泵
 RELIC_adrenaline_pump_DESC,"At the start of your first turn each combat, gain 1 Energy.",每场战斗首回合开始时，获得1点能量。
 RELIC_yin_yang_compass_TITLE,Yin-Yang Compass,阴阳罗盘
@@ -28,19 +28,17 @@ RELIC_yin_yang_compass_DESC,"At the start of each turn, alternate polarity — Y
 RELIC_barbed_plating_TITLE,Barbed Plating,倒刺镀层
 RELIC_barbed_plating_DESC,"At the start of each turn, gain 1 Thorns.",每回合开始时，获得1点荆棘。
 RELIC_medkit_drone_TITLE,Medkit Drone,医疗无人机
-RELIC_medkit_drone_DESC,"After combat, heal 4 HP.",战斗结束后，治疗4点生命。
+RELIC_medkit_drone_DESC,"When you take damage, heal 1 HP.",受到伤害时，恢复 1 点生命值。
 RELIC_crit_plating_TITLE,Crit Plating,暴击镀层
 RELIC_crit_plating_DESC,"Whenever you gain Block, a luck-scaled chance to gain 1.5x as much.",每当你获得格挡时，有受幸运影响的几率改为获得1.5倍格挡。
 RELIC_crit_clip_TITLE,Crit Clip,暴击弹夹
 RELIC_crit_clip_DESC,"Bill's attack cards have a luck-scaled chance to deal 1.5x damage.",比尔的攻击牌有受幸运影响的几率造成1.5倍伤害。
-RELIC_ballast_anchor_TITLE,"Ballast Anchor","压舱铁锚"
-RELIC_ballast_anchor_DESC,"At the start of your first turn each combat, gain 10 Block.","每场战斗首个回合开始时，获得 10 点格挡。"
 RELIC_kinetic_hammer_TITLE,"Kinetic Hammer","动能锤"
-RELIC_kinetic_hammer_DESC,"At the start of each combat, gain 1 Strength.","每场战斗开始时，获得 1 点力量。"
+RELIC_kinetic_hammer_DESC,"At the start of your first turn each combat, gain 2 temporary Strength (lost at end of turn).",每场战斗首回合开始时，获得 2 点临时力量（回合结束时消失）。
 RELIC_thorn_harness_TITLE,"Thorn Harness","尖刺挽具"
 RELIC_thorn_harness_DESC,"At the start of combat, gain 3 Thorns.","战斗开始时，获得 3 层荆棘。"
 RELIC_brutal_servo_TITLE,"Brutal Servo","残暴伺服"
-RELIC_brutal_servo_DESC,"Your attacks deal 2 additional damage.","你的攻击额外造成 2 点伤害。"
+RELIC_brutal_servo_DESC,"Whenever you apply Bleed, apply 1 additional Bleed.",每当你施加流血时，额外施加 1 层流血。
 RELIC_bulwark_plating_TITLE,"Bulwark Plating","壁垒镀装"
 RELIC_bulwark_plating_DESC,"Incoming attacks deal 1 less damage. On your first turn each combat, gain 5 Block.","受到的攻击伤害减少 1 点。每场战斗首个回合开始时，获得 5 点格挡。"
 RELIC_war_drum_TITLE,"War Drum","战鼓"

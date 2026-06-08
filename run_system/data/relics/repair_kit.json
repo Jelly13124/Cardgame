@@ -1,14 +1,10 @@
 {
   "id": "repair_kit",
   "title": "Repair Kit",
-  "description": "After combat, heal 3 HP.",
+  "description": "After each combat, heal 2 HP.",
   "icon": "res://run_system/assets/images/relics/repair_kit.png",
   "rarity": "common",
   "effects": [
-    {
-      "trigger": "combat_victory",
-      "type": "heal",
-      "amount": 3
-    }
+    { "trigger": "combat_victory", "type": "heal", "amount": 2 }
   ]
 }

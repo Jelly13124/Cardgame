@@ -111,6 +111,9 @@ var inventory_items: Array[String]:
 		return backpack_equip_ids()
 
 var relics: Array[String] = []
+## player_deck uids granted the "wealthy" card keyword this run (bounty_tags).
+## Playing a card whose uid is here grants gold in combat (battle_scene.on_card_played_wealthy).
+var wealthy_uids: Array[String] = []
 ## Hard ceiling on backpack cells. The backpack ARRAY is always this length (so
 ## cell/safe-cell indices stay stable across saves); the USABLE cell count is the
 ## dynamic effective_backpack_size() below, which grows from BASE_BACKPACK toward
@@ -612,6 +615,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	ascension = clampi(resolved_asc, 0, 5)
 
 	player_deck.clear()
+	wealthy_uids.clear()
 	# Base deck = explicit `starter_deck` arg, else hero JSON's starter_deck, else
 	# DEFAULT_STARTER_DECK. A persistent per-hero starter-deck override (outpost deck
 	# editor) takes precedence over ALL of the above when set (it already encodes the
@@ -1427,8 +1431,42 @@ func add_relic(relic_id: String) -> bool:
 	if relic_id.is_empty() or relic_id in relics:
 		return false
 	relics.append(relic_id)
+	_apply_relic_on_pickup(relic_id)
 	emit_signal("relics_updated")
 	return true
+
+
+## Run any `on_pickup`-triggered relic effects the moment the relic is acquired
+## (outside combat). Currently: bounty_tags grants the "wealthy" keyword to random
+## deck cards.
+func _apply_relic_on_pickup(relic_id: String) -> void:
+	var data := get_relic_data(relic_id)
+	for e in data.get("effects", []):
+		if typeof(e) != TYPE_DICTIONARY or str(e.get("trigger", "")) != "on_pickup":
+			continue
+		match str(e.get("type", "")):
+			"grant_card_keyword":
+				_grant_keyword_to_random_cards(
+					str(e.get("keyword", "wealthy")), int(e.get("amount", 1))
+				)
+
+
+## Mark `n` random player_deck entries with `keyword`. For "wealthy" also records
+## their uids in wealthy_uids so battle_scene can detect the played card.
+func _grant_keyword_to_random_cards(keyword: String, n: int) -> void:
+	if player_deck.is_empty() or n <= 0:
+		return
+	var idxs: Array = range(player_deck.size())
+	idxs.shuffle()
+	for i in range(mini(n, idxs.size())):
+		var entry = player_deck[idxs[i]]
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		entry[keyword] = true
+		if keyword == "wealthy":
+			var uid := str(entry.get("uid", ""))
+			if uid != "" and not uid in wealthy_uids:
+				wealthy_uids.append(uid)
 
 
 func has_relic(relic_id: String) -> bool:

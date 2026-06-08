@@ -85,3 +85,4 @@ UI_COMBAT_STATUS_FEEL_NO_PAIN,Numb,镇痛
 UI_COMBAT_STATUS_FEEL_NO_PAIN_DESC,Whenever a card is Exhausted gain Block equal to stacks. Persistent.,每当一张牌被消耗时获得等同层数的格挡。持续。
 UI_COMBAT_STATUS_DARK_EMBRACE,Salvage,回收
 UI_COMBAT_STATUS_DARK_EMBRACE_DESC,Whenever a card is Exhausted draw cards equal to stacks. Persistent.,每当一张牌被消耗时抽取等同层数的牌。持续。
+UI_COMBAT_WEALTHY,💰 +{n} Gold,💰 +{n} 金币

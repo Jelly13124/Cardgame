@@ -160,6 +160,9 @@ func _resolve_enemy_hit(enemy: Node, outgoing: int) -> bool:
 			main.show_notification(tr("UI_COMBAT_DODGE"), Color(0.6, 0.95, 1.0))
 			return false
 	main.player.take_damage(outgoing)
+	# Relic: medkit_drone heals when the player takes attack damage.
+	if main.relic_effect_system:
+		main.relic_effect_system.on_player_take_damage(main.player)
 	if main.combat_engine:
 		main.combat_engine.apply_thorns_reflection(enemy, main.player)
 	return true
