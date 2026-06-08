@@ -56,6 +56,14 @@ func on_player_turn_started(player: Node, round_number: int) -> void:
 				if _deal_to_all_enemies(amount):
 					_notify("%s: %d to all" % [str(entry["title"]), amount], Color(1.0, 0.4, 0.3))
 					_mark_used_once(entry)
+			"gain_temp_strength":
+				# Temporary Strength that fades at end of turn (kinetic_hammer).
+				if player and player.has_method("gain_temp_strength"):
+					player.gain_temp_strength(amount)
+					_notify(
+						"%s: +%d Strength" % [str(entry["title"]), amount], Color(1.0, 0.5, 0.3)
+					)
+					_mark_used_once(entry)
 
 
 func modify_player_attack_damage(amount: int, _attacker: Node, _defender: Node) -> int:
@@ -160,7 +168,56 @@ func on_player_gain_block(_player: Node, amount: int) -> int:
 			"block_gain_damage":
 				_deal_to_random_enemy(int(effect.get("amount", 0)))
 				_mark_used_once(entry)
+			"gain_block":
+				# Flat bonus Block whenever the player gains Block (inertial_dampener).
+				result += int(effect.get("amount", 0))
+				_mark_used_once(entry)
 	return result
+
+
+## Fired from combat_engine after a player ATTACK card resolves on `target`.
+## sharpened_scrap applies Bleed to the struck enemy (with the brutal_servo bonus).
+func on_player_attack(target: Node) -> void:
+	if target == null or not is_instance_valid(target) or not target.has_method("add_status"):
+		return
+	for entry in _get_effect_entries("player_attack"):
+		var effect: Dictionary = entry["effect"]
+		if not _can_use_once(entry):
+			continue
+		match str(effect.get("type", "")):
+			"apply_status":
+				var status := str(effect.get("status", ""))
+				var n := int(effect.get("amount", effect.get("stacks", 1)))
+				if status == "bleed":
+					n += bleed_bonus_stacks()
+				target.add_status(status, n)
+				_mark_used_once(entry)
+
+
+## Fired from enemy_ai when the player takes attack damage. medkit_drone heals.
+func on_player_take_damage(player: Node) -> void:
+	if player == null or not is_instance_valid(player):
+		return
+	for entry in _get_effect_entries("player_take_damage"):
+		var effect: Dictionary = entry["effect"]
+		if not _can_use_once(entry):
+			continue
+		match str(effect.get("type", "")):
+			"heal":
+				if player.has_method("heal"):
+					player.heal(int(effect.get("amount", 0)))
+					_mark_used_once(entry)
+
+
+## Total bonus Bleed stacks added whenever the player applies Bleed (brutal_servo).
+## Returns 0 when no on_apply_bleed relic is owned.
+func bleed_bonus_stacks() -> int:
+	var bonus := 0
+	for entry in _get_effect_entries("on_apply_bleed"):
+		var effect: Dictionary = entry["effect"]
+		if str(effect.get("type", "")) == "add_bleed":
+			bonus += int(effect.get("amount", 0))
+	return bonus
 
 
 ## Deal `amount` to every alive enemy. Returns true if at least one enemy was hit

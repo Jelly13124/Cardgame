@@ -1,14 +1,10 @@
 {
   "id": "sharpened_scrap",
   "title": "Sharpened Scrap",
-  "description": "Your direct attack damage is increased by 1.",
+  "description": "Your attack cards apply 1 Bleed to the target.",
   "icon": "res://run_system/assets/images/relics/sharpened_scrap.png",
   "rarity": "common",
   "effects": [
-    {
-      "trigger": "player_attack_damage",
-      "type": "add_damage",
-      "amount": 1
-    }
+    { "trigger": "player_attack", "type": "apply_status", "status": "bleed", "amount": 1 }
   ]
 }

@@ -111,6 +111,14 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 				if typeof(be) == TYPE_DICTIONARY:
 					await _apply_effect(be, target, player, card_mult)
 
+	# Relic: an attack card that landed on a target fires on-attack relics
+	# (sharpened_scrap → Bleed on the struck enemy).
+	if type == "attack" and target and is_instance_valid(target) and main.relic_effect_system:
+		main.relic_effect_system.on_player_attack(target)
+	# Card keyword: wealthy → gold on play (capped per combat by battle_scene).
+	if main and main.has_method("on_card_played_wealthy"):
+		main.on_card_played_wealthy(card)
+
 
 func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: float = 1.0) -> void:
 	var effect_type: String = effect.get("type", "")
@@ -320,6 +328,9 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 		"apply_status":
 			var status: String = effect.get("status", "")
 			var stacks: int = int(effect.get("stacks", 1))
+			# brutal_servo: every Bleed the player applies gets bonus stacks.
+			if status == "bleed" and main.relic_effect_system:
+				stacks += main.relic_effect_system.bleed_bonus_stacks()
 			if target and is_instance_valid(target) and target.has_method("add_status"):
 				target.add_status(status, stacks)
 				main.show_notification(
@@ -348,6 +359,9 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 		"apply_status_all":
 			var status: String = effect.get("status", "")
 			var stacks: int = int(effect.get("stacks", 1))
+			# brutal_servo: every Bleed the player applies gets bonus stacks.
+			if status == "bleed" and main.relic_effect_system:
+				stacks += main.relic_effect_system.bleed_bonus_stacks()
 			for enemy in main.enemy_container.get_children():
 				if is_instance_valid(enemy) and enemy.has_method("add_status"):
 					enemy.add_status(status, stacks)

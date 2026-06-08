@@ -426,7 +426,26 @@ func start_turn() -> void:
 
 func end_turn() -> void:
 	status_system.on_turn_end(self)
+	# Temporary Strength (kinetic_hammer) fades at end of turn.
+	if _temp_strength > 0:
+		strength = max(0, strength - _temp_strength)
+		_temp_strength = 0
+		notify_stats_changed()
 	_refresh_hud()
+
+
+## Temporary Strength granted this turn (relic gain_temp_strength). Removed in
+## end_turn so the buff lasts a single turn.
+var _temp_strength: int = 0
+
+
+## Grant Strength that lasts only until end of turn (kinetic_hammer).
+func gain_temp_strength(n: int) -> void:
+	if n <= 0:
+		return
+	strength += n
+	_temp_strength += n
+	notify_stats_changed()
 
 
 func pay_energy(cost: int) -> bool:

@@ -1,14 +1,10 @@
 {
-	"id": "inertial_dampener",
-	"title": "Inertial Dampener",
-	"description": "Every enemy attack deals 1 less damage.",
-	"icon": "res://run_system/assets/images/relics/inertial_dampener.png",
-	"rarity": "uncommon",
-	"effects": [
-		{
-			"trigger": "enemy_attack_damage",
-			"type": "reduce_damage",
-			"amount": 1
-		}
-	]
+  "id": "inertial_dampener",
+  "title": "Inertial Dampener",
+  "description": "Whenever you gain Block, gain 2 additional Block.",
+  "icon": "res://run_system/assets/images/relics/inertial_dampener.png",
+  "rarity": "uncommon",
+  "effects": [
+    { "trigger": "player_gain_block", "type": "gain_block", "amount": 2 }
+  ]
 }
