@@ -18,7 +18,7 @@ UI_COMBAT_STUN_X,STUN x{n},眩晕 x{n}
 UI_COMBAT_ALL_STUN_X,ALL: STUN x{n},全体：眩晕 x{n}
 UI_COMBAT_APPLIED_STATUS,APPLIED {status} x{n},施加 {status} x{n}
 UI_COMBAT_ALL_STATUS,ALL: {status} x{n},全体：{status} x{n}
-UI_COMBAT_STATUS_POISON,Poison,中毒
+UI_COMBAT_STATUS_BLEED,Bleed,流血
 UI_COMBAT_STATUS_BURN,Burn,灼烧
 UI_COMBAT_STATUS_WEAK,Weak,虚弱
 UI_COMBAT_STATUS_VULNERABLE,Vulnerable,易伤
@@ -28,8 +28,8 @@ UI_COMBAT_STATUS_REGEN,Regen,再生
 UI_COMBAT_STATUS_THORNS,Thorns,荆棘
 UI_COMBAT_STATUS_FRAIL,Frail,脆弱
 UI_COMBAT_STATUS_DODGE,Dodge,闪避
-UI_COMBAT_STATUS_POISON_DESC,Take 1 damage per stack at the start of your turn. Stacks decay by 1 each turn.,每回合开始时每层造成 1 点伤害。每回合衰减 1 层。
-UI_COMBAT_STATUS_BURN_DESC,Take damage equal to stacks at the start of your turn. All stacks consumed.,每回合开始时造成等同层数的伤害。消耗所有层数。
+UI_COMBAT_STATUS_BLEED_DESC,Take damage equal to stacks at the start of your turn. Then stacks are halved (rounded down).,每回合开始时受到等同层数的伤害。然后层数减半（向下取整）。
+UI_COMBAT_STATUS_BURN_DESC,Take damage equal to stacks at the end of your turn. Lose 1 stack at the start of each turn.,每回合结束时受到等同层数的伤害。每回合开始时层数 -1。
 UI_COMBAT_STATUS_WEAK_DESC,Outgoing attack damage reduced 25% per stack. Decays 1 per turn.,每层使造成的攻击伤害降低 25%。每回合衰减 1 层。
 UI_COMBAT_STATUS_VULNERABLE_DESC,Incoming attack damage increased 50% per stack. Decays 1 per turn.,每层使受到的攻击伤害提高 50%。每回合衰减 1 层。
 UI_COMBAT_STATUS_DOUBLE_DAMAGE_DESC,Next N attacks deal double damage. Consumed on use.,接下来 N 次攻击造成双倍伤害。使用后消耗。
@@ -56,7 +56,7 @@ UI_COMBAT_INTENT_TIP_UNKNOWN,Preparing an action,正在准备行动
 UI_COMBAT_SHORT_WEAK,Weak,虚弱
 UI_COMBAT_SHORT_VULNERABLE,Vuln,易伤
 UI_COMBAT_SHORT_BURN,Burn,灼烧
-UI_COMBAT_SHORT_POISON,Pois,中毒
+UI_COMBAT_SHORT_BLEED,Bleed,流血
 UI_COMBAT_SHORT_STUN,Stun,眩晕
 UI_COMBAT_SHORT_DOUBLE_DAMAGE,Dbl,双倍
 UI_COMBAT_SHORT_DODGE,Dodge,闪避

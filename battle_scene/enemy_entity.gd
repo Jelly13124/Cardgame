@@ -45,7 +45,7 @@ const _STATUS_SHORT_NAMES = {
 	"weak": "Weak",
 	"vulnerable": "Vuln",
 	"burn": "Burn",
-	"poison": "Pois",
+	"bleed": "Bleed",
 	"stun": "Stun",
 	"double_damage": "Dbl",
 }

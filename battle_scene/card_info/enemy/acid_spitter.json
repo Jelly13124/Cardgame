@@ -4,8 +4,8 @@
 	"sprite_id": "acid_spitter",
 	"max_health": 18,
 	"action_pattern": [
-		{ "type": "attack_status", "amount": 4, "status": "poison", "stacks": 2, "label": "☠ 4 + P2" },
+		{ "type": "attack_status", "amount": 4, "status": "bleed", "stacks": 2, "label": "☠ 4 + Bl2" },
 		{ "type": "attack",        "amount": 6,                                   "label": "⚔ 6" },
-		{ "type": "attack_status", "amount": 3, "status": "poison", "stacks": 3, "label": "☠ 3 + P3" }
+		{ "type": "attack_status", "amount": 3, "status": "bleed", "stacks": 3, "label": "☠ 3 + Bl3" }
 	]
 }
