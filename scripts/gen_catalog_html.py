@@ -243,14 +243,27 @@ def build_cards():
 
 
 # ── Relics (grouped by rarity) ──────────────────────────────────────────────
+def fmt_relic_eff(e):
+    # Clearer labels for the typed relic effects; everything else auto-humanizes.
+    ty = e.get("type", "")
+    if ty == "apply_status":
+        label = "Apply " + cap(e.get("status", ""))
+    elif ty == "grant_card_keyword":
+        label = "Grant Card Keyword (" + cap(e.get("keyword", "")) + ")"
+    elif ty == "add_bleed":
+        label = "Add %d Bleed" % int(e.get("amount", 1))
+    else:
+        label = cap(ty)
+    return "%s → %s" % (cap(e.get("trigger", "")), label)
+
+
 def relic_block(rid, d):
     en = relics_tr.get(f"RELIC_{rid}_TITLE", {}).get("en", d.get("title", rid))
     zh = relics_tr.get(f"RELIC_{rid}_TITLE", {}).get("zh", "")
     desc = relics_tr.get(f"RELIC_{rid}_DESC", {}).get("zh") or d.get("description", "")
     rar = str(d.get("rarity", "common")).lower()
     c = RARITY.get(rar, "#9aa3ad")
-    trg = "".join(f"<li>{esc(cap(e.get('trigger','')))} → {esc(cap(e.get('type','')))}</li>"
-                  for e in d.get("effects", []))
+    trg = "".join(f"<li>{esc(fmt_relic_eff(e))}</li>" for e in d.get("effects", []))
     search = f"{rid} {en} {zh} {rar}".lower()
     return (f'<div class="card" data-search="{esc(search)}" data-rarity="{rar}" style="border-left-color:{c}">'
             f'<h3>{esc(en)} <span class="zh">{esc(zh)}</span></h3>'
@@ -372,12 +385,12 @@ def build_enemies():
 
 # ── Keyword glossary ────────────────────────────────────────────────────────
 STATUS_COLORS = {
-    "poison": "#66e533", "burn": "#ff6619", "weak": "#b380e6", "vulnerable": "#f27333",
+    "bleed": "#ff4d5e", "burn": "#ff6619", "weak": "#b380e6", "vulnerable": "#f27333",
     "double_damage": "#33ccff", "stun": "#f2f24d",
     "regen": "#4dffa6", "thorns": "#b3bfcc", "frail": "#9980b3", "dodge": "#99f2ff",
     "metallicize": "#b8ccdb", "feel_no_pain": "#8cccf2", "dark_embrace": "#b86bdb",
 }
-STATUSES = ["poison", "burn", "weak", "vulnerable", "double_damage", "stun",
+STATUSES = ["bleed", "burn", "weak", "vulnerable", "double_damage", "stun",
             "regen", "thorns", "frail", "dodge",
             "metallicize", "feel_no_pain", "dark_embrace"]
 
@@ -430,7 +443,9 @@ def build_keywords():
                       "打出后,该卡在本场战斗中被移除(不再回到牌库)。", "#cfa9ff", "exhaust"))
     kw.append(kw_card("Retain", "保留", "The card is NOT discarded at end of turn — it stays in your hand.",
                       "回合结束时不弃掉,保留在手牌中。", "#9ec1ff", "retain"))
-    body.append('<div class="section"><h2>Card Keywords 卡牌关键词 <span class="cnt">(2)</span></h2></div>'
+    kw.append(kw_card("Wealthy", "富裕", "When this card is played, gain 5 gold. Triggers up to 3 times per combat.",
+                      "打出此牌时获得 5 金币，每场战斗最多触发 3 次。", "#ffd24a", "wealthy rich gold"))
+    body.append('<div class="section"><h2>Card Keywords 卡牌关键词 <span class="cnt">(3)</span></h2></div>'
                 f'<div class="kw">{"".join(kw)}</div>')
     # Attributes
     attrs = [
@@ -443,7 +458,7 @@ def build_keywords():
     ac = [kw_card(e, z, de, dz, c, e.lower()) for e, z, de, dz, c in attrs]
     body.append('<div class="section"><h2>Attributes 属性 <span class="cnt">(5)</span></h2></div>'
                 f'<div class="kw">{"".join(ac)}</div>')
-    total = len(STATUSES) + 4 + 2 + 5
+    total = len(STATUSES) + 4 + 3 + 5  # statuses + yin/yang(4) + card keywords(3) + attributes(5)
     page("keywords.html", "Keywords · 关键词", "Statuses, Yin-Yang, card keywords & attributes",
          "", "".join(body), total)
 
