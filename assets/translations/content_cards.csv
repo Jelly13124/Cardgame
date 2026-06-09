@@ -129,3 +129,19 @@ CARD_plating_loop_TITLE,"Plating Loop","镀装循环"
 CARD_plating_loop_DESC,"[Yin] At the start of each turn, gain 3 Block. Matched: +1 Block per turn.","[阴] 每回合开始时获得 3 点格挡。调和时：每回合额外 +1 点格挡。"
 CARD_slam_dunk_TITLE,"Slam Dunk","灌注重击"
 CARD_slam_dunk_DESC,"[Yin] Deal damage equal to your Block. Matched: deal 4 more damage.","[阴] 造成等同于你格挡值的伤害。调和时：额外造成 4 点伤害。"
+GEM_wealthy_TITLE,Wealthy Gem,富裕宝石
+GEM_wealthy_DESC,"When played, gain 5 gold (up to 3 times per combat).",打出时获得 5 金币（每场战斗最多 3 次）。
+GEM_keen_TITLE,Keen Gem,锋锐宝石
+GEM_keen_DESC,"When played, deal 3 extra damage.",打出时额外造成 3 点伤害。
+GEM_bulwark_TITLE,Bulwark Gem,壁垒宝石
+GEM_bulwark_DESC,"When played, gain 4 Block.",打出时获得 4 点格挡。
+GEM_swift_TITLE,Swift Gem,迅捷宝石
+GEM_swift_DESC,"When played, draw 1 card.",打出时抽 1 张牌。
+GEM_venom_TITLE,Venom Gem,毒囊宝石
+GEM_venom_DESC,"When played, apply 2 Bleed to the target.",打出时对目标施加 2 层流血。
+GEM_brute_TITLE,Brute Gem,蛮力宝石
+GEM_brute_DESC,"When played, gain 1 Strength.",打出时获得 1 点力量。
+GEM_spark_TITLE,Spark Gem,电火花宝石
+GEM_spark_DESC,"When played, gain 1 Energy.",打出时获得 1 点能量。
+GEM_leech_TITLE,Leech Gem,吸血宝石
+GEM_leech_DESC,"When played, heal 2 HP.",打出时恢复 2 点生命。
