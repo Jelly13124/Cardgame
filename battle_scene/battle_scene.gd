@@ -574,6 +574,8 @@ func _victory():
 	# extract/victory. award_caps_for_combat dispatches boss/elite/normal so a
 	# boss fight grants ONLY the boss award (no boss + normal double-count).
 	RunManager.award_caps_for_combat(RunManager.last_battle_node_type)
+	# In-run XP: queue a card draft per level gained (consumed by the loot screen).
+	RunManager.gain_xp(RunManager.last_battle_node_type)
 
 	# Boss victory routing:
 	#   - non-final act boss → extract choice modal (rewards by current_act)
