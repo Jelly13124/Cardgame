@@ -110,17 +110,24 @@ func _generate_loot() -> void:
 		}
 	)
 
-	available_loot.append(
-		{
-			"id": "cards",
-			"type": "cards",
-			"title": tr("UI_LOOT_CARD_TITLE"),
-			"subtitle": tr("UI_LOOT_CARD_SUBTITLE"),
-			"icon": CARD_REWARD_ICON_PATH
-		}
-	)
+	# Card drafts no longer come from every combat — they are granted by LEVEL-UPS
+	# (pending_level_draws, surfaced on PROCEED). Combat loot is now: normal = gold
+	# only; elite = gem 3-choose-1 + equipment; boss loot is handled in _victory.
+	var node_type: String = RunManager.last_battle_node_type
+	if node_type == "elite":
+		available_loot.append(
+			{
+				"id": "gem_draft",
+				"type": "gem_draft",
+				"title": tr("UI_LOOT_GEM_TITLE"),
+				"subtitle": tr("UI_LOOT_GEM_SUBTITLE"),
+				"icon": CARD_REWARD_ICON_PATH
+			}
+		)
 
-	var equipment_drop_rarity = _drop_rarity_for_node_type(RunManager.last_battle_node_type)
+	var equipment_drop_rarity = (
+		_drop_rarity_for_node_type(node_type) if node_type == "elite" else ""
+	)
 	var equipment_drop_id = (
 		RunManager.roll_equipment_drop(equipment_drop_rarity) if equipment_drop_rarity != "" else ""
 	)
@@ -348,17 +355,34 @@ func _on_loot_selected(loot_id: String, button: Button) -> void:
 			_show_backpack_full_toast()
 			return
 		button.queue_free()
-	elif loot["type"] == "cards":
+	elif loot["type"] == "gem_draft":
+		# Elite reward: a one-off 3-choose-1 gem draft (not tied to level-ups).
+		_draft_gem_only = true
+		_draft_is_level = false
 		_open_card_draft()
 		button.queue_free()
 	elif loot["type"] == "equipment":
 		_claim_equipment_drop(loot.get("instance", {}), button)
 
 
+## Draft state: gem-only (elite reward) vs the level-up card draft chain.
+var _draft_gem_only: bool = false
+var _draft_is_level: bool = false
+
+
 func _on_proceed_pressed() -> void:
-	# Emit signal so a parent (battle_scene) can drive the scene transition.
-	# If no one is listening (standalone use), fall back to the legacy behavior
-	# of switching scenes directly.
+	# Before leaving, spend any queued level-up card drafts (one per level gained).
+	if RunManager.pending_level_draws > 0:
+		_draft_is_level = true
+		_draft_gem_only = false
+		_open_card_draft()
+		return
+	_finish_loot()
+
+
+## Leave the loot screen (emit closed so battle_scene drives the transition; fall
+## back to a direct scene change in standalone use).
+func _finish_loot() -> void:
 	if closed.get_connections().is_empty():
 		get_tree().change_scene_to_file(MAP_SCENE_PATH)
 		return
@@ -390,36 +414,35 @@ func _generate_draft_options() -> void:
 	for child in draft_card_container.get_children():
 		child.queue_free()
 
-	var draft_options = []
+	var gem_ids: Array = RunManager.gem_pool()
 	for i in range(3):
-		var roll = randf()
-		var picked_rarity = "common"
+		# Gem slot when this is an elite gem-draft, or (in a level draft) a Luck roll.
+		var as_gem := _draft_gem_only or (randf() < RunManager.luck_gem_chance())
+		if as_gem and not gem_ids.is_empty():
+			draft_card_container.add_child(
+				_make_gem_draft_slot(str(gem_ids[randi() % gem_ids.size()]))
+			)
+		else:
+			draft_card_container.add_child(_make_draft_card_slot(_roll_draft_card_id()))
 
-		if roll < 0.05:
-			picked_rarity = "rare"
-		elif roll < 0.30:
+
+## Roll a single card id for a draft slot (rarity weighted, Luck-boosted).
+func _roll_draft_card_id() -> String:
+	var roll = randf()
+	var picked_rarity = "common"
+	if roll < 0.05:
+		picked_rarity = "rare"
+	elif roll < 0.30:
+		picked_rarity = "uncommon"
+	if picked_rarity != "rare" and randf() < RunManager.luck_rarity_bonus():
+		picked_rarity = "rare" if picked_rarity == "uncommon" else "uncommon"
+	if _rarity_pools[picked_rarity].is_empty():
+		if picked_rarity == "rare":
 			picked_rarity = "uncommon"
-
-		if picked_rarity != "rare" and randf() < RunManager.luck_rarity_bonus():
-			picked_rarity = "rare" if picked_rarity == "uncommon" else "uncommon"
-
 		if _rarity_pools[picked_rarity].is_empty():
-			if picked_rarity == "rare":
-				picked_rarity = "uncommon"
-			if _rarity_pools[picked_rarity].is_empty():
-				picked_rarity = "common"
-
-		var pool = _rarity_pools[picked_rarity]
-		if not pool.is_empty():
-			var picked_id = pool[randi() % pool.size()]
-			if not picked_id in draft_options:
-				draft_options.append(picked_id)
-			else:
-				picked_id = pool[randi() % pool.size()]
-				draft_options.append(picked_id)
-
-	for card_id in draft_options:
-		draft_card_container.add_child(_make_draft_card_slot(card_id))
+			picked_rarity = "common"
+	var pool = _rarity_pools[picked_rarity]
+	return str(pool[randi() % pool.size()]) if not pool.is_empty() else ""
 
 
 func _make_draft_card_slot(card_id: String) -> Control:
@@ -482,19 +505,87 @@ func _make_draft_card_slot(card_id: String) -> Control:
 	return wrapper
 
 
+## A gem option in a draft (elite gem-draft, or a Luck-rolled level-up slot).
+func _make_gem_draft_slot(gem_id: String) -> Control:
+	var wrapper = Control.new()
+	wrapper.custom_minimum_size = Vector2(300, 400)
+
+	var frame = Panel.new()
+	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+	frame.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(Color(0.06, 0.10, 0.13, 0.95), Color(0.45, 0.85, 1.0), 4)
+	)
+	wrapper.add_child(frame)
+
+	var box = VBoxContainer.new()
+	box.set_anchors_preset(Control.PRESET_FULL_RECT)
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 14)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	wrapper.add_child(box)
+
+	var glyph = Label.new()
+	glyph.text = "💎"
+	glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	glyph.add_theme_font_size_override("font_size", 80)
+	box.add_child(glyph)
+
+	var gdata := RunManager.get_gem_data(gem_id)
+	var name_lbl = Label.new()
+	name_lbl.text = Settings.t("GEM_%s_TITLE" % gem_id, str(gdata.get("title", gem_id)))
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.add_theme_font_size_override("font_size", 24)
+	name_lbl.add_theme_color_override("font_color", Color(0.7, 0.95, 1.0))
+	box.add_child(name_lbl)
+
+	var desc_lbl = Label.new()
+	desc_lbl.text = Settings.t("GEM_%s_DESC" % gem_id, "")
+	desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc_lbl.custom_minimum_size = Vector2(240, 0)
+	desc_lbl.add_theme_color_override("font_color", Color(0.82, 0.86, 0.8))
+	box.add_child(desc_lbl)
+
+	var button = Button.new()
+	button.set_anchors_preset(Control.PRESET_FULL_RECT)
+	button.flat = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.pressed.connect(_on_gem_draft_selected.bind(gem_id))
+	wrapper.add_child(button)
+	return wrapper
+
+
 func _on_draft_card_selected(card_id: String) -> void:
-	RunManager.add_card_to_deck(card_id)
-	print("Drafted card: ", card_id)
-	_close_card_draft()
+	if card_id != "":
+		RunManager.add_card_to_deck(card_id)
+	_after_draft()
+
+
+func _on_gem_draft_selected(gem_id: String) -> void:
+	if gem_id != "":
+		RunManager.gem_inventory.append(gem_id)
+	_after_draft()
 
 
 func _on_skip_draft_pressed() -> void:
-	_close_card_draft()
+	_after_draft()
 
 
-func _close_card_draft() -> void:
-	loot_root.visible = true
+## Advance the draft: level drafts chain one-per-level then leave; a single gem /
+## elite draft returns to the loot list so remaining rewards can be claimed.
+func _after_draft() -> void:
+	if _draft_is_level:
+		RunManager.pending_level_draws = maxi(0, RunManager.pending_level_draws - 1)
+		if RunManager.pending_level_draws > 0:
+			_generate_draft_options()
+			return
 	draft_overlay.visible = false
+	loot_root.visible = true
+	_draft_gem_only = false
+	if _draft_is_level:
+		_draft_is_level = false
+		_finish_loot()
 
 
 ## Returns "" if no drop. Otherwise the drop rarity for this node type.

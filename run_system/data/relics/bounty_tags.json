@@ -1,10 +1,15 @@
 {
   "id": "bounty_tags",
   "title": "Bounty Tags",
-  "description": "A random card in your deck gains Wealthy (when played, gain 5 gold; up to 3 times per combat).",
+  "description": "Gain a Wealthy gem — socket it into a card to earn gold when that card is played.",
   "icon": "res://run_system/assets/images/relics/bounty_tags.png",
   "rarity": "uncommon",
   "effects": [
-    { "trigger": "on_pickup", "type": "grant_card_keyword", "keyword": "wealthy", "amount": 1 }
+    {
+      "trigger": "on_pickup",
+      "type": "grant_card_keyword",
+      "keyword": "wealthy",
+      "amount": 1
+    }
   ]
 }

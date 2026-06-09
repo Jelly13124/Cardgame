@@ -20,7 +20,7 @@ RELIC_scavenger_lens_DESC,"Whenever you gain Block, deal 3 damage to a random en
 RELIC_war_horn_TITLE,War Horn,战争号角
 RELIC_war_horn_DESC,"At the start of each combat, gain 1 Strength.",每场战斗开始时，获得1点力量。
 RELIC_bounty_tags_TITLE,Bounty Tags,赏金标牌
-RELIC_bounty_tags_DESC,"A random card in your deck gains Wealthy (when played, gain 5 gold; up to 3 times per combat).",使你卡组中的一张随机卡牌获得「富裕」（打出该牌时获得 5 金币，每场战斗最多 3 次）。
+RELIC_bounty_tags_DESC,Gain a Wealthy gem — socket it into a card to earn gold when that card is played.,获得一颗富裕宝石 —— 镶嵌到卡牌上，打出该牌时获得金币。
 RELIC_adrenaline_pump_TITLE,Adrenaline Pump,肾上腺素泵
 RELIC_adrenaline_pump_DESC,"At the start of your first turn each combat, gain 1 Energy.",每场战斗首回合开始时，获得1点能量。
 RELIC_yin_yang_compass_TITLE,Yin-Yang Compass,阴阳罗盘

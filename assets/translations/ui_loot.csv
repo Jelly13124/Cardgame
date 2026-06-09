@@ -14,3 +14,5 @@ UI_LOOT_ACTION_CLAIM,CLAIM,领取
 UI_LOOT_DEFAULT_TITLE,Reward,奖励
 UI_LOOT_NO_BONUSES,(no bonuses),（无加成）
 UI_LOOT_BACKPACK_FULL,"Backpack full — left it behind","背包已满 —— 只能放弃"
+UI_LOOT_GEM_TITLE,Gem Cache,宝石匣
+UI_LOOT_GEM_SUBTITLE,Choose 1 of 3 gems,三选一宝石

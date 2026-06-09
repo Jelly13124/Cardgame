@@ -1229,6 +1229,12 @@ func luck_rarity_bonus() -> float:
 	return _attr("luck") * RARITY_PER_LUCK
 
 
+## Probability that a level-up draft slot is a GEM instead of a card. Scales with
+## Luck (4% per point), capped at 50%.
+func luck_gem_chance() -> float:
+	return clampf(0.04 * float(_attr("luck")), 0.0, 0.5)
+
+
 func charm_shop_mult() -> float:
 	return maxf(SHOP_FLOOR, 1.0 - _attr("charm") * SHOP_PER_CHARM)
 
