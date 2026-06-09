@@ -115,11 +115,13 @@ var relics: Array[String] = []
 var gem_inventory: Array[String] = []
 var _gem_cache: Dictionary = {}
 
-## In-run XP/level. Killing enemies grants XP; each level-up queues a card draft
-## (consumed by the loot screen via pending_level_draws). All reset in start_new_run.
+## In-run XP/level. Killing enemies grants XP; each level-up queues an attribute
+## point (consumed by the loot screen via pending_attr_points). Reset in start_new_run.
 var xp: int = 0
 var level: int = 1
-var pending_level_draws: int = 0
+## Unspent attribute points from level-ups (each → a 3-of-5 attribute pick, surfaced
+## by the loot screen). Cards come from combat drafts; attributes come from leveling.
+var pending_attr_points: int = 0
 const XP_PER_KILL := {"enemy": 6, "elite": 14, "boss": 30}
 
 
@@ -129,7 +131,7 @@ func xp_to_next(lvl: int) -> int:
 
 
 ## Award XP for a combat win by node type; rolls up level-ups and returns how many
-## levels were gained (the caller queues that many card drafts).
+## levels were gained (the caller queues that many attribute-point picks).
 func gain_xp(node_type: String) -> int:
 	xp += int(XP_PER_KILL.get(node_type, XP_PER_KILL["enemy"]))
 	var gained := 0
@@ -137,7 +139,7 @@ func gain_xp(node_type: String) -> int:
 		xp -= xp_to_next(level)
 		level += 1
 		gained += 1
-	pending_level_draws += gained
+	pending_attr_points += gained
 	return gained
 
 
@@ -645,7 +647,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	gem_inventory.clear()
 	xp = 0
 	level = 1
-	pending_level_draws = 0
+	pending_attr_points = 0
 	# Base deck = explicit `starter_deck` arg, else hero JSON's starter_deck, else
 	# DEFAULT_STARTER_DECK. A persistent per-hero starter-deck override (outpost deck
 	# editor) takes precedence over ALL of the above when set (it already encodes the

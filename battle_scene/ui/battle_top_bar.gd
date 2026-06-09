@@ -5,10 +5,15 @@ const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
 const RELIC_DATA_DIR := "res://run_system/data/relics/"
 # Lazy-loaded at call site to avoid map→battle→map cyclic preload.
 const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
-const BAR_HEIGHT := 62.0
+const TOP_BAR_HEIGHT := 62.0
+const RELIC_ROW_TOP := 68.0
+const BAR_HEIGHT := 108.0
 
 var main: Node
-var status_label: Label
+var hp_value_label: Label
+var gold_value_label: Label
+var floor_value_label: Label
+var level_value_label: Label
 var relic_strip: HBoxContainer
 var deck_button: Button
 var settings_button: Button
@@ -45,23 +50,24 @@ func _build_bar() -> void:
 	bg.name = "Background"
 	bg.color = Color(0.045, 0.038, 0.03, 0.94)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.anchor_right = 1.0
+	bg.offset_bottom = TOP_BAR_HEIGHT
 	add_child(bg)
 
 	var bottom_line = ColorRect.new()
 	bottom_line.name = "BottomLine"
 	bottom_line.color = Color(0.65, 0.48, 0.25, 0.58)
 	bottom_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bottom_line.anchor_top = 1.0
 	bottom_line.anchor_right = 1.0
-	bottom_line.anchor_bottom = 1.0
-	bottom_line.offset_top = -2.0
+	bottom_line.offset_top = TOP_BAR_HEIGHT - 2.0
+	bottom_line.offset_bottom = TOP_BAR_HEIGHT
 	add_child(bottom_line)
 
 	var margin = MarginContainer.new()
 	margin.name = "Margin"
 	margin.mouse_filter = Control.MOUSE_FILTER_PASS
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.anchor_right = 1.0
+	margin.offset_bottom = TOP_BAR_HEIGHT
 	margin.add_theme_constant_override("margin_left", 14)
 	margin.add_theme_constant_override("margin_right", 14)
 	margin.add_theme_constant_override("margin_top", 7)
@@ -69,25 +75,20 @@ func _build_bar() -> void:
 	add_child(margin)
 
 	var row = HBoxContainer.new()
-	row.name = "Row"
+	row.name = "StatusRow"
 	row.mouse_filter = Control.MOUSE_FILTER_PASS
-	row.add_theme_constant_override("separation", 14)
+	row.add_theme_constant_override("separation", 10)
 	margin.add_child(row)
 
-	status_label = Label.new()
-	status_label.name = "RunStatus"
-	status_label.custom_minimum_size = Vector2(360, 42)
-	status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	status_label.add_theme_font_size_override("font_size", 20)
-	status_label.add_theme_color_override("font_color", Color(0.94, 0.86, 0.68))
-	row.add_child(status_label)
+	hp_value_label = _add_status_chip(row, "HP", 132, Color(0.82, 0.16, 0.10))
+	gold_value_label = _add_status_chip(row, "GOLD", 122, Color(0.95, 0.66, 0.22))
+	floor_value_label = _add_status_chip(row, "FLOOR", 92, T.ACCENT_NEON_BLUE)
+	level_value_label = _add_status_chip(row, "LV", 150, Color(0.55, 0.9, 0.7))
 
-	relic_strip = HBoxContainer.new()
-	relic_strip.name = "RelicStrip"
-	relic_strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	relic_strip.mouse_filter = Control.MOUSE_FILTER_PASS
-	relic_strip.add_theme_constant_override("separation", 8)
-	row.add_child(relic_strip)
+	var spacer = Control.new()
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(spacer)
 
 	deck_button = _make_icon_button("D", tr("UI_BATTLE_VIEW_RUN_DECK"))
 	deck_button.pressed.connect(_on_deck_pressed)
@@ -96,6 +97,18 @@ func _build_bar() -> void:
 	settings_button = _make_icon_button("⚙", TranslationServer.translate("SETTINGS_BUTTON"))
 	settings_button.pressed.connect(_show_settings)
 	row.add_child(settings_button)
+
+	relic_strip = HBoxContainer.new()
+	relic_strip.name = "RelicStrip"
+	relic_strip.custom_minimum_size = Vector2(0, 40)
+	relic_strip.anchor_right = 1.0
+	relic_strip.offset_left = 14.0
+	relic_strip.offset_top = RELIC_ROW_TOP
+	relic_strip.offset_right = -14.0
+	relic_strip.offset_bottom = RELIC_ROW_TOP + 40.0
+	relic_strip.mouse_filter = Control.MOUSE_FILTER_PASS
+	relic_strip.add_theme_constant_override("separation", 7)
+	add_child(relic_strip)
 
 
 func _build_settings_menu() -> void:
@@ -188,7 +201,7 @@ func _refresh_all() -> void:
 
 
 func _refresh_status() -> void:
-	if not status_label:
+	if not hp_value_label or not gold_value_label or not floor_value_label:
 		return
 
 	var hp_current = 0
@@ -200,9 +213,11 @@ func _refresh_status() -> void:
 	var rm = _get_run_manager()
 	var gold = int(rm.gold) if rm else 0
 	var floor_text = str(rm.current_floor) if rm and rm.get("is_run_active") else "-"
-	status_label.text = tr("UI_BATTLE_RUN_STATUS").format(
-		{"hp": hp_current, "max": hp_max, "gold": gold, "floor": floor_text}
-	)
+	hp_value_label.text = "%d / %d" % [hp_current, hp_max]
+	gold_value_label.text = str(gold)
+	floor_value_label.text = floor_text
+	if level_value_label and rm:
+		level_value_label.text = "%d  (%d/%d)" % [rm.level, rm.xp, rm.xp_to_next(rm.level)]
 
 
 func _refresh_relics() -> void:
@@ -219,12 +234,6 @@ func _refresh_relics() -> void:
 			ids = raw
 
 	if ids.is_empty():
-		var empty = Label.new()
-		empty.text = tr("UI_BATTLE_NO_RELICS")
-		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		empty.add_theme_font_size_override("font_size", 20)
-		empty.add_theme_color_override("font_color", Color(0.65, 0.6, 0.5, 0.8))
-		relic_strip.add_child(empty)
 		return
 
 	for relic_id in ids:
@@ -241,7 +250,7 @@ func _make_relic_chip(relic_id: String) -> Button:
 	var desc = Settings.t("RELIC_%s_DESC" % relic_id, str(data.get("description", "")))
 	var chip = Button.new()
 	chip.text = _short_label(title)
-	chip.custom_minimum_size = Vector2(42, 42)
+	chip.custom_minimum_size = Vector2(38, 38)
 	chip.focus_mode = Control.FOCUS_NONE
 	# Use the custom Tooltip autoload (richer styling than Godot's default
 	# tooltip_text). Anchored above the chip center so it doesn't follow
@@ -263,12 +272,18 @@ func _make_relic_chip(relic_id: String) -> Button:
 	)
 	chip.mouse_exited.connect(Tooltip.hide_if_owner.bind(chip_id))
 	chip.tree_exited.connect(Tooltip.hide_if_owner.bind(chip_id))
-	chip.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
-	chip.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
-	chip.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
+	chip.add_theme_stylebox_override(
+		"normal", T.rounded_button(Color(0.09, 0.055, 0.035, 0.78), Color(0.52, 0.35, 0.16), 4, 2)
+	)
+	chip.add_theme_stylebox_override(
+		"hover", T.rounded_button(Color(0.14, 0.085, 0.045, 0.90), T.ACCENT_NEON_BLUE, 4, 2)
+	)
+	chip.add_theme_stylebox_override(
+		"pressed", T.rounded_button(Color(0.05, 0.035, 0.026, 0.95), Color(0.92, 0.70, 0.28), 4, 2)
+	)
 	chip.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	chip.add_theme_color_override("font_color", T.TEXT_MAIN)
-	chip.add_theme_font_size_override("font_size", 20)
+	chip.add_theme_font_size_override("font_size", 17)
 
 	var icon_path = str(data.get("icon", ""))
 	if not icon_path.is_empty():
@@ -280,6 +295,61 @@ func _make_relic_chip(relic_id: String) -> Button:
 
 	chip.pressed.connect(_on_relic_pressed.bind(data))
 	return chip
+
+
+func _add_status_chip(parent: Control, caption: String, min_width: float, accent: Color) -> Label:
+	var panel = PanelContainer.new()
+	panel.name = "%sChip" % caption.capitalize()
+	panel.custom_minimum_size = Vector2(min_width, 46)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override("panel", _status_chip_style(accent))
+	parent.add_child(panel)
+
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 10)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_top", 5)
+	margin.add_theme_constant_override("margin_bottom", 5)
+	panel.add_child(margin)
+
+	var box = VBoxContainer.new()
+	box.add_theme_constant_override("separation", 0)
+	margin.add_child(box)
+
+	var caption_label = Label.new()
+	caption_label.text = caption
+	caption_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	caption_label.add_theme_font_size_override("font_size", 11)
+	caption_label.add_theme_color_override("font_color", Color(0.78, 0.62, 0.42))
+	box.add_child(caption_label)
+
+	var value_label = Label.new()
+	value_label.text = "-"
+	value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	value_label.add_theme_font_size_override("font_size", 18)
+	value_label.add_theme_color_override("font_color", T.TEXT_MAIN)
+	box.add_child(value_label)
+	return value_label
+
+
+func _status_chip_style(accent: Color) -> StyleBoxFlat:
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.105, 0.062, 0.035, 0.92)
+	style.border_color = Color(0.42, 0.24, 0.12)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.corner_radius_top_left = 4
+	style.corner_radius_top_right = 4
+	style.corner_radius_bottom_left = 4
+	style.corner_radius_bottom_right = 4
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.32)
+	style.shadow_size = 3
+	style.shadow_offset = Vector2(2, 2)
+	style.border_width_left = 5
+	style.border_color = accent.darkened(0.18)
+	return style
 
 
 func _load_relic_data(relic_id: String) -> Dictionary:

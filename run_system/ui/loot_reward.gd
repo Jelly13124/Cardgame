@@ -110,10 +110,19 @@ func _generate_loot() -> void:
 		}
 	)
 
-	# Card drafts no longer come from every combat — they are granted by LEVEL-UPS
-	# (pending_level_draws, surfaced on PROCEED). Combat loot is now: normal = gold
-	# only; elite = gem 3-choose-1 + equipment; boss loot is handled in _victory.
+	# Card acquisition is combat-driven: every non-boss combat offers a 3-choose-1
+	# card draft. (Attributes come from LEVEL-UPS, surfaced on PROCEED; gems from
+	# elites/bosses.) Boss loot is handled in battle_scene._victory (never here).
 	var node_type: String = RunManager.last_battle_node_type
+	available_loot.append(
+		{
+			"id": "cards",
+			"type": "cards",
+			"title": tr("UI_LOOT_CARD_TITLE"),
+			"subtitle": tr("UI_LOOT_CARD_SUBTITLE"),
+			"icon": CARD_REWARD_ICON_PATH
+		}
+	)
 	if node_type == "elite":
 		available_loot.append(
 			{
@@ -355,28 +364,99 @@ func _on_loot_selected(loot_id: String, button: Button) -> void:
 			_show_backpack_full_toast()
 			return
 		button.queue_free()
+	elif loot["type"] == "cards":
+		# Combat card draft (normal + elite). Luck may turn a slot into a gem.
+		_draft_gem_only = false
+		_open_card_draft()
+		button.queue_free()
 	elif loot["type"] == "gem_draft":
-		# Elite reward: a one-off 3-choose-1 gem draft (not tied to level-ups).
+		# Elite reward: a one-off 3-choose-1 gem draft (all gems).
 		_draft_gem_only = true
-		_draft_is_level = false
 		_open_card_draft()
 		button.queue_free()
 	elif loot["type"] == "equipment":
 		_claim_equipment_drop(loot.get("instance", {}), button)
 
 
-## Draft state: gem-only (elite reward) vs the level-up card draft chain.
+## Draft state. `_draft_gem_only` = elite gem draft; `_in_attr` = level-up attribute
+## pick (3-of-5, one +1 per level gained).
 var _draft_gem_only: bool = false
-var _draft_is_level: bool = false
+var _in_attr: bool = false
 
 
 func _on_proceed_pressed() -> void:
-	# Before leaving, spend any queued level-up card drafts (one per level gained).
-	if RunManager.pending_level_draws > 0:
-		_draft_is_level = true
-		_draft_gem_only = false
-		_open_card_draft()
+	# Before leaving, spend any queued level-up attribute points (one pick per level).
+	if RunManager.pending_attr_points > 0:
+		_open_attr_choice()
 		return
+	_finish_loot()
+
+
+## --- Level-up attribute choice: pick 1 of 3 random attributes (+1) per level. ---
+const _ATTR_KEYS := ["strength", "constitution", "intelligence", "luck", "charm"]
+
+
+func _open_attr_choice() -> void:
+	_in_attr = true
+	loot_root.visible = false
+	draft_overlay.visible = true
+	_generate_attr_options()
+
+
+func _generate_attr_options() -> void:
+	for child in draft_card_container.get_children():
+		child.queue_free()
+	var keys := _ATTR_KEYS.duplicate()
+	keys.shuffle()
+	for i in range(min(3, keys.size())):
+		draft_card_container.add_child(_make_attr_slot(str(keys[i])))
+
+
+func _make_attr_slot(attr: String) -> Control:
+	var wrapper = Control.new()
+	wrapper.custom_minimum_size = Vector2(300, 400)
+	var frame = Panel.new()
+	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+	frame.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(Color(0.10, 0.085, 0.06, 0.95), Color(1.0, 0.82, 0.4), 4)
+	)
+	wrapper.add_child(frame)
+	var box = VBoxContainer.new()
+	box.set_anchors_preset(Control.PRESET_FULL_RECT)
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 12)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	wrapper.add_child(box)
+	var name_lbl = Label.new()
+	name_lbl.text = tr("UI_COMBAT_ATTR_%s" % attr.to_upper())
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.add_theme_font_size_override("font_size", 28)
+	name_lbl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.5))
+	box.add_child(name_lbl)
+	var plus = Label.new()
+	plus.text = "+1"
+	plus.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	plus.add_theme_font_size_override("font_size", 48)
+	plus.add_theme_color_override("font_color", Color(0.6, 1.0, 0.7))
+	box.add_child(plus)
+	var button = Button.new()
+	button.set_anchors_preset(Control.PRESET_FULL_RECT)
+	button.flat = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.pressed.connect(_on_attr_picked.bind(attr))
+	wrapper.add_child(button)
+	return wrapper
+
+
+func _on_attr_picked(attr: String) -> void:
+	RunManager.grant_attribute(attr, 1)
+	RunManager.pending_attr_points = maxi(0, RunManager.pending_attr_points - 1)
+	if RunManager.pending_attr_points > 0:
+		_generate_attr_options()
+		return
+	_in_attr = false
+	draft_overlay.visible = false
 	_finish_loot()
 
 
@@ -569,23 +649,25 @@ func _on_gem_draft_selected(gem_id: String) -> void:
 
 
 func _on_skip_draft_pressed() -> void:
+	# Skipping an attribute pick forfeits that point (and chains to the next).
+	if _in_attr:
+		RunManager.pending_attr_points = maxi(0, RunManager.pending_attr_points - 1)
+		if RunManager.pending_attr_points > 0:
+			_generate_attr_options()
+			return
+		_in_attr = false
+		draft_overlay.visible = false
+		_finish_loot()
+		return
 	_after_draft()
 
 
-## Advance the draft: level drafts chain one-per-level then leave; a single gem /
-## elite draft returns to the loot list so remaining rewards can be claimed.
+## Card / gem draft is a single pick — return to the loot list so the player can
+## claim the remaining rewards, then PROCEED.
 func _after_draft() -> void:
-	if _draft_is_level:
-		RunManager.pending_level_draws = maxi(0, RunManager.pending_level_draws - 1)
-		if RunManager.pending_level_draws > 0:
-			_generate_draft_options()
-			return
 	draft_overlay.visible = false
 	loot_root.visible = true
 	_draft_gem_only = false
-	if _draft_is_level:
-		_draft_is_level = false
-		_finish_loot()
 
 
 ## Returns "" if no drop. Otherwise the drop rarity for this node type.

@@ -4,9 +4,24 @@
   "sprite_id": "cowboy_bill",
   "tint": "#ffffff",
   "max_health": 50,
-  "starter_deck": ["strike", "strike", "strike", "strike", "weak_strike",
-                   "defend", "defend", "defend", "defend"],
-  "starting_attributes": {"strength": 3, "constitution": 3, "intelligence": 3, "luck": 3, "charm": 3},
+  "starter_deck": [
+    "strike",
+    "strike",
+    "strike",
+    "strike",
+    "weak_strike",
+    "defend",
+    "defend",
+    "defend",
+    "defend"
+  ],
+  "starting_attributes": {
+    "strength": 0,
+    "constitution": 0,
+    "intelligence": 0,
+    "luck": 0,
+    "charm": 0
+  },
   "starting_relic": "crit_clip",
   "description": "One-eyed gunslinger. Reliable, average across the board."
 }
