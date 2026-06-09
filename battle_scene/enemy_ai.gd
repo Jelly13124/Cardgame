@@ -159,9 +159,11 @@ func _resolve_enemy_hit(enemy: Node, outgoing: int) -> bool:
 		if main.player.status_system.try_consume_dodge(main.player):
 			main.show_notification(tr("UI_COMBAT_DODGE"), Color(0.6, 0.95, 1.0))
 			return false
+	var hp_before: int = int(main.player.health)
 	main.player.take_damage(outgoing)
-	# Relic: medkit_drone heals when the player takes attack damage.
-	if main.relic_effect_system:
+	# Relic: medkit_drone heals only when the player ACTUALLY lost HP — a hit fully
+	# absorbed by Block does not trigger it.
+	if main.relic_effect_system and int(main.player.health) < hp_before:
 		main.relic_effect_system.on_player_take_damage(main.player)
 	if main.combat_engine:
 		main.combat_engine.apply_thorns_reflection(enemy, main.player)
