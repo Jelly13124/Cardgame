@@ -14,6 +14,8 @@ var _card_factory: Node
 ## click). "" = nothing selected.
 var _selected_gem: String = ""
 var _rebuild: Callable = Callable()
+## Stable container for the gem-inventory list (repopulated, never freed/recreated).
+var _gem_box: VBoxContainer
 
 
 func _ready() -> void:
@@ -89,10 +91,12 @@ func _build() -> void:
 	grid.add_theme_constant_override("v_separation", 18)
 	scroll.add_child(grid)
 
-	var gem_panel := _build_gem_panel()
-	main.add_child(gem_panel)
+	# Gem panel built ONCE; only its inner list (_gem_box) is repopulated on rebuild.
+	# (Reassigning a captured local inside the _rebuild lambda does not persist across
+	# calls, so we never free/recreate the panel — we refill stable containers.)
+	main.add_child(_build_gem_panel())
 
-	# Rebuild closure repaints both the card grid and the gem panel after a socket.
+	# Rebuild closure repaints the (stable) card grid and gem list after a socket.
 	_rebuild = func() -> void:
 		if not is_instance_valid(grid):
 			return
@@ -101,17 +105,12 @@ func _build() -> void:
 		for entry in RunManager.player_deck:
 			if typeof(entry) == TYPE_DICTIONARY and str(entry.get("card_id", "")) != "":
 				grid.add_child(_make_card_slot(entry))
-		var new_panel := _build_gem_panel()
-		var idx := gem_panel.get_index()
-		main.remove_child(gem_panel)
-		gem_panel.queue_free()
-		gem_panel = new_panel
-		main.add_child(gem_panel)
-		main.move_child(gem_panel, idx)
+		_populate_gem_box()
 	_rebuild.call()
 
 
-## Right-hand gem inventory: one button per gem; clicking selects it (to insert).
+## Right-hand gem inventory panel. Built once; the dynamic gem list lives in
+## `_gem_box` (repopulated by _populate_gem_box on every rebuild).
 func _build_gem_panel() -> Control:
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(280, 0)
@@ -130,17 +129,28 @@ func _build_gem_panel() -> Control:
 	hdr.add_theme_color_override("font_color", Color(0.7, 0.95, 1.0))
 	box.add_child(hdr)
 
+	_gem_box = VBoxContainer.new()
+	_gem_box.add_theme_constant_override("separation", 8)
+	box.add_child(_gem_box)
+	_populate_gem_box()
+	return panel
+
+
+## (Re)fill the gem-inventory list. Safe to call repeatedly — clears first.
+func _populate_gem_box() -> void:
+	if not is_instance_valid(_gem_box):
+		return
+	for c in _gem_box.get_children():
+		c.queue_free()
 	if RunManager.gem_inventory.is_empty():
 		var empty := Label.new()
 		empty.text = tr("UI_COMMON_GEM_NONE")
 		empty.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		box.add_child(empty)
-		return panel
-
+		_gem_box.add_child(empty)
+		return
 	for gem_id in RunManager.gem_inventory:
-		box.add_child(_make_gem_button(str(gem_id)))
-	return panel
+		_gem_box.add_child(_make_gem_button(str(gem_id)))
 
 
 func _make_gem_button(gem_id: String) -> Button:
