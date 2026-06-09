@@ -544,8 +544,8 @@ func take_damage(amount: int, silent: bool = false) -> void:
 		_hit_flash()
 
 	# Floating damage number + shake. Caller can suppress with silent=true
-	# (e.g. status_effect_system's poison/burn ticks already show a
-	# "POISON N" notification, so the floating number would double up).
+	# (e.g. status_effect_system's bleed/burn ticks already show a
+	# "BLEED N" notification, so the floating number would double up).
 	if not silent:
 		var scene := get_tree().current_scene
 		if scene:
