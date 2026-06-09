@@ -789,28 +789,6 @@ func purchase_card_removal(uid: String, cost: int) -> bool:
 	return true
 
 
-## Upgrade the deck entry matching uid: swap card_id from "X" to "X_plus".
-## Returns false if uid not found, already upgraded, or no _plus JSON exists.
-## Card upgrade is one-shot per card within a run.
-func upgrade_card_by_uid(uid: String) -> bool:
-	for i in range(player_deck.size()):
-		if player_deck[i]["uid"] != uid:
-			continue
-		var current_id: String = str(player_deck[i]["card_id"])
-		if current_id.ends_with("_plus"):
-			return false
-		var upgraded_id := current_id + "_plus"
-		# Defensive: confirm a _plus variant file exists before swapping
-		var path := "res://battle_scene/card_info/player/" + upgraded_id + ".json"
-		if not FileAccess.file_exists(path):
-			push_warning("upgrade_card_by_uid: no _plus variant for '%s'" % current_id)
-			return false
-		player_deck[i]["card_id"] = upgraded_id
-		emit_signal("deck_updated")
-		return true
-	return false
-
-
 # --- Health & Damage ---
 
 

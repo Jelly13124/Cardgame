@@ -7,7 +7,6 @@ const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
 const MAP_RENDERER_SCRIPT = preload("res://run_system/ui/map_renderer.gd")
 const EQUIPMENT_PANEL_SCRIPT = preload("res://run_system/ui/equipment_panel.gd")
-const CARD_UPGRADE_MODAL = preload("res://run_system/ui/card_upgrade_modal.gd")
 const RUN_DECK_VIEWER_MODAL = preload("res://run_system/ui/run_deck_viewer_modal.gd")
 const EVENT_MODAL_SCRIPT = preload("res://run_system/ui/event_modal.gd")
 const T_THEME = preload("res://run_system/ui/theme/wasteland_theme.gd")
@@ -703,21 +702,15 @@ func _open_rest_choice() -> void:
 	)
 	buttons.add_child(heal_btn)
 
-	var upgrade_btn := Button.new()
-	upgrade_btn.text = tr("UI_MAP_REST_UPGRADE_BTN")
-	upgrade_btn.custom_minimum_size = Vector2(200, 60)
-	upgrade_btn.pressed.connect(
+	# Gem socketing: open the deck/gem screen so the player can slot collected gems
+	# into their cards (card upgrades were removed — gems are the growth axis).
+	var gems_btn := Button.new()
+	gems_btn.text = tr("UI_MAP_REST_GEMS_BTN")
+	gems_btn.custom_minimum_size = Vector2(200, 60)
+	gems_btn.pressed.connect(
 		func():
-			var picker = CARD_UPGRADE_MODAL.new()
-			picker.picked.connect(
-				func(uid: String):
-					if uid == "":
-						# Cancelled — leave rest choice open so player can pick HEAL
-						return
-					_show_popup(tr("UI_MAP_CARD_UPGRADED"))
-					modal.queue_free()
-					_node_click_pending = false  # release click guard
-			)
-			modal.add_child(picker)
+			modal.queue_free()
+			_node_click_pending = false
+			_open_run_deck_viewer()
 	)
-	buttons.add_child(upgrade_btn)
+	buttons.add_child(gems_btn)
