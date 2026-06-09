@@ -300,6 +300,21 @@ func _draw_top_bar(vp: Vector2) -> void:
 		22,
 		Color(0.95, 0.78, 0.45)
 	)
+	_scene.draw_string(
+		_font,
+		Vector2(700, 35),
+		tr("UI_MAP_TOPBAR_LEVEL").format(
+			{
+				"lvl": _scene.rm.level,
+				"xp": _scene.rm.xp,
+				"next": _scene.rm.xp_to_next(_scene.rm.level)
+			}
+		),
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		22,
+		Color(0.6, 0.95, 0.7)
+	)
 
 
 func _draw_pixel_dashed_line(
