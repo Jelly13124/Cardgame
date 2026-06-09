@@ -15,3 +15,6 @@ UI_COMMON_CANCEL,CANCEL,取消
 UI_COMMON_RUN_DECK_TITLE,RUN DECK ({n} cards),运行牌组（{n} 张卡牌）
 UI_COMMON_DECK_UPGRADE_HINT,Upgraded cards show a [+] suffix on their name.,已强化的卡牌名称带有 [+] 后缀。
 UI_COMMON_DECK_EMPTY,(Deck is empty.),（牌组为空。）
+UI_COMMON_DECK_GEM_HINT,Select a gem then click an empty socket to insert it (locked after).,选择一颗宝石后点击空插槽嵌入（嵌入后锁定）。
+UI_COMMON_GEM_INVENTORY,Gem Inventory,宝石库存
+UI_COMMON_GEM_NONE,No gems yet — defeat elites to find them.,暂无宝石 —— 击败精英可获得。
