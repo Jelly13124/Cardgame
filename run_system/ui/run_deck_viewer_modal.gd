@@ -1,7 +1,8 @@
-## Read-only run-deck viewer. Renders every card in RunManager.player_deck
-## via JsonCardFactory so upgraded cards show their `+` title naturally
-## (card_id swap to "_plus" makes the factory load the _plus.json variant).
-## Opened from the map screen via the [📚 DECK] button.
+## Run-deck / gem-socket screen. Renders every card in RunManager.player_deck with
+## its 2 gem sockets, plus a gem-inventory panel. Click a gem in the inventory to
+## select it, then click an empty socket on a card to insert it (locked after —
+## gems cannot be removed this run). Card upgrades were replaced by gems.
+## Opened from the map [📚 DECK] button and the rest-stop "Socket Gems" button.
 extends Control
 class_name RunDeckViewerModal
 
@@ -9,6 +10,10 @@ const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const CARD_FACTORY_SCENE = preload("res://battle_scene/my_card_factory.tscn")
 
 var _card_factory: Node
+## The gem id currently selected from the inventory (to insert on the next socket
+## click). "" = nothing selected.
+var _selected_gem: String = ""
+var _rebuild: Callable = Callable()
 
 
 func _ready() -> void:
@@ -16,8 +21,6 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_card_factory = CARD_FACTORY_SCENE.instantiate()
 	add_child(_card_factory)
-	# play_card.tscn is intrinsically 208x286; match it (cards scaled back to the old
-	# 160x220 footprint at placement so the existing grid layout still fits).
 	_card_factory.card_size = Vector2(208, 286)
 	_build()
 
@@ -35,18 +38,16 @@ func _build() -> void:
 
 	var panel := PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
-	panel.custom_minimum_size = Vector2(1100, 720)
+	panel.custom_minimum_size = Vector2(1180, 740)
 	center.add_child(panel)
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 28)
-	margin.add_theme_constant_override("margin_right", 28)
-	margin.add_theme_constant_override("margin_top", 20)
-	margin.add_theme_constant_override("margin_bottom", 20)
+	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		margin.add_theme_constant_override(s, 24)
 	panel.add_child(margin)
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 14)
+	vbox.add_theme_constant_override("separation", 12)
 	margin.add_child(vbox)
 
 	# Header with close X
@@ -66,61 +67,166 @@ func _build() -> void:
 	close_btn.pressed.connect(queue_free)
 	header.add_child(close_btn)
 
-	# Subtitle hint about upgrades
 	var subtitle := Label.new()
-	subtitle.text = tr("UI_COMMON_DECK_UPGRADE_HINT")
+	subtitle.text = tr("UI_COMMON_DECK_GEM_HINT")
 	subtitle.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
 	vbox.add_child(subtitle)
 
-	# Scrollable grid of cards
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.custom_minimum_size = Vector2(1040, 580)
-	vbox.add_child(scroll)
+	# Main: card grid (left) + gem inventory (right)
+	var main := HBoxContainer.new()
+	main.add_theme_constant_override("separation", 18)
+	main.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(main)
 
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(860, 600)
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main.add_child(scroll)
 	var grid := GridContainer.new()
-	grid.columns = 5
+	grid.name = "CardGrid"
+	grid.columns = 4
 	grid.add_theme_constant_override("h_separation", 16)
 	grid.add_theme_constant_override("v_separation", 18)
 	scroll.add_child(grid)
 
-	if RunManager.player_deck.is_empty():
-		var none_lbl := Label.new()
-		none_lbl.text = tr("UI_COMMON_DECK_EMPTY")
-		none_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
-		vbox.add_child(none_lbl)
-		return
+	var gem_panel := _build_gem_panel()
+	main.add_child(gem_panel)
 
-	for entry in RunManager.player_deck:
-		var card_id: String = str(entry.get("card_id", ""))
-		if card_id == "":
-			continue
-		grid.add_child(_make_card_slot(card_id))
+	# Rebuild closure repaints both the card grid and the gem panel after a socket.
+	_rebuild = func() -> void:
+		if not is_instance_valid(grid):
+			return
+		for c in grid.get_children():
+			c.queue_free()
+		for entry in RunManager.player_deck:
+			if typeof(entry) == TYPE_DICTIONARY and str(entry.get("card_id", "")) != "":
+				grid.add_child(_make_card_slot(entry))
+		var new_panel := _build_gem_panel()
+		var idx := gem_panel.get_index()
+		main.remove_child(gem_panel)
+		gem_panel.queue_free()
+		gem_panel = new_panel
+		main.add_child(gem_panel)
+		main.move_child(gem_panel, idx)
+	_rebuild.call()
 
 
-func _make_card_slot(card_id: String) -> Control:
-	var wrapper := Control.new()
-	wrapper.custom_minimum_size = Vector2(180, 260)
+## Right-hand gem inventory: one button per gem; clicking selects it (to insert).
+func _build_gem_panel() -> Control:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(280, 0)
+	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	var m := MarginContainer.new()
+	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		m.add_theme_constant_override(s, 12)
+	panel.add_child(m)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	m.add_child(box)
 
+	var hdr := Label.new()
+	hdr.text = tr("UI_COMMON_GEM_INVENTORY")
+	hdr.add_theme_font_size_override("font_size", 20)
+	hdr.add_theme_color_override("font_color", Color(0.7, 0.95, 1.0))
+	box.add_child(hdr)
+
+	if RunManager.gem_inventory.is_empty():
+		var empty := Label.new()
+		empty.text = tr("UI_COMMON_GEM_NONE")
+		empty.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(empty)
+		return panel
+
+	for gem_id in RunManager.gem_inventory:
+		box.add_child(_make_gem_button(str(gem_id)))
+	return panel
+
+
+func _make_gem_button(gem_id: String) -> Button:
+	var b := Button.new()
+	b.text = _gem_label(gem_id)
+	b.custom_minimum_size = Vector2(0, 40)
+	b.tooltip_text = _gem_desc(gem_id)
+	if gem_id == _selected_gem:
+		b.modulate = Color(0.6, 1.0, 0.7)  # highlight the chosen gem
+	b.pressed.connect(
+		func() -> void:
+			_selected_gem = "" if _selected_gem == gem_id else gem_id
+			if _rebuild.is_valid():
+				_rebuild.call()
+	)
+	return b
+
+
+func _gem_label(gem_id: String) -> String:
+	var d := RunManager.get_gem_data(gem_id)
+	return Settings.t("GEM_%s_TITLE" % gem_id, str(d.get("title", gem_id)))
+
+
+func _gem_desc(gem_id: String) -> String:
+	return Settings.t("GEM_%s_DESC" % gem_id, "")
+
+
+## One deck card: its art + a row of 2 socket widgets underneath.
+func _make_card_slot(entry: Dictionary) -> Control:
+	var card_id: String = str(entry.get("card_id", ""))
+	var uid: String = str(entry.get("uid", ""))
+	var gems: Array = entry.get("gems", [])
+
+	var wrapper := VBoxContainer.new()
+	wrapper.custom_minimum_size = Vector2(190, 300)
+	wrapper.add_theme_constant_override("separation", 4)
+
+	var art_holder := Control.new()
+	art_holder.custom_minimum_size = Vector2(180, 250)
 	var frame := Panel.new()
 	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
-	# Upgraded cards get a subtle gold tint to stand out
-	var is_upgraded := card_id.ends_with("_plus")
-	var border := Color(1.0, 0.85, 0.35) if is_upgraded else T.PANEL_BORDER
 	frame.add_theme_stylebox_override(
-		"panel", T.panel_with_shadow(Color(0.09, 0.072, 0.055, 0.92), border, 3)
+		"panel", T.panel_with_shadow(Color(0.09, 0.072, 0.055, 0.92), T.PANEL_BORDER, 3)
 	)
-	wrapper.add_child(frame)
-
+	art_holder.add_child(frame)
 	var card = _card_factory.create_card(card_id, null)
 	if card:
 		if card.get_parent():
 			card.get_parent().remove_child(card)
 		card.can_be_interacted_with = false
 		card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		card.position = Vector2(10, 20)
-		card.pivot_offset = Vector2(0, 0)
+		card.position = Vector2(10, 18)
+		card.pivot_offset = Vector2.ZERO
 		card.scale = Vector2(160.0 / 208.0, 160.0 / 208.0)
-		wrapper.add_child(card)
+		art_holder.add_child(card)
+	wrapper.add_child(art_holder)
+
+	# 2 socket widgets
+	var sockets := HBoxContainer.new()
+	sockets.alignment = BoxContainer.ALIGNMENT_CENTER
+	sockets.add_theme_constant_override("separation", 6)
+	wrapper.add_child(sockets)
+	for slot in range(2):
+		sockets.add_child(_make_socket(uid, gems, slot))
 
 	return wrapper
+
+
+func _make_socket(uid: String, gems: Array, slot: int) -> Button:
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(84, 34)
+	if slot < gems.size():
+		# Filled (locked).
+		b.text = _gem_label(str(gems[slot]))
+		b.disabled = true
+		b.tooltip_text = _gem_desc(str(gems[slot]))
+		b.modulate = Color(0.7, 0.95, 1.0)
+	else:
+		# Empty — inserts the selected gem on click.
+		b.text = "＋"
+		b.disabled = _selected_gem == ""
+		b.pressed.connect(
+			func() -> void:
+				if _selected_gem != "" and RunManager.socket_gem(uid, _selected_gem):
+					_selected_gem = ""
+					if _rebuild.is_valid():
+						_rebuild.call()
+		)
+	return b
