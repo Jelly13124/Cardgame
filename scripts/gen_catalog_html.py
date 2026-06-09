@@ -126,6 +126,7 @@ document.querySelectorAll('.tag').forEach(tag=>tag.addEventListener('click',()=>
 def nav(cur):
     items = [("cards.html", "Cards 卡牌"), ("relics.html", "Relics 遗物"),
              ("equipment.html", "Equipment 装备"), ("enemies.html", "Enemies 敌人"),
+             ("gems.html", "Gems 宝石"),
              ("affixes.html", "Affixes 词条"), ("keywords.html", "Keywords 关键词")]
     return '<div class="nav">' + "".join(
         '<a class="%s" href="%s">%s</a>' % ("cur" if f == cur else "", f, esc(t))
@@ -190,6 +191,11 @@ def fmt_effect(e):
         "scale_damage_by_attacks": f"Deal {e.get('base',0)}+{e.get('per',0)}×attacks this turn",
         "exhaust_self": "Exhaust (removed for combat)",
         "flip_polarity": "Flip polarity (Yin↔Yang)",
+        "gain_gold": f"Gain {amt} gold",
+        "heal": f"Heal {amt} HP",
+        "deal_damage_block_mult": f"Deal damage = Block×{mult}",
+        "double_strength": "Double your Strength",
+        "lose_hp": f"Lose {amt} HP",
     }
     if t in m:
         return m[t]
@@ -282,6 +288,28 @@ def build_relics():
     controls = "".join(f'<span class="tag" data-k="rarity" data-f="{r}">{r}</span>'
                        for r in ("common", "uncommon", "rare"))
     page("relics.html", "Relics · 遗物", "Passive run relics, grouped by rarity", controls, body, len(items))
+
+
+# ── Gems (run-scoped socketables) ───────────────────────────────────────────
+def build_gems():
+    items = load_json_dir("run_system/data/gems")
+    cards = []
+    for gid, d in items:
+        en = cards_tr.get(f"GEM_{gid}_TITLE", {}).get("en", d.get("title", gid))
+        zh = cards_tr.get(f"GEM_{gid}_TITLE", {}).get("zh", "")
+        desc = cards_tr.get(f"GEM_{gid}_DESC", {}).get("zh", "")
+        eff = "".join(f"<li>{esc(fmt_effect(e))}</li>" for e in d.get("effects", []))
+        search = f"{gid} {en} {zh}".lower()
+        cards.append(
+            f'<div class="card" data-search="{esc(search)}" style="border-left-color:#6fd3ff">'
+            f'<h3>{esc(en)} <span class="zh">{esc(zh)}</span></h3>'
+            f'<div class="meta"><span class="pill" style="color:#6fd3ff">{esc(gid)}</span>'
+            f'<span class="pill" style="color:#6b6256">on play</span></div>'
+            f'<div class="desc">{esc(desc)}</div><ul class="eff">{eff}</ul></div>')
+    body = section("Gems 宝石", len(cards), "".join(cards))
+    page("gems.html", "Gems · 宝石",
+         "Run-scoped socketable gems — slot up to 2 into a card; effects fire when the card is played",
+         "", body, len(items))
 
 
 # ── Equipment (grouped by slot) + sets ──────────────────────────────────────
@@ -443,9 +471,7 @@ def build_keywords():
                       "打出后,该卡在本场战斗中被移除(不再回到牌库)。", "#cfa9ff", "exhaust"))
     kw.append(kw_card("Retain", "保留", "The card is NOT discarded at end of turn — it stays in your hand.",
                       "回合结束时不弃掉,保留在手牌中。", "#9ec1ff", "retain"))
-    kw.append(kw_card("Wealthy", "富裕", "When this card is played, gain 5 gold. Triggers up to 3 times per combat.",
-                      "打出此牌时获得 5 金币，每场战斗最多触发 3 次。", "#ffd24a", "wealthy rich gold"))
-    body.append('<div class="section"><h2>Card Keywords 卡牌关键词 <span class="cnt">(3)</span></h2></div>'
+    body.append('<div class="section"><h2>Card Keywords 卡牌关键词 <span class="cnt">(2)</span></h2></div>'
                 f'<div class="kw">{"".join(kw)}</div>')
     # Attributes
     attrs = [
@@ -458,7 +484,7 @@ def build_keywords():
     ac = [kw_card(e, z, de, dz, c, e.lower()) for e, z, de, dz, c in attrs]
     body.append('<div class="section"><h2>Attributes 属性 <span class="cnt">(5)</span></h2></div>'
                 f'<div class="kw">{"".join(ac)}</div>')
-    total = len(STATUSES) + 4 + 3 + 5  # statuses + yin/yang(4) + card keywords(3) + attributes(5)
+    total = len(STATUSES) + 4 + 2 + 5  # statuses + yin/yang(4) + card keywords(2) + attributes(5)
     page("keywords.html", "Keywords · 关键词", "Statuses, Yin-Yang, card keywords & attributes",
          "", "".join(body), total)
 
@@ -514,6 +540,7 @@ def build_affixes():
 
 build_cards()
 build_relics()
+build_gems()
 build_equipment()
 build_enemies()
 build_affixes()
