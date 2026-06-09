@@ -1,0 +1,1 @@
+{ "id": "leech", "title": "Leech Gem", "trigger": "on_play", "effects": [ { "type": "heal", "amount": 2 } ] }

@@ -115,9 +115,15 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 	# (sharpened_scrap → Bleed on the struck enemy).
 	if type == "attack" and target and is_instance_valid(target) and main.relic_effect_system:
 		main.relic_effect_system.on_player_attack(target)
-	# Card keyword: wealthy → gold on play (capped per combat by battle_scene).
-	if main and main.has_method("on_card_played_wealthy"):
-		main.on_card_played_wealthy(card)
+	# Socketed gems: each gem's effects resolve AFTER the card's own effects (and
+	# matched bonus), reusing _apply_effect so they get the same target / global
+	# STR-CON / dodge / thorns handling. ≤2 gems per card; locked once socketed.
+	var gems: Array = card.get_meta("gems") if card.has_meta("gems") else []
+	for gem_id in gems:
+		var gdata: Dictionary = RunManager.get_gem_data(str(gem_id))
+		for ge in gdata.get("effects", []):
+			if typeof(ge) == TYPE_DICTIONARY:
+				await _apply_effect(ge, target, player, card_mult)
 
 
 func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: float = 1.0) -> void:
@@ -419,6 +425,21 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			else:
 				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
 			await get_tree().create_timer(0.2).timeout
+
+		"gain_gold":
+			# Card/gem gold (wealthy gem). `max_per_combat` caps triggers (battle_scene).
+			if main and main.has_method("try_gain_gold"):
+				main.try_gain_gold(amount, int(effect.get("max_per_combat", 0)))
+			await get_tree().create_timer(0.1).timeout
+
+		"heal":
+			# Card/gem self-heal (leech gem).
+			if player and player.has_method("heal"):
+				player.heal(amount)
+				main.show_notification(
+					tr("UI_COMBAT_HEAL").format({"n": amount}), Color(0.3, 1.0, 0.45)
+				)
+			await get_tree().create_timer(0.15).timeout
 
 		_:
 			push_error(

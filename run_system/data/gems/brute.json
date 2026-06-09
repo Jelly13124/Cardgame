@@ -1,0 +1,1 @@
+{ "id": "brute", "title": "Brute Gem", "trigger": "on_play", "effects": [ { "type": "gain_strength", "amount": 1 } ] }
