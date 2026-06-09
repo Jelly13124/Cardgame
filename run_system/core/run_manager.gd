@@ -114,6 +114,33 @@ var relics: Array[String] = []
 ## Run-scoped gems collected but not yet socketed into a card (cleared on death).
 var gem_inventory: Array[String] = []
 var _gem_cache: Dictionary = {}
+
+## In-run XP/level. Killing enemies grants XP; each level-up queues a card draft
+## (consumed by the loot screen via pending_level_draws). All reset in start_new_run.
+var xp: int = 0
+var level: int = 1
+var pending_level_draws: int = 0
+const XP_PER_KILL := {"enemy": 6, "elite": 14, "boss": 30}
+
+
+## XP needed to go from `lvl` to `lvl+1`. Gentle curve → ~1 level per 1-2 fights.
+func xp_to_next(lvl: int) -> int:
+	return 10 + lvl * 4
+
+
+## Award XP for a combat win by node type; rolls up level-ups and returns how many
+## levels were gained (the caller queues that many card drafts).
+func gain_xp(node_type: String) -> int:
+	xp += int(XP_PER_KILL.get(node_type, XP_PER_KILL["enemy"]))
+	var gained := 0
+	while xp >= xp_to_next(level):
+		xp -= xp_to_next(level)
+		level += 1
+		gained += 1
+	pending_level_draws += gained
+	return gained
+
+
 ## Hard ceiling on backpack cells. The backpack ARRAY is always this length (so
 ## cell/safe-cell indices stay stable across saves); the USABLE cell count is the
 ## dynamic effective_backpack_size() below, which grows from BASE_BACKPACK toward
@@ -616,6 +643,9 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 
 	player_deck.clear()
 	gem_inventory.clear()
+	xp = 0
+	level = 1
+	pending_level_draws = 0
 	# Base deck = explicit `starter_deck` arg, else hero JSON's starter_deck, else
 	# DEFAULT_STARTER_DECK. A persistent per-hero starter-deck override (outpost deck
 	# editor) takes precedence over ALL of the above when set (it already encodes the
