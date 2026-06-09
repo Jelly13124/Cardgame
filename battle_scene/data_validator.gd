@@ -17,6 +17,13 @@ const SET_DIR = "res://run_system/data/equipment_sets/"
 const BASE_UPGRADE_DIR = "res://run_system/data/base_upgrades/"
 const HERO_DIR = "res://run_system/data/heroes/"
 const RANDOM_EVENT_DIR = "res://run_system/data/random_events/"
+const GEM_DIR = "res://run_system/data/gems/"
+
+# ─── Gem schema ───────────────────────────────────────────────────────────────
+## Socketable gems (run-scoped). Each carries `effects[]` reusing the card effect
+## vocabulary; they resolve after the socketed card's own effects on play.
+const REQUIRED_GEM_KEYS = ["id", "title", "trigger", "effects"]
+const ALLOWED_GEM_TRIGGERS = ["on_play"]
 
 # ─── Card schema ──────────────────────────────────────────────────────────────
 const REQUIRED_CARD_KEYS = ["name", "title", "type", "cost", "effects"]
@@ -48,6 +55,8 @@ const ALLOWED_EFFECT_TYPES = [
 	"lose_hp",
 	"double_strength",
 	"deal_damage_block_mult",
+	"gain_gold",
+	"heal",
 ]
 const ALLOWED_STATUS_NAMES = [
 	"bleed",
@@ -212,6 +221,8 @@ static func validate_all_data_at_startup() -> int:
 	# does not fail boot. _validate_dir reports a missing dir as a failure.
 	if DirAccess.dir_exists_absolute(RANDOM_EVENT_DIR):
 		failures += _validate_dir(RANDOM_EVENT_DIR, Callable(DataValidator, "validate_event"))
+	if DirAccess.dir_exists_absolute(GEM_DIR):
+		failures += _validate_dir(GEM_DIR, Callable(DataValidator, "validate_gem"))
 	# Cross-check encounter pools so a typo in RunManager constants fails at
 	# startup instead of crashing the player mid-combat in enemy_entity.create().
 	failures += validate_encounter_pools()
@@ -566,6 +577,25 @@ static func validate_relic(data: Dictionary, source_path: String) -> bool:
 				)
 			)
 			ok = false
+	return ok
+
+
+## Validate a single gem JSON. Required keys + a known trigger; each effect reuses
+## the shared card-effect validator (so gem effects must be real ALLOWED_EFFECT_TYPES).
+static func validate_gem(data: Dictionary, source_path: String) -> bool:
+	var prefix := "Gem '%s'" % source_path
+	var ok := true
+	for key in REQUIRED_GEM_KEYS:
+		if not data.has(key):
+			push_error("%s: missing required key '%s'" % [prefix, key])
+			ok = false
+	if data.has("trigger") and not str(data["trigger"]) in ALLOWED_GEM_TRIGGERS:
+		push_error("%s: trigger '%s' not in %s" % [prefix, data["trigger"], ALLOWED_GEM_TRIGGERS])
+		ok = false
+	if typeof(data.get("effects", null)) == TYPE_ARRAY:
+		for i in range(data["effects"].size()):
+			if not _validate_card_effect(data["effects"][i], prefix, "effects", i):
+				ok = false
 	return ok
 
 

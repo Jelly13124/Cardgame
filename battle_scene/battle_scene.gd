@@ -456,7 +456,7 @@ func refresh_hand_ui():
 ## Initialise a new battle from RunManager state (or defaults if no run is active).
 func _start_new_game():
 	is_game_over = false
-	_wealthy_gold_triggers = 0
+	_gold_effect_triggers = 0
 
 	relic_effect_system = RELIC_EFFECT_SYSTEM.new()
 	relic_effect_system.setup(self)
@@ -792,26 +792,18 @@ func play_spell(card: Control, target_node: Node):
 	_maybe_auto_end_turn()
 
 
-## Wealthy card keyword: playing a card flagged wealthy grants 5 gold, capped at
-## 3 triggers per combat. A card is wealthy if its deck entry was granted the
-## keyword (uid in RunManager.wealthy_uids) or its JSON declares "wealthy".
-const WEALTHY_GOLD := 5
-const WEALTHY_MAX_PER_COMBAT := 3
-var _wealthy_gold_triggers: int = 0
+## Gold from a card/gem `gain_gold` effect (the wealthy gem). When `cap > 0` the
+## grant is limited to `cap` triggers per combat (wealthy = 3); cap 0 = uncapped.
+var _gold_effect_triggers: int = 0
 
 
-func on_card_played_wealthy(card) -> void:
-	if _wealthy_gold_triggers >= WEALTHY_MAX_PER_COMBAT or not is_instance_valid(card):
+func try_gain_gold(amount: int, cap: int) -> void:
+	if cap > 0 and _gold_effect_triggers >= cap:
 		return
-	var uid: String = str(card.get_meta("uid", "")) if card.has_meta("uid") else ""
-	var is_wealthy: bool = (
-		bool(card.card_info.get("wealthy", false)) or (uid != "" and uid in RunManager.wealthy_uids)
-	)
-	if not is_wealthy:
-		return
-	_wealthy_gold_triggers += 1
-	RunManager.add_resources(WEALTHY_GOLD, 0)
-	show_notification(tr("UI_COMBAT_WEALTHY").format({"n": WEALTHY_GOLD}), Color(1.0, 0.82, 0.29))
+	if cap > 0:
+		_gold_effect_triggers += 1
+	RunManager.add_resources(amount, 0)
+	show_notification(tr("UI_COMBAT_WEALTHY").format({"n": amount}), Color(1.0, 0.82, 0.29))
 
 
 ## Fire the player's on-exhaust power triggers when a card routes to Exhaust:

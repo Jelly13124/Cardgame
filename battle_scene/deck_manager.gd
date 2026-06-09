@@ -129,6 +129,7 @@ func reset_deck() -> void:
 		var card = card_factory.create_card(card_name, deck)
 		if card and typeof(item) == TYPE_DICTIONARY:
 			card.set_meta("uid", item.get("uid", ""))
+			card.set_meta("gems", item.get("gems", []))
 
 	deck.shuffle()
 	battle_scene._update_ui_labels()

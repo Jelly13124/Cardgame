@@ -111,9 +111,9 @@ var inventory_items: Array[String]:
 		return backpack_equip_ids()
 
 var relics: Array[String] = []
-## player_deck uids granted the "wealthy" card keyword this run (bounty_tags).
-## Playing a card whose uid is here grants gold in combat (battle_scene.on_card_played_wealthy).
-var wealthy_uids: Array[String] = []
+## Run-scoped gems collected but not yet socketed into a card (cleared on death).
+var gem_inventory: Array[String] = []
+var _gem_cache: Dictionary = {}
 ## Hard ceiling on backpack cells. The backpack ARRAY is always this length (so
 ## cell/safe-cell indices stay stable across saves); the USABLE cell count is the
 ## dynamic effective_backpack_size() below, which grows from BASE_BACKPACK toward
@@ -615,7 +615,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	ascension = clampi(resolved_asc, 0, 5)
 
 	player_deck.clear()
-	wealthy_uids.clear()
+	gem_inventory.clear()
 	# Base deck = explicit `starter_deck` arg, else hero JSON's starter_deck, else
 	# DEFAULT_STARTER_DECK. A persistent per-hero starter-deck override (outpost deck
 	# editor) takes precedence over ALL of the above when set (it already encodes the
@@ -728,7 +728,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 
 func add_card_to_deck(card_id: String) -> void:
 	var uid = str(Time.get_ticks_usec()) + "_" + str(randi_range(1000, 9999))
-	var card_data = {"uid": uid, "card_id": card_id}
+	var card_data = {"uid": uid, "card_id": card_id, "gems": []}
 	player_deck.append(card_data)
 	emit_signal("deck_updated")
 
@@ -1437,8 +1437,8 @@ func add_relic(relic_id: String) -> bool:
 
 
 ## Run any `on_pickup`-triggered relic effects the moment the relic is acquired
-## (outside combat). Currently: bounty_tags grants the "wealthy" keyword to random
-## deck cards.
+## (outside combat). bounty_tags grants `amount` gems (its `keyword` is the gem id,
+## e.g. "wealthy") into the gem inventory to be socketed later.
 func _apply_relic_on_pickup(relic_id: String) -> void:
 	var data := get_relic_data(relic_id)
 	for e in data.get("effects", []):
@@ -1446,27 +1446,9 @@ func _apply_relic_on_pickup(relic_id: String) -> void:
 			continue
 		match str(e.get("type", "")):
 			"grant_card_keyword":
-				_grant_keyword_to_random_cards(
-					str(e.get("keyword", "wealthy")), int(e.get("amount", 1))
-				)
-
-
-## Mark `n` random player_deck entries with `keyword`. For "wealthy" also records
-## their uids in wealthy_uids so battle_scene can detect the played card.
-func _grant_keyword_to_random_cards(keyword: String, n: int) -> void:
-	if player_deck.is_empty() or n <= 0:
-		return
-	var idxs: Array = range(player_deck.size())
-	idxs.shuffle()
-	for i in range(mini(n, idxs.size())):
-		var entry = player_deck[idxs[i]]
-		if typeof(entry) != TYPE_DICTIONARY:
-			continue
-		entry[keyword] = true
-		if keyword == "wealthy":
-			var uid := str(entry.get("uid", ""))
-			if uid != "" and not uid in wealthy_uids:
-				wealthy_uids.append(uid)
+				var gem_id := str(e.get("keyword", "wealthy"))
+				for _i in range(maxi(1, int(e.get("amount", 1)))):
+					gem_inventory.append(gem_id)
 
 
 func has_relic(relic_id: String) -> bool:
@@ -1563,6 +1545,49 @@ func get_relic_data(relic_id: String) -> Dictionary:
 		data[key] = parsed[key]
 	_relic_data_cache[relic_id] = data
 	return data
+
+
+# --- Gems (run-scoped socketables) ---
+
+const GEM_DATA_DIR := "res://run_system/data/gems/"
+
+
+## Load a gem JSON by id (cached). Returns {} on miss.
+func get_gem_data(gem_id: String) -> Dictionary:
+	if _gem_cache.has(gem_id):
+		return _gem_cache[gem_id]
+	var data := _load_json_by_id(GEM_DATA_DIR, gem_id)
+	_gem_cache[gem_id] = data
+	return data
+
+
+## All gem ids that have a JSON file in the gems dir (the elite/draft gem pool).
+func gem_pool() -> Array[String]:
+	var ids: Array[String] = []
+	var dir := DirAccess.open(GEM_DATA_DIR)
+	if dir:
+		for f in dir.get_files():
+			if f.ends_with(".json"):
+				ids.append(f.trim_suffix(".json"))
+	return ids
+
+
+## Socket `gem_id` (taken from gem_inventory) into the player_deck card with `uid`,
+## if it has a free slot (<2 gems). Locked after — no removal. Returns success.
+func socket_gem(uid: String, gem_id: String) -> bool:
+	if not gem_id in gem_inventory:
+		return false
+	for entry in player_deck:
+		if typeof(entry) != TYPE_DICTIONARY or str(entry.get("uid", "")) != uid:
+			continue
+		var gems: Array = entry.get("gems", [])
+		if gems.size() >= 2:
+			return false
+		gems.append(gem_id)
+		entry["gems"] = gems
+		gem_inventory.erase(gem_id)
+		return true
+	return false
 
 
 ## Load equipment JSON by id. Returns empty dict on miss.
