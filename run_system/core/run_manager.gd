@@ -130,10 +130,16 @@ func xp_to_next(lvl: int) -> int:
 	return 10 + lvl * 4
 
 
-## Award XP for a combat win by node type; rolls up level-ups and returns how many
-## levels were gained (the caller queues that many attribute-point picks).
+## XP multiplier from Intelligence (the attribute's purpose): +5% XP per point.
+func xp_int_mult() -> float:
+	return 1.0 + 0.05 * float(_attr("intelligence"))
+
+
+## Award XP for a combat win by node type (scaled by Intelligence); rolls up
+## level-ups and returns how many levels were gained (→ that many attribute picks).
 func gain_xp(node_type: String) -> int:
-	xp += int(XP_PER_KILL.get(node_type, XP_PER_KILL["enemy"]))
+	var base: int = int(XP_PER_KILL.get(node_type, XP_PER_KILL["enemy"]))
+	xp += int(round(base * xp_int_mult()))
 	var gained := 0
 	while xp >= xp_to_next(level):
 		xp -= xp_to_next(level)
