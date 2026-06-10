@@ -1,1 +1,12 @@
-{ "id": "keen", "title": "Keen Gem", "trigger": "on_play", "effects": [ { "type": "deal_damage", "amount": 3 } ] }
+{
+  "id": "keen",
+  "title": "Keen Gem",
+  "trigger": "on_play",
+  "effects": [
+    {
+      "type": "deal_damage",
+      "amount": 3
+    }
+  ],
+  "color": "#ff6b5e"
+}

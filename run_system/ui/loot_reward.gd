@@ -585,6 +585,18 @@ func _make_draft_card_slot(card_id: String) -> Control:
 	return wrapper
 
 
+## White gem silhouette texture (game-icons.net), tinted by the gem's color at the
+## call site. Tries SVG then PNG; null if neither exists (caller falls back to 💎).
+func _load_gem_icon(gem_id: String) -> Texture2D:
+	for ext in [".svg", ".png"]:
+		var p := "res://run_system/assets/images/gems/%s%s" % [gem_id, ext]
+		if ResourceLoader.exists(p):
+			var t = load(p)
+			if t is Texture2D:
+				return t
+	return null
+
+
 ## A gem option in a draft (elite gem-draft, or a Luck-rolled level-up slot).
 func _make_gem_draft_slot(gem_id: String) -> Control:
 	var wrapper = Control.new()
@@ -604,13 +616,25 @@ func _make_gem_draft_slot(gem_id: String) -> Control:
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	wrapper.add_child(box)
 
-	var glyph = Label.new()
-	glyph.text = "💎"
-	glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	glyph.add_theme_font_size_override("font_size", 80)
-	box.add_child(glyph)
-
 	var gdata := RunManager.get_gem_data(gem_id)
+	var gem_tex := _load_gem_icon(gem_id)
+	if gem_tex:
+		var icon = TextureRect.new()
+		icon.texture = gem_tex
+		icon.modulate = Color.html(str(gdata.get("color", "#ffffff")))
+		icon.custom_minimum_size = Vector2(96, 96)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_child(icon)
+	else:
+		var glyph = Label.new()
+		glyph.text = "💎"
+		glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		glyph.add_theme_font_size_override("font_size", 80)
+		box.add_child(glyph)
+
 	var name_lbl = Label.new()
 	name_lbl.text = Settings.t("GEM_%s_TITLE" % gem_id, str(gdata.get("title", gem_id)))
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
