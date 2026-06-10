@@ -1,1 +1,12 @@
-{ "id": "brute", "title": "Brute Gem", "trigger": "on_play", "effects": [ { "type": "gain_strength", "amount": 1 } ] }
+{
+  "id": "brute",
+  "title": "Brute Gem",
+  "trigger": "on_play",
+  "effects": [
+    {
+      "type": "gain_strength",
+      "amount": 1
+    }
+  ],
+  "color": "#ff9e4a"
+}
