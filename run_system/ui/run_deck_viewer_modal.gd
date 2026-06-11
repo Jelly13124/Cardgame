@@ -19,13 +19,22 @@ var _gem_box: VBoxContainer
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	# MapScene's Control rect is NOT viewport-sized (it draws via get_viewport_rect()
+	# but never sets its own size), so PRESET_FULL_RECT would collapse to (0,0).
+	# Size ourselves to the viewport explicitly and stay updated on resize.
+	set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_fit_to_viewport()
+	get_viewport().size_changed.connect(_fit_to_viewport)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_card_factory = CARD_FACTORY_SCENE.instantiate()
 	add_child(_card_factory)
 	_card_factory.card_size = Vector2(208, 286)
-	# Defer so our own anchor layout resolves before we build children.
-	call_deferred("_build")
+	_build()
+
+
+func _fit_to_viewport() -> void:
+	set_position(Vector2.ZERO)
+	set_size(get_viewport_rect().size)
 
 
 func _build() -> void:
@@ -36,9 +45,6 @@ func _build() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(bg)
-	# Anchor layout resolves after _ready(); force the initial size now so the bg
-	# paints immediately before the first SORT_CHILDREN notification arrives.
-	bg.set_deferred("size", get_viewport_rect().size)
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
