@@ -42,3 +42,4 @@ UI_MAP_TOPBAR_LEVEL,Lv {lvl} ({xp}/{next}),等级 {lvl}（{xp}/{next}）
 UI_TOPBAR_ACT_SHORT,Act,幕
 UI_TOPBAR_FLOOR_SHORT,Floor,层
 UI_TOPBAR_RELICS_CAPTION,Relics,遗物
+UI_TOPBAR_LEVEL_FMT,Lv {lvl} · {xp}/{next},Lv {lvl} · {xp}/{next}
