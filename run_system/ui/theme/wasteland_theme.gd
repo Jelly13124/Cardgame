@@ -146,6 +146,22 @@ static func button_textured(state: String = "normal") -> StyleBoxTexture:
 	return style
 
 
+## A square ✕ close button for the full-screen pages (character / run-deck).
+## The caller anchors it to the page's top-right corner and connects `pressed`.
+static func close_x_button() -> Button:
+	var b := Button.new()
+	b.text = "✕"
+	b.custom_minimum_size = Vector2(48, 48)
+	b.focus_mode = Control.FOCUS_NONE
+	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	b.add_theme_font_size_override("font_size", 24)
+	b.add_theme_color_override("font_color", TEXT_MAIN)
+	b.add_theme_stylebox_override("normal", button_textured("normal"))
+	b.add_theme_stylebox_override("hover", button_textured("hover"))
+	b.add_theme_stylebox_override("pressed", button_textured("pressed"))
+	return b
+
+
 # ─── Internal ─────────────────────────────────────────────────────────────────
 
 
