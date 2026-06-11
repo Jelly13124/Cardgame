@@ -13,7 +13,6 @@ const CARD_REWARD_ICON_PATH := "res://run_system/assets/images/loot_ui/card_rewa
 # `T.PANEL_BG` etc. — see wasteland_theme.gd for all colors / builders.
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const INVENTORY_FULL_MODAL = preload("res://run_system/ui/inventory_full_modal.gd")
-const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
 # Lazy-loaded at call site to avoid map→battle→loot cyclic preload.
 const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 
@@ -142,12 +141,9 @@ func _generate_loot() -> void:
 	)
 	if equipment_drop_id != "":
 		var data = RunManager.get_equipment_data(equipment_drop_id)
-		var set_tag := ""
-		if str(data.get("set_id", "")) != "":
-			set_tag = tr("UI_LOOT_EQUIP_SET_TAG").format({"set": str(data.get("set_id"))})
-		# Roll the affix instance UP FRONT so the reward shows the actual rolled
-		# affixes (the new system) — not the obsolete static JSON bonuses — and the
-		# claim grants this exact instance.
+		# Roll the affix instance UP FRONT so the claim grants this exact instance.
+		# The reward row deliberately shows NO stat/set subtitle (just the item
+		# name) — the player inspects the actual rolled affixes on the map screen.
 		var instance := RunManager.make_equip_instance(equipment_drop_id, equipment_drop_rarity)
 		available_loot.append(
 			{
@@ -160,10 +156,7 @@ func _generate_loot() -> void:
 				Settings.t(
 					"EQUIP_%s_NAME" % equipment_drop_id, str(data.get("name", equipment_drop_id))
 				),
-				"subtitle":
-				tr("UI_LOOT_EQUIP_SUBTITLE").format(
-					{"set": set_tag, "bonuses": _format_affixes(instance)}
-				),
+				"subtitle": "",
 				"icon": "res://battle_scene/assets/images/%s" % str(data.get("sprite", "")),
 				"action": tr("UI_LOOT_ACTION_TAKE")
 			}
@@ -223,12 +216,14 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	copy.add_child(title)
 
-	var subtitle = Label.new()
-	subtitle.text = str(loot.get("subtitle", ""))
-	subtitle.add_theme_color_override("font_color", T.TEXT_SECONDARY)
-	subtitle.add_theme_font_size_override("font_size", 18)
-	subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	copy.add_child(subtitle)
+	var subtitle_text := str(loot.get("subtitle", ""))
+	if subtitle_text != "":
+		var subtitle = Label.new()
+		subtitle.text = subtitle_text
+		subtitle.add_theme_color_override("font_color", T.TEXT_SECONDARY)
+		subtitle.add_theme_font_size_override("font_size", 18)
+		subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		copy.add_child(subtitle)
 
 	row.add_child(_make_claim_plate(str(loot.get("action", tr("UI_LOOT_ACTION_CLAIM")))))
 	return button
@@ -728,18 +723,6 @@ func _show_backpack_full_toast() -> void:
 	tween.tween_interval(1.4)
 	tween.tween_property(toast, "modulate:a", 0.0, 0.5)
 	tween.tween_callback(toast.queue_free)
-
-
-## Affix list for an equipment instance (the new system; replaces the old static
-## `bonuses` summary). Shows each rolled affix via AFFIX_POOL.describe.
-func _format_affixes(instance: Dictionary) -> String:
-	var affixes: Array = RunManager.equip_affixes(instance)
-	if affixes.is_empty():
-		return tr("UI_LOOT_NO_BONUSES")
-	var parts: Array = []
-	for a in affixes:
-		parts.append(AFFIX_POOL.describe(a))
-	return ", ".join(parts)
 
 
 func _load_texture(path: String) -> Texture2D:

@@ -7,12 +7,9 @@ UI_LOOT_GOLD_TITLE,{n} Gold,{n} 金币
 UI_LOOT_GOLD_SUBTITLE,Recovered from the fight,从战斗中缴获
 UI_LOOT_CARD_TITLE,Card Reward,卡牌奖励
 UI_LOOT_CARD_SUBTITLE,Choose one card for your deck,为你的牌组选择一张卡牌
-UI_LOOT_EQUIP_SET_TAG," [{set} set]"," [{set} 套装]"
-UI_LOOT_EQUIP_SUBTITLE,Equipment Drop{set} - {bonuses},装备掉落{set} - {bonuses}
 UI_LOOT_ACTION_TAKE,TAKE,拾取
 UI_LOOT_ACTION_CLAIM,CLAIM,领取
 UI_LOOT_DEFAULT_TITLE,Reward,奖励
-UI_LOOT_NO_BONUSES,(no bonuses),（无加成）
 UI_LOOT_BACKPACK_FULL,"Backpack full — left it behind","背包已满 —— 只能放弃"
 UI_LOOT_GEM_TITLE,Gem Cache,宝石匣
 UI_LOOT_GEM_SUBTITLE,Choose 1 of 3 gems,三选一宝石
