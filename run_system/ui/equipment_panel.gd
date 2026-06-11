@@ -36,7 +36,13 @@ var _status_label: Label
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	# MapScene's Control rect is NOT viewport-sized (it draws via get_viewport_rect()
+	# but never sets its own size), so PRESET_FULL_RECT would collapse the page (and
+	# its opaque bg ColorRect) to ~(0,0) — the map shows through. Size ourselves to
+	# the viewport explicitly and stay updated on resize.
+	set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_fit_to_viewport()
+	get_viewport().size_changed.connect(_fit_to_viewport)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build()
 	RunManager.equipment_changed.connect(_refresh)
@@ -45,6 +51,11 @@ func _ready() -> void:
 	RunManager.relics_updated.connect(_refresh)
 	RunManager.backpack_changed.connect(_refresh)
 	_refresh()
+
+
+func _fit_to_viewport() -> void:
+	set_position(Vector2.ZERO)
+	set_size(get_viewport_rect().size)
 
 
 func _on_health_changed(_current: int, _maximum: int) -> void:
@@ -87,13 +98,6 @@ func _build() -> void:
 	_vitals_label.add_theme_color_override("font_color", Color(0.95, 0.92, 0.7))
 	_vitals_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	header.add_child(_vitals_label)
-	header.add_child(_spacer())
-	var close_btn := Button.new()
-	close_btn.text = tr("UI_EQUIP_BACK_TO_MAP")
-	close_btn.custom_minimum_size = Vector2(170, 44)
-	T.apply_button_theme(close_btn)
-	close_btn.pressed.connect(queue_free)
-	header.add_child(close_btn)
 
 	# ── Body: 3 zones ──
 	var body := HBoxContainer.new()
@@ -131,6 +135,28 @@ func _build() -> void:
 	_status_label = Label.new()
 	_status_label.add_theme_color_override("font_color", Color(1, 0.4, 0.3))
 	vroot.add_child(_status_label)
+
+	_add_close_x()
+
+
+## Top-right ✕ — returns to the map (queue_free), same as the old back button.
+func _add_close_x() -> void:
+	var x := T.close_x_button()
+	x.anchor_left = 1.0
+	x.anchor_right = 1.0
+	x.offset_left = -64.0
+	x.offset_right = -16.0
+	x.offset_top = 16.0
+	x.offset_bottom = 64.0
+	x.pressed.connect(queue_free)
+	add_child(x)
+
+
+## ESC also closes the character page (map has no competing ESC handler).
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		queue_free()
 
 
 func _build_character_zone() -> Control:
