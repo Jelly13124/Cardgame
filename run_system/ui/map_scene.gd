@@ -190,7 +190,7 @@ func _input(event: InputEvent) -> void:
 	# coroutine is still resolving. Without this, a click outside a non-FULL_RECT
 	# modal can re-enter _on_node_clicked and clobber rm.current_encounter mid-
 	# transition, leaving the modal orphaned in a freed scene.
-	if _is_relic_choice_open or _node_click_pending:
+	if _is_relic_choice_open or _node_click_pending or _is_page_open():
 		return
 
 	if event is InputEventMouseMotion:
@@ -223,6 +223,15 @@ func _input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			_scroll_offset = clampf(_scroll_offset - 50.0, 0.0, _max_scroll)
 			queue_redraw()
+
+
+## True while a full-screen page (character / run-deck) is mounted over the map.
+## map_scene resolves node clicks in the GLOBAL _input(), which fires regardless
+## of the opaque page painted on top — without this gate, clicks pass through to
+## map nodes (the 误触 bug).
+func _is_page_open() -> bool:
+	return get_node_or_null("EquipmentPanel") != null \
+		or get_node_or_null("RunDeckViewerModal") != null
 
 
 func _on_node_clicked(node: Dictionary) -> void:
