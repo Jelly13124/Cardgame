@@ -1,13 +1,1 @@
-{
-  "id": "wealthy",
-  "title": "Wealthy Gem",
-  "trigger": "on_play",
-  "effects": [
-    {
-      "type": "gain_gold",
-      "amount": 5,
-      "max_per_combat": 3
-    }
-  ],
-  "color": "#ffd24a"
-}
+{ "id": "wealthy", "title": "Wealthy Gem", "trigger": "on_play", "effects": [ { "type": "gain_gold", "amount": 5, "max_per_combat": 3 } ] }

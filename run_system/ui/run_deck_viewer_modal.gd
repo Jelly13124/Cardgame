@@ -153,26 +153,11 @@ func _populate_gem_box() -> void:
 		_gem_box.add_child(_make_gem_button(str(gem_id)))
 
 
-## White gem silhouette texture (game-icons.net); null if missing.
-func _gem_icon(gem_id: String) -> Texture2D:
-	for ext in [".svg", ".png"]:
-		var p := "res://run_system/assets/images/gems/%s%s" % [gem_id, ext]
-		if ResourceLoader.exists(p):
-			var t = load(p)
-			if t is Texture2D:
-				return t
-	return null
-
-
 func _make_gem_button(gem_id: String) -> Button:
 	var b := Button.new()
 	b.text = _gem_label(gem_id)
 	b.custom_minimum_size = Vector2(0, 40)
 	b.tooltip_text = _gem_desc(gem_id)
-	var tex := _gem_icon(gem_id)
-	if tex:
-		b.icon = tex
-		b.expand_icon = true
 	if gem_id == _selected_gem:
 		b.modulate = Color(0.6, 1.0, 0.7)  # highlight the chosen gem
 	b.pressed.connect(
