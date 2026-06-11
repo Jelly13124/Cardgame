@@ -100,7 +100,12 @@ Authoritative list in `DataValidator.ALLOWED_ENEMY_ACTION_TYPES`:
 
 Authoritative list in `DataValidator.ALLOWED_STATUS_NAMES`:
 
-`poison`, `burn`, `weak`, `vulnerable`, `strength_up`, `double_damage`, `stun`
+`bleed`, `burn`, `weak`, `vulnerable`, `double_damage`, `stun`, `regen`, `thorns`,
+`frail`, `dodge`, `metallicize`, `feel_no_pain`, `dark_embrace`
+
+(`bleed` replaced the old `poison`; `strength_up` was removed. `bleed` ticks then
+halves stacks; `burn` ticks at end of turn and decays 1 at start. The last three are
+persistent powers from the StS2 port.)
 
 **Stun is enemy-only** (see `docs/adr/0004-shock-enemy-only.md`). Enemy skips its next turn per stack.
 

@@ -67,7 +67,6 @@ rarity, equipment by slot, enemies by tier; affixes have their own page.
 ## Project-tuned tooling
 
 - `/new-content <type> <id>` — scaffold a card/enemy/relic/hero/base_upgrade with schema + wiring.
-- `/regen-catalogs [type]` — refresh the derivable sections of `docs/catalog-*.md` from JSON.
 - `/codex-handoff` — draft the `asset-spec-*.md` + `codex-prompt-*.md` art contract per ADR-0005.
 - `gdscript-reviewer` subagent — fast project-tuned pass for this repo's recurring bug classes.
 - `content-balance` subagent — checks new content's numbers against the existing power curve.

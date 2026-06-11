@@ -93,17 +93,18 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 
 | Status | Effect |
 |---|---|
-| **Poison** ☠ | Deals stacks damage at start of turn, stacks decrease by 1 per turn |
-| **Burn** 🔥 | Deals stacks damage at start of turn, does NOT decrease |
+| **Bleed** | Start of turn: take damage = stacks, then stacks halve (round down) |
+| **Burn** 🔥 | Takes damage = stacks at END of turn; loses 1 stack at start of turn |
 | **Weak** | Direct attack damage dealt is reduced by 50%; stacks decrement at end of affected character turn |
 | **Vulnerable** | Direct attack damage taken is increased by 50%; stacks decrement at end of affected character turn |
-| **Strength Up** | Bonus strength for stacks turns then expires |
 | **Stun** ⚡ | Enemy skips its next turn per stack; manual-consume, no decay; enemy-only; can interrupt a telegraphed attack |
+| **Regen / Thorns / Frail / Dodge / Double Damage** | heal-over-time / reflect-on-hit / −25% block / negate one attack / next N attacks doubled |
+| **Metallicize / Feel No Pain / Dark Embrace** | persistent powers (StS2 port): +Block per turn / +Block on Exhaust / draw on Exhaust |
 
 ### Enemy System
 - Each enemy loads from `card_info/enemy/{id}.json` — includes a `sprite_id` for the art
-- Action types: `attack`, `attack_status`, `attack_all`, `block`, `heal`, `telegraph`, plus `summon` (spawn add enemies, capped at 4 on the field) and `buff_self` (apply a status to itself, e.g. `strength_up`)
-- **Bosses have bespoke mechanics** via an optional `phases` field: at an HP threshold the boss runs one-time `on_enter` actions and swaps to a tougher `action_pattern`. The three act bosses: **rust_titan** (enrage at 50% — stacks Strength), **ash_warden** (debuff + summons `ember_wisp`), **junkyard_tyrant** (summons `scrap_shard` + AoE + self-heal). Killing the boss ends the fight even if summoned adds are still alive.
+- Action types: `attack`, `attack_status`, `attack_all`, `block`, `heal`, `telegraph`, plus `summon` (spawn add enemies, capped at 4 on the field) and `buff_self` (apply a status to itself, e.g. `thorns`)
+- **Bosses have bespoke mechanics** via an optional `phases` field: at an HP threshold the boss runs one-time `on_enter` actions and swaps to a tougher `action_pattern`. The three act bosses: **rust_titan** (tougher phase-2 loop at 50%), **ash_warden** (debuff + summons `ember_wisp`), **junkyard_tyrant** (summons `scrap_shard` + AoE + self-heal). Killing the boss ends the fight even if summoned adds are still alive.
 - **Per-act difficulty scaling**: non-boss enemy HP ×[1.0, 1.25, 1.5] and damage ×[1.0, 1.15, 1.3] by act; the enemy pool also shifts tougher each act. Bosses are exempt (tuned per-boss).
 - **Intent badge** displayed above enemy HUD with emoji; multiple enemies per encounter supported
 
@@ -368,7 +369,7 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 4. Reference final PNGs from JSON or runtime loaders; gameplay must not reference raw sheets.
 
 - **Folder:** `enemies/{sprite_id}/{anim}/{sprite_id}_{anim}_{n}.png` or `heroes/{hero_id}/{anim}/{hero_id}_{anim}_{n}.png`.
-- **Frame counts:** Cowboy Bill uses 8 idle frames plus 8 attack frames. Older enemies may still use 4 attack frames with `attack_0` as the static rest pose until they are regenerated.
+- **Frame counts:** Cowboy Bill uses 8 idle frames plus 8 attack frames. Standard enemy attacks use 4 frames by default with `attack_0` as the static rest/wind-up pose. Enemy attacks must hit exactly once; repeated hit poses or multi-swing loops are rejected.
 - **Scale:** frames render at the size set by gameplay/UI code; scale does not change the art direction.
 - **Source sheets:** keep raw/generated sheets in `generated_sheet/` folders only.
 ---
@@ -383,7 +384,7 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 - Enemy intent system with action patterns
 - Player HP / block / energy UI (CharacterHUD)
 - Draw pile / discard pile viewer (Q/E shortcuts)
-- Status effect system (poison, burn, weak, vulnerable, strength_up)
+- Status effect system (bleed, burn, weak, vulnerable, double_damage, stun, regen, thorns, frail, dodge, + StS2 powers)
 - Combat sprites with static rest poses and attack animations
 
 ### 🔄 Phase 2 — Run System & Content (Active)
@@ -400,8 +401,8 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 - ✅ Elite/Boss loot equipment drops; treasure node 50/50 relic or equipment (70/30 uncommon/rare)
 - ✅ Relic system: passive run effects, JSON-driven (RelicEffectSystem)
 - ✅ Shop scene (merchant node): 3 cards + 2 equipment + 1 relic + remove-card service (75g)
-- ✅ Rest site: choice between Heal 25% HP and Upgrade a Card
-- ✅ Card upgrade system: 17 `_plus` variants, `RunManager.upgrade_card_by_uid` + CardUpgradeModal; upgrade = card_id swap (e.g., `strike` → `strike_plus`)
+- ✅ Rest site: choice between Heal 25% HP and Socket Gems (opens the deck/gem screen)
+- ⛔ ~~Card upgrade system (`_plus` variants + `upgrade_card_by_uid` + CardUpgradeModal)~~ — **REMOVED**; replaced by the gem-socket system (see Phase 6). All `_plus` cards + the upgrade UI were deleted.
 - ✅ Character info panel (map screen): HP / Gold / Floor + equipment slots + inventory + active sets + relics + stats — one consolidated view
 
 ### 🟡 Phase 4 — Base Building & Meta-Progression (MVP shipped 2026-05-25)
@@ -415,16 +416,16 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
   - **Command Center**: +50 / +120 / +200 starting gold
 - ✅ Boss victory grants Core and returns to home base. (Superseded by the 3-act map: each act ends in a boss, and the extract-vs-push-on choice now ships after each non-final act boss — see Extraction Backpack Economy.)
 - ✅ Player death routes to home base (no Core gained)
-- ✅ Hero JSON schema + dynamic loader: heroes/*.json (cowboy_bill + hero_jerry_killer); player.gd reads sprite/tint/stats from RunManager.current_hero_data
-- ✅ Hero unlock: jerry_unlock base upgrade (100 Core, single tier)
+- ✅ Hero JSON schema + dynamic loader: heroes/*.json (cowboy_bill + hero_fengshui_master, the 风水大师 yin/yang hero that replaced the earlier "Jerry the Killer"); player.gd reads sprite/tint/stats from RunManager.current_hero_data
+- ✅ Hero selection now lives in the Warehouse building (the standalone hero-select screen was removed)
 - ✅ Run history panel: home base shows last 5 runs (outcome icon + hero + floor + core)
 - ✅ Ascension difficulty: 5 levels, each adds a negative modifier (enemy HP+10%, player -5 max HP, -1 first-turn energy, +10% shop prices, elite-heavy maps)
 - ✅ Starter Boost upgrade: 3 tiers, +N random attribute points at run start
 - ✅ Card Research upgrade: 3 tiers unlocking 5 cards (flash_bang, bone_breaker, last_breath, preemptive_strike, junk_bomb)
 
 ### 🟡 Phase 5 — Content Expansion (in progress)
-- ✅ Second hero with a distinct kit: **Jerry the Killer** (aggressive high-STR, `bounty_tags` starting relic); Cowboy Bill = luck/crit (`crit_clip`)
-- ✅ 35 cards (excl. `_plus`), including luck/charm/strength-scaling cards
+- ✅ Second hero with a distinct kit: **Feng Shui Master (风水大师)** — yin/yang polarity (matched-bonus cards, flip-polarity, harmony); Cowboy Bill = luck/crit (`crit_clip`) + the StS2 Ironclad bruiser pool
+- ✅ ~65 player cards (no upgrade variants — gems replace upgrades), incl. a re-skinned StS2 Ironclad port; per-hero pools + colourless pool
 - ✅ 13 enemy types (+2 summon-only adds); art migrating to the new style (ADR-0012)
 - ✅ 3 boss encounters (one per act) with multi-phase patterns + bespoke mechanics (enrage / summon / AoE)
 - ⬜ More heroes, more enemies, deeper boss gimmicks
@@ -436,6 +437,14 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 - ✅ **Boss bespoke mechanics**: HP-threshold `phases` + `summon` / `buff_self` enemy actions
 - ✅ **Random events**: the "?" map node opens a full event scene (2–3 attribute-gated options); 6 events
 - ✅ Act-aware UI (map top bar / vitals / run history show the act) + i18n (zh) for events
+
+### ✅ Phase 7 — Gems · In-Run Leveling · Reward Restructure (shipped 2026-06-09)
+See `docs/superpowers/specs/2026-06-09-gems-leveling-rewards-design.md` for the full design.
+- ✅ **Gem-socket system** (replaces card upgrades): run-scoped gems (`run_system/data/gems/*.json`, cleared on death), 2 sockets/card, inserted out of combat and **locked after**. Gem effects fire after the card's own effects on play (`RunManager.gem_inventory / socket_gem / gem_pool / get_gem_data`; socket UI in `run_deck_viewer_modal.gd`). The old `wealthy` keyword is now a gem.
+- ✅ **In-run XP / level**: kill enemies → XP (scaled by **Intelligence**, +5%/point); each level-up grants a **pick-1-of-3 random attribute (+1)**. `RunManager.xp / level / gain_xp / xp_to_next / pending_attr_points`.
+- ✅ **Starting attributes = 0** (heroes grow via level-ups / gear / gems).
+- ✅ **Rewards by node type**: normal = gold + 3-choose-1 card draft (Luck may turn a slot into a gem); elite = card + gem 3-choose-1 + equipment; boss = gem + relic. Equipment only drops from elite/boss.
+- ✅ **StS2 Ironclad port** (`docs/sts2-port-audit.md`): re-skinned cards + 7 relics + 6 new combat mechanics; `bleed` replaced `poison`; `burn` retimed; `strength_up` removed.
 
 ---
 

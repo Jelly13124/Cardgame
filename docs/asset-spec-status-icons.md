@@ -28,7 +28,7 @@ letter if the PNG is missing. No data/JSON change required.
 
 | id | name (en / zh) | effect | theme hex | icon direction |
 |----|----------------|--------|-----------|----------------|
-| `poison` | Poison / 中毒 | Start of turn: lose 1 HP per stack; decays 1/turn | `#66E633` | dripping toxin drop / skull bubble |
+| `bleed` | Bleed / 流血 | Start of turn: take damage = stacks, then stacks halve (round down) | `#ff4d5e` | blood drop / wound |
 | `burn` | Burn / 燃烧 | Start of turn: take damage = stacks, then cleared | `#FF6619` | flame |
 | `weak` | Weak / 虚弱 | Outgoing attack damage −25% | `#B380E6` | drooping / cracked fist |
 | `vulnerable` | Vulnerable / 易伤 | Incoming attack damage +50% | `#F27333` | cracked shield / broken armor |

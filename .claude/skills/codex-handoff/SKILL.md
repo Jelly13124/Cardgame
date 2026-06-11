@@ -91,8 +91,9 @@ enemy Tier column tells you which.)
 This is the copy-paste-into-Codex file. Structure (mirror the existing one):
 - One line: "Copy everything below the `---` into your codex session."
 - Step 1: files to read first (the asset spec above, `art-style-reference.md`,
-  `project-rules.md` §1–§5, `adr/0008-...`, `catalog-all.md`) + one reference PNG per
-  asset type so output matches existing visual weight.
+  `project-rules.md` §1–§5, `adr/0008-...`, and the browsable HTML catalogs in
+  `docs/catalog_html/`) + one reference PNG per asset type so output matches existing
+  visual weight.
 - Step 2: deliverables (counts + path patterns, which enemies are 192 vs 128).
 - Step 3: the non-negotiable pipeline rules (same as spec §1).
 - Step 4: one-item-at-a-time loop (compose prompt = theme + accent + anchor → generate
