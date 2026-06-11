@@ -24,29 +24,27 @@ func _ready() -> void:
 	_card_factory = CARD_FACTORY_SCENE.instantiate()
 	add_child(_card_factory)
 	_card_factory.card_size = Vector2(208, 286)
-	_build()
+	# Defer so our own anchor layout resolves before we build children.
+	call_deferred("_build")
 
 
 func _build() -> void:
+	# Opaque full-screen page (pseudo-scene). Map _input is gated separately so
+	# clicks can't fall through; in battle the STOP overlay blocks card input.
 	var bg := ColorRect.new()
-	bg.color = Color(0, 0, 0, 0.78)
+	bg.color = Color(0.07, 0.05, 0.035, 1.0)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(bg)
-
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(center)
-
-	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
-	panel.custom_minimum_size = Vector2(1180, 740)
-	center.add_child(panel)
+	# Anchor layout resolves after _ready(); force the initial size now so the bg
+	# paints immediately before the first SORT_CHILDREN notification arrives.
+	bg.set_deferred("size", get_viewport_rect().size)
 
 	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		margin.add_theme_constant_override(s, 24)
-	panel.add_child(margin)
+		margin.add_theme_constant_override(s, 48)
+	add_child(margin)
 
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 12)
@@ -60,14 +58,6 @@ func _build() -> void:
 	title.add_theme_font_size_override("font_size", 28)
 	title.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
 	header.add_child(title)
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(spacer)
-	var close_btn := Button.new()
-	close_btn.text = "X"
-	close_btn.custom_minimum_size = Vector2(44, 44)
-	close_btn.pressed.connect(queue_free)
-	header.add_child(close_btn)
 
 	var subtitle := Label.new()
 	subtitle.text = tr("UI_COMMON_DECK_GEM_HINT")
@@ -107,6 +97,28 @@ func _build() -> void:
 				grid.add_child(_make_card_slot(entry))
 		_populate_gem_box()
 	_rebuild.call()
+	_add_close_x()
+
+
+## Top-right ✕ — same effect as the second-press toggle (queue_free).
+func _add_close_x() -> void:
+	var x := T.close_x_button()
+	x.anchor_left = 1.0
+	x.anchor_right = 1.0
+	x.offset_left = -64.0
+	x.offset_right = -16.0
+	x.offset_top = 16.0
+	x.offset_bottom = 64.0
+	x.pressed.connect(queue_free)
+	add_child(x)
+
+
+## ESC closes the page. Battle's top-bar only consumes ESC when its settings menu
+## is already visible, so this never conflicts; the map has no ESC handler.
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		queue_free()
 
 
 ## Right-hand gem inventory panel. Built once; the dynamic gem list lives in
