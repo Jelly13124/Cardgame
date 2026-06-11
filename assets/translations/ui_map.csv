@@ -39,3 +39,6 @@ UI_MAP_REST_UPGRADE_BTN,UPGRADE A CARD,强化一张卡牌
 UI_MAP_CARD_UPGRADED,Card upgraded.,卡牌已强化。
 UI_MAP_REST_GEMS_BTN,💎 Socket Gems,💎 镶嵌宝石
 UI_MAP_TOPBAR_LEVEL,Lv {lvl} ({xp}/{next}),等级 {lvl}（{xp}/{next}）
+UI_TOPBAR_ACT_SHORT,Act,幕
+UI_TOPBAR_FLOOR_SHORT,Floor,层
+UI_TOPBAR_RELICS_CAPTION,Relics,遗物
