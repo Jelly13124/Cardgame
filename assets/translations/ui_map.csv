@@ -8,10 +8,7 @@ UI_MAP_LEGEND_REST,Rest,休整
 UI_MAP_LEGEND_ENEMY,Enemy,敌人
 UI_MAP_LEGEND_ELITE,Elite,精英
 UI_MAP_LEGEND_BOSS,Boss,首领
-UI_MAP_TOPBAR_HP,HP: {cur}/{max},生命：{cur}/{max}
 UI_MAP_TOPBAR_GOLD,Gold: {n},金币：{n}
-UI_MAP_TOPBAR_FLOOR,Floor: {n},层数：{n}
-UI_MAP_TOPBAR_ACT,Act: {cur}/{max},幕：{cur}/{max}
 UI_MAP_ENTER_ACT,⟐ ENTERING ACT {n},⟐ 进入第 {n} 幕
 UI_MAP_CHOOSE_STARTING_RELIC,Choose Your Starting Relic,选择起始遗物
 UI_MAP_CHOOSE_A_RELIC,Choose a Relic,选择一件遗物
@@ -25,7 +22,6 @@ UI_MAP_NO_RELICS_REMAIN,No relics remain.,已无遗物可得。
 UI_MAP_GAINED_RELIC,Gained relic: {n},获得遗物：{n}
 UI_MAP_ALREADY_HAVE_RELIC,Already have that relic.,已拥有该遗物。
 UI_MAP_CHARACTER_BTN,⚔ CHARACTER,⚔ 角色
-UI_MAP_DECK_BTN,📚 DECK,📚 牌组
 UI_MAP_CRATE_EMPTY,The crate was empty.,箱子是空的。
 UI_MAP_FOUND_EQUIPMENT,Found {n}!,找到{n}！
 UI_MAP_TOOK_EQUIPMENT,Took {n}.,拿取了{n}。
@@ -38,7 +34,6 @@ UI_MAP_RESTED_HEAL,Rested. Healed {n} HP.,休整完毕。治疗{n}生命。
 UI_MAP_REST_UPGRADE_BTN,UPGRADE A CARD,强化一张卡牌
 UI_MAP_CARD_UPGRADED,Card upgraded.,卡牌已强化。
 UI_MAP_REST_GEMS_BTN,💎 Socket Gems,💎 镶嵌宝石
-UI_MAP_TOPBAR_LEVEL,Lv {lvl} ({xp}/{next}),等级 {lvl}（{xp}/{next}）
 UI_TOPBAR_ACT_SHORT,Act,幕
 UI_TOPBAR_FLOOR_SHORT,Floor,层
 UI_TOPBAR_RELICS_CAPTION,Relics,遗物
