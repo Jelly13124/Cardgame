@@ -11,15 +11,10 @@ const COMBAT_FX = preload("res://battle_scene/combat_fx.gd")
 
 # Intent badge icon textures — preloaded once instead of `load()`-ing on every
 # intent refresh (which can fire frequently as enemy / player status changes).
-# White game-icons.net silhouettes (CC BY 3.0); tinted per intent type below.
-const INTENT_ICON_ATTACK = preload("res://battle_scene/assets/images/ui/intent_attack.svg")
-const INTENT_ICON_BLOCK = preload("res://battle_scene/assets/images/ui/intent_block.svg")
-const INTENT_ICON_BUFF = preload("res://battle_scene/assets/images/ui/intent_buff.svg")
-const INTENT_ICON_CHARGE = preload("res://battle_scene/assets/images/ui/intent_charge.svg")
-const INTENT_TINT_ATTACK = Color(1.0, 0.38, 0.30)
-const INTENT_TINT_BLOCK = Color(0.42, 0.72, 1.0)
-const INTENT_TINT_BUFF = Color(0.55, 1.0, 0.50)
-const INTENT_TINT_CHARGE = Color(1.0, 0.70, 0.25)
+const INTENT_ICON_ATTACK = preload("res://battle_scene/assets/images/ui/intent_attack.png")
+const INTENT_ICON_BLOCK = preload("res://battle_scene/assets/images/ui/intent_block.png")
+const INTENT_ICON_BUFF = preload("res://battle_scene/assets/images/ui/intent_buff.png")
+const INTENT_ICON_CHARGE = preload("res://battle_scene/assets/images/ui/intent_charge.png")
 const NORMAL_DISPLAY_HEIGHT := 256.0
 const ELITE_DISPLAY_HEIGHT := 320.0
 const BOSS_DISPLAY_HEIGHT := 384.0
@@ -465,23 +460,18 @@ func _update_intent_display() -> void:
 	match type:
 		"attack", "attack_status", "attack_all":
 			_intent_icon.texture = INTENT_ICON_ATTACK
-			_intent_icon.modulate = INTENT_TINT_ATTACK
 			label_color = Color(1.0, 0.78, 0.62)
 		"block":
 			_intent_icon.texture = INTENT_ICON_BLOCK
-			_intent_icon.modulate = INTENT_TINT_BLOCK
 			label_color = Color(0.65, 0.86, 1.0)
 		"heal", "buff":
 			_intent_icon.texture = INTENT_ICON_BUFF
-			_intent_icon.modulate = INTENT_TINT_BUFF
 			label_color = Color(0.72, 1.0, 0.62)
 		"telegraph":
 			_intent_icon.texture = INTENT_ICON_CHARGE
-			_intent_icon.modulate = INTENT_TINT_CHARGE
 			label_color = Color(1.0, 0.86, 0.42)
 		_:
 			_intent_icon.texture = INTENT_ICON_BUFF
-			_intent_icon.modulate = INTENT_TINT_BUFF
 	if bool(next.get("interruptible", false)):
 		label_color = Color(1.0, 0.94, 0.28)
 	_intent_label.add_theme_color_override("font_color", label_color)
