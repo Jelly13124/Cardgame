@@ -8,6 +8,7 @@ const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const MAP_RENDERER_SCRIPT = preload("res://run_system/ui/map_renderer.gd")
 const EQUIPMENT_PANEL_SCRIPT = preload("res://run_system/ui/equipment_panel.gd")
 const RUN_DECK_VIEWER_MODAL = preload("res://run_system/ui/run_deck_viewer_modal.gd")
+const RUN_TOP_BAR = preload("res://run_system/ui/run_top_bar.gd")
 const EVENT_MODAL_SCRIPT = preload("res://run_system/ui/event_modal.gd")
 const T_THEME = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const BATTLE_PACKED = preload("res://battle_scene/battle_scene.tscn")
@@ -68,8 +69,7 @@ func _ready() -> void:
 	rm.relics_updated.connect(func(): queue_redraw())
 	get_viewport().size_changed.connect(_on_viewport_resized)
 	_build_relic_choice_layer()
-	_build_equipment_button()
-	_build_deck_button()
+	_build_top_bar()
 
 	# Act-transition toast: only when the map scene loads on a freshly generated
 	# act > 1 (advance_act cleared the walk + node selection). Act 1's first map
@@ -561,22 +561,19 @@ func _humanize_id(value: String) -> String:
 	return value.replace("_", " ").capitalize()
 
 
-func _build_equipment_button() -> void:
-	var equip_btn := Button.new()
-	equip_btn.text = tr("UI_MAP_CHARACTER_BTN")
-	equip_btn.add_theme_font_size_override("font_size", 20)
-	T.apply_button_theme(equip_btn)
-	# Anchor to top-right corner with a small margin
-	equip_btn.anchor_left = 1.0
-	equip_btn.anchor_right = 1.0
-	equip_btn.anchor_top = 0.0
-	equip_btn.anchor_bottom = 0.0
-	equip_btn.offset_left = -200.0
-	equip_btn.offset_right = -12.0
-	equip_btn.offset_top = 12.0
-	equip_btn.offset_bottom = 52.0
-	equip_btn.pressed.connect(_open_equipment_panel)
-	add_child(equip_btn)
+func _build_top_bar() -> void:
+	var layer := CanvasLayer.new()
+	layer.name = "TopBarLayer"
+	layer.layer = 50
+	add_child(layer)
+
+	var bar = RUN_TOP_BAR.new()
+	bar.hp_from_player = false
+	bar.show_character_button = true
+	bar.show_settings_button = false
+	bar.deck_pressed.connect(_open_run_deck_viewer)
+	bar.character_pressed.connect(_open_equipment_panel)
+	layer.add_child(bar)
 
 
 func _open_equipment_panel() -> void:
@@ -587,24 +584,6 @@ func _open_equipment_panel() -> void:
 	var panel = EQUIPMENT_PANEL_SCRIPT.new()
 	panel.name = "EquipmentPanel"
 	add_child(panel)
-
-
-func _build_deck_button() -> void:
-	var deck_btn := Button.new()
-	deck_btn.text = tr("UI_MAP_DECK_BTN")
-	deck_btn.add_theme_font_size_override("font_size", 20)
-	T.apply_button_theme(deck_btn)
-	# Place immediately to the LEFT of the CHARACTER button
-	deck_btn.anchor_left = 1.0
-	deck_btn.anchor_right = 1.0
-	deck_btn.anchor_top = 0.0
-	deck_btn.anchor_bottom = 0.0
-	deck_btn.offset_left = -360.0
-	deck_btn.offset_right = -212.0
-	deck_btn.offset_top = 12.0
-	deck_btn.offset_bottom = 52.0
-	deck_btn.pressed.connect(_open_run_deck_viewer)
-	add_child(deck_btn)
 
 
 func _open_run_deck_viewer() -> void:
