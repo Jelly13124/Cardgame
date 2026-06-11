@@ -1,4 +1,6 @@
 extends Control
+## Host for the battle scene's top bar. Mounts the shared run_top_bar component
+## and owns the in-battle settings overlay (pause menu).
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
@@ -122,7 +124,7 @@ func _on_deck_pressed() -> void:
 func _show_settings() -> void:
 	if not settings_layer:
 		return
-	var rm = _get_run_manager()
+	var rm = RunManager
 	if return_map_button:
 		return_map_button.disabled = not (rm and rm.get("is_run_active"))
 	settings_layer.visible = true
@@ -136,13 +138,8 @@ func _hide_settings() -> void:
 
 
 func _on_return_map_pressed() -> void:
-	var rm = _get_run_manager()
+	var rm = RunManager
 	if not (rm and rm.get("is_run_active")):
 		return
 	_hide_settings()
 	get_tree().change_scene_to_file(MAP_SCENE_PATH)
-
-
-func _get_run_manager() -> Node:
-	# RunManager is a registered autoload (project.godot) — always available.
-	return RunManager
