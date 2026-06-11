@@ -278,12 +278,6 @@ func _refresh_relics() -> void:
 	var ids: Array = RunManager.relics if typeof(RunManager.relics) == TYPE_ARRAY else []
 	if ids.is_empty():
 		return
-	var caption := Label.new()
-	caption.text = tr("UI_TOPBAR_RELICS_CAPTION")
-	caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	caption.add_theme_font_size_override("font_size", 12)
-	caption.add_theme_color_override("font_color", T.TEXT_SECONDARY)
-	_relic_shelf.add_child(caption)
 	for relic_id in ids:
 		_relic_shelf.add_child(_make_relic_medallion(str(relic_id)))
 
@@ -297,21 +291,17 @@ func _make_relic_medallion(relic_id: String) -> Button:
 
 	var chip := Button.new()
 	chip.text = _short_label(title)
-	chip.custom_minimum_size = Vector2(36, 36)
+	chip.custom_minimum_size = Vector2(40, 40)
 	chip.focus_mode = Control.FOCUS_NONE
 	chip.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	chip.add_theme_stylebox_override(
-		"normal", T.rounded_button(Color(0.09, 0.055, 0.035, 0.82), Color(0.62, 0.42, 0.20), 18, 2)
-	)
-	chip.add_theme_stylebox_override(
-		"hover", T.rounded_button(Color(0.14, 0.085, 0.045, 0.92), T.ACCENT_NEON_BLUE, 18, 2)
-	)
-	chip.add_theme_stylebox_override(
-		"pressed", T.rounded_button(Color(0.05, 0.035, 0.026, 0.95), Color(0.92, 0.70, 0.28), 18, 2)
-	)
+	# StS-style: bare relic art, no frame / background box. The tooltip + the
+	# pointing-hand cursor are the affordance; every state stays frameless.
+	chip.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	chip.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
+	chip.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
 	chip.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	chip.add_theme_color_override("font_color", T.TEXT_MAIN)
-	chip.add_theme_font_size_override("font_size", 16)
+	chip.add_theme_font_size_override("font_size", 18)
 
 	var icon_path := str(data.get("icon", ""))
 	if not icon_path.is_empty():
