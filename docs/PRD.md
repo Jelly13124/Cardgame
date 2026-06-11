@@ -174,7 +174,7 @@ All loot lives in a single **20-cell backpack** where **Gold, Core, and equipmen
 - **Equipment** — one item per cell.
 
 ### Death, safe cells, and the permanent stash
-- **Death forfeits the entire backpack AND equipped gear — EXCEPT "safe cells."** The first N cells are safe (base 2, +1 per Blacksmith base-upgrade level); their contents survive death.
+- **Death forfeits the entire backpack AND equipped gear — EXCEPT "safe cells."** The first N cells are safe (base 2, +1 per Outpost safe-cells upgrade level); their contents survive death.
 - **Extract / final victory** banks all carried Core and sends all carried + equipped gear to a **permanent base stash** (`MetaProgress.stash`).
 - A **loadout step** at the base injects chosen stashed gear into the next run's backpack (`RunManager.pending_loadout`).
 
@@ -196,20 +196,25 @@ All loot lives in a single **20-cell backpack** where **Gold, Core, and equipmen
 
 ## Base Building System (基地建造)
 
-Between runs, players return to their **home base** and spend **Core** (meta-currency) to permanently improve it.
+Between runs, players return to their **home base** — a 2-left / 2-right building
+layout with a centre "depart door" (Warehouse tile above it). Each building opens a
+full-screen, merchant-style screen. Three meta-currencies fund it:
+**Core** (unlock + tier-up buildings), **Caps** (Clinic / Market services), **Scrap**
+(Forge services). See `meta_progress.gd` `BUILDING_DEFS`.
 
-### Base Upgrades (examples)
-| Upgrade | Effect |
+### The 5 buildings
+| Building | Role |
 |---|---|
-| **Med Bay** | Start runs with more max HP |
-| **Arsenal** | Unlock more starter equipment options |
-| **Research Lab** | Add cards to the general draft pool |
-| **Scrap Workshop** | Reduce equipment upgrade costs in shops |
-| **Command Center** | Reveal map nodes before choosing |
+| **Forge (锻造)** | Dismantle gear → Scrap; craft / reforge / curse equipment (tier-gated, Scrap) |
+| **Clinic (诊所)** | Caps-bought permanent attribute perks + a Max-HP perk (tier raises the cap) |
+| **Market (黑市)** | Caps equipment shop + Core card-unlock; tier 3 opens a card shop |
+| **Outpost (前哨站)** | Core upgrades: starting gold / in-run shop discount / safe cells / backpack size; difficulty (ascension) selector; starter-deck editor |
+| **Warehouse (仓库)** | Pick the hero + the starting equipment loadout (drag-to-equip); default-unlocked; tier-ups add stash slots + (T3) resource conversion |
 
 ### Rules
-- Core is earned by extracting or completing runs — NOT from dying
-- Base upgrades persist permanently across all runs (true meta-progression)
+- Core/Caps/Scrap are earned by extracting or completing runs — NOT from dying.
+- Building unlocks + tiers persist permanently across runs (true meta-progression).
+- Hero selection lives in the Warehouse (the standalone hero-select screen was removed).
 - Some upgrades unlock new heroes or starting decks
 
 ---
@@ -406,14 +411,9 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 - ✅ Character info panel (map screen): HP / Gold / Floor + equipment slots + inventory + active sets + relics + stats — one consolidated view
 
 ### 🟡 Phase 4 — Base Building & Meta-Progression (MVP shipped 2026-05-25)
-- ✅ Home base scene with 5 upgrade panels + START NEW RUN button (boot scene)
+> ⚠️ **Superseded** by the 5-building refactor + Caps/Scrap economy (see "Base Building System" above). The original flat "5 upgrade panels" model below is historical; Med Bay→Clinic, Arsenal/Research Lab were removed, Scrap Workshop/Command Center→Outpost upgrades.
 - ✅ Core currency persistence across runs via `MetaProgress` autoload (`user://meta.json`)
-- ✅ Base upgrades (5 × 3 tiers, cost 30/60/100 Core):
-  - **Med Bay**: +10/20/30 max HP at run start
-  - **Arsenal**: 1 common / 2 commons / 2 commons + 1 uncommon in starter inventory
-  - **Research Lab**: 5% / 10% / 15% chance to promote loot draft cards' rarity (Lv3 also adds +5% rare)
-  - **Scrap Workshop**: 10% / 20% / 30% off all shop prices
-  - **Command Center**: +50 / +120 / +200 starting gold
+- ✅ (original) Base upgrades (5 × 3 tiers, cost 30/60/100 Core): Med Bay (+max HP), Arsenal (starter gear), Research Lab (loot rarity), Scrap Workshop (shop discount), Command Center (starting gold)
 - ✅ Boss victory grants Core and returns to home base. (Superseded by the 3-act map: each act ends in a boss, and the extract-vs-push-on choice now ships after each non-final act boss — see Extraction Backpack Economy.)
 - ✅ Player death routes to home base (no Core gained)
 - ✅ Hero JSON schema + dynamic loader: heroes/*.json (cowboy_bill + hero_fengshui_master, the 风水大师 yin/yang hero that replaced the earlier "Jerry the Killer"); player.gd reads sprite/tint/stats from RunManager.current_hero_data
