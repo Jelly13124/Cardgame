@@ -80,17 +80,18 @@ func _build() -> void:
 	header.add_child(spacer)
 	_core_label = Label.new()
 	_style_readable_label(_core_label, 32, Color(0.64, 0.90, 1.0), 3)
-	header.add_child(_make_currency_chip("core", Color(0.64, 0.90, 1.0), _core_label))
+	header.add_child(_core_label)
 	_refresh_core()
 
 	_caps_label = Label.new()
+	# Caps icon is a Codex deliverable; the "🔩" glyph is a placeholder prefix.
 	_style_readable_label(_caps_label, 32, Color(1.0, 0.82, 0.45), 3)
-	header.add_child(_make_currency_chip("caps", Color(1.0, 0.82, 0.45), _caps_label))
+	header.add_child(_caps_label)
 	_refresh_caps()
 
 	_scrap_label = Label.new()
 	_style_readable_label(_scrap_label, 32, Color(0.78, 0.86, 0.62), 3)
-	header.add_child(_make_currency_chip("scrap", Color(0.78, 0.86, 0.62), _scrap_label))
+	header.add_child(_scrap_label)
 	_refresh_scrap()
 
 	var settings_btn := Button.new()
@@ -147,29 +148,6 @@ func _add_background() -> void:
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(shade)
-
-
-## Tinted currency icon (game-icons.net silhouette) + its value label, packed
-## tight in a small HBox. `id` ∈ {core, caps, scrap, gold}.
-const CURRENCY_ICON_DIR := "res://run_system/assets/images/currency/"
-
-
-func _make_currency_chip(id: String, color: Color, value_label: Label) -> HBoxContainer:
-	var box := HBoxContainer.new()
-	box.add_theme_constant_override("separation", 5)
-	var path := CURRENCY_ICON_DIR + id + ".svg"
-	if ResourceLoader.exists(path):
-		var icon := TextureRect.new()
-		icon.texture = load(path)
-		icon.modulate = color
-		icon.custom_minimum_size = Vector2(30, 30)
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-		icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		box.add_child(icon)
-	box.add_child(value_label)
-	return box
 
 
 func _style_readable_label(label: Label, font_size: int, color: Color, outline_size: int) -> void:
