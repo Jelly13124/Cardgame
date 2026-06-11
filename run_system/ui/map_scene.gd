@@ -61,12 +61,6 @@ func _ready() -> void:
 	_max_scroll = max(0.0, _get_total_width() - get_viewport_rect().size.x)
 	_scroll_to_current()
 
-	rm.health_changed.connect(func(_c, _m): queue_redraw())
-	rm.resources_changed.connect(func(_g, _co): queue_redraw())
-	# Gold / Core / equipment drops mutate the backpack directly (no
-	# resources_changed), so the top-bar gold readout needs this too.
-	rm.backpack_changed.connect(func(): queue_redraw())
-	rm.relics_updated.connect(func(): queue_redraw())
 	get_viewport().size_changed.connect(_on_viewport_resized)
 	_build_relic_choice_layer()
 	_build_top_bar()
@@ -567,7 +561,7 @@ func _build_top_bar() -> void:
 	layer.layer = 50
 	add_child(layer)
 
-	var bar = RUN_TOP_BAR.new()
+	var bar := RUN_TOP_BAR.new()
 	bar.hp_from_player = false
 	bar.show_character_button = true
 	bar.show_settings_button = false
