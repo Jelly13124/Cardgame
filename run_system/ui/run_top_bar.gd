@@ -118,7 +118,7 @@ func _build() -> void:
 		row.add_child(char_btn)
 
 	if show_settings_button:
-		var set_btn := _make_icon_button("⚙", TranslationServer.translate("SETTINGS_BUTTON"))
+		var set_btn := _make_icon_button("⚙", tr("SETTINGS_BUTTON"))
 		set_btn.pressed.connect(func(): settings_pressed.emit())
 		row.add_child(set_btn)
 
@@ -251,7 +251,7 @@ func _refresh_vitals() -> void:
 	var have: int = RunManager.xp
 	_xp_bar.max_value = maxf(1.0, float(need))
 	_xp_bar.value = clampf(float(have), 0.0, float(need))
-	_xp_label.text = "Lv %d · %d/%d" % [lvl, have, need]
+	_xp_label.text = tr("UI_TOPBAR_LEVEL_FMT").format({"lvl": lvl, "xp": have, "next": need})
 
 
 func _refresh_gold_act() -> void:
