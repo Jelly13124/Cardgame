@@ -34,9 +34,18 @@ func _setup() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if settings_layer and settings_layer.visible and event.is_action_pressed("ui_cancel"):
+	# ESC toggles the in-battle settings/pause menu: open it when closed, close it
+	# when open. (battle_top_bar is PROCESS_MODE_ALWAYS so this still fires while
+	# the menu has the tree paused.)
+	if not event.is_action_pressed("ui_cancel"):
+		return
+	if not settings_layer:
+		return
+	if settings_layer.visible:
 		_hide_settings()
-		get_viewport().set_input_as_handled()
+	else:
+		_show_settings()
+	get_viewport().set_input_as_handled()
 
 
 func _build_settings_menu() -> void:
