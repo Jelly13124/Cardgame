@@ -52,7 +52,6 @@ func draw(vp: Vector2) -> void:
 	_draw_all_paths(vp)
 	_draw_all_nodes(vp)
 	_draw_legend(vp)
-	_draw_top_bar(vp)
 
 
 func _draw_map_background(vp: Vector2) -> void:
@@ -256,65 +255,6 @@ func _draw_legend(vp: Vector2) -> void:
 			Color(0.18, 0.12, 0.08)
 		)
 		y += 26.0
-
-
-func _draw_top_bar(vp: Vector2) -> void:
-	_scene.draw_rect(Rect2(0, 0, vp.x, 52), Color(0.05, 0.028, 0.018, 0.94))
-	_scene.draw_rect(Rect2(0, 50, vp.x, 4), Color(0.62, 0.42, 0.2, 0.78))
-
-	_scene.draw_string(
-		_font,
-		Vector2(20, 35),
-		tr("UI_MAP_TOPBAR_HP").format(
-			{"cur": _scene.rm.current_health, "max": _scene.rm.max_health}
-		),
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		22,
-		Color(1.0, 0.42, 0.34)
-	)
-	_scene.draw_string(
-		_font,
-		Vector2(200, 35),
-		tr("UI_MAP_TOPBAR_GOLD").format({"n": _scene.rm.gold}),
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		22,
-		Color(1.0, 0.86, 0.24)
-	)
-	_scene.draw_string(
-		_font,
-		Vector2(380, 35),
-		tr("UI_MAP_TOPBAR_FLOOR").format({"n": _scene.rm.current_floor}),
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		22,
-		Color(0.85, 0.82, 0.72)
-	)
-	_scene.draw_string(
-		_font,
-		Vector2(540, 35),
-		tr("UI_MAP_TOPBAR_ACT").format({"cur": _scene.rm.current_act, "max": _scene.rm.ACTS_TOTAL}),
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		22,
-		Color(0.95, 0.78, 0.45)
-	)
-	_scene.draw_string(
-		_font,
-		Vector2(700, 35),
-		tr("UI_MAP_TOPBAR_LEVEL").format(
-			{
-				"lvl": _scene.rm.level,
-				"xp": _scene.rm.xp,
-				"next": _scene.rm.xp_to_next(_scene.rm.level)
-			}
-		),
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		22,
-		Color(0.6, 0.95, 0.7)
-	)
 
 
 func _draw_pixel_dashed_line(
