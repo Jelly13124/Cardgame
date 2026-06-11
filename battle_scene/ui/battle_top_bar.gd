@@ -9,11 +9,18 @@ const TOP_BAR_HEIGHT := 62.0
 const RELIC_ROW_TOP := 68.0
 const BAR_HEIGHT := 108.0
 
+## --- Kenney Sci-Fi UI demo (CC0, kenney.nl) — reversible top-bar reskin test ---
+const KENNEY_TRACK = preload("res://battle_scene/assets/images/ui/kenney_demo/bar_track.png")
+const KENNEY_HP = preload("res://battle_scene/assets/images/ui/kenney_demo/bar_hp.png")
+const KENNEY_XP = preload("res://battle_scene/assets/images/ui/kenney_demo/bar_xp.png")
+
 var main: Node
 var hp_value_label: Label
 var gold_value_label: Label
 var floor_value_label: Label
 var level_value_label: Label
+var hp_bar: TextureProgressBar
+var xp_bar: TextureProgressBar
 var relic_strip: HBoxContainer
 var deck_button: Button
 var settings_button: Button
@@ -80,10 +87,14 @@ func _build_bar() -> void:
 	row.add_theme_constant_override("separation", 10)
 	margin.add_child(row)
 
-	hp_value_label = _add_status_chip(row, "HP", 132, Color(0.82, 0.16, 0.10))
+	var hp_chip = _add_bar_chip(row, "HP", KENNEY_HP, Color(0.82, 0.16, 0.10))
+	hp_value_label = hp_chip["label"]
+	hp_bar = hp_chip["bar"]
 	gold_value_label = _add_status_chip(row, "GOLD", 122, Color(0.95, 0.66, 0.22))
 	floor_value_label = _add_status_chip(row, "FLOOR", 92, T.ACCENT_NEON_BLUE)
-	level_value_label = _add_status_chip(row, "LV", 150, Color(0.55, 0.9, 0.7))
+	var lv_chip = _add_bar_chip(row, "LV", KENNEY_XP, Color(0.55, 0.9, 0.7))
+	level_value_label = lv_chip["label"]
+	xp_bar = lv_chip["bar"]
 
 	var spacer = Control.new()
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -214,10 +225,15 @@ func _refresh_status() -> void:
 	var gold = int(rm.gold) if rm else 0
 	var floor_text = str(rm.current_floor) if rm and rm.get("is_run_active") else "-"
 	hp_value_label.text = "%d / %d" % [hp_current, hp_max]
+	if hp_bar and hp_max > 0:
+		hp_bar.value = clampf(100.0 * float(hp_current) / float(hp_max), 0.0, 100.0)
 	gold_value_label.text = str(gold)
 	floor_value_label.text = floor_text
 	if level_value_label and rm:
-		level_value_label.text = "%d  (%d/%d)" % [rm.level, rm.xp, rm.xp_to_next(rm.level)]
+		level_value_label.text = "LV %d" % rm.level
+		if xp_bar:
+			var nxt: int = max(1, rm.xp_to_next(rm.level))
+			xp_bar.value = clampf(100.0 * float(rm.xp) / float(nxt), 0.0, 100.0)
 
 
 func _refresh_relics() -> void:
@@ -295,6 +311,61 @@ func _make_relic_chip(relic_id: String) -> Button:
 
 	chip.pressed.connect(_on_relic_pressed.bind(data))
 	return chip
+
+
+## A chip with a caption + a Kenney textured progress bar, the value drawn over it.
+## Returns {label, bar}. Used for HP and XP/LV.
+func _add_bar_chip(
+	parent: Control, caption: String, fill_tex: Texture2D, accent: Color
+) -> Dictionary:
+	var panel = PanelContainer.new()
+	panel.name = "%sBarChip" % caption.capitalize()
+	panel.custom_minimum_size = Vector2(150, 46)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override("panel", _status_chip_style(accent))
+	parent.add_child(panel)
+
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 10)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_top", 5)
+	margin.add_theme_constant_override("margin_bottom", 5)
+	panel.add_child(margin)
+
+	var box = VBoxContainer.new()
+	box.add_theme_constant_override("separation", 1)
+	margin.add_child(box)
+
+	var caption_label = Label.new()
+	caption_label.text = caption
+	caption_label.add_theme_font_size_override("font_size", 11)
+	caption_label.add_theme_color_override("font_color", Color(0.78, 0.62, 0.42))
+	box.add_child(caption_label)
+
+	var bar = TextureProgressBar.new()
+	bar.texture_under = KENNEY_TRACK
+	bar.texture_progress = fill_tex
+	bar.nine_patch_stretch = true
+	bar.stretch_margin_left = 8
+	bar.stretch_margin_right = 8
+	bar.custom_minimum_size = Vector2(126, 18)
+	bar.min_value = 0
+	bar.max_value = 100
+	bar.value = 100
+	box.add_child(bar)
+
+	var value_label = Label.new()
+	value_label.text = "-"
+	value_label.add_theme_font_size_override("font_size", 12)
+	value_label.add_theme_color_override("font_color", Color(1.0, 0.97, 0.85))
+	value_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.85))
+	value_label.add_theme_constant_override("outline_size", 3)
+	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	value_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	value_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.add_child(value_label)
+	return {"label": value_label, "bar": bar}
 
 
 func _add_status_chip(parent: Control, caption: String, min_width: float, accent: Color) -> Label:
