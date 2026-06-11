@@ -728,9 +728,3 @@ func _section_title(text: String) -> Label:
 	l.text = text
 	l.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
 	return l
-
-
-func _spacer() -> Control:
-	var s = Control.new()
-	s.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	return s
