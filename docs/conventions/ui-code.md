@@ -9,7 +9,8 @@ Light conventions for UI scripts. UI is currently the messiest part of the codeb
 | Concern | Files |
 |---|---|
 | Battle HUD (HP bar, block badge, status badges) | `battle_scene/ui/character_hud.gd` |
-| Battle top bar (HP / gold / floor / relic chips / settings) | `battle_scene/ui/battle_top_bar.gd` |
+| Shared top bar (HP/XP bars, gold/act chips, relic shelf) | `run_system/ui/run_top_bar.gd` |
+| Battle top-bar host (settings/pause menu only) | `battle_scene/ui/battle_top_bar.gd` |
 | Battle notifications + pile viewer + inspect overlay | `battle_scene/battle_ui_manager.gd` |
 | Map rendering (background, paths, nodes, legend) | `run_system/ui/map_renderer.gd` (extracted from map_scene) |
 | Map interaction + relic modal | `run_system/ui/map_scene.gd` |
@@ -90,7 +91,8 @@ Individual UI files have a soft cap of ~400 lines. Currently:
 |---|---|---|
 | `map_scene.gd` | ~412 | ✅ Recently split (was 628 — `_draw_*` extracted to `map_renderer.gd`) |
 | `loot_reward.gd` | ~362 | ✅ Recently slimmed (theme dedup) |
-| `battle_top_bar.gd` | ~385 | ⚠️ Approaching cap |
+| `run_top_bar.gd` | 408 | ⚠️ Slightly over cap — justified (cohesive: vitals+chips+buttons+relic shelf) |
+| `battle_top_bar.gd` | 145 | ✅ Slimmed — now hosts run_top_bar |
 | `battle_ui_manager.gd` | ~180 | ✅ OK |
 | `character_hud.gd` | ~120 | ✅ OK |
 
