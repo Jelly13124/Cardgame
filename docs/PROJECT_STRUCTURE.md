@@ -91,11 +91,11 @@ The old root-level `skills/` workflow docs have been removed. Project convention
     *   *Gold, deck, equipped items, inventory, base_attributes, player_attributes (computed), relics, gems (`gem_inventory`), XP/level, map state. Public API: `add_card_to_deck`, `remove_card_from_deck_by_uid`, `socket_gem` / `gem_pool` / `get_gem_data`, `gain_xp` / `xp_to_next`, `equip_to_slot`, `unequip_slot`, `add_to_inventory`, `discard_from_inventory`, `purchase_*` (shop-gated wrappers), `recompute_attributes`, `get_active_set_tiers`. `start_new_run` calls `_apply_meta_upgrades` to read MetaProgress and add max HP / starting gold / starter inventory.*
 
 ### 🏠 Base Building (Meta-Progression)
-*   **Persistent State**: `run_system/core/meta_progress.gd` (autoload, owns `user://meta.json`) — Core currency + per-upgrade level (0-3). API: `add_core`, `get_upgrade_level`, `can_purchase`, `purchase_upgrade`, `reset_all` (debug).
-*   **Boot Scene**: `run_system/ui/home_base_scene.{gd,tscn}` — Core counter + 5 upgrade panels + START NEW RUN
-*   **Upgrade Widget**: `run_system/ui/upgrade_panel.gd` — reusable panel (title / level dots / next-tier preview / BUY)
-*   **Battle hook**: `battle_scene/battle_scene.gd` `_victory()` grants +150 Core and routes to home base on boss kill; `_game_over()` routes to home base on death
-*   **Effect consumers**: `loot_reward.gd` reads `research_lab` for rarity bias; `shop_scene.gd` reads `scrap_workshop` for discount
+*   **Persistent State**: `run_system/core/meta_progress.gd` (autoload, owns `user://meta.json`) — three currencies (**Core / Caps / Scrap**) + `buildings{}` (per-building tier) + `BUILDING_DEFS`. API: `add_core/caps/scrap` + `spend_*`, `get_building_tier`, `is_building_unlocked`, `unlock_building`, `upgrade_building`, `building_can`, `unlock_card`, `set_starter_deck_override`, `stash`/dismantle/reforge.
+*   **Boot Scene**: `run_system/ui/home_base_scene.{gd,tscn}` — Core/Caps/Scrap bar + 5 building tiles laid out 2-left / 2-right with a centre START "door" (Warehouse above it). Clicking a tile opens its screen.
+*   **Building Screens**: `run_system/ui/buildings/{forge,clinic,market,outpost,warehouse}_screen.gd` (subclass `building_screen_base.gd`) — full-screen merchant-style screens; `home_base_scene` convention-loads `<id>_screen.gd`. `upgrade_panel.gd` is the reusable Core-upgrade row widget (used inside Outpost).
+*   **Battle hook**: `battle_scene/battle_scene.gd` `_victory()` awards Core + Caps by node type and routes to home base on boss kill; `_game_over()` routes to home base on death.
+*   **Effect consumers**: Outpost Core upgrades (starting gold / shop discount / safe cells / backpack); Clinic/Market spend Caps; Forge spends Scrap. (The old `research_lab` rarity-bias upgrade was removed — loot rarity is Luck-driven.)
 
 ---
 
@@ -120,7 +120,7 @@ All gameplay content is data-driven. Add GDScript only when introducing a new sh
 *   **Relics**: `run_system/data/relics/{relic_id}.json`
 *   **Equipment**: `run_system/data/equipment/{item_id}.json` (rarity budget: common=+1, uncommon=+2 total, rare=+3 total)
 *   **Equipment Sets**: `run_system/data/equipment_sets/{set_id}.json` (each set has 2 tiers: 3-piece + 5-piece)
-*   **Base Upgrades**: `run_system/data/base_upgrades/{upgrade_id}.json` (5 upgrades × 3 tiers each; effect_value schema varies per effect_key)
+*   **Base Upgrades**: `run_system/data/base_upgrades/{upgrade_id}.json` (7 definitions: med_bay, command_center, scrap_workshop, blacksmith, backpack, starter_boost, jerry_unlock — tiered; effect_value schema varies per effect_key). These are the data the building screens read; `ALLOWED_BASE_UPGRADE_EFFECT_KEYS` in `data_validator.gd` is the schema.
 *   **Heroes**: `run_system/data/heroes/{hero_id}.json` (`cowboy_bill.json`, `hero_fengshui_master.json`) — `player.gd` reads `sprite_id` / `tint` / starting stats dynamically from the selected hero's JSON (`RunManager.current_hero_data`), falling back to `cowboy_bill` when none is loaded.
 *   **Random Events**: `run_system/data/random_events/{event_id}.json` — content (choices, outcomes) for the "?" map node, surfaced by `run_system/ui/event_modal.gd`.
 

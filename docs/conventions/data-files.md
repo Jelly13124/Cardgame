@@ -92,7 +92,7 @@ Authoritative list in `DataValidator.ALLOWED_ENEMY_ACTION_TYPES`:
 - `heal` — self-heal
 - `telegraph` — no-op + "CHARGING" intent badge, sets up next action as interruptible
 - `summon` — spawns add enemies mid-combat. Required: `enemy_ids` (array of enemy ids); optional `count` (default 1). Capped at `MAX_ENEMIES_ON_FIELD` (4) — spawns past the cap are skipped. e.g. `{"type":"summon","enemy_ids":["scrap_shard"],"count":2}`
-- `buff_self` — applies a status to the acting enemy itself. Required: `status` (∈ `ALLOWED_STATUS_NAMES`, e.g. `strength_up`), `stacks`. e.g. `{"type":"buff_self","status":"strength_up","stacks":3}`
+- `buff_self` — applies a status to the acting enemy itself. Required: `status` (∈ `ALLOWED_STATUS_NAMES`, e.g. `thorns`), `stacks`. e.g. `{"type":"buff_self","status":"thorns","stacks":3}`
 
 ---
 
