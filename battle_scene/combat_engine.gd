@@ -98,7 +98,12 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 		await _animate_player_gunshot(player, target)
 
 	for effect in effects:
-		await _apply_effect(effect, target, player, card_mult)
+		# An earlier effect (or DOT) may have killed and freed the target mid-
+		# resolution; never pass a freed Object into _apply_effect's typed
+		# `target: Node` param. Re-validate each iteration (null == "no target").
+		await _apply_effect(
+			effect, target if is_instance_valid(target) else null, player, card_mult
+		)
 
 	# Polarity matched bonus — resolved after the normal effects (so any
 	# flip_polarity earlier in this same card has already applied). Reuses every
@@ -109,7 +114,9 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 		if bonus is Array:
 			for be in bonus:
 				if typeof(be) == TYPE_DICTIONARY:
-					await _apply_effect(be, target, player, card_mult)
+					await _apply_effect(
+						be, target if is_instance_valid(target) else null, player, card_mult
+					)
 
 	# Relic: an attack card that landed on a target fires on-attack relics
 	# (sharpened_scrap → Bleed on the struck enemy).
@@ -123,7 +130,9 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 		var gdata: Dictionary = RunManager.get_gem_data(str(gem_id))
 		for ge in gdata.get("effects", []):
 			if typeof(ge) == TYPE_DICTIONARY:
-				await _apply_effect(ge, target, player, card_mult)
+				await _apply_effect(
+					ge, target if is_instance_valid(target) else null, player, card_mult
+				)
 
 
 func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: float = 1.0) -> void:

@@ -765,7 +765,14 @@ func play_spell(card: Control, target_node: Node):
 	# lets combat_engine + equipment_set_system identify the card behind each
 	# effect (needed to know whether a gain_block came from a "skill" card etc.).
 	current_resolving_card = card
-	await combat_engine.resolve_card_effect(card, target_node, player)
+	# target_node can be freed DURING the fly_to_play_area await above — the
+	# targeted enemy may have died from a parallel in-flight card or a DOT tick.
+	# A previously-freed Object fails resolve_card_effect's typed `target: Node`
+	# parameter check BEFORE its body's is_instance_valid guards can run, so
+	# sanitise to null here. The resolver already treats a null target as
+	# "no target" (skill/ability cards pass null routinely).
+	var safe_target: Node = target_node if is_instance_valid(target_node) else null
+	await combat_engine.resolve_card_effect(card, safe_target, player)
 	current_resolving_card = null
 
 	# Release the per-card play lock NOW. The play is logically complete —
