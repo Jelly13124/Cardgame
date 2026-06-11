@@ -352,8 +352,6 @@ func _make_status_badge(status_name: String, stacks: int) -> Control:
 	if icon_texture:
 		var icon = TextureRect.new()
 		icon.texture = icon_texture
-		# Icons ship as white silhouettes (game-icons.net); tint to the status color.
-		icon.modulate = STATUS_COLORS.get(status_name, Color.WHITE)
 		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -393,11 +391,10 @@ func _make_status_badge(status_name: String, stacks: int) -> Control:
 
 
 func _load_status_icon(status_name: String) -> Texture2D:
-	# Prefer SVG (game-icons.net silhouettes, imported as textures), fall back to PNG.
-	for ext in [".svg", ".png"]:
-		var path := "%s%s%s" % [STATUS_ICON_DIR, status_name, ext]
-		if ResourceLoader.exists(path):
-			var loaded = load(path)
-			if loaded is Texture2D:
-				return loaded
+	var path := "%s%s.png" % [STATUS_ICON_DIR, status_name]
+	if not ResourceLoader.exists(path):
+		return null
+	var loaded = load(path)
+	if loaded is Texture2D:
+		return loaded
 	return null

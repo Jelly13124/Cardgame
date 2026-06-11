@@ -1,12 +1,1 @@
-{
-  "id": "bulwark",
-  "title": "Bulwark Gem",
-  "trigger": "on_play",
-  "effects": [
-    {
-      "type": "gain_block",
-      "amount": 4
-    }
-  ],
-  "color": "#7fa8d8"
-}
+{ "id": "bulwark", "title": "Bulwark Gem", "trigger": "on_play", "effects": [ { "type": "gain_block", "amount": 4 } ] }

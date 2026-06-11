@@ -1,12 +1,1 @@
-{
-  "id": "spark",
-  "title": "Spark Gem",
-  "trigger": "on_play",
-  "effects": [
-    {
-      "type": "gain_energy",
-      "amount": 1
-    }
-  ],
-  "color": "#f2e24d"
-}
+{ "id": "spark", "title": "Spark Gem", "trigger": "on_play", "effects": [ { "type": "gain_energy", "amount": 1 } ] }
