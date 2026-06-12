@@ -85,18 +85,19 @@ func _draw_all_paths(vp: Vector2) -> void:
 			# current node and the child hasn't been entered yet.
 			var available: bool = (node.id == current_id) and not (child_id in visited)
 
-			var color: Color
 			if walked:
-				color = Color(1.0, 0.85, 0.35, 0.98)  # bright gold = walked
+				# Walked route: solid glowing cyan (slightly warm tint to read as "past")
+				var core = Color(0.55, 1.0, 0.98, 0.92)
+				_draw_solid_glow_line(from, to, core, 2.5, 9.0)
 			elif available:
-				color = Color(0.55, 0.95, 1.0, 0.98)  # bright cyan = next step
+				# Available (next step): solid glowing bright cyan — most prominent
+				var core = Color(0.40, 0.96, 1.0, 1.0)
+				_draw_solid_glow_line(from, to, core, 2.8, 12.0)
 			else:
-				color = Color(0.18, 0.36, 0.52, 0.32)  # very dim = unreachable
-
-			_draw_pixel_dashed_line(
-				from, to, Color(0.02, 0.05, 0.08, color.a * 0.62), 3.2, 22.0, 12.0, Vector2(1, 2)
-			)
-			_draw_pixel_dashed_line(from, to, color, 2.1, 22.0, 12.0, Vector2.ZERO)
+				# Unreachable / future: thin grey dashed, very dim
+				_draw_pixel_dashed_line(
+					from, to, Color(0.55, 0.58, 0.60, 0.22), 1.2, 10.0, 8.0, Vector2.ZERO
+				)
 
 
 func _draw_all_nodes(vp: Vector2) -> void:
@@ -213,48 +214,68 @@ func _draw_pixel_selection(center: Vector2, radius: float, color: Color) -> void
 
 
 func _draw_legend(vp: Vector2) -> void:
-	var pw = 150.0
-	var ph = 238.0
+	var pw = 156.0
+	var ph = 248.0
 	var px = vp.x - pw - 18.0
-	var py = 68.0
+	# Start below the taller framed top bar (main bar ≈ 86px) so it isn't occluded.
+	var py = 96.0
 	var rect = Rect2(px, py, pw, ph)
 
-	_scene.draw_rect(
-		Rect2(rect.position + Vector2(5, 6), rect.size), Color(0.02, 0.012, 0.006, 0.42)
-	)
-	_scene.draw_rect(rect, Color(0.70, 0.58, 0.39, 0.92))
-	_scene.draw_rect(rect, Color(0.22, 0.16, 0.10, 0.9), false, 2.0)
+	# Drop shadow
+	_scene.draw_rect(Rect2(rect.position + Vector2(4, 5), rect.size), Color(0.0, 0.0, 0.0, 0.55))
+	# Dark background panel
+	_scene.draw_rect(rect, Color(0.06, 0.07, 0.09, 0.94))
+	# Subtle inner highlight at top (gives depth)
+	_scene.draw_rect(Rect2(px, py, pw, 2.0), Color(0.35, 0.80, 0.95, 0.22))
+	# Cyan-tinted border to match the glowing path theme
+	_scene.draw_rect(rect, Color(0.28, 0.72, 0.85, 0.75), false, 1.5)
 
-	var y = py + 26.0
+	# Title
+	var y = py + 24.0
+	var title_text = tr("UI_MAP_LEGEND_TITLE")
+	var title_w = _font.get_string_size(title_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_scene.draw_string(
 		_font,
-		Vector2(px + 45, y),
-		tr("UI_MAP_LEGEND_TITLE"),
+		Vector2(px + (pw - title_w) * 0.5, y),
+		title_text,
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
-		17,
-		Color(0.18, 0.12, 0.08)
+		15,
+		Color(0.70, 0.92, 0.98, 1.0)
 	)
-	y += 8.0
+	y += 7.0
+	# Separator line in dim cyan
 	_scene.draw_line(
-		Vector2(px + 10, y), Vector2(px + pw - 10, y), Color(0.26, 0.18, 0.11, 0.78), 2.0
+		Vector2(px + 8, y), Vector2(px + pw - 8, y), Color(0.30, 0.72, 0.88, 0.45), 1.0
 	)
-	y += 18.0
+	y += 16.0
 
 	for entry in LEGEND_ENTRIES:
 		_draw_node_texture(
-			Vector2(px + 22, y - 6), str(entry[0]), LEGEND_NODE_ICON_SIZE, Color(1.0, 1.0, 1.0, 1.0)
+			Vector2(px + 20, y - 6), str(entry[0]), LEGEND_NODE_ICON_SIZE, Color(1.0, 1.0, 1.0, 1.0)
 		)
 		_scene.draw_string(
 			_font,
-			Vector2(px + 38, y),
+			Vector2(px + 36, y),
 			tr(str(entry[1])),
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1,
 			14,
-			Color(0.18, 0.12, 0.08)
+			Color(0.82, 0.88, 0.92, 0.95)
 		)
 		y += 26.0
+
+
+## Draws a solid glowing line: a wide translucent glow underlay + a bright thin core on top.
+## Used for walked and available edges so the active route reads as a lit, solid path.
+func _draw_solid_glow_line(
+	from: Vector2, to: Vector2, core_color: Color, core_width: float, glow_width: float
+) -> void:
+	var glow_color = Color(core_color.r, core_color.g, core_color.b, core_color.a * 0.22)
+	_scene.draw_line(from, to, glow_color, glow_width)
+	var mid_color = Color(core_color.r, core_color.g, core_color.b, core_color.a * 0.50)
+	_scene.draw_line(from, to, mid_color, glow_width * 0.50)
+	_scene.draw_line(from, to, core_color, core_width)
 
 
 func _draw_pixel_dashed_line(
