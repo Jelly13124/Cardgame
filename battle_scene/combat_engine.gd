@@ -124,7 +124,7 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 		main.relic_effect_system.on_player_attack(target)
 	# Socketed gems: each gem's effects resolve AFTER the card's own effects (and
 	# matched bonus), reusing _apply_effect so they get the same target / global
-	# STR-CON / dodge / thorns handling. ≤2 gems per card; locked once socketed.
+	# STR-CON / dodge / thorns handling. ≤1 gem per card; locked once socketed.
 	var gems: Array = card.get_meta("gems") if card.has_meta("gems") else []
 	for gem_id in gems:
 		var gdata: Dictionary = RunManager.get_gem_data(str(gem_id))

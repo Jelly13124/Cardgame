@@ -440,7 +440,7 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 
 ### ✅ Phase 7 — Gems · In-Run Leveling · Reward Restructure (shipped 2026-06-09)
 See `docs/superpowers/specs/2026-06-09-gems-leveling-rewards-design.md` for the full design.
-- ✅ **Gem-socket system** (replaces card upgrades): run-scoped gems (`run_system/data/gems/*.json`, cleared on death), 2 sockets/card, inserted out of combat and **locked after**. Gem effects fire after the card's own effects on play (`RunManager.gem_inventory / socket_gem / gem_pool / get_gem_data`; socket UI in `run_deck_viewer_modal.gd`). The old `wealthy` keyword is now a gem.
+- ✅ **Gem-socket system** (replaces card upgrades): run-scoped gems (`run_system/data/gems/*.json`, cleared on death), 1 socket/card, inserted out of combat and **locked after**. Gem effects fire after the card's own effects on play (`RunManager.gem_inventory / socket_gem / gem_pool / get_gem_data`; socket UI in `run_deck_viewer_modal.gd`). The old `wealthy` keyword is now a gem.
 - ✅ **In-run XP / level**: kill enemies → XP (scaled by **Intelligence**, +5%/point); each level-up grants a **pick-1-of-3 random attribute (+1)**. `RunManager.xp / level / gain_xp / xp_to_next / pending_attr_points`.
 - ✅ **Starting attributes = 0** (heroes grow via level-ups / gear / gems).
 - ✅ **Rewards by node type**: normal = gold + 3-choose-1 card draft (Luck may turn a slot into a gem); elite = card + gem 3-choose-1 + equipment; boss = gem + relic. Equipment only drops from elite/boss.

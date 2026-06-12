@@ -1595,7 +1595,7 @@ func gem_pool() -> Array[String]:
 
 
 ## Socket `gem_id` (taken from gem_inventory) into the player_deck card with `uid`,
-## if it has a free slot (<2 gems). Locked after — no removal. Returns success.
+## if it has a free slot (<1 gem). Locked after — no removal. Returns success.
 func socket_gem(uid: String, gem_id: String) -> bool:
 	if not gem_id in gem_inventory:
 		return false
@@ -1603,7 +1603,7 @@ func socket_gem(uid: String, gem_id: String) -> bool:
 		if typeof(entry) != TYPE_DICTIONARY or str(entry.get("uid", "")) != uid:
 			continue
 		var gems: Array = entry.get("gems", [])
-		if gems.size() >= 2:
+		if gems.size() >= 1:
 			return false
 		gems.append(gem_id)
 		entry["gems"] = gems
