@@ -535,15 +535,15 @@ func _pick_node_type(floor_idx: int, total: int, treasure_extras_used: int = 0) 
 	if ascension >= 5:
 		roll = roll * 0.5 + 0.5
 
-	# Early floors (1..EARLY_FLOOR_LAST): combat-only — no rest, no treasure,
-	# no merchant. Player gets ramped up on encounters before resources/shops
-	# come online.
+	# Early floors (1..EARLY_FLOOR_LAST): combat-only ramp — no rest, treasure,
+	# merchant, OR elite. Elites only appear from floor EARLY_FLOOR_LAST + 1 on
+	# (the mid/late table below), so the first 4 floors stay beginner-safe.
 	if floor_idx <= EARLY_FLOOR_LAST:
 		if roll < 0.65:
 			return "enemy"
 		if roll < 0.85:
 			return "unknown"
-		return "elite"
+		return "enemy"
 
 	# Mid/late floors: full pool with reduced treasure rate + global treasure cap.
 	if roll < 0.40:
