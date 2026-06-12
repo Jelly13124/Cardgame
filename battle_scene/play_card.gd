@@ -27,6 +27,20 @@ var _glow_tween: Tween
 
 var _rarity_frames: Dictionary = {}
 
+# Per-rarity accent colors.
+# Applied as modulate to ArtFrameTexture AND as border on the rarity ring panel.
+const RARITY_COLORS: Dictionary = {
+	"common": Color(0.78, 0.80, 0.84),  # steel grey — subtle, as expected
+	"uncommon": Color(0.30, 0.95, 0.50),  # vivid green
+	"rare": Color(1.0, 0.78, 0.20),  # vivid gold
+}
+
+# Reference to the single gem socket node (created in _ready)
+var _gem_socket_node: Control = null
+
+# Reference to the rarity border panel (created in _ready, sits behind art frame)
+var _rarity_border_node: Panel = null
+
 
 func _ready() -> void:
 	super._ready()
@@ -80,6 +94,12 @@ func _ready() -> void:
 	mouse_exited.connect(_on_mouse_exited)
 
 	pivot_offset = size / 2.0  # Ensure we scale from center
+
+	# ── Rarity border ring (behind ArtFrameTexture, over ArtBackground) ──────
+	_build_rarity_border()
+
+	# ── Gem socket (single slot on right edge, mid-height) ────────────────────
+	_build_gem_socket()
 
 
 func _style_cost_label() -> void:
@@ -157,8 +177,6 @@ func _attack_should_drag(main) -> bool:
 		return false
 	return main.sole_alive_enemy() != null
 
-	super._handle_mouse_released()
-
 
 func set_card_data(data: Dictionary) -> void:
 	if not is_instance_valid(self):
@@ -183,13 +201,19 @@ func set_card_data(data: Dictionary) -> void:
 	var desc = _build_description(data)
 	desc_label.parse_bbcode("[center][font_size=13]" + desc + "[/font_size][/center]")
 
-	# ── Rarity: swap the art FRAME texture ───────────────────────────────────
+	# ── Rarity: swap the art FRAME texture + apply accent color tint ─────────
 	var rarity = data.get("rarity", "common").to_lower()
 	if rarity in _rarity_frames:
 		art_frame_texture.texture = _rarity_frames[rarity]
 	else:
 		art_frame_texture.texture = _rarity_frames.get("common")
 	art_frame_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	art_frame_texture.modulate = RARITY_COLORS.get(rarity, RARITY_COLORS["common"])
+	# Update the dedicated rarity border ring for maximum visibility.
+	_update_rarity_border(rarity)
+
+	# ── Gem socket refresh ────────────────────────────────────────────────────
+	_refresh_gem_socket()
 
 	# ── Type label ────────────────────────────────────────────────────────────
 	# Card art is uniformly square now; the old attack-card V-shape mask was removed.
@@ -521,3 +545,179 @@ func _start_glow_pulse() -> void:
 	_glow_tween = create_tween().set_loops()
 	_glow_tween.tween_property(playable_glow, "modulate:a", 0.3, 0.8).set_trans(Tween.TRANS_SINE)
 	_glow_tween.tween_property(playable_glow, "modulate:a", 1.0, 0.8).set_trans(Tween.TRANS_SINE)
+
+
+# ─── Rarity Border ───────────────────────────────────────────────────────────
+
+
+## Creates a Panel that sits ON TOP of ArtFrameTexture to act as a vivid
+## coloured ring indicating rarity. Sized to match the enlarged ArtFrameTexture
+## rect (offsets 10/40/198/181). Common gets low alpha; uncommon/rare are vivid.
+func _build_rarity_border() -> void:
+	var front_face = get_node_or_null("FrontFace")
+	if not is_instance_valid(front_face):
+		return
+	var border = Panel.new()
+	border.name = "RarityBorder"
+	# Same rect as the enlarged ArtFrameTexture so the border frames the art area.
+	border.position = Vector2(10.0, 40.0)
+	border.size = Vector2(188.0, 141.0)
+	border.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 0)  # transparent fill — only border shows
+	style.border_width_left = 5
+	style.border_width_top = 5
+	style.border_width_right = 5
+	style.border_width_bottom = 5
+	style.border_color = Color(0.78, 0.80, 0.84, 0.0)  # start transparent (common)
+	style.corner_radius_top_left = 5
+	style.corner_radius_top_right = 5
+	style.corner_radius_bottom_right = 5
+	style.corner_radius_bottom_left = 5
+	border.add_theme_stylebox_override("panel", style)
+	front_face.add_child(border)
+	# Place AFTER ArtFrameTexture so it renders on top of it.
+	var art_frame_node = front_face.get_node_or_null("ArtFrameTexture")
+	var insert_idx = art_frame_node.get_index() + 1 if is_instance_valid(art_frame_node) else -1
+	if insert_idx >= 0 and insert_idx < front_face.get_child_count():
+		front_face.move_child(border, insert_idx)
+	_rarity_border_node = border
+
+
+## Update the rarity border color. Called from set_card_data().
+func _update_rarity_border(rarity: String) -> void:
+	if not is_instance_valid(_rarity_border_node):
+		return
+	var style: StyleBoxFlat = _rarity_border_node.get_theme_stylebox("panel") as StyleBoxFlat
+	if not is_instance_valid(style):
+		return
+	var col: Color = RARITY_COLORS.get(rarity, RARITY_COLORS["common"])
+	if rarity == "common":
+		# Common: keep the border but at low alpha — barely noticeable.
+		style.border_color = Color(col.r, col.g, col.b, 0.45)
+	else:
+		# Uncommon / Rare: fully opaque vivid border.
+		style.border_color = Color(col.r, col.g, col.b, 1.0)
+
+
+# ─── Gem Socket ───────────────────────────────────────────────────────────────
+
+
+## Build the single gem socket Control and attach it to FrontFace.
+## Called once from _ready() — creates a small Panel (30×30) anchored to the
+## right edge of the card at mid-art-height so it sits outside the art frame
+## without covering the cost badge.
+func _build_gem_socket() -> void:
+	var front_face = get_node_or_null("FrontFace")
+	if not is_instance_valid(front_face):
+		return
+	# Container panel for the socket (right edge, vertically centred on art area)
+	var socket = Panel.new()
+	socket.name = "GemSocket"
+	socket.custom_minimum_size = Vector2(30, 30)
+	socket.size = Vector2(30, 30)
+	# Position: right edge of card (card width=208), art vertical centre ≈ 111px
+	socket.position = Vector2(180, 96)
+	socket.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Style: dark semi-transparent rounded background
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.10, 0.10, 0.12, 0.80)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.55, 0.55, 0.65, 0.90)
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_right = 6
+	style.corner_radius_bottom_left = 6
+	socket.add_theme_stylebox_override("panel", style)
+	front_face.add_child(socket)
+
+	# Label inside the socket — used to display gem letter / empty indicator
+	var lbl = Label.new()
+	lbl.name = "GemLabel"
+	lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 12)
+	lbl.add_theme_color_override("font_color", Color(0.80, 0.80, 0.90, 0.70))
+	lbl.text = "◇"
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	socket.add_child(lbl)
+
+	_gem_socket_node = socket
+
+
+## Refresh the gem socket display from card_info metadata.
+## Reads get_meta("gems") or card_info["gems"] (Array); element 0 is the gem id.
+func _refresh_gem_socket() -> void:
+	if not is_instance_valid(_gem_socket_node):
+		return
+	var lbl: Label = _gem_socket_node.get_node_or_null("GemLabel")
+	if not is_instance_valid(lbl):
+		return
+
+	# Resolve gem id from metadata (set by battle system) or card_info dict.
+	# deck_manager sets the meta AFTER set_card_data runs, so fall back to
+	# looking up the run deck entry by uid when the meta isn't present yet.
+	var gems: Array = []
+	if has_meta("gems"):
+		gems = get_meta("gems")
+	else:
+		gems = card_info.get("gems", [])
+	if gems.is_empty() and has_meta("uid"):
+		var uid_str := str(get_meta("uid"))
+		if uid_str != "" and is_instance_valid(RunManager):
+			for entry in RunManager.player_deck:
+				if typeof(entry) == TYPE_DICTIONARY and str(entry.get("uid", "")) == uid_str:
+					gems = entry.get("gems", [])
+					break
+
+	if gems.is_empty():
+		# Empty socket
+		lbl.text = "◇"
+		lbl.add_theme_color_override("font_color", Color(0.80, 0.80, 0.90, 0.70))
+		var style: StyleBoxFlat = _gem_socket_node.get_theme_stylebox("panel") as StyleBoxFlat
+		if is_instance_valid(style):
+			style.border_color = Color(0.55, 0.55, 0.65, 0.90)
+		return
+
+	# A gem is socketed
+	var gem_id: String = str(gems[0])
+	var gem_data: Dictionary = {}
+	if is_instance_valid(RunManager):
+		gem_data = RunManager.get_gem_data(gem_id)
+
+	# Try to show icon texture; fall back to first letter of gem name / id
+	var icon_path: String = gem_data.get("icon", "")
+	if icon_path != "" and ResourceLoader.exists(icon_path):
+		# Replace label with a TextureRect if not already set up
+		var existing_tr: TextureRect = _gem_socket_node.get_node_or_null("GemIcon")
+		if not is_instance_valid(existing_tr):
+			existing_tr = TextureRect.new()
+			existing_tr.name = "GemIcon"
+			existing_tr.set_anchors_preset(Control.PRESET_FULL_RECT)
+			existing_tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			existing_tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			existing_tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			_gem_socket_node.add_child(existing_tr)
+		existing_tr.texture = load(icon_path)
+		lbl.visible = false
+	else:
+		# Show first letter of gem display name (or gem_id) in a tinted color
+		var gem_name: String = gem_data.get("name", gem_id)
+		lbl.text = gem_name.substr(0, 1).to_upper()
+		lbl.visible = true
+		# Tint based on gem rarity if available
+		var gem_rarity: String = gem_data.get("rarity", "common").to_lower()
+		lbl.add_theme_color_override(
+			"font_color", RARITY_COLORS.get(gem_rarity, Color(0.90, 0.75, 0.30))
+		)
+
+	# Border color matches gem rarity
+	var gem_rarity2: String = gem_data.get("rarity", "common").to_lower()
+	var border_col: Color = RARITY_COLORS.get(gem_rarity2, Color(0.55, 0.55, 0.65))
+	var style2: StyleBoxFlat = _gem_socket_node.get_theme_stylebox("panel") as StyleBoxFlat
+	if is_instance_valid(style2):
+		style2.border_color = border_col
