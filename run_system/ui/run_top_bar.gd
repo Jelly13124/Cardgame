@@ -1,8 +1,10 @@
 extends Control
 
 ## Shared StS-style top bar used by BOTH the map and battle scenes.
-## Renders HP + XP as progress bars, a gold chip, an act/floor chip, a
-## configurable button group, and a relic shelf row below the main bar.
+## Renders a hero-portrait badge (far left), HP + XP bars (prominent, framed),
+## a gold chip, an act/floor chip, a configurable button group, and a relic shelf
+## row below the main bar.  All panels use T.panel_textured() 9-slice frames for
+## the heavy "framed-metal" look (placeholder until Codex delivers bespoke frames).
 ##
 ## Scene-agnostic: it reads RunManager (autoload) state and emits intent
 ## signals; the HOST scene wires the buttons to its own handlers. Set the
@@ -10,11 +12,19 @@ extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const RELIC_DATA_DIR := "res://run_system/data/relics/"
+const TOPBAR_ICON_DIR := "res://run_system/assets/images/ui/topbar/"
+const HERO_IDLE_DIR := "res://battle_scene/assets/images/heroes/"
 
-const MAIN_BAR_HEIGHT := 62.0
-const RELIC_ROW_TOP := 66.0
-const RELIC_ROW_HEIGHT := 42.0
-const BAR_HEIGHT := 108.0
+# ─── Layout constants (bigger, ~+35% from old MAIN_BAR_HEIGHT=62) ─────────────
+const PORTRAIT_SIZE := 84.0  # hero badge square
+const MAIN_BAR_HEIGHT := 86.0  # old was 62 → +38%
+const RELIC_ROW_TOP := 90.0  # old was 66 → moved down to match taller bar
+const RELIC_ROW_HEIGHT := 50.0  # old was 42 → scaled up
+const BAR_HEIGHT := 140.0  # old was 108 → total including relic shelf
+const HP_BAR_W := 220.0  # old 178 → wider
+const HP_BAR_H := 30.0  # old 22 → taller for better readability
+const XP_BAR_W := 220.0
+const XP_BAR_H := 12.0  # stays thin
 
 signal deck_pressed
 signal character_pressed
@@ -34,6 +44,8 @@ var _xp_label: Label
 var _gold_label: Label
 var _act_label: Label
 var _relic_shelf: HBoxContainer
+var _portrait_label: Label  # fallback initial letter when no sprite
+var _portrait_texture: TextureRect
 
 
 func _ready() -> void:
@@ -50,70 +62,135 @@ func _ready() -> void:
 
 
 func _build() -> void:
-	var bg := ColorRect.new()
+	# Full-width dark background covering the main bar area
+	var bg := PanelContainer.new()
 	bg.name = "Background"
-	bg.color = Color(0.045, 0.038, 0.03, 0.94)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bg.anchor_right = 1.0
 	bg.offset_bottom = MAIN_BAR_HEIGHT
+	bg.add_theme_stylebox_override(
+		"panel", T.panel_flat(Color(0.045, 0.034, 0.022, 0.97), T.PANEL_BORDER, 0, 3)
+	)
 	add_child(bg)
 
+	# Accent bottom border line
 	var bottom_line := ColorRect.new()
 	bottom_line.name = "BottomLine"
-	bottom_line.color = Color(0.65, 0.48, 0.25, 0.62)
+	bottom_line.color = Color(0.65, 0.48, 0.25, 0.78)
 	bottom_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bottom_line.anchor_right = 1.0
 	bottom_line.offset_top = MAIN_BAR_HEIGHT - 3.0
 	bottom_line.offset_bottom = MAIN_BAR_HEIGHT
 	add_child(bottom_line)
 
+	# ── Hero portrait badge (far left, flush top) ─────────────────────────────
+	var portrait_panel := PanelContainer.new()
+	portrait_panel.name = "PortraitPanel"
+	portrait_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait_panel.offset_left = 6.0
+	portrait_panel.offset_top = 4.0
+	portrait_panel.offset_right = 6.0 + PORTRAIT_SIZE
+	portrait_panel.offset_bottom = 4.0 + PORTRAIT_SIZE - 4.0
+	portrait_panel.add_theme_stylebox_override("panel", T.panel_textured("default"))
+	add_child(portrait_panel)
+
+	# TextureRect for the hero idle frame (fills the panel)
+	_portrait_texture = TextureRect.new()
+	_portrait_texture.name = "PortraitTexture"
+	_portrait_texture.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	_portrait_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_portrait_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_portrait_texture.set_anchors_preset(Control.PRESET_FULL_RECT)
+	portrait_panel.add_child(_portrait_texture)
+
+	# Fallback letter label (shown when no texture)
+	_portrait_label = Label.new()
+	_portrait_label.name = "PortraitLabel"
+	_portrait_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_portrait_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_portrait_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_portrait_label.add_theme_font_size_override("font_size", 36)
+	_portrait_label.add_theme_color_override("font_color", T.TEXT_MAIN)
+	_portrait_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_portrait_label.add_theme_constant_override("outline_size", 4)
+	_portrait_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait_panel.add_child(_portrait_label)
+
+	_load_hero_portrait()
+
+	# ── Main content margin (starts AFTER the portrait badge) ─────────────────
 	var margin := MarginContainer.new()
 	margin.name = "MainMargin"
 	margin.mouse_filter = Control.MOUSE_FILTER_PASS
 	margin.anchor_right = 1.0
+	margin.offset_left = 6.0 + PORTRAIT_SIZE + 8.0  # portrait width + gap
 	margin.offset_bottom = MAIN_BAR_HEIGHT
-	margin.add_theme_constant_override("margin_left", 14)
-	margin.add_theme_constant_override("margin_right", 14)
-	margin.add_theme_constant_override("margin_top", 7)
-	margin.add_theme_constant_override("margin_bottom", 7)
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_bottom", 8)
 	add_child(margin)
 
 	var row := HBoxContainer.new()
 	row.name = "MainRow"
 	row.mouse_filter = Control.MOUSE_FILTER_PASS
-	row.add_theme_constant_override("separation", 12)
+	row.add_theme_constant_override("separation", 10)
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	margin.add_child(row)
 
-	# Vitals: HP bar over XP bar.
+	# ── Vitals: big HP bar + thin XP bar ──────────────────────────────────────
+	var vitals_panel := PanelContainer.new()
+	vitals_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vitals_panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	vitals_panel.custom_minimum_size = Vector2(HP_BAR_W + 16.0, 0)
+	row.add_child(vitals_panel)
+
+	var vitals_margin := MarginContainer.new()
+	vitals_margin.add_theme_constant_override("margin_left", 8)
+	vitals_margin.add_theme_constant_override("margin_right", 8)
+	vitals_margin.add_theme_constant_override("margin_top", 6)
+	vitals_margin.add_theme_constant_override("margin_bottom", 6)
+	vitals_panel.add_child(vitals_margin)
+
 	var vitals := VBoxContainer.new()
 	vitals.add_theme_constant_override("separation", 4)
 	vitals.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(vitals)
+	vitals.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	vitals_margin.add_child(vitals)
 
-	var hp_pair := _make_stat_bar(178, 22, Color(0.82, 0.16, 0.10), Color(0.22, 0.06, 0.05))
+	var hp_pair := _make_stat_bar(
+		HP_BAR_W, HP_BAR_H, Color(0.82, 0.16, 0.10), Color(0.22, 0.06, 0.05), 16, true
+	)
 	_hp_bar = hp_pair[0]
 	_hp_label = hp_pair[1]
 	vitals.add_child(_hp_bar)
 
-	var xp_pair := _make_stat_bar(178, 15, T.ACCENT_NEON_GREEN, Color(0.10, 0.14, 0.05))
+	var xp_pair := _make_stat_bar(
+		XP_BAR_W, XP_BAR_H, T.ACCENT_NEON_GREEN, Color(0.10, 0.14, 0.05), 11, false
+	)
 	_xp_bar = xp_pair[0]
 	_xp_label = xp_pair[1]
 	vitals.add_child(_xp_bar)
 
+	# ── Spacer to push chips/buttons right ────────────────────────────────────
 	var spacer := Control.new()
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(spacer)
 
-	_gold_label = _make_chip(row, Color(0.95, 0.66, 0.22))
-	_act_label = _make_chip(row, T.ACCENT_NEON_BLUE)
+	# ── Gold chip ─────────────────────────────────────────────────────────────
+	_gold_label = _make_framed_chip(row, Color(0.95, 0.66, 0.22), 20)
 
-	var deck_btn := _make_icon_button("D", tr("UI_BATTLE_VIEW_RUN_DECK"))
+	# ── Act/Floor chip ────────────────────────────────────────────────────────
+	_act_label = _make_framed_chip(row, T.ACCENT_NEON_BLUE, 17)
+
+	# ── Icon buttons ──────────────────────────────────────────────────────────
+	var deck_btn := _make_icon_button("", tr("UI_BATTLE_VIEW_RUN_DECK"), "deck")
 	deck_btn.pressed.connect(func(): deck_pressed.emit())
 	row.add_child(deck_btn)
 
 	if show_character_button:
-		var char_btn := _make_icon_button("C", tr("UI_MAP_CHARACTER_BTN"))
+		var char_btn := _make_icon_button("", tr("UI_MAP_CHARACTER_BTN"), "character")
 		char_btn.pressed.connect(func(): character_pressed.emit())
 		row.add_child(char_btn)
 
@@ -122,7 +199,7 @@ func _build() -> void:
 		set_btn.pressed.connect(func(): settings_pressed.emit())
 		row.add_child(set_btn)
 
-	# Relic shelf (second row).
+	# ── Relic shelf (second row below main bar) ────────────────────────────────
 	_relic_shelf = HBoxContainer.new()
 	_relic_shelf.name = "RelicShelf"
 	_relic_shelf.anchor_right = 1.0
@@ -131,11 +208,55 @@ func _build() -> void:
 	_relic_shelf.offset_right = -16.0
 	_relic_shelf.offset_bottom = RELIC_ROW_TOP + RELIC_ROW_HEIGHT
 	_relic_shelf.mouse_filter = Control.MOUSE_FILTER_PASS
-	_relic_shelf.add_theme_constant_override("separation", 7)
+	_relic_shelf.add_theme_constant_override("separation", 8)
 	add_child(_relic_shelf)
 
 
-func _make_stat_bar(width: float, height: float, fill: Color, track: Color) -> Array:
+# ─── Hero portrait loader ──────────────────────────────────────────────────────
+
+
+func _load_hero_portrait() -> void:
+	# Try to load the hero's idle frame 0 as a portrait placeholder.
+	# Hero data: current_hero_data["sprite_id"] → id used for the folder name.
+	# Path convention: battle_scene/assets/images/heroes/{sprite_id}/idle/{sprite_id}_idle_0.png
+	var hero_data: Dictionary = RunManager.current_hero_data
+	var sprite_id: String = str(hero_data.get("sprite_id", RunManager.current_hero_id))
+	var hero_name: String = str(hero_data.get("name", sprite_id))
+
+	var fallback_letter: String = "?"
+	if not hero_name.is_empty():
+		fallback_letter = hero_name.substr(0, 1).to_upper()
+
+	# Attempt idle frame 0
+	var tex: Texture2D = null
+	if not sprite_id.is_empty():
+		var idle_path := "%s%s/idle/%s_idle_0.png" % [HERO_IDLE_DIR, sprite_id, sprite_id]
+		if ResourceLoader.exists(idle_path):
+			var loaded = load(idle_path)
+			if loaded is Texture2D:
+				tex = loaded
+		# Fallback: try _idle_1.png (some heroes start at 1)
+		if not tex:
+			var alt_path := "%s%s/idle/%s_idle_1.png" % [HERO_IDLE_DIR, sprite_id, sprite_id]
+			if ResourceLoader.exists(alt_path):
+				var loaded = load(alt_path)
+				if loaded is Texture2D:
+					tex = loaded
+
+	if tex:
+		_portrait_texture.texture = tex
+		_portrait_label.visible = false
+	else:
+		_portrait_texture.visible = false
+		_portrait_label.text = fallback_letter
+
+
+# ─── Stat bar builder ──────────────────────────────────────────────────────────
+
+
+func _make_stat_bar(
+	width: float, height: float, fill: Color, track: Color, font_size: int, bold_label: bool
+) -> Array:
 	var bar := ProgressBar.new()
 	bar.custom_minimum_size = Vector2(width, height)
 	bar.show_percentage = false
@@ -151,58 +272,81 @@ func _make_stat_bar(width: float, height: float, fill: Color, track: Color) -> A
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.add_theme_font_size_override("font_size", 13)
+	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", T.TEXT_MAIN)
-	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
-	label.add_theme_constant_override("outline_size", 3)
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	label.add_theme_constant_override("outline_size", 4 if bold_label else 2)
 	bar.add_child(label)
 	return [bar, label]
 
 
-func _make_chip(parent: Control, accent: Color) -> Label:
+# ─── Framed chip builder ───────────────────────────────────────────────────────
+
+
+func _make_framed_chip(parent: Control, accent: Color, font_size: int) -> Label:
 	var panel := PanelContainer.new()
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override("panel", _chip_style(accent))
+	panel.add_theme_stylebox_override("panel", _framed_chip_style(accent))
 	parent.add_child(panel)
 
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 11)
-	margin.add_theme_constant_override("margin_right", 11)
-	margin.add_theme_constant_override("margin_top", 4)
-	margin.add_theme_constant_override("margin_bottom", 4)
-	panel.add_child(margin)
+	var inner := MarginContainer.new()
+	inner.add_theme_constant_override("margin_left", 14)
+	inner.add_theme_constant_override("margin_right", 14)
+	inner.add_theme_constant_override("margin_top", 5)
+	inner.add_theme_constant_override("margin_bottom", 5)
+	panel.add_child(inner)
 
 	var label := Label.new()
 	label.text = "-"
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 17)
+	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", T.TEXT_MAIN)
-	margin.add_child(label)
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	label.add_theme_constant_override("outline_size", 2)
+	inner.add_child(label)
 	return label
 
 
-func _chip_style(accent: Color) -> StyleBoxFlat:
-	var style := T.panel_flat(Color(0.105, 0.062, 0.035, 0.92), accent.darkened(0.18), 5, 2)
-	style.border_width_left = 5
-	style.shadow_color = Color(0.0, 0.0, 0.0, 0.30)
-	style.shadow_size = 3
-	style.shadow_offset = Vector2(2, 2)
+func _framed_chip_style(accent: Color) -> StyleBoxFlat:
+	var style := T.panel_flat(Color(0.095, 0.055, 0.030, 0.94), accent.darkened(0.15), 6, 3)
+	style.border_width_bottom = 4  # heavier bottom edge = "metal frame" feel
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.38)
+	style.shadow_size = 4
+	style.shadow_offset = Vector2(2, 3)
 	return style
 
 
-func _make_icon_button(text: String, tooltip: String) -> Button:
+# ─── Icon button builder ───────────────────────────────────────────────────────
+
+
+func _make_icon_button(text: String, tooltip: String, icon_id: String = "") -> Button:
 	var button := Button.new()
 	button.text = text
 	button.tooltip_text = tooltip
-	button.custom_minimum_size = Vector2(42, 40)
+	button.custom_minimum_size = Vector2(52, 52)  # old was 42×40 → bigger
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.add_theme_font_size_override("font_size", 19)
+	button.add_theme_font_size_override("font_size", 22)  # old 19
 	button.add_theme_color_override("font_color", T.TEXT_MAIN)
 	button.add_theme_stylebox_override("normal", T.button_textured("normal"))
 	button.add_theme_stylebox_override("hover", T.button_textured("hover"))
 	button.add_theme_stylebox_override("pressed", T.button_textured("pressed"))
+	if not icon_id.is_empty():
+		var tex := _load_topbar_icon(icon_id)
+		if tex is Texture2D:
+			button.icon = tex
+			button.expand_icon = true
+			button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return button
+
+
+func _load_topbar_icon(icon_id: String) -> Texture2D:
+	var path := "%s%s.png" % [TOPBAR_ICON_DIR, icon_id]
+	if ResourceLoader.exists(path):
+		var tex = load(path)
+		if tex is Texture2D:
+			return tex
+	return null
 
 
 # ─── State refresh ──────────────────────────────────────────────────────────
@@ -291,7 +435,7 @@ func _make_relic_medallion(relic_id: String) -> Button:
 
 	var chip := Button.new()
 	chip.text = _short_label(title)
-	chip.custom_minimum_size = Vector2(40, 40)
+	chip.custom_minimum_size = Vector2(48, 48)  # old was 40 → scale up with bar
 	chip.focus_mode = Control.FOCUS_NONE
 	chip.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	# StS-style: bare relic art, no frame / background box. The tooltip + the
@@ -301,7 +445,7 @@ func _make_relic_medallion(relic_id: String) -> Button:
 	chip.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
 	chip.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	chip.add_theme_color_override("font_color", T.TEXT_MAIN)
-	chip.add_theme_font_size_override("font_size", 18)
+	chip.add_theme_font_size_override("font_size", 20)  # old 18
 
 	var icon_path := str(data.get("icon", ""))
 	if not icon_path.is_empty():
