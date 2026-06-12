@@ -1,5 +1,5 @@
 ## Run-deck / gem-socket screen. Renders every card in RunManager.player_deck with
-## its 2 gem sockets, plus a gem-inventory panel. Click a gem in the inventory to
+## its 1 gem socket, plus a gem-inventory panel. Click a gem in the inventory to
 ## select it, then click an empty socket on a card to insert it (locked after —
 ## gems cannot be removed this run). Card upgrades were replaced by gems.
 ## Opened from the map [📚 DECK] button and the rest-stop "Socket Gems" button.
@@ -196,7 +196,7 @@ func _gem_desc(gem_id: String) -> String:
 	return Settings.t("GEM_%s_DESC" % gem_id, "")
 
 
-## One deck card: its art + a row of 2 socket widgets underneath.
+## One deck card: its art + a row of 1 socket widget underneath.
 func _make_card_slot(entry: Dictionary) -> Control:
 	var card_id: String = str(entry.get("card_id", ""))
 	var uid: String = str(entry.get("uid", ""))
@@ -226,12 +226,12 @@ func _make_card_slot(entry: Dictionary) -> Control:
 		art_holder.add_child(card)
 	wrapper.add_child(art_holder)
 
-	# 2 socket widgets
+	# 1 socket widget
 	var sockets := HBoxContainer.new()
 	sockets.alignment = BoxContainer.ALIGNMENT_CENTER
 	sockets.add_theme_constant_override("separation", 6)
 	wrapper.add_child(sockets)
-	for slot in range(2):
+	for slot in range(1):
 		sockets.add_child(_make_socket(uid, gems, slot))
 
 	return wrapper

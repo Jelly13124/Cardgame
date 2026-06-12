@@ -71,7 +71,7 @@ The old root-level `skills/` workflow docs have been removed. Project convention
 
 ### 💎 Gem / Socket System (replaced card upgrades)
 *   **Gem data**: `run_system/data/gems/{gem_id}.json` — run-scoped socketables; `effects[]` reuse the card effect vocabulary and fire when the socketed card is played. Schema in `data_validator.gd` (`validate_gem`).
-*   **Socket screen**: `run_system/ui/run_deck_viewer_modal.gd` — each deck card shows its 2 sockets; insert a gem from `RunManager.gem_inventory`, **locked after** (no removal this run).
+*   **Socket screen**: `run_system/ui/run_deck_viewer_modal.gd` — each deck card shows its 1 socket; insert a gem from `RunManager.gem_inventory`, **locked after** (no removal this run).
 *   **Mechanic**: `player_deck` entries carry a `gems: []` array; battle cards get a `gems` meta (`deck_manager.gd`); `combat_engine.resolve_card_effect` runs each gem's effects after the card's own. Card upgrades (`_plus`) were fully removed.
 
 ### 🎒 Equipment System

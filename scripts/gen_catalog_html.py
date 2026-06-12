@@ -308,7 +308,7 @@ def build_gems():
             f'<div class="desc">{esc(desc)}</div><ul class="eff">{eff}</ul></div>')
     body = section("Gems 宝石", len(cards), "".join(cards))
     page("gems.html", "Gems · 宝石",
-         "Run-scoped socketable gems — slot up to 2 into a card; effects fire when the card is played",
+         "Run-scoped socketable gems — slot 1 into a card; effects fire when the card is played",
          "", body, len(items))
 
 
