@@ -12,8 +12,8 @@ const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
 const DEFAULT_HERO_ID := "cowboy_bill"
 const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 const BUILDING_SCREEN_BASE = preload("res://run_system/ui/buildings/building_screen_base.gd")
-## Building selector order + per-building placeholder accent (Codex art swaps the
-## tile sprite later; the accent keeps the 5 tiles visually distinct meanwhile).
+## Building selector order + per-building accent color. The tile art lives under
+## run_system/assets/images/home/buildings/.
 const BUILDING_ORDER := ["forge", "clinic", "market", "outpost", "warehouse"]
 ## Entry-screen arrangement: two flank columns + a centre column. The centre
 ## column stacks the Warehouse tile above the START "door", so the layout reads
@@ -21,6 +21,7 @@ const BUILDING_ORDER := ["forge", "clinic", "market", "outpost", "warehouse"]
 ## naturally the thing you touch last before leaving).
 const LEFT_BUILDINGS := ["forge", "clinic"]
 const RIGHT_BUILDINGS := ["market", "outpost"]
+const BUILDING_IMAGE_DIR := "res://run_system/assets/images/home/buildings_runtime/"
 const BUILDING_ACCENTS := {
 	"forge": Color(0.92, 0.55, 0.32),
 	"clinic": Color(0.46, 0.86, 0.78),
@@ -28,11 +29,13 @@ const BUILDING_ACCENTS := {
 	"outpost": Color(0.62, 0.78, 0.96),
 	"warehouse": Color(0.78, 0.72, 0.60),
 }
-const HOME_BACKGROUND_PATH := "res://run_system/assets/images/home/home_base_bg.png"
+const HOME_BACKGROUND_PATH := "res://run_system/assets/images/home/home_base_empty_bg.png"
+const MAP_CANVAS_SIZE := Vector2(1920, 1080)
 
 var _core_label: Label
 var _caps_label: Label
 var _scrap_label: Label
+var _difficulty_buttons: Array[Button] = []
 ## Three-column building area (left flank / centre door / right flank), rebuilt
 ## on buildings_changed.
 var _building_area: HBoxContainer
@@ -53,6 +56,13 @@ func _ready() -> void:
 
 
 func _build() -> void:
+	_add_background()
+	_add_building_sprites()
+	_add_depart_controls()
+	_add_currency_hud()
+
+
+func _build_legacy() -> void:
 	_add_background()
 
 	var margin := MarginContainer.new()
@@ -131,7 +141,7 @@ func _add_background() -> void:
 	if ResourceLoader.exists(HOME_BACKGROUND_PATH):
 		var bg := TextureRect.new()
 		bg.texture = load(HOME_BACKGROUND_PATH)
-		bg.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		bg.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -144,10 +154,324 @@ func _add_background() -> void:
 		add_child(bg)
 
 	var shade := ColorRect.new()
-	shade.color = Color(0.0, 0.0, 0.0, 0.36)
+	shade.color = Color(0.0, 0.0, 0.0, 0.0)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(shade)
+
+
+func _add_currency_hud() -> void:
+	var row := HBoxContainer.new()
+	row.name = "CurrencyHud"
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 12)
+	row.anchor_left = 0.0
+	row.anchor_top = 0.0
+	row.anchor_right = 0.0
+	row.anchor_bottom = 0.0
+	row.offset_left = 22
+	row.offset_top = 28
+	row.offset_right = 530
+	row.offset_bottom = 92
+	add_child(row)
+
+	_core_label = _make_currency_chip(row, "core", Color(0.28, 0.90, 1.0))
+	_caps_label = _make_currency_chip(row, "caps", Color(1.0, 0.62, 0.34))
+	_scrap_label = _make_currency_chip(row, "scrap", Color(0.86, 0.80, 0.62))
+	_refresh_core()
+	_refresh_caps()
+	_refresh_scrap()
+
+
+func _add_building_sprites() -> void:
+	_add_interactive_building(
+		"forge",
+		Rect2(55, 300, 360, 360),
+		tr("UI_BUILD_FORGE_NAME"),
+		func() -> void: _open_building_screen("forge")
+	)
+	_add_interactive_building(
+		"clinic",
+		Rect2(410, 300, 360, 360),
+		tr("UI_BUILD_CLINIC_NAME"),
+		func() -> void: _open_building_screen("clinic")
+	)
+	_add_interactive_building(
+		"market",
+		Rect2(780, 300, 360, 360),
+		tr("UI_BUILD_MARKET_NAME"),
+		func() -> void: _open_building_screen("market")
+	)
+	_add_interactive_building(
+		"outpost",
+		Rect2(1145, 300, 360, 360),
+		tr("UI_BUILD_OUTPOST_NAME"),
+		func() -> void: _open_building_screen("outpost")
+	)
+	_add_interactive_building(
+		"warehouse",
+		Rect2(1510, 300, 360, 360),
+		tr("UI_BUILD_WAREHOUSE_NAME"),
+		func() -> void: _open_building_screen("warehouse")
+	)
+
+	_add_building_plaque("forge", Rect2(128, 218, 215, 78), tr("UI_BUILD_FORGE_NAME"))
+	_add_building_plaque("clinic", Rect2(482, 218, 215, 78), tr("UI_BUILD_CLINIC_NAME"))
+	_add_building_plaque("market", Rect2(852, 218, 215, 78), tr("UI_BUILD_MARKET_NAME"))
+	_add_building_plaque("outpost", Rect2(1218, 218, 215, 78), tr("UI_BUILD_OUTPOST_NAME"))
+	_add_building_plaque("warehouse", Rect2(1582, 218, 215, 78), tr("UI_BUILD_WAREHOUSE_NAME"))
+
+
+func _add_depart_controls() -> void:
+	var button := Button.new()
+	button.name = "StartRunButton"
+	button.text = TranslationServer.translate("UI_HOME_START_RUN")
+	button.custom_minimum_size = Vector2(320, 62)
+	button.add_theme_font_size_override("font_size", 26)
+	T.apply_button_theme(button)
+	button.add_theme_color_override("font_color", Color(1.0, 0.88, 0.50))
+	button.add_theme_color_override("font_hover_color", Color(1.0, 0.96, 0.70))
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.pressed.connect(_on_start_pressed)
+	_set_map_rect(button, Rect2(800, 812, 320, 64))
+	add_child(button)
+
+	_add_difficulty_bar(Rect2(650, 886, 620, 82))
+
+
+func _add_difficulty_bar(rect: Rect2) -> void:
+	var panel := PanelContainer.new()
+	panel.name = "DifficultyBar"
+	panel.add_theme_stylebox_override(
+		"panel",
+		T.panel_with_shadow(Color(0.085, 0.055, 0.035, 0.94), Color(0.78, 0.45, 0.18), 6, 3)
+	)
+	_set_map_rect(panel, rect)
+	add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	panel.add_child(margin)
+
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 10)
+	margin.add_child(row)
+
+	var title := Label.new()
+	title.custom_minimum_size = Vector2(72, 0)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.text = tr("UI_OUTPOST_SECT_DIFFICULTY")
+	_style_readable_label(title, 20, Color(1.0, 0.86, 0.54), 3)
+	row.add_child(title)
+
+	_difficulty_buttons.clear()
+	var max_unlocked: int = clampi(int(MetaProgress.max_ascension), 0, 5)
+	var pending: int = RunManager.pending_ascension if RunManager.pending_ascension >= 0 else 0
+	var current: int = clampi(pending, 0, max_unlocked)
+	RunManager.pending_ascension = current
+	for value in range(6):
+		var btn := Button.new()
+		btn.toggle_mode = true
+		btn.text = "A%d" % value
+		btn.custom_minimum_size = Vector2(58, 42)
+		btn.add_theme_font_size_override("font_size", 17)
+		btn.disabled = value > max_unlocked
+		btn.button_pressed = value == current
+		_style_difficulty_button(btn, btn.button_pressed, btn.disabled)
+		var asc := value
+		btn.pressed.connect(func() -> void: _on_home_difficulty_chosen(asc))
+		row.add_child(btn)
+		_difficulty_buttons.append(btn)
+
+
+func _on_home_difficulty_chosen(value: int) -> void:
+	var max_unlocked: int = clampi(int(MetaProgress.max_ascension), 0, 5)
+	RunManager.pending_ascension = clampi(value, 0, max_unlocked)
+	for i in range(_difficulty_buttons.size()):
+		var btn := _difficulty_buttons[i]
+		if is_instance_valid(btn):
+			btn.button_pressed = i == RunManager.pending_ascension
+			_style_difficulty_button(btn, btn.button_pressed, btn.disabled)
+
+
+func _style_difficulty_button(button: Button, selected: bool, disabled: bool) -> void:
+	var bg := Color(0.13, 0.10, 0.075, 0.96)
+	var border := Color(0.55, 0.36, 0.18, 1.0)
+	var text := Color(0.86, 0.76, 0.58, 1.0)
+	if selected:
+		bg = Color(0.30, 0.17, 0.065, 0.98)
+		border = Color(1.0, 0.72, 0.28, 1.0)
+		text = Color(1.0, 0.90, 0.55, 1.0)
+	elif disabled:
+		bg = Color(0.07, 0.06, 0.052, 0.78)
+		border = Color(0.25, 0.20, 0.16, 0.75)
+		text = Color(0.42, 0.36, 0.28, 0.85)
+	button.add_theme_stylebox_override("normal", T.rounded_button(bg, border, 5, 2))
+	button.add_theme_stylebox_override(
+		"hover", T.rounded_button(bg.lightened(0.10), Color(0.35, 0.88, 1.0, 1.0), 5, 2)
+	)
+	button.add_theme_stylebox_override("pressed", T.rounded_button(bg.darkened(0.10), border, 5, 2))
+	button.add_theme_stylebox_override("disabled", T.rounded_button(bg, border, 5, 2))
+	button.add_theme_color_override("font_color", text)
+	button.add_theme_color_override("font_hover_color", text.lightened(0.15))
+	button.add_theme_color_override("font_pressed_color", text)
+	button.add_theme_color_override("font_disabled_color", text)
+	button.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.85))
+	button.add_theme_constant_override("outline_size", 1)
+
+
+func _add_interactive_building(
+	asset_id: String, rect: Rect2, tooltip: String, callback: Callable
+) -> void:
+	var normal_tex := _load_home_texture("%s%s.png" % [BUILDING_IMAGE_DIR, asset_id])
+	var hover_tex := _load_home_texture("%s%s_hover.png" % [BUILDING_IMAGE_DIR, asset_id])
+	var pressed_tex := _load_home_texture("%s%s_pressed.png" % [BUILDING_IMAGE_DIR, asset_id])
+	var button := TextureButton.new()
+	button.name = "Building_%s" % asset_id
+	button.texture_normal = normal_tex
+	button.texture_hover = hover_tex if hover_tex is Texture2D else normal_tex
+	button.texture_pressed = pressed_tex if pressed_tex is Texture2D else button.texture_hover
+	button.texture_click_mask = _make_click_mask(normal_tex)
+	button.ignore_texture_size = true
+	button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	button.tooltip_text = tooltip
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_set_map_rect(button, rect)
+	button.pressed.connect(callback)
+	add_child(button)
+
+
+func _make_click_mask(texture: Texture2D) -> BitMap:
+	if not texture:
+		return null
+	var image := texture.get_image()
+	if image == null:
+		return null
+	var mask := BitMap.new()
+	mask.create_from_image_alpha(image, 0.1)
+	return mask
+
+
+func _add_building_plaque(building_id: String, rect: Rect2, title: String) -> void:
+	var tier := 1
+	if building_id != "depart_gate":
+		tier = MetaProgress.get_building_tier(building_id)
+	var accent: Color = BUILDING_ACCENTS.get(building_id, Color(0.86, 0.60, 0.30))
+	var panel := PanelContainer.new()
+	panel.name = "Plaque_%s" % building_id
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(Color(0.075, 0.050, 0.034, 0.94), accent.darkened(0.10), 6, 2)
+	)
+	_set_map_rect(panel, rect)
+	add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 10)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_top", 7)
+	margin.add_theme_constant_override("margin_bottom", 7)
+	panel.add_child(margin)
+
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 8)
+	margin.add_child(row)
+
+	var title_label := Label.new()
+	title_label.text = title
+	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	title_label.add_theme_font_size_override("font_size", 22)
+	title_label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.54))
+	title_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	title_label.add_theme_constant_override("outline_size", 3)
+	row.add_child(title_label)
+
+	if building_id != "depart_gate":
+		var tier_badge := PanelContainer.new()
+		tier_badge.custom_minimum_size = Vector2(52, 44)
+		tier_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tier_badge.add_theme_stylebox_override(
+			"panel", T.rounded_button(Color(0.13, 0.095, 0.055, 0.96), accent.lightened(0.10), 5, 2)
+		)
+		row.add_child(tier_badge)
+
+		var badge_margin := MarginContainer.new()
+		badge_margin.add_theme_constant_override("margin_left", 4)
+		badge_margin.add_theme_constant_override("margin_right", 4)
+		badge_margin.add_theme_constant_override("margin_top", 3)
+		badge_margin.add_theme_constant_override("margin_bottom", 3)
+		tier_badge.add_child(badge_margin)
+
+		var tier_label := Label.new()
+		tier_label.text = "T%d" % tier
+		tier_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		tier_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		tier_label.add_theme_font_size_override("font_size", 19)
+		tier_label.add_theme_color_override("font_color", Color(0.82, 1.0, 0.72))
+		tier_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+		tier_label.add_theme_constant_override("outline_size", 3)
+		badge_margin.add_child(tier_label)
+
+
+func _set_map_rect(control: Control, rect: Rect2) -> void:
+	control.anchor_left = rect.position.x / MAP_CANVAS_SIZE.x
+	control.anchor_top = rect.position.y / MAP_CANVAS_SIZE.y
+	control.anchor_right = (rect.position.x + rect.size.x) / MAP_CANVAS_SIZE.x
+	control.anchor_bottom = (rect.position.y + rect.size.y) / MAP_CANVAS_SIZE.y
+	control.offset_left = 0
+	control.offset_top = 0
+	control.offset_right = 0
+	control.offset_bottom = 0
+
+
+func _load_home_texture(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var tex = load(path)
+		if tex is Texture2D:
+			return tex
+	return null
+
+
+## Number-only currency chip. The Codex currency icons (core/caps/scrap.png)
+## shipped with placeholder numbers BAKED INTO the art (caps="1", scrap="232"),
+## which read as a duplicated number beside the live value. Icons are disabled
+## until number-free art is delivered — see docs/asset-spec-currency-icons.md.
+## The accent border color-codes each currency in the icons' absence.
+func _make_currency_chip(parent: Control, _icon_id: String, accent: Color) -> Label:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(124, 64)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(Color(0.075, 0.058, 0.046, 0.96), accent.darkened(0.12), 6, 2)
+	)
+	parent.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_bottom", 4)
+	panel.add_child(margin)
+
+	var label := Label.new()
+	label.text = "0"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 28)
+	label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.70))
+	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.92))
+	label.add_theme_constant_override("outline_size", 3)
+	margin.add_child(label)
+	return label
 
 
 func _style_readable_label(label: Label, font_size: int, color: Color, outline_size: int) -> void:
@@ -207,17 +531,17 @@ func _open_settings() -> void:
 
 func _refresh_core() -> void:
 	if _core_label:
-		_core_label.text = tr("UI_HOME_CORE").format({"n": MetaProgress.core})
+		_core_label.text = str(MetaProgress.core)
 
 
 func _refresh_caps() -> void:
 	if _caps_label:
-		_caps_label.text = tr("UI_HOME_CAPS").format({"n": MetaProgress.caps})
+		_caps_label.text = str(MetaProgress.caps)
 
 
 func _refresh_scrap() -> void:
 	if _scrap_label:
-		_scrap_label.text = tr("UI_HOME_SCRAP").format({"n": MetaProgress.scrap})
+		_scrap_label.text = str(MetaProgress.scrap)
 
 
 ## Rebuild the three-column building area: left flank (Forge/Clinic), centre
@@ -294,8 +618,7 @@ func _make_building_tile(building_id: String) -> Control:
 	var accent: Color = BUILDING_ACCENTS.get(building_id, Color(0.86, 0.78, 0.52))
 	var tier := MetaProgress.get_building_tier(building_id)
 
-	# Big, intentional tile: accent border + a bold accent header strip, a large
-	# placeholder sprite well (Codex art swaps later), the name, and a lock/tier badge.
+	# Big, intentional tile: accent border, generated building art, and lock/tier badge.
 	var tile := PanelContainer.new()
 	tile.custom_minimum_size = Vector2(300, 220)
 	var border := accent
@@ -337,13 +660,16 @@ func _make_building_tile(building_id: String) -> Control:
 	body.add_theme_constant_override("separation", 10)
 	body_margin.add_child(body)
 
-	# Placeholder "sprite" well: a large flat accent-tinted block (Codex art swaps this).
-	var accent_block := ColorRect.new()
-	accent_block.color = Color(accent.r * 0.55, accent.g * 0.55, accent.b * 0.55, 1.0)
-	accent_block.custom_minimum_size = Vector2(0, 96)
-	accent_block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	accent_block.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_child(accent_block)
+	var art := TextureRect.new()
+	art.texture = _load_building_texture(building_id)
+	art.custom_minimum_size = Vector2(0, 112)
+	art.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	art.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	body.add_child(art)
 
 	var badge := Label.new()
 	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -361,6 +687,15 @@ func _make_building_tile(building_id: String) -> Control:
 				_open_building_screen(building_id)
 	)
 	return tile
+
+
+func _load_building_texture(building_id: String) -> Texture2D:
+	var path := "%s%s.png" % [BUILDING_IMAGE_DIR, building_id]
+	if ResourceLoader.exists(path):
+		var tex = load(path)
+		if tex is Texture2D:
+			return tex
+	return null
 
 
 ## Open a building's screen as a full-rect overlay child. Phase 1 swaps in
