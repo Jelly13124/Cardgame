@@ -230,8 +230,9 @@ func _input(event: InputEvent) -> void:
 ## of the opaque page painted on top — without this gate, clicks pass through to
 ## map nodes (the 误触 bug).
 func _is_page_open() -> bool:
-	return get_node_or_null("EquipmentPanel") != null \
-		or get_node_or_null("RunDeckViewerModal") != null
+	return (
+		get_node_or_null("EquipmentPanel") != null or get_node_or_null("RunDeckViewerModal") != null
+	)
 
 
 func _on_node_clicked(node: Dictionary) -> void:
@@ -587,6 +588,7 @@ func _open_equipment_panel() -> void:
 	var panel = EQUIPMENT_PANEL_SCRIPT.new()
 	panel.name = "EquipmentPanel"
 	add_child(panel)
+	_hide_top_bar_for_page(panel)
 
 
 func _open_run_deck_viewer() -> void:
@@ -597,6 +599,25 @@ func _open_run_deck_viewer() -> void:
 	var modal = RUN_DECK_VIEWER_MODAL.new()
 	modal.name = "RunDeckViewerModal"
 	add_child(modal)
+	_hide_top_bar_for_page(modal)
+
+
+## A full-screen page (character / run-deck) sits at map_scene's canvas layer,
+## BELOW the TopBarLayer (CanvasLayer, layer 50) — so the top bar (incl. its relic
+## shelf) bled over the page and doubled the relics. Hide the bar while a page is
+## up; restore it when the page closes (X / ESC / toggle) via tree_exited. Capture
+## the layer node directly + guard it, so a scene-change teardown can't deref a
+## freed map_scene.
+func _hide_top_bar_for_page(page: Node) -> void:
+	var bar_layer := get_node_or_null("TopBarLayer")
+	if not bar_layer:
+		return
+	bar_layer.visible = false
+	page.tree_exited.connect(
+		func():
+			if is_instance_valid(bar_layer):
+				bar_layer.visible = true
+	)
 
 
 ## Treasure equipment drop: 70% uncommon / 30% rare. Drops straight into the
