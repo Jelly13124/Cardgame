@@ -38,9 +38,6 @@ const RARITY_COLORS: Dictionary = {
 # Reference to the single gem socket node (created in _ready)
 var _gem_socket_node: Control = null
 
-# Reference to the rarity border panel (created in _ready, sits behind art frame)
-var _rarity_border_node: Panel = null
-
 
 func _ready() -> void:
 	super._ready()
@@ -95,10 +92,7 @@ func _ready() -> void:
 
 	pivot_offset = size / 2.0  # Ensure we scale from center
 
-	# ── Rarity border ring (behind ArtFrameTexture, over ArtBackground) ──────
-	_build_rarity_border()
-
-	# ── Gem socket (single slot on right edge, mid-height) ────────────────────
+	# ── Gem socket (single slot, top-right corner) ────────────────────────────
 	_build_gem_socket()
 
 
@@ -209,8 +203,6 @@ func set_card_data(data: Dictionary) -> void:
 		art_frame_texture.texture = _rarity_frames.get("common")
 	art_frame_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	art_frame_texture.modulate = RARITY_COLORS.get(rarity, RARITY_COLORS["common"])
-	# Update the dedicated rarity border ring for maximum visibility.
-	_update_rarity_border(rarity)
 
 	# ── Gem socket refresh ────────────────────────────────────────────────────
 	_refresh_gem_socket()
@@ -547,77 +539,25 @@ func _start_glow_pulse() -> void:
 	_glow_tween.tween_property(playable_glow, "modulate:a", 1.0, 0.8).set_trans(Tween.TRANS_SINE)
 
 
-# ─── Rarity Border ───────────────────────────────────────────────────────────
-
-
-## Creates a Panel that sits ON TOP of ArtFrameTexture to act as a vivid
-## coloured ring indicating rarity. Sized to match the enlarged ArtFrameTexture
-## rect (offsets 10/40/198/181). Common gets low alpha; uncommon/rare are vivid.
-func _build_rarity_border() -> void:
-	var front_face = get_node_or_null("FrontFace")
-	if not is_instance_valid(front_face):
-		return
-	var border = Panel.new()
-	border.name = "RarityBorder"
-	# Same rect as the enlarged ArtFrameTexture so the border frames the art area.
-	border.position = Vector2(10.0, 40.0)
-	border.size = Vector2(188.0, 141.0)
-	border.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0, 0, 0, 0)  # transparent fill — only border shows
-	style.border_width_left = 5
-	style.border_width_top = 5
-	style.border_width_right = 5
-	style.border_width_bottom = 5
-	style.border_color = Color(0.78, 0.80, 0.84, 0.0)  # start transparent (common)
-	style.corner_radius_top_left = 5
-	style.corner_radius_top_right = 5
-	style.corner_radius_bottom_right = 5
-	style.corner_radius_bottom_left = 5
-	border.add_theme_stylebox_override("panel", style)
-	front_face.add_child(border)
-	# Place AFTER ArtFrameTexture so it renders on top of it.
-	var art_frame_node = front_face.get_node_or_null("ArtFrameTexture")
-	var insert_idx = art_frame_node.get_index() + 1 if is_instance_valid(art_frame_node) else -1
-	if insert_idx >= 0 and insert_idx < front_face.get_child_count():
-		front_face.move_child(border, insert_idx)
-	_rarity_border_node = border
-
-
-## Update the rarity border color. Called from set_card_data().
-func _update_rarity_border(rarity: String) -> void:
-	if not is_instance_valid(_rarity_border_node):
-		return
-	var style: StyleBoxFlat = _rarity_border_node.get_theme_stylebox("panel") as StyleBoxFlat
-	if not is_instance_valid(style):
-		return
-	var col: Color = RARITY_COLORS.get(rarity, RARITY_COLORS["common"])
-	if rarity == "common":
-		# Common: keep the border but at low alpha — barely noticeable.
-		style.border_color = Color(col.r, col.g, col.b, 0.45)
-	else:
-		# Uncommon / Rare: fully opaque vivid border.
-		style.border_color = Color(col.r, col.g, col.b, 1.0)
-
-
 # ─── Gem Socket ───────────────────────────────────────────────────────────────
 
 
 ## Build the single gem socket Control and attach it to FrontFace.
-## Called once from _ready() — creates a small Panel (30×30) anchored to the
-## right edge of the card at mid-art-height so it sits outside the art frame
-## without covering the cost badge.
+## Called once from _ready() — creates a small Panel (30×30) in the TOP-RIGHT
+## corner, mirroring the top-left cost badge, so the two top corners are symmetric.
 func _build_gem_socket() -> void:
 	var front_face = get_node_or_null("FrontFace")
 	if not is_instance_valid(front_face):
 		return
-	# Container panel for the socket (right edge, vertically centred on art area)
+	# Container panel for the socket — TOP-RIGHT corner, mirroring the top-left
+	# cost badge (card width ≈ 208).
 	var socket = Panel.new()
 	socket.name = "GemSocket"
+	# Mirror the top-left cost badge (left=14.3, top=11.7, 31.8×31.8) on the right
+	# edge so both top corners are symmetric and sit inside the card border.
 	socket.custom_minimum_size = Vector2(30, 30)
 	socket.size = Vector2(30, 30)
-	# Position: right edge of card (card width=208), art vertical centre ≈ 111px
-	socket.position = Vector2(180, 96)
+	socket.position = Vector2(164, 12)
 	socket.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# Style: dark semi-transparent rounded background
 	var style = StyleBoxFlat.new()
