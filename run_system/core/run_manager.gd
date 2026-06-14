@@ -124,6 +124,10 @@ var level: int = 1
 var pending_attr_points: int = 0
 const XP_PER_KILL := {"enemy": 6, "elite": 14, "boss": 30}
 
+## Wall-clock tick (msec) when the current run started — drives the top-bar run
+## timer (StS-style clock). 0 = no run started this session.
+var run_started_msec: int = 0
+
 
 ## XP needed to go from `lvl` to `lvl+1`. Gentle curve → ~1 level per 1-2 fights.
 func xp_to_next(lvl: int) -> int:
@@ -248,6 +252,21 @@ const FLOORS_PER_ACT: int = 12
 ## Legacy alias — some pre-act code paths still read BOSS_ROSTER as a fallback.
 const BOSS_ROSTER: Array = ["junkyard_tyrant"]
 
+## ── DEMO BUILD ────────────────────────────────────────────────────────────
+## Flip DEMO_BUILD to false to restore the full 3-act, all-heroes game. Every
+## demo restriction routes through this one toggle so the full game is one edit
+## away. acts_total() is the demo-aware cap used by is_final_act()/advance_act();
+## DEMO_ALLOWED_HEROES filters the Warehouse hero picker.
+const DEMO_BUILD: bool = true
+const DEMO_MAX_ACTS: int = 1
+const DEMO_ALLOWED_HEROES: Array[String] = ["cowboy_bill"]
+
+
+## Demo-aware act count. The full game has ACTS_TOTAL acts; the demo caps at
+## DEMO_MAX_ACTS so the Act-1 boss wins the run (no extract-vs-push choice).
+func acts_total() -> int:
+	return DEMO_MAX_ACTS if DEMO_BUILD else ACTS_TOTAL
+
 
 ## True when a floor index is the boss floor — always the top floor of an act.
 func is_boss_floor(floor_idx: int) -> bool:
@@ -262,13 +281,13 @@ func current_act_boss() -> String:
 
 ## True when the player is on the final act (its boss wins the run — no extract).
 func is_final_act() -> bool:
-	return current_act >= ACTS_TOTAL
+	return current_act >= acts_total()
 
 
 ## Advance to the next act: bump current_act, reset map position, and generate a
 ## fresh map for the new act. Returns false (no-op) if already on the final act.
 func advance_act() -> bool:
-	if current_act >= ACTS_TOTAL:
+	if current_act >= acts_total():
 		return false
 	current_act += 1
 	current_floor = 0
@@ -654,6 +673,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	xp = 0
 	level = 1
 	pending_attr_points = 0
+	run_started_msec = Time.get_ticks_msec()
 	# Base deck = explicit `starter_deck` arg, else hero JSON's starter_deck, else
 	# DEFAULT_STARTER_DECK. A persistent per-hero starter-deck override (outpost deck
 	# editor) takes precedence over ALL of the above when set (it already encodes the
