@@ -48,10 +48,10 @@ color = Color(0.941176, 0.776471, 0.435294, 1)
 [node name="ArtContainer" type="Control" parent="FrontFace"]
 clip_contents = true
 layout_mode = 0
-offset_left = 22.6
-offset_top = 52.7
-offset_right = 185.3
-offset_bottom = 168.1
+offset_left = 16.8
+offset_top = 46.8
+offset_right = 191.2
+offset_bottom = 173.9
 
 [node name="ArtTexture" type="TextureRect" parent="FrontFace/ArtContainer"]
 layout_mode = 1
