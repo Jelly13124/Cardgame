@@ -34,6 +34,9 @@ var caps_perk_levels: Dictionary = {}
 var run_history: Array = []
 ## Highest difficulty completed. 0 means no ascension cleared.
 var max_ascension: int = 0
+## True once the player has seen the first-battle tutorial tips. Persisted so the
+## tips show exactly once across all runs. Set via mark_tutorial_seen().
+var tutorial_seen: bool = false
 ## Card ids unlocked beyond the INITIAL_CARD_POOL (added via the Market screen's
 ## per-card unlock, MetaProgress.unlock_card).
 var unlocked_cards: Array[String] = []
@@ -693,6 +696,15 @@ func reset_all() -> void:
 	emit_signal("buildings_changed")
 
 
+## Mark the first-battle tutorial as seen and persist, so the tips never show
+## again. Idempotent — a no-op once already set.
+func mark_tutorial_seen() -> void:
+	if tutorial_seen:
+		return
+	tutorial_seen = true
+	save_progress()
+
+
 func save_progress() -> void:
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if not f:
@@ -712,6 +724,7 @@ func save_progress() -> void:
 		"starter_deck_override": starter_deck_override,
 		"stash": stash,
 		"buildings": buildings,
+		"tutorial_seen": tutorial_seen,
 	}
 	f.store_string(JSON.stringify(payload, "  "))
 	f.close()
@@ -748,6 +761,7 @@ func load_progress() -> void:
 	if typeof(raw_history) == TYPE_ARRAY:
 		run_history = raw_history
 	max_ascension = clampi(int(parsed.get("max_ascension", 0)), 0, ASCENSION_CAP)
+	tutorial_seen = bool(parsed.get("tutorial_seen", false))
 	var raw_unlocked = parsed.get("unlocked_cards", [])
 	if typeof(raw_unlocked) == TYPE_ARRAY:
 		unlocked_cards.clear()
