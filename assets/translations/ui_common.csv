@@ -18,3 +18,33 @@ UI_COMMON_DECK_EMPTY,(Deck is empty.),（牌组为空。）
 UI_COMMON_DECK_GEM_HINT,Select a gem then click an empty socket to insert it (locked after).,选择一颗宝石后点击空插槽嵌入（嵌入后锁定）。
 UI_COMMON_GEM_INVENTORY,Gem Inventory,宝石库存
 UI_COMMON_GEM_NONE,No gems yet — defeat elites to find them.,暂无宝石 —— 击败精英可获得。
+MENU_TITLE,Wasteland Salvage,废土拾荒
+MENU_SUBTITLE,DEMO,试玩版
+MENU_PLAY,Play,开始游戏
+MENU_CONTINUE,Continue,继续游戏
+MENU_HOWTO,How to Play,玩法说明
+MENU_SETTINGS,Settings,设置
+MENU_QUIT,Quit,退出
+MENU_VERSION,Demo v0.1,试玩版 v0.1
+RESULT_DEFEAT_TITLE,You Died,你死了
+RESULT_DEFEAT_BODY,"Your run ends here. The wasteland claims another salvager.","你的旅程到此为止。废土又吞噬了一名拾荒者。"
+RESULT_DEMO_TITLE,Demo Complete!,试玩通关!
+RESULT_DEMO_BODY,"You cleared the Act 1 boss. Thanks for playing the demo!","你击败了第一幕的 Boss。感谢试玩!"
+RESULT_WISHLIST,"Wishlist the full game on Steam to play all three acts.","在 Steam 上将完整版加入愿望单,体验全部三幕。"
+RESULT_SUMMARY,Hero: {hero}   Act {act}   Floor {floor},英雄:{hero}   第 {act} 幕   第 {floor} 层
+RESULT_BACK_TO_MENU,Back to Menu,返回主菜单
+RULES_TITLE,How to Play,玩法说明
+RULES_ENERGY,"Energy: you get 3 energy each turn. Playing a card costs energy; leftover energy is lost when the turn ends.","能量:每回合获得 3 点能量。打出卡牌消耗能量,回合结束时未用完的能量清零。"
+RULES_CARDS,"Cards: drag an ATTACK card onto an enemy to target it. Drag SKILL / ABILITY cards upward into the play zone.","卡牌:把攻击牌拖到敌人身上指定目标;把技能/能力牌向上拖入出牌区。"
+RULES_BLOCK,"Block: block absorbs incoming damage this turn, then resets to 0 at the start of your next turn.","格挡:格挡抵消本回合受到的伤害,下回合开始时归零。"
+RULES_ATTRS,"Attributes: Strength adds to all attack damage, Constitution to all block, plus Intelligence / Luck / Charm. Level up in a run to raise them.","属性:力量加成所有攻击伤害,体质加成所有格挡,另有智力/幸运/魅力。局内升级可提升属性。"
+RULES_GEMS,"Gems: socket a gem into a card outside combat to permanently enhance that card for the rest of the run.","宝石:战斗外把宝石嵌入卡牌,在本局剩余时间永久强化该卡。"
+RULES_BACKPACK,"Backpack: gold, Core and gear share 20 cells. If you die you lose everything except the first safe cells.","背包:金币、核心和装备共用 20 格。死亡会丢失除前几个安全格以外的所有东西。"
+RULES_INTENT,"Intents: the icon above each enemy shows what it will do next turn — plan your block and attacks around it.","意图:敌人头顶的图标显示它下回合的行动,据此安排你的格挡和进攻。"
+RULES_CLOSE,Close,关闭
+TIP_1,"Welcome! Spend energy (top-left) to play cards from your hand.","欢迎!消耗能量(左上角)打出手牌。"
+TIP_2,"Drag an ATTACK card onto an enemy to hit it. Drag SKILL cards upward to play them.","把攻击牌拖到敌人身上攻击;把技能牌向上拖出来打出。"
+TIP_3,"Each enemy's intent icon shows its next move. Gain Block to survive big hits.","每个敌人的意图图标显示它的下一步。获得格挡来扛住重击。"
+TIP_4,"Out of moves? Press END TURN. Good luck out there!","没法行动了?点击结束回合。祝你好运!"
+TIP_NEXT,Next,下一步
+TIP_DONE,Got it,明白了
