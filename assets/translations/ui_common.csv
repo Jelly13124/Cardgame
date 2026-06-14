@@ -26,6 +26,7 @@ MENU_HOWTO,How to Play,玩法说明
 MENU_SETTINGS,Settings,设置
 MENU_QUIT,Quit,退出
 MENU_VERSION,Demo v0.1,试玩版 v0.1
+SETTINGS_SAVE_QUIT,Save & Quit to Menu,保存并退出到主菜单
 RESULT_DEFEAT_TITLE,You Died,你死了
 RESULT_DEFEAT_BODY,"Your run ends here. The wasteland claims another salvager.","你的旅程到此为止。废土又吞噬了一名拾荒者。"
 RESULT_DEMO_TITLE,Demo Complete!,试玩通关!
