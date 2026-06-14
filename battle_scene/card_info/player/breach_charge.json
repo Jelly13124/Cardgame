@@ -5,13 +5,13 @@
 	"type": "attack",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Lose 1 HP. Deal 9 damage to ALL enemies.",
+	"description": "Lose 3 HP. Deal 9 damage to ALL enemies.",
 	"front_image": "player/strike.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "lose_hp",
-			"amount": 1
+			"amount": 3
 		},
 		{
 			"type": "deal_damage_all",
