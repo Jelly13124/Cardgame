@@ -47,6 +47,7 @@ const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 const LOOT_REWARD_SCENE = preload("res://run_system/ui/loot_reward.tscn")
 const EXTRACT_CHOICE_MODAL_SCRIPT = preload("res://run_system/ui/extract_choice_modal.gd")
 const RESULT_SCREEN_SCRIPT = preload("res://run_system/ui/result_screen.gd")
+const TUTORIAL_TIPS_SCRIPT = preload("res://battle_scene/ui/tutorial_tips.gd")
 const MAIN_MENU_PATH := "res://run_system/ui/main_menu.tscn"
 
 const BOSS_VICTORY_CORE := 130
@@ -118,6 +119,21 @@ func _ready():
 	_start_new_game()
 
 	set_process(true)
+
+	# First-battle tutorial tips — shown once ever, gated on MetaProgress.
+	_maybe_show_tutorial()
+
+
+## Show the first-battle tip sequence the very first time the player enters a
+## battle, then mark it seen so it never reappears.
+func _maybe_show_tutorial() -> void:
+	if MetaProgress.tutorial_seen:
+		return
+	MetaProgress.mark_tutorial_seen()
+	var canvas := CanvasLayer.new()
+	canvas.layer = 240
+	add_child(canvas)
+	canvas.add_child(TUTORIAL_TIPS_SCRIPT.new())
 
 
 # ─── Input ────────────────────────────────────────────────────────────────────
