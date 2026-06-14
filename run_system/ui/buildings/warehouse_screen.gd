@@ -137,6 +137,10 @@ func _build_hero_picker() -> Control:
 	flow.add_theme_constant_override("v_separation", 8)
 
 	for hero_id in _list_hero_ids():
+		# DEMO BUILD: only the allowed heroes appear in the picker (full roster
+		# returns when RunManager.DEMO_BUILD is flipped off).
+		if RunManager.DEMO_BUILD and not (hero_id in RunManager.DEMO_ALLOWED_HEROES):
+			continue
 		var data := _load_hero(hero_id)
 		var locked := _hero_locked(hero_id)
 		var english_name := str(data.get("name", hero_id))
