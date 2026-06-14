@@ -652,6 +652,8 @@ func get_default_starter_deck() -> Array[String]:
 ## home_base_scene._on_start_pressed) always wins. Both pending_* are consumed
 ## (reset) here.
 func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int = -1) -> void:
+	# A fresh run invalidates any prior in-run save (can't resume the old one).
+	clear_run_save()
 	# Fallback to the warehouse-screen intent only when no hero was passed.
 	if hero_id == "" and pending_hero_id != "":
 		hero_id = pending_hero_id
@@ -1765,6 +1767,9 @@ func _teardown_run(victory: bool, outcome: String, core_earned: int) -> void:
 		return
 	_settle_backpack(victory, outcome)
 	is_run_active = false
+	# The run is over (death / extract / victory): drop any resumable save so the
+	# title screen's Continue can't reload a finished run.
+	clear_run_save()
 	var summary := {
 		"hero_id": current_hero_id,
 		"floor": current_floor,
@@ -1774,6 +1779,153 @@ func _teardown_run(victory: bool, outcome: String, core_earned: int) -> void:
 		"timestamp": int(Time.get_unix_time_from_system()),
 	}
 	emit_signal("run_ended", victory, summary)
+
+
+# ─── In-run save / resume ──────────────────────────────────────────────────
+## Saved at map (non-battle) checkpoints; loaded by the title "Continue" button.
+## Quitting mid-battle loses that battle and resumes at the last map checkpoint.
+const RUN_SAVE_PATH := "user://run_save.json"
+
+
+## True when a resumable in-run save exists on disk.
+func has_run_save() -> bool:
+	return FileAccess.file_exists(RUN_SAVE_PATH)
+
+
+## Serialize the full run state to disk. Cheap to call repeatedly. Mirrors the
+## MetaProgress JSON pattern (FileAccess + JSON.stringify). No-op outside a run.
+func save_run() -> void:
+	if not is_run_active:
+		return
+	var payload := {
+		"v": 1,
+		"is_run_active": is_run_active,
+		"current_hero_id": current_hero_id,
+		"current_hero_data": current_hero_data,
+		"ascension": ascension,
+		"max_health": max_health,
+		"current_health": current_health,
+		"core": core,
+		"run_caps": _run_caps,
+		"current_floor": current_floor,
+		"current_act": current_act,
+		"player_deck": player_deck,
+		"equipped_items": equipped_items,
+		"backpack": backpack,
+		"relics": relics,
+		"gem_inventory": gem_inventory,
+		"xp": xp,
+		"level": level,
+		"pending_attr_points": pending_attr_points,
+		"run_started_msec": run_started_msec,
+		"base_attributes": base_attributes,
+		"player_attributes": player_attributes,
+		"current_encounter": current_encounter,
+		"last_battle_node_type": last_battle_node_type,
+		"map_data": map_data,
+		"current_node_id": current_node_id,
+		"visited_node_ids": visited_node_ids,
+	}
+	var f := FileAccess.open(RUN_SAVE_PATH, FileAccess.WRITE)
+	if f == null:
+		push_warning("RunManager: could not write %s" % RUN_SAVE_PATH)
+		return
+	f.store_string(JSON.stringify(payload, "  "))
+	f.close()
+
+
+## Load a saved run from disk into RunManager state. Returns false if no valid
+## save exists (state left untouched). Rebuilds derived caches (node index +
+## attributes). On a corrupt/partial save, returns false rather than half-loading.
+func load_run() -> bool:
+	if not FileAccess.file_exists(RUN_SAVE_PATH):
+		return false
+	var f := FileAccess.open(RUN_SAVE_PATH, FileAccess.READ)
+	if f == null:
+		return false
+	var data = JSON.parse_string(f.get_as_text())
+	f.close()
+	if typeof(data) != TYPE_DICTIONARY:
+		push_warning("RunManager: run save corrupt — ignoring")
+		return false
+	if not bool(data.get("is_run_active", false)):
+		return false
+
+	current_hero_id = str(data.get("current_hero_id", ""))
+	current_hero_data = data.get("current_hero_data", {})
+	ascension = int(data.get("ascension", 0))
+	max_health = int(data.get("max_health", 50))
+	current_health = int(data.get("current_health", max_health))
+	core = int(data.get("core", 0))
+	_run_caps = int(data.get("run_caps", 0))
+	current_floor = int(data.get("current_floor", 0))
+	current_act = int(data.get("current_act", 1))
+	player_deck = data.get("player_deck", [])
+	equipped_items = data.get("equipped_items", {})
+	backpack = data.get("backpack", [])
+	relics = _to_string_array(data.get("relics", []))
+	gem_inventory = _to_string_array(data.get("gem_inventory", []))
+	xp = int(data.get("xp", 0))
+	level = int(data.get("level", 1))
+	pending_attr_points = int(data.get("pending_attr_points", 0))
+	run_started_msec = int(data.get("run_started_msec", 0))
+	base_attributes = data.get("base_attributes", base_attributes)
+	player_attributes = data.get("player_attributes", player_attributes)
+	current_encounter = _to_string_array(data.get("current_encounter", []))
+	last_battle_node_type = str(data.get("last_battle_node_type", "enemy"))
+	map_data = _normalize_map(data.get("map_data", []))
+	current_node_id = str(data.get("current_node_id", ""))
+	visited_node_ids = _to_string_array(data.get("visited_node_ids", []))
+
+	_reindex_map()
+	recompute_attributes()
+	is_run_active = true
+	return true
+
+
+## Delete any in-run save (on run end, or when a fresh run starts).
+func clear_run_save() -> void:
+	if FileAccess.file_exists(RUN_SAVE_PATH):
+		DirAccess.remove_absolute(RUN_SAVE_PATH)
+
+
+func _reindex_map() -> void:
+	_node_index.clear()
+	for node in map_data:
+		if typeof(node) == TYPE_DICTIONARY and node.has("id"):
+			_node_index[str(node.id)] = node
+
+
+func _to_string_array(v) -> Array[String]:
+	var out: Array[String] = []
+	if typeof(v) == TYPE_ARRAY:
+		for e in v:
+			out.append(str(e))
+	return out
+
+
+## Re-coerce JSON-parsed map nodes: numeric fields come back as floats, and
+## children must be a String array for id lookups to match. Extra generator
+## fields are preserved as-is.
+func _normalize_map(raw) -> Array:
+	var out: Array = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for node in raw:
+		if typeof(node) != TYPE_DICTIONARY:
+			continue
+		var n := {
+			"id": str(node.get("id", "")),
+			"floor": int(node.get("floor", 0)),
+			"slot": int(node.get("slot", 0)),
+			"type": str(node.get("type", "enemy")),
+			"children": _to_string_array(node.get("children", [])),
+		}
+		for k in node.keys():
+			if not n.has(k):
+				n[k] = node[k]
+		out.append(n)
+	return out
 
 
 ## Settle the backpack at run end.

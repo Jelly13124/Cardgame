@@ -9,6 +9,7 @@ const MAP_RENDERER_SCRIPT = preload("res://run_system/ui/map_renderer.gd")
 const EQUIPMENT_PANEL_SCRIPT = preload("res://run_system/ui/equipment_panel.gd")
 const RUN_DECK_VIEWER_MODAL = preload("res://run_system/ui/run_deck_viewer_modal.gd")
 const RUN_TOP_BAR = preload("res://run_system/ui/run_top_bar.gd")
+const SETTINGS_PANEL_SCRIPT = preload("res://run_system/ui/settings_panel.gd")
 const EVENT_MODAL_SCRIPT = preload("res://run_system/ui/event_modal.gd")
 const T_THEME = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const BATTLE_PACKED = preload("res://battle_scene/battle_scene.tscn")
@@ -70,6 +71,12 @@ func _ready() -> void:
 	# is excluded by the act>1 guard.
 	if rm.current_act > 1 and rm.current_node_id == "" and rm.visited_node_ids.is_empty():
 		_show_popup(tr("UI_MAP_ENTER_ACT").format({"n": rm.current_act}))
+
+	# In-run checkpoint: the map is the only non-battle save point. Reached on a
+	# fresh run, after every battle, and on resume — so the save always reflects
+	# "at the map, about to pick the next node."
+	if rm.is_run_active:
+		rm.save_run()
 
 
 func _load_texture(path: String) -> Texture2D:
@@ -574,10 +581,101 @@ func _build_top_bar() -> void:
 	var bar := RUN_TOP_BAR.new()
 	bar.hp_from_player = false
 	bar.show_character_button = true
-	bar.show_settings_button = false
+	bar.show_settings_button = true
 	bar.deck_pressed.connect(_open_run_deck_viewer)
 	bar.character_pressed.connect(_open_equipment_panel)
+	bar.settings_pressed.connect(_open_settings)
 	layer.add_child(bar)
+
+
+## Settings overlay (language / fullscreen / volume) — same pattern as the home
+## base's _open_settings. Language change reloads the map scene (state lives in
+## RunManager, so a reload is lossless).
+func _open_settings() -> void:
+	if get_node_or_null("SettingsOverlay") != null:
+		return
+	var layer := CanvasLayer.new()
+	layer.name = "SettingsOverlay"
+	layer.layer = 130
+	add_child(layer)
+
+	var overlay := ColorRect.new()
+	overlay.color = Color(0.0, 0.0, 0.0, 0.6)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(overlay)
+
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(center)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(420, 380)
+	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	center.add_child(panel)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 12)
+	panel.add_child(box)
+
+	var title := Label.new()
+	title.text = tr("SETTINGS_TITLE")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", Color(1.0, 0.86, 0.48))
+	box.add_child(title)
+
+	SETTINGS_PANEL_SCRIPT.add_controls(
+		box, func() -> void: get_tree().reload_current_scene(), false
+	)
+
+	box.add_child(HSeparator.new())
+
+	var howto_btn := Button.new()
+	howto_btn.text = tr("MENU_HOWTO")
+	howto_btn.custom_minimum_size = Vector2(300, 44)
+	T.apply_button_theme(howto_btn)
+	howto_btn.pressed.connect(_open_rules_panel)
+	box.add_child(howto_btn)
+
+	var save_quit_btn := Button.new()
+	save_quit_btn.text = tr("SETTINGS_SAVE_QUIT")
+	save_quit_btn.custom_minimum_size = Vector2(300, 44)
+	T.apply_button_theme(save_quit_btn)
+	save_quit_btn.pressed.connect(_on_save_and_quit)
+	box.add_child(save_quit_btn)
+
+	var close_btn := Button.new()
+	close_btn.text = tr("SETTINGS_RESUME")
+	close_btn.custom_minimum_size = Vector2(300, 44)
+	T.apply_button_theme(close_btn)
+	close_btn.pressed.connect(layer.queue_free)
+	box.add_child(close_btn)
+
+
+## Save the run at this map checkpoint and return to the title screen. Continue
+## from the menu resumes here.
+func _on_save_and_quit() -> void:
+	if rm and rm.is_run_active:
+		rm.save_run()
+	get_tree().change_scene_to_file("res://run_system/ui/main_menu.tscn")
+
+
+## Open the How-to-Play rules panel (loaded at runtime; no-op until it exists).
+func _open_rules_panel() -> void:
+	var path := "res://run_system/ui/rules_panel.gd"
+	if not ResourceLoader.exists(path):
+		return
+	var script = load(path)
+	if script == null:
+		return
+	var layer := CanvasLayer.new()
+	layer.name = "RulesLayer"
+	layer.layer = 140
+	add_child(layer)
+	var panel = script.new()
+	panel.tree_exited.connect(layer.queue_free)
+	layer.add_child(panel)
 
 
 func _open_equipment_panel() -> void:
