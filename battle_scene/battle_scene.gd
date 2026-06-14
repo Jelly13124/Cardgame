@@ -46,6 +46,8 @@ const HOME_BASE_PATH := "res://run_system/ui/home_base_scene.tscn"
 const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 const LOOT_REWARD_SCENE = preload("res://run_system/ui/loot_reward.tscn")
 const EXTRACT_CHOICE_MODAL_SCRIPT = preload("res://run_system/ui/extract_choice_modal.gd")
+const RESULT_SCREEN_SCRIPT = preload("res://run_system/ui/result_screen.gd")
+const MAIN_MENU_PATH := "res://run_system/ui/main_menu.tscn"
 
 const BOSS_VICTORY_CORE := 130
 ## Extract reward per act (keyed by RunManager.current_act). The final act has
@@ -61,7 +63,9 @@ const EXTRACT_REWARDS := {
 ## Returns the {continue, extract} reward dict for the given act's boss, or
 ## {} if `act` is the final act (no extract choice — full victory).
 func _extract_rewards_for_act(act: int) -> Dictionary:
-	if act >= RunManager.ACTS_TOTAL:
+	# Demo-aware: on the final act (Act 1 in the demo) there is no extract-vs-push
+	# choice — the boss kill wins outright. acts_total() collapses to 1 in demo.
+	if act >= RunManager.acts_total():
 		return {}
 	if EXTRACT_REWARDS.has(act):
 		return EXTRACT_REWARDS[act]
@@ -596,7 +600,9 @@ func _victory():
 		# is 0 to avoid double-counting.
 		RunManager.add_core_to_backpack(BOSS_VICTORY_CORE)
 		RunManager.end_run_victory(0, "victory")
-		get_tree().change_scene_to_file(HOME_BASE_PATH)
+		# Demo: the final-act (Act 1) boss kill ends the demo — show the
+		# demo-complete / wishlist screen instead of silently returning to base.
+		_show_result_screen("demo_complete")
 		return
 	# Elite kills drop a small amount of Core into the backpack (still at
 	# death risk until extraction); the normal loot flow handles the rest.
@@ -664,9 +670,20 @@ func _game_over():
 	# and run_ended(false) is emitted.
 	_write_hp_to_run_manager(true)
 	# DEFEAT... banner removed per UX feedback — the player.health → 0 +
-	# HUD bar drop + transition to home base communicates defeat clearly.
+	# HUD bar drop reads as defeat; the result screen then offers Back to Menu.
 	await get_tree().create_timer(3.0).timeout
-	get_tree().change_scene_to_file(HOME_BASE_PATH)
+	_show_result_screen("defeat")
+
+
+## Show the end-of-run result screen ("defeat" | "demo_complete") over the battle
+## on a high CanvasLayer. Its Back to Menu button routes to the title screen.
+func _show_result_screen(result_mode: String) -> void:
+	var canvas := CanvasLayer.new()
+	canvas.layer = 250
+	add_child(canvas)
+	var screen = RESULT_SCREEN_SCRIPT.new()
+	screen.mode = result_mode
+	canvas.add_child(screen)
 
 
 ## Writes player.health back to RunManager so it persists between battles.
