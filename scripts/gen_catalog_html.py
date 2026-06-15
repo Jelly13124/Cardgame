@@ -57,7 +57,7 @@ def cap(s):
     return str(s).replace("_", " ").title()
 
 
-RARITY = {"common": "#9aa3ad", "uncommon": "#4fb0ff", "rare": "#ffcf45", "boss": "#ff6b6b"}
+RARITY = {"common": "#9aa3ad", "uncommon": "#4fb0ff", "rare": "#ffcf45", "boss": "#ff6b6b", "unique": "#c77dff"}
 POLARITY = {"yin": "#6fa8dc", "yang": "#ff9e4a", "neutral": "#9c917c"}
 
 STYLE = """
@@ -279,14 +279,16 @@ def relic_block(rid, d):
 
 def build_relics():
     items = load_json_dir("run_system/data/relics")
-    by = {"common": [], "uncommon": [], "rare": []}
+    by = {"common": [], "uncommon": [], "rare": [], "unique": []}
     for rid, d in items:
         by.setdefault(str(d.get("rarity", "common")).lower(), []).append(relic_block(rid, d))
+    labels = {"common": "Common 遗物", "uncommon": "Uncommon 遗物",
+              "rare": "Rare 遗物", "unique": "Unique 专属遗物 (hero clips)"}
     body = ""
-    for r in ("common", "uncommon", "rare"):
-        body += section(f"{r.title()} 遗物", len(by.get(r, [])), "".join(by.get(r, [])))
+    for r in ("common", "uncommon", "rare", "unique"):
+        body += section(labels[r], len(by.get(r, [])), "".join(by.get(r, [])))
     controls = "".join(f'<span class="tag" data-k="rarity" data-f="{r}">{r}</span>'
-                       for r in ("common", "uncommon", "rare"))
+                       for r in ("common", "uncommon", "rare", "unique"))
     page("relics.html", "Relics · 遗物", "Passive run relics, grouped by rarity", controls, body, len(items))
 
 
