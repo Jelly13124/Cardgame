@@ -32,6 +32,11 @@ var _dmg_preview: Label = null
 var _polarity_badge: Label = null  # H5: lazily-created HUD badge for yin/yang hero polarity
 var _auto_ending: bool = false  # guards the auto-end-turn beat from re-entry
 var _ending_turn: bool = false  # guards end_turn across the discard animation await
+## Attack-allowance (double-fire clip): cap on attack cards per turn. 0 = unarmed
+## (no limit — normal play). When armed, _attacks_left_this_turn is consumed by
+## playing attacks and topped up by Reload cards; at 0, attacks are unplayable.
+var _attack_limit_per_turn: int = 0
+var _attacks_left_this_turn: int = 0
 
 const TARGETING_ARROW_SCRIPT = preload("res://battle_scene/targeting_arrow.gd")
 const RELIC_EFFECT_SYSTEM = preload("res://battle_scene/relic_effect_system.gd")
@@ -375,6 +380,12 @@ func _on_turn_started(side: String) -> void:
 	player.start_turn()
 	if is_game_over:
 		return
+	# Reset the attack allowance for the new turn (double-fire clip arms this).
+	_attack_limit_per_turn = (
+		relic_effect_system.attack_limit_per_turn() if relic_effect_system else 0
+	)
+	_attacks_left_this_turn = _attack_limit_per_turn
+	_update_attack_allowance_ui()
 	# Ascension A3+: first turn of each combat starts with -1 energy.
 	if RunManager.ascension >= 3 and turn_manager.current_round == 1:
 		player.pay_energy(1)
@@ -758,6 +769,44 @@ func spend_energy(cards: Array) -> void:
 	player.pay_energy(total_cost)
 
 
+# ─── Attack allowance (double-fire clip) ──────────────────────────────────────
+
+var _attack_allowance_label: Label = null
+
+
+## Grant +n attacks this turn (Reload card). No-op when the limit isn't armed.
+func add_attack_allowance(n: int) -> void:
+	if _attack_limit_per_turn <= 0:
+		return
+	_attacks_left_this_turn += n
+	_update_attack_allowance_ui()
+
+
+## Refresh the "attacks left this turn" indicator near the End Round button.
+## Shown only while the allowance is armed (double-fire run); hidden otherwise.
+func _update_attack_allowance_ui() -> void:
+	if _attack_limit_per_turn <= 0:
+		if is_instance_valid(_attack_allowance_label):
+			_attack_allowance_label.visible = false
+		return
+	if not is_instance_valid(_attack_allowance_label):
+		_attack_allowance_label = Label.new()
+		_attack_allowance_label.add_theme_font_size_override("font_size", 18)
+		_attack_allowance_label.add_theme_color_override("font_color", Color(1.0, 0.7, 0.35))
+		_attack_allowance_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+		_attack_allowance_label.add_theme_constant_override("shadow_offset_x", 1)
+		_attack_allowance_label.add_theme_constant_override("shadow_offset_y", 1)
+		if is_instance_valid(end_round_button):
+			end_round_button.get_parent().add_child(_attack_allowance_label)
+			_attack_allowance_label.position = end_round_button.position + Vector2(0, -28)
+		else:
+			add_child(_attack_allowance_label)
+	_attack_allowance_label.visible = true
+	_attack_allowance_label.text = tr("UI_BATTLE_ATTACKS_LEFT").format(
+		{"n": _attacks_left_this_turn}
+	)
+
+
 # ─── Card Play ────────────────────────────────────────────────────────────────
 
 
@@ -785,6 +834,16 @@ func play_spell(card: Control, target_node: Node):
 			hand.add_card(card)
 			card.remove_meta("_in_play")
 			return
+		# Attack-allowance gate (double-fire clip): no attacks left this turn → the
+		# attack is unplayable. Return it to hand and explain via a notification.
+		if _attack_limit_per_turn > 0 and _attacks_left_this_turn <= 0:
+			show_notification(tr("UI_BATTLE_NO_ATTACKS_LEFT"), Color(0.85, 0.55, 0.3))
+			hand.add_card(card)
+			card.remove_meta("_in_play")
+			return
+		if _attack_limit_per_turn > 0:
+			_attacks_left_this_turn -= 1
+			_update_attack_allowance_ui()
 
 	# Deduct cost; remove from current container if still tracked there
 	spend_energy([card])

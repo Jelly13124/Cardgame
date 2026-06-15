@@ -1,5 +1,7 @@
 keys,en,zh
 UI_BATTLE_MUST_TARGET_ENEMY,MUST TARGET ENEMY,必须选择敌人
+UI_BATTLE_NO_ATTACKS_LEFT,No attacks left this turn — Reload to fire again,本回合没有攻击次数了 —— 装弹才能再开火
+UI_BATTLE_ATTACKS_LEFT,Attacks left: {n},剩余攻击次数：{n}
 UI_BATTLE_NOT_ENOUGH_ENERGY,NOT ENOUGH ENERGY,能量不足
 UI_BATTLE_NO_TARGET,NO TARGET,没有目标
 UI_BATTLE_DRAW_PILE,Draw Pile,抽牌堆

@@ -230,6 +230,16 @@ func attack_replay_bonus() -> int:
 	return bonus
 
 
+## Per-turn cap on attack cards imposed by held relics (the double-fire clip caps
+## at 1). 0 = no cap (normal play). The highest cap wins if multiple relics set one.
+func attack_limit_per_turn() -> int:
+	var limit := 0
+	for entry in _get_effect_entries("on_attack_limit"):
+		if str(entry["effect"].get("type", "")) == "attack_limit":
+			limit = max(limit, int(entry["effect"].get("amount", 0)))
+	return limit
+
+
 ## Deal `amount` to every alive enemy. Returns true if at least one enemy was hit
 ## (so the caller can gate its notification / once_per_combat marking).
 func _deal_to_all_enemies(amount: int) -> bool:

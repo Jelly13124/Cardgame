@@ -57,6 +57,7 @@ const ALLOWED_EFFECT_TYPES = [
 	"deal_damage_block_mult",
 	"gain_gold",
 	"heal",
+	"gain_attack_allowance",
 ]
 const ALLOWED_STATUS_NAMES = [
 	"bleed",
@@ -99,6 +100,7 @@ const ALLOWED_RELIC_EFFECT_TYPES = [
 	"add_damage",
 	"add_bleed",
 	"attack_replay",
+	"attack_limit",
 	"apply_self_status",
 	"apply_status",
 	"grant_card_keyword",
