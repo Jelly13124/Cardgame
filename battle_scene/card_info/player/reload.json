@@ -1,0 +1,15 @@
+{
+  "name": "reload",
+  "title": "Reload",
+  "rarity": "common",
+  "type": "skill",
+  "cost": 0,
+  "polarity": "neutral",
+  "description": "Gain 1 attack this turn. Draw 1 card.",
+  "front_image": "player/defend.png",
+  "side": "player",
+  "effects": [
+    { "type": "gain_attack_allowance", "amount": 1 },
+    { "type": "draw_cards", "amount": 1 }
+  ]
+}

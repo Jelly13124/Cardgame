@@ -1,0 +1,12 @@
+{
+  "id": "double_fire_clip",
+  "title": "Double-Fire Clip",
+  "description": "Your attack cards gain Replay 1 (they fire twice), but you may play only 1 attack card per turn. Adds 2 Reload cards to your deck.",
+  "icon": "res://run_system/assets/images/relics/double_fire_clip.png",
+  "rarity": "unique",
+  "effects": [
+    { "trigger": "on_attack_replay", "type": "attack_replay", "amount": 1 },
+    { "trigger": "on_attack_limit", "type": "attack_limit", "amount": 1 },
+    { "trigger": "on_pickup", "type": "add_card", "card": "reload", "amount": 2 }
+  ]
+}
