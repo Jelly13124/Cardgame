@@ -12,6 +12,11 @@ const DEFAULT_LANGUAGE := "en"
 var language: String = DEFAULT_LANGUAGE
 var fullscreen: bool = false
 var master_volume: float = 1.0
+## Active save slot (1..3), or 0 when none is chosen yet (fresh boot at the menu).
+## Persisted so a relaunch can remember the last-played slot, but the slot-select
+## screen always re-sets it on pick. MetaProgress / RunManager namespace their
+## save files under user://slot_{active_slot}/ from this value.
+var active_slot: int = 0
 
 const TRANSLATIONS_DIR := "res://assets/translations"
 
@@ -50,6 +55,7 @@ func load_settings() -> void:
 	language = str(data.get("language", DEFAULT_LANGUAGE))
 	fullscreen = bool(data.get("fullscreen", false))
 	master_volume = float(data.get("master_volume", 1.0))
+	active_slot = int(data.get("active_slot", 0))
 
 
 func save_settings() -> void:
@@ -67,6 +73,7 @@ func save_settings() -> void:
 						"language": language,
 						"fullscreen": fullscreen,
 						"master_volume": master_volume,
+						"active_slot": active_slot,
 					}
 				)
 			)
@@ -95,6 +102,13 @@ func set_fullscreen(on: bool) -> void:
 func set_master_volume(v: float) -> void:
 	master_volume = clampf(v, 0.0, 1.0)
 	_apply_volume()
+	save_settings()
+
+
+## Set the active save slot (1..3) and persist. MetaProgress.set_active_slot wraps
+## this and also (re)loads that slot's profile — prefer calling that.
+func set_active_slot(n: int) -> void:
+	active_slot = n
 	save_settings()
 
 
