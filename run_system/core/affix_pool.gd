@@ -16,16 +16,16 @@ const POSITIVE := [
 	{"type": "attr_intelligence", "value": 1},
 	{"type": "attr_luck", "value": 1},
 	{"type": "attr_charm", "value": 1},
-	{"type": "crit_pct", "value": 5},
 	{"type": "max_hp", "value": 10},
 ]
 
 ## Curse affixes (consumed in Phase 5). Negative values.
+## (crit_pct / curse_crit affixes were removed — crit is now Bill's keyword via the
+## crit clip, not an equipment stat. Old saves may still carry them; harmless.)
 const CURSE := [
 	{"type": "curse_attr_strength", "value": -1},
 	{"type": "curse_attr_constitution", "value": -1},
 	{"type": "curse_max_hp", "value": -8},
-	{"type": "curse_crit", "value": -5},
 ]
 
 ## Positive affix count granted per rarity. Rare adds a set bonus separately
@@ -125,25 +125,25 @@ static func describe(affix: Dictionary) -> String:
 	var localized := TranslationServer.translate(key)
 	if localized != key:
 		return localized.format({"value": value, "abs": abs(value)})
-	var sign := "+" if value >= 0 else ""
+	var value_sign := "+" if value >= 0 else ""
 	var label: String
 	match type:
 		"attr_strength", "curse_attr_strength":
-			label = "%s%d Strength" % [sign, value]
+			label = "%s%d Strength" % [value_sign, value]
 		"attr_constitution", "curse_attr_constitution":
-			label = "%s%d Constitution" % [sign, value]
+			label = "%s%d Constitution" % [value_sign, value]
 		"attr_intelligence", "curse_attr_intelligence":
-			label = "%s%d Intelligence" % [sign, value]
+			label = "%s%d Intelligence" % [value_sign, value]
 		"attr_luck", "curse_attr_luck":
-			label = "%s%d Luck" % [sign, value]
+			label = "%s%d Luck" % [value_sign, value]
 		"attr_charm", "curse_attr_charm":
-			label = "%s%d Charm" % [sign, value]
+			label = "%s%d Charm" % [value_sign, value]
 		"max_hp", "curse_max_hp":
-			label = "%s%d Max HP" % [sign, value]
+			label = "%s%d Max HP" % [value_sign, value]
 		"crit_pct", "curse_crit":
-			label = "%s%d%% Crit" % [sign, value]
+			label = "%s%d%% Crit" % [value_sign, value]
 		_:
-			label = "%s%d %s" % [sign, value, type]
+			label = "%s%d %s" % [value_sign, value, type]
 	if is_curse(affix):
 		label += " (Curse)"
 	return label
