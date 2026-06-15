@@ -774,11 +774,20 @@ func spend_energy(cards: Array) -> void:
 var _attack_allowance_label: Label = null
 
 
-## Grant +n attacks this turn (Reload card). No-op when the limit isn't armed.
+## Grant +n attacks this turn. No-op when the limit isn't armed.
 func add_attack_allowance(n: int) -> void:
 	if _attack_limit_per_turn <= 0:
 		return
 	_attacks_left_this_turn += n
+	_update_attack_allowance_ui()
+
+
+## Refresh the attack allowance back up to the per-turn cap (Reload card). Does
+## NOT stack past the cap — so you can fire again, but can't bank extra attacks.
+func restore_attack_allowance() -> void:
+	if _attack_limit_per_turn <= 0:
+		return
+	_attacks_left_this_turn = max(_attacks_left_this_turn, _attack_limit_per_turn)
 	_update_attack_allowance_ui()
 
 

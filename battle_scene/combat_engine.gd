@@ -264,10 +264,16 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			await get_tree().create_timer(0.2).timeout
 
 		"gain_attack_allowance":
-			# Reload card: +amount attacks this turn (only matters under the
-			# double-fire clip's per-turn attack cap; no-op otherwise).
+			# +amount attacks this turn (only matters under the double-fire clip's
+			# per-turn attack cap; no-op otherwise).
 			if main.has_method("add_attack_allowance"):
 				main.add_attack_allowance(amount)
+
+		"restore_attack_allowance":
+			# Reload card: refresh the attack allowance up to the per-turn cap (fire
+			# again) without banking extra. No-op without the clip's cap.
+			if main.has_method("restore_attack_allowance"):
+				main.restore_attack_allowance()
 
 		"deal_damage_all":
 			var per_target_amount = amount

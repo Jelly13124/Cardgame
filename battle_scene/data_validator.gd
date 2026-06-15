@@ -59,6 +59,7 @@ const ALLOWED_EFFECT_TYPES = [
 	"gain_gold",
 	"heal",
 	"gain_attack_allowance",
+	"restore_attack_allowance",
 ]
 const ALLOWED_STATUS_NAMES = [
 	"bleed",
