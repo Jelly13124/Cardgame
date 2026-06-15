@@ -27,6 +27,10 @@ MENU_SETTINGS,Settings,设置
 MENU_QUIT,Quit,退出
 MENU_VERSION,Demo v0.1,试玩版 v0.1
 SETTINGS_SAVE_QUIT,Save & Quit to Menu,保存并退出到主菜单
+CHAR_VIEW_TITLE,Attributes,角色属性
+CHAR_VIEW_HP,HP,生命
+CHAR_VIEW_LEVEL,Level,等级
+CHAR_VIEW_HINT,Press I or ESC to close,按 I 或 ESC 关闭
 RESULT_DEFEAT_TITLE,You Died,你死了
 RESULT_DEFEAT_BODY,"Your run ends here. The wasteland claims another salvager.","你的旅程到此为止。废土又吞噬了一名拾荒者。"
 RESULT_DEMO_TITLE,Demo Complete!,试玩通关!

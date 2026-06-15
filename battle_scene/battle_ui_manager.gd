@@ -4,6 +4,7 @@ extends Node
 
 const ENERGY_CORE_TEX = preload("res://battle_scene/assets/images/ui/energy_core.png")
 const ENERGY_PANEL_TEX = preload("res://battle_scene/assets/images/ui/energy_panel_frame.png")
+const ATTRIBUTE_VIEW_SCRIPT = preload("res://battle_scene/ui/attribute_view.gd")
 
 @export_group("UI Nodes")
 @export var energy_label: Label
@@ -22,6 +23,8 @@ var _energy_display: Control = null
 ## Tracks which pile the viewer is currently showing ("draw"/"discard"/"deck"/"")
 ## so the Q/E toggle logic doesn't compare against the (now localized) title text.
 var _current_pile_kind: String = ""
+## Read-only in-battle attribute view (toggled with the `i` key).
+var _attr_view_layer: CanvasLayer = null
 
 
 func _ready() -> void:
@@ -271,7 +274,9 @@ func _input(event: InputEvent) -> void:
 		return
 
 	if event.is_action_pressed("ui_cancel"):
-		if inspect_layer and inspect_layer.visible:
+		if _attr_view_layer and is_instance_valid(_attr_view_layer):
+			_close_attr_view()
+		elif inspect_layer and inspect_layer.visible:
 			close_inspection()
 		elif pile_viewer_layer and pile_viewer_layer.visible:
 			hide_pile_viewer()
@@ -301,3 +306,24 @@ func _input(event: InputEvent) -> void:
 			)
 			if not overlay_open and not main.is_targeting:
 				main._on_end_round_button_pressed()
+
+		elif event.keycode == KEY_I:
+			# `i` toggles the read-only attribute view (no backpack ops in battle).
+			_toggle_attr_view()
+
+
+## Open the read-only attribute view, or close it if already open.
+func _toggle_attr_view() -> void:
+	if _attr_view_layer and is_instance_valid(_attr_view_layer):
+		_close_attr_view()
+		return
+	_attr_view_layer = CanvasLayer.new()
+	_attr_view_layer.layer = 135
+	main.add_child(_attr_view_layer)
+	_attr_view_layer.add_child(ATTRIBUTE_VIEW_SCRIPT.new())
+
+
+func _close_attr_view() -> void:
+	if _attr_view_layer and is_instance_valid(_attr_view_layer):
+		_attr_view_layer.queue_free()
+	_attr_view_layer = null

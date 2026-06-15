@@ -192,6 +192,14 @@ func _get_node_at(pos: Vector2) -> Dictionary:
 
 
 func _input(event: InputEvent) -> void:
+	# `i` toggles the character / equipment panel (full version on the map).
+	# Handled before the modal guard so it can also close itself; won't stack on
+	# top of another full-screen page.
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_I:
+		if get_node_or_null("EquipmentPanel") or not _is_page_open():
+			_open_equipment_panel()
+		return
+
 	# Block ALL map input while any modal is open (relic choice, rest choice,
 	# treasure equipment grant, inventory-full, extract, etc.) OR a node-click
 	# coroutine is still resolving. Without this, a click outside a non-FULL_RECT
