@@ -240,6 +240,15 @@ func attack_limit_per_turn() -> int:
 	return limit
 
 
+## True if a held relic makes the player's Thorns reflection also apply equal
+## Bleed to the attacker (Serrated Barbs). Read by combat_engine.
+func thorns_apply_bleed() -> bool:
+	for entry in _get_effect_entries("on_thorns_damage"):
+		if str(entry["effect"].get("type", "")) == "thorns_bleed":
+			return true
+	return false
+
+
 ## Deal `amount` to every alive enemy. Returns true if at least one enemy was hit
 ## (so the caller can gate its notification / once_per_combat marking).
 func _deal_to_all_enemies(amount: int) -> bool:

@@ -102,6 +102,7 @@ const ALLOWED_RELIC_EFFECT_TYPES = [
 	"add_bleed",
 	"attack_replay",
 	"attack_limit",
+	"thorns_bleed",
 	"add_card",
 	"apply_self_status",
 	"apply_status",

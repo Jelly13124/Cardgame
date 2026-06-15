@@ -65,6 +65,15 @@ func apply_thorns_reflection(attacker: Node, defender: Node) -> void:
 		and attacker.has_method("take_damage")
 	):
 		attacker.take_damage(thorns)
+		# Relic (thorn_bleed): the PLAYER's Thorns also apply equal Bleed to the
+		# attacker. Only fires for the player's own Thorns (defender == player).
+		if (
+			defender == main.player
+			and main.relic_effect_system
+			and main.relic_effect_system.thorns_apply_bleed()
+			and attacker.has_method("add_status")
+		):
+			attacker.add_status("bleed", thorns)
 
 
 func resolve_card_effect(card: Control, target: Node, player: Node) -> void:

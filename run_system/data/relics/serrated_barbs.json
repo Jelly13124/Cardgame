@@ -1,0 +1,10 @@
+{
+  "id": "serrated_barbs",
+  "title": "Serrated Barbs",
+  "description": "Your Thorns damage also applies that much Bleed to the attacker.",
+  "icon": "res://run_system/assets/images/relics/serrated_barbs.png",
+  "rarity": "uncommon",
+  "effects": [
+    { "trigger": "on_thorns_damage", "type": "thorns_bleed" }
+  ]
+}
