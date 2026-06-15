@@ -290,3 +290,14 @@ func _input(event: InputEvent) -> void:
 			else:
 				_current_pile_kind = "discard"
 				show_pile_viewer(tr("UI_BATTLE_DISCARD_PILE"), main.discard_pile)
+
+		elif event.keycode == KEY_SPACE:
+			# Spacebar ends the turn — same guarded path as the End Round button.
+			# Suppressed while a pile/inspect overlay is open or an attack is being
+			# targeted, so it never fires mid-interaction.
+			var overlay_open := (
+				(pile_viewer_layer and pile_viewer_layer.visible)
+				or (inspect_layer and inspect_layer.visible)
+			)
+			if not overlay_open and not main.is_targeting:
+				main._on_end_round_button_pressed()
