@@ -251,6 +251,12 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			main.show_notification(tr("UI_COMBAT_DRAW").format({"n": amount}), Color(0.7, 1.0, 0.7))
 			await get_tree().create_timer(0.2).timeout
 
+		"gain_attack_allowance":
+			# Reload card: +amount attacks this turn (only matters under the
+			# double-fire clip's per-turn attack cap; no-op otherwise).
+			if main.has_method("add_attack_allowance"):
+				main.add_attack_allowance(amount)
+
 		"deal_damage_all":
 			var per_target_amount = amount
 			if main.equipment_set_system and main.current_resolving_card:
