@@ -1,6 +1,8 @@
 keys,en,zh
 RELIC_double_fire_clip_TITLE,Double-Fire Clip,双发弹夹
 RELIC_double_fire_clip_DESC,"Your attack cards gain Replay 1 (they fire twice), but you may play only 1 attack card per turn. Adds 2 Reload cards to your deck.","你的攻击牌获得重放 1（攻击两次），但每回合只能打出 1 张攻击牌。往牌组加入 2 张装弹。"
+RELIC_serrated_barbs_TITLE,Serrated Barbs,锯齿倒刺
+RELIC_serrated_barbs_DESC,"Your Thorns damage also applies that much Bleed to the attacker.","你的荆棘造成的伤害会对攻击者额外施加等量的流血。"
 RELIC_cracked_battery_TITLE,Cracked Battery,破裂电池
 RELIC_cracked_battery_DESC,"At the start of each turn, deal 1 damage to ALL enemies.",每回合开始时，对所有敌人造成1点伤害。
 RELIC_steel_plating_TITLE,Steel Plating,钢制镀层
