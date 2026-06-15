@@ -48,6 +48,7 @@ const ALLOWED_EFFECT_TYPES = [
 	"apply_status",
 	"apply_status_self",
 	"apply_status_all",
+	"apply_bleed_scaled",
 	"apply_stun",
 	"apply_stun_all",
 	"exhaust_self",

@@ -172,8 +172,11 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 	# Card JSON carries the BASE number only — the old per-card `scaling` field is
 	# gone. `scale_damage_by_attacks` (cascade) and `deal_damage_str_mult`
 	# (charged_shot) compute their own damage and must NOT receive the global +STR.
+	# `no_str: true` on a damage effect opts OUT of the global +STR (fixed damage,
+	# e.g. Acid Splash's corrosive hit).
 	if player:
-		if effect_type == "deal_damage" or effect_type == "deal_damage_all":
+		var skip_str: bool = bool(effect.get("no_str", false))
+		if (effect_type == "deal_damage" or effect_type == "deal_damage_all") and not skip_str:
 			amount += int(player.get("strength"))
 		elif effect_type == "gain_block":
 			amount += int(player.get("constitution"))
@@ -382,6 +385,29 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				main.show_notification(
 					tr("UI_COMBAT_APPLIED_STATUS").format(
 						{"status": STATUS_SYS.format_name_localized(status), "n": stacks}
+					),
+					Color(0.6, 0.9, 0.3)
+				)
+			else:
+				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
+			await get_tree().create_timer(0.2).timeout
+
+		"apply_bleed_scaled":
+			# Bleed = `amount` + an attribute (default Intelligence); if the target
+			# is ALREADY bleeding, the applied stacks are DOUBLED. (Lacerate.)
+			var attr: String = str(effect.get("attr", "intelligence"))
+			var bstacks: int = int(effect.get("amount", 0)) + int(player.get(attr))
+			if target and is_instance_valid(target) and target.has_method("get_status_stacks"):
+				if target.get_status_stacks("bleed") > 0:
+					bstacks *= 2
+			# brutal_servo and friends still add their flat bonus.
+			if main.relic_effect_system:
+				bstacks += main.relic_effect_system.bleed_bonus_stacks()
+			if target and is_instance_valid(target) and target.has_method("add_status"):
+				target.add_status("bleed", bstacks)
+				main.show_notification(
+					tr("UI_COMBAT_APPLIED_STATUS").format(
+						{"status": STATUS_SYS.format_name_localized("bleed"), "n": bstacks}
 					),
 					Color(0.6, 0.9, 0.3)
 				)
