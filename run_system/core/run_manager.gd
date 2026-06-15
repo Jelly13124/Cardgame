@@ -1493,6 +1493,12 @@ func _apply_relic_on_pickup(relic_id: String) -> void:
 				var gem_id := str(e.get("keyword", "wealthy"))
 				for _i in range(maxi(1, int(e.get("amount", 1)))):
 					gem_inventory.append(gem_id)
+			"add_card":
+				# Inject N copies of a card into the deck (double-fire clip → 2 Reloads).
+				var card_id := str(e.get("card", ""))
+				if card_id != "":
+					for _i in range(maxi(1, int(e.get("amount", 1)))):
+						add_card_to_deck(card_id)
 
 
 func has_relic(relic_id: String) -> bool:
