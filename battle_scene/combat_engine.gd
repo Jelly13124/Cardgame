@@ -94,6 +94,22 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 		)
 		return
 
+	# Replay N (重放): the WHOLE card resolves 1 + N times — animation, effects,
+	# matched bonus, on-attack relics, and gems all re-trigger (Echo / Double-Tap
+	# style). N = the card's innate `replay` plus any relic grant (double-fire clip
+	# gives attack cards Replay 1). The attack-allowance is charged once per PLAY
+	# (in the play path), not per replay.
+	var replays: int = _replay_count(card, type)
+	for _i in range(1 + replays):
+		await _resolve_card_once(card, effects, type, target, player, card_mult)
+
+
+## One full resolution pass of a played card: gunshot anim → effects → polarity
+## matched bonus → on-attack relics → socketed gems. Called once normally, or
+## 1 + N times when the card has Replay N.
+func _resolve_card_once(
+	card: Control, effects: Array, type: String, target: Node, player: Node, card_mult: float
+) -> void:
 	if type == "attack" and target and is_instance_valid(target):
 		await _animate_player_gunshot(player, target)
 
@@ -133,6 +149,15 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 				await _apply_effect(
 					ge, target if is_instance_valid(target) else null, player, card_mult
 				)
+
+
+## Total extra resolutions for a played card: its innate `replay` field plus any
+## relic-granted replay (double-fire clip → +1 for attack cards).
+func _replay_count(card: Control, type: String) -> int:
+	var n: int = int(card.card_info.get("replay", 0))
+	if type == "attack" and main.relic_effect_system:
+		n += main.relic_effect_system.attack_replay_bonus()
+	return n
 
 
 func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: float = 1.0) -> void:

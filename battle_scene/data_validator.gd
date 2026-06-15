@@ -98,6 +98,7 @@ const ALLOWED_CARD_POLARITIES = ["yin", "yang", "neutral"]
 const ALLOWED_RELIC_EFFECT_TYPES = [
 	"add_damage",
 	"add_bleed",
+	"attack_replay",
 	"apply_self_status",
 	"apply_status",
 	"grant_card_keyword",
