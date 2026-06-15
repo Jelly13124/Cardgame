@@ -9,7 +9,100 @@
 ##   - upgrades: id → current level (0..3)
 extends Node
 
-const SAVE_PATH := "user://meta.json"
+## Save slots. Each slot is an independent profile under user://slot_{n}/. The
+## active slot lives in Settings.active_slot (set by the slot-select screen).
+## Legacy global user://meta.json is no longer read (the slot system supersedes it).
+const SLOT_COUNT := 3
+const LEGACY_SAVE_PATH := "user://meta.json"
+
+
+## meta.json path for a slot (defaults to the active slot). Slot 0 (none chosen)
+## falls back to slot 1 so direct save/load never writes to a slotless root.
+func _meta_path(slot: int = -1) -> String:
+	var s: int = Settings.active_slot if slot < 0 else slot
+	if s < 1:
+		s = 1
+	return "user://slot_%d/meta.json" % s
+
+
+func _ensure_slot_dir(slot: int = -1) -> void:
+	var s: int = Settings.active_slot if slot < 0 else slot
+	if s < 1:
+		s = 1
+	DirAccess.make_dir_recursive_absolute("user://slot_%d" % s)
+
+
+## Activate a slot: set it globally (persisted via Settings) and load that slot's
+## profile into MetaProgress. Used by the slot-select screen's Continue.
+func set_active_slot(slot: int) -> void:
+	Settings.set_active_slot(slot)
+	_reset_to_defaults()
+	load_progress()
+
+
+## True if slot N has a saved profile on disk.
+func slot_exists(slot: int) -> bool:
+	return FileAccess.file_exists(_meta_path(slot))
+
+
+## Lightweight read of a slot's profile for the menu summary, WITHOUT changing the
+## active slot or MetaProgress state. Returns {} for an empty slot.
+func peek_slot(slot: int) -> Dictionary:
+	var path := _meta_path(slot)
+	if not FileAccess.file_exists(path):
+		return {}
+	var f := FileAccess.open(path, FileAccess.READ)
+	if not f:
+		return {}
+	var parsed = JSON.parse_string(f.get_as_text())
+	f.close()
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return {}
+	return {
+		"core": int(parsed.get("core", 0)),
+		"caps": int(parsed.get("caps", 0)),
+		"scrap": int(parsed.get("scrap", 0)),
+		"runs": (parsed.get("run_history", []) as Array).size(),
+		"max_ascension": int(parsed.get("max_ascension", 0)),
+	}
+
+
+## Start a brand-new profile in `slot`: wipe its files, reset state to defaults,
+## and write a fresh meta.json. Also clears that slot's in-run save.
+func reset_for_new_game(slot: int) -> void:
+	Settings.set_active_slot(slot)
+	_ensure_slot_dir(slot)
+	var meta := _meta_path(slot)
+	if FileAccess.file_exists(meta):
+		DirAccess.remove_absolute(meta)
+	_reset_to_defaults()
+	if RunManager.has_method("clear_run_save"):
+		RunManager.clear_run_save()
+	save_progress()
+	emit_signal("core_changed", core)
+	emit_signal("caps_changed", caps)
+	emit_signal("scrap_changed", scrap)
+	emit_signal("buildings_changed")
+
+
+## Reset all persisted profile state to first-boot defaults (no disk I/O). Used by
+## set_active_slot before a load and by reset_for_new_game.
+func _reset_to_defaults() -> void:
+	core = 0
+	caps = 0
+	scrap = 0
+	upgrades = {}
+	facilities = {}
+	caps_perk_levels = {}
+	run_history = []
+	max_ascension = 0
+	tutorial_seen = false
+	unlocked_cards = []
+	purchased_cards = []
+	starter_deck_override = {}
+	stash = []
+	buildings = {}
+
 
 signal core_changed(new_value: int)
 signal caps_changed(new_value: int)
@@ -228,7 +321,11 @@ const HERO_EXCLUSIVE_CARDS := {
 
 
 func _ready() -> void:
-	load_progress()
+	# Slot system: only load at boot if a slot is already active (e.g. relaunch
+	# remembering the last slot). A fresh boot lands on the menu with no slot; the
+	# slot-select screen calls set_active_slot() to load the chosen profile.
+	if Settings.active_slot >= 1:
+		load_progress()
 	RunManager.run_ended.connect(_on_run_ended)
 
 
@@ -706,7 +803,8 @@ func mark_tutorial_seen() -> void:
 
 
 func save_progress() -> void:
-	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	_ensure_slot_dir()
+	var f := FileAccess.open(_meta_path(), FileAccess.WRITE)
 	if not f:
 		push_warning("MetaProgress: failed to open save file for write")
 		return
@@ -731,17 +829,18 @@ func save_progress() -> void:
 
 
 func load_progress() -> void:
-	if not FileAccess.file_exists(SAVE_PATH):
+	var path := _meta_path()
+	if not FileAccess.file_exists(path):
 		return
-	var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	var f := FileAccess.open(path, FileAccess.READ)
 	if not f:
 		return
 	var raw := f.get_as_text()
 	f.close()
 	var parsed = JSON.parse_string(raw)
 	if typeof(parsed) != TYPE_DICTIONARY:
-		push_warning("MetaProgress: corrupt save file at %s, renaming to .bak" % SAVE_PATH)
-		DirAccess.rename_absolute(SAVE_PATH, SAVE_PATH + ".bak")
+		push_warning("MetaProgress: corrupt save file at %s, renaming to .bak" % path)
+		DirAccess.rename_absolute(path, path + ".bak")
 		return
 	core = int(parsed.get("core", 0))
 	caps = int(parsed.get("caps", 0))

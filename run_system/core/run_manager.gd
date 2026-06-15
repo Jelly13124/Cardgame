@@ -1793,12 +1793,18 @@ func _teardown_run(victory: bool, outcome: String, core_earned: int) -> void:
 # ─── In-run save / resume ──────────────────────────────────────────────────
 ## Saved at map (non-battle) checkpoints; loaded by the title "Continue" button.
 ## Quitting mid-battle loses that battle and resumes at the last map checkpoint.
-const RUN_SAVE_PATH := "user://run_save.json"
+## In-run save is namespaced to the active save slot (Settings.active_slot), so
+## each profile resumes its own run. Slot 0 (none) falls back to slot 1.
+func _run_save_path() -> String:
+	var s: int = Settings.active_slot
+	if s < 1:
+		s = 1
+	return "user://slot_%d/run_save.json" % s
 
 
-## True when a resumable in-run save exists on disk.
+## True when a resumable in-run save exists on disk (for the active slot).
 func has_run_save() -> bool:
-	return FileAccess.file_exists(RUN_SAVE_PATH)
+	return FileAccess.file_exists(_run_save_path())
 
 
 ## Serialize the full run state to disk. Cheap to call repeatedly. Mirrors the
@@ -1835,9 +1841,11 @@ func save_run() -> void:
 		"current_node_id": current_node_id,
 		"visited_node_ids": visited_node_ids,
 	}
-	var f := FileAccess.open(RUN_SAVE_PATH, FileAccess.WRITE)
+	var path := _run_save_path()
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+	var f := FileAccess.open(path, FileAccess.WRITE)
 	if f == null:
-		push_warning("RunManager: could not write %s" % RUN_SAVE_PATH)
+		push_warning("RunManager: could not write %s" % path)
 		return
 	f.store_string(JSON.stringify(payload, "  "))
 	f.close()
@@ -1847,9 +1855,10 @@ func save_run() -> void:
 ## save exists (state left untouched). Rebuilds derived caches (node index +
 ## attributes). On a corrupt/partial save, returns false rather than half-loading.
 func load_run() -> bool:
-	if not FileAccess.file_exists(RUN_SAVE_PATH):
+	var path := _run_save_path()
+	if not FileAccess.file_exists(path):
 		return false
-	var f := FileAccess.open(RUN_SAVE_PATH, FileAccess.READ)
+	var f := FileAccess.open(path, FileAccess.READ)
 	if f == null:
 		return false
 	var data = JSON.parse_string(f.get_as_text())
@@ -1894,8 +1903,9 @@ func load_run() -> bool:
 
 ## Delete any in-run save (on run end, or when a fresh run starts).
 func clear_run_save() -> void:
-	if FileAccess.file_exists(RUN_SAVE_PATH):
-		DirAccess.remove_absolute(RUN_SAVE_PATH)
+	var path := _run_save_path()
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(path)
 
 
 func _reindex_map() -> void:
