@@ -403,8 +403,18 @@ func _generate_attr_options() -> void:
 		child.queue_free()
 	var keys := _ATTR_KEYS.duplicate()
 	keys.shuffle()
+	# Luck: a chance that ONE of the three level-up slots is a gem instead of an
+	# attribute (scaled by luck_gem_chance). Only when the gem pool is non-empty.
+	var gem_slot := -1
+	var pool: Array = RunManager.gem_pool()
+	if not pool.is_empty() and randf() < RunManager.luck_gem_chance():
+		gem_slot = randi() % 3
 	for i in range(min(3, keys.size())):
-		draft_card_container.add_child(_make_attr_slot(str(keys[i])))
+		if i == gem_slot:
+			var gem_id := str(pool[randi() % pool.size()])
+			draft_card_container.add_child(_make_gem_draft_slot(gem_id, true))
+		else:
+			draft_card_container.add_child(_make_attr_slot(str(keys[i])))
 
 
 func _make_attr_slot(attr: String) -> Control:
@@ -581,7 +591,9 @@ func _make_draft_card_slot(card_id: String) -> Control:
 
 
 ## A gem option in a draft (elite gem-draft, or a Luck-rolled level-up slot).
-func _make_gem_draft_slot(gem_id: String) -> Control:
+## `in_attr` routes the pick through the level-up flow (consume an attr point +
+## continue) instead of the card-draft completion.
+func _make_gem_draft_slot(gem_id: String, in_attr: bool = false) -> Control:
 	var wrapper = Control.new()
 	wrapper.custom_minimum_size = Vector2(300, 400)
 
@@ -626,9 +638,26 @@ func _make_gem_draft_slot(gem_id: String) -> Control:
 	button.flat = true
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.pressed.connect(_on_gem_draft_selected.bind(gem_id))
+	if in_attr:
+		button.pressed.connect(_on_attr_gem_picked.bind(gem_id))
+	else:
+		button.pressed.connect(_on_gem_draft_selected.bind(gem_id))
 	wrapper.add_child(button)
 	return wrapper
+
+
+## Level-up slot resolved as a gem (Luck roll): bank the gem, consume one attr
+## point, and continue the pick loop (mirrors _on_attr_picked's tail).
+func _on_attr_gem_picked(gem_id: String) -> void:
+	if gem_id != "":
+		RunManager.gem_inventory.append(gem_id)
+	RunManager.pending_attr_points = maxi(0, RunManager.pending_attr_points - 1)
+	if RunManager.pending_attr_points > 0:
+		_generate_attr_options()
+		return
+	_in_attr = false
+	draft_overlay.visible = false
+	_finish_loot()
 
 
 func _on_draft_card_selected(card_id: String) -> void:

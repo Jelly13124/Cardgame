@@ -1247,8 +1247,11 @@ func equipment_crit_pct_bonus() -> float:
 	return float(_equipment_crit_pct_bonus) / 100.0
 
 
+## Crit chance — Luck-scaled only. Crit is Bill's keyword: this value only turns
+## into actual crits while a crit-granting relic is held (the crit clip converts
+## Luck → attack crit; crit_plating → block crit). Equipment no longer grants crit.
 func crit_chance() -> float:
-	return clampf(_attr("luck") * CRIT_PER_LUCK + equipment_crit_pct_bonus(), 0.0, CRIT_CAP)
+	return clampf(_attr("luck") * CRIT_PER_LUCK, 0.0, CRIT_CAP)
 
 
 func luck_gold_mult() -> float:
