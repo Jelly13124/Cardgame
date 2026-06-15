@@ -269,7 +269,15 @@ func _on_node_clicked(node: Dictionary) -> void:
 	#   - popup-only branches release synchronously below
 	match node.type:
 		"relic":
-			_open_relic_choice(tr("UI_MAP_CHOOSE_STARTING_RELIC"), "starting")
+			# Bill's starting node is a build-defining clip pick: Crit Clip (burst /
+			# variance) vs Double-Fire Clip (guaranteed replay, ammo-gated). Both are
+			# unique relics, so neither rolls anywhere else — the unpicked one is gone
+			# for the run. Other heroes keep the random starting-relic roll.
+			if str(rm.current_hero_id) == "cowboy_bill":
+				var clips: Array[String] = ["crit_clip", "double_fire_clip"]
+				_open_relic_choice(tr("UI_MAP_CHOOSE_STARTING_RELIC"), "starting", clips)
+			else:
+				_open_relic_choice(tr("UI_MAP_CHOOSE_STARTING_RELIC"), "starting")
 		"enemy", "elite", "boss":
 			rm.current_encounter = rm.select_encounter(node.type, int(node.floor))
 			rm.last_battle_node_type = node.type
@@ -445,12 +453,17 @@ func _build_relic_choice_layer() -> void:
 	panel.add_child(_relic_choice_box)
 
 
-func _open_relic_choice(title: String, source_type: String) -> void:
+func _open_relic_choice(
+	title: String, source_type: String, forced_choices: Array[String] = []
+) -> void:
 	if not rm:
 		_node_click_pending = false
 		return
 
-	var choices: Array[String] = rm.roll_relic_choices(3)
+	# Forced choices (e.g. Bill's fixed clip pair) bypass the random roll.
+	var choices: Array[String] = (
+		forced_choices if not forced_choices.is_empty() else rm.roll_relic_choices(3)
+	)
 	if choices.is_empty():
 		if source_type == "treasure":
 			var gold = randi_range(20, 45)
