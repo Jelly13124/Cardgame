@@ -220,6 +220,16 @@ func bleed_bonus_stacks() -> int:
 	return bonus
 
 
+## Extra full-card replays granted to ATTACK cards by held relics (the double-fire
+## clip grants +1). Read by combat_engine._replay_count when resolving an attack.
+func attack_replay_bonus() -> int:
+	var bonus := 0
+	for entry in _get_effect_entries("on_attack_replay"):
+		if str(entry["effect"].get("type", "")) == "attack_replay":
+			bonus += int(entry["effect"].get("amount", 0))
+	return bonus
+
+
 ## Deal `amount` to every alive enemy. Returns true if at least one enemy was hit
 ## (so the caller can gate its notification / once_per_combat marking).
 func _deal_to_all_enemies(amount: int) -> bool:
