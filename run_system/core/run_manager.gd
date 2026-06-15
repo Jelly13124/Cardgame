@@ -258,7 +258,7 @@ const BOSS_ROSTER: Array = ["junkyard_tyrant"]
 ## away. acts_total() is the demo-aware cap used by is_final_act()/advance_act();
 ## DEMO_ALLOWED_HEROES filters the Warehouse hero picker.
 const DEMO_BUILD: bool = true
-const DEMO_MAX_ACTS: int = 1
+const DEMO_MAX_ACTS: int = 2
 const DEMO_ALLOWED_HEROES: Array[String] = ["cowboy_bill"]
 
 
