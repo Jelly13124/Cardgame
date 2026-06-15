@@ -12,6 +12,9 @@ var is_player_turn: bool = true
 ## Counts attack cards the player has played this turn. Read by
 ## combat_engine `scale_damage_by_attacks` effect. Reset on player turn start.
 var attacks_played_this_turn: int = 0
+## Same, but for the WHOLE combat (reset only at combat start). Read by
+## scale_damage_by_attacks effects with "scope":"combat" (e.g. Cascade).
+var attacks_played_this_combat: int = 0
 
 
 func _ready() -> void:
@@ -21,6 +24,7 @@ func _ready() -> void:
 func start_new_game() -> void:
 	current_round = 0
 	attacks_played_this_turn = 0
+	attacks_played_this_combat = 0
 	start_next_round()
 
 
