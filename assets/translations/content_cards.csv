@@ -32,7 +32,7 @@ CARD_last_breath_DESC,"Gain [b]10[/b] block. Draw 2 cards. Exhaust.","获得 [b]
 CARD_last_stand_TITLE,"Last Stand","背水一战"
 CARD_last_stand_DESC,"Gain [b]12[/b] block. Draw 1 card.","获得 [b]12[/b] 点格挡。抽 1 张牌。"
 CARD_siphon_TITLE,"Siphon","汲取"
-CARD_siphon_DESC,"Deal [b]2[/b] damage and gain [b]4[/b] block.","造成 [b]2[/b] 点伤害，并获得 [b]4[/b] 点格挡。"
+CARD_siphon_DESC,"Deal [b]2[/b] damage and gain [b]2[/b] block.","造成 [b]2[/b] 点伤害，并获得 [b]2[/b] 点格挡。"
 CARD_reinforce_TITLE,"Reinforce","加固装甲"
 CARD_reinforce_DESC,"Gain 7 Block.","获得 7 点格挡。"
 CARD_deflector_TITLE,"Deflector","偏导力场"
