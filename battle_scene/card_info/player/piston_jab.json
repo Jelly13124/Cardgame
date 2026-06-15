@@ -5,17 +5,14 @@
 	"type": "attack",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Deal 5 damage twice.",
+	"description": "Deal 4 fixed damage (ignores Strength).",
 	"front_image": "player/strike.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "deal_damage",
-			"amount": 5
-		},
-		{
-			"type": "deal_damage",
-			"amount": 5
+			"amount": 4,
+			"no_str": true
 		}
 	]
 }

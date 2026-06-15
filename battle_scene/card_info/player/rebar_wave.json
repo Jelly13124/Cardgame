@@ -1,21 +1,23 @@
 {
 	"name": "rebar_wave",
-	"title": "Rebar Wave",
+	"title": "Defensive Strike",
 	"rarity": "common",
 	"type": "attack",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Gain 5 Block. Deal 5 damage.",
+	"description": "Gain 5 fixed Block and deal 5 fixed damage (ignores Constitution and Strength).",
 	"front_image": "player/strike.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "gain_block",
-			"amount": 5
+			"amount": 5,
+			"no_con": true
 		},
 		{
 			"type": "deal_damage",
-			"amount": 5
+			"amount": 5,
+			"no_str": true
 		}
 	]
 }

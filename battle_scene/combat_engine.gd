@@ -178,7 +178,7 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 		var skip_str: bool = bool(effect.get("no_str", false))
 		if (effect_type == "deal_damage" or effect_type == "deal_damage_all") and not skip_str:
 			amount += int(player.get("strength"))
-		elif effect_type == "gain_block":
+		elif effect_type == "gain_block" and not bool(effect.get("no_con", false)):
 			amount += int(player.get("constitution"))
 
 	var is_damage = effect_type == "deal_damage" or effect_type == "deal_damage_all"
@@ -396,13 +396,15 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			await get_tree().create_timer(0.2).timeout
 
 		"apply_bleed_scaled":
-			# Bleed = `amount` + an attribute (default Intelligence); if the target
-			# is ALREADY bleeding, the applied stacks are DOUBLED. (Lacerate.)
+			# Bleed = `amount` + an attribute (default Intelligence). With
+			# "double_if_bleeding": true, the applied stacks DOUBLE when the target
+			# is already Bleeding (Lacerate). Without it, just the scaled value.
 			var attr: String = str(effect.get("attr", "intelligence"))
 			var bstacks: int = int(effect.get("amount", 0)) + int(player.get(attr))
-			if target and is_instance_valid(target) and target.has_method("get_status_stacks"):
-				if target.get_status_stacks("bleed") > 0:
-					bstacks *= 2
+			if bool(effect.get("double_if_bleeding", false)):
+				if target and is_instance_valid(target) and target.has_method("get_status_stacks"):
+					if target.get_status_stacks("bleed") > 0:
+						bstacks *= 2
 			# brutal_servo and friends still add their flat bonus.
 			if main.relic_effect_system:
 				bstacks += main.relic_effect_system.bleed_bonus_stacks()

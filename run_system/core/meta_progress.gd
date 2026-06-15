@@ -300,11 +300,8 @@ const HERO_EXCLUSIVE_CARDS := {
 	[
 		"piston_jab",
 		"pipe_swing",
-		"scrap_maul",
-		"overclock_swing",
 		"combat_stim",
 		"power_surge",
-		"mark_target",
 		"incinerate",
 		"focusing_blow",
 		"siphon_valve",
