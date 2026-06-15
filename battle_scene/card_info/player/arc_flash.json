@@ -5,13 +5,13 @@
 	"type": "attack",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Deal 4 damage and apply 1 Vulnerable to ALL enemies.",
+	"description": "Deal 2 (+STR) damage and apply 1 Vulnerable to ALL enemies.",
 	"front_image": "player/strike.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "deal_damage_all",
-			"amount": 4
+			"amount": 2
 		},
 		{
 			"type": "apply_status_all",

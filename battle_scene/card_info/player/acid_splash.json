@@ -4,13 +4,14 @@
 	"rarity": "uncommon",
 	"type": "attack",
 	"cost": 1,
-	"description": "Deal [b]4[/b] damage to ALL enemies and apply [b]2 Bleed[/b] to ALL.",
+	"description": "Deal [b]2[/b] fixed damage to ALL enemies (ignores Strength) and apply [b]2 Bleed[/b] to ALL.",
 	"front_image": "player/acid_splash.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "deal_damage_all",
-			"amount": 4
+			"amount": 2,
+			"no_str": true
 		},
 		{
 			"type": "apply_status_all",
