@@ -287,7 +287,10 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			var per: int = int(effect.get("per", 0))
 			var count: int = 0
 			if main and main.turn_manager:
-				count = int(main.turn_manager.attacks_played_this_turn)
+				if str(effect.get("scope", "turn")) == "combat":
+					count = int(main.turn_manager.attacks_played_this_combat)
+				else:
+					count = int(main.turn_manager.attacks_played_this_turn)
 			var dynamic = base_dmg + per * count
 			if target and is_instance_valid(target) and target.has_method("take_damage"):
 				if _check_dodge(target):
@@ -589,6 +592,7 @@ func _get_target_hit_position(target: Node) -> Vector2:
 func _register_player_attack() -> void:
 	if main and main.turn_manager:
 		main.turn_manager.attacks_played_this_turn += 1
+		main.turn_manager.attacks_played_this_combat += 1
 
 
 func _make_fx_sprite(texture: Texture2D, pos: Vector2, sprite_scale: Vector2) -> Sprite2D:

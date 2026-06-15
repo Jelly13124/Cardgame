@@ -246,7 +246,6 @@ const INITIAL_CARD_POOL: Array[String] = [
 	"hot_swap",
 	"adrenaline",
 	"brace",
-	"double_tap",
 	"siphon",
 	"charged_shot",
 	"cascade",
@@ -301,7 +300,6 @@ const HERO_EXCLUSIVE_CARDS := {
 	[
 		"piston_jab",
 		"pipe_swing",
-		"haymaker",
 		"scrap_maul",
 		"overclock_swing",
 		"combat_stim",

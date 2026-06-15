@@ -5,13 +5,14 @@
 	"type": "attack",
 	"cost": 2,
 	"polarity": "neutral",
-	"description": "Deal 16 damage.",
+	"description": "Deal 12 fixed damage (ignores Strength).",
 	"front_image": "player/strike.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "deal_damage",
-			"amount": 16
+			"amount": 12,
+			"no_str": true
 		}
 	]
 }
