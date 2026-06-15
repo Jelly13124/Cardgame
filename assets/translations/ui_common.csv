@@ -31,6 +31,15 @@ CHAR_VIEW_TITLE,Attributes,角色属性
 CHAR_VIEW_HP,HP,生命
 CHAR_VIEW_LEVEL,Level,等级
 CHAR_VIEW_HINT,Press I or ESC to close,按 I 或 ESC 关闭
+MENU_SLOTS,Save Slots,选择存档
+SLOT_SELECT_TITLE,Select a Save Slot,选择存档栏位
+SLOT_LABEL,Slot {n},存档 {n}
+SLOT_EMPTY,Empty — start a new game,空存档 —— 开始新游戏
+SLOT_SUMMARY,{scrap} Scrap · {core} Core · {runs} runs,废料 {scrap} · 核心 {core} · {runs} 局
+SLOT_NEW_GAME,New Game,新游戏
+SLOT_CONTINUE,Continue,继续游戏
+SLOT_OVERWRITE,Overwrite this slot? This erases its progress.,覆盖此存档？这会清除它的进度。
+SLOT_CONFIRM,Overwrite,确认覆盖
 RESULT_DEFEAT_TITLE,You Died,你死了
 RESULT_DEFEAT_BODY,"Your run ends here. The wasteland claims another salvager.","你的旅程到此为止。废土又吞噬了一名拾荒者。"
 RESULT_DEMO_TITLE,Demo Complete!,试玩通关!

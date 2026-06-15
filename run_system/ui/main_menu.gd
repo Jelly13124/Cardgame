@@ -69,12 +69,8 @@ func _build() -> void:
 	gap.custom_minimum_size = Vector2(0, 28)
 	box.add_child(gap)
 
-	box.add_child(_menu_button(tr("MENU_PLAY"), _on_play))
-
-	var has_save: bool = RunManager.has_method("has_run_save") and RunManager.has_run_save()
-	var continue_btn := _menu_button(tr("MENU_CONTINUE"), _on_continue)
-	continue_btn.disabled = not has_save
-	box.add_child(continue_btn)
+	# Save Slots is the primary entry — New Game / Continue happen per slot.
+	box.add_child(_menu_button(tr("MENU_SLOTS"), _on_slots))
 
 	box.add_child(_menu_button(tr("MENU_HOWTO"), _on_howto))
 	box.add_child(_menu_button(tr("MENU_SETTINGS"), _on_settings))
@@ -102,14 +98,15 @@ func _menu_button(text: String, handler: Callable) -> Button:
 	return button
 
 
-func _on_play() -> void:
-	get_tree().change_scene_to_file(HOME_BASE_PATH)
-
-
-func _on_continue() -> void:
-	if not (RunManager.has_method("load_run") and RunManager.load_run()):
-		return
-	get_tree().change_scene_to_file(MAP_SCENE_PATH)
+## Open the 3-slot save-select screen (New Game / Continue happen per slot).
+func _on_slots() -> void:
+	var layer := CanvasLayer.new()
+	layer.name = "SlotSelectLayer"
+	layer.layer = 130
+	add_child(layer)
+	var panel = preload("res://run_system/ui/slot_select.gd").new()
+	panel.tree_exited.connect(layer.queue_free)
+	layer.add_child(panel)
 
 
 func _on_howto() -> void:
