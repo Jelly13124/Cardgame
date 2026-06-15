@@ -1,21 +1,22 @@
 {
 	"name": "recoil_shot",
-	"title": "Recoil Shot",
+	"title": "Slash",
 	"rarity": "common",
 	"type": "attack",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Deal 9 damage. Draw 1 card.",
+	"description": "Deal 1 (+STR) damage. Apply 1 (+INT) Bleed.",
 	"front_image": "player/strike.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "deal_damage",
-			"amount": 9
+			"amount": 1
 		},
 		{
-			"type": "draw_cards",
-			"amount": 1
+			"type": "apply_bleed_scaled",
+			"amount": 1,
+			"attr": "intelligence"
 		}
 	]
 }

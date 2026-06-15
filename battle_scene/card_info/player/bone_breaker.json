@@ -11,7 +11,8 @@
 		{
 			"type": "apply_bleed_scaled",
 			"amount": 3,
-			"attr": "intelligence"
+			"attr": "intelligence",
+			"double_if_bleeding": true
 		}
 	]
 }

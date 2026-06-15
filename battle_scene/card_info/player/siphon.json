@@ -4,13 +4,13 @@
 	"rarity": "common",
 	"type": "attack",
 	"cost": 1,
-	"description": "Deal [b]4[/b] damage and gain [b]4[/b] block.",
+	"description": "Deal [b]2[/b] damage and gain [b]4[/b] block.",
 	"front_image": "player/siphon.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "deal_damage",
-			"amount": 4
+			"amount": 2
 		},
 		{
 			"type": "gain_block",
