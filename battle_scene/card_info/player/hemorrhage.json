@@ -1,0 +1,14 @@
+{
+  "name": "hemorrhage",
+  "title": "Hemorrhage",
+  "rarity": "rare",
+  "type": "ability",
+  "cost": 2,
+  "polarity": "neutral",
+  "description": "This combat, your Bleed damage can Crit.",
+  "front_image": "player/strike.png",
+  "side": "player",
+  "effects": [
+    { "type": "apply_status_self", "status": "hemorrhage", "stacks": 1 }
+  ]
+}

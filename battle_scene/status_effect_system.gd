@@ -39,6 +39,10 @@ const STATUS_COLORS = {
 	"metallicize": Color(0.72, 0.80, 0.86),
 	"feel_no_pain": Color(0.55, 0.80, 0.95),
 	"dark_embrace": Color(0.72, 0.42, 0.86),
+	"hot_streak": Color(1.0, 0.82, 0.3),
+	"all_in": Color(1.0, 0.45, 0.25),
+	"hemorrhage": Color(0.85, 0.15, 0.25),
+	"covering_reload": Color(0.55, 0.78, 0.95),
 }
 
 const STATUS_LABELS = {
@@ -55,6 +59,10 @@ const STATUS_LABELS = {
 	"metallicize": "M",
 	"feel_no_pain": "¤",
 	"dark_embrace": "◆",
+	"hot_streak": "HS",
+	"all_in": "AI",
+	"hemorrhage": "Hm",
+	"covering_reload": "CR",
 }
 
 const STATUS_ICON_DIR := "res://battle_scene/assets/images/ui/status/"
@@ -76,6 +84,10 @@ const STATUS_DESCRIPTIONS = {
 	"metallicize": "At the start of your turn, gain stacks Block. Persistent.",
 	"feel_no_pain": "Whenever a card is Exhausted, gain stacks Block. Persistent.",
 	"dark_embrace": "Whenever a card is Exhausted, draw stacks card(s). Persistent.",
+	"hot_streak": "Whenever you Crit, gain 2 gold. Persistent.",
+	"all_in": "Your Crits deal double damage, but non-Crit attacks deal 0. Persistent.",
+	"hemorrhage": "Your Bleed damage can Crit. Persistent.",
+	"covering_reload": "Whenever you Reload, gain 3 Block. Persistent.",
 }
 
 
@@ -109,6 +121,18 @@ func on_turn_start(entity: Node) -> void:
 	var changed := false
 	if has_status("bleed"):
 		var dmg: int = _statuses["bleed"]
+		# Hemorrhage power: the PLAYER's Bleed on enemies can Crit. The player's own
+		# Bleed (enemy-applied) does not — the player entity is in "player_entity".
+		if entity and not entity.is_in_group("player_entity"):
+			var tree = entity.get_tree()
+			var pl = tree.get_first_node_in_group("player_entity") if tree else null
+			if (
+				pl
+				and pl.has_method("get_status_stacks")
+				and pl.get_status_stacks("hemorrhage") > 0
+				and randf() < RunManager.crit_chance()
+			):
+				dmg = int(round(dmg * RunManager.CRIT_MULT))
 		if entity.has_method("take_damage"):
 			# silent=false → CombatFX floating damage number IS the readout
 			# now that _notify is deleted.

@@ -784,7 +784,19 @@ func add_attack_allowance(n: int) -> void:
 
 ## Refresh the attack allowance back up to the per-turn cap (Reload card). Does
 ## NOT stack past the cap — so you can fire again, but can't bank extra attacks.
+## Also fires the Covering Reload power (Block on every Reload).
 func restore_attack_allowance() -> void:
+	# Covering Reload power: gain 3 Block whenever a Reload is played (independent
+	# of whether the attack cap is armed).
+	if (
+		player
+		and player.has_method("get_status_stacks")
+		and player.get_status_stacks("covering_reload") > 0
+		and player.has_method("add_block")
+	):
+		player.add_block(3)
+		if player.has_method("play_block_pulse"):
+			player.play_block_pulse()
 	if _attack_limit_per_turn <= 0:
 		return
 	_attacks_left_this_turn = max(_attacks_left_this_turn, _attack_limit_per_turn)
