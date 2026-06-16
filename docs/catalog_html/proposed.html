@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>Proposed — Bill Identity (NOT in game)</title>
+<style>
+  :root{--bg:#171309;--panel:#221a0f;--line:#3a2c18;--txt:#f0d8a8;--dim:#b08060;--gold:#ffcf45;--blue:#3bc7eb;--green:#8ce04a;--danger:#e07020;}
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--txt);font-family:system-ui,"Noto Sans CJK SC",sans-serif;margin:0;padding:0 0 80px}
+  header{position:sticky;top:0;background:linear-gradient(180deg,#1d1812,#171309);border-bottom:2px solid var(--line);padding:16px 28px;z-index:10}
+  h1{margin:0;font-size:22px;color:var(--gold)}
+  .warn{color:var(--danger);font-size:14px;margin-top:4px}
+  main{max-width:1000px;margin:0 auto;padding:24px 20px}
+  h2{color:var(--gold);font-size:18px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-top:34px}
+  .card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:10px;padding:14px 16px;margin:12px 0}
+  .card h3{margin:0 0 6px;font-size:17px}
+  .pill{display:inline-block;border-radius:5px;padding:2px 8px;background:#0e0b07;border:1px solid var(--line);color:var(--dim);font-size:12px;margin-right:6px}
+  .desc{margin:6px 0 0;color:#e6d4ac}
+  .note{color:var(--dim);font-size:13px;margin-top:6px}
+  table{border-collapse:collapse;width:100%;margin-top:10px}
+  td,th{border:1px solid var(--line);padding:8px 10px;text-align:left;font-size:14px}
+  th{color:var(--gold)}
+  .q{color:var(--blue)}
+  ul{line-height:1.7}
+</style>
+</head>
+<body>
+<header>
+  <h1>Bill 职业身份卡 / 暴击·幸运重做 — ✅ 已实装</h1>
+  <div class="warn" style="color:#8ce04a">✅ 全部已实装进游戏（JSON + 机制 + 卡池 + 翻译 + catalog）。暴击公式已 live 验证；战斗内 power 行为（梭哈归零非暴击、致命失血流血暴击）建议实机 QA 一次。</div>
+</header>
+<main>
+
+<h2>暴击 &amp; 幸运 重做</h2>
+<p>把暴击从「只有暴击弹夹才能触发」改成 <b>幸运驱动的基础机制</b>，这样双发流也能用暴击卡。</p>
+<table>
+  <tr><th>情形</th><th>暴击率</th></tr>
+  <tr><td>任何角色（基础）</td><td>幸运 × 2%</td></tr>
+  <tr><td>装了暴击弹夹</td><td>5% 底 + 幸运 × 4%（幸运翻倍）</td></tr>
+  <tr><td>暴击倍率</td><td>默认 1.5×（梭哈为 2×）</td></tr>
+  <tr><td>暴击上限</td><td><b>无上限</b>（移除现有 40% cap）—— 高幸运可冲到 100%+ 必暴</td></tr>
+</table>
+<p class="note">实装影响：会推翻之前「暴击=Bill专属 / 从装备移除暴击率」的改动 —— 暴击要改回走基础攻击路径（不再只靠 crit_clip 遗物触发）。<b>装备暴击率词缀：恢复 ✅</b>（重新加回 affix 池）。</p>
+
+<h2>提案卡</h2>
+
+<div class="card" style="border-left-color:var(--green)">
+  <h3>备弹 / Load Up</h3>
+  <span class="pill">技能 Skill</span><span class="pill">1 费</span><span class="pill">装弹体系</span>
+  <div class="desc">将 2 张「装弹」置入你的手牌。</div>
+  <div class="note">让双发流能在弹夹给的 2 张装弹之外，临时多造一批弹药打爆发回合。</div>
+</div>
+
+<div class="card" style="border-left-color:var(--gold)">
+  <h3>走运 / Hot Streak</h3>
+  <span class="pill">能力 Power</span><span class="pill">1 费</span><span class="pill">暴击体系</span>
+  <div class="desc">本场战斗，你每次暴击就获得 2 金币。</div>
+  <div class="note">需机制：暴击时触发钩子。（改成给金币而非幸运，避开暴击→幸运→更高暴击的滚雪球。）</div>
+</div>
+
+<div class="card" style="border-left-color:var(--danger)">
+  <h3>致命失血 / Hemorrhage</h3>
+  <span class="pill">能力 Power</span><span class="pill">2 费</span><span class="pill">Rare</span><span class="pill">流血 × 暴击</span>
+  <div class="desc">你的流血伤害也能暴击。</div>
+  <div class="note q">需机制：流血结算时按暴击率掷骰、命中则 ×倍率。把流血流和暴击流缝在一起。</div>
+</div>
+
+<div class="card" style="border-left-color:var(--gold)">
+  <h3>换弹掩护 / Covering Reload</h3>
+  <span class="pill">能力 Power</span><span class="pill">1 费</span><span class="pill">装弹体系</span>
+  <div class="desc">本场战斗，每当你打出「装弹」时，获得 3 点格挡。</div>
+  <div class="note q">需机制：装弹触发钩子（restore_attack_allowance 时给 block）。给装弹流一条防御向收益。</div>
+</div>
+
+<div class="card" style="border-left-color:var(--danger)">
+  <h3>解剖 / Dissect</h3>
+  <span class="pill">攻击 Attack</span><span class="pill">1 费</span><span class="pill">流血 × 智力</span>
+  <div class="desc">施加等同于<b>双倍智力</b>的流血（2 × INT）。</div>
+  <div class="note q">需机制：扩展 apply_bleed_scaled 支持属性倍率（amount:0, attr:intelligence, attr_mult:2）。纯智力缩放放血。</div>
+</div>
+
+<div class="card" style="border-left-color:var(--green)">
+  <h3>凝血 / Coagulate</h3>
+  <span class="pill">技能 Skill</span><span class="pill">1 费</span><span class="pill">流血 → 格挡</span>
+  <div class="desc">获得等同于所有敌人当前流血层数总和的格挡（1:1）。</div>
+  <div class="note">需机制：统计全场敌人流血层数 → 转格挡。比例 1:1（格挡只存一回合，高也无妨）。</div>
+</div>
+
+<div class="card" style="border-left-color:var(--blue)">
+  <h3>梭哈 / All In</h3>
+  <span class="pill">能力 Power</span><span class="pill">1 费</span><span class="pill">暴击体系</span>
+  <div class="desc">本场战斗：你的暴击造成 <b>2 倍</b>伤害，但你<b>未暴击的攻击造成 0 伤害</b>。</div>
+  <div class="note q">需机制：power 改写暴击倍率为 2×，且非暴击攻击伤害归零。全有或全无 —— 逼你把暴击堆满（配无上限暴击 + 暴击弹夹）。</div>
+</div>
+
+<h2>已定 / 已实装的相关基础（供参考）</h2>
+<ul>
+  <li><b>装弹 / Reload</b>（已实装）：0费，抽1 + 刷新攻击次数（到上限不叠加）+ 消耗。双发弹夹拿到时塞 2 张。</li>
+  <li><b>双发弹夹</b>（已实装）：攻击重放1 + 每回合限1攻击。</li>
+  <li>流血卡（已实装）：切割、切割伤口、回旋锯刃；遗物：锯齿倒刺、磨尖废铁、残暴伺服。</li>
+</ul>
+
+<h2>已定（本轮）</h2>
+<ul>
+  <li>✅ 暴击无上限（移除 40% cap）</li>
+  <li>✅ 走运：暴击 → 2 金币（不再加幸运）</li>
+  <li>✅ 致命失血：2 费、Rare</li>
+  <li>✅ 梭哈：改为能力 1费 —— 暴击 2× 伤害，未暴击攻击 0 伤害（全有或全无）</li>
+  <li>✅ 装备暴击率词缀：恢复（加回 affix 池）</li>
+  <li>✅ 新卡 凝血 / Coagulate：全场流血层数 → 格挡（1:1）</li>
+  <li>✅ 备弹 1费置入2张装弹（数值 OK）</li>
+  <li>✅ 新卡 换弹掩护 / Covering Reload：每次装弹 → +3 格挡</li>
+  <li>✅ 新卡 解剖 / Dissect：攻击1费，施加 2×智力 流血</li>
+</ul>
+
+<h2 class="q">仍待你拍板</h2>
+<ul>
+  <li>备弹（1费，置入2张装弹）数值 OK 吗？</li>
+  <li>还要不要更多装弹卡（拨锤连射 / 弹链 / 空仓）？</li>
+  <li>这套定稿后就实装，对吗？</li>
+</ul>
+
+</main>
+</body>
+</html>
