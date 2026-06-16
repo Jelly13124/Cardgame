@@ -1221,8 +1221,13 @@ func recompute_attributes() -> void:
 # --- Attribute gameplay helpers (luck/charm) ---
 # Pure, single-sourced so consumers (crit/loot/gold/shop) stay testable.
 
-const CRIT_PER_LUCK := 0.03
-const CRIT_CAP := 0.40
+## Crit is a Luck-driven BASE mechanic (any character): each Luck gives
+## CRIT_PER_LUCK crit chance. The Crit Clip relic adds CRIT_CLIP_BASE flat AND
+## doubles Luck's contribution (CRIT_PER_LUCK_CLIP). No cap — high Luck can reach
+## guaranteed crits. Default crit multiplier is 1.5x (powers like All In override).
+const CRIT_PER_LUCK := 0.02
+const CRIT_PER_LUCK_CLIP := 0.04
+const CRIT_CLIP_BASE := 0.05
 const CRIT_MULT := 1.5
 const GOLD_PER_LUCK := 0.03
 const RARITY_PER_LUCK := 0.015
@@ -1247,11 +1252,16 @@ func equipment_crit_pct_bonus() -> float:
 	return float(_equipment_crit_pct_bonus) / 100.0
 
 
-## Crit chance — Luck-scaled only. Crit is Bill's keyword: this value only turns
-## into actual crits while a crit-granting relic is held (the crit clip converts
-## Luck → attack crit; crit_plating → block crit). Equipment no longer grants crit.
+## Crit chance — Luck-driven, applied to every player attack (no relic needed).
+## Crit Clip adds a flat base and doubles Luck's contribution. Equipment crit_pct
+## affixes fold in. Uncapped: stacking Luck can push past 100% (guaranteed crits).
 func crit_chance() -> float:
-	return clampf(_attr("luck") * CRIT_PER_LUCK, 0.0, CRIT_CAP)
+	var per_luck := CRIT_PER_LUCK
+	var base := 0.0
+	if has_relic("crit_clip"):
+		per_luck = CRIT_PER_LUCK_CLIP
+		base = CRIT_CLIP_BASE
+	return max(0.0, base + _attr("luck") * per_luck + equipment_crit_pct_bonus())
 
 
 func luck_gold_mult() -> float:
