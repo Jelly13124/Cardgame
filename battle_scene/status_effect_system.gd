@@ -141,6 +141,7 @@ func on_turn_start(entity: Node) -> void:
 			# silent=false → CombatFX floating damage number IS the readout
 			# now that _notify is deleted.
 			entity.take_damage(dmg)
+			AudioManager.play_sfx("bleed")
 		# Halve remaining stacks, rounded down (int division floors for positives).
 		_statuses["bleed"] = _statuses["bleed"] / 2
 		if _statuses["bleed"] <= 0:

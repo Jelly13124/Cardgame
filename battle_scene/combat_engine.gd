@@ -56,6 +56,7 @@ func _apply_player_crit(damage: int) -> int:
 		var mult := 2.0 if all_in else float(RunManager.CRIT_MULT)
 		if has_power and p.get_status_stacks("hot_streak") > 0:
 			RunManager.add_gold(2)
+		AudioManager.play_sfx("crit")
 		if main.has_method("show_notification"):
 			main.show_notification("CRIT!", Color(1, 0.85, 0.2))
 		return int(round(damage * mult))
@@ -242,6 +243,7 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 						)
 					var outgoing = calculate_attack_damage(amount, player, target)
 					target.take_damage(outgoing)
+					AudioManager.play_sfx("attack_hit")
 					_register_player_attack()
 					main.show_notification(
 						tr("UI_COMBAT_DEALT_DAMAGE").format({"n": outgoing}), Color(1.0, 0.4, 0.3)
@@ -268,6 +270,7 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			player.add_block(amount)
 			if player.has_method("play_block_pulse"):
 				player.play_block_pulse()  # grow-and-shrink, like the enemy's block
+			AudioManager.play_sfx("block_gain")
 			main.show_notification(
 				tr("UI_COMBAT_GAIN_BLOCK").format({"n": amount}), Color(0.4, 0.6, 1.0)
 			)
@@ -304,6 +307,7 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 
 		"draw_cards":
 			main.deck_manager.draw_cards(amount)
+			AudioManager.play_sfx("card_draw")
 			main.show_notification(tr("UI_COMBAT_DRAW").format({"n": amount}), Color(0.7, 1.0, 0.7))
 			await get_tree().create_timer(0.2).timeout
 
@@ -336,6 +340,7 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 						)
 					apply_thorns_reflection(player, enemy)
 			_register_player_attack()
+			AudioManager.play_sfx("attack_slash")
 			main.show_notification(tr("UI_COMBAT_ALL_ENEMIES_HIT"), Color(1.0, 0.3, 0.2))
 			await get_tree().create_timer(0.3).timeout
 

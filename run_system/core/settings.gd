@@ -12,6 +12,8 @@ const DEFAULT_LANGUAGE := "en"
 var language: String = DEFAULT_LANGUAGE
 var fullscreen: bool = false
 var master_volume: float = 1.0
+var music_volume: float = 0.7
+var sfx_volume: float = 0.9
 ## Active save slot (1..3), or 0 when none is chosen yet (fresh boot at the menu).
 ## Persisted so a relaunch can remember the last-played slot, but the slot-select
 ## screen always re-sets it on pick. MetaProgress / RunManager namespace their
@@ -55,6 +57,8 @@ func load_settings() -> void:
 	language = str(data.get("language", DEFAULT_LANGUAGE))
 	fullscreen = bool(data.get("fullscreen", false))
 	master_volume = float(data.get("master_volume", 1.0))
+	music_volume = float(data.get("music_volume", 0.7))
+	sfx_volume = float(data.get("sfx_volume", 0.9))
 	active_slot = int(data.get("active_slot", 0))
 
 
@@ -73,6 +77,8 @@ func save_settings() -> void:
 						"language": language,
 						"fullscreen": fullscreen,
 						"master_volume": master_volume,
+						"music_volume": music_volume,
+						"sfx_volume": sfx_volume,
 						"active_slot": active_slot,
 					}
 				)
@@ -84,7 +90,7 @@ func save_settings() -> void:
 func _apply_all() -> void:
 	TranslationServer.set_locale(language)
 	_apply_fullscreen()
-	_apply_volume()
+	apply_audio()
 
 
 func set_language(loc: String) -> void:
@@ -101,7 +107,7 @@ func set_fullscreen(on: bool) -> void:
 
 func set_master_volume(v: float) -> void:
 	master_volume = clampf(v, 0.0, 1.0)
-	_apply_volume()
+	apply_audio()
 	save_settings()
 
 
@@ -118,10 +124,30 @@ func _apply_fullscreen() -> void:
 	)
 
 
-func _apply_volume() -> void:
-	var bus := AudioServer.get_bus_index("Master")
-	if bus >= 0:
-		AudioServer.set_bus_volume_db(bus, linear_to_db(maxf(master_volume, 0.0001)))
+## Apply all three audio bus volumes. Music / SFX buses are created by
+## AudioManager; this no-ops on any bus that doesn't exist yet.
+func apply_audio() -> void:
+	_set_bus_db("Master", master_volume)
+	_set_bus_db("Music", music_volume)
+	_set_bus_db("SFX", sfx_volume)
+
+
+func _set_bus_db(bus_name: String, v: float) -> void:
+	var idx := AudioServer.get_bus_index(bus_name)
+	if idx >= 0:
+		AudioServer.set_bus_volume_db(idx, linear_to_db(maxf(v, 0.0001)))
+
+
+func set_music_volume(v: float) -> void:
+	music_volume = clampf(v, 0.0, 1.0)
+	apply_audio()
+	save_settings()
+
+
+func set_sfx_volume(v: float) -> void:
+	sfx_volume = clampf(v, 0.0, 1.0)
+	apply_audio()
+	save_settings()
 
 
 ## Content-translation helper. Returns the localized string for `key`, or
