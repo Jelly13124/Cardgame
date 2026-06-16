@@ -69,8 +69,12 @@ func _build() -> void:
 	gap.custom_minimum_size = Vector2(0, 28)
 	box.add_child(gap)
 
-	# Save Slots is the primary entry — New Game / Continue happen per slot.
-	box.add_child(_menu_button(tr("MENU_SLOTS"), _on_slots))
+	# New Game auto-creates a save in the first free slot (or prompts to delete one
+	# if full); Continue resumes the most recently played slot.
+	box.add_child(_menu_button(tr("MENU_NEW_GAME"), _on_new_game))
+	var continue_btn := _menu_button(tr("MENU_CONTINUE"), _on_continue)
+	continue_btn.disabled = MetaProgress.most_recent_slot() == 0
+	box.add_child(continue_btn)
 
 	box.add_child(_menu_button(tr("MENU_HOWTO"), _on_howto))
 	box.add_child(_menu_button(tr("MENU_SETTINGS"), _on_settings))
@@ -98,8 +102,30 @@ func _menu_button(text: String, handler: Callable) -> Button:
 	return button
 
 
-## Open the 3-slot save-select screen (New Game / Continue happen per slot).
-func _on_slots() -> void:
+## New Game — use the first empty slot, or open the delete picker when full.
+func _on_new_game() -> void:
+	var empty: int = MetaProgress.first_empty_slot()
+	if empty > 0:
+		MetaProgress.reset_for_new_game(empty)
+		get_tree().change_scene_to_file(HOME_BASE_PATH)
+	else:
+		_open_slot_manager()
+
+
+## Continue — resume the most recently played slot (run if any, else its base).
+func _on_continue() -> void:
+	var slot: int = MetaProgress.most_recent_slot()
+	if slot == 0:
+		return
+	MetaProgress.set_active_slot(slot)
+	if RunManager.has_method("load_run") and RunManager.has_run_save() and RunManager.load_run():
+		get_tree().change_scene_to_file(MAP_SCENE_PATH)
+	else:
+		get_tree().change_scene_to_file(HOME_BASE_PATH)
+
+
+## Open the slot manager (delete a save to free a slot, then start a new game).
+func _open_slot_manager() -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "SlotSelectLayer"
 	layer.layer = 130

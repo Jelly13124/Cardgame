@@ -32,6 +32,9 @@ CHAR_VIEW_HP,HP,生命
 CHAR_VIEW_LEVEL,Level,等级
 CHAR_VIEW_HINT,Press I or ESC to close,按 I 或 ESC 关闭
 MENU_SLOTS,Save Slots,选择存档
+MENU_NEW_GAME,New Game,新游戏
+SLOT_FULL_TITLE,Save slots full — delete one to start a new game,存档已满 —— 删除一个以开始新游戏
+SLOT_DELETE,Delete,删除
 SLOT_SELECT_TITLE,Select a Save Slot,选择存档栏位
 SLOT_LABEL,Slot {n},存档 {n}
 SLOT_EMPTY,Empty — start a new game,空存档 —— 开始新游戏

@@ -1,14 +1,10 @@
-## Save-slot select screen — three independent profile slots. Opened from the
-## title menu. Each slot shows its summary (or "Empty"); New Game wipes + starts a
-## fresh profile, Continue loads the slot (resuming its in-run save if any, else
-## its home base). No class_name per ADR-0006; owner instances on a CanvasLayer.
+## Slot manager — shown by New Game when all save slots are full. Each slot lists
+## its summary and a Delete button; deleting a slot immediately starts a new game
+## in that freed slot. No class_name per ADR-0006; owner instances on a CanvasLayer.
 extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const HOME_BASE_PATH := "res://run_system/ui/home_base_scene.tscn"
-const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
-
-var _pending_overwrite_slot: int = 0
 
 
 func _ready() -> void:
@@ -36,9 +32,11 @@ func _build() -> void:
 	center.add_child(box)
 
 	var title := Label.new()
-	title.text = tr("SLOT_SELECT_TITLE")
+	title.text = tr("SLOT_FULL_TITLE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 34)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title.custom_minimum_size = Vector2(720, 0)
+	title.add_theme_font_size_override("font_size", 26)
 	title.add_theme_color_override("font_color", Color(1.0, 0.86, 0.48))
 	box.add_child(title)
 
@@ -95,10 +93,10 @@ func _slot_row(slot: int) -> Control:
 	sub.add_theme_color_override("font_color", T.TEXT_SECONDARY)
 	info.add_child(sub)
 
-	var continue_btn := _button(tr("SLOT_CONTINUE"), 160, _on_continue.bind(slot))
-	continue_btn.disabled = summary.is_empty()
-	row.add_child(continue_btn)
-	row.add_child(_button(tr("SLOT_NEW_GAME"), 160, _on_new_game.bind(slot)))
+	var del := _button(tr("SLOT_DELETE"), 180, _on_delete.bind(slot))
+	del.disabled = summary.is_empty()
+	del.add_theme_color_override("font_color", T.ACCENT_DANGER)
+	row.add_child(del)
 
 	return panel
 
@@ -114,77 +112,14 @@ func _button(text: String, width: int, handler: Callable) -> Button:
 	return b
 
 
-func _on_continue(slot: int) -> void:
-	MetaProgress.set_active_slot(slot)
-	if RunManager.has_method("load_run") and RunManager.has_run_save() and RunManager.load_run():
-		get_tree().change_scene_to_file(MAP_SCENE_PATH)
-	else:
-		get_tree().change_scene_to_file(HOME_BASE_PATH)
-
-
-func _on_new_game(slot: int) -> void:
-	# Confirm before overwriting a slot that already has progress.
-	if MetaProgress.slot_exists(slot):
-		_pending_overwrite_slot = slot
-		_show_overwrite_confirm(slot)
-		return
-	_start_new_game(slot)
-
-
-func _start_new_game(slot: int) -> void:
+## Delete the slot's save, then immediately start a new game in that freed slot.
+func _on_delete(slot: int) -> void:
+	MetaProgress.delete_slot(slot)
 	MetaProgress.reset_for_new_game(slot)
 	get_tree().change_scene_to_file(HOME_BASE_PATH)
-
-
-func _show_overwrite_confirm(slot: int) -> void:
-	var layer := ColorRect.new()
-	layer.name = "OverwriteConfirm"
-	layer.color = Color(0, 0, 0, 0.75)
-	layer.set_anchors_preset(Control.PRESET_FULL_RECT)
-	layer.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(layer)
-
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	layer.add_child(center)
-
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(520, 0)
-	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
-	center.add_child(panel)
-
-	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 26)
-	panel.add_child(margin)
-
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 16)
-	margin.add_child(box)
-
-	var msg := Label.new()
-	msg.text = tr("SLOT_OVERWRITE")
-	msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	msg.custom_minimum_size = Vector2(460, 0)
-	msg.add_theme_font_size_override("font_size", 19)
-	msg.add_theme_color_override("font_color", T.TEXT_MAIN)
-	box.add_child(msg)
-
-	var btns := HBoxContainer.new()
-	btns.alignment = BoxContainer.ALIGNMENT_CENTER
-	btns.add_theme_constant_override("separation", 16)
-	box.add_child(btns)
-	btns.add_child(_button(tr("RULES_CLOSE"), 160, func() -> void: layer.queue_free()))
-	var confirm := _button(tr("SLOT_CONFIRM"), 200, func() -> void: _start_new_game(slot))
-	confirm.add_theme_color_override("font_color", T.ACCENT_DANGER)
-	btns.add_child(confirm)
 
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
-		if get_node_or_null("OverwriteConfirm"):
-			get_node("OverwriteConfirm").queue_free()
-		else:
-			queue_free()
+		queue_free()
