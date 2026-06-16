@@ -77,10 +77,9 @@ func modify_player_attack_damage(amount: int, _attacker: Node, _defender: Node) 
 				result += int(effect.get("amount", 0))
 				_mark_used_once(entry)
 			"crit_chance":
-				if randf() < RunManager.crit_chance():
-					result = int(round(result * RunManager.CRIT_MULT))
-					if _battle_scene and _battle_scene.has_method("show_notification"):
-						_battle_scene.show_notification("CRIT!", Color(1, 0.85, 0.2))
+				# Crit is now a base mechanic rolled in combat_engine
+				# (_apply_player_crit); the Crit Clip just boosts crit_chance().
+				# Kept as a no-op marker for back-compat.
 				_mark_used_once(entry)
 	return max(0, result)
 

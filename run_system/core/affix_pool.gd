@@ -16,16 +16,16 @@ const POSITIVE := [
 	{"type": "attr_intelligence", "value": 1},
 	{"type": "attr_luck", "value": 1},
 	{"type": "attr_charm", "value": 1},
+	{"type": "crit_pct", "value": 5},
 	{"type": "max_hp", "value": 10},
 ]
 
 ## Curse affixes (consumed in Phase 5). Negative values.
-## (crit_pct / curse_crit affixes were removed — crit is now Bill's keyword via the
-## crit clip, not an equipment stat. Old saves may still carry them; harmless.)
 const CURSE := [
 	{"type": "curse_attr_strength", "value": -1},
 	{"type": "curse_attr_constitution", "value": -1},
 	{"type": "curse_max_hp", "value": -8},
+	{"type": "curse_crit", "value": -5},
 ]
 
 ## Positive affix count granted per rarity. Rare adds a set bonus separately

@@ -31,6 +31,7 @@ func calculate_attack_damage(base_damage: int, attacker: Node, defender: Node) -
 	var modified_base = base_damage
 	if main and main.has_method("modify_player_attack_damage") and attacker == main.player:
 		modified_base = main.modify_player_attack_damage(modified_base, attacker, defender)
+		modified_base = _apply_player_crit(modified_base)
 
 	var outgoing_mult := 1.0
 	var incoming_mult := 1.0
@@ -39,6 +40,27 @@ func calculate_attack_damage(base_damage: int, attacker: Node, defender: Node) -
 	if defender and defender.has_method("get_incoming_attack_multiplier"):
 		incoming_mult = defender.get_incoming_attack_multiplier()
 	return int(modified_base * outgoing_mult * incoming_mult)
+
+
+## Roll crit for a player attack and apply the result. Crit is a Luck-driven base
+## mechanic (RunManager.crit_chance). Powers (player statuses) modify it:
+##   all_in     → crits deal 2x (not 1.5x) AND non-crit attacks deal 0
+##   hot_streak → gain 2 gold on each crit
+func _apply_player_crit(damage: int) -> int:
+	if damage <= 0:
+		return damage
+	var p = main.player
+	var has_power := p and p.has_method("get_status_stacks")
+	var all_in: bool = has_power and p.get_status_stacks("all_in") > 0
+	if randf() < RunManager.crit_chance():
+		var mult := 2.0 if all_in else float(RunManager.CRIT_MULT)
+		if has_power and p.get_status_stacks("hot_streak") > 0:
+			RunManager.add_gold(2)
+		if main.has_method("show_notification"):
+			main.show_notification("CRIT!", Color(1, 0.85, 0.2))
+		return int(round(damage * mult))
+	# Non-crit. All In zeroes non-crit attacks (all-or-nothing).
+	return 0 if all_in else damage
 
 
 ## Dodge: if `target` has a Dodge stack, consume one and negate the attack.
