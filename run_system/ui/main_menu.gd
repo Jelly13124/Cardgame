@@ -23,7 +23,7 @@ func _ready() -> void:
 
 
 func _build() -> void:
-	# ── Background: darkened wasteland art, falling back to a flat dark fill. ──
+	# ── Background art (stays visible to the left of the menu panel) ──
 	var bg_tex = load(BG_TEXTURE_PATH) if ResourceLoader.exists(BG_TEXTURE_PATH) else null
 	if bg_tex:
 		var tex := TextureRect.new()
@@ -34,71 +34,122 @@ func _build() -> void:
 		tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(tex)
 	var dim := ColorRect.new()
-	dim.color = Color(0.04, 0.03, 0.02, 0.55 if bg_tex else 1.0)
+	dim.color = Color(0.05, 0.035, 0.02, 0.4 if bg_tex else 1.0)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(dim)
 
-	# ── Centered content column ──
+	# ── Right-side menu panel (dark, gold left edge) ──
+	var panel := Panel.new()
+	panel.anchor_left = 1.0
+	panel.anchor_right = 1.0
+	panel.anchor_top = 0.0
+	panel.anchor_bottom = 1.0
+	panel.offset_left = -470.0
+	var ps := StyleBoxFlat.new()
+	ps.bg_color = Color(0.11, 0.08, 0.045, 0.97)
+	ps.border_width_left = 3
+	ps.border_color = Color(0.78, 0.56, 0.22)
+	panel.add_theme_stylebox_override("panel", ps)
+	add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 52)
+	margin.add_theme_constant_override("margin_right", 52)
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(center)
+	panel.add_child(center)
+	center.add_child(margin)
 
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 14)
-	box.alignment = BoxContainer.ALIGNMENT_CENTER
-	center.add_child(box)
+	box.add_theme_constant_override("separation", 10)
+	box.custom_minimum_size = Vector2(360, 0)
+	margin.add_child(box)
 
+	# Title (Oswald) — gold; falls back to Noto for zh.
 	var title := Label.new()
 	title.text = tr("MENU_TITLE")
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 64)
-	title.add_theme_color_override("font_color", Color(1.0, 0.86, 0.48))
-	title.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD
+	title.custom_minimum_size = Vector2(360, 0)
+	T.style_display(title, 52, 700)
+	title.add_theme_color_override("font_color", Color(1.0, 0.81, 0.27))
+	title.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
 	title.add_theme_constant_override("shadow_offset_x", 2)
 	title.add_theme_constant_override("shadow_offset_y", 2)
 	box.add_child(title)
 
-	var subtitle := Label.new()
-	subtitle.text = tr("MENU_SUBTITLE")
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle.add_theme_font_size_override("font_size", 24)
-	subtitle.add_theme_color_override("font_color", T.ACCENT_NEON_BLUE)
-	box.add_child(subtitle)
+	# DEMO tag (cyan pill)
+	var tag := Label.new()
+	tag.text = tr("MENU_SUBTITLE")
+	T.style_display(tag, 16, 600)
+	tag.add_theme_color_override("font_color", Color(0.06, 0.09, 0.11))
+	var tagbg := StyleBoxFlat.new()
+	tagbg.bg_color = T.ACCENT_NEON_BLUE
+	tagbg.set_corner_radius_all(6)
+	tagbg.content_margin_left = 9
+	tagbg.content_margin_right = 9
+	tagbg.content_margin_top = 2
+	tagbg.content_margin_bottom = 2
+	var tagwrap := PanelContainer.new()
+	tagwrap.add_theme_stylebox_override("panel", tagbg)
+	tagwrap.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	tagwrap.add_child(tag)
+	box.add_child(tagwrap)
 
 	var gap := Control.new()
-	gap.custom_minimum_size = Vector2(0, 28)
+	gap.custom_minimum_size = Vector2(0, 26)
 	box.add_child(gap)
 
-	# New Game auto-creates a save in the first free slot (or prompts to delete one
-	# if full); Continue resumes the most recently played slot.
-	box.add_child(_menu_button(tr("MENU_NEW_GAME"), _on_new_game))
-	var continue_btn := _menu_button(tr("MENU_CONTINUE"), _on_continue)
-	continue_btn.disabled = MetaProgress.most_recent_slot() == 0
-	box.add_child(continue_btn)
-
+	box.add_child(_menu_button(tr("MENU_NEW_GAME"), _on_new_game, true))
+	var cont := _menu_button(tr("MENU_CONTINUE"), _on_continue)
+	cont.disabled = MetaProgress.most_recent_slot() == 0
+	box.add_child(cont)
 	box.add_child(_menu_button(tr("MENU_HOWTO"), _on_howto))
-	box.add_child(_menu_button(tr("MENU_SETTINGS"), _on_settings))
-	box.add_child(_menu_button(tr("MENU_QUIT"), _on_quit))
 
-	var version := Label.new()
-	version.text = tr("MENU_VERSION")
-	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	version.add_theme_font_size_override("font_size", 16)
-	version.add_theme_color_override("font_color", T.TEXT_SECONDARY)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 9)
+	var sbtn := _menu_button(tr("MENU_SETTINGS"), _on_settings)
+	sbtn.custom_minimum_size = Vector2(0, 52)
+	sbtn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var qbtn := _menu_button(tr("MENU_QUIT"), _on_quit)
+	qbtn.custom_minimum_size = Vector2(0, 52)
+	qbtn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(sbtn)
+	row.add_child(qbtn)
+	box.add_child(row)
+
 	var vgap := Control.new()
-	vgap.custom_minimum_size = Vector2(0, 20)
+	vgap.custom_minimum_size = Vector2(0, 18)
 	box.add_child(vgap)
-	box.add_child(version)
+	var ver := Label.new()
+	ver.text = tr("MENU_VERSION")
+	T.style_display(ver, 13, 500)
+	ver.add_theme_color_override("font_color", Color(0.5, 0.39, 0.25))
+	box.add_child(ver)
 
 
-func _menu_button(text: String, handler: Callable) -> Button:
+func _menu_button(text: String, handler: Callable, accent: bool = false) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(360, 58)
+	button.custom_minimum_size = Vector2(360, 52)
 	button.focus_mode = Control.FOCUS_NONE
-	button.add_theme_font_size_override("font_size", 24)
+	button.add_theme_font_override("font", T.display_font(600))
+	button.add_theme_font_size_override("font_size", 21)
 	T.apply_button_theme(button)
+	if accent:
+		var st := StyleBoxFlat.new()
+		st.bg_color = Color(0.27, 0.19, 0.08)
+		st.border_color = Color(1.0, 0.81, 0.27)
+		st.set_border_width_all(2)
+		st.set_corner_radius_all(7)
+		st.content_margin_top = 9
+		st.content_margin_bottom = 9
+		button.add_theme_stylebox_override("normal", st)
+		var sh := st.duplicate()
+		sh.bg_color = Color(0.35, 0.25, 0.1)
+		button.add_theme_stylebox_override("hover", sh)
+		button.add_theme_color_override("font_color", Color(1.0, 0.86, 0.4))
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(handler)
 	return button
