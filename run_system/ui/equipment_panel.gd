@@ -328,7 +328,7 @@ func _refresh() -> void:
 		else:
 			var data = RunManager.get_equipment_data(item_id)
 			var item_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
-			icon.set_equipment(slot, item_name, str(data.get("sprite", "")))
+			icon.set_equipment(slot, item_name, str(data.get("sprite", "")), str(data.get("rarity", "common")))
 			# Equipped item is draggable back into the backpack (unequip).
 			cell.drag_payload = {"src": "slot", "slot": slot, "item_id": item_id}
 			cell.preview_text = str(SLOT_LETTERS.get(slot, "?"))
@@ -475,7 +475,7 @@ func _make_equip_cell(item_id: String, index: int, instance: Dictionary = {}) ->
 	var icon := EQUIPMENT_ICON.new()
 	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	icon.set_equipment(slot, item_name, str(data.get("sprite", "")))
+	icon.set_equipment(slot, item_name, str(data.get("sprite", "")), str(data.get("rarity", "common")))
 	cell.add_child(icon)
 	cell.hover_tip = _build_equipment_tooltip(data, slot, instance)
 	cell.drag_payload = {

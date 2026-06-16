@@ -30,7 +30,6 @@ var targeting_arrow: Node2D = null
 var hovered_unit: Node = null
 var _dmg_preview: Label = null
 var _polarity_badge: Label = null  # H5: lazily-created HUD badge for yin/yang hero polarity
-var _auto_ending: bool = false  # guards the auto-end-turn beat from re-entry
 var _ending_turn: bool = false  # guards end_turn across the discard animation await
 ## Attack-allowance (double-fire clip): cap on attack cards per turn. 0 = unarmed
 ## (no limit — normal play). When armed, _attacks_left_this_turn is consumed by
@@ -397,16 +396,11 @@ func _on_turn_started(side: String) -> void:
 	update_polarity_hud()  # H5: reflect opening polarity state on the HUD badge
 	enemy_ai.spawn_enemy_units()
 
-	_auto_ending = false  # re-arm auto-end for the new player turn
 	_ending_turn = false  # re-arm the end-turn guard
 	if turn_manager.current_round == 1:
 		deck_manager.first_round_draw()
 	else:
 		deck_manager.draw_cards(3)
-	# NOTE: deliberately NOT calling _maybe_auto_end_turn() here. The opening draw
-	# (esp. with a reshuffle) leaves the hand briefly empty, which used to trip a
-	# premature auto-end → turn flip → re-draw (the "draws 6 at turn start" bug).
-	# Auto-end only runs after a card is PLAYED (see play_spell tail).
 
 
 ## STS rule: at END of player turn, reset block/energy. Hand discard is handled
@@ -543,46 +537,6 @@ func _on_end_round_button_pressed():
 		if to_discard.size() > 0:
 			await _animate_hand_discard(to_discard)
 		turn_manager.end_turn()
-
-
-## True if any card in hand is currently affordable (cost <= energy).
-func _has_playable_card() -> bool:
-	if not player:
-		return false
-	for card in hand.get_cards():
-		if is_instance_valid(card) and int(card.card_info.get("cost", 0)) <= player.energy:
-			return true
-	return false
-
-
-## True while any hand card is mid-resolution (animation in flight).
-func _cards_resolving() -> bool:
-	for card in hand.get_cards():
-		if is_instance_valid(card) and card.has_meta("_in_play"):
-			return true
-	return false
-
-
-## Auto-end the player turn when nothing in hand can be played. Fires only during
-## the player's turn, after a short beat, and never while a card is resolving.
-## Re-validates after the beat so a mid-air change cancels it. `_auto_ending` is
-## reset at each player turn start.
-func _maybe_auto_end_turn() -> void:
-	if _auto_ending or is_game_over or not turn_manager.is_player_turn:
-		return
-	# Never auto-end while a draw is in flight (a slow reshuffle leaves the hand
-	# momentarily empty — that is NOT "nothing to play").
-	if _has_playable_card() or _cards_resolving() or deck_manager.is_drawing():
-		return
-	_auto_ending = true
-	await _wait(0.55)
-	if is_game_over or not turn_manager.is_player_turn:
-		_auto_ending = false
-		return
-	if _has_playable_card() or _cards_resolving() or deck_manager.is_drawing():
-		_auto_ending = false
-		return
-	_on_end_round_button_pressed()
 
 
 func _victory():
@@ -914,8 +868,6 @@ func play_spell(card: Control, target_node: Node):
 
 	_update_ui_labels()
 	refresh_hand_ui()
-	# Nothing left to play? End the turn for the player.
-	_maybe_auto_end_turn()
 
 
 ## Gold from a card/gem `gain_gold` effect (the wealthy gem). When `cap > 0` the

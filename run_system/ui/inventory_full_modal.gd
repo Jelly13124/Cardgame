@@ -92,7 +92,10 @@ func _build() -> void:
 	)
 	var inc_icon = EQUIPMENT_ICON.new()
 	inc_icon.set_equipment(
-		str(inc_data.get("slot", "head")), inc_name, str(inc_data.get("sprite", ""))
+		str(inc_data.get("slot", "head")),
+		inc_name,
+		str(inc_data.get("sprite", "")),
+		str(inc_data.get("rarity", "common"))
 	)
 	incoming_box.add_child(inc_icon)
 	var inc_label := Label.new()
@@ -163,9 +166,10 @@ func _on_discard_selected() -> void:
 	if RunManager.backpack_changed.is_connected(_rebuild_bag_grid):
 		RunManager.backpack_changed.disconnect(_rebuild_bag_grid)
 	RunManager.discard_from_inventory(_selected_bag_index)
-	RunManager.add_to_inventory(
-		_incoming_instance if not _incoming_instance.is_empty() else _incoming_item_id
-	)
+	var incoming_item = _incoming_instance
+	if incoming_item.is_empty():
+		incoming_item = _incoming_item_id
+	RunManager.add_to_inventory(incoming_item)
 	emit_signal("resolved", true)
 	queue_free()
 

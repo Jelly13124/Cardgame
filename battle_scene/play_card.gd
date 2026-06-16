@@ -30,9 +30,9 @@ var _rarity_frames: Dictionary = {}
 # Per-rarity accent colors.
 # Applied as modulate to ArtFrameTexture AND as border on the rarity ring panel.
 const RARITY_COLORS: Dictionary = {
-	"common": Color(0.78, 0.80, 0.84),  # steel grey — subtle, as expected
-	"uncommon": Color(0.30, 0.95, 0.50),  # vivid green
-	"rare": Color(1.0, 0.78, 0.20),  # vivid gold
+	"common": Color(0.95, 0.96, 0.98),  # white
+	"uncommon": Color(0.31, 0.69, 1.0),  # blue
+	"rare": Color(1.0, 0.81, 0.27),  # gold
 }
 
 # Reference to the single gem socket node (created in _ready)

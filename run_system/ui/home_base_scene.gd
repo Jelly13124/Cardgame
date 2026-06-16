@@ -820,7 +820,7 @@ func _make_stash_cell(index: int, item_id: String) -> Control:
 	var item_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
 	var icon := EQUIPMENT_ICON.new()
 	icon.custom_minimum_size = Vector2(76, 76)
-	icon.set_equipment(slot, item_name, str(data.get("sprite", "")))
+	icon.set_equipment(slot, item_name, str(data.get("sprite", "")), str(data.get("rarity", "common")))
 	icon.set_hover_tooltip("[b]%s[/b]" % item_name)
 	icon.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	if index in _stash_selected:
