@@ -105,6 +105,32 @@ static func apply_button_theme(
 	button.add_theme_constant_override("outline_size", 1)
 
 
+# ─── Display font (Oswald — condensed, for titles/labels/numbers) ─────────────
+## Oswald is Latin-only, so it falls back to the project CJK font for Chinese —
+## English/numbers get the condensed HUD look, 中文 still renders via Noto.
+const DISPLAY_FONT_SRC = preload("res://assets/fonts/Oswald.ttf")
+const CJK_FALLBACK = preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
+
+
+## A condensed Oswald FontVariation at the given weight (100–700). Apply with
+## label.add_theme_font_override("font", T.display_font(600)). The wasteland HUD
+## look comes from this + tight letter-spacing.
+static func display_font(weight: int = 600) -> FontVariation:
+	var fv := FontVariation.new()
+	fv.base_font = DISPLAY_FONT_SRC
+	fv.variation_opentype = {"wght": weight}
+	fv.fallbacks = [CJK_FALLBACK]
+	return fv
+
+
+## Apply the display font + size (+ optional letter spacing) to a Label in one call.
+static func style_display(label: Label, size: int, weight: int = 600, spacing: int = 0) -> void:
+	label.add_theme_font_override("font", display_font(weight))
+	label.add_theme_font_size_override("font_size", size)
+	if spacing != 0:
+		label.add_theme_constant_override("font_spacing_glyph", spacing)
+
+
 # ─── Textured (PNG-based) builders ────────────────────────────────────────────
 # Codex delivers 9-slice PNG components — these helpers wrap them in
 # StyleBoxTexture so .add_theme_stylebox_override("panel", ...) Just Works.
