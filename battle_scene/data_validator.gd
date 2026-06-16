@@ -81,6 +81,7 @@ const ALLOWED_STATUS_NAMES = [
 	"all_in",
 	"hemorrhage",
 	"covering_reload",
+	"bullet",
 ]
 # Effect types that require a `status` field
 const STATUS_BEARING_EFFECTS = [
