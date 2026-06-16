@@ -47,6 +47,7 @@ var _stash_rebuild: Callable = Callable()
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	AudioManager.play_music("home")
 	_build()
 	MetaProgress.core_changed.connect(func(_v): _refresh_core())
 	MetaProgress.caps_changed.connect(func(_v): _refresh_caps())
@@ -820,7 +821,9 @@ func _make_stash_cell(index: int, item_id: String) -> Control:
 	var item_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
 	var icon := EQUIPMENT_ICON.new()
 	icon.custom_minimum_size = Vector2(76, 76)
-	icon.set_equipment(slot, item_name, str(data.get("sprite", "")), str(data.get("rarity", "common")))
+	icon.set_equipment(
+		slot, item_name, str(data.get("sprite", "")), str(data.get("rarity", "common"))
+	)
 	icon.set_hover_tooltip("[b]%s[/b]" % item_name)
 	icon.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	if index in _stash_selected:

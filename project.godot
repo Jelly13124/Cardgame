@@ -20,6 +20,7 @@ Settings="*res://run_system/core/settings.gd"
 RunManager="*res://run_system/core/run_manager.gd"
 MetaProgress="*res://run_system/core/meta_progress.gd"
 Tooltip="*res://run_system/core/tooltip.gd"
+AudioManager="*res://run_system/core/audio_manager.gd"
 
 [display]
 

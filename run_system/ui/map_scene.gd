@@ -47,6 +47,7 @@ var _renderer: RefCounted  # MapRenderer; kept untyped to avoid class_name parse
 
 
 func _ready() -> void:
+	AudioManager.play_music("map")
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	map_background_tex = _load_texture(MAP_BACKGROUND_PATH)
 	_load_node_icons()

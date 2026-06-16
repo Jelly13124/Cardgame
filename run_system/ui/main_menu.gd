@@ -18,6 +18,7 @@ var _settings_layer: CanvasLayer = null
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	AudioManager.play_music("menu")
 	_build()
 
 
@@ -98,6 +99,7 @@ func _menu_button(text: String, handler: Callable) -> Button:
 	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_size_override("font_size", 24)
 	T.apply_button_theme(button)
+	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(handler)
 	return button
 

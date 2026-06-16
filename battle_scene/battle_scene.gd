@@ -82,6 +82,7 @@ func _extract_rewards_for_act(act: int) -> Dictionary:
 
 func _ready():
 	print("BATTLE STARTING (STS Layout)")
+	AudioManager.play_music("boss" if RunManager.last_battle_node_type == "boss" else "battle")
 	card_manager.debug_mode = false
 	Engine.time_scale = 1.0
 
@@ -376,6 +377,7 @@ func _on_turn_started(side: String) -> void:
 		return
 
 	# Player turn start: reset block + energy via player.start_turn()
+	AudioManager.play_sfx("turn_start")
 	player.start_turn()
 	if is_game_over:
 		return
@@ -543,6 +545,7 @@ func _victory():
 	if is_game_over:
 		return
 	is_game_over = true
+	AudioManager.play_sfx("victory")
 	if relic_effect_system:
 		relic_effect_system.on_combat_victory(player)
 	# Victory path: persist HP without firing the death gate, even if the
@@ -647,6 +650,7 @@ func _game_over():
 	if is_game_over:
 		return
 	is_game_over = true
+	AudioManager.play_sfx("defeat")
 	# Defeat path: route through the death gate so _handle_run_loss fires
 	# and run_ended(false) is emitted.
 	_write_hp_to_run_manager(true)
@@ -738,6 +742,7 @@ func add_attack_allowance(n: int) -> void:
 ## NOT stack past the cap — so you can fire again, but can't bank extra attacks.
 ## Also fires the Covering Reload power (Block on every Reload).
 func restore_attack_allowance() -> void:
+	AudioManager.play_sfx("reload")
 	# Covering Reload power: gain 3 Block whenever a Reload is played (independent
 	# of whether the attack cap is armed).
 	if (
@@ -805,6 +810,7 @@ func play_spell(card: Control, target_node: Node):
 			_update_attack_allowance_ui()
 
 	# Deduct cost; remove from current container if still tracked there
+	AudioManager.play_sfx("card_play")
 	spend_energy([card])
 	if card.card_container and card.card_container.has_card(card):
 		card.card_container.remove_card(card)

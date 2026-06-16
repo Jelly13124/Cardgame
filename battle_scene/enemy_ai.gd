@@ -160,6 +160,7 @@ func _resolve_enemy_hit(enemy: Node, outgoing: int) -> bool:
 			main.show_notification(tr("UI_COMBAT_DODGE"), Color(0.6, 0.95, 1.0))
 			return false
 	var hp_before: int = int(main.player.health)
+	AudioManager.play_sfx("enemy_attack")
 	main.player.take_damage(outgoing)
 	# Relic: medkit_drone heals only when the player ACTUALLY lost HP — a hit fully
 	# absorbed by Block does not trigger it.
