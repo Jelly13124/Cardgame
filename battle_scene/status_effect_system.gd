@@ -43,6 +43,7 @@ const STATUS_COLORS = {
 	"all_in": Color(1.0, 0.45, 0.25),
 	"hemorrhage": Color(0.85, 0.15, 0.25),
 	"covering_reload": Color(0.55, 0.78, 0.95),
+	"bullet": Color(1.0, 0.78, 0.35),
 }
 
 const STATUS_LABELS = {
@@ -63,6 +64,7 @@ const STATUS_LABELS = {
 	"all_in": "AI",
 	"hemorrhage": "Hm",
 	"covering_reload": "CR",
+	"bullet": "●",
 }
 
 const STATUS_ICON_DIR := "res://battle_scene/assets/images/ui/status/"
@@ -88,6 +90,8 @@ const STATUS_DESCRIPTIONS = {
 	"all_in": "Your Crits deal double damage, but non-Crit attacks deal 0. Persistent.",
 	"hemorrhage": "Your Bleed damage can Crit. Persistent.",
 	"covering_reload": "Whenever you Reload, gain 3 Block. Persistent.",
+	"bullet":
+	"Ammo for attacks (double-fire clip). 1 at the start of each turn, max 1; spent by attacking, restored by Reload.",
 }
 
 

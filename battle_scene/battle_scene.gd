@@ -725,8 +725,6 @@ func spend_energy(cards: Array) -> void:
 
 # ─── Attack allowance (double-fire clip) ──────────────────────────────────────
 
-var _attack_allowance_label: Label = null
-
 
 ## Grant +n attacks this turn. No-op when the limit isn't armed.
 func add_attack_allowance(n: int) -> void:
@@ -757,29 +755,15 @@ func restore_attack_allowance() -> void:
 	_update_attack_allowance_ui()
 
 
-## Refresh the "attacks left this turn" indicator near the End Round button.
-## Shown only while the allowance is armed (double-fire run); hidden otherwise.
+## Mirror the attack allowance onto the player's "bullet" status (shown in the
+## status bar). The clip arms it: 1 bullet at turn start, max 1; spent by
+## attacking, restored by Reload. Cleared/absent when the allowance isn't armed.
 func _update_attack_allowance_ui() -> void:
-	if _attack_limit_per_turn <= 0:
-		if is_instance_valid(_attack_allowance_label):
-			_attack_allowance_label.visible = false
+	if not (player and player.status_system):
 		return
-	if not is_instance_valid(_attack_allowance_label):
-		_attack_allowance_label = Label.new()
-		_attack_allowance_label.add_theme_font_size_override("font_size", 18)
-		_attack_allowance_label.add_theme_color_override("font_color", Color(1.0, 0.7, 0.35))
-		_attack_allowance_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
-		_attack_allowance_label.add_theme_constant_override("shadow_offset_x", 1)
-		_attack_allowance_label.add_theme_constant_override("shadow_offset_y", 1)
-		if is_instance_valid(end_round_button):
-			end_round_button.get_parent().add_child(_attack_allowance_label)
-			_attack_allowance_label.position = end_round_button.position + Vector2(0, -28)
-		else:
-			add_child(_attack_allowance_label)
-	_attack_allowance_label.visible = true
-	_attack_allowance_label.text = tr("UI_BATTLE_ATTACKS_LEFT").format(
-		{"n": _attacks_left_this_turn}
-	)
+	player.status_system.remove_status("bullet", player)
+	if _attack_limit_per_turn > 0 and _attacks_left_this_turn > 0:
+		player.status_system.add_status("bullet", _attacks_left_this_turn, player)
 
 
 # ─── Card Play ────────────────────────────────────────────────────────────────
