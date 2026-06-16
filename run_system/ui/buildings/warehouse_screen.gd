@@ -211,7 +211,7 @@ func _build_slot_row(slot: String) -> Control:
 		var base_id: String = RunManager.equip_base(inst)
 		var data: Dictionary = RunManager.get_equipment_data(base_id)
 		var item_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
-		icon.set_equipment(slot, item_name, str(data.get("sprite", "")))
+		icon.set_equipment(slot, item_name, str(data.get("sprite", "")), str(data.get("rarity", "common")))
 		# Filled slot is draggable back into the stash (unequip).
 		cell.drag_payload = {"src": "slot", "slot": slot}
 		cell.preview_text = str(SLOT_LETTERS.get(slot, "?"))
@@ -279,7 +279,7 @@ func _build_stash_cell(entry: Variant) -> Control:
 	var icon := EQUIPMENT_ICON.new()
 	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	icon.set_equipment(slot, item_name, str(data.get("sprite", "")))
+	icon.set_equipment(slot, item_name, str(data.get("sprite", "")), str(data.get("rarity", "common")))
 	cell.add_child(icon)
 
 	cell.hover_tip = _equip_tooltip(inst)

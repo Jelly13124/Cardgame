@@ -160,14 +160,14 @@ func _take_random_from_pool(pools: Dictionary, rarity: String) -> String:
 func _take_random_from_any_pool(pools: Dictionary, rarity_order: Array) -> Dictionary:
 	var available: Array = []
 	for rarity_value in rarity_order:
-		var rarity := str(rarity_value)
-		var pool: Array = pools.get(rarity, [])
-		if not pool.is_empty() and not available.has(rarity):
-			available.append(rarity)
+		var candidate_rarity := str(rarity_value)
+		var pool: Array = pools.get(candidate_rarity, [])
+		if not pool.is_empty() and not available.has(candidate_rarity):
+			available.append(candidate_rarity)
 	if available.is_empty():
 		return {}
-	var rarity := str(available[randi() % available.size()])
-	return {"id": _take_random_from_pool(pools, rarity), "rarity": rarity}
+	var selected_rarity := str(available[randi() % available.size()])
+	return {"id": _take_random_from_pool(pools, selected_rarity), "rarity": selected_rarity}
 
 
 func _make_equipment_stock_entry(item_id: String, rarity: String) -> Dictionary:
@@ -570,7 +570,7 @@ func _build_equipment_stall(entry: Dictionary) -> Control:
 	var icon := EQUIPMENT_ICON.new()
 	icon.custom_minimum_size = Vector2(52, 52)
 	icon_holder.add_child(icon)
-	icon.set_equipment(slot, equip_name, str(data.get("sprite", "")))
+	icon.set_equipment(slot, equip_name, str(data.get("sprite", "")), str(data.get("rarity", "common")))
 
 	var name_lbl := Label.new()
 	name_lbl.text = equip_name

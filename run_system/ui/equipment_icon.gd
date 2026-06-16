@@ -19,6 +19,12 @@ const SLOT_LETTERS := {
 	"hands": "Hd",
 	"accessory": "Ac",
 }
+## Rarity border colors — white / blue / gold (matches the card frames).
+const RARITY_COLORS := {
+	"common": Color(0.95, 0.96, 0.98),
+	"uncommon": Color(0.31, 0.69, 1.0),
+	"rare": Color(1.0, 0.81, 0.27),
+}
 
 var _label: Label
 var _texture_rect: TextureRect
@@ -86,10 +92,13 @@ func _on_mouse_exited() -> void:
 
 ## Populate the icon. Safe to call before the node enters the scene tree.
 ## lazy-builds children if _ready hasn't fired yet.
-func set_equipment(slot: String, item_name: String, sprite_path: String = "") -> void:
+func set_equipment(
+	slot: String, item_name: String, sprite_path: String = "", rarity: String = "common"
+) -> void:
 	if not _label:
 		_build()
-	add_theme_stylebox_override("panel", T.icon_frame_style())
+	# Slot-tinted fill + a rarity-colored border (white/blue/gold).
+	add_theme_stylebox_override("panel", _equip_style(slot, rarity, 0.72))
 
 	# Label = SLOT_LETTERS preferred, else first char of item name
 	_label.text = str(SLOT_LETTERS.get(slot, item_name.substr(0, 1).to_upper()))
@@ -108,7 +117,19 @@ func set_equipment(slot: String, item_name: String, sprite_path: String = "") ->
 				_label.visible = false
 				return
 
-	_apply_slot_placeholder_style(slot, 0.72)
+
+## Slot-colored fill with a rarity-colored border, single-sourcing the equipment
+## icon look so rarity (white/blue/gold) is readable at a glance.
+func _equip_style(slot: String, rarity: String, alpha: float) -> StyleBoxFlat:
+	var bg: Color = SLOT_COLORS.get(slot, T.DUSTY_TAUPE)
+	bg.a = alpha
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg
+	style.border_color = RARITY_COLORS.get(rarity, RARITY_COLORS["common"])
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(6)
+	style.set_content_margin_all(2)
+	return style
 
 
 ## Render an "empty slot" appearance. Safe to call before _ready fires.
