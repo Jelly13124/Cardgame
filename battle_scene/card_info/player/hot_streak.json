@@ -1,0 +1,14 @@
+{
+  "name": "hot_streak",
+  "title": "Hot Streak",
+  "rarity": "uncommon",
+  "type": "ability",
+  "cost": 1,
+  "polarity": "neutral",
+  "description": "This combat, whenever you Crit, gain 2 gold.",
+  "front_image": "player/defend.png",
+  "side": "player",
+  "effects": [
+    { "type": "apply_status_self", "status": "hot_streak", "stacks": 1 }
+  ]
+}

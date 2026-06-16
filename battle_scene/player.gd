@@ -115,6 +115,9 @@ func _hero_tint() -> Color:
 
 
 func _ready() -> void:
+	# Tag the player so per-entity systems (e.g. the Bleed tick checking the
+	# Hemorrhage power) can tell the player apart from enemies.
+	add_to_group("player_entity")
 	_build_visual()
 
 

@@ -77,6 +77,10 @@ const ALLOWED_STATUS_NAMES = [
 	"metallicize",
 	"feel_no_pain",
 	"dark_embrace",
+	"hot_streak",
+	"all_in",
+	"hemorrhage",
+	"covering_reload",
 ]
 # Effect types that require a `status` field
 const STATUS_BEARING_EFFECTS = [
