@@ -45,6 +45,8 @@ SLOT_NEW_GAME,New Game,新游戏
 SLOT_CONTINUE,Continue,继续游戏
 SLOT_OVERWRITE,Overwrite this slot? This erases its progress.,覆盖此存档？这会清除它的进度。
 SLOT_CONFIRM,Overwrite,确认覆盖
+SLOT_IN_PROGRESS,In progress,进行中
+MENU_CANCEL,Cancel,取消
 RESULT_DEFEAT_TITLE,You Died,你死了
 RESULT_DEFEAT_BODY,"Your run ends here. The wasteland claims another salvager.","你的旅程到此为止。废土又吞噬了一名拾荒者。"
 RESULT_DEMO_TITLE,Demo Complete!,试玩通关!

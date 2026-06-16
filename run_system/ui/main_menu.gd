@@ -14,6 +14,9 @@ const RULES_PANEL_PATH := "res://run_system/ui/rules_panel.gd"
 const BG_TEXTURE_PATH := "res://battle_scene/assets/images/backgrounds/wasteland_battlefield.png"
 
 var _settings_layer: CanvasLayer = null
+## Currently highlighted save slot (1..SLOT_COUNT). Drives Continue / New Game.
+## 0 = uninitialised; _build() seeds it from the most-recent save on first paint.
+var _selected_slot: int = 0
 
 
 func _ready() -> void:
@@ -98,13 +101,33 @@ func _build() -> void:
 	box.add_child(tagwrap)
 
 	var gap := Control.new()
-	gap.custom_minimum_size = Vector2(0, 26)
+	gap.custom_minimum_size = Vector2(0, 18)
 	box.add_child(gap)
 
-	box.add_child(_menu_button(tr("MENU_NEW_GAME"), _on_new_game, true))
+	# Default selection = the slot Continue would resume (most-recent save), or
+	# slot 1 when there are no saves yet. Preserved across rebuilds on re-select.
+	if _selected_slot < 1:
+		_selected_slot = maxi(1, MetaProgress.most_recent_slot())
+
+	# ── Save-slot selector — click a card to pick the active slot ──
+	var slots_header := Label.new()
+	slots_header.text = tr("MENU_SLOTS")
+	T.style_display(slots_header, 16, 600)
+	slots_header.add_theme_color_override("font_color", Color(0.78, 0.62, 0.36))
+	box.add_child(slots_header)
+
+	for n in range(1, MetaProgress.SLOT_COUNT + 1):
+		box.add_child(_slot_card(n))
+
+	var gap2 := Control.new()
+	gap2.custom_minimum_size = Vector2(0, 8)
+	box.add_child(gap2)
+
+	# Continue resumes the currently-selected slot; disabled when it's empty.
 	var cont := _menu_button(tr("MENU_CONTINUE"), _on_continue)
-	cont.disabled = MetaProgress.most_recent_slot() == 0
+	cont.disabled = not MetaProgress.slot_exists(_selected_slot)
 	box.add_child(cont)
+	box.add_child(_menu_button(tr("MENU_NEW_GAME"), _on_new_game))
 	box.add_child(_menu_button(tr("MENU_HOWTO"), _on_howto))
 
 	var row := HBoxContainer.new()
@@ -129,7 +152,7 @@ func _build() -> void:
 	box.add_child(ver)
 
 
-func _menu_button(text: String, handler: Callable, accent: bool = false) -> Button:
+func _menu_button(text: String, handler: Callable) -> Button:
 	var button := Button.new()
 	button.text = text
 	button.custom_minimum_size = Vector2(360, 52)
@@ -137,55 +160,188 @@ func _menu_button(text: String, handler: Callable, accent: bool = false) -> Butt
 	button.add_theme_font_override("font", T.display_font(600))
 	button.add_theme_font_size_override("font_size", 21)
 	T.apply_button_theme(button)
-	if accent:
-		var st := StyleBoxFlat.new()
-		st.bg_color = Color(0.27, 0.19, 0.08)
-		st.border_color = Color(1.0, 0.81, 0.27)
-		st.set_border_width_all(2)
-		st.set_corner_radius_all(7)
-		st.content_margin_top = 9
-		st.content_margin_bottom = 9
-		button.add_theme_stylebox_override("normal", st)
-		var sh := st.duplicate()
-		sh.bg_color = Color(0.35, 0.25, 0.1)
-		button.add_theme_stylebox_override("hover", sh)
-		button.add_theme_color_override("font_color", Color(1.0, 0.86, 0.4))
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(handler)
 	return button
 
 
-## New Game — use the first empty slot, or open the delete picker when full.
-func _on_new_game() -> void:
-	var empty: int = MetaProgress.first_empty_slot()
-	if empty > 0:
-		MetaProgress.reset_for_new_game(empty)
-		get_tree().change_scene_to_file(HOME_BASE_PATH)
+## A clickable save-slot card. Click selects the slot (drives Continue / New Game).
+func _slot_card(n: int) -> Button:
+	var selected := n == _selected_slot
+	var card := Button.new()
+	card.focus_mode = Control.FOCUS_NONE
+	card.custom_minimum_size = Vector2(0, 58)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	card.pressed.connect(
+		func() -> void:
+			AudioManager.play_sfx("ui_click")
+			_select_slot(n)
+	)
+
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color(0.17, 0.12, 0.06, 0.96) if selected else Color(0.08, 0.06, 0.035, 0.94)
+	box.border_color = Color(1.0, 0.81, 0.27) if selected else Color(0.34, 0.26, 0.15)
+	box.set_border_width_all(2 if selected else 1)
+	box.set_corner_radius_all(7)
+	card.add_theme_stylebox_override("normal", box)
+	var hov := box.duplicate()
+	hov.bg_color = Color(0.21, 0.15, 0.08, 0.98)
+	if not selected:
+		hov.border_color = Color(0.55, 0.42, 0.24)
+	card.add_theme_stylebox_override("hover", hov)
+	card.add_theme_stylebox_override("pressed", box)
+	card.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+	var margin := MarginContainer.new()
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	card.add_child(margin)
+
+	var content := VBoxContainer.new()
+	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content.alignment = BoxContainer.ALIGNMENT_CENTER
+	content.add_theme_constant_override("separation", 1)
+	margin.add_child(content)
+
+	var name_lbl := Label.new()
+	name_lbl.text = tr("SLOT_LABEL").format({"n": n})
+	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	T.style_display(name_lbl, 20, 600)
+	name_lbl.add_theme_color_override(
+		"font_color", Color(1.0, 0.86, 0.4) if selected else T.TEXT_MAIN
+	)
+	content.add_child(name_lbl)
+
+	var sub := Label.new()
+	sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var info := MetaProgress.peek_slot(n)
+	if info.is_empty():
+		sub.text = tr("SLOT_EMPTY")
 	else:
-		_open_slot_manager()
+		var line: String = (
+			tr("SLOT_SUMMARY")
+			. format(
+				{
+					"scrap": int(info.get("scrap", 0)),
+					"core": int(info.get("core", 0)),
+					"runs": int(info.get("runs", 0)),
+				}
+			)
+		)
+		if FileAccess.file_exists("user://slot_%d/run_save.json" % n):
+			line += " · " + tr("SLOT_IN_PROGRESS")
+		sub.text = line
+	sub.add_theme_font_size_override("font_size", 14)
+	sub.add_theme_color_override("font_color", T.TEXT_SECONDARY)
+	content.add_child(sub)
+	return card
 
 
-## Continue — resume the most recently played slot (run if any, else its base).
-func _on_continue() -> void:
-	var slot: int = MetaProgress.most_recent_slot()
-	if slot == 0:
+## Select a slot and rebuild the menu so the highlight + Continue state refresh.
+func _select_slot(n: int) -> void:
+	_selected_slot = n
+	_rebuild()
+
+
+## Tear down and rebuild the menu body (keeps the settings overlay alive).
+func _rebuild() -> void:
+	for c in get_children():
+		if c == _settings_layer:
+			continue
+		c.queue_free()
+	_build()
+
+
+## New Game — start in the selected slot, confirming first if it's occupied.
+func _on_new_game() -> void:
+	if _selected_slot < 1:
 		return
-	MetaProgress.set_active_slot(slot)
+	if MetaProgress.slot_exists(_selected_slot):
+		_confirm_overwrite(_selected_slot)
+	else:
+		_start_new_in(_selected_slot)
+
+
+func _start_new_in(slot: int) -> void:
+	MetaProgress.delete_slot(slot)
+	MetaProgress.reset_for_new_game(slot)
+	get_tree().change_scene_to_file(HOME_BASE_PATH)
+
+
+## Continue — resume the selected slot (its in-run save if any, else its base).
+func _on_continue() -> void:
+	if _selected_slot < 1 or not MetaProgress.slot_exists(_selected_slot):
+		return
+	MetaProgress.set_active_slot(_selected_slot)
 	if RunManager.has_method("load_run") and RunManager.has_run_save() and RunManager.load_run():
 		get_tree().change_scene_to_file(MAP_SCENE_PATH)
 	else:
 		get_tree().change_scene_to_file(HOME_BASE_PATH)
 
 
-## Open the slot manager (delete a save to free a slot, then start a new game).
-func _open_slot_manager() -> void:
+## Overwrite confirmation modal — New Game onto an occupied slot wipes it first.
+func _confirm_overwrite(slot: int) -> void:
 	var layer := CanvasLayer.new()
-	layer.name = "SlotSelectLayer"
-	layer.layer = 130
+	layer.layer = 140
 	add_child(layer)
-	var panel = preload("res://run_system/ui/slot_select.gd").new()
-	panel.tree_exited.connect(layer.queue_free)
-	layer.add_child(panel)
+
+	var root := Control.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_STOP
+	layer.add_child(root)
+	var dim := ColorRect.new()
+	dim.color = Color(0.0, 0.0, 0.0, 0.62)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	root.add_child(dim)
+
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_child(center)
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	center.add_child(panel)
+	var pad := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		pad.add_theme_constant_override("margin_" + side, 26)
+	panel.add_child(pad)
+	var vb := VBoxContainer.new()
+	vb.add_theme_constant_override("separation", 18)
+	vb.custom_minimum_size = Vector2(420, 0)
+	pad.add_child(vb)
+
+	var msg := Label.new()
+	msg.text = tr("SLOT_OVERWRITE")
+	msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	msg.custom_minimum_size = Vector2(420, 0)
+	msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	msg.add_theme_font_size_override("font_size", 19)
+	msg.add_theme_color_override("font_color", T.TEXT_MAIN)
+	vb.add_child(msg)
+
+	var btn_row := HBoxContainer.new()
+	btn_row.add_theme_constant_override("separation", 12)
+	btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	var yes := _menu_button(
+		tr("SLOT_CONFIRM"),
+		func() -> void:
+			layer.queue_free()
+			_start_new_in(slot)
+	)
+	yes.custom_minimum_size = Vector2(180, 50)
+	yes.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	yes.add_theme_color_override("font_color", Color(1.0, 0.72, 0.4))
+	var no := _menu_button(tr("MENU_CANCEL"), func() -> void: layer.queue_free())
+	no.custom_minimum_size = Vector2(180, 50)
+	no.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_row.add_child(yes)
+	btn_row.add_child(no)
+	vb.add_child(btn_row)
 
 
 func _on_howto() -> void:
