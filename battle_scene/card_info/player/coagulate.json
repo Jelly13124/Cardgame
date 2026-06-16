@@ -1,0 +1,14 @@
+{
+  "name": "coagulate",
+  "title": "Coagulate",
+  "rarity": "uncommon",
+  "type": "skill",
+  "cost": 1,
+  "polarity": "neutral",
+  "description": "Gain Block equal to the total Bleed on all enemies.",
+  "front_image": "player/defend.png",
+  "side": "player",
+  "effects": [
+    { "type": "gain_block_from_bleed" }
+  ]
+}

@@ -273,6 +273,28 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			)
 			await get_tree().create_timer(0.2).timeout
 
+		"gain_block_from_bleed":
+			# Coagulate: gain Block equal to total Bleed across all enemies (1:1).
+			var total_bleed := 0
+			for enemy in main.enemy_container.get_children():
+				if is_instance_valid(enemy) and enemy.has_method("get_status_stacks"):
+					total_bleed += enemy.get_status_stacks("bleed")
+			if player and player.has_method("add_block"):
+				player.add_block(total_bleed)
+				if player.has_method("play_block_pulse"):
+					player.play_block_pulse()
+			main.show_notification(
+				tr("UI_COMBAT_GAIN_BLOCK").format({"n": total_bleed}), Color(0.4, 0.6, 1.0)
+			)
+			await get_tree().create_timer(0.2).timeout
+
+		"add_card_to_hand":
+			# Load Up: create `amount` copies of a card directly into the hand.
+			var cid: String = str(effect.get("card", ""))
+			if cid != "" and main.deck_manager.has_method("add_card_to_hand"):
+				for _i in range(max(1, amount)):
+					main.deck_manager.add_card_to_hand(cid)
+
 		"gain_energy":
 			player.pay_energy(-amount)
 			main.show_notification(
@@ -437,7 +459,8 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			# "double_if_bleeding": true, the applied stacks DOUBLE when the target
 			# is already Bleeding (Lacerate). Without it, just the scaled value.
 			var attr: String = str(effect.get("attr", "intelligence"))
-			var bstacks: int = int(effect.get("amount", 0)) + int(player.get(attr))
+			var attr_mult: int = int(effect.get("attr_mult", 1))
+			var bstacks: int = int(effect.get("amount", 0)) + int(player.get(attr)) * attr_mult
 			if bool(effect.get("double_if_bleeding", false)):
 				if target and is_instance_valid(target) and target.has_method("get_status_stacks"):
 					if target.get_status_stacks("bleed") > 0:
