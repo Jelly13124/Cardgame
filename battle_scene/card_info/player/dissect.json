@@ -1,0 +1,14 @@
+{
+  "name": "dissect",
+  "title": "Dissect",
+  "rarity": "uncommon",
+  "type": "attack",
+  "cost": 1,
+  "polarity": "neutral",
+  "description": "Apply Bleed equal to twice your Intelligence.",
+  "front_image": "player/strike.png",
+  "side": "player",
+  "effects": [
+    { "type": "apply_bleed_scaled", "amount": 0, "attr": "intelligence", "attr_mult": 2 }
+  ]
+}

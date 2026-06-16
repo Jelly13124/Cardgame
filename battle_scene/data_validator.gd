@@ -60,6 +60,8 @@ const ALLOWED_EFFECT_TYPES = [
 	"heal",
 	"gain_attack_allowance",
 	"restore_attack_allowance",
+	"gain_block_from_bleed",
+	"add_card_to_hand",
 ]
 const ALLOWED_STATUS_NAMES = [
 	"bleed",

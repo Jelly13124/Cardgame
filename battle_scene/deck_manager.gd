@@ -33,6 +33,15 @@ func is_drawing() -> bool:
 	return _drawing or _pending_draw > 0
 
 
+## Create a card directly into the hand (e.g. Load Up adds Reload cards). The
+## card is built fresh by the factory — it is NOT pulled from the draw pile.
+func add_card_to_hand(card_id: String) -> void:
+	if card_factory and hand:
+		card_factory.create_card(card_id, hand)
+		if battle_scene:
+			battle_scene._update_ui_labels()
+
+
 func draw_cards(count: int) -> void:
 	if count <= 0:
 		return
