@@ -48,19 +48,25 @@ static func add_controls(
 	fs.toggled.connect(func(on: bool) -> void: Settings.set_fullscreen(on))
 	box.add_child(fs)
 
-	# ── Master volume ──
-	var vol_row := HBoxContainer.new()
-	vol_row.add_theme_constant_override("separation", 10)
-	box.add_child(vol_row)
-	vol_row.add_child(_label(TranslationServer.translate("SETTINGS_VOLUME")))
+	# ── Volume: Master / Music / SFX ──
+	_volume_row(box, "SETTINGS_VOLUME", Settings.master_volume, Settings.set_master_volume)
+	_volume_row(box, "SETTINGS_MUSIC", Settings.music_volume, Settings.set_music_volume)
+	_volume_row(box, "SETTINGS_SFX", Settings.sfx_volume, Settings.set_sfx_volume)
+
+
+static func _volume_row(box: VBoxContainer, key: String, value: float, setter: Callable) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	box.add_child(row)
+	row.add_child(_label(TranslationServer.translate(key)))
 	var slider := HSlider.new()
 	slider.min_value = 0.0
 	slider.max_value = 1.0
 	slider.step = 0.05
-	slider.value = Settings.master_volume
+	slider.value = value
 	slider.custom_minimum_size = Vector2(170, 24)
-	slider.value_changed.connect(func(v: float) -> void: Settings.set_master_volume(v))
-	vol_row.add_child(slider)
+	slider.value_changed.connect(func(v: float) -> void: setter.call(v))
+	row.add_child(slider)
 
 
 static func _label(text: String) -> Label:
