@@ -45,6 +45,34 @@ func slot_exists(slot: int) -> bool:
 	return FileAccess.file_exists(_meta_path(slot))
 
 
+## First slot (1..N) with no save, or 0 if all slots are full.
+func first_empty_slot() -> int:
+	for n in range(1, SLOT_COUNT + 1):
+		if not slot_exists(n):
+			return n
+	return 0
+
+
+## The most-recently-played slot to resume: the active slot if it has a save,
+## else the lowest-numbered existing slot, else 0 (no saves at all).
+func most_recent_slot() -> int:
+	if Settings.active_slot >= 1 and slot_exists(Settings.active_slot):
+		return Settings.active_slot
+	for n in range(1, SLOT_COUNT + 1):
+		if slot_exists(n):
+			return n
+	return 0
+
+
+## Permanently delete slot N's files (meta + in-run save).
+func delete_slot(slot: int) -> void:
+	var dir := "user://slot_%d" % slot
+	for f in ["meta.json", "meta.json.bak", "run_save.json"]:
+		var path: String = dir + "/" + str(f)
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(path)
+
+
 ## Lightweight read of a slot's profile for the menu summary, WITHOUT changing the
 ## active slot or MetaProgress state. Returns {} for an empty slot.
 func peek_slot(slot: int) -> Dictionary:
