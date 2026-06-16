@@ -340,6 +340,7 @@ func _make_claim_plate_style() -> StyleBoxFlat:
 
 
 func _on_loot_selected(loot_id: String, button: Button) -> void:
+	AudioManager.play_sfx("reward")
 	var loot = null
 	for entry in available_loot:
 		if entry["id"] == loot_id:
