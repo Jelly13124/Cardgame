@@ -135,40 +135,64 @@ static func style_display(label: Label, size: int, weight: int = 600, spacing: i
 # Codex delivers 9-slice PNG components — these helpers wrap them in
 # StyleBoxTexture so .add_theme_stylebox_override("panel", ...) Just Works.
 
-const _PANEL_DEFAULT_TEX = preload("res://battle_scene/assets/images/ui/panel_default.png")
-const _PANEL_DARK_TEX = preload("res://battle_scene/assets/images/ui/panel_dark.png")
-const _BUTTON_NORMAL_TEX = preload("res://battle_scene/assets/images/ui/button_normal.png")
-const _BUTTON_HOVER_TEX = preload("res://battle_scene/assets/images/ui/button_hover.png")
-const _BUTTON_PRESSED_TEX = preload("res://battle_scene/assets/images/ui/button_pressed.png")
+# Kenney UI Pack (CC0) 9-slice art, tinted to wasteland tones via modulate_color.
+const _K_PANEL = preload("res://run_system/assets/images/ui/kenney/panel.png")
+const _K_PANEL_RECESSED = preload("res://run_system/assets/images/ui/kenney/panel_recessed.png")
+const _K_BTN_NORMAL = preload("res://run_system/assets/images/ui/kenney/button_normal.png")
+const _K_BTN_HOVER = preload("res://run_system/assets/images/ui/kenney/button_hover.png")
+const _K_BTN_PRESSED = preload("res://run_system/assets/images/ui/kenney/button_pressed.png")
+
+# Wasteland tints applied over the grey Kenney art.
+const _TINT_PANEL = Color(0.40, 0.29, 0.17)
+const _TINT_PANEL_DARK = Color(0.26, 0.18, 0.10)
+const _TINT_BTN = Color(0.60, 0.45, 0.26)
+const _TINT_BTN_HOVER = Color(0.82, 0.64, 0.36)
+const _TINT_BTN_PRESSED = Color(0.46, 0.33, 0.19)
 
 
-## 9-slice panel from PNG. variant: "default" (rusty rivet panel) or "dark"
-## (heavier modal backdrop). Margins match the asset spec's 16px corner safe-zone.
+## 9-slice panel (Kenney art, wasteland-tinted). variant: "default" / "dark".
 static func panel_textured(variant: String = "default") -> StyleBoxTexture:
 	var style = StyleBoxTexture.new()
-	style.texture = _PANEL_DARK_TEX if variant == "dark" else _PANEL_DEFAULT_TEX
-	style.texture_margin_left = 16
-	style.texture_margin_right = 16
-	style.texture_margin_top = 16
-	style.texture_margin_bottom = 16
+	style.texture = _K_PANEL_RECESSED if variant == "dark" else _K_PANEL
+	style.modulate_color = _TINT_PANEL_DARK if variant == "dark" else _TINT_PANEL
+	for s in [
+		&"texture_margin_left",
+		&"texture_margin_right",
+		&"texture_margin_top",
+		&"texture_margin_bottom"
+	]:
+		style.set(s, 34)
+	for s in [
+		&"content_margin_left",
+		&"content_margin_right",
+		&"content_margin_top",
+		&"content_margin_bottom"
+	]:
+		style.set(s, 16)
 	return style
 
 
-## 9-slice button stylebox. state: "normal" / "hover" / "pressed".
-## Margins match the asset spec's 12px horizontal / 8px vertical corner safe-zone.
+## 9-slice button stylebox (Kenney art, brass-tinted). state: normal/hover/pressed.
 static func button_textured(state: String = "normal") -> StyleBoxTexture:
 	var style = StyleBoxTexture.new()
 	match state:
 		"hover":
-			style.texture = _BUTTON_HOVER_TEX
+			style.texture = _K_BTN_HOVER
+			style.modulate_color = _TINT_BTN_HOVER
 		"pressed":
-			style.texture = _BUTTON_PRESSED_TEX
+			style.texture = _K_BTN_PRESSED
+			style.modulate_color = _TINT_BTN_PRESSED
 		_:
-			style.texture = _BUTTON_NORMAL_TEX
-	style.texture_margin_left = 12
-	style.texture_margin_right = 12
-	style.texture_margin_top = 8
-	style.texture_margin_bottom = 8
+			style.texture = _K_BTN_NORMAL
+			style.modulate_color = _TINT_BTN
+	style.texture_margin_left = 18
+	style.texture_margin_right = 18
+	style.texture_margin_top = 14
+	style.texture_margin_bottom = 20
+	style.content_margin_left = 16
+	style.content_margin_right = 16
+	style.content_margin_top = 6
+	style.content_margin_bottom = 10
 	return style
 
 
