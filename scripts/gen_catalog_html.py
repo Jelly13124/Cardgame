@@ -81,6 +81,7 @@ input[type=search]{background:#0e0b07;border:1px solid var(--line);color:var(--t
 .card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:14px 16px;transition:.12s}
 .card:hover{background:var(--panel2);transform:translateY(-2px)}
 .card h3{margin:0 0 2px;font-size:17px}
+.thumb{width:100%;aspect-ratio:512/320;object-fit:contain;border-radius:7px;border:1px solid var(--line);background:#0e0b07;display:block;margin-bottom:10px}
 .zh{color:var(--gold);font-size:15px;font-weight:600}
 .meta{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;font-size:11px}
 .pill{border-radius:5px;padding:2px 8px;background:#0e0b07;border:1px solid var(--line);color:var(--dim)}
@@ -220,8 +221,17 @@ def card_block(cid, d):
     desc = dtr.get("zh") or d.get("description", "")
     c = POLARITY.get(pol) if pol in ("yin", "yang") else RARITY.get(rar, "#9aa3ad")
     search = f"{cid} {en} {zh} {ctype} {rar} {pol}".lower()
+    front = str(d.get("front_image", ""))
+    thumb = ""
+    if front:
+        art_rel = "../../battle_scene/assets/images/cards/" + front
+        thumb = (
+            f'<img class="thumb" src="{esc(art_rel)}" loading="lazy" alt="" '
+            f"onerror=\"this.style.display='none'\">"
+        )
     return (
         f'<div class="card" data-search="{esc(search)}" data-rarity="{rar}" data-polarity="{pol}" style="border-left-color:{c}">'
+        f"{thumb}"
         f'<h3>{esc(en)} <span class="zh">{esc(zh)}</span></h3>'
         f'<div class="meta"><span class="pill">⚡ {esc(cost)}</span><span class="pill">{esc(cap(ctype))}</span>'
         f'{rar_pill(rar)}{pol_pill(pol)}<span class="pill" style="color:#6b6256">{esc(cid)}</span></div>'
