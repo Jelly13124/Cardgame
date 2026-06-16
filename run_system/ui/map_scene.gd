@@ -491,8 +491,13 @@ func _open_relic_choice(
 	hint.add_theme_color_override("font_color", Color(0.78, 0.72, 0.62))
 	_relic_choice_box.add_child(hint)
 
+	# Lay the choices out side-by-side (left-right), not stacked.
+	var choices_row := HBoxContainer.new()
+	choices_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	choices_row.add_theme_constant_override("separation", 28)
+	_relic_choice_box.add_child(choices_row)
 	for relic_id in choices:
-		_relic_choice_box.add_child(_make_relic_choice_button(relic_id, source_type))
+		choices_row.add_child(_make_relic_choice_button(relic_id, source_type))
 
 	_is_relic_choice_open = true
 	_relic_choice_layer.visible = true
@@ -506,12 +511,14 @@ func _make_relic_choice_button(relic_id: String, source_type: String) -> Button:
 	var description = Settings.t("RELIC_%s_DESC" % relic_id, str(data.get("description", "")))
 
 	var button = Button.new()
-	button.custom_minimum_size = Vector2(620, 82)
+	button.custom_minimum_size = Vector2(300, 200)
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.add_theme_stylebox_override("normal", T.button_textured("normal"))
 	button.add_theme_stylebox_override("hover", T.button_textured("hover"))
 	button.add_theme_stylebox_override("pressed", T.button_textured("pressed"))
+	# Description shows on hover only — the card itself shows just the name.
+	button.tooltip_text = description
 	button.pressed.connect(_on_relic_choice_selected.bind(relic_id, source_type))
 
 	var margin = MarginContainer.new()
@@ -519,24 +526,26 @@ func _make_relic_choice_button(relic_id: String, source_type: String) -> Button:
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", 16)
 	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 10)
-	margin.add_theme_constant_override("margin_bottom", 10)
+	margin.add_theme_constant_override("margin_top", 14)
+	margin.add_theme_constant_override("margin_bottom", 14)
 	button.add_child(margin)
 
-	var row = HBoxContainer.new()
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_theme_constant_override("separation", 14)
-	margin.add_child(row)
+	# Vertical card: icon on top, name below.
+	var col = VBoxContainer.new()
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_theme_constant_override("separation", 12)
+	margin.add_child(col)
 
 	var icon_path = str(data.get("icon", ""))
 	var icon_texture = _load_texture(icon_path) if not icon_path.is_empty() else null
 	var icon_slot := CenterContainer.new()
-	icon_slot.custom_minimum_size = Vector2(62, 62)
+	icon_slot.custom_minimum_size = Vector2(0, 96)
 	icon_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(icon_slot)
+	col.add_child(icon_slot)
 	if icon_texture:
 		var icon = TextureRect.new()
-		icon.custom_minimum_size = Vector2(50, 50)
+		icon.custom_minimum_size = Vector2(88, 88)
 		icon.texture = icon_texture
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -544,31 +553,21 @@ func _make_relic_choice_button(relic_id: String, source_type: String) -> Button:
 		icon_slot.add_child(icon)
 	else:
 		var icon = Label.new()
-		icon.custom_minimum_size = Vector2(50, 50)
+		icon.custom_minimum_size = Vector2(88, 88)
 		icon.text = title.substr(0, 1).to_upper()
 		icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		icon.add_theme_font_size_override("font_size", 28)
+		icon.add_theme_font_size_override("font_size", 44)
 		icon.add_theme_color_override("font_color", Color(0.35, 0.95, 1.0))
 		icon_slot.add_child(icon)
 
-	var text_box = VBoxContainer.new()
-	text_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(text_box)
-
 	var title_text = Label.new()
 	title_text.text = title
+	title_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title_text.add_theme_font_size_override("font_size", 22)
 	title_text.add_theme_color_override("font_color", Color(1.0, 0.88, 0.56))
-	text_box.add_child(title_text)
-
-	var desc_text = Label.new()
-	desc_text.text = description
-	desc_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc_text.add_theme_font_size_override("font_size", 20)
-	desc_text.add_theme_color_override("font_color", Color(0.88, 0.82, 0.70))
-	text_box.add_child(desc_text)
+	col.add_child(title_text)
 
 	return button
 
