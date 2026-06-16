@@ -50,8 +50,8 @@ func _apply_player_crit(damage: int) -> int:
 	if damage <= 0:
 		return damage
 	var p = main.player
-	var has_power := p and p.has_method("get_status_stacks")
-	var all_in: bool = has_power and p.get_status_stacks("all_in") > 0
+	var has_power: bool = p != null and p.has_method("get_status_stacks")
+	var all_in: bool = has_power and int(p.get_status_stacks("all_in")) > 0
 	if randf() < RunManager.crit_chance():
 		var mult := 2.0 if all_in else float(RunManager.CRIT_MULT)
 		if has_power and p.get_status_stacks("hot_streak") > 0:
