@@ -394,6 +394,43 @@ func _build_description(data: Dictionary) -> String:
 				# Rendered separately as a keyword tag below
 				pass
 
+			"add_card_to_hand":
+				var ac_n: int = int(effect.get("amount", 1))
+				var ac_id: String = str(effect.get("card", ""))
+				var ac_name: String = Settings.t("CARD_%s_TITLE" % ac_id, ac_id)
+				lines.append(tr("UI_BATTLE_DESC_ADD_CARD").format({"n": ac_n, "card": ac_name}))
+
+			"apply_bleed_scaled":
+				var bs_base: int = int(effect.get("amount", 0))
+				var bs_attr: String = tr(
+					"UI_COMBAT_ATTR_%s" % str(effect.get("attr", "intelligence")).to_upper()
+				)
+				lines.append(
+					tr("UI_BATTLE_DESC_BLEED_SCALED").format({"base": bs_base, "attr": bs_attr})
+				)
+
+			"deal_damage_block_mult":
+				lines.append(
+					tr("UI_BATTLE_DESC_DMG_BLOCK_MULT").format({"mult": int(effect.get("mult", 1))})
+				)
+
+			"double_target_bleed":
+				lines.append(tr("UI_BATTLE_DESC_DOUBLE_BLEED"))
+
+			"flip_polarity":
+				lines.append(tr("UI_BATTLE_DESC_FLIP_POLARITY"))
+
+			"gain_block_from_bleed":
+				lines.append(tr("UI_BATTLE_DESC_BLOCK_FROM_BLEED"))
+
+			"lose_hp":
+				lines.append(
+					tr("UI_BATTLE_DESC_LOSE_HP").format({"n": int(effect.get("amount", 0))})
+				)
+
+			"restore_attack_allowance":
+				lines.append(tr("UI_BATTLE_DESC_RESTORE_ATTACK"))
+
 			_:
 				lines.append(etype.replace("_", " ").capitalize())
 

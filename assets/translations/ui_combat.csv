@@ -36,6 +36,16 @@ UI_COMBAT_STATUS_DOUBLE_DAMAGE_DESC,Next N attacks deal double damage. Consumed 
 UI_COMBAT_STATUS_STUN_DESC,Enemy skips its next turn for each stack (enemy-only).,每层使敌人跳过其下一回合（仅敌人）。
 UI_COMBAT_STATUS_REGEN_DESC,Heal stacks HP at the start of your turn. Stacks decay by 1 each turn.,每回合开始时回复等同层数的生命值。每回合衰减 1 层。
 UI_COMBAT_STATUS_THORNS_DESC,"When hit by an attack, the attacker takes stacks damage. Loses 1 stack per turn.",被攻击命中时，攻击者受到等同层数的伤害。每回合减少 1 层。
+UI_COMBAT_STATUS_HOT_STREAK,Hot Streak,走运
+UI_COMBAT_STATUS_HOT_STREAK_DESC,"Whenever you Crit, gain 2 gold.",每次暴击时获得 2 金币。
+UI_COMBAT_STATUS_ALL_IN,All In,梭哈
+UI_COMBAT_STATUS_ALL_IN_DESC,"Crits deal double damage, but non-Crit attacks deal 0.",暴击造成双倍伤害，但非暴击攻击造成 0 点伤害。
+UI_COMBAT_STATUS_HEMORRHAGE,Hemorrhage,致命失血
+UI_COMBAT_STATUS_HEMORRHAGE_DESC,Your Bleed damage can Crit.,你的流血伤害也能暴击。
+UI_COMBAT_STATUS_COVERING_RELOAD,Covering Reload,换弹掩护
+UI_COMBAT_STATUS_COVERING_RELOAD_DESC,"Whenever you Reload, gain 3 Block.",每次装弹时获得 3 点格挡。
+UI_COMBAT_STATUS_BULLET,Ammo,弹药
+UI_COMBAT_STATUS_BULLET_DESC,"Attack ammo. 1 at the start of each turn; spent by attacking, restored by Reload.",攻击弹药。每回合开始 1 发；攻击消耗，装弹恢复。
 UI_COMBAT_STATUS_FRAIL_DESC,Block gained is reduced 25%. Decays 1 per turn.,获得的格挡降低 25%。每回合衰减 1 层。
 UI_COMBAT_STATUS_DODGE_DESC,"Completely negates incoming attacks, one stack consumed per attack.",完全抵消受到的攻击，每次攻击消耗一层。
 UI_COMBAT_STATUS_TIP,"[b]{name} ×{n}[/b]
