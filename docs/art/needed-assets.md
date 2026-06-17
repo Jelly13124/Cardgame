@@ -5,9 +5,9 @@ Per ADR-0005, **Codex owns all art** under `battle_scene/assets/images/**` and
 wiring; Claude does not generate art.
 
 > **Status — 2026-06-17.** Audited with `scripts/check_missing_art.py` + a gem/status
-> pass. Remaining batch = **16 assets**: 1 card, 6 relics, 8 gems, 1 status icon.
-> Everything else (all other cards, 25 relic files, 21 equipment, 15 enemies × 4
-> frames, hero Bill) is bespoke and present.
+> pass. Remaining batch = **21 assets**: 1 card, 6 relics, 8 gems, 1 status icon,
+> 5 attribute icons. Everything else (all other cards, 25 relic files, 21 equipment,
+> 15 enemies × 4 frames, hero Bill) is bespoke and present.
 
 ## Mandatory style anchor (paste into EVERY prompt)
 
@@ -87,15 +87,35 @@ unit; bold single-glyph readability. Matches the existing status-icon set.
 
 ---
 
-## Deliverables checklist (16 files)
+## §5 — Attribute icons · `64×64` square PNG · transparent bg  (NEW)
+
+Path: `battle_scene/assets/images/ui/attributes/<id>.png` (new folder). Small HUD
+icons for the 5 character attributes — shown on the character page and next to stat
+readouts. Bold single-shape silhouette, readable when small, tinted to each
+attribute's accent colour. **Wiring:** Claude points the attribute UI at these after
+delivery.
+
+| id | attribute | effect | accent | art direction |
+|---|---|---|---|---|
+| `strength` | 力量 Strength | +1 attack damage / point | orange `#ff8033` | a flexed muscular arm / clenched fist |
+| `constitution` | 体质 Constitution | +1 Block / point | blue `#4da6ff` | a sturdy heart-plate / armored torso |
+| `intelligence` | 智力 Intelligence | +5% combat XP / point | purple `#b366ff` | a gear-brain / circuit sigil |
+| `luck` | 幸运 Luck | +crit / gold / loot rarity | yellow `#ffe14d` | a horseshoe or four-leaf clover with a sparkle |
+| `charm` | 魅力 Charm | −shop prices, event options | pink `#ff80c4` | a winking star / charm pendant |
+
+---
+
+## Deliverables checklist (21 files)
 
 - [ ] §1 cards/player/`combat_stim`.png
 - [ ] §2 relics/`thorn_harness`, `vampiric_coupler`, `brutal_servo`, `bulwark_plating`, `kinetic_hammer`, `war_drum` (6)
 - [ ] §3 gems/`brute`, `bulwark`, `keen`, `leech`, `spark`, `swift`, `venom`, `wealthy` (8)
 - [ ] §4 ui/status/`bullet`.png
+- [ ] §5 ui/attributes/`strength`, `constitution`, `intelligence`, `luck`, `charm` (5)
 
 ## Notes
 - Re-run the audit any time: `python scripts/check_missing_art.py` (flags missing /
   placeholder / duplicate card art / relics sharing one icon).
-- Claude wiring after delivery: add the `icon` field to the 8 gem JSONs (§3). Cards,
-  relics and the status icon need no wiring — they load from their fixed paths.
+- Claude wiring after delivery: add the `icon` field to the 8 gem JSONs (§3) and
+  point the attribute UI at §5. Cards, relics and the status icon need no wiring —
+  they load from their fixed paths.
