@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cy3lm7eb2gb8u"
-path="res://.godot/imported/bulwark.png-3f9ff1112facb37618411e828d60963f.ctex"
+uid="uid://c3gh6sdnesmdq"
+path="res://.godot/imported/taiji_shift.png-5301d21847412842ea4b06086238a0c8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/cards/player/bulwark.png"
-dest_files=["res://.godot/imported/bulwark.png-3f9ff1112facb37618411e828d60963f.ctex"]
+source_file="res://battle_scene/assets/images/cards/player/taiji_shift.png"
+dest_files=["res://.godot/imported/taiji_shift.png-5301d21847412842ea4b06086238a0c8.ctex"]
 
 [params]
 

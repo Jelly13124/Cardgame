@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b5f44x8lt24dl"
-path="res://.godot/imported/patch_kit.png-9f0123b9bc8ebb2438c613c1b4a6aa0f.ctex"
+uid="uid://bn6xhduwq1rl7"
+path="res://.godot/imported/piston_jab.png-352e892d63588e4755cf8d95ba18b2ac.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/cards/player/patch_kit.png"
-dest_files=["res://.godot/imported/patch_kit.png-9f0123b9bc8ebb2438c613c1b4a6aa0f.ctex"]
+source_file="res://battle_scene/assets/images/cards/player/piston_jab.png"
+dest_files=["res://.godot/imported/piston_jab.png-352e892d63588e4755cf8d95ba18b2ac.ctex"]
 
 [params]
 

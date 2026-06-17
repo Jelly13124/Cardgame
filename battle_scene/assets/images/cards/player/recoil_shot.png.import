@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cmia6jtoeqveu"
-path="res://.godot/imported/last_stand.png-c5d2060c83f74e1a7aa45a597eb7e98d.ctex"
+uid="uid://c38ag4f7fvthe"
+path="res://.godot/imported/recoil_shot.png-92743ac62ad2574b89bf623118476c67.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/cards/player/last_stand.png"
-dest_files=["res://.godot/imported/last_stand.png-c5d2060c83f74e1a7aa45a597eb7e98d.ctex"]
+source_file="res://battle_scene/assets/images/cards/player/recoil_shot.png"
+dest_files=["res://.godot/imported/recoil_shot.png-92743ac62ad2574b89bf623118476c67.ctex"]
 
 [params]
 

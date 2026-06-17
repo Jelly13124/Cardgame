@@ -63,6 +63,7 @@ def main() -> None:
     dup_cards = [cards for cards in hash_to_cards.values() if len(cards) > 1]
 
     missing_relics = []
+    relic_icon_to_ids = {}
     for jf in sorted(RELIC_DIR.glob("*.json")):
         d = load(jf)
         icon = d.get("icon", "")
@@ -70,6 +71,9 @@ def main() -> None:
             continue  # some relics may legitimately have no icon field
         if not res_to_fs(icon).exists():
             missing_relics.append(f"{jf.stem}  ->  {icon}")
+        else:
+            relic_icon_to_ids.setdefault(icon, []).append(jf.stem)
+    dup_relics = [ids for ids in relic_icon_to_ids.values() if len(ids) > 1]
 
     missing_equip = []
     for jf in sorted(EQUIP_DIR.glob("*.json")):
@@ -112,6 +116,11 @@ def main() -> None:
         n_cards,
     )
     section("RELIC icons missing", missing_relics, n_relics)
+    section(
+        "RELICS sharing one icon (borrowers need bespoke art)",
+        [" + ".join(ids) for ids in dup_relics],
+        n_relics,
+    )
     section("EQUIPMENT sprites missing", missing_equip, n_equip)
     section("ENEMY attack frames missing", missing_enemies, n_enemies)
 

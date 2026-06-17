@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bqjbc1u0pc4es"
-path="res://.godot/imported/reinforce.png-3843141a75bb9b7391e8710d8b5847db.ctex"
+uid="uid://do6jvpgyfwrud"
+path="res://.godot/imported/yang_ember_will.png-ab80f93fa78432759a52432844573946.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/cards/player/reinforce.png"
-dest_files=["res://.godot/imported/reinforce.png-3843141a75bb9b7391e8710d8b5847db.ctex"]
+source_file="res://battle_scene/assets/images/cards/player/yang_ember_will.png"
+dest_files=["res://.godot/imported/yang_ember_will.png-ab80f93fa78432759a52432844573946.ctex"]
 
 [params]
 
