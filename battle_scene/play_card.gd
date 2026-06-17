@@ -193,7 +193,9 @@ func set_card_data(data: Dictionary) -> void:
 
 	# ── Description: build from effects[] showing real calculated numbers ────
 	var desc = _build_description(data)
-	desc_label.parse_bbcode("[center][font_size=13]" + desc + "[/font_size][/center]")
+	desc_label.parse_bbcode(
+		"[center][font_size=13]" + _colorize_keywords(desc) + "[/font_size][/center]"
+	)
 
 	# ── Rarity: swap the art FRAME texture + apply accent color tint ─────────
 	var rarity = data.get("rarity", "common").to_lower()
@@ -259,10 +261,18 @@ func _build_description(data: Dictionary) -> String:
 		# the BASE first, THEN STR auto-adds to attack damage / CON to block. The old
 		# per-card `scaling` field is gone, so the breakdown is driven purely by etype.
 		var base_after_mult: int = int(base * mult) if mult != 1 else base
+		# Whether this effect actually scales with an attribute (respects no_str /
+		# no_con). Scaling effects ALWAYS show the "(base+stat)" breakdown — even when
+		# the stat is 0 — so players can tell a card that grows from a fixed one.
+		var scales_str: bool = (
+			(etype == "deal_damage" or etype == "deal_damage_all")
+			and not bool(effect.get("no_str", false))
+		)
+		var scales_con: bool = etype == "gain_block" and not bool(effect.get("no_con", false))
 		var stat_val: int = 0
-		if etype == "deal_damage" or etype == "deal_damage_all":
+		if scales_str:
 			stat_val = int(stats.get("strength", 0))
-		elif etype == "gain_block":
+		elif scales_con:
 			stat_val = int(stats.get("constitution", 0))
 
 		var total: int = base_after_mult + stat_val
@@ -279,7 +289,7 @@ func _build_description(data: Dictionary) -> String:
 		match etype:
 			"deal_damage":
 				var label_val = _color_num(final_damage, total)
-				if stat_val > 0:
+				if scales_str:
 					lines.append(
 						tr("UI_BATTLE_DESC_DEAL_SCALING").format(
 							{"val": label_val, "base": base_after_mult, "stat": stat_val}
@@ -290,7 +300,7 @@ func _build_description(data: Dictionary) -> String:
 
 			"deal_damage_all":
 				var label_val = _color_num(final_damage, total)
-				if stat_val > 0:
+				if scales_str:
 					lines.append(
 						tr("UI_BATTLE_DESC_DEAL_ALL_SCALING").format(
 							{"val": label_val, "base": base_after_mult, "stat": stat_val}
@@ -301,7 +311,7 @@ func _build_description(data: Dictionary) -> String:
 
 			"gain_block":
 				var label_val = _color_num(final_block, total)
-				if stat_val > 0:
+				if scales_con:
 					lines.append(
 						tr("UI_BATTLE_DESC_BLOCK_SCALING").format(
 							{"val": label_val, "base": base_after_mult, "stat": stat_val}
@@ -333,21 +343,30 @@ func _build_description(data: Dictionary) -> String:
 			"apply_status":
 				lines.append(
 					tr("UI_BATTLE_DESC_APPLY_STATUS").format(
-						{"status": STATUS_SYS.format_name(effect.get("status", "")), "n": stacks}
+						{
+							"status": STATUS_SYS.format_name_localized(effect.get("status", "")),
+							"n": stacks
+						}
 					)
 				)
 
 			"apply_status_all":
 				lines.append(
 					tr("UI_BATTLE_DESC_APPLY_STATUS_ALL").format(
-						{"status": STATUS_SYS.format_name(effect.get("status", "")), "n": stacks}
+						{
+							"status": STATUS_SYS.format_name_localized(effect.get("status", "")),
+							"n": stacks
+						}
 					)
 				)
 
 			"apply_status_self":
 				lines.append(
 					tr("UI_BATTLE_DESC_APPLY_STATUS_SELF").format(
-						{"status": STATUS_SYS.format_name(effect.get("status", "")), "n": stacks}
+						{
+							"status": STATUS_SYS.format_name_localized(effect.get("status", "")),
+							"n": stacks
+						}
 					)
 				)
 
@@ -412,6 +431,26 @@ func _color_num(val: int, base_plus_stat: int) -> String:
 		return "[color=#ff4444]%d[/color]" % val  # Red
 
 	return str(val)
+
+
+## StS-style keyword tinting: colour status / keyword terms in a card's description
+## so the player sees at a glance what it touches (definitions show in the hover
+## glossary). Terms resolve in the current locale, so 流血/Bleed, 虚弱/Weak … match.
+func _colorize_keywords(text: String) -> String:
+	var terms: Array = []  # [[term, hex], ...]
+	for status in STATUS_SYS.STATUS_COLORS:
+		var nm: String = STATUS_SYS.format_name_localized(status)
+		if nm.strip_edges() != "":
+			terms.append([nm, STATUS_SYS.STATUS_COLORS[status].to_html(false)])
+	# (Exhaust / Retain already arrive pre-coloured from their UI_BATTLE_KEYWORD_*
+	# translation rows, so they are NOT re-tinted here.)
+	# Longest term first so a short term can't pre-empt a longer one.
+	terms.sort_custom(func(a, b): return a[0].length() > b[0].length())
+	for pair in terms:
+		var term: String = pair[0]
+		if term != "" and text.contains(term):
+			text = text.replace(term, "[color=#%s]%s[/color]" % [pair[1], term])
+	return text
 
 
 ## Returns current player attribute values for description calculation.
@@ -500,12 +539,27 @@ func _build_keyword_glossary() -> String:
 		var up := status.to_upper()
 		var kw_name := tr("UI_COMBAT_STATUS_%s" % up)
 		if kw_name == "UI_COMBAT_STATUS_%s" % up:
-			kw_name = STATUS_SYS.format_name(status)
+			kw_name = STATUS_SYS.format_name_localized(status)
 		var desc := tr("UI_COMBAT_STATUS_%s_DESC" % up)
 		if desc == "UI_COMBAT_STATUS_%s_DESC" % up:
 			desc = str(STATUS_SYS.STATUS_DESCRIPTIONS.get(status, ""))
 		if desc != "":
 			lines.append("[b]%s[/b]: %s" % [kw_name, desc])
+
+	# Card keywords (Exhaust / Retain) — explain them when the card has them.
+	if bool(card_info.get("retain", false)):
+		lines.append(
+			"[b]%s[/b]: %s" % [tr("UI_BATTLE_KEYWORD_RETAIN"), tr("UI_BATTLE_KEYWORD_RETAIN_DESC")]
+		)
+	for effect in effects:
+		if str(effect.get("type", "")) == "exhaust_self":
+			lines.append(
+				(
+					"[b]%s[/b]: %s"
+					% [tr("UI_BATTLE_KEYWORD_EXHAUST"), tr("UI_BATTLE_KEYWORD_EXHAUST_DESC")]
+				)
+			)
+			break
 
 	return "\n".join(lines)
 
