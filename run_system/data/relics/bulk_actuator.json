@@ -1,15 +1,15 @@
 {
 	"id": "bulk_actuator",
 	"title": "Bulk Actuator",
-	"description": "At the start of each combat, set your Strength to 4 (if lower).",
+	"description": "At the start of each combat, set your Strength to 2 (if lower).",
 	"icon": "res://run_system/assets/images/relics/bulk_actuator.png",
 	"rarity": "uncommon",
 	"effects": [
 		{
 			"trigger": "battle_start",
 			"type": "set_strength",
-			"amount": 4,
-			"max": 4
+			"amount": 2,
+			"max": 2
 		}
 	]
 }

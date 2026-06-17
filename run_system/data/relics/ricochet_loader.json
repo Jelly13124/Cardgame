@@ -1,0 +1,10 @@
+{
+	"id": "ricochet_loader",
+	"title": "Ricochet Loader",
+	"description": "Whenever you Crit, add a Reload card to your hand.",
+	"icon": "res://run_system/assets/images/relics/ricochet_loader.png",
+	"rarity": "rare",
+	"effects": [
+		{ "trigger": "on_crit", "type": "add_card_to_hand", "card": "reload", "amount": 1 }
+	]
+}

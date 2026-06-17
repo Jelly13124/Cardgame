@@ -52,6 +52,7 @@ exists as a borrowed copy — overwrite it); the JSON `icon` field is already co
 | `bulwark_plating` | 壁垒镀装 | −1 incoming damage + first-turn Block | `signal_jammer.png` | a heavy fortified armor plate / riot-bulwark panel, rivets, brass trim |
 | `kinetic_hammer` | 动能锤 | First-turn temporary Strength | `war_horn.png` | a scrap war-hammer head crackling with kinetic energy, orange sparks |
 | `war_drum` | 战鼓 | Start each combat with 2 Strength | `war_horn.png` | a scrap-metal war drum, taut hide, beaters, brass studs |
+| `ricochet_loader` | 跳弹供弹器 (rare) | On Crit, add a Reload card to hand | (new — no icon yet) | a brass bullet ricocheting off a spring-loaded ammo feeder, cyan spark, lucky/ammo feel |
 
 ---
 
@@ -108,7 +109,7 @@ delivery.
 ## Deliverables checklist (21 files)
 
 - [ ] §1 cards/player/`combat_stim`.png
-- [ ] §2 relics/`thorn_harness`, `vampiric_coupler`, `brutal_servo`, `bulwark_plating`, `kinetic_hammer`, `war_drum` (6)
+- [ ] §2 relics/`thorn_harness`, `vampiric_coupler`, `brutal_servo`, `bulwark_plating`, `kinetic_hammer`, `war_drum`, `ricochet_loader` (7)
 - [ ] §3 gems/`brute`, `bulwark`, `keen`, `leech`, `spark`, `swift`, `venom`, `wealthy` (8)
 - [ ] §4 ui/status/`bullet`.png
 - [ ] §5 ui/attributes/`strength`, `constitution`, `intelligence`, `luck`, `charm` (5)
