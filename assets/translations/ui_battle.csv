@@ -32,6 +32,14 @@ UI_BATTLE_DESC_DRAW,Draw {n} cards,抽 {n} 张牌
 UI_BATTLE_DESC_APPLY_STATUS,Apply {status} x{n},施加 {status} x{n}
 UI_BATTLE_DESC_APPLY_STATUS_ALL,Apply {status} x{n} to all enemies,对所有敌人施加 {status} x{n}
 UI_BATTLE_DESC_APPLY_STATUS_SELF,Apply {status} x{n} to self,对自身施加 {status} x{n}
+UI_BATTLE_DESC_ADD_CARD,Add {n} {card} to your hand,将 {n} 张「{card}」置入手牌
+UI_BATTLE_DESC_BLEED_SCALED,Apply {base} (+{attr}) Bleed,施加 {base}（+{attr}）流血
+UI_BATTLE_DESC_DMG_BLOCK_MULT,Deal damage equal to Block ×{mult},造成等同于格挡 ×{mult} 的伤害
+UI_BATTLE_DESC_DOUBLE_BLEED,Double the target's Bleed,使目标当前流血层数翻倍
+UI_BATTLE_DESC_FLIP_POLARITY,Flip your polarity (Yin↔Yang),翻转你的阴阳极性
+UI_BATTLE_DESC_BLOCK_FROM_BLEED,Gain Block equal to enemy Bleed,获得等同于敌方流血层数的格挡
+UI_BATTLE_DESC_LOSE_HP,Lose {n} HP,失去 {n} 点生命
+UI_BATTLE_DESC_RESTORE_ATTACK,Restore an attack this turn,刷新本回合的攻击次数
 UI_BATTLE_DESC_APPLY_STUN,Apply [color=#f0e040]Stun[/color] x{n},施加 [color=#f0e040]眩晕[/color] x{n}
 UI_BATTLE_DESC_APPLY_STUN_ALL,Apply [color=#f0e040]Stun[/color] x{n} to all enemies,对所有敌人施加 [color=#f0e040]眩晕[/color] x{n}
 UI_BATTLE_DESC_DAMAGE_STR_MULT,Deal damage equal to {mult}× Strength.,造成等同于 {mult} 倍力量的伤害。

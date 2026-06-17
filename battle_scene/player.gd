@@ -347,6 +347,11 @@ func take_damage(amount: int, silent: bool = false) -> void:
 	health_changed.emit(health)
 	_refresh_hud()
 
+	# Hit reaction: a red flash when HP damage actually lands (a hit fully absorbed
+	# by Block does NOT flash). Mirrors the enemy's _hit_flash for consistent feedback.
+	if dmg_after_block > 0:
+		_hit_flash()
+
 	# Floating damage number + shake. silent=true skips both — DoT ticks
 	# (bleed/burn) already produce a "BLEED N" / "BURN N" notification
 	# from status_effect_system, so showing a floating number too would
@@ -369,6 +374,17 @@ func take_damage(amount: int, silent: bool = false) -> void:
 		died.emit()
 
 
+## Red flash on the rendered sprite when hit — mirrors EnemyEntity._hit_flash. Tweens
+## back to the hero tint (not pure white) so the character's colour is preserved.
+func _hit_flash() -> void:
+	var spr: Node2D = _visible_sprite()
+	if spr == null or not is_instance_valid(spr):
+		return
+	spr.modulate = Color(1.7, 0.55, 0.5)
+	var tw := create_tween()
+	tw.tween_property(spr, "modulate", _hero_tint(), 0.22).set_trans(Tween.TRANS_QUAD)
+
+
 func heal(amount: int) -> void:
 	health = min(health + amount, max_health)
 	health_changed.emit(health)
@@ -383,6 +399,7 @@ func lose_hp(amount: int) -> void:
 	health = max(0, health - amount)
 	health_changed.emit(health)
 	_refresh_hud()
+	_hit_flash()
 	var scene := get_tree().current_scene
 	if scene:
 		var spawn_pos: Vector2 = global_position + Vector2(0, -TARGET_DISPLAY_HEIGHT * 0.5)
