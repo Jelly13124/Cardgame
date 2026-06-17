@@ -6,6 +6,8 @@ UI_BATTLE_NOT_ENOUGH_ENERGY,NOT ENOUGH ENERGY,能量不足
 UI_BATTLE_NO_TARGET,NO TARGET,没有目标
 UI_BATTLE_DRAW_PILE,Draw Pile,抽牌堆
 UI_BATTLE_DISCARD_PILE,Discard Pile,弃牌堆
+UI_BATTLE_EXHAUST_PILE,Exhaust Pile,消耗牌堆
+UI_BATTLE_EXHAUST_SHORT,✕ {n},消耗 {n}
 UI_BATTLE_RUN_DECK,Run Deck,本局牌组
 UI_BATTLE_VIEW_RUN_DECK,View run deck,查看本局牌组
 UI_BATTLE_RUN_STATUS,HP {hp}/{max}    Gold {gold}    Floor {floor},生命 {hp}/{max}    金币 {gold}    层 {floor}

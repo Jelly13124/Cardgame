@@ -478,6 +478,69 @@ func refresh_hand_ui():
 	for card in hand.get_cards():
 		if card.has_method("update_display"):
 			card.update_display()
+	_refresh_pile_counts()
+
+
+## Draw-pile / discard-pile card counts, drawn on each pile's back. Refreshed on
+## every hand change so the numbers track draws / discards / reshuffles.
+func _refresh_pile_counts() -> void:
+	if is_instance_valid(deck):
+		_set_pile_count(deck, deck.get_cards().size())
+	if is_instance_valid(discard_pile):
+		_set_pile_count(discard_pile, discard_pile.get_cards().size())
+	_refresh_exhaust_indicator()
+
+
+func _set_pile_count(pile: Node, n: int) -> void:
+	var lbl: Label = pile.get_node_or_null("CountLabel")
+	if lbl == null:
+		lbl = Label.new()
+		lbl.name = "CountLabel"
+		lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		lbl.z_index = 30
+		lbl.add_theme_font_size_override("font_size", 30)
+		lbl.add_theme_color_override("font_color", Color(1.0, 0.96, 0.85))
+		lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.95))
+		lbl.add_theme_constant_override("outline_size", 6)
+		pile.add_child(lbl)
+	lbl.text = str(n)
+
+
+# ── Exhaust pile (hidden): exhausted cards collect here instead of vanishing.
+# Open it with the X key or the on-screen indicator that appears once non-empty.
+var _exhausted_card_names: PackedStringArray = []
+
+
+func view_exhaust_pile() -> void:
+	ui_manager.show_pile_viewer_from_names(
+		tr("UI_BATTLE_EXHAUST_PILE"), _exhausted_card_names, "exhaust"
+	)
+
+
+func _refresh_exhaust_indicator() -> void:
+	var n: int = _exhausted_card_names.size()
+	var btn: Button = get_node_or_null("ExhaustIndicator")
+	if btn == null:
+		btn = Button.new()
+		btn.name = "ExhaustIndicator"
+		btn.focus_mode = Control.FOCUS_NONE
+		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		btn.anchor_left = 1.0
+		btn.anchor_right = 1.0
+		btn.anchor_top = 1.0
+		btn.anchor_bottom = 1.0
+		btn.offset_left = -250.0
+		btn.offset_top = -152.0
+		btn.offset_right = -116.0
+		btn.offset_bottom = -114.0
+		btn.add_theme_font_size_override("font_size", 17)
+		btn.pressed.connect(view_exhaust_pile)
+		add_child(btn)
+	btn.visible = n > 0
+	btn.text = tr("UI_BATTLE_EXHAUST_SHORT").format({"n": n})
 
 
 ## Initialise a new battle from RunManager state (or defaults if no run is active).
@@ -867,7 +930,13 @@ func play_spell(card: Control, target_node: Node):
 			card.card_container.remove_card(card)
 		if should_exhaust:
 			_trigger_exhaust_powers()
+			# Keep the card's identity for the (hidden) Exhaust pile before it's freed.
+			var ex_name: String = (
+				str(card.card_info.get("name", "")) if is_instance_valid(card) else ""
+			)
 			await card_animator.fly_to_exhaust(card)
+			if ex_name != "":
+				_exhausted_card_names.append(ex_name)
 			if is_instance_valid(card):
 				card.queue_free()
 		else:

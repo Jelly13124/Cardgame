@@ -199,6 +199,20 @@ func show_pile_viewer(title: String, pile_container: CardContainer) -> void:
 	pile_viewer_layer.visible = true
 
 
+## Like show_pile_viewer but populated from card-name strings — used by the hidden
+## Exhaust pile, whose cards no longer exist as nodes once exhausted.
+func show_pile_viewer_from_names(title: String, names, kind: String) -> void:
+	if not pile_viewer_layer:
+		return
+	_current_pile_kind = kind
+	pile_viewer_title.text = title
+	_clear_pile_viewer_grid()
+	for nm in names:
+		if str(nm) != "":
+			_add_card_to_viewer(str(nm))
+	pile_viewer_layer.visible = true
+
+
 func show_run_deck_viewer(title: String = "", deck_entries: Array = []) -> void:
 	if not pile_viewer_layer:
 		return
@@ -295,6 +309,12 @@ func _input(event: InputEvent) -> void:
 			else:
 				_current_pile_kind = "discard"
 				show_pile_viewer(tr("UI_BATTLE_DISCARD_PILE"), main.discard_pile)
+
+		elif event.keycode == KEY_X:
+			if pile_viewer_layer and pile_viewer_layer.visible and _current_pile_kind == "exhaust":
+				hide_pile_viewer()
+			else:
+				main.view_exhaust_pile()
 
 		elif event.keycode == KEY_SPACE:
 			# Spacebar ends the turn — same guarded path as the End Round button.
