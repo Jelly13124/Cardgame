@@ -113,6 +113,7 @@ const ALLOWED_RELIC_EFFECT_TYPES = [
 	"attack_limit",
 	"thorns_bleed",
 	"add_card",
+	"add_card_to_hand",
 	"apply_self_status",
 	"apply_status",
 	"grant_card_keyword",

@@ -59,6 +59,8 @@ func _apply_player_crit(damage: int) -> int:
 		AudioManager.play_sfx("crit")
 		if main.has_method("show_notification"):
 			main.show_notification("CRIT!", Color(1, 0.85, 0.2))
+		if main.relic_effect_system:
+			main.relic_effect_system.on_player_crit(p)
 		return int(round(damage * mult))
 	# Non-crit. All In zeroes non-crit attacks (all-or-nothing).
 	return 0 if all_in else damage

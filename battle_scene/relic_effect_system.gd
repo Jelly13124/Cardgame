@@ -248,6 +248,23 @@ func thorns_apply_bleed() -> bool:
 	return false
 
 
+## Held relics that react to a player Crit. Ricochet Loader adds a Reload card to
+## the hand on each crit. Called from combat_engine._apply_player_crit.
+func on_player_crit(_player: Node) -> void:
+	if _battle_scene == null:
+		return
+	var dm = _battle_scene.get("deck_manager")
+	if dm == null or not dm.has_method("add_card_to_hand"):
+		return
+	for entry in _get_effect_entries("on_crit"):
+		var effect: Dictionary = entry["effect"]
+		if str(effect.get("type", "")) == "add_card_to_hand":
+			var cid: String = str(effect.get("card", ""))
+			if cid != "":
+				for _i in range(maxi(1, int(effect.get("amount", 1)))):
+					dm.add_card_to_hand(cid)
+
+
 ## Deal `amount` to every alive enemy. Returns true if at least one enemy was hit
 ## (so the caller can gate its notification / once_per_combat marking).
 func _deal_to_all_enemies(amount: int) -> bool:
