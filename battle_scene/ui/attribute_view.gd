@@ -64,6 +64,18 @@ func _build() -> void:
 		var name_text: String = tr("UI_COMBAT_ATTR_%s" % attr.to_upper())
 		var val: int = int(RunManager.player_attributes.get(attr, 0))
 		box.add_child(_stat_row(name_text, str(val)))
+		# Explain what the attribute does (onboarding). Falls back gracefully if a
+		# description key is missing.
+		var dkey := "UI_BATTLE_KEYWORD_%s_DESC" % attr.to_upper()
+		var dtext := tr(dkey)
+		if dtext != dkey and dtext != "":
+			var d := Label.new()
+			d.text = dtext
+			d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			d.custom_minimum_size = Vector2(360, 0)
+			d.add_theme_font_size_override("font_size", 13)
+			d.add_theme_color_override("font_color", T.TEXT_SECONDARY)
+			box.add_child(d)
 
 	box.add_child(HSeparator.new())
 

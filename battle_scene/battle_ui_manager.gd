@@ -296,27 +296,27 @@ func _input(event: InputEvent) -> void:
 			hide_pile_viewer()
 
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_Q:
+		if event.keycode == Settings.get_key("view_draw"):
 			if pile_viewer_layer and pile_viewer_layer.visible and _current_pile_kind == "draw":
 				hide_pile_viewer()
 			else:
 				_current_pile_kind = "draw"
 				show_pile_viewer(tr("UI_BATTLE_DRAW_PILE"), main.deck)
 
-		elif event.keycode == KEY_E:
+		elif event.keycode == Settings.get_key("view_discard"):
 			if pile_viewer_layer and pile_viewer_layer.visible and _current_pile_kind == "discard":
 				hide_pile_viewer()
 			else:
 				_current_pile_kind = "discard"
 				show_pile_viewer(tr("UI_BATTLE_DISCARD_PILE"), main.discard_pile)
 
-		elif event.keycode == KEY_X:
+		elif event.keycode == Settings.get_key("view_exhaust"):
 			if pile_viewer_layer and pile_viewer_layer.visible and _current_pile_kind == "exhaust":
 				hide_pile_viewer()
 			else:
 				main.view_exhaust_pile()
 
-		elif event.keycode == KEY_SPACE:
+		elif event.keycode == Settings.get_key("end_turn"):
 			# Spacebar ends the turn — same guarded path as the End Round button.
 			# Suppressed while a pile/inspect overlay is open or an attack is being
 			# targeted, so it never fires mid-interaction.
@@ -327,7 +327,7 @@ func _input(event: InputEvent) -> void:
 			if not overlay_open and not main.is_targeting:
 				main._on_end_round_button_pressed()
 
-		elif event.keycode == KEY_I:
+		elif event.keycode == Settings.get_key("view_attributes"):
 			# `i` toggles the read-only attribute view (no backpack ops in battle).
 			_toggle_attr_view()
 

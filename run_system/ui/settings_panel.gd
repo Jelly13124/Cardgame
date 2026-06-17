@@ -9,6 +9,7 @@
 extends RefCounted
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
+const KEYBIND_ROW = preload("res://run_system/ui/keybind_row.gd")
 
 
 ## Append Language / Fullscreen / Volume rows to `box`. `on_language_change` is
@@ -52,6 +53,38 @@ static func add_controls(
 	_volume_row(box, "SETTINGS_VOLUME", Settings.master_volume, Settings.set_master_volume)
 	_volume_row(box, "SETTINGS_MUSIC", Settings.music_volume, Settings.set_music_volume)
 	_volume_row(box, "SETTINGS_SFX", Settings.sfx_volume, Settings.set_sfx_volume)
+
+
+## Append a Key Bindings section: one rebind row per battle action + a Reset.
+static func add_key_controls(box: VBoxContainer) -> void:
+	box.add_child(HSeparator.new())
+	var header := _label(TranslationServer.translate("SETTINGS_KEYBINDS"))
+	header.add_theme_color_override("font_color", T.SAND_LIGHT)
+	box.add_child(header)
+	var actions := [
+		["end_turn", "SETTINGS_KEY_END_TURN"],
+		["view_draw", "SETTINGS_KEY_DRAW"],
+		["view_discard", "SETTINGS_KEY_DISCARD"],
+		["view_exhaust", "SETTINGS_KEY_EXHAUST"],
+		["view_attributes", "SETTINGS_KEY_ATTRS"],
+	]
+	for pair in actions:
+		var row = KEYBIND_ROW.new()
+		box.add_child(row)
+		row.setup(pair[0], TranslationServer.translate(pair[1]))
+	var reset := Button.new()
+	reset.text = TranslationServer.translate("SETTINGS_RESET_KEYS")
+	reset.custom_minimum_size = Vector2(0, 38)
+	reset.focus_mode = Control.FOCUS_NONE
+	_style_button(reset)
+	reset.pressed.connect(
+		func() -> void:
+			Settings.reset_keys()
+			for c in box.get_children():
+				if c.has_method("refresh"):
+					c.refresh()
+	)
+	box.add_child(reset)
 
 
 static func _volume_row(box: VBoxContainer, key: String, value: float, setter: Callable) -> void:

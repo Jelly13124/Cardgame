@@ -558,6 +558,7 @@ func _build_settings_overlay() -> void:
 
 	# Language change reloads this menu so the new locale applies immediately.
 	SETTINGS_PANEL.add_controls(box, func() -> void: get_tree().reload_current_scene(), false)
+	SETTINGS_PANEL.add_key_controls(box)
 
 	box.add_child(HSeparator.new())
 
