@@ -4,14 +4,14 @@
 	"rarity": "common",
 	"type": "skill",
 	"cost": 0,
-	"description": "Gain [b]4[/b] block. Retain.",
+	"description": "Gain [b]3[/b] (+CON) block. Retain.",
 	"front_image": "player/brace.png",
 	"side": "player",
 	"retain": true,
 	"effects": [
 		{
 			"type": "gain_block",
-			"amount": 4
+			"amount": 3
 		}
 	]
 }

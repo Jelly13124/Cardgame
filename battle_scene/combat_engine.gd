@@ -536,6 +536,29 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				)
 			await get_tree().create_timer(0.2).timeout
 
+		"double_target_bleed":
+			# Limit Break (reworked) - double the target's current Bleed stacks.
+			if (
+				target
+				and is_instance_valid(target)
+				and target.has_method("get_status_stacks")
+				and target.has_method("add_status")
+			):
+				var cur_bleed := int(target.get_status_stacks("bleed"))
+				if cur_bleed > 0:
+					target.add_status("bleed", cur_bleed)
+					main.show_notification(
+						tr("UI_COMBAT_APPLIED_STATUS").format(
+							{"status": STATUS_SYS.format_name_localized("bleed"), "n": cur_bleed}
+						),
+						Color(0.9, 0.2, 0.3)
+					)
+				else:
+					main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
+			else:
+				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
+			await get_tree().create_timer(0.2).timeout
+
 		"deal_damage_block_mult":
 			# Body Slam — deal damage equal to current Block × mult. Scales off the
 			# CON-driven block pool, so it does NOT receive the global +STR.

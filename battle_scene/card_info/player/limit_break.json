@@ -5,12 +5,12 @@
 	"type": "skill",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Double your Strength. Exhaust.",
-	"front_image": "player/defend.png",
+	"description": "Double the target's Bleed. Exhaust.",
+	"front_image": "player/limit_break.png",
 	"side": "player",
 	"effects": [
 		{
-			"type": "double_strength"
+			"type": "double_target_bleed"
 		},
 		{
 			"type": "exhaust_self"

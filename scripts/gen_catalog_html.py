@@ -483,7 +483,9 @@ def build_keywords():
                       "打出后,该卡在本场战斗中被移除(不再回到牌库)。", "#cfa9ff", "exhaust"))
     kw.append(kw_card("Retain", "保留", "The card is NOT discarded at end of turn — it stays in your hand.",
                       "回合结束时不弃掉,保留在手牌中。", "#9ec1ff", "retain"))
-    body.append('<div class="section"><h2>Card Keywords 卡牌关键词 <span class="cnt">(2)</span></h2></div>'
+    kw.append(kw_card("Replay", "重放", "When you play this card, its effects trigger 1 extra time per Replay stack (Replay 1 = it fires twice). Granted by Double-Fire Clip.",
+                      "打出这张牌时，其效果按「重放」层数额外触发一次（重放 1 = 触发两次）。来源：双发弹夹。", "#3bc7eb", "replay"))
+    body.append('<div class="section"><h2>Card Keywords 卡牌关键词 <span class="cnt">(3)</span></h2></div>'
                 f'<div class="kw">{"".join(kw)}</div>')
     # Attributes
     attrs = [
@@ -496,7 +498,7 @@ def build_keywords():
     ac = [kw_card(e, z, de, dz, c, e.lower()) for e, z, de, dz, c in attrs]
     body.append('<div class="section"><h2>Attributes 属性 <span class="cnt">(5)</span></h2></div>'
                 f'<div class="kw">{"".join(ac)}</div>')
-    total = len(STATUSES) + 4 + 2 + 5  # statuses + yin/yang(4) + card keywords(2) + attributes(5)
+    total = len(STATUSES) + 4 + 3 + 5  # statuses + yin/yang(4) + card keywords(2) + attributes(5)
     page("keywords.html", "Keywords · 关键词", "Statuses, Yin-Yang, card keywords & attributes",
          "", "".join(body), total)
 

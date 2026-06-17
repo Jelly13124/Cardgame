@@ -7,7 +7,7 @@ class_name StatusEffectSystem
 
 var _statuses: Dictionary = {}
 
-const TURN_END_DECAY = ["weak", "vulnerable", "frail"]
+const TURN_END_DECAY = ["weak", "vulnerable", "frail", "thorns"]
 
 
 static func format_name(status_name: String) -> String:
@@ -80,7 +80,7 @@ const STATUS_DESCRIPTIONS = {
 	"double_damage": "Next N attacks deal double damage. Consumed on use.",
 	"stun": "Enemy skips its next turn for each stack (enemy-only).",
 	"regen": "Heal stacks HP at the start of your turn. Stacks decay by 1 each turn.",
-	"thorns": "When hit by an attack, the attacker takes stacks damage. Persistent.",
+	"thorns": "When hit by an attack, the attacker takes stacks damage. Decays 1 per turn.",
 	"frail": "Block gained is reduced 25%. Decays 1 per turn.",
 	"dodge": "Completely negates incoming attacks, one stack consumed per attack.",
 	"metallicize": "At the start of your turn, gain stacks Block. Persistent.",

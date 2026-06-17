@@ -5,13 +5,16 @@
 	"type": "skill",
 	"cost": 0,
 	"polarity": "neutral",
-	"description": "Draw 3 cards.",
-	"front_image": "player/defend.png",
+	"description": "Draw 3 cards. Exhaust.",
+	"front_image": "player/data_dump.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "draw_cards",
 			"amount": 3
+		},
+		{
+			"type": "exhaust_self"
 		}
 	]
 }

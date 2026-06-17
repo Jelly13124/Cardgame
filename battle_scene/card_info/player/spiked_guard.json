@@ -4,11 +4,11 @@
 	"rarity": "uncommon",
 	"type": "skill",
 	"cost": 1,
-	"description": "Gain 5 Block. Gain [b]2 Thorns[/b].",
+	"description": "Gain 4 (+CON) Block. Gain [b]2 Thorns[/b].",
 	"front_image": "player/spiked_guard.png",
 	"side": "player",
 	"effects": [
-		{ "type": "gain_block", "amount": 5 },
+		{ "type": "gain_block", "amount": 4 },
 		{ "type": "apply_status_self", "status": "thorns", "stacks": 2 }
 	]
 }
