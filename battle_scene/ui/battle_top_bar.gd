@@ -95,6 +95,7 @@ func _build_settings_menu() -> void:
 
 	# Language / Fullscreen / Volume. Language change reloads the battle scene.
 	SETTINGS_PANEL.add_controls(box, func() -> void: get_tree().reload_current_scene(), true)
+	SETTINGS_PANEL.add_key_controls(box)
 
 	var sep = HSeparator.new()
 	box.add_child(sep)

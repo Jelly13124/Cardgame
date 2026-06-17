@@ -7,6 +7,14 @@ SETTINGS_FULLSCREEN,Fullscreen,全屏
 SETTINGS_VOLUME,Master Volume,主音量
 SETTINGS_MUSIC,Music,音乐
 SETTINGS_SFX,Sound Effects,音效
+SETTINGS_KEYBINDS,Key Bindings,按键设置
+SETTINGS_PRESS_KEY,Press a key…,按下按键…
+SETTINGS_RESET_KEYS,Reset to Defaults,恢复默认
+SETTINGS_KEY_END_TURN,End Turn,结束回合
+SETTINGS_KEY_DRAW,View Draw Pile,查看抽牌堆
+SETTINGS_KEY_DISCARD,View Discard Pile,查看弃牌堆
+SETTINGS_KEY_EXHAUST,View Exhaust Pile,查看消耗牌堆
+SETTINGS_KEY_ATTRS,View Attributes,查看属性
 SETTINGS_LANG_NOTE,(restarts battle),(重启战斗)
 SETTINGS_BUTTON,Settings,设置
 SETTINGS_EXIT,Exit,退出

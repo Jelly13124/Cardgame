@@ -649,6 +649,7 @@ func _open_settings() -> void:
 	SETTINGS_PANEL_SCRIPT.add_controls(
 		box, func() -> void: get_tree().reload_current_scene(), false
 	)
+	SETTINGS_PANEL_SCRIPT.add_key_controls(box)
 
 	box.add_child(HSeparator.new())
 

@@ -20,6 +20,17 @@ var sfx_volume: float = 0.9
 ## save files under user://slot_{active_slot}/ from this value.
 var active_slot: int = 0
 
+## Rebindable battle keys (action -> Godot keycode). Players remap these in
+## Settings; battle_ui_manager reads them via get_key().
+const DEFAULT_KEYS := {
+	"end_turn": KEY_SPACE,
+	"view_draw": KEY_Q,
+	"view_discard": KEY_E,
+	"view_exhaust": KEY_X,
+	"view_attributes": KEY_I,
+}
+var key_bindings: Dictionary = {}
+
 const TRANSLATIONS_DIR := "res://assets/translations"
 
 
@@ -60,6 +71,11 @@ func load_settings() -> void:
 	music_volume = float(data.get("music_volume", 0.7))
 	sfx_volume = float(data.get("sfx_volume", 0.9))
 	active_slot = int(data.get("active_slot", 0))
+	key_bindings = {}
+	var kb = data.get("key_bindings", {})
+	if typeof(kb) == TYPE_DICTIONARY:
+		for a in kb:
+			key_bindings[str(a)] = int(kb[a])
 
 
 func save_settings() -> void:
@@ -80,6 +96,7 @@ func save_settings() -> void:
 						"music_volume": music_volume,
 						"sfx_volume": sfx_volume,
 						"active_slot": active_slot,
+						"key_bindings": key_bindings,
 					}
 				)
 			)
@@ -115,6 +132,26 @@ func set_master_volume(v: float) -> void:
 ## this and also (re)loads that slot's profile — prefer calling that.
 func set_active_slot(n: int) -> void:
 	active_slot = n
+	save_settings()
+
+
+## ── Key bindings ──────────────────────────────────────────────────────────────
+
+
+## Current keycode for an action, falling back to the default when unbound.
+func get_key(action: String) -> int:
+	if key_bindings.has(action):
+		return int(key_bindings[action])
+	return int(DEFAULT_KEYS.get(action, KEY_NONE))
+
+
+func set_key(action: String, keycode: int) -> void:
+	key_bindings[action] = keycode
+	save_settings()
+
+
+func reset_keys() -> void:
+	key_bindings = {}
 	save_settings()
 
 
