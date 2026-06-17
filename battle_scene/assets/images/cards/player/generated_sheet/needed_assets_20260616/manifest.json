@@ -1,0 +1,296 @@
+{
+  "card_batches": [
+    {
+      "batch": 1,
+      "raw": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0e5399960a4973af016a30ff2fcf08819b9fb4f56564cd0e5d.png",
+      "names": [
+        "reload",
+        "load_up",
+        "coagulate",
+        "dissect",
+        "hot_streak",
+        "all_in",
+        "hemorrhage",
+        "covering_reload"
+      ]
+    },
+    {
+      "batch": 2,
+      "raw": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0e5399960a4973af016a30ffb1f9f8819ba62099cb706a8872.png",
+      "names": [
+        "acid_splash",
+        "arc_flash",
+        "brace_protocol",
+        "breach_charge",
+        "bulkhead_bleed",
+        "crowbar_smash",
+        "data_dump",
+        "focusing_blow"
+      ]
+    },
+    {
+      "batch": 3,
+      "raw": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0e5399960a4973af016a31003b9d64819b936e7b17331c7923.png",
+      "names": [
+        "hemo_drive",
+        "incinerate",
+        "kinetic_barrier",
+        "limit_break",
+        "phase_plating",
+        "pipe_swing",
+        "piston_jab",
+        "power_surge"
+      ]
+    },
+    {
+      "batch": 4,
+      "raw": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0e5399960a4973af016a3100b82170819bafccb9edd31fbd1a.png",
+      "names": [
+        "rebar_wave",
+        "recoil_shot",
+        "siphon_valve",
+        "slam_dunk",
+        "static_shout",
+        "sweep_arc",
+        "tape_patch",
+        "vent_plating"
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "id": "reload",
+      "path": "battle_scene\\assets\\images\\cards\\player\\reload.png",
+      "batch": 1,
+      "cell": 1
+    },
+    {
+      "id": "load_up",
+      "path": "battle_scene\\assets\\images\\cards\\player\\load_up.png",
+      "batch": 1,
+      "cell": 2
+    },
+    {
+      "id": "coagulate",
+      "path": "battle_scene\\assets\\images\\cards\\player\\coagulate.png",
+      "batch": 1,
+      "cell": 3
+    },
+    {
+      "id": "dissect",
+      "path": "battle_scene\\assets\\images\\cards\\player\\dissect.png",
+      "batch": 1,
+      "cell": 4
+    },
+    {
+      "id": "hot_streak",
+      "path": "battle_scene\\assets\\images\\cards\\player\\hot_streak.png",
+      "batch": 1,
+      "cell": 5
+    },
+    {
+      "id": "all_in",
+      "path": "battle_scene\\assets\\images\\cards\\player\\all_in.png",
+      "batch": 1,
+      "cell": 6
+    },
+    {
+      "id": "hemorrhage",
+      "path": "battle_scene\\assets\\images\\cards\\player\\hemorrhage.png",
+      "batch": 1,
+      "cell": 7
+    },
+    {
+      "id": "covering_reload",
+      "path": "battle_scene\\assets\\images\\cards\\player\\covering_reload.png",
+      "batch": 1,
+      "cell": 8
+    },
+    {
+      "id": "acid_splash",
+      "path": "battle_scene\\assets\\images\\cards\\player\\acid_splash.png",
+      "batch": 2,
+      "cell": 1
+    },
+    {
+      "id": "arc_flash",
+      "path": "battle_scene\\assets\\images\\cards\\player\\arc_flash.png",
+      "batch": 2,
+      "cell": 2
+    },
+    {
+      "id": "brace_protocol",
+      "path": "battle_scene\\assets\\images\\cards\\player\\brace_protocol.png",
+      "batch": 2,
+      "cell": 3
+    },
+    {
+      "id": "breach_charge",
+      "path": "battle_scene\\assets\\images\\cards\\player\\breach_charge.png",
+      "batch": 2,
+      "cell": 4
+    },
+    {
+      "id": "bulkhead_bleed",
+      "path": "battle_scene\\assets\\images\\cards\\player\\bulkhead_bleed.png",
+      "batch": 2,
+      "cell": 5
+    },
+    {
+      "id": "crowbar_smash",
+      "path": "battle_scene\\assets\\images\\cards\\player\\crowbar_smash.png",
+      "batch": 2,
+      "cell": 6
+    },
+    {
+      "id": "data_dump",
+      "path": "battle_scene\\assets\\images\\cards\\player\\data_dump.png",
+      "batch": 2,
+      "cell": 7
+    },
+    {
+      "id": "focusing_blow",
+      "path": "battle_scene\\assets\\images\\cards\\player\\focusing_blow.png",
+      "batch": 2,
+      "cell": 8
+    },
+    {
+      "id": "hemo_drive",
+      "path": "battle_scene\\assets\\images\\cards\\player\\hemo_drive.png",
+      "batch": 3,
+      "cell": 1
+    },
+    {
+      "id": "incinerate",
+      "path": "battle_scene\\assets\\images\\cards\\player\\incinerate.png",
+      "batch": 3,
+      "cell": 2
+    },
+    {
+      "id": "kinetic_barrier",
+      "path": "battle_scene\\assets\\images\\cards\\player\\kinetic_barrier.png",
+      "batch": 3,
+      "cell": 3
+    },
+    {
+      "id": "limit_break",
+      "path": "battle_scene\\assets\\images\\cards\\player\\limit_break.png",
+      "batch": 3,
+      "cell": 4
+    },
+    {
+      "id": "phase_plating",
+      "path": "battle_scene\\assets\\images\\cards\\player\\phase_plating.png",
+      "batch": 3,
+      "cell": 5
+    },
+    {
+      "id": "pipe_swing",
+      "path": "battle_scene\\assets\\images\\cards\\player\\pipe_swing.png",
+      "batch": 3,
+      "cell": 6
+    },
+    {
+      "id": "piston_jab",
+      "path": "battle_scene\\assets\\images\\cards\\player\\piston_jab.png",
+      "batch": 3,
+      "cell": 7
+    },
+    {
+      "id": "power_surge",
+      "path": "battle_scene\\assets\\images\\cards\\player\\power_surge.png",
+      "batch": 3,
+      "cell": 8
+    },
+    {
+      "id": "rebar_wave",
+      "path": "battle_scene\\assets\\images\\cards\\player\\rebar_wave.png",
+      "batch": 4,
+      "cell": 1
+    },
+    {
+      "id": "recoil_shot",
+      "path": "battle_scene\\assets\\images\\cards\\player\\recoil_shot.png",
+      "batch": 4,
+      "cell": 2
+    },
+    {
+      "id": "siphon_valve",
+      "path": "battle_scene\\assets\\images\\cards\\player\\siphon_valve.png",
+      "batch": 4,
+      "cell": 3
+    },
+    {
+      "id": "slam_dunk",
+      "path": "battle_scene\\assets\\images\\cards\\player\\slam_dunk.png",
+      "batch": 4,
+      "cell": 4
+    },
+    {
+      "id": "static_shout",
+      "path": "battle_scene\\assets\\images\\cards\\player\\static_shout.png",
+      "batch": 4,
+      "cell": 5
+    },
+    {
+      "id": "sweep_arc",
+      "path": "battle_scene\\assets\\images\\cards\\player\\sweep_arc.png",
+      "batch": 4,
+      "cell": 6
+    },
+    {
+      "id": "tape_patch",
+      "path": "battle_scene\\assets\\images\\cards\\player\\tape_patch.png",
+      "batch": 4,
+      "cell": 7
+    },
+    {
+      "id": "vent_plating",
+      "path": "battle_scene\\assets\\images\\cards\\player\\vent_plating.png",
+      "batch": 4,
+      "cell": 8
+    }
+  ],
+  "icons": {
+    "double_fire_clip": {
+      "kind": "relic",
+      "path": "run_system\\assets\\images\\relics\\double_fire_clip.png",
+      "source": "battle_scene\\assets\\images\\ui\\status\\generated\\needed_assets_20260616_icons\\needed_icon-1.png",
+      "size": 128
+    },
+    "serrated_barbs": {
+      "kind": "relic",
+      "path": "run_system\\assets\\images\\relics\\serrated_barbs.png",
+      "source": "battle_scene\\assets\\images\\ui\\status\\generated\\needed_assets_20260616_icons\\needed_icon-2.png",
+      "size": 128
+    },
+    "hot_streak": {
+      "kind": "status",
+      "path": "battle_scene\\assets\\images\\ui\\status\\hot_streak.png",
+      "source": "battle_scene\\assets\\images\\ui\\status\\generated\\needed_assets_20260616_icons\\needed_icon-3.png",
+      "size": 64
+    },
+    "all_in": {
+      "kind": "status",
+      "path": "battle_scene\\assets\\images\\ui\\status\\all_in.png",
+      "source": "battle_scene\\assets\\images\\ui\\status\\generated\\needed_assets_20260616_icons\\needed_icon-4.png",
+      "size": 64
+    },
+    "hemorrhage": {
+      "kind": "status",
+      "path": "battle_scene\\assets\\images\\ui\\status\\hemorrhage.png",
+      "source": "battle_scene\\assets\\images\\ui\\status\\generated\\needed_assets_20260616_icons\\needed_icon-5.png",
+      "size": 64
+    },
+    "covering_reload": {
+      "kind": "status",
+      "path": "battle_scene\\assets\\images\\ui\\status\\covering_reload.png",
+      "source": "battle_scene\\assets\\images\\ui\\status\\generated\\needed_assets_20260616_icons\\needed_icon-6.png",
+      "size": 64
+    }
+  },
+  "previews": [
+    "docs\\art\\previews\\needed_assets_cards_20260616_preview.png",
+    "docs\\art\\previews\\needed_assets_icons_20260616_preview.png"
+  ]
+}
