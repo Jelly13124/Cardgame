@@ -1,15 +1,15 @@
 # Needed Art Assets — Codex Handoff
 
-Per ADR-0005, Codex owns all art under `battle_scene/assets/images/**` and
-`run_system/assets/images/**`. Claude writes this list + the asset-spec contracts;
-it does not generate art.
+Per ADR-0005, **Codex owns all art** under `battle_scene/assets/images/**` and
+`run_system/assets/images/**`. Claude writes this contract + does any JSON/code
+wiring; Claude does not generate art.
 
-> **Status — 2026-06-17.** Re-audited with `scripts/check_missing_art.py` (now also
-> flags relics that share one icon). After the card cull, the remaining gap is
-> **1 card + 6 relics** that reuse another asset's image. Everything else is bespoke.
-> (Orphaned art from the 10 deleted cards has been removed from disk.)
+> **Status — 2026-06-17.** Audited with `scripts/check_missing_art.py` + a gem/status
+> pass. Remaining batch = **16 assets**: 1 card, 6 relics, 8 gems, 1 status icon.
+> Everything else (all other cards, 25 relic files, 21 equipment, 15 enemies × 4
+> frames, hero Bill) is bespoke and present.
 
-## Mandatory style anchor (paste into every prompt)
+## Mandatory style anchor (paste into EVERY prompt)
 
 ```
 original Offbeat Adult Sci-Fi Cartoon Wasteland game art, matching the approved
@@ -26,45 +26,76 @@ no text, no labels, no UI frame, no logo
 
 ---
 
-## 1. Card illustration — `512x320` landscape PNG, transparent bg
+## §1 — Card illustration · `512×320` landscape PNG · transparent bg
 
-Path: `battle_scene/assets/images/cards/player/<name>.png`. No UI frame / text baked in.
+Path: `battle_scene/assets/images/cards/player/<id>.png`. Pure illustration (the
+frame / cost / title are drawn by the card scene). The JSON `front_image` already
+points here — no wiring needed once delivered.
 
-| id | card | effect | currently reuses | art direction |
+| id | card | effect | now reuses | art direction |
 |---|---|---|---|---|
 | `combat_stim` | 战斗兴奋剂 Combat Stim | Gain 2 Strength | `brace.png` | a stim syringe of glowing serum jabbed into a muscular arm, muscles flexing, warm orange power-surge glow |
 
 ---
 
-## 2. Relic icons — square PNG (≈128×128), transparent bg
+## §2 — Relic icons · `128×128` square PNG · transparent bg
 
 Path: `run_system/assets/images/relics/<id>.png`. These 6 relics currently point at
-**another relic's** icon — give each its own and confirm the JSON `icon` path matches.
+**another relic's** icon. Deliver a bespoke icon at the SAME path (the file already
+exists as a borrowed copy — overwrite it); the JSON `icon` field is already correct.
 
-| id | relic | effect | currently reuses | art direction |
+| id | relic | effect | now reuses | art direction |
 |---|---|---|---|---|
-| `thorn_harness` | 尖刺挽具 Thorn Harness | Start combat with 3 Thorns | `barbed_plating.png` | a leather-and-scrap harness studded with jutting metal thorns |
-| `vampiric_coupler` | 吸血联结器 Vampiric Coupler | First-turn Block + Thorns | `barbed_plating.png` | a hose coupler / connector dripping blood, red veins, cyan glow |
-| `brutal_servo` | 残暴伺服 Brutal Servo | +1 Bleed whenever you apply Bleed | `sharpened_scrap.png` | a brutal servo-motor piston with serrated edges, flecked with blood |
-| `bulwark_plating` | 壁垒镀装 Bulwark Plating | -1 incoming damage + first-turn Block | `signal_jammer.png` | a heavy fortified armor plate / riot bulwark panel, rivets, brass trim |
-| `kinetic_hammer` | 动能锤 Kinetic Hammer | First-turn temporary Strength | `war_horn.png` | a scrap war-hammer head crackling with kinetic energy, orange sparks |
-| `war_drum` | 战鼓 War Drum | Start each combat with 2 Strength | `war_horn.png` | a scrap-metal war drum, taut hide, beaters, brass studs |
+| `thorn_harness` | 尖刺挽具 | Start combat with 3 Thorns | `barbed_plating.png` | a leather-and-scrap harness studded with jutting metal thorns |
+| `vampiric_coupler` | 吸血联结器 | First-turn Block + Thorns | `barbed_plating.png` | a hose/pipe coupler dripping blood, red veins, faint cyan glow |
+| `brutal_servo` | 残暴伺服 | +1 Bleed when you apply Bleed | `sharpened_scrap.png` | a brutal servo-motor piston with serrated edges, flecked with blood |
+| `bulwark_plating` | 壁垒镀装 | −1 incoming damage + first-turn Block | `signal_jammer.png` | a heavy fortified armor plate / riot-bulwark panel, rivets, brass trim |
+| `kinetic_hammer` | 动能锤 | First-turn temporary Strength | `war_horn.png` | a scrap war-hammer head crackling with kinetic energy, orange sparks |
+| `war_drum` | 战鼓 | Start each combat with 2 Strength | `war_horn.png` | a scrap-metal war drum, taut hide, beaters, brass studs |
 
 ---
 
-## ✅ Delivered (verified present on disk — no action)
+## §3 — Gem icons · `64×64` square PNG · transparent bg  (NEW)
 
-- **All other player cards** are bespoke (only `strike.png` / `defend.png` remain as
-  themselves, which is correct).
-- **Relic icons** — 25 / 25 files exist (the 6 above just need to stop sharing).
-- **Equipment sprites** — 21 / 21.
-- **Enemy sprites** — 15 / 15, each with 4 attack frames.
-- **Hero (cowboy_bill)** — 8 idle + 8 attack frames + identity references.
-- **Status icons** — incl. `hot_streak`, `all_in`, `hemorrhage`, `covering_reload`.
+Path: `run_system/assets/images/gems/<id>.png` (new folder). Renders in a **30×30**
+socket on the card top-right, so keep the silhouette bold and centred, readable when
+tiny. Theme each as a small glowing faceted gem with a motif for its effect.
+**Wiring:** after delivery, Claude adds `"icon": "res://run_system/assets/images/gems/<id>.png"`
+to each gem JSON (the card scene already loads `gem_data.icon`).
+
+| id | gem | effect | art direction |
+|---|---|---|---|
+| `brute` | 蛮力宝石 | +1 Strength | red/orange faceted gem, clenched-fist or muscle motif, aggressive |
+| `bulwark` | 壁垒宝石 | +4 Block | steel-blue faceted gem, shield motif, defensive |
+| `keen` | 锋锐宝石 | Deal 3 damage | white/silver gem, sharp blade-edge facets |
+| `leech` | 吸血宝石 | Heal 2 | crimson gem with a blood-drop highlight, life-steal feel |
+| `spark` | 电火花宝石 | +1 Energy | cyan/electric gem crackling with little arcs |
+| `swift` | 迅捷宝石 | Draw 1 card | green/teal gem, motion-streak / arrow motif |
+| `venom` | 毒囊宝石 | Apply Poison | toxic-green gem, dripping-poison or skull motif |
+| `wealthy` | 富裕宝石 | +5 Gold | gold/amber gem, coin or `$` glint motif |
 
 ---
+
+## §4 — Status icon · `64×64` square PNG · transparent bg  (NEW)
+
+Path: `battle_scene/assets/images/ui/status/<name>.png`. Renders at ~30px next to the
+unit; bold single-glyph readability. Matches the existing status-icon set.
+
+| name | status | currently | art direction |
+|---|---|---|---|
+| `bullet` | 装弹 / remaining attacks | a `●` dot glyph (warm gold) | a single brass rifle cartridge / bullet, warm gold (#ffc759), slight cyan rim-light |
+
+---
+
+## Deliverables checklist (16 files)
+
+- [ ] §1 cards/player/`combat_stim`.png
+- [ ] §2 relics/`thorn_harness`, `vampiric_coupler`, `brutal_servo`, `bulwark_plating`, `kinetic_hammer`, `war_drum` (6)
+- [ ] §3 gems/`brute`, `bulwark`, `keen`, `leech`, `spark`, `swift`, `venom`, `wealthy` (8)
+- [ ] §4 ui/status/`bullet`.png
 
 ## Notes
-- Re-run the audit any time: `python scripts/check_missing_art.py` (flags missing,
-  placeholder, duplicate card art, AND relics sharing one icon).
-- Use `/codex-handoff` to turn §1 / §2 into a full `asset-spec-*.md` + prompt contract.
+- Re-run the audit any time: `python scripts/check_missing_art.py` (flags missing /
+  placeholder / duplicate card art / relics sharing one icon).
+- Claude wiring after delivery: add the `icon` field to the 8 gem JSONs (§3). Cards,
+  relics and the status icon need no wiring — they load from their fixed paths.
