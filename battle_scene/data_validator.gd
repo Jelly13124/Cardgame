@@ -55,6 +55,7 @@ const ALLOWED_EFFECT_TYPES = [
 	"flip_polarity",
 	"lose_hp",
 	"double_strength",
+	"double_target_bleed",
 	"deal_damage_block_mult",
 	"gain_gold",
 	"heal",
