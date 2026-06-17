@@ -10,6 +10,7 @@
 [ext_resource type="Texture2D" path="res://battle_scene/assets/images/cards/ui/card_back.png" id="6_uv8m4"]
 [ext_resource type="PackedScene" path="res://battle_scene/player.tscn" id="7_player"]
 [ext_resource type="Script" path="res://addons/card-framework/hand.gd" id="10_wrush"]
+[ext_resource type="Script" path="res://battle_scene/no_reorder_hand.gd" id="11_noreorder"]
 [ext_resource type="Script" path="res://addons/card-framework/pile.gd" id="12_ixui7"]
 
 [ext_resource type="Script" path="res://battle_scene/turn_manager.gd" id="16_turn"]
@@ -82,7 +83,7 @@ offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 1
-script = ExtResource("10_wrush")
+script = ExtResource("11_noreorder")
 max_hand_spread = 760
 hand_rotation_curve = SubResource("Curve_lsli3")
 hand_vertical_curve = SubResource("Curve_8dbo5")
@@ -203,7 +204,7 @@ layer = 30
 layout_mode = 3
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 62.0
+offset_bottom = 108.0
 grow_horizontal = 2
 mouse_filter = 1
 script = ExtResource("21_topbar")

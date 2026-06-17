@@ -546,6 +546,10 @@ func _victory():
 		return
 	is_game_over = true
 	AudioManager.play_sfx("victory")
+	# Combat is over — neutralise any in-flight card drag NOW, before the 3s gap +
+	# loot modal (MOUSE_FILTER_STOP) can swallow the mouse-release and leave a card
+	# stuck in HOLDING, which permanently locks all future drags. (Bug fix.)
+	_reset_hand_drag_state()
 	if relic_effect_system:
 		relic_effect_system.on_combat_victory(player)
 	# Victory path: persist HP without firing the death gate, even if the
@@ -593,6 +597,22 @@ func _victory():
 	if RunManager.last_battle_node_type == "elite":
 		RunManager.add_core_to_backpack(randi_range(8, 16))
 	_show_loot_modal()
+
+
+## Cancel any in-flight hand-card drag at combat end and lock the hand so no new
+## drag can start during the victory gap. The card-framework tracks a GLOBAL
+## holding/hovering count (card.gd); if a card is left in HOLDING when the loot
+## modal's MOUSE_FILTER_STOP eats the mouse-release, that count stays > 0 forever
+## and `_can_start_hovering` blocks every future drag. Forcing each card to IDLE
+## (state 0) runs its state-exit, which decrements the count back to zero.
+func _reset_hand_drag_state() -> void:
+	if not hand:
+		return
+	for card in hand.get_cards():
+		if not is_instance_valid(card):
+			continue
+		card.change_state(0)  # DraggableState.IDLE — runs state-exit, drops the counter
+		card.can_be_interacted_with = false
 
 
 func _show_extract_choice(act: int, rewards: Dictionary) -> void:
