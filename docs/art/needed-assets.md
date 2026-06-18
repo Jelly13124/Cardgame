@@ -27,11 +27,10 @@ wiring; Claude does not generate art.
 > starter-card illustrations (functional but plain).
 >
 > **Full game only (NOT in the Bill-only demo):**
-> - **2nd hero — Feng Shui Master (风水大师)** has NO character art: its hero JSON
->   borrows `sprite_id: "cowboy_bill"`, so in-game it looks identical to Bill.
->   Needs its own `idle/` + `attack/` frame sets + headshot under
->   `battle_scene/assets/images/heroes/<id>/`.
 > - **Enemy redo** is owner-driven and in flight — keep the new style consistent.
+>
+> (The 2nd hero "Feng Shui Master" was removed from the project on 2026-06-18,
+> so its character-art gap no longer applies.)
 
 ## Mandatory style anchor (paste into EVERY prompt)
 
