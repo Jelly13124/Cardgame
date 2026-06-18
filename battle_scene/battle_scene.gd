@@ -381,10 +381,15 @@ func _on_turn_started(side: String) -> void:
 	player.start_turn()
 	if is_game_over:
 		return
+	# Reset the per-turn guaranteed-first-attack Crit (Deadeye Crit Clip).
+	combat_engine.reset_turn_crit()
 	# Reset the attack allowance for the new turn (double-fire clip arms this).
 	_attack_limit_per_turn = (
 		relic_effect_system.attack_limit_per_turn() if relic_effect_system else 0
 	)
+	# Burst-Fire Clip: +1 allowance on the first turn only (2 attacks on turn 1).
+	if _attack_limit_per_turn > 0 and relic_effect_system and turn_manager.current_round == 1:
+		_attack_limit_per_turn += relic_effect_system.first_turn_bonus_allowance()
 	_attacks_left_this_turn = _attack_limit_per_turn
 	_update_attack_allowance_ui()
 	# Ascension A3+: first turn of each combat starts with -1 energy.

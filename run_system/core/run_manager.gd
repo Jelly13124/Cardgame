@@ -1259,10 +1259,25 @@ func equipment_crit_pct_bonus() -> float:
 func crit_chance() -> float:
 	var per_luck := CRIT_PER_LUCK
 	var base := 0.0
-	if has_relic("crit_clip"):
+	if has_crit_clip():
 		per_luck = CRIT_PER_LUCK_CLIP
 		base = CRIT_CLIP_BASE
 	return max(0.0, base + _attr("luck") * per_luck + equipment_crit_pct_bonus())
+
+
+## True if any held relic grants the Crit Clip profile — the base `crit_clip` or an
+## upgraded variant (Volatile / Deadeye). Detected via the `crit_chance` marker
+## effect so an upgrade that REPLACES the base clip keeps Luck→crit coupling without
+## hardcoding relic ids.
+func has_crit_clip() -> bool:
+	for relic_id in relics:
+		var effects = get_relic_data(str(relic_id)).get("effects", [])
+		if typeof(effects) != TYPE_ARRAY:
+			continue
+		for e in effects:
+			if typeof(e) == TYPE_DICTIONARY and str(e.get("type", "")) == "crit_chance":
+				return true
+	return false
 
 
 func luck_gold_mult() -> float:

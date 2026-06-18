@@ -130,6 +130,9 @@ const ALLOWED_RELIC_EFFECT_TYPES = [
 	"reduce_damage",
 	"set_polarity_alternating",
 	"set_strength",
+	"crit_mult",
+	"auto_crit",
+	"bonus_allowance",
 ]
 
 # ─── Enemy schema ─────────────────────────────────────────────────────────────

@@ -38,6 +38,9 @@ var _drag_start_scroll: float = 0.0
 var _relic_choice_layer: CanvasLayer
 var _relic_choice_box: VBoxContainer
 var _is_relic_choice_open: bool = false
+## When the active relic-choice modal is a clip-upgrade pick (the Act 2+ opener),
+## maps each offered relic id → the clip it REPLACES ("" = pure add / second clip).
+var _upgrade_replaces: Dictionary = {}
 ## Re-entrancy guard for _on_node_clicked. The handler awaits a 0.35s
 ## timer before transitioning; without this, a rapid second click on a
 ## CHILD of the just-clicked node passes _is_accessible and starts a
@@ -274,7 +277,16 @@ func _on_node_clicked(node: Dictionary) -> void:
 			# variance) vs Double-Fire Clip (guaranteed replay, ammo-gated). Both are
 			# unique relics, so neither rolls anywhere else — the unpicked one is gone
 			# for the run. Other heroes keep the random starting-relic roll.
-			if str(rm.current_hero_id) == "cowboy_bill":
+			# From Act 2 on, this floor-0 node opens Bill's clip-UPGRADE pick instead.
+			if str(rm.current_hero_id) == "cowboy_bill" and int(rm.current_act) >= 2:
+				var base_clip := _held_base_clip()
+				if base_clip != "":
+					_open_clip_upgrade_choice(base_clip)
+				else:
+					# Already upgraded (3-act runs) — give a normal relic pick rather
+					# than re-offering the starting clips.
+					_open_relic_choice(tr("UI_MAP_CHOOSE_A_RELIC"), "treasure")
+			elif str(rm.current_hero_id) == "cowboy_bill":
 				var clips: Array[String] = ["crit_clip", "double_fire_clip"]
 				_open_relic_choice(tr("UI_MAP_CHOOSE_STARTING_RELIC"), "starting", clips)
 			else:
@@ -504,6 +516,61 @@ func _open_relic_choice(
 	_relic_choice_layer.visible = true
 
 
+## The base clip Bill currently holds ("crit_clip" / "double_fire_clip"), or "" if
+## he holds none or only an already-upgraded variant. Drives the Act 2+ upgrade node.
+func _held_base_clip() -> String:
+	if rm.has_relic("crit_clip"):
+		return "crit_clip"
+	if rm.has_relic("double_fire_clip"):
+		return "double_fire_clip"
+	return ""
+
+
+## Act 2+ opener for Bill: upgrade the held clip (REPLACES it) or grab the OTHER
+## base clip as a second exclusive relic (pure add). Modeled on _open_relic_choice,
+## but selection routes through _upgrade_replaces so an upgrade swaps out the old clip.
+func _open_clip_upgrade_choice(base_clip: String) -> void:
+	if not rm:
+		_node_click_pending = false
+		return
+	var choices: Array[String] = []
+	_upgrade_replaces = {}
+	if base_clip == "crit_clip":
+		choices = ["crit_clip_volatile", "crit_clip_deadeye", "double_fire_clip"]
+		_upgrade_replaces["crit_clip_volatile"] = "crit_clip"
+		_upgrade_replaces["crit_clip_deadeye"] = "crit_clip"
+	else:
+		choices = ["double_fire_clip_burst", "crit_clip"]
+		_upgrade_replaces["double_fire_clip_burst"] = "double_fire_clip"
+
+	for child in _relic_choice_box.get_children():
+		child.queue_free()
+
+	var title_label = Label.new()
+	title_label.text = tr("UI_MAP_CHOOSE_CLIP_UPGRADE")
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.add_theme_font_size_override("font_size", 30)
+	title_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.48))
+	_relic_choice_box.add_child(title_label)
+
+	var hint = Label.new()
+	hint.text = tr("UI_MAP_CLIP_UPGRADE_HINT")
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_font_size_override("font_size", 20)
+	hint.add_theme_color_override("font_color", Color(0.78, 0.72, 0.62))
+	_relic_choice_box.add_child(hint)
+
+	var choices_row := HBoxContainer.new()
+	choices_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	choices_row.add_theme_constant_override("separation", 28)
+	_relic_choice_box.add_child(choices_row)
+	for relic_id in choices:
+		choices_row.add_child(_make_relic_choice_button(relic_id, "upgrade"))
+
+	_is_relic_choice_open = true
+	_relic_choice_layer.visible = true
+
+
 func _make_relic_choice_button(relic_id: String, source_type: String) -> Button:
 	var data = rm.get_relic_data(relic_id)
 	var title = Settings.t(
@@ -573,10 +640,18 @@ func _make_relic_choice_button(relic_id: String, source_type: String) -> Button:
 	return button
 
 
-func _on_relic_choice_selected(relic_id: String, _source_type: String) -> void:
+func _on_relic_choice_selected(relic_id: String, source_type: String) -> void:
 	_is_relic_choice_open = false
 	_node_click_pending = false  # release click guard so the next map node is clickable
 	_relic_choice_layer.visible = false
+
+	# Clip-upgrade picks may REPLACE the held base clip (swap to an upgraded variant),
+	# or be a pure add (grab the other clip as a second exclusive relic).
+	if source_type == "upgrade":
+		var replaces := str(_upgrade_replaces.get(relic_id, ""))
+		_upgrade_replaces = {}
+		if replaces != "":
+			rm.remove_relic(replaces)
 
 	if rm.add_relic(relic_id):
 		var data = rm.get_relic_data(relic_id)

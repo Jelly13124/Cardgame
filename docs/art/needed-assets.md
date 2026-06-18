@@ -53,6 +53,9 @@ exists as a borrowed copy — overwrite it); the JSON `icon` field is already co
 | `kinetic_hammer` | 动能锤 | First-turn temporary Strength | `war_horn.png` | a scrap war-hammer head crackling with kinetic energy, orange sparks |
 | `war_drum` | 战鼓 | Start each combat with 2 Strength | `war_horn.png` | a scrap-metal war drum, taut hide, beaters, brass studs |
 | `ricochet_loader` | 跳弹供弹器 (rare) | On Crit, add a Reload card to hand | (new — no icon yet) | a brass bullet ricocheting off a spring-loaded ammo feeder, cyan spark, lucky/ammo feel |
+| `crit_clip_volatile` | 易爆暴击弹夹 (unique upgrade) | Crits deal 1.75x | reuses `crit_clip.png` | the Crit Clip but charged/overloaded — cracked casing, volatile orange-red energy leaking, danger glow |
+| `crit_clip_deadeye` | 神射暴击弹夹 (unique upgrade) | First attack each turn auto-Crits | reuses `crit_clip.png` | the Crit Clip with a precision/scope motif — crosshair etched on the clip, single steady cyan targeting glint |
+| `double_fire_clip_burst` | 爆发弹夹 (unique upgrade) | Replay 1 + 2 attacks on turn 1 | reuses `double_fire_clip.png` | the Double-Fire Clip enlarged to a triple/burst magazine — three rounds chambered, muzzle-burst spark |
 
 ---
 

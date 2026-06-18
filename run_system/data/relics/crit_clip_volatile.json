@@ -1,0 +1,11 @@
+{
+  "id": "crit_clip_volatile",
+  "title": "Volatile Crit Clip",
+  "description": "Bill's attack cards have a luck-scaled chance to Crit. Crits now deal 1.75x damage (upgraded Crit Clip).",
+  "icon": "res://run_system/assets/images/relics/crit_clip.png",
+  "rarity": "unique",
+  "effects": [
+    { "trigger": "player_attack_damage", "type": "crit_chance" },
+    { "trigger": "player_crit_mult", "type": "crit_mult", "amount": 175 }
+  ]
+}
