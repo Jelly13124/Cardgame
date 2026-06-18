@@ -12,7 +12,6 @@ UI_HOME_RECENT_RUNS,RECENT RUNS,近期征程
 UI_HOME_NO_RUNS,(no runs yet),（暂无征程记录）
 UI_HOME_RUN_ROW,{icon}  {hero}  Act {act}·F{floor}  +{core} Core,{icon}  {hero}  第{act}幕·{floor}层  +{core} 核心
 UI_HOME_HERO_BILL,Bill,比尔
-UI_HOME_HERO_FENGSHUI,Feng Shui,风水
 UI_HOME_UPGRADE_LEVEL,Level: {dots}  ({cur}/{max}),等级：{dots}  ({cur}/{max})
 UI_HOME_UPGRADE_FULLY_UPGRADED,Fully upgraded.,已强化至满级。
 UI_HOME_UPGRADE_MAXED,MAXED,满级

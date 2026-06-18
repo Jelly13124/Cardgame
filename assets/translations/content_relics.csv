@@ -56,9 +56,7 @@ RELIC_adrenaline_pump_TITLE,Adrenaline Pump,肾上腺素泵
 
 RELIC_adrenaline_pump_DESC,"At the start of your first turn each combat, gain 1 Energy.",每场战斗首回合开始时，获得1点能量。
 
-RELIC_yin_yang_compass_TITLE,Yin-Yang Compass,阴阳罗盘
 
-RELIC_yin_yang_compass_DESC,"At the start of each turn, alternate polarity — Yin on odd turns, Yang on even turns.",每回合开始时，阴阳极性交替——奇数回合为阴，偶数回合为阳。
 
 RELIC_barbed_plating_TITLE,Barbed Plating,倒刺镀层
 

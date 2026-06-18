@@ -28,8 +28,6 @@ const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 const BACKPACK_CELL = preload("res://run_system/ui/backpack_cell.gd")
 
 const HERO_DIR := "res://run_system/data/heroes/"
-## Hero gated behind the jerry_unlock base upgrade (mirrors hero_select.gd).
-const LOCKED_HERO_ID := "hero_fengshui_master"
 
 const CELL_SIZE := Vector2(74, 74)
 const STASH_COLUMNS := 4
@@ -568,8 +566,8 @@ func _describe_item(inst: Dictionary) -> String:
 # --- hero data (mirrors hero_select.gd, read-only) -------------------------
 
 
-func _hero_locked(hero_id: String) -> bool:
-	return hero_id == LOCKED_HERO_ID and MetaProgress.get_upgrade_level("jerry_unlock") <= 0
+func _hero_locked(_hero_id: String) -> bool:
+	return false  # Feng Shui Master removed; no heroes are unlock-gated.
 
 
 func _list_hero_ids() -> Array[String]:
