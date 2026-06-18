@@ -63,7 +63,7 @@ SLOT_EMPTY_SHORT,Empty,空
 RESULT_DEFEAT_TITLE,You Died,你死了
 RESULT_DEFEAT_BODY,"Your run ends here. The wasteland claims another salvager.","你的旅程到此为止。废土又吞噬了一名拾荒者。"
 RESULT_DEMO_TITLE,Demo Complete!,试玩通关!
-RESULT_DEMO_BODY,"You cleared the Act 1 boss. Thanks for playing the demo!","你击败了第一幕的 Boss。感谢试玩!"
+RESULT_DEMO_BODY,"You cleared the final boss of the demo. Thanks for playing!","你击败了试玩版的最终 Boss。感谢试玩！"
 RESULT_WISHLIST,"Wishlist the full game on Steam to play all three acts.","在 Steam 上将完整版加入愿望单,体验全部三幕。"
 RESULT_SUMMARY,Hero: {hero}   Act {act}   Floor {floor},英雄:{hero}   第 {act} 幕   第 {floor} 层
 RESULT_BACK_TO_MENU,Back to Menu,返回主菜单

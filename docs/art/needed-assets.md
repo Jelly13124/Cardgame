@@ -4,10 +4,21 @@ Per ADR-0005, **Codex owns all art** under `battle_scene/assets/images/**` and
 `run_system/assets/images/**`. Claude writes this contract + does any JSON/code
 wiring; Claude does not generate art.
 
-> **Status — 2026-06-17.** Audited with `scripts/check_missing_art.py` + a gem/status
-> pass. Remaining batch = **21 assets**: 1 card, 6 relics, 8 gems, 1 status icon,
-> 5 attribute icons. Everything else (all other cards, 25 relic files, 21 equipment,
-> 15 enemies × 4 frames, hero Bill) is bespoke and present.
+> **Status — 2026-06-18.** Most of the 2026-06-17 batch is DELIVERED + committed
+> (`f07b58f`): the card art, 8 gems, 5 attribute icons, the bullet status icon, and
+> all 6 borrowed relic icons now have bespoke art. **Remaining = 4 relic icons**
+> (see the checklist), plus two optional polish items. Run
+> `python scripts/check_missing_art.py` to re-confirm.
+>
+> **Still needed (relic icons · `128×128` transparent PNG · `run_system/assets/images/relics/<id>.png`):**
+> - `ricochet_loader` — hard-missing (no file; relic shows a blank icon).
+> - `crit_clip_volatile`, `crit_clip_deadeye` — both borrow `crit_clip.png`.
+> - `double_fire_clip_burst` — borrows `double_fire_clip.png`.
+>
+> **Optional polish:** a real title-screen key-art backdrop (currently reuses
+> `battle_scene/assets/images/backgrounds/wasteland_battlefield.png`); fresh
+> illustrations for the `strike` / `defend` starter cards (functional but plain).
+> Enemy redo is owner-driven and in flight — keep the new style consistent.
 
 ## Mandatory style anchor (paste into EVERY prompt)
 
@@ -109,13 +120,20 @@ delivery.
 
 ---
 
-## Deliverables checklist (21 files)
+## Deliverables checklist
 
-- [ ] §1 cards/player/`combat_stim`.png
-- [ ] §2 relics/`thorn_harness`, `vampiric_coupler`, `brutal_servo`, `bulwark_plating`, `kinetic_hammer`, `war_drum`, `ricochet_loader` (7)
-- [ ] §3 gems/`brute`, `bulwark`, `keen`, `leech`, `spark`, `swift`, `venom`, `wealthy` (8)
-- [ ] §4 ui/status/`bullet`.png
-- [ ] §5 ui/attributes/`strength`, `constitution`, `intelligence`, `luck`, `charm` (5)
+**Remaining (4 relic icons — the only hard gaps):**
+- [ ] §2 relics/`ricochet_loader`.png  (hard-missing — blank in-game)
+- [ ] §2 relics/`crit_clip_volatile`.png  (borrows `crit_clip.png`)
+- [ ] §2 relics/`crit_clip_deadeye`.png  (borrows `crit_clip.png`)
+- [ ] §2 relics/`double_fire_clip_burst`.png  (borrows `double_fire_clip.png`)
+
+**Optional polish (not blocking):**
+- [ ] title-screen key-art backdrop (currently reuses `wasteland_battlefield.png`)
+- [ ] fresh `strike` / `defend` starter-card illustrations
+
+**Delivered 2026-06-18 (`f07b58f`):** §1 combat_stim · §2 thorn_harness, vampiric_coupler,
+brutal_servo, bulwark_plating, kinetic_hammer, war_drum · §3 all 8 gems · §4 bullet · §5 all 5 attributes.
 
 ## Notes
 - Re-run the audit any time: `python scripts/check_missing_art.py` (flags missing /
