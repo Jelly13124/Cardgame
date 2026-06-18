@@ -68,8 +68,8 @@ const EXTRACT_REWARDS := {
 ## Returns the {continue, extract} reward dict for the given act's boss, or
 ## {} if `act` is the final act (no extract choice — full victory).
 func _extract_rewards_for_act(act: int) -> Dictionary:
-	# Demo-aware: on the final act (Act 1 in the demo) there is no extract-vs-push
-	# choice — the boss kill wins outright. acts_total() collapses to 1 in demo.
+	# Demo-aware: on the final act (Act 2 in the demo) there is no extract-vs-push
+	# choice — the boss kill wins outright. acts_total() is 2 in the demo.
 	if act >= RunManager.acts_total():
 		return {}
 	if EXTRACT_REWARDS.has(act):
@@ -651,7 +651,7 @@ func _victory():
 		# is 0 to avoid double-counting.
 		RunManager.add_core_to_backpack(BOSS_VICTORY_CORE)
 		RunManager.end_run_victory(0, "victory")
-		# Demo: the final-act (Act 1) boss kill ends the demo — show the
+		# Demo: the final-act (Act 2) boss kill ends the demo — show the
 		# demo-complete / wishlist screen instead of silently returning to base.
 		_show_result_screen("demo_complete")
 		return
