@@ -303,18 +303,6 @@ const INITIAL_CARD_POOL: Array[String] = [
 ## The Feng Shui Master's yin/yang/flip cards make no sense for a non-polarity
 ## hero (Cowboy Bill), so they must NOT roll in his card rewards.
 const HERO_EXCLUSIVE_CARDS := {
-	"hero_fengshui_master":
-	[
-		"yin_crescent_cut",
-		"yin_still_water",
-		"yang_solar_strike",
-		"yang_ember_will",
-		"taiji_shift",
-		"taiji_pivot",
-		# StS2 port — yin defensive / block-counter cards (polarity-flavoured).
-		"kinetic_barrier",
-		"slam_dunk",
-	],
 	# Cowboy Bill — the StS2 Ironclad bruiser kit (strength / blood / exhaust).
 	# These have no polarity, so they must never roll for the Feng Shui Master.
 	"cowboy_bill":

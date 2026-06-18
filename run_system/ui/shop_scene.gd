@@ -183,8 +183,8 @@ func _make_equipment_stock_entry(item_id: String, rarity: String) -> Dictionary:
 
 func _list_cards_by_rarity() -> Dictionary:
 	var result := {"common": [], "uncommon": [], "rare": []}
-	# Block other heroes' exclusive cards (e.g. the Feng Shui Master's yin/yang
-	# cards must not appear in Cowboy Bill's shop).
+	# Block any hero-exclusive cards that belong to a DIFFERENT hero than the
+	# current one (HERO_EXCLUSIVE_CARDS), so they never roll in this hero's shop.
 	var hero_id := str(RunManager.current_hero_id)
 	var blocked := {}
 	for h in MetaProgress.HERO_EXCLUSIVE_CARDS:

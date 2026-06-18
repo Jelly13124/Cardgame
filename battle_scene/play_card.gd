@@ -417,8 +417,6 @@ func _build_description(data: Dictionary) -> String:
 			"double_target_bleed":
 				lines.append(tr("UI_BATTLE_DESC_DOUBLE_BLEED"))
 
-			"flip_polarity":
-				lines.append(tr("UI_BATTLE_DESC_FLIP_POLARITY"))
 
 			"gain_block_from_bleed":
 				lines.append(tr("UI_BATTLE_DESC_BLOCK_FROM_BLEED"))
