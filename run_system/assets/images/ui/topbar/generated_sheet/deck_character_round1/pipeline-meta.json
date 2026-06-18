@@ -1,0 +1,91 @@
+{
+  "target": "asset",
+  "mode": "single",
+  "prompt": "",
+  "role": "",
+  "input": "run_system\\assets\\images\\ui\\topbar\\generated_sheet\\deck_character_round1\\raw-sheet.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 200,
+  "rows": 1,
+  "cols": 2,
+  "cell_size": 44,
+  "fit_scale": 0.95,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 6,
+  "min_component_area": 1,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "topbar-1",
+    "topbar-2"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        14,
+        14,
+        94,
+        117
+      ],
+      "edge_touch": false,
+      "output_size": [
+        31,
+        40
+      ],
+      "paste_position": [
+        6,
+        2
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        128,
+        0,
+        256,
+        128
+      ],
+      "component_mode": "all",
+      "component_count": 2,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        7,
+        23,
+        114,
+        97
+      ],
+      "edge_touch": false,
+      "output_size": [
+        41,
+        28
+      ],
+      "paste_position": [
+        1,
+        8
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

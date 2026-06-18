@@ -1,0 +1,175 @@
+{
+  "target": "creature",
+  "mode": "attack",
+  "prompt": "rust_titan 4 frame single overhead smash attack, raised left arm default, one hit only, no effects",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_01eae7b9508b3b24016a23a885f5b08198902a18db24b99454.png",
+  "threshold": 35,
+  "edge_threshold": 150,
+  "duration": 90,
+  "rows": 1,
+  "cols": 4,
+  "cell_size": 128,
+  "fit_scale": 1.35,
+  "trim_border": 4,
+  "edge_clean_depth": 2,
+  "align": "feet",
+  "shared_scale": true,
+  "component_mode": "largest",
+  "component_padding": 14,
+  "min_component_area": 1,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "rust_titan_attack-1",
+    "rust_titan_attack-2",
+    "rust_titan_attack-3",
+    "rust_titan_attack-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        495,
+        793
+      ],
+      "component_mode": "largest",
+      "component_count": 2,
+      "selected_component_area": 119461,
+      "selected_component_bbox": [
+        52,
+        127,
+        440,
+        654
+      ],
+      "crop_bbox": [
+        38,
+        113,
+        454,
+        668
+      ],
+      "edge_touch": false,
+      "output_size": [
+        129,
+        172
+      ],
+      "paste_position": [
+        -1,
+        -44
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        495,
+        0,
+        990,
+        793
+      ],
+      "component_mode": "largest",
+      "component_count": 4,
+      "selected_component_area": 114444,
+      "selected_component_bbox": [
+        33,
+        207,
+        439,
+        654
+      ],
+      "crop_bbox": [
+        19,
+        193,
+        453,
+        668
+      ],
+      "edge_touch": false,
+      "output_size": [
+        135,
+        147
+      ],
+      "paste_position": [
+        -4,
+        -19
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        990,
+        0,
+        1485,
+        793
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 105968,
+      "selected_component_bbox": [
+        26,
+        279,
+        458,
+        654
+      ],
+      "crop_bbox": [
+        12,
+        265,
+        472,
+        668
+      ],
+      "edge_touch": false,
+      "output_size": [
+        143,
+        125
+      ],
+      "paste_position": [
+        -8,
+        3
+      ]
+    },
+    {
+      "grid": [
+        0,
+        3
+      ],
+      "source_box": [
+        1485,
+        0,
+        1980,
+        793
+      ],
+      "component_mode": "largest",
+      "component_count": 3,
+      "selected_component_area": 119527,
+      "selected_component_bbox": [
+        68,
+        127,
+        453,
+        654
+      ],
+      "crop_bbox": [
+        54,
+        113,
+        467,
+        668
+      ],
+      "edge_touch": false,
+      "output_size": [
+        128,
+        172
+      ],
+      "paste_position": [
+        0,
+        -44
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

@@ -1,0 +1,283 @@
+{
+  "target": "creature",
+  "mode": "attack",
+  "prompt": "mortar_cart alien pack beast redo, 8-frame restrained mortar shot, flat weird sci-fi cartoon wasteland, non-mech",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0c8405f79a9ae205016a2208151d8c8194a4e10d8ebbb80c05.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 70,
+  "rows": 2,
+  "cols": 4,
+  "cell_size": 256,
+  "fit_scale": 0.88,
+  "trim_border": 4,
+  "edge_clean_depth": 5,
+  "align": "feet",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 8,
+  "min_component_area": 1,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "mortar_cart_attack-1",
+    "mortar_cart_attack-2",
+    "mortar_cart_attack-3",
+    "mortar_cart_attack-4",
+    "mortar_cart_attack-5",
+    "mortar_cart_attack-6",
+    "mortar_cart_attack-7",
+    "mortar_cart_attack-8"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        418,
+        470
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        59,
+        117,
+        355,
+        407
+      ],
+      "edge_touch": false,
+      "output_size": [
+        203,
+        199
+      ],
+      "paste_position": [
+        26,
+        42
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        418,
+        0,
+        836,
+        470
+      ],
+      "component_mode": "all",
+      "component_count": 8,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        56,
+        93,
+        363,
+        412
+      ],
+      "edge_touch": false,
+      "output_size": [
+        210,
+        219
+      ],
+      "paste_position": [
+        23,
+        22
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        836,
+        0,
+        1254,
+        470
+      ],
+      "component_mode": "all",
+      "component_count": 8,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        54,
+        118,
+        358,
+        413
+      ],
+      "edge_touch": false,
+      "output_size": [
+        208,
+        202
+      ],
+      "paste_position": [
+        24,
+        39
+      ]
+    },
+    {
+      "grid": [
+        0,
+        3
+      ],
+      "source_box": [
+        1254,
+        0,
+        1672,
+        470
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        40,
+        123,
+        334,
+        411
+      ],
+      "edge_touch": false,
+      "output_size": [
+        201,
+        197
+      ],
+      "paste_position": [
+        27,
+        44
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        470,
+        418,
+        940
+      ],
+      "component_mode": "all",
+      "component_count": 6,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        62,
+        31,
+        363,
+        349
+      ],
+      "edge_touch": false,
+      "output_size": [
+        206,
+        218
+      ],
+      "paste_position": [
+        25,
+        23
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        418,
+        470,
+        836,
+        940
+      ],
+      "component_mode": "all",
+      "component_count": 6,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        57,
+        63,
+        359,
+        348
+      ],
+      "edge_touch": false,
+      "output_size": [
+        207,
+        195
+      ],
+      "paste_position": [
+        24,
+        46
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        836,
+        470,
+        1254,
+        940
+      ],
+      "component_mode": "all",
+      "component_count": 9,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        35,
+        17,
+        341,
+        345
+      ],
+      "edge_touch": false,
+      "output_size": [
+        210,
+        225
+      ],
+      "paste_position": [
+        23,
+        16
+      ]
+    },
+    {
+      "grid": [
+        1,
+        3
+      ],
+      "source_box": [
+        1254,
+        470,
+        1672,
+        940
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        37,
+        69,
+        334,
+        350
+      ],
+      "edge_touch": false,
+      "output_size": [
+        203,
+        192
+      ],
+      "paste_position": [
+        26,
+        49
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

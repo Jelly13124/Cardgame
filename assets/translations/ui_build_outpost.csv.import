@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://bedc4ncof8a40"
+
+[deps]
+
+files=["res://assets/translations/ui_build_outpost.en.translation", "res://assets/translations/ui_build_outpost.zh.translation"]
+
+source_file="res://assets/translations/ui_build_outpost.csv"
+dest_files=["res://assets/translations/ui_build_outpost.en.translation", "res://assets/translations/ui_build_outpost.zh.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

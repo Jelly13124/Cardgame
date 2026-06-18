@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://kq72oyugpv8o"
+
+[deps]
+
+files=["res://assets/translations/ui_build_market.en.translation", "res://assets/translations/ui_build_market.zh.translation"]
+
+source_file="res://assets/translations/ui_build_market.csv"
+dest_files=["res://assets/translations/ui_build_market.en.translation", "res://assets/translations/ui_build_market.zh.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

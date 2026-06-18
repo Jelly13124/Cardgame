@@ -1,0 +1,296 @@
+{
+  "target": "creature",
+  "mode": "attack",
+  "prompt": "junkyard_tyrant 8-frame small-amplitude staff and claw attack, Cowboy Bill style salvage mutant boss, solid magenta",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0c8405f79a9ae205016a228998ba988194a085f50d34c8d284.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 70,
+  "rows": 2,
+  "cols": 4,
+  "cell_size": 384,
+  "fit_scale": 0.88,
+  "trim_border": 4,
+  "edge_clean_depth": 5,
+  "align": "feet",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 8,
+  "min_component_area": 1,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "junkyard_tyrant_attack-1",
+    "junkyard_tyrant_attack-2",
+    "junkyard_tyrant_attack-3",
+    "junkyard_tyrant_attack-4",
+    "junkyard_tyrant_attack-5",
+    "junkyard_tyrant_attack-6",
+    "junkyard_tyrant_attack-7",
+    "junkyard_tyrant_attack-8"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        404,
+        486
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        42,
+        66,
+        384,
+        403
+      ],
+      "edge_touch": false,
+      "output_size": [
+        294,
+        289
+      ],
+      "paste_position": [
+        45,
+        72
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        404,
+        0,
+        808,
+        486
+      ],
+      "component_mode": "all",
+      "component_count": 9,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        0,
+        69,
+        389,
+        405
+      ],
+      "edge_touch": true,
+      "output_size": [
+        334,
+        288
+      ],
+      "paste_position": [
+        25,
+        73
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        808,
+        0,
+        1212,
+        486
+      ],
+      "component_mode": "all",
+      "component_count": 18,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        21,
+        31,
+        396,
+        406
+      ],
+      "edge_touch": false,
+      "output_size": [
+        322,
+        322
+      ],
+      "paste_position": [
+        31,
+        39
+      ]
+    },
+    {
+      "grid": [
+        0,
+        3
+      ],
+      "source_box": [
+        1212,
+        0,
+        1616,
+        486
+      ],
+      "component_mode": "all",
+      "component_count": 10,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        0,
+        68,
+        369,
+        406
+      ],
+      "edge_touch": true,
+      "output_size": [
+        317,
+        290
+      ],
+      "paste_position": [
+        33,
+        71
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        486,
+        404,
+        972
+      ],
+      "component_mode": "all",
+      "component_count": 16,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        17,
+        41,
+        396,
+        371
+      ],
+      "edge_touch": false,
+      "output_size": [
+        325,
+        283
+      ],
+      "paste_position": [
+        29,
+        78
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        404,
+        486,
+        808,
+        972
+      ],
+      "component_mode": "all",
+      "component_count": 18,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        0,
+        38,
+        393,
+        372
+      ],
+      "edge_touch": true,
+      "output_size": [
+        337,
+        287
+      ],
+      "paste_position": [
+        23,
+        74
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        808,
+        486,
+        1212,
+        972
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        40,
+        33,
+        383,
+        371
+      ],
+      "edge_touch": false,
+      "output_size": [
+        294,
+        290
+      ],
+      "paste_position": [
+        45,
+        71
+      ]
+    },
+    {
+      "grid": [
+        1,
+        3
+      ],
+      "source_box": [
+        1212,
+        486,
+        1616,
+        972
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        32,
+        37,
+        372,
+        372
+      ],
+      "edge_touch": false,
+      "output_size": [
+        292,
+        288
+      ],
+      "paste_position": [
+        46,
+        73
+      ]
+    }
+  ],
+  "edge_touch_frames": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      1,
+      1
+    ]
+  ]
+}

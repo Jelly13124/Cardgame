@@ -1,0 +1,300 @@
+{
+  "target": "creature",
+  "mode": "attack",
+  "prompt": "armored_patrol elite alien shield brute sample, 8-frame restrained shield shove, flat weird sci-fi cartoon wasteland, non-mech",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0c8405f79a9ae205016a21ecf423e481948a0e7f6e3704025e.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 70,
+  "rows": 2,
+  "cols": 4,
+  "cell_size": 384,
+  "fit_scale": 0.9,
+  "trim_border": 4,
+  "edge_clean_depth": 5,
+  "align": "feet",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 8,
+  "min_component_area": 1,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "armored_patrol_elite_attack-1",
+    "armored_patrol_elite_attack-2",
+    "armored_patrol_elite_attack-3",
+    "armored_patrol_elite_attack-4",
+    "armored_patrol_elite_attack-5",
+    "armored_patrol_elite_attack-6",
+    "armored_patrol_elite_attack-7",
+    "armored_patrol_elite_attack-8"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        418,
+        470
+      ],
+      "component_mode": "all",
+      "component_count": 2,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        40,
+        75,
+        408,
+        404
+      ],
+      "edge_touch": false,
+      "output_size": [
+        325,
+        290
+      ],
+      "paste_position": [
+        29,
+        75
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        418,
+        0,
+        836,
+        470
+      ],
+      "component_mode": "all",
+      "component_count": 5,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        0,
+        79,
+        391,
+        404
+      ],
+      "edge_touch": true,
+      "output_size": [
+        345,
+        287
+      ],
+      "paste_position": [
+        19,
+        78
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        836,
+        0,
+        1254,
+        470
+      ],
+      "component_mode": "all",
+      "component_count": 3,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        22,
+        79,
+        410,
+        404
+      ],
+      "edge_touch": false,
+      "output_size": [
+        342,
+        287
+      ],
+      "paste_position": [
+        21,
+        78
+      ]
+    },
+    {
+      "grid": [
+        0,
+        3
+      ],
+      "source_box": [
+        1254,
+        0,
+        1672,
+        470
+      ],
+      "component_mode": "all",
+      "component_count": 4,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        0,
+        80,
+        367,
+        404
+      ],
+      "edge_touch": true,
+      "output_size": [
+        324,
+        286
+      ],
+      "paste_position": [
+        30,
+        79
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        470,
+        418,
+        940
+      ],
+      "component_mode": "all",
+      "component_count": 2,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        36,
+        37,
+        407,
+        362
+      ],
+      "edge_touch": false,
+      "output_size": [
+        327,
+        287
+      ],
+      "paste_position": [
+        28,
+        78
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        418,
+        470,
+        836,
+        940
+      ],
+      "component_mode": "all",
+      "component_count": 3,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        0,
+        37,
+        391,
+        362
+      ],
+      "edge_touch": true,
+      "output_size": [
+        345,
+        287
+      ],
+      "paste_position": [
+        19,
+        78
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        836,
+        470,
+        1254,
+        940
+      ],
+      "component_mode": "all",
+      "component_count": 3,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        22,
+        37,
+        410,
+        362
+      ],
+      "edge_touch": false,
+      "output_size": [
+        342,
+        287
+      ],
+      "paste_position": [
+        21,
+        78
+      ]
+    },
+    {
+      "grid": [
+        1,
+        3
+      ],
+      "source_box": [
+        1254,
+        470,
+        1672,
+        940
+      ],
+      "component_mode": "all",
+      "component_count": 3,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        0,
+        38,
+        367,
+        362
+      ],
+      "edge_touch": true,
+      "output_size": [
+        324,
+        286
+      ],
+      "paste_position": [
+        30,
+        79
+      ]
+    }
+  ],
+  "edge_touch_frames": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      1,
+      1
+    ],
+    [
+      1,
+      3
+    ]
+  ]
+}

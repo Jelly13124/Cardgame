@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://vsxycv0bxy5e"
+
+[deps]
+
+files=["res://assets/translations/ui_build_warehouse.en.translation", "res://assets/translations/ui_build_warehouse.zh.translation"]
+
+source_file="res://assets/translations/ui_build_warehouse.csv"
+dest_files=["res://assets/translations/ui_build_warehouse.en.translation", "res://assets/translations/ui_build_warehouse.zh.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

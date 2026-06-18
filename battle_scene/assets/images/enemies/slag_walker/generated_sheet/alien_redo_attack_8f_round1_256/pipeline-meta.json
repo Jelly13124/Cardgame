@@ -1,0 +1,292 @@
+{
+  "target": "creature",
+  "mode": "attack",
+  "prompt": "slag_walker alien mutant redo, 8-frame restrained hook spark, flat weird sci-fi cartoon wasteland, non-mech",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0c8405f79a9ae205016a22092d868c81949ba05bea64e813d9.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 70,
+  "rows": 2,
+  "cols": 4,
+  "cell_size": 256,
+  "fit_scale": 0.88,
+  "trim_border": 4,
+  "edge_clean_depth": 5,
+  "align": "feet",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 8,
+  "min_component_area": 1,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "slag_walker_attack-1",
+    "slag_walker_attack-2",
+    "slag_walker_attack-3",
+    "slag_walker_attack-4",
+    "slag_walker_attack-5",
+    "slag_walker_attack-6",
+    "slag_walker_attack-7",
+    "slag_walker_attack-8"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        418,
+        470
+      ],
+      "component_mode": "all",
+      "component_count": 2,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        88,
+        77,
+        405,
+        433
+      ],
+      "edge_touch": false,
+      "output_size": [
+        197,
+        222
+      ],
+      "paste_position": [
+        29,
+        19
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        418,
+        0,
+        836,
+        470
+      ],
+      "component_mode": "all",
+      "component_count": 6,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        3,
+        79,
+        361,
+        434
+      ],
+      "edge_touch": false,
+      "output_size": [
+        223,
+        221
+      ],
+      "paste_position": [
+        16,
+        20
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        836,
+        0,
+        1254,
+        470
+      ],
+      "component_mode": "all",
+      "component_count": 8,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        49,
+        79,
+        410,
+        433
+      ],
+      "edge_touch": false,
+      "output_size": [
+        225,
+        220
+      ],
+      "paste_position": [
+        15,
+        21
+      ]
+    },
+    {
+      "grid": [
+        0,
+        3
+      ],
+      "source_box": [
+        1254,
+        0,
+        1672,
+        470
+      ],
+      "component_mode": "all",
+      "component_count": 3,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        0,
+        78,
+        301,
+        433
+      ],
+      "edge_touch": true,
+      "output_size": [
+        187,
+        221
+      ],
+      "paste_position": [
+        34,
+        20
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        470,
+        418,
+        940
+      ],
+      "component_mode": "all",
+      "component_count": 2,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        88,
+        35,
+        405,
+        393
+      ],
+      "edge_touch": false,
+      "output_size": [
+        197,
+        223
+      ],
+      "paste_position": [
+        29,
+        18
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        418,
+        470,
+        836,
+        940
+      ],
+      "component_mode": "all",
+      "component_count": 6,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        1,
+        37,
+        361,
+        393
+      ],
+      "edge_touch": false,
+      "output_size": [
+        224,
+        222
+      ],
+      "paste_position": [
+        16,
+        19
+      ]
+    },
+    {
+      "grid": [
+        1,
+        2
+      ],
+      "source_box": [
+        836,
+        470,
+        1254,
+        940
+      ],
+      "component_mode": "all",
+      "component_count": 9,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        50,
+        35,
+        410,
+        394
+      ],
+      "edge_touch": false,
+      "output_size": [
+        224,
+        224
+      ],
+      "paste_position": [
+        16,
+        17
+      ]
+    },
+    {
+      "grid": [
+        1,
+        3
+      ],
+      "source_box": [
+        1254,
+        470,
+        1672,
+        940
+      ],
+      "component_mode": "all",
+      "component_count": 4,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        0,
+        36,
+        300,
+        394
+      ],
+      "edge_touch": true,
+      "output_size": [
+        187,
+        223
+      ],
+      "paste_position": [
+        34,
+        18
+      ]
+    }
+  ],
+  "edge_touch_frames": [
+    [
+      0,
+      3
+    ],
+    [
+      1,
+      3
+    ]
+  ]
+}

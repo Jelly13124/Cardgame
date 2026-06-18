@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://pypqs2keqmdc"
+
+[deps]
+
+files=["res://assets/translations/ui_build_forge.en.translation", "res://assets/translations/ui_build_forge.zh.translation"]
+
+source_file="res://assets/translations/ui_build_forge.csv"
+dest_files=["res://assets/translations/ui_build_forge.en.translation", "res://assets/translations/ui_build_forge.zh.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true
