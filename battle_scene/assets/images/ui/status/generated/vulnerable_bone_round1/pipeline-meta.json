@@ -1,0 +1,11 @@
+{
+  "target": "asset",
+  "mode": "single",
+  "prompt": "",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_09a0d9f02cbbcb46016a270f22132c81998aeb6b0537701a6e.png",
+  "threshold": 24,
+  "edge_threshold": 150,
+  "duration": 200,
+  "single_size": 64
+}
