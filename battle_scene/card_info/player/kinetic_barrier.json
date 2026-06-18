@@ -6,7 +6,7 @@
 	"cost": 2,
 	"polarity": "yin",
 	"description": "[Yin] Gain 12 Block. Gain 3 Thorns. Matched: gain 4 Block.",
-	"front_image": "player/defend.png",
+	"front_image": "player/kinetic_barrier.png",
 	"side": "player",
 	"effects": [
 		{

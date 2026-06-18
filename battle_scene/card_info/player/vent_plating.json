@@ -6,7 +6,7 @@
 	"cost": 1,
 	"polarity": "neutral",
 	"description": "Gain 8 Block. Draw 1 card.",
-	"front_image": "player/defend.png",
+	"front_image": "player/vent_plating.png",
 	"side": "player",
 	"effects": [
 		{

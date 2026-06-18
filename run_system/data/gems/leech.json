@@ -1,1 +1,1 @@
-{ "id": "leech", "title": "Leech Gem", "trigger": "on_play", "effects": [ { "type": "heal", "amount": 2 } ] }
+{ "id": "leech", "title": "Leech Gem", "trigger": "on_play", "effects": [ { "type": "heal", "amount": 2 } ], "icon": "res://run_system/assets/images/gems/leech.png" }

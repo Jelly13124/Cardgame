@@ -6,7 +6,7 @@
   "cost": 1,
   "polarity": "neutral",
   "description": "This combat, your Crits deal DOUBLE damage, but your non-Crit attacks deal 0.",
-  "front_image": "player/strike.png",
+  "front_image": "player/all_in.png",
   "side": "player",
   "effects": [
     { "type": "apply_status_self", "status": "all_in", "stacks": 1 }

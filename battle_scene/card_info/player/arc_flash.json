@@ -6,7 +6,7 @@
 	"cost": 1,
 	"polarity": "neutral",
 	"description": "Deal 2 (+STR) damage and apply 1 Vulnerable to ALL enemies.",
-	"front_image": "player/strike.png",
+	"front_image": "player/arc_flash.png",
 	"side": "player",
 	"effects": [
 		{

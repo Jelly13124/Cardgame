@@ -6,7 +6,7 @@
   "cost": 1,
   "polarity": "neutral",
   "description": "Put 2 Reload cards into your hand.",
-  "front_image": "player/defend.png",
+  "front_image": "player/load_up.png",
   "side": "player",
   "effects": [
     { "type": "add_card_to_hand", "card": "reload", "amount": 2 }

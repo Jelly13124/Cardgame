@@ -2,7 +2,7 @@
   "id": "bulwark_plating",
   "title": "Bulwark Plating",
   "description": "Incoming attacks deal 1 less damage. On your first turn each combat, gain 5 Block.",
-  "icon": "res://run_system/assets/images/relics/signal_jammer.png",
+  "icon": "res://run_system/assets/images/relics/bulwark_plating.png",
   "rarity": "uncommon",
   "effects": [
     {

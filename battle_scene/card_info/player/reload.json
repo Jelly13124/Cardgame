@@ -6,7 +6,7 @@
   "cost": 0,
   "polarity": "neutral",
   "description": "Draw 1 card. Refresh your attack this turn. Exhaust.",
-  "front_image": "player/defend.png",
+  "front_image": "player/reload.png",
   "side": "player",
   "effects": [
     { "type": "draw_cards", "amount": 1 },

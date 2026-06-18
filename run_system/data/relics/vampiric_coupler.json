@@ -2,7 +2,7 @@
   "id": "vampiric_coupler",
   "title": "Vampiric Coupler",
   "description": "On your first turn, gain 8 Block. At the start of combat, gain 2 Thorns.",
-  "icon": "res://run_system/assets/images/relics/barbed_plating.png",
+  "icon": "res://run_system/assets/images/relics/vampiric_coupler.png",
   "rarity": "rare",
   "effects": [
     {

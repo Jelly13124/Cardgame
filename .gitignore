@@ -60,3 +60,4 @@ releases/
 *.zip
 *.tar.gz
 test-extract/ 
+.mcp/

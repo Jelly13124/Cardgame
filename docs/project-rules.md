@@ -71,6 +71,9 @@ For combat unit sheets, also include:
 ```text
 side view full body, shared baseline, consistent scale, hero faces right or enemy faces left,
 for Cowboy Bill and hero combat sprites use 8 idle frames plus 8 attack frames when generated,
+for standard enemies use 4 attack frames by default,
+enemy 4-frame attack structure: rest or wind-up -> one hit -> recoil -> return/rest,
+the attack must hit exactly once; no repeated strikes, no repeated hit poses, no multi-swing loops,
 idle is a seamless subtle loop, attack is a one-shot readable wind-up / fire / recoil / recovery sequence,
 contained inside each frame with safe margins
 ```

@@ -6,7 +6,7 @@
 	"cost": 1,
 	"polarity": "neutral",
 	"description": "Gain 5 fixed Block and deal 5 fixed damage (ignores Constitution and Strength).",
-	"front_image": "player/strike.png",
+	"front_image": "player/rebar_wave.png",
 	"side": "player",
 	"effects": [
 		{
