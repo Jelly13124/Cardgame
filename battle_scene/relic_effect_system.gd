@@ -239,6 +239,37 @@ func attack_limit_per_turn() -> int:
 	return limit
 
 
+## Player Crit damage multiplier override from held relics (Volatile Crit Clip →
+## 1.75x). Returns `default_mult` when no relic overrides it; the highest override
+## wins. `amount` is a percentage (175 → 1.75x). Read by combat_engine._apply_player_crit.
+func crit_mult(default_mult: float) -> float:
+	var result := default_mult
+	for entry in _get_effect_entries("player_crit_mult"):
+		if str(entry["effect"].get("type", "")) == "crit_mult":
+			result = max(result, float(int(entry["effect"].get("amount", 0))) / 100.0)
+	return result
+
+
+## True if a held relic makes the FIRST player attack each turn a guaranteed Crit
+## (Deadeye Crit Clip). combat_engine._apply_player_crit tracks the per-turn "first
+## attack" itself and consults this.
+func first_attack_auto_crit() -> bool:
+	for entry in _get_effect_entries("first_attack_crit"):
+		if str(entry["effect"].get("type", "")) == "auto_crit":
+			return true
+	return false
+
+
+## Extra attack-allowance granted on the FIRST turn only by held relics (Burst-Fire
+## Clip → +1, i.e. 2 attacks on turn 1). Read by battle_scene at player-turn start.
+func first_turn_bonus_allowance() -> int:
+	var bonus := 0
+	for entry in _get_effect_entries("first_turn_allowance"):
+		if str(entry["effect"].get("type", "")) == "bonus_allowance":
+			bonus += int(entry["effect"].get("amount", 0))
+	return bonus
+
+
 ## True if a held relic makes the player's Thorns reflection also apply equal
 ## Bleed to the attacker (Serrated Barbs). Read by combat_engine.
 func thorns_apply_bleed() -> bool:

@@ -22,6 +22,10 @@ const PLAYER_GUNSHOT_WINDUP_SECONDS := 0.22
 
 @onready var main = get_parent()
 
+## Deadeye Crit Clip: whether this turn's guaranteed first-attack Crit is still
+## available. Reset each player turn by battle_scene via reset_turn_crit().
+var _first_attack_crit_used: bool = false
+
 
 func declare_victory() -> void:
 	victory_declared.emit()
@@ -52,8 +56,23 @@ func _apply_player_crit(damage: int) -> int:
 	var p = main.player
 	var has_power: bool = p != null and p.has_method("get_status_stacks")
 	var all_in: bool = has_power and int(p.get_status_stacks("all_in")) > 0
-	if randf() < RunManager.crit_chance():
+	# Deadeye Crit Clip: the first attack each turn is a guaranteed Crit. The
+	# guarantee is spent on this first damage instance (harmless if Luck would
+	# have critted anyway).
+	var forced := false
+	if (
+		not _first_attack_crit_used
+		and main.relic_effect_system
+		and main.relic_effect_system.first_attack_auto_crit()
+	):
+		forced = true
+		_first_attack_crit_used = true
+	if forced or randf() < RunManager.crit_chance():
+		# Base 1.5x, or a relic override (Volatile Crit Clip → 1.75x). All In trumps
+		# both at 2x.
 		var mult := 2.0 if all_in else float(RunManager.CRIT_MULT)
+		if not all_in and main.relic_effect_system:
+			mult = main.relic_effect_system.crit_mult(mult)
 		if has_power and p.get_status_stacks("hot_streak") > 0:
 			RunManager.add_gold(2)
 		AudioManager.play_sfx("crit")
@@ -64,6 +83,12 @@ func _apply_player_crit(damage: int) -> int:
 		return int(round(damage * mult))
 	# Non-crit. All In zeroes non-crit attacks (all-or-nothing).
 	return 0 if all_in else damage
+
+
+## Reset the per-turn guaranteed-Crit flag (Deadeye Crit Clip). Called by
+## battle_scene at the start of each player turn.
+func reset_turn_crit() -> void:
+	_first_attack_crit_used = false
 
 
 ## Dodge: if `target` has a Dodge stack, consume one and negate the attack.

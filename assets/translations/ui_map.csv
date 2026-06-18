@@ -37,3 +37,5 @@ UI_MAP_REST_GEMS_BTN,💎 Socket Gems,💎 镶嵌宝石
 UI_TOPBAR_ACT_SHORT,Act,幕
 UI_TOPBAR_FLOOR_SHORT,Floor,层
 UI_TOPBAR_LEVEL_FMT,Lv {lvl} · {xp}/{next},Lv {lvl} · {xp}/{next}
+UI_MAP_CHOOSE_CLIP_UPGRADE,Upgrade Your Clip,升级你的弹夹
+UI_MAP_CLIP_UPGRADE_HINT,Upgrade your clip — or grab the other one as a second.,升级你的弹夹，或获得另一把作为第二件专属遗物。

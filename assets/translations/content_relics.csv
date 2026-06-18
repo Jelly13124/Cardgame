@@ -1,53 +1,118 @@
 keys,en,zh
+
 RELIC_double_fire_clip_TITLE,Double-Fire Clip,双发弹夹
+
 RELIC_double_fire_clip_DESC,"Your attack cards gain Replay 1 (they fire twice), but you may play only 1 attack card per turn. Adds 2 Reload cards to your deck.","你的攻击牌获得重放 1（攻击两次），但每回合只能打出 1 张攻击牌。往牌组加入 2 张装弹。"
+
 RELIC_serrated_barbs_TITLE,Serrated Barbs,锯齿倒刺
+
 RELIC_serrated_barbs_DESC,"Your Thorns damage also applies that much Bleed to the attacker.","你的荆棘造成的伤害会对攻击者额外施加等量的流血。"
+
 RELIC_cracked_battery_TITLE,Cracked Battery,破裂电池
+
 RELIC_cracked_battery_DESC,"At the start of each turn, deal 1 damage to ALL enemies.",每回合开始时，对所有敌人造成1点伤害。
+
 RELIC_steel_plating_TITLE,Steel Plating,钢制镀层
+
 RELIC_steel_plating_DESC,"At the start of your first turn each combat, gain 6 Block.",每场战斗首个回合开始时，获得6点格挡。
+
 RELIC_sharpened_scrap_TITLE,Sharpened Scrap,磨利废铁
+
 RELIC_sharpened_scrap_DESC,Your attack cards apply 1 Bleed to the target.,你的攻击牌对目标施加 1 层流血。
+
 RELIC_signal_jammer_TITLE,Signal Jammer,信号干扰器
+
 RELIC_signal_jammer_DESC,The first enemy attack each combat deals 2 less damage.,每场战斗中敌人的首次攻击少造成2点伤害。
+
 RELIC_repair_kit_TITLE,Repair Kit,修理工具包
+
 RELIC_repair_kit_DESC,"After each combat, heal 2 HP.",战斗结束后，治疗2点生命。
+
 RELIC_lucky_cog_TITLE,Lucky Cog,幸运齿轮
+
 RELIC_lucky_cog_DESC,"After combat, gain 5 Gold.",战斗结束后，获得5金币。
+
 RELIC_bulk_actuator_TITLE,Bulk Actuator,重型作动器
+
 RELIC_bulk_actuator_DESC,"At the start of each combat, set your Strength to 2 (if lower).",每场战斗开始时，将你的力量设为2（若低于2）。
+
 RELIC_inertial_dampener_TITLE,Inertial Dampener,惯性阻尼器
+
 RELIC_inertial_dampener_DESC,"Whenever you gain Block, gain 2 additional Block.",每当你获得格挡时，额外获得 2 点格挡。
+
 RELIC_scavenger_lens_TITLE,Scavenger's Lens,拾荒者透镜
+
 RELIC_scavenger_lens_DESC,"Whenever you gain Block, deal 3 damage to a random enemy.",每当你获得格挡时，对一个随机敌人造成3点伤害。
+
 RELIC_war_horn_TITLE,War Horn,战争号角
+
 RELIC_war_horn_DESC,"At the start of each combat, gain 1 Strength.",每场战斗开始时，获得1点力量。
+
 RELIC_bounty_tags_TITLE,Bounty Tags,赏金标牌
+
 RELIC_bounty_tags_DESC,Gain a Wealthy gem — socket it into a card to earn gold when that card is played.,获得一颗富裕宝石 —— 镶嵌到卡牌上，打出该牌时获得金币。
+
 RELIC_adrenaline_pump_TITLE,Adrenaline Pump,肾上腺素泵
+
 RELIC_adrenaline_pump_DESC,"At the start of your first turn each combat, gain 1 Energy.",每场战斗首回合开始时，获得1点能量。
+
 RELIC_yin_yang_compass_TITLE,Yin-Yang Compass,阴阳罗盘
+
 RELIC_yin_yang_compass_DESC,"At the start of each turn, alternate polarity — Yin on odd turns, Yang on even turns.",每回合开始时，阴阳极性交替——奇数回合为阴，偶数回合为阳。
+
 RELIC_barbed_plating_TITLE,Barbed Plating,倒刺镀层
+
 RELIC_barbed_plating_DESC,"At the start of each turn, gain 1 Thorns.",每回合开始时，获得1点荆棘。
+
 RELIC_medkit_drone_TITLE,Medkit Drone,医疗无人机
+
 RELIC_medkit_drone_DESC,"When you take damage, heal 1 HP.",受到伤害时，恢复 1 点生命值。
+
 RELIC_crit_plating_TITLE,Crit Plating,暴击镀层
+
 RELIC_crit_plating_DESC,"Whenever you gain Block, a luck-scaled chance to gain 1.5x as much.",每当你获得格挡时，有受幸运影响的几率改为获得1.5倍格挡。
+
 RELIC_crit_clip_TITLE,Crit Clip,暴击弹夹
+
 RELIC_crit_clip_DESC,"Bill's attack cards have a luck-scaled chance to deal 1.5x damage.",比尔的攻击牌有受幸运影响的几率造成1.5倍伤害。
+
 RELIC_kinetic_hammer_TITLE,"Kinetic Hammer","动能锤"
+
 RELIC_kinetic_hammer_DESC,"At the start of your first turn each combat, gain 2 temporary Strength (lost at end of turn).",每场战斗首回合开始时，获得 2 点临时力量（回合结束时消失）。
+
 RELIC_thorn_harness_TITLE,"Thorn Harness","尖刺挽具"
+
 RELIC_thorn_harness_DESC,"At the start of combat, gain 3 Thorns.","战斗开始时，获得 3 层荆棘。"
+
 RELIC_brutal_servo_TITLE,"Brutal Servo","残暴伺服"
+
 RELIC_brutal_servo_DESC,"Whenever you apply Bleed, apply 1 additional Bleed.",每当你施加流血时，额外施加 1 层流血。
+
 RELIC_bulwark_plating_TITLE,"Bulwark Plating","壁垒镀装"
+
 RELIC_bulwark_plating_DESC,"Incoming attacks deal 1 less damage. On your first turn each combat, gain 5 Block.","受到的攻击伤害减少 1 点。每场战斗首个回合开始时，获得 5 点格挡。"
+
 RELIC_war_drum_TITLE,"War Drum","战鼓"
+
 RELIC_war_drum_DESC,"At the start of each combat, gain 2 Strength. On your first turn, gain 6 Block.","每场战斗开始时，获得 2 点力量。首个回合开始时，获得 6 点格挡。"
+
 RELIC_vampiric_coupler_TITLE,"Vampiric Coupler","吸血联结器"
+
 RELIC_vampiric_coupler_DESC,"On your first turn, gain 8 Block. At the start of combat, gain 2 Thorns.","首个回合开始时，获得 8 点格挡。战斗开始时，获得 2 层荆棘。"
+
 RELIC_ricochet_loader_TITLE,Ricochet Loader,跳弹供弹器
+
 RELIC_ricochet_loader_DESC,"Whenever you Crit, add a Reload card to your hand.",每当你暴击时，将一张「装弹」置入手牌。
+
+RELIC_crit_clip_volatile_TITLE,Volatile Crit Clip,易爆暴击弹夹
+
+RELIC_crit_clip_volatile_DESC,"Bill's attack cards have a luck-scaled chance to Crit. Crits now deal 1.75x damage (upgraded Crit Clip).","比尔的攻击牌有受幸运影响的暴击几率。暴击现在造成 1.75 倍伤害（暴击弹夹·升级）。"
+
+RELIC_crit_clip_deadeye_TITLE,Deadeye Crit Clip,神射暴击弹夹
+
+RELIC_crit_clip_deadeye_DESC,"Bill's attack cards have a luck-scaled chance to Crit (1.5x). The first attack you play each turn always Crits.","比尔的攻击牌有受幸运影响的暴击几率（1.5 倍）。你每回合打出的第一张攻击牌必定暴击。"
+
+RELIC_double_fire_clip_burst_TITLE,Burst-Fire Clip,爆发弹夹
+
+RELIC_double_fire_clip_burst_DESC,"Your attack cards gain Replay 1. You may play 2 attack cards on your first turn, then 1 per turn after (upgraded Double-Fire Clip).","你的攻击牌获得重放 1。第一回合可以打出 2 张攻击牌，之后每回合 1 张（双发弹夹·升级）。"
+

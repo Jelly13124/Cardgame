@@ -1,0 +1,11 @@
+{
+  "id": "crit_clip_deadeye",
+  "title": "Deadeye Crit Clip",
+  "description": "Bill's attack cards have a luck-scaled chance to Crit (1.5x). The first attack you play each turn always Crits.",
+  "icon": "res://run_system/assets/images/relics/crit_clip.png",
+  "rarity": "unique",
+  "effects": [
+    { "trigger": "player_attack_damage", "type": "crit_chance" },
+    { "trigger": "first_attack_crit", "type": "auto_crit" }
+  ]
+}
