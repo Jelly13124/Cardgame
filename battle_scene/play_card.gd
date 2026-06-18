@@ -436,6 +436,15 @@ func _build_description(data: Dictionary) -> String:
 
 	# Keyword tags (Retain / Exhaust) appear on their own line, dimmer than effects.
 	var keywords: PackedStringArray = []
+	# Replay tag (double-fire clip etc.): card's own replay + held-relic bonus on
+	# attacks. Display only — never mutates the shared/preloaded card_info.
+	var replay_n: int = int(data.get("replay", 0))
+	if str(data.get("type", "")).to_lower() == "attack":
+		var rscene = get_tree().current_scene if get_tree() else null
+		if rscene and "relic_effect_system" in rscene and rscene.relic_effect_system:
+			replay_n += int(rscene.relic_effect_system.attack_replay_bonus())
+	if replay_n > 0:
+		keywords.append(tr("UI_BATTLE_KEYWORD_REPLAY").format({"n": replay_n}))
 	if bool(data.get("retain", false)):
 		keywords.append(tr("UI_BATTLE_KEYWORD_RETAIN"))
 	for e in effects:
