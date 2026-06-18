@@ -31,11 +31,17 @@ func declare_victory() -> void:
 	victory_declared.emit()
 
 
-func calculate_attack_damage(base_damage: int, attacker: Node, defender: Node) -> int:
+## `preview` = true for the targeting damage preview (called every frame while
+## aiming). Preview must be side-effect-free: it reads the predicted number but
+## must NOT consume Deadeye's once-per-turn crit, play the crit SFX/banner, grant
+## Hot Streak gold, or trigger Ricochet Loader. Real resolution passes false.
+func calculate_attack_damage(
+	base_damage: int, attacker: Node, defender: Node, preview: bool = false
+) -> int:
 	var modified_base = base_damage
 	if main and main.has_method("modify_player_attack_damage") and attacker == main.player:
 		modified_base = main.modify_player_attack_damage(modified_base, attacker, defender)
-		modified_base = _apply_player_crit(modified_base)
+		modified_base = _apply_player_crit(modified_base, preview)
 
 	var outgoing_mult := 1.0
 	var incoming_mult := 1.0
@@ -50,15 +56,15 @@ func calculate_attack_damage(base_damage: int, attacker: Node, defender: Node) -
 ## mechanic (RunManager.crit_chance). Powers (player statuses) modify it:
 ##   all_in     → crits deal 2x (not 1.5x) AND non-crit attacks deal 0
 ##   hot_streak → gain 2 gold on each crit
-func _apply_player_crit(damage: int) -> int:
+func _apply_player_crit(damage: int, preview: bool = false) -> int:
 	if damage <= 0:
 		return damage
 	var p = main.player
 	var has_power: bool = p != null and p.has_method("get_status_stacks")
 	var all_in: bool = has_power and int(p.get_status_stacks("all_in")) > 0
 	# Deadeye Crit Clip: the first attack each turn is a guaranteed Crit. The
-	# guarantee is spent on this first damage instance (harmless if Luck would
-	# have critted anyway).
+	# guarantee is spent on the first REAL damage instance — the per-frame targeting
+	# preview (preview=true) shows the crit number but must not consume it.
 	var forced := false
 	if (
 		not _first_attack_crit_used
@@ -66,20 +72,24 @@ func _apply_player_crit(damage: int) -> int:
 		and main.relic_effect_system.first_attack_auto_crit()
 	):
 		forced = true
-		_first_attack_crit_used = true
+		if not preview:
+			_first_attack_crit_used = true
 	if forced or randf() < RunManager.crit_chance():
 		# Base 1.5x, or a relic override (Volatile Crit Clip → 1.75x). All In trumps
 		# both at 2x.
 		var mult := 2.0 if all_in else float(RunManager.CRIT_MULT)
 		if not all_in and main.relic_effect_system:
 			mult = main.relic_effect_system.crit_mult(mult)
-		if has_power and p.get_status_stacks("hot_streak") > 0:
-			RunManager.add_gold(2)
-		AudioManager.play_sfx("crit")
-		if main.has_method("show_notification"):
-			main.show_notification("CRIT!", Color(1, 0.85, 0.2))
-		if main.relic_effect_system:
-			main.relic_effect_system.on_player_crit(p)
+		# Side effects (sound, banner, Hot Streak gold, Ricochet Loader's free Reload)
+		# belong to the real attack only — never the per-frame preview.
+		if not preview:
+			if has_power and p.get_status_stacks("hot_streak") > 0:
+				RunManager.add_gold(2)
+			AudioManager.play_sfx("crit")
+			if main.has_method("show_notification"):
+				main.show_notification("CRIT!", Color(1, 0.85, 0.2))
+			if main.relic_effect_system:
+				main.relic_effect_system.on_player_crit(p)
 		return int(round(damage * mult))
 	# Non-crit. All In zeroes non-crit attacks (all-or-nothing).
 	return 0 if all_in else damage

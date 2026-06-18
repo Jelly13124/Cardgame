@@ -258,7 +258,9 @@ func _card_preview_damage(card: Control, target: Node) -> int:
 		and player.get_status_stacks("double_damage") > 0
 	):
 		base_total *= 2
-	return combat_engine.calculate_attack_damage(base_total, player, target)
+	# preview=true: predicted number only — must not consume Deadeye's guaranteed
+	# crit or fire crit side effects (this runs every frame while aiming).
+	return combat_engine.calculate_attack_damage(base_total, player, target, true)
 
 
 func _show_damage_preview(target: Node, dmg: int) -> void:
