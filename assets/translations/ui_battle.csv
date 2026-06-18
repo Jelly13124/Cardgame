@@ -46,6 +46,7 @@ UI_BATTLE_DESC_DAMAGE_STR_MULT,Deal damage equal to {mult}× Strength.,造成等
 UI_BATTLE_DESC_SCALE_BY_ATTACKS,Deal {base} + {per} per Attack played this turn,造成 {base} + {per}（本回合每打出一张攻击牌）
 UI_BATTLE_KEYWORD_RETAIN,[color=#9ec1ff]Retain[/color],[color=#9ec1ff]保留[/color]
 UI_BATTLE_KEYWORD_EXHAUST,[color=#cfa9ff]Exhaust[/color],[color=#cfa9ff]消耗[/color]
+UI_BATTLE_KEYWORD_REPLAY,[color=#3bc7eb]Replay {n}[/color],[color=#3bc7eb]重放 {n}[/color]
 UI_BATTLE_KEYWORD_RETAIN_DESC,The card is not discarded at end of turn — it stays in your hand.,回合结束时不弃掉，保留在手牌中。
 UI_BATTLE_KEYWORD_EXHAUST_DESC,Removed from your deck for the rest of this combat once played.,打出后，本场战斗中被移除（不再回到牌库）。
 UI_BATTLE_KEYWORD_STRENGTH_DESC,Each point of Strength adds 1 to attack damage.,每点力量使攻击伤害增加 1。
