@@ -10,15 +10,28 @@ wiring; Claude does not generate art.
 > (see the checklist), plus two optional polish items. Run
 > `python scripts/check_missing_art.py` to re-confirm.
 >
-> **Still needed (relic icons · `128×128` transparent PNG · `run_system/assets/images/relics/<id>.png`):**
-> - `ricochet_loader` — hard-missing (no file; relic shows a blank icon).
-> - `crit_clip_volatile`, `crit_clip_deadeye` — both borrow `crit_clip.png`.
-> - `double_fire_clip_burst` — borrows `double_fire_clip.png`.
+> **Still needed — demo-visible (priority):**
+> - **`bleed` status icon** · `64×64` transparent PNG · `battle_scene/assets/images/ui/status/bleed.png`.
+>   Currently MISSING → falls back to a text glyph in combat. Bleed is Bill's core
+>   mechanic, so it looks unfinished next to every other (iconned) status. Red
+>   blood-drop / laceration motif. (`poison.png` in that folder is now an orphan —
+>   poison was renamed to bleed; safe to delete.)
+> - **4 relic icons** · `128×128` transparent PNG · `run_system/assets/images/relics/<id>.png`
+>   (all reachable in the demo via relic rewards / the Act 2 upgrade node):
+>   - `ricochet_loader` — hard-missing (no file; blank icon).
+>   - `crit_clip_volatile`, `crit_clip_deadeye` — both borrow `crit_clip.png`.
+>   - `double_fire_clip_burst` — borrows `double_fire_clip.png`.
 >
-> **Optional polish:** a real title-screen key-art backdrop (currently reuses
-> `battle_scene/assets/images/backgrounds/wasteland_battlefield.png`); fresh
-> illustrations for the `strike` / `defend` starter cards (functional but plain).
-> Enemy redo is owner-driven and in flight — keep the new style consistent.
+> **Optional polish (not demo-blocking):** a real title-screen key-art backdrop
+> (currently reuses `wasteland_battlefield.png`); fresh `strike` / `defend`
+> starter-card illustrations (functional but plain).
+>
+> **Full game only (NOT in the Bill-only demo):**
+> - **2nd hero — Feng Shui Master (风水大师)** has NO character art: its hero JSON
+>   borrows `sprite_id: "cowboy_bill"`, so in-game it looks identical to Bill.
+>   Needs its own `idle/` + `attack/` frame sets + headshot under
+>   `battle_scene/assets/images/heroes/<id>/`.
+> - **Enemy redo** is owner-driven and in flight — keep the new style consistent.
 
 ## Mandatory style anchor (paste into EVERY prompt)
 
