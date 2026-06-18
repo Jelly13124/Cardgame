@@ -263,7 +263,8 @@ const DEMO_ALLOWED_HEROES: Array[String] = ["cowboy_bill"]
 
 
 ## Demo-aware act count. The full game has ACTS_TOTAL acts; the demo caps at
-## DEMO_MAX_ACTS so the Act-1 boss wins the run (no extract-vs-push choice).
+## DEMO_MAX_ACTS (= 2): the Act-1 boss offers the extract-vs-push choice and
+## clearing the Act-2 boss (the demo's final act) wins the run.
 func acts_total() -> int:
 	return DEMO_MAX_ACTS if DEMO_BUILD else ACTS_TOTAL
 
