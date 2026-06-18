@@ -6,7 +6,7 @@
 	"cost": 2,
 	"polarity": "neutral",
 	"description": "Deal 5 (+STR) damage. Apply 2 Vulnerable.",
-	"front_image": "player/strike.png",
+	"front_image": "player/crowbar_smash.png",
 	"side": "player",
 	"effects": [
 		{

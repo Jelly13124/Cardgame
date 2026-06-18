@@ -6,7 +6,7 @@
 	"cost": 1,
 	"polarity": "neutral",
 	"description": "Gain 2 Strength.",
-	"front_image": "player/brace.png",
+	"front_image": "player/combat_stim.png",
 	"side": "player",
 	"effects": [
 		{

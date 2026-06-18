@@ -6,7 +6,7 @@
 	"cost": 1,
 	"polarity": "neutral",
 	"description": "Deal 1 (+STR) damage. Apply 1 (+INT) Bleed.",
-	"front_image": "player/strike.png",
+	"front_image": "player/recoil_shot.png",
 	"side": "player",
 	"effects": [
 		{

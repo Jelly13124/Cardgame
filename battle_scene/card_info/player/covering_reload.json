@@ -6,7 +6,7 @@
   "cost": 1,
   "polarity": "neutral",
   "description": "This combat, whenever you play a Reload, gain 3 Block.",
-  "front_image": "player/defend.png",
+  "front_image": "player/covering_reload.png",
   "side": "player",
   "effects": [
     { "type": "apply_status_self", "status": "covering_reload", "stacks": 1 }

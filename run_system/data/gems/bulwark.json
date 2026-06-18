@@ -1,1 +1,1 @@
-{ "id": "bulwark", "title": "Bulwark Gem", "trigger": "on_play", "effects": [ { "type": "gain_block", "amount": 4 } ] }
+{ "id": "bulwark", "title": "Bulwark Gem", "trigger": "on_play", "effects": [ { "type": "gain_block", "amount": 4 } ], "icon": "res://run_system/assets/images/gems/bulwark.png" }

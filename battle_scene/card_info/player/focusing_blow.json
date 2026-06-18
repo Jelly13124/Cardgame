@@ -6,7 +6,7 @@
 	"cost": 2,
 	"polarity": "neutral",
 	"description": "Deal 12 fixed damage (ignores Strength).",
-	"front_image": "player/strike.png",
+	"front_image": "player/focusing_blow.png",
 	"side": "player",
 	"effects": [
 		{

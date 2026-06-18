@@ -6,7 +6,7 @@
 	"cost": 2,
 	"polarity": "neutral",
 	"description": "Lose 2 HP. Gain 16 Block.",
-	"front_image": "player/defend.png",
+	"front_image": "player/bulkhead_bleed.png",
 	"side": "player",
 	"effects": [
 		{

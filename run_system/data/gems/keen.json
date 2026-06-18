@@ -1,1 +1,1 @@
-{ "id": "keen", "title": "Keen Gem", "trigger": "on_play", "effects": [ { "type": "deal_damage", "amount": 3 } ] }
+{ "id": "keen", "title": "Keen Gem", "trigger": "on_play", "effects": [ { "type": "deal_damage", "amount": 3 } ], "icon": "res://run_system/assets/images/gems/keen.png" }

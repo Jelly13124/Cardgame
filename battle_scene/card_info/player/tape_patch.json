@@ -6,7 +6,7 @@
 	"cost": 1,
 	"polarity": "neutral",
 	"description": "Gain 7 Block. Exhaust.",
-	"front_image": "player/defend.png",
+	"front_image": "player/tape_patch.png",
 	"side": "player",
 	"effects": [
 		{

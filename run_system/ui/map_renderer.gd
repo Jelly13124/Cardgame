@@ -94,9 +94,10 @@ func _draw_all_paths(vp: Vector2) -> void:
 				var core = Color(0.40, 0.96, 1.0, 1.0)
 				_draw_solid_glow_line(from, to, core, 2.8, 12.0)
 			else:
-				# Unreachable / future: thin grey dashed, very dim
+				# Unreachable / future: grey dashed — dark enough to read on the
+				# bright sand (alpha 0.22 was invisible), still clearly secondary.
 				_draw_pixel_dashed_line(
-					from, to, Color(0.55, 0.58, 0.60, 0.22), 1.2, 10.0, 8.0, Vector2.ZERO
+					from, to, Color(0.24, 0.22, 0.20, 0.55), 2.2, 12.0, 8.0, Vector2.ZERO
 				)
 
 

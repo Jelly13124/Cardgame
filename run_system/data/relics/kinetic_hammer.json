@@ -2,9 +2,15 @@
   "id": "kinetic_hammer",
   "title": "Kinetic Hammer",
   "description": "At the start of your first turn each combat, gain 2 temporary Strength (lost at end of turn).",
-  "icon": "res://run_system/assets/images/relics/war_horn.png",
+  "icon": "res://run_system/assets/images/relics/kinetic_hammer.png",
   "rarity": "common",
   "effects": [
-    { "trigger": "player_turn_start", "round": 1, "type": "gain_temp_strength", "amount": 2, "once_per_combat": true }
+    {
+      "trigger": "player_turn_start",
+      "round": 1,
+      "type": "gain_temp_strength",
+      "amount": 2,
+      "once_per_combat": true
+    }
   ]
 }

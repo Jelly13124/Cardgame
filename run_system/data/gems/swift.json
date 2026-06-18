@@ -1,1 +1,1 @@
-{ "id": "swift", "title": "Swift Gem", "trigger": "on_play", "effects": [ { "type": "draw_cards", "amount": 1 } ] }
+{ "id": "swift", "title": "Swift Gem", "trigger": "on_play", "effects": [ { "type": "draw_cards", "amount": 1 } ], "icon": "res://run_system/assets/images/gems/swift.png" }

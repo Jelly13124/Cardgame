@@ -81,17 +81,17 @@ func _make_preview() -> Control:
 	p.add_theme_stylebox_override("panel", sb)
 	# Prefer the real sprite; fall back to the letter glyph when there's no art.
 	if preview_tex:
-		var tr := TextureRect.new()
-		tr.texture = preview_tex
-		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tr.set_anchors_preset(Control.PRESET_FULL_RECT)
-		tr.offset_left = 4
-		tr.offset_top = 4
-		tr.offset_right = -4
-		tr.offset_bottom = -4
-		p.add_child(tr)
+		var texture_rect := TextureRect.new()
+		texture_rect.texture = preview_tex
+		texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		texture_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+		texture_rect.offset_left = 4
+		texture_rect.offset_top = 4
+		texture_rect.offset_right = -4
+		texture_rect.offset_bottom = -4
+		p.add_child(texture_rect)
 	else:
 		var l := Label.new()
 		l.text = preview_text

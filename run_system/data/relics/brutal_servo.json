@@ -2,9 +2,13 @@
   "id": "brutal_servo",
   "title": "Brutal Servo",
   "description": "Whenever you apply Bleed, apply 1 additional Bleed.",
-  "icon": "res://run_system/assets/images/relics/sharpened_scrap.png",
+  "icon": "res://run_system/assets/images/relics/brutal_servo.png",
   "rarity": "uncommon",
   "effects": [
-    { "trigger": "on_apply_bleed", "type": "add_bleed", "amount": 1 }
+    {
+      "trigger": "on_apply_bleed",
+      "type": "add_bleed",
+      "amount": 1
+    }
   ]
 }

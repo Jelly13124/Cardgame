@@ -6,7 +6,7 @@
 	"cost": 2,
 	"polarity": "neutral",
 	"description": "Deal 18 damage to ALL enemies. Apply 2 Burn to all.",
-	"front_image": "player/strike.png",
+	"front_image": "player/incinerate.png",
 	"side": "player",
 	"effects": [
 		{

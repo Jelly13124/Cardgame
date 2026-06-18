@@ -1,1 +1,1 @@
-{ "id": "venom", "title": "Venom Gem", "trigger": "on_play", "effects": [ { "type": "apply_status", "status": "bleed", "stacks": 2 } ] }
+{ "id": "venom", "title": "Venom Gem", "trigger": "on_play", "effects": [ { "type": "apply_status", "status": "bleed", "stacks": 2 } ], "icon": "res://run_system/assets/images/gems/venom.png" }

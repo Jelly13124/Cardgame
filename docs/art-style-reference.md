@@ -13,10 +13,10 @@ Do not copy named show characters, logos, exact scene layouts, or franchise-spec
 
 - **Medium:** flat 2D TV-animation-like game art with clean black or very dark outlines, large simple shape blocks, sparse interior contour lines, and smooth cel shading.
 - **Resolution policy:** asset dimensions such as 128x128, 192x192, 256x256, 512x320, or 1920x1080 are technical output sizes only. They never imply pixel art.
-- **Shape language:** exaggerated sci-fi western silhouettes, rubbery props, odd alien desert forms, chunky salvage devices, crooked antennas, bulbous lenses, patched cloth, simple boots, oversized hats, awkward gadgets, and readable one-glance poses.
+- **Shape language:** exaggerated sci-fi western silhouettes, rubbery props, odd alien desert forms, lumpy creatures, crooked antennas, bulbous eyes/lenses, patched cloth, simple boots, oversized hats, awkward gadgets, and readable one-glance poses.
 - **Linework:** confident dark cartoon outlines with minimal interior line clutter. Avoid sketchy concept-art hatching, comic-book crosshatching, tiny scratches, and realistic hard-surface line density.
 - **Shading:** two-to-three value cel shading with broad shadow shapes. Avoid painterly rendering, photoreal lighting, gritty texture, noisy grunge, dithering, and dense material detail.
-- **Materials:** simplified dusty leather, brass, dented robot metal, patched cloth, rubber hoses, glass lenses, toxic sludge, glowing sci-fi canisters, and flat alien terrain.
+- **Materials:** simplified dusty leather, patched cloth, flat alien skin, brass accents, rubber hoses, glass lenses, toxic sludge, glowing sci-fi canisters, and occasional small scrap-metal props.
 - **Palette:** dusty tan and warm brown base colors, muted red cloth, grey-green metal, pale desert sand, sickly toxic green, cyan plasma, warm orange glows, and off-white UI/negative space where needed.
 - **Accent color:** use one or two bright high-contrast accents per asset. Toxic green, cyan, and orange are the primary glow accents.
 - **Background policy:** scene backgrounds are full-scene PNGs with no UI, text, labels, or characters baked in. Sprites, card objects, icons, and FX use transparent PNGs or solid `#FF00FF` cleanup backgrounds.
@@ -59,9 +59,14 @@ Map and battle backgrounds must be simple, graphic, and readable behind UI.
 ### Enemies And Other Characters
 
 - Enemies, NPCs, equipment, relics, cards, and UI icons must share the active flat adult sci-fi cartoon language.
-- Enemies should be original junk-tech western robots, mutants, drones, creatures, or wasteland devices. They must not be direct copies of named show characters or existing franchise designs.
+- Enemies should read as weird adult sci-fi cartoon wasteland mutants, aliens, odd creatures, comedy goons, or simple salvage-tech machines. Mechanical enemies are allowed, but they must match Cowboy Bill's flat cartoon robot language: big readable shapes, thick outlines, sparse panel detail, warm brass/brown/grey materials, and one or two bright glow accents.
 - Enemies face left in combat.
 - Prioritize funny-gross silhouettes, bulging lenses/eyes, odd proportions, simple body masses, bright toxic accents, and clear gameplay readability.
+- Avoid turning enemies into detailed mechs: no heavy rivet fields, chrome armor stacks, dense panel seams, realistic military shields, or high-detail rendered metal. If an enemy is mechanical, keep it closer to Cowboy Bill's simple toy-like salvage robot styling than realistic hard-surface armor.
+- **Review gate:** enemy art direction must be approved from a single sample sheet before batching. Do not run unattended overnight enemy generation. If a generated enemy reads as a mech/armored robot instead of a weird cartoon creature or goon, reject it and regenerate before replacing runtime assets.
+- **Animation amplitude:** combat attacks should be restrained by default. Keep feet planted and body movement small.
+- **Enemy attack frame rule:** normal enemy attacks use **4 frames by default**: rest/wind-up, single hit, recoil, return/rest. The attack may strike exactly once. Reject sheets where the weapon, fist, bite, projectile, or hit pose repeats across multiple frames as multiple attacks. No extra sparks, slash trails, dust bursts, or detached effects unless explicitly requested.
+- Bosses and elites may use more frames only when the extra frames describe one continuous attack, not repeated hits.
 
 ## UI Rules
 
@@ -81,7 +86,7 @@ Use this prompt anchor for generated character, enemy, relic, card, UI icon, FX,
 original Offbeat Adult Sci-Fi Cartoon Wasteland game art,
 matching the approved in-game exemplars in battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png, battle_scene/assets/images/backgrounds/wasteland_battlefield.png, and run_system/assets/images/map/wasteland_route_map_pixel_bg.png,
 flat 2D adult sci-fi TV-animation look, thick clean dark cartoon outlines, large simple shape blocks, sparse interior lines, broad two-to-three value cel shading,
-weird sci-fi western wasteland, rubbery alien desert shapes, absurd salvage-tech silhouettes, dusty leather, brass, dented grey-green robot metal, patched red cloth, hoses, antennas, odd gadgets,
+weird sci-fi western wasteland, rubbery alien desert shapes, funny-gross mutants, odd comedy goons, dusty leather, patched cloth, flat alien skin, sparse brass/scrap accents, hoses, antennas, odd gadgets,
 bright toxic green, cyan, and warm orange glow accents used sparingly,
 clean game-ready edges, readable silhouettes, low texture noise,
 no text, no labels, no UI frame, no logo, no named show characters, no franchise-specific props, no exact scene copies
@@ -92,8 +97,13 @@ For combat unit sheets, add:
 ```text
 side view full body, shared baseline, consistent scale, hero faces right or enemy faces left,
 for Cowboy Bill and hero combat sprites use 8 idle frames plus 8 attack frames when generated,
-for enemies use 8 attack frames and, when the enemy is being fully refactored, 8 hurt frames,
+for standard enemies use 4 attack frames by default,
+enemy 4-frame attack structure: rest or wind-up -> one hit -> recoil -> return/rest,
+the attack must hit exactly once; no repeated strikes, no repeated hit poses, no multi-swing loops,
+enemy hit feedback is runtime flash/shake only; do not generate separate hurt-frame animations,
 idle is a seamless subtle loop, attack is a one-shot readable wind-up / fire / recoil / recovery sequence,
+enemy attacks must stay small-amplitude unless the design explicitly calls for a boss-scale move,
+feet planted and body motion restrained; weapon/hand/FX movement carries the action,
 contained inside each frame with safe margins
 ```
 
@@ -113,6 +123,6 @@ For card illustrations, keep the same style but do not force side-view/full-body
 - Any old visual reference image as a global style source.
 - Direct copies of named characters, logos, exact show-specific designs, or franchise-specific props.
 - Pixel art, retro tiles, chunky pixels, dithering, and pixelated texture clusters.
-- Realistic military hard-surface rendering, photorealistic lighting, glossy concept-art mechs, and high-detail painterly surfaces.
+- Realistic military hard-surface rendering, photorealistic lighting, glossy concept-art mechs, dense robot armor, and high-detail painterly surfaces.
 - Dense scratches, noisy grunge, comic-book hatching, tiny repeated debris, or over-rendering that hides the clear cartoon silhouette.
 - UI text baked into art, card frames baked into card art, or characters baked into battle/map backgrounds.

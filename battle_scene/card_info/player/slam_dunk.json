@@ -6,7 +6,7 @@
 	"cost": 1,
 	"polarity": "yin",
 	"description": "[Yin] Deal damage equal to your Block. Matched: deal 4 more damage.",
-	"front_image": "player/strike.png",
+	"front_image": "player/slam_dunk.png",
 	"side": "player",
 	"effects": [
 		{

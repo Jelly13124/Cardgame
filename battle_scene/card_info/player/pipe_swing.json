@@ -6,7 +6,7 @@
 	"cost": 2,
 	"polarity": "neutral",
 	"description": "Deal 12 damage. Apply 2 Weak.",
-	"front_image": "player/strike.png",
+	"front_image": "player/pipe_swing.png",
 	"side": "player",
 	"effects": [
 		{

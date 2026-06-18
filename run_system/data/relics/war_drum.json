@@ -2,7 +2,7 @@
   "id": "war_drum",
   "title": "War Drum",
   "description": "At the start of each combat, gain 2 Strength. On your first turn, gain 6 Block.",
-  "icon": "res://run_system/assets/images/relics/war_horn.png",
+  "icon": "res://run_system/assets/images/relics/war_drum.png",
   "rarity": "rare",
   "effects": [
     {

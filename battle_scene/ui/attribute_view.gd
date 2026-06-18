@@ -7,6 +7,8 @@ extends Control
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 
 const ATTRS := ["strength", "constitution", "intelligence", "luck", "charm"]
+const ATTR_ICON_DIR := "res://battle_scene/assets/images/ui/attributes/"
+const ATTR_ICON_SIZE := Vector2(28, 28)
 
 
 func _ready() -> void:
@@ -63,7 +65,7 @@ func _build() -> void:
 	for attr in ATTRS:
 		var name_text: String = tr("UI_COMBAT_ATTR_%s" % attr.to_upper())
 		var val: int = int(RunManager.player_attributes.get(attr, 0))
-		box.add_child(_stat_row(name_text, str(val)))
+		box.add_child(_attribute_row(attr, name_text, str(val)))
 		# Explain what the attribute does (onboarding). Falls back gracefully if a
 		# description key is missing.
 		var dkey := "UI_BATTLE_KEYWORD_%s_DESC" % attr.to_upper()
@@ -96,6 +98,42 @@ func _stat_row(label_text: String, value_text: String) -> Control:
 	l.add_theme_color_override("font_color", T.TEXT_MAIN)
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(l)
+	var v := Label.new()
+	v.text = value_text
+	v.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	v.add_theme_font_size_override("font_size", 20)
+	v.add_theme_color_override("font_color", T.SAND_LIGHT)
+	row.add_child(v)
+	return row
+
+
+## Attribute row with the generated icon beside the localized label.
+func _attribute_row(attr_id: String, label_text: String, value_text: String) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+
+	var icon_path := "%s%s.png" % [ATTR_ICON_DIR, attr_id]
+	if ResourceLoader.exists(icon_path):
+		var icon := TextureRect.new()
+		icon.custom_minimum_size = ATTR_ICON_SIZE
+		icon.texture = load(icon_path)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(icon)
+	else:
+		var spacer := Control.new()
+		spacer.custom_minimum_size = ATTR_ICON_SIZE
+		row.add_child(spacer)
+
+	var l := Label.new()
+	l.text = label_text
+	l.add_theme_font_size_override("font_size", 20)
+	l.add_theme_color_override("font_color", T.TEXT_MAIN)
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(l)
+
 	var v := Label.new()
 	v.text = value_text
 	v.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT

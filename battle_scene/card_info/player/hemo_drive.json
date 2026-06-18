@@ -6,7 +6,7 @@
 	"cost": 1,
 	"polarity": "neutral",
 	"description": "Lose 2 HP. Deal 15 damage.",
-	"front_image": "player/strike.png",
+	"front_image": "player/hemo_drive.png",
 	"side": "player",
 	"effects": [
 		{
