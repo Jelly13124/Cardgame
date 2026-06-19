@@ -493,7 +493,7 @@ def build_keywords():
         ("Constitution", "体质", "Each point adds +1 to Block gained.", "每点 +1 获得的格挡。", "#4da6ff"),
         ("Intelligence", "智力", "Each point: +5% XP gained from combat (level up faster).", "每点：战斗获得的经验 +5%（升级更快）。", "#b366ff"),
         ("Luck", "幸运", "Each point: +3% crit chance, +1.5% loot rarity.", "每点:+3% 暴击、+1.5% 战利品稀有度。", "#ffe14d"),
-        ("Charm", "魅力", "Each point: -2% shop prices (down to -40%); gates some event options.", "每点:-2% 商店价格(最低 -40%);并解锁部分事件选项。", "#ff80c4"),
+        ("Charm", "魅力", "Each point: -2% shop prices (down to -40%); gates some event options; +2% flee threshold (weakened regular enemies flee, cap 30%).", "每点:-2% 商店价格(最低 -40%);解锁部分事件选项;逃跑线 +2%(濒死普通敌人逃跑,上限 30%)。", "#ff80c4"),
     ]
     ac = [kw_card(e, z, de, dz, c, e.lower()) for e, z, de, dz, c in attrs]
     body.append('<div class="section"><h2>Attributes 属性 <span class="cnt">(5)</span></h2></div>'

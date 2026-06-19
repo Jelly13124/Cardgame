@@ -561,10 +561,40 @@ func take_damage(amount: int, silent: bool = false) -> void:
 		queue_free()
 		return
 
+	# Charm intimidation: a weakened non-boss/elite enemy flees — leaves combat and
+	# counts as defeated (same victory bookkeeping as a kill).
+	if _should_flee():
+		_flee()
+		return
+
 	# Phase transitions only matter while alive (spec A2: never fire during death
 	# / HP<=0). Checked here on the damage path so the swap happens the moment HP
 	# first crosses a threshold.
 	_check_phase_transitions()
+
+
+## True if Charm intimidation should make this enemy flee: only in regular "enemy"
+## battles (elites/bosses stand their ground), only once Charm raises the flee line
+## above 0, and only after HP has dropped to/below that fraction of max.
+func _should_flee() -> bool:
+	if str(RunManager.last_battle_node_type) != "enemy":
+		return false
+	var thr := RunManager.flee_threshold()
+	if thr <= 0.0:
+		return false
+	return health <= int(round(max_health * thr))
+
+
+## Flee = leave combat, counted as defeated. Emits `died` (like a kill) so enemy_ai
+## handles the victory check; shows a flavour notification instead of a death.
+func _flee() -> void:
+	var scene := get_tree().current_scene
+	if scene and scene.has_method("show_notification"):
+		scene.show_notification(
+			tr("UI_COMBAT_FLEE").format({"name": enemy_name}), Color(1.0, 0.7, 1.0)
+		)
+	died.emit()
+	queue_free()
 
 
 ## After taking damage, if current HP has first dropped below `hp_below*max_health`

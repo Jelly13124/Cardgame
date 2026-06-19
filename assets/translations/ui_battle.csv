@@ -52,7 +52,7 @@ UI_BATTLE_KEYWORD_STRENGTH_DESC,Each point of Strength adds 1 to attack damage.,
 UI_BATTLE_KEYWORD_CONSTITUTION_DESC,Each point of Constitution adds 1 to Block gained.,每点体质使获得的格挡增加 1。
 UI_BATTLE_KEYWORD_INTELLIGENCE_DESC,Each point of Intelligence: +5% combat XP (level up faster).,每点智力：战斗获得的经验 +5%（升级更快）。
 UI_BATTLE_KEYWORD_LUCK_DESC,"Each point of Luck: +2% crit chance, +1.5% loot rarity.",每点幸运：暴击率 +2%、战利品稀有度 +1.5%。
-UI_BATTLE_KEYWORD_CHARM_DESC,Each point of Charm: -2% shop prices (down to -40%) and unlocks some event options.,每点魅力：商店价格 -2%（最低 -40%），并解锁部分事件选项。
+UI_BATTLE_KEYWORD_CHARM_DESC,"Each point of Charm: -2% shop prices (down to -40%), unlocks some event options, and +2% flee threshold (weakened regular enemies flee, capped 30%).","每点魅力：商店价格 -2%（最低 -40%）、解锁部分事件选项、逃跑线 +2%（濒死的普通敌人逃跑，上限 30%）。"
 UI_BATTLE_ATTR_CONSTITUTION,Constitution,体质
 UI_BATTLE_ATTR_INTELLIGENCE,Intelligence,智力
 UI_BATTLE_ATTR_LUCK,Luck,幸运
