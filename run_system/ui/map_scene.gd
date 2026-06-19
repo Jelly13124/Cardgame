@@ -47,10 +47,14 @@ var _upgrade_replaces: Dictionary = {}
 ## second coroutine that clobbers current_encounter / current_node_id.
 var _node_click_pending: bool = false
 var _renderer: RefCounted  # MapRenderer; kept untyped to avoid class_name parse ordering
+## When true, this map is a read-only PEEK overlay shown over an active battle:
+## no node travel, no checkpoint save, no music swap — plus a "back to battle" button.
+var peek_mode: bool = false
 
 
 func _ready() -> void:
-	AudioManager.play_music("map")
+	if not peek_mode:
+		AudioManager.play_music("map")
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	map_background_tex = _load_texture(MAP_BACKGROUND_PATH)
 	_load_node_icons()
@@ -79,8 +83,37 @@ func _ready() -> void:
 	# In-run checkpoint: the map is the only non-battle save point. Reached on a
 	# fresh run, after every battle, and on resume — so the save always reflects
 	# "at the map, about to pick the next node."
-	if rm.is_run_active:
+	if rm.is_run_active and not peek_mode:
 		rm.save_run()
+
+	if peek_mode:
+		_build_peek_close_button()
+
+
+## "Back to battle" button shown only in peek mode — frees this map overlay (its
+## parent CanvasLayer), returning to the untouched BattleScene underneath.
+func _build_peek_close_button() -> void:
+	var layer := CanvasLayer.new()
+	layer.name = "PeekClose"
+	layer.layer = 100
+	add_child(layer)
+	var holder := Control.new()
+	holder.set_anchors_preset(Control.PRESET_FULL_RECT)
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(holder)
+	var btn := Button.new()
+	btn.text = tr("UI_MAP_BACK_TO_BATTLE")
+	btn.add_theme_font_size_override("font_size", 22)
+	btn.custom_minimum_size = Vector2(240, 50)
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	btn.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	btn.position = Vector2(-120, 14)
+	btn.pressed.connect(
+		func() -> void:
+			AudioManager.play_sfx("ui_click")
+			get_parent().queue_free()
+	)
+	holder.add_child(btn)
 
 
 func _load_texture(path: String) -> Texture2D:
@@ -255,6 +288,8 @@ func _is_page_open() -> bool:
 
 
 func _on_node_clicked(node: Dictionary) -> void:
+	if peek_mode:
+		return  # read-only peek over a battle — no travel
 	if _node_click_pending:
 		return
 	_node_click_pending = true
