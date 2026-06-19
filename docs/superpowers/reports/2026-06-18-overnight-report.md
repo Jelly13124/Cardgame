@@ -75,3 +75,13 @@ Tonight's new content reuses existing art (game-ready, but not bespoke):
 2. Decide the **Map/Battle** UX (peek-toggle vs close-the-exploit) — I can build it fast once you pick.
 3. Charm design chat (the execute-threshold idea).
 4. Review + `push` when happy (everything is local, unpushed).
+
+## Post-report (same day) — both deferred items BUILT + verified
+Owner picked the directions, so both were implemented after the overnight:
+- **Charm = low-HP flee** (`261ffe5`). Non-boss/elite enemies flee once HP ≤
+  Charm×2% of max (cap 30%, 0 at Charm 0); fleeing counts as a kill (loot/XP/win).
+  Charm now has a combat identity. Verified live (flee→win; boss/elite/charm-0 immune).
+- **Map peek overlay** (`228308f`). The battle "return to map" button now opens the
+  map as a read-only modal overlay (peek_mode: no travel/save/music-swap) with a
+  "返回战斗" button — fixes the skip-the-fight exploit. Verified live (battle stays
+  alive underneath; back-to-battle returns to the same fight).
