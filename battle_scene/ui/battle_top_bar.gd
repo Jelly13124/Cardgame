@@ -152,4 +152,17 @@ func _on_return_map_pressed() -> void:
 	if not (rm and rm.get("is_run_active")):
 		return
 	_hide_settings()
-	get_tree().change_scene_to_file(MAP_SCENE_PATH)
+	# Peek the map WITHOUT leaving the fight: map_scene as a modal overlay. peek_mode
+	# disables travel / checkpoint-save / music swap; a "back to battle" button closes
+	# it, returning to the untouched BattleScene. (Was change_scene_to_file → that tore
+	# the battle down and skipped the fight.)
+	var battle = get_tree().current_scene
+	if battle == null or battle.has_node("MapPeekLayer"):
+		return
+	var layer := CanvasLayer.new()
+	layer.name = "MapPeekLayer"
+	layer.layer = 90
+	var map = load(MAP_SCENE_PATH).instantiate()
+	map.peek_mode = true
+	layer.add_child(map)
+	battle.add_child(layer)
