@@ -1,0 +1,12 @@
+{
+	"id": "riot_hound_alpha",
+	"name": "Riot Hound Alpha",
+	"sprite_id": "riot_hound",
+	"max_health": 34,
+	"action_pattern": [
+		{ "type": "attack_status", "amount": 7, "status": "weak", "stacks": 1,        "label": "⚔ 7 +Weak" },
+		{ "type": "buff_self",     "status": "metallicize", "stacks": 3,              "label": "💪 PLATE +3" },
+		{ "type": "attack",        "amount": 9,                                       "label": "⚔ 9" },
+		{ "type": "attack",        "amount": 6,                                       "label": "⚔ 6" }
+	]
+}

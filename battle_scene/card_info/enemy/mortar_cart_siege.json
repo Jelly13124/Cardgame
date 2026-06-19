@@ -1,0 +1,13 @@
+{
+	"id": "mortar_cart_siege",
+	"name": "Siege Mortar",
+	"sprite_id": "mortar_cart",
+	"max_health": 32,
+	"action_pattern": [
+		{ "type": "block",         "amount": 4,                                        "label": "🛡 4" },
+		{ "type": "attack_status", "amount": 6, "status": "vulnerable", "stacks": 1,   "label": "⚔ 6 +Vuln" },
+		{ "type": "telegraph",                                                         "label": "💢 LOADING SHELL" },
+		{ "type": "attack_all",    "amount": 16, "interruptible": true,                "label": "💥 BARRAGE 16" },
+		{ "type": "block",         "amount": 4,                                        "label": "🛡 4" }
+	]
+}
