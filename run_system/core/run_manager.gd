@@ -239,6 +239,8 @@ const ENCOUNTER_POOLS_LATE = [
 	["chrome_hound"],
 	["chrome_hound", "scrap_rat"],
 	["slag_walker", "acid_spitter"],
+	["riot_hound_alpha"],
+	["mortar_cart_siege", "scrap_rat"],
 ]
 const ELITE_ROSTER: Array = ["armored_patrol"]
 ## Acts (大层). Each act is its OWN FLOORS_PER_ACT-tall map ending in a single
