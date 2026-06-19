@@ -4,9 +4,10 @@
 	"sprite_id": "rust_brute",
 	"max_health": 40,
 	"action_pattern": [
-		{ "type": "block",  "amount": 10, "label": "🛡 10" },
-		{ "type": "attack", "amount": 8,  "label": "⚔ 8" },
-		{ "type": "attack", "amount": 8,  "label": "⚔ 8" },
-		{ "type": "block",  "amount": 10, "label": "🛡 10" }
+		{ "type": "block",         "amount": 10,                                 "label": "🛡 10" },
+		{ "type": "attack",        "amount": 8,                                  "label": "⚔ 8" },
+		{ "type": "attack_status", "amount": 10, "status": "frail", "stacks": 1, "label": "🔨 10 +Frail" },
+		{ "type": "block",         "amount": 10,                                 "label": "🛡 10" },
+		{ "type": "attack",        "amount": 10,                                 "label": "⚔ 10" }
 	]
 }
