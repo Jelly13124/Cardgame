@@ -377,6 +377,8 @@ func _on_loot_selected(loot_id: String, button: Button) -> void:
 ## Draft state. `_draft_gem_only` = elite gem draft; `_in_attr` = level-up attribute
 ## pick (3-of-5, one +1 per level gained).
 var _draft_gem_only: bool = false
+## Lazily-created reward card-draft reroll button (Reroll Tokens upgrade).
+var _reroll_btn: Button = null
 var _in_attr: bool = false
 
 
@@ -397,6 +399,9 @@ func _open_attr_choice() -> void:
 	loot_root.visible = false
 	draft_overlay.visible = true
 	_generate_attr_options()
+	# Attribute pick has no reroll — hide the card-draft reroll button if present.
+	if _reroll_btn:
+		_reroll_btn.visible = false
 
 
 func _generate_attr_options() -> void:
@@ -480,6 +485,33 @@ func _open_card_draft() -> void:
 	loot_root.visible = false
 	draft_overlay.visible = true
 	_generate_draft_options()
+	_refresh_reroll_btn()
+
+
+## Reward card-draft reroll button — re-rolls the 3 offered cards, spending one of
+## the run's reward_rerolls (granted by the Reroll Tokens base upgrade).
+func _refresh_reroll_btn() -> void:
+	if _reroll_btn == null:
+		_reroll_btn = Button.new()
+		_reroll_btn.focus_mode = Control.FOCUS_NONE
+		_reroll_btn.custom_minimum_size = Vector2(240, 46)
+		_reroll_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		_reroll_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		_reroll_btn.pressed.connect(_on_reroll_pressed)
+		$DraftOverlay/VBoxContainer.add_child(_reroll_btn)
+	_reroll_btn.visible = true
+	var n: int = RunManager.reward_rerolls
+	_reroll_btn.text = tr("UI_LOOT_REROLL").format({"n": n})
+	_reroll_btn.disabled = n <= 0
+
+
+func _on_reroll_pressed() -> void:
+	if RunManager.reward_rerolls <= 0:
+		return
+	RunManager.reward_rerolls -= 1
+	AudioManager.play_sfx("ui_click")
+	_generate_draft_options()
+	_refresh_reroll_btn()
 
 
 func _categorize_cards() -> void:

@@ -198,6 +198,7 @@ const ALLOWED_BASE_UPGRADE_EFFECT_KEYS = [
 	"starting_gold",
 	"unlock_hero",
 	"starter_attributes",
+	"reroll_tokens",
 	"safe_cells_bonus",
 	"backpack_cells",
 ]
