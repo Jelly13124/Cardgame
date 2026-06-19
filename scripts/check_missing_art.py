@@ -41,7 +41,7 @@ def main() -> None:
     for ph in ("strike.png", "defend.png"):
         f = CARD_ART_BASE / "player" / ph
         if f.exists():
-            placeholder_hashes[md5(f)] = ph
+            placeholder_hashes[md5(f)] = pathlib.Path(ph).stem
 
     missing_cards, placeholder_cards = [], []
     hash_to_cards = {}  # md5 -> [card ids]  (to catch reused/duplicate art)
@@ -57,8 +57,8 @@ def main() -> None:
         else:
             h = md5(art)
             hash_to_cards.setdefault(h, []).append(jf.stem)
-            if h in placeholder_hashes:
-                placeholder_cards.append(f"{jf.stem}  (= {placeholder_hashes[h]})")
+            if h in placeholder_hashes and jf.stem != placeholder_hashes[h]:
+                placeholder_cards.append(f"{jf.stem}  (= {placeholder_hashes[h]}.png)")
 
     dup_cards = [cards for cards in hash_to_cards.values() if len(cards) > 1]
 

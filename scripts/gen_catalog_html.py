@@ -492,7 +492,7 @@ def build_keywords():
         ("Strength", "力量", "Each point adds +1 to attack-card damage.", "每点 +1 攻击牌伤害。", "#ff8033"),
         ("Constitution", "体质", "Each point adds +1 to Block gained.", "每点 +1 获得的格挡。", "#4da6ff"),
         ("Intelligence", "智力", "Each point: +5% XP gained from combat (level up faster).", "每点：战斗获得的经验 +5%（升级更快）。", "#b366ff"),
-        ("Luck", "幸运", "Each point: +3% crit chance, +3% gold, +1.5% loot rarity.", "每点:+3% 暴击、+3% 金币、+1.5% 战利品稀有度。", "#ffe14d"),
+        ("Luck", "幸运", "Each point: +3% crit chance, +1.5% loot rarity.", "每点:+3% 暴击、+1.5% 战利品稀有度。", "#ffe14d"),
         ("Charm", "魅力", "Each point: -2% shop prices (down to -40%); gates some event options.", "每点:-2% 商店价格(最低 -40%);并解锁部分事件选项。", "#ff80c4"),
     ]
     ac = [kw_card(e, z, de, dz, c, e.lower()) for e, z, de, dz, c in attrs]

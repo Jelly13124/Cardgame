@@ -1230,7 +1230,6 @@ const CRIT_PER_LUCK := 0.02
 const CRIT_PER_LUCK_CLIP := 0.04
 const CRIT_CLIP_BASE := 0.05
 const CRIT_MULT := 1.5
-const GOLD_PER_LUCK := 0.03
 const RARITY_PER_LUCK := 0.015
 const SHOP_PER_CHARM := 0.02
 const SHOP_FLOOR := 0.60
@@ -1278,10 +1277,6 @@ func has_crit_clip() -> bool:
 			if typeof(e) == TYPE_DICTIONARY and str(e.get("type", "")) == "crit_chance":
 				return true
 	return false
-
-
-func luck_gold_mult() -> float:
-	return 1.0 + _attr("luck") * GOLD_PER_LUCK
 
 
 func luck_rarity_bonus() -> float:

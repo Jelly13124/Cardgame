@@ -4,27 +4,24 @@ Per ADR-0005, **Codex owns all art** under `battle_scene/assets/images/**` and
 `run_system/assets/images/**`. Claude writes this contract + does any JSON/code
 wiring; Claude does not generate art.
 
-> **Status — 2026-06-18.** Most of the 2026-06-17 batch is DELIVERED + committed
-> (`f07b58f`): the card art, 8 gems, 5 attribute icons, the bullet status icon, and
-> all 6 borrowed relic icons now have bespoke art. **Remaining = 4 relic icons**
-> (see the checklist), plus two optional polish items. Run
-> `python scripts/check_missing_art.py` to re-confirm.
+> **Status — 2026-06-18.** The demo-visible art backlog is DELIVERED: the bleed
+> status icon, all 4 remaining relic icons, the starter-card polish art
+> (`strike` / `defend`), and a dedicated title-screen key-art backdrop are present.
+> Run `python scripts/check_missing_art.py` to re-confirm.
 >
-> **Still needed — demo-visible (priority):**
-> - **`bleed` status icon** · `64×64` transparent PNG · `battle_scene/assets/images/ui/status/bleed.png`.
->   Currently MISSING → falls back to a text glyph in combat. Bleed is Bill's core
->   mechanic, so it looks unfinished next to every other (iconned) status. Red
->   blood-drop / laceration motif. (`poison.png` in that folder is now an orphan —
->   poison was renamed to bleed; safe to delete.)
-> - **4 relic icons** · `128×128` transparent PNG · `run_system/assets/images/relics/<id>.png`
+> **Delivered ? demo-visible (priority):**
+> - **`bleed` status icon** ? `64?64` transparent PNG ? `battle_scene/assets/images/ui/status/bleed.png`.
+>   Delivered as a red blood-drop / laceration motif. The old top-level
+>   `poison.png` status icon was removed because runtime data now uses `bleed`.
+> - **4 relic icons** ? `128?128` transparent PNG ? `run_system/assets/images/relics/<id>.png`
 >   (all reachable in the demo via relic rewards / the Act 2 upgrade node):
->   - `ricochet_loader` — hard-missing (no file; blank icon).
->   - `crit_clip_volatile`, `crit_clip_deadeye` — both borrow `crit_clip.png`.
->   - `double_fire_clip_burst` — borrows `double_fire_clip.png`.
+>   - `ricochet_loader` ? delivered as a bespoke ricochet ammo-feeder icon.
+>   - `crit_clip_volatile`, `crit_clip_deadeye` ? delivered as Crit Clip upgrade variants.
+>   - `double_fire_clip_burst` ? delivered as a Double-Fire Clip burst upgrade variant.
 >
-> **Optional polish (not demo-blocking):** a real title-screen key-art backdrop
-> (currently reuses `wasteland_battlefield.png`); fresh `strike` / `defend`
-> starter-card illustrations (functional but plain).
+> **Optional polish delivered:** a real title-screen key-art backdrop replaced the
+> main-menu reuse of `wasteland_battlefield.png`; `strike` / `defend` now have
+> fresh starter-card illustrations.
 >
 > **Full game only (NOT in the Bill-only demo):**
 > - **Enemy redo** is owner-driven and in flight — keep the new style consistent.
@@ -111,6 +108,7 @@ unit; bold single-glyph readability. Matches the existing status-icon set.
 | name | status | currently | art direction |
 |---|---|---|---|
 | `bullet` | 装弹 / remaining attacks | a `●` dot glyph (warm gold) | a single brass rifle cartridge / bullet, warm gold (#ffc759), slight cyan rim-light |
+| `bleed` | 流血 / Bleed | text glyph fallback | a red blood-drop / laceration slash motif |
 
 ---
 
@@ -127,22 +125,23 @@ delivery.
 | `strength` | 力量 Strength | +1 attack damage / point | orange `#ff8033` | a flexed muscular arm / clenched fist |
 | `constitution` | 体质 Constitution | +1 Block / point | blue `#4da6ff` | a sturdy heart-plate / armored torso |
 | `intelligence` | 智力 Intelligence | +5% combat XP / point | purple `#b366ff` | a gear-brain / circuit sigil |
-| `luck` | 幸运 Luck | +crit / gold / loot rarity | yellow `#ffe14d` | a horseshoe or four-leaf clover with a sparkle |
+| `luck` | 幸运 Luck | +crit / loot rarity | yellow `#ffe14d` | a horseshoe or four-leaf clover with a sparkle |
 | `charm` | 魅力 Charm | −shop prices, event options | pink `#ff80c4` | a winking star / charm pendant |
 
 ---
 
 ## Deliverables checklist
 
-**Remaining (4 relic icons — the only hard gaps):**
-- [ ] §2 relics/`ricochet_loader`.png  (hard-missing — blank in-game)
-- [ ] §2 relics/`crit_clip_volatile`.png  (borrows `crit_clip.png`)
-- [ ] §2 relics/`crit_clip_deadeye`.png  (borrows `crit_clip.png`)
-- [ ] §2 relics/`double_fire_clip_burst`.png  (borrows `double_fire_clip.png`)
+**Delivered 2026-06-18 (remaining demo-visible gaps):**
+- [x] §4 ui/status/`bleed`.png
+- [x] §2 relics/`ricochet_loader`.png
+- [x] §2 relics/`crit_clip_volatile`.png
+- [x] §2 relics/`crit_clip_deadeye`.png
+- [x] §2 relics/`double_fire_clip_burst`.png
 
-**Optional polish (not blocking):**
-- [ ] title-screen key-art backdrop (currently reuses `wasteland_battlefield.png`)
-- [ ] fresh `strike` / `defend` starter-card illustrations
+**Optional polish delivered 2026-06-18:**
+- [x] title-screen key-art backdrop (`battle_scene/assets/images/backgrounds/title_key_art.png`)
+- [x] fresh `strike` / `defend` starter-card illustrations
 
 **Delivered 2026-06-18 (`f07b58f`):** §1 combat_stim · §2 thorn_harness, vampiric_coupler,
 brutal_servo, bulwark_plating, kinetic_hammer, war_drum · §3 all 8 gems · §4 bullet · §5 all 5 attributes.

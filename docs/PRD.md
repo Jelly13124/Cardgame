@@ -84,7 +84,7 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 | **Strength** | 力量 | Added GLOBALLY to ALL attack damage (`combat_engine._apply_effect()`, default +3); per-card `scaling` is deprecated |
 | **Constitution** | 体质 | Added GLOBALLY to ALL block (default +3); replaces old "Defense" |
 | **Intelligence** | 智力 | Used by Ability cards and special scaling (e.g. Overdrive) |
-| **Luck** | 幸运 | Crit chance (1.5× hits via Cowboy Bill's Crit Clip relic, ≈luck×3% capped 40%) + post-battle gold + loot rarity |
+| **Luck** | 幸运 | Crit chance (1.5× hits via Cowboy Bill's Crit Clip relic, ≈luck×3% capped 40%) + loot rarity |
 | **Charm** | 魅力 | Lowers shop prices (≈2%/point, floored at 0.6×) + unlocks high-Charm options in random events |
 
 > Equipment boosts these five stats. Attributes persist within a run via `RunManager.player_attributes`.

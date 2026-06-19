@@ -2,7 +2,7 @@
   "id": "double_fire_clip_burst",
   "title": "Burst-Fire Clip",
   "description": "Your attack cards gain Replay 1. You may play 2 attack cards on your first turn, then 1 per turn after (upgraded Double-Fire Clip).",
-  "icon": "res://run_system/assets/images/relics/double_fire_clip.png",
+  "icon": "res://run_system/assets/images/relics/double_fire_clip_burst.png",
   "rarity": "unique",
   "effects": [
     { "trigger": "on_attack_replay", "type": "attack_replay", "amount": 1 },

@@ -19,11 +19,11 @@ UI_EQUIP_STATS,STR:{str}  CON:{con}  INT:{int}  LUC:{luc}  CHA:{cha},力量:{str
 UI_EQUIP_ATTR_TIP,"[b]Strength[/b]: +1 attack damage each.
 [b]Constitution[/b]: +1 Block gained each.
 [b]Intelligence[/b]: reserved attribute, no active effect yet.
-[b]Luck[/b]: +3% gold, +1.5% loot rarity, and a chance to find gems each.
+[b]Luck[/b]: +1.5% loot rarity, and a chance to find gems each.
 [b]Charm[/b]: -2% shop prices each (down to -40%).","[b]力量[/b]：每点 +1 攻击伤害。
 [b]体质[/b]：每点 +1 获得的格挡。
 [b]智力[/b]：保留属性，暂无主动效果。
-[b]幸运[/b]：每点 +3% 金币、+1.5% 战利品稀有度，并有概率掉落宝石。
+[b]幸运[/b]：每点 +1.5% 战利品稀有度，并有概率掉落宝石。
 [b]魅力[/b]：每点 -2% 商店价格（最低 -40%）。"
 UI_EQUIP_NO_BONUSES,(no bonuses),(无加成)
 UI_EQUIP_FULL_SWAP,INVENTORY FULL — discard something first to swap,背包已满 — 请先丢弃物品再替换
