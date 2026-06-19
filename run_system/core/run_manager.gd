@@ -122,6 +122,9 @@ var level: int = 1
 ## Unspent attribute points from level-ups (each → a 3-of-5 attribute pick, surfaced
 ## by the loot screen). Cards come from combat drafts; attributes come from leveling.
 var pending_attr_points: int = 0
+## Reward-screen card-draft rerolls available this run (default 0). Granted by the
+## Reroll Tokens base upgrade; spent in loot_reward; reset each run.
+var reward_rerolls: int = 0
 const XP_PER_KILL := {"enemy": 6, "elite": 14, "boss": 30}
 
 ## Wall-clock tick (msec) when the current run started — drives the top-bar run
@@ -678,6 +681,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	xp = 0
 	level = 1
 	pending_attr_points = 0
+	reward_rerolls = 0
 	run_started_msec = Time.get_ticks_msec()
 	# Base deck = explicit `starter_deck` arg, else hero JSON's starter_deck, else
 	# DEFAULT_STARTER_DECK. A persistent per-hero starter-deck override (outpost deck
@@ -1750,6 +1754,9 @@ func _apply_meta_upgrades() -> void:
 		max_health += hp
 		current_health = max_health
 
+	# Reroll Tokens → N reward-screen card rerolls this run.
+	reward_rerolls = int(_get_meta_effect_value("reroll_tokens").get("rerolls", 0))
+
 	# Clinic Max-HP caps perk (cyber_hp) → +CYBER_HP_PER_LEVEL max HP per level.
 	# Applied here (alongside Med Bay) so it stacks additively and is consumed
 	# exactly once per run — start_new_run calls _apply_meta_upgrades() once.
@@ -1855,6 +1862,7 @@ func save_run() -> void:
 		"xp": xp,
 		"level": level,
 		"pending_attr_points": pending_attr_points,
+		"reward_rerolls": reward_rerolls,
 		"run_started_msec": run_started_msec,
 		"base_attributes": base_attributes,
 		"player_attributes": player_attributes,
@@ -1909,6 +1917,7 @@ func load_run() -> bool:
 	xp = int(data.get("xp", 0))
 	level = int(data.get("level", 1))
 	pending_attr_points = int(data.get("pending_attr_points", 0))
+	reward_rerolls = int(data.get("reward_rerolls", 0))
 	run_started_msec = int(data.get("run_started_msec", 0))
 	base_attributes = data.get("base_attributes", base_attributes)
 	player_attributes = data.get("player_attributes", player_attributes)

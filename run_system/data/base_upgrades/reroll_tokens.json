@@ -1,0 +1,11 @@
+{
+  "id": "reroll_tokens",
+  "name": "REROLL TOKENS",
+  "description": "Carry reroll tokens that re-roll a reward card draft.",
+  "effect_key": "reroll_tokens",
+  "tiers": [
+    {"level": 1, "cost": 60,  "effect_value": {"rerolls": 1}, "effect_text": "+1 reward reroll per run"},
+    {"level": 2, "cost": 130, "effect_value": {"rerolls": 2}, "effect_text": "+2 reward rerolls per run"},
+    {"level": 3, "cost": 220, "effect_value": {"rerolls": 3}, "effect_text": "+3 reward rerolls per run"}
+  ]
+}
