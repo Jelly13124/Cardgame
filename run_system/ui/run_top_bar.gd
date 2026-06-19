@@ -452,7 +452,7 @@ func _refresh_gold_act() -> void:
 		% [
 			tr("UI_TOPBAR_ACT_SHORT"),
 			RunManager.current_act,
-			RunManager.ACTS_TOTAL,
+			RunManager.acts_total(),
 			tr("UI_TOPBAR_FLOOR_SHORT"),
 			RunManager.current_floor
 		]
