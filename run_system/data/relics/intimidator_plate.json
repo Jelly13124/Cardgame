@@ -1,0 +1,10 @@
+{
+  "id": "intimidator_plate",
+  "title": "Intimidator Plate",
+  "description": "Whenever you play an attack card, apply 1 Weak to the target.",
+  "icon": "res://run_system/assets/images/relics/barbed_plating.png",
+  "rarity": "uncommon",
+  "effects": [
+    { "trigger": "player_attack", "type": "apply_status", "status": "weak", "amount": 1 }
+  ]
+}
