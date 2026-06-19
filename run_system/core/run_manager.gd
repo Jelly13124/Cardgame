@@ -178,18 +178,18 @@ const DEFAULT_STARTER_DECK = [
 ## from equipped items), refreshed by recompute_attributes() — never mutated
 ## directly by gameplay code outside RunManager.
 var base_attributes: Dictionary = {
-	"strength": 3,
-	"constitution": 3,
-	"intelligence": 3,
-	"luck": 3,
-	"charm": 3,
+	"strength": 0,
+	"constitution": 0,
+	"intelligence": 0,
+	"luck": 0,
+	"charm": 0,
 }
 var player_attributes: Dictionary = {
-	"strength": 3,
-	"constitution": 3,
-	"intelligence": 3,
-	"luck": 3,
-	"charm": 3,
+	"strength": 0,
+	"constitution": 0,
+	"intelligence": 0,
+	"luck": 0,
+	"charm": 0,
 }
 ## Cached equipment-affix totals, refreshed by recompute_attributes(). max_hp
 ## feeds the player's effective max-health (see equipment_max_hp_bonus);
@@ -759,11 +759,11 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	# Base attributes: hero JSON's starting_attributes overrides the default.
 	var attrs: Dictionary = current_hero_data.get("starting_attributes", {})
 	base_attributes = {
-		"strength": int(attrs.get("strength", 3)),
-		"constitution": int(attrs.get("constitution", 3)),
-		"intelligence": int(attrs.get("intelligence", 3)),
-		"luck": int(attrs.get("luck", 3)),
-		"charm": int(attrs.get("charm", 3)),
+		"strength": int(attrs.get("strength", 0)),
+		"constitution": int(attrs.get("constitution", 0)),
+		"intelligence": int(attrs.get("intelligence", 0)),
+		"luck": int(attrs.get("luck", 0)),
+		"charm": int(attrs.get("charm", 0)),
 	}
 	# Cyber Doctor caps perks → permanent +1 per level to the mapped attribute.
 	# Applied after the hero's starting_attributes baseline, before recompute.
@@ -1303,7 +1303,7 @@ func charm_shop_mult() -> float:
 func grant_attribute(attr: String, amount: int) -> void:
 	if attr == "":
 		return
-	base_attributes[attr] = int(base_attributes.get(attr, 3)) + amount
+	base_attributes[attr] = int(base_attributes.get(attr, 0)) + amount
 	recompute_attributes()
 
 
