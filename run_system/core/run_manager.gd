@@ -1299,6 +1299,13 @@ func charm_shop_mult() -> float:
 	return maxf(SHOP_FLOOR, 1.0 - _attr("charm") * SHOP_PER_CHARM)
 
 
+## Charm intimidation: a non-boss/elite enemy flees once its HP drops to/below this
+## fraction of max. 2% per Charm point, capped at 30%; 0 at Charm 0 (no flee). Read
+## by enemy_entity.take_damage (gated on last_battle_node_type == "enemy").
+func flee_threshold() -> float:
+	return minf(0.02 * float(_attr("charm")), 0.30)
+
+
 ## Permanently raise a BASE attribute by `amount` and refresh derived totals.
 ## Single-sources the "bump a base attribute" idiom (random events + starter_boost).
 func grant_attribute(attr: String, amount: int) -> void:
