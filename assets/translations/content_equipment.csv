@@ -44,3 +44,7 @@ EQUIP_warden_pendant_DESC,A coal still warm with the Warden's last breath.,一�
 SET_weak_hunter_NAME,Weak Hunter,弱猎人
 SET_tank_engineer_NAME,Tank Engineer,坦克工程师
 SET_warden_NAME,Warden,守望者
+EQUIP_reinforced_plating_NAME,Reinforced Plating,强化镀板
+EQUIP_reinforced_plating_DESC,Bolted-on scrap that takes the edge off a hit.,螺栓固定的废铁，能卸去攻击的一点锋芒。
+EQUIP_combat_harness_NAME,Combat Harness,战斗挽具
+EQUIP_combat_harness_DESC,"Straps, buckles, and just enough courage.",绑带、卡扣，外加刚好够用的勇气。
