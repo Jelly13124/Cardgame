@@ -96,7 +96,7 @@ func _apply_static_theme() -> void:
 
 func _generate_loot() -> void:
 	available_loot.clear()
-	var gold_amount = int(round(10 * RunManager.luck_gold_mult()))
+	var gold_amount = 10  # flat; Luck no longer scales gold
 
 	available_loot.append(
 		{

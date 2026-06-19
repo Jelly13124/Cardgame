@@ -12,7 +12,7 @@ const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
 const HOME_BASE_PATH := "res://run_system/ui/home_base_scene.tscn"
 const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 const RULES_PANEL_PATH := "res://run_system/ui/rules_panel.gd"
-const BG_TEXTURE_PATH := "res://battle_scene/assets/images/backgrounds/wasteland_battlefield.png"
+const BG_TEXTURE_PATH := "res://battle_scene/assets/images/backgrounds/title_key_art.png"
 
 var _settings_layer: CanvasLayer = null
 ## The currently-open slot picker / saves manager (one at a time). ESC closes it.

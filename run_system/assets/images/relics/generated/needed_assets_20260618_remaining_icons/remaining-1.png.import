@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://du5vs57f28cla"
-path="res://.godot/imported/poison.png-85a2bb0abd40e393a7b23f7811a28709.ctex"
+uid="uid://bs0t1trv38ad"
+path="res://.godot/imported/remaining-1.png-251020fa3f9e5be68f979f7a03e9a772.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/ui/status/poison.png"
-dest_files=["res://.godot/imported/poison.png-85a2bb0abd40e393a7b23f7811a28709.ctex"]
+source_file="res://run_system/assets/images/relics/generated/needed_assets_20260618_remaining_icons/remaining-1.png"
+dest_files=["res://.godot/imported/remaining-1.png-251020fa3f9e5be68f979f7a03e9a772.ctex"]
 
 [params]
 
