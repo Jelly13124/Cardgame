@@ -4,11 +4,11 @@
 	"rarity": "uncommon",
 	"type": "skill",
 	"cost": 1,
-	"description": "Apply [b]1 Frail[/b]. Apply [b]1 Weak[/b].",
+	"description": "Apply [b]1 Vulnerable[/b]. Apply [b]1 Weak[/b].",
 	"front_image": "player/purge.png",
 	"side": "player",
 	"effects": [
-		{ "type": "apply_status", "status": "frail", "stacks": 1 },
+		{ "type": "apply_status", "status": "vulnerable", "stacks": 1 },
 		{ "type": "apply_status", "status": "weak", "stacks": 1 }
 	]
 }
