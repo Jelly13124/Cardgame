@@ -4,9 +4,9 @@
 	"sprite_id": "slag_walker",
 	"max_health": 28,
 	"action_pattern": [
-		{ "type": "block",  "amount": 6, "label": "🛡 6" },
-		{ "type": "attack", "amount": 9, "label": "⚔ 9" },
-		{ "type": "attack", "amount": 6, "label": "⚔ 6" },
-		{ "type": "block",  "amount": 6, "label": "🛡 6" }
+		{ "type": "block",         "amount": 6,                                      "label": "🛡 6" },
+		{ "type": "attack_status", "amount": 9, "status": "vulnerable", "stacks": 1, "label": "⚔ 9 +Vuln" },
+		{ "type": "attack",        "amount": 6,                                      "label": "⚔ 6" },
+		{ "type": "block",         "amount": 6,                                      "label": "🛡 6" }
 	]
 }

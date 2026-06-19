@@ -4,9 +4,9 @@
 	"sprite_id": "armored_patrol",
 	"max_health": 50,
 	"action_pattern": [
-		{ "type": "block",  "amount": 12, "label": "🛡 12" },
-		{ "type": "attack", "amount": 8,  "label": "⚔ 8" },
-		{ "type": "block",  "amount": 12, "label": "🛡 12" },
+		{ "type": "block",         "amount": 12,                                      "label": "🛡 12" },
+		{ "type": "attack_status", "amount": 8,  "status": "frail", "stacks": 1,      "label": "🔨 8 +Frail" },
+		{ "type": "block",         "amount": 12,                                      "label": "🛡 12" },
 		{ "type": "attack_status", "amount": 10, "status": "vulnerable", "stacks": 1, "label": "⚔ 10 +Vuln" }
 	]
 }
