@@ -103,6 +103,34 @@ static func apply_button_theme(
 	button.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
 	button.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.82))
 	button.add_theme_constant_override("outline_size", 1)
+	# Hover "juice": a soft tick + a subtle scale pop. Attached here so every themed
+	# button across the game gets the same alive feedback for free.
+	button.mouse_entered.connect(
+		func() -> void:
+			if not is_instance_valid(button) or button.disabled:
+				return
+			AudioManager.play_sfx("ui_hover")
+			_button_pop(button, Vector2(1.04, 1.04), 0.08)
+	)
+	button.mouse_exited.connect(
+		func() -> void:
+			if is_instance_valid(button):
+				_button_pop(button, Vector2.ONE, 0.10)
+	)
+
+
+## Tween a button's scale (centered) with the prior pop killed first, so rapid
+## hover in/out doesn't stack fighting tweens. Used by apply_button_theme's juice.
+static func _button_pop(button: Button, to: Vector2, dur: float) -> void:
+	if not is_instance_valid(button) or not button.is_inside_tree():
+		return  # create_tween() outside the tree warns; skip if mid-removal
+	var prev = button.get_meta("_juice_tw", null)
+	if prev != null and (prev is Tween) and prev.is_valid():
+		prev.kill()
+	button.pivot_offset = button.size / 2.0
+	var tw := button.create_tween()
+	button.set_meta("_juice_tw", tw)
+	tw.tween_property(button, "scale", to, dur).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 # ─── Display font (Oswald — condensed, for titles/labels/numbers) ─────────────
