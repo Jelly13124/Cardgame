@@ -170,7 +170,21 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 	# (in the play path), not per replay.
 	var replays: int = _replay_count(card, type)
 	for _i in range(1 + replays):
-		await _resolve_card_once(card, effects, type, target, player, card_mult)
+		# The target can die/flee on an earlier replay pass; never pass a dead/freed
+		# Object into _resolve_card_once's typed `target: Node` param. _live_target()
+		# also rejects a queue_free'd-but-not-yet-freed node (same frame), so a later
+		# await inside the pass can't deref it. null = "no target" → the hit fizzles.
+		await _resolve_card_once(card, effects, type, _live_target(target), player, card_mult)
+
+
+## A target Node counts as "live" only if it exists AND isn't already queued for
+## deletion. queue_free() defers the real free to frame-end, so is_instance_valid()
+## still returns true that same frame — a dying target would pass a naive guard and
+## then be freed by a later await, hard-crashing any typed `target: Node` param it is
+## passed to. Returns null for a null / freed / dying target so callers treat null as
+## "no target" uniformly. The param is untyped on purpose (must accept a freed Object).
+func _live_target(t) -> Node:
+	return t if (is_instance_valid(t) and not t.is_queued_for_deletion()) else null
 
 
 ## One full resolution pass of a played card: gunshot anim → effects → polarity
@@ -179,16 +193,14 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 func _resolve_card_once(
 	card: Control, effects: Array, type: String, target: Node, player: Node, card_mult: float
 ) -> void:
-	if type == "attack" and target and is_instance_valid(target):
+	if type == "attack" and _live_target(target):
 		await _animate_player_gunshot(player, target)
 
 	for effect in effects:
 		# An earlier effect (or DOT) may have killed and freed the target mid-
 		# resolution; never pass a freed Object into _apply_effect's typed
 		# `target: Node` param. Re-validate each iteration (null == "no target").
-		await _apply_effect(
-			effect, target if is_instance_valid(target) else null, player, card_mult
-		)
+		await _apply_effect(effect, _live_target(target), player, card_mult)
 
 	# Polarity matched bonus — resolved after the normal effects (so any
 	# flip_polarity earlier in this same card has already applied). Reuses every
@@ -199,13 +211,11 @@ func _resolve_card_once(
 		if bonus is Array:
 			for be in bonus:
 				if typeof(be) == TYPE_DICTIONARY:
-					await _apply_effect(
-						be, target if is_instance_valid(target) else null, player, card_mult
-					)
+					await _apply_effect(be, _live_target(target), player, card_mult)
 
 	# Relic: an attack card that landed on a target fires on-attack relics
 	# (sharpened_scrap → Bleed on the struck enemy).
-	if type == "attack" and target and is_instance_valid(target) and main.relic_effect_system:
+	if type == "attack" and _live_target(target) and main.relic_effect_system:
 		main.relic_effect_system.on_player_attack(target)
 	# Socketed gems: each gem's effects resolve AFTER the card's own effects (and
 	# matched bonus), reusing _apply_effect so they get the same target / global
@@ -215,9 +225,7 @@ func _resolve_card_once(
 		var gdata: Dictionary = RunManager.get_gem_data(str(gem_id))
 		for ge in gdata.get("effects", []):
 			if typeof(ge) == TYPE_DICTIONARY:
-				await _apply_effect(
-					ge, target if is_instance_valid(target) else null, player, card_mult
-				)
+				await _apply_effect(ge, _live_target(target), player, card_mult)
 
 
 ## Total extra resolutions for a played card: its innate `replay` field plus any
@@ -652,6 +660,12 @@ func _animate_player_gunshot(player: Node, target: Node) -> void:
 		player.play_attack()
 
 	await get_tree().create_timer(PLAYER_GUNSHOT_WINDUP_SECONDS).timeout
+
+	# The target can die (queue_free) during the wind-up await; bail before we deref it
+	# for the hit position. _get_target_hit_position takes a typed `target: Node` that
+	# would hard-error on a freed Object (and there's nothing left to shoot at anyway).
+	if _live_target(target) == null:
+		return
 
 	var origin := _get_player_muzzle_position(player)
 	var hit := _get_target_hit_position(target)
