@@ -919,6 +919,7 @@ func _on_remove_cancel(modal: Control) -> void:
 
 
 func _on_leave_pressed() -> void:
+	AudioManager.play_sfx("ui_back")
 	SceneTransition.change_to(MAP_SCENE_PATH)
 
 

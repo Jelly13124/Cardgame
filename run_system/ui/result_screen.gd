@@ -114,5 +114,5 @@ func _summary_text() -> String:
 
 
 func _on_back() -> void:
-	AudioManager.play_sfx("ui_click")
+	AudioManager.play_sfx("ui_back")
 	SceneTransition.change_to(MAIN_MENU_PATH)

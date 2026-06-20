@@ -788,6 +788,7 @@ func _open_settings() -> void:
 ## Save the run at this map checkpoint and return to the title screen. Continue
 ## from the menu resumes here.
 func _on_save_and_quit() -> void:
+	AudioManager.play_sfx("ui_back")
 	if rm and rm.is_run_active:
 		rm.save_run()
 	SceneTransition.change_to("res://run_system/ui/main_menu.tscn")
