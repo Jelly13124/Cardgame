@@ -43,6 +43,7 @@ func _ready() -> void:
 	proceed_button.pressed.connect(_on_proceed_pressed)
 	draft_skip_button.pressed.connect(_on_skip_draft_pressed)
 	draft_overlay.visible = false
+	T.fade_in(self)  # soft entrance instead of a hard pop-in
 
 	_card_factory = preload("res://battle_scene/my_card_factory.tscn").instantiate()
 	add_child(_card_factory)

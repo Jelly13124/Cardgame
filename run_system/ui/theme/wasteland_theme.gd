@@ -133,6 +133,15 @@ static func _button_pop(button: Button, to: Vector2, dur: float) -> void:
 	tw.tween_property(button, "scale", to, dur).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
+## Fade a freshly-shown modal/overlay in (modulate only — safe under any container,
+## unlike scale/position which fight layout). Call once the control is in the tree.
+static func fade_in(control: Control, dur: float = 0.16) -> void:
+	if not is_instance_valid(control) or not control.is_inside_tree():
+		return
+	control.modulate.a = 0.0
+	control.create_tween().tween_property(control, "modulate:a", 1.0, dur)
+
+
 ## Theme an HSlider's track + filled area to wasteland tones (kills the default
 ## grey/blue slider). The grabber stays the engine default — small + unobtrusive.
 static func style_slider(slider: HSlider, accent: Color = Color(0.82, 0.58, 0.25)) -> void:
