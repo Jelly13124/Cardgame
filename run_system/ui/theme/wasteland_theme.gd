@@ -133,6 +133,23 @@ static func _button_pop(button: Button, to: Vector2, dur: float) -> void:
 	tw.tween_property(button, "scale", to, dur).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
+## Theme an HSlider's track + filled area to wasteland tones (kills the default
+## grey/blue slider). The grabber stays the engine default — small + unobtrusive.
+static func style_slider(slider: HSlider, accent: Color = Color(0.82, 0.58, 0.25)) -> void:
+	slider.focus_mode = Control.FOCUS_NONE
+	var track := StyleBoxFlat.new()
+	track.bg_color = Color(0.06, 0.05, 0.04, 0.95)
+	track.border_color = Color(0.0, 0.0, 0.0, 0.5)
+	track.set_border_width_all(1)
+	track.set_corner_radius_all(4)
+	slider.add_theme_stylebox_override("slider", track)
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = accent
+	fill.set_corner_radius_all(4)
+	slider.add_theme_stylebox_override("grabber_area", fill)
+	slider.add_theme_stylebox_override("grabber_area_highlight", fill)
+
+
 # ─── Display font (Oswald — condensed, for titles/labels/numbers) ─────────────
 ## Oswald is Latin-only, so it falls back to the project CJK font for Chinese —
 ## English/numbers get the condensed HUD look, 中文 still renders via Noto.

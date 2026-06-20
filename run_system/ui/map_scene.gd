@@ -925,6 +925,8 @@ func _open_rest_choice() -> void:
 	var heal_btn := Button.new()
 	heal_btn.text = tr("UI_MAP_REST_HEAL_BTN")
 	heal_btn.custom_minimum_size = Vector2(200, 60)
+	heal_btn.focus_mode = Control.FOCUS_NONE
+	T.apply_button_theme(heal_btn)
 	heal_btn.pressed.connect(
 		func():
 			var heal_amount = int(rm.max_health * 0.25)
@@ -940,6 +942,8 @@ func _open_rest_choice() -> void:
 	var gems_btn := Button.new()
 	gems_btn.text = tr("UI_MAP_REST_GEMS_BTN")
 	gems_btn.custom_minimum_size = Vector2(200, 60)
+	gems_btn.focus_mode = Control.FOCUS_NONE
+	T.apply_button_theme(gems_btn)
 	gems_btn.pressed.connect(
 		func():
 			modal.queue_free()
