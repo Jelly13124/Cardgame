@@ -506,6 +506,25 @@ func _make_shop_button(text: String, min_size: Vector2) -> Button:
 # --- Stall builders --------------------------------------------------------
 
 
+## Subtle scale-pop on hovering a shop stall card (visual only — the buy buttons
+## already give the hover tick, so no sound here to avoid a wall of clicks).
+func _add_stall_hover(node: Control) -> void:
+	node.mouse_entered.connect(func() -> void: _stall_scale(node, Vector2(1.04, 1.04)))
+	node.mouse_exited.connect(func() -> void: _stall_scale(node, Vector2.ONE))
+
+
+func _stall_scale(node: Control, to: Vector2) -> void:
+	if not is_instance_valid(node) or not node.is_inside_tree():
+		return
+	var prev = node.get_meta("_hv_tw") if node.has_meta("_hv_tw") else null
+	if prev != null and (prev is Tween) and prev.is_valid():
+		prev.kill()
+	node.pivot_offset = node.size / 2.0
+	var tw := node.create_tween()
+	node.set_meta("_hv_tw", tw)
+	tw.tween_property(node, "scale", to, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
 func _build_card_stall(entry: Dictionary) -> Control:
 	var wrapper := VBoxContainer.new()
 	wrapper.add_theme_constant_override("separation", 6)
@@ -518,6 +537,7 @@ func _build_card_stall(entry: Dictionary) -> Control:
 		"panel", T.panel_with_shadow(SHOP_PANEL_BG_DARK, SHOP_PANEL_BORDER, 3, 2)
 	)
 	wrapper.add_child(card_plate)
+	_add_stall_hover(card_plate)
 
 	var card_margin := MarginContainer.new()
 	card_margin.add_theme_constant_override("margin_left", 6)
@@ -564,6 +584,7 @@ func _build_equipment_stall(entry: Dictionary) -> Control:
 	frame.add_theme_stylebox_override(
 		"panel", T.panel_with_shadow(SHOP_PANEL_BG_DARK, Color(0.44, 0.29, 0.16, 1.0), 3, 1)
 	)
+	_add_stall_hover(frame)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 8)
@@ -643,6 +664,7 @@ func _build_relic_stall(entry: Dictionary) -> Control:
 	frame.add_theme_stylebox_override(
 		"panel", T.panel_with_shadow(SHOP_PANEL_BG_DARK, Color(0.62, 0.44, 0.22, 1.0), 3, 1)
 	)
+	_add_stall_hover(frame)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 8)

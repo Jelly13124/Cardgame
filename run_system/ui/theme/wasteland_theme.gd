@@ -124,7 +124,7 @@ static func apply_button_theme(
 static func _button_pop(button: Button, to: Vector2, dur: float) -> void:
 	if not is_instance_valid(button) or not button.is_inside_tree():
 		return  # create_tween() outside the tree warns; skip if mid-removal
-	var prev = button.get_meta("_juice_tw", null)
+	var prev = button.get_meta("_juice_tw") if button.has_meta("_juice_tw") else null
 	if prev != null and (prev is Tween) and prev.is_valid():
 		prev.kill()
 	button.pivot_offset = button.size / 2.0
