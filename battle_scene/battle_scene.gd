@@ -706,7 +706,7 @@ func _on_extract_chosen(extract: bool, rewards: Dictionary, canvas: CanvasLayer)
 		var earned: int = int(rewards.get("extract", 0))
 		RunManager.add_core_to_backpack(earned)
 		RunManager.end_run_victory(0, "extracted")
-		get_tree().change_scene_to_file(HOME_BASE_PATH)
+		SceneTransition.change_to(HOME_BASE_PATH)
 	else:
 		# Push on: push-on Core drops into the backpack (still at death risk),
 		# advance to the next act (regenerates its fresh map), then drop into the
@@ -733,7 +733,7 @@ func _show_loot_modal() -> void:
 func _on_loot_closed(canvas: CanvasLayer) -> void:
 	if is_instance_valid(canvas):
 		canvas.queue_free()
-	get_tree().change_scene_to_file(MAP_SCENE_PATH)
+	SceneTransition.change_to(MAP_SCENE_PATH)
 
 
 func _game_over():

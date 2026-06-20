@@ -329,11 +329,11 @@ func _on_node_clicked(node: Dictionary) -> void:
 		"enemy", "elite", "boss":
 			rm.current_encounter = rm.select_encounter(node.type, int(node.floor))
 			rm.last_battle_node_type = node.type
-			get_tree().change_scene_to_packed(BATTLE_PACKED)
+			SceneTransition.change_to_packed(BATTLE_PACKED)
 		"rest":
 			_open_rest_choice()
 		"merchant":
-			get_tree().change_scene_to_packed(SHOP_PACKED)
+			SceneTransition.change_to_packed(SHOP_PACKED)
 		"treasure":
 			# Treasure is always a 3-choose-1 relic pick. _open_relic_choice handles
 			# the empty-pool fallback (gold) and manages the click guard.
@@ -386,7 +386,7 @@ func _resolve_unknown_node(floor_idx: int) -> void:
 	if roll < 0.40:
 		rm.current_encounter = rm.select_encounter("enemy", floor_idx)
 		rm.last_battle_node_type = "enemy"
-		get_tree().change_scene_to_packed(BATTLE_PACKED)
+		SceneTransition.change_to_packed(BATTLE_PACKED)
 		# Scene change tears down — no need to reset click guard.
 		return
 
@@ -790,7 +790,7 @@ func _open_settings() -> void:
 func _on_save_and_quit() -> void:
 	if rm and rm.is_run_active:
 		rm.save_run()
-	get_tree().change_scene_to_file("res://run_system/ui/main_menu.tscn")
+	SceneTransition.change_to("res://run_system/ui/main_menu.tscn")
 
 
 ## Open the How-to-Play rules panel (loaded at runtime; no-op until it exists).

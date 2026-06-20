@@ -115,4 +115,4 @@ func _summary_text() -> String:
 
 func _on_back() -> void:
 	AudioManager.play_sfx("ui_click")
-	get_tree().change_scene_to_file(MAIN_MENU_PATH)
+	SceneTransition.change_to(MAIN_MENU_PATH)
