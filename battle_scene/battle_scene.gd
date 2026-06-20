@@ -884,6 +884,7 @@ func play_spell(card: Control, target_node: Node):
 
 	if type == "attack":
 		if not target_node or not is_instance_valid(target_node):
+			AudioManager.play_sfx("error")
 			show_notification(tr("UI_BATTLE_MUST_TARGET_ENEMY"), Color(0.8, 0.4, 0.4))
 			hand.add_card(card)
 			card.remove_meta("_in_play")
@@ -891,6 +892,7 @@ func play_spell(card: Control, target_node: Node):
 		# Attack-allowance gate (double-fire clip): no attacks left this turn → the
 		# attack is unplayable. Return it to hand and explain via a notification.
 		if _attack_limit_per_turn > 0 and _attacks_left_this_turn <= 0:
+			AudioManager.play_sfx("error")
 			show_notification(tr("UI_BATTLE_NO_ATTACKS_LEFT"), Color(0.85, 0.55, 0.3))
 			hand.add_card(card)
 			card.remove_meta("_in_play")

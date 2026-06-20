@@ -353,6 +353,8 @@ func _on_loot_selected(loot_id: String, button: Button) -> void:
 	if loot["type"] == "gold":
 		var amount: int = int(loot["amount"])
 		var put: int = RunManager.add_gold(amount)
+		if put > 0:
+			AudioManager.play_sfx("gold")
 		print("Claimed %d Gold" % put)
 		if put < amount:
 			# Backpack couldn't hold the full reward — leave the row so the

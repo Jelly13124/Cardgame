@@ -557,6 +557,7 @@ func take_damage(amount: int, silent: bool = false) -> void:
 				COMBAT_FX.shake(_sprite, 6.0, 0.18)
 
 	if health <= 0:
+		AudioManager.play_sfx("enemy_death")
 		died.emit()
 		queue_free()
 		return

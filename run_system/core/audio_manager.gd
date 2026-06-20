@@ -13,6 +13,7 @@ var _sfx_idx: int = 0
 var _music: AudioStreamPlayer = null
 var _sfx_cache: Dictionary = {}
 var _current_music: String = ""
+var _warned_missing: Dictionary = {}
 
 
 func _ready() -> void:
@@ -41,11 +42,22 @@ func _ensure_buses() -> void:
 
 
 ## Play a one-shot sound effect by name (file stem under assets/audio/sfx/).
-func play_sfx(sfx_name: String, volume_db: float = 0.0, pitch: float = 1.0) -> void:
+## `pitch_vary` adds a small random ± to the pitch so repeated hits/clicks don't
+## sound mechanically identical (set 0.0 to disable, e.g. for musical stingers).
+func play_sfx(
+	sfx_name: String, volume_db: float = 0.0, pitch: float = 1.0, pitch_vary: float = 0.06
+) -> void:
 	var stream = _sfx_cache.get(sfx_name)
 	if stream == null:
 		var path := SFX_DIR + sfx_name + ".wav"
 		if not ResourceLoader.exists(path):
+			# Key→file is an implicit folder convention, so a typo'd name is silent
+			# forever with no error. Warn once per missing key to catch wiring slips.
+			if not _warned_missing.has(sfx_name):
+				_warned_missing[sfx_name] = true
+				push_warning(
+					"AudioManager: no SFX file for '%s' (%s) — call is silent." % [sfx_name, path]
+				)
 			return
 		stream = load(path)
 		_sfx_cache[sfx_name] = stream
@@ -53,7 +65,10 @@ func play_sfx(sfx_name: String, volume_db: float = 0.0, pitch: float = 1.0) -> v
 	_sfx_idx = (_sfx_idx + 1) % SFX_POOL
 	p.stream = stream
 	p.volume_db = volume_db
-	p.pitch_scale = pitch
+	if pitch_vary > 0.0:
+		p.pitch_scale = pitch * randf_range(1.0 - pitch_vary, 1.0 + pitch_vary)
+	else:
+		p.pitch_scale = pitch
 	p.play()
 
 
