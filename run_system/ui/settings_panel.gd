@@ -40,13 +40,18 @@ static func add_controls(
 		note.add_theme_color_override("font_color", T.TEXT_SECONDARY)
 		box.add_child(note)
 
-	# ── Fullscreen ──
-	var fs := CheckButton.new()
-	fs.text = TranslationServer.translate("SETTINGS_FULLSCREEN")
-	fs.button_pressed = Settings.fullscreen
+	# ── Fullscreen ── a themed toggle button ([✓]/[ ]) rather than the engine's
+	# default blue CheckButton switch, which clashes hard with the wasteland skin.
+	var fs := Button.new()
 	fs.focus_mode = Control.FOCUS_NONE
-	fs.add_theme_color_override("font_color", T.TEXT_MAIN)
-	fs.toggled.connect(func(on: bool) -> void: Settings.set_fullscreen(on))
+	fs.custom_minimum_size = Vector2(0, 40)
+	fs.text = _fullscreen_text(Settings.fullscreen)
+	_style_button(fs)
+	fs.pressed.connect(
+		func() -> void:
+			Settings.set_fullscreen(not Settings.fullscreen)
+			fs.text = _fullscreen_text(Settings.fullscreen)
+	)
 	box.add_child(fs)
 
 	# ── Volume: Master / Music / SFX ──
@@ -98,6 +103,7 @@ static func _volume_row(box: VBoxContainer, key: String, value: float, setter: C
 	slider.step = 0.05
 	slider.value = value
 	slider.custom_minimum_size = Vector2(170, 24)
+	T.style_slider(slider)
 	slider.value_changed.connect(func(v: float) -> void: setter.call(v))
 	row.add_child(slider)
 
@@ -111,7 +117,9 @@ static func _label(text: String) -> Label:
 
 
 static func _style_button(b: Button) -> void:
-	b.add_theme_color_override("font_color", T.TEXT_MAIN)
-	b.add_theme_stylebox_override("normal", T.button_textured("normal"))
-	b.add_theme_stylebox_override("hover", T.button_textured("hover"))
-	b.add_theme_stylebox_override("pressed", T.button_textured("pressed"))
+	# Route through the shared theme so these get the same font colors + hover juice.
+	T.apply_button_theme(b)
+
+
+static func _fullscreen_text(on: bool) -> String:
+	return TranslationServer.translate("SETTINGS_FULLSCREEN") + ("   [✓]" if on else "   [  ]")
