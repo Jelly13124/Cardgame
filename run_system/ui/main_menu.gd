@@ -23,6 +23,7 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	AudioManager.play_music("menu")
 	_build()
+	T.fade_in(self, 0.35)  # smooth title-screen intro instead of a hard cut on boot
 
 
 func _build() -> void:
