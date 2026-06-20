@@ -438,6 +438,19 @@ func _make_attr_slot(attr: String) -> Control:
 	box.add_theme_constant_override("separation", 12)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	wrapper.add_child(box)
+	# Attribute portrait — reuse the same generated icons the stats panel shows
+	# (res://battle_scene/assets/images/ui/attributes/<attr>.png). Guarded so a
+	# missing / still-regenerating Codex asset just drops back to the text-only card.
+	var icon_path := "res://battle_scene/assets/images/ui/attributes/%s.png" % attr
+	if ResourceLoader.exists(icon_path):
+		var icon := TextureRect.new()
+		icon.custom_minimum_size = Vector2(132, 132)
+		icon.texture = load(icon_path)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_child(icon)
 	var name_lbl = Label.new()
 	name_lbl.text = tr("UI_COMBAT_ATTR_%s" % attr.to_upper())
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
