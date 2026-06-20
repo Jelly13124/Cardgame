@@ -35,6 +35,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	_build()
+	T.fade_in(self)  # soft entrance instead of a hard pop-in
 	MetaProgress.buildings_changed.connect(_refresh)
 	MetaProgress.core_changed.connect(func(_v): _refresh())
 	MetaProgress.caps_changed.connect(func(_v): _refresh())
