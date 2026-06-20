@@ -490,7 +490,7 @@ func _on_attr_picked(attr: String) -> void:
 ## back to a direct scene change in standalone use).
 func _finish_loot() -> void:
 	if closed.get_connections().is_empty():
-		get_tree().change_scene_to_file(MAP_SCENE_PATH)
+		SceneTransition.change_to(MAP_SCENE_PATH)
 		return
 	emit_signal("closed")
 	queue_free()

@@ -187,16 +187,16 @@ func _on_saves() -> void:
 func _enter_slot(slot: int) -> void:
 	MetaProgress.set_active_slot(slot)
 	if RunManager.has_method("load_run") and RunManager.has_run_save() and RunManager.load_run():
-		get_tree().change_scene_to_file(MAP_SCENE_PATH)
+		SceneTransition.change_to(MAP_SCENE_PATH)
 	else:
-		get_tree().change_scene_to_file(HOME_BASE_PATH)
+		SceneTransition.change_to(HOME_BASE_PATH)
 
 
 ## Wipe a slot and start a brand-new game there.
 func _start_new_in(slot: int) -> void:
 	MetaProgress.delete_slot(slot)
 	MetaProgress.reset_for_new_game(slot)
-	get_tree().change_scene_to_file(HOME_BASE_PATH)
+	SceneTransition.change_to(HOME_BASE_PATH)
 
 
 # ─── Slot picker / saves manager modal ───────────────────────────────────────

@@ -919,7 +919,7 @@ func _on_remove_cancel(modal: Control) -> void:
 
 
 func _on_leave_pressed() -> void:
-	get_tree().change_scene_to_file(MAP_SCENE_PATH)
+	SceneTransition.change_to(MAP_SCENE_PATH)
 
 
 # --- Helpers ---------------------------------------------------------------

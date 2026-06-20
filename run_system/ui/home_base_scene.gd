@@ -883,7 +883,7 @@ func _on_start_pressed() -> void:
 	)
 	var asc: int = RunManager.pending_ascension if RunManager.pending_ascension >= 0 else 0
 	RunManager.start_new_run(hero, [], asc)
-	get_tree().change_scene_to_packed(MAP_PACKED)
+	SceneTransition.change_to_packed(MAP_PACKED)
 
 
 func _build_recent_runs_panel() -> Control:
