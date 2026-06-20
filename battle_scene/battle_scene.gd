@@ -901,8 +901,13 @@ func play_spell(card: Control, target_node: Node):
 			_attacks_left_this_turn -= 1
 			_update_attack_allowance_ui()
 
-	# Deduct cost; remove from current container if still tracked there
-	AudioManager.play_sfx("card_play")
+	# Deduct cost; remove from current container if still tracked there. Per-type play
+	# sound (attack swipe / skill whoosh / power charge); other types (status, curse…)
+	# fall back to the generic card_play.
+	var play_sfx_name: String = "card_play"
+	if type in ["attack", "skill", "power"]:
+		play_sfx_name = "card_play_" + type
+	AudioManager.play_sfx(play_sfx_name)
 	spend_energy([card])
 	if card.card_container and card.card_container.has_card(card):
 		card.card_container.remove_card(card)
