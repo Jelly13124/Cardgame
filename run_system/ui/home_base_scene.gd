@@ -442,26 +442,43 @@ func _load_home_texture(path: String) -> Texture2D:
 	return null
 
 
-## Number-only currency chip. The Codex currency icons (core/caps/scrap.png)
-## shipped with placeholder numbers BAKED INTO the art (caps="1", scrap="232"),
-## which read as a duplicated number beside the live value. Icons are disabled
-## until number-free art is delivered — see docs/asset-spec-currency-icons.md.
-## The accent border color-codes each currency in the icons' absence.
+## Currency chip: an accent swatch (color-coded placeholder for the pending Codex
+## icon) + the live value. The icons (core/caps/scrap.png) baked placeholder
+## NUMBERS into the art, so they stay disabled until number-free art lands — see
+## docs/asset-spec-currency-icons.md. The swatch + a bright accent border keep the
+## chip reading as an intentional resource counter, not a bare number on black.
+## (When the clean icon lands, swap the swatch Panel for a TextureRect of equal size.)
 func _make_currency_chip(parent: Control, _icon_id: String, accent: Color) -> Label:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(124, 64)
+	panel.custom_minimum_size = Vector2(134, 64)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_theme_stylebox_override(
-		"panel", T.panel_with_shadow(Color(0.075, 0.058, 0.046, 0.96), accent.darkened(0.12), 6, 2)
+		"panel", T.panel_with_shadow(Color(0.090, 0.070, 0.055, 0.96), accent, 7, 2)
 	)
 	parent.add_child(panel)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_right", 14)
 	margin.add_theme_constant_override("margin_top", 4)
 	margin.add_theme_constant_override("margin_bottom", 4)
 	panel.add_child(margin)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 9)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	margin.add_child(row)
+
+	var swatch := Panel.new()
+	swatch.custom_minimum_size = Vector2(26, 26)
+	swatch.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = accent
+	sb.set_corner_radius_all(13)
+	sb.set_border_width_all(2)
+	sb.border_color = accent.darkened(0.45)
+	swatch.add_theme_stylebox_override("panel", sb)
+	row.add_child(swatch)
 
 	var label := Label.new()
 	label.text = "0"
@@ -471,7 +488,8 @@ func _make_currency_chip(parent: Control, _icon_id: String, accent: Color) -> La
 	label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.70))
 	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.92))
 	label.add_theme_constant_override("outline_size", 3)
-	margin.add_child(label)
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
 	return label
 
 

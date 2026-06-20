@@ -443,13 +443,30 @@ func _add_scene_art() -> void:
 		add_child(keeper)
 
 
-func _section_header(text: String) -> Label:
+func _section_header(text: String) -> Control:
+	# Title + a thin accent rule beneath it, so each section reads as a titled
+	# block instead of a bare line of text floating on the panel border.
+	var box := VBoxContainer.new()
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_theme_constant_override("separation", 5)
+
 	var lbl := Label.new()
 	lbl.text = text
 	lbl.add_theme_font_size_override("font_size", 20)
-	lbl.add_theme_color_override("font_color", Color(0.85, 0.78, 0.5))
+	lbl.add_theme_color_override("font_color", Color(0.93, 0.83, 0.55))
+	lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.85))
+	lbl.add_theme_constant_override("outline_size", 2)
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	return lbl
+	box.add_child(lbl)
+
+	var rule := Panel.new()
+	rule.custom_minimum_size = Vector2(0, 2)
+	rule.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.62, 0.38, 0.18, 0.85)
+	box.add_child(rule)
+	return box
 
 
 func _make_section_panel(title: String, min_size: Vector2 = Vector2.ZERO) -> Dictionary:
@@ -570,7 +587,9 @@ func _build_equipment_stall(entry: Dictionary) -> Control:
 	var icon := EQUIPMENT_ICON.new()
 	icon.custom_minimum_size = Vector2(52, 52)
 	icon_holder.add_child(icon)
-	icon.set_equipment(slot, equip_name, str(data.get("sprite", "")), str(data.get("rarity", "common")))
+	icon.set_equipment(
+		slot, equip_name, str(data.get("sprite", "")), str(data.get("rarity", "common"))
+	)
 
 	var name_lbl := Label.new()
 	name_lbl.text = equip_name
