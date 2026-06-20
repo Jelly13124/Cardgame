@@ -465,6 +465,7 @@ func _section_header(text: String) -> Control:
 	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.62, 0.38, 0.18, 0.85)
+	rule.add_theme_stylebox_override("panel", sb)
 	box.add_child(rule)
 	return box
 
