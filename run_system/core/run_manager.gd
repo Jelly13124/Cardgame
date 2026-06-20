@@ -153,6 +153,8 @@ func gain_xp(node_type: String) -> int:
 		level += 1
 		gained += 1
 	pending_attr_points += gained
+	if gained > 0:
+		AudioManager.play_sfx("level_up")
 	return gained
 
 
@@ -1673,6 +1675,7 @@ func socket_gem(uid: String, gem_id: String) -> bool:
 		gems.append(gem_id)
 		entry["gems"] = gems
 		gem_inventory.erase(gem_id)
+		AudioManager.play_sfx("gem")
 		return true
 	return false
 

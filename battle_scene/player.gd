@@ -386,7 +386,10 @@ func _hit_flash() -> void:
 
 
 func heal(amount: int) -> void:
+	var before: int = health
 	health = min(health + amount, max_health)
+	if health > before:
+		AudioManager.play_sfx("heal")
 	health_changed.emit(health)
 	_refresh_hud()
 
