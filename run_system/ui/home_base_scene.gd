@@ -233,6 +233,7 @@ func _add_depart_controls() -> void:
 	button.add_theme_color_override("font_color", Color(1.0, 0.88, 0.50))
 	button.add_theme_color_override("font_hover_color", Color(1.0, 0.96, 0.70))
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(_on_start_pressed)
 	_set_map_rect(button, Rect2(800, 812, 320, 64))
 	add_child(button)
@@ -344,6 +345,11 @@ func _add_interactive_building(
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	_set_map_rect(button, rect)
+	# The building sprites already swap to a hover texture, but were silent — add the
+	# hover tick + click so the boot screen feels responsive (sound connected before
+	# the callback so it still fires when the callback opens a building overlay).
+	button.mouse_entered.connect(func() -> void: AudioManager.play_sfx("ui_hover"))
+	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(callback)
 	add_child(button)
 
