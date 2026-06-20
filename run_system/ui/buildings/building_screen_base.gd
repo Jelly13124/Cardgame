@@ -153,6 +153,7 @@ func _build() -> void:
 	leave_btn.custom_minimum_size = Vector2(200, 48)
 	leave_btn.add_theme_font_size_override("font_size", 20)
 	T.apply_button_theme(leave_btn)
+	leave_btn.pressed.connect(func() -> void: AudioManager.play_sfx("ui_back"))
 	leave_btn.pressed.connect(_close)
 	footer.add_child(leave_btn)
 
