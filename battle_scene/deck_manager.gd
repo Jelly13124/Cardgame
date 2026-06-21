@@ -139,6 +139,11 @@ func reset_deck() -> void:
 		if card and typeof(item) == TYPE_DICTIONARY:
 			card.set_meta("uid", item.get("uid", ""))
 			card.set_meta("gems", item.get("gems", []))
+			# create_card already ran _refresh_gem_socket during set_card_data, BEFORE
+			# this meta existed — so it rendered as empty. Refresh again now that the
+			# uid/gems meta is set, or socketed gems never show on the card.
+			if card.has_method("_refresh_gem_socket"):
+				card._refresh_gem_socket()
 
 	deck.shuffle()
 	battle_scene._update_ui_labels()
