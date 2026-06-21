@@ -25,6 +25,7 @@ const DISCOUNT_UPGRADE_ID := "scrap_workshop"
 const BACKPACK_UPGRADE_ID := "backpack"
 const SAFE_CELLS_UPGRADE_ID := "blacksmith"
 const REROLL_UPGRADE_ID := "reroll_tokens"
+const TOOL_SLOTS_UPGRADE_ID := "tool_slots"
 ## Max cards swappable in the starter-deck editor (spec: <=2).
 const MAX_DECK_SWAPS := 2
 
@@ -99,6 +100,10 @@ func _populate(container: VBoxContainer) -> void:
 	# --- T1: reward-screen card rerolls (Core upgrade row). ---
 	_add_section_header(container, tr("UI_OUTPOST_SECT_REROLL"))
 	_add_upgrade_row(container, REROLL_UPGRADE_ID)
+
+	# --- T1: tool rack — +1 top-bar tool slot (Core upgrade row). ---
+	_add_section_header(container, tr("UI_OUTPOST_SECT_TOOL_SLOTS"))
+	_add_upgrade_row(container, TOOL_SLOTS_UPGRADE_ID)
 
 	# --- T1: difficulty selector. ---
 	_add_section_header(container, tr("UI_OUTPOST_SECT_DIFFICULTY"))

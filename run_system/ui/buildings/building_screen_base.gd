@@ -1,9 +1,9 @@
-## Reusable full-rect overlay screen for ONE base building (Phase-1 shell).
-## Configured with a `building_id` (one of MetaProgress.BUILDING_DEFS). Renders the
-## building name, its current tier badge, an unlock/upgrade button driven entirely
-## by the F0a MetaProgress building API, and a `content` VBox that subclasses fill
-## via `_build_content()`. Phase-1 building screens subclass this and override that
-## single hook; the base shows a "functions coming soon" placeholder.
+## Reusable full-rect overlay screen for ONE base building. Configured with a
+## `building_id` (one of MetaProgress.BUILDING_DEFS). Renders a layered detail page:
+## an icon + name + flavour header, a prominent ACTION CARD (unlock/upgrade with its
+## effect, cost, and — when locked — a preview of what the building does so a locked
+## page still sells its value), and a scrollable `content` VBox that subclasses fill
+## via `_build_content()`.
 ##
 ## NO class_name (ADR-0006: preload these instead). Instantiate with `.new()`,
 ## set `building_id`, then add as a child — `_ready()` builds the UI.
@@ -22,10 +22,13 @@ var on_close: Callable = Callable()
 var accent: Color = Color(0.86, 0.78, 0.52)
 
 var _tier_badge: Label
-var _action_btn: Button
 var _content_box: VBoxContainer
 var _core_label: Label
+## Inner VBox of the action card; rebuilt by `_refresh()` for the current state.
+var _action_card_body: VBoxContainer
 
+## Per-building header art (the same home-base runtime sprites).
+const _ICON_DIR := "res://run_system/assets/images/home/buildings_runtime/"
 ## Placeholder per-building background path (Codex art swaps these in later).
 const _BG_DIR := "res://run_system/assets/images/buildings/"
 
@@ -53,7 +56,7 @@ func _build() -> void:
 
 	# The big framed board. Accent tints the border so each building reads distinct.
 	var board := PanelContainer.new()
-	board.custom_minimum_size = Vector2(1100, 720)
+	board.custom_minimum_size = Vector2(1120, 740)
 	var border := accent
 	border.a = 1.0
 	board.add_theme_stylebox_override(
@@ -63,37 +66,65 @@ func _build() -> void:
 
 	var margin := MarginContainer.new()
 	for side in ["margin_left", "margin_right"]:
-		margin.add_theme_constant_override(side, 36)
+		margin.add_theme_constant_override(side, 34)
 	for side in ["margin_top", "margin_bottom"]:
-		margin.add_theme_constant_override(side, 28)
+		margin.add_theme_constant_override(side, 24)
 	board.add_child(margin)
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 16)
+	vbox.add_theme_constant_override("separation", 14)
 	margin.add_child(vbox)
 
-	# --- Title bar: big building name + tier badge + Core balance + close ---
+	# --- Header band: building icon + name/flavour, then tier + Core + close ---
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 18)
 	vbox.add_child(header)
 
+	var icon_frame := PanelContainer.new()
+	icon_frame.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	icon_frame.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	header.add_child(icon_frame)
+	var icon := TextureRect.new()
+	icon.custom_minimum_size = Vector2(104, 104)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var icon_path := "%s%s.png" % [_ICON_DIR, building_id]
+	if ResourceLoader.exists(icon_path):
+		icon.texture = load(icon_path)
+	icon_frame.add_child(icon)
+
+	var title_box := VBoxContainer.new()
+	title_box.add_theme_constant_override("separation", 3)
+	title_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	header.add_child(title_box)
 	var name_lbl := Label.new()
 	name_lbl.text = tr("UI_BUILD_%s_NAME" % building_id.to_upper())
 	_style_label(name_lbl, 40, accent, 3)
-	header.add_child(name_lbl)
-
-	_tier_badge = Label.new()
-	_style_label(_tier_badge, 26, Color(0.90, 0.90, 0.86), 2)
-	header.add_child(_tier_badge)
+	title_box.add_child(name_lbl)
+	var flavour_lbl := Label.new()
+	flavour_lbl.text = _flavour_text()
+	flavour_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	flavour_lbl.custom_minimum_size = Vector2(560, 0)
+	_style_label(flavour_lbl, 17, Color(0.82, 0.76, 0.62), 1)
+	title_box.add_child(flavour_lbl)
 
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(spacer)
 
-	# Core balance chip — the currency that unlocks/upgrades buildings.
+	var right_box := VBoxContainer.new()
+	right_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	right_box.add_theme_constant_override("separation", 6)
+	header.add_child(right_box)
+	_tier_badge = Label.new()
+	_tier_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_style_label(_tier_badge, 24, Color(0.90, 0.90, 0.86), 2)
+	right_box.add_child(_tier_badge)
 	_core_label = Label.new()
-	_style_label(_core_label, 26, Color(0.64, 0.90, 1.0), 2)
-	header.add_child(_core_label)
+	_core_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_style_label(_core_label, 22, Color(0.64, 0.90, 1.0), 2)
+	right_box.add_child(_core_label)
 
 	var close_btn := Button.new()
 	close_btn.text = "✕"
@@ -105,25 +136,27 @@ func _build() -> void:
 
 	vbox.add_child(HSeparator.new())
 
-	# --- Unlock / upgrade action button row (driven by F0a API on refresh) ---
-	var action_row := HBoxContainer.new()
-	action_row.add_theme_constant_override("separation", 12)
-	vbox.add_child(action_row)
-
-	_action_btn = Button.new()
-	_action_btn.custom_minimum_size = Vector2(420, 48)
-	_action_btn.add_theme_font_size_override("font_size", 20)
-	T.apply_button_theme(_action_btn)
-	_action_btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
-	_action_btn.pressed.connect(_on_action_pressed)
-	action_row.add_child(_action_btn)
-
-	vbox.add_child(HSeparator.new())
+	# --- Action card: prominent unlock/upgrade (effect + cost + button, plus a
+	# preview of the building's functions while it is still locked). ---
+	var card := PanelContainer.new()
+	var card_border := accent
+	card_border.a = 0.85
+	card.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(Color(0.10, 0.085, 0.07, 0.96), card_border, 4, 2)
+	)
+	vbox.add_child(card)
+	var card_margin := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		card_margin.add_theme_constant_override(side, 16)
+	card.add_child(card_margin)
+	_action_card_body = VBoxContainer.new()
+	_action_card_body.add_theme_constant_override("separation", 8)
+	card_margin.add_child(_action_card_body)
 
 	# --- Scrollable content area: subclasses populate this; base shows placeholder.
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.custom_minimum_size = Vector2(0, 440)
+	scroll.custom_minimum_size = Vector2(0, 384)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	vbox.add_child(scroll)
 
@@ -202,35 +235,125 @@ func _build_content(container: VBoxContainer) -> void:
 	container.add_child(placeholder)
 
 
-## Update the tier badge + action button to the current building state. Safe to
-## call repeatedly (wired to buildings/currency change signals).
+# --- Per-building copy (translation-driven; subclasses may override) ---------
+
+
+## One-line tagline shown under the building name. CSV: UI_BUILD_<ID>_FLAVOUR.
+func _flavour_text() -> String:
+	return tr("UI_BUILD_%s_FLAVOUR" % building_id.to_upper())
+
+
+## What unlocking grants — shown in the action card while locked.
+## CSV: UI_BUILD_<ID>_UNLOCK_DESC.
+func _unlock_desc() -> String:
+	return tr("UI_BUILD_%s_UNLOCK_DESC" % building_id.to_upper())
+
+
+## Multi-line "what this building does" preview (locked state).
+## CSV: UI_BUILD_<ID>_PREVIEW.
+func _preview_text() -> String:
+	return tr("UI_BUILD_%s_PREVIEW" % building_id.to_upper())
+
+
+# --- State refresh ----------------------------------------------------------
+
+
+## Update the tier badge, Core chip, and action card to the current building state.
+## Safe to call repeatedly (wired to buildings/currency change signals).
 func _refresh() -> void:
-	if not is_instance_valid(_tier_badge) or not is_instance_valid(_action_btn):
+	if not is_instance_valid(_action_card_body):
 		return
 	if is_instance_valid(_core_label):
 		_core_label.text = tr("UI_HOME_CORE").format({"n": MetaProgress.core})
 	var tier := MetaProgress.get_building_tier(building_id)
-	if tier <= 0:
-		_tier_badge.text = tr("UI_BUILD_LOCKED")
-	else:
-		_tier_badge.text = "T%d" % tier
+	if is_instance_valid(_tier_badge):
+		_tier_badge.text = tr("UI_BUILD_LOCKED") if tier <= 0 else "T%d" % tier
+
+	# Rebuild the action card body for the current state (remove immediately so the
+	# freed nodes never briefly double-draw).
+	for c in _action_card_body.get_children():
+		_action_card_body.remove_child(c)
+		c.queue_free()
 
 	var cost := MetaProgress.next_building_cost(building_id)
 	if tier <= 0:
-		# Locked → unlock button.
-		_action_btn.visible = true
-		_action_btn.text = tr("UI_BUILD_UNLOCK").format({"n": cost})
-		_action_btn.disabled = cost < 0 or MetaProgress.core < cost
+		_fill_action_card_locked(cost)
 	elif tier < MetaProgress.MAX_BUILDING_TIER and cost >= 0:
-		# Unlocked, not maxed → upgrade button.
-		_action_btn.visible = true
-		_action_btn.text = tr("UI_BUILD_UPGRADE").format({"n": tier + 1, "c": cost})
-		_action_btn.disabled = MetaProgress.core < cost
+		_fill_action_card_upgrade(tier, cost)
 	else:
-		# Maxed.
-		_action_btn.visible = true
-		_action_btn.text = tr("UI_BUILD_MAX")
-		_action_btn.disabled = true
+		_fill_action_card_max()
+
+
+func _fill_action_card_locked(cost: int) -> void:
+	var head := Label.new()
+	_style_label(head, 24, Color(1.0, 0.86, 0.5), 2)
+	head.text = tr("UI_BUILD_ACTION_LOCKED_HEAD")
+	_action_card_body.add_child(head)
+
+	var desc := Label.new()
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(desc, 18, Color(0.92, 0.88, 0.76), 1)
+	desc.text = _unlock_desc()
+	_action_card_body.add_child(desc)
+
+	# Preview of what the building does once unlocked, so a locked page still sells it.
+	var prev_head := Label.new()
+	_style_label(prev_head, 17, accent, 1)
+	prev_head.text = tr("UI_BUILD_PREVIEW_HEAD")
+	_action_card_body.add_child(prev_head)
+	var prev := Label.new()
+	prev.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(prev, 16, Color(0.80, 0.84, 0.74), 1)
+	prev.text = _preview_text()
+	_action_card_body.add_child(prev)
+
+	var enabled := cost >= 0 and MetaProgress.core >= cost
+	_action_card_body.add_child(
+		_make_action_button(tr("UI_BUILD_UNLOCK").format({"n": cost}), enabled)
+	)
+
+
+func _fill_action_card_upgrade(tier: int, cost: int) -> void:
+	var head := Label.new()
+	_style_label(head, 22, Color(1.0, 0.86, 0.5), 2)
+	head.text = tr("UI_BUILD_ACTION_UPGRADE_HEAD").format({"n": tier + 1})
+	_action_card_body.add_child(head)
+
+	var desc := Label.new()
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(desc, 17, Color(0.92, 0.88, 0.76), 1)
+	desc.text = tr("UI_BUILD_UPGRADE_GENERIC")
+	_action_card_body.add_child(desc)
+
+	_action_card_body.add_child(
+		_make_action_button(
+			tr("UI_BUILD_UPGRADE").format({"n": tier + 1, "c": cost}), MetaProgress.core >= cost
+		)
+	)
+
+
+func _fill_action_card_max() -> void:
+	var head := Label.new()
+	_style_label(head, 22, Color(0.7, 0.92, 0.7), 2)
+	head.text = tr("UI_BUILD_MAX")
+	_action_card_body.add_child(head)
+	var desc := Label.new()
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(desc, 17, Color(0.86, 0.84, 0.74), 1)
+	desc.text = tr("UI_BUILD_MAX_DESC")
+	_action_card_body.add_child(desc)
+
+
+func _make_action_button(text: String, enabled: bool) -> Button:
+	var btn := Button.new()
+	btn.text = text
+	btn.custom_minimum_size = Vector2(440, 50)
+	btn.add_theme_font_size_override("font_size", 21)
+	T.apply_button_theme(btn)
+	btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
+	btn.disabled = not enabled
+	btn.pressed.connect(_on_action_pressed)
+	return btn
 
 
 func _on_action_pressed() -> void:
@@ -239,7 +362,7 @@ func _on_action_pressed() -> void:
 		MetaProgress.unlock_building(building_id)
 	elif tier < MetaProgress.MAX_BUILDING_TIER:
 		MetaProgress.upgrade_building(building_id)
-	# buildings_changed → _refresh() repaints the badge/button.
+	# buildings_changed → _refresh() repaints the badge/card.
 
 
 func _close() -> void:
