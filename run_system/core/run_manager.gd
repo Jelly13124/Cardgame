@@ -134,19 +134,17 @@ var run_started_msec: int = 0
 
 ## XP needed to go from `lvl` to `lvl+1`. Gentle curve → ~1 level per 1-2 fights.
 func xp_to_next(lvl: int) -> int:
-	return 10 + lvl * 4
+	# Charm lowers the per-level XP wall (faster leveling): -4%/point, floored at -40%.
+	var mult := clampf(1.0 - 0.04 * float(_attr("charm")), 0.60, 1.0)
+	return int(round((10 + lvl * 4) * mult))
 
 
-## XP multiplier from Intelligence (the attribute's purpose): +5% XP per point.
-func xp_int_mult() -> float:
-	return 1.0 + 0.05 * float(_attr("intelligence"))
-
-
-## Award XP for a combat win by node type (scaled by Intelligence); rolls up
-## level-ups and returns how many levels were gained (→ that many attribute picks).
+## Award XP for a combat win by node type; rolls up level-ups and returns how many
+## levels were gained (→ that many attribute picks). Intelligence no longer touches
+## XP (it scales tools + Bleed cards now); Charm lowers the wall via xp_to_next.
 func gain_xp(node_type: String) -> int:
 	var base: int = int(XP_PER_KILL.get(node_type, XP_PER_KILL["enemy"]))
-	xp += int(round(base * xp_int_mult()))
+	xp += base
 	var gained := 0
 	while xp >= xp_to_next(level):
 		xp -= xp_to_next(level)
@@ -1299,13 +1297,6 @@ func luck_gem_chance() -> float:
 
 func charm_shop_mult() -> float:
 	return maxf(SHOP_FLOOR, 1.0 - _attr("charm") * SHOP_PER_CHARM)
-
-
-## Charm intimidation: a non-boss/elite enemy flees once its HP drops to/below this
-## fraction of max. 2% per Charm point, capped at 30%; 0 at Charm 0 (no flee). Read
-## by enemy_entity.take_damage (gated on last_battle_node_type == "enemy").
-func flee_threshold() -> float:
-	return minf(0.02 * float(_attr("charm")), 0.30)
 
 
 ## Permanently raise a BASE attribute by `amount` and refresh derived totals.
