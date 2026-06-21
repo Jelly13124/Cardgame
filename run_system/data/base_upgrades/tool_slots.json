@@ -1,0 +1,16 @@
+{
+  "id": "tool_slots",
+  "name": "TOOL RACK",
+  "description": "Carry an extra tool.",
+  "effect_key": "tool_slots",
+  "tiers": [
+    {
+      "level": 1,
+      "cost": 90,
+      "effect_value": {
+        "slots": 1
+      },
+      "effect_text": "+1 tool slot"
+    }
+  ]
+}

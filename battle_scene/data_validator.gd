@@ -18,12 +18,15 @@ const BASE_UPGRADE_DIR = "res://run_system/data/base_upgrades/"
 const HERO_DIR = "res://run_system/data/heroes/"
 const RANDOM_EVENT_DIR = "res://run_system/data/random_events/"
 const GEM_DIR = "res://run_system/data/gems/"
+const TOOL_DIR = "res://run_system/data/tools/"
 
 # ─── Gem schema ───────────────────────────────────────────────────────────────
 ## Socketable gems (run-scoped). Each carries `effects[]` reusing the card effect
 ## vocabulary; they resolve after the socketed card's own effects on play.
 const REQUIRED_GEM_KEYS = ["id", "title", "trigger", "effects"]
 const ALLOWED_GEM_TRIGGERS = ["on_play"]
+const REQUIRED_TOOL_KEYS = ["id", "title", "effects"]
+const ALLOWED_TOOL_TARGETS = ["enemy", "self", "none"]
 
 # ─── Card schema ──────────────────────────────────────────────────────────────
 const REQUIRED_CARD_KEYS = ["name", "title", "type", "cost", "effects"]
@@ -199,6 +202,7 @@ const ALLOWED_BASE_UPGRADE_EFFECT_KEYS = [
 	"unlock_hero",
 	"starter_attributes",
 	"reroll_tokens",
+	"tool_slots",
 	"safe_cells_bonus",
 	"backpack_cells",
 ]
@@ -243,6 +247,8 @@ static func validate_all_data_at_startup() -> int:
 		failures += _validate_dir(RANDOM_EVENT_DIR, Callable(DataValidator, "validate_event"))
 	if DirAccess.dir_exists_absolute(GEM_DIR):
 		failures += _validate_dir(GEM_DIR, Callable(DataValidator, "validate_gem"))
+	if DirAccess.dir_exists_absolute(TOOL_DIR):
+		failures += _validate_dir(TOOL_DIR, Callable(DataValidator, "validate_tool"))
 	# Cross-check encounter pools so a typo in RunManager constants fails at
 	# startup instead of crashing the player mid-combat in enemy_entity.create().
 	failures += validate_encounter_pools()
@@ -611,6 +617,25 @@ static func validate_gem(data: Dictionary, source_path: String) -> bool:
 			ok = false
 	if data.has("trigger") and not str(data["trigger"]) in ALLOWED_GEM_TRIGGERS:
 		push_error("%s: trigger '%s' not in %s" % [prefix, data["trigger"], ALLOWED_GEM_TRIGGERS])
+		ok = false
+	if typeof(data.get("effects", null)) == TYPE_ARRAY:
+		for i in range(data["effects"].size()):
+			if not _validate_card_effect(data["effects"][i], prefix, "effects", i):
+				ok = false
+	return ok
+
+
+## Validate a single tool JSON dictionary (one-time consumable). Effects reuse the
+## card effect handlers; `target` is enemy/self/none. Returns true on success.
+static func validate_tool(data: Dictionary, source_path: String) -> bool:
+	var prefix := "Tool '%s'" % source_path
+	var ok := true
+	for key in REQUIRED_TOOL_KEYS:
+		if not data.has(key):
+			push_error("%s: missing required key '%s'" % [prefix, key])
+			ok = false
+	if data.has("target") and not str(data["target"]) in ALLOWED_TOOL_TARGETS:
+		push_error("%s: target '%s' not in %s" % [prefix, data["target"], ALLOWED_TOOL_TARGETS])
 		ok = false
 	if typeof(data.get("effects", null)) == TYPE_ARRAY:
 		for i in range(data["effects"].size()):

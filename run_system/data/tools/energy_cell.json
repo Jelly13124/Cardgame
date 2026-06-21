@@ -1,0 +1,13 @@
+{
+  "id": "energy_cell",
+  "title": "Energy Cell",
+  "target": "none",
+  "rarity": "common",
+  "effects": [
+    {
+      "type": "gain_energy",
+      "amount": 2
+    }
+  ],
+  "icon": "res://run_system/assets/images/ui/tools/energy_cell.png"
+}

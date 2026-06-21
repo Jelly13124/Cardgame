@@ -113,6 +113,9 @@ var inventory_items: Array[String]:
 var relics: Array[String] = []
 ## Run-scoped gems collected but not yet socketed into a card (cleared on death).
 var gem_inventory: Array[String] = []
+## Run-scoped one-time tools (StS2-style top-bar consumables). NOT in the backpack.
+var tool_inventory: Array[String] = []
+var _tool_cache: Dictionary = {}
 var _gem_cache: Dictionary = {}
 
 ## In-run XP/level. Killing enemies grants XP; each level-up queues an attribute
@@ -678,6 +681,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 
 	player_deck.clear()
 	gem_inventory.clear()
+	tool_inventory.clear()
 	xp = 0
 	level = 1
 	pending_attr_points = 0
@@ -1652,6 +1656,42 @@ func gem_pool() -> Array[String]:
 	return ids
 
 
+const TOOL_DATA_DIR := "res://run_system/data/tools/"
+
+
+## Load a tool JSON by id (cached). Returns {} on miss.
+func get_tool_data(tool_id: String) -> Dictionary:
+	if _tool_cache.has(tool_id):
+		return _tool_cache[tool_id]
+	var data := _load_json_by_id(TOOL_DATA_DIR, tool_id)
+	_tool_cache[tool_id] = data
+	return data
+
+
+## All tool ids that have a JSON file (the shop / drop pool).
+func tool_pool() -> Array[String]:
+	var ids: Array[String] = []
+	var dir := DirAccess.open(TOOL_DATA_DIR)
+	if dir:
+		for f in dir.get_files():
+			if f.ends_with(".json"):
+				ids.append(f.trim_suffix(".json"))
+	return ids
+
+
+## Tool slots (top-bar consumable slots): 2 base + the Outpost "Tool Rack" upgrade.
+func tool_slots() -> int:
+	return 2 + int(_get_meta_effect_value("tool_slots").get("slots", 0))
+
+
+## Add a tool to the inventory if a slot is free. Returns false when full.
+func add_tool(tool_id: String) -> bool:
+	if tool_inventory.size() >= tool_slots():
+		return false
+	tool_inventory.append(tool_id)
+	return true
+
+
 ## Socket `gem_id` (taken from gem_inventory) into the player_deck card with `uid`,
 ## if it has a free slot (<1 gem). Locked after — no removal. Returns success.
 func socket_gem(uid: String, gem_id: String) -> bool:
@@ -1860,6 +1900,7 @@ func save_run() -> void:
 		"backpack": backpack,
 		"relics": relics,
 		"gem_inventory": gem_inventory,
+		"tool_inventory": tool_inventory,
 		"xp": xp,
 		"level": level,
 		"pending_attr_points": pending_attr_points,
@@ -1915,6 +1956,7 @@ func load_run() -> bool:
 	backpack = data.get("backpack", [])
 	relics = _to_string_array(data.get("relics", []))
 	gem_inventory = _to_string_array(data.get("gem_inventory", []))
+	tool_inventory = _to_string_array(data.get("tool_inventory", []))
 	xp = int(data.get("xp", 0))
 	level = int(data.get("level", 1))
 	pending_attr_points = int(data.get("pending_attr_points", 0))

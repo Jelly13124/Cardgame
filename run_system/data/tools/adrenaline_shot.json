@@ -1,0 +1,13 @@
+{
+  "id": "adrenaline_shot",
+  "title": "Adrenaline Shot",
+  "target": "none",
+  "rarity": "common",
+  "effects": [
+    {
+      "type": "draw_cards",
+      "amount": 2
+    }
+  ],
+  "icon": "res://run_system/assets/images/ui/tools/adrenaline_shot.png"
+}
