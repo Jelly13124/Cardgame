@@ -176,6 +176,11 @@ func _make_gem_button(gem_id: String) -> Button:
 	b.text = _gem_label(gem_id)
 	b.custom_minimum_size = Vector2(0, 40)
 	b.tooltip_text = _gem_desc(gem_id)
+	# Gem art (Codex) as the button icon, constrained to fit the row height.
+	var gicon := str(RunManager.get_gem_data(gem_id).get("icon", ""))
+	if gicon != "" and ResourceLoader.exists(gicon):
+		b.icon = load(gicon)
+		b.add_theme_constant_override("icon_max_width", 28)
 	if gem_id == _selected_gem:
 		b.modulate = Color(0.6, 1.0, 0.7)  # highlight the chosen gem
 	b.pressed.connect(
