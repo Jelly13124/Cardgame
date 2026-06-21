@@ -44,3 +44,5 @@ UPGRADE_reroll_tokens_DESC,"Carry reroll tokens that re-roll a reward card draft
 UPGRADE_reroll_tokens_TIER1,+1 reward reroll per run,每局 +1 次奖励刷新
 UPGRADE_reroll_tokens_TIER2,+2 reward rerolls per run,每局 +2 次奖励刷新
 UPGRADE_reroll_tokens_TIER3,+3 reward rerolls per run,每局 +3 次奖励刷新
+UPGRADE_tool_slots_NAME,TOOL RACK,工具架
+UPGRADE_tool_slots_TIER1,+1 tool slot (carry 3),+1 工具栏位（携带 3 个）

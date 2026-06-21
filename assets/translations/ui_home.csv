@@ -48,3 +48,43 @@ UI_BUILD_MAX,Max tier,已满级
 UI_BUILD_LOCKED,Locked,未解锁
 UI_BUILD_COMING,Functions coming soon,功能即将到来
 UI_BUILD_LEAVE,Leave,离开
+UI_BUILD_ACTION_LOCKED_HEAD,Unlock this facility,解锁该设施
+UI_BUILD_PREVIEW_HEAD,Once unlocked:,解锁后可以：
+UI_BUILD_ACTION_UPGRADE_HEAD,Upgrade to Tier {n},升级到 T{n}
+UI_BUILD_UPGRADE_GENERIC,Raise this facility's tier to unlock more functions.,提升该设施等级，解锁更多功能。
+UI_BUILD_MAX_DESC,This facility is fully upgraded.,该设施已完全升级。
+UI_BUILD_FORGE_FLAVOUR,Salvage and reforge gear at the anvil.,在铁砧前拆解、重铸装备。
+UI_BUILD_FORGE_UNLOCK_DESC,Unlock the Forge to dismantle and craft equipment.,解锁铁匠铺，拆解并打造装备。
+UI_BUILD_FORGE_PREVIEW,"• Dismantle gear into scrap
+• Craft & reforge equipment
+• Higher tiers: reroll affixes, remove curses","• 拆解装备换取废料
+• 打造与重铸装备
+• 更高等级：重铸词缀、移除诅咒"
+UI_BUILD_CLINIC_FLAVOUR,Cybernetic clinic — permanent attribute perks.,义体诊所——永久属性强化。
+UI_BUILD_CLINIC_UNLOCK_DESC,Unlock the Clinic for permanent attribute & max-HP upgrades.,解锁义体诊所，获得永久属性与生命上限强化。
+UI_BUILD_CLINIC_PREVIEW,"• Buy attribute perks (STR/CON/INT/LCK/CHA)
+• Raise max HP
+• Higher tiers: bigger caps","• 购买属性强化（力/体/智/幸/魅）
+• 提升生命上限
+• 更高等级：更高强化上限"
+UI_BUILD_MARKET_FLAVOUR,Black market — unlock cards and better stock.,黑市——解锁卡牌与更优货源。
+UI_BUILD_MARKET_UNLOCK_DESC,Unlock the Market to unlock cards & improve shops.,解锁黑市，永久解锁卡牌并改善商店。
+UI_BUILD_MARKET_PREVIEW,"• Permanently unlock new cards
+• Improve in-run shop stock
+• Higher tiers: a card shop","• 永久解锁新卡牌
+• 提升局内商店货源
+• 更高等级：卡牌商店"
+UI_BUILD_OUTPOST_FLAVOUR,"Forward outpost — prep gold, discounts, difficulty, deck.",前哨站——准备资金、折扣、难度与卡组。
+UI_BUILD_OUTPOST_UNLOCK_DESC,Unlock the Outpost for run-prep upgrades & difficulty.,解锁前哨站，获得开局准备强化与难度选择。
+UI_BUILD_OUTPOST_PREVIEW,"• Starting gold, discount, backpack & tool slots
+• Reward rerolls & difficulty (Ascension)
+• Higher tiers: safe cells, deck editor","• 起始金币、折扣、背包与工具栏位
+• 奖励刷新与难度（飞升）
+• 更高等级：安全格、卡组编辑"
+UI_BUILD_WAREHOUSE_FLAVOUR,Warehouse — stash gear between runs.,仓库——跨周目存放装备。
+UI_BUILD_WAREHOUSE_UNLOCK_DESC,Unlock the Warehouse to stash equipment across runs.,解锁仓库，跨周目存放装备。
+UI_BUILD_WAREHOUSE_PREVIEW,"• Store equipment in the stash
+• Pull stashed gear into new runs
+• Higher tiers: more safe slots","• 在仓库中存放装备
+• 将装备带入新周目
+• 更高等级：更多安全栏位"
