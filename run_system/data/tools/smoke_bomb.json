@@ -1,0 +1,13 @@
+{
+  "id": "smoke_bomb",
+  "title": "Smoke Bomb",
+  "target": "none",
+  "rarity": "common",
+  "effects": [
+    {
+      "type": "gain_block",
+      "amount": 12
+    }
+  ],
+  "icon": "res://run_system/assets/images/ui/tools/smoke_bomb.png"
+}

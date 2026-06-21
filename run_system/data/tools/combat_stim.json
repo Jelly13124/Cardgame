@@ -1,0 +1,13 @@
+{
+  "id": "combat_stim",
+  "title": "Combat Stim",
+  "target": "none",
+  "rarity": "uncommon",
+  "effects": [
+    {
+      "type": "gain_strength",
+      "amount": 2
+    }
+  ],
+  "icon": "res://run_system/assets/images/ui/tools/combat_stim.png"
+}

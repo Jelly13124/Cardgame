@@ -1,0 +1,13 @@
+{
+  "id": "frag_grenade",
+  "title": "Frag Grenade",
+  "target": "enemy",
+  "rarity": "common",
+  "effects": [
+    {
+      "type": "deal_damage",
+      "amount": 10
+    }
+  ],
+  "icon": "res://run_system/assets/images/ui/tools/frag_grenade.png"
+}

@@ -115,3 +115,19 @@ GEM_spark_TITLE,Spark Gem,电火花宝石
 GEM_spark_DESC,"When played, gain 1 Energy.",打出时获得 1 点能量。
 GEM_leech_TITLE,Leech Gem,吸血宝石
 GEM_leech_DESC,"When played, heal 2 HP.",打出时恢复 2 点生命。
+TOOL_med_kit_TITLE,Med Kit,医疗包
+TOOL_med_kit_DESC,"Heal 6 HP.",回复 6 点生命。
+TOOL_energy_cell_TITLE,Energy Cell,能量电池
+TOOL_energy_cell_DESC,"Gain 2 Energy this turn.",本回合获得 2 点能量。
+TOOL_adrenaline_shot_TITLE,Adrenaline Shot,肾上腺素
+TOOL_adrenaline_shot_DESC,"Draw 2 cards.",抽 2 张牌。
+TOOL_frag_grenade_TITLE,Frag Grenade,手雷
+TOOL_frag_grenade_DESC,"Deal 10 damage to an enemy.",对一个敌人造成 10 点伤害。
+TOOL_smoke_bomb_TITLE,Smoke Bomb,烟雾弹
+TOOL_smoke_bomb_DESC,"Gain 12 Block.",获得 12 点格挡。
+TOOL_combat_stim_TITLE,Combat Stim,兴奋剂
+TOOL_combat_stim_DESC,"Gain 2 Strength.",获得 2 点力量。
+TOOL_toxin_vial_TITLE,Toxin Vial,毒瓶
+TOOL_toxin_vial_DESC,"Apply 4 Bleed to an enemy.",对一个敌人施加 4 层流血。
+TOOL_shock_charge_TITLE,Shock Charge,电荷
+TOOL_shock_charge_DESC,"Apply 2 Vulnerable and 2 Weak to an enemy.",对一个敌人施加 2 层易伤和 2 层虚弱。

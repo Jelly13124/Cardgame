@@ -1,0 +1,14 @@
+{
+  "id": "toxin_vial",
+  "title": "Toxin Vial",
+  "target": "enemy",
+  "rarity": "uncommon",
+  "effects": [
+    {
+      "type": "apply_status",
+      "status": "bleed",
+      "amount": 4
+    }
+  ],
+  "icon": "res://run_system/assets/images/ui/tools/toxin_vial.png"
+}
