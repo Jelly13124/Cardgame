@@ -14,6 +14,7 @@ var _music: AudioStreamPlayer = null
 var _sfx_cache: Dictionary = {}
 var _current_music: String = ""
 var _warned_missing: Dictionary = {}
+var _music_fade: Tween = null
 
 
 func _ready() -> void:
@@ -73,7 +74,7 @@ func play_sfx(
 
 
 ## Start (looping) a music track by name. No-op if it's already the current track.
-func play_music(track_name: String) -> void:
+func play_music(track_name: String, fade_in: float = 1.0) -> void:
 	if track_name == _current_music and _music and _music.playing:
 		return
 	var path := MUS_DIR + track_name + ".ogg"
@@ -84,10 +85,23 @@ func play_music(track_name: String) -> void:
 		stream.loop = true
 	_current_music = track_name
 	_music.stream = stream
-	_music.play()
+	if _music_fade and _music_fade.is_valid():
+		_music_fade.kill()
+	# Ease the new track up from near-silence so it doesn't blast in. The previous
+	# track stops under the scene's fade-to-black, so there's no audible hard cut.
+	if fade_in > 0.0:
+		_music.volume_db = -36.0
+		_music.play()
+		_music_fade = create_tween()
+		_music_fade.tween_property(_music, "volume_db", 0.0, fade_in)
+	else:
+		_music.volume_db = 0.0
+		_music.play()
 
 
 func stop_music() -> void:
+	if _music_fade and _music_fade.is_valid():
+		_music_fade.kill()
 	if _music:
 		_music.stop()
 	_current_music = ""
