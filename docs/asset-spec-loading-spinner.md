@@ -1,8 +1,9 @@
 # Asset Spec — Loading spinner
 
 **Owner:** Codex (ADR-0005 — Codex generates all PNGs under `run_system/assets/images/**`).
-**Status:** Requested. Scene transitions currently show a rotating **gear glyph (⚙)**
-placeholder during the black load hold; this replaces it with bespoke art.
+**Status:** Delivered 2026-06-20. Scene transitions now use bespoke art at
+`run_system/assets/images/ui/loading_spinner.png` instead of the rotating **gear
+glyph (⚙)** fallback.
 
 ## Problem
 

@@ -461,12 +461,9 @@ func _load_home_texture(path: String) -> Texture2D:
 	return null
 
 
-## Currency chip: an accent swatch (color-coded placeholder for the pending Codex
-## icon) + the live value. The icons (core/caps/scrap.png) baked placeholder
-## NUMBERS into the art, so they stay disabled until number-free art lands — see
-## docs/asset-spec-currency-icons.md. The swatch + a bright accent border keep the
-## chip reading as an intentional resource counter, not a bare number on black.
-## (When the clean icon lands, swap the swatch Panel for a TextureRect of equal size.)
+## Currency chip: Codex currency icon + the live value. The accent border keeps
+## the resource counter readable on the home-base background; if an icon is
+## missing, the chip falls back to a color swatch.
 func _make_currency_chip(parent: Control, _icon_id: String, accent: Color) -> Label:
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(134, 64)

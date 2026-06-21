@@ -1,7 +1,7 @@
 # Asset Spec — Art re-cleans (3 PNGs)
 
 **Owner:** Codex (ADR-0005 — Codex generates/cleans all PNGs under
-`run_system/assets/images/**`). **Status:** Requested. These three shipped art
+`run_system/assets/images/**`). **Status:** Delivered 2026-06-20. These three shipped art
 files have cleanup defects; the code already loads them, so a clean re-export at
 the **same path** fixes the in-game look with zero code change.
 
@@ -28,3 +28,8 @@ fragment and tidy the alpha edges.
 **None.** All three are drop-in overwrites at the paths above — the currency chips
 (`home_base_scene._make_currency_chip`) and building sprites
 (`_add_interactive_building`) already load them via `ResourceLoader.exists`.
+
+## Delivery notes
+- `home/currency/caps.png`: regenerated as a clean 128x128 transparent icon with no baked number or UI chip background.
+- `home/currency/scrap.png`: regenerated as a clean 128x128 transparent icon with no baked number or UI chip background.
+- `home/buildings_runtime/clinic.png`: re-cleaned in place at 447x471; detached right-edge alpha fragments were removed while preserving the main clinic sprite.

@@ -1,8 +1,9 @@
 # Asset Spec — Loading-screen background
 
 **Owner:** Codex (ADR-0005 — Codex generates all PNGs under `run_system/assets/images/**`).
-**Status:** Requested. Scene transitions currently show the rotating spinner on a
-**plain black** screen; this adds a themed loading-screen illustration behind it.
+**Status:** Delivered 2026-06-20. Scene transitions now use the themed backdrop at
+`run_system/assets/images/ui/loading_bg.png` behind the spinner instead of a
+plain black hold screen.
 
 ## Problem
 
