@@ -18,8 +18,10 @@ extends CanvasLayer
 const FADE_OUT := 0.18
 const FADE_IN := 0.24
 const SPINNER_TEX_PATH := "res://run_system/assets/images/ui/loading_spinner.png"
+const LOADING_BG_PATH := "res://run_system/assets/images/ui/loading_bg.png"
 
 var _rect: ColorRect
+var _bg: TextureRect
 var _loading: Control
 var _spinner: Control
 var _spin_tween: Tween
@@ -35,7 +37,25 @@ func _ready() -> void:
 	_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_rect.visible = false
 	add_child(_rect)
+	_build_bg()
 	_build_loading()
+
+
+## Optional full-screen loading-screen art behind the spinner (dimmed so the
+## spinner + text read on top). Falls back to plain black when the Codex art at
+## LOADING_BG_PATH is absent. Sits above the black rect, below the spinner.
+func _build_bg() -> void:
+	_bg = TextureRect.new()
+	_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	_bg.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_bg.modulate = Color(0.62, 0.62, 0.62)  # dim the backdrop so the spinner pops
+	_bg.visible = false
+	if ResourceLoader.exists(LOADING_BG_PATH):
+		_bg.texture = load(LOADING_BG_PATH)
+	add_child(_bg)
 
 
 ## Centered spinner + label, on top of the black rect, hidden until a load is in
@@ -92,6 +112,8 @@ func _build_loading() -> void:
 
 
 func _start_spinner() -> void:
+	if _bg.texture != null:
+		_bg.visible = true
 	_loading.visible = true
 	if _spin_tween and _spin_tween.is_valid():
 		_spin_tween.kill()
@@ -104,6 +126,7 @@ func _stop_spinner() -> void:
 	if _spin_tween and _spin_tween.is_valid():
 		_spin_tween.kill()
 	_loading.visible = false
+	_bg.visible = false
 
 
 ## Fade to black, change to the scene at `path`, fade back in.
