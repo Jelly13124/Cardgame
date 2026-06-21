@@ -352,6 +352,19 @@ func _add_interactive_building(
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(callback)
 	add_child(button)
+	# Locked buildings (not yet unlocked with Core) render dimmed with a lock badge so
+	# it reads at a glance which ones aren't available. Still clickable — the building
+	# screen is where you spend Core to unlock.
+	if MetaProgress.get_building_tier(asset_id) <= 0:
+		button.modulate = Color(0.5, 0.5, 0.55)
+		var lock := Label.new()
+		lock.text = "🔒"
+		lock.add_theme_font_size_override("font_size", 76)
+		lock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lock.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		lock.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_set_map_rect(lock, rect)
+		add_child(lock)
 
 
 func _make_click_mask(texture: Texture2D) -> BitMap:
@@ -475,16 +488,28 @@ func _make_currency_chip(parent: Control, _icon_id: String, accent: Color) -> La
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	margin.add_child(row)
 
-	var swatch := Panel.new()
-	swatch.custom_minimum_size = Vector2(26, 26)
-	swatch.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = accent
-	sb.set_corner_radius_all(13)
-	sb.set_border_width_all(2)
-	sb.border_color = accent.darkened(0.45)
-	swatch.add_theme_stylebox_override("panel", sb)
-	row.add_child(swatch)
+	# Codex currency icon (home/currency/<id>.png) if present, else the color swatch.
+	var icon_path := "res://run_system/assets/images/home/currency/%s.png" % _icon_id
+	if _icon_id != "" and ResourceLoader.exists(icon_path):
+		var icon := TextureRect.new()
+		icon.texture = load(icon_path)
+		icon.custom_minimum_size = Vector2(38, 38)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(icon)
+	else:
+		var swatch := Panel.new()
+		swatch.custom_minimum_size = Vector2(26, 26)
+		swatch.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = accent
+		sb.set_corner_radius_all(13)
+		sb.set_border_width_all(2)
+		sb.border_color = accent.darkened(0.45)
+		swatch.add_theme_stylebox_override("panel", sb)
+		row.add_child(swatch)
 
 	var label := Label.new()
 	label.text = "0"
