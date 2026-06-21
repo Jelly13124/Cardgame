@@ -938,8 +938,9 @@ func _open_rest_choice() -> void:
 	)
 	buttons.add_child(heal_btn)
 
-	# Gem socketing: open the deck/gem screen so the player can slot collected gems
-	# into their cards (card upgrades were removed — gems are the growth axis).
+	# Mine a gem: the rest stop hands out a random gem (socketing is available any
+	# time from the top-bar deck button, so it would be redundant here — the
+	# campfire is where you DIG UP gems instead).
 	var gems_btn := Button.new()
 	gems_btn.text = tr("UI_MAP_REST_GEMS_BTN")
 	gems_btn.custom_minimum_size = Vector2(200, 60)
@@ -947,8 +948,13 @@ func _open_rest_choice() -> void:
 	T.apply_button_theme(gems_btn)
 	gems_btn.pressed.connect(
 		func():
+			var pool: Array = RunManager.gem_pool()
+			if not pool.is_empty():
+				var gem_id := str(pool[randi() % pool.size()])
+				RunManager.gem_inventory.append(gem_id)
+				var gem_name: String = Settings.t("GEM_%s_TITLE" % gem_id, gem_id)
+				_show_popup(tr("UI_MAP_MINED_GEM").format({"gem": gem_name}))
 			modal.queue_free()
 			_node_click_pending = false
-			_open_run_deck_viewer()
 	)
 	buttons.add_child(gems_btn)
