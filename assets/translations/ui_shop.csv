@@ -15,3 +15,4 @@ UI_SHOP_REMOVE_MODAL_TITLE,REMOVE A CARD,移除卡牌
 UI_SHOP_REMOVE_MODAL_SUBTITLE,Pick a card to permanently remove from your deck.,选择一张卡牌从牌组中永久移除。
 UI_SHOP_CANCEL,CANCEL,取消
 UI_SHOP_NO_BONUSES,(no bonuses),（无加成）
+UI_SHOP_SECTION_TOOL,TOOLS,工具

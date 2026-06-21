@@ -691,6 +691,12 @@ func _victory():
 			if not RunManager.add_gem_to_backpack(bgem):
 				# Bag full — warn rather than silently dropping the boss gem.
 				show_notification(tr("UI_LOOT_BACKPACK_FULL"), Color(1.0, 0.45, 0.4))
+		# Boss also drops equipment — now the ONLY equipment source in the run.
+		var boss_eq := RunManager.roll_equipment_drop("rare")
+		if boss_eq != "":
+			var eq_inst := RunManager.make_equip_instance(boss_eq, "rare")
+			if not RunManager.add_equip_to_backpack(eq_inst):
+				show_notification(tr("UI_LOOT_BACKPACK_FULL"), Color(1.0, 0.45, 0.4))
 		var act: int = RunManager.current_act
 		var rewards: Dictionary = _extract_rewards_for_act(act)
 		if not rewards.is_empty():
