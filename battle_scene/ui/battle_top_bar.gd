@@ -28,8 +28,14 @@ func _setup() -> void:
 	bar.player_source = main.player if (main and "player" in main) else null
 	bar.show_character_button = false
 	bar.show_settings_button = true
+	bar.show_tools = true
 	bar.deck_pressed.connect(_on_deck_pressed)
 	bar.settings_pressed.connect(_show_settings)
+	bar.tool_used.connect(
+		func(i: int) -> void:
+			if main and main.has_method("use_tool"):
+				main.use_tool(i)
+	)
 	add_child(bar)
 
 
