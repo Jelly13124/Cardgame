@@ -51,7 +51,7 @@ UI_BATTLE_KEYWORD_EXHAUST_DESC,Removed from your deck for the rest of this comba
 UI_BATTLE_KEYWORD_STRENGTH_DESC,Each point of Strength adds 1 to attack damage.,每点力量使攻击伤害增加 1。
 UI_BATTLE_KEYWORD_CONSTITUTION_DESC,Each point of Constitution adds 1 to Block gained.,每点体质使获得的格挡增加 1。
 UI_BATTLE_KEYWORD_INTELLIGENCE_DESC,"Each point of Intelligence: stronger Bleed on Bleed cards, and stronger tools.",每点智力：增强流血牌的流血层数，并提升工具效果。
-UI_BATTLE_KEYWORD_LUCK_DESC,"Each point of Luck: +2% crit chance, +1.5% loot rarity.",每点幸运：暴击率 +2%、战利品稀有度 +1.5%。
+UI_BATTLE_KEYWORD_LUCK_DESC,"Each point of Luck: +2% crit chance, +1.5% loot rarity, and a higher chance to find gems & tools.",每点幸运：暴击率 +2%、战利品稀有度 +1.5%，并提升发现宝石与工具的几率。
 UI_BATTLE_KEYWORD_CHARM_DESC,"Each point of Charm: -2% shop prices (down to -40%), unlocks some event options, and -4% level-up XP cost (down to -40%, faster leveling).","每点魅力：商店价格 -2%（最低 -40%）、解锁部分事件选项、升级所需经验 -4%（最低 -40%，升级更快）。"
 UI_BATTLE_ATTR_CONSTITUTION,Constitution,体质
 UI_BATTLE_ATTR_INTELLIGENCE,Intelligence,智力

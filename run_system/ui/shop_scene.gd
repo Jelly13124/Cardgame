@@ -15,14 +15,14 @@ const SHOPKEEPER_PATH := "res://run_system/assets/images/shop/shopkeeper.png"
 
 # --- Pricing (per rarity) ---
 const CARD_PRICE := {"common": 70, "uncommon": 120, "rare": 200}
-const EQUIP_PRICE := {"common": 60, "uncommon": 100, "rare": 180}
 const RELIC_PRICE := 150
 const REMOVE_CARD_PRICE := 75
 const SHOP_CARD_COUNT := 6
-const SHOP_EQUIPMENT_COUNT := 3
 const SHOP_RELIC_COUNT := 3
 const CARD_RARITY_SEQUENCE := ["common", "common", "uncommon", "common", "uncommon", "rare"]
-const EQUIPMENT_RARITY_SEQUENCE := ["common", "uncommon", "rare"]
+const TOOL_PRICE := {"common": 55, "uncommon": 95}
+const SHOP_TOOL_COUNT := 3
+const TOOL_RARITY_SEQUENCE := ["common", "uncommon", "common"]
 
 const SHOP_BOARD_BG := Color(0.055, 0.040, 0.032, 0.94)
 const SHOP_PANEL_BG := Color(0.080, 0.055, 0.040, 0.92)
@@ -38,7 +38,7 @@ const RARITY_COLORS := {
 
 # Rolled stock — set once in _ready
 var _stock_cards: Array = []  # [{card_id, rarity, price}]
-var _stock_equipment: Array = []  # [{item_id, rarity, price}]
+var _stock_tools: Array = []  # [{tool_id, rarity, price}]
 var _stock_relics: Array = []  # [{relic_id, price}]
 var _remove_price: int = 75
 
@@ -92,7 +92,7 @@ func _refresh_gold_label() -> void:
 
 func _roll_stock() -> void:
 	_stock_cards.clear()
-	_stock_equipment.clear()
+	_stock_tools.clear()
 	_stock_relics.clear()
 
 	var card_pool := _list_cards_by_rarity()
@@ -117,23 +117,19 @@ func _roll_stock() -> void:
 			}
 		)
 
-	var equipment_pool := _list_equipment_by_rarity()
-	for rarity in EQUIPMENT_RARITY_SEQUENCE:
-		var item_id := _take_random_from_pool(equipment_pool, rarity)
-		if item_id == "":
+	var tools_pool := _list_tools_by_rarity()
+	for rarity in TOOL_RARITY_SEQUENCE:
+		var tool_id := _take_random_from_pool(tools_pool, rarity)
+		if tool_id == "":
 			continue
-		_stock_equipment.append(_make_equipment_stock_entry(item_id, rarity))
+		_stock_tools.append(_make_tool_stock_entry(tool_id, rarity))
 
-	while _stock_equipment.size() < SHOP_EQUIPMENT_COUNT:
-		var fallback_equipment := _take_random_from_any_pool(
-			equipment_pool, EQUIPMENT_RARITY_SEQUENCE
-		)
-		if fallback_equipment.is_empty():
+	while _stock_tools.size() < SHOP_TOOL_COUNT:
+		var fallback_tool := _take_random_from_any_pool(tools_pool, TOOL_RARITY_SEQUENCE)
+		if fallback_tool.is_empty():
 			break
-		_stock_equipment.append(
-			_make_equipment_stock_entry(
-				str(fallback_equipment["id"]), str(fallback_equipment["rarity"])
-			)
+		_stock_tools.append(
+			_make_tool_stock_entry(str(fallback_tool["id"]), str(fallback_tool["rarity"]))
 		)
 
 	var relic_pool := _list_unowned_relics()
@@ -170,14 +166,12 @@ func _take_random_from_any_pool(pools: Dictionary, rarity_order: Array) -> Dicti
 	return {"id": _take_random_from_pool(pools, selected_rarity), "rarity": selected_rarity}
 
 
-func _make_equipment_stock_entry(item_id: String, rarity: String) -> Dictionary:
+func _make_tool_stock_entry(tool_id: String, rarity: String) -> Dictionary:
 	var price_key := rarity
-	if not EQUIP_PRICE.has(price_key):
+	if not TOOL_PRICE.has(price_key):
 		price_key = "common"
 	return {
-		"item_id": item_id,
-		"rarity": rarity,
-		"price": _discounted_price(int(EQUIP_PRICE[price_key]))
+		"tool_id": tool_id, "rarity": rarity, "price": _discounted_price(int(TOOL_PRICE[price_key]))
 	}
 
 
@@ -209,19 +203,12 @@ func _list_cards_by_rarity() -> Dictionary:
 	return result
 
 
-func _list_equipment_by_rarity() -> Dictionary:
-	var result := {"common": [], "uncommon": [], "rare": []}
-	var dir = DirAccess.open("res://run_system/data/equipment/")
-	if dir == null:
-		return result
-	for file_name in dir.get_files():
-		if not file_name.ends_with(".json"):
-			continue
-		var item_id := file_name.get_basename()
-		var data := _load_json("res://run_system/data/equipment/" + file_name)
-		var rarity := str(data.get("rarity", "common"))
+func _list_tools_by_rarity() -> Dictionary:
+	var result := {"common": [], "uncommon": []}
+	for tid in RunManager.tool_pool():
+		var rarity := str(RunManager.get_tool_data(tid).get("rarity", "common"))
 		if rarity in result:
-			result[rarity].append(item_id)
+			result[rarity].append(tid)
 	return result
 
 
@@ -358,29 +345,27 @@ func _build_ui() -> void:
 	for entry in _stock_cards:
 		cards_grid.add_child(_build_card_stall(entry))
 
-	if not _stock_equipment.is_empty() or not _stock_relics.is_empty():
+	if not _stock_tools.is_empty() or not _stock_relics.is_empty():
 		var mid_row := HBoxContainer.new()
 		mid_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		mid_row.add_theme_constant_override("separation", 14)
 		mid_row.alignment = BoxContainer.ALIGNMENT_CENTER
 		body.add_child(mid_row)
 
-		if not _stock_equipment.is_empty():
-			var equip_section := _make_section_panel(
-				tr("UI_SHOP_SECTION_EQUIPMENT"), Vector2(0, 246)
-			)
-			mid_row.add_child(equip_section["panel"] as Control)
-			var equip_body := equip_section["body"] as VBoxContainer
-			var equip_center := CenterContainer.new()
-			equip_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			equip_body.add_child(equip_center)
-			var equip_grid := GridContainer.new()
-			equip_grid.columns = max(1, min(3, _stock_equipment.size()))
-			equip_grid.add_theme_constant_override("h_separation", 12)
-			equip_grid.add_theme_constant_override("v_separation", 8)
-			equip_center.add_child(equip_grid)
-			for entry in _stock_equipment:
-				equip_grid.add_child(_build_equipment_stall(entry))
+		if not _stock_tools.is_empty():
+			var tool_section := _make_section_panel(tr("UI_SHOP_SECTION_TOOL"), Vector2(0, 246))
+			mid_row.add_child(tool_section["panel"] as Control)
+			var tool_body := tool_section["body"] as VBoxContainer
+			var tool_center := CenterContainer.new()
+			tool_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			tool_body.add_child(tool_center)
+			var tool_grid := GridContainer.new()
+			tool_grid.columns = max(1, min(3, _stock_tools.size()))
+			tool_grid.add_theme_constant_override("h_separation", 12)
+			tool_grid.add_theme_constant_override("v_separation", 8)
+			tool_center.add_child(tool_grid)
+			for entry in _stock_tools:
+				tool_grid.add_child(_build_tool_stall(entry))
 
 		if not _stock_relics.is_empty():
 			var relic_section := _make_section_panel(tr("UI_SHOP_SECTION_RELIC"), Vector2(0, 246))
@@ -578,7 +563,7 @@ func _build_card_stall(entry: Dictionary) -> Control:
 	return wrapper
 
 
-func _build_equipment_stall(entry: Dictionary) -> Control:
+func _build_tool_stall(entry: Dictionary) -> Control:
 	var frame := PanelContainer.new()
 	frame.custom_minimum_size = Vector2(176, 174)
 	frame.add_theme_stylebox_override(
@@ -598,23 +583,40 @@ func _build_equipment_stall(entry: Dictionary) -> Control:
 	wrapper.alignment = BoxContainer.ALIGNMENT_CENTER
 	margin.add_child(wrapper)
 
-	var item_id: String = str(entry["item_id"])
-	var data := RunManager.get_equipment_data(item_id)
-	var slot := str(data.get("slot", "head"))
-	var equip_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
+	var tool_id: String = str(entry["tool_id"])
+	var data := RunManager.get_tool_data(tool_id)
+	var tool_name := Settings.t("TOOL_%s_TITLE" % tool_id, str(data.get("title", tool_id)))
 
 	var icon_holder := HBoxContainer.new()
 	icon_holder.alignment = BoxContainer.ALIGNMENT_CENTER
 	wrapper.add_child(icon_holder)
-	var icon := EQUIPMENT_ICON.new()
-	icon.custom_minimum_size = Vector2(52, 52)
-	icon_holder.add_child(icon)
-	icon.set_equipment(
-		slot, equip_name, str(data.get("sprite", "")), str(data.get("rarity", "common"))
-	)
+	var icon_path := str(data.get("icon", ""))
+	var tex: Texture2D = null
+	if icon_path != "" and ResourceLoader.exists(icon_path):
+		tex = load(icon_path) as Texture2D
+	if tex:
+		# Codex tool art when present.
+		var icon := TextureRect.new()
+		icon.custom_minimum_size = Vector2(52, 52)
+		icon.texture = tex
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon_holder.add_child(icon)
+	else:
+		# Glyph fallback (first char of the localized name) until art lands.
+		var glyph := Label.new()
+		glyph.custom_minimum_size = Vector2(52, 52)
+		glyph.text = tool_name.substr(0, 1) if tool_name != "" else "?"
+		glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		glyph.add_theme_font_size_override("font_size", 30)
+		glyph.add_theme_color_override(
+			"font_color", RARITY_COLORS.get(str(entry["rarity"]), Color.WHITE)
+		)
+		icon_holder.add_child(glyph)
 
 	var name_lbl := Label.new()
-	name_lbl.text = equip_name
+	name_lbl.text = tool_name
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	name_lbl.custom_minimum_size = Vector2(150, 0)
@@ -622,25 +624,16 @@ func _build_equipment_stall(entry: Dictionary) -> Control:
 	name_lbl.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
 	wrapper.add_child(name_lbl)
 
-	var bonus_lbl := Label.new()
-	bonus_lbl.text = _format_bonuses(data.get("bonuses", {}))
-	bonus_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	bonus_lbl.add_theme_font_size_override("font_size", 15)
-	bonus_lbl.add_theme_color_override(
+	var desc_lbl := Label.new()
+	desc_lbl.text = Settings.t("TOOL_%s_DESC" % tool_id, "")
+	desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc_lbl.custom_minimum_size = Vector2(150, 0)
+	desc_lbl.add_theme_font_size_override("font_size", 13)
+	desc_lbl.add_theme_color_override(
 		"font_color", RARITY_COLORS.get(str(entry["rarity"]), Color.WHITE)
 	)
-	wrapper.add_child(bonus_lbl)
-
-	var set_id := str(data.get("set_id", ""))
-	if set_id != "":
-		var set_lbl := Label.new()
-		set_lbl.text = "[%s]" % Settings.t("SET_%s_NAME" % set_id, set_id)
-		set_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		set_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		set_lbl.custom_minimum_size = Vector2(150, 0)
-		set_lbl.add_theme_font_size_override("font_size", 14)
-		set_lbl.add_theme_color_override("font_color", Color(0.7, 0.6, 0.4))
-		wrapper.add_child(set_lbl)
+	wrapper.add_child(desc_lbl)
 
 	var price_row := HBoxContainer.new()
 	price_row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -652,7 +645,7 @@ func _build_equipment_stall(entry: Dictionary) -> Control:
 	price_lbl.add_theme_color_override("font_color", SHOP_PRICE)
 	price_row.add_child(price_lbl)
 	var buy_btn := _make_shop_button(tr("UI_SHOP_BUY"), Vector2(78, 32))
-	buy_btn.pressed.connect(_on_buy_equipment.bind(item_id, int(entry["price"]), buy_btn))
+	buy_btn.pressed.connect(_on_buy_tool.bind(tool_id, int(entry["price"]), buy_btn))
 	price_row.add_child(buy_btn)
 
 	return frame
@@ -772,8 +765,8 @@ func _on_buy_card(card_id: String, price: int, btn: Button) -> void:
 		_mark_sold(btn)
 
 
-func _on_buy_equipment(item_id: String, price: int, btn: Button) -> void:
-	if RunManager.purchase_equipment(item_id, price):
+func _on_buy_tool(tool_id: String, price: int, btn: Button) -> void:
+	if RunManager.purchase_tool(tool_id, price):
 		_mark_sold(btn)
 
 

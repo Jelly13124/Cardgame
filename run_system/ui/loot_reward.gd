@@ -134,34 +134,30 @@ func _generate_loot() -> void:
 			}
 		)
 
-	var equipment_drop_rarity = (
-		_drop_rarity_for_node_type(node_type) if node_type == "elite" else ""
-	)
-	var equipment_drop_id = (
-		RunManager.roll_equipment_drop(equipment_drop_rarity) if equipment_drop_rarity != "" else ""
-	)
-	if equipment_drop_id != "":
-		var data = RunManager.get_equipment_data(equipment_drop_id)
-		# Roll the affix instance UP FRONT so the claim grants this exact instance.
-		# The reward row deliberately shows NO stat/set subtitle (just the item
-		# name) — the player inspects the actual rolled affixes on the map screen.
-		var instance := RunManager.make_equip_instance(equipment_drop_id, equipment_drop_rarity)
-		available_loot.append(
-			{
-				"id": "equipment",
-				"type": "equipment",
-				"item_id": equipment_drop_id,
-				"rarity": equipment_drop_rarity,
-				"instance": instance,
-				"title":
-				Settings.t(
-					"EQUIP_%s_NAME" % equipment_drop_id, str(data.get("name", equipment_drop_id))
-				),
-				"subtitle": "",
-				"icon": "res://battle_scene/assets/images/%s" % str(data.get("sprite", "")),
-				"action": tr("UI_LOOT_ACTION_TAKE")
-			}
-		)
+	# Tool drop: elites ALWAYS drop a tool; normal combats roll a Luck-scaled chance.
+	# (Equipment now drops ONLY from bosses, granted in battle_scene._victory.)
+	var wants_tool := false
+	if node_type == "elite":
+		wants_tool = true
+	elif node_type != "boss":
+		wants_tool = randf() < RunManager.luck_tool_chance()
+	if wants_tool:
+		var tool_id := RunManager.roll_tool_drop(node_type)
+		if tool_id != "":
+			var tdata := RunManager.get_tool_data(tool_id)
+			available_loot.append(
+				{
+					"id": "tool",
+					"type": "tool",
+					"tool_id": tool_id,
+					"rarity": str(tdata.get("rarity", "common")),
+					"title":
+					Settings.t("TOOL_%s_TITLE" % tool_id, str(tdata.get("title", tool_id))),
+					"subtitle": Settings.t("TOOL_%s_DESC" % tool_id, ""),
+					"icon": str(tdata.get("icon", "")),
+					"action": tr("UI_LOOT_ACTION_TAKE")
+				}
+			)
 
 
 func _populate_loot_ui() -> void:
@@ -375,6 +371,8 @@ func _on_loot_selected(loot_id: String, button: Button) -> void:
 		button.queue_free()
 	elif loot["type"] == "equipment":
 		_claim_equipment_drop(loot.get("instance", {}), button)
+	elif loot["type"] == "tool":
+		_claim_tool_drop(str(loot.get("tool_id", "")), button)
 
 
 ## Draft state. `_draft_gem_only` = elite gem draft; `_in_attr` = level-up attribute
@@ -780,6 +778,18 @@ func _drop_rarity_for_node_type(node_type: String) -> String:
 			return ""
 
 
+## Claim a tool reward into the top-bar inventory. Slots full → warn (no silent
+## loss); the player can skip by proceeding, or use a tool first and take it next.
+func _claim_tool_drop(tool_id: String, button: Button) -> void:
+	if tool_id == "":
+		return
+	if RunManager.add_tool(tool_id):
+		AudioManager.play_sfx("reward")
+		button.queue_free()
+		return
+	_show_backpack_full_toast(tr("UI_LOOT_TOOL_SLOTS_FULL"))
+
+
 func _claim_equipment_drop(instance: Dictionary, button: Button) -> void:
 	if instance.is_empty():
 		return
@@ -797,9 +807,10 @@ func _claim_equipment_drop(instance: Dictionary, button: Button) -> void:
 	add_child(modal)
 
 
-## Transient bottom-centered notice used when the backpack can't hold a reward
-## (gold overflow or a full equipment bag). Self-frees after a short fade.
-func _show_backpack_full_toast() -> void:
+## Transient bottom-centered notice used when a reward can't be taken (gold
+## overflow, full equipment bag, or full tool slots). Self-frees after a short
+## fade. Pass `toast_text` to override the default backpack-full message.
+func _show_backpack_full_toast(toast_text: String = "") -> void:
 	# Avoid stacking duplicates if the player spams a blocked reward.
 	var existing = get_node_or_null("BackpackFullToast")
 	if existing:
@@ -807,7 +818,7 @@ func _show_backpack_full_toast() -> void:
 
 	var toast = Label.new()
 	toast.name = "BackpackFullToast"
-	toast.text = tr("UI_LOOT_BACKPACK_FULL")
+	toast.text = toast_text if toast_text != "" else tr("UI_LOOT_BACKPACK_FULL")
 	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	toast.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	toast.add_theme_font_size_override("font_size", 24)
@@ -841,6 +852,11 @@ func _load_texture(path: String) -> Texture2D:
 	var file_path = path
 	if path.begins_with("res://"):
 		file_path = ProjectSettings.globalize_path(path)
+
+	# Guard the raw-file fallback: a missing path (e.g. Codex tool art still
+	# pending) would otherwise spam a loud core ERROR. Fall through to the glyph.
+	if not FileAccess.file_exists(file_path):
+		return null
 
 	var image = Image.new()
 	var err = image.load(file_path)

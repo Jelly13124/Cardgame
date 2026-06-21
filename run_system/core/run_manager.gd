@@ -1340,6 +1340,12 @@ func luck_gem_chance() -> float:
 	return clampf(0.04 * float(_attr("luck")), 0.0, 0.5)
 
 
+## Luck-scaled chance for a normal (non-elite, non-boss) combat / event to also
+## drop a tool. Elites always drop one; bosses drop equipment instead. [tunable]
+func luck_tool_chance() -> float:
+	return clampf(0.25 + 0.03 * float(_attr("luck")), 0.0, 0.60)
+
+
 func charm_shop_mult() -> float:
 	return maxf(SHOP_FLOOR, 1.0 - _attr("charm") * SHOP_PER_CHARM)
 
@@ -1739,6 +1745,33 @@ func consume_tool(index: int) -> void:
 	if index >= 0 and index < tool_inventory.size():
 		tool_inventory.remove_at(index)
 		tools_changed.emit()
+
+
+## Pick a random tool id for a drop. Elites bias toward uncommon tools, normal
+## combats toward common; falls back to the whole pool if that tier is empty.
+func roll_tool_drop(node_type: String = "") -> String:
+	var pool := tool_pool()
+	if pool.is_empty():
+		return ""
+	var prefer := "uncommon" if node_type == "elite" else "common"
+	var filtered: Array[String] = []
+	for tid in pool:
+		if str(get_tool_data(tid).get("rarity", "common")) == prefer:
+			filtered.append(tid)
+	var src: Array = filtered if not filtered.is_empty() else pool
+	return str(src[randi() % src.size()])
+
+
+## Spend gold to add a tool to the top-bar inventory. Returns false on insufficient
+## gold, an unknown id, or no free tool slot (caller handles the UI in each case).
+func purchase_tool(tool_id: String, cost: int) -> bool:
+	if tool_id == "" or gold < cost:
+		return false
+	if tool_inventory.size() >= tool_slots():
+		return false
+	add_resources(-cost, 0)
+	add_tool(tool_id)
+	return true
 
 
 ## Socket `gem_id` (taken from the backpack) into the player_deck card with `uid`,
