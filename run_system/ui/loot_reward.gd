@@ -549,15 +549,21 @@ func _generate_draft_options() -> void:
 		child.queue_free()
 
 	var gem_ids: Array = RunManager.gem_pool()
+	var used := {}  # ids shown this draft — the 3 slots never repeat the same card/gem
 	for i in range(3):
 		# Gem slot when this is an elite gem-draft, or (in a level draft) a Luck roll.
 		var as_gem := _draft_gem_only or (randf() < RunManager.luck_gem_chance())
 		if as_gem and not gem_ids.is_empty():
-			draft_card_container.add_child(
-				_make_gem_draft_slot(str(gem_ids[randi() % gem_ids.size()]))
-			)
+			var avail: Array = gem_ids.filter(func(g): return not used.has(str(g)))
+			if avail.is_empty():
+				avail = gem_ids
+			var gid := str(avail[randi() % avail.size()])
+			used[gid] = true
+			draft_card_container.add_child(_make_gem_draft_slot(gid))
 		else:
-			draft_card_container.add_child(_make_draft_card_slot(_roll_draft_card_id()))
+			var cid := _roll_unique_draft_card_id(used)
+			used[cid] = true
+			draft_card_container.add_child(_make_draft_card_slot(cid))
 
 
 ## Roll a single card id for a draft slot (rarity weighted, Luck-boosted).
@@ -579,16 +585,25 @@ func _roll_draft_card_id() -> String:
 	return str(pool[randi() % pool.size()]) if not pool.is_empty() else ""
 
 
-func _make_draft_card_slot(card_id: String) -> Control:
-	var wrapper = Control.new()
-	wrapper.custom_minimum_size = Vector2(300, 400)
+## Like _roll_draft_card_id but skips ids already used this draft, so the 3 slots
+## never show two of the same card (bounded retry — the rarity pools are large).
+func _roll_unique_draft_card_id(used: Dictionary) -> String:
+	for _attempt in range(24):
+		var cid := _roll_draft_card_id()
+		if cid != "" and not used.has(cid):
+			return cid
+	return _roll_draft_card_id()
 
-	var frame = Panel.new()
-	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
-	frame.add_theme_stylebox_override(
-		"panel", T.panel_with_shadow(Color(0.095, 0.072, 0.055, 0.92), T.PANEL_BORDER, 4)
-	)
-	wrapper.add_child(frame)
+
+func _make_draft_card_slot(card_id: String) -> Control:
+	# Bigger card, and NO frame box behind it — just the card itself.
+	var card_w := 208.0
+	var card_h := 286.0
+	var disp_scale := 1.5  # up from the old ~1.15 footprint
+	var disp := Vector2(card_w, card_h) * disp_scale
+	var wrapper = Control.new()
+	# Pad so the hover scale-up doesn't clip against the neighbours.
+	wrapper.custom_minimum_size = disp + Vector2(28, 28)
 
 	var card = _card_factory.create_card(card_id, null)
 	if card:
@@ -596,11 +611,11 @@ func _make_draft_card_slot(card_id: String) -> Control:
 			card.get_parent().remove_child(card)
 		card.can_be_interacted_with = false
 		card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		# Compensate for the 208x286 card so the draft slot renders identically to
-		# the old 160x220 @1.5 footprint (160/208 ≈ 0.769), zoomed from the new center.
-		card.position = Vector2(46, 55)
-		card.scale = Vector2(1.5 * 160.0 / 208.0, 1.5 * 160.0 / 208.0)
-		card.pivot_offset = Vector2(104, 143)
+		card.pivot_offset = Vector2(card_w * 0.5, card_h * 0.5)
+		card.scale = Vector2(disp_scale, disp_scale)
+		# Centre the scaled card in the wrapper (scale pivots around the card centre).
+		var tl: Vector2 = (wrapper.custom_minimum_size - disp) * 0.5
+		card.position = tl - Vector2(card_w * 0.5, card_h * 0.5) * (1.0 - disp_scale)
 		wrapper.add_child(card)
 
 	var button = Button.new()
@@ -613,27 +628,18 @@ func _make_draft_card_slot(card_id: String) -> Control:
 	wrapper.add_child(button)
 
 	if card:
+		# Hover: pop the card up a touch (no frame to recolour any more).
 		button.mouse_entered.connect(
 			func():
-				frame.add_theme_stylebox_override(
-					"panel",
-					T.panel_with_shadow(Color(0.13, 0.095, 0.062, 0.96), T.ACCENT_NEON_BLUE, 4)
-				)
 				var tween = create_tween()
 				tween.tween_property(
-					card, "scale", Vector2(1.62 * 160.0 / 208.0, 1.62 * 160.0 / 208.0), 0.10
+					card, "scale", Vector2(disp_scale * 1.07, disp_scale * 1.07), 0.10
 				)
 		)
 		button.mouse_exited.connect(
 			func():
-				frame.add_theme_stylebox_override(
-					"panel",
-					T.panel_with_shadow(Color(0.095, 0.072, 0.055, 0.92), T.PANEL_BORDER, 4)
-				)
 				var tween = create_tween()
-				tween.tween_property(
-					card, "scale", Vector2(1.5 * 160.0 / 208.0, 1.5 * 160.0 / 208.0), 0.10
-				)
+				tween.tween_property(card, "scale", Vector2(disp_scale, disp_scale), 0.10)
 		)
 
 	return wrapper
