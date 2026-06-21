@@ -914,3 +914,54 @@ func load_progress() -> void:
 	# One-time migration: seed building tiers from legacy facility/upgrade state
 	# so no progress is lost. Idempotent (only raises tiers); legacy fields kept.
 	_normalize_buildings()
+
+
+# --- Card-info cache (loading optimization, Phase 5) -----------------------
+#
+# The vendored json_card_factory re-parses every card JSON each time a battle (or
+# the shop) builds a factory — ~50 file reads + JSON parses per battle. This
+# session-level cache parses each card's JSON ONCE; cached_card_factory.gd reads
+# from it instead of re-scanning. (Addon untouched per ADR-0005.)
+
+const _CARD_INFO_ROOT := "res://battle_scene/card_info"
+var _card_info_cache: Dictionary = {}  # card_name -> parsed info Dictionary
+
+
+## Parsed card-info for every card JSON under card_info/, built once and reused
+## for the rest of the session. Returns {card_name: info_dict}. Callers must NOT
+## mutate the returned dicts — the factory deep-copies per card when it builds a
+## battle's cards.
+func get_card_info_cache() -> Dictionary:
+	if _card_info_cache.is_empty():
+		_build_card_info_cache(_CARD_INFO_ROOT)
+		print("CardInfoCache: parsed %d card JSONs once." % _card_info_cache.size())
+	return _card_info_cache
+
+
+func _build_card_info_cache(path: String) -> void:
+	var dir := DirAccess.open(path)
+	if dir == null:
+		return
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while file_name != "":
+		if dir.current_is_dir():
+			if file_name != "." and file_name != "..":
+				_build_card_info_cache(path + "/" + file_name)
+		elif file_name.ends_with(".json"):
+			var info := _parse_card_json(path + "/" + file_name)
+			if not info.is_empty():
+				_card_info_cache[file_name.get_basename()] = info
+		file_name = dir.get_next()
+
+
+func _parse_card_json(full_path: String) -> Dictionary:
+	if not FileAccess.file_exists(full_path):
+		return {}
+	var f := FileAccess.open(full_path, FileAccess.READ)
+	if f == null:
+		return {}
+	var text := f.get_as_text()
+	f.close()
+	var parsed = JSON.parse_string(text)
+	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
