@@ -76,6 +76,7 @@ var equipped_items: Dictionary = {
 ## as_equip_instance) for back-compat. Gold / Core / equipment share these cells.
 var backpack: Array = []
 signal backpack_changed
+signal tools_changed
 const GOLD_PER_CELL := 100
 const CORE_PER_CELL := 30
 
@@ -1689,7 +1690,15 @@ func add_tool(tool_id: String) -> bool:
 	if tool_inventory.size() >= tool_slots():
 		return false
 	tool_inventory.append(tool_id)
+	tools_changed.emit()
 	return true
+
+
+## Remove (consume) the tool at `index` from the inventory; emits tools_changed.
+func consume_tool(index: int) -> void:
+	if index >= 0 and index < tool_inventory.size():
+		tool_inventory.remove_at(index)
+		tools_changed.emit()
 
 
 ## Socket `gem_id` (taken from gem_inventory) into the player_deck card with `uid`,

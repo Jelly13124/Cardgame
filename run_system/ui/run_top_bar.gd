@@ -31,12 +31,14 @@ const XP_BAR_H := 17.0
 signal deck_pressed
 signal character_pressed
 signal settings_pressed
+signal tool_used(index: int)
 
 ## â”€â”€â”€ Config (set by host before add_child) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var hp_from_player: bool = false  # battle = true (live player HP)
 var player_source: Node = null  # the PlayerEntity when hp_from_player
 var show_character_button: bool = true  # map only (equipment locked in combat)
 var show_settings_button: bool = false  # battle only
+var show_tools: bool = false  # battle = tool slots are clickable/usable
 
 ## â”€â”€â”€ Cached nodes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var _hp_bar: ProgressBar
@@ -46,6 +48,7 @@ var _xp_label: Label
 var _gold_label: Label
 var _act_label: Label
 var _relic_shelf: HBoxContainer
+var _tool_shelf: HBoxContainer
 var _portrait_label: Label  # fallback initial letter when no sprite
 var _portrait_texture: TextureRect
 var _time_label: Label
@@ -181,6 +184,16 @@ func _build() -> void:
 
 	# Gold sits LEFT next to the vitals, StS-style: bare icon + number, no frame.
 	_gold_label = _make_icon_value(row, GOLD_ICON, 21, Color(1.0, 0.86, 0.45))
+
+	# Tool slots (StS2-style top-bar consumables), left cluster next to gold.
+	_tool_shelf = HBoxContainer.new()
+	_tool_shelf.name = "ToolShelf"
+	_tool_shelf.add_theme_constant_override("separation", 6)
+	_tool_shelf.mouse_filter = Control.MOUSE_FILTER_PASS
+	row.add_child(_tool_shelf)
+	if is_instance_valid(RunManager):
+		RunManager.tools_changed.connect(refresh_tools)
+	refresh_tools()
 
 	# Spacer pushes the right cluster (act/floor · deck · settings · time) right.
 	var spacer := Control.new()
@@ -457,6 +470,70 @@ func _refresh_gold_act() -> void:
 			RunManager.current_floor
 		]
 	)
+
+
+## Rebuild the top-bar tool slots from RunManager.tool_inventory (StS2-style).
+func refresh_tools() -> void:
+	if not is_instance_valid(_tool_shelf):
+		return
+	for c in _tool_shelf.get_children():
+		c.queue_free()
+	var inv: Array = RunManager.tool_inventory
+	var slots: int = RunManager.tool_slots()
+	for i in range(slots):
+		if i < inv.size():
+			_tool_shelf.add_child(_make_tool_slot(i, str(inv[i])))
+		else:
+			_tool_shelf.add_child(_make_empty_tool_slot())
+
+
+func _make_empty_tool_slot() -> Control:
+	var p := Panel.new()
+	p.custom_minimum_size = Vector2(40, 40)
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0, 0, 0, 0.22)
+	sb.set_corner_radius_all(8)
+	sb.set_border_width_all(1)
+	sb.border_color = Color(0.5, 0.45, 0.35, 0.45)
+	p.add_theme_stylebox_override("panel", sb)
+	return p
+
+
+## A filled tool slot: icon (or first-letter fallback) + tooltip; in battle a press
+## emits tool_used(index) so the host resolves + consumes it.
+func _make_tool_slot(index: int, tool_id: String) -> Button:
+	var data := RunManager.get_tool_data(tool_id)
+	var title := Settings.t(
+		"TOOL_%s_TITLE" % tool_id, str(data.get("title", _humanize_id(tool_id)))
+	)
+	var desc := Settings.t("TOOL_%s_DESC" % tool_id, "")
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(40, 40)
+	b.focus_mode = Control.FOCUS_NONE
+	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	b.tooltip_text = ("%s\n%s" % [title, desc]) if not desc.is_empty() else title
+	var icon_path := str(data.get("icon", ""))
+	if icon_path != "" and ResourceLoader.exists(icon_path):
+		b.icon = load(icon_path)
+		b.expand_icon = true
+	else:
+		b.text = _short_label(title)
+		b.add_theme_font_size_override("font_size", 18)
+		b.add_theme_color_override("font_color", T.TEXT_MAIN)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.10, 0.12, 0.16, 0.85)
+	sb.set_corner_radius_all(8)
+	sb.set_border_width_all(2)
+	sb.border_color = Color(0.55, 0.75, 0.95, 0.9)
+	b.add_theme_stylebox_override("normal", sb)
+	var sbh: StyleBoxFlat = sb.duplicate()
+	sbh.border_color = Color(0.78, 0.92, 1.0, 1.0)
+	b.add_theme_stylebox_override("hover", sbh)
+	b.add_theme_stylebox_override("pressed", sb)
+	if show_tools:
+		b.pressed.connect(func() -> void: tool_used.emit(index))
+	return b
 
 
 func _refresh_relics() -> void:

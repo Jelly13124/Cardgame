@@ -368,6 +368,46 @@ func show_notification(text: String, color: Color = Color.WHITE):
 	ui_manager.show_notification(text, color)
 
 
+## Use a top-bar tool (StS2-style one-time consumable). Self/none tools resolve
+## immediately; enemy tools hit the first alive enemy (multi-enemy pick is a later
+## refinement). Effect amounts scale with Intelligence; consumed after resolving.
+func use_tool(index: int) -> void:
+	if index < 0 or index >= RunManager.tool_inventory.size():
+		return
+	var tdata: Dictionary = RunManager.get_tool_data(str(RunManager.tool_inventory[index]))
+	if tdata.is_empty():
+		return
+	var target: Node = null
+	if str(tdata.get("target", "none")) == "enemy":
+		for c in enemy_container.get_children():
+			if (
+				is_instance_valid(c)
+				and not c.is_queued_for_deletion()
+				and c.has_method("take_damage")
+			):
+				target = c
+				break
+		if target == null:
+			AudioManager.play_sfx("error")
+			return
+	await _resolve_tool(index, tdata, target)
+
+
+func _resolve_tool(index: int, tdata: Dictionary, target: Node) -> void:
+	AudioManager.play_sfx("ui_click")
+	var int_mult: float = 1.0 + 0.08 * float(RunManager._attr("intelligence"))
+	for eff in tdata.get("effects", []):
+		if typeof(eff) != TYPE_DICTIONARY:
+			continue
+		var e: Dictionary = (eff as Dictionary).duplicate(true)
+		if e.has("amount"):
+			e["amount"] = int(round(float(e["amount"]) * int_mult))
+		await combat_engine._apply_effect(
+			e, target if is_instance_valid(target) else null, player, 1.0
+		)
+	RunManager.consume_tool(index)
+
+
 # ─── Turn Events ──────────────────────────────────────────────────────────────
 
 
