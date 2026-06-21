@@ -51,7 +51,7 @@ func _build_bg() -> void:
 	_bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	_bg.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	_bg.modulate = Color(0.62, 0.62, 0.62)  # dim the backdrop so the spinner pops
+	_bg.modulate = Color(0.82, 0.82, 0.82)  # lightly dim the backdrop so the spinner pops
 	_bg.visible = false
 	if ResourceLoader.exists(LOADING_BG_PATH):
 		_bg.texture = load(LOADING_BG_PATH)
