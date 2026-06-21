@@ -949,11 +949,18 @@ func _open_rest_choice() -> void:
 	gems_btn.pressed.connect(
 		func():
 			var pool: Array = RunManager.gem_pool()
-			if not pool.is_empty():
-				var gem_id := str(pool[randi() % pool.size()])
-				RunManager.gem_inventory.append(gem_id)
-				var gem_name: String = Settings.t("GEM_%s_TITLE" % gem_id, gem_id)
-				_show_popup(tr("UI_MAP_MINED_GEM").format({"gem": gem_name}))
+			if pool.is_empty():
+				modal.queue_free()
+				_node_click_pending = false
+				return
+			var gem_id := str(pool[randi() % pool.size()])
+			if not RunManager.add_gem_to_backpack(gem_id):
+				# Bag full — warn and keep the rest stop open so the player can heal
+				# instead of losing the dig.
+				_show_popup(tr("UI_LOOT_BACKPACK_FULL"))
+				return
+			var gem_name: String = Settings.t("GEM_%s_TITLE" % gem_id, gem_id)
+			_show_popup(tr("UI_MAP_MINED_GEM").format({"gem": gem_name}))
 			modal.queue_free()
 			_node_click_pending = false
 	)

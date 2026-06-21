@@ -1091,6 +1091,46 @@ func add_equip_to_backpack(item: Variant) -> bool:
 	return true
 
 
+## Put a gem into the first free backpack cell (1 gem = 1 cell, like equipment).
+## Returns false when the backpack is full. Every gem grant (mining / draft / shop
+## / relic) routes through here so a full bag blocks the grant — the caller shows
+## the backpack-full toast — instead of stuffing an unlimited side-list.
+func add_gem_to_backpack(gem_id: String) -> bool:
+	if gem_id == "":
+		return false
+	_ensure_backpack()
+	var idx := _first_null_cell()
+	if idx == -1:
+		return false
+	backpack[idx] = {"kind": "gem", "id": gem_id}
+	emit_signal("backpack_changed")
+	return true
+
+
+## Gem ids currently held in the backpack (cell order) — replaces the old
+## gem_inventory side-list for the socketing UI.
+func backpack_gem_ids() -> Array[String]:
+	var out: Array[String] = []
+	for c in backpack:
+		if typeof(c) == TYPE_DICTIONARY and c.get("kind") == "gem":
+			out.append(str(c.get("id", "")))
+	return out
+
+
+## First backpack cell index holding `gem_id` (-1 if none). Used to free the cell
+## when the gem is socketed.
+func _find_gem_cell(gem_id: String) -> int:
+	for i in range(MAX_INVENTORY):
+		var c = backpack[i]
+		if (
+			typeof(c) == TYPE_DICTIONARY
+			and c.get("kind") == "gem"
+			and str(c.get("id", "")) == gem_id
+		):
+			return i
+	return -1
+
+
 ## Swap two backpack cells (panel uses this to move an item into/out of a safe
 ## cell). Safe-cell range is index 0..safe_cells-1.
 func move_cell(from_idx: int, to_idx: int) -> void:
@@ -1527,7 +1567,7 @@ func _apply_relic_on_pickup(relic_id: String) -> void:
 			"grant_card_keyword":
 				var gem_id := str(e.get("keyword", "wealthy"))
 				for _i in range(maxi(1, int(e.get("amount", 1)))):
-					gem_inventory.append(gem_id)
+					add_gem_to_backpack(gem_id)
 			"add_card":
 				# Inject N copies of a card into the deck (double-fire clip → 2 Reloads).
 				var card_id := str(e.get("card", ""))
@@ -1701,10 +1741,12 @@ func consume_tool(index: int) -> void:
 		tools_changed.emit()
 
 
-## Socket `gem_id` (taken from gem_inventory) into the player_deck card with `uid`,
-## if it has a free slot (<1 gem). Locked after — no removal. Returns success.
+## Socket `gem_id` (taken from the backpack) into the player_deck card with `uid`,
+## if it has a free slot (<1 gem). Frees the gem's backpack cell on success.
+## Locked after — no removal. Returns success.
 func socket_gem(uid: String, gem_id: String) -> bool:
-	if not gem_id in gem_inventory:
+	var cell_idx := _find_gem_cell(gem_id)
+	if cell_idx == -1:
 		return false
 	for entry in player_deck:
 		if typeof(entry) != TYPE_DICTIONARY or str(entry.get("uid", "")) != uid:
@@ -1714,7 +1756,8 @@ func socket_gem(uid: String, gem_id: String) -> bool:
 			return false
 		gems.append(gem_id)
 		entry["gems"] = gems
-		gem_inventory.erase(gem_id)
+		backpack[cell_idx] = null
+		emit_signal("backpack_changed")
 		AudioManager.play_sfx("gem")
 		return true
 	return false
@@ -1965,6 +2008,13 @@ func load_run() -> bool:
 	backpack = data.get("backpack", [])
 	relics = _to_string_array(data.get("relics", []))
 	gem_inventory = _to_string_array(data.get("gem_inventory", []))
+	# Migrate legacy unlimited-gem saves into backpack cells (gems now occupy the
+	# bag). Runs AFTER backpack restore above; drops any that no longer fit. New
+	# saves keep gem_inventory empty so this is a no-op.
+	if not gem_inventory.is_empty():
+		for gid in gem_inventory:
+			add_gem_to_backpack(str(gid))
+		gem_inventory.clear()
 	tool_inventory = _to_string_array(data.get("tool_inventory", []))
 	xp = int(data.get("xp", 0))
 	level = int(data.get("level", 1))

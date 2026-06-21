@@ -160,14 +160,15 @@ func _populate_gem_box() -> void:
 		return
 	for c in _gem_box.get_children():
 		c.queue_free()
-	if RunManager.gem_inventory.is_empty():
+	var gem_ids := RunManager.backpack_gem_ids()
+	if gem_ids.is_empty():
 		var empty := Label.new()
 		empty.text = tr("UI_COMMON_GEM_NONE")
 		empty.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_gem_box.add_child(empty)
 		return
-	for gem_id in RunManager.gem_inventory:
+	for gem_id in gem_ids:
 		_gem_box.add_child(_make_gem_button(str(gem_id)))
 
 
