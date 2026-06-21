@@ -717,7 +717,11 @@ func _make_gem_draft_slot(gem_id: String, in_attr: bool = false) -> Control:
 ## point, and continue the pick loop (mirrors _on_attr_picked's tail).
 func _on_attr_gem_picked(gem_id: String) -> void:
 	if gem_id != "":
-		RunManager.gem_inventory.append(gem_id)
+		if not RunManager.add_gem_to_backpack(gem_id):
+			# Bag full — warn and leave the pick open (don't burn the point) so the
+			# player can skip or free a cell. Mirrors the gold-overflow path.
+			_show_backpack_full_toast()
+			return
 	RunManager.pending_attr_points = maxi(0, RunManager.pending_attr_points - 1)
 	if RunManager.pending_attr_points > 0:
 		_generate_attr_options()
@@ -735,7 +739,11 @@ func _on_draft_card_selected(card_id: String) -> void:
 
 func _on_gem_draft_selected(gem_id: String) -> void:
 	if gem_id != "":
-		RunManager.gem_inventory.append(gem_id)
+		if not RunManager.add_gem_to_backpack(gem_id):
+			# Bag full — warn and keep the draft open so the player can free a cell
+			# or skip, rather than silently dropping the gem.
+			_show_backpack_full_toast()
+			return
 	_after_draft()
 
 

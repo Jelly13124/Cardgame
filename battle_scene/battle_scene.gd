@@ -687,7 +687,10 @@ func _victory():
 		# Boss reward: grant 1 random gem (relic comes via the extract-choice rewards).
 		var boss_gems: Array = RunManager.gem_pool()
 		if not boss_gems.is_empty():
-			RunManager.gem_inventory.append(str(boss_gems[randi() % boss_gems.size()]))
+			var bgem := str(boss_gems[randi() % boss_gems.size()])
+			if not RunManager.add_gem_to_backpack(bgem):
+				# Bag full — warn rather than silently dropping the boss gem.
+				show_notification(tr("UI_LOOT_BACKPACK_FULL"), Color(1.0, 0.45, 0.4))
 		var act: int = RunManager.current_act
 		var rewards: Dictionary = _extract_rewards_for_act(act)
 		if not rewards.is_empty():
