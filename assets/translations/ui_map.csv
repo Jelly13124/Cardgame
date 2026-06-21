@@ -33,7 +33,8 @@ UI_MAP_REST_HEAL_BTN,HEAL 25% HP,治疗25%生命
 UI_MAP_RESTED_HEAL,Rested. Healed {n} HP.,休整完毕。治疗{n}生命。
 UI_MAP_REST_UPGRADE_BTN,UPGRADE A CARD,强化一张卡牌
 UI_MAP_CARD_UPGRADED,Card upgraded.,卡牌已强化。
-UI_MAP_REST_GEMS_BTN,💎 Socket Gems,💎 镶嵌宝石
+UI_MAP_REST_GEMS_BTN,⛏ Mine a Gem,⛏ 挖掘宝石
+UI_MAP_MINED_GEM,Mined {gem}!,挖到了「{gem}」！
 UI_TOPBAR_ACT_SHORT,Act,幕
 UI_TOPBAR_FLOOR_SHORT,Floor,层
 UI_TOPBAR_LEVEL_FMT,Lv {lvl} · {xp}/{next},Lv {lvl} · {xp}/{next}
