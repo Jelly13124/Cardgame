@@ -77,6 +77,10 @@ Authoritative list in `DataValidator.ALLOWED_EFFECT_TYPES`. As of this writing:
 
 **Global attributes:** STR is auto-added to all attack damage and CON to all block (`combat_engine._apply_effect()`, default +3 each). The per-card `scaling` field is **deprecated** — combat_engine no longer reads it. Card JSON carries the BASE number only. (`deal_damage_str_mult` and `scale_damage_by_attacks` compute their own damage and do NOT receive the global +STR.)
 
+**Bleed scaling (Intelligence):** an `apply_status` effect that applies `bleed` reads an optional `attr` (default `intelligence`); the applied bleed stacks are increased by that attribute's value (`combat_engine._apply_effect()`). This is how Intelligence boosts Bleed — e.g. `{"type": "apply_status", "status": "bleed", "stacks": 2}` applies `2 + INT` stacks. Other statuses ignore `attr`.
+
+**Tools:** `run_system/data/tools/{tool_id}.json` are one-time battle consumables — shape `{id, title, target ("enemy"|"self"|"none"), rarity, effects[], icon}`. Their `effects[]` reuse this same effect vocabulary (resolved through `combat_engine._apply_effect`, scaled ×(1+0.08·INT)); validated by `DataValidator.validate_tool` (`REQUIRED_TOOL_KEYS` / `ALLOWED_TOOL_TARGETS`).
+
 When adding a new effect type, update **both** `combat_engine._apply_effect()` and `DataValidator.ALLOWED_EFFECT_TYPES`.
 
 ---
