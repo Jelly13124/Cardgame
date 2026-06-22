@@ -299,12 +299,10 @@ const INITIAL_CARD_POOL: Array[String] = [
 	"crowbar_smash",
 ]
 
-## Hero-exclusive draft cards: only offered (loot/shop) when that hero is active.
-## The Feng Shui Master's yin/yang/flip cards make no sense for a non-polarity
-## hero (Cowboy Bill), so they must NOT roll in his card rewards.
+## Hero-exclusive draft cards: only offered (loot/shop) when that hero is active, so
+## a hero's signature cards never roll in another hero's rewards.
 const HERO_EXCLUSIVE_CARDS := {
 	# Cowboy Bill — the StS2 Ironclad bruiser kit (strength / blood / exhaust).
-	# These have no polarity, so they must never roll for the Feng Shui Master.
 	"cowboy_bill":
 	[
 		"piston_jab",
@@ -357,8 +355,7 @@ func append_run_history(entry: Dictionary) -> void:
 
 
 ## Returns the union of INITIAL_CARD_POOL, unlocked_cards, and the ACTIVE hero's
-## exclusive cards (so e.g. the Feng Shui Master's yin/yang cards are draftable
-## for him but never for Cowboy Bill).
+## exclusive cards (a hero's signature cards are draftable only while he is active).
 func get_unlocked_card_pool() -> Array[String]:
 	var pool: Array[String] = INITIAL_CARD_POOL.duplicate()
 	for c in unlocked_cards:
