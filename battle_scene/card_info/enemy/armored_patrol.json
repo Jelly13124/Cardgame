@@ -6,7 +6,7 @@
 	"action_pattern": [
 		{ "type": "block",         "amount": 12,                                      "label": "🛡 12" },
 		{ "type": "attack_status", "amount": 8,  "status": "frail", "stacks": 1,      "label": "🔨 8 +Frail" },
-		{ "type": "block",         "amount": 12,                                      "label": "🛡 12" },
+		{ "type": "attack",        "amount": 10,                                      "label": "⚔ 10" },
 		{ "type": "attack_status", "amount": 10, "status": "vulnerable", "stacks": 1, "label": "⚔ 10 +Vuln" }
 	]
 }

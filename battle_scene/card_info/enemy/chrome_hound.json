@@ -8,6 +8,6 @@
 		{ "type": "buff_self", "status": "dodge", "stacks": 1, "label": "💨 EVADE" },
 		{ "type": "attack", "amount": 8,  "label": "⚔ 8" },
 		{ "type": "attack_status", "amount": 5, "status": "weak", "stacks": 1, "label": "⚔ 5 + W1" },
-		{ "type": "block",  "amount": 10, "label": "🛡 10" }
+		{ "type": "attack", "amount": 8,  "label": "⚔ 8" }
 	]
 }

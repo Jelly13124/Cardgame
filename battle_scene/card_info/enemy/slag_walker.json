@@ -7,6 +7,6 @@
 		{ "type": "block",         "amount": 6,                                      "label": "🛡 6" },
 		{ "type": "attack_status", "amount": 9, "status": "vulnerable", "stacks": 1, "label": "⚔ 9 +Vuln" },
 		{ "type": "attack",        "amount": 6,                                      "label": "⚔ 6" },
-		{ "type": "block",         "amount": 6,                                      "label": "🛡 6" }
+		{ "type": "attack",        "amount": 7,                                      "label": "⚔ 7" }
 	]
 }
