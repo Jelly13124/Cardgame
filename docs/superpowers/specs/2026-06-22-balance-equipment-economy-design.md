@@ -163,3 +163,32 @@ and dials from here.
 ## Out of scope (this run)
 Shop equipment (stays tools-only); buffing weak cards (focus is nerf + enemy pressure);
 Ascension 1-5 retune (A0 first); second hero.
+
+
+---
+
+## Appendix — A0 damage model (verification, 2026-06-22)
+
+**Ungeared baseline** (fresh Bill): 50 HP, 3 energy, 0 attributes, starter =
+4x strike(3) + weak_strike(3) + 4x defend(3). Output ~6-9 dmg/turn (~3 energy of
+1-cost cards), mitigation ~6-9 block/turn.
+
+**vs the retuned Act-1 boss rust_titan:** 90 HP, phase-1 DPT ~8.6, telegraphed slam
+20 (interruptible), phase-2 (<50% HP) ruin 22 + enrage Thorns 6.
+
+- **Ungeared:** ~10-15 turns to grind 90 HP while eating ~8.6 DPT + a 20 slam + the
+  phase-2 22/Thorns. Face-tanking loses; learning to interrupt the slam + bank block
+  turns it into a ~2-3-attempt gate. -> target met.
+- **Geared+leveled (+5 STR / +5 CON, from ~5 gear + ~5 level points):** every strike
+  3->8, defend 3->8 => ~24 dmg/turn kills 90 in ~4-5 turns AND blocks ~+10-15/turn,
+  largely negating the boss offense. Clears comfortably. -> target met.
+
+**Runtime-verified (MCP):** rust_titan loads at 90/90 with an attack intent; crossing
+50% HP enters phase 2 (pattern -> ruin 22 / block 12 / attack 14) and queues the
+enrage `buff_self thorns stacks:6`; the card cache loads the nerfed values (67 JSONs);
+zero errors.
+
+**The loop closes:** A0 is now hard enough (deflated deck + aggressive enemies + a
+real boss gate) that the ~2x swing from gear is what turns a 2-3-try gate into a clean
+clear -- and the Phase-1 equipment economy is what supplies that gear. That is the
+meta-progression driver the goal asked for. All numbers remain [tunable].
