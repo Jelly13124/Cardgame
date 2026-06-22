@@ -83,9 +83,9 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 |---|---|---|
 | **Strength** | 力量 | Added GLOBALLY to ALL attack damage (`combat_engine._apply_effect()`, default +3); per-card `scaling` is deprecated |
 | **Constitution** | 体质 | Added GLOBALLY to ALL block (default +3); replaces old "Defense" |
-| **Intelligence** | 智力 | Used by Ability cards and special scaling (e.g. Overdrive) |
-| **Luck** | 幸运 | Crit chance (1.5× hits via Cowboy Bill's Crit Clip relic, ≈luck×3% capped 40%) + loot rarity |
-| **Charm** | 魅力 | Lowers shop prices (≈2%/point, floored at 0.6×) + unlocks high-Charm options in random events |
+| **Intelligence** | 智力 | Boosts tool effects (+8%/pt) and card Bleed scaling (default scaling attr); no longer affects XP |
+| **Luck** | 幸运 | Crit chance (+2%/pt, +4% with Crit Clip, uncapped; 1.5× crit) + 1.5%/pt loot rarity + gem/tool/equipment find chance |
+| **Charm** | 魅力 | Lowers shop prices (−2%/pt, floor 0.6×) + lowers per-level XP wall (−4%/pt, floor 0.6×) + gates high-Charm event options (the old enemy-flee mechanic was deleted) |
 
 > Equipment boosts these five stats. Attributes persist within a run via `RunManager.player_attributes`.
 
@@ -115,7 +115,7 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 Equipment is gear the player equips to **boost their five attributes**. It is NOT a passive relic — it has direct numeric stat bonuses.
 
 ### Rules
-- Player has **5 equipment slots** (one per attribute, or general-purpose)
+- Player has **5 equipment slots**: head / chest / weapon / hands / accessory
 - Equipment can only be changed on the **Map screen** (between battles)
 - Equipment **cannot** be swapped during combat
 - Equipment is looted from encounters, purchased in shops, or found in the base
@@ -127,7 +127,7 @@ Equipment is gear the player equips to **boost their five attributes**. It is NO
     "id": "scrap_gauntlet",
     "name": "Scrap Gauntlet",
     "rarity": "common",
-    "slot": 1,
+    "slot": "hands",
     "bonuses": {
         "strength": 2,
         "constitution": 1
@@ -249,10 +249,11 @@ Central source of truth for a run. Persists across scene changes.
 - Enemy encounters escalate in difficulty by floor
 
 ### Loot Reward
-- Post-battle screen shows: **Gold**, **Card Draft**, and occasionally **Equipment Drop**
-- Gold: random 30–75 gold, added to RunManager
-- Card Draft: choose 1 of 3 random cards from the `draft_pool`
-- Equipment Drop: rare chance to find a new equipment piece to equip on the map screen
+Rewards are node-typed (see "Rewards by node type" in Phase 7):
+- **Normal**: Gold + a 3-choose-1 **Card Draft** (Luck may turn a slot into a gem) + a Luck-scaled **Tool** + a Luck-scaled **common Equipment** (independent rolls).
+- **Elite**: Card Draft + a 3-choose-1 **Gem** + a Luck-scaled **uncommon Equipment** (no tool).
+- **Boss**: a guaranteed **rare Equipment** + a Gem.
+- Gold is a flat per-fight amount (Luck no longer scales gold). Tools claim into the top-bar tool slots; equipment/gems claim into the backpack.
 
 ---
 
@@ -401,11 +402,11 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 - Loot reward with equipment drops
 
 ### ✅ Phase 3 — Equipment & Relics (Complete)
-- ✅ Equipment system: 5 body-part slots, stat bonuses, swap on map screen, 2 sets with tiered bonuses (3-piece / 5-piece), 18 items (10 common / 4 uncommon / 4 rare)
+- ✅ Equipment system: 5 body-part slots, stat bonuses, swap on map screen, 3 sets with tiered bonuses (3-piece / 5-piece), 23 items (14 common / 6 uncommon / 3 rare)
 - ✅ Inventory (8-item cap) — later superseded by the 20-cell Extraction Backpack where Gold/Core/equipment share cells (see Extraction Backpack Economy)
-- ✅ Elite/Boss loot equipment drops; treasure node 50/50 relic or equipment (70/30 uncommon/rare)
+- ✅ Equipment drops are Luck-scaled (normal = common, elite = uncommon, boss = guaranteed rare; see 2026-06-22 economy pass); the treasure node is a 3-choose-1 relic pick
 - ✅ Relic system: passive run effects, JSON-driven (RelicEffectSystem)
-- ✅ Shop scene (merchant node): 3 cards + 2 equipment + 1 relic + remove-card service (75g)
+- ✅ Shop scene (merchant node): 3 cards + 3 tools + 3 relics + remove-card service (75g) — equipment is no longer sold
 - ✅ Rest site: choice between Heal 25% HP and Socket Gems (opens the deck/gem screen)
 - ⛔ ~~Card upgrade system (`_plus` variants + `upgrade_card_by_uid` + CardUpgradeModal)~~ — **REMOVED**; replaced by the gem-socket system (see Phase 6). All `_plus` cards + the upgrade UI were deleted.
 - ✅ Character info panel (map screen): HP / Gold / Floor + equipment slots + inventory + active sets + relics + stats — one consolidated view
@@ -440,11 +441,21 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 
 ### ✅ Phase 7 — Gems · In-Run Leveling · Reward Restructure (shipped 2026-06-09)
 See `docs/superpowers/specs/2026-06-09-gems-leveling-rewards-design.md` for the full design.
-- ✅ **Gem-socket system** (replaces card upgrades): run-scoped gems (`run_system/data/gems/*.json`, cleared on death), 1 socket/card, inserted out of combat and **locked after**. Gem effects fire after the card's own effects on play (`RunManager.gem_inventory / socket_gem / gem_pool / get_gem_data`; socket UI in `run_deck_viewer_modal.gd`). The old `wealthy` keyword is now a gem.
-- ✅ **In-run XP / level**: kill enemies → XP (scaled by **Intelligence**, +5%/point); each level-up grants a **pick-1-of-3 random attribute (+1)**. `RunManager.xp / level / gain_xp / xp_to_next / pending_attr_points`.
+- ✅ **Gem-socket system** (replaces card upgrades): run-scoped gems (`run_system/data/gems/*.json`, cleared on death), 1 socket/card, inserted out of combat and **locked after**. Gem effects fire after the card's own effects on play. Gems occupy **backpack cells** (1 gem = 1 cell; socketing frees the cell) — `add_gem_to_backpack / backpack_gem_ids / socket_gem / gem_pool`; socket UI reads `backpack_gem_ids()` in `run_deck_viewer_modal.gd`. (`gem_inventory` is now a vestigial migration-only field.) The old `wealthy` keyword is now a gem.
+- ✅ **In-run XP / level**: kill enemies → XP; each level-up grants a **pick-1-of-3 random attribute (+1)**. (Intelligence no longer scales XP — **Charm** lowers the per-level XP wall instead, −4%/pt.) `RunManager.xp / level / gain_xp / xp_to_next / pending_attr_points`.
 - ✅ **Starting attributes = 0** (heroes grow via level-ups / gear / gems).
-- ✅ **Rewards by node type**: normal = gold + 3-choose-1 card draft (Luck may turn a slot into a gem); elite = card + gem 3-choose-1 + equipment; boss = gem + relic. Equipment only drops from elite/boss.
+- ✅ **Rewards by node type** (updated 2026-06-22): normal = gold + 3-choose-1 card draft (Luck may swap a slot to a gem) + Luck-scaled tool + Luck-scaled common equipment; elite = card + 3-choose-1 gem + Luck-scaled uncommon equipment; boss = guaranteed rare equipment + gem. (Equipment now drops from normal/elite too, not boss-only.)
 - ✅ **StS2 Ironclad port** (`docs/sts2-port-audit.md`): re-skinned cards + 7 relics + 6 new combat mechanics; `bleed` replaced `poison`; `burn` retimed; `strength_up` removed.
+
+### ✅ Phase 8 — Tools · Equipment Economy · A0 Balance (shipped 2026-06-21..22)
+Specs: `docs/superpowers/specs/2026-06-21-tools-attrs-loading-base-ui-design.md`, `…/2026-06-22-balance-equipment-economy-design.md`.
+- ✅ **Tool system** (StS2-style one-time consumables): `run_system/data/tools/*.json` (8), a top-bar **tool shelf** (`run_top_bar.gd`), free instant use in battle (`battle_scene.use_tool`; enemy-target tools auto-target; effects reuse `combat_engine._apply_effect`, scaled ×(1+0.08·INT)). **2 base slots** + an Outpost **Tool Rack** (`tool_slots`) upgrade (cap 3).
+- ✅ **Attribute rework**: the Charm enemy-**flee** mechanic was **deleted**; INT off XP → boosts tools + Bleed; Charm lowers the per-level XP wall.
+- ✅ **Gems → backpack** (1 gem = 1 cell; socketing frees the cell), replacing the unlimited `gem_inventory` side-list.
+- ✅ **Drop / shop restructure**: shop sells tools (not equipment); Luck-scaled tool + equipment drops (see Rewards by node type).
+- ✅ **Loading**: session card-info cache (`MetaProgress.get_card_info_cache` + `cached_card_factory.gd`) skips the per-battle JSON re-parse.
+- ✅ **Building detail pages** redesigned (icon + flavour + action card + locked-state preview, all 5 buildings).
+- ✅ **A0 balance pass**: deflated the over-statted 1-cost cards, raised enemy aggression (block→attack), retuned the Act-1 boss `rust_titan` into a 2-3-try skill gate (geared+leveled clears comfortably).
 
 ---
 

@@ -71,11 +71,11 @@ The old root-level `skills/` workflow docs have been removed. Project convention
 
 ### 💎 Gem / Socket System (replaced card upgrades)
 *   **Gem data**: `run_system/data/gems/{gem_id}.json` — run-scoped socketables; `effects[]` reuse the card effect vocabulary and fire when the socketed card is played. Schema in `data_validator.gd` (`validate_gem`).
-*   **Socket screen**: `run_system/ui/run_deck_viewer_modal.gd` — each deck card shows its 1 socket; insert a gem from `RunManager.gem_inventory`, **locked after** (no removal this run).
+*   **Socket screen**: `run_system/ui/run_deck_viewer_modal.gd` — each deck card shows its 1 socket; insert a gem from the **backpack** (`backpack_gem_ids()`), **locked after** (no removal this run). Socketing frees the gem's backpack cell.
 *   **Mechanic**: `player_deck` entries carry a `gems: []` array; battle cards get a `gems` meta (`deck_manager.gd`); `combat_engine.resolve_card_effect` runs each gem's effects after the card's own. Card upgrades (`_plus`) were fully removed.
 
 ### 🎒 Equipment System
-*   **Data**: `run_system/data/equipment/{item_id}.json` (21 items) + `run_system/data/equipment_sets/{set_id}.json` (3 sets)
+*   **Data**: `run_system/data/equipment/{item_id}.json` (23 items) + `run_system/data/equipment_sets/{set_id}.json` (3 sets)
 *   **Set Effect System**: `battle_scene/equipment_set_system.gd` — snapshots active tier effects at battle start; mirrors `relic_effect_system.gd` shape.
 *   **Equipment Icon Component**: `run_system/ui/equipment_icon.gd` — reusable placeholder (colored panel + slot letter) with PNG fallback.
 *   **Character Panel**: `run_system/ui/equipment_panel.gd` — map-screen modal showing HP/Gold/Floor + slots + inventory + active sets + relics + stats. Open via `⚔ CHARACTER` button.
@@ -88,7 +88,7 @@ The old root-level `skills/` workflow docs have been removed. Project convention
 ### 🏃 Run Management
 *   **Run Shape**: a run is **3 self-contained acts**, each a ~12-floor map ending in a boss. Loot lives in a **20-cell backpack** where Gold / Core / equipment compete for space, with safe-cells preserved on death, a permanent base stash, and a next-run loadout (`RunManager.backpack` / `RunManager.pending_loadout`; `MetaProgress.stash`).
 *   **Global State**: `run_system/core/run_manager.gd` (autoload)
-    *   *Gold, deck, equipped items, inventory, base_attributes, player_attributes (computed), relics, gems (`gem_inventory`), XP/level, map state. Public API: `add_card_to_deck`, `remove_card_from_deck_by_uid`, `socket_gem` / `gem_pool` / `get_gem_data`, `gain_xp` / `xp_to_next`, `equip_to_slot`, `unequip_slot`, `add_to_inventory`, `discard_from_inventory`, `purchase_*` (shop-gated wrappers), `recompute_attributes`, `get_active_set_tiers`. `start_new_run` calls `_apply_meta_upgrades` to read MetaProgress and add max HP / starting gold / starter inventory.*
+    *   *Gold, deck, equipped items, inventory, base_attributes, player_attributes (computed), relics, gems (in backpack cells), tools (`tool_inventory`), XP/level, map state. Public API: `add_card_to_deck`, `remove_card_from_deck_by_uid`, `socket_gem` / `gem_pool` / `get_gem_data`, `gain_xp` / `xp_to_next`, `equip_to_slot`, `unequip_slot`, `add_to_inventory`, `discard_from_inventory`, `purchase_*` (shop-gated wrappers), `recompute_attributes`, `get_active_set_tiers`. `start_new_run` calls `_apply_meta_upgrades` to read MetaProgress and add max HP / starting gold / starter inventory.*
 
 ### 🏠 Base Building (Meta-Progression)
 *   **Persistent State**: `run_system/core/meta_progress.gd` (autoload, owns `user://meta.json`) — three currencies (**Core / Caps / Scrap**) + `buildings{}` (per-building tier) + `BUILDING_DEFS`. API: `add_core/caps/scrap` + `spend_*`, `get_building_tier`, `is_building_unlocked`, `unlock_building`, `upgrade_building`, `building_can`, `unlock_card`, `set_starter_deck_override`, `stash`/dismantle/reforge.
@@ -120,7 +120,9 @@ All gameplay content is data-driven. Add GDScript only when introducing a new sh
 *   **Relics**: `run_system/data/relics/{relic_id}.json`
 *   **Equipment**: `run_system/data/equipment/{item_id}.json` (rarity budget: common=+1, uncommon=+2 total, rare=+3 total)
 *   **Equipment Sets**: `run_system/data/equipment_sets/{set_id}.json` (each set has 2 tiers: 3-piece + 5-piece)
-*   **Base Upgrades**: `run_system/data/base_upgrades/{upgrade_id}.json` (7 definitions: med_bay, command_center, scrap_workshop, blacksmith, backpack, starter_boost, jerry_unlock — tiered; effect_value schema varies per effect_key). These are the data the building screens read; `ALLOWED_BASE_UPGRADE_EFFECT_KEYS` in `data_validator.gd` is the schema.
+*   **Gems**: `run_system/data/gems/{gem_id}.json` — run-scoped socketables that occupy backpack cells (`validate_gem`); see the Gem/Socket section.
+*   **Tools**: `run_system/data/tools/{tool_id}.json` — StS2-style one-time battle consumables; `effects[]` reuse the card effect vocabulary (`validate_tool`).
+*   **Base Upgrades**: `run_system/data/base_upgrades/{upgrade_id}.json` (8 definitions: med_bay, command_center, scrap_workshop, blacksmith, backpack, starter_boost, reroll_tokens, tool_slots — tiered; effect_value schema varies per effect_key). These are the data the building screens read; `ALLOWED_BASE_UPGRADE_EFFECT_KEYS` in `data_validator.gd` is the schema.
 *   **Heroes**: `run_system/data/heroes/{hero_id}.json` (`cowboy_bill.json`) — `player.gd` reads `sprite_id` / `tint` / starting stats dynamically from the selected hero's JSON (`RunManager.current_hero_data`), falling back to `cowboy_bill` when none is loaded.
 *   **Random Events**: `run_system/data/random_events/{event_id}.json` — content (choices, outcomes) for the "?" map node, surfaced by `run_system/ui/event_modal.gd`.
 
