@@ -121,7 +121,7 @@ All gameplay content is data-driven. Add GDScript only when introducing a new sh
 *   **Equipment**: `run_system/data/equipment/{item_id}.json` (rarity budget: common=+1, uncommon=+2 total, rare=+3 total)
 *   **Equipment Sets**: `run_system/data/equipment_sets/{set_id}.json` (each set has 2 tiers: 3-piece + 5-piece)
 *   **Base Upgrades**: `run_system/data/base_upgrades/{upgrade_id}.json` (7 definitions: med_bay, command_center, scrap_workshop, blacksmith, backpack, starter_boost, jerry_unlock — tiered; effect_value schema varies per effect_key). These are the data the building screens read; `ALLOWED_BASE_UPGRADE_EFFECT_KEYS` in `data_validator.gd` is the schema.
-*   **Heroes**: `run_system/data/heroes/{hero_id}.json` (`cowboy_bill.json`, `hero_fengshui_master.json`) — `player.gd` reads `sprite_id` / `tint` / starting stats dynamically from the selected hero's JSON (`RunManager.current_hero_data`), falling back to `cowboy_bill` when none is loaded.
+*   **Heroes**: `run_system/data/heroes/{hero_id}.json` (`cowboy_bill.json`) — `player.gd` reads `sprite_id` / `tint` / starting stats dynamically from the selected hero's JSON (`RunManager.current_hero_data`), falling back to `cowboy_bill` when none is loaded.
 *   **Random Events**: `run_system/data/random_events/{event_id}.json` — content (choices, outcomes) for the "?" map node, surfaced by `run_system/ui/event_modal.gd`.
 
 All schemas validated at startup by `battle_scene/data_validator.gd`.

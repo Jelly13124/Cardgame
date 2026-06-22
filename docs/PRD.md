@@ -416,7 +416,7 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 - ✅ (original) Base upgrades (5 × 3 tiers, cost 30/60/100 Core): Med Bay (+max HP), Arsenal (starter gear), Research Lab (loot rarity), Scrap Workshop (shop discount), Command Center (starting gold)
 - ✅ Boss victory grants Core and returns to home base. (Superseded by the 3-act map: each act ends in a boss, and the extract-vs-push-on choice now ships after each non-final act boss — see Extraction Backpack Economy.)
 - ✅ Player death routes to home base (no Core gained)
-- ✅ Hero JSON schema + dynamic loader: heroes/*.json (cowboy_bill + hero_fengshui_master, the 风水大师 yin/yang hero that replaced the earlier "Jerry the Killer"); player.gd reads sprite/tint/stats from RunManager.current_hero_data
+- ✅ Hero JSON schema + dynamic loader: heroes/*.json (cowboy_bill); player.gd reads sprite/tint/stats from RunManager.current_hero_data
 - ✅ Hero selection now lives in the Warehouse building (the standalone hero-select screen was removed)
 - ✅ Run history panel: home base shows last 5 runs (outcome icon + hero + floor + core)
 - ✅ Ascension difficulty: 5 levels, each adds a negative modifier (enemy HP+10%, player -5 max HP, -1 first-turn energy, +10% shop prices, elite-heavy maps)
@@ -424,7 +424,7 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 - ✅ Card Research upgrade: 3 tiers unlocking 5 cards (flash_bang, bone_breaker, last_breath, preemptive_strike, junk_bomb)
 
 ### 🟡 Phase 5 — Content Expansion (in progress)
-- ✅ Second hero with a distinct kit: **Feng Shui Master (风水大师)** — yin/yang polarity (matched-bonus cards, flip-polarity, harmony); Cowboy Bill = luck/crit (`crit_clip`) + the StS2 Ironclad bruiser pool
+- ✅ Cowboy Bill kit: luck/crit (`crit_clip`) + the StS2 Ironclad bruiser pool. (A second "Feng Shui Master" yin/yang hero was prototyped then **cut** 2026-06-18 — the demo ships Bill-only. Vestigial polarity plumbing remains inert.)
 - ✅ ~65 player cards (no upgrade variants — gems replace upgrades), incl. a re-skinned StS2 Ironclad port; per-hero pools + colourless pool
 - ✅ 13 enemy types (+2 summon-only adds); art migrating to the new style (ADR-0012)
 - ✅ 3 boss encounters (one per act) with multi-phase patterns + bespoke mechanics (enrage / summon / AoE)

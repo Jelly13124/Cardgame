@@ -456,25 +456,6 @@ def build_keywords():
                              STATUS_COLORS.get(s, "#9c917c"), s))
     body.append(f'<div class="section"><h2>Status Effects 状态效果 <span class="cnt">({len(cards)})</span></h2></div>'
                 f'<div class="kw">{"".join(cards)}</div>')
-    # Yin/Yang mechanic
-    pol = []
-    yin = battle_tr.get("UI_BATTLE_POLARITY_YIN", {})
-    yang = battle_tr.get("UI_BATTLE_POLARITY_YANG", {})
-    harm = battle_tr.get("UI_BATTLE_POLARITY_HARMONY", {})
-    pol.append(kw_card(yin.get("en", "Yin"), yin.get("zh", "阴"),
-                       "Active on odd turns (Feng Shui Master). While Yin, your Yin cards trigger their matched bonus.",
-                       "奇数回合激活(风水大师)。阴态下,打出阴卡会触发其匹配加成。", POLARITY["yin"], "yin polarity"))
-    pol.append(kw_card(yang.get("en", "Yang"), yang.get("zh", "阳"),
-                       "Active on even turns. While Yang, your Yang cards trigger their matched bonus.",
-                       "偶数回合激活。阳态下,打出阳卡会触发其匹配加成。", POLARITY["yang"], "yang polarity"))
-    pol.append(kw_card(harm.get("en", "Harmony"), harm.get("zh", "阴阳调和"),
-                       "Reached by experiencing BOTH Yin and Yang in one turn (via flip cards). Grants +1 Energy and draws 1 card, and for the rest of the turn BOTH Yin and Yang cards count as matched.",
-                       "一回合内同时经历阴与阳(靠翻转卡)即进入。立即 +1 能量并抽 1 张,且该回合内阴卡阳卡都视为匹配。", POLARITY["yang"], "harmony"))
-    pol.append(kw_card("Flip Polarity", "翻转极性",
-                       "Card effect that switches your current polarity (Yin↔Yang) — the tool for reaching Harmony.",
-                       "翻转当前阴阳极性的卡牌效果 —— 触发调和的关键。", "#ffcf45", "flip polarity taiji"))
-    body.append('<div class="section"><h2>Yin-Yang Mechanic 阴阳机制 <span class="cnt">(4)</span></h2></div>'
-                f'<div class="kw">{"".join(pol)}</div>')
     # Card keywords
     kw = []
     ex = battle_tr.get("UI_BATTLE_KEYWORD_EXHAUST", {})
