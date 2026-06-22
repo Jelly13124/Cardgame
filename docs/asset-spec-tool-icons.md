@@ -2,9 +2,13 @@
 
 > **For Codex (ADR-0005).** 8 one-time battle tools (StS2-style consumables).
 > They sit in the battle top bar's **tool shelf** (`run_system/ui/run_top_bar.gd`
-> `_make_tool_slot`). Today each slot renders a 1–2 char glyph fallback
-> (`_short_label`) because the icon PNGs don't exist yet. This spec is for those
+> `_make_tool_slot`). Before delivery, each slot rendered a 1–2 char glyph fallback
+> (`_short_label`) because the icon PNGs did not exist yet. This spec is for those
 > per-tool icons; the loader already points at the paths below.
+
+**Status:** Delivered 2026-06-21. All 8 tool icons were generated as 64x64
+transparent PNGs at `run_system/assets/images/ui/tools/<id>.png`; no wiring
+changes were required.
 
 ## Deliverable
 
