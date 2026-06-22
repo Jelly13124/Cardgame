@@ -12,7 +12,7 @@
     {
       "type": "apply_status",
       "status": "weak",
-      "amount": 2
+      "amount": 1
     }
   ],
   "icon": "res://run_system/assets/images/ui/tools/shock_charge.png"

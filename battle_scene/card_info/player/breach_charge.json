@@ -5,7 +5,7 @@
 	"type": "attack",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Lose 1 HP. Deal 9 fixed damage to ALL enemies (ignores Strength).",
+	"description": "Lose 1 HP. Deal 6 fixed damage to ALL enemies (ignores Strength).",
 	"front_image": "player/breach_charge.png",
 	"side": "player",
 	"effects": [
@@ -15,7 +15,7 @@
 		},
 		{
 			"type": "deal_damage_all",
-			"amount": 9,
+			"amount": 6,
 			"no_str": true
 		}
 	]

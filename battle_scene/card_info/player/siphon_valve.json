@@ -5,7 +5,7 @@
 	"type": "skill",
 	"cost": 0,
 	"polarity": "neutral",
-	"description": "Lose 3 HP. Gain 2 Energy.",
+	"description": "Lose 3 HP. Gain 2 Energy. Exhaust.",
 	"front_image": "player/siphon_valve.png",
 	"side": "player",
 	"effects": [
@@ -16,6 +16,9 @@
 		{
 			"type": "gain_energy",
 			"amount": 2
+		},
+		{
+			"type": "exhaust_self"
 		}
 	]
 }
