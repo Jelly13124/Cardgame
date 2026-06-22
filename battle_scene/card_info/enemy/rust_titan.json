@@ -2,21 +2,21 @@
 	"id": "rust_titan",
 	"name": "Rust Titan",
 	"sprite_id": "rust_titan",
-	"max_health": 75,
+	"max_health": 90,
 	"action_pattern": [
 		{ "type": "attack",        "amount": 8,                                       "label": "⚔ 8" },
 		{ "type": "attack_status", "amount": 10, "status": "vulnerable", "stacks": 1, "label": "⚔ 10 +Vuln" },
 		{ "type": "block",         "amount": 10,                                      "label": "🛡 10" },
 		{ "type": "attack_status", "amount": 12, "status": "frail", "stacks": 1,      "label": "🔨 12 +Frail" },
 		{ "type": "telegraph",                                                        "label": "💢 WIND-UP" },
-		{ "type": "attack",        "amount": 18, "interruptible": true,               "label": "💥 SLAM 18" },
-		{ "type": "block",         "amount": 8,                                       "label": "🛡 8" }
+		{ "type": "attack",        "amount": 20, "interruptible": true,               "label": "💥 SLAM 20" },
+		{ "type": "attack",        "amount": 10,                                      "label": "⚔ 10" }
 	],
 	"phases": [
 		{
 			"hp_below": 0.5,
 			"on_enter": [
-				{ "type": "buff_self", "status": "thorns", "stacks": 4, "label": "💪 ENRAGE +Thorns" }
+				{ "type": "buff_self", "status": "thorns", "stacks": 6, "label": "💪 ENRAGE +Thorns" }
 			],
 			"action_pattern": [
 				{ "type": "telegraph", "label": "💢 OVERLOAD" },
