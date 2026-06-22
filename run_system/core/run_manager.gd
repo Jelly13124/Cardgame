@@ -1340,10 +1340,19 @@ func luck_gem_chance() -> float:
 	return clampf(0.04 * float(_attr("luck")), 0.0, 0.5)
 
 
-## Luck-scaled chance for a normal (non-elite, non-boss) combat / event to also
-## drop a tool. Elites always drop one; bosses drop equipment instead. [tunable]
+## Luck-scaled chance for a normal (non-elite, non-boss) combat to also drop a tool.
+## Elites give a gem + equipment chance instead; bosses give guaranteed equipment.
+## [tunable]
 func luck_tool_chance() -> float:
 	return clampf(0.25 + 0.03 * float(_attr("luck")), 0.0, 0.60)
+
+
+## Luck-scaled chance for a normal / elite combat to drop equipment (normal = common,
+## elite = uncommon; rolled independently of the tool drop). Bosses always drop a rare
+## (granted in battle_scene). Tuned lower than the tool chance so gear stays the rarer,
+## more exciting find. [tunable]
+func luck_equip_chance() -> float:
+	return clampf(0.12 + 0.02 * float(_attr("luck")), 0.0, 0.35)
 
 
 func charm_shop_mult() -> float:

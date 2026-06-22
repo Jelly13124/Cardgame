@@ -134,27 +134,51 @@ func _generate_loot() -> void:
 			}
 		)
 
-	# Tool drop: elites ALWAYS drop a tool; normal combats roll a Luck-scaled chance.
-	# (Equipment now drops ONLY from bosses, granted in battle_scene._victory.)
-	var wants_tool := false
+	# Tool drop: ONLY normal combats roll a tool (Luck-scaled). Elites give a gem
+	# draft + an equipment chance instead; boss loot is handled in battle_scene.
+	if node_type != "elite" and node_type != "boss":
+		if randf() < RunManager.luck_tool_chance():
+			var tool_id := RunManager.roll_tool_drop(node_type)
+			if tool_id != "":
+				var tdata := RunManager.get_tool_data(tool_id)
+				available_loot.append(
+					{
+						"id": "tool",
+						"type": "tool",
+						"tool_id": tool_id,
+						"rarity": str(tdata.get("rarity", "common")),
+						"title":
+						Settings.t("TOOL_%s_TITLE" % tool_id, str(tdata.get("title", tool_id))),
+						"subtitle": Settings.t("TOOL_%s_DESC" % tool_id, ""),
+						"icon": str(tdata.get("icon", "")),
+						"action": tr("UI_LOOT_ACTION_TAKE")
+					}
+				)
+
+	# Equipment drop (Luck-scaled): normal = common, elite = uncommon. Boss equipment
+	# (guaranteed rare) is granted in battle_scene._victory. Rolls INDEPENDENTLY of the
+	# tool drop, so a normal fight can yield both.
+	var equip_rarity := ""
 	if node_type == "elite":
-		wants_tool = true
+		equip_rarity = "uncommon"
 	elif node_type != "boss":
-		wants_tool = randf() < RunManager.luck_tool_chance()
-	if wants_tool:
-		var tool_id := RunManager.roll_tool_drop(node_type)
-		if tool_id != "":
-			var tdata := RunManager.get_tool_data(tool_id)
+		equip_rarity = "common"
+	if equip_rarity != "" and randf() < RunManager.luck_equip_chance():
+		var equip_id := RunManager.roll_equipment_drop(equip_rarity)
+		if equip_id != "":
+			var edata := RunManager.get_equipment_data(equip_id)
+			var einst := RunManager.make_equip_instance(equip_id, equip_rarity)
 			available_loot.append(
 				{
-					"id": "tool",
-					"type": "tool",
-					"tool_id": tool_id,
-					"rarity": str(tdata.get("rarity", "common")),
+					"id": "equipment",
+					"type": "equipment",
+					"item_id": equip_id,
+					"rarity": equip_rarity,
+					"instance": einst,
 					"title":
-					Settings.t("TOOL_%s_TITLE" % tool_id, str(tdata.get("title", tool_id))),
-					"subtitle": Settings.t("TOOL_%s_DESC" % tool_id, ""),
-					"icon": str(tdata.get("icon", "")),
+					Settings.t("EQUIP_%s_NAME" % equip_id, str(edata.get("name", equip_id))),
+					"subtitle": "",
+					"icon": "res://battle_scene/assets/images/%s" % str(edata.get("sprite", "")),
 					"action": tr("UI_LOOT_ACTION_TAKE")
 				}
 			)
