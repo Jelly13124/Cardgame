@@ -5,13 +5,13 @@
 	"type": "skill",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Gain 8 Block. Draw 1 card.",
+	"description": "Gain 6 Block. Draw 1 card.",
 	"front_image": "player/vent_plating.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "gain_block",
-			"amount": 8
+			"amount": 6
 		},
 		{
 			"type": "draw_cards",

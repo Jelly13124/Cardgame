@@ -6,7 +6,7 @@
   "effects": [
     {
       "type": "gain_block",
-      "amount": 12
+      "amount": 10
     }
   ],
   "icon": "res://run_system/assets/images/ui/tools/smoke_bomb.png"

@@ -5,7 +5,7 @@
 	"type": "attack",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Lose 2 HP. Deal 15 damage.",
+	"description": "Lose 2 HP. Deal 9 damage.",
 	"front_image": "player/hemo_drive.png",
 	"side": "player",
 	"effects": [
@@ -15,7 +15,7 @@
 		},
 		{
 			"type": "deal_damage",
-			"amount": 15
+			"amount": 9
 		}
 	]
 }
