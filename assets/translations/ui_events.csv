@@ -49,3 +49,21 @@ EVENT_FORTUNE_SHRINE_OPT0_RESULT,"You drop a coin in the dust and bow your head.
 EVENT_FORTUNE_SHRINE_OPT1_TEXT,[Luck] Roll the cracked dice for the shrine's hoard,[幸运] 掷那只裂口骰子，赌神龛的窖藏
 EVENT_FORTUNE_SHRINE_OPT1_RESULT_OK,"The dice come up blessed. The altar's false floor gives, spilling a Lucky Cog and a scatter of coin into your hands.","骰子掷出福兆。祭坛的暗格塌开，一枚幸运齿轮和一把散币落进你手心。"
 EVENT_FORTUNE_SHRINE_OPT1_RESULT_FAIL,"Snake eyes. The scrap altar lurches and a hidden spike rakes your arm as you snatch your hand back empty.","两个一点。废件祭坛猛地一晃，一根暗藏的尖刺在你空手缩回时划过手臂。"
+EVENT_CARAVAN_CHECKPOINT_TITLE,The Caravan Checkpoint,商队检查站
+EVENT_CARAVAN_CHECKPOINT_DESC,"A makeshift toll gate of oil drums and razor wire blocks the dry riverbed. Two guards in mismatched armor lounge in the shade, rifles across their knees, watching you approach.",油桶和刺网搭成的临时关卡拦住了干涸的河床。两名穿着杂色护甲的卫兵懒洋洋地靠在阴影里，步枪横在膝上，看着你走近。
+EVENT_CARAVAN_CHECKPOINT_OPT0_TEXT,Help the guards reset a fallen drum to earn passage,帮卫兵扶起倒下的油桶，换取通行
+EVENT_CARAVAN_CHECKPOINT_OPT0_RESULT,"You heave the toppled oil drum back onto the wire. The lead guard grunts, flips you a few coins for the trouble, and waves you through.",你把倒下的油桶重新架回刺网上。领头的卫兵哼了一声，扔给你几枚硬币当辛苦费，挥手放你过去。
+EVENT_CARAVAN_CHECKPOINT_OPT1_TEXT,[Charm 5] Talk your way past — and out of an old contact's debt,[魅力 5] 靠嘴皮子通关——顺便了结一段旧人情
+EVENT_CARAVAN_CHECKPOINT_OPT1_RESULT,"Turns out you know the lead guard's cousin. A few right names later he not only waves you through, he settles an old marker in your favor.",原来你认识领头卫兵的表亲。报上几个对的名字后，他不仅放你通行，还顺手帮你了结了一笔旧账，对你有利。
+EVENT_CARAVAN_CHECKPOINT_OPT2_TEXT,[Luck] Bluff a hidden escort and dare them to stop you,[幸运] 虚张声势说自己有暗哨，量他们不敢拦
+EVENT_CARAVAN_CHECKPOINT_OPT2_RESULT_OK,"You let your eyes flick to the ridgeline like backup waits there. They blink first, lower the wire, and even toss you a toll refund to stay friendly.",你故意瞟向山脊，仿佛援军就埋伏在那。他们先怂了，放下刺网，甚至退给你过路费以示交好。
+EVENT_CARAVAN_CHECKPOINT_OPT2_RESULT_FAIL,They call your bluff. A warning shot goes wide but the second clips you before you're back over the riverbank.,他们识破了你的虚张声势。第一枪警告打偏，但你还没退回河岸，第二枪就擦中了你。
+EVENT_COLLAPSED_OVERPASS_TITLE,The Collapsed Overpass,坍塌的高架桥
+EVENT_COLLAPSED_OVERPASS_DESC,"A highway overpass lies snapped across the canyon, its rusted rebar clawing at the sky. A glint of an old supply cache shows in the rubble — but the whole slab groans whenever the wind shifts.",一座高架公路桥拦腰断在峡谷上，锈蚀的钢筋刺向天空。瓦砾间闪着旧补给箱的微光——可每当风向一变，整块桥板就发出呻吟。
+EVENT_COLLAPSED_OVERPASS_OPT0_TEXT,"Pick the wreckage clean, slow and careful",慢慢来、小心翼翼地把残骸捡干净
+EVENT_COLLAPSED_OVERPASS_OPT0_RESULT,"You spend the afternoon prying loose what won't bring the slab down. A modest haul of scrap and coin, and all your fingers intact.",你花了一下午，撬下那些不会引发坍塌的东西。废料和钱币收获不多，但十根手指都还在。
+EVENT_COLLAPSED_OVERPASS_OPT1_TEXT,[Charm 5] Flag down a passing scav crew to brace it for a cut,[魅力 5] 拦下路过的拾荒队，分成请他们撑住桥板
+EVENT_COLLAPSED_OVERPASS_OPT1_RESULT,"Your easy patter wins over the scav crew. They jack the slab on hydraulics, you split the cache, and everyone walks away richer.",你三言两语就说动了拾荒队。他们用液压顶撑起桥板，你们平分了补给，各自满载而归。
+EVENT_COLLAPSED_OVERPASS_OPT2_TEXT,[Luck] Crawl under the groaning slab for the deep cache,[幸运] 钻到呻吟的桥板下，去掏最深处的补给
+EVENT_COLLAPSED_OVERPASS_OPT2_RESULT_OK,The slab holds. You drag out a sealed crate of refined core and a fat purse before scrambling clear.,桥板撑住了。你拖出一箱密封的精炼核心和一只鼓囊囊的钱袋，赶在塌落前爬了出来。
+EVENT_COLLAPSED_OVERPASS_OPT2_RESULT_FAIL,"The wind shifts. Concrete shears loose and pins your leg — you wrench free bleeding, the cache buried for good.",风向变了。混凝土崩落，压住了你的腿——你流着血挣脱出来，补给就此永远埋在了下面。
