@@ -24,7 +24,7 @@ const TOOL_PRICE := {"common": 55, "uncommon": 95}
 const SHOP_TOOL_COUNT := 3
 const TOOL_RARITY_SEQUENCE := ["common", "uncommon", "common"]
 
-const SHOP_BOARD_BG := Color(0.055, 0.040, 0.032, 0.94)
+const SHOP_BOARD_BG := Color(0.055, 0.040, 0.032, 0.66)
 const SHOP_PANEL_BG := Color(0.080, 0.055, 0.040, 0.92)
 const SHOP_PANEL_BG_DARK := Color(0.045, 0.035, 0.030, 0.96)
 const SHOP_PANEL_BORDER := Color(0.55, 0.30, 0.13, 1.0)
