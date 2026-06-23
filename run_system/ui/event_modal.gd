@@ -37,11 +37,7 @@ func _ready() -> void:
 
 func _build() -> void:
 	_eid = str(event_data.get("id", "")).to_upper()
-	var bg := ColorRect.new()
-	bg.color = Color(0, 0, 0, 0.78)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(bg)
+	_add_event_background()
 
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -89,6 +85,35 @@ func _build() -> void:
 			if typeof(opt) != TYPE_DICTIONARY:
 				continue
 			_vbox.add_child(_make_option_button(opt, i))
+
+
+## Fullscreen OPAQUE background so the event reads as its own screen — the map is
+## fully hidden (not just dimmed). Per-event art at events/<id>.png, cover-fit; a dark
+## scrim keeps the panel legible; falls back to an opaque tint if the art is missing.
+func _add_event_background() -> void:
+	var eid_lower := str(event_data.get("id", "")).to_lower()
+	var path := "res://run_system/assets/images/events/%s.png" % eid_lower
+	if eid_lower != "" and ResourceLoader.exists(path):
+		var bg := TextureRect.new()
+		bg.texture = load(path)
+		bg.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg.mouse_filter = Control.MOUSE_FILTER_STOP
+		add_child(bg)
+	else:
+		var tint := ColorRect.new()
+		tint.color = Color(0.06, 0.05, 0.04, 1.0)  # OPAQUE — fully covers the map
+		tint.set_anchors_preset(Control.PRESET_FULL_RECT)
+		tint.mouse_filter = Control.MOUSE_FILTER_STOP
+		add_child(tint)
+	# Readability scrim over the art so the title/desc/options stay legible.
+	var scrim := ColorRect.new()
+	scrim.color = Color(0.0, 0.0, 0.0, 0.5)
+	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(scrim)
 
 
 func _make_option_button(opt: Dictionary, index: int) -> Button:
