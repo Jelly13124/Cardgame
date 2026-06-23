@@ -30,9 +30,22 @@ var _vbox: VBoxContainer
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	# Fill the whole screen regardless of parent (a Control under a CanvasLayer or a
+	# zero-size parent does NOT get a viewport-sized rect from anchors alone — the
+	# background/scrim would render 0x0). Pin top-left and drive the size from the
+	# viewport ourselves (top-left anchors avoid the non-equal-anchors size warning).
+	set_anchors_preset(Control.PRESET_TOP_LEFT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	_fit_to_viewport()
+	get_viewport().size_changed.connect(_fit_to_viewport)
 	_build()
+
+
+func _fit_to_viewport() -> void:
+	var vp := get_viewport().get_visible_rect().size
+	if vp.x > 0.0 and vp.y > 0.0:
+		position = Vector2.ZERO
+		size = vp
 
 
 func _build() -> void:
