@@ -358,10 +358,13 @@ func _make_action_button(text: String, enabled: bool) -> Button:
 
 func _on_action_pressed() -> void:
 	var tier := MetaProgress.get_building_tier(building_id)
+	var ok := false
 	if tier <= 0:
-		MetaProgress.unlock_building(building_id)
+		ok = MetaProgress.unlock_building(building_id)
 	elif tier < MetaProgress.MAX_BUILDING_TIER:
-		MetaProgress.upgrade_building(building_id)
+		ok = MetaProgress.upgrade_building(building_id)
+	# Meaty confirmation on a successful unlock / tier-up; soft error cue otherwise.
+	AudioManager.play_sfx("reward" if ok else "error")
 	# buildings_changed → _refresh() repaints the badge/card.
 
 

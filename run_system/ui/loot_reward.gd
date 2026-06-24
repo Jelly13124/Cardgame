@@ -97,7 +97,7 @@ func _apply_static_theme() -> void:
 
 func _generate_loot() -> void:
 	available_loot.clear()
-	var gold_amount = 15  # flat per-fight; per-kill drops (enemy_entity) add on top
+	var gold_amount = 8  # flat per-fight; per-kill drops (enemy_entity) add on top
 
 	available_loot.append(
 		{
