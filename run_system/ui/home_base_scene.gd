@@ -40,6 +40,9 @@ var _difficulty_buttons: Array[Button] = []
 ## Three-column building area (left flank / centre door / right flank), rebuilt
 ## on buildings_changed.
 var _building_area: HBoxContainer
+## Container holding the interactive building sprites + plaques (lock / tier badges).
+## Freed + rebuilt on buildings_changed so unlock / tier-up repaints live.
+var _buildings_root: Control
 ## Stash indices the player has marked to carry into the next run (rebuilt into
 ## RunManager.pending_loadout on every toggle). Reset when the scene reloads.
 var _stash_selected: Array[int] = []
@@ -52,9 +55,12 @@ func _ready() -> void:
 	_build()
 	MetaProgress.core_changed.connect(func(_v): _refresh_core())
 	MetaProgress.caps_changed.connect(func(_v): _refresh_caps())
-	# Building selector: top-bar Scrap + tile lock/tier badges track these.
+	# Building selector: top-bar Scrap + lock/tier badges track these.
 	MetaProgress.scrap_changed.connect(func(_v): _refresh_scrap())
-	MetaProgress.buildings_changed.connect(_rebuild_building_tiles)
+	# Repaint the building sprites (lock → unlocked, tier badges) the moment a building
+	# changes — previously wired to the inert _rebuild_building_tiles, so the lock only
+	# cleared on a scene reload (the "must restart to see it unlocked" bug).
+	MetaProgress.buildings_changed.connect(_add_building_sprites)
 
 
 func _build() -> void:
@@ -215,6 +221,19 @@ func _add_currency_hud() -> void:
 
 
 func _add_building_sprites() -> void:
+	# Re-entrant: also fires on buildings_changed. Free the prior visuals (immediately,
+	# so there's no one-frame double-draw) and rebuild under a single root container.
+	if is_instance_valid(_buildings_root):
+		remove_child(_buildings_root)
+		_buildings_root.queue_free()
+	_buildings_root = Control.new()
+	_buildings_root.name = "BuildingsRoot"
+	_buildings_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_buildings_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_buildings_root)
+	# Keep the buildings just above the background (below the HUD / depart / help button)
+	# even when re-added last on a rebuild.
+	move_child(_buildings_root, 1)
 	_add_interactive_building(
 		"forge",
 		Rect2(55, 300, 360, 360),
@@ -381,7 +400,7 @@ func _add_interactive_building(
 	button.mouse_entered.connect(func() -> void: AudioManager.play_sfx("ui_hover"))
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(callback)
-	add_child(button)
+	_buildings_root.add_child(button)
 	# Locked buildings (not yet unlocked with Core) render dimmed with a lock badge so
 	# it reads at a glance which ones aren't available. Still clickable — the building
 	# screen is where you spend Core to unlock.
@@ -394,7 +413,7 @@ func _add_interactive_building(
 		lock.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		lock.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_set_map_rect(lock, rect)
-		add_child(lock)
+		_buildings_root.add_child(lock)
 
 
 func _make_click_mask(texture: Texture2D) -> BitMap:
@@ -420,7 +439,7 @@ func _add_building_plaque(building_id: String, rect: Rect2, title: String) -> vo
 		"panel", T.panel_with_shadow(Color(0.075, 0.050, 0.034, 0.94), accent.darkened(0.10), 6, 2)
 	)
 	_set_map_rect(panel, rect)
-	add_child(panel)
+	_buildings_root.add_child(panel)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 10)
