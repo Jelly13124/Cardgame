@@ -553,8 +553,11 @@ func take_damage(amount: int, silent: bool = false) -> void:
 			COMBAT_FX.spawn_damage_number(scene, spawn_pos, dmg_after_block, blocked_amount)
 			# Shake the sprite only (not `self`) so the HUD / status badges
 			# that are children of this entity don't wobble with it.
-			if dmg_after_block >= 10 and _sprite and is_instance_valid(_sprite):
-				COMBAT_FX.shake(_sprite, 6.0, 0.18)
+			# All hits nudge the sprite now (small → subtle, big → strong), scaled by damage.
+			if dmg_after_block > 0 and _sprite and is_instance_valid(_sprite):
+				COMBAT_FX.shake(
+					_sprite, clampf(3.0 + float(dmg_after_block) * 0.5, 3.0, 14.0), 0.18
+				)
 
 	if health <= 0:
 		AudioManager.play_sfx("enemy_death")
@@ -566,6 +569,8 @@ func take_damage(amount: int, silent: bool = false) -> void:
 		if is_elite:
 			kill_gold *= 2
 		RunManager.add_gold(kill_gold)
+		# A small screen jolt punctuates the kill.
+		COMBAT_FX.shake_screen(get_tree().current_scene, 4.0, 0.18)
 		died.emit()
 		queue_free()
 		return

@@ -55,6 +55,23 @@ func _ready() -> void:
 func update_labels(energy: int, max_energy: int) -> void:
 	if energy_label:
 		energy_label.text = "%d / %d" % [energy, max_energy]
+	_pop_energy()
+
+
+## Quick scale-pop on the energy orb whenever energy changes — spend/gain now reads
+## kinetically instead of a silent text swap.
+func _pop_energy() -> void:
+	if _energy_display == null or not is_instance_valid(_energy_display):
+		return
+	_energy_display.pivot_offset = Vector2(78, 22)  # centre of the 156x44 panel
+	_energy_display.scale = Vector2(1.16, 1.16)
+	var tw := create_tween()
+	(
+		tw
+		. tween_property(_energy_display, "scale", Vector2.ONE, 0.18)
+		. set_trans(Tween.TRANS_BACK)
+		. set_ease(Tween.EASE_OUT)
+	)
 
 
 func _build_energy_display() -> void:
