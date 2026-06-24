@@ -1,0 +1,12 @@
+{
+	"id": "siege_breaker",
+	"name": "Siege Breaker",
+	"sprite_id": "mortar_cart",
+	"max_health": 50,
+	"action_pattern": [
+		{ "type": "block",         "amount": 8,                                          "label": "🛡 8" },
+		{ "type": "attack",        "amount": 18,                                         "label": "⚔ 18" },
+		{ "type": "attack_status", "amount": 12, "status": "vulnerable", "stacks": 1,     "label": "💥 12 +Vuln" },
+		{ "type": "attack",        "amount": 20,                                         "label": "⚔ 20" }
+	]
+}

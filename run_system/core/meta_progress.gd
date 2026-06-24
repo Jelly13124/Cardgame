@@ -297,6 +297,9 @@ const INITIAL_CARD_POOL: Array[String] = [
 	"sweep_arc",
 	"tape_patch",
 	"crowbar_smash",
+	# Build-enabler additions: a second Burn source (AoE) + an in-pool crit-rate source.
+	"wildfire",
+	"lucky_streak",
 ]
 
 ## Hero-exclusive draft cards: only offered (loot/shop) when that hero is active, so
