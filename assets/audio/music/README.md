@@ -11,6 +11,8 @@ Looping is forced in code, so the file does **not** need baked loop points.
 | `map.ogg` | The run map | `map_scene.gd` |
 | `battle.ogg` | Normal + elite fights | `battle_scene.gd` |
 | `boss.ogg` | Boss fights | `battle_scene.gd` (when the node is a boss) |
+| `shop.ogg` | Merchant shop | `shop_scene.gd` |
+| `event.ogg` | Random event scene | `event_modal.gd` |
 
 ## Format
 - **OGG Vorbis**, stereo, 44.1 kHz. Any reasonable length — it loops seamlessly in
@@ -29,4 +31,9 @@ that permits commercial game use (credit as required), or your own. Note the sou
 
 | Track | Source | License |
 |---|---|---|
-| (fill in when you replace a track) | | |
+| `menu.ogg` — *Wild West - Desert Wind* by **Monume** | [Pixabay](https://pixabay.com/) (id 519223) | Pixabay Content License — free for commercial use, **no attribution required** |
+| `battle` / `boss` / `map` / `home` / `shop` / `event` .ogg | Procedural synth — `scripts/gen_audio.py` (project-owned) | Original to this project; regenerate with `python scripts/gen_audio.py` |
+
+> The procedural tracks are ~50–60s with a seamless crossfade loop point (`seamless()`),
+> in the wasteland-western synth palette. `menu.ogg` is the only licensed third-party
+> track and is **never** overwritten by `gen_audio.py`.

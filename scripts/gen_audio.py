@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
-"""Procedural audio generator for the demo. Synthesizes a full SFX set + per-scene
-BGM loops (numpy). SFX -> assets/audio/sfx/*.wav ; music -> *.wav (ffmpeg converts
-to .ogg in the build step). Demo-grade retro/synth quality; swap in CC0 files later
-by replacing the same filenames.
+"""Procedural BGM generator for the demo (numpy synth, wasteland-western palette).
+
+Music -> assets/audio/music/*.ogg (this script ffmpeg-converts WAV->OGG itself).
+Tracks are ~50-60s with a seamless crossfade loop point so the loop is not obvious.
+
+  python scripts/gen_audio.py          # (re)generate BGM oggs (battle/boss/map/home/shop/event)
+  python scripts/gen_audio.py --sfx    # ALSO write the legacy procedural SFX (fallback only)
+
+SFX now ship from the Kenney CC0 audio packs (see assets/audio/sfx/README.md); the
+procedural SFX synth below is kept as an opt-in fallback. `menu.ogg` is the real
+licensed track (Wild West - Desert Wind) and is NEVER regenerated here.
 """
 import os, wave, struct
 import numpy as np
@@ -62,6 +69,19 @@ def padd(*sigs):
     for s in sigs: out[:len(s)] += s
     return out
 
+def seamless(track, xfade=0.6):
+    """Fold the track's tail into its head so end->start loops without a click/gap.
+    Returns the trimmed track whose first `xfade`s already contain the old tail, so
+    playing it on loop is seamless. No-op for very short tracks."""
+    n = int(xfade * SR)
+    if 2 * n >= len(track):
+        return track
+    head = track[:n].copy()
+    tail = track[-n:].copy()
+    fin = np.linspace(0.0, 1.0, n)
+    track[:n] = head * fin + tail * (1.0 - fin)
+    return track[:-n]
+
 def write_wav(path, sig, sr=SR):
     sig = np.clip(sig, -1, 1); data = (sig * 32767).astype("<i2").tobytes()
     with wave.open(path, "w") as w:
@@ -70,7 +90,7 @@ def write_wav(path, sig, sr=SR):
 
 def midi(n): return 440.0 * 2 ** ((n - 69) / 12.0)
 
-# ---------- SFX ----------
+# ---------- SFX (legacy procedural fallback — opt-in via --sfx; Kenney CC0 is the default) ----------
 def sfx_ui_click():
     s = padd(env_perc(square(880, 0.05, 0.5), 60) * 0.5, env_perc(sine(1600, 0.04), 80) * 0.3)
     return norm(s, 0.6)
@@ -224,7 +244,9 @@ def place(track, sig, at_sec):
     track[i:i + len(sig)] += sig
 
 def build_music(bpm, bars, chords, lead_notes=None, drums=False, kick_only=False,
-                pad=True, lead_vol=0.4):
+                pad=True, lead_vol=0.4, loop_xfade=0.6):
+    """Render `bars` bars at `bpm`, then fold a seamless loop point. The lead motif
+    repeats (2 slots/bar) instead of stretching, so long tracks keep their shape."""
     beat = 60.0 / bpm; bar = beat * 4; total = bar * bars
     track = np.zeros(int(SR * total))
     for b in range(bars):
@@ -232,9 +254,9 @@ def build_music(bpm, bars, chords, lead_notes=None, drums=False, kick_only=False
         # bass on beats
         for k in range(4):
             place(track, instr_bass(midi(root - 12), beat * 0.9), b * bar + k * beat)
-        # pad chord (root, +3/4, +7)
+        # pad chord (root, +3, +7)
         if pad:
-            for off in [0, 3 if (root % 12) in (0,2,4,5,7,9,11) else 3, 7]:
+            for off in [0, 3, 7]:
                 place(track, instr_pad(midi(root + off), bar * 0.98, 0.22), b * bar)
         # arp pluck
         arp = [root, root + 7, root + 12, root + 7]
@@ -250,46 +272,65 @@ def build_music(bpm, bars, chords, lead_notes=None, drums=False, kick_only=False
         elif kick_only:
             place(track, drum_kick(), b * bar)
             place(track, drum_kick(), b * bar + 2 * beat)
-    # lead melody (sparse)
+    # lead melody — repeat the motif (2 slots/bar) across all bars rather than
+    # stretching a few notes over the whole (now much longer) track.
     if lead_notes:
-        step = total / len(lead_notes)
-        for i, nn in enumerate(lead_notes):
-            if nn is None: continue
-            place(track, instr_lead(midi(nn), step * 0.9, lead_vol), i * step)
-    return norm(softclip(track * 1.1), 0.7)
+        seg = bar / 2.0
+        for i in range(bars * 2):
+            nn = lead_notes[i % len(lead_notes)]
+            if nn is None:
+                continue
+            place(track, instr_lead(midi(nn), seg * 0.9, lead_vol), i * seg)
+    track = norm(softclip(track * 1.1), 0.7)
+    if loop_xfade > 0.0:
+        track = seamless(track, loop_xfade)
+    return track
 
-# minor-key wasteland progressions (MIDI root notes)
+# minor-key wasteland progressions (MIDI root notes). bars tuned for ~50-60s loops.
 A = 57  # A3
-def music_menu():
-    # slow, atmospheric Am - F - C - G
-    ch = [A, A - 4, A + 3, A - 2]
-    lead = [69, None, 72, None, 71, None, 67, None]
-    return build_music(72, 8, ch, lead_notes=lead, pad=True, drums=False, lead_vol=0.3)
 def music_battle():
     # driving Am - G - F - E
     ch = [A, A - 2, A - 4, A - 5]
     lead = [69, 72, 71, 69, 67, 69, 64, 67]
-    return build_music(124, 8, ch, lead_notes=lead, drums=True, lead_vol=0.34)
+    return build_music(124, 28, ch, lead_notes=lead, drums=True, lead_vol=0.34)
 def music_map():
     ch = [A, A + 3, A - 4, A - 2]
     lead = [76, None, 72, None, 69, None, 71, None]
-    return build_music(96, 8, ch, lead_notes=lead, kick_only=True, lead_vol=0.3)
+    return build_music(96, 22, ch, lead_notes=lead, kick_only=True, lead_vol=0.3)
 def music_home():
     ch = [A + 3, A, A - 2, A - 4]
     lead = [72, None, 76, None, 74, None, 71, None]
-    return build_music(84, 8, ch, lead_notes=lead, pad=True, lead_vol=0.28)
+    return build_music(84, 20, ch, lead_notes=lead, pad=True, lead_vol=0.28)
 def music_boss():
     ch = [A - 5, A - 5, A - 4, A - 2]
     lead = [64, 65, 67, 64, 60, 62, 64, 62]
-    return build_music(132, 8, ch, lead_notes=lead, drums=True, lead_vol=0.38)
+    return build_music(132, 30, ch, lead_notes=lead, drums=True, lead_vol=0.38)
+def music_shop():
+    # warm, relaxed saloon — gentle, no drums
+    ch = [A + 3, A + 5, A, A + 2]
+    lead = [76, None, 79, None, 77, None, 72, None]
+    return build_music(92, 20, ch, lead_notes=lead, pad=True, lead_vol=0.26)
+def music_event():
+    # sparse, tense, ambient bed under a decision
+    ch = [A - 5, A - 7, A - 4, A - 5]
+    lead = [60, None, None, 62, None, None, 59, None]
+    return build_music(70, 16, ch, lead_notes=lead, kick_only=True, pad=True, lead_vol=0.22)
 
-MUSIC = {"menu": music_menu, "battle": music_battle, "map": music_map,
-         "home": music_home, "boss": music_boss}
+# NOTE: "menu" is intentionally absent — menu.ogg is the real licensed track.
+MUSIC = {"battle": music_battle, "map": music_map, "home": music_home,
+         "boss": music_boss, "shop": music_shop, "event": music_event}
 
 if __name__ == "__main__":
-    for name, fn in SFX.items():
-        write_wav(f"{SFX_DIR}/{name}.wav", fn())
-    print(f"wrote {len(SFX)} SFX -> {SFX_DIR}")
+    import subprocess, sys
+    if "--sfx" in sys.argv:  # legacy procedural SFX — Kenney CC0 is the default set
+        for name, fn in SFX.items():
+            write_wav(f"{SFX_DIR}/{name}.wav", fn())
+        print(f"wrote {len(SFX)} legacy SFX -> {SFX_DIR}")
     for name, fn in MUSIC.items():
-        write_wav(f"{MUS_DIR}/{name}.wav", fn())
-    print(f"wrote {len(MUSIC)} music loops (WAV) -> {MUS_DIR}")
+        wav = f"{MUS_DIR}/{name}.wav"; ogg = f"{MUS_DIR}/{name}.ogg"
+        sig = fn(); write_wav(wav, sig)
+        subprocess.run(["ffmpeg", "-y", "-i", wav, "-c:a", "libvorbis", "-q:a", "5", ogg],
+                       check=True, capture_output=True)
+        os.remove(wav)
+        print(f"wrote {name}.ogg ({len(sig) / SR:.0f}s)")
+    print(f"wrote {len(MUSIC)} music loops (.ogg) -> {MUS_DIR}  (menu.ogg = real track, untouched)")
