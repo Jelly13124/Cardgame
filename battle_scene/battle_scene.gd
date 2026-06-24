@@ -80,11 +80,17 @@ func _extract_rewards_for_act(act: int) -> Dictionary:
 	}
 
 
+func _exit_tree() -> void:
+	# Restore normal speed when leaving combat so the map / menus run at 1x
+	# regardless of the battle-speed setting (Engine.time_scale is global).
+	Engine.time_scale = 1.0
+
+
 func _ready():
 	print("BATTLE STARTING (STS Layout)")
 	AudioManager.play_music("boss" if RunManager.last_battle_node_type == "boss" else "battle")
 	card_manager.debug_mode = false
-	Engine.time_scale = 1.0
+	Engine.time_scale = Settings.game_speed
 
 	# Instantiate DeckManager
 	deck_manager = DECK_MANAGER_SCRIPT.new()

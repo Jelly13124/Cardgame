@@ -329,7 +329,30 @@ const HERO_EXCLUSIVE_CARDS := {
 }
 
 
+## One-shot migration: a pre-slots profile lived at user://meta.json. If it exists and
+## slot 1 has no save yet, import it into slot 1 so a returning tester keeps their banked
+## Core / stash / unlocks instead of booting an empty profile after the slots update.
+func _migrate_legacy_save() -> void:
+	if slot_exists(1) or not FileAccess.file_exists(LEGACY_SAVE_PATH):
+		return
+	var src := FileAccess.open(LEGACY_SAVE_PATH, FileAccess.READ)
+	if src == null:
+		return
+	var text := src.get_as_text()
+	src.close()
+	if text.strip_edges() == "":
+		return
+	_ensure_slot_dir(1)
+	var dst := FileAccess.open(_meta_path(1), FileAccess.WRITE)
+	if dst == null:
+		return
+	dst.store_string(text)
+	dst.close()
+	push_warning("MetaProgress: migrated legacy user://meta.json -> slot 1")
+
+
 func _ready() -> void:
+	_migrate_legacy_save()
 	# Slot system: only load at boot if a slot is already active (e.g. relaunch
 	# remembering the last slot). A fresh boot lands on the menu with no slot; the
 	# slot-select screen calls set_active_slot() to load the chosen profile.

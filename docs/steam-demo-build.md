@@ -81,7 +81,7 @@ the App ID and the file is ignored.)
 ## Demo scope reminder
 
 The demo is gated by `RunManager.DEMO_BUILD` (`run_system/core/run_manager.gd`):
-- `DEMO_MAX_ACTS = 1` — only Act 1; its boss wins the demo (no extract choice).
+- `DEMO_MAX_ACTS = 2` — Acts 1–2; the Act-1 boss offers extract-vs-push, and clearing the Act-2 boss (`ash_warden`) wins the demo.
 - `DEMO_ALLOWED_HEROES = ["cowboy_bill"]` — only Cowboy Bill in the Warehouse picker.
 
 Flip `DEMO_BUILD = false` to build the full 3-act, all-heroes game from the same
