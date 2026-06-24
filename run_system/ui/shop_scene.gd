@@ -14,8 +14,8 @@ const SHOP_BACKGROUND_PATH := "res://run_system/assets/images/shop/shop_interior
 const SHOPKEEPER_PATH := "res://run_system/assets/images/shop/shopkeeper.png"
 
 # --- Pricing (per rarity) ---
-const CARD_PRICE := {"common": 70, "uncommon": 120, "rare": 200}
-const RELIC_PRICE := 150
+const CARD_PRICE := {"common": 65, "uncommon": 110, "rare": 175}
+const RELIC_PRICE := 135
 const REMOVE_CARD_PRICE := 75
 const SHOP_CARD_COUNT := 6
 const SHOP_RELIC_COUNT := 3
