@@ -89,3 +89,14 @@ TIP_3,"Each enemy's intent icon shows its next move. Gain Block to survive big h
 TIP_4,"Out of moves? Press END TURN. Good luck out there!","没法行动了?点击结束回合。祝你好运!"
 TIP_NEXT,Next,下一步
 TIP_DONE,Got it,明白了
+PAUSE_TITLE,Paused,暂停
+PAUSE_RESUME,Resume,继续
+PAUSE_SETTINGS,Settings,设置
+PAUSE_ABANDON,Abandon Run,放弃本局
+PAUSE_QUIT,Quit Game,退出游戏
+PAUSE_BACK,Back,返回
+PAUSE_CONFIRM_TITLE,Are you sure?,确定吗?
+PAUSE_ABANDON_CONFIRM,"Give up this run and return to base? You lose everything not in a safe cell.","放弃本局、回到基地?安全格以外的东西都会丢失。"
+PAUSE_QUIT_CONFIRM,Quit the game to desktop?,退出游戏到桌面?
+PAUSE_CONFIRM_YES,Yes,确定
+PAUSE_CONFIRM_NO,Cancel,取消

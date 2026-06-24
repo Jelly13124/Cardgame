@@ -1936,6 +1936,12 @@ func _handle_run_loss(core_earned: int = 0) -> void:
 ## THIS run (e.g. 150 for final boss, 50 for extract). `outcome` is
 ## "victory" for final boss kill, "extracted" for mid-act extract.
 ## Idempotent — calling twice is a no-op the second time.
+## Voluntarily give up the run (pause-menu Abandon): settled as a loss like death
+## (no rewards, backpack forfeit except safe cells); the pause panel then routes to base.
+func abandon_run() -> void:
+	_teardown_run(false, "abandoned", 0)
+
+
 func end_run_victory(core_earned: int = 0, outcome: String = "victory") -> void:
 	_teardown_run(true, outcome, core_earned)
 

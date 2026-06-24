@@ -7,6 +7,7 @@ extends Control
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const MAP_PACKED = preload("res://run_system/ui/map_scene.tscn")
 const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
+const PAUSE_PANEL = preload("res://run_system/ui/pause_panel.gd")
 ## Fallback hero when no Warehouse selection has been made — the base hero, always
 ## available. Keeps START NEW RUN robust (a run never begins with an empty hero).
 const DEFAULT_HERO_ID := "cowboy_bill"
@@ -127,7 +128,7 @@ func _build_legacy() -> void:
 	settings_btn.custom_minimum_size = Vector2(136, 48)
 	settings_btn.add_theme_font_size_override("font_size", 18)
 	T.apply_button_theme(settings_btn)
-	settings_btn.pressed.connect(_open_settings)
+	settings_btn.pressed.connect(_open_pause)
 	header.add_child(settings_btn)
 
 	# "?" How-to-Play — the base is the systems hub (tools/relics/equipment/upgrades),
@@ -559,6 +560,13 @@ func _style_readable_label(label: Label, font_size: int, color: Color, outline_s
 
 ## Settings overlay (Language / Fullscreen / Volume). Language change reloads
 ## the home base so all labels pick up the new locale.
+## Open the unified pause panel (the ⚙ gear). No run is active at the base, so the
+## Abandon option auto-hides (PAUSE_PANEL.open is passed is_run_active = false here).
+func _open_pause() -> void:
+	PAUSE_PANEL.open(self, RunManager.is_run_active)
+
+
+## Superseded by _open_pause; no longer wired. Kept for reference, safe to delete later.
 func _open_settings() -> void:
 	if get_node_or_null("SettingsOverlay") != null:
 		return

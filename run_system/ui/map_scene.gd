@@ -10,6 +10,7 @@ const EQUIPMENT_PANEL_SCRIPT = preload("res://run_system/ui/equipment_panel.gd")
 const RUN_DECK_VIEWER_MODAL = preload("res://run_system/ui/run_deck_viewer_modal.gd")
 const RUN_TOP_BAR = preload("res://run_system/ui/run_top_bar.gd")
 const SETTINGS_PANEL_SCRIPT = preload("res://run_system/ui/settings_panel.gd")
+const PAUSE_PANEL = preload("res://run_system/ui/pause_panel.gd")
 const EVENT_MODAL_SCRIPT = preload("res://run_system/ui/event_modal.gd")
 const T_THEME = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const BATTLE_PACKED = preload("res://battle_scene/battle_scene.tscn")
@@ -235,6 +236,17 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_I:
 		if get_node_or_null("EquipmentPanel") or not _is_page_open():
 			_open_equipment_panel()
+		return
+
+	# ESC → unified pause panel (settings / how-to / abandon / quit), unless a full
+	# page (equipment, a modal, etc.) is already open and owns the ESC.
+	if (
+		event.is_action_pressed("ui_cancel")
+		and not _is_page_open()
+		and not get_node_or_null("PauseLayer")
+	):
+		_open_pause()
+		get_viewport().set_input_as_handled()
 		return
 
 	# Block ALL map input while any modal is open (relic choice, rest choice,
@@ -715,13 +727,21 @@ func _build_top_bar() -> void:
 	bar.show_settings_button = true
 	bar.deck_pressed.connect(_open_run_deck_viewer)
 	bar.character_pressed.connect(_open_equipment_panel)
-	bar.settings_pressed.connect(_open_settings)
+	bar.settings_pressed.connect(_open_pause)
 	layer.add_child(bar)
 
 
 ## Settings overlay (language / fullscreen / volume) — same pattern as the home
 ## base's _open_settings. Language change reloads the map scene (state lives in
 ## RunManager, so a reload is lossless).
+## Open the unified pause panel (ESC + the top-bar gear). Settings / How-to / Abandon
+## (mid-run) / Quit all live inside it.
+func _open_pause() -> void:
+	PAUSE_PANEL.open(self, RunManager.is_run_active)
+
+
+## Superseded by the pause panel (_open_pause); retained only as a reference and no
+## longer wired to anything. Safe to delete in a later cleanup.
 func _open_settings() -> void:
 	if get_node_or_null("SettingsOverlay") != null:
 		return

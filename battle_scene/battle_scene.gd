@@ -8,6 +8,8 @@ extends Node
 @onready var discard_pile = $CardManager/DiscardPile
 @onready var player = $Player
 @onready var enemy_container = $EnemyContainer
+
+const PAUSE_PANEL = preload("res://run_system/ui/pause_panel.gd")
 @onready var turn_manager = $TurnManager
 @onready var combat_engine = $CombatEngine
 @onready var enemy_ai = $EnemyAI
@@ -154,6 +156,17 @@ func _maybe_show_tutorial() -> void:
 ## ONLY intercepts right-click during targeting — never keyboard events,
 ## so Q/E pile-viewer shortcuts can still reach BattleUIManager.
 func _input(event: InputEvent) -> void:
+	# ESC → unified pause panel (settings / how-to / abandon / quit). Suppressed while
+	# targeting so ESC there stays free to cancel the targeting arrow.
+	if (
+		event.is_action_pressed("ui_cancel")
+		and not is_targeting
+		and not get_node_or_null("PauseLayer")
+	):
+		PAUSE_PANEL.open(self, RunManager.is_run_active)
+		get_viewport().set_input_as_handled()
+		return
+
 	# Debug-only: right-click any enemy (outside targeting) → instant-kill.
 	# Routes through the normal take_damage path so the died signal fires and
 	# combat_engine declares victory once the last enemy is gone. Guarded on
