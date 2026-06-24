@@ -76,6 +76,7 @@ func _ready() -> void:
 	# Gold now lives in the backpack — refresh the label whenever the backpack
 	# changes (a purchase spends gold via backpack mutation, not resources_changed).
 	RunManager.backpack_changed.connect(_refresh_gold_label)
+	AudioManager.play_music("shop")
 
 
 func _on_resources_changed(_gold: int, _core: int) -> void:

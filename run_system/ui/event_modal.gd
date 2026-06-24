@@ -28,6 +28,10 @@ var _option_buttons: Array[Button] = []
 var _result_label: Label
 var _vbox: VBoxContainer
 
+## BGM playing when the event opened (usually "map") — restored on close so the event
+## reads as its own scene with its own music.
+var _prev_music: String = ""
+
 
 func _ready() -> void:
 	# Fill the whole screen regardless of parent (a Control under a CanvasLayer or a
@@ -39,6 +43,8 @@ func _ready() -> void:
 	_fit_to_viewport()
 	get_viewport().size_changed.connect(_fit_to_viewport)
 	_build()
+	_prev_music = AudioManager.current_track()
+	AudioManager.play_music("event")
 
 
 func _fit_to_viewport() -> void:
@@ -217,5 +223,7 @@ func _show_result(text: String) -> void:
 
 
 func _finalize() -> void:
+	if _prev_music != "":
+		AudioManager.play_music(_prev_music)
 	resolved.emit()
 	queue_free()
