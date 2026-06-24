@@ -457,6 +457,16 @@ Specs: `docs/superpowers/specs/2026-06-21-tools-attrs-loading-base-ui-design.md`
 - ✅ **Building detail pages** redesigned (icon + flavour + action card + locked-state preview, all 5 buildings).
 - ✅ **A0 balance pass**: deflated the over-statted 1-cost cards, raised enemy aggression (block→attack), retuned the Act-1 boss `rust_titan` into a 2-3-try skill gate (geared+leveled clears comfortably).
 
+### ✅ Phase 9 — Demo Polish (shipped 2026-06-24)
+Spec: `docs/superpowers/specs/2026-06-24-demo-polish-overnight-design.md`. Driven by a 4-dimension demo review.
+- ✅ **Audio overhaul**: real licensed menu track (*Wild West - Desert Wind*, Pixabay); procedural BGM regenerated ~50–60s with seamless loop points + new `shop`/`event` slots; all SFX replaced with **Kenney CC0** samples. Licensing in `assets/audio/{music,sfx}/README.md`.
+- ✅ **Economy**: 99-gold start + per-kill gold drops (toughness-scaled, elites ×2) + shop price retune — the merchant is usable across a 2-act run.
+- ✅ **Wishlist CTA**: real `OS.shell_open` button on BOTH win and defeat result screens + a "full game has more" teaser (`STORE_URL` is a TODO placeholder pending the real App ID).
+- ✅ **Onboarding**: rules panel now teaches Tools / Relics / Equipment / Crit / Base and fully defines Luck & Charm; also reachable from the home base.
+- ✅ **Combat juice**: damage-scaled screen shake + per-hit sprite feedback (removed the ≥10 gate) + enemy-death thud + energy-orb pop.
+- ✅ **Content**: 3 elites (was 1; now picks one at random per node) — `chrome_warden` + `siege_breaker` reuse existing sprites with distinct movesets; 2 Bill-pool cards (`wildfire` AoE-Burn, `lucky_streak` crit-rate source); event-node frequency bumped.
+- ✅ **Settings/QoL**: Battle Speed toggle (1×/1.5×/2×); one-shot legacy-save migration (`user://meta.json` → slot 1).
+
 ---
 
 ## Known Issues & Tech Debt
@@ -466,3 +476,5 @@ Specs: `docs/superpowers/specs/2026-06-21-tools-attrs-loading-base-ui-design.md`
 | 🟢 | `Sharpened Scrap` relic's `_mark_used_once()` call is harmless dead code for non-`once_per_combat` relics — minor readability |
 | P3 | Some historical generated-sheet intermediates remain for traceability; current playable cards reference PNG art only |
 | ⚠️ | **The pre-2026-05-25 PixelLab key in `generate_enemy.ps1`** is in git history and should be rotated on the PixelLab side. The file now reads from `$env:PIXELLAB_API_KEY` but the old key remains exposed in historical commits. |
+| P3 | Demo-polish deferred (need windowed visual verification): enemy idle-breathe + full death-fade + block/status number pops; a resolution dropdown; act-2-exclusive enemies (the 3-elite variety + per-act scaling partly cover this). |
+| ⚠️ | Wishlist `STORE_URL` (`result_screen.gd`) + `steam_appid.txt` are placeholders — set the real Steam App ID before shipping the demo. |
