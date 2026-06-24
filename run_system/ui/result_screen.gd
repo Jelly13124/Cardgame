@@ -7,6 +7,9 @@ extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const MAIN_MENU_PATH := "res://run_system/ui/main_menu.tscn"
+## Wishlist CTA target. TODO: swap for the real Steam store page (App ID) once it
+## exists — steam_appid.txt is still the 480 placeholder.
+const STORE_URL := "https://store.steampowered.com/"
 
 ## "defeat" or "demo_complete". Set by the owner before add_child.
 var mode: String = "defeat"
@@ -71,15 +74,25 @@ func _build() -> void:
 	summary.add_theme_color_override("font_color", T.TEXT_SECONDARY)
 	box.add_child(summary)
 
-	if is_win:
-		var wishlist := Label.new()
-		wishlist.text = tr("RESULT_WISHLIST")
-		wishlist.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		wishlist.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		wishlist.custom_minimum_size = Vector2(560, 0)
-		wishlist.add_theme_font_size_override("font_size", 18)
-		wishlist.add_theme_color_override("font_color", T.ACCENT_NEON_BLUE)
-		box.add_child(wishlist)
+	# Wishlist CTA — shown on BOTH win and defeat. Most demo players exit via defeat,
+	# so the conversion ask (and the "there's more" teaser) must live on both paths.
+	var teaser := Label.new()
+	teaser.text = tr("RESULT_TEASER")
+	teaser.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	teaser.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	teaser.custom_minimum_size = Vector2(560, 0)
+	teaser.add_theme_font_size_override("font_size", 18)
+	teaser.add_theme_color_override("font_color", T.ACCENT_NEON_BLUE)
+	box.add_child(teaser)
+
+	var wishlist_btn := Button.new()
+	wishlist_btn.text = tr("RESULT_WISHLIST")
+	wishlist_btn.custom_minimum_size = Vector2(360, 52)
+	wishlist_btn.focus_mode = Control.FOCUS_NONE
+	wishlist_btn.add_theme_font_size_override("font_size", 20)
+	T.apply_button_theme(wishlist_btn)
+	wishlist_btn.pressed.connect(_on_wishlist)
+	box.add_child(wishlist_btn)
 
 	var gap := Control.new()
 	gap.custom_minimum_size = Vector2(0, 12)
@@ -116,3 +129,9 @@ func _summary_text() -> String:
 func _on_back() -> void:
 	AudioManager.play_sfx("ui_back")
 	SceneTransition.change_to(MAIN_MENU_PATH)
+
+
+func _on_wishlist() -> void:
+	AudioManager.play_sfx("ui_click")
+	# Opens the store page in the default browser. Harmless no-op if unsupported.
+	OS.shell_open(STORE_URL)
