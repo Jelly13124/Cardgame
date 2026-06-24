@@ -63,6 +63,23 @@ func _build() -> void:
 	_add_currency_hud()
 
 
+## Open the How-to-Play panel (loaded at runtime; same pattern as map_scene._open_rules_panel).
+func _open_rules_panel() -> void:
+	var path := "res://run_system/ui/rules_panel.gd"
+	if not ResourceLoader.exists(path):
+		return
+	var script = load(path)
+	if script == null:
+		return
+	var layer := CanvasLayer.new()
+	layer.name = "RulesLayer"
+	layer.layer = 140
+	add_child(layer)
+	var panel = script.new()
+	panel.tree_exited.connect(layer.queue_free)
+	layer.add_child(panel)
+
+
 func _build_legacy() -> void:
 	_add_background()
 
@@ -112,6 +129,18 @@ func _build_legacy() -> void:
 	T.apply_button_theme(settings_btn)
 	settings_btn.pressed.connect(_open_settings)
 	header.add_child(settings_btn)
+
+	# "?" How-to-Play — the base is the systems hub (tools/relics/equipment/upgrades),
+	# so surface the rules here too (previously only on the title + map pause).
+	var help_btn := Button.new()
+	help_btn.text = "?"
+	help_btn.custom_minimum_size = Vector2(48, 48)
+	help_btn.focus_mode = Control.FOCUS_NONE
+	help_btn.tooltip_text = tr("MENU_HOWTO")
+	help_btn.add_theme_font_size_override("font_size", 22)
+	T.apply_button_theme(help_btn)
+	help_btn.pressed.connect(_open_rules_panel)
+	header.add_child(help_btn)
 
 	# (Stash/loadout button + header START removed — START now lives in the centre
 	# "door" of the building layout below; the Warehouse owns hero + loadout.)
