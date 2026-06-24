@@ -365,10 +365,18 @@ func take_damage(amount: int, silent: bool = false) -> void:
 			# badges that are children of this entity don't wobble. If the
 			# AnimatedSprite2D has no frames loaded, the fallback Sprite2D is
 			# the actually-rendered art.
-			if dmg_after_block >= 10:
+			# Every HP-damage hit now gives kinetic feedback: small hits nudge, big
+			# hits jolt. Sprite shake scales with damage, and the whole battlefield
+			# screen-shakes on top — proportional to the blow.
+			if dmg_after_block > 0:
 				var shake_target: Node2D = _visible_sprite()
 				if shake_target:
-					COMBAT_FX.shake(shake_target, 8.0, 0.22)
+					COMBAT_FX.shake(
+						shake_target, clampf(4.0 + float(dmg_after_block) * 0.6, 4.0, 16.0), 0.22
+					)
+				COMBAT_FX.shake_screen(
+					scene, clampf(2.0 + float(dmg_after_block) * 0.4, 2.0, 10.0), 0.22
+				)
 
 	if health <= 0:
 		died.emit()

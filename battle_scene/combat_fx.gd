@@ -94,6 +94,18 @@ static func shake(target: Node2D, intensity: float = 8.0, duration: float = 0.18
 	tween.tween_property(target, "position", origin, duration / float(steps))
 
 
+## Whole-battlefield "screen shake": jolt the player + enemy container together so a
+## big hit or crit reads as a screen impact. Reuses the origin-cached shake() above, so
+## there's no positional drift. A brief HUD wobble during the ~0.2s jolt is intentional.
+static func shake_screen(scene: Node, intensity: float = 6.0, duration: float = 0.22) -> void:
+	if scene == null or not is_instance_valid(scene):
+		return
+	for prop in ["player", "enemy_container"]:
+		var n = scene.get(prop)
+		if n is Node2D and is_instance_valid(n):
+			shake(n, intensity, duration)
+
+
 static func _color_for_hit(amount: int, blocked: int) -> Color:
 	if blocked > 0 and amount == 0:
 		return Color(0.65, 0.85, 1.0)  # fully absorbed — cool blue-grey
