@@ -14,6 +14,8 @@ var fullscreen: bool = false
 var master_volume: float = 1.0
 var music_volume: float = 0.7
 var sfx_volume: float = 0.9
+## Battle speed multiplier applied to Engine.time_scale during combat (1.0 / 1.5 / 2.0).
+var game_speed: float = 1.0
 ## Active save slot (1..3), or 0 when none is chosen yet (fresh boot at the menu).
 ## Persisted so a relaunch can remember the last-played slot, but the slot-select
 ## screen always re-sets it on pick. MetaProgress / RunManager namespace their
@@ -70,6 +72,7 @@ func load_settings() -> void:
 	master_volume = float(data.get("master_volume", 1.0))
 	music_volume = float(data.get("music_volume", 0.7))
 	sfx_volume = float(data.get("sfx_volume", 0.9))
+	game_speed = clampf(float(data.get("game_speed", 1.0)), 1.0, 2.0)
 	active_slot = int(data.get("active_slot", 0))
 	key_bindings = {}
 	var kb = data.get("key_bindings", {})
@@ -95,6 +98,7 @@ func save_settings() -> void:
 						"master_volume": master_volume,
 						"music_volume": music_volume,
 						"sfx_volume": sfx_volume,
+						"game_speed": game_speed,
 						"active_slot": active_slot,
 						"key_bindings": key_bindings,
 					}
@@ -125,6 +129,13 @@ func set_fullscreen(on: bool) -> void:
 func set_master_volume(v: float) -> void:
 	master_volume = clampf(v, 0.0, 1.0)
 	apply_audio()
+	save_settings()
+
+
+## Battle-speed multiplier (1.0 / 1.5 / 2.0). Applied to Engine.time_scale by
+## battle_scene on enter; reset to 1.0 on exit so menus run at normal speed.
+func set_game_speed(v: float) -> void:
+	game_speed = clampf(v, 1.0, 2.0)
 	save_settings()
 
 

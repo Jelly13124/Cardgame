@@ -59,6 +59,24 @@ static func add_controls(
 	_volume_row(box, "SETTINGS_MUSIC", Settings.music_volume, Settings.set_music_volume)
 	_volume_row(box, "SETTINGS_SFX", Settings.sfx_volume, Settings.set_sfx_volume)
 
+	# ── Battle speed ── cycle 1x / 1.5x / 2x (applied to Engine.time_scale in combat).
+	var speed_btn := Button.new()
+	speed_btn.focus_mode = Control.FOCUS_NONE
+	speed_btn.custom_minimum_size = Vector2(0, 40)
+	speed_btn.text = _speed_text(Settings.game_speed)
+	_style_button(speed_btn)
+	speed_btn.pressed.connect(
+		func() -> void:
+			var next: float = 1.0 if Settings.game_speed >= 2.0 else Settings.game_speed + 0.5
+			Settings.set_game_speed(next)
+			speed_btn.text = _speed_text(Settings.game_speed)
+	)
+	box.add_child(speed_btn)
+
+
+static func _speed_text(s: float) -> String:
+	return "%s  %.1fx" % [TranslationServer.translate("SETTINGS_GAME_SPEED"), s]
+
 
 ## Append a Key Bindings section: one rebind row per battle action + a Reset.
 static func add_key_controls(box: VBoxContainer) -> void:

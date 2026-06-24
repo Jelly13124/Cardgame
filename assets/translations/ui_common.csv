@@ -7,6 +7,7 @@ SETTINGS_FULLSCREEN,Fullscreen,全屏
 SETTINGS_VOLUME,Master Volume,主音量
 SETTINGS_MUSIC,Music,音乐
 SETTINGS_SFX,Sound Effects,音效
+SETTINGS_GAME_SPEED,Battle Speed,战斗速度
 SETTINGS_KEYBINDS,Key Bindings,按键设置
 SETTINGS_PRESS_KEY,Press a key…,按下按键…
 SETTINGS_RESET_KEYS,Reset to Defaults,恢复默认
