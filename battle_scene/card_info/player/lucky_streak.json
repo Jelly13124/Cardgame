@@ -1,0 +1,17 @@
+{
+	"name": "lucky_streak",
+	"title": "Lucky Streak",
+	"rarity": "uncommon",
+	"type": "skill",
+	"cost": 1,
+	"polarity": "neutral",
+	"description": "Gain 2 Luck (raises crit chance and loot rarity).",
+	"front_image": "player/adrenaline.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "gain_luck",
+			"amount": 2
+		}
+	]
+}

@@ -1,0 +1,12 @@
+{
+	"id": "chrome_warden",
+	"name": "Chrome Warden",
+	"sprite_id": "chrome_hound",
+	"max_health": 60,
+	"action_pattern": [
+		{ "type": "block",         "amount": 18,                                       "label": "🛡 18" },
+		{ "type": "attack_status", "amount": 10, "status": "weak",  "stacks": 1,        "label": "⚔ 10 +Weak" },
+		{ "type": "attack",        "amount": 13,                                       "label": "⚔ 13" },
+		{ "type": "attack_status", "amount": 11, "status": "frail", "stacks": 1,        "label": "🔨 11 +Frail" }
+	]
+}

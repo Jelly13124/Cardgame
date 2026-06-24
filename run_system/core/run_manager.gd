@@ -250,7 +250,7 @@ const ENCOUNTER_POOLS_LATE = [
 	["riot_hound_alpha"],
 	["mortar_cart_siege", "scrap_rat"],
 ]
-const ELITE_ROSTER: Array = ["armored_patrol"]
+const ELITE_ROSTER: Array = ["armored_patrol", "chrome_warden", "siege_breaker"]
 ## Acts (大层). Each act is its OWN FLOORS_PER_ACT-tall map ending in a single
 ## boss at the top floor — there are no mid-map bosses. Clearing a non-final
 ## act's boss offers an extract choice; clearing the final act's boss wins the
@@ -576,7 +576,9 @@ func _pick_node_type(floor_idx: int, total: int, treasure_extras_used: int = 0) 
 		return "enemy"
 
 	# Mid/late floors: full pool with reduced treasure rate + global treasure cap.
-	if roll < 0.40:
+	# (Event "?" band widened 0.37-0.55 = 18%, taken from the plentiful enemy band, so
+	# the authored random events show up more without shrinking merchant/rest/elite.)
+	if roll < 0.37:
 		return "enemy"
 	if roll < 0.55:
 		return "unknown"
@@ -625,8 +627,9 @@ func select_encounter(node_type: String, floor_idx: int) -> Array[String]:
 			# Boss is the current act's boss (floor_idx is always the top floor).
 			result.append(current_act_boss())
 		"elite":
-			for id in ELITE_ROSTER:
-				result.append(str(id))
+			# Pick ONE elite at random so elite nodes vary across a run (and across the
+			# two acts) instead of every elite being the same fight.
+			result.append(str(ELITE_ROSTER[randi() % ELITE_ROSTER.size()]))
 		"enemy", "unknown":
 			var pool: Array
 			var tier_floor: int = floor_idx + (current_act - 1) * ACT_POOL_OFFSET
