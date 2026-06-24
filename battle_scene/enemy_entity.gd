@@ -558,6 +558,14 @@ func take_damage(amount: int, silent: bool = false) -> void:
 
 	if health <= 0:
 		AudioManager.play_sfx("enemy_death")
+		# Per-kill gold drop, scaled by toughness (elites pay double). Keeps the purse
+		# flowing between the flat per-fight loot gold so the shop stays affordable
+		# across a 2-act run. max_health is already act/ascension-scaled, so deeper
+		# fights naturally pay more.
+		var kill_gold := clampi(3 + max_health / 18, 2, 18)
+		if is_elite:
+			kill_gold *= 2
+		RunManager.add_gold(kill_gold)
 		died.emit()
 		queue_free()
 		return

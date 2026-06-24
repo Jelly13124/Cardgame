@@ -97,7 +97,7 @@ func _apply_static_theme() -> void:
 
 func _generate_loot() -> void:
 	available_loot.clear()
-	var gold_amount = 10  # flat; Luck no longer scales gold
+	var gold_amount = 15  # flat per-fight; per-kill drops (enemy_entity) add on top
 
 	available_loot.append(
 		{

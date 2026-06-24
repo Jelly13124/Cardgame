@@ -90,6 +90,7 @@ const CAPS_PER_COMBAT := 6  # normal (non-elite, non-boss) combat win
 const CAPS_PER_ELITE := 18  # elite win
 const CAPS_PER_BOSS := 45  # boss win (granted alongside BOSS_VICTORY_CORE)
 const GOLD_PER_CAP := 10  # extraction: floor(run gold / GOLD_PER_CAP) → caps
+const STARTING_GOLD := 99  # baseline purse every run begins with (Command Center stacks on top)
 ## Run-scoped caps accrued so far this run (banked on extract/victory only).
 var _run_caps: int = 0
 ## Equipment queued (from the base stash) to inject into the backpack at the
@@ -724,6 +725,9 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	_ensure_backpack()
 	for i in range(MAX_INVENTORY):
 		backpack[i] = null
+	# Every run starts with a baseline purse so the merchant is usable from floor 1.
+	# (Command Center's +starting-gold meta upgrade stacks on top in _apply_meta_upgrades.)
+	add_gold(STARTING_GOLD)
 	# Inject the pending loadout (selected from the base stash) into the backpack,
 	# removing each taken entry from the permanent stash so it isn't duplicated.
 	# Entries are instances (or legacy strings, tolerated by add_equip_to_backpack).
