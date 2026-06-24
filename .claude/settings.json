@@ -4,7 +4,7 @@
       {
         "matcher": "Edit|Write|NotebookEdit",
         "hooks": [
-          { "type": "command", "command": "bash scripts/hook_guard_addons.sh" }
+          { "type": "command", "command": "bash .claude/hooks/hook_guard_addons.sh" }
         ]
       }
     ],
@@ -12,14 +12,14 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "bash scripts/hook_gdformat.sh" }
+          { "type": "command", "command": "bash .claude/hooks/hook_gdformat.sh" }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "bash scripts/hook_smoke.sh" }
+          { "type": "command", "command": "bash .claude/hooks/hook_smoke.sh" }
         ]
       }
     ]

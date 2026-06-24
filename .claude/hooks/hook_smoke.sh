@@ -9,7 +9,8 @@
 
 set -uo pipefail
 
-PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# This hook lives in .claude/hooks/, so the repo root is two levels up.
+PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$PROJECT_ROOT" || exit 0
 
 # Any code/data files dirty? (staged or unstaged)
