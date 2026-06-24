@@ -4,6 +4,7 @@ extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
+const PAUSE_PANEL = preload("res://run_system/ui/pause_panel.gd")
 const RUN_TOP_BAR = preload("res://run_system/ui/run_top_bar.gd")
 # Lazy-loaded at call site to avoid map→battle→map cyclic preload.
 const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
@@ -21,7 +22,6 @@ func _ready() -> void:
 
 func _setup() -> void:
 	main = get_tree().current_scene
-	_build_settings_menu()
 
 	var bar = RUN_TOP_BAR.new()
 	bar.hp_from_player = true
@@ -39,19 +39,8 @@ func _setup() -> void:
 	add_child(bar)
 
 
-func _input(event: InputEvent) -> void:
-	# ESC toggles the in-battle settings/pause menu: open it when closed, close it
-	# when open. (battle_top_bar is PROCESS_MODE_ALWAYS so this still fires while
-	# the menu has the tree paused.)
-	if not event.is_action_pressed("ui_cancel"):
-		return
-	if not settings_layer:
-		return
-	if settings_layer.visible:
-		_hide_settings()
-	else:
-		_show_settings()
-	get_viewport().set_input_as_handled()
+# ESC is now handled by battle_scene (it opens the unified pause panel), so both ESC and
+# the ⚙ gear reach the same panel. This top bar no longer runs its own ESC menu.
 
 
 func _build_settings_menu() -> void:
@@ -138,13 +127,9 @@ func _on_deck_pressed() -> void:
 
 
 func _show_settings() -> void:
-	if not settings_layer:
-		return
-	var rm = RunManager
-	if return_map_button:
-		return_map_button.disabled = not (rm and rm.get("is_run_active"))
-	settings_layer.visible = true
-	get_tree().paused = true
+	# Open the unified pause panel (settings / how-to / abandon / quit) on the battle
+	# scene — the same panel ESC, the map gear, and the base gear all use.
+	PAUSE_PANEL.open(main, RunManager.is_run_active)
 
 
 func _hide_settings() -> void:
