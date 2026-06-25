@@ -434,10 +434,12 @@ func _add_building_plaque(building_id: String, rect: Rect2, title: String) -> vo
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	if building_id != "depart_gate":
-		label.text = "Lv%d  %s" % [MetaProgress.get_building_tier(building_id), title]
-	else:
+	if building_id == "depart_gate":
 		label.text = title
+	elif MetaProgress.get_building_tier(building_id) <= 0:
+		label.text = title  # locked: name only (the 🔒 sits on the sprite)
+	else:
+		label.text = "Lv%d  %s" % [MetaProgress.get_building_tier(building_id), title]
 	label.add_theme_font_size_override("font_size", 33)
 	label.add_theme_color_override("font_color", Color(1.0, 0.93, 0.68))
 	label.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02, 1.0))
@@ -457,7 +459,126 @@ func _add_building_plaque(building_id: String, rect: Rect2, title: String) -> vo
 	tw.tween_property(label, "position:y", base_y, dur).set_trans(Tween.TRANS_SINE).set_ease(
 		Tween.EASE_IN_OUT
 	)
+	# Unlock / upgrade action lives here on the overview now (moved off the detail page).
+	if building_id != "depart_gate":
+		_add_tier_button(building_id, rect)
 	return
+
+
+## Unlock / upgrade button under a building's floating label — confirms before spending Core.
+## Hidden at max tier. Rebuilt with the plaques on buildings_changed so it stays live.
+func _add_tier_button(building_id: String, plaque_rect: Rect2) -> void:
+	var tier := MetaProgress.get_building_tier(building_id)
+	var cost := MetaProgress.next_building_cost(building_id)
+	if cost < 0:
+		return  # maxed (or no unlock cost) → no button
+	var zh := Settings.language == "zh"
+	var btn := Button.new()
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_size_override("font_size", 17)
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	T.apply_button_theme(btn)
+	if tier <= 0:
+		btn.text = ("解锁  %d 核心" if zh else "Unlock  %d Core") % cost
+	else:
+		btn.text = ("升级  %d 核心" if zh else "Upgrade  %d Core") % cost
+	btn.disabled = cost < 0 or MetaProgress.core < cost
+	btn.pressed.connect(
+		func() -> void:
+			AudioManager.play_sfx("ui_click")
+			_show_tier_confirm(building_id)
+	)
+	var bw := 196.0
+	var br := Rect2(
+		plaque_rect.position.x + plaque_rect.size.x * 0.5 - bw * 0.5,
+		plaque_rect.position.y + plaque_rect.size.y - 4,
+		bw,
+		40
+	)
+	_set_map_rect(btn, br)
+	_buildings_root.add_child(btn)
+
+
+## Confirmation popup for an unlock/upgrade. Confirm spends Core via MetaProgress
+## (→ buildings_changed → the overview rebuilds with the new tier).
+func _show_tier_confirm(building_id: String) -> void:
+	var tier := MetaProgress.get_building_tier(building_id)
+	var cost := MetaProgress.next_building_cost(building_id)
+	if cost < 0 or MetaProgress.core < cost:
+		return
+	var zh := Settings.language == "zh"
+	var is_unlock := tier <= 0
+	var bname := tr("UI_BUILD_%s_NAME" % building_id.to_upper())
+
+	var layer := CanvasLayer.new()
+	layer.name = "TierConfirm"
+	layer.layer = 155
+	add_child(layer)
+	var dim := ColorRect.new()
+	dim.color = Color(0.0, 0.0, 0.0, 0.62)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	layer.add_child(dim)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(center)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(470, 0)
+	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	center.add_child(panel)
+	var m := MarginContainer.new()
+	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		m.add_theme_constant_override(s, 28)
+	panel.add_child(m)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 18)
+	m.add_child(box)
+
+	var msg := Label.new()
+	msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if is_unlock:
+		msg.text = ("解锁「%s」?\n花费 %d 核心" if zh else 'Unlock "%s"?\nCost %d Core') % [bname, cost]
+	else:
+		var t2 := tier + 1
+		msg.text = (
+			("把「%s」升级到 T%d?\n花费 %d 核心" if zh else 'Upgrade "%s" to T%d?\nCost %d Core')
+			% [bname, t2, cost]
+		)
+	msg.add_theme_font_size_override("font_size", 22)
+	msg.add_theme_color_override("font_color", Color(1.0, 0.93, 0.78))
+	box.add_child(msg)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_child(row)
+	var yes := Button.new()
+	yes.text = "确认" if zh else "Confirm"
+	yes.custom_minimum_size = Vector2(150, 46)
+	yes.focus_mode = Control.FOCUS_NONE
+	T.apply_button_theme(yes)
+	yes.pressed.connect(
+		func() -> void:
+			AudioManager.play_sfx("reward")
+			if is_unlock:
+				MetaProgress.unlock_building(building_id)
+			else:
+				MetaProgress.upgrade_building(building_id)
+			layer.queue_free()
+	)
+	row.add_child(yes)
+	var no := Button.new()
+	no.text = "取消" if zh else "Cancel"
+	no.custom_minimum_size = Vector2(150, 46)
+	no.focus_mode = Control.FOCUS_NONE
+	T.apply_button_theme(no)
+	no.pressed.connect(
+		func() -> void:
+			AudioManager.play_sfx("ui_back")
+			layer.queue_free()
+	)
+	row.add_child(no)
 
 
 ## Superseded by the floating-label version above; unused, kept for reference.
@@ -836,6 +957,11 @@ func _load_building_texture(building_id: String) -> Texture2D:
 ## shared base screen (real unlock/upgrade buttons, placeholder content).
 func _open_building_screen(building_id: String) -> void:
 	if get_node_or_null("BuildingOverlay") != null:
+		return
+	if MetaProgress.get_building_tier(building_id) <= 0:
+		# Locked: the unlock action moved to the overview — show its confirm popup
+		# instead of opening an empty services page.
+		_show_tier_confirm(building_id)
 		return
 	# Convention: load run_system/ui/buildings/<id>_screen.gd (a BUILDING_SCREEN_BASE
 	# subclass) if it exists, else fall back to the shared base (placeholder content).
