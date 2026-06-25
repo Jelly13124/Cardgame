@@ -427,7 +427,41 @@ func _make_click_mask(texture: Texture2D) -> BitMap:
 	return mask
 
 
+## Floating building label: "Lv<tier>  <name>", centered, no box, gentle up-down bob.
 func _add_building_plaque(building_id: String, rect: Rect2, title: String) -> void:
+	var label := Label.new()
+	label.name = "Plaque_%s" % building_id
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	if building_id != "depart_gate":
+		label.text = "Lv%d  %s" % [MetaProgress.get_building_tier(building_id), title]
+	else:
+		label.text = title
+	label.add_theme_font_size_override("font_size", 33)
+	label.add_theme_color_override("font_color", Color(1.0, 0.93, 0.68))
+	label.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02, 1.0))
+	label.add_theme_constant_override("outline_size", 9)
+	label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.55))
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 5)
+	_set_map_rect(label, rect)
+	_buildings_root.add_child(label)
+	# Gentle bob; duration varies a touch per building so they drift out of lockstep.
+	var base_y := label.position.y
+	var dur := 1.7 + fmod(rect.position.x * 0.0017, 1.0) * 0.6
+	var tw := label.create_tween().set_loops()
+	tw.tween_property(label, "position:y", base_y - 7.0, dur).set_trans(Tween.TRANS_SINE).set_ease(
+		Tween.EASE_IN_OUT
+	)
+	tw.tween_property(label, "position:y", base_y, dur).set_trans(Tween.TRANS_SINE).set_ease(
+		Tween.EASE_IN_OUT
+	)
+	return
+
+
+## Superseded by the floating-label version above; unused, kept for reference.
+func _add_building_plaque_OLD(building_id: String, rect: Rect2, title: String) -> void:
 	var tier := 1
 	if building_id != "depart_gate":
 		tier = MetaProgress.get_building_tier(building_id)
@@ -517,9 +551,8 @@ func _make_currency_chip(parent: Control, _icon_id: String, accent: Color) -> La
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(134, 64)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override(
-		"panel", T.panel_with_shadow(Color(0.090, 0.070, 0.055, 0.96), accent, 7, 2)
-	)
+	# No background frame — the icon + number sit bare on the scene (owner request).
+	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	parent.add_child(panel)
 
 	var margin := MarginContainer.new()
@@ -563,8 +596,8 @@ func _make_currency_chip(parent: Control, _icon_id: String, accent: Color) -> La
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 28)
 	label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.70))
-	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.92))
-	label.add_theme_constant_override("outline_size", 3)
+	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.95))
+	label.add_theme_constant_override("outline_size", 6)
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(label)
 	return label
