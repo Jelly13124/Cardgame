@@ -502,6 +502,8 @@ func _add_tier_button(building_id: String, plaque_rect: Rect2) -> void:
 ## Confirmation popup for an unlock/upgrade. Confirm spends Core via MetaProgress
 ## (→ buildings_changed → the overview rebuilds with the new tier).
 func _show_tier_confirm(building_id: String) -> void:
+	if get_node_or_null("TierConfirm") != null:
+		return  # a confirm popup is already open
 	var tier := MetaProgress.get_building_tier(building_id)
 	var cost := MetaProgress.next_building_cost(building_id)
 	if cost < 0 or MetaProgress.core < cost:
