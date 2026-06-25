@@ -10,6 +10,14 @@ extends "res://run_system/ui/buildings/building_screen_base.gd"
 
 const EQUIPMENT_DIR := "res://run_system/data/equipment/"
 const CARD_DIR := "res://battle_scene/card_info/player/"
+const EQUIPMENT_ICON := preload("res://run_system/ui/equipment_icon.gd")
+const CARD_FACTORY_SCENE := preload("res://battle_scene/my_card_factory.tscn")
+
+## Real-card display footprint: the native 208×286 card scaled down for shop tiles.
+const CARD_NATIVE := Vector2(208, 286)
+const CARD_TILE_SCALE := 0.62
+## Equipment shelf-tile icon size.
+const SHELF_ICON := Vector2(96, 96)
 
 ## Equipment buy prices in Caps, by rarity (spec: 60/140/280).
 const EQUIP_CAPS_PRICE := {"common": 60, "uncommon": 140, "rare": 280}
@@ -39,12 +47,22 @@ var _caps_label: Label = null
 var _mkt_core_label: Label = null
 ## The whole content host, so currency/building changes can rebuild the lists.
 var _market_box: VBoxContainer = null
+## Card factory for rendering real card visuals in the unlock / card-shop tiles.
+## Persists across rebuilds (lives on the screen, not in _market_box).
+var _card_factory: Node = null
 
 
 func _build_content(container: VBoxContainer) -> void:
 	# Roll equipment stock once for the session (stable across refresh).
 	if _equip_stock.is_empty():
 		_equip_stock = _roll_equip_stock()
+
+	# Card factory renders real card art in the unlock / card-shop tiles. Built once
+	# and parented to the screen so it survives _market_box rebuilds (mirrors loot_reward).
+	if _card_factory == null:
+		_card_factory = CARD_FACTORY_SCENE.instantiate()
+		add_child(_card_factory)
+		_card_factory.card_size = CARD_NATIVE
 
 	_market_box = container
 	# Repaint on currency / building changes. The base already connects _refresh
@@ -146,50 +164,70 @@ func _build_equip_section() -> Control:
 		body.add_child(empty)
 		return section
 
+	# Lay the stock out as tiles on a shelf (wrapping grid) instead of a text list.
+	var shelf := HFlowContainer.new()
+	shelf.add_theme_constant_override("h_separation", 14)
+	shelf.add_theme_constant_override("v_separation", 14)
+	shelf.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_child(shelf)
 	for entry in _equip_stock:
-		body.add_child(_build_equip_row(entry))
+		shelf.add_child(_build_equip_tile(entry))
 	return section
 
 
-func _build_equip_row(entry: Dictionary) -> Control:
+## One piece of gear sitting on the shelf: a rarity-framed tile with the item icon,
+## its name, and a Caps buy button (which doubles as the price tag).
+func _build_equip_tile(entry: Dictionary) -> Control:
 	var base_id: String = str(entry.get("base", ""))
 	var rarity: String = str(entry.get("rarity", "common"))
 	var price: int = int(entry.get("price", 0))
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
 	var data := RunManager.get_equipment_data(base_id)
+	var slot := str(data.get("slot", "head"))
 	var equip_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
+
+	var tile := PanelContainer.new()
+	tile.add_theme_stylebox_override(
+		"panel",
+		T.panel_with_shadow(
+			Color(0.12, 0.085, 0.060, 0.95), RARITY_COLORS.get(rarity, Color(0.6, 0.5, 0.4)), 3, 2
+		)
+	)
+	var tm := MarginContainer.new()
+	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		tm.add_theme_constant_override(s, 10)
+	tile.add_child(tm)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 6)
+	col.custom_minimum_size = Vector2(150, 0)
+	tm.add_child(col)
+
+	var icon_holder := CenterContainer.new()
+	var icon := EQUIPMENT_ICON.new()
+	icon.custom_minimum_size = SHELF_ICON
+	icon.set_equipment(slot, equip_name, str(data.get("sprite", "")), rarity)
+	icon.set_hover_tooltip(
+		"[b]%s[/b]\n%s" % [equip_name, tr("UI_MARKET_RARITY_%s" % rarity.to_upper())]
+	)
+	icon_holder.add_child(icon)
+	col.add_child(icon_holder)
 
 	var name_lbl := Label.new()
 	name_lbl.text = equip_name
-	name_lbl.custom_minimum_size = Vector2(280, 0)
-	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	_style_label(name_lbl, 19, Color(0.95, 0.92, 0.85), 1)
-	row.add_child(name_lbl)
-
-	var rarity_lbl := Label.new()
-	rarity_lbl.text = tr("UI_MARKET_RARITY_%s" % rarity.to_upper())
-	rarity_lbl.custom_minimum_size = Vector2(110, 0)
-	_style_label(rarity_lbl, 18, RARITY_COLORS.get(rarity, Color.WHITE), 1)
-	row.add_child(rarity_lbl)
-
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(spacer)
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(name_lbl, 16, RARITY_COLORS.get(rarity, Color(0.95, 0.92, 0.85)), 1)
+	col.add_child(name_lbl)
 
 	var buy_btn := Button.new()
-	buy_btn.custom_minimum_size = Vector2(190, 40)
-	buy_btn.add_theme_font_size_override("font_size", 18)
+	buy_btn.custom_minimum_size = Vector2(0, 38)
+	buy_btn.add_theme_font_size_override("font_size", 17)
 	T.apply_button_theme(buy_btn)
 	buy_btn.text = tr("UI_MARKET_BUY_CAPS").format({"n": price})
 	buy_btn.disabled = MetaProgress.caps < price
 	buy_btn.pressed.connect(_on_buy_equipment.bind(base_id, rarity, price, buy_btn))
-	row.add_child(buy_btn)
+	col.add_child(buy_btn)
 
-	return row
+	return tile
 
 
 func _on_buy_equipment(base_id: String, rarity: String, price: int, btn: Button) -> void:
@@ -224,47 +262,18 @@ func _build_card_unlock_section() -> Control:
 		body.add_child(empty)
 		return section
 
+	# Show the real card art for each lockable card, with an unlock button beneath.
+	var grid := _card_grid()
+	body.add_child(grid)
+	var unlock_text := tr("UI_MARKET_UNLOCK_CORE").format({"n": CARD_UNLOCK_CORE})
 	for card in locked:
-		body.add_child(_build_card_unlock_row(card))
+		var cid := str(card.get("id", ""))
+		grid.add_child(
+			_build_card_tile(
+				cid, unlock_text, MetaProgress.core < CARD_UNLOCK_CORE, _on_unlock_card.bind(cid)
+			)
+		)
 	return section
-
-
-func _build_card_unlock_row(card: Dictionary) -> Control:
-	var card_id: String = str(card.get("id", ""))
-	var title: String = str(card.get("title", card_id))
-	var rarity: String = str(card.get("rarity", "common"))
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-	var name_lbl := Label.new()
-	name_lbl.text = title
-	name_lbl.custom_minimum_size = Vector2(280, 0)
-	name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	_style_label(name_lbl, 19, Color(0.95, 0.92, 0.85), 1)
-	row.add_child(name_lbl)
-
-	var rarity_lbl := Label.new()
-	rarity_lbl.text = tr("UI_MARKET_RARITY_%s" % rarity.to_upper())
-	rarity_lbl.custom_minimum_size = Vector2(110, 0)
-	_style_label(rarity_lbl, 18, RARITY_COLORS.get(rarity, Color.WHITE), 1)
-	row.add_child(rarity_lbl)
-
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(spacer)
-
-	var unlock_btn := Button.new()
-	unlock_btn.custom_minimum_size = Vector2(190, 40)
-	unlock_btn.add_theme_font_size_override("font_size", 18)
-	T.apply_button_theme(unlock_btn)
-	unlock_btn.text = tr("UI_MARKET_UNLOCK_CORE").format({"n": CARD_UNLOCK_CORE})
-	unlock_btn.disabled = MetaProgress.core < CARD_UNLOCK_CORE
-	unlock_btn.pressed.connect(_on_unlock_card.bind(card_id, unlock_btn))
-	row.add_child(unlock_btn)
-
-	return row
 
 
 func _on_unlock_card(card_id: String, btn: Button) -> void:
@@ -336,6 +345,8 @@ func _build_card_shop_section() -> Control:
 	_style_label(note, 17, Color(0.85, 0.66, 0.40), 1)
 	body.add_child(note)
 
+	var grid := _card_grid()
+	body.add_child(grid)
 	var unlocked := MetaProgress.get_unlocked_card_pool()
 	var shown := 0
 	for card_id in unlocked:
@@ -343,40 +354,15 @@ func _build_card_shop_section() -> Control:
 		if data.is_empty():
 			continue
 		var rarity := str(data.get("rarity", "common"))
-		var title := str(data.get("title", card_id))
 		var price := int(CARD_CAPS_PRICE.get(rarity, CARD_CAPS_PRICE["common"]))
-
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 12)
-		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-		var name_lbl := Label.new()
-		name_lbl.text = title
-		name_lbl.custom_minimum_size = Vector2(280, 0)
-		name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		_style_label(name_lbl, 19, Color(0.95, 0.92, 0.85), 1)
-		row.add_child(name_lbl)
-
-		var rarity_lbl := Label.new()
-		rarity_lbl.text = tr("UI_MARKET_RARITY_%s" % rarity.to_upper())
-		rarity_lbl.custom_minimum_size = Vector2(110, 0)
-		_style_label(rarity_lbl, 18, RARITY_COLORS.get(rarity, Color.WHITE), 1)
-		row.add_child(rarity_lbl)
-
-		var spacer := Control.new()
-		spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(spacer)
-
-		var buy_btn := Button.new()
-		buy_btn.custom_minimum_size = Vector2(190, 40)
-		buy_btn.add_theme_font_size_override("font_size", 18)
-		T.apply_button_theme(buy_btn)
-		buy_btn.text = tr("UI_MARKET_BUY_CAPS").format({"n": price})
-		buy_btn.disabled = MetaProgress.caps < price
-		buy_btn.pressed.connect(_on_buy_card_caps.bind(card_id, price, buy_btn))
-		row.add_child(buy_btn)
-
-		body.add_child(row)
+		grid.add_child(
+			_build_card_tile(
+				card_id,
+				tr("UI_MARKET_BUY_CAPS").format({"n": price}),
+				MetaProgress.caps < price,
+				_on_buy_card_caps.bind(card_id, price)
+			)
+		)
 		shown += 1
 		if shown >= 8:
 			break
@@ -436,6 +422,56 @@ func _locked_section(title: String, tier: int) -> Control:
 	_style_label(hint, 18, Color(0.72, 0.64, 0.50), 1)
 	body.add_child(hint)
 	return section
+
+
+## A wrapping grid (HFlowContainer) that lays card tiles out across the width.
+func _card_grid() -> HFlowContainer:
+	var grid := HFlowContainer.new()
+	grid.add_theme_constant_override("h_separation", 16)
+	grid.add_theme_constant_override("v_separation", 16)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return grid
+
+
+## A card tile: the real card art (scaled, display-only) above one action button.
+## press_cb is bound with everything EXCEPT the button — we append the button here.
+func _build_card_tile(
+	card_id: String, btn_text: String, disabled: bool, press_cb: Callable
+) -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 6)
+	col.add_child(_make_card_visual(card_id))
+
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(CARD_NATIVE.x * CARD_TILE_SCALE, 38)
+	btn.add_theme_font_size_override("font_size", 16)
+	T.apply_button_theme(btn)
+	btn.text = btn_text
+	btn.disabled = disabled
+	btn.pressed.connect(press_cb.bind(btn))
+	col.add_child(btn)
+	return col
+
+
+## Real card visual, non-interactive, scaled down to the shop-tile footprint. The
+## scaled card pivots from its top-left so it exactly fills a CARD_TILE_SCALE wrapper.
+func _make_card_visual(card_id: String) -> Control:
+	var disp := CARD_NATIVE * CARD_TILE_SCALE
+	var wrapper := Control.new()
+	wrapper.custom_minimum_size = disp
+	if _card_factory == null:
+		return wrapper
+	var card = _card_factory.create_card(card_id, null)
+	if card:
+		if card.get_parent():
+			card.get_parent().remove_child(card)
+		card.can_be_interacted_with = false
+		card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card.pivot_offset = Vector2.ZERO
+		card.scale = Vector2(CARD_TILE_SCALE, CARD_TILE_SCALE)
+		card.position = Vector2.ZERO
+		wrapper.add_child(card)
+	return wrapper
 
 
 ## Roll a small, session-stable equipment stock from disk, bucketed by rarity.
