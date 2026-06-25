@@ -15,6 +15,11 @@ extends "res://run_system/ui/buildings/building_screen_base.gd"
 
 ## Affix roller for describe()/is_curse()/roll() (no class_name — preload per ADR-0006).
 const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
+## Stash grid cell + icon (shared with the warehouse loadout board).
+const EQUIPMENT_ICON := preload("res://run_system/ui/equipment_icon.gd")
+const BACKPACK_CELL := preload("res://run_system/ui/backpack_cell.gd")
+const CELL_SIZE := Vector2(74, 74)
+const STASH_COLUMNS := 4
 
 ## Scrap cost to craft a fresh item, by target rarity (spec: 40/80/140).
 const CRAFT_COST := {"common": 40, "uncommon": 80, "rare": 140}
@@ -41,6 +46,8 @@ var _body: VBoxContainer
 ## Craft picker state (which slot / rarity the player has selected).
 var _craft_slot: String = "head"
 var _craft_rarity: String = "common"
+## Index into MetaProgress.stash of the item currently on the workbench (-1 = none).
+var _selected_index: int = -1
 
 
 func _build_content(container: VBoxContainer) -> void:
@@ -53,11 +60,17 @@ func _build_content(container: VBoxContainer) -> void:
 
 
 ## Rebuild the whole content body from the current building tier + stash state.
+## Layout: scrap balance → two-column workbench (LEFT stash grid | RIGHT drop slot
+## + the selected item's affixes & dismantle/reforge actions) → craft control.
 func _rebuild_body() -> void:
 	if not is_instance_valid(_body):
 		return
 	for child in _body.get_children():
 		child.queue_free()
+
+	# Drop a stale selection (e.g. the item was dismantled out from under it).
+	if _selected_index >= MetaProgress.stash.size():
+		_selected_index = -1
 
 	# Current Scrap balance.
 	var scrap_lbl := Label.new()
@@ -70,78 +83,186 @@ func _rebuild_body() -> void:
 	var can_craft := MetaProgress.building_can("forge", "craft")
 	var can_curse := MetaProgress.building_can("forge", "curse")
 
-	# --- Craft control (T2) ---
+	var hint := Label.new()
+	hint.text = tr("UI_FORGE_WORKBENCH_HINT")
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(hint, 16, Color(0.80, 0.74, 0.58), 1)
+	_body.add_child(hint)
+
+	# --- Two-column workbench: LEFT stash | RIGHT drop slot + actions ---
+	var board := HBoxContainer.new()
+	board.add_theme_constant_override("separation", 28)
+	board.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_body.add_child(board)
+	board.add_child(_build_stash_column())
+	board.add_child(VSeparator.new())
+	board.add_child(_build_workbench_column(can_dismantle, can_reforge, can_curse))
+
+	# --- Craft control (T2): mint a fresh item; independent of the workbench ---
+	_body.add_child(HSeparator.new())
 	if can_craft:
 		_body.add_child(_build_craft_control())
 	else:
 		_body.add_child(_locked_hint(tr("UI_FORGE_CRAFT_LOCKED")))
 
-	_body.add_child(HSeparator.new())
 
-	# --- Stash list (dismantle / reforge / curse per item) ---
+# --- LEFT column: the stash as a draggable / clickable grid -----------------
+
+
+func _build_stash_column() -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 10)
+	col.custom_minimum_size = Vector2(360, 0)
+
+	var title := Label.new()
+	title.text = tr("UI_FORGE_STASH_TITLE").format({"n": MetaProgress.stash.size()})
+	_style_label(title, 20, accent, 2)
+	col.add_child(title)
+
 	if MetaProgress.stash.is_empty():
 		var empty := Label.new()
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		empty.text = tr("UI_FORGE_EMPTY")
-		_style_label(empty, 18, Color(0.8, 0.74, 0.6), 1)
-		_body.add_child(empty)
-	else:
-		for i in range(MetaProgress.stash.size()):
-			_body.add_child(_build_item_row(int(i), can_dismantle, can_reforge, can_curse))
+		_style_label(empty, 18, Color(0.72, 0.66, 0.52), 1)
+		col.add_child(empty)
+		return col
 
-	# Lock hints for functions above the current tier (only when not already shown).
-	if not can_reforge:
-		_body.add_child(_locked_hint(tr("UI_FORGE_REFORGE_LOCKED")))
-	if not can_curse:
-		_body.add_child(_locked_hint(tr("UI_FORGE_CURSE_LOCKED")))
+	var grid := GridContainer.new()
+	grid.columns = STASH_COLUMNS
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	col.add_child(grid)
+	for i in range(MetaProgress.stash.size()):
+		grid.add_child(_build_forge_stash_cell(i))
+	return col
 
 
-## One stash row: name + rarity, affix lines (curses red), then the per-item
-## action buttons that the current tier unlocks.
-func _build_item_row(
-	index: int, can_dismantle: bool, can_reforge: bool, can_curse: bool
-) -> Control:
+## One stash cell: a draggable BackpackCell (EquipmentIcon child) that drops onto the
+## workbench slot to select it; left-click also selects it. The selected item gets a
+## gold outline.
+func _build_forge_stash_cell(index: int) -> Control:
 	var inst := RunManager.as_equip_instance(MetaProgress.stash[index])
 	var base_id := str(inst.get("base", ""))
-	var rarity := str(inst.get("rarity", "common"))
-	var cursed := bool(inst.get("cursed", false))
 	var data: Dictionary = RunManager.get_equipment_data(base_id)
+	var slot := str(data.get("slot", "head"))
+	var rarity := str(inst.get("rarity", "common"))
 	var item_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
 
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
+	var cell := BACKPACK_CELL.new()
+	cell.custom_minimum_size = CELL_SIZE
+	cell.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var icon := EQUIPMENT_ICON.new()
+	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.set_equipment(slot, item_name, str(data.get("sprite", "")), rarity)
+	cell.add_child(icon)
 
+	cell.hover_tip = _forge_item_tooltip(inst)
+	cell.drag_payload = {"src": "forge_stash", "index": index}
+	cell.preview_text = item_name.substr(0, 1)
+	cell.preview_color = Color(1.0, 0.86, 0.4)
+	cell.preview_tex = _load_equip_tex(str(data.get("sprite", "")))
+	var idx := index
+	cell.click_handler = func(btn): if btn == MOUSE_BUTTON_LEFT: _select_item(idx)
+
+	if index == _selected_index:
+		var hl := Panel.new()
+		hl.set_anchors_preset(Control.PRESET_FULL_RECT)
+		hl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var st := StyleBoxFlat.new()
+		st.bg_color = Color(0, 0, 0, 0)
+		st.border_color = Color(1.0, 0.85, 0.35)
+		st.set_border_width_all(3)
+		st.set_corner_radius_all(6)
+		hl.add_theme_stylebox_override("panel", st)
+		cell.add_child(hl)
+	return cell
+
+
+# --- RIGHT column: the workbench (drop slot + selected-item actions) --------
+
+
+func _build_workbench_column(can_dismantle: bool, can_reforge: bool, can_curse: bool) -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 10)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var title := Label.new()
+	title.text = tr("UI_FORGE_BENCH_TITLE")
+	_style_label(title, 20, accent, 2)
+	col.add_child(title)
+
+	var sel_inst: Dictionary = {}
+	if _selected_index >= 0 and _selected_index < MetaProgress.stash.size():
+		sel_inst = RunManager.as_equip_instance(MetaProgress.stash[_selected_index])
+
+	# The drop slot (also shows the selected item's icon).
+	var slot_holder := CenterContainer.new()
+	var slot_cell := BACKPACK_CELL.new()
+	slot_cell.custom_minimum_size = Vector2(104, 104)
+	var slot_icon := EQUIPMENT_ICON.new()
+	slot_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+	slot_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if sel_inst.is_empty():
+		slot_icon.set_empty("weapon")
+	else:
+		var b := str(sel_inst.get("base", ""))
+		var d: Dictionary = RunManager.get_equipment_data(b)
+		slot_icon.set_equipment(
+			str(d.get("slot", "head")),
+			Settings.t("EQUIP_%s_NAME" % b, str(d.get("name", b))),
+			str(d.get("sprite", "")),
+			str(sel_inst.get("rarity", "common"))
+		)
+	slot_cell.add_child(slot_icon)
+	slot_cell.can_accept = func(d): return d.get("src") == "forge_stash"
+	slot_cell.perform_drop = func(d): _select_item(int(d.get("index", -1)))
+	slot_holder.add_child(slot_cell)
+	col.add_child(slot_holder)
+
+	if sel_inst.is_empty():
+		var bench_hint := Label.new()
+		bench_hint.text = tr("UI_FORGE_BENCH_EMPTY")
+		bench_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		bench_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_style_label(bench_hint, 17, Color(0.72, 0.66, 0.52), 1)
+		col.add_child(bench_hint)
+		if not can_reforge:
+			col.add_child(_locked_hint(tr("UI_FORGE_REFORGE_LOCKED")))
+		return col
+
+	# Selected item: name + rarity.
+	var base_id := str(sel_inst.get("base", ""))
+	var rarity := str(sel_inst.get("rarity", "common"))
+	var cursed := bool(sel_inst.get("cursed", false))
+	var data: Dictionary = RunManager.get_equipment_data(base_id)
+	var item_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
 	var name_lbl := Label.new()
 	name_lbl.text = "%s [%s]" % [item_name, rarity.capitalize()]
-	_style_label(name_lbl, 18, Color(1, 0.92, 0.55), 1)
-	name_lbl.custom_minimum_size = Vector2(240, 0)
-	row.add_child(name_lbl)
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_style_label(name_lbl, 19, Color(1, 0.92, 0.55), 1)
+	col.add_child(name_lbl)
 
-	# Affixes; each as its own label so curses can be tinted red individually.
-	var affix_box := HBoxContainer.new()
-	affix_box.add_theme_constant_override("separation", 8)
-	affix_box.custom_minimum_size = Vector2(280, 0)
-	var affixes := RunManager.equip_affixes(inst)
+	# Affix list — each affix on its own row with a per-affix reforge button (T2).
+	var reforge_cost := int(
+		MetaProgress.REFORGE_COST.get(rarity, MetaProgress.REFORGE_COST["common"])
+	)
+	var affixes := RunManager.equip_affixes(sel_inst)
 	if affixes.is_empty():
 		var none := Label.new()
 		none.text = "—"
 		_style_label(none, 16, Color(0.7, 0.7, 0.68), 1)
-		affix_box.add_child(none)
+		col.add_child(none)
 	else:
-		for affix in affixes:
-			var a := affix as Dictionary
-			var lbl := Label.new()
-			lbl.text = AFFIX_POOL.describe(a)
-			var is_curse := AFFIX_POOL.is_curse(a)
-			_style_label(lbl, 16, Color(1.0, 0.42, 0.42) if is_curse else Color(0.7, 0.92, 0.7), 1)
-			affix_box.add_child(lbl)
-	row.add_child(affix_box)
+		for ai in range(affixes.size()):
+			col.add_child(_build_affix_row(affixes[ai], ai, reforge_cost, can_reforge))
 
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(spacer)
+	col.add_child(HSeparator.new())
 
-	# Dismantle (T1).
+	# Dismantle (T1) + Curse (T3).
+	var btn_row := HBoxContainer.new()
+	btn_row.add_theme_constant_override("separation", 12)
+	col.add_child(btn_row)
 	if can_dismantle:
 		var dismantle_scrap := int(
 			MetaProgress.DISMANTLE_SCRAP.get(rarity, MetaProgress.DISMANTLE_SCRAP["common"])
@@ -150,38 +271,115 @@ func _build_item_row(
 			dismantle_scrap += 5
 		var dismantle_btn := Button.new()
 		dismantle_btn.text = tr("UI_FORGE_DISMANTLE").format({"n": dismantle_scrap})
-		dismantle_btn.custom_minimum_size = Vector2(150, 36)
+		dismantle_btn.custom_minimum_size = Vector2(150, 38)
 		T.apply_button_theme(dismantle_btn)
-		dismantle_btn.pressed.connect(func() -> void: MetaProgress.dismantle_stash_item(index))
-		row.add_child(dismantle_btn)
-
-	# Reforge (T2).
-	if can_reforge:
-		var reforge_cost := int(
-			MetaProgress.REFORGE_COST.get(rarity, MetaProgress.REFORGE_COST["common"])
-		)
-		var reforge_btn := Button.new()
-		reforge_btn.text = tr("UI_FORGE_REFORGE").format({"n": reforge_cost})
-		reforge_btn.custom_minimum_size = Vector2(160, 36)
-		T.apply_button_theme(reforge_btn)
-		reforge_btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
-		reforge_btn.disabled = int(MetaProgress.scrap) < reforge_cost
-		reforge_btn.pressed.connect(func() -> void: MetaProgress.reforge_stash_item(index))
-		row.add_child(reforge_btn)
-
-	# Curse (T3).
+		dismantle_btn.pressed.connect(_dismantle_selected)
+		btn_row.add_child(dismantle_btn)
 	if can_curse:
 		var curse_btn := Button.new()
 		curse_btn.text = tr("UI_FORGE_CURSE").format({"n": CURSE_COST})
-		curse_btn.custom_minimum_size = Vector2(160, 36)
+		curse_btn.custom_minimum_size = Vector2(160, 38)
 		T.apply_button_theme(curse_btn)
 		curse_btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
-		# Disabled if too poor or the item is already cursed.
 		curse_btn.disabled = int(MetaProgress.scrap) < CURSE_COST or cursed
-		curse_btn.pressed.connect(func() -> void: _curse_item(index))
-		row.add_child(curse_btn)
+		curse_btn.pressed.connect(func() -> void: _curse_item(_selected_index))
+		btn_row.add_child(curse_btn)
+	if not can_reforge:
+		col.add_child(_locked_hint(tr("UI_FORGE_REFORGE_LOCKED")))
+	if not can_curse:
+		col.add_child(_locked_hint(tr("UI_FORGE_CURSE_LOCKED")))
+	return col
 
+
+## One affix line on the workbench: the affix text + (T2) a button that rerolls just
+## this affix. Curses are shown red and cannot be reforged.
+func _build_affix_row(
+	affix_v: Variant, affix_index: int, reforge_cost: int, can_reforge: bool
+) -> Control:
+	var a := affix_v as Dictionary
+	var is_curse := AFFIX_POOL.is_curse(a)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+
+	var lbl := Label.new()
+	lbl.text = AFFIX_POOL.describe(a)
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_label(lbl, 17, Color(1.0, 0.42, 0.42) if is_curse else Color(0.7, 0.92, 0.7), 1)
+	row.add_child(lbl)
+
+	if can_reforge and not is_curse:
+		var rb := Button.new()
+		rb.text = tr("UI_FORGE_REFORGE_ONE").format({"n": reforge_cost})
+		rb.custom_minimum_size = Vector2(150, 34)
+		rb.add_theme_font_size_override("font_size", 16)
+		T.apply_button_theme(rb)
+		rb.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
+		rb.disabled = int(MetaProgress.scrap) < reforge_cost
+		var ai := affix_index
+		rb.pressed.connect(func() -> void: _reforge_affix(ai))
+		row.add_child(rb)
 	return row
+
+
+# --- workbench actions ------------------------------------------------------
+
+
+## Put a stash item on the workbench (from a drag-drop or a click).
+func _select_item(index: int) -> void:
+	if index < 0 or index >= MetaProgress.stash.size():
+		return
+	_selected_index = index
+	AudioManager.play_sfx("ui_click")
+	_rebuild_body()
+
+
+## Dismantle the workbench item, then clear the bench (its index is now stale).
+func _dismantle_selected() -> void:
+	if _selected_index < 0 or _selected_index >= MetaProgress.stash.size():
+		return
+	if MetaProgress.dismantle_stash_item(_selected_index):
+		_selected_index = -1
+	_rebuild_body()
+
+
+## Reforge just affix `affix_index` of the workbench item (keeps it selected so the
+## new roll shows immediately).
+func _reforge_affix(affix_index: int) -> void:
+	if _selected_index < 0:
+		return
+	MetaProgress.reforge_stash_item_affix(_selected_index, affix_index)
+	_rebuild_body()
+
+
+## Load an equipment sprite texture for the drag preview (mirrors warehouse_screen).
+func _load_equip_tex(sprite_path: String) -> Texture2D:
+	if sprite_path == "":
+		return null
+	var full := "res://battle_scene/assets/images/" + sprite_path
+	if ResourceLoader.exists(full):
+		return load(full) as Texture2D
+	if FileAccess.file_exists(full):
+		var img := Image.load_from_file(full)
+		if img:
+			return ImageTexture.create_from_image(img)
+	return null
+
+
+## Rich tooltip for a stash item: name + one colored line per affix.
+func _forge_item_tooltip(inst: Dictionary) -> String:
+	var base_id := str(inst.get("base", ""))
+	var data: Dictionary = RunManager.get_equipment_data(base_id)
+	var nm := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
+	var lines: Array[String] = ["[b]%s[/b]" % nm]
+	for affix in RunManager.equip_affixes(inst):
+		if typeof(affix) != TYPE_DICTIONARY:
+			continue
+		var label := AFFIX_POOL.describe(affix)
+		if AFFIX_POOL.is_curse(affix):
+			lines.append("[color=#e0584c]%s[/color]" % label)
+		else:
+			lines.append("[color=#5fd06a]%s[/color]" % label)
+	return "\n".join(lines)
 
 
 ## Craft picker (T2): two option buttons (slot + rarity) and a Craft button whose

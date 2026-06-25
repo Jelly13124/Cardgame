@@ -754,6 +754,32 @@ func reforge_stash_item(index: int) -> bool:
 	return true
 
 
+## Reforge a SPECIFIC affix on stash item `item_index` (forge T2 per-affix reforge):
+## spend the rarity's REFORGE_COST in scrap to reroll only affix `affix_index`. Returns
+## false on a bad index, a curse target, or insufficient scrap. Mirrors reforge_stash_item.
+func reforge_stash_item_affix(item_index: int, affix_index: int) -> bool:
+	if item_index < 0 or item_index >= stash.size():
+		return false
+	var inst: Dictionary = RunManager.as_equip_instance(stash[item_index])
+	if inst.is_empty():
+		return false
+	var affixes: Array = RunManager.equip_affixes(inst)
+	if affix_index < 0 or affix_index >= affixes.size():
+		return false
+	if AFFIX_POOL.is_curse(affixes[affix_index]):
+		return false  # curses can't be reforged
+	var rarity: String = str(inst.get("rarity", "common"))
+	var cost: int = int(REFORGE_COST.get(rarity, REFORGE_COST["common"]))
+	if scrap < cost:
+		return false
+	spend_scrap(cost)  # saves + emits scrap_changed
+	inst["affixes"] = AFFIX_POOL.reroll_at(affixes, affix_index)
+	stash[item_index] = inst
+	save_progress()
+	emit_signal("upgrades_changed")
+	return true
+
+
 ## Curse stash item `index` (forge T3): spend 100 scrap to re-roll its affixes as
 ## a cursed set for its rarity and flag cursed=true. Stores the result back as a
 ## full instance dict (converts legacy strings). Returns false on bad index, an
