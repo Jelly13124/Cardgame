@@ -1742,16 +1742,80 @@ func tool_pool() -> Array[String]:
 	return ids
 
 
-## Tool slots (top-bar consumable slots): 2 base + the Outpost "Tool Rack" upgrade.
+## Equipped tool slots (top-bar usable): 1 base + the Outpost "Tool Rack" upgrade +
+## any +1-tool-slot relic. Tools are HELD in the backpack and equipped into a slot.
 func tool_slots() -> int:
-	return 2 + int(_get_meta_effect_value("tool_slots").get("slots", 0))
+	return 1 + int(_get_meta_effect_value("tool_slots").get("slots", 0)) + relic_tool_slot_bonus()
 
 
-## Add a tool to the inventory if a slot is free. Returns false when full.
+## Total +tool-slot bonus from held relics (passive effect type "tool_slots").
+func relic_tool_slot_bonus() -> int:
+	var bonus := 0
+	for relic_id in relics:
+		var effects = get_relic_data(str(relic_id)).get("effects", [])
+		if typeof(effects) != TYPE_ARRAY:
+			continue
+		for e in effects:
+			if typeof(e) == TYPE_DICTIONARY and str(e.get("type", "")) == "tool_slots":
+				bonus += int(e.get("amount", 0))
+	return bonus
+
+
+## Acquire a tool (drop / event): it goes into the BACKPACK now — equip it into a
+## slot from the character panel. Returns false when the backpack is full.
 func add_tool(tool_id: String) -> bool:
+	return add_tool_to_backpack(tool_id)
+
+
+## Put a tool into the first free backpack cell (1 tool = 1 cell, like gems). Returns
+## false when the backpack is full (the caller shows the inventory-full toast).
+func add_tool_to_backpack(tool_id: String) -> bool:
+	if tool_id == "":
+		return false
+	_ensure_backpack()
+	var idx := _first_null_cell()
+	if idx == -1:
+		return false
+	backpack[idx] = {"kind": "tool", "id": tool_id}
+	emit_signal("backpack_changed")
+	return true
+
+
+## Tool ids currently held in the backpack (cell order).
+func backpack_tool_ids() -> Array[String]:
+	var out: Array[String] = []
+	for c in backpack:
+		if typeof(c) == TYPE_DICTIONARY and c.get("kind") == "tool":
+			out.append(str(c.get("id", "")))
+	return out
+
+
+## Equip the backpack tool at cell `index` into a free tool slot. Returns false on a
+## non-tool cell or when every slot is full.
+func equip_tool_from_backpack(index: int) -> bool:
+	_ensure_backpack()
+	if index < 0 or index >= backpack.size():
+		return false
+	var c = backpack[index]
+	if typeof(c) != TYPE_DICTIONARY or c.get("kind") != "tool":
+		return false
 	if tool_inventory.size() >= tool_slots():
 		return false
-	tool_inventory.append(tool_id)
+	tool_inventory.append(str(c.get("id", "")))
+	backpack[index] = null
+	emit_signal("backpack_changed")
+	tools_changed.emit()
+	return true
+
+
+## Unequip the tool in slot `index` back into the backpack. Returns false when the
+## backpack is full (the tool stays equipped).
+func unequip_tool(index: int) -> bool:
+	if index < 0 or index >= tool_inventory.size():
+		return false
+	if not add_tool_to_backpack(tool_inventory[index]):
+		return false
+	tool_inventory.remove_at(index)
 	tools_changed.emit()
 	return true
 
@@ -1783,10 +1847,10 @@ func roll_tool_drop(node_type: String = "") -> String:
 func purchase_tool(tool_id: String, cost: int) -> bool:
 	if tool_id == "" or gold < cost:
 		return false
-	if tool_inventory.size() >= tool_slots():
-		return false
+	if backpack_count_used() >= effective_backpack_size():
+		return false  # no room in the bag for the tool
 	add_resources(-cost, 0)
-	add_tool(tool_id)
+	add_tool_to_backpack(tool_id)
 	return true
 
 

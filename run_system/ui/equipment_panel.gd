@@ -26,6 +26,7 @@ var _slot_icons: Dictionary = {}  # slot → EquipmentIcon
 var _slot_cells: Dictionary = {}  # slot → BackpackCell (drag/drop wrapper)
 var _slot_labels: Dictionary = {}  # slot → Label (slot/item name)
 var _grid: GridContainer
+var _tool_row: HBoxContainer  # equipped tool slots (tools are held in the backpack)
 var _portrait_rect: TextureRect
 var _attrs_label: Label
 var _vitals_label: Label
@@ -255,6 +256,14 @@ func _build_backpack_zone() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 8)
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	# Equipped tool slots — tools are HELD in the backpack and equipped into a slot
+	# here (click a backpack tool to equip; click an equipped tool to unequip).
+	col.add_child(_section_title(tr("UI_EQUIP_TOOLS_TITLE")))
+	_tool_row = HBoxContainer.new()
+	_tool_row.add_theme_constant_override("separation", 8)
+	col.add_child(_tool_row)
+
 	_inv_title = _section_title("")
 	col.add_child(_inv_title)
 	_grid = GridContainer.new()
@@ -337,6 +346,18 @@ func _refresh() -> void:
 			cell.hover_tip = _build_equipment_tooltip(data, slot, slot_inst)
 			label.text = "%s: %s" % [slot_label, item_name]
 
+	# Equipped tool slots (filled from tool_inventory; the rest show empty slots).
+	if is_instance_valid(_tool_row):
+		for child in _tool_row.get_children():
+			child.queue_free()
+		var inv: Array = RunManager.tool_inventory
+		var slots: int = RunManager.tool_slots()
+		for i in range(slots):
+			if i < inv.size():
+				_tool_row.add_child(_make_equipped_tool_cell(i, str(inv[i])))
+			else:
+				_tool_row.add_child(_make_empty_tool_cell())
+
 	# Backpack grid (rebuild every refresh)
 	if _inv_title:
 		_inv_title.text = tr("UI_EQUIP_INVENTORY_COUNT").format(
@@ -409,6 +430,8 @@ func _build_cell_content(index: int) -> Control:
 				)
 			"gem":
 				return _make_gem_cell(str(cell.get("id", "")), index)
+			"tool":
+				return _make_tool_cell(str(cell.get("id", "")), index)
 	# Empty cell — dim placeholder panel, still a valid drop target.
 	var wrapper := BACKPACK_CELL.new()
 	wrapper.custom_minimum_size = CELL_SIZE
@@ -548,6 +571,141 @@ func _make_gem_cell(gem_id: String, index: int) -> Control:
 	_wire_backpack_drop(cell, index)
 	cell.click_handler = func(btn): if btn == MOUSE_BUTTON_MIDDLE: _toggle_safe(index)
 	return cell
+
+
+## A backpack TOOL cell: tool art (or ⚙ glyph) + tooltip. Left-click equips it into a
+## free tool slot; middle-click toggles the safe zone; draggable to reorder/swap.
+func _make_tool_cell(tool_id: String, index: int) -> Control:
+	var data: Dictionary = RunManager.get_tool_data(tool_id)
+	var tool_name := Settings.t("TOOL_%s_TITLE" % tool_id, str(data.get("title", tool_id)))
+	var cell := BACKPACK_CELL.new()
+	cell.custom_minimum_size = CELL_SIZE
+	cell.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var panel := Panel.new()
+	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override("panel", T.icon_frame_style())
+	cell.add_child(panel)
+
+	var icon_path := str(data.get("icon", ""))
+	var tex: Texture2D = null
+	if icon_path != "" and ResourceLoader.exists(icon_path):
+		tex = load(icon_path) as Texture2D
+	if tex:
+		var icon := TextureRect.new()
+		icon.texture = tex
+		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+		icon.offset_left = 6
+		icon.offset_top = 6
+		icon.offset_right = -6
+		icon.offset_bottom = -6
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		panel.add_child(icon)
+	else:
+		var glyph := Label.new()
+		glyph.text = "⚙"
+		glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
+		glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		glyph.add_theme_font_size_override("font_size", 26)
+		glyph.add_theme_color_override("font_color", Color(0.6, 0.8, 1.0))
+		glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		panel.add_child(glyph)
+
+	var desc := Settings.t("TOOL_%s_DESC" % tool_id, "")
+	var equip_hint := tr("UI_EQUIP_TOOL_EQUIP_HINT")
+	if desc == "":
+		cell.hover_tip = "[b]%s[/b]\n[color=#9fd0ff]%s[/color]" % [tool_name, equip_hint]
+	else:
+		cell.hover_tip = "[b]%s[/b]\n%s\n[color=#9fd0ff]%s[/color]" % [tool_name, desc, equip_hint]
+	cell.drag_payload = {"src": "backpack", "index": index, "kind": "tool", "tool_id": tool_id}
+	cell.preview_text = "⚙"
+	cell.preview_color = Color(0.6, 0.8, 1.0)
+	cell.preview_tex = tex
+	_wire_backpack_drop(cell, index)
+	cell.click_handler = func(btn):
+		if btn == MOUSE_BUTTON_LEFT:
+			_equip_tool(index)
+		elif btn == MOUSE_BUTTON_MIDDLE:
+			_toggle_safe(index)
+	return cell
+
+
+## An equipped tool slot (the worn tool): icon + tooltip; click unequips it back into
+## the backpack.
+func _make_equipped_tool_cell(index: int, tool_id: String) -> Control:
+	var data: Dictionary = RunManager.get_tool_data(tool_id)
+	var title := Settings.t("TOOL_%s_TITLE" % tool_id, str(data.get("title", tool_id)))
+	var desc := Settings.t("TOOL_%s_DESC" % tool_id, "")
+	var b := Button.new()
+	b.custom_minimum_size = CELL_SIZE
+	b.focus_mode = Control.FOCUS_NONE
+	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var unhint := tr("UI_EQUIP_TOOL_UNEQUIP_HINT")
+	b.tooltip_text = (
+		"%s\n%s\n%s" % [title, desc, unhint] if desc != "" else "%s\n%s" % [title, unhint]
+	)
+	var icon_path := str(data.get("icon", ""))
+	if icon_path != "" and ResourceLoader.exists(icon_path):
+		b.icon = load(icon_path)
+		b.expand_icon = true
+	else:
+		b.text = title.substr(0, 1).to_upper()
+		b.add_theme_font_size_override("font_size", 18)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.10, 0.12, 0.16, 0.9)
+	sb.set_corner_radius_all(8)
+	sb.set_border_width_all(2)
+	sb.border_color = Color(0.55, 0.75, 0.95, 0.95)
+	b.add_theme_stylebox_override("normal", sb)
+	b.add_theme_stylebox_override("hover", sb)
+	b.add_theme_stylebox_override("pressed", sb)
+	b.pressed.connect(func() -> void: _unequip_tool(index))
+	return b
+
+
+## An empty tool slot (dim, with a faint ⚙ so it reads as a slot awaiting a tool).
+func _make_empty_tool_cell() -> Control:
+	var p := Panel.new()
+	p.custom_minimum_size = CELL_SIZE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.0, 0.0, 0.0, 0.22)
+	sb.set_corner_radius_all(8)
+	sb.set_border_width_all(1)
+	sb.border_color = Color(0.5, 0.55, 0.7, 0.5)
+	p.add_theme_stylebox_override("panel", sb)
+	p.tooltip_text = tr("UI_EQUIP_TOOL_SLOT_EMPTY")
+	var glyph := Label.new()
+	glyph.text = "⚙"
+	glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
+	glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	glyph.add_theme_font_size_override("font_size", 22)
+	glyph.add_theme_color_override("font_color", Color(0.5, 0.55, 0.7, 0.5))
+	glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.add_child(glyph)
+	return p
+
+
+## Equip a backpack tool (cell `index`) into a free tool slot, or flash a hint when
+## every slot is full.
+func _equip_tool(index: int) -> void:
+	if RunManager.equip_tool_from_backpack(index):
+		AudioManager.play_sfx("ui_click")
+	else:
+		_status_label.text = tr("UI_EQUIP_TOOL_SLOTS_FULL")
+		AudioManager.play_sfx("error")
+
+
+## Unequip the tool in slot `index` back into the backpack (or flash if the bag is full).
+func _unequip_tool(index: int) -> void:
+	if RunManager.unequip_tool(index):
+		AudioManager.play_sfx("ui_back")
+	else:
+		_status_label.text = tr("UI_LOOT_BACKPACK_FULL")
+		AudioManager.play_sfx("error")
 
 
 ## Right-click discard now asks first — affixed gear is permanently lost otherwise.
