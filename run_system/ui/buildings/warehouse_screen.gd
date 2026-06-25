@@ -28,6 +28,7 @@ const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 const BACKPACK_CELL = preload("res://run_system/ui/backpack_cell.gd")
 
 const HERO_DIR := "res://run_system/data/heroes/"
+const HERO_SPRITE_DIR := "res://battle_scene/assets/images/heroes/"
 
 const CELL_SIZE := Vector2(74, 74)
 const STASH_COLUMNS := 4
@@ -127,12 +128,11 @@ func _build_character_column() -> Control:
 	return col
 
 
-## Compact hero buttons in a wrap; the picked hero is highlighted. Mirrors the old
-## hero_select but inline (no per-hero "Select" button — the row IS the button).
+## Hero choices as portrait tiles in a wrap; the picked hero is highlighted.
 func _build_hero_picker() -> Control:
 	var flow := HFlowContainer.new()
-	flow.add_theme_constant_override("h_separation", 8)
-	flow.add_theme_constant_override("v_separation", 8)
+	flow.add_theme_constant_override("h_separation", 12)
+	flow.add_theme_constant_override("v_separation", 12)
 
 	for hero_id in _list_hero_ids():
 		# DEMO BUILD: only the allowed heroes appear in the picker (full roster
@@ -141,22 +141,77 @@ func _build_hero_picker() -> Control:
 			continue
 		var data := _load_hero(hero_id)
 		var locked := _hero_locked(hero_id)
-		var english_name := str(data.get("name", hero_id))
-		var hero_name := Settings.t("HERO_%s_NAME" % hero_id, english_name)
-		var btn := Button.new()
-		btn.custom_minimum_size = Vector2(0, 38)
-		T.apply_button_theme(btn)
-		if locked:
-			btn.text = "%s 🔒" % hero_name
-			btn.disabled = true
-		elif str(RunManager.current_hero_id) == hero_id:
-			btn.text = "● %s" % hero_name
-			btn.add_theme_color_override("font_color", Color(0.55, 0.85, 0.5))
-		else:
-			btn.text = hero_name
-			btn.pressed.connect(_on_hero_picked.bind(hero_id, hero_name))
-		flow.add_child(btn)
+		var hero_name := Settings.t("HERO_%s_NAME" % hero_id, str(data.get("name", hero_id)))
+		flow.add_child(_build_hero_tile(hero_id, hero_name, locked))
 	return flow
+
+
+## One hero choice: a framed portrait + name. The current hero gets a green border
+## and ● mark; locked heroes are dimmed with a 🔒. A flat full-rect button on top
+## (only when pickable) routes the click to _on_hero_picked.
+func _build_hero_tile(hero_id: String, hero_name: String, locked: bool) -> Control:
+	var selected := str(RunManager.current_hero_id) == hero_id
+	var border := Color(0.45, 0.78, 0.42) if selected else Color(0.5, 0.4, 0.26)
+	var tile := PanelContainer.new()
+	tile.custom_minimum_size = Vector2(132, 0)
+	tile.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(Color(0.12, 0.10, 0.075, 0.95), border, 3, 2)
+	)
+	var m := MarginContainer.new()
+	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		m.add_theme_constant_override(s, 8)
+	tile.add_child(m)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 5)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	m.add_child(col)
+
+	var avatar := TextureRect.new()
+	avatar.custom_minimum_size = Vector2(108, 108)
+	avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	avatar.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	avatar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var tex := _load_portrait(hero_id)
+	if tex:
+		avatar.texture = tex
+	if locked:
+		avatar.modulate = Color(0.5, 0.5, 0.55)
+	col.add_child(avatar)
+
+	var name_lbl := Label.new()
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if locked:
+		name_lbl.text = "%s 🔒" % hero_name
+	elif selected:
+		name_lbl.text = "● %s" % hero_name
+	else:
+		name_lbl.text = hero_name
+	_style_label(name_lbl, 17, Color(0.55, 0.85, 0.5) if selected else Color(0.92, 0.86, 0.66), 1)
+	col.add_child(name_lbl)
+
+	if not locked and not selected:
+		var click := Button.new()
+		click.flat = true
+		click.focus_mode = Control.FOCUS_NONE
+		click.set_anchors_preset(Control.PRESET_FULL_RECT)
+		click.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		click.pressed.connect(_on_hero_picked.bind(hero_id, hero_name))
+		tile.add_child(click)
+	return tile
+
+
+## Hero portrait texture, by the shared convention heroes/<id>/<id>_portrait.png.
+func _load_portrait(hero_id: String) -> Texture2D:
+	var path := "%s%s/%s_portrait.png" % [HERO_SPRITE_DIR, hero_id, hero_id]
+	if ResourceLoader.exists(path):
+		return load(path)
+	if FileAccess.file_exists(path):
+		var img := Image.load_from_file(path)
+		if img:
+			return ImageTexture.create_from_image(img)
+	return null
 
 
 func _on_hero_picked(hero_id: String, hero_name: String) -> void:
@@ -233,22 +288,14 @@ func _build_stash_column() -> Control:
 	col.add_theme_constant_override("separation", 10)
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
+	var available := _available_stash_indices()
+	var cap := MetaProgress.effective_stash_cap()
+
 	var title := Label.new()
 	# Count only entries still available (not assigned to a slot) over capacity.
-	title.text = tr("UI_WAREHOUSE_STASH_HEADER").format(
-		{"n": _available_stash_indices().size(), "cap": MetaProgress.effective_stash_cap()}
-	)
+	title.text = tr("UI_WAREHOUSE_STASH_HEADER").format({"n": available.size(), "cap": cap})
 	_style_label(title, 20, accent, 2)
 	col.add_child(title)
-
-	var available := _available_stash_indices()
-	if available.is_empty():
-		var empty := Label.new()
-		empty.text = tr("UI_WAREHOUSE_LOADOUT_EMPTY")
-		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_style_label(empty, 18, Color(0.72, 0.66, 0.52), 1)
-		col.add_child(empty)
-		return col
 
 	var grid := GridContainer.new()
 	grid.columns = STASH_COLUMNS
@@ -258,7 +305,28 @@ func _build_stash_column() -> Control:
 
 	for i in available:
 		grid.add_child(_build_stash_cell(MetaProgress.stash[i]))
+
+	# Always render empty slot frames so the stash reads as a grid of cells, not a
+	# void. Pad to one row past the filled items, at least 3 rows, capped at capacity.
+	var visible := clampi(available.size() + STASH_COLUMNS, STASH_COLUMNS * 3, cap)
+	for _e in range(maxi(0, visible - available.size())):
+		grid.add_child(_build_empty_stash_cell())
 	return col
+
+
+## A recessed empty stash cell — a dim framed square so vacant capacity reads as
+## slots waiting to be filled rather than blank space.
+func _build_empty_stash_cell() -> Control:
+	var cell := Panel.new()
+	cell.custom_minimum_size = CELL_SIZE
+	cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.07, 0.06, 0.05, 0.55)
+	style.border_color = Color(0.34, 0.28, 0.20, 0.85)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(6)
+	cell.add_theme_stylebox_override("panel", style)
+	return cell
 
 
 ## One stash cell: a draggable BackpackCell (EquipmentIcon cosmetic child) carrying
