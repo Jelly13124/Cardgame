@@ -31,7 +31,7 @@ const HERO_DIR := "res://run_system/data/heroes/"
 const HERO_SPRITE_DIR := "res://battle_scene/assets/images/heroes/"
 
 const CELL_SIZE := Vector2(74, 74)
-const STASH_COLUMNS := 4
+const STASH_COLUMNS := 8
 const SLOT_LETTERS := {"head": "H", "chest": "C", "weapon": "W", "hands": "Hd", "accessory": "Ac"}
 
 ## Conversion tunables (spec §Warehouse): Core→Caps 1:2, Caps→Scrap 4:1, ~10% tax
@@ -306,10 +306,9 @@ func _build_stash_column() -> Control:
 	for i in available:
 		grid.add_child(_build_stash_cell(MetaProgress.stash[i]))
 
-	# Always render empty slot frames so the stash reads as a grid of cells, not a
-	# void. Pad to one row past the filled items, at least 3 rows, capped at capacity.
-	var visible := clampi(available.size() + STASH_COLUMNS, STASH_COLUMNS * 3, cap)
-	for _e in range(maxi(0, visible - available.size())):
+	# Render the FULL capacity as a grid of slots (filled items first, then empty
+	# frames) so the fullscreen page actually shows all of the stash, not a handful.
+	for _e in range(maxi(0, cap - available.size())):
 		grid.add_child(_build_empty_stash_cell())
 	return col
 
