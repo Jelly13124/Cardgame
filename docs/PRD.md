@@ -449,13 +449,31 @@ See `docs/superpowers/specs/2026-06-09-gems-leveling-rewards-design.md` for the 
 
 ### ✅ Phase 8 — Tools · Equipment Economy · A0 Balance (shipped 2026-06-21..22)
 Specs: `docs/superpowers/specs/2026-06-21-tools-attrs-loading-base-ui-design.md`, `…/2026-06-22-balance-equipment-economy-design.md`.
-- ✅ **Tool system** (StS2-style one-time consumables): `run_system/data/tools/*.json` (8), a top-bar **tool shelf** (`run_top_bar.gd`), free instant use in battle (`battle_scene.use_tool`; enemy-target tools auto-target; effects reuse `combat_engine._apply_effect`, scaled ×(1+0.08·INT)). **2 base slots** + an Outpost **Tool Rack** (`tool_slots`) upgrade (cap 3).
+- ✅ **Tool system** (StS2-style one-time consumables): `run_system/data/tools/*.json` (8), a top-bar **tool shelf** (`run_top_bar.gd`), free instant use in battle (`battle_scene.use_tool`; enemy-target tools auto-target; effects reuse `combat_engine._apply_effect`, scaled ×(1+0.08·INT)). _Tool slots reworked in Phase 9 → **1 base slot**, tools held in the backpack + equipped from the character panel; see below._
 - ✅ **Attribute rework**: the Charm enemy-**flee** mechanic was **deleted**; INT off XP → boosts tools + Bleed; Charm lowers the per-level XP wall.
 - ✅ **Gems → backpack** (1 gem = 1 cell; socketing frees the cell), replacing the unlimited `gem_inventory` side-list.
 - ✅ **Drop / shop restructure**: shop sells tools (not equipment); Luck-scaled tool + equipment drops (see Rewards by node type).
 - ✅ **Loading**: session card-info cache (`MetaProgress.get_card_info_cache` + `cached_card_factory.gd`) skips the per-battle JSON re-parse.
-- ✅ **Building detail pages** redesigned (icon + flavour + action card + locked-state preview, all 5 buildings).
+- ✅ **Building detail pages** redesigned (icon + flavour + action card + locked-state preview, all 5 buildings). _Phase 9 moved the unlock/upgrade to the overview, dropped the action card, and made the pages fullscreen._
 - ✅ **A0 balance pass**: deflated the over-statted 1-cost cards, raised enemy aggression (block→attack), retuned the Act-1 boss `rust_titan` into a 2-3-try skill gate (geared+leveled clears comfortably).
+
+### ✅ Phase 9 — Base/shop/forge UI + tool-system rework (shipped 2026-06-25)
+Spec: `docs/superpowers/specs/2026-06-25-base-shop-forge-tools-overhaul.md`.
+- ✅ **Building unlock/upgrade → the overview**: a button under each building's floating
+  "Lv<n> Name" label (or 🔒) → a confirm popup → spend Core. The detail-page action card is
+  gone; clicking a locked building opens the same unlock confirm. Detail pages are services-only.
+- ✅ **Building detail pages are fullscreen** (the shared shell fills the viewport minus a frame
+  margin), so big grids fit. Warehouse shows the full **40-slot** stash (8-col grid of filled
+  items + empty frames) + a **hero portrait** picker.
+- ✅ **Market (黑市)**: equipment sits on a **shelf** (rarity-framed icon tiles + price), and the
+  card-unlock / card-shop sections render **real card art** (`my_card_factory`).
+- ✅ **Forge (铁匠铺) bench**: LEFT stash grid + RIGHT drop slot; drag/click an item onto the bench
+  to see its affixes, then **Dismantle** or **Reforge a specific affix** (`affix_pool.reroll_at` +
+  `MetaProgress.reforge_stash_item_affix`). Curse/Craft retained.
+- ✅ **Tool rework**: `tool_slots()` base 2 → **1** (+ Outpost Tool Rack + relic). Tools are now
+  **held in the backpack** (`{"kind":"tool"}` cells) and **equipped** into a slot from the
+  character panel (`equipment_panel`: 工具槽 row + click-to-equip). New relic **Tool Belt**
+  (`tool_belt`, +1 tool slot — `tool_slots` passive relic effect).
 
 ### ✅ Phase 9 — Demo Polish (shipped 2026-06-24)
 Spec: `docs/superpowers/specs/2026-06-24-demo-polish-overnight-design.md`. Driven by a 4-dimension demo review.
