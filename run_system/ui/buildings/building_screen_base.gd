@@ -219,7 +219,7 @@ func _add_scene_background() -> void:
 		add_child(bg)
 
 	var shade := ColorRect.new()
-	shade.color = Color(0.0, 0.0, 0.0, 0.55)
+	shade.color = Color(0.0, 0.0, 0.0, 0.72)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(shade)

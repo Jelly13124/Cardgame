@@ -183,101 +183,99 @@ func _load_json(path: String) -> Dictionary:
 	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
 
 
-func _build_attr_perk_row(perk_id: String) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-
-	var lvl := MetaProgress.get_caps_perk_level(perk_id)
-	var max_lvl := MetaProgress.attr_perk_cap()
+## Card-style perk row: [icon]  name + level pips ........... [ BUY  cost ] / MAX.
+## Shared by the attribute perks and the Max-HP perk. `on_buy` runs on purchase.
+func _perk_card(
+	icon_path: String, name_text: String, lvl: int, max_lvl: int, cost: int, on_buy: Callable
+) -> Control:
 	var maxed := lvl >= max_lvl
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_bottom", 10)
+	card.add_child(margin)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	margin.add_child(row)
+
+	if icon_path != "" and ResourceLoader.exists(icon_path):
+		var icon := TextureRect.new()
+		icon.texture = load(icon_path)
+		icon.custom_minimum_size = Vector2(46, 46)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(icon)
+
+	var info := VBoxContainer.new()
+	info.add_theme_constant_override("separation", 4)
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(info)
 
 	var name_lbl := Label.new()
-	name_lbl.text = tr("UI_CLINIC_PERK_%s" % perk_id.to_upper())
-	_style_label(name_lbl, 18, Color(1, 0.92, 0.55), 1)
-	name_lbl.custom_minimum_size = Vector2(240, 0)
-	row.add_child(name_lbl)
+	name_lbl.text = name_text
+	_style_label(name_lbl, 21, Color(1, 0.92, 0.62), 2)
+	info.add_child(name_lbl)
 
-	var lvl_lbl := Label.new()
-	lvl_lbl.text = tr("UI_CLINIC_PERK_LEVEL").format({"cur": lvl, "max": max_lvl})
-	_style_label(lvl_lbl, 18, Color(0.90, 0.90, 0.86), 1)
-	lvl_lbl.custom_minimum_size = Vector2(110, 0)
-	row.add_child(lvl_lbl)
+	var pips := ""
+	for i in range(max_lvl):
+		pips += "●" if i < lvl else "○"
+	var pips_lbl := Label.new()
+	pips_lbl.text = "%s   %d/%d" % [pips, lvl, max_lvl]
+	_style_label(pips_lbl, 18, Color(0.60, 0.92, 1.0), 1)
+	info.add_child(pips_lbl)
 
-	var cost := MetaProgress.caps_perk_cost(perk_id)
-	var cost_lbl := Label.new()
-	cost_lbl.text = "" if maxed else tr("UI_CLINIC_PERK_COST").format({"n": cost})
-	_style_label(cost_lbl, 18, Color(1.0, 0.82, 0.45), 1)
-	cost_lbl.custom_minimum_size = Vector2(150, 0)
-	row.add_child(cost_lbl)
-
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(spacer)
-
-	var buy_btn := Button.new()
-	buy_btn.custom_minimum_size = Vector2(120, 36)
-	T.apply_button_theme(buy_btn)
-	buy_btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
+	var buy := Button.new()
+	buy.custom_minimum_size = Vector2(176, 46)
+	buy.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	buy.add_theme_font_size_override("font_size", 19)
+	T.apply_button_theme(buy)
+	buy.add_theme_color_override("font_disabled_color", Color(0.70, 0.62, 0.50, 0.9))
 	if maxed:
-		buy_btn.text = tr("UI_CLINIC_PERK_MAX")
-		buy_btn.disabled = true
+		buy.text = tr("UI_CLINIC_PERK_MAX")
+		buy.disabled = true
 	else:
-		buy_btn.text = tr("UI_CLINIC_BUY")
-		buy_btn.disabled = MetaProgress.caps < cost
-		buy_btn.pressed.connect(func() -> void: MetaProgress.buy_caps_perk(perk_id))
-	row.add_child(buy_btn)
+		buy.text = "%s  %d" % [tr("UI_CLINIC_BUY"), cost]
+		buy.disabled = MetaProgress.caps < cost
+		if not buy.disabled:
+			buy.add_theme_color_override("font_color", Color(0.74, 1.0, 0.64))  # affordable
+		buy.pressed.connect(on_buy)
+	row.add_child(buy)
 
-	return row
+	return card
+
+
+func _build_attr_perk_row(perk_id: String) -> Control:
+	var attr: String = str(MetaProgress.CYBER_DOC_PERKS.get(perk_id, ""))
+	return _perk_card(
+		"res://battle_scene/assets/images/ui/attributes/%s.png" % attr,
+		tr("UI_CLINIC_PERK_%s" % perk_id.to_upper()),
+		MetaProgress.get_caps_perk_level(perk_id),
+		MetaProgress.attr_perk_cap(),
+		MetaProgress.caps_perk_cost(perk_id),
+		func() -> void: MetaProgress.buy_caps_perk(perk_id)
+	)
 
 
 ## Max-HP perk row (cyber_hp). Buys one level via MetaProgress.buy_caps_perk, which
 ## gates on the clinic's T2 max_hp_perk function and the shared attr_perk_cap().
 func _build_max_hp_row() -> Control:
 	var perk_id := MetaProgress.CYBER_HP_PERK
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-
-	var lvl := MetaProgress.get_caps_perk_level(perk_id)
-	var max_lvl := MetaProgress.attr_perk_cap()
-	var maxed := lvl >= max_lvl
-
-	var name_lbl := Label.new()
-	name_lbl.text = tr("UI_CLINIC_HP_PERK").format({"hp": MAX_HP_PER_LEVEL})
-	_style_label(name_lbl, 18, Color(1, 0.92, 0.55), 1)
-	name_lbl.custom_minimum_size = Vector2(240, 0)
-	row.add_child(name_lbl)
-
-	var lvl_lbl := Label.new()
-	lvl_lbl.text = tr("UI_CLINIC_PERK_LEVEL").format({"cur": lvl, "max": max_lvl})
-	_style_label(lvl_lbl, 18, Color(0.90, 0.90, 0.86), 1)
-	lvl_lbl.custom_minimum_size = Vector2(110, 0)
-	row.add_child(lvl_lbl)
-
-	var cost := MetaProgress.caps_perk_cost(perk_id)
-	var cost_lbl := Label.new()
-	cost_lbl.text = "" if maxed else tr("UI_CLINIC_PERK_COST").format({"n": cost})
-	_style_label(cost_lbl, 18, Color(1.0, 0.82, 0.45), 1)
-	cost_lbl.custom_minimum_size = Vector2(150, 0)
-	row.add_child(cost_lbl)
-
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(spacer)
-
-	var buy_btn := Button.new()
-	buy_btn.custom_minimum_size = Vector2(120, 36)
-	T.apply_button_theme(buy_btn)
-	buy_btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
-	if maxed:
-		buy_btn.text = tr("UI_CLINIC_PERK_MAX")
-		buy_btn.disabled = true
-	else:
-		buy_btn.text = tr("UI_CLINIC_BUY")
-		buy_btn.disabled = MetaProgress.caps < cost
-		buy_btn.pressed.connect(func() -> void: MetaProgress.buy_caps_perk(perk_id))
-	row.add_child(buy_btn)
-
-	return row
+	return _perk_card(
+		"res://battle_scene/assets/images/ui/attributes/constitution.png",
+		tr("UI_CLINIC_HP_PERK").format({"hp": MAX_HP_PER_LEVEL}),
+		MetaProgress.get_caps_perk_level(perk_id),
+		MetaProgress.attr_perk_cap(),
+		MetaProgress.caps_perk_cost(perk_id),
+		func() -> void: MetaProgress.buy_caps_perk(perk_id)
+	)
 
 
 func _add_section_title(container: VBoxContainer, text: String) -> void:
