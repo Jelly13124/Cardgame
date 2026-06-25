@@ -19,3 +19,8 @@ UI_FORGE_RARITY_RARE,Rare,稀有
 UI_FORGE_CRAFT_LOCKED,Craft unlocks at Forge T2.,锻造在铁匠铺 T2 解锁。
 UI_FORGE_REFORGE_LOCKED,Reforge unlocks at Forge T2.,重铸在铁匠铺 T2 解锁。
 UI_FORGE_CURSE_LOCKED,Curse unlocks at Forge T3.,诅咒在铁匠铺 T3 解锁。
+UI_FORGE_WORKBENCH_HINT,Drag a stash item onto the bench (or click it) to dismantle or reforge it.,把仓库里的装备拖到右边台子上（或点一下），即可拆解或重铸。
+UI_FORGE_STASH_TITLE,Stash ({n}),仓库（{n}）
+UI_FORGE_BENCH_TITLE,Workbench,工作台
+UI_FORGE_BENCH_EMPTY,Drop a piece of gear here to work on it.,把一件装备放到这里来加工。
+UI_FORGE_REFORGE_ONE,Reforge ({n}),重铸（{n}）

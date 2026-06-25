@@ -80,6 +80,28 @@ static func reroll_one(affixes: Array) -> Array:
 	return result
 
 
+## Reroll EXACTLY the affix at `target_index` (the forge's per-affix reforge). Refuses
+## to touch a curse (returns the list unchanged). Avoids reproducing a type already on
+## the other affixes. Returns a fresh deep-copied list.
+static func reroll_at(affixes: Array, target_index: int) -> Array:
+	var result: Array = []
+	for affix in affixes:
+		result.append((affix as Dictionary).duplicate(true))
+	if target_index < 0 or target_index >= result.size():
+		return result
+	if is_curse(result[target_index]):
+		return result  # curses are not rerollable
+	var used_types: Array = []
+	for i in result.size():
+		if i != target_index:
+			used_types.append(result[i].get("type", ""))
+	var fresh: Array = _pick_distinct_positives(1, used_types)
+	if fresh.is_empty():
+		fresh = [POSITIVE[randi() % POSITIVE.size()].duplicate(true)]
+	result[target_index] = fresh[0]
+	return result
+
+
 ## Sum every affix's contribution into a flat totals dict. This is what the
 ## recompute consumer (E_B) calls. attr_* / curse_attr_* map to the five
 ## attributes; max_hp / curse_max_hp → max_hp; crit_pct / curse_crit → crit_pct.
