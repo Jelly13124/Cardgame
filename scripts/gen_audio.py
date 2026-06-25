@@ -322,10 +322,11 @@ MUSIC = {"battle": music_battle, "map": music_map, "home": music_home,
 
 if __name__ == "__main__":
     import subprocess, sys
-    if "--sfx" in sys.argv:  # legacy procedural SFX — Kenney CC0 is the default set
+    if "--sfx" in sys.argv:  # procedural SFX set (reverted from Kenney 2026-06-24)
+        sfx_gain = 0.5  # quieter than the raw normalized peaks (owner felt SFX too loud/harsh)
         for name, fn in SFX.items():
-            write_wav(f"{SFX_DIR}/{name}.wav", fn())
-        print(f"wrote {len(SFX)} legacy SFX -> {SFX_DIR}")
+            write_wav(f"{SFX_DIR}/{name}.wav", fn() * sfx_gain)
+        print(f"wrote {len(SFX)} procedural SFX (gain {sfx_gain}) -> {SFX_DIR}")
     for name, fn in MUSIC.items():
         wav = f"{MUS_DIR}/{name}.wav"; ogg = f"{MUS_DIR}/{name}.ogg"
         sig = fn(); write_wav(wav, sig)
