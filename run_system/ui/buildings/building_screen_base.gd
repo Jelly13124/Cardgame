@@ -48,19 +48,25 @@ func _build() -> void:
 	# a dark readability shade, then a large centered framed panel.
 	_add_scene_background()
 
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(center)
+	# Near-fullscreen framed board: fill the viewport (minus a small frame margin) so
+	# big grids — a 40-slot stash, the market shelf — have real room instead of being
+	# crammed into a small centered card.
+	var outer := MarginContainer.new()
+	outer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		outer.add_theme_constant_override(side, 40)
+	add_child(outer)
 
 	# The big framed board. Accent tints the border so each building reads distinct.
 	var board := PanelContainer.new()
-	board.custom_minimum_size = Vector2(1120, 740)
+	board.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	board.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var border := accent
 	border.a = 1.0
 	board.add_theme_stylebox_override(
 		"panel", T.panel_with_shadow(Color(0.055, 0.045, 0.038, 0.96), border, 6, 3)
 	)
-	center.add_child(board)
+	outer.add_child(board)
 
 	var margin := MarginContainer.new()
 	for side in ["margin_left", "margin_right"]:
