@@ -136,6 +136,7 @@ const ALLOWED_RELIC_EFFECT_TYPES = [
 	"crit_mult",
 	"auto_crit",
 	"bonus_allowance",
+	"tool_slots",
 ]
 
 # ─── Enemy schema ─────────────────────────────────────────────────────────────

@@ -1,0 +1,10 @@
+{
+  "id": "tool_belt",
+  "title": "Tool Belt",
+  "description": "+1 tool slot.",
+  "icon": "res://run_system/assets/images/relics/tool_belt.png",
+  "rarity": "uncommon",
+  "effects": [
+    { "trigger": "passive", "type": "tool_slots", "amount": 1 }
+  ]
+}

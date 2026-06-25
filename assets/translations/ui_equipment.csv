@@ -52,3 +52,8 @@ UI_AFFIX_CURSE_ATTR_STRENGTH,{value} Strength (Curse),{value} 力量（诅咒）
 UI_AFFIX_CURSE_ATTR_CONSTITUTION,{value} Constitution (Curse),{value} 体质（诅咒）
 UI_AFFIX_CURSE_MAX_HP,{value} Max HP (Curse),{value} 生命上限（诅咒）
 UI_AFFIX_CURSE_CRIT,{value}% Crit (Curse),{value}% 暴击（诅咒）
+UI_EQUIP_TOOLS_TITLE,Tool Slots,工具槽
+UI_EQUIP_TOOL_EQUIP_HINT,Click to equip,点击装备到工具槽
+UI_EQUIP_TOOL_UNEQUIP_HINT,Click to unequip,点击卸下回背包
+UI_EQUIP_TOOL_SLOTS_FULL,Tool slots are full — unequip one first.,工具槽已满 —— 先卸下一个。
+UI_EQUIP_TOOL_SLOT_EMPTY,Empty tool slot — click a bag tool to equip it.,空工具槽 —— 点背包里的工具来装备。

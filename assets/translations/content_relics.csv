@@ -116,3 +116,6 @@ RELIC_double_fire_clip_burst_DESC,"Your attack cards gain Replay 1. You may play
 
 RELIC_intimidator_plate_TITLE,Intimidator Plate,威慑甲板
 RELIC_intimidator_plate_DESC,"Whenever you play an attack card, apply 1 Weak to the target.","每当你打出一张攻击牌，对目标施加 1 层虚弱。"
+
+RELIC_tool_belt_TITLE,Tool Belt,工具腰带
+RELIC_tool_belt_DESC,+1 tool slot — carry one more tool into battle.,+1 工具槽 —— 多带一件工具上战场。
