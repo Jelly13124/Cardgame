@@ -1,6 +1,12 @@
 # Asset Spec — Core UI Theme Frame Kit (bespoke 9-slice)
 
-**Owner:** Codex (ADR-0005). **Status:** Requested.
+**Owner:** Codex (ADR-0005). **Status:** ❌ REJECTED on review 2026-06-25. The panel+button
+sample (`docs/art/previews/ui_frame_kit_20260625/`) was wired into the theme and rendered
+in-context (black market): the corner-bolt salvage frames read **busier and worse than the
+plain Kenney-tinted placeholder** — the chrome started competing with the card/item art on a
+content-dense screen with many small buttons/tiles/40 slots. **Decision: keep the existing
+clean tinted-Kenney chrome.** Do NOT batch A–D. Lesson kept here so we don't re-pitch ornate
+UI frames: on this UI the win is layout/spacing/hierarchy, not fancier frames.
 **Replaces:** the placeholder **Kenney UI Pack** 9-slice textures that
 `run_system/ui/theme/wasteland_theme.gd` currently loads + tints
 (`run_system/assets/images/ui/kenney/{panel,panel_recessed,button_normal,button_hover,button_pressed}.png`).
