@@ -31,9 +31,12 @@ that permits commercial game use (credit as required), or your own. Note the sou
 
 | Track | Source | License |
 |---|---|---|
-| `menu.ogg` — *Wild West - Desert Wind* by **Monume** | [Pixabay](https://pixabay.com/) (id 519223) | Pixabay Content License — free for commercial use, **no attribution required** |
 | `battle` / `boss` / `map` / `home` / `shop` / `event` .ogg | Procedural synth — `scripts/gen_audio.py` (project-owned) | Original to this project; regenerate with `python scripts/gen_audio.py` |
 
+> The title screen is **intentionally silent** — the old licensed `menu.ogg`
+> (*Wild West - Desert Wind*) was removed on 2026-06-25; `main_menu.gd` calls
+> `AudioManager.stop_music()`. To give the menu music again, drop a `menu.ogg` here and
+> restore `play_music("menu")` in `main_menu._ready()`.
+>
 > The procedural tracks are ~50–60s with a seamless crossfade loop point (`seamless()`),
-> in the wasteland-western synth palette. `menu.ogg` is the only licensed third-party
-> track and is **never** overwritten by `gen_audio.py`.
+> in the wasteland-western synth palette. All shipped music is now project-owned.
