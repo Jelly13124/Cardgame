@@ -21,7 +21,9 @@ var _modal_layer: CanvasLayer = null
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	AudioManager.play_music("menu")
+	# Title screen is intentionally silent (menu BGM removed). stop_music() also kills
+	# any track that carried over when returning to the menu from another scene.
+	AudioManager.stop_music()
 	_build()
 	T.fade_in(self, 0.35)  # smooth title-screen intro instead of a hard cut on boot
 

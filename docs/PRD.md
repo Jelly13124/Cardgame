@@ -477,7 +477,7 @@ Spec: `docs/superpowers/specs/2026-06-25-base-shop-forge-tools-overhaul.md`.
 
 ### ✅ Phase 9 — Demo Polish (shipped 2026-06-24)
 Spec: `docs/superpowers/specs/2026-06-24-demo-polish-overnight-design.md`. Driven by a 4-dimension demo review.
-- ✅ **Audio overhaul**: real licensed menu track (*Wild West - Desert Wind*, Pixabay); procedural BGM regenerated ~50–60s with seamless loop points + new `shop`/`event` slots; all SFX replaced with **Kenney CC0** samples. Licensing in `assets/audio/{music,sfx}/README.md`.
+- ✅ **Audio overhaul**: procedural BGM regenerated ~50–60s with seamless loop points + new `shop`/`event` slots; all SFX replaced with **Kenney CC0** samples. Licensing in `assets/audio/{music,sfx}/README.md`. _(The licensed menu track was later removed — the title screen is now silent; see `main_menu._ready()`.)_
 - ✅ **Economy**: 99-gold start + per-kill gold drops (toughness-scaled, elites ×2) + shop price retune — the merchant is usable across a 2-act run.
 - ✅ **Wishlist CTA**: real `OS.shell_open` button on BOTH win and defeat result screens + a "full game has more" teaser (`STORE_URL` is a TODO placeholder pending the real App ID).
 - ✅ **Onboarding**: rules panel now teaches Tools / Relics / Equipment / Crit / Base and fully defines Luck & Charm; also reachable from the home base.
