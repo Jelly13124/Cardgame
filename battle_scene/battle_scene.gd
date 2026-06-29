@@ -475,6 +475,8 @@ func _on_turn_started(side: String) -> void:
 ## upstream in `_on_end_round_button_pressed` so the animation fully completes
 ## before turn_manager switches sides.
 func _on_turn_ended(side: String) -> void:
+	if is_game_over:
+		return  # a curse (e.g. Rust) can kill the player mid-end-turn — don't tick a corpse
 	if side == "player":
 		player.end_turn()
 		_update_ui_labels()
@@ -662,6 +664,8 @@ func _on_end_round_button_pressed():
 		# Curse penalties: apply each in-hand curse's end_turn_in_hand effects to the
 		# player before the hand discards (StS-style "punished for not clearing it").
 		for c in hand.get_cards():
+			if is_game_over:
+				break  # a curse killed the player — stop applying further penalties
 			if not is_instance_valid(c):
 				continue
 			for eff in c.card_info.get("end_turn_in_hand", []):
