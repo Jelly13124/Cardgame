@@ -229,6 +229,7 @@ const ALLOWED_EVENT_EFFECT_TYPES = [
 	"gain_relic",
 	"gain_equipment",
 	"gain_attribute",
+	"add_curse",
 ]
 
 

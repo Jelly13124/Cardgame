@@ -67,3 +67,9 @@ EVENT_COLLAPSED_OVERPASS_OPT1_RESULT,"Your easy patter wins over the scav crew. 
 EVENT_COLLAPSED_OVERPASS_OPT2_TEXT,[Luck] Crawl under the groaning slab for the deep cache,[幸运] 钻到呻吟的桥板下，去掏最深处的补给
 EVENT_COLLAPSED_OVERPASS_OPT2_RESULT_OK,The slab holds. You drag out a sealed crate of refined core and a fat purse before scrambling clear.,桥板撑住了。你拖出一箱密封的精炼核心和一只鼓囊囊的钱袋，赶在塌落前爬了出来。
 EVENT_COLLAPSED_OVERPASS_OPT2_RESULT_FAIL,"The wind shifts. Concrete shears loose and pins your leg — you wrench free bleeding, the cache buried for good.",风向变了。混凝土崩落，压住了你的腿——你流着血挣脱出来，补给就此永远埋在了下面。
+EVENT_CURSED_SAFE_TITLE,Humming Strongbox,嗡鸣保险箱
+EVENT_CURSED_SAFE_DESC,"A dented strongbox hums on a cracked altar, leaking sickly green light through its seams. Coins glint inside — but the air tastes of rot and bad luck.",一只凹陷的保险箱在龟裂的祭台上嗡嗡作响，缝隙里渗出病态的绿光。里面有金币闪烁——可空气里弥漫着腐烂与霉运的味道。
+EVENT_CURSED_SAFE_OPT0_TEXT,Crack it open and pocket the coins,撬开它，把金币塞进兜里
+EVENT_CURSED_SAFE_OPT0_RESULT,"Coins spill into your hands — and a film of orange rust creeps up your arm. A curse settles into your pack.",金币落进你手心——一层橙色的锈迹顺着手臂爬上来。一张诅咒钻进了你的行囊。
+EVENT_CURSED_SAFE_OPT1_TEXT,Leave it. Nothing glows green for free.,走开。会发绿光的东西没一样是白送的。
+EVENT_CURSED_SAFE_OPT1_RESULT,"You back away. The box hums on, waiting for someone greedier.",你退开了。箱子继续嗡鸣，等着更贪心的人。

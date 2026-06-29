@@ -1,0 +1,20 @@
+{
+  "id": "cursed_safe",
+  "title": "Humming Strongbox",
+  "description": "A dented strongbox hums on a cracked altar, leaking sickly green light through its seams. Coins glint inside — but the air tastes of rot and bad luck.",
+  "options": [
+    {
+      "text": "Crack it open and pocket the coins",
+      "effects": [
+        { "type": "gain_gold", "amount": 40 },
+        { "type": "add_curse", "curse": "rust" }
+      ],
+      "result": "Coins spill into your hands — and a film of orange rust creeps up your arm. A curse settles into your pack."
+    },
+    {
+      "text": "Leave it. Nothing glows green for free.",
+      "effects": [],
+      "result": "You back away. The box hums on, waiting for someone greedier."
+    }
+  ]
+}
