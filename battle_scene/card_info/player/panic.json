@@ -1,0 +1,15 @@
+{
+	"name": "panic",
+	"title": "Panic",
+	"rarity": "curse",
+	"type": "curse",
+	"cost": 0,
+	"description": "Unplayable. At the end of your turn while in hand, gain 1 Frail.",
+	"front_image": "player/curse_placeholder.png",
+	"side": "player",
+	"unplayable": true,
+	"effects": [],
+	"end_turn_in_hand": [
+		{ "type": "apply_status_self", "status": "frail", "stacks": 1 }
+	]
+}

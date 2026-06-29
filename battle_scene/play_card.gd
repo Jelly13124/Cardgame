@@ -33,6 +33,7 @@ const RARITY_COLORS: Dictionary = {
 	"common": Color(0.95, 0.96, 0.98),  # white
 	"uncommon": Color(0.31, 0.69, 1.0),  # blue
 	"rare": Color(1.0, 0.81, 0.27),  # gold
+	"curse": Color(0.62, 0.36, 0.78),  # dark purple — curse cards
 }
 
 # Reference to the single gem socket node (created in _ready)
@@ -223,6 +224,9 @@ func set_card_data(data: Dictionary) -> void:
 	elif c_type == "ability":
 		type_label.text = tr("UI_BATTLE_CARD_TYPE_ABILITY")
 		type_label.modulate = Color(0.8, 0.4, 1.0)
+	elif c_type == "curse":
+		type_label.text = tr("UI_BATTLE_CARD_TYPE_CURSE")
+		type_label.modulate = Color(0.7, 0.45, 0.85)
 	else:
 		type_label.text = c_type.to_upper()
 
@@ -416,7 +420,6 @@ func _build_description(data: Dictionary) -> String:
 
 			"double_target_bleed":
 				lines.append(tr("UI_BATTLE_DESC_DOUBLE_BLEED"))
-
 
 			"gain_block_from_bleed":
 				lines.append(tr("UI_BATTLE_DESC_BLOCK_FROM_BLEED"))

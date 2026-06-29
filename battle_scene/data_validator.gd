@@ -30,11 +30,11 @@ const ALLOWED_TOOL_TARGETS = ["enemy", "self", "none"]
 
 # ─── Card schema ──────────────────────────────────────────────────────────────
 const REQUIRED_CARD_KEYS = ["name", "title", "type", "cost", "effects"]
-const ALLOWED_CARD_TYPES = ["attack", "skill", "ability"]
+const ALLOWED_CARD_TYPES = ["attack", "skill", "ability", "curse"]
 # "unique" = hero-starting relics (e.g. crit_clip). Drop/shop pools bucket by
 # common/uncommon/rare and must never surface a unique relic (see
 # get_unowned_relic_ids / shop_scene._list_unowned_relics, which exclude it).
-const ALLOWED_RARITIES = ["common", "uncommon", "rare", "unique"]
+const ALLOWED_RARITIES = ["common", "uncommon", "rare", "unique", "curse"]
 const ALLOWED_EFFECT_TYPES = [
 	"deal_damage",
 	"deal_damage_all",
@@ -66,6 +66,8 @@ const ALLOWED_EFFECT_TYPES = [
 	"restore_attack_allowance",
 	"gain_block_from_bleed",
 	"add_card_to_hand",
+	"lose_gold",
+	"add_curse_to_deck",
 ]
 const ALLOWED_STATUS_NAMES = [
 	"bleed",
@@ -102,6 +104,8 @@ const KNOWN_OPTIONAL_CARD_KEYS = [
 	"retain",
 	"polarity",
 	"matched_bonus",
+	"unplayable",
+	"end_turn_in_hand",
 ]
 # Yin/Yang polarity values a card may declare (absent = treated as "neutral")
 const ALLOWED_CARD_POLARITIES = ["yin", "yang", "neutral"]
@@ -341,6 +345,22 @@ static func validate_card(data: Dictionary, source_path: String) -> bool:
 	for i in range(effects.size()):
 		if not _validate_card_effect(effects[i], prefix, "effect", i):
 			ok = false
+
+	# Curse cards must be unplayable; their optional end-of-turn-in-hand penalties
+	# reuse the same effect validator as normal card effects.
+	if str(data.get("type", "")) == "curse" and not bool(data.get("unplayable", false)):
+		push_error('%s: curse cards must set "unplayable": true' % prefix)
+		ok = false
+	if data.has("end_turn_in_hand"):
+		if typeof(data["end_turn_in_hand"]) != TYPE_ARRAY:
+			push_error("%s: end_turn_in_hand must be an Array" % prefix)
+			ok = false
+		else:
+			for i in range(data["end_turn_in_hand"].size()):
+				if not _validate_card_effect(
+					data["end_turn_in_hand"][i], prefix, "end_turn_in_hand", i
+				):
+					ok = false
 
 	# Optional `polarity` (Yin/Yang hero). Absent = neutral; validate only if present.
 	if data.has("polarity") and not str(data["polarity"]) in ALLOWED_CARD_POLARITIES:
