@@ -569,6 +569,19 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				)
 			await get_tree().create_timer(0.15).timeout
 
+		"lose_gold":
+			# Curse gold-drain (Leaking Wealth). spend_gold clamps at 0 (no-op if broke).
+			RunManager.spend_gold(amount)
+			main.show_notification(
+				tr("UI_COMBAT_LOSE_GOLD").format({"n": amount}), Color(0.85, 0.7, 0.3)
+			)
+
+		"add_curse_to_deck":
+			# Permanent curse onto the run deck (for future double-edged cards).
+			var curse_id: String = str(effect.get("card", effect.get("curse", "radiation_dust")))
+			for _i in range(maxi(1, amount)):
+				RunManager.add_card_to_deck(curse_id)
+
 		"double_strength":
 			# Limit Break — double current Strength (attribute payoff).
 			if player:
