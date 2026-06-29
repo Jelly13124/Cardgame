@@ -87,6 +87,7 @@ UI_COMBAT_ENEMY_CHARGING,{name} CHARGING...,{name} 蓄力中……
 UI_COMBAT_ENEMY_SUMMONS,{name} SUMMONS REINFORCEMENTS!,{name} 召唤了援军！
 UI_COMBAT_ENEMY_BUFFS_SELF,{name} EMPOWERS ITSELF (+{status})!,{name} 强化了自身（+{status}）！
 UI_COMBAT_LOSE_HP,Lose {n} HP,失去 {n} 生命
+UI_COMBAT_LOSE_GOLD,Lose {n} Gold,失去 {n} 金币
 UI_COMBAT_DOUBLE_STRENGTH,STRENGTH DOUBLED!,力量翻倍！
 UI_COMBAT_STATUS_METALLICIZE,Plating,镀装
 UI_COMBAT_STATUS_METALLICIZE_DESC,At the start of your turn gain Block equal to stacks. Persistent.,每回合开始获得等同层数的格挡。持续。

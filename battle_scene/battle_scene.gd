@@ -659,6 +659,14 @@ func _on_end_round_button_pressed():
 		# animation inside the signal handler doesn't block that switch, so the
 		# next player draw would race against the in-flight discard and see an
 		# empty discard pile (breaking reshuffle when deck < draw count).
+		# Curse penalties: apply each in-hand curse's end_turn_in_hand effects to the
+		# player before the hand discards (StS-style "punished for not clearing it").
+		for c in hand.get_cards():
+			if not is_instance_valid(c):
+				continue
+			for eff in c.card_info.get("end_turn_in_hand", []):
+				if typeof(eff) == TYPE_DICTIONARY:
+					await combat_engine._apply_effect(eff, player, player)
 		var remaining = hand.get_cards().duplicate()
 		var to_discard: Array = []
 		for c in remaining:
@@ -949,6 +957,15 @@ func play_spell(card: Control, target_node: Node):
 	card.set_meta("_in_play", true)
 
 	var type = card.card_info.get("type", "skill").to_lower()
+
+	# Curses (and any card flagged unplayable) can't be played — return it to hand with
+	# a notification (mirrors the out-of-ammo path).
+	if type == "curse" or bool(card.card_info.get("unplayable", false)):
+		AudioManager.play_sfx("error")
+		show_notification(tr("UI_BATTLE_CURSE_UNPLAYABLE"), Color(0.72, 0.5, 0.85))
+		hand.add_card(card)
+		card.remove_meta("_in_play")
+		return
 
 	if type == "attack":
 		if not target_node or not is_instance_valid(target_node):
