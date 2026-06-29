@@ -686,7 +686,7 @@ func _make_currency_chip(parent: Control, _icon_id: String, accent: Color) -> La
 	panel.add_child(margin)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 9)
+	row.add_theme_constant_override("separation", 5)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	margin.add_child(row)
 
@@ -699,24 +699,30 @@ func _make_currency_chip(parent: Control, _icon_id: String, accent: Color) -> La
 		cname = "瓶盖" if zh else "Caps"
 	elif _icon_id == "scrap":
 		cname = "废料" if zh else "Scrap"
+	# Hierarchy: the NAME is a small muted accent label, the NUMBER dominates (bigger,
+	# brighter). Keeps the frameless look (owner request) but reads less like a flat
+	# placeholder. The accent-tinted name doubles as the per-currency color cue until
+	# the Codex icons land.
 	var tag := Label.new()
 	tag.text = cname
-	tag.add_theme_font_size_override("font_size", 22)
-	tag.add_theme_color_override("font_color", accent)
-	tag.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.95))
-	tag.add_theme_constant_override("outline_size", 6)
+	tag.add_theme_font_size_override("font_size", 15)
+	tag.add_theme_color_override("font_color", accent.lerp(Color(0.86, 0.82, 0.72), 0.35))
+	tag.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
+	tag.add_theme_constant_override("outline_size", 4)
 	tag.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(tag)
 
 	var label := Label.new()
 	label.text = "0"
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 28)
-	label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.70))
+	label.add_theme_font_size_override("font_size", 31)
+	label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.78))
 	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.95))
 	label.add_theme_constant_override("outline_size", 6)
+	label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.5))
+	label.add_theme_constant_override("shadow_offset_y", 2)
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(label)
 	return label
