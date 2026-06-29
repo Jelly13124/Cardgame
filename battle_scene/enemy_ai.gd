@@ -318,6 +318,22 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 			buff_tween.tween_property(enemy, "modulate", Color.WHITE, 0.2)
 			await buff_tween.finished
 
+		"add_curse":
+			# Shuffle a curse into the player's DRAW pile — combat-scoped (gone next fight).
+			# JSON: {"type":"add_curse","curse":"radiation_dust","amount":1,"label":"✦ 诅咒"}
+			var curse_id: String = str(action.get("curse", "radiation_dust"))
+			var curse_n: int = int(action.get("amount", 1))
+			for _i in range(maxi(1, curse_n)):
+				main.deck_manager.add_card_to_draw(curse_id)
+			main.show_notification(
+				tr("UI_BATTLE_ENEMY_CURSE").format({"name": enemy.enemy_name}),
+				Color(0.72, 0.5, 0.85)
+			)
+			var hex_tween = create_tween()
+			hex_tween.tween_property(enemy, "modulate", Color(0.85, 0.6, 1.2), 0.15)
+			hex_tween.tween_property(enemy, "modulate", Color.WHITE, 0.15)
+			await hex_tween.finished
+
 		_:
 			push_error(
 				(

@@ -154,6 +154,7 @@ const ALLOWED_ENEMY_ACTION_TYPES = [
 	"telegraph",
 	"summon",
 	"buff_self",
+	"add_curse",
 ]
 # Action types that require a `status` field
 const STATUS_BEARING_ACTIONS = ["attack_status"]

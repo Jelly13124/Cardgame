@@ -20,6 +20,7 @@ UI_BATTLE_CARD_TYPE_SKILL,SKILL,技能
 UI_BATTLE_CARD_TYPE_ABILITY,ABILITY,能力
 UI_BATTLE_CARD_TYPE_CURSE,CURSE,诅咒
 UI_BATTLE_CURSE_UNPLAYABLE,Curse cards can't be played,诅咒牌无法打出
+UI_BATTLE_ENEMY_CURSE,{name} curses your draw pile!,{name} 往你的抽牌堆塞了诅咒！
 UI_BATTLE_DESC_DEAL,Deal {val} dmg,造成 {val} 伤害
 UI_BATTLE_DESC_DEAL_SCALING,Deal {val} ([i]{base}+[color=#8b0000]{stat}[/color][/i]) dmg,造成 {val} ([i]{base}+[color=#8b0000]{stat}[/color][/i]) 伤害
 UI_BATTLE_DESC_DEAL_ALL,Deal {val} dmg to all enemies,对所有敌人造成 {val} 伤害

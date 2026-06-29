@@ -229,6 +229,7 @@ const ENCOUNTER_POOLS_EARLY = [
 	["trash_robot"],
 	["scrap_rat", "scrap_rat"],
 	["wasteland_killer"],
+	["hex_drone"],
 ]
 const ENCOUNTER_POOLS_MID = [
 	["riot_hound"],
