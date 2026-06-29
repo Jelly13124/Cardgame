@@ -475,6 +475,18 @@ Spec: `docs/superpowers/specs/2026-06-25-base-shop-forge-tools-overhaul.md`.
   character panel (`equipment_panel`: 工具槽 row + click-to-equip). New relic **Tool Belt**
   (`tool_belt`, +1 tool slot — `tool_slots` passive relic effect).
 
+### ✅ Phase 10 — Curse cards (shipped 2026-06-25)
+Spec: `docs/superpowers/specs/2026-06-25-curse-cards-design.md`; plan: `…/plans/2026-06-25-curse-cards.md`.
+- ✅ New **`curse`** card type (+ rarity): **unplayable** (returns to hand on play) with an
+  optional `end_turn_in_hand` penalty. 5 curses: 辐射尘 (pure), 漏财 (−5 gold), 铁锈 (−2 HP),
+  怯懦 (Weak), 恐慌 (Frail). Purple frame + 诅咒 label; placeholder art (Codex TODO). Excluded
+  from every normal card pool.
+- ✅ **3 sources** (source = permanence): **enemy** `add_curse` action → shuffles a curse into
+  the combat **draw pile** (temporary); **event** `add_curse` → permanent run-deck curse
+  (clearable at the shop's 75g removal); **card** `add_card_to_hand` (temp) / `add_curse_to_deck`
+  (perm). New effects `lose_gold` + `add_curse_to_deck`. New enemy **`hex_drone` 咒术机蛭** +
+  the **`cursed_safe` 嗡鸣保险箱** event. All MCP-verified.
+
 ### ✅ Phase 9 — Demo Polish (shipped 2026-06-24)
 Spec: `docs/superpowers/specs/2026-06-24-demo-polish-overnight-design.md`. Driven by a 4-dimension demo review.
 - ✅ **Audio overhaul**: procedural BGM regenerated ~50–60s with seamless loop points + new `shop`/`event` slots; all SFX replaced with **Kenney CC0** samples. Licensing in `assets/audio/{music,sfx}/README.md`. _(The licensed menu track was later removed — the title screen is now silent; see `main_menu._ready()`.)_

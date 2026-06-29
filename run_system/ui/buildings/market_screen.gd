@@ -317,6 +317,8 @@ func _list_lockable_cards() -> Array:
 		if blocked.has(card_id):
 			continue
 		var data := _load_json(CARD_DIR + file_name)
+		if str(data.get("type", "")) == "curse":
+			continue  # curses are never offered as unlockable cards
 		(
 			result
 			. append(
