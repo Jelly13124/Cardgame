@@ -42,6 +42,17 @@ func add_card_to_hand(card_id: String) -> void:
 			battle_scene._update_ui_labels()
 
 
+## Shuffle a card (e.g. an enemy-inflicted curse) into the DRAW pile — combat-scoped
+## (the draw pile is rebuilt from the run deck each fight, so it's gone next combat).
+func add_card_to_draw(card_id: String) -> void:
+	if card_factory and deck:
+		card_factory.create_card(card_id, deck)
+		if deck.has_method("shuffle"):
+			deck.shuffle()
+		if battle_scene:
+			battle_scene._update_ui_labels()
+
+
 func draw_cards(count: int) -> void:
 	if count <= 0:
 		return
