@@ -1459,6 +1459,9 @@ func apply_event_effects(effects: Array) -> void:
 					add_equip_to_backpack(make_equip_instance(item_id, rarity))
 			"gain_attribute":
 				grant_attribute(str(effect.get("attr", "")), int(effect.get("amount", 0)))
+			"add_curse":
+				# Permanent curse onto the run deck (clearable at the shop's card removal).
+				add_card_to_deck(str(effect.get("curse", "radiation_dust")))
 
 
 ## Equip item_id into slot. If slot is occupied, the previous occupant moves
