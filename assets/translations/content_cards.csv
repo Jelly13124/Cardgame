@@ -135,3 +135,13 @@ TOOL_toxin_vial_TITLE,Toxin Vial,毒瓶
 TOOL_toxin_vial_DESC,"Apply 4 Bleed to an enemy.",对一个敌人施加 4 层流血。
 TOOL_shock_charge_TITLE,Shock Charge,电荷
 TOOL_shock_charge_DESC,"Apply 2 Vulnerable and 1 Weak to an enemy.",对一个敌人施加 2 层易伤和 1 层虚弱。
+CARD_radiation_dust_TITLE,Radiation Dust,辐射尘
+CARD_radiation_dust_DESC,Unplayable.,无法打出。
+CARD_leaking_wealth_TITLE,Leaking Wealth,漏财
+CARD_leaking_wealth_DESC,"Unplayable. At the end of your turn while in hand, lose 5 Gold.",无法打出。回合结束时若在手牌中，失去 5 金币。
+CARD_rust_TITLE,Rust,铁锈
+CARD_rust_DESC,"Unplayable. At the end of your turn while in hand, lose 2 HP.",无法打出。回合结束时若在手牌中，失去 2 点生命。
+CARD_cowardice_TITLE,Cowardice,怯懦
+CARD_cowardice_DESC,"Unplayable. At the end of your turn while in hand, gain 1 Weak.",无法打出。回合结束时若在手牌中，获得 1 层虚弱。
+CARD_panic_TITLE,Panic,恐慌
+CARD_panic_DESC,"Unplayable. At the end of your turn while in hand, gain 1 Frail.",无法打出。回合结束时若在手牌中，获得 1 层脆弱。

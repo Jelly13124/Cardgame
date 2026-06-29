@@ -1,0 +1,15 @@
+{
+	"name": "leaking_wealth",
+	"title": "Leaking Wealth",
+	"rarity": "curse",
+	"type": "curse",
+	"cost": 0,
+	"description": "Unplayable. At the end of your turn while in hand, lose 5 Gold.",
+	"front_image": "player/curse_placeholder.png",
+	"side": "player",
+	"unplayable": true,
+	"effects": [],
+	"end_turn_in_hand": [
+		{ "type": "lose_gold", "amount": 5 }
+	]
+}
