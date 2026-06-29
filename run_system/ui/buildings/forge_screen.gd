@@ -19,7 +19,7 @@ const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
 const EQUIPMENT_ICON := preload("res://run_system/ui/equipment_icon.gd")
 const BACKPACK_CELL := preload("res://run_system/ui/backpack_cell.gd")
 const CELL_SIZE := Vector2(74, 74)
-const STASH_COLUMNS := 4
+const STASH_COLUMNS := 6
 
 ## Scrap cost to craft a fresh item, by target rarity (spec: 40/80/140).
 const CRAFT_COST := {"common": 40, "uncommon": 80, "rare": 140}
@@ -112,7 +112,7 @@ func _rebuild_body() -> void:
 func _build_stash_column() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 10)
-	col.custom_minimum_size = Vector2(360, 0)
+	col.custom_minimum_size = Vector2(520, 0)
 
 	var title := Label.new()
 	title.text = tr("UI_FORGE_STASH_TITLE").format({"n": MetaProgress.stash.size()})
