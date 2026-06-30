@@ -94,10 +94,6 @@ func _build_ui() -> void:
 	add_child(_status_badges)
 
 
-func get_status_badge_container() -> HBoxContainer:
-	return _status_badges
-
-
 ## Call this whenever stats change to refresh all visuals.
 func update_stats(hp: int, max_hp: int, blk: int) -> void:
 	current_health = hp
