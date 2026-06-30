@@ -763,17 +763,26 @@ func _build_remove_service_row() -> HBoxContainer:
 
 func _on_buy_card(card_id: String, price: int, btn: Button) -> void:
 	if RunManager.purchase_card(card_id, price):
+		AudioManager.play_sfx("gold")
 		_mark_sold(btn)
+	else:
+		AudioManager.play_sfx("error")
 
 
 func _on_buy_tool(tool_id: String, price: int, btn: Button) -> void:
 	if RunManager.purchase_tool(tool_id, price):
+		AudioManager.play_sfx("gold")
 		_mark_sold(btn)
+	else:
+		AudioManager.play_sfx("error")
 
 
 func _on_buy_relic(relic_id: String, price: int, btn: Button) -> void:
 	if RunManager.purchase_relic(relic_id, price):
+		AudioManager.play_sfx("gold")
 		_mark_sold(btn)
+	else:
+		AudioManager.play_sfx("error")
 
 
 func _mark_sold(btn: Button) -> void:

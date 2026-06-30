@@ -401,6 +401,7 @@ func _dismantle_selected() -> void:
 	if _selected_index < 0 or _selected_index >= MetaProgress.stash.size():
 		return
 	if MetaProgress.dismantle_stash_item(_selected_index):
+		AudioManager.play_sfx("reload")  # mechanical "take-apart" clack
 		_selected_index = -1
 	_rebuild_body()
 
@@ -411,7 +412,8 @@ func _dismantle_selected() -> void:
 func _reforge_selected() -> void:
 	if _selected_index < 0 or _selected_affix_index < 0:
 		return
-	MetaProgress.reforge_stash_item_locked(_selected_index, _selected_affix_index)
+	if MetaProgress.reforge_stash_item_locked(_selected_index, _selected_affix_index):
+		AudioManager.play_sfx("gem")  # affix re-roll shimmer
 	_rebuild_body()
 
 
@@ -520,6 +522,7 @@ func _on_craft_pressed() -> void:
 	if inst.is_empty():
 		return
 	MetaProgress.add_to_stash(inst)
+	AudioManager.play_sfx("reward")  # a fresh piece of gear minted
 	# add_to_stash saves but emits no signal; spend_scrap already emitted
 	# scrap_changed → _rebuild_body picks the new item up. Rebuild explicitly too
 	# in case scrap was unchanged for any reason.
@@ -533,6 +536,7 @@ func _on_craft_pressed() -> void:
 func _curse_item(index: int) -> void:
 	if not MetaProgress.curse_stash_item(index):
 		return
+	AudioManager.play_sfx("bleed")  # ominous curse sting
 	_rebuild_body()
 
 
