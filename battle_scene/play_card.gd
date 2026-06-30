@@ -551,33 +551,33 @@ func _on_mouse_exited() -> void:
 ## (falling back to StatusEffectSystem.STATUS_DESCRIPTIONS). Empty if none apply.
 func _build_keyword_glossary() -> String:
 	var effects: Array = card_info.get("effects", [])
-	if effects.is_empty():
-		return ""
 	var seen: Dictionary = {}
 	var lines: PackedStringArray = []
 
-	# Global attributes first (Strength on attacks, Constitution on block).
-	var uses_str := false
-	var uses_con := false
+	# --- Global attributes the card scales with or grants — one line per attribute. ---
+	var attrs: Dictionary = {}
 	for effect in effects:
-		var etype := str(effect.get("type", ""))
-		if etype in ["deal_damage", "deal_damage_all", "deal_damage_str_mult"]:
-			uses_str = true
-		elif etype == "gain_block":
-			uses_con = true
-	if uses_str:
-		lines.append(
-			"[b]%s[/b]: %s" % [tr("UI_COMBAT_ATTR_STRENGTH"), tr("UI_BATTLE_KEYWORD_STRENGTH_DESC")]
-		)
-	if uses_con:
-		lines.append(
-			(
-				"[b]%s[/b]: %s"
-				% [tr("UI_COMBAT_ATTR_CONSTITUTION"), tr("UI_BATTLE_KEYWORD_CONSTITUTION_DESC")]
-			)
-		)
+		match str(effect.get("type", "")):
+			"deal_damage", "deal_damage_all", "deal_damage_str_mult", "gain_strength":
+				attrs["STRENGTH"] = true
+			"gain_block", "gain_constitution":
+				attrs["CONSTITUTION"] = true
+			"gain_intelligence":
+				attrs["INTELLIGENCE"] = true
+			"gain_luck":
+				attrs["LUCK"] = true
+			"gain_charm":
+				attrs["CHARM"] = true
+			"apply_bleed_scaled":
+				attrs[str(effect.get("attr", "intelligence")).to_upper()] = true
+	for attr_key in ["STRENGTH", "CONSTITUTION", "INTELLIGENCE", "LUCK", "CHARM"]:
+		if not attrs.has(attr_key):
+			continue
+		var d := tr("UI_BATTLE_KEYWORD_%s_DESC" % attr_key)
+		if d != "UI_BATTLE_KEYWORD_%s_DESC" % attr_key:
+			lines.append("[b]%s[/b]: %s" % [tr("UI_COMBAT_ATTR_%s" % attr_key), d])
 
-	# Then any statuses the card applies.
+	# --- Statuses applied via apply_status / _self / _all (carry a `status` field). ---
 	for effect in effects:
 		var status := str(effect.get("status", ""))
 		if status == "" or seen.has(status):
@@ -592,6 +592,22 @@ func _build_keyword_glossary() -> String:
 			desc = str(STATUS_SYS.STATUS_DESCRIPTIONS.get(status, ""))
 		if desc != "":
 			lines.append("[b]%s[/b]: %s" % [kw_name, desc])
+
+	# --- Stun: its own effect type (apply_stun / _all), with no `status` field. ---
+	for effect in effects:
+		var et := str(effect.get("type", ""))
+		if (et == "apply_stun" or et == "apply_stun_all") and not seen.has("stun"):
+			seen["stun"] = true
+			var sd := tr("UI_COMBAT_STATUS_STUN_DESC")
+			if sd != "UI_COMBAT_STATUS_STUN_DESC":
+				lines.append("[b]%s[/b]: %s" % [tr("UI_COMBAT_STATUS_STUN"), sd])
+			break
+
+	# --- Replay: the card's own replay count (an attack auto-repeats). ---
+	if int(card_info.get("replay", 0)) > 0:
+		var rd := tr("UI_BATTLE_KEYWORD_REPLAY_DESC")
+		if rd != "UI_BATTLE_KEYWORD_REPLAY_DESC":
+			lines.append("[b]%s[/b]: %s" % [tr("UI_BATTLE_KEYWORD_REPLAY_NAME"), rd])
 
 	# Card keywords (Exhaust / Retain) — explain them when the card has them.
 	if bool(card_info.get("retain", false)):
