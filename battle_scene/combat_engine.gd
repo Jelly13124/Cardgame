@@ -288,7 +288,7 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 						)
 					var outgoing = calculate_attack_damage(amount, player, target)
 					target.take_damage(outgoing)
-					AudioManager.play_sfx("attack_hit")
+					AudioManager.play_sfx("enemy_hurt")
 					_register_player_attack()
 					main.show_notification(
 						tr("UI_COMBAT_DEALT_DAMAGE").format({"n": outgoing}), Color(1.0, 0.4, 0.3)
