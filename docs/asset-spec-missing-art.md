@@ -5,7 +5,7 @@
 状态图标、属性图标、工具图标、宝石图标、建筑、背景)**不在此列**。
 
 **Owner:** 按 ADR-0005 本应由 Codex 出图;本清单也可交给外部美术。回来后由 Claude 接线。
-**Status:** Requested（2026-06-29）。
+**Status:** Delivered（2026-06-29）。
 
 > 工程接线细节(代码侧,美术可忽略)集中在最后一节,并指向各自的详细 spec
 > (`asset-spec-ui-icons.md` / `asset-spec-currency-icons.md` / `asset-spec-card-back.md`)。
@@ -36,6 +36,14 @@ no text, no labels, no UI frame, no logo, transparent background
 ```
 
 > 用法:**最终 prompt = 上面这段锚点 + 下面每一项的 `subject:` 一行。**
+
+---
+
+## Delivery log（2026-06-29）
+
+- 已生成并接线 5 张诅咒卡插画：`radiation_dust` / `leaking_wealth` / `rust` / `cowardice` / `panic`。
+- 已生成并接线 5 个装备槽位图标、`tool_belt` 遗物图标、3 个基地货币图标、透明圆角卡背。
+- 预览与 raw 来源保存在 `docs/art/previews/missing_art_20260629/`。
 
 ---
 

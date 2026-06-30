@@ -1,0 +1,26 @@
+{
+  "cards": [
+    "battle_scene/assets/images/cards/player/radiation_dust.png",
+    "battle_scene/assets/images/cards/player/leaking_wealth.png",
+    "battle_scene/assets/images/cards/player/rust.png",
+    "battle_scene/assets/images/cards/player/cowardice.png",
+    "battle_scene/assets/images/cards/player/panic.png"
+  ],
+  "slots": [
+    "battle_scene/assets/images/ui/slots/head.png",
+    "battle_scene/assets/images/ui/slots/chest.png",
+    "battle_scene/assets/images/ui/slots/weapon.png",
+    "battle_scene/assets/images/ui/slots/hands.png",
+    "battle_scene/assets/images/ui/slots/accessory.png"
+  ],
+  "currency": [
+    "run_system/assets/images/home/currency/core.png",
+    "run_system/assets/images/home/currency/caps.png",
+    "run_system/assets/images/home/currency/scrap.png"
+  ],
+  "relics": [
+    "run_system/assets/images/relics/tool_belt.png"
+  ],
+  "card_back": "battle_scene/assets/images/cards/ui/card_back.png",
+  "raw_sources_copied_to": "docs/art/previews/missing_art_20260629"
+}
