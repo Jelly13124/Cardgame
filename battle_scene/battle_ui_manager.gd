@@ -156,31 +156,6 @@ func show_notification(text: String, color: Color = Color.WHITE) -> void:
 # --- Inspection UI ---
 
 
-func inspect_card(card: Control) -> void:
-	if main.is_game_over:
-		return
-	if inspect_layer and inspect_pivot:
-		inspect_layer.visible = true
-
-		# Clear existing if any
-		if inspected_card:
-			inspected_card.queue_free()
-
-		var card_name = card.card_info.get("name", "")
-		if card_name.is_empty():
-			return
-		inspected_card = main.card_factory.create_card(card_name, null)
-		if inspected_card:
-			if inspected_card.get_parent():
-				inspected_card.get_parent().remove_child(inspected_card)
-			inspected_card.reparent(inspect_pivot)
-			inspected_card.show_front = true
-			inspected_card.scale = Vector2(2.5, 2.5)
-			inspected_card.can_be_interacted_with = false
-			inspected_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			inspected_card.global_position = Vector2(760, 265)
-
-
 func _on_inspect_overlay_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		close_inspection()

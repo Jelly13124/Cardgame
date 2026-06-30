@@ -1,17 +1,11 @@
 extends Control
-## Host for the battle scene's top bar. Mounts the shared run_top_bar component
-## and owns the in-battle settings overlay (pause menu).
+## Host for the battle scene's top bar. Mounts the shared run_top_bar component;
+## the ⚙ gear opens the unified pause panel (settings / how-to / abandon / quit).
 
-const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
-const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
 const PAUSE_PANEL = preload("res://run_system/ui/pause_panel.gd")
 const RUN_TOP_BAR = preload("res://run_system/ui/run_top_bar.gd")
-# Lazy-loaded at call site to avoid map→battle→map cyclic preload.
-const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 
 var main: Node
-var settings_layer: CanvasLayer
-var return_map_button: Button
 
 
 func _ready() -> void:
@@ -39,88 +33,6 @@ func _setup() -> void:
 	add_child(bar)
 
 
-# ESC is now handled by battle_scene (it opens the unified pause panel), so both ESC and
-# the ⚙ gear reach the same panel. This top bar no longer runs its own ESC menu.
-
-
-func _build_settings_menu() -> void:
-	settings_layer = CanvasLayer.new()
-	settings_layer.name = "SettingsLayer"
-	settings_layer.layer = 130
-	settings_layer.visible = false
-	settings_layer.process_mode = Node.PROCESS_MODE_ALWAYS
-	add_child(settings_layer)
-
-	var root = Control.new()
-	root.name = "SettingsRoot"
-	root.mouse_filter = Control.MOUSE_FILTER_STOP
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	settings_layer.add_child(root)
-
-	var overlay = ColorRect.new()
-	overlay.name = "Overlay"
-	overlay.color = Color(0.0, 0.0, 0.0, 0.58)
-	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.add_child(overlay)
-
-	var center = CenterContainer.new()
-	center.name = "Center"
-	center.mouse_filter = Control.MOUSE_FILTER_PASS
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.add_child(center)
-
-	var panel = PanelContainer.new()
-	panel.name = "Panel"
-	panel.custom_minimum_size = Vector2(420, 420)
-	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
-	center.add_child(panel)
-
-	var box = VBoxContainer.new()
-	box.name = "Content"
-	box.add_theme_constant_override("separation", 12)
-	panel.add_child(box)
-
-	var title = Label.new()
-	title.text = TranslationServer.translate("SETTINGS_TITLE")
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 28)
-	title.add_theme_color_override("font_color", Color(1.0, 0.86, 0.48))
-	box.add_child(title)
-
-	# Language / Fullscreen / Volume. Language change reloads the battle scene.
-	SETTINGS_PANEL.add_controls(box, func() -> void: get_tree().reload_current_scene(), true)
-	SETTINGS_PANEL.add_key_controls(box)
-
-	var sep = HSeparator.new()
-	box.add_child(sep)
-
-	var resume = _make_menu_button(TranslationServer.translate("SETTINGS_RESUME"))
-	resume.pressed.connect(_hide_settings)
-	box.add_child(resume)
-
-	return_map_button = _make_menu_button(TranslationServer.translate("SETTINGS_RETURN_MAP"))
-	return_map_button.pressed.connect(_on_return_map_pressed)
-	box.add_child(return_map_button)
-
-	var exit_button = _make_menu_button(TranslationServer.translate("SETTINGS_EXIT"))
-	exit_button.disabled = true
-	box.add_child(exit_button)
-
-
-func _make_menu_button(text: String) -> Button:
-	var button := Button.new()
-	button.text = text
-	button.custom_minimum_size = Vector2(300, 44)
-	button.focus_mode = Control.FOCUS_NONE
-	button.add_theme_font_size_override("font_size", 20)
-	button.add_theme_color_override("font_color", T.TEXT_MAIN)
-	button.add_theme_stylebox_override("normal", T.button_textured("normal"))
-	button.add_theme_stylebox_override("hover", T.button_textured("hover"))
-	button.add_theme_stylebox_override("pressed", T.button_textured("pressed"))
-	return button
-
-
 func _on_deck_pressed() -> void:
 	if main and main.ui_manager:
 		main.ui_manager.show_run_deck_viewer()
@@ -130,30 +42,3 @@ func _show_settings() -> void:
 	# Open the unified pause panel (settings / how-to / abandon / quit) on the battle
 	# scene — the same panel ESC, the map gear, and the base gear all use.
 	PAUSE_PANEL.open(main, RunManager.is_run_active)
-
-
-func _hide_settings() -> void:
-	if settings_layer:
-		settings_layer.visible = false
-	get_tree().paused = false
-
-
-func _on_return_map_pressed() -> void:
-	var rm = RunManager
-	if not (rm and rm.get("is_run_active")):
-		return
-	_hide_settings()
-	# Peek the map WITHOUT leaving the fight: map_scene as a modal overlay. peek_mode
-	# disables travel / checkpoint-save / music swap; a "back to battle" button closes
-	# it, returning to the untouched BattleScene. (Was change_scene_to_file → that tore
-	# the battle down and skipped the fight.)
-	var battle = get_tree().current_scene
-	if battle == null or battle.has_node("MapPeekLayer"):
-		return
-	var layer := CanvasLayer.new()
-	layer.name = "MapPeekLayer"
-	layer.layer = 90
-	var map = load(MAP_SCENE_PATH).instantiate()
-	map.peek_mode = true
-	layer.add_child(map)
-	battle.add_child(layer)
