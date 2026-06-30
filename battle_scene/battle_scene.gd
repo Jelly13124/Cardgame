@@ -916,7 +916,7 @@ func open_discover(pool: String, count: int, free: bool) -> String:
 	if ids.is_empty():
 		show_notification(tr("UI_DISCOVER_EMPTY"), Color(0.85, 0.6, 0.4))
 		return ""
-	var modal = DISCOVER_MODAL.instantiate()
+	var modal = DISCOVER_MODAL.new()
 	modal.setup(ids, _discover_title(pool))
 	add_child(modal)
 	var picked: String = await modal.discovered
