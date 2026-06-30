@@ -42,7 +42,7 @@ layout_mode = 0
 offset_left = 16.8
 offset_top = 46.8
 offset_right = 191.2
-offset_bottom = 173.9
+offset_bottom = 142.8
 color = Color(0.941176, 0.776471, 0.435294, 1)
 
 [node name="ArtContainer" type="Control" parent="FrontFace"]
@@ -51,7 +51,7 @@ layout_mode = 0
 offset_left = 16.8
 offset_top = 46.8
 offset_right = 191.2
-offset_bottom = 173.9
+offset_bottom = 142.8
 
 [node name="ArtTexture" type="TextureRect" parent="FrontFace/ArtContainer"]
 layout_mode = 1
@@ -68,7 +68,7 @@ layout_mode = 0
 offset_left = 10.0
 offset_top = 40.0
 offset_right = 198.0
-offset_bottom = 181.0
+offset_bottom = 150.0
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 0
@@ -91,7 +91,7 @@ vertical_alignment = 1
 [node name="DescriptionBox" type="TextureRect" parent="FrontFace"]
 layout_mode = 0
 offset_left = 20.1
-offset_top = 180.7
+offset_top = 152.0
 offset_right = 187.9
 offset_bottom = 251
 expand_mode = 1
@@ -102,7 +102,7 @@ layout_mode = 0
 offset_left = 6.5
 offset_top = 8
 offset_right = 161.3
-offset_bottom = 62.5
+offset_bottom = 91.0
 theme_override_colors/default_color = Color(0.15, 0.12, 0.1, 1)
 theme_override_constants/line_separation = 0
 theme_override_font_sizes/normal_font_size = 13
