@@ -18,18 +18,23 @@ func setup(card_ids: Array, title: String) -> void:
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	# Top-left anchors (equal opposite) + explicit size fills the viewport without the
+	# "size overridden by anchors" warning (mirrors event_modal's _fit_to_viewport).
+	set_anchors_preset(Control.PRESET_TOP_LEFT)
 	mouse_filter = Control.MOUSE_FILTER_STOP  # eat all input → battle is paused
+	var vp := get_viewport().get_visible_rect().size
+	position = Vector2.ZERO
+	size = vp
 
 	# Frosted scrim: dim the battle but let it show through (NOT an opaque reward frame).
 	var scrim := ColorRect.new()
 	scrim.color = Color(0.0, 0.0, 0.0, 0.72)
-	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	scrim.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(scrim)
 
 	var vbox := VBoxContainer.new()
-	vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	vbox.add_theme_constant_override("separation", 28)
 	add_child(vbox)
