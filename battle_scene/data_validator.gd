@@ -68,6 +68,7 @@ const ALLOWED_EFFECT_TYPES = [
 	"add_card_to_hand",
 	"lose_gold",
 	"add_curse_to_deck",
+	"discover",
 ]
 const ALLOWED_STATUS_NAMES = [
 	"bleed",
@@ -106,6 +107,7 @@ const KNOWN_OPTIONAL_CARD_KEYS = [
 	"matched_bonus",
 	"unplayable",
 	"end_turn_in_hand",
+	"tags",
 ]
 # Yin/Yang polarity values a card may declare (absent = treated as "neutral")
 const ALLOWED_CARD_POLARITIES = ["yin", "yang", "neutral"]
@@ -412,6 +414,14 @@ static func _validate_card_effect(effect: Variant, prefix: String, label: String
 			"%s: %s[%d] type '%s' not in %s" % [prefix, label, i, etype, ALLOWED_EFFECT_TYPES]
 		)
 		ok = false
+	# Discover: needs a non-empty `pool`; `count` (if present) must be a positive int.
+	if etype == "discover":
+		if str(effect.get("pool", "")).strip_edges() == "":
+			push_error("%s: %s[%d] discover is missing a non-empty 'pool'" % [prefix, label, i])
+			ok = false
+		if effect.has("count") and int(effect.get("count", 0)) <= 0:
+			push_error("%s: %s[%d] discover 'count' must be a positive int" % [prefix, label, i])
+			ok = false
 	# Effects that reference a status name must carry a valid status
 	if etype in STATUS_BEARING_EFFECTS:
 		if not effect.has("status"):
