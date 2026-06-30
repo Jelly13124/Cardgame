@@ -12,6 +12,8 @@ const RARITY_BG_COLORS := {
 	"common": Color(0.28, 0.28, 0.31, 1.0),  # neutral graphite
 	"uncommon": Color(0.16, 0.27, 0.42, 1.0),  # dark steel blue
 	"rare": Color(0.40, 0.31, 0.12, 1.0),  # dark gold-brown
+	"set": Color(0.16, 0.34, 0.20, 1.0),  # dark green — set pieces
+	"cursed": Color(0.38, 0.14, 0.15, 1.0),  # dark red — cursed gear
 }
 const SLOT_LETTERS := {
 	"head": "H",
@@ -29,9 +31,11 @@ const SLOT_ICON_PATHS := {
 }
 ## Rarity border colors — white / blue / gold (matches the card frames).
 const RARITY_COLORS := {
-	"common": Color(0.95, 0.96, 0.98),
-	"uncommon": Color(0.31, 0.69, 1.0),
-	"rare": Color(1.0, 0.81, 0.27),
+	"common": Color(0.95, 0.96, 0.98),  # white
+	"uncommon": Color(0.31, 0.69, 1.0),  # blue
+	"rare": Color(1.0, 0.81, 0.27),  # gold
+	"set": Color(0.42, 0.85, 0.46),  # green — set pieces
+	"cursed": Color(0.86, 0.32, 0.34),  # red — cursed gear
 }
 
 var _label: Label

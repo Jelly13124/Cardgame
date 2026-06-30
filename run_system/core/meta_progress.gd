@@ -839,11 +839,11 @@ func curse_stash_item(index: int) -> bool:
 		return false
 	if bool(inst.get("cursed", false)):
 		return false
-	var rarity: String = str(inst.get("rarity", "common"))
 	if not spend_scrap(CURSE_SCRAP_COST):  # saves + emits scrap_changed
 		return false
-	inst["affixes"] = AFFIX_POOL.roll(rarity, true)
+	inst["affixes"] = AFFIX_POOL.roll("cursed")
 	inst["cursed"] = true
+	inst["rarity"] = "cursed"  # red cursed tier — 3 positives + 1 curse
 	stash[index] = inst
 	save_progress()
 	emit_signal("upgrades_changed")

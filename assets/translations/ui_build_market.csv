@@ -12,7 +12,9 @@ UI_MARKET_STASH_FULL,Stash Full,仓库已满
 UI_MARKET_EQUIP_EMPTY,No equipment in stock.,暂无装备库存。
 UI_MARKET_UNLOCK_EMPTY,All available cards are already unlocked.,所有可解锁卡牌均已解锁。
 UI_MARKET_RARITY_COMMON,Common,普通
-UI_MARKET_RARITY_UNCOMMON,Uncommon,精良
-UI_MARKET_RARITY_RARE,Rare,稀有
+UI_MARKET_RARITY_UNCOMMON,Uncommon,稀有
+UI_MARKET_RARITY_RARE,Rare,罕见
+UI_MARKET_RARITY_SET,Set,套装
+UI_MARKET_RARITY_CURSED,Cursed,诅咒
 UI_MARKET_LOCKED_HINT,"Upgrade the Market to tier {t} to unlock this.","将黑市升级至 T{t} 以解锁此功能。"
 UI_MARKET_CARD_SHOP_NOTE,"Purchased cards join your next run's deck.","已购买的卡牌将加入你下一局的卡组。"

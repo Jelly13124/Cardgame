@@ -891,7 +891,7 @@ func _build_equipment_tooltip(data: Dictionary, slot: String, instance: Dictiona
 	var name_str := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", "?")))
 	# Prefer the instance's rolled rarity; fall back to the base JSON rarity.
 	var rarity := str(instance.get("rarity", data.get("rarity", "common")))
-	var rarity_str := Settings.t("EQUIP_RARITY_%s" % rarity, rarity)
+	var rarity_str := Settings.t("UI_FORGE_RARITY_%s" % rarity.to_upper(), rarity)
 	var desc := Settings.t("EQUIP_%s_DESC" % item_id, str(data.get("description", "")))
 	# Prefer the instance's set_id (rolled), fall back to the base JSON.
 	var set_id := str(instance.get("set_id", data.get("set_id", "")))
