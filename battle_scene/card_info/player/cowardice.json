@@ -5,7 +5,7 @@
 	"type": "curse",
 	"cost": 0,
 	"description": "Unplayable. At the end of your turn while in hand, gain 1 Weak.",
-	"front_image": "player/curse_placeholder.png",
+	"front_image": "player/cowardice.png",
 	"side": "player",
 	"unplayable": true,
 	"effects": [],

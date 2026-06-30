@@ -5,7 +5,7 @@
 	"type": "curse",
 	"cost": 0,
 	"description": "Unplayable.",
-	"front_image": "player/curse_placeholder.png",
+	"front_image": "player/radiation_dust.png",
 	"side": "player",
 	"unplayable": true,
 	"effects": []

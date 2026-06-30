@@ -19,6 +19,13 @@ const SLOT_LETTERS := {
 	"hands": "Hd",
 	"accessory": "Ac",
 }
+const SLOT_ICON_PATHS := {
+	"head": "res://battle_scene/assets/images/ui/slots/head.png",
+	"chest": "res://battle_scene/assets/images/ui/slots/chest.png",
+	"weapon": "res://battle_scene/assets/images/ui/slots/weapon.png",
+	"hands": "res://battle_scene/assets/images/ui/slots/hands.png",
+	"accessory": "res://battle_scene/assets/images/ui/slots/accessory.png",
+}
 ## Rarity border colors — white / blue / gold (matches the card frames).
 const RARITY_COLORS := {
 	"common": Color(0.95, 0.96, 0.98),
@@ -113,9 +120,11 @@ func set_equipment(
 			var tex = load(full_path) as Texture2D
 			if tex:
 				_texture_rect.texture = tex
+				_texture_rect.modulate = Color.WHITE
 				_texture_rect.visible = true
 				_label.visible = false
 				return
+	_try_show_slot_icon(slot, Color(1, 1, 1, 0.75))
 
 
 ## Slot-colored fill with a rarity-colored border, single-sourcing the equipment
@@ -141,6 +150,20 @@ func set_empty(slot: String) -> void:
 	_label.modulate = Color(1, 1, 1, 0.4)
 	_label.visible = true
 	_texture_rect.visible = false
+	_try_show_slot_icon(slot, Color(1, 1, 1, 0.62))
+
+
+func _try_show_slot_icon(slot: String, modulate_color: Color) -> void:
+	var icon_path := str(SLOT_ICON_PATHS.get(slot, ""))
+	if icon_path == "" or not ResourceLoader.exists(icon_path):
+		return
+	var tex = load(icon_path) as Texture2D
+	if tex == null:
+		return
+	_texture_rect.texture = tex
+	_texture_rect.modulate = modulate_color
+	_texture_rect.visible = true
+	_label.visible = false
 
 
 func _apply_slot_placeholder_style(slot: String, alpha: float) -> void:
