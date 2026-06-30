@@ -25,5 +25,20 @@
 - `79b3bee`(发现工具)领先 main 1,**待用户定**推不推。
 
 ### 现状速查
-- 事件:9 个。工具:11 个(8 原有 + 3 发现工具)。
+- 事件:**12 个**(9 + 3 诅咒注入事件)。工具:11 个(8 原有 + 3 发现工具)。
 - 验证方式:`GODOT_BIN="C:/Program Files/Godot/Godot.exe" bash scripts/smoke_test.sh` + godot MCP。
+
+## Session 2026-06-30(下半) — 项目审计 + 诅咒进游戏 + 文档同步
+
+用户:"审计 dead code + 过时 doc" → "成品图放进对话看 / 诅咒卡进游戏(事件特定) / 执行1、2 / dead doc"。
+
+### 完成(均在 overnight-0615,未推)
+- **Dead code**(70444e7):3 个只读 agent 并行审计(dead GDScript / 孤立 data+asset / 过时 doc)→ 我交叉核对。删孤立 `upgrade_panel.gd` + 14 处零调用函数(reforge 旧 API ×2、unlock_facility、battle_top_bar **整块死 settings overlay**、home_base/map 旧 _open_settings、is_drawing/inspect_card/get_status_badge_container/_refresh_badges_legacy/_build_legacy/_add_building_plaque_OLD)。`--import` 编译干净 + smoke 过。
+- **Dead doc**:删 2 份真死(132728d)+ 归档 5 份(34a23da → docs/archive/)。
+- **诅咒卡进游戏**(d022714):3 张到不了的诅咒各配一个"贪婪陷阱"事件 —— torn_coin_pouch(+100金+漏财)/ deserter_charm(回满血+怯懦)/ adrenaline_shot(+1力量+恐慌),选"拿"→ `add_curse` 永久进卡组(商店可移除)。事件扫目录自动进池 + 18 行 en/zh 翻译。`end_turn_in_hand` handler 已存在(battle_scene:666)。
+- **文档同步**(2062fd7):PRD 装备整章重写(5档+rolled affix+set+cursed+forge)、Card Types 加 curse、effect 清单补全到 33、Phase 11 discover、删掉已删符号引用、shop 卖工具、slot 存档路径。
+
+### 教训
+- **agent 标的 high-confidence dead 单项仍要自己验证边界**:battle_top_bar `_build_settings_menu` 被标零调用没错,但它带一窝连锁死代码(`_show_settings` 已改走 PAUSE_PANEL,旧 settings_layer/_hide_settings/_on_return_map_pressed/_make_menu_button 全触达不到)——读全文件才发现是整块死,不是单函数。
+- **装备 base `bonuses` 是 back-compat 兼容字段**:新掉落 `make_equip_instance` 随机 roll affixes **不读 bonuses**;只有旧存档裸字符串装备才从 bonuses 派生 affixes(`as_equip_instance`)。
+- **事件本地化**:JSON 写英文 fallback,`Settings.t("EVENT_<ID>_TITLE/_DESC/_OPT<i>_TEXT/_OPT<i>_RESULT", fallback)`,翻译在 `ui_events.csv`(`keys,en,zh`),改完 `--import` 生成 .translation。
