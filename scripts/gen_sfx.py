@@ -158,6 +158,21 @@ def forge_curse():
     return mix(dyad, rumble)
 
 
+def player_hurt():
+    """Player takes a hit — low pained thud: descending tone + noise body."""
+    t = _t(0.18)
+    tone = expdecay(np.sin(2 * np.pi * np.linspace(280, 150, len(t)) * t), 0.06) * 0.7
+    body = expdecay(noise(0.18), 0.03) * 0.3
+    return tone + body
+
+
+def enemy_hurt():
+    """Enemy takes a hit — short percussive smack: mid noise burst + click."""
+    body = expdecay(noise(0.12), 0.025) * 0.6
+    click = expdecay(square(330, 0.12), 0.03) * 0.4
+    return body + click
+
+
 CUES = {
     "purchase": purchase,
     "upgrade": upgrade,
@@ -165,6 +180,8 @@ CUES = {
     "forge_dismantle": forge_dismantle,
     "forge_reforge": forge_reforge,
     "forge_curse": forge_curse,
+    "player_hurt": player_hurt,
+    "enemy_hurt": enemy_hurt,
 }
 
 

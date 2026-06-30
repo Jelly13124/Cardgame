@@ -12,7 +12,7 @@ const DEFAULT_LANGUAGE := "en"
 var language: String = DEFAULT_LANGUAGE
 var fullscreen: bool = false
 var master_volume: float = 1.0
-var music_volume: float = 0.7
+var music_volume: float = 0.45
 var sfx_volume: float = 0.9
 ## Battle speed multiplier applied to Engine.time_scale during combat (1.0 / 1.5 / 2.0).
 var game_speed: float = 1.0
@@ -70,7 +70,7 @@ func load_settings() -> void:
 	language = str(data.get("language", DEFAULT_LANGUAGE))
 	fullscreen = bool(data.get("fullscreen", false))
 	master_volume = float(data.get("master_volume", 1.0))
-	music_volume = float(data.get("music_volume", 0.7))
+	music_volume = float(data.get("music_volume", 0.45))
 	sfx_volume = float(data.get("sfx_volume", 0.9))
 	game_speed = clampf(float(data.get("game_speed", 1.0)), 1.0, 2.0)
 	active_slot = int(data.get("active_slot", 0))

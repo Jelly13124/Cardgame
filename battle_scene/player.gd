@@ -351,6 +351,8 @@ func take_damage(amount: int, silent: bool = false) -> void:
 	# by Block does NOT flash). Mirrors the enemy's _hit_flash for consistent feedback.
 	if dmg_after_block > 0:
 		_hit_flash()
+		if not silent:
+			AudioManager.play_sfx("player_hurt")
 
 	# Floating damage number + shake. silent=true skips both — DoT ticks
 	# (bleed/burn) already produce a "BLEED N" / "BURN N" notification
