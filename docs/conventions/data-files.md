@@ -30,12 +30,14 @@ The game's content lives in JSON: cards, enemies, relics, and encounter pools. T
 {
   "name": "card_id",          // matches filename
   "title": "Display Name",
-  "type": "attack|skill|ability",
+  "type": "attack|skill|ability|curse",
   "cost": 1,
   "effects": [ ... ]
 }
 ```
-Optional: `description`, `front_image`, `side`, `rarity` (`common|uncommon|rare`), `retain` (bool).
+Optional: `description`, `front_image`, `side`, `rarity` (`common|uncommon|rare|unique|curse`), `retain` (bool).
+
+**Curse cards** (`type: "curse"`, `rarity: "curse"`) are unplayable penalty cards. They MUST set `"unplayable": true`, and may carry `"end_turn_in_hand": [<effect>, …]` — effects applied **to the player** at the end of every turn the card sits in hand (the penalty; each entry reuses the card effect vocabulary). Excluded from every normal card pool; injected by enemies (temporary — shuffled into the combat draw pile) and by events (permanent — into the run deck, clearable at the shop's card-removal service).
 
 ### Enemies
 ```json
@@ -68,11 +70,13 @@ Optional `phases` (array) — HP-threshold phase transitions. Each phase has `hp
 
 Authoritative list in `DataValidator.ALLOWED_EFFECT_TYPES`. As of this writing:
 
-- Damage: `deal_damage`, `deal_damage_all`, `deal_damage_str_mult` (damage = `mult` × Strength; needs `mult`), `scale_damage_by_attacks`
-- Defense: `gain_block`
-- Resources: `gain_energy`, `draw_cards`
-- Attributes: `gain_strength`, `gain_constitution`, `gain_intelligence`, `gain_luck`, `gain_charm`
-- Status: `apply_status`, `apply_status_self`, `apply_status_all`, `apply_stun`, `apply_stun_all`
+- Damage: `deal_damage`, `deal_damage_all`, `deal_damage_str_mult` (damage = `mult` × Strength; needs `mult`), `scale_damage_by_attacks`, `deal_damage_block_mult`
+- Defense: `gain_block`, `gain_block_from_bleed`
+- Resources: `gain_energy`, `draw_cards`, `gain_gold`, `lose_gold`, `heal`, `lose_hp`
+- Attributes: `gain_strength`, `gain_constitution`, `gain_intelligence`, `gain_luck`, `gain_charm`, `double_strength`
+- Status: `apply_status`, `apply_status_self`, `apply_status_all`, `apply_bleed_scaled`, `apply_stun`, `apply_stun_all`, `double_target_bleed`
+- Cards / curses: `add_card_to_hand`, `add_curse_to_deck`, `discover` (3-choose-1 into the hand; `pool` = a card type or a theme tag like `bleed`, `count`, optional `free` = costs 0 this combat)
+- Bill / ammo: `gain_attack_allowance`, `restore_attack_allowance`, `flip_polarity`
 - Marker: `exhaust_self`
 
 **Global attributes:** STR is auto-added to all attack damage and CON to all block (`combat_engine._apply_effect()`, default +3 each). The per-card `scaling` field is **deprecated** — combat_engine no longer reads it. Card JSON carries the BASE number only. (`deal_damage_str_mult` and `scale_damage_by_attacks` compute their own damage and do NOT receive the global +STR.)
