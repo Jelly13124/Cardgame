@@ -44,6 +44,8 @@ const RELIC_EFFECT_SYSTEM = preload("res://battle_scene/relic_effect_system.gd")
 const EQUIPMENT_SET_SYSTEM = preload("res://battle_scene/equipment_set_system.gd")
 const CARD_ANIMATOR_SCRIPT = preload("res://battle_scene/card_animator.gd")
 const DECK_MANAGER_SCRIPT = preload("res://battle_scene/deck_manager.gd")
+const DISCOVER_MODAL = preload("res://battle_scene/discover_modal.gd")
+const DISCOVER_POOL = preload("res://run_system/core/discover_pool.gd")
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 # NOTE: map_scene + home_base_scene are loaded lazily at the call site
 # (not preloaded) because doing so would create a cyclic dep
@@ -881,20 +883,57 @@ func modify_enemy_attack_damage(amount: int, attacker: Node, defender: Node) -> 
 # ─── Energy ───────────────────────────────────────────────────────────────────
 
 
+## Effective energy cost of a card right now — a discover `cost_override` (this combat)
+## wins over the card's base cost.
+func card_cost(card) -> int:
+	if card and is_instance_valid(card) and card.has_meta("cost_override"):
+		return int(card.get_meta("cost_override"))
+	return int(card.card_info.get("cost", 0)) if card else 0
+
+
 func can_afford(cards: Array) -> bool:
 	if is_game_over or not player:
 		return false
 	var total_cost = 0
 	for card in cards:
-		total_cost += int(card.card_info.get("cost", 0))
+		total_cost += card_cost(card)
 	return player.energy >= total_cost
 
 
 func spend_energy(cards: Array) -> void:
 	var total_cost = 0
 	for card in cards:
-		total_cost += int(card.card_info.get("cost", 0))
+		total_cost += card_cost(card)
 	player.pay_energy(total_cost)
+
+
+## Hearthstone-style Discover: pop a 3-choose-1 for `pool`; await the pick; the chosen card
+## is created straight into the current hand (this combat only). `free` makes it cost 0 this
+## combat (cost_override meta). Returns the chosen id, or "" if nothing matched.
+func open_discover(pool: String, count: int, free: bool) -> String:
+	var unlocked: Array = MetaProgress.get_unlocked_card_pool()
+	var ids: Array = DISCOVER_POOL.roll(pool, count, unlocked)
+	if ids.is_empty():
+		show_notification(tr("UI_DISCOVER_EMPTY"), Color(0.85, 0.6, 0.4))
+		return ""
+	var modal = DISCOVER_MODAL.instantiate()
+	modal.setup(ids, _discover_title(pool))
+	add_child(modal)
+	var picked: String = await modal.discovered
+	var card = deck_manager.add_card_to_hand(picked)
+	if free and card and is_instance_valid(card):
+		card.set_meta("cost_override", 0)
+		if card.has_method("update_display"):
+			card.update_display()
+	AudioManager.play_sfx("card_draw")
+	return picked
+
+
+## Localized Discover title for a pool (e.g. "Discover · Skill"); falls back to bare "Discover".
+func _discover_title(pool: String) -> String:
+	var key := "UI_DISCOVER_TITLE_%s" % pool.to_upper()
+	var localized := tr(key)
+	return localized if localized != key else tr("UI_DISCOVER_TITLE")
 
 
 # ─── Attack allowance (double-fire clip) ──────────────────────────────────────
