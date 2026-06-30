@@ -343,6 +343,15 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				for _i in range(max(1, amount)):
 					main.deck_manager.add_card_to_hand(cid)
 
+		"discover":
+			# Hearthstone-style: pop a 3-choose-1; the picked card enters the current hand.
+			if main and main.has_method("open_discover"):
+				await main.open_discover(
+					str(effect.get("pool", "skill")),
+					int(effect.get("count", 3)),
+					bool(effect.get("free", false))
+				)
+
 		"gain_energy":
 			player.pay_energy(-amount)
 			main.show_notification(

@@ -181,7 +181,11 @@ func set_card_data(data: Dictionary) -> void:
 	card_name = data.get("name", "Unknown")
 
 	# ── Cost: always integer ──────────────────────────────────────────────────
-	cost_label.text = str(int(data.get("cost", 0)))
+	# cost_override (this-combat discover) wins over the card's base cost.
+	var shown_cost: int = int(data.get("cost", 0))
+	if has_meta("cost_override"):
+		shown_cost = int(get_meta("cost_override"))
+	cost_label.text = str(shown_cost)
 	_style_cost_label()
 
 	# ── Name (CONTENT) ───────────────────────────────────────────────────────

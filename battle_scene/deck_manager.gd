@@ -35,11 +35,13 @@ func is_drawing() -> bool:
 
 ## Create a card directly into the hand (e.g. Load Up adds Reload cards). The
 ## card is built fresh by the factory — it is NOT pulled from the draw pile.
-func add_card_to_hand(card_id: String) -> void:
+func add_card_to_hand(card_id: String):
 	if card_factory and hand:
-		card_factory.create_card(card_id, hand)
+		var card = card_factory.create_card(card_id, hand)
 		if battle_scene:
 			battle_scene._update_ui_labels()
+		return card
+	return null
 
 
 ## Shuffle a card (e.g. an enemy-inflicted curse) into the DRAW pile — combat-scoped
