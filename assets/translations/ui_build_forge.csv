@@ -24,3 +24,6 @@ UI_FORGE_STASH_TITLE,Stash ({n}),仓库（{n}）
 UI_FORGE_BENCH_TITLE,Workbench,工作台
 UI_FORGE_BENCH_EMPTY,Drop a piece of gear here to work on it.,把一件装备放到这里来加工。
 UI_FORGE_REFORGE_ONE,Reforge ({n}),重铸（{n}）
+UI_FORGE_REFORGE_LOCKED_AT,Locked to this affix · reforged {n}×,已锁定此词条 · 已重铸 {n} 次
+UI_FORGE_REFORGE_PICK,Pick an affix above to reforge it.,点上方一条词条来重铸它。
+UI_FORGE_REFORGE_FIRST,First reforge locks this affix; cost climbs each time.,首次重铸会锁定此词条；之后每次更贵。

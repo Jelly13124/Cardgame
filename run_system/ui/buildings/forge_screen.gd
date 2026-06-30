@@ -48,6 +48,9 @@ var _craft_slot: String = "head"
 var _craft_rarity: String = "common"
 ## Index into MetaProgress.stash of the item currently on the workbench (-1 = none).
 var _selected_index: int = -1
+## Which affix ROW is picked for reforge (-1 = none). Forced to the locked affix index
+## in _build_workbench_column once the item has been reforged at least once.
+var _selected_affix_index: int = -1
 
 
 func _build_content(container: VBoxContainer) -> void:
@@ -243,11 +246,13 @@ func _build_workbench_column(can_dismantle: bool, can_reforge: bool, can_curse: 
 	_style_label(name_lbl, 19, Color(1, 0.92, 0.55), 1)
 	col.add_child(name_lbl)
 
-	# Affix list — each affix on its own row with a per-affix reforge button (T2).
-	var reforge_cost := int(
-		MetaProgress.REFORGE_COST.get(rarity, MetaProgress.REFORGE_COST["common"])
-	)
+	# Affix list — click a row to PICK it for reforge. After the first reforge the item
+	# LOCKS to that affix (reforge_index); only it stays pickable and the cost climbs.
+	var locked := int(sel_inst.get("reforge_index", -1))
+	var rcount := int(sel_inst.get("reforge_count", 0))
 	var affixes := RunManager.equip_affixes(sel_inst)
+	if locked >= 0:
+		_selected_affix_index = locked  # a locked item forces the pick to the locked row
 	if affixes.is_empty():
 		var none := Label.new()
 		none.text = "—"
@@ -255,7 +260,35 @@ func _build_workbench_column(can_dismantle: bool, can_reforge: bool, can_curse: 
 		col.add_child(none)
 	else:
 		for ai in range(affixes.size()):
-			col.add_child(_build_affix_row(affixes[ai], ai, reforge_cost, can_reforge))
+			col.add_child(_build_affix_row(affixes[ai], ai, locked, can_reforge))
+
+	# Single reforge button (acts on the picked row) + a status line. Cost escalates
+	# with reforge_count via MetaProgress.reforge_cost_for.
+	if can_reforge and not affixes.is_empty():
+		var rcost := MetaProgress.reforge_cost_for(sel_inst)
+		var pick_ok := (
+			_selected_affix_index >= 0
+			and _selected_affix_index < affixes.size()
+			and not AFFIX_POOL.is_curse(affixes[_selected_affix_index])
+		)
+		var rbtn := Button.new()
+		rbtn.text = tr("UI_FORGE_REFORGE").format({"n": rcost})
+		rbtn.custom_minimum_size = Vector2(200, 40)
+		T.apply_button_theme(rbtn)
+		rbtn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
+		rbtn.disabled = int(MetaProgress.scrap) < rcost or not pick_ok
+		rbtn.pressed.connect(_reforge_selected)
+		col.add_child(rbtn)
+		var status := Label.new()
+		if locked >= 0:
+			status.text = tr("UI_FORGE_REFORGE_LOCKED_AT").format({"n": rcount})
+		elif not pick_ok:
+			status.text = tr("UI_FORGE_REFORGE_PICK")
+		else:
+			status.text = tr("UI_FORGE_REFORGE_FIRST")
+		status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_style_label(status, 14, Color(0.74, 0.70, 0.58), 1)
+		col.add_child(status)
 
 	col.add_child(HSeparator.new())
 
@@ -291,34 +324,63 @@ func _build_workbench_column(can_dismantle: bool, can_reforge: bool, can_curse: 
 	return col
 
 
-## One affix line on the workbench: the affix text + (T2) a button that rerolls just
-## this affix. Curses are shown red and cannot be reforged.
+## One affix line on the workbench. Clicking it PICKS that affix for reforge (the single
+## reforge button above acts on the pick). Curses can't be picked. Once the item is
+## locked (locked_index >= 0) only the locked row stays enabled; the others dim.
 func _build_affix_row(
-	affix_v: Variant, affix_index: int, reforge_cost: int, can_reforge: bool
+	affix_v: Variant, affix_index: int, locked_index: int, can_reforge: bool
 ) -> Control:
 	var a := affix_v as Dictionary
 	var is_curse := AFFIX_POOL.is_curse(a)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
+	var picked := affix_index == _selected_affix_index
+	var pickable := (
+		can_reforge and not is_curse and (locked_index < 0 or locked_index == affix_index)
+	)
 
-	var lbl := Label.new()
-	lbl.text = AFFIX_POOL.describe(a)
-	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_style_label(lbl, 17, Color(1.0, 0.42, 0.42) if is_curse else Color(0.7, 0.92, 0.7), 1)
-	row.add_child(lbl)
-
-	if can_reforge and not is_curse:
-		var rb := Button.new()
-		rb.text = tr("UI_FORGE_REFORGE_ONE").format({"n": reforge_cost})
-		rb.custom_minimum_size = Vector2(150, 34)
-		rb.add_theme_font_size_override("font_size", 16)
-		T.apply_button_theme(rb)
-		rb.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
-		rb.disabled = int(MetaProgress.scrap) < reforge_cost
+	var btn := Button.new()
+	btn.text = AFFIX_POOL.describe(a)
+	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	btn.custom_minimum_size = Vector2(0, 36)
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_size_override("font_size", 17)
+	var fg := Color(1.0, 0.42, 0.42) if is_curse else Color(0.70, 0.92, 0.70)
+	if not pickable and not picked:
+		fg = fg.darkened(0.4)
+	btn.add_theme_color_override("font_color", fg)
+	btn.add_theme_color_override("font_hover_color", fg.lightened(0.15))
+	btn.add_theme_color_override("font_pressed_color", fg)
+	btn.add_theme_color_override("font_disabled_color", fg)
+	btn.add_theme_stylebox_override("normal", _affix_row_style(picked))
+	btn.add_theme_stylebox_override("hover", _affix_row_style(picked))
+	btn.add_theme_stylebox_override("pressed", _affix_row_style(true))
+	btn.add_theme_stylebox_override("disabled", _affix_row_style(picked))
+	if pickable:
+		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		var ai := affix_index
-		rb.pressed.connect(func() -> void: _reforge_affix(ai))
-		row.add_child(rb)
-	return row
+		btn.pressed.connect(
+			func() -> void:
+				_selected_affix_index = ai
+				AudioManager.play_sfx("ui_click")
+				_rebuild_body()
+		)
+	else:
+		btn.disabled = true
+	return btn
+
+
+## Stylebox for an affix row: gold-outlined when picked, faint otherwise.
+func _affix_row_style(picked: bool) -> StyleBoxFlat:
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.16, 0.14, 0.11, 0.9) if picked else Color(0.10, 0.10, 0.12, 0.55)
+	st.border_color = Color(1.0, 0.82, 0.35) if picked else Color(0.32, 0.30, 0.26, 0.8)
+	st.set_border_width_all(2 if picked else 1)
+	st.set_corner_radius_all(5)
+	st.content_margin_left = 10
+	st.content_margin_right = 10
+	st.content_margin_top = 5
+	st.content_margin_bottom = 5
+	return st
 
 
 # --- workbench actions ------------------------------------------------------
@@ -329,6 +391,7 @@ func _select_item(index: int) -> void:
 	if index < 0 or index >= MetaProgress.stash.size():
 		return
 	_selected_index = index
+	_selected_affix_index = -1  # reset the affix pick when a new item comes onto the bench
 	AudioManager.play_sfx("ui_click")
 	_rebuild_body()
 
@@ -342,12 +405,13 @@ func _dismantle_selected() -> void:
 	_rebuild_body()
 
 
-## Reforge just affix `affix_index` of the workbench item (keeps it selected so the
-## new roll shows immediately).
-func _reforge_affix(affix_index: int) -> void:
-	if _selected_index < 0:
+## Reforge the PICKED affix on the workbench item. The backend locks the item to that
+## affix on the first reforge and climbs the cost each time. Keeps the item selected so
+## the new roll shows immediately.
+func _reforge_selected() -> void:
+	if _selected_index < 0 or _selected_affix_index < 0:
 		return
-	MetaProgress.reforge_stash_item_affix(_selected_index, affix_index)
+	MetaProgress.reforge_stash_item_locked(_selected_index, _selected_affix_index)
 	_rebuild_body()
 
 

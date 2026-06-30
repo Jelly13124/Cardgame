@@ -780,6 +780,50 @@ func reforge_stash_item_affix(item_index: int, affix_index: int) -> bool:
 	return true
 
 
+## Scrap cost of the NEXT reforge on this instance: rarity base × (reforge_count + 1),
+## so the price climbs each time the SAME item is reforged (15→30→45… for common).
+func reforge_cost_for(inst: Dictionary) -> int:
+	var rarity: String = str(inst.get("rarity", "common"))
+	var base: int = int(REFORGE_COST.get(rarity, REFORGE_COST["common"]))
+	var count: int = int(inst.get("reforge_count", 0))
+	return base * (count + 1)
+
+
+## Forge reforge with a SINGLE-affix lock + escalating cost (the owner's rule):
+##   - First reforge on an item rerolls affix `affix_index` AND locks the item to it
+##     (stored as reforge_index).
+##   - Every later reforge MUST target that same locked index — a different index is
+##     refused. Cost escalates via reforge_cost_for (reforge_count grows each time).
+## Curses are never reforgeable. Returns false on a bad index, a curse target, a
+## mismatched index after lock, or insufficient scrap. reforge_index/reforge_count
+## persist on the instance dict (legacy string entries get upgraded to a dict here).
+func reforge_stash_item_locked(item_index: int, affix_index: int) -> bool:
+	if item_index < 0 or item_index >= stash.size():
+		return false
+	var inst: Dictionary = RunManager.as_equip_instance(stash[item_index])
+	if inst.is_empty():
+		return false
+	var affixes: Array = RunManager.equip_affixes(inst)
+	if affix_index < 0 or affix_index >= affixes.size():
+		return false
+	if AFFIX_POOL.is_curse(affixes[affix_index]):
+		return false  # curses can't be reforged
+	var locked: int = int(inst.get("reforge_index", -1))
+	if locked >= 0 and affix_index != locked:
+		return false  # already locked to a different affix
+	var cost: int = reforge_cost_for(inst)
+	if scrap < cost:
+		return false
+	spend_scrap(cost)  # saves + emits scrap_changed
+	inst["affixes"] = AFFIX_POOL.reroll_at(affixes, affix_index)
+	inst["reforge_index"] = affix_index
+	inst["reforge_count"] = int(inst.get("reforge_count", 0)) + 1
+	stash[item_index] = inst
+	save_progress()
+	emit_signal("upgrades_changed")
+	return true
+
+
 ## Curse stash item `index` (forge T3): spend 100 scrap to re-roll its affixes as
 ## a cursed set for its rarity and flag cursed=true. Stores the result back as a
 ## full instance dict (converts legacy strings). Returns false on bad index, an
