@@ -241,7 +241,7 @@ func _build_workbench_column(can_dismantle: bool, can_reforge: bool, can_curse: 
 	var data: Dictionary = RunManager.get_equipment_data(base_id)
 	var item_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
 	var name_lbl := Label.new()
-	name_lbl.text = "%s [%s]" % [item_name, rarity.capitalize()]
+	name_lbl.text = "%s [%s]" % [item_name, tr("UI_FORGE_RARITY_%s" % rarity.to_upper())]
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_style_label(name_lbl, 19, Color(1, 0.92, 0.55), 1)
 	col.add_child(name_lbl)

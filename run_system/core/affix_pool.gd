@@ -28,25 +28,23 @@ const CURSE := [
 	{"type": "curse_crit", "value": -5},
 ]
 
-## Positive affix count granted per rarity. Rare adds a set bonus separately
-## (via set_id on the instance), NOT an extra affix here.
-const AFFIX_COUNT := {"common": 1, "uncommon": 2, "rare": 2}
+## Positive affix count granted per rarity (owner's 5-tier model):
+## common 1 / uncommon 2 / rare 3 / set 3 (+ set bonus via set_id) / cursed 3 (+1 curse).
+const AFFIX_COUNT := {"common": 1, "uncommon": 2, "rare": 3, "set": 3, "cursed": 3}
 
 
 ## Roll the affix list for a freshly generated item.
-## Picks `AFFIX_COUNT.get(rarity, 1)` distinct-type positives. When `cursed`,
-## ALSO adds 1 curse affix and grants one extra positive (cursed = 1 curse + up
-## to AFFIX_COUNT+1 positives). Returned dicts are duplicated so callers may
-## mutate them freely.
+## Picks `AFFIX_COUNT.get(rarity, 1)` distinct-type positives. A cursed item (the
+## "cursed" tier, or the `cursed` flag) ALSO appends 1 curse affix — the curse is the
+## trade-off, NOT an extra positive. Returned dicts are duplicated for free mutation.
 static func roll(rarity: String, cursed: bool = false) -> Array:
+	var is_cursed: bool = cursed or rarity == "cursed"
 	var positives_wanted: int = int(AFFIX_COUNT.get(rarity, 1))
-	if cursed:
-		positives_wanted += 1
 	var result: Array = []
 	var used_types: Array = []
 	for picked in _pick_distinct_positives(positives_wanted, used_types):
 		result.append(picked)
-	if cursed:
+	if is_cursed:
 		var curse: Dictionary = CURSE[randi() % CURSE.size()].duplicate(true)
 		result.append(curse)
 	return result

@@ -1205,6 +1205,12 @@ func make_equip_instance(base_id: String, rarity: String, cursed: bool = false) 
 		return {}
 	var data: Dictionary = get_equipment_data(base_id)
 	var resolved_rarity: String = rarity if rarity != "" else str(data.get("rarity", "common"))
+	# Owner's 5-tier model: a set piece (has set_id) always reads as the green "set" tier;
+	# a cursed item reads as the red "cursed" tier. Both grant 3 positives (cursed +1 curse).
+	if cursed:
+		resolved_rarity = "cursed"
+	elif str(data.get("set_id", "")) != "":
+		resolved_rarity = "set"
 	return {
 		"base": base_id,
 		"rarity": resolved_rarity,
