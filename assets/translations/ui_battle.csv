@@ -63,3 +63,8 @@ UI_BATTLE_ATTR_INTELLIGENCE,Intelligence,智力
 UI_BATTLE_ATTR_LUCK,Luck,幸运
 UI_BATTLE_ATTR_CHARM,Charm,魅力
 UI_BATTLE_ATTR_ENERGY,Energy,能量
+UI_DISCOVER_TITLE,Discover,发现
+UI_DISCOVER_TITLE_SKILL,Discover · Skill,发现 · 技能
+UI_DISCOVER_TITLE_ATTACK,Discover · Attack,发现 · 攻击
+UI_DISCOVER_TITLE_BLEED,Discover · Bleed,发现 · 流血
+UI_DISCOVER_EMPTY,Nothing to discover.,没有可发现的牌。

@@ -29,9 +29,22 @@ static func roll(pool: String, count: int, unlocked: Array) -> Array:
 static func _matches(data: Dictionary, pool: String) -> bool:
 	if pool in CARD_TYPES:
 		return str(data.get("type", "")).to_lower() == pool
-	# Otherwise treat `pool` as a theme tag.
+	# Theme tag match (a card may opt in via a `tags` array).
 	var tags: Variant = data.get("tags", [])
-	return typeof(tags) == TYPE_ARRAY and pool in tags
+	if typeof(tags) == TYPE_ARRAY and pool in tags:
+		return true
+	# Built-in theme detection so a themed pool works without tagging every card.
+	# "bleed": the card applies Bleed (apply_status bleed / apply_bleed_scaled).
+	if pool == "bleed":
+		for e in data.get("effects", []):
+			if typeof(e) != TYPE_DICTIONARY:
+				continue
+			if (
+				str(e.get("status", "")) == "bleed"
+				or str(e.get("type", "")) == "apply_bleed_scaled"
+			):
+				return true
+	return false
 
 
 static func _load_card(id: String) -> Dictionary:

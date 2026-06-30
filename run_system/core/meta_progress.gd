@@ -269,6 +269,10 @@ const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
 # deliberately NOT in the reward/draft pool — getting more of them as rewards is
 # pointless and dilutes the pool.
 const INITIAL_CARD_POOL: Array[String] = [
+	# Discover cards (Hearthstone-style 3-choose-1).
+	"scrap_scavenge",
+	"blood_recipe",
+	"armory_requisition",
 	"weak_strike",
 	"stun_baton",
 	"hot_swap",

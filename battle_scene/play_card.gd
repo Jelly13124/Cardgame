@@ -241,6 +241,10 @@ func set_card_data(data: Dictionary) -> void:
 func _build_description(data: Dictionary) -> String:
 	var card_id: String = str(data.get("name", ""))
 	var effects: Array = data.get("effects", [])
+	# Discover cards read better from their authored description than an effect breakdown.
+	for e in effects:
+		if typeof(e) == TYPE_DICTIONARY and str(e.get("type", "")) == "discover":
+			return Settings.t("CARD_%s_DESC" % card_id, str(data.get("description", "")))
 	if effects.is_empty():
 		# Raw description is CONTENT — route through Settings.t (CARD_<id>_DESC)
 		# with the English source as fallback, THEN strip BBCode for plain display.

@@ -1,0 +1,14 @@
+{
+	"name": "scrap_scavenge",
+	"title": "Scrap Scavenge",
+	"rarity": "uncommon",
+	"type": "skill",
+	"cost": 1,
+	"description": "Discover a skill.",
+	"front_image": "player/curse_placeholder.png",
+	"side": "player",
+	"effects": [
+		{ "type": "discover", "pool": "skill", "count": 3 },
+		{ "type": "exhaust_self" }
+	]
+}
