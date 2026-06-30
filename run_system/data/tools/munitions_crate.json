@@ -1,0 +1,10 @@
+{
+	"id": "munitions_crate",
+	"title": "Munitions Crate",
+	"target": "none",
+	"rarity": "uncommon",
+	"effects": [
+		{ "type": "discover", "pool": "attack", "count": 3 }
+	],
+	"icon": "res://run_system/assets/images/ui/tools/frag_grenade.png"
+}

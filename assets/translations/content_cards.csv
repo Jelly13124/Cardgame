@@ -135,6 +135,12 @@ TOOL_toxin_vial_TITLE,Toxin Vial,毒瓶
 TOOL_toxin_vial_DESC,"Apply 4 Bleed to an enemy.",对一个敌人施加 4 层流血。
 TOOL_shock_charge_TITLE,Shock Charge,电荷
 TOOL_shock_charge_DESC,"Apply 2 Vulnerable and 1 Weak to an enemy.",对一个敌人施加 2 层易伤和 1 层虚弱。
+TOOL_blood_kit_TITLE,Blood Kit,采血工具包
+TOOL_blood_kit_DESC,"Discover a Bleed card. It costs 0 this combat.",发现一张流血牌，本场战斗中它的费用为 0。
+TOOL_munitions_crate_TITLE,Munitions Crate,军火箱
+TOOL_munitions_crate_DESC,Discover an attack.,发现一张攻击牌。
+TOOL_field_kit_TITLE,Field Kit,战术工具包
+TOOL_field_kit_DESC,Discover a skill.,发现一张技能牌。
 CARD_radiation_dust_TITLE,Radiation Dust,辐射尘
 CARD_radiation_dust_DESC,Unplayable.,无法打出。
 CARD_leaking_wealth_TITLE,Leaking Wealth,漏财

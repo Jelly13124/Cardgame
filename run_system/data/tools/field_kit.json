@@ -1,0 +1,10 @@
+{
+	"id": "field_kit",
+	"title": "Field Kit",
+	"target": "none",
+	"rarity": "uncommon",
+	"effects": [
+		{ "type": "discover", "pool": "skill", "count": 3 }
+	],
+	"icon": "res://run_system/assets/images/ui/tools/combat_stim.png"
+}
