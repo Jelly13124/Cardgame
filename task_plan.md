@@ -2,7 +2,7 @@
 
 **Goal:** 持续把 Steam demo(废土拾荒 · roguelite deckbuilder · Godot 4.6)打磨到工业级。
 **Branch:** `overnight-0615`(已 push + fast-forward 合并进 `main` 到 `a04f0e9`)。
-**Last updated:** 2026-06-30。`overnight-0615` 领先 `main` 1 个 commit(`79b3bee` 发现工具,待定推不推)。
+**Last updated:** 2026-06-30(审计会话)。`overnight-0615` 领先 `main` **7 个 commit**(发现工具 + dead-code 清理 + 诅咒进游戏 + 文档同步,均待定推不推)。
 
 ## 本会话 Phases(全部 complete)
 
@@ -17,6 +17,15 @@
 | 7 | 关键词 tooltip 增强(悬停卡牌弹全部术语) | ✅ MCP | 100c584 |
 | 8 | 发现机制(discover effect + DiscoverModal + 0费 + 3 卡) | ✅ MCP | 2dd0d6a..e726c1c |
 | 9 | 发现工具(blood_kit / munitions_crate / field_kit) | ✅ smoke | 79b3bee |
+
+## 2026-06-30 审计会话(complete)
+
+| # | Phase | Status | Commit |
+|---|---|---|---|
+| A | Dead code 审计+删除(孤立 upgrade_panel.gd + 14 处零调用函数 + battle_top_bar 整块死 settings overlay) | ✅ import+smoke | 70444e7 |
+| B | Dead doc:删 2 份真死(open-art-backlog / asset-spec-sts2-port)+ 归档 5 份使命完成的 → docs/archive/ | ✅ | 132728d / 34a23da |
+| C | 诅咒卡进游戏:3 个贪婪陷阱事件注入 cowardice/panic/leaking_wealth(torn_coin_pouch / deserter_charm / adrenaline_shot) | ✅ import+smoke | d022714 |
+| D | 文档同步:PRD/PROJECT_STRUCTURE/data-files(装备5档+affix / curse / discover / 33 effect清单 / 删除已删符号引用) | ✅ | 2062fd7 |
 
 ## 待办 / Follow-up (open)
 
