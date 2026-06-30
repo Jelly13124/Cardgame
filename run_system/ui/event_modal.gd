@@ -63,8 +63,8 @@ func _build() -> void:
 	add_child(center)
 
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
-	panel.custom_minimum_size = Vector2(680, 420)
+	panel.add_theme_stylebox_override("panel", _panel_style())
+	panel.custom_minimum_size = Vector2(720, 0)
 	center.add_child(panel)
 
 	var margin := MarginContainer.new()
@@ -81,8 +81,10 @@ func _build() -> void:
 	var title := Label.new()
 	title.text = Settings.t("EVENT_%s_TITLE" % _eid, str(event_data.get("title", "Event")))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 30)
+	title.add_theme_font_size_override("font_size", 32)
 	title.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
+	title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	title.add_theme_constant_override("outline_size", 5)
 	_vbox.add_child(title)
 
 	var desc := Label.new()
@@ -136,19 +138,69 @@ func _add_event_background() -> void:
 
 
 func _make_option_button(opt: Dictionary, index: int) -> Button:
+	var unlocked: bool = RunManager.option_unlocked(opt)
 	var button := Button.new()
 	button.text = Settings.t("EVENT_%s_OPT%d_TEXT" % [_eid, index], str(opt.get("text", "...")))
-	button.custom_minimum_size = Vector2(600, 56)
+	button.custom_minimum_size = Vector2(620, 0)
 	button.add_theme_font_size_override("font_size", 19)
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-
-	var unlocked: bool = RunManager.option_unlocked(opt)
-	if not unlocked:
+	button.focus_mode = Control.FOCUS_NONE
+	# STS-style option card: frosted-dark row, gold edge + lift on hover, dim when locked.
+	button.add_theme_stylebox_override("normal", _option_style(false, not unlocked))
+	button.add_theme_stylebox_override("hover", _option_style(true, not unlocked))
+	button.add_theme_stylebox_override("pressed", _option_style(true, not unlocked))
+	button.add_theme_stylebox_override("disabled", _option_style(false, true))
+	var fg := Color(0.95, 0.91, 0.79) if unlocked else Color(0.60, 0.56, 0.49)
+	button.add_theme_color_override("font_color", fg)
+	button.add_theme_color_override("font_hover_color", Color(1.0, 0.97, 0.84))
+	button.add_theme_color_override("font_pressed_color", fg)
+	button.add_theme_color_override("font_disabled_color", fg)
+	if unlocked:
+		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	else:
 		button.disabled = true
 		button.tooltip_text = _lock_hint(opt)
 	button.pressed.connect(_on_option_pressed.bind(index))
 	_option_buttons.append(button)
 	return button
+
+
+## A frosted-dark option row. Gold-bordered + brighter on hover; dim grey when locked.
+func _option_style(hover: bool, locked: bool) -> StyleBoxFlat:
+	var st := StyleBoxFlat.new()
+	if locked:
+		st.bg_color = Color(0.10, 0.09, 0.08, 0.80)
+		st.border_color = Color(0.34, 0.31, 0.27, 0.85)
+	elif hover:
+		st.bg_color = Color(0.26, 0.20, 0.12, 0.96)
+		st.border_color = Color(1.0, 0.82, 0.40)
+	else:
+		st.bg_color = Color(0.14, 0.12, 0.10, 0.90)
+		st.border_color = Color(0.56, 0.46, 0.31, 0.90)
+	st.set_border_width_all(2)
+	st.set_corner_radius_all(8)
+	st.content_margin_left = 22
+	st.content_margin_right = 22
+	st.content_margin_top = 13
+	st.content_margin_bottom = 13
+	return st
+
+
+## Frosted-dark event panel — rounded, thin gold edge, soft drop shadow.
+func _panel_style() -> StyleBoxFlat:
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.09, 0.08, 0.07, 0.93)
+	st.border_color = Color(0.85, 0.68, 0.35, 0.85)
+	st.set_border_width_all(2)
+	st.set_corner_radius_all(14)
+	st.shadow_color = Color(0.0, 0.0, 0.0, 0.5)
+	st.shadow_size = 18
+	st.content_margin_left = 8
+	st.content_margin_right = 8
+	st.content_margin_top = 8
+	st.content_margin_bottom = 8
+	return st
 
 
 ## Human-readable "[Charm N] [Luck N]" hint for a locked option's requires gate.
@@ -216,8 +268,16 @@ func _show_result(text: String) -> void:
 
 	var continue_btn := Button.new()
 	continue_btn.text = Settings.t("UI_EVENT_CONTINUE", "Continue")
-	continue_btn.custom_minimum_size = Vector2(600, 56)
+	continue_btn.custom_minimum_size = Vector2(620, 0)
 	continue_btn.add_theme_font_size_override("font_size", 20)
+	continue_btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	continue_btn.focus_mode = Control.FOCUS_NONE
+	continue_btn.add_theme_stylebox_override("normal", _option_style(false, false))
+	continue_btn.add_theme_stylebox_override("hover", _option_style(true, false))
+	continue_btn.add_theme_stylebox_override("pressed", _option_style(true, false))
+	continue_btn.add_theme_color_override("font_color", Color(0.95, 0.91, 0.79))
+	continue_btn.add_theme_color_override("font_hover_color", Color(1.0, 0.97, 0.84))
+	continue_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	continue_btn.pressed.connect(_finalize)
 	_vbox.add_child(continue_btn)
 
