@@ -52,6 +52,7 @@ The old root-level `skills/` workflow docs have been removed. Project convention
     *   *The brain of the game. It resolves all card effects (damage, block, buffs) triggered by JSON data.*
 *   **Status Effects**: `battle_scene/status_effect_system.gd`
     *   *System for managing bleed, burn, weak, vulnerable, double damage, and other buffs/debuffs.*
+*   **Discover**: `battle_scene/discover_modal.gd` (full-screen 3-choose-1 popup) + `run_system/core/discover_pool.gd` (rolls candidates by card type / theme tag). Driven by the `discover` effect in `combat_engine._apply_effect`; the picked card enters the hand for this combat only (optional `free` = 0-cost via a `cost_override` meta). Cards and tools share this path.
 
 ---
 
@@ -65,7 +66,7 @@ The old root-level `skills/` workflow docs have been removed. Project convention
 
 ### 🛒 Shop & Rest
 *   **Shop Scene**: `run_system/ui/shop_scene.tscn` + `.gd`
-    *   *Merchant map node loads this. Rolls 3 cards + 2 equipment + 1 relic + remove-card service. Prices and pools defined at the top of the script.*
+    *   *Merchant map node loads this. Rolls 3 cards + 3 tools + 3 relics + remove-card service (equipment is no longer sold here). Prices and pools defined at the top of the script.*
 *   **Rest Choice Modal**: built inline in `map_scene.gd` (`_open_rest_choice`)
     *   *HEAL 25% HP or SOCKET GEMS (opens the deck/gem screen).*
 
@@ -75,9 +76,9 @@ The old root-level `skills/` workflow docs have been removed. Project convention
 *   **Mechanic**: `player_deck` entries carry a `gems: []` array; battle cards get a `gems` meta (`deck_manager.gd`); `combat_engine.resolve_card_effect` runs each gem's effects after the card's own. Card upgrades (`_plus`) were fully removed.
 
 ### 🎒 Equipment System
-*   **Data**: `run_system/data/equipment/{item_id}.json` (23 items) + `run_system/data/equipment_sets/{set_id}.json` (3 sets)
+*   **Data**: `run_system/data/equipment/{item_id}.json` (23 base items) + `run_system/data/equipment_sets/{set_id}.json` (3 sets). Rarity is **5-tier** (`run_system/core/affix_pool.gd`): common/uncommon/rare/set/cursed roll 1/2/3/3/3 affixes — `set` = a piece carrying a `set_id` (green, grants set bonuses), `cursed` = 3 positives + 1 curse affix (red). Instances roll their affixes at drop time (`RunManager.make_equip_instance`).
 *   **Set Effect System**: `battle_scene/equipment_set_system.gd` — snapshots active tier effects at battle start; mirrors `relic_effect_system.gd` shape.
-*   **Equipment Icon Component**: `run_system/ui/equipment_icon.gd` — reusable placeholder (colored panel + slot letter) with PNG fallback.
+*   **Equipment Icon Component**: `run_system/ui/equipment_icon.gd` — tile colored by **rarity** (common/uncommon/rare/set/cursed → graphite / steel-blue / gold / green / red) with a slot PNG icon (slot-letter fallback when the PNG is missing).
 *   **Character Panel**: `run_system/ui/equipment_panel.gd` — map-screen modal showing HP/Gold/Floor + slots + inventory + active sets + relics + stats. Open via `⚔ CHARACTER` button.
 *   **Inventory Full Modal**: `run_system/ui/inventory_full_modal.gd` — discard-or-skip flow when bag overflows.
 
@@ -91,9 +92,9 @@ The old root-level `skills/` workflow docs have been removed. Project convention
     *   *Gold, deck, equipped items, inventory, base_attributes, player_attributes (computed), relics, gems (in backpack cells), tools (**equipped** in `tool_inventory`, **held** in backpack `{"kind":"tool"}` cells), XP/level, map state. Public API: `add_card_to_deck`, `remove_card_from_deck_by_uid`, `socket_gem` / `gem_pool` / `get_gem_data`, `gain_xp` / `xp_to_next`, `equip_to_slot`, `unequip_slot`, `add_to_inventory`, `discard_from_inventory`, `add_tool_to_backpack` / `equip_tool_from_backpack` / `unequip_tool` / `tool_slots` (1 base + Outpost + relic), `purchase_*` (shop-gated wrappers), `recompute_attributes`, `get_active_set_tiers`. `start_new_run` calls `_apply_meta_upgrades` to read MetaProgress and add max HP / starting gold / starter inventory.*
 
 ### 🏠 Base Building (Meta-Progression)
-*   **Persistent State**: `run_system/core/meta_progress.gd` (autoload, owns `user://meta.json`) — three currencies (**Core / Caps / Scrap**) + `buildings{}` (per-building tier) + `BUILDING_DEFS`. API: `add_core/caps/scrap` + `spend_*`, `get_building_tier`, `is_building_unlocked`, `unlock_building`, `upgrade_building`, `building_can`, `unlock_card`, `set_starter_deck_override`, `stash` + `dismantle_stash_item` / `reforge_stash_item` / `reforge_stash_item_affix` (per-affix) / `curse_stash_item`.
+*   **Persistent State**: `run_system/core/meta_progress.gd` (autoload, owns `user://slot_<n>/meta.json` — 3 save slots; the legacy global `user://meta.json` is no longer read) — three currencies (**Core / Caps / Scrap**) + `buildings{}` (per-building tier) + `BUILDING_DEFS`. API: `add_core/caps/scrap` + `spend_*`, `get_building_tier`, `is_building_unlocked`, `unlock_building`, `upgrade_building`, `building_can`, `unlock_card`, `set_starter_deck_override`, `stash` + `dismantle_stash_item` / `reforge_stash_item_locked` (single-affix lock + escalating cost) / `curse_stash_item`.
 *   **Boot Scene**: `run_system/ui/home_base_scene.{gd,tscn}` — Core/Caps/Scrap bar + 5 building tiles laid out 2-left / 2-right with a centre START "door" (Warehouse above it). Clicking a tile opens its screen.
-*   **Building Screens**: `run_system/ui/buildings/{forge,clinic,market,outpost,warehouse}_screen.gd` (subclass `building_screen_base.gd`) — **fullscreen, services-only** pages (the shared shell fills the viewport); `home_base_scene` convention-loads `<id>_screen.gd`. **Unlock/upgrade moved to the home-base overview** (a button under each building's floating label → confirm popup → `MetaProgress.unlock/upgrade_building`), not in the detail page. Per-building: market = equipment **shelf** + real-card grids (`my_card_factory`); forge = stash + drop-slot **bench** (per-affix reforge); warehouse = hero-portrait picker + 40-slot stash grid + loadout board. `upgrade_panel.gd` is the reusable Core-upgrade row widget (used inside Outpost).
+*   **Building Screens**: `run_system/ui/buildings/{forge,clinic,market,outpost,warehouse}_screen.gd` (subclass `building_screen_base.gd`) — **fullscreen, services-only** pages (the shared shell fills the viewport); `home_base_scene` convention-loads `<id>_screen.gd`. **Unlock/upgrade moved to the home-base overview** (a button under each building's floating label → confirm popup → `MetaProgress.unlock/upgrade_building`), not in the detail page. Per-building: market = equipment **shelf** + real-card grids (`my_card_factory`); forge = stash + drop-slot **bench** (click an affix to select; one button reforges it with a per-item lock + escalating Scrap cost); warehouse = hero-portrait picker + 40-slot stash grid + loadout board. Outpost builds its Core-upgrade rows inline.
 *   **Battle hook**: `battle_scene/battle_scene.gd` `_victory()` awards Core + Caps by node type and routes to home base on boss kill; `_game_over()` routes to home base on death.
 *   **Effect consumers**: Outpost Core upgrades (starting gold / shop discount / safe cells / backpack); Clinic/Market spend Caps; Forge spends Scrap. (The old `research_lab` rarity-bias upgrade was removed — loot rarity is Luck-driven.)
 
@@ -118,12 +119,12 @@ All gameplay content is data-driven. Add GDScript only when introducing a new sh
 *   **Player Cards**: `battle_scene/card_info/player/{card_id}.json` (one JSON per card; no `_plus` upgrade variants — gems replace upgrades)
 *   **Enemies**: `battle_scene/card_info/enemy/{enemy_id}.json`
 *   **Relics**: `run_system/data/relics/{relic_id}.json`
-*   **Equipment**: `run_system/data/equipment/{item_id}.json` (rarity budget: common=+1, uncommon=+2 total, rare=+3 total)
+*   **Equipment**: `run_system/data/equipment/{item_id}.json` — base item (`slot` / `rarity` / optional `set_id` / `bonuses` back-compat baseline / `sprite`). Real stats are **rolled affixes** at drop time (5-tier common/uncommon/rare/set/cursed = 1/2/3/3/3+curse) via `run_system/core/affix_pool.gd`; new drops ignore `bonuses`.
 *   **Equipment Sets**: `run_system/data/equipment_sets/{set_id}.json` (each set has 2 tiers: 3-piece + 5-piece)
 *   **Gems**: `run_system/data/gems/{gem_id}.json` — run-scoped socketables that occupy backpack cells (`validate_gem`); see the Gem/Socket section.
 *   **Tools**: `run_system/data/tools/{tool_id}.json` — StS2-style one-time battle consumables; `effects[]` reuse the card effect vocabulary (`validate_tool`).
 *   **Base Upgrades**: `run_system/data/base_upgrades/{upgrade_id}.json` (8 definitions: med_bay, command_center, scrap_workshop, blacksmith, backpack, starter_boost, reroll_tokens, tool_slots — tiered; effect_value schema varies per effect_key). These are the data the building screens read; `ALLOWED_BASE_UPGRADE_EFFECT_KEYS` in `data_validator.gd` is the schema.
 *   **Heroes**: `run_system/data/heroes/{hero_id}.json` (`cowboy_bill.json`) — `player.gd` reads `sprite_id` / `tint` / starting stats dynamically from the selected hero's JSON (`RunManager.current_hero_data`), falling back to `cowboy_bill` when none is loaded.
-*   **Random Events**: `run_system/data/random_events/{event_id}.json` — content (choices, outcomes) for the "?" map node, surfaced by `run_system/ui/event_modal.gd`.
+*   **Random Events**: `run_system/data/random_events/{event_id}.json` (12 events) — content (choices, outcomes) for the "?" map node, surfaced by `run_system/ui/event_modal.gd`. Three are "greed-trap" curse-injection events (`torn_coin_pouch` / `deserter_charm` / `adrenaline_shot`): a boon + an `add_curse` effect. Events are dir-scanned into the pool; localized via `EVENT_<ID>_*` keys in `assets/translations/ui_events.csv`.
 
 All schemas validated at startup by `battle_scene/data_validator.gd`.

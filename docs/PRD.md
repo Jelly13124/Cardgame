@@ -61,6 +61,7 @@ Hero Select + Loadout -> Act 1 Map -> Battle -> Loot -> Map -> ... -> Act Boss
 | **Attack** | Click card → drag targeting arrow → release on enemy | Yes (enemy) |
 | **Skill** | Drag card upward into the invisible play zone | No |
 | **Ability** | Drag card upward into the invisible play zone | No |
+| **Curse** | **Unplayable** — returns to hand if played; punishes you each turn it sits in hand (`end_turn_in_hand`) | — |
 
 ### Card Effects System (Data-Driven)
 All effects are defined in card JSON via the `effects[]` array. The `CombatEngine` resolves them generically. Supported effect types:
@@ -75,6 +76,9 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 - `apply_status_self` — Apply a status effect to the player
 - `apply_status_all` — Apply a status effect to all enemies
 - `discover` — Hearthstone-style 3-choose-1: pops a candidate popup (filtered by `pool` — a card type, or a theme tag like `bleed`); the picked card is created into the **current hand for this combat only** (never the permanent deck). Optional `free` makes it cost 0 this combat (a `cost_override` meta on the card).
+- Economy / curse: `gain_gold`, `lose_gold`, `heal`, `lose_hp`, `add_card_to_hand`, `add_curse_to_deck` — gold / HP swings and shuffling a card (or a permanent curse) into the deck.
+
+> The list above is a selection. The **authoritative** set is `DataValidator.ALLOWED_EFFECT_TYPES` (33 types) — see `docs/conventions/data-files.md` for the full categorized list.
 
 **New cards never require GDScript changes** — only a JSON file.
 
@@ -113,34 +117,45 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 
 ## Equipment System (装备)
 
-Equipment is gear the player equips to **boost their five attributes**. It is NOT a passive relic — it has direct numeric stat bonuses.
+Equipment is gear the player equips to **boost their five attributes** via rolled **affixes**. It is NOT a passive relic — it carries direct numeric stat bonuses.
 
 ### Rules
 - Player has **5 equipment slots**: head / chest / weapon / hands / accessory
-- Equipment can only be changed on the **Map screen** (between battles)
-- Equipment **cannot** be swapped during combat
-- Equipment is looted from encounters, purchased in shops, or found in the base
-- Each piece of equipment shows: stat bonuses, rarity, and flavor text
+- Equipment is held in the backpack and **equipped from the character panel**; it cannot be swapped during combat
+- Equipment is looted from encounters (Luck-scaled) and forged / reforged at the base — it is **no longer sold in the shop** (the shop sells tools)
+- Each piece shows its rolled affixes, a rarity color, and flavor text
 
-### Equipment JSON Schema
+### Rarity & Affixes (5-tier)
+A dropped piece becomes an **instance** that rolls its affixes at grant time (`RunManager.make_equip_instance` → `run_system/core/affix_pool.gd`). Rarity drives both the affix count and the tile color:
+
+| Rarity | 中文 | Affixes | Color | Notes |
+|---|---|---|---|---|
+| `common` | 普通 | 1 | graphite | — |
+| `uncommon` | 稀有 | 2 | steel-blue | — |
+| `rare` | 罕见 | 3 | gold | — |
+| `set` | 套装 | 3 | green | a piece carrying a `set_id` → grants tiered **set bonuses** (3-piece / 5-piece) |
+| `cursed` | 诅咒 | 3 **+ 1 curse** | red | 3 positive affixes + 1 negative curse affix (the trade-off) |
+
+`set` / `cursed` are **derived** at roll time (a piece with a `set_id` reads as `set`; a cursed roll as `cursed`). Affixes come from a fixed pool — positives (`attr_*` +1 to a stat, `crit_pct` +5%, `max_hp` +10) and curses (`curse_*`); `affix_pool.attribute_totals()` sums them and `recompute_attributes()` applies the totals on top of `base_attributes` for every equipped piece.
+
+### Equipment JSON Schema (base item)
 ```json
 {
-    "id": "scrap_gauntlet",
-    "name": "Scrap Gauntlet",
+    "id": "tank_engineer_helm",
+    "name": "Reinforced Hardhat",
+    "slot": "head",
     "rarity": "common",
-    "slot": "hands",
-    "bonuses": {
-        "strength": 2,
-        "constitution": 1
-    },
-    "description": "Welded from junk. Still hits hard.",
-    "sprite": "equipment/scrap_gauntlet.png"
+    "set_id": "tank_engineer",
+    "bonuses": { "constitution": 1 },
+    "description": "Steel-banded. Heavy. Reliable.",
+    "sprite": "equipment/tank_engineer_helm.png"
 }
 ```
+- `set_id` — optional; present only on set pieces (one of the 3 sets).
+- `bonuses` — a **back-compat baseline only**: freshly-dropped pieces roll affixes anew and ignore it; a legacy stash entry stored as a bare item-id string derives its affixes from `bonuses` (`as_equip_instance`). New stat design lives in the rolled affixes, not here.
 
-### RunManager Fields
-- `equipped_items: Array[String]` — up to 5 equipment IDs (already exists, to be repurposed)
-- Equipment stat totals are computed and applied to `player_attributes` at map screen load
+### Forge (铁匠铺)
+At the base: **dismantle** gear into Scrap, or **reforge** a single affix — the first reforge locks the item to that affix and each later reforge of it costs more (`reforge_stash_item_locked`, cost = rarity-base × (count + 1)). Curse affixes can't be reforged.
 
 ---
 
@@ -254,7 +269,7 @@ Rewards are node-typed (see "Rewards by node type" in Phase 7):
 - **Normal**: Gold + a 3-choose-1 **Card Draft** (Luck may turn a slot into a gem) + a Luck-scaled **Tool** + a Luck-scaled **common Equipment** (independent rolls).
 - **Elite**: Card Draft + a 3-choose-1 **Gem** + a Luck-scaled **uncommon Equipment** (no tool).
 - **Boss**: a guaranteed **rare Equipment** + a Gem.
-- Gold is a flat per-fight amount (Luck no longer scales gold). Tools claim into the top-bar tool slots; equipment/gems claim into the backpack.
+- Gold is a flat per-fight amount (Luck no longer scales gold). Tools, equipment, and gems all claim into the **backpack**; tools are then equipped into a tool slot from the character panel.
 
 ---
 
@@ -403,7 +418,7 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 - Loot reward with equipment drops
 
 ### ✅ Phase 3 — Equipment & Relics (Complete)
-- ✅ Equipment system: 5 body-part slots, stat bonuses, swap on map screen, 3 sets with tiered bonuses (3-piece / 5-piece), 23 items (14 common / 6 uncommon / 3 rare)
+- ✅ Equipment system: 5 body-part slots, **rolled affixes** (5-tier rarity common/uncommon/rare/set/cursed = 1/2/3/3/3+curse affixes; `affix_pool.gd`), 3 sets with tiered bonuses (3-piece / 5-piece), 23 base items (14 common / 6 uncommon / 3 rare on disk; set/cursed are derived at roll time)
 - ✅ Inventory (8-item cap) — later superseded by the 20-cell Extraction Backpack where Gold/Core/equipment share cells (see Extraction Backpack Economy)
 - ✅ Equipment drops are Luck-scaled (normal = common, elite = uncommon, boss = guaranteed rare; see 2026-06-22 economy pass); the treasure node is a 3-choose-1 relic pick
 - ✅ Relic system: passive run effects, JSON-driven (RelicEffectSystem)
@@ -450,7 +465,7 @@ See `docs/superpowers/specs/2026-06-09-gems-leveling-rewards-design.md` for the 
 
 ### ✅ Phase 8 — Tools · Equipment Economy · A0 Balance (shipped 2026-06-21..22)
 Specs: `docs/superpowers/specs/2026-06-21-tools-attrs-loading-base-ui-design.md`, `…/2026-06-22-balance-equipment-economy-design.md`.
-- ✅ **Tool system** (StS2-style one-time consumables): `run_system/data/tools/*.json` (8), a top-bar **tool shelf** (`run_top_bar.gd`), free instant use in battle (`battle_scene.use_tool`; enemy-target tools auto-target; effects reuse `combat_engine._apply_effect`, scaled ×(1+0.08·INT)). _Tool slots reworked in Phase 9 → **1 base slot**, tools held in the backpack + equipped from the character panel; see below._
+- ✅ **Tool system** (StS2-style one-time consumables): `run_system/data/tools/*.json` (11: 8 original + 3 discover tools added 2026-06-30), a top-bar **tool shelf** (`run_top_bar.gd`), free instant use in battle (`battle_scene.use_tool`; enemy-target tools auto-target; effects reuse `combat_engine._apply_effect`, scaled ×(1+0.08·INT)). _Tool slots reworked in Phase 9 → **1 base slot**, tools held in the backpack + equipped from the character panel; see below._
 - ✅ **Attribute rework**: the Charm enemy-**flee** mechanic was **deleted**; INT off XP → boosts tools + Bleed; Charm lowers the per-level XP wall.
 - ✅ **Gems → backpack** (1 gem = 1 cell; socketing frees the cell), replacing the unlimited `gem_inventory` side-list.
 - ✅ **Drop / shop restructure**: shop sells tools (not equipment); Luck-scaled tool + equipment drops (see Rewards by node type).
@@ -487,6 +502,20 @@ Spec: `docs/superpowers/specs/2026-06-25-curse-cards-design.md`; plan: `…/plan
   (clearable at the shop's 75g removal); **card** `add_card_to_hand` (temp) / `add_curse_to_deck`
   (perm). New effects `lose_gold` + `add_curse_to_deck`. New enemy **`hex_drone` 咒术机蛭** +
   the **`cursed_safe` 嗡鸣保险箱** event. All MCP-verified.
+- ✅ **(2026-06-30) Curse-injection events**: the previously-unreachable 怯懦/恐慌/漏财 curses now
+  each have a themed "greed-trap" event — `torn_coin_pouch` (+100 gold + 漏财), `deserter_charm`
+  (heal to full + 怯懦), `adrenaline_shot` (+1 Strength permanent + 恐慌). All three curse cards
+  are now obtainable in a run; curses are clearable at the shop's card-removal service.
+
+### ✅ Phase 11 — Discover mechanic (shipped 2026-06-30)
+Spec: `docs/superpowers/specs/2026-06-30-discover-mechanic-design.md`; plan: `…/plans/2026-06-30-discover-mechanic.md`.
+- ✅ New **`discover` effect** + `DiscoverModal` (`battle_scene/discover_modal.gd`, a brand-new
+  full-screen 3-choose-1 popup) + `discover_pool.gd` (filters candidates by card type or by a
+  theme tag like `bleed`). The picked card enters the **current hand for this combat only**;
+  optional `free` makes it cost 0 this combat (a `cost_override` card meta).
+- ✅ **3 demo discover cards** (`scrap_scavenge` / `blood_recipe` / `armory_requisition`) + **3
+  discover tools** (`blood_kit` / `munitions_crate` / `field_kit`) — tools route through the same
+  `combat_engine._apply_effect`, so they share the discover plumbing.
 
 ### ✅ Phase 9 — Demo Polish (shipped 2026-06-24)
 Spec: `docs/superpowers/specs/2026-06-24-demo-polish-overnight-design.md`. Driven by a 4-dimension demo review.
