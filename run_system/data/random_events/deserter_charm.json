@@ -1,0 +1,20 @@
+{
+  "id": "deserter_charm",
+  "title": "The Deserter's Charm",
+  "description": "A rusted charm dangles from a deserter's sun-bleached skull, still faintly warm. They say it kept its last owner breathing — by making them run from every fight they could.",
+  "options": [
+    {
+      "text": "Wear it — survival first (Heal to full)",
+      "effects": [
+        { "type": "heal", "amount": 999 },
+        { "type": "add_curse", "curse": "cowardice" }
+      ],
+      "result": "Warmth floods your wounds and they knit shut in seconds. But a cold thread of dread settles in with it — your hands won't stop wanting to flee."
+    },
+    {
+      "text": "Let the dead keep it",
+      "effects": [],
+      "result": "You leave the charm with its owner. Some bargains aren't worth the asking."
+    }
+  ]
+}

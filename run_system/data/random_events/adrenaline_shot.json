@@ -1,0 +1,20 @@
+{
+  "id": "adrenaline_shot",
+  "title": "Pre-War Auto-Injector",
+  "description": "A military auto-injector, its glass barrel sloshing with something that glows a sickly amber. One dose of pre-war combat serum — guaranteed to make you hit harder, and flinch at every shadow after.",
+  "options": [
+    {
+      "text": "Jam it in — feel the burn (+1 Strength, permanent)",
+      "effects": [
+        { "type": "gain_attribute", "attr": "strength", "amount": 1 },
+        { "type": "add_curse", "curse": "panic" }
+      ],
+      "result": "Fire roars up your arm and your muscles sing — you're stronger, lastingly so. But your heart won't slow, and every noise jolts you half out of your skin."
+    },
+    {
+      "text": "Crush the vial underfoot",
+      "effects": [],
+      "result": "You grind the injector into the dirt. Whatever edge it offered, the price reads too steep."
+    }
+  ]
+}

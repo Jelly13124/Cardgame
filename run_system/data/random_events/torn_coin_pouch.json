@@ -1,0 +1,20 @@
+{
+  "id": "torn_coin_pouch",
+  "title": "Torn Coin Pouch",
+  "description": "A jittery drifter shoves a bulging coin-pouch into your hands and bolts before you can refuse. The seams are split and weeping rust — coins already trickling out between your fingers.",
+  "options": [
+    {
+      "text": "Pocket it — coin is coin (+100 Gold)",
+      "effects": [
+        { "type": "gain_gold", "amount": 100 },
+        { "type": "add_curse", "curse": "leaking_wealth" }
+      ],
+      "result": "You stuff the pouch away, a hundred richer. But the tear won't hold — with every step, a coin or two slips loose into the dust behind you."
+    },
+    {
+      "text": "Drop it and walk away",
+      "effects": [],
+      "result": "You let the cursed thing fall. Whatever's wrong with it, it isn't your problem now."
+    }
+  ]
+}
