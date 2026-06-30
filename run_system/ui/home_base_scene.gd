@@ -562,7 +562,7 @@ func _show_tier_confirm(building_id: String) -> void:
 	T.apply_button_theme(yes)
 	yes.pressed.connect(
 		func() -> void:
-			AudioManager.play_sfx("reward")
+			AudioManager.play_sfx("upgrade")
 			if is_unlock:
 				MetaProgress.unlock_building(building_id)
 			else:
