@@ -74,6 +74,7 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 - `apply_status` — Apply a status effect to a target enemy
 - `apply_status_self` — Apply a status effect to the player
 - `apply_status_all` — Apply a status effect to all enemies
+- `discover` — Hearthstone-style 3-choose-1: pops a candidate popup (filtered by `pool` — a card type, or a theme tag like `bleed`); the picked card is created into the **current hand for this combat only** (never the permanent deck). Optional `free` makes it cost 0 this combat (a `cost_override` meta on the card).
 
 **New cards never require GDScript changes** — only a JSON file.
 
