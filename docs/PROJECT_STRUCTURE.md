@@ -52,7 +52,7 @@ The old root-level `skills/` workflow docs have been removed. Project convention
     *   *The brain of the game. It resolves all card effects (damage, block, buffs) triggered by JSON data.*
 *   **Status Effects**: `battle_scene/status_effect_system.gd`
     *   *System for managing bleed, burn, weak, vulnerable, double damage, and other buffs/debuffs.*
-*   **Discover**: `battle_scene/discover_modal.gd` (full-screen 3-choose-1 popup) + `run_system/core/discover_pool.gd` (rolls candidates by card type / theme tag). Driven by the `discover` effect in `combat_engine._apply_effect`; the picked card enters the hand for this combat only (optional `free` = 0-cost via a `cost_override` meta). Cards and tools share this path.
+*   **Discover**: `battle_scene/discover_modal.gd` (full-screen 3-choose-1 popup) + `run_system/core/discover_pool.gd` (rolls candidates by card type / theme tag). Driven by the `discover` effect in `combat_engine._apply_effect`; the picked card enters the hand for this combat only (optional `free` = 0-cost via a `cost_override` meta). Triggered by the 3 discover **tools** (`blood_kit`/`munitions_crate`/`field_kit`) — the demo discover *cards* were removed 2026-07-01, so discover is tool-only. Candidates suppress the "playable" glow and drive their keyword tooltip from the overlay button.
 
 ---
 

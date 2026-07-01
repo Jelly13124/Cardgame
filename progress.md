@@ -42,3 +42,20 @@
 - **agent 标的 high-confidence dead 单项仍要自己验证边界**:battle_top_bar `_build_settings_menu` 被标零调用没错,但它带一窝连锁死代码(`_show_settings` 已改走 PAUSE_PANEL,旧 settings_layer/_hide_settings/_on_return_map_pressed/_make_menu_button 全触达不到)——读全文件才发现是整块死,不是单函数。
 - **装备 base `bonuses` 是 back-compat 兼容字段**:新掉落 `make_equip_instance` 随机 roll affixes **不读 bonuses**;只有旧存档裸字符串装备才从 bonuses 派生 affixes(`as_equip_instance`)。
 - **事件本地化**:JSON 写英文 fallback,`Settings.t("EVENT_<ID>_TITLE/_DESC/_OPT<i>_TEXT/_OPT<i>_RESULT", fallback)`,翻译在 `ui_events.csv`(`keys,en,zh`),改完 `--import` 生成 .translation。
+
+## Session 2026-07-01 — discover 实测修复 + push
+
+用户实测发现界面截图,反馈 3 点 → 修复 + push main + clear。
+
+### 完成(overnight-0615)
+- **discover 青光 bug**(8c2052e):候选卡误显 `PlayableGlow`(能量够的"可打出"青脉冲)——它不是手牌不该亮。play_card 加 `suppress_playable_glow`,discover_modal 候选设 true。**这是用户说的"紫色"真凶,不是稀有度描边**(稀有度色按用户要求保留)。
+- **discover 悬停关键词**(8c2052e):候选 `mouse_filter=IGNORE` + overlay 按钮只缩放 → 按钮补 `Tooltip.show(_build_keyword_glossary())` + 移出隐藏。
+- **收敛发现载体**(8c2052e):删 3 张发现卡(scrap_scavenge/blood_recipe/armory_requisition:JSON + INITIAL_CARD_POOL + 翻译),discover **仅工具**触发。用户拍板。稀有度描边保留(用户选)。
+- **文档/catalog**(36831c1 + 本次):PRD Phase 11 + PROJECT_STRUCTURE discover → tool-only;`gen_catalog_html.py` 重生成 cards.html(57 张)。
+
+### 澄清(非改动)
+- 用户以为"工具有空位自动进左上角栏" → 其实早改成**进背包 + 角色面板手动装备**(P5)。工具位保持 1(用户选)。
+
+### 关键诊断(下次遇到可复用)
+- 卡牌上的"可打出"高亮 = `PlayCard.PlayableGlow`(青色,`update_playable`→`visible=can_afford`),战斗中 `update_display` 每次调用。任何**非手牌复用 PlayCard** 的地方(discover/reward/查看)都要 `suppress_playable_glow=true`,否则青光乱亮。
+- discover 候选 `mouse_filter=IGNORE`+overlay 按钮 → 卡自身 `_on_mouse_entered` 不触发,tooltip/hover 逻辑要从 overlay 驱动。

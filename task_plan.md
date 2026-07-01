@@ -2,7 +2,7 @@
 
 **Goal:** 持续把 Steam demo(废土拾荒 · roguelite deckbuilder · Godot 4.6)打磨到工业级。
 **Branch:** `overnight-0615`(已 push + fast-forward 合并进 `main` 到 `a04f0e9`)。
-**Last updated:** 2026-06-30(审计会话)。`overnight-0615` 领先 `main` **7 个 commit**(发现工具 + dead-code 清理 + 诅咒进游戏 + 文档同步,均待定推不推)。
+**Last updated:** 2026-07-01。`overnight-0615` 已在 2026-06-30 push + ff-merge 进 `main`(到 9852df6);之后加了 discover 实测修复 + 文档/catalog 同步(本次再 push main)。
 
 ## 本会话 Phases(全部 complete)
 
@@ -27,13 +27,23 @@
 | C | 诅咒卡进游戏:3 个贪婪陷阱事件注入 cowardice/panic/leaking_wealth(torn_coin_pouch / deserter_charm / adrenaline_shot) | ✅ import+smoke | d022714 |
 | D | 文档同步:PRD/PROJECT_STRUCTURE/data-files(装备5档+affix / curse / discover / 33 effect清单 / 删除已删符号引用) | ✅ | 2062fd7 |
 
+> 2026-06-30 全部 push + ff-merge 到 main(9852df6),含孤立 UI 图清理(9852df6)。
+
+## 2026-07-01 discover 实测修复(complete)
+
+| # | Phase | Status | Commit |
+|---|---|---|---|
+| E | discover 候选误显"可打出"青光(PlayableGlow)→ play_card 加 suppress_playable_glow,discover 候选设 true(**这就是用户说的"紫色",非稀有度描边**) | ✅ import+smoke | 8c2052e |
+| F | discover 悬停无关键词:候选 mouse-transparent → overlay 按钮驱动 Tooltip.show(_build_keyword_glossary) | ✅ import+smoke | 8c2052e |
+| G | 收敛发现载体:删 3 张发现卡,discover 改为**仅工具**(blood_kit/munitions_crate/field_kit) | ✅ import+smoke | 8c2052e |
+| H | 文档/catalog:PRD + PROJECT_STRUCTURE discover→tool-only + regen cards.html(57) | ✅ | 36831c1 / 本次 |
+
 ## 待办 / Follow-up (open)
 
-- [ ] **发现工具 free 语义**:确认"本场 0 费"(现状,cost_override)OK,还是改成严格"本回合 0 费"(回合末恢复)——**用户待定**。
-- [ ] **发现卡 + 发现工具真图**:目前占位(curse_placeholder / 复用工具图)。要写 Codex asset-spec。
-- [ ] **discover tools (79b3bee) 推 + 合并 main**?——用户待定。
+- [ ] **发现工具真图**:目前复用现有工具图标(toxin_vial/frag_grenade/combat_stim)。要写 Codex asset-spec。
 - [ ] **装备掉落**:set/cursed 专门掉落渠道(首版套装件按 base 稀有度掉、然后渲染成 set 档)。
 - [ ] 事件图 `hooded_stranger`/`fortune_shrine` 勉强搭氛围,可选重做。
+- [ ] discover 修复(glow/tooltip)未 MCP 实拍(没弹窗口),逻辑+编译已验;用户实测中。
 
 ## 决策记录
 
