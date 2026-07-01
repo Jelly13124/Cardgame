@@ -151,9 +151,3 @@ CARD_cowardice_TITLE,Cowardice,怯懦
 CARD_cowardice_DESC,"Unplayable. At the end of your turn while in hand, gain 1 Weak.",无法打出。回合结束时若在手牌中，获得 1 层虚弱。
 CARD_panic_TITLE,Panic,恐慌
 CARD_panic_DESC,"Unplayable. At the end of your turn while in hand, gain 1 Frail.",无法打出。回合结束时若在手牌中，获得 1 层脆弱。
-CARD_scrap_scavenge_TITLE,Scrap Scavenge,废料翻找
-CARD_scrap_scavenge_DESC,Discover a skill.,发现一张技能牌。
-CARD_blood_recipe_TITLE,Blood Recipe,血色配方
-CARD_blood_recipe_DESC,"Discover a Bleed card. It costs 0 this combat.",发现一张流血牌，本场战斗中它的费用为 0。
-CARD_armory_requisition_TITLE,Armory Requisition,军火调拨
-CARD_armory_requisition_DESC,Discover an attack.,发现一张攻击牌。

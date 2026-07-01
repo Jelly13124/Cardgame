@@ -63,22 +63,44 @@ func _build_candidate(card_id: String) -> Control:
 	var card = PLAY_CARD.instantiate()
 	card.scale = Vector2(1.25, 1.25)
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.suppress_playable_glow = true  # candidates aren't hand cards — no "playable" glow
 	holder.add_child(card)
 	var info := _card_info(card_id)
 	card.card_info = info
 	if card.is_node_ready() and card.has_method("set_card_data"):
 		card.set_card_data(info)
-	# A transparent button over the card captures the click + hover.
+	# A transparent button over the card captures the click + hover (the card itself is
+	# mouse-transparent, so its own hover tooltip never fires — we drive it from here).
 	var btn := Button.new()
 	btn.flat = true
 	btn.custom_minimum_size = holder.custom_minimum_size
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	btn.focus_mode = Control.FOCUS_NONE
-	btn.mouse_entered.connect(func() -> void: card.scale = Vector2(1.38, 1.38))
-	btn.mouse_exited.connect(func() -> void: card.scale = Vector2(1.25, 1.25))
+	btn.mouse_entered.connect(
+		func() -> void:
+			card.scale = Vector2(1.38, 1.38)
+			_show_keywords(card)
+	)
+	btn.mouse_exited.connect(
+		func() -> void:
+			card.scale = Vector2(1.25, 1.25)
+			Tooltip.hide_if_owner(card.get_instance_id())
+	)
 	btn.pressed.connect(func() -> void: _pick(card_id))
 	holder.add_child(btn)
 	return holder
+
+
+## Pop the card's keyword glossary on hover. The candidate PlayCard is
+## mouse_filter = IGNORE, so its own _on_mouse_entered never fires — mirror it here.
+func _show_keywords(card: Control) -> void:
+	if not card.has_method("_build_keyword_glossary"):
+		return
+	var glossary: String = card._build_keyword_glossary()
+	if glossary == "":
+		return
+	var rect := card.get_global_rect()
+	Tooltip.show(glossary, rect.position + Vector2(rect.size.x * 0.5, 0), card.get_instance_id())
 
 
 func _card_info(card_id: String) -> Dictionary:
