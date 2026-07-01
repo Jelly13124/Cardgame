@@ -24,6 +24,8 @@ const TYPE_BADGE_PATH = UI_ASSET_PATH + "card_type_badge.png"
 
 var _hover_tween: Tween
 var _glow_tween: Tween
+## Discover candidates aren't hand cards — suppress the "can I afford it" glow.
+var suppress_playable_glow: bool = false
 
 var _rarity_frames: Dictionary = {}
 
@@ -638,6 +640,9 @@ func _build_keyword_glossary() -> String:
 ## Toggles the "can afford" glow and pulse animation.
 func update_playable(current_energy: int) -> void:
 	if not is_instance_valid(playable_glow):
+		return
+	if suppress_playable_glow:
+		playable_glow.visible = false
 		return
 
 	var cost = int(card_info.get("cost", 0))
