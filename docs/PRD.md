@@ -513,9 +513,10 @@ Spec: `docs/superpowers/specs/2026-06-30-discover-mechanic-design.md`; plan: `�
   full-screen 3-choose-1 popup) + `discover_pool.gd` (filters candidates by card type or by a
   theme tag like `bleed`). The picked card enters the **current hand for this combat only**;
   optional `free` makes it cost 0 this combat (a `cost_override` card meta).
-- ✅ **3 demo discover cards** (`scrap_scavenge` / `blood_recipe` / `armory_requisition`) + **3
-  discover tools** (`blood_kit` / `munitions_crate` / `field_kit`) — tools route through the same
-  `combat_engine._apply_effect`, so they share the discover plumbing.
+- ✅ **3 discover tools** (`blood_kit` bleed-free / `munitions_crate` attack / `field_kit` skill)
+  trigger discover; they route through the same `combat_engine._apply_effect` as any card. (Demo
+  discover *cards* were prototyped then **removed 2026-07-01** — discover is **tool-only** now, to
+  drop the card/tool redundancy and not tax the single tool slot.)
 
 ### ✅ Phase 9 — Demo Polish (shipped 2026-06-24)
 Spec: `docs/superpowers/specs/2026-06-24-demo-polish-overnight-design.md`. Driven by a 4-dimension demo review.
