@@ -3,17 +3,21 @@
 ## battle). Three modes:
 ##   MODE_MAP    — in-run map: full editable equipment + backpack (drag/drop/click)
 ##   MODE_BATTLE — in battle: the same layout, read-only (cells locked)
-##   MODE_BASE   — home base: stub for now, built in a later task
-## Layout (fits the fixed 880x640 window): LEFT character portrait + attributes /
-## MIDDLE the 5 equipment slots / RIGHT tool-slot row + backpack grid, plus a
-## bottom strip with active sets + relics. Listens to RunManager state signals
-## for live refresh; the window is freed on close, which drops the connections.
+##   MODE_BASE   — home base: hero picker + next-run loadout (drag stash gear onto
+##                 the 5 slots → RunManager.pending_equipped) + stash carry-marks
+##                 (left-click → RunManager.pending_loadout)
+## Map/battle layout (fits the fixed 880x640 window): LEFT character portrait +
+## attributes / MIDDLE the 5 equipment slots / RIGHT tool-slot row + backpack
+## grid, plus a bottom strip with active sets + relics. Listens to RunManager
+## state signals for live refresh; the window is freed on close, which drops the
+## connections.
 extends "res://run_system/ui/window/draggable_window.gd"
 
 const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 const BACKPACK_CELL = preload("res://run_system/ui/backpack_cell.gd")
 const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
 const HERO_SPRITE_DIR := "res://battle_scene/assets/images/heroes/"
+const HERO_DIR := "res://run_system/data/heroes/"
 
 const MODE_BASE := "base"
 const MODE_MAP := "map"
@@ -21,8 +25,9 @@ const MODE_BATTLE := "battle"
 
 const WIN_SIZE := Vector2(880, 640)
 const GRID_COLUMNS := 5
+const STASH_COLUMNS := 8  # base-mode stash grid
 const SLOT_CELL_SIZE := Vector2(60, 60)  # equipment slots + tool cells
-const GRID_CELL_SIZE := Vector2(56, 56)  # backpack grid cells
+const GRID_CELL_SIZE := Vector2(56, 56)  # backpack + stash grid cells
 const SLOT_LETTERS := {"head": "H", "chest": "C", "weapon": "W", "hands": "Hd", "accessory": "Ac"}
 
 var mode: String = MODE_MAP
@@ -40,6 +45,14 @@ var _inv_title: Label
 var _sets_container: VBoxContainer
 var _relics_container: HFlowContainer
 var _status_label: Label
+
+# --- base-mode state ---
+## Body VBox of the base page, rebuilt wholesale on every _refresh_base.
+var _base_box: VBoxContainer
+## Stash indices the player marked to carry into the next run's backpack
+## (rebuilt into RunManager.pending_loadout on every toggle). Ported from the
+## old home_base_scene StashOverlay; reset when the window closes.
+var _stash_selected: Array[int] = []
 
 
 ## Toggle-open the character window on `host`'s WindowLayer: if one is already
@@ -64,6 +77,18 @@ func _ready() -> void:
 	match mode:
 		MODE_BASE:
 			_build_base()
+			# Stash / building mutations surface through these MetaProgress signals
+			# (the same set warehouse_screen's base wires its refresh to — there is
+			# no dedicated stash_changed signal). Guarded against duplicate
+			# connects; queue_free on close drops them automatically.
+			if not MetaProgress.buildings_changed.is_connected(_refresh_base):
+				MetaProgress.buildings_changed.connect(_refresh_base)
+			if not MetaProgress.core_changed.is_connected(_on_meta_currency_changed):
+				MetaProgress.core_changed.connect(_on_meta_currency_changed)
+			if not MetaProgress.caps_changed.is_connected(_on_meta_currency_changed):
+				MetaProgress.caps_changed.connect(_on_meta_currency_changed)
+			if not MetaProgress.scrap_changed.is_connected(_on_meta_currency_changed):
+				MetaProgress.scrap_changed.connect(_on_meta_currency_changed)
 		_:
 			_build_map_battle()
 			# Guarded connects: _ready runs once per window, but keep it re-entry
@@ -81,15 +106,422 @@ func _ready() -> void:
 			_refresh()
 
 
-## Home-base variant — placeholder until the base-mode task lands.
+## Home-base variant — the pre-run loadout board, ported from warehouse_screen's
+## loadout board + the old home_base_scene StashOverlay:
+##   TOP    hero picker → RunManager.pending_hero_id
+##   MIDDLE the 5 equipment slots as drop targets → RunManager.pending_equipped
+##   BOTTOM the permanent stash grid (MetaProgress.stash). Two interactions per
+##          cell: DRAG onto a matching slot = start the run wearing it (the entry
+##          stays in stash data but is HIDDEN from the grid while assigned;
+##          start_new_run removes it exactly once) / LEFT-CLICK = toggle the
+##          "carry into the next run's backpack" mark (green border; rebuilds
+##          RunManager.pending_loadout).
 func _build_base() -> void:
-	var placeholder := Label.new()
-	placeholder.text = "TODO: base mode"
-	placeholder.add_theme_color_override("font_color", Color(0.65, 0.6, 0.5))
-	placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	placeholder.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	placeholder.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	content_root.add_child(placeholder)
+	var margin := MarginContainer.new()
+	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		margin.add_theme_constant_override(side, 12)
+	content_root.add_child(margin)
+	_base_box = VBoxContainer.new()
+	_base_box.add_theme_constant_override("separation", 8)
+	margin.add_child(_base_box)
+	_refresh_base()
+
+
+func _on_meta_currency_changed(_v: int) -> void:
+	_refresh_base()
+
+
+## Rebuild the whole base-mode body (cheap: one picker row + 5 slots + the stash
+## grid). Old children are removed immediately (not just queue_freed) so the
+## fixed-size window never shows a frame of doubled content.
+func _refresh_base() -> void:
+	if not is_instance_valid(_base_box):
+		return
+	# Prune carry-marks that no longer point at a stash entry (the stash can
+	# shrink under us — e.g. another screen consumed items).
+	var pruned := false
+	for i in range(_stash_selected.size() - 1, -1, -1):
+		if _stash_selected[i] >= MetaProgress.stash.size():
+			_stash_selected.remove_at(i)
+			pruned = true
+	if pruned:
+		_rebuild_pending_loadout()
+	for child in _base_box.get_children():
+		_base_box.remove_child(child)
+		child.queue_free()
+
+	# ── TOP: hero picker ──
+	_base_box.add_child(_section_title(tr("UI_WAREHOUSE_HERO_TITLE")))
+	_base_box.add_child(_build_base_hero_picker())
+
+	# ── MIDDLE: the 5 equipment slots (drop targets → pending_equipped) ──
+	_base_box.add_child(HSeparator.new())
+	_base_box.add_child(_section_title(tr("UI_WAREHOUSE_SLOTS_HEADER")))
+	var slot_row := HBoxContainer.new()
+	slot_row.add_theme_constant_override("separation", 8)
+	for slot in RunManager.EQUIPMENT_SLOTS:
+		slot_row.add_child(_make_base_slot_column(slot))
+	_base_box.add_child(slot_row)
+
+	# ── BOTTOM: stash grid (8 columns; scrolls when the cap outgrows the window) ──
+	_base_box.add_child(HSeparator.new())
+	var available := _available_stash_indices()
+	var cap := MetaProgress.effective_stash_cap()
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 16)
+	head.add_child(
+		_section_title(tr("UI_WAREHOUSE_STASH_HEADER").format({"n": available.size(), "cap": cap}))
+	)
+	var carry_lbl := Label.new()
+	carry_lbl.text = tr("UI_HOME_STASH_SELECTED").format({"n": _stash_selected.size()})
+	carry_lbl.add_theme_font_size_override("font_size", 14)
+	carry_lbl.add_theme_color_override("font_color", Color(0.55, 0.95, 0.6))
+	head.add_child(carry_lbl)
+	_base_box.add_child(head)
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_base_box.add_child(scroll)
+	var grid := GridContainer.new()
+	grid.columns = STASH_COLUMNS
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 6)
+	scroll.add_child(grid)
+	for i in available:
+		grid.add_child(_make_base_stash_cell(i))
+	# Render the FULL capacity (filled cells first, then empty frames) so vacant
+	# space reads as slots waiting to be filled.
+	for _e in range(maxi(0, cap - available.size())):
+		grid.add_child(_make_empty_stash_cell())
+
+	var hint := Label.new()
+	hint.text = "%s %s" % [tr("UI_WAREHOUSE_LOADOUT_HINT"), tr("UI_HOME_STASH_HINT")]
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.add_theme_font_size_override("font_size", 12)
+	hint.add_theme_color_override("font_color", Color(0.65, 0.6, 0.5))
+	_base_box.add_child(hint)
+
+
+# --- base mode: hero picker -------------------------------------------------
+
+
+## Compact hero picker (ported from warehouse_screen): one framed portrait tile
+## per hero JSON under run_system/data/heroes/; click selects.
+func _build_base_hero_picker() -> Control:
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 10)
+	flow.add_theme_constant_override("v_separation", 10)
+	for hero_id in _list_hero_ids():
+		# DEMO BUILD: only the allowed heroes appear (mirrors the warehouse picker;
+		# the full roster returns when RunManager.DEMO_BUILD is flipped off).
+		if RunManager.DEMO_BUILD and not (hero_id in RunManager.DEMO_ALLOWED_HEROES):
+			continue
+		flow.add_child(_build_base_hero_tile(hero_id))
+	return flow
+
+
+## One hero tile: framed portrait + name; the selected hero gets a green border
+## and ● mark. A flat full-rect button routes the click (only when not selected).
+func _build_base_hero_tile(hero_id: String) -> Control:
+	var data := _load_hero(hero_id)
+	var hero_name := Settings.t("HERO_%s_NAME" % hero_id, str(data.get("name", hero_id)))
+	var selected := str(RunManager.current_hero_id) == hero_id
+	var border := Color(0.45, 0.78, 0.42) if selected else Color(0.5, 0.4, 0.26)
+	var tile := PanelContainer.new()
+	tile.custom_minimum_size = Vector2(104, 0)
+	tile.add_theme_stylebox_override(
+		"panel", T.panel_with_shadow(Color(0.12, 0.10, 0.075, 0.95), border, 3, 2)
+	)
+	var m := MarginContainer.new()
+	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		m.add_theme_constant_override(s, 6)
+	tile.add_child(m)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 4)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	m.add_child(col)
+
+	var avatar := TextureRect.new()
+	avatar.custom_minimum_size = Vector2(72, 72)
+	avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	avatar.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	avatar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var tex := _load_portrait(str(data.get("sprite_id", hero_id)))
+	if tex:
+		avatar.texture = tex
+	col.add_child(avatar)
+
+	var name_lbl := Label.new()
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	name_lbl.text = ("● %s" % hero_name) if selected else hero_name
+	name_lbl.add_theme_font_size_override("font_size", 13)
+	name_lbl.add_theme_color_override(
+		"font_color", Color(0.55, 0.85, 0.5) if selected else Color(0.92, 0.86, 0.66)
+	)
+	col.add_child(name_lbl)
+
+	if not selected:
+		var click := Button.new()
+		click.flat = true
+		click.focus_mode = Control.FOCUS_NONE
+		click.set_anchors_preset(Control.PRESET_FULL_RECT)
+		click.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		click.pressed.connect(_on_base_hero_picked.bind(hero_id))
+		tile.add_child(click)
+	return tile
+
+
+## Persist the pick: start_new_run reads pending_hero_id when no explicit hero is
+## passed; current_hero_id makes the selected marker reflect it immediately
+## (mirrors warehouse_screen._on_hero_picked).
+func _on_base_hero_picked(hero_id: String) -> void:
+	RunManager.pending_hero_id = hero_id
+	RunManager.current_hero_id = hero_id
+	AudioManager.play_sfx("ui_click")
+	_refresh_base()
+
+
+func _list_hero_ids() -> Array[String]:
+	var ids: Array[String] = []
+	var dir := DirAccess.open(HERO_DIR)
+	if dir == null:
+		return ids
+	for file_name in dir.get_files():
+		if file_name.ends_with(".json"):
+			ids.append(file_name.get_basename())
+	ids.sort()
+	return ids
+
+
+func _load_hero(hero_id: String) -> Dictionary:
+	var path := HERO_DIR + hero_id + ".json"
+	if not FileAccess.file_exists(path):
+		return {}
+	var f := FileAccess.open(path, FileAccess.READ)
+	if not f:
+		return {}
+	var raw := f.get_as_text()
+	f.close()
+	var parsed = JSON.parse_string(raw)
+	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
+
+
+# --- base mode: equipment slots (→ pending_equipped) ------------------------
+
+
+## One equip slot as a compact column: a BackpackCell drop target (EquipmentIcon
+## cosmetic child) over a name label. Shows the item queued in
+## pending_equipped[slot]; drag-accepts a matching-slot stash item; click or
+## drag-off unequips (the item returns to the stash grid).
+func _make_base_slot_column(slot: String) -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 3)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var center := CenterContainer.new()
+	col.add_child(center)
+	var cell = _new_cell(SLOT_CELL_SIZE)
+	cell.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var icon = EQUIPMENT_ICON.new()
+	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cell.add_child(icon)
+	center.add_child(cell)
+
+	var s := slot
+	cell.can_accept = func(data): return data.get("src") == "stash" and data.get("slot") == s
+	cell.perform_drop = func(data): _assign_to_slot(s, data.get("entry"))
+
+	var label := Label.new()
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.clip_text = true
+	label.add_theme_font_size_override("font_size", 12)
+	col.add_child(label)
+
+	var queued: Variant = RunManager.pending_equipped.get(slot, null)
+	var inst: Dictionary = RunManager.as_equip_instance(queued) if queued != null else {}
+	if inst.is_empty():
+		icon.set_empty(slot)
+		cell.drag_payload = {}
+		cell.hover_tip = "[b]%s[/b]\n%s" % [_slot_label(slot), tr("UI_EQUIP_EMPTY_SLOT")]
+		label.text = "%s: %s" % [_slot_label(slot), tr("UI_EQUIP_EMPTY")]
+		label.add_theme_color_override("font_color", Color(0.72, 0.66, 0.52))
+	else:
+		var base_id: String = RunManager.equip_base(inst)
+		var data: Dictionary = RunManager.get_equipment_data(base_id)
+		var item_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
+		icon.set_equipment(
+			slot, item_name, str(data.get("sprite", "")), str(data.get("rarity", "common"))
+		)
+		# Filled slot is draggable back off (drop on any stash cell = unequip).
+		cell.drag_payload = {"src": "slot", "slot": slot}
+		cell.preview_text = str(SLOT_LETTERS.get(slot, "?"))
+		cell.preview_color = Color(1.0, 0.86, 0.4)
+		cell.preview_tex = _load_equip_tex(str(data.get("sprite", "")))
+		cell.hover_tip = _build_equipment_tooltip(data, slot, inst)
+		cell.click_handler = func(btn):
+			if btn == MOUSE_BUTTON_LEFT:
+				_unassign_slot(s)
+		label.text = "%s: %s" % [_slot_label(slot), item_name]
+		label.add_theme_color_override("font_color", Color(0.90, 0.84, 0.64))
+	return col
+
+
+## Mark stash `entry` as the run's starting item for `slot` (warehouse semantics:
+## pending_equipped just references it — the entry is NOT removed from stash data;
+## a previously queued item simply returns to the grid). Re-validates the item's
+## JSON slot. An assigned item also loses its carry-mark (if any) so the same
+## stash entry can't be consumed twice by start_new_run.
+func _assign_to_slot(slot: String, entry: Variant) -> void:
+	if entry == null or not slot in RunManager.EQUIPMENT_SLOTS:
+		return
+	var inst: Dictionary = RunManager.as_equip_instance(entry)
+	if inst.is_empty():
+		return
+	var base_id: String = RunManager.equip_base(inst)
+	var data: Dictionary = RunManager.get_equipment_data(base_id)
+	if str(data.get("slot", "")) != slot:
+		return  # slot mismatch — ignore
+	RunManager.pending_equipped[slot] = entry
+	for i in _stash_selected:
+		if i < MetaProgress.stash.size() and MetaProgress.stash[i] == entry:
+			_stash_selected.erase(i)
+			_rebuild_pending_loadout()
+			break
+	_refresh_base()
+
+
+## Clear the queued item from `slot` (it returns to the available stash grid).
+func _unassign_slot(slot: String) -> void:
+	if RunManager.pending_equipped.has(slot):
+		RunManager.pending_equipped.erase(slot)
+		_refresh_base()
+
+
+## Indices into MetaProgress.stash of entries NOT currently assigned to a slot —
+## an assigned item shows in its slot but is hidden from the grid, so it cannot
+## also be marked elsewhere. Matches by VALUE against pending_equipped, consuming
+## one assignment per stash entry (handles duplicate gear). Ported verbatim from
+## warehouse_screen.gd.
+func _available_stash_indices() -> Array[int]:
+	var assigned: Array = RunManager.pending_equipped.values()
+	var taken: Array[int] = []  # assignment indices already consumed by a stash entry
+	var out: Array[int] = []
+	for i in range(MetaProgress.stash.size()):
+		var entry: Variant = MetaProgress.stash[i]
+		if RunManager.as_equip_instance(entry).is_empty():
+			continue
+		var matched := false
+		for a in range(assigned.size()):
+			if a in taken:
+				continue
+			if assigned[a] == entry:
+				taken.append(a)
+				matched = true
+				break
+		if not matched:
+			out.append(i)
+	return out
+
+
+# --- base mode: stash grid + carry-marks (→ pending_loadout) -----------------
+
+
+## One stash cell — TWO interactions:
+##   DRAG onto a matching slot → equip for the next run (see _assign_to_slot);
+##   LEFT-CLICK (a click that never becomes a drag) → toggle the carry-mark.
+## Also a drop target for a slot item dragged back off (unequip).
+func _make_base_stash_cell(stash_index: int) -> Control:
+	var entry: Variant = MetaProgress.stash[stash_index]
+	var inst: Dictionary = RunManager.as_equip_instance(entry)
+	var base_id: String = RunManager.equip_base(inst)
+	var data: Dictionary = RunManager.get_equipment_data(base_id)
+	var slot := str(data.get("slot", "head"))
+	var item_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
+
+	var cell = _new_cell(GRID_CELL_SIZE)
+	cell.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var icon = EQUIPMENT_ICON.new()
+	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.set_equipment(
+		slot, item_name, str(data.get("sprite", "")), str(data.get("rarity", "common"))
+	)
+	cell.add_child(icon)
+
+	cell.hover_tip = (
+		"%s\n[color=#9fd0ff]%s[/color]"
+		% [_build_equipment_tooltip(data, slot, inst), tr("UI_HOME_STASH_HINT")]
+	)
+	# The payload carries the actual stash entry so the slot can mark it directly.
+	cell.drag_payload = {"src": "stash", "slot": slot, "entry": entry}
+	cell.preview_text = str(SLOT_LETTERS.get(slot, "?"))
+	cell.preview_color = Color(1.0, 0.86, 0.4)
+	cell.preview_tex = _load_equip_tex(str(data.get("sprite", "")))
+	# Accept a slot item dragged back here (unequip to the stash).
+	cell.can_accept = func(d): return d.get("src") == "slot"
+	cell.perform_drop = func(d): _unassign_slot(str(d.get("slot", "")))
+	var idx := stash_index
+	cell.click_handler = func(btn):
+		if btn == MOUSE_BUTTON_LEFT:
+			_toggle_stash_select(idx)
+	if stash_index in _stash_selected:
+		_add_carry_border(cell)
+	return cell
+
+
+## A recessed empty stash cell — vacant capacity reads as slots, not blank space.
+func _make_empty_stash_cell() -> Control:
+	var cell := Panel.new()
+	cell.custom_minimum_size = GRID_CELL_SIZE
+	cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.07, 0.06, 0.05, 0.55)
+	style.border_color = Color(0.34, 0.28, 0.20, 0.85)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(6)
+	cell.add_theme_stylebox_override("panel", style)
+	return cell
+
+
+## Overlay a green border on a carry-marked stash cell (visual only; ignores mouse).
+func _add_carry_border(cell: Control) -> void:
+	var border := Panel.new()
+	border.set_anchors_preset(Control.PRESET_FULL_RECT)
+	border.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0, 0, 0, 0)
+	sb.border_color = Color(0.45, 1.0, 0.5)
+	sb.set_border_width_all(3)
+	sb.set_corner_radius_all(2)
+	border.add_theme_stylebox_override("panel", sb)
+	cell.add_child(border)
+
+
+## Toggle whether stash item `index` is carried into the next run's backpack,
+## keeping RunManager.pending_loadout in sync. Capped at the usable backpack
+## size. Ported from home_base_scene._toggle_stash_select.
+func _toggle_stash_select(index: int) -> void:
+	if index in _stash_selected:
+		_stash_selected.erase(index)
+	elif _stash_selected.size() < RunManager.effective_backpack_size():
+		_stash_selected.append(index)
+	_rebuild_pending_loadout()
+	_refresh_base()
+
+
+## Rebuild pending_loadout from the carry-marks, pushing the actual stash entries
+## (instance dicts, or legacy strings) so rolled affixes travel into the run intact.
+func _rebuild_pending_loadout() -> void:
+	RunManager.pending_loadout.clear()
+	for i in _stash_selected:
+		if i < MetaProgress.stash.size():
+			RunManager.pending_loadout.append(MetaProgress.stash[i])
 
 
 func _on_health_changed(_current: int, _maximum: int) -> void:

@@ -1,7 +1,8 @@
 ## Home base scene — the boot scene + post-run return point.
-## Shows the Core/Caps/Scrap balance bar, the 5 building selector tiles, the
-## stash/loadout button, START NEW RUN, and the recent-runs panel. The base's
-## actual functions now live in the per-building screens (run_system/ui/buildings/).
+## Shows the Core/Caps/Scrap balance bar, the 5 building selector tiles,
+## START NEW RUN, and the recent-runs panel; `i` opens the floating character
+## window (hero pick + next-run loadout + stash carry-marks). The base's actual
+## functions now live in the per-building screens (run_system/ui/buildings/).
 extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
@@ -11,7 +12,7 @@ const PAUSE_PANEL = preload("res://run_system/ui/pause_panel.gd")
 ## Fallback hero when no Warehouse selection has been made — the base hero, always
 ## available. Keeps START NEW RUN robust (a run never begins with an empty hero).
 const DEFAULT_HERO_ID := "cowboy_bill"
-const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
+const CHARACTER_WINDOW = preload("res://run_system/ui/window/character_window.gd")
 const BUILDING_SCREEN_BASE = preload("res://run_system/ui/buildings/building_screen_base.gd")
 ## Building selector order + per-building accent color. The tile art lives under
 ## run_system/assets/images/home/buildings/.
@@ -43,10 +44,6 @@ var _building_area: HBoxContainer
 ## Container holding the interactive building sprites + plaques (lock / tier badges).
 ## Freed + rebuilt on buildings_changed so unlock / tier-up repaints live.
 var _buildings_root: Control
-## Stash indices the player has marked to carry into the next run (rebuilt into
-## RunManager.pending_loadout on every toggle). Reset when the scene reloads.
-var _stash_selected: Array[int] = []
-var _stash_rebuild: Callable = Callable()
 
 
 func _ready() -> void:
@@ -63,27 +60,43 @@ func _ready() -> void:
 	MetaProgress.buildings_changed.connect(_add_building_sprites)
 
 
-## ESC opens the unified pause/settings panel (mirrors map_scene's ui_cancel → pause
-## wiring). Guarded so it doesn't double-open if a panel is already up, and defers to
-## any full-page overlay currently open (BuildingOverlay owns its own ESC — it backs
-## out to this overview first; StashOverlay/TierConfirm/RulesLayer are simple popups
-## without their own ESC handler, so ESC here would otherwise fall through to Settings
-## while one is open — skip in that case too so a stray ESC doesn't stack panels).
+## `i` toggles the floating character window (hero / loadout / stash); ESC opens
+## the unified pause/settings panel (mirrors map_scene's ui_cancel → pause
+## wiring). Both are guarded against the full-page overlays / popups: ESC doesn't
+## double-open if a panel is already up and defers to any overlay currently open
+## (BuildingOverlay owns its own ESC — it backs out to this overview first;
+## TierConfirm/RulesLayer are simple popups without their own ESC handler, so ESC
+## here would otherwise fall through to Settings while one is open — skip in that
+## case too so a stray ESC doesn't stack panels). The character window shouldn't
+## open under those overlays either, so KEY_I shares the same guard set.
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_I:
+		if _overlay_blocking():
+			return
+		get_viewport().set_input_as_handled()
+		_open_character_window()
+		return
 	if not event.is_action_pressed("ui_cancel"):
 		return
 	if get_node_or_null("PauseLayer") != null:
 		return  # already open
 	if get_node_or_null("BuildingOverlay") != null:
 		return  # the building screen's own _unhandled_input handles ESC first
-	if (
-		get_node_or_null("StashOverlay") != null
-		or get_node_or_null("TierConfirm") != null
-		or get_node_or_null("RulesLayer") != null
-	):
+	if get_node_or_null("TierConfirm") != null or get_node_or_null("RulesLayer") != null:
 		return  # let the open popup own ESC (none currently bind it; avoid stacking)
 	get_viewport().set_input_as_handled()
 	_open_pause()
+
+
+## True while a full-page overlay / popup is up (the same set the ESC guards
+## check one by one above).
+func _overlay_blocking() -> bool:
+	return (
+		get_node_or_null("PauseLayer") != null
+		or get_node_or_null("BuildingOverlay") != null
+		or get_node_or_null("TierConfirm") != null
+		or get_node_or_null("RulesLayer") != null
+	)
 
 
 func _build() -> void:
@@ -790,133 +803,12 @@ func _open_building_screen(building_id: String) -> void:
 	add_child(screen)
 
 
-## Stash & loadout overlay: shows the permanent equipment stash; left-click an
-## item to mark it for the next run (rebuilt into RunManager.pending_loadout).
-func _open_stash() -> void:
-	if get_node_or_null("StashOverlay") != null:
-		return
-	var layer := CanvasLayer.new()
-	layer.name = "StashOverlay"
-	layer.layer = 130
-	add_child(layer)
-
-	var overlay := ColorRect.new()
-	overlay.color = Color(0.0, 0.0, 0.0, 0.66)
-	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	layer.add_child(overlay)
-
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	layer.add_child(center)
-
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(940, 620)
-	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
-	center.add_child(panel)
-
-	var margin := MarginContainer.new()
-	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		margin.add_theme_constant_override(side, 24)
-	panel.add_child(margin)
-
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 12)
-	margin.add_child(box)
-
-	var title := Label.new()
-	title.text = TranslationServer.translate("UI_HOME_STASH")
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 30)
-	title.add_theme_color_override("font_color", Color(1.0, 0.86, 0.48))
-	box.add_child(title)
-
-	var hint := Label.new()
-	hint.text = TranslationServer.translate("UI_HOME_STASH_HINT")
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.add_theme_color_override("font_color", Color(0.8, 0.74, 0.6))
-	box.add_child(hint)
-
-	var count_lbl := Label.new()
-	count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	count_lbl.add_theme_color_override("font_color", Color(0.6, 1.0, 0.6))
-	box.add_child(count_lbl)
-
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.custom_minimum_size = Vector2(0, 380)
-	box.add_child(scroll)
-	var grid := GridContainer.new()
-	grid.columns = 6
-	grid.add_theme_constant_override("h_separation", 10)
-	grid.add_theme_constant_override("v_separation", 10)
-	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(grid)
-
-	_stash_rebuild = func() -> void:
-		if not is_instance_valid(grid) or not is_instance_valid(count_lbl):
-			return
-		for c in grid.get_children():
-			c.queue_free()
-		var st: Array = MetaProgress.stash
-		if st.is_empty():
-			var empty := Label.new()
-			empty.text = TranslationServer.translate("UI_HOME_STASH_EMPTY")
-			empty.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
-			grid.add_child(empty)
-		else:
-			for i in range(st.size()):
-				# Stash entries may be instances or legacy strings; resolve the
-				# display base id tolerantly.
-				grid.add_child(_make_stash_cell(int(i), RunManager.equip_base(st[i])))
-		count_lbl.text = TranslationServer.translate("UI_HOME_STASH_SELECTED").format(
-			{"n": _stash_selected.size()}
-		)
-	_stash_rebuild.call()
-
-	var close := Button.new()
-	close.text = TranslationServer.translate("SETTINGS_RESUME")
-	close.custom_minimum_size = Vector2(300, 44)
-	close.pressed.connect(layer.queue_free)
-	box.add_child(close)
-
-
-func _make_stash_cell(index: int, item_id: String) -> Control:
-	var data = RunManager.get_equipment_data(item_id)
-	var slot := str(data.get("slot", "head"))
-	var item_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
-	var icon := EQUIPMENT_ICON.new()
-	icon.custom_minimum_size = Vector2(76, 76)
-	icon.set_equipment(
-		slot, item_name, str(data.get("sprite", "")), str(data.get("rarity", "common"))
-	)
-	icon.set_hover_tooltip("[b]%s[/b]" % item_name)
-	icon.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	if index in _stash_selected:
-		icon.modulate = Color(0.5, 1.0, 0.5)
-	icon.gui_input.connect(
-		func(ev: InputEvent) -> void:
-			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
-				_toggle_stash_select(index)
-	)
-	return icon
-
-
-## Toggle whether stash item `index` is carried into the next run, keeping
-## RunManager.pending_loadout in sync. Capped at the usable backpack size.
-func _toggle_stash_select(index: int) -> void:
-	if index in _stash_selected:
-		_stash_selected.erase(index)
-	elif _stash_selected.size() < RunManager.effective_backpack_size():
-		_stash_selected.append(index)
-	RunManager.pending_loadout.clear()
-	for i in _stash_selected:
-		if i < MetaProgress.stash.size():
-			# Push the actual stash entry (instance dict, or legacy string) so
-			# its rolled affixes travel into the run intact.
-			RunManager.pending_loadout.append(MetaProgress.stash[i])
-	if _stash_rebuild.is_valid():
-		_stash_rebuild.call()
+## Toggle the floating character window in base mode — hero picker, next-run
+## equipment loadout (→ RunManager.pending_equipped) and stash carry-marks
+## (→ RunManager.pending_loadout). Replaces the old StashOverlay popup, whose
+## select-to-carry logic now lives inside the window.
+func _open_character_window() -> void:
+	CHARACTER_WINDOW.open_window(self, "base")
 
 
 ## START NEW RUN launches the run directly (the hero-select screen was removed).
