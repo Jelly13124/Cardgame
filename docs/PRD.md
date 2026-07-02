@@ -434,7 +434,7 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 - ✅ Relic system: passive run effects, JSON-driven (RelicEffectSystem)
 - ✅ Shop scene (merchant node): 3 cards + 3 tools + 3 relics + remove-card service (75g) — equipment is no longer sold
 - ✅ Rest site: choice between Heal 25% HP and Upgrade a Card (opens `card_upgrade_modal.gd`)
-- ✅ Card upgrade system: in-run per-card upgrades resolved by `card_upgrade.gd` (deck entries carry an `upgraded` flag, applied at battle start). The interim gem-socket system that briefly replaced upgrades was removed 2026-07-02.
+- ✅ Card upgrade system: in-run per-card upgrades resolved by `card_upgrade.gd` (deck entries carry an `upgraded` flag, applied at battle start). **Hybrid model**: a card either carries a bespoke `upgrade` block (overrides any of cost/title/description/effects; effects = full replacement) or falls back to a generic numeric formula (`deal_damage` +2, `gain_block` +3, attribute/energy gains +1, `apply_status` stacks +1, `draw_cards` +1); **curses are never upgradeable**. Growth axes: rest campfire = heal-or-upgrade-a-card; elites give a card + Luck-scaled equipment (no gem); boss gives a guaranteed rare relic/equipment. The interim gem-socket system that briefly replaced upgrades was removed 2026-07-02. _(Deferred: 力量流档案扩充 — a broader Strength-archetype profile expansion is a future pass, not in this refactor.)_
 - ✅ Character info panel (map screen): HP / Gold / Floor + equipment slots + inventory + active sets + relics + stats — one consolidated view
 
 ### 🟡 Phase 4 — Base Building & Meta-Progression (MVP shipped 2026-05-25)

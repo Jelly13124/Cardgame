@@ -39,6 +39,43 @@ Optional: `description`, `front_image`, `side`, `rarity` (`common|uncommon|rare|
 
 **Curse cards** (`type: "curse"`, `rarity: "curse"`) are unplayable penalty cards. They MUST set `"unplayable": true`, and may carry `"end_turn_in_hand": [<effect>, …]` — effects applied **to the player** at the end of every turn the card sits in hand (the penalty; each entry reuses the card effect vocabulary). Excluded from every normal card pool; injected by enemies (temporary — shuffled into the combat draw pile) and by events (permanent — into the run deck, clearable at the shop's card-removal service).
 
+#### The optional `upgrade` block (in-run card upgrades)
+
+Cards grow **in-run** via the rest-campfire upgrade picker. `run_system/core/card_upgrade.gd` (`resolve()`) is the source of truth; `deck_manager.gd` applies it at battle start when a `player_deck` entry's `upgraded` flag is set. There are **no `_plus` variant JSON files** — a card has at most one JSON, plus an optional upgrade rule inside it.
+
+A card may carry an optional top-level `"upgrade"` dict that **overrides** the base card when upgraded:
+
+```json
+{
+  "name": "charged_shot", "type": "attack", "cost": 1,
+  "effects": [ { "type": "deal_damage_str_mult", "mult": 2 }, { "type": "exhaust_self" } ],
+  "upgrade": {
+    "cost": 0,                                  // optional — overrides cost
+    "title": "Charged Shot+",                   // optional — overrides title
+    "description": "Deal 3× your Strength. Exhaust.",  // optional — overrides description
+    "effects": [                                // optional — FULL replacement of effects[]
+      { "type": "deal_damage_str_mult", "mult": 3 }, { "type": "exhaust_self" }
+    ]
+  }
+}
+```
+
+- Every `upgrade` field is optional; any subset may be present. `effects`, if present, **replaces** the whole base `effects[]` (it is not merged).
+- **No `upgrade` block → generic formula fallback.** `resolve()` bumps only the unambiguously-beneficial numeric fields; everything else is left unchanged, which is the signal that a card needs a bespoke block. Field names match the card JSON: damage/block/stat/draw use `amount`; status applies use `stacks`.
+
+  | Effect type | Field bumped | Δ |
+  |---|---|---|
+  | `deal_damage`, `deal_damage_all` | `amount` | +2 |
+  | `gain_block` | `amount` | +3 |
+  | `gain_strength` / `gain_dexterity` / `gain_luck` / `gain_intelligence` / `gain_energy` | `amount` | +1 |
+  | `apply_status`, `apply_status_all` | `stacks` | +1 |
+  | `draw_cards` | `amount` | +1 |
+  | anything else (`deal_damage_str_mult`, `scale_damage_by_attacks`, `add_card_to_hand`, self-debuff, …) | — | unchanged → route to a bespoke `upgrade` block |
+
+- **Curses are never upgradeable** — cards with `"type": "curse"` are skipped entirely (`is_upgradeable()` returns `false`; the modal dims them and the catalog renders no upgrade line). Do NOT add an `upgrade` block to a curse.
+- `cost` is **only ever** changed by a bespoke `upgrade.cost`; the formula never touches cost.
+- The browsable catalog (`scripts/gen_catalog_html.py`) mirrors this resolver in Python and renders an "Upgraded" panel under each non-curse card — keep the two in sync when the rules change.
+
 ### Enemies
 ```json
 {

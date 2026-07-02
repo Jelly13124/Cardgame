@@ -71,7 +71,7 @@ The old root-level `skills/` workflow docs have been removed. Project convention
     *   *HEAL 25% HP or UPGRADE A CARD (opens `card_upgrade_modal.gd`).*
 
 ### ⬆️ Card Upgrade System
-*   **Upgrade logic**: `run_system/core/card_upgrade.gd` — resolves a card's upgraded `card_info` (bumped cost/description/effects). The gem-socket system was removed; in-run card upgrades are the growth axis.
+*   **Upgrade logic**: `run_system/core/card_upgrade.gd` (upgrade resolver) — `resolve(card_info)` returns the upgraded `card_info` (bumped cost/description/effects). **Hybrid**: a bespoke top-level `upgrade` block overrides cost/title/description/effects (effects = full replacement), else `formula()` bumps beneficial numeric fields (damage +2 / block +3 / attr+energy +1 / status stacks +1 / draw +1); `is_upgradeable()` returns false for curses. Removed the gem-socket system; the gems data dir (`run_system/data/gems/`) is gone. In-run card upgrades are the growth axis.
 *   **Upgrade picker**: `run_system/ui/card_upgrade_modal.gd` — opened from the rest campfire; the player flips ONE deck entry's `upgraded` flag to true (locked for the run). Already-upgraded / non-upgradeable cards are dimmed.
 *   **Mechanic**: `player_deck` entries carry an `upgraded: bool`; `deck_manager.gd` re-applies `CARD_UPGRADE.resolve(card_info)` at battle start when set. `run_deck_viewer_modal.gd` renders the deck (upgraded cards show their upgraded stats).
 
