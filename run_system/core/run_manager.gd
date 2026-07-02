@@ -696,8 +696,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	# Base deck = explicit `starter_deck` arg, else hero JSON's starter_deck, else
 	# DEFAULT_STARTER_DECK. A persistent per-hero starter-deck override (outpost deck
 	# editor) takes precedence over ALL of the above when set (it already encodes the
-	# hero default + ≤2 swaps). Finally the permanent purchased_cards (market card
-	# shop) are appended on top of whichever base/override deck was chosen.
+	# hero default + ≤2 swaps).
 	var deck_to_use: Array = starter_deck
 	if current_hero_data.has("starter_deck") and current_hero_data["starter_deck"] is Array:
 		deck_to_use = current_hero_data["starter_deck"]
@@ -707,9 +706,6 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	if not override.is_empty():
 		deck_to_use = override
 	for card_id in deck_to_use:
-		add_card_to_deck(str(card_id))
-	# Permanent extra cards bought at the market card shop, appended to every run.
-	for card_id in MetaProgress.purchased_cards:
 		add_card_to_deck(str(card_id))
 
 	# Reset resources and health (hero max_health overrides default 50).

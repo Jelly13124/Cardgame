@@ -125,8 +125,6 @@ func _reset_to_defaults() -> void:
 	run_history = []
 	max_ascension = 0
 	tutorial_seen = false
-	unlocked_cards = []
-	purchased_cards = []
 	starter_deck_override = {}
 	stash = []
 	buildings = {}
@@ -158,13 +156,6 @@ var max_ascension: int = 0
 ## True once the player has seen the first-battle tutorial tips. Persisted so the
 ## tips show exactly once across all runs. Set via mark_tutorial_seen().
 var tutorial_seen: bool = false
-## Card ids unlocked beyond the INITIAL_CARD_POOL (added via the Market screen's
-## per-card unlock, MetaProgress.unlock_card).
-var unlocked_cards: Array[String] = []
-## Cards bought (with Caps) at the market T3 card shop. Persistent; appended to
-## the run deck at start_new_run (on TOP of the starter/override deck). Back-compat
-## default []. These are permanent extra deck cards, NOT consumed on use.
-var purchased_cards: Array = []
 ## Per-hero starter-deck override set by the outpost deck editor. hero_id → Array
 ## of card_id Strings (the full, ≤2-swap deck). When non-empty for the run's hero,
 ## start_new_run uses it instead of the hero JSON / DEFAULT_STARTER_DECK. Persistent;
@@ -227,7 +218,7 @@ const BUILDING_DEFS := {
 	{
 		"unlock_cost": 100,
 		"tier_costs": [140, 240],
-		"functions": {"equip_shop": 1, "card_unlock": 1, "better_stock": 2, "card_shop": 3},
+		"functions": {"tool_shop": 1, "equip_shop": 2, "refresh": 3},
 	},
 	"outpost":
 	{
@@ -262,44 +253,6 @@ const DISMANTLE_SCRAP := {"common": 5, "uncommon": 12, "rare": 25}
 const REFORGE_COST := {"common": 15, "uncommon": 30, "rare": 50}
 ## Affix roller (per-instance equipment); used by reforge_stash_item.
 const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
-## Cards available before any are unlocked at the Market. The omitted
-## ids (bone_breaker, last_breath, chain_link, last_stand)
-## unlock via the Market screen's per-card unlock (unlock_card).
-# NOTE: strike + defend are basic starter cards (in hero starter decks) and are
-# deliberately NOT in the reward/draft pool — getting more of them as rewards is
-# pointless and dilutes the pool.
-const INITIAL_CARD_POOL: Array[String] = [
-	"weak_strike",
-	"stun_baton",
-	"hot_swap",
-	"adrenaline",
-	"brace",
-	"siphon",
-	"charged_shot",
-	"cascade",
-	"acid_splash",
-	"focus",
-	"chain_link",
-	"deflector",
-	"spiked_guard",
-	"corrode",
-	"venom_coat",
-	"purge",
-	"smoke_step",
-	# StS2 port — colourless (no attribute lean, draftable by every hero).
-	"rebar_wave",
-	"recoil_shot",
-	"arc_flash",
-	"vent_plating",
-	"brace_protocol",
-	"static_shout",
-	"data_dump",
-	"sweep_arc",
-	"tape_patch",
-	"crowbar_smash",
-	# Build-enabler addition: an in-pool crit-rate source.
-	"lucky_streak",
-]
 
 ## Hero-exclusive draft cards: only offered (loot/shop) when that hero is active, so
 ## a hero's signature cards never roll in another hero's rewards.
@@ -378,53 +331,58 @@ func append_run_history(entry: Dictionary) -> void:
 	save_progress()
 
 
-## Returns the union of INITIAL_CARD_POOL, unlocked_cards, and the ACTIVE hero's
-## exclusive cards (a hero's signature cards are draftable only while he is active).
+## Card directory scanned for the draftable pool (Phase A: all cards draftable
+## by default — no more per-card Market unlock).
+const CARD_DATA_DIR := "res://battle_scene/card_info/player/"
+## Basic starter cards (in hero starter decks) are deliberately excluded from
+## the reward/draft/shop pool — getting more of them as rewards is pointless
+## and dilutes the pool.
+const BASIC_CARD_IDS := ["strike", "defend"]
+
+
+## Every card on disk EXCEPT curses, the basics (strike/defend), and any OTHER
+## hero's exclusive cards (the active hero's own exclusives ARE included).
+## Directory-scanned so newly added card JSON is draftable with no unlock step.
 func get_unlocked_card_pool() -> Array[String]:
-	var pool: Array[String] = INITIAL_CARD_POOL.duplicate()
-	for c in unlocked_cards:
-		if not c in pool:
-			pool.append(c)
+	var pool: Array[String] = []
 	var hero_id: String = str(RunManager.current_hero_id) if RunManager else ""
-	for c in HERO_EXCLUSIVE_CARDS.get(hero_id, []):
-		if not str(c) in pool:
-			pool.append(str(c))
+	var blocked := {}
+	for h in HERO_EXCLUSIVE_CARDS:
+		if h != hero_id:
+			for cid in HERO_EXCLUSIVE_CARDS[h]:
+				blocked[str(cid)] = true
+
+	var dir := DirAccess.open(CARD_DATA_DIR)
+	if dir == null:
+		return pool
+	for file_name in dir.get_files():
+		if not file_name.ends_with(".json"):
+			continue
+		var card_id := file_name.get_basename()
+		if card_id in BASIC_CARD_IDS:
+			continue
+		if blocked.has(card_id):
+			continue
+		var data := _load_card_json(CARD_DATA_DIR + file_name)
+		if str(data.get("type", "")) == "curse":
+			continue
+		pool.append(card_id)
 	return pool
 
 
-## --- Market: card unlock (Core) + card shop (Caps) + starter-deck override ---
+func _load_card_json(path: String) -> Dictionary:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {}
+	var text := file.get_as_text()
+	file.close()
+	var parsed = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return {}
+	return parsed
 
 
-## Spend Core to permanently unlock a card (market T1 card_unlock). Returns false
-## if the id is empty, already unlocked (present in unlocked_cards), already part
-## of the base pool, or Core is insufficient. Cost is a flat 40 Core.
-func unlock_card(id: String) -> bool:
-	if id == "":
-		return false
-	if id in unlocked_cards or id in INITIAL_CARD_POOL:
-		return false
-	if not spend_core(40):  # saves + emits core_changed
-		return false
-	unlocked_cards.append(id)
-	save_progress()
-	emit_signal("upgrades_changed")
-	return true
-
-
-## Spend Caps to buy a card onto the permanent run deck (market T3 card_shop). The
-## bought id is appended to purchased_cards and injected into every future run's
-## deck at start_new_run. Returns false on insufficient Caps. Duplicates are
-## allowed (buying the same card twice adds two copies). Cost is caller-supplied
-## (rarity-priced in the market screen).
-func buy_card_caps(id: String, cost: int) -> bool:
-	if id == "":
-		return false
-	if not spend_caps(cost):  # saves + emits caps_changed
-		return false
-	purchased_cards.append(id)
-	save_progress()
-	emit_signal("upgrades_changed")
-	return true
+## --- Market: starter-deck override ---
 
 
 ## Persist a per-hero starter-deck override (outpost deck editor). `deck` is the
@@ -819,7 +777,6 @@ func reset_all() -> void:
 	facilities.clear()
 	caps_perk_levels.clear()
 	buildings.clear()
-	purchased_cards.clear()
 	starter_deck_override.clear()
 	save_progress()
 	emit_signal("core_changed", core)
@@ -853,8 +810,6 @@ func save_progress() -> void:
 		"caps_perk_levels": caps_perk_levels,
 		"run_history": run_history,
 		"max_ascension": max_ascension,
-		"unlocked_cards": unlocked_cards,
-		"purchased_cards": purchased_cards,
 		"starter_deck_override": starter_deck_override,
 		"stash": stash,
 		"buildings": buildings,
@@ -897,18 +852,9 @@ func load_progress() -> void:
 		run_history = raw_history
 	max_ascension = clampi(int(parsed.get("max_ascension", 0)), 0, ASCENSION_CAP)
 	tutorial_seen = bool(parsed.get("tutorial_seen", false))
-	var raw_unlocked = parsed.get("unlocked_cards", [])
-	if typeof(raw_unlocked) == TYPE_ARRAY:
-		unlocked_cards.clear()
-		for c in raw_unlocked:
-			unlocked_cards.append(str(c))
-	# Back-compat: old saves predate the market card-shop / deck-override. Missing
-	# keys → empty (no purchased cards, no per-hero deck overrides).
-	var raw_purchased = parsed.get("purchased_cards", [])
-	purchased_cards.clear()
-	if typeof(raw_purchased) == TYPE_ARRAY:
-		for c in raw_purchased:
-			purchased_cards.append(str(c))
+	# Back-compat: older saves carry two now-removed keys from the deleted base
+	# card-unlock/card-shop system. Those keys are simply left unread here —
+	# every card is draftable by default now (get_unlocked_card_pool scans disk).
 	var raw_override = parsed.get("starter_deck_override", {})
 	starter_deck_override.clear()
 	if typeof(raw_override) == TYPE_DICTIONARY:

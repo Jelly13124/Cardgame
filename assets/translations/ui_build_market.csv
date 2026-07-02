@@ -1,20 +1,19 @@
 keys,en,zh
 UI_MARKET_CAPS,Caps,瓶盖
 UI_MARKET_CORE,Core,核心
+UI_MARKET_TOOL_SECTION,Tools (Caps),工具(瓶盖)
 UI_MARKET_EQUIP_SECTION,Equipment (Caps),装备(瓶盖)
-UI_MARKET_UNLOCK_SECTION,Unlock Cards (Core),解锁卡牌(核心)
-UI_MARKET_CARD_SHOP_SECTION,Card Shop (Caps),卡牌商店(瓶盖)
+UI_MARKET_REFRESH_SECTION,Refresh Stock (Caps),刷新库存(瓶盖)
 UI_MARKET_BUY_CAPS,"Buy ({n} Caps)","购买({n} 瓶盖)"
-UI_MARKET_UNLOCK_CORE,"Unlock ({n} Core)","解锁({n} 核心)"
 UI_MARKET_BOUGHT,Bought,已购买
-UI_MARKET_UNLOCKED,Unlocked,已解锁
 UI_MARKET_STASH_FULL,Stash Full,仓库已满
 UI_MARKET_EQUIP_EMPTY,No equipment in stock.,暂无装备库存。
-UI_MARKET_UNLOCK_EMPTY,All available cards are already unlocked.,所有可解锁卡牌均已解锁。
+UI_MARKET_TOOL_EMPTY,No tools in stock.,暂无工具库存。
 UI_MARKET_RARITY_COMMON,Common,普通
 UI_MARKET_RARITY_UNCOMMON,Uncommon,稀有
 UI_MARKET_RARITY_RARE,Rare,罕见
 UI_MARKET_RARITY_SET,Set,套装
 UI_MARKET_RARITY_CURSED,Cursed,诅咒
 UI_MARKET_LOCKED_HINT,"Upgrade the Market to tier {t} to unlock this.","将黑市升级至 T{t} 以解锁此功能。"
-UI_MARKET_CARD_SHOP_NOTE,"Purchased cards join your next run's deck.","已购买的卡牌将加入你下一局的卡组。"
+UI_MARKET_REFRESH_NOTE,"Reroll the stocked tools and equipment. Price rises each use this visit.","重新刷新工具与装备库存。每次刷新价格递增(仅本次到访)。"
+UI_MARKET_REFRESH_BTN,"Refresh ({n} Caps)","刷新({n} 瓶盖)"

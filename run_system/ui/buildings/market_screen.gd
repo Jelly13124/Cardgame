@@ -1,32 +1,34 @@
 ## Market (黑市) building screen. Subclasses the shared building shell and fills
 ## the content VBox with the Market's tier-gated functions:
-##   - T1 equip_shop : buy equipment INSTANCES with Caps (rarity-priced).
-##   - T1 card_unlock: spend Core to unlock cards outside the base/hero pool.
-##   - T3 card_shop  : buy an unlocked card with Caps (gated; minimal — see REPORT).
+##   - T1 tool_shop : buy 3 random tools with Caps (flat price).
+##   - T2 equip_shop: buy equipment INSTANCES with Caps (rarity-priced).
+##   - T3 refresh   : spend Caps to re-roll the stocked tools + equipment.
+##
+## The base card-unlock/card-shop system was removed (Phase A refactor): every
+## non-curse, non-basic card is draftable by default via
+## MetaProgress.get_unlocked_card_pool(), so the Market no longer sells cards.
 ##
 ## NO class_name (ADR-0006: subclass via path string, instantiate with `.new()`).
 ## Reads only the shared MetaProgress / RunManager API; edits no shared file.
 extends "res://run_system/ui/buildings/building_screen_base.gd"
 
 const EQUIPMENT_DIR := "res://run_system/data/equipment/"
-const CARD_DIR := "res://battle_scene/card_info/player/"
 const EQUIPMENT_ICON := preload("res://run_system/ui/equipment_icon.gd")
-const CARD_FACTORY_SCENE := preload("res://battle_scene/my_card_factory.tscn")
 
-## Real-card display footprint: the native 208×286 card scaled down for shop tiles.
-const CARD_NATIVE := Vector2(208, 286)
-const CARD_TILE_SCALE := 0.62
 ## Equipment shelf-tile icon size.
 const SHELF_ICON := Vector2(96, 96)
 
 ## Equipment buy prices in Caps, by rarity (spec: 60/140/280).
 const EQUIP_CAPS_PRICE := {"common": 60, "uncommon": 140, "rare": 280}
-## Card buy prices (T3 card_shop) in Caps, by rarity (spec: 200/350/600).
-const CARD_CAPS_PRICE := {"common": 200, "uncommon": 350, "rare": 600}
-## Core cost to unlock a card (T1 card_unlock).
-const CARD_UNLOCK_CORE := 40
 ## How many equipment items to stock per rarity bucket.
 const EQUIP_STOCK_PER_RARITY := {"common": 2, "uncommon": 2, "rare": 1}
+## Flat Caps price per tool (tools have no rarity tiers).
+const MARKET_TOOL_PRICE := 40
+## How many random tools to stock.
+const MARKET_TOOL_COUNT := 3
+## Refresh (T3): base Caps cost, +10 per use this visit.
+const MARKET_REFRESH_BASE := 20
+const MARKET_REFRESH_STEP := 10
 
 const RARITY_ORDER := ["common", "uncommon", "rare"]
 const RARITY_COLORS := {
@@ -39,30 +41,27 @@ const SECTION_BORDER := Color(0.55, 0.30, 0.13, 1.0)
 const PRICE_COLOR := Color(1.0, 0.84, 0.18)
 
 ## Rolled equipment stock — set once for the session in _build_content. Each
-## entry: {base, rarity, price}. Stable until the screen is rebuilt.
+## entry: {base, rarity, price}. Stable until refreshed.
 var _equip_stock: Array = []
+## Rolled tool stock — set once for the session in _build_content. Each
+## entry: tool_id String. Stable until refreshed.
+var _tool_stock: Array = []
+## How many times the T3 refresh has been used this visit (price escalates).
+var _refresh_uses: int = 0
 
 ## Live-refresh handles so balances + buttons repaint without a full rebuild.
 var _caps_label: Label = null
 var _mkt_core_label: Label = null
 ## The whole content host, so currency/building changes can rebuild the lists.
 var _market_box: VBoxContainer = null
-## Card factory for rendering real card visuals in the unlock / card-shop tiles.
-## Persists across rebuilds (lives on the screen, not in _market_box).
-var _card_factory: Node = null
 
 
 func _build_content(container: VBoxContainer) -> void:
-	# Roll equipment stock once for the session (stable across refresh).
+	# Roll stock once for the session (stable until refreshed).
+	if _tool_stock.is_empty():
+		_tool_stock = _roll_tool_stock()
 	if _equip_stock.is_empty():
 		_equip_stock = _roll_equip_stock()
-
-	# Card factory renders real card art in the unlock / card-shop tiles. Built once
-	# and parented to the screen so it survives _market_box rebuilds (mirrors loot_reward).
-	if _card_factory == null:
-		_card_factory = CARD_FACTORY_SCENE.instantiate()
-		add_child(_card_factory)
-		_card_factory.card_size = CARD_NATIVE
 
 	_market_box = container
 	# Repaint on currency / building changes. The base already connects _refresh
@@ -101,23 +100,23 @@ func _refresh_balances() -> void:
 func _populate(container: VBoxContainer) -> void:
 	container.add_child(_build_balances_row())
 
-	# T1: equipment shop (Caps).
+	# T1: tool shop (Caps).
+	if MetaProgress.building_can("market", "tool_shop"):
+		container.add_child(_build_tool_section())
+	else:
+		container.add_child(_locked_section(tr("UI_MARKET_TOOL_SECTION"), 1))
+
+	# T2: equipment shop (Caps).
 	if MetaProgress.building_can("market", "equip_shop"):
 		container.add_child(_build_equip_section())
 	else:
-		container.add_child(_locked_section(tr("UI_MARKET_EQUIP_SECTION"), 1))
+		container.add_child(_locked_section(tr("UI_MARKET_EQUIP_SECTION"), 2))
 
-	# T1: card unlock (Core).
-	if MetaProgress.building_can("market", "card_unlock"):
-		container.add_child(_build_card_unlock_section())
+	# T3: refresh stock (Caps).
+	if MetaProgress.building_can("market", "refresh"):
+		container.add_child(_build_refresh_section())
 	else:
-		container.add_child(_locked_section(tr("UI_MARKET_UNLOCK_SECTION"), 1))
-
-	# T3: card shop (Caps) — gated; minimal (see REPORT for the missing target).
-	if MetaProgress.building_can("market", "card_shop"):
-		container.add_child(_build_card_shop_section())
-	else:
-		container.add_child(_locked_section(tr("UI_MARKET_CARD_SHOP_SECTION"), 3))
+		container.add_child(_locked_section(tr("UI_MARKET_REFRESH_SECTION"), 3))
 
 
 # --- Balances --------------------------------------------------------------
@@ -150,7 +149,116 @@ func _build_balances_row() -> Control:
 	return row
 
 
-# --- Equipment shop (T1, Caps) ---------------------------------------------
+# --- Tool shop (T1, Caps) ---------------------------------------------------
+
+
+func _build_tool_section() -> Control:
+	var section := _make_section(tr("UI_MARKET_TOOL_SECTION"))
+	var body := section.get_meta("body") as VBoxContainer
+
+	if _tool_stock.is_empty():
+		var empty := Label.new()
+		empty.text = tr("UI_MARKET_TOOL_EMPTY")
+		_style_label(empty, 18, Color(0.8, 0.74, 0.6), 1)
+		body.add_child(empty)
+		return section
+
+	var shelf := HFlowContainer.new()
+	shelf.add_theme_constant_override("h_separation", 14)
+	shelf.add_theme_constant_override("v_separation", 14)
+	shelf.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_child(shelf)
+	for tool_id in _tool_stock:
+		shelf.add_child(_build_tool_tile(str(tool_id)))
+	return section
+
+
+## One tool sitting on the shelf: an icon (or glyph fallback), its name, and a
+## Caps buy button. Mirrors shop_scene._build_tool_stall's data lookups.
+func _build_tool_tile(tool_id: String) -> Control:
+	var data := RunManager.get_tool_data(tool_id)
+	var tool_name := Settings.t("TOOL_%s_TITLE" % tool_id, str(data.get("title", tool_id)))
+
+	var tile := PanelContainer.new()
+	tile.add_theme_stylebox_override(
+		"panel",
+		T.panel_with_shadow(Color(0.12, 0.085, 0.060, 0.95), Color(0.62, 0.44, 0.22, 1.0), 3, 2)
+	)
+	var tm := MarginContainer.new()
+	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		tm.add_theme_constant_override(s, 10)
+	tile.add_child(tm)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 6)
+	col.custom_minimum_size = Vector2(150, 0)
+	tm.add_child(col)
+
+	var icon_holder := CenterContainer.new()
+	col.add_child(icon_holder)
+	var icon_path := str(data.get("icon", ""))
+	var tex: Texture2D = null
+	if icon_path != "" and ResourceLoader.exists(icon_path):
+		tex = load(icon_path) as Texture2D
+	if tex:
+		var icon := TextureRect.new()
+		icon.custom_minimum_size = SHELF_ICON
+		icon.texture = tex
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon_holder.add_child(icon)
+	else:
+		var glyph := Label.new()
+		glyph.custom_minimum_size = SHELF_ICON
+		glyph.text = tool_name.substr(0, 1) if tool_name != "" else "?"
+		glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		glyph.add_theme_font_size_override("font_size", 30)
+		glyph.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
+		icon_holder.add_child(glyph)
+
+	var name_lbl := Label.new()
+	name_lbl.text = tool_name
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(name_lbl, 16, Color(0.95, 0.92, 0.85), 1)
+	col.add_child(name_lbl)
+
+	var desc_lbl := Label.new()
+	desc_lbl.text = Settings.t("TOOL_%s_DESC" % tool_id, "")
+	desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(desc_lbl, 13, Color(0.82, 0.76, 0.62), 1)
+	col.add_child(desc_lbl)
+
+	var buy_btn := Button.new()
+	buy_btn.custom_minimum_size = Vector2(0, 38)
+	buy_btn.add_theme_font_size_override("font_size", 17)
+	T.apply_button_theme(buy_btn)
+	buy_btn.text = tr("UI_MARKET_BUY_CAPS").format({"n": MARKET_TOOL_PRICE})
+	buy_btn.disabled = MetaProgress.caps < MARKET_TOOL_PRICE
+	buy_btn.pressed.connect(_on_buy_tool.bind(tool_id, buy_btn))
+	col.add_child(buy_btn)
+
+	return tile
+
+
+func _on_buy_tool(tool_id: String, btn: Button) -> void:
+	if not MetaProgress.spend_caps(MARKET_TOOL_PRICE):
+		return
+	if not RunManager.add_tool_to_backpack(tool_id):
+		# Backpack full → refund the Caps so the player isn't charged for nothing.
+		MetaProgress.add_caps(MARKET_TOOL_PRICE)
+		if is_instance_valid(btn):
+			btn.text = tr("UI_MARKET_STASH_FULL")
+		return
+	if is_instance_valid(btn):
+		btn.disabled = true
+		btn.text = tr("UI_MARKET_BOUGHT")
+	# caps_changed → _on_market_changed repaints balances + other buy buttons'
+	# disabled state via _refresh_balances; this button keeps its SOLD state.
+
+
+# --- Equipment shop (T2, Caps) ----------------------------------------------
 
 
 func _build_equip_section() -> Control:
@@ -247,140 +355,43 @@ func _on_buy_equipment(base_id: String, rarity: String, price: int, btn: Button)
 	# disabled state via _refresh_balances; this button keeps its SOLD state.
 
 
-# --- Card unlock (T1, Core) ------------------------------------------------
+# --- Refresh (T3, Caps) ------------------------------------------------------
 
 
-func _build_card_unlock_section() -> Control:
-	var section := _make_section(tr("UI_MARKET_UNLOCK_SECTION"))
+func _build_refresh_section() -> Control:
+	var section := _make_section(tr("UI_MARKET_REFRESH_SECTION"))
 	var body := section.get_meta("body") as VBoxContainer
 
-	var locked := _list_lockable_cards()
-	if locked.is_empty():
-		var empty := Label.new()
-		empty.text = tr("UI_MARKET_UNLOCK_EMPTY")
-		_style_label(empty, 18, Color(0.8, 0.74, 0.6), 1)
-		body.add_child(empty)
-		return section
-
-	# Show the real card art for each lockable card, with an unlock button beneath.
-	var grid := _card_grid()
-	body.add_child(grid)
-	var unlock_text := tr("UI_MARKET_UNLOCK_CORE").format({"n": CARD_UNLOCK_CORE})
-	for card in locked:
-		var cid := str(card.get("id", ""))
-		grid.add_child(
-			_build_card_tile(
-				cid, unlock_text, MetaProgress.core < CARD_UNLOCK_CORE, _on_unlock_card.bind(cid)
-			)
-		)
-	return section
-
-
-func _on_unlock_card(card_id: String, btn: Button) -> void:
-	# MetaProgress.unlock_card handles the 40-Core spend + append + save.
-	if not MetaProgress.unlock_card(card_id):
-		return
-	if is_instance_valid(btn):
-		btn.disabled = true
-		btn.text = tr("UI_MARKET_UNLOCKED")
-	# Rebuild so the just-unlocked card leaves the list (and appears in the T3
-	# card shop if that tier is active).
-	_rebuild_market()
-
-
-## Cards on disk in the player card pool that are NOT yet unlocked: excludes
-## the already-unlocked pool, _plus upgrades, and OTHER heroes' exclusive cards.
-func _list_lockable_cards() -> Array:
-	var result: Array = []
-	var unlocked := MetaProgress.get_unlocked_card_pool()
-	var active_hero := str(RunManager.current_hero_id) if RunManager else ""
-
-	# Block every OTHER hero's exclusive cards (the active hero's are in the
-	# unlocked pool already, so they won't appear as lockable anyway).
-	var blocked := {}
-	for h in MetaProgress.HERO_EXCLUSIVE_CARDS:
-		if h != active_hero:
-			for cid in MetaProgress.HERO_EXCLUSIVE_CARDS[h]:
-				blocked[str(cid)] = true
-
-	var dir = DirAccess.open(CARD_DIR)
-	if dir == null:
-		return result
-	for file_name in dir.get_files():
-		if not file_name.ends_with(".json"):
-			continue
-		var card_id := file_name.get_basename()
-		if card_id.ends_with("_plus"):
-			continue
-		if card_id in unlocked:
-			continue
-		if blocked.has(card_id):
-			continue
-		var data := _load_json(CARD_DIR + file_name)
-		if str(data.get("type", "")) == "curse":
-			continue  # curses are never offered as unlockable cards
-		(
-			result
-			. append(
-				{
-					"id": card_id,
-					"title": str(data.get("title", card_id)),
-					"rarity": str(data.get("rarity", "common")),
-				}
-			)
-		)
-	return result
-
-
-# --- Card shop (T3, Caps) — minimal/gated; see REPORT -----------------------
-
-
-func _build_card_shop_section() -> Control:
-	var section := _make_section(tr("UI_MARKET_CARD_SHOP_SECTION"))
-	var body := section.get_meta("body") as VBoxContainer
-
-	# Spend Caps to add an unlocked card onto the permanent run deck via
-	# MetaProgress.buy_card_caps; purchased cards join every future run's deck.
 	var note := Label.new()
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	note.text = tr("UI_MARKET_CARD_SHOP_NOTE")
+	note.text = tr("UI_MARKET_REFRESH_NOTE")
 	_style_label(note, 17, Color(0.85, 0.66, 0.40), 1)
 	body.add_child(note)
 
-	var grid := _card_grid()
-	body.add_child(grid)
-	var unlocked := MetaProgress.get_unlocked_card_pool()
-	var shown := 0
-	for card_id in unlocked:
-		var data := _load_json(CARD_DIR + card_id + ".json")
-		if data.is_empty():
-			continue
-		var rarity := str(data.get("rarity", "common"))
-		var price := int(CARD_CAPS_PRICE.get(rarity, CARD_CAPS_PRICE["common"]))
-		grid.add_child(
-			_build_card_tile(
-				card_id,
-				tr("UI_MARKET_BUY_CAPS").format({"n": price}),
-				MetaProgress.caps < price,
-				_on_buy_card_caps.bind(card_id, price)
-			)
-		)
-		shown += 1
-		if shown >= 8:
-			break
+	var cost := _refresh_cost()
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(220, 44)
+	btn.add_theme_font_size_override("font_size", 18)
+	T.apply_button_theme(btn)
+	btn.text = tr("UI_MARKET_REFRESH_BTN").format({"n": cost})
+	btn.disabled = MetaProgress.caps < cost
+	btn.pressed.connect(_on_refresh_stock)
+	body.add_child(btn)
 
 	return section
 
 
-func _on_buy_card_caps(card_id: String, price: int, btn: Button) -> void:
-	# buy_card_caps spends the Caps + appends to purchased_cards (injected into
-	# every future run's deck) + saves. Returns false on insufficient Caps.
-	if not MetaProgress.buy_card_caps(card_id, price):
+func _refresh_cost() -> int:
+	return MARKET_REFRESH_BASE + MARKET_REFRESH_STEP * _refresh_uses
+
+
+func _on_refresh_stock() -> void:
+	var cost := _refresh_cost()
+	if not MetaProgress.spend_caps(cost):
 		return
-	if is_instance_valid(btn):
-		btn.text = tr("UI_MARKET_BOUGHT")
-	# caps_changed → _on_market_changed repaints balances + the row buttons'
-	# disabled state via _refresh_balances; rebuild so prices re-gate cleanly.
+	_refresh_uses += 1
+	_tool_stock = _roll_tool_stock()
+	_equip_stock = _roll_equip_stock()
 	_rebuild_market()
 
 
@@ -426,54 +437,14 @@ func _locked_section(title: String, tier: int) -> Control:
 	return section
 
 
-## A wrapping grid (HFlowContainer) that lays card tiles out across the width.
-func _card_grid() -> HFlowContainer:
-	var grid := HFlowContainer.new()
-	grid.add_theme_constant_override("h_separation", 16)
-	grid.add_theme_constant_override("v_separation", 16)
-	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	return grid
-
-
-## A card tile: the real card art (scaled, display-only) above one action button.
-## press_cb is bound with everything EXCEPT the button — we append the button here.
-func _build_card_tile(
-	card_id: String, btn_text: String, disabled: bool, press_cb: Callable
-) -> Control:
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 6)
-	col.add_child(_make_card_visual(card_id))
-
-	var btn := Button.new()
-	btn.custom_minimum_size = Vector2(CARD_NATIVE.x * CARD_TILE_SCALE, 38)
-	btn.add_theme_font_size_override("font_size", 16)
-	T.apply_button_theme(btn)
-	btn.text = btn_text
-	btn.disabled = disabled
-	btn.pressed.connect(press_cb.bind(btn))
-	col.add_child(btn)
-	return col
-
-
-## Real card visual, non-interactive, scaled down to the shop-tile footprint. The
-## scaled card pivots from its top-left so it exactly fills a CARD_TILE_SCALE wrapper.
-func _make_card_visual(card_id: String) -> Control:
-	var disp := CARD_NATIVE * CARD_TILE_SCALE
-	var wrapper := Control.new()
-	wrapper.custom_minimum_size = disp
-	if _card_factory == null:
-		return wrapper
-	var card = _card_factory.create_card(card_id, null)
-	if card:
-		if card.get_parent():
-			card.get_parent().remove_child(card)
-		card.can_be_interacted_with = false
-		card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		card.pivot_offset = Vector2.ZERO
-		card.scale = Vector2(CARD_TILE_SCALE, CARD_TILE_SCALE)
-		card.position = Vector2.ZERO
-		wrapper.add_child(card)
-	return wrapper
+## Roll a small, session-stable tool stock from the whole tool pool.
+func _roll_tool_stock() -> Array:
+	var pool: Array = RunManager.tool_pool().duplicate()
+	pool.shuffle()
+	var stock: Array = []
+	for i in range(min(MARKET_TOOL_COUNT, pool.size())):
+		stock.append(str(pool[i]))
+	return stock
 
 
 ## Roll a small, session-stable equipment stock from disk, bucketed by rarity.
