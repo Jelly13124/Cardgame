@@ -32,6 +32,16 @@ const CURSE := [
 ## common 1 / uncommon 2 / rare 3 / set 3 (+ set bonus via set_id) / cursed 3 (+1 curse).
 const AFFIX_COUNT := {"common": 1, "uncommon": 2, "rare": 3, "set": 3, "cursed": 3}
 
+## The attribute affixes (the 5 stats). A subset of POSITIVE — every rolled item
+## guarantees one of these first, then fills the rest from the full POSITIVE pool.
+const ATTRIBUTE_TYPES := [
+	"attr_strength",
+	"attr_constitution",
+	"attr_intelligence",
+	"attr_luck",
+	"attr_charm",
+]
+
 
 ## Roll the affix list for a freshly generated item.
 ## Picks `AFFIX_COUNT.get(rarity, 1)` distinct-type positives. A cursed item (the
@@ -42,12 +52,27 @@ static func roll(rarity: String, cursed: bool = false) -> Array:
 	var positives_wanted: int = int(AFFIX_COUNT.get(rarity, 1))
 	var result: Array = []
 	var used_types: Array = []
-	for picked in _pick_distinct_positives(positives_wanted, used_types):
+	# Guarantee the FIRST positive is a random attribute affix.
+	if positives_wanted > 0:
+		var attr := _pick_attribute()
+		result.append(attr)
+		used_types.append(attr["type"])
+	# Fill the rest from the full positive pool (distinct types).
+	for picked in _pick_distinct_positives(positives_wanted - 1, used_types):
 		result.append(picked)
 	if is_cursed:
 		var curse: Dictionary = CURSE[randi() % CURSE.size()].duplicate(true)
 		result.append(curse)
 	return result
+
+
+## Pick one random attribute affix (deep copy).
+static func _pick_attribute() -> Dictionary:
+	var attrs: Array = []
+	for entry in POSITIVE:
+		if ATTRIBUTE_TYPES.has(entry["type"]):
+			attrs.append(entry)
+	return attrs[randi() % attrs.size()].duplicate(true)
 
 
 ## Return a deep copy of `affixes` with ONE random non-curse affix replaced by a
