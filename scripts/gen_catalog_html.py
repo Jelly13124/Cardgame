@@ -57,7 +57,7 @@ def cap(s):
     return str(s).replace("_", " ").title()
 
 
-RARITY = {"common": "#9aa3ad", "uncommon": "#4fb0ff", "rare": "#ffcf45", "boss": "#ff6b6b", "unique": "#c77dff"}
+RARITY = {"common": "#9aa3ad", "uncommon": "#4fb0ff", "rare": "#ffcf45", "boss": "#ff6b6b", "unique": "#c77dff", "curse": "#9e5cc7"}
 POLARITY = {"yin": "#6fa8dc", "yang": "#ff9e4a", "neutral": "#9c917c"}
 
 STYLE = """
@@ -124,18 +124,28 @@ document.querySelectorAll('.tag').forEach(tag=>tag.addEventListener('click',()=>
 """
 
 
-def nav(cur):
-    items = [("cards.html", "Cards 卡牌"), ("relics.html", "Relics 遗物"),
+NAV_ITEMS = [("index.html", "◫ All 总览"),
+             ("cards.html", "Cards 卡牌"), ("relics.html", "Relics 遗物"),
              ("equipment.html", "Equipment 装备"), ("enemies.html", "Enemies 敌人"),
-             ("gems.html", "Gems 宝石"),
+             ("gems.html", "Gems 宝石"), ("tools.html", "Tools 工具"),
+             ("events.html", "Events 事件"),
              ("affixes.html", "Affixes 词条"), ("keywords.html", "Keywords 关键词")]
+# Categories that become tabs in the combined index (index.html itself excluded).
+CATEGORY_ITEMS = [it for it in NAV_ITEMS if it[0] != "index.html"]
+# Every page() call records its content here so build_index() can inline all tabs.
+PAGES = []
+
+
+def nav(cur):
     return '<div class="nav">' + "".join(
         '<a class="%s" href="%s">%s</a>' % ("cur" if f == cur else "", f, esc(t))
-        for f, t in items
+        for f, t in NAV_ITEMS
     ) + "</div>"
 
 
 def page(fname, title, subtitle, controls, body, count):
+    PAGES.append({"file": fname, "title": title, "subtitle": subtitle,
+                  "controls": controls, "body": body, "count": count})
     h = f"""<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(title)}</title><style>{STYLE}</style></head><body>
@@ -177,7 +187,30 @@ def fmt_effect(e):
     stacks = e.get("stacks")
     status = e.get("status", "")
     mult = e.get("mult", e.get("multiplier"))
+    # Effects whose wording depends on several fields — handle before the table.
+    if t == "apply_bleed_scaled":
+        base = f"Apply {amt} Bleed (+{cap(e.get('attr', 'intelligence'))[:3].upper()})"
+        return base + (" — x2 if target already bleeding" if e.get("double_if_bleeding") else "")
+    if t == "discover":
+        free = " (free this combat)" if e.get("free") else ""
+        return f"Discover: pick 1 of {e.get('count', 3)} {cap(e.get('pool', 'any'))} cards{free}"
+    if t == "add_card_to_hand":
+        return f"Add {e.get('amount', 1)}x '{e.get('card', '?')}' to hand"
+    if t == "add_curse_to_deck":
+        return f"Add curse '{e.get('curse', '?')}' to deck (permanent)"
+    if t == "add_curse":
+        return f"Add curse '{e.get('curse', '?')}' to deck"
+    if t == "gain_attribute":
+        return f"Gain +{amt or 1} {cap(e.get('attr', e.get('attribute', 'attribute')))}"
     m = {
+        "lose_gold": f"Lose {amt} gold",
+        "gain_core": f"Gain {amt} Core",
+        "gain_relic": "Gain a relic",
+        "gain_equipment": "Gain equipment",
+        "double_target_bleed": "Double target's Bleed",
+        "gain_attack_allowance": f"Gain {amt} attack(s) this turn",
+        "restore_attack_allowance": "Restore attack allowance",
+        "gain_block_from_bleed": "Gain Block = target's Bleed",
         "deal_damage": f"Deal {amt} damage (+STR)",
         "deal_damage_all": f"Deal {amt} to ALL enemies (+STR)",
         "deal_damage_str_mult": f"Deal STR×{mult} damage",
@@ -217,6 +250,10 @@ def card_block(cid, d):
     effs = "".join(f"<li>{esc(fmt_effect(e))}</li>" for e in d.get("effects", []))
     for be in d.get("matched_bonus", []) or []:
         effs += f'<li class="bonus">If matched: {esc(fmt_effect(be))}</li>'
+    if d.get("unplayable"):
+        effs += '<li style="color:#c98be0">⛔ Unplayable — returns to hand if played</li>'
+    for pe in d.get("end_turn_in_hand", []) or []:
+        effs += f'<li style="color:#e0584c">☣ While in hand at end of turn: {esc(fmt_effect(pe))}</li>'
     dtr = cards_tr.get(f"CARD_{cid}_DESC", {})
     desc = dtr.get("zh") or d.get("description", "")
     c = POLARITY.get(pol) if pol in ("yin", "yang") else RARITY.get(rar, "#9aa3ad")
@@ -242,14 +279,15 @@ def card_block(cid, d):
 def build_cards():
     items = load_json_dir("battle_scene/card_info/player")
     items.sort(key=lambda kv: kv[0])
-    groups = {"attack": [], "skill": [], "ability": []}
+    groups = {"attack": [], "skill": [], "ability": [], "curse": []}
     for cid, d in items:
         groups.setdefault(str(d.get("type", "skill")), []).append(card_block(cid, d))
     body = ""
-    for key, label in [("attack", "Attacks 攻击"), ("skill", "Skills 技能"), ("ability", "Abilities 能力")]:
+    for key, label in [("attack", "Attacks 攻击"), ("skill", "Skills 技能"),
+                       ("ability", "Abilities 能力"), ("curse", "Curses 诅咒")]:
         body += section(label, len(groups.get(key, [])), "".join(groups.get(key, [])))
     controls = "".join(f'<span class="tag" data-k="rarity" data-f="{r}">{r}</span>'
-                       for r in ("common", "uncommon", "rare"))
+                       for r in ("common", "uncommon", "rare", "curse"))
     page("cards.html", "Cards · 卡牌", "All player cards, grouped by type",
          controls, body, len(items))
 
@@ -320,6 +358,68 @@ def build_gems():
          "", body, len(items))
 
 
+# ── Tools (one-time battle consumables) ─────────────────────────────────────
+def build_tools():
+    items = load_json_dir("run_system/data/tools")
+    # Tool titles/descs are spread across a few content CSVs — merge them.
+    tool_tr = dict(cards_tr)
+    for extra in ("ui_loot.csv", "ui_equipment.csv", "ui_build_outpost.csv"):
+        tool_tr.update(load_tr(extra))
+    tgt_label = {"enemy": "🎯 Target enemy", "self": "🧍 Self", "none": "✦ No target"}
+    cards = []
+    for tid, d in items:
+        en = tool_tr.get(f"TOOL_{tid}_TITLE", {}).get("en", d.get("title", tid))
+        zh = tool_tr.get(f"TOOL_{tid}_TITLE", {}).get("zh", "")
+        desc = tool_tr.get(f"TOOL_{tid}_DESC", {}).get("zh", "")
+        tgt = str(d.get("target", "none"))
+        eff = "".join(f"<li>{esc(fmt_effect(e))}</li>" for e in d.get("effects", []))
+        search = f"{tid} {en} {zh} {tgt}".lower()
+        cards.append(
+            f'<div class="card" data-search="{esc(search)}" style="border-left-color:#7fbf7f">'
+            f'<h3>{esc(en)} <span class="zh">{esc(zh)}</span></h3>'
+            f'<div class="meta"><span class="pill">{esc(tgt_label.get(tgt, tgt))}</span>'
+            f'<span class="pill" style="color:#6b6256">{esc(tid)}</span></div>'
+            f'<div class="desc">{esc(desc)}</div><ul class="eff">{eff}</ul></div>')
+    body = section("Tools 工具", len(cards), "".join(cards))
+    page("tools.html", "Tools · 工具",
+         "One-time battle consumables — no rarity tiers; held in the backpack, equipped 1 at a time from the character panel",
+         "", body, len(items))
+
+
+# ── Random events (the "?" map node) ────────────────────────────────────────
+def build_events():
+    items = load_json_dir("run_system/data/random_events")
+    ev_tr = load_tr("ui_events.csv")
+    cards = []
+    for eid, d in items:
+        up = eid.upper()
+        en = ev_tr.get(f"EVENT_{up}_TITLE", {}).get("en", d.get("title", eid))
+        zh = ev_tr.get(f"EVENT_{up}_TITLE", {}).get("zh", "")
+        desc = ev_tr.get(f"EVENT_{up}_DESC", {}).get("zh") or d.get("description", "")
+        opts = ""
+        for i, opt in enumerate(d.get("options", [])):
+            otext = ev_tr.get(f"EVENT_{up}_OPT{i}_TEXT", {}).get("zh") or opt.get("text", "")
+            effs = " · ".join(fmt_effect(e) for e in opt.get("effects", [])) or "—"
+            opts += (f'<li><b>{esc(otext)}</b>'
+                     f'<br><span style="color:#9c917c;font-size:12px">→ {esc(effs)}</span></li>')
+        is_trap = any(e.get("type") == "add_curse"
+                      for opt in d.get("options", []) for e in opt.get("effects", []))
+        trap = ('<span class="pill" style="color:#e0584c;border-color:#e0584c">curse-trap</span>'
+                if is_trap else "")
+        c = "#e0584c" if is_trap else "#7fc7d9"
+        search = f"{eid} {en} {zh}".lower()
+        cards.append(
+            f'<div class="card" data-search="{esc(search)}" style="border-left-color:{c}">'
+            f'<h3>{esc(en)} <span class="zh">{esc(zh)}</span></h3>'
+            f'<div class="meta">{trap}<span class="pill" style="color:#6b6256">{esc(eid)}</span>'
+            f'<span class="pill">{len(d.get("options", []))} options</span></div>'
+            f'<div class="desc">{esc(desc)}</div><ul class="eff">{opts}</ul></div>')
+    body = section("Random Events 随机事件", len(cards), "".join(cards))
+    page("events.html", "Events · 事件",
+         'The "?" map node — each presents 2–3 attribute-gated choices',
+         "", body, len(items))
+
+
 # ── Equipment (grouped by slot) + sets ──────────────────────────────────────
 def build_equipment():
     items = load_json_dir("run_system/data/equipment")
@@ -331,8 +431,22 @@ def build_equipment():
         rar = str(d.get("rarity", "common")).lower()
         slot = str(d.get("slot", "?"))
         c = RARITY.get(rar, "#9aa3ad")
-        bl = "".join(f"<li>+{v} {cap(k)}</li>" for k, v in d.get("bonuses", {}).items())
         setname = d.get("set_id", d.get("set", ""))
+        # Equipment rolls its affixes at drop time — show the roll rule, not the dead
+        # back-compat `bonuses` baseline. Set pieces roll the 3-affix "set" tier.
+        if setname:
+            roll_txt = "Rolls 3 affixes (incl. 1 attribute) + set bonus"
+        else:
+            roll_txt = {
+                "common": "Rolls 1 affix (an attribute)",
+                "uncommon": "Rolls 2 affixes (incl. 1 attribute)",
+                "rare": "Rolls 3 affixes (incl. 1 attribute)",
+            }.get(rar, "")
+        bl = (
+            f"<li>{roll_txt}</li>"
+            if roll_txt
+            else "".join(f"<li>+{v} {cap(k)}</li>" for k, v in d.get("bonuses", {}).items())
+        )
         setline = (f'<div class="meta"><span class="pill" style="color:{RARITY["rare"]}">Set: {esc(cap(setname))}</span></div>'
                    if setname else "")
         search = f"{eid} {en} {zh} {slot} {rar} {setname}".lower()
@@ -421,14 +535,17 @@ def build_enemies():
 
 # ── Keyword glossary ────────────────────────────────────────────────────────
 STATUS_COLORS = {
-    "bleed": "#ff4d5e", "burn": "#ff6619", "weak": "#b380e6", "vulnerable": "#f27333",
-    "double_damage": "#33ccff", "stun": "#f2f24d",
+    "bleed": "#ff4d5e", "weak": "#b380e6", "vulnerable": "#f27333",
+    "stun": "#f2f24d",
     "regen": "#4dffa6", "thorns": "#b3bfcc", "frail": "#9980b3", "dodge": "#99f2ff",
-    "metallicize": "#b8ccdb", "feel_no_pain": "#8cccf2", "dark_embrace": "#b86bdb",
+    "metallicize": "#b8ccdb", "feel_no_pain": "#8cccf2",
+    "hot_streak": "#ff9640", "all_in": "#ff5470", "hemorrhage": "#c21f3a",
+    "covering_reload": "#6fb3e0", "bullet": "#e8c860",
 }
-STATUSES = ["bleed", "burn", "weak", "vulnerable", "double_damage", "stun",
+STATUSES = ["bleed", "weak", "vulnerable", "stun",
             "regen", "thorns", "frail", "dodge",
-            "metallicize", "feel_no_pain", "dark_embrace"]
+            "metallicize", "feel_no_pain",
+            "hot_streak", "all_in", "hemorrhage", "covering_reload", "bullet"]
 
 
 def kw_card(name_en, name_zh, desc_en, desc_zh, color, ident=""):
@@ -468,7 +585,7 @@ def build_keywords():
     attrs = [
         ("Strength", "力量", "Each point adds +1 to attack-card damage.", "每点 +1 攻击牌伤害。", "#ff8033"),
         ("Constitution", "体质", "Each point adds +1 to Block gained.", "每点 +1 获得的格挡。", "#4da6ff"),
-        ("Intelligence", "智力", "Each point boosts tool effects (+8%) and card Bleed scaling.", "每点提升工具效果（+8%）与卡牌流血加成。", "#b366ff"),
+        ("Intelligence", "智力", "Each point: +1 to the stacks of every status you apply; +8% tool effects.", "每点:你施加的每个状态层数 +1;并提升工具效果 +8%。", "#b366ff"),
         ("Luck", "幸运", "Each point: +2% crit chance, +1.5% loot rarity, +chance to find gems/tools/equipment.", "每点:+2% 暴击、+1.5% 战利品稀有度、+发现宝石/工具/装备几率。", "#ffe14d"),
         ("Charm", "魅力", "Each point: -2% shop prices (to -40%); -4% level-up XP cost (to -40%); gates some event options.", "每点:-2% 商店价格(最低 -40%);-4% 升级所需经验(最低 -40%);解锁部分事件选项。", "#ff80c4"),
     ]
@@ -529,11 +646,101 @@ def build_affixes():
          "", "".join(body), len(positive) + len(curse))
 
 
+# ── Combined single-page index (left-side tabs) ─────────────────────────────
+INDEX_STYLE = """
+.app{display:flex;min-height:100vh}
+.side{position:sticky;top:0;align-self:flex-start;height:100vh;overflow:auto;width:215px;flex:0 0 215px;background:linear-gradient(180deg,#1d1812,#141009);border-right:2px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:4px}
+.brand{color:var(--gold);font-weight:700;font-size:14px;padding:4px 8px 12px;border-bottom:1px solid var(--line);margin-bottom:8px;line-height:1.35}
+.side-link{display:flex;justify-content:space-between;align-items:center;color:var(--dim);text-decoration:none;font-size:14px;padding:8px 10px;border-radius:7px;cursor:pointer;border:1px solid transparent;user-select:none}
+.side-link:hover{background:var(--panel);color:var(--txt)}
+.side-link.active{background:var(--gold);color:#13100c;border-color:var(--gold);font-weight:600}
+.side-link .cnt{font-size:11px;opacity:.75}
+.side .sq{margin-top:auto;width:100%;background:#0e0b07;border:1px solid var(--line);color:var(--txt);padding:8px 10px;border-radius:8px;font-size:13px}
+.content{flex:1;min-width:0}
+.panel{display:none}
+.panel.on{display:block}
+.panel-head{position:sticky;top:0;background:linear-gradient(180deg,#1d1812,#171309);border-bottom:2px solid var(--line);padding:14px 28px;z-index:10}
+.panel-head h2{margin:0;color:var(--gold);font-size:20px}
+.panel-head .sub{color:var(--dim);font-size:12px;margin-top:3px}
+.panel-head .bar{margin-top:10px}
+"""
+
+INDEX_JS = """
+const q=document.getElementById('gq');
+function panelOn(){return document.querySelector('.panel.on');}
+function applyFilter(){
+  const p=panelOn(); if(!p)return;
+  const t=(q?q.value:'').toLowerCase();
+  const af=p.querySelector('.tag.active');
+  const f=af?af.dataset.f:''; const fk=af?af.dataset.k:'';
+  p.querySelectorAll('.card,.kwc').forEach(c=>{
+    const okt=!t||(c.dataset.search||'').includes(t);
+    const okf=!f||(c.dataset[fk]===f);
+    c.style.display=(okt&&okf)?'':'none';
+  });
+}
+document.querySelectorAll('.side-link').forEach(a=>a.addEventListener('click',()=>{
+  document.querySelectorAll('.side-link').forEach(x=>x.classList.remove('active'));
+  a.classList.add('active');
+  document.querySelectorAll('.panel').forEach(pp=>pp.classList.remove('on'));
+  const tgt=document.getElementById('tab-'+a.dataset.tab);
+  if(tgt)tgt.classList.add('on');
+  applyFilter();
+}));
+if(q)q.addEventListener('input',applyFilter);
+document.querySelectorAll('.tag').forEach(tag=>tag.addEventListener('click',()=>{
+  const p=tag.closest('.panel');
+  const was=tag.classList.contains('active');
+  p.querySelectorAll('.tag').forEach(t=>t.classList.remove('active'));
+  if(!was)tag.classList.add('active');
+  applyFilter();
+}));
+"""
+
+
+def build_index():
+    by_file = {p["file"]: p for p in PAGES}
+    side = ['<div class="brand">🗂 游戏图鉴 · 数值总览</div>']
+    panels = []
+    first = True
+    for f, label in CATEGORY_ITEMS:
+        p = by_file.get(f)
+        if not p:
+            continue
+        tab = f[:-5]  # strip ".html"
+        side.append(
+            '<a class="side-link%s" data-tab="%s">%s<span class="cnt">%d</span></a>'
+            % (" active" if first else "", tab, esc(label), p["count"]))
+        panels.append(
+            '<section class="panel%s" id="tab-%s">'
+            '<div class="panel-head"><h2>%s</h2>'
+            '<div class="sub">%s · %d entries</div>'
+            '<div class="bar">%s</div></div>%s</section>'
+            % (" on" if first else "", tab, esc(p["title"]), esc(p["subtitle"]),
+               p["count"], p["controls"], p["body"]))
+        first = False
+    html = (
+        '<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width,initial-scale=1">'
+        '<title>Catalog · 游戏图鉴总览</title><style>%s%s</style></head><body>'
+        '<div class="app"><nav class="side">%s'
+        '<input id="gq" class="sq" type="search" placeholder="Search / 搜索…"></nav>'
+        '<main class="content">%s</main></div>'
+        '<script>%s</script></body></html>'
+        % (STYLE, INDEX_STYLE, "".join(side), "".join(panels), INDEX_JS))
+    with open(os.path.join(OUT, "index.html"), "w", encoding="utf-8") as fh:
+        fh.write(html)
+    print("wrote index.html (%d tabs)" % len(panels))
+
+
 build_cards()
 build_relics()
 build_gems()
+build_tools()
 build_equipment()
 build_enemies()
+build_events()
 build_affixes()
 build_keywords()
+build_index()
 print("Done ->", OUT)

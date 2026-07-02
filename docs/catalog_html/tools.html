@@ -1,0 +1,68 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tools · 工具</title><style>
+:root{--bg:#13100c;--panel:#1d1812;--panel2:#262019;--line:#3a3026;--gold:#ffcf45;--txt:#e7ddc8;--dim:#9c917c;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:"Segoe UI",system-ui,sans-serif;}
+header{position:sticky;top:0;background:linear-gradient(180deg,#1d1812,#171309);border-bottom:2px solid var(--line);padding:16px 28px;z-index:10;}
+h1{margin:0;font-size:23px;color:var(--gold);letter-spacing:.5px}
+.sub{color:var(--dim);font-size:13px;margin-top:4px}
+.bar{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input[type=search]{background:#0e0b07;border:1px solid var(--line);color:var(--txt);padding:8px 12px;border-radius:8px;min-width:220px;font-size:14px}
+.tag{font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:20px;padding:3px 10px;cursor:pointer;user-select:none}
+.tag.active{color:#13100c;background:var(--gold);border-color:var(--gold)}
+.nav{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.nav a{color:var(--dim);text-decoration:none;font-size:13px;border:1px solid var(--line);padding:4px 12px;border-radius:6px}
+.nav a:hover,.nav a.cur{color:var(--gold);border-color:var(--gold)}
+.section{padding:18px 28px 2px;}
+.section h2{color:var(--gold);font-size:17px;margin:0 0 2px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.section .cnt{color:var(--dim);font-size:12px;font-weight:400}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;padding:14px 28px 4px;}
+.card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:14px 16px;transition:.12s}
+.card:hover{background:var(--panel2);transform:translateY(-2px)}
+.card h3{margin:0 0 2px;font-size:17px}
+.thumb{width:100%;aspect-ratio:512/320;object-fit:contain;border-radius:7px;border:1px solid var(--line);background:#0e0b07;display:block;margin-bottom:10px}
+.zh{color:var(--gold);font-size:15px;font-weight:600}
+.meta{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;font-size:11px}
+.pill{border-radius:5px;padding:2px 8px;background:#0e0b07;border:1px solid var(--line);color:var(--dim)}
+.desc{color:#c9bfa8;font-size:13px;font-style:italic;margin:6px 0}
+.eff{list-style:none;padding:0;margin:8px 0 0}
+.eff li{font-size:13px;color:var(--txt);padding:3px 0 3px 16px;position:relative}
+.eff li:before{content:"▸";position:absolute;left:0;color:var(--gold)}
+.eff li.bonus:before{content:"☯";color:#ffcf45}
+.hp{color:#ff8b6b;font-weight:700}
+.kw{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;padding:14px 28px}
+.kwc{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:9px;padding:12px 15px}
+.kwc h3{margin:0 0 4px;font-size:16px}
+.kwc .en{color:var(--dim);font-size:12px;font-weight:400}
+.kwc p{margin:6px 0 0;font-size:13px;color:#d7cdb6;line-height:1.5}
+.kwc .zhd{color:#c9bfa8;font-size:12.5px;margin-top:3px}
+</style></head><body>
+<header><h1>Tools · 工具</h1><div class="sub">One-time battle consumables — no rarity tiers; held in the backpack, equipped 1 at a time from the character panel · <span>11 entries</span></div>
+<div class="nav"><a class="" href="index.html">◫ All 总览</a><a class="" href="cards.html">Cards 卡牌</a><a class="" href="relics.html">Relics 遗物</a><a class="" href="equipment.html">Equipment 装备</a><a class="" href="enemies.html">Enemies 敌人</a><a class="" href="gems.html">Gems 宝石</a><a class="cur" href="tools.html">Tools 工具</a><a class="" href="events.html">Events 事件</a><a class="" href="affixes.html">Affixes 词条</a><a class="" href="keywords.html">Keywords 关键词</a></div>
+<div class="bar"><input id="q" type="search" placeholder="Search / 搜索…"></div>
+</header>
+<div class="section"><h2>Tools 工具 <span class="cnt">(11)</span></h2></div><div class="grid"><div class="card" data-search="adrenaline_shot adrenaline shot 肾上腺素 none" style="border-left-color:#7fbf7f"><h3>Adrenaline Shot <span class="zh">肾上腺素</span></h3><div class="meta"><span class="pill">✦ No target</span><span class="pill" style="color:#6b6256">adrenaline_shot</span></div><div class="desc">抽 2 张牌。</div><ul class="eff"><li>Draw 2 card(s)</li></ul></div><div class="card" data-search="blood_kit blood kit 采血工具包 none" style="border-left-color:#7fbf7f"><h3>Blood Kit <span class="zh">采血工具包</span></h3><div class="meta"><span class="pill">✦ No target</span><span class="pill" style="color:#6b6256">blood_kit</span></div><div class="desc">发现一张流血牌，本场战斗中它的费用为 0。</div><ul class="eff"><li>Discover: pick 1 of 3 Bleed cards (free this combat)</li></ul></div><div class="card" data-search="combat_stim combat stim 兴奋剂 none" style="border-left-color:#7fbf7f"><h3>Combat Stim <span class="zh">兴奋剂</span></h3><div class="meta"><span class="pill">✦ No target</span><span class="pill" style="color:#6b6256">combat_stim</span></div><div class="desc">获得 2 点力量。</div><ul class="eff"><li>Gain 2 Strength</li></ul></div><div class="card" data-search="energy_cell energy cell 能量电池 none" style="border-left-color:#7fbf7f"><h3>Energy Cell <span class="zh">能量电池</span></h3><div class="meta"><span class="pill">✦ No target</span><span class="pill" style="color:#6b6256">energy_cell</span></div><div class="desc">本回合获得 2 点能量。</div><ul class="eff"><li>Gain 2 Energy</li></ul></div><div class="card" data-search="field_kit field kit 战术工具包 none" style="border-left-color:#7fbf7f"><h3>Field Kit <span class="zh">战术工具包</span></h3><div class="meta"><span class="pill">✦ No target</span><span class="pill" style="color:#6b6256">field_kit</span></div><div class="desc">发现一张技能牌，本场战斗中它的费用为 0。</div><ul class="eff"><li>Discover: pick 1 of 3 Skill cards (free this combat)</li></ul></div><div class="card" data-search="frag_grenade frag grenade 手雷 enemy" style="border-left-color:#7fbf7f"><h3>Frag Grenade <span class="zh">手雷</span></h3><div class="meta"><span class="pill">🎯 Target enemy</span><span class="pill" style="color:#6b6256">frag_grenade</span></div><div class="desc">对一个敌人造成 10 点伤害。</div><ul class="eff"><li>Deal 10 damage (+STR)</li></ul></div><div class="card" data-search="med_kit med kit 医疗包 none" style="border-left-color:#7fbf7f"><h3>Med Kit <span class="zh">医疗包</span></h3><div class="meta"><span class="pill">✦ No target</span><span class="pill" style="color:#6b6256">med_kit</span></div><div class="desc">获得 3 层再生。</div><ul class="eff"><li>Gain 3 Regen</li></ul></div><div class="card" data-search="munitions_crate munitions crate 军火箱 none" style="border-left-color:#7fbf7f"><h3>Munitions Crate <span class="zh">军火箱</span></h3><div class="meta"><span class="pill">✦ No target</span><span class="pill" style="color:#6b6256">munitions_crate</span></div><div class="desc">发现一张攻击牌，本场战斗中它的费用为 0。</div><ul class="eff"><li>Discover: pick 1 of 3 Attack cards (free this combat)</li></ul></div><div class="card" data-search="shock_charge shock charge 电荷 enemy" style="border-left-color:#7fbf7f"><h3>Shock Charge <span class="zh">电荷</span></h3><div class="meta"><span class="pill">🎯 Target enemy</span><span class="pill" style="color:#6b6256">shock_charge</span></div><div class="desc">对一个敌人施加 2 层易伤和 1 层虚弱。</div><ul class="eff"><li>Apply 2 Vulnerable to target</li><li>Apply 1 Weak to target</li></ul></div><div class="card" data-search="smoke_bomb smoke bomb 烟雾弹 none" style="border-left-color:#7fbf7f"><h3>Smoke Bomb <span class="zh">烟雾弹</span></h3><div class="meta"><span class="pill">✦ No target</span><span class="pill" style="color:#6b6256">smoke_bomb</span></div><div class="desc">获得 10 点格挡。</div><ul class="eff"><li>Gain 10 Block (+CON)</li></ul></div><div class="card" data-search="toxin_vial rusty blade 生锈铁刀 enemy" style="border-left-color:#7fbf7f"><h3>Rusty Blade <span class="zh">生锈铁刀</span></h3><div class="meta"><span class="pill">🎯 Target enemy</span><span class="pill" style="color:#6b6256">toxin_vial</span></div><div class="desc">对一个敌人施加 4 层流血。</div><ul class="eff"><li>Apply 4 Bleed to target</li></ul></div></div>
+<script>
+const q=document.getElementById('q');
+function applyFilter(){
+  const t=(q?q.value:'').toLowerCase();
+  const af=document.querySelector('.tag.active');
+  const f=af?af.dataset.f:''; const fk=af?af.dataset.k:'';
+  document.querySelectorAll('.card,.kwc').forEach(c=>{
+    const okt=!t||(c.dataset.search||'').includes(t);
+    const okf=!f||(c.dataset[fk]===f);
+    c.style.display=(okt&&okf)?'':'none';
+  });
+  document.querySelectorAll('.section').forEach(s=>{
+    const any=[...s.parentElement.querySelectorAll('.card,.kwc')];
+  });
+}
+if(q)q.addEventListener('input',applyFilter);
+document.querySelectorAll('.tag').forEach(tag=>tag.addEventListener('click',()=>{
+  const was=tag.classList.contains('active');
+  document.querySelectorAll('.tag').forEach(t=>t.classList.remove('active'));
+  if(!was)tag.classList.add('active');
+  applyFilter();
+}));
+</script></body></html>
