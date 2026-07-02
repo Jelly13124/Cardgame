@@ -108,12 +108,16 @@ Authoritative list in `DataValidator.ALLOWED_ENEMY_ACTION_TYPES`:
 
 Authoritative list in `DataValidator.ALLOWED_STATUS_NAMES`:
 
-`bleed`, `burn`, `weak`, `vulnerable`, `double_damage`, `stun`, `regen`, `thorns`,
-`frail`, `dodge`, `metallicize`, `feel_no_pain`, `dark_embrace`
+`bleed`, `weak`, `vulnerable`, `stun`, `regen`, `thorns`, `frail`, `dodge`,
+`metallicize`, `feel_no_pain`, `hot_streak`, `all_in`, `hemorrhage`,
+`covering_reload`, `bullet`
 
-(`bleed` replaced the old `poison`; `strength_up` was removed. `bleed` ticks then
-halves stacks; `burn` ticks at end of turn and decays 1 at start. The last three are
-persistent powers from the StS2 port.)
+(`bleed` replaced the old `poison`; `strength_up` was removed; `burn`,
+`double_damage`, and `dark_embrace` were removed 2026-07-01. `bleed` ticks then
+halves stacks; `thorns` reflects then loses 1 stack per trigger. `metallicize` /
+`feel_no_pain` are persistent StS2 powers; the last five are the Cowboy Bill
+crit / ammo / reload kit. Intelligence adds +1 stack to every status the player
+applies via `apply_status` / `apply_status_all`.)
 
 **Stun is enemy-only** (see `docs/adr/0004-shock-enemy-only.md`). Enemy skips its next turn per stack.
 

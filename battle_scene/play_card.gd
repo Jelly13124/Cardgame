@@ -297,8 +297,6 @@ func _build_description(data: Dictionary) -> String:
 
 		if etype.contains("damage"):
 			final_damage = int(final_damage * stats.get("outgoing_mult", 1.0))
-			if stats.get("double_damage", 0) > 0:
-				final_damage *= 2
 
 		match etype:
 			"deal_damage":
@@ -523,8 +521,6 @@ func _get_player_stats() -> Dictionary:
 			"intelligence": int(p.get("intelligence") if "intelligence" in p else 0),
 			"luck": int(p.get("luck") if "luck" in p else 0),
 			"charm": int(p.get("charm") if "charm" in p else 0),
-			"double_damage":
-			p.get_status_stacks("double_damage") if p.has_method("get_status_stacks") else 0,
 			"outgoing_mult":
 			p.status_system.get_outgoing_multiplier() if "status_system" in p else 1.0,
 		}

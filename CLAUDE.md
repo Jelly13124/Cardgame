@@ -52,17 +52,25 @@ bash scripts/smoke_test.sh    # GODOT_BIN overrides the godot binary if not on P
 Expected tail: `[OK] DataValidator: all schemas passed.` On this machine Godot is
 `C:/Program Files/Godot/Godot_v4.6-stable_win64_console.exe`.
 
-**Keep the HTML catalogs in sync.** Whenever you add or remove content
-(cards / relics / equipment / enemies / affixes) or change its numbers, regenerate
-the browsable reference tables before finishing:
+**Catalog HTML is the design surface — plan there first, then sync into the game.**
+The browsable tables under `docs/catalog_html/` are the reference for *what content
+exists*. For ANY content add / remove / retune (cards / enemies / relics / equipment /
+gems / tools / events / affixes / base upgrades), follow this order:
+
+1. **Look at the catalog first.** Open the relevant page under `docs/catalog_html/`
+   and plan the change against the full existing set — naming, numbers, power curve,
+   consistency with its siblings.
+2. **Then edit the game data** (JSON + translation CSVs + any wiring).
+3. **Regenerate and verify** — a change is NOT done until the HTML matches the game data:
 
 ```bash
-python scripts/gen_catalog_html.py   # → docs/catalog_html/{cards,relics,equipment,enemies,keywords,affixes}.html
+python scripts/gen_catalog_html.py   # → docs/catalog_html/index.html (combined left-tab view) + per-category {cards,relics,equipment,enemies,gems,tools,events,keywords,affixes}.html
 ```
 
-The generator reads the JSON data + translation CSVs + `affix_pool.gd`, so it
-reflects the new values automatically. Cards are grouped by type, relics by
-rarity, equipment by slot, enemies by tier; affixes have their own page.
+The generator reads the JSON data + translation CSVs + `affix_pool.gd`, so it reflects
+new values automatically — **never hand-edit the HTML** (a regen overwrites it). Cards
+group by type (incl. curses), relics by rarity, equipment by slot, enemies by tier,
+tools by rarity; gems / events / affixes / keywords have their own pages.
 
 ## Project-tuned tooling
 

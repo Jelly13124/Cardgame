@@ -2,7 +2,6 @@
   "id": "combat_stim",
   "title": "Combat Stim",
   "target": "none",
-  "rarity": "uncommon",
   "effects": [
     {
       "type": "gain_strength",

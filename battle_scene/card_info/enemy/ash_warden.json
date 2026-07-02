@@ -4,7 +4,7 @@
 	"sprite_id": "ash_warden",
 	"max_health": 95,
 	"action_pattern": [
-		{ "type": "attack_status", "amount": 6, "status": "burn",       "stacks": 2, "label": "🔥 6 + B2" },
+		{ "type": "attack_status", "amount": 6, "status": "bleed",      "stacks": 2, "label": "🩸 6 + Bl2" },
 		{ "type": "attack_status", "amount": 7, "status": "weak",       "stacks": 1, "label": "⚔ 7 + W1" },
 		{ "type": "block",         "amount": 12,                                     "label": "🛡 12" },
 		{ "type": "attack_status", "amount": 8, "status": "vulnerable", "stacks": 1, "label": "⚔ 8 + V1" },
@@ -19,12 +19,12 @@
 				{ "type": "summon", "enemy_ids": ["ember_wisp"], "count": 1, "label": "☠ EMBER SUMMON" }
 			],
 			"action_pattern": [
-				{ "type": "attack_status", "amount": 8,  "status": "burn",       "stacks": 3, "label": "🔥 8 + B3" },
+				{ "type": "attack_status", "amount": 8,  "status": "bleed",      "stacks": 3, "label": "🩸 8 + Bl3" },
 				{ "type": "attack_status", "amount": 6,  "status": "weak",       "stacks": 2, "label": "⚔ 6 + W2" },
 				{ "type": "attack_status", "amount": 9,  "status": "vulnerable", "stacks": 2, "label": "⚔ 9 + V2" },
 				{ "type": "block",         "amount": 10,                                      "label": "🛡 10" },
 				{ "type": "summon",        "enemy_ids": ["ember_wisp"], "count": 1,           "label": "☠ EMBER SUMMON" },
-				{ "type": "attack_status", "amount": 10, "status": "burn",       "stacks": 3, "label": "🔥 10 + B3" }
+				{ "type": "attack_status", "amount": 10, "status": "bleed",      "stacks": 3, "label": "🩸 10 + Bl3" }
 			]
 		}
 	]

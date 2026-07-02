@@ -263,7 +263,7 @@ const REFORGE_COST := {"common": 15, "uncommon": 30, "rare": 50}
 ## Affix roller (per-instance equipment); used by reforge_stash_item.
 const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
 ## Cards available before any are unlocked at the Market. The omitted
-## ids (bone_breaker, last_breath, preemptive_strike, chain_link, last_stand)
+## ids (bone_breaker, last_breath, chain_link, last_stand)
 ## unlock via the Market screen's per-card unlock (unlock_card).
 # NOTE: strike + defend are basic starter cards (in hero starter decks) and are
 # deliberately NOT in the reward/draft pool — getting more of them as rewards is
@@ -297,8 +297,7 @@ const INITIAL_CARD_POOL: Array[String] = [
 	"sweep_arc",
 	"tape_patch",
 	"crowbar_smash",
-	# Build-enabler additions: a second Burn source (AoE) + an in-pool crit-rate source.
-	"wildfire",
+	# Build-enabler addition: an in-pool crit-rate source.
 	"lucky_streak",
 ]
 
@@ -318,7 +317,6 @@ const HERO_EXCLUSIVE_CARDS := {
 		"all_in",
 		"hemorrhage",
 		"covering_reload",
-		"incinerate",
 		"focusing_blow",
 		"siphon_valve",
 		"bulkhead_bleed",

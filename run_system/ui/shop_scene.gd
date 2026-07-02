@@ -20,9 +20,8 @@ const REMOVE_CARD_PRICE := 75
 const SHOP_CARD_COUNT := 6
 const SHOP_RELIC_COUNT := 3
 const CARD_RARITY_SEQUENCE := ["common", "common", "uncommon", "common", "uncommon", "rare"]
-const TOOL_PRICE := {"common": 55, "uncommon": 95}
+const TOOL_PRICE := 50  # tools have no rarity tiers — flat price
 const SHOP_TOOL_COUNT := 3
-const TOOL_RARITY_SEQUENCE := ["common", "uncommon", "common"]
 
 const SHOP_BOARD_BG := Color(0.055, 0.040, 0.032, 0.66)
 const SHOP_PANEL_BG := Color(0.080, 0.055, 0.040, 0.92)
@@ -38,7 +37,7 @@ const RARITY_COLORS := {
 
 # Rolled stock — set once in _ready
 var _stock_cards: Array = []  # [{card_id, rarity, price}]
-var _stock_tools: Array = []  # [{tool_id, rarity, price}]
+var _stock_tools: Array = []  # [{tool_id, price}]
 var _stock_relics: Array = []  # [{relic_id, price}]
 var _remove_price: int = 75
 
@@ -118,20 +117,11 @@ func _roll_stock() -> void:
 			}
 		)
 
-	var tools_pool := _list_tools_by_rarity()
-	for rarity in TOOL_RARITY_SEQUENCE:
-		var tool_id := _take_random_from_pool(tools_pool, rarity)
-		if tool_id == "":
-			continue
-		_stock_tools.append(_make_tool_stock_entry(tool_id, rarity))
-
-	while _stock_tools.size() < SHOP_TOOL_COUNT:
-		var fallback_tool := _take_random_from_any_pool(tools_pool, TOOL_RARITY_SEQUENCE)
-		if fallback_tool.is_empty():
-			break
-		_stock_tools.append(
-			_make_tool_stock_entry(str(fallback_tool["id"]), str(fallback_tool["rarity"]))
-		)
+	# Tools have no rarity tiers — stock SHOP_TOOL_COUNT distinct tools at a flat price.
+	var tools_pool: Array = RunManager.tool_pool().duplicate()
+	tools_pool.shuffle()
+	for i in range(min(SHOP_TOOL_COUNT, tools_pool.size())):
+		_stock_tools.append(_make_tool_stock_entry(str(tools_pool[i])))
 
 	var relic_pool := _list_unowned_relics()
 	while _stock_relics.size() < SHOP_RELIC_COUNT and not relic_pool.is_empty():
@@ -167,13 +157,8 @@ func _take_random_from_any_pool(pools: Dictionary, rarity_order: Array) -> Dicti
 	return {"id": _take_random_from_pool(pools, selected_rarity), "rarity": selected_rarity}
 
 
-func _make_tool_stock_entry(tool_id: String, rarity: String) -> Dictionary:
-	var price_key := rarity
-	if not TOOL_PRICE.has(price_key):
-		price_key = "common"
-	return {
-		"tool_id": tool_id, "rarity": rarity, "price": _discounted_price(int(TOOL_PRICE[price_key]))
-	}
+func _make_tool_stock_entry(tool_id: String) -> Dictionary:
+	return {"tool_id": tool_id, "price": _discounted_price(TOOL_PRICE)}
 
 
 func _list_cards_by_rarity() -> Dictionary:
@@ -201,15 +186,6 @@ func _list_cards_by_rarity() -> Dictionary:
 		var rarity := str(data.get("rarity", "common"))
 		if rarity in result:
 			result[rarity].append(card_id)
-	return result
-
-
-func _list_tools_by_rarity() -> Dictionary:
-	var result := {"common": [], "uncommon": []}
-	for tid in RunManager.tool_pool():
-		var rarity := str(RunManager.get_tool_data(tid).get("rarity", "common"))
-		if rarity in result:
-			result[rarity].append(tid)
 	return result
 
 

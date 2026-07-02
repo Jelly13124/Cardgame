@@ -134,6 +134,10 @@ func apply_thorns_reflection(attacker: Node, defender: Node) -> void:
 			and attacker.has_method("add_status")
 		):
 			attacker.add_status("bleed", thorns)
+		# Thorns decays on trigger (not per turn): lose 1 stack each time it reflects.
+		var ss = defender.get("status_system")
+		if ss:
+			ss.spend_stacks("thorns", 1, defender)
 
 
 func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
@@ -141,14 +145,6 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 	var type = card.card_info.get("type", "skill").to_lower()
 
 	var card_mult: float = 1.0
-	if (
-		type == "attack"
-		and player.has_method("get_status_stacks")
-		and player.get_status_stacks("double_damage") > 0
-	):
-		card_mult = 2.0
-		player.status_system.remove_status("double_damage", player)
-		main.show_notification(tr("UI_COMBAT_DOUBLE_DAMAGE_ACTIVE"), Color(0.2, 0.8, 1.0))
 
 	if effects.is_empty():
 		push_error(
@@ -498,6 +494,8 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 		"apply_status":
 			var status: String = effect.get("status", "")
 			var stacks: int = int(effect.get("stacks", 1))
+			# Intelligence boosts every status the player applies (+INT stacks).
+			stacks += int(player.get("intelligence"))
 			# brutal_servo: every Bleed the player applies gets bonus stacks.
 			if status == "bleed" and main.relic_effect_system:
 				stacks += main.relic_effect_system.bleed_bonus_stacks()
@@ -555,6 +553,8 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 		"apply_status_all":
 			var status: String = effect.get("status", "")
 			var stacks: int = int(effect.get("stacks", 1))
+			# Intelligence boosts every status the player applies (+INT stacks).
+			stacks += int(player.get("intelligence"))
 			# brutal_servo: every Bleed the player applies gets bonus stacks.
 			if status == "bleed" and main.relic_effect_system:
 				stacks += main.relic_effect_system.bleed_bonus_stacks()

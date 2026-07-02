@@ -2,11 +2,11 @@
   "id": "med_kit",
   "title": "Med Kit",
   "target": "none",
-  "rarity": "common",
   "effects": [
     {
-      "type": "heal",
-      "amount": 6
+      "type": "apply_status_self",
+      "status": "regen",
+      "stacks": 3
     }
   ],
   "icon": "res://run_system/assets/images/ui/tools/med_kit.png"
