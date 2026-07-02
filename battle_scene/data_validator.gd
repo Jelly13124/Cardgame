@@ -8,6 +8,9 @@
 extends RefCounted
 class_name DataValidator
 
+# ─── Core resolvers ───────────────────────────────────────────────────────────
+const CARD_UPGRADE = preload("res://run_system/core/card_upgrade.gd")
+
 # ─── Paths ────────────────────────────────────────────────────────────────────
 const CARD_DIR = "res://battle_scene/card_info/player/"
 const ENEMY_DIR = "res://battle_scene/card_info/enemy/"
@@ -105,6 +108,7 @@ const KNOWN_OPTIONAL_CARD_KEYS = [
 	"unplayable",
 	"end_turn_in_hand",
 	"tags",
+	"upgrade",
 ]
 # Yin/Yang polarity values a card may declare (absent = treated as "neutral")
 const ALLOWED_CARD_POLARITIES = ["yin", "yang", "neutral"]
@@ -381,6 +385,52 @@ static func validate_card(data: Dictionary, source_path: String) -> bool:
 			for i in range(bonus.size()):
 				if not _validate_card_effect(bonus[i], prefix, "matched_bonus", i):
 					ok = false
+
+	# Optional bespoke `upgrade` block (consumed by card_upgrade.resolve). When
+	# present it overrides cost/title/description/effects on the upgraded card.
+	# Each override field is validated to the same shape as its base counterpart;
+	# `upgrade.effects` reuses the same per-effect validator as the main array.
+	if data.has("upgrade"):
+		var upgrade = data["upgrade"]
+		if typeof(upgrade) != TYPE_DICTIONARY:
+			push_error("%s: upgrade must be a Dictionary, got %s" % [prefix, typeof(upgrade)])
+			ok = false
+		else:
+			if upgrade.has("cost"):
+				if typeof(upgrade["cost"]) != TYPE_INT and typeof(upgrade["cost"]) != TYPE_FLOAT:
+					push_error(
+						(
+							"%s: upgrade.cost must be a number, got %s"
+							% [prefix, typeof(upgrade["cost"])]
+						)
+					)
+					ok = false
+			if upgrade.has("title") and typeof(upgrade["title"]) != TYPE_STRING:
+				push_error("%s: upgrade.title must be a String" % prefix)
+				ok = false
+			if upgrade.has("description") and typeof(upgrade["description"]) != TYPE_STRING:
+				push_error("%s: upgrade.description must be a String" % prefix)
+				ok = false
+			if upgrade.has("effects"):
+				if typeof(upgrade["effects"]) != TYPE_ARRAY:
+					push_error("%s: upgrade.effects must be an Array" % prefix)
+					ok = false
+				else:
+					for i in range(upgrade["effects"].size()):
+						if not _validate_card_effect(
+							upgrade["effects"][i], prefix, "upgrade.effects", i
+						):
+							ok = false
+
+	# Coverage warning (non-fatal): a card with neither a bespoke upgrade block nor
+	# a formula-bumpable effect resolves to a no-op upgrade. Phase 5 closes the gap.
+	if not CARD_UPGRADE.is_upgradeable(data):
+		push_warning(
+			(
+				"Card '%s' has no bespoke upgrade and no formula-bumpable effect — upgrade is a no-op"
+				% str(data.get("name", source_path))
+			)
+		)
 
 	# Unknown top-level keys → warn (not fatal) — helps catch typos like "retian"
 	var known_keys = REQUIRED_CARD_KEYS + KNOWN_OPTIONAL_CARD_KEYS
