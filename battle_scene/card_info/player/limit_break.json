@@ -15,5 +15,12 @@
 		{
 			"type": "exhaust_self"
 		}
-	]
+	],
+	"upgrade": {
+		"cost": 0,
+		"effects": [
+			{ "type": "double_target_bleed" },
+			{ "type": "exhaust_self" }
+		]
+	}
 }

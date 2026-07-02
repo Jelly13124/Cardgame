@@ -10,5 +10,8 @@
   "side": "player",
   "effects": [
     { "type": "gain_block_from_bleed" }
-  ]
+  ],
+  "upgrade": {
+    "cost": 0
+  }
 }

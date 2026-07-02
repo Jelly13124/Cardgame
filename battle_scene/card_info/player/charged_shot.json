@@ -10,5 +10,11 @@
 	"effects": [
 		{ "type": "deal_damage_str_mult", "mult": 2 },
 		{ "type": "exhaust_self" }
-	]
+	],
+	"upgrade": {
+		"effects": [
+			{ "type": "deal_damage_str_mult", "mult": 3 },
+			{ "type": "exhaust_self" }
+		]
+	}
 }

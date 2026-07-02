@@ -14,5 +14,10 @@
 			"attr": "intelligence",
 			"double_if_bleeding": true
 		}
-	]
+	],
+	"upgrade": {
+		"effects": [
+			{ "type": "apply_bleed_scaled", "amount": 5, "attr": "intelligence", "double_if_bleeding": true }
+		]
+	}
 }

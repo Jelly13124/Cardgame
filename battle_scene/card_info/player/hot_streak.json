@@ -10,5 +10,8 @@
   "side": "player",
   "effects": [
     { "type": "apply_status_self", "status": "hot_streak", "stacks": 1 }
-  ]
+  ],
+  "upgrade": {
+    "cost": 0
+  }
 }

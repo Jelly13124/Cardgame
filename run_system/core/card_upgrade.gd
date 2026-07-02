@@ -56,6 +56,8 @@ static func formula(effects: Array) -> Array:
 ## True when `resolve()` would change something (card is meaningfully upgradeable).
 ## Used by the validator coverage warning and the upgrade modal (grey out no-op).
 static func is_upgradeable(base: Dictionary) -> bool:
+	if str(base.get("type", "")) == "curse":
+		return false
 	if base.has("upgrade"):
 		return true
 	var before: Array = base.get("effects", [])

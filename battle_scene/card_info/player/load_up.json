@@ -10,5 +10,10 @@
   "side": "player",
   "effects": [
     { "type": "add_card_to_hand", "card": "reload", "amount": 2 }
-  ]
+  ],
+  "upgrade": {
+    "effects": [
+      { "type": "add_card_to_hand", "card": "reload", "amount": 3 }
+    ]
+  }
 }

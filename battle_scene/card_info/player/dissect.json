@@ -10,5 +10,10 @@
   "side": "player",
   "effects": [
     { "type": "apply_bleed_scaled", "amount": 0, "attr": "intelligence", "attr_mult": 2 }
-  ]
+  ],
+  "upgrade": {
+    "effects": [
+      { "type": "apply_bleed_scaled", "amount": 2, "attr": "intelligence", "attr_mult": 3 }
+    ]
+  }
 }

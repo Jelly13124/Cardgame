@@ -10,5 +10,12 @@
 	"effects": [
 		{ "type": "apply_status_self", "status": "dodge", "stacks": 1 },
 		{ "type": "exhaust_self" }
-	]
+	],
+	"upgrade": {
+		"cost": 0,
+		"effects": [
+			{ "type": "apply_status_self", "status": "dodge", "stacks": 1 },
+			{ "type": "exhaust_self" }
+		]
+	}
 }

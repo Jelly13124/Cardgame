@@ -10,5 +10,10 @@
 	"retain": true,
 	"effects": [
 		{ "type": "scale_damage_by_attacks", "base": 0, "per": 2, "scope": "combat" }
-	]
+	],
+	"upgrade": {
+		"effects": [
+			{ "type": "scale_damage_by_attacks", "base": 0, "per": 3, "scope": "combat" }
+		]
+	}
 }

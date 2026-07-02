@@ -10,5 +10,11 @@
   "side": "player",
   "effects": [
     { "type": "apply_status_self", "status": "covering_reload", "stacks": 1 }
-  ]
+  ],
+  "upgrade": {
+    "effects": [
+      { "type": "apply_status_self", "status": "covering_reload", "stacks": 1 },
+      { "type": "gain_block", "amount": 6 }
+    ]
+  }
 }
