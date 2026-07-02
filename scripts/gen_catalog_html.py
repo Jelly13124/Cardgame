@@ -90,6 +90,12 @@ input[type=search]{background:#0e0b07;border:1px solid var(--line);color:var(--t
 .eff li{font-size:13px;color:var(--txt);padding:3px 0 3px 16px;position:relative}
 .eff li:before{content:"▸";position:absolute;left:0;color:var(--gold)}
 .eff li.bonus:before{content:"☯";color:#ffcf45}
+.up{margin-top:9px;padding:8px 10px;border-radius:8px;background:rgba(90,200,120,.07);border:1px solid #2f5a3a}
+.up .uplabel{display:inline-block;font-size:11px;font-weight:700;color:#7fe0a0;letter-spacing:.4px}
+.up .upcost{margin-left:8px;font-size:11px;color:#ffcf45}
+.up .eff{margin:6px 0 0}
+.up .eff li{color:#cfe6d5}
+.up .eff li:before{content:"▸";color:#7fe0a0}
 .hp{color:#ff8b6b;font-weight:700}
 .kw{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;padding:14px 28px}
 .kwc{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:9px;padding:12px 15px}
@@ -238,6 +244,61 @@ def fmt_effect(e):
     return cap(t)
 
 
+# ── Card-upgrade resolver (Python mirror of run_system/core/card_upgrade.gd) ──
+# Keep IN SYNC with card_upgrade.gd. Bespoke `upgrade` block overrides
+# cost/title/description/effects (effects = full replacement); otherwise the
+# formula bumps beneficial numeric fields. Curses are never upgradeable.
+_UPGRADE_FORMULA = {
+    "deal_damage": ("amount", 2), "deal_damage_all": ("amount", 2),
+    "gain_block": ("amount", 3),
+    "gain_strength": ("amount", 1), "gain_dexterity": ("amount", 1),
+    "gain_luck": ("amount", 1), "gain_intelligence": ("amount", 1),
+    "gain_energy": ("amount", 1),
+    "apply_status": ("stacks", 1), "apply_status_all": ("stacks", 1),
+    "draw_cards": ("amount", 1),
+}
+
+
+def upgrade_formula(effects):
+    out = []
+    for e in effects:
+        e2 = dict(e)
+        rule = _UPGRADE_FORMULA.get(e2.get("type", ""))
+        if rule:
+            field, delta = rule
+            e2[field] = int(e2.get(field, 0)) + delta
+        out.append(e2)
+    return out
+
+
+def resolve_upgrade(d):
+    """Upgraded card dict (cost/title/description/effects), mirroring resolve()."""
+    result = dict(d)
+    up = d.get("upgrade", {})
+    if not isinstance(up, dict):
+        up = {}
+    if "cost" in up:
+        result["cost"] = int(up["cost"])
+    if "title" in up:
+        result["title"] = str(up["title"])
+    if "description" in up:
+        result["description"] = str(up["description"])
+    if "effects" in up:
+        result["effects"] = list(up["effects"])
+    else:
+        result["effects"] = upgrade_formula(d.get("effects", []))
+    return result
+
+
+def is_upgradeable(d):
+    if str(d.get("type", "")) == "curse":
+        return False
+    if "upgrade" in d:
+        return True
+    before = d.get("effects", [])
+    return upgrade_formula(before) != before
+
+
 # ── Cards (grouped by type) ─────────────────────────────────────────────────
 def card_block(cid, d):
     tr = cards_tr.get(f"CARD_{cid}_TITLE", {})
@@ -256,6 +317,16 @@ def card_block(cid, d):
         effs += f'<li style="color:#e0584c">☣ While in hand at end of turn: {esc(fmt_effect(pe))}</li>'
     dtr = cards_tr.get(f"CARD_{cid}_DESC", {})
     desc = dtr.get("zh") or d.get("description", "")
+    # Upgraded form (rest-campfire card upgrade). Curses never upgrade.
+    up_html = ""
+    if is_upgradeable(d):
+        u = resolve_upgrade(d)
+        up_cost = u.get("cost", cost)
+        cost_txt = (f'<span class="upcost">⚡ {esc(cost)}→{esc(up_cost)}</span>'
+                    if up_cost != cost else "")
+        up_effs = "".join(f"<li>{esc(fmt_effect(e))}</li>" for e in u.get("effects", []))
+        up_html = (f'<div class="up"><span class="uplabel">Upgraded ↑ 升级</span>'
+                   f'{cost_txt}<ul class="eff">{up_effs}</ul></div>')
     c = POLARITY.get(pol) if pol in ("yin", "yang") else RARITY.get(rar, "#9aa3ad")
     search = f"{cid} {en} {zh} {ctype} {rar} {pol}".lower()
     front = str(d.get("front_image", ""))
@@ -272,7 +343,7 @@ def card_block(cid, d):
         f'<h3>{esc(en)} <span class="zh">{esc(zh)}</span></h3>'
         f'<div class="meta"><span class="pill">⚡ {esc(cost)}</span><span class="pill">{esc(cap(ctype))}</span>'
         f'{rar_pill(rar)}{pol_pill(pol)}<span class="pill" style="color:#6b6256">{esc(cid)}</span></div>'
-        f'<div class="desc">{esc(desc)}</div><ul class="eff">{effs}</ul></div>'
+        f'<div class="desc">{esc(desc)}</div><ul class="eff">{effs}</ul>{up_html}</div>'
     )
 
 
