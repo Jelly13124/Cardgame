@@ -42,8 +42,9 @@ const CONV_CAPS_CHUNK := 40
 const CONV_CAPS_RATE := 0.25
 const CONV_TAX := 0.10
 
-## Balances row (rebuilt on every _refresh via the base's signal wiring).
-var _balances_lbl: Label = null
+## Balances row — an HBox of 3 T.currency_row entries (Core/Caps/Scrap), rebuilt
+## on every _refresh via the base's signal wiring.
+var _balances_row: HBoxContainer = null
 ## Status line for transient feedback (selection / conversion results).
 var _status_lbl: Label = null
 
@@ -63,10 +64,9 @@ func _build_content(container: VBoxContainer) -> void:
 	banner_col.add_theme_constant_override("separation", 4)
 	bm.add_child(banner_col)
 
-	_balances_lbl = Label.new()
-	_balances_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(_balances_lbl, 20, Color(0.92, 0.86, 0.62), 2)
-	banner_col.add_child(_balances_lbl)
+	_balances_row = HBoxContainer.new()
+	_balances_row.add_theme_constant_override("separation", 24)
+	banner_col.add_child(_balances_row)
 
 	_status_lbl = Label.new()
 	_status_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -499,7 +499,10 @@ func _build_conversion(container: VBoxContainer) -> void:
 	var core_out := _converted_amount(CONV_CORE_CHUNK, CONV_CORE_RATE)
 	group.add_child(
 		_conversion_row(
-			tr("UI_WAREHOUSE_CONVERT_CORE").format({"src": CONV_CORE_CHUNK, "dst": core_out}),
+			CONV_CORE_CHUNK,
+			"core",
+			core_out,
+			"caps",
 			MetaProgress.core >= CONV_CORE_CHUNK,
 			_on_convert_core_to_caps
 		)
@@ -509,7 +512,10 @@ func _build_conversion(container: VBoxContainer) -> void:
 	var caps_out := _converted_amount(CONV_CAPS_CHUNK, CONV_CAPS_RATE)
 	group.add_child(
 		_conversion_row(
-			tr("UI_WAREHOUSE_CONVERT_CAPS").format({"src": CONV_CAPS_CHUNK, "dst": caps_out}),
+			CONV_CAPS_CHUNK,
+			"caps",
+			caps_out,
+			"scrap",
 			MetaProgress.caps >= CONV_CAPS_CHUNK,
 			_on_convert_caps_to_scrap
 		)
@@ -524,16 +530,30 @@ func _converted_amount(chunk: int, rate: float) -> int:
 
 ## One conversion row, built on the shared `_row_panel` helper so it matches the
 ## bordered-row look of the upgrade rows on the other 4 screens instead of a
-## bare HBoxContainer floating on the background.
-func _conversion_row(label_text: String, affordable: bool, cb: Callable) -> Control:
+## bare HBoxContainer floating on the background. Shows "<src amount+icon> → <dst
+## amount+icon> (after 10% tax)" instead of the old all-text sentence.
+func _conversion_row(
+	src_amount: int, src_cur: String, dst_amount: int, dst_cur: String, affordable: bool, cb: Callable
+) -> Control:
 	var row := _row_panel()
 
-	var lbl := Label.new()
-	lbl.text = label_text
-	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_style_label(lbl, TOK_FONT_BODY, TOK_TEXT, 1)
-	row.add_child(lbl)
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 8)
+	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(line)
+
+	line.add_child(T.currency_row(src_amount, src_cur, TOK_FONT_BODY, 20))
+	var arrow := Label.new()
+	arrow.text = "→"
+	_style_label(arrow, TOK_FONT_BODY, TOK_TEXT, 1)
+	line.add_child(arrow)
+	line.add_child(T.currency_row(dst_amount, dst_cur, TOK_FONT_BODY, 20))
+
+	var tax_lbl := Label.new()
+	tax_lbl.text = tr("UI_WAREHOUSE_CONVERT_TAX_NOTE")
+	tax_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(tax_lbl, TOK_FONT_DIM, TOK_TEXT_DIM, 1)
+	line.add_child(tax_lbl)
 
 	var btn := Button.new()
 	btn.custom_minimum_size = Vector2(150, 40)
@@ -604,11 +624,13 @@ func _refresh() -> void:
 
 
 func _update_balances() -> void:
-	if not is_instance_valid(_balances_lbl):
+	if not is_instance_valid(_balances_row):
 		return
-	_balances_lbl.text = tr("UI_WAREHOUSE_BALANCES").format(
-		{"core": MetaProgress.core, "caps": MetaProgress.caps, "scrap": MetaProgress.scrap}
-	)
+	for c in _balances_row.get_children():
+		c.queue_free()
+	_balances_row.add_child(T.currency_row(MetaProgress.core, "core", 20, 24))
+	_balances_row.add_child(T.currency_row(MetaProgress.caps, "caps", 20, 24))
+	_balances_row.add_child(T.currency_row(MetaProgress.scrap, "scrap", 20, 24))
 
 
 func _flash_status(text: String) -> void:

@@ -5,6 +5,10 @@ UI_FORGE_DISMANTLE,Dismantle ({n} Scrap),拆解（{n} 废料）
 UI_FORGE_REFORGE,Reforge ({n} Scrap),重铸（{n} 废料）
 UI_FORGE_CURSE,Curse ({n} Scrap),诅咒（{n} 废料）
 UI_FORGE_CRAFT,Craft ({n} Scrap),锻造（{n} 废料）
+UI_FORGE_DISMANTLE_VERB,Dismantle,拆解
+UI_FORGE_REFORGE_VERB,Reforge,重铸
+UI_FORGE_CURSE_VERB,Curse,诅咒
+UI_FORGE_CRAFT_VERB,Craft,锻造
 UI_FORGE_CRAFT_TITLE,Craft Equipment,锻造装备
 UI_FORGE_SLOT,Slot,部位
 UI_FORGE_RARITY,Rarity,品质

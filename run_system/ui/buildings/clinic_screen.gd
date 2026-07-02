@@ -44,10 +44,7 @@ func _rebuild(container: VBoxContainer) -> void:
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		bm.add_theme_constant_override(side, TOK_MARGIN_INNER)
 	banner.add_child(bm)
-	var caps_lbl := Label.new()
-	caps_lbl.text = tr("UI_CLINIC_CAPS").format({"n": MetaProgress.caps})
-	_style_label(caps_lbl, 20, Color(1.0, 0.82, 0.45), 2)
-	bm.add_child(caps_lbl)
+	bm.add_child(T.currency_row(MetaProgress.caps, "caps", 20, 24))
 	container.add_child(banner)
 
 	# --- T1: attribute perks (Caps) ---
@@ -139,9 +136,8 @@ func _add_core_upgrade_row(container: VBoxContainer, upgrade_id: String) -> void
 	bottom.add_theme_constant_override("separation", 12)
 	vbox.add_child(bottom)
 
-	var cost_lbl := Label.new()
-	_style_label(cost_lbl, 18, Color(0.64, 0.90, 1.0), 1)
-	bottom.add_child(cost_lbl)
+	var cost_slot := HBoxContainer.new()
+	bottom.add_child(cost_slot)
 
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -155,7 +151,6 @@ func _add_core_upgrade_row(container: VBoxContainer, upgrade_id: String) -> void
 
 	if lvl >= tiers.size():
 		effect_lbl.text = tr("UI_HOME_UPGRADE_FULLY_UPGRADED")
-		cost_lbl.text = ""
 		buy.text = tr("UI_HOME_UPGRADE_MAXED")
 		buy.disabled = true
 	else:
@@ -165,7 +160,7 @@ func _add_core_upgrade_row(container: VBoxContainer, upgrade_id: String) -> void
 			str(next_tier.get("effect_text", ""))
 		)
 		effect_lbl.text = tr("UI_HOME_UPGRADE_NEXT").format({"text": effect_text})
-		cost_lbl.text = tr("UI_HOME_UPGRADE_COST").format({"n": int(next_tier.get("cost", 0))})
+		cost_slot.add_child(T.currency_row(int(next_tier.get("cost", 0)), "core", 18, 20))
 		buy.text = tr("UI_HOME_UPGRADE_BUY")
 		buy.disabled = not MetaProgress.can_purchase(upgrade_id, def)
 		# purchase_upgrade emits core_changed + upgrades_changed → _rebuild.
@@ -244,11 +239,13 @@ func _perk_card(
 		buy.text = tr("UI_CLINIC_PERK_MAX")
 		buy.disabled = true
 	else:
-		buy.text = "%s  %d" % [tr("UI_CLINIC_BUY"), cost]
+		buy.text = tr("UI_CLINIC_BUY")
+		buy.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		buy.disabled = MetaProgress.caps < cost
 		if not buy.disabled:
 			buy.add_theme_color_override("font_color", Color(0.74, 1.0, 0.64))  # affordable
 		buy.pressed.connect(on_buy)
+		buy.add_child(T.overlay_cost_badge(cost, "caps", 17, 18, -8, -70))
 	row.add_child(buy)
 
 	return card

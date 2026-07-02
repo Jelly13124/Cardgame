@@ -23,7 +23,10 @@ var accent: Color = Color(0.86, 0.78, 0.52)
 
 var _tier_badge: Label
 var _content_box: VBoxContainer
-var _core_label: Label
+## Amount+icon Core chip (T.currency_row) in the header's right column.
+var _core_row: HBoxContainer
+## The row's amount Label — cached for cheap live updates.
+var _core_amount_lbl: Label
 
 ## Per-building header art (the same home-base runtime sprites).
 const _ICON_DIR := "res://run_system/assets/images/home/buildings_runtime/"
@@ -73,6 +76,17 @@ func _ready() -> void:
 	MetaProgress.core_changed.connect(func(_v): _refresh())
 	MetaProgress.caps_changed.connect(func(_v): _refresh())
 	MetaProgress.scrap_changed.connect(func(_v): _refresh())
+
+
+## ESC backs out of this building detail page first (same effect as the ✕ close
+## button — reuses `_close()`, so the existing X-button behavior is untouched).
+## Consumes the event so the base overview's own ESC→Settings handler doesn't
+## also fire this same frame.
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		AudioManager.play_sfx("ui_back")
+		_close()
 
 
 func _build() -> void:
@@ -157,10 +171,11 @@ func _build() -> void:
 	_tier_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_style_label(_tier_badge, 24, Color(0.90, 0.90, 0.86), 2)
 	right_box.add_child(_tier_badge)
-	_core_label = Label.new()
-	_core_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_style_label(_core_label, 22, Color(0.64, 0.90, 1.0), 2)
-	right_box.add_child(_core_label)
+	_core_row = T.currency_row(0, "core", 22, 24)
+	_core_row.alignment = BoxContainer.ALIGNMENT_END
+	right_box.add_child(_core_row)
+	_core_amount_lbl = _core_row.get_meta("amount_label") as Label
+	_core_amount_lbl.add_theme_color_override("font_color", Color(0.64, 0.90, 1.0))
 
 	var close_btn := Button.new()
 	close_btn.text = "✕"
@@ -271,8 +286,8 @@ func _flavour_text() -> String:
 ## Update the tier badge, Core chip, and action card to the current building state.
 ## Safe to call repeatedly (wired to buildings/currency change signals).
 func _refresh() -> void:
-	if is_instance_valid(_core_label):
-		_core_label.text = tr("UI_HOME_CORE").format({"n": MetaProgress.core})
+	if is_instance_valid(_core_amount_lbl):
+		_core_amount_lbl.text = str(MetaProgress.core)
 	var tier := MetaProgress.get_building_tier(building_id)
 	if is_instance_valid(_tier_badge):
 		_tier_badge.text = tr("UI_BUILD_LOCKED") if tier <= 0 else "T%d" % tier

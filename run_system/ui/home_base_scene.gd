@@ -63,6 +63,29 @@ func _ready() -> void:
 	MetaProgress.buildings_changed.connect(_add_building_sprites)
 
 
+## ESC opens the unified pause/settings panel (mirrors map_scene's ui_cancel → pause
+## wiring). Guarded so it doesn't double-open if a panel is already up, and defers to
+## any full-page overlay currently open (BuildingOverlay owns its own ESC — it backs
+## out to this overview first; StashOverlay/TierConfirm/RulesLayer are simple popups
+## without their own ESC handler, so ESC here would otherwise fall through to Settings
+## while one is open — skip in that case too so a stray ESC doesn't stack panels).
+func _unhandled_input(event: InputEvent) -> void:
+	if not event.is_action_pressed("ui_cancel"):
+		return
+	if get_node_or_null("PauseLayer") != null:
+		return  # already open
+	if get_node_or_null("BuildingOverlay") != null:
+		return  # the building screen's own _unhandled_input handles ESC first
+	if (
+		get_node_or_null("StashOverlay") != null
+		or get_node_or_null("TierConfirm") != null
+		or get_node_or_null("RulesLayer") != null
+	):
+		return  # let the open popup own ESC (none currently bind it; avoid stacking)
+	get_viewport().set_input_as_handled()
+	_open_pause()
+
+
 func _build() -> void:
 	_add_background()
 	_add_building_sprites()
@@ -391,16 +414,17 @@ func _add_tier_button(building_id: String, plaque_rect: Rect2) -> void:
 	btn.add_theme_font_size_override("font_size", 17)
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	T.apply_button_theme(btn)
-	if tier <= 0:
-		btn.text = ("解锁  %d 核心" if zh else "Unlock  %d Core") % cost
-	else:
-		btn.text = ("升级  %d 核心" if zh else "Upgrade  %d Core") % cost
+	btn.text = ("解锁" if zh else "Unlock") if tier <= 0 else ("升级" if zh else "Upgrade")
+	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	btn.disabled = cost < 0 or MetaProgress.core < cost
 	btn.pressed.connect(
 		func() -> void:
 			AudioManager.play_sfx("ui_click")
 			_show_tier_confirm(building_id)
 	)
+	# Cost shown as amount+icon, overlaid on the button's right side (verb text
+	# stays as btn.text on the left) instead of the old "N 核心" word suffix.
+	btn.add_child(T.overlay_cost_badge(cost, "core", 15, 18, -10, -110))
 	var bw := 196.0
 	var br := Rect2(
 		plaque_rect.position.x + plaque_rect.size.x * 0.5 - bw * 0.5,
@@ -453,16 +477,18 @@ func _show_tier_confirm(building_id: String) -> void:
 	msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if is_unlock:
-		msg.text = ("解锁「%s」?\n花费 %d 核心" if zh else 'Unlock "%s"?\nCost %d Core') % [bname, cost]
+		msg.text = ("解锁「%s」?" if zh else 'Unlock "%s"?') % bname
 	else:
 		var t2 := tier + 1
-		msg.text = (
-			("把「%s」升级到 T%d?\n花费 %d 核心" if zh else 'Upgrade "%s" to T%d?\nCost %d Core')
-			% [bname, t2, cost]
-		)
+		msg.text = ("把「%s」升级到 T%d?" if zh else 'Upgrade "%s" to T%d?') % [bname, t2]
 	msg.add_theme_font_size_override("font_size", 22)
 	msg.add_theme_color_override("font_color", Color(1.0, 0.93, 0.78))
 	box.add_child(msg)
+
+	# Cost as amount+icon (no "N 核心" word), centered under the question.
+	var cost_row := T.currency_row(cost, "core", 20, 22, "花费:" if zh else "Cost:")
+	cost_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_child(cost_row)
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
@@ -515,14 +541,14 @@ func _load_home_texture(path: String) -> Texture2D:
 	return null
 
 
-## Currency chip: the Codex currency icon + the live value. If the icon PNG is
-## missing, the chip falls back to a small accent-tinted name label so the counter
-## stays readable on the home-base background.
-func _make_currency_chip(parent: Control, _icon_id: String, accent: Color) -> Label:
+## Currency chip: a big number + the Codex currency icon (T.currency_row), sat
+## bare on the scene (no background frame — owner request). If the icon PNG is
+## missing, currency_row falls back to a small currency-word label so the
+## counter stays readable even if the art regresses.
+func _make_currency_chip(parent: Control, _icon_id: String, _accent: Color) -> Label:
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(134, 64)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# No background frame — the icon + number sit bare on the scene (owner request).
 	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	parent.add_child(panel)
 
@@ -533,58 +559,20 @@ func _make_currency_chip(parent: Control, _icon_id: String, accent: Color) -> La
 	margin.add_theme_constant_override("margin_bottom", 4)
 	panel.add_child(margin)
 
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 5)
+	var row := T.currency_row(0, _icon_id, 31, 40)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	margin.add_child(row)
 
-	# The currency NAME label — shown only as the missing-art fallback: when the icon
-	# PNG loads (below) the name is hidden and the icon takes its slot. Keeps the chip
-	# readable if the art ever regresses.
-	var zh := Settings.language == "zh"
-	var cname := "核心" if zh else "Core"
-	if _icon_id == "caps":
-		cname = "瓶盖" if zh else "Caps"
-	elif _icon_id == "scrap":
-		cname = "废料" if zh else "Scrap"
-	# Hierarchy: the NAME is a small muted accent label, the NUMBER dominates (bigger,
-	# brighter). Keeps the frameless look (owner request). The accent-tinted name
-	# doubles as the per-currency color cue on the missing-art fallback path.
-	var tag := Label.new()
-	tag.text = cname
-	tag.add_theme_font_size_override("font_size", 15)
-	tag.add_theme_color_override("font_color", accent.lerp(Color(0.86, 0.82, 0.72), 0.35))
-	tag.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
-	tag.add_theme_constant_override("outline_size", 4)
-	tag.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(tag)
-
-	var icon_path := "res://run_system/assets/images/home/currency/%s.png" % _icon_id
-	var icon_tex := _load_home_texture(icon_path)
-	if icon_tex:
-		var icon := TextureRect.new()
-		icon.custom_minimum_size = Vector2(54, 54)
-		icon.texture = icon_tex
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.add_child(icon)
-		row.move_child(icon, tag.get_index())
-		tag.visible = false
-
-	var label := Label.new()
-	label.text = "0"
+	# Style the row's amount Label to match the prior big/bright HUD look and hand
+	# it back so _refresh_* can update it.
+	var label := row.get_meta("amount_label") as Label
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 31)
 	label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.78))
 	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.95))
 	label.add_theme_constant_override("outline_size", 6)
 	label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.5))
 	label.add_theme_constant_override("shadow_offset_y", 2)
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(label)
 	return label
 
 

@@ -250,6 +250,112 @@ static func button_textured(state: String = "normal") -> StyleBoxTexture:
 	return style
 
 
+## Currency icon PNGs (Codex art). Keyed by currency id: core / caps / scrap.
+const _CURRENCY_ICON_DIR := "res://run_system/assets/images/home/currency/"
+
+## Currency display fallback names (used only if the icon PNG is missing, so
+## a regressed art pipeline never leaves the number without a unit).
+const _CURRENCY_FALLBACK_NAME := {
+	"core": {"zh": "核心", "en": "Core"},
+	"caps": {"zh": "瓶盖", "en": "Caps"},
+	"scrap": {"zh": "废料", "en": "Scrap"},
+}
+
+
+## Amount + currency ICON row: an HBoxContainer with a number Label followed by a
+## small TextureRect icon (`home/currency/{currency}.png`; currency ∈ core/caps/
+## scrap). Falls back to "<amount> <currency-word>" text if the icon PNG is
+## missing so a regressed art pipeline never leaves a bare, unlabeled number.
+## `icon_size` controls the icon's square size (20–24px fits inline with body text).
+## `prefix` optionally prepends a label before the row (e.g. "花费: <row>") — pass
+## the already-translated prefix text; empty string omits it.
+static func currency_row(
+	amount: int, currency: String, font_size: int = 20, icon_size: int = 22, prefix: String = ""
+) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	if prefix != "":
+		var prefix_lbl := Label.new()
+		prefix_lbl.text = prefix
+		prefix_lbl.add_theme_font_size_override("font_size", font_size)
+		prefix_lbl.add_theme_color_override("font_color", TEXT_MAIN)
+		prefix_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(prefix_lbl)
+
+	var icon_path := "%s%s.png" % [_CURRENCY_ICON_DIR, currency]
+	var icon_tex: Texture2D = null
+	if ResourceLoader.exists(icon_path):
+		var loaded = load(icon_path)
+		if loaded is Texture2D:
+			icon_tex = loaded
+
+	var amount_lbl := Label.new()
+	amount_lbl.text = str(amount)
+	amount_lbl.add_theme_font_size_override("font_size", font_size)
+	amount_lbl.add_theme_color_override("font_color", TEXT_MAIN)
+	amount_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	amount_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(amount_lbl)
+	# Stable handle regardless of child order (the optional prefix Label, when
+	# present, sits BEFORE this one) — callers that need to live-update the
+	# number should fetch `row.get_meta("amount_label")` rather than assuming
+	# a child index.
+	row.set_meta("amount_label", amount_lbl)
+
+	if icon_tex:
+		var icon := TextureRect.new()
+		icon.texture = icon_tex
+		icon.custom_minimum_size = Vector2(icon_size, icon_size)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(icon)
+	else:
+		# Missing-art fallback: show the currency word so the number still reads.
+		var zh := Settings.language == "zh"
+		var names: Dictionary = _CURRENCY_FALLBACK_NAME.get(
+			currency, {"zh": currency, "en": currency}
+		)
+		var word_lbl := Label.new()
+		word_lbl.text = str(names.get("zh" if zh else "en", currency))
+		word_lbl.add_theme_font_size_override("font_size", font_size)
+		word_lbl.add_theme_color_override("font_color", TEXT_SECONDARY)
+		word_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(word_lbl)
+
+	return row
+
+
+## A currency_row anchored as a right-edge overlay badge on a parent Control (a
+## Button that already has left-aligned verb text, typically) — e.g. "Reforge"
+## text on the left, a Scrap amount+icon badge overlaid on the right. Anchors to
+## the FULL right column (top=0, bottom=1) and wraps the row in a CenterContainer
+## so it is reliably vertically centered regardless of the parent's height —
+## anchoring the row itself to a zero-height center-right point would collapse
+## its rect and rely on min-size clamping, which is fragile. `right_inset` /
+## `left_inset` are negative pixel offsets from the parent's right edge (e.g.
+## -8 / -66 reserves a ~58px-wide badge column, 8px from the edge).
+static func overlay_cost_badge(
+	amount: int, currency: String, font_size: int, icon_size: int, right_inset: int, left_inset: int
+) -> Control:
+	var holder := CenterContainer.new()
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.anchor_left = 1.0
+	holder.anchor_right = 1.0
+	holder.anchor_top = 0.0
+	holder.anchor_bottom = 1.0
+	holder.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	holder.offset_right = right_inset
+	holder.offset_left = left_inset
+	holder.offset_top = 0
+	holder.offset_bottom = 0
+	holder.add_child(currency_row(amount, currency, font_size, icon_size))
+	return holder
+
+
 ## A square ✕ close button for the full-screen pages (character / run-deck).
 ## The caller anchors it to the page's top-right corner and connects `pressed`.
 static func close_x_button() -> Button:

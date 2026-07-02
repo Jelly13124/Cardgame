@@ -23,5 +23,6 @@ UI_WAREHOUSE_SLOTS_INFO,"Capacity rises with the warehouse tier: +5 slots at T2,
 UI_WAREHOUSE_CONVERT_TITLE,Resource Conversion,资源兑换
 UI_WAREHOUSE_CONVERT_CORE,"{src} Core  →  {dst} Caps (after 10% tax)","{src} 核心  →  {dst} 瓶盖（已扣 10% 税）"
 UI_WAREHOUSE_CONVERT_CAPS,"{src} Caps  →  {dst} Scrap (after 10% tax)","{src} 瓶盖  →  {dst} 废料（已扣 10% 税）"
+UI_WAREHOUSE_CONVERT_TAX_NOTE,(after 10% tax),（已扣 10% 税）
 UI_WAREHOUSE_CONVERT_DO,Convert,兑换
 UI_WAREHOUSE_CONVERT_OK,"Converted {src} {src_name} into {dst} {dst_name}.","已将 {src} {src_name} 兑换为 {dst} {dst_name}。"

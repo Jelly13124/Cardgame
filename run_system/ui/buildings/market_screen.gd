@@ -134,25 +134,15 @@ func _build_balances_row() -> Control:
 	row.add_theme_constant_override("separation", 24)
 	bm.add_child(row)
 
-	var caps_title := Label.new()
-	caps_title.text = tr("UI_MARKET_CAPS")
-	_style_label(caps_title, 20, TOK_TEXT, 1)
-	row.add_child(caps_title)
+	var caps_row := T.currency_row(MetaProgress.caps, "caps", 22, 24)
+	row.add_child(caps_row)
+	_caps_label = caps_row.get_meta("amount_label") as Label
+	_caps_label.add_theme_color_override("font_color", PRICE_COLOR)
 
-	_caps_label = Label.new()
-	_caps_label.text = "%d" % MetaProgress.caps
-	_style_label(_caps_label, 22, PRICE_COLOR, 2)
-	row.add_child(_caps_label)
-
-	var core_title := Label.new()
-	core_title.text = tr("UI_MARKET_CORE")
-	_style_label(core_title, 20, TOK_TEXT, 1)
-	row.add_child(core_title)
-
-	_mkt_core_label = Label.new()
-	_mkt_core_label.text = "%d" % MetaProgress.core
-	_style_label(_mkt_core_label, 22, Color(0.55, 0.85, 1.0), 2)
-	row.add_child(_mkt_core_label)
+	var core_row := T.currency_row(MetaProgress.core, "core", 22, 24)
+	row.add_child(core_row)
+	_mkt_core_label = core_row.get_meta("amount_label") as Label
+	_mkt_core_label.add_theme_color_override("font_color", Color(0.55, 0.85, 1.0))
 
 	return banner
 
@@ -238,11 +228,7 @@ func _build_tool_tile(tool_id: String) -> Control:
 	_style_label(desc_lbl, 13, Color(0.82, 0.76, 0.62), 1)
 	col.add_child(desc_lbl)
 
-	var buy_btn := Button.new()
-	buy_btn.custom_minimum_size = Vector2(0, 38)
-	buy_btn.add_theme_font_size_override("font_size", 17)
-	T.apply_button_theme(buy_btn)
-	buy_btn.text = tr("UI_MARKET_BUY_CAPS").format({"n": MARKET_TOOL_PRICE})
+	var buy_btn := _caps_cost_button(MARKET_TOOL_PRICE, Vector2(0, 38))
 	buy_btn.disabled = MetaProgress.caps < MARKET_TOOL_PRICE
 	buy_btn.pressed.connect(_on_buy_tool.bind(tool_id, buy_btn))
 	col.add_child(buy_btn)
@@ -334,11 +320,7 @@ func _build_equip_tile(entry: Dictionary) -> Control:
 	_style_label(name_lbl, 16, RARITY_COLORS.get(rarity, Color(0.95, 0.92, 0.85)), 1)
 	col.add_child(name_lbl)
 
-	var buy_btn := Button.new()
-	buy_btn.custom_minimum_size = Vector2(0, 38)
-	buy_btn.add_theme_font_size_override("font_size", 17)
-	T.apply_button_theme(buy_btn)
-	buy_btn.text = tr("UI_MARKET_BUY_CAPS").format({"n": price})
+	var buy_btn := _caps_cost_button(price, Vector2(0, 38))
 	buy_btn.disabled = MetaProgress.caps < price
 	buy_btn.pressed.connect(_on_buy_equipment.bind(base_id, rarity, price, buy_btn))
 	col.add_child(buy_btn)
@@ -381,9 +363,11 @@ func _build_refresh_section() -> Control:
 	btn.custom_minimum_size = Vector2(220, 44)
 	btn.add_theme_font_size_override("font_size", 18)
 	T.apply_button_theme(btn)
-	btn.text = tr("UI_MARKET_REFRESH_BTN").format({"n": cost})
+	btn.text = tr("UI_MARKET_REFRESH_VERB")
+	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	btn.disabled = MetaProgress.caps < cost
 	btn.pressed.connect(_on_refresh_stock)
+	btn.add_child(T.overlay_cost_badge(cost, "caps", 16, 18, -10, -76))
 	body.add_child(btn)
 
 	return section
@@ -503,3 +487,17 @@ func _load_json(path: String) -> Dictionary:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return {}
 	return parsed
+
+
+## A "Buy" button with a Caps amount+icon row overlaid on the right — replaces
+## the old "Buy (N Caps)" text-only label. Caller still sets `.disabled` /
+## `.pressed` after this returns.
+func _caps_cost_button(price: int, min_size: Vector2) -> Button:
+	var btn := Button.new()
+	btn.custom_minimum_size = min_size
+	btn.add_theme_font_size_override("font_size", 17)
+	T.apply_button_theme(btn)
+	btn.text = tr("UI_MARKET_BUY_VERB")
+	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	btn.add_child(T.overlay_cost_badge(price, "caps", 15, 16, -8, -66))
+	return btn

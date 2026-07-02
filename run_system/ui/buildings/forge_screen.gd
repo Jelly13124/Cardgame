@@ -86,10 +86,7 @@ func _rebuild_body() -> void:
 		bm.add_theme_constant_override(side, TOK_MARGIN_INNER)
 	banner.add_child(bm)
 	bm.add_child(banner_row)
-	var scrap_lbl := Label.new()
-	scrap_lbl.text = tr("UI_FORGE_SCRAP").format({"n": int(MetaProgress.scrap)})
-	_style_label(scrap_lbl, 22, Color(0.78, 0.86, 0.62), 2)
-	banner_row.add_child(scrap_lbl)
+	banner_row.add_child(T.currency_row(int(MetaProgress.scrap), "scrap", 22, 26))
 	_body.add_child(banner)
 
 	var can_dismantle := MetaProgress.building_can("forge", "dismantle")
@@ -297,11 +294,7 @@ func _build_workbench_column(can_dismantle: bool, can_reforge: bool, can_curse: 
 			and _selected_affix_index < affixes.size()
 			and not AFFIX_POOL.is_curse(affixes[_selected_affix_index])
 		)
-		var rbtn := Button.new()
-		rbtn.text = tr("UI_FORGE_REFORGE").format({"n": rcost})
-		rbtn.custom_minimum_size = Vector2(200, 40)
-		T.apply_button_theme(rbtn)
-		rbtn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
+		var rbtn := _cost_action_button(tr("UI_FORGE_REFORGE_VERB"), rcost, Vector2(200, 40))
 		rbtn.disabled = int(MetaProgress.scrap) < rcost or not pick_ok
 		rbtn.pressed.connect(_reforge_selected)
 		col.add_child(rbtn)
@@ -328,18 +321,13 @@ func _build_workbench_column(can_dismantle: bool, can_reforge: bool, can_curse: 
 		)
 		if cursed:
 			dismantle_scrap += 5
-		var dismantle_btn := Button.new()
-		dismantle_btn.text = tr("UI_FORGE_DISMANTLE").format({"n": dismantle_scrap})
-		dismantle_btn.custom_minimum_size = Vector2(150, 38)
-		T.apply_button_theme(dismantle_btn)
+		var dismantle_btn := _cost_action_button(
+			tr("UI_FORGE_DISMANTLE_VERB"), dismantle_scrap, Vector2(150, 38)
+		)
 		dismantle_btn.pressed.connect(_dismantle_selected)
 		btn_row.add_child(dismantle_btn)
 	if can_curse:
-		var curse_btn := Button.new()
-		curse_btn.text = tr("UI_FORGE_CURSE").format({"n": CURSE_COST})
-		curse_btn.custom_minimum_size = Vector2(160, 38)
-		T.apply_button_theme(curse_btn)
-		curse_btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
+		var curse_btn := _cost_action_button(tr("UI_FORGE_CURSE_VERB"), CURSE_COST, Vector2(160, 38))
 		curse_btn.disabled = int(MetaProgress.scrap) < CURSE_COST or cursed
 		curse_btn.pressed.connect(func() -> void: _curse_item(_selected_index))
 		btn_row.add_child(curse_btn)
@@ -528,11 +516,7 @@ func _build_craft_control() -> Control:
 	row.add_child(row_spacer)
 
 	var cost := int(CRAFT_COST.get(_craft_rarity, CRAFT_COST["common"]))
-	var craft_btn := Button.new()
-	craft_btn.text = tr("UI_FORGE_CRAFT").format({"n": cost})
-	craft_btn.custom_minimum_size = Vector2(170, 40)
-	T.apply_button_theme(craft_btn)
-	craft_btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
+	var craft_btn := _cost_action_button(tr("UI_FORGE_CRAFT_VERB"), cost, Vector2(170, 40))
 	craft_btn.disabled = int(MetaProgress.scrap) < cost
 	craft_btn.pressed.connect(_on_craft_pressed)
 	row.add_child(craft_btn)
@@ -573,3 +557,18 @@ func _curse_item(index: int) -> void:
 ## A dim lock hint line for a function above the current tier.
 func _locked_hint(text: String) -> Control:
 	return _body_label(text, true)
+
+
+## A Scrap-cost action button: the verb text (left, native Button.text) plus a
+## Scrap amount+icon row overlaid on the right (T.currency_row) — replaces the
+## old "Verb (N Scrap)" text-only label. Caller still sets `.disabled` /
+## `.pressed` after this returns.
+func _cost_action_button(verb: String, cost: int, min_size: Vector2) -> Button:
+	var btn := Button.new()
+	btn.text = verb
+	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	btn.custom_minimum_size = min_size
+	T.apply_button_theme(btn)
+	btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
+	btn.add_child(T.overlay_cost_badge(cost, "scrap", 15, 16, -8, -66))
+	return btn

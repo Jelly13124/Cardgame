@@ -74,10 +74,7 @@ func _populate(container: VBoxContainer) -> void:
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		bm.add_theme_constant_override(side, TOK_MARGIN_INNER)
 	banner.add_child(bm)
-	var bal := Label.new()
-	_style_label(bal, 20, Color(0.64, 0.90, 1.0), 1)
-	bal.text = tr("UI_OUTPOST_CORE_BALANCE").format({"n": MetaProgress.core})
-	bm.add_child(bal)
+	bm.add_child(T.currency_row(MetaProgress.core, "core", 20, 24))
 	container.add_child(banner)
 
 	if tier <= 0:
@@ -176,9 +173,8 @@ func _add_upgrade_row(container: VBoxContainer, upgrade_id: String) -> void:
 	bottom.add_theme_constant_override("separation", 12)
 	vbox.add_child(bottom)
 
-	var cost_lbl := Label.new()
-	_style_label(cost_lbl, 18, Color(0.64, 0.90, 1.0), 1)
-	bottom.add_child(cost_lbl)
+	var cost_slot := HBoxContainer.new()
+	bottom.add_child(cost_slot)
 
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -192,7 +188,6 @@ func _add_upgrade_row(container: VBoxContainer, upgrade_id: String) -> void:
 
 	if lvl >= tiers.size():
 		effect_lbl.text = tr("UI_HOME_UPGRADE_FULLY_UPGRADED")
-		cost_lbl.text = ""
 		buy.text = tr("UI_HOME_UPGRADE_MAXED")
 		buy.disabled = true
 	else:
@@ -202,7 +197,7 @@ func _add_upgrade_row(container: VBoxContainer, upgrade_id: String) -> void:
 			str(next_tier.get("effect_text", ""))
 		)
 		effect_lbl.text = tr("UI_HOME_UPGRADE_NEXT").format({"text": effect_text})
-		cost_lbl.text = tr("UI_HOME_UPGRADE_COST").format({"n": int(next_tier.get("cost", 0))})
+		cost_slot.add_child(T.currency_row(int(next_tier.get("cost", 0)), "core", 18, 20))
 		buy.text = tr("UI_HOME_UPGRADE_BUY")
 		buy.disabled = not MetaProgress.can_purchase(upgrade_id, def)
 		# purchase_upgrade emits core_changed + upgrades_changed → _rebuild_content.
