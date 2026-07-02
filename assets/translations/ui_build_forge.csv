@@ -1,10 +1,9 @@
 keys,en,zh
-UI_FORGE_SCRAP,Scrap: {n},废料：{n}
-UI_FORGE_EMPTY,Stash is empty — extract gear from a run to dismantle, reforge or curse it here.,仓库空空 —— 撤离带回装备后，方可在此拆解、重铸或诅咒。
-UI_FORGE_DISMANTLE,Dismantle ({n} Scrap),拆解（{n} 废料）
-UI_FORGE_REFORGE,Reforge ({n} Scrap),重铸（{n} 废料）
-UI_FORGE_CURSE,Curse ({n} Scrap),诅咒（{n} 废料）
-UI_FORGE_CRAFT,Craft ({n} Scrap),锻造（{n} 废料）
+UI_FORGE_TAB_CRAFT,Craft,打造
+UI_FORGE_TAB_DISMANTLE,Dismantle,拆解
+UI_FORGE_TAB_REFORGE,Reforge,重铸
+UI_FORGE_TAB_CURSE,Curse,诅咒
+UI_FORGE_EMPTY,"Stash is empty — extract gear from a run to dismantle, reforge or curse it here.",仓库空空 —— 撤离带回装备后，方可在此拆解、重铸或诅咒。
 UI_FORGE_DISMANTLE_VERB,Dismantle,拆解
 UI_FORGE_REFORGE_VERB,Reforge,重铸
 UI_FORGE_CURSE_VERB,Curse,诅咒
@@ -25,12 +24,10 @@ UI_FORGE_RARITY_CURSED,Cursed,诅咒
 UI_FORGE_CRAFT_LOCKED,Craft unlocks at Forge T2.,锻造在铁匠铺 T2 解锁。
 UI_FORGE_REFORGE_LOCKED,Reforge unlocks at Forge T2.,重铸在铁匠铺 T2 解锁。
 UI_FORGE_CURSE_LOCKED,Curse unlocks at Forge T3.,诅咒在铁匠铺 T3 解锁。
-UI_FORGE_WORKBENCH_HINT,Drag a stash item onto the bench (or click it) to dismantle or reforge it.,把仓库里的装备拖到右边台子上（或点一下），即可拆解或重铸。
+UI_FORGE_WORKBENCH_HINT,Drag a stash item onto the bench (or click it) to work on it.,把仓库里的装备拖到上方台子上（或点一下），即可加工。
 UI_FORGE_STASH_TITLE,Stash ({n}),仓库（{n}）
-UI_FORGE_BENCH_TITLE,Workbench,工作台
 UI_FORGE_SELECTED_TITLE,Selected Item,已选装备
 UI_FORGE_BENCH_EMPTY,Drop a piece of gear here to work on it.,把一件装备放到这里来加工。
-UI_FORGE_REFORGE_ONE,Reforge ({n}),重铸（{n}）
 UI_FORGE_REFORGE_LOCKED_AT,Locked to this affix · reforged {n}×,已锁定此词条 · 已重铸 {n} 次
 UI_FORGE_REFORGE_PICK,Pick an affix above to reforge it.,点上方一条词条来重铸它。
 UI_FORGE_REFORGE_FIRST,First reforge locks this affix; cost climbs each time.,首次重铸会锁定此词条；之后每次更贵。

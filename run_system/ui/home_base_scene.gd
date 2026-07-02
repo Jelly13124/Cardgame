@@ -187,7 +187,7 @@ func _add_building_sprites() -> void:
 		"forge",
 		Rect2(55, 300, 360, 360),
 		tr("UI_BUILD_FORGE_NAME"),
-		func() -> void: _open_building_screen("forge")
+		func() -> void: _open_forge_windows()
 	)
 	_add_interactive_building(
 		"clinic",
@@ -809,6 +809,37 @@ func _open_building_screen(building_id: String) -> void:
 ## select-to-carry logic now lives inside the window.
 func _open_character_window() -> void:
 	CHARACTER_WINDOW.open_window(self, "base")
+
+
+## Forge entrance — dual floating windows instead of the old fullscreen
+## BuildingOverlay: the ForgeWindow (560 wide) opens on the LEFT beside the
+## base-mode CharacterWindow (880 wide) on the RIGHT, so stash gear drags from
+## the character window straight onto the forge bench (Diablo-style). A locked
+## forge still routes to the unlock confirm like every other building. Windows
+## already open are brought to front, never duplicated (positions are set AFTER
+## WindowLayer.open(), which centers by default).
+func _open_forge_windows() -> void:
+	if MetaProgress.get_building_tier("forge") <= 0:
+		_show_tier_confirm("forge")
+		return
+	var wl = load("res://run_system/ui/window/window_layer.gd").ensure(self)
+	var fw = wl.get_node_or_null("ForgeWindow")
+	if fw == null or fw.is_queued_for_deletion():
+		fw = load("res://run_system/ui/window/forge_window.gd").new()
+		fw.name = "ForgeWindow"
+		wl.open(fw)
+		fw.position = Vector2(80, 120)  # forge on the LEFT
+	else:
+		wl.bring_to_front(fw)
+	var cw = wl.get_node_or_null("CharacterWindow")
+	if cw == null or cw.is_queued_for_deletion():
+		cw = CHARACTER_WINDOW.new()
+		cw.name = "CharacterWindow"
+		cw.mode = "base"
+		wl.open(cw)
+		cw.position = Vector2(700, 120)  # character window on the RIGHT
+	else:
+		wl.bring_to_front(cw)
 
 
 ## START NEW RUN launches the run directly (the hero-select screen was removed).
