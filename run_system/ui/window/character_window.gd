@@ -862,7 +862,7 @@ func _refresh() -> void:
 
 ## Build one backpack cell from RunManager.backpack[index] — the cell states:
 ## null = empty, {"kind":"equip"} = interactive gear icon, {"kind":"gold"} /
-## {"kind":"core"} = resource stack, {"kind":"gem"} / {"kind":"tool"}.
+## {"kind":"core"} = resource stack, {"kind":"tool"}.
 func _make_grid_cell(index: int) -> Control:
 	var cell := _build_cell_content(index)
 	# Safe cells (index 0..safe-1) get a gold border; their contents survive death.
@@ -896,8 +896,6 @@ func _build_cell_content(index: int) -> Control:
 					index,
 					"core"
 				)
-			"gem":
-				return _make_gem_cell(str(cell.get("id", "")), index)
 			"tool":
 				return _make_tool_cell(str(cell.get("id", "")), index)
 	# Empty cell — dim placeholder panel, still a valid drop target (map mode).
@@ -986,61 +984,6 @@ func _make_equip_cell(item_id: String, index: int, instance: Dictionary = {}) ->
 			elif btn == MOUSE_BUTTON_RIGHT:
 				_confirm_discard(index, item_id)
 			elif btn == MOUSE_BUTTON_MIDDLE:
-				_toggle_safe(index)
-	return cell
-
-
-## A gem cell: gem art (or ◆ glyph) + tooltip. Draggable to reorder/swap; gems are
-## socketed from the deck viewer (which frees the cell), not from here. Middle-click
-## toggles the safe zone like the other cell kinds.
-func _make_gem_cell(gem_id: String, index: int) -> Control:
-	var data: Dictionary = RunManager.get_gem_data(gem_id)
-	var gem_name := Settings.t("GEM_%s_TITLE" % gem_id, str(data.get("title", gem_id)))
-	var cell = _new_cell(GRID_CELL_SIZE)
-	cell.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var panel := Panel.new()
-	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override("panel", T.icon_frame_style())
-	cell.add_child(panel)
-
-	var icon_path := str(data.get("icon", ""))
-	var tex: Texture2D = null
-	if icon_path != "" and ResourceLoader.exists(icon_path):
-		tex = load(icon_path) as Texture2D
-	if tex:
-		var icon := TextureRect.new()
-		icon.texture = tex
-		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
-		icon.offset_left = 6
-		icon.offset_top = 6
-		icon.offset_right = -6
-		icon.offset_bottom = -6
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		panel.add_child(icon)
-	else:
-		var glyph := Label.new()
-		glyph.text = "◆"
-		glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
-		glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		glyph.add_theme_font_size_override("font_size", 24)
-		glyph.add_theme_color_override("font_color", Color(0.55, 0.95, 0.7))
-		glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		panel.add_child(glyph)
-
-	var desc := Settings.t("GEM_%s_DESC" % gem_id, "")
-	cell.hover_tip = gem_name if desc == "" else "%s\n%s" % [gem_name, desc]
-	cell.drag_payload = {"src": "backpack", "index": index, "kind": "gem", "gem_id": gem_id}
-	cell.preview_text = "◆"
-	cell.preview_color = Color(0.55, 0.95, 0.7)
-	cell.preview_tex = tex
-	_wire_backpack_drop(cell, index)
-	if not _read_only:
-		cell.click_handler = func(btn):
-			if btn == MOUSE_BUTTON_MIDDLE:
 				_toggle_safe(index)
 	return cell
 

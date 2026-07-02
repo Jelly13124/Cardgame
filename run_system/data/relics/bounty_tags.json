@@ -1,15 +1,14 @@
 {
   "id": "bounty_tags",
   "title": "Bounty Tags",
-  "description": "Gain a Wealthy gem — socket it into a card to earn gold when that card is played.",
+  "description": "Gain 40 Gold when picked up.",
   "icon": "res://run_system/assets/images/relics/bounty_tags.png",
   "rarity": "uncommon",
   "effects": [
     {
       "trigger": "on_pickup",
-      "type": "grant_card_keyword",
-      "keyword": "wealthy",
-      "amount": 1
+      "type": "gain_gold",
+      "amount": 40
     }
   ]
 }

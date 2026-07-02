@@ -916,31 +916,3 @@ func _open_rest_choice() -> void:
 			picker.cancelled.connect(func(): _node_click_pending = false, CONNECT_ONE_SHOT)
 	)
 	buttons.add_child(upgrade_btn)
-
-	# Mine a gem: the rest stop hands out a random gem (socketing is available any
-	# time from the top-bar deck button, so it would be redundant here — the
-	# campfire is where you DIG UP gems instead).
-	var gems_btn := Button.new()
-	gems_btn.text = tr("UI_MAP_REST_GEMS_BTN")
-	gems_btn.custom_minimum_size = Vector2(200, 60)
-	gems_btn.focus_mode = Control.FOCUS_NONE
-	T.apply_button_theme(gems_btn)
-	gems_btn.pressed.connect(
-		func():
-			var pool: Array = RunManager.gem_pool()
-			if pool.is_empty():
-				modal.queue_free()
-				_node_click_pending = false
-				return
-			var gem_id := str(pool[randi() % pool.size()])
-			if not RunManager.add_gem_to_backpack(gem_id):
-				# Bag full — warn and keep the rest stop open so the player can heal
-				# instead of losing the dig.
-				_show_popup(tr("UI_LOOT_BACKPACK_FULL"))
-				return
-			var gem_name: String = Settings.t("GEM_%s_TITLE" % gem_id, gem_id)
-			_show_popup(tr("UI_MAP_MINED_GEM").format({"gem": gem_name}))
-			modal.queue_free()
-			_node_click_pending = false
-	)
-	buttons.add_child(gems_btn)

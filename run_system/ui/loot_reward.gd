@@ -111,8 +111,8 @@ func _generate_loot() -> void:
 	)
 
 	# Card acquisition is combat-driven: every non-boss combat offers a 3-choose-1
-	# card draft. (Attributes come from LEVEL-UPS, surfaced on PROCEED; gems from
-	# elites/bosses.) Boss loot is handled in battle_scene._victory (never here).
+	# card draft. (Attributes come from LEVEL-UPS, surfaced on PROCEED.) Boss loot is
+	# handled in battle_scene._victory (never here).
 	var node_type: String = RunManager.last_battle_node_type
 	available_loot.append(
 		{
@@ -123,19 +123,9 @@ func _generate_loot() -> void:
 			"icon": CARD_REWARD_ICON_PATH
 		}
 	)
-	if node_type == "elite":
-		available_loot.append(
-			{
-				"id": "gem_draft",
-				"type": "gem_draft",
-				"title": tr("UI_LOOT_GEM_TITLE"),
-				"subtitle": tr("UI_LOOT_GEM_SUBTITLE"),
-				"icon": CARD_REWARD_ICON_PATH
-			}
-		)
 
-	# Tool drop: ONLY normal combats roll a tool (Luck-scaled). Elites give a gem
-	# draft + an equipment chance instead; boss loot is handled in battle_scene.
+	# Tool drop: ONLY normal combats roll a tool (Luck-scaled). Elites give an
+	# equipment chance instead; boss loot is handled in battle_scene.
 	if node_type != "elite" and node_type != "boss":
 		if randf() < RunManager.luck_tool_chance():
 			var tool_id := RunManager.roll_tool_drop(node_type)
@@ -394,13 +384,7 @@ func _on_loot_selected(loot_id: String, button: Button) -> void:
 			return
 		button.queue_free()
 	elif loot["type"] == "cards":
-		# Combat card draft (normal + elite). Luck may turn a slot into a gem.
-		_draft_gem_only = false
-		_open_card_draft()
-		button.queue_free()
-	elif loot["type"] == "gem_draft":
-		# Elite reward: a one-off 3-choose-1 gem draft (all gems).
-		_draft_gem_only = true
+		# Combat card draft (normal + elite).
 		_open_card_draft()
 		button.queue_free()
 	elif loot["type"] == "equipment":
@@ -409,9 +393,7 @@ func _on_loot_selected(loot_id: String, button: Button) -> void:
 		_claim_tool_drop(str(loot.get("tool_id", "")), button)
 
 
-## Draft state. `_draft_gem_only` = elite gem draft; `_in_attr` = level-up attribute
-## pick (3-of-5, one +1 per level gained).
-var _draft_gem_only: bool = false
+## Draft state. `_in_attr` = level-up attribute pick (3-of-5, one +1 per level gained).
 ## Lazily-created reward card-draft reroll button (Reroll Tokens upgrade).
 var _reroll_btn: Button = null
 var _in_attr: bool = false
@@ -444,18 +426,8 @@ func _generate_attr_options() -> void:
 		child.queue_free()
 	var keys := _ATTR_KEYS.duplicate()
 	keys.shuffle()
-	# Luck: a chance that ONE of the three level-up slots is a gem instead of an
-	# attribute (scaled by luck_gem_chance). Only when the gem pool is non-empty.
-	var gem_slot := -1
-	var pool: Array = RunManager.gem_pool()
-	if not pool.is_empty() and randf() < RunManager.luck_gem_chance():
-		gem_slot = randi() % 3
 	for i in range(min(3, keys.size())):
-		if i == gem_slot:
-			var gem_id := str(pool[randi() % pool.size()])
-			draft_card_container.add_child(_make_gem_draft_slot(gem_id, true))
-		else:
-			draft_card_container.add_child(_make_attr_slot(str(keys[i])))
+		draft_card_container.add_child(_make_attr_slot(str(keys[i])))
 
 
 func _make_attr_slot(attr: String) -> Control:
@@ -580,22 +552,11 @@ func _generate_draft_options() -> void:
 	for child in draft_card_container.get_children():
 		child.queue_free()
 
-	var gem_ids: Array = RunManager.gem_pool()
-	var used := {}  # ids shown this draft — the 3 slots never repeat the same card/gem
+	var used := {}  # ids shown this draft — the 3 slots never repeat the same card
 	for i in range(3):
-		# Gem slot when this is an elite gem-draft, or (in a level draft) a Luck roll.
-		var as_gem := _draft_gem_only or (randf() < RunManager.luck_gem_chance())
-		if as_gem and not gem_ids.is_empty():
-			var avail: Array = gem_ids.filter(func(g): return not used.has(str(g)))
-			if avail.is_empty():
-				avail = gem_ids
-			var gid := str(avail[randi() % avail.size()])
-			used[gid] = true
-			draft_card_container.add_child(_make_gem_draft_slot(gid))
-		else:
-			var cid := _roll_unique_draft_card_id(used)
-			used[cid] = true
-			draft_card_container.add_child(_make_draft_card_slot(cid))
+		var cid := _roll_unique_draft_card_id(used)
+		used[cid] = true
+		draft_card_container.add_child(_make_draft_card_slot(cid))
 
 
 ## Roll a single card id for a draft slot (rarity weighted, Luck-boosted).
@@ -677,105 +638,9 @@ func _make_draft_card_slot(card_id: String) -> Control:
 	return wrapper
 
 
-## A gem option in a draft (elite gem-draft, or a Luck-rolled level-up slot).
-## `in_attr` routes the pick through the level-up flow (consume an attr point +
-## continue) instead of the card-draft completion.
-func _make_gem_draft_slot(gem_id: String, in_attr: bool = false) -> Control:
-	var wrapper = Control.new()
-	wrapper.custom_minimum_size = Vector2(300, 400)
-
-	var frame = Panel.new()
-	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
-	frame.add_theme_stylebox_override(
-		"panel", T.panel_with_shadow(Color(0.06, 0.10, 0.13, 0.95), Color(0.45, 0.85, 1.0), 4)
-	)
-	wrapper.add_child(frame)
-
-	var box = VBoxContainer.new()
-	box.set_anchors_preset(Control.PRESET_FULL_RECT)
-	box.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_theme_constant_override("separation", 14)
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	wrapper.add_child(box)
-
-	var gdata := RunManager.get_gem_data(gem_id)
-
-	# Gem art (Codex): a TextureRect from the gem's `icon` path; 💎 glyph fallback.
-	var icon_path := str(gdata.get("icon", ""))
-	if icon_path != "" and ResourceLoader.exists(icon_path):
-		var icon := TextureRect.new()
-		icon.texture = load(icon_path)
-		icon.custom_minimum_size = Vector2(120, 120)
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		box.add_child(icon)
-	else:
-		var glyph := Label.new()
-		glyph.text = "💎"
-		glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		glyph.add_theme_font_size_override("font_size", 80)
-		box.add_child(glyph)
-	var name_lbl = Label.new()
-	name_lbl.text = Settings.t("GEM_%s_TITLE" % gem_id, str(gdata.get("title", gem_id)))
-	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.add_theme_font_size_override("font_size", 24)
-	name_lbl.add_theme_color_override("font_color", Color(0.7, 0.95, 1.0))
-	box.add_child(name_lbl)
-
-	var desc_lbl = Label.new()
-	desc_lbl.text = Settings.t("GEM_%s_DESC" % gem_id, "")
-	desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc_lbl.custom_minimum_size = Vector2(240, 0)
-	desc_lbl.add_theme_color_override("font_color", Color(0.82, 0.86, 0.8))
-	box.add_child(desc_lbl)
-
-	var button = Button.new()
-	button.set_anchors_preset(Control.PRESET_FULL_RECT)
-	button.flat = true
-	button.focus_mode = Control.FOCUS_NONE
-	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	if in_attr:
-		button.pressed.connect(_on_attr_gem_picked.bind(gem_id))
-	else:
-		button.pressed.connect(_on_gem_draft_selected.bind(gem_id))
-	wrapper.add_child(button)
-	return wrapper
-
-
-## Level-up slot resolved as a gem (Luck roll): bank the gem, consume one attr
-## point, and continue the pick loop (mirrors _on_attr_picked's tail).
-func _on_attr_gem_picked(gem_id: String) -> void:
-	if gem_id != "":
-		if not RunManager.add_gem_to_backpack(gem_id):
-			# Bag full — warn and leave the pick open (don't burn the point) so the
-			# player can skip or free a cell. Mirrors the gold-overflow path.
-			_show_backpack_full_toast()
-			return
-	RunManager.pending_attr_points = maxi(0, RunManager.pending_attr_points - 1)
-	if RunManager.pending_attr_points > 0:
-		_generate_attr_options()
-		return
-	_in_attr = false
-	draft_overlay.visible = false
-	_finish_loot()
-
-
 func _on_draft_card_selected(card_id: String) -> void:
 	if card_id != "":
 		RunManager.add_card_to_deck(card_id)
-	_after_draft()
-
-
-func _on_gem_draft_selected(gem_id: String) -> void:
-	if gem_id != "":
-		if not RunManager.add_gem_to_backpack(gem_id):
-			# Bag full — warn and keep the draft open so the player can free a cell
-			# or skip, rather than silently dropping the gem.
-			_show_backpack_full_toast()
-			return
 	_after_draft()
 
 
@@ -793,12 +658,11 @@ func _on_skip_draft_pressed() -> void:
 	_after_draft()
 
 
-## Card / gem draft is a single pick — return to the loot list so the player can
+## Card draft is a single pick — return to the loot list so the player can
 ## claim the remaining rewards, then PROCEED.
 func _after_draft() -> void:
 	draft_overlay.visible = false
 	loot_root.visible = true
-	_draft_gem_only = false
 
 
 ## Returns "" if no drop. Otherwise the drop rarity for this node type.
