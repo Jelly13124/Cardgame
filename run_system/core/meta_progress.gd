@@ -218,7 +218,7 @@ const BUILDING_DEFS := {
 	{
 		"unlock_cost": 100,
 		"tier_costs": [140, 240],
-		"functions": {"tool_shop": 1, "equip_shop": 2, "refresh": 3},
+		"functions": {"tool_shop": 1, "equip_shop": 2, "resource_convert": 3},
 	},
 	"outpost":
 	{

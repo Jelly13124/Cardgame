@@ -1,8 +1,11 @@
 ## Market (黑市) building screen. Subclasses the shared building shell and fills
 ## the content VBox with the Market's tier-gated functions:
-##   - T1 tool_shop : buy 3 random tools with Caps (flat price).
-##   - T2 equip_shop: buy equipment INSTANCES with Caps (rarity-priced).
-##   - T3 refresh   : spend Caps to re-roll the stocked tools + equipment.
+##   - T1 tool_shop       : buy 3 random tools with Caps (flat price).
+##   - T2 equip_shop      : buy equipment INSTANCES with Caps (rarity-priced).
+##   - T3 resource_convert: currency exchange (Core→Caps, Caps→Scrap) with a
+##     ~10% tax — moved here from the removed Warehouse building.
+## Refresh (re-roll the stocked tools + equipment for Caps) is ungated —
+## available from T1.
 ##
 ## The base card-unlock/card-shop system was removed (Phase A refactor): every
 ## non-curse, non-basic card is draftable by default via
@@ -26,9 +29,18 @@ const EQUIP_STOCK_PER_RARITY := {"common": 2, "uncommon": 2, "rare": 1}
 const MARKET_TOOL_PRICE := 40
 ## How many random tools to stock.
 const MARKET_TOOL_COUNT := 3
-## Refresh (T3): base Caps cost, +10 per use this visit.
+## Refresh (ungated): base Caps cost, +10 per use this visit.
 const MARKET_REFRESH_BASE := 20
 const MARKET_REFRESH_STEP := 10
+
+## Conversion tunables (ported VERBATIM from the removed warehouse screen):
+## Core→Caps 1:2, Caps→Scrap 4:1, ~10% tax (floored). Each row converts a
+## fixed chunk of the source currency.
+const CONV_CORE_CHUNK := 50
+const CONV_CORE_RATE := 2.0
+const CONV_CAPS_CHUNK := 40
+const CONV_CAPS_RATE := 0.25
+const CONV_TAX := 0.10
 
 const RARITY_ORDER := ["common", "uncommon", "rare"]
 const RARITY_COLORS := {
@@ -44,8 +56,12 @@ var _equip_stock: Array = []
 ## Rolled tool stock — set once for the session in _build_content. Each
 ## entry: tool_id String. Stable until refreshed.
 var _tool_stock: Array = []
-## How many times the T3 refresh has been used this visit (price escalates).
+## How many times the refresh has been used this visit (price escalates).
 var _refresh_uses: int = 0
+## Transient feedback line for the last conversion. Kept as data (not a node)
+## because the whole content box is rebuilt on every currency change — the
+## conversion section re-renders it after each rebuild.
+var _convert_status_text: String = ""
 
 ## Live-refresh handles so balances + buttons repaint without a full rebuild.
 var _caps_label: Label = null
@@ -110,11 +126,14 @@ func _populate(container: VBoxContainer) -> void:
 	else:
 		container.add_child(_locked_section(tr("UI_MARKET_EQUIP_SECTION"), 2))
 
-	# T3: refresh stock (Caps).
-	if MetaProgress.building_can("market", "refresh"):
-		container.add_child(_build_refresh_section())
+	# Refresh stock (Caps) — ungated, available from T1.
+	container.add_child(_build_refresh_section())
+
+	# T3: resource conversion (Core→Caps, Caps→Scrap) — from the old Warehouse.
+	if MetaProgress.building_can("market", "resource_convert"):
+		container.add_child(_build_convert_section())
 	else:
-		container.add_child(_locked_section(tr("UI_MARKET_REFRESH_SECTION"), 3))
+		container.add_child(_locked_section(tr("UI_MARKET_CONVERT_SECTION"), 3))
 
 
 # --- Balances --------------------------------------------------------------
@@ -345,7 +364,7 @@ func _on_buy_equipment(base_id: String, rarity: String, price: int, btn: Button)
 	# disabled state via _refresh_balances; this button keeps its SOLD state.
 
 
-# --- Refresh (T3, Caps) ------------------------------------------------------
+# --- Refresh (ungated, Caps) --------------------------------------------------
 
 
 func _build_refresh_section() -> Control:
@@ -384,6 +403,149 @@ func _on_refresh_stock() -> void:
 	_refresh_uses += 1
 	_tool_stock = _roll_tool_stock()
 	_equip_stock = _roll_equip_stock()
+	_rebuild_market()
+
+
+# --- Resource conversion (T3, from the removed Warehouse) --------------------
+# The rows, math, and handlers are ported verbatim from warehouse_screen.gd's
+# T3 conversion block (economy unchanged); only the status feedback adapts to
+# this screen's rebuild-on-currency-change flow.
+
+
+func _build_convert_section() -> Control:
+	var section := _make_section(tr("UI_MARKET_CONVERT_SECTION"))
+	var body := section.get_meta("body") as VBoxContainer
+
+	# Group both conversion rows in one block so they read as one function.
+	var group := VBoxContainer.new()
+	group.add_theme_constant_override("separation", TOK_ROW_SEP)
+	body.add_child(group)
+
+	# Core → Caps (1:2, ~10% tax).
+	var core_out := _converted_amount(CONV_CORE_CHUNK, CONV_CORE_RATE)
+	group.add_child(
+		_conversion_row(
+			CONV_CORE_CHUNK,
+			"core",
+			core_out,
+			"caps",
+			MetaProgress.core >= CONV_CORE_CHUNK,
+			_on_convert_core_to_caps
+		)
+	)
+
+	# Caps → Scrap (4:1, ~10% tax).
+	var caps_out := _converted_amount(CONV_CAPS_CHUNK, CONV_CAPS_RATE)
+	group.add_child(
+		_conversion_row(
+			CONV_CAPS_CHUNK,
+			"caps",
+			caps_out,
+			"scrap",
+			MetaProgress.caps >= CONV_CAPS_CHUNK,
+			_on_convert_caps_to_scrap
+		)
+	)
+
+	# Last-conversion feedback (survives the rebuild the currency change causes).
+	if _convert_status_text != "":
+		var status := Label.new()
+		status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_style_label(status, 17, Color(0.70, 0.86, 0.55), 1)
+		status.text = _convert_status_text
+		body.add_child(status)
+	return section
+
+
+## Post-tax destination amount for converting `chunk` of source at `rate`. Tax is
+## floored off the gross so grinding never rounds in the player's favor.
+func _converted_amount(chunk: int, rate: float) -> int:
+	return int(floor(chunk * rate * (1.0 - CONV_TAX)))
+
+
+## One conversion row, built on the shared `_row_panel` helper so it matches the
+## bordered-row look of the upgrade rows on the other screens. Shows "<src
+## amount+icon> → <dst amount+icon> (after 10% tax)" plus a Convert button.
+func _conversion_row(
+	src_amount: int,
+	src_cur: String,
+	dst_amount: int,
+	dst_cur: String,
+	affordable: bool,
+	cb: Callable
+) -> Control:
+	var row := _row_panel()
+
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 8)
+	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(line)
+
+	line.add_child(T.currency_row(src_amount, src_cur, TOK_FONT_BODY, 20))
+	var arrow := Label.new()
+	arrow.text = "→"
+	_style_label(arrow, TOK_FONT_BODY, TOK_TEXT, 1)
+	line.add_child(arrow)
+	line.add_child(T.currency_row(dst_amount, dst_cur, TOK_FONT_BODY, 20))
+
+	var tax_lbl := Label.new()
+	tax_lbl.text = tr("UI_MARKET_CONVERT_TAX_NOTE")
+	tax_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(tax_lbl, TOK_FONT_DIM, TOK_TEXT_DIM, 1)
+	line.add_child(tax_lbl)
+
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(150, 40)
+	btn.text = tr("UI_MARKET_CONVERT_DO")
+	T.apply_button_theme(btn)
+	btn.disabled = not affordable
+	if affordable:
+		btn.pressed.connect(cb)
+	row.add_child(btn)
+	return row.get_meta("_panel")
+
+
+func _on_convert_core_to_caps() -> void:
+	if MetaProgress.core < CONV_CORE_CHUNK:
+		return
+	var out := _converted_amount(CONV_CORE_CHUNK, CONV_CORE_RATE)
+	# add_core(-n) clamps at 0 but we already checked the balance, so it is exact.
+	MetaProgress.add_core(-CONV_CORE_CHUNK)
+	MetaProgress.add_caps(out)
+	_flash_status(
+		tr("UI_MARKET_CONVERT_OK").format(
+			{
+				"src": CONV_CORE_CHUNK,
+				"src_name": tr("UI_MARKET_CONVERT_CUR_CORE"),
+				"dst": out,
+				"dst_name": tr("UI_MARKET_CONVERT_CUR_CAPS")
+			}
+		)
+	)
+
+
+func _on_convert_caps_to_scrap() -> void:
+	if not MetaProgress.spend_caps(CONV_CAPS_CHUNK):
+		return
+	var out := _converted_amount(CONV_CAPS_CHUNK, CONV_CAPS_RATE)
+	MetaProgress.add_scrap(out)
+	_flash_status(
+		tr("UI_MARKET_CONVERT_OK").format(
+			{
+				"src": CONV_CAPS_CHUNK,
+				"src_name": tr("UI_MARKET_CONVERT_CUR_CAPS"),
+				"dst": out,
+				"dst_name": tr("UI_MARKET_CONVERT_CUR_SCRAP")
+			}
+		)
+	)
+
+
+## Record the conversion feedback and repaint: the content rebuild refreshes the
+## row buttons' affordability AND re-renders the status line from the stored text
+## (currency signals only repaint the balance labels, not the buttons).
+func _flash_status(text: String) -> void:
+	_convert_status_text = text
 	_rebuild_market()
 
 

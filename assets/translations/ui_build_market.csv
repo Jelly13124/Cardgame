@@ -19,3 +19,10 @@ UI_MARKET_LOCKED_HINT,"Upgrade the Market to tier {t} to unlock this.","将黑�
 UI_MARKET_REFRESH_NOTE,"Reroll the stocked tools and equipment. Price rises each use this visit.","重新刷新工具与装备库存。每次刷新价格递增(仅本次到访)。"
 UI_MARKET_REFRESH_BTN,"Refresh ({n} Caps)","刷新({n} 瓶盖)"
 UI_MARKET_REFRESH_VERB,Refresh,刷新
+UI_MARKET_CONVERT_SECTION,Resource Trading,资源交易
+UI_MARKET_CONVERT_TAX_NOTE,(after 10% tax),（已扣 10% 税）
+UI_MARKET_CONVERT_DO,Convert,兑换
+UI_MARKET_CONVERT_OK,"Converted {src} {src_name} into {dst} {dst_name}.","已将 {src} {src_name} 兑换为 {dst} {dst_name}。"
+UI_MARKET_CONVERT_CUR_CORE,Core,核心
+UI_MARKET_CONVERT_CUR_CAPS,Caps,瓶盖
+UI_MARKET_CONVERT_CUR_SCRAP,Scrap,废料
