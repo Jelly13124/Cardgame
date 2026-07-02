@@ -1,5 +1,7 @@
 extends Node
 
+const CARD_UPGRADE = preload("res://run_system/core/card_upgrade.gd")
+
 var battle_scene: Node
 var deck: Node
 var discard_pile: Node
@@ -146,6 +148,9 @@ func reset_deck() -> void:
 		if card and typeof(item) == TYPE_DICTIONARY:
 			card.set_meta("uid", item.get("uid", ""))
 			card.set_meta("gems", item.get("gems", []))
+			if item.get("upgraded", false) and card.has_method("set_card_data"):
+				# Re-apply upgraded card_info so cost/desc/effects all refresh.
+				card.set_card_data(CARD_UPGRADE.resolve(card.card_info))
 			# create_card already ran _refresh_gem_socket during set_card_data, BEFORE
 			# this meta existed — so it rendered as empty. Refresh again now that the
 			# uid/gems meta is set, or socketed gems never show on the card.
