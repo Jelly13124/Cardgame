@@ -8,6 +8,7 @@ const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const MAP_RENDERER_SCRIPT = preload("res://run_system/ui/map_renderer.gd")
 const CHARACTER_WINDOW = preload("res://run_system/ui/window/character_window.gd")
 const RUN_DECK_VIEWER_MODAL = preload("res://run_system/ui/run_deck_viewer_modal.gd")
+const CARD_UPGRADE_MODAL = preload("res://run_system/ui/card_upgrade_modal.gd")
 const RUN_TOP_BAR = preload("res://run_system/ui/run_top_bar.gd")
 const SETTINGS_PANEL_SCRIPT = preload("res://run_system/ui/settings_panel.gd")
 const PAUSE_PANEL = preload("res://run_system/ui/pause_panel.gd")
@@ -891,6 +892,30 @@ func _open_rest_choice() -> void:
 			_node_click_pending = false  # release click guard
 	)
 	buttons.add_child(heal_btn)
+
+	# Upgrade a card (classic StS smith). Closes the rest choice, then opens the
+	# card-upgrade picker. We deliberately do NOT release the click guard here — the
+	# picker's `upgraded`/`cancelled` signals release it, so the map stays gated
+	# while the picker is up (and never soft-locks if the player cancels).
+	var upgrade_btn := Button.new()
+	upgrade_btn.text = tr("UI_MAP_REST_UPGRADE_BTN")
+	upgrade_btn.custom_minimum_size = Vector2(200, 60)
+	upgrade_btn.focus_mode = Control.FOCUS_NONE
+	T.apply_button_theme(upgrade_btn)
+	upgrade_btn.pressed.connect(
+		func():
+			modal.queue_free()
+			var picker := CARD_UPGRADE_MODAL.new()
+			add_child(picker)
+			picker.upgraded.connect(
+				func():
+					_show_popup(tr("UI_MAP_CARD_UPGRADED"))
+					_node_click_pending = false,
+				CONNECT_ONE_SHOT
+			)
+			picker.cancelled.connect(func(): _node_click_pending = false, CONNECT_ONE_SHOT)
+	)
+	buttons.add_child(upgrade_btn)
 
 	# Mine a gem: the rest stop hands out a random gem (socketing is available any
 	# time from the top-bar deck button, so it would be redundant here — the
