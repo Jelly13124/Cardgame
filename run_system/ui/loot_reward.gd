@@ -164,21 +164,31 @@ func _generate_loot() -> void:
 	elif node_type != "boss":
 		equip_rarity = "common"
 	if equip_rarity != "" and randf() < RunManager.luck_equip_chance():
-		var equip_id := RunManager.roll_equipment_drop(equip_rarity)
+		var einst := RunManager.roll_shell_drop(equip_rarity)
+		var equip_id := str(einst.get("base", ""))
 		if equip_id != "":
 			var edata := RunManager.get_equipment_data(equip_id)
-			var einst := RunManager.make_equip_instance(equip_id, equip_rarity)
+			var einst_rarity := str(einst.get("rarity", equip_rarity))
+			var spr := str(edata.get("sprite", ""))
+			var icon_path := (
+				"res://battle_scene/assets/images/%s" % spr
+				if spr != ""
+				else (
+					"res://battle_scene/assets/images/ui/equipment/%s_%s.png"
+					% [str(edata.get("slot", "")), einst_rarity]
+				)
+			)
 			available_loot.append(
 				{
 					"id": "equipment",
 					"type": "equipment",
 					"item_id": equip_id,
-					"rarity": equip_rarity,
+					"rarity": einst_rarity,
 					"instance": einst,
 					"title":
 					Settings.t("EQUIP_%s_NAME" % equip_id, str(edata.get("name", equip_id))),
 					"subtitle": "",
-					"icon": "res://battle_scene/assets/images/%s" % str(edata.get("sprite", "")),
+					"icon": icon_path,
 					"action": tr("UI_LOOT_ACTION_TAKE")
 				}
 			)
