@@ -69,11 +69,16 @@ func _populate(container: VBoxContainer) -> void:
 	var tier := MetaProgress.get_building_tier(building_id)
 
 	# --- Core balance banner (shared currency context for every action). ---
+	var banner := _styled_panel(true)
+	var bm := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		bm.add_theme_constant_override(side, TOK_MARGIN_INNER)
+	banner.add_child(bm)
 	var bal := Label.new()
 	_style_label(bal, 20, Color(0.64, 0.90, 1.0), 1)
 	bal.text = tr("UI_OUTPOST_CORE_BALANCE").format({"n": MetaProgress.core})
-	container.add_child(bal)
-	container.add_child(HSeparator.new())
+	bm.add_child(bal)
+	container.add_child(banner)
 
 	if tier <= 0:
 		var locked := Label.new()
@@ -83,41 +88,33 @@ func _populate(container: VBoxContainer) -> void:
 		container.add_child(locked)
 		return
 
-	# --- T1: starting gold (Core upgrade row). ---
-	_add_section_header(container, tr("UI_OUTPOST_SECT_GOLD"))
-	_add_upgrade_row(container, GOLD_UPGRADE_ID)
-
-	# --- T1: merchant discount (Core upgrade row). ---
-	_add_section_header(container, tr("UI_OUTPOST_SECT_DISCOUNT"))
-	_add_upgrade_row(container, DISCOUNT_UPGRADE_ID)
-
-	# --- T1: backpack capacity (Core upgrade row). Available at T1 alongside the
-	# other basic Core upgrades; raises RunManager.effective_backpack_size() from
-	# the base 10 toward the 20-cell ceiling. ---
-	_add_section_header(container, tr("UI_OUTPOST_SECT_BACKPACK"))
-	_add_upgrade_row(container, BACKPACK_UPGRADE_ID)
-
-	# --- T1: reward-screen card rerolls (Core upgrade row). ---
-	_add_section_header(container, tr("UI_OUTPOST_SECT_REROLL"))
-	_add_upgrade_row(container, REROLL_UPGRADE_ID)
-
-	# --- T1: tool rack — +1 top-bar tool slot (Core upgrade row). ---
-	_add_section_header(container, tr("UI_OUTPOST_SECT_TOOL_SLOTS"))
-	_add_upgrade_row(container, TOOL_SLOTS_UPGRADE_ID)
+	# --- T1: the five Core upgrade rows, grouped into ONE panel so they read as
+	# one "Core Upgrades" block instead of five loosely-spaced standalone rows
+	# each with their own header (the original cramped/ungrouped layout). Each
+	# row still carries its own name/level/cost via _add_upgrade_row. ---
+	container.add_child(_section_header(tr("UI_OUTPOST_SECT_CORE_UPGRADES")))
+	var core_group := VBoxContainer.new()
+	core_group.add_theme_constant_override("separation", TOK_ROW_SEP)
+	container.add_child(core_group)
+	_add_upgrade_row(core_group, GOLD_UPGRADE_ID)
+	_add_upgrade_row(core_group, DISCOUNT_UPGRADE_ID)
+	_add_upgrade_row(core_group, BACKPACK_UPGRADE_ID)
+	_add_upgrade_row(core_group, REROLL_UPGRADE_ID)
+	_add_upgrade_row(core_group, TOOL_SLOTS_UPGRADE_ID)
 
 	# --- T1: difficulty selector. ---
-	_add_section_header(container, tr("UI_OUTPOST_SECT_DIFFICULTY"))
+	container.add_child(_section_header(tr("UI_OUTPOST_SECT_DIFFICULTY")))
 	_add_difficulty_selector(container)
 
 	# --- T2: safe cells (Core upgrade row, gated). ---
-	_add_section_header(container, tr("UI_OUTPOST_SECT_SAFE_CELLS"))
+	container.add_child(_section_header(tr("UI_OUTPOST_SECT_SAFE_CELLS")))
 	if MetaProgress.building_can(building_id, "safe_cells"):
 		_add_upgrade_row(container, SAFE_CELLS_UPGRADE_ID)
 	else:
 		_add_lock_note(container, tr("UI_OUTPOST_LOCK_SAFE_CELLS"))
 
 	# --- T3: starter-deck editor (gated). ---
-	_add_section_header(container, tr("UI_OUTPOST_SECT_DECK"))
+	container.add_child(_section_header(tr("UI_OUTPOST_SECT_DECK")))
 	if MetaProgress.building_can(building_id, "deck_editor"):
 		_add_deck_editor(container)
 	else:
@@ -141,13 +138,12 @@ func _add_upgrade_row(container: VBoxContainer, upgrade_id: String) -> void:
 	var tiers: Array = def.get("tiers", [])
 	var lvl := MetaProgress.get_upgrade_level(upgrade_id)
 
-	var row := PanelContainer.new()
-	row.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	var row := _styled_panel(true)
 	container.add_child(row)
 
 	var margin := MarginContainer.new()
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		margin.add_theme_constant_override(side, 14)
+		margin.add_theme_constant_override(side, TOK_MARGIN_OUTER)
 	row.add_child(margin)
 
 	var vbox := VBoxContainer.new()
@@ -155,7 +151,7 @@ func _add_upgrade_row(container: VBoxContainer, upgrade_id: String) -> void:
 	margin.add_child(vbox)
 
 	var title := Label.new()
-	_style_label(title, 21, Color(1, 0.92, 0.55), 2)
+	_style_label(title, TOK_FONT_SECTION, TOK_GOLD, 2)
 	title.text = (
 		Settings.t("UPGRADE_%s_NAME" % upgrade_id, str(def.get("name", upgrade_id))).to_upper()
 	)
@@ -457,14 +453,6 @@ func _on_deck_save(hero_id: String) -> void:
 
 
 # --- Small UI + data helpers ------------------------------------------------
-
-
-func _add_section_header(container: VBoxContainer, text: String) -> void:
-	container.add_child(HSeparator.new())
-	var lbl := Label.new()
-	_style_label(lbl, 24, accent, 2)
-	lbl.text = text
-	container.add_child(lbl)
 
 
 func _add_lock_note(container: VBoxContainer, text: String) -> void:

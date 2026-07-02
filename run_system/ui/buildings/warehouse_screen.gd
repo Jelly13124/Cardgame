@@ -52,23 +52,31 @@ var _status_lbl: Label = null
 ## base also calls our _refresh() override after, and on every currency/buildings
 ## change signal it already connects.
 func _build_content(container: VBoxContainer) -> void:
-	# Top: live currency balances (Core / Caps / Scrap).
+	# Top: live currency balances (Core / Caps / Scrap), banner-wrapped to match
+	# the balance treatment on the other 4 screens.
+	var banner := _styled_panel(true)
+	var bm := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		bm.add_theme_constant_override(side, TOK_MARGIN_INNER)
+	banner.add_child(bm)
+	var banner_col := VBoxContainer.new()
+	banner_col.add_theme_constant_override("separation", 4)
+	bm.add_child(banner_col)
+
 	_balances_lbl = Label.new()
 	_balances_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_style_label(_balances_lbl, 20, Color(0.92, 0.86, 0.62), 2)
-	container.add_child(_balances_lbl)
+	banner_col.add_child(_balances_lbl)
 
 	_status_lbl = Label.new()
 	_status_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_style_label(_status_lbl, 17, Color(0.70, 0.86, 0.55), 1)
 	_status_lbl.visible = false
-	container.add_child(_status_lbl)
-
-	container.add_child(HSeparator.new())
+	banner_col.add_child(_status_lbl)
+	container.add_child(banner)
 
 	# Two-column body: LEFT character (hero pick + equip slots) | RIGHT stash grid.
 	_build_loadout_board(container)
-	container.add_child(HSeparator.new())
 	_build_conversion(container)
 
 	_update_balances()
@@ -80,26 +88,35 @@ func _build_content(container: VBoxContainer) -> void:
 ## The headline: an HBoxContainer with LEFT character column (hero picker + the 5
 ## equipment slots as drop targets) and RIGHT stash column (draggable grid).
 ## Gated on the warehouse "loadout" function (T1). Rebuilt wholesale on _refresh.
+## Wrapped in a styled panel (mirrors the forge workbench) so the two-column
+## board reads as one grouped unit instead of loose columns on bare background.
 func _build_loadout_board(container: VBoxContainer) -> void:
 	container.add_child(_function_header(tr("UI_WAREHOUSE_LOADOUT_TITLE"), "loadout"))
 	if not MetaProgress.building_can("warehouse", "loadout"):
 		container.add_child(_locked_note("loadout"))
 		return
 
-	var hint := Label.new()
-	hint.text = tr("UI_WAREHOUSE_LOADOUT_HINT")
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(hint, 16, Color(0.80, 0.74, 0.58), 1)
-	container.add_child(hint)
+	var panel := _styled_panel(false)
+	var margin := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		margin.add_theme_constant_override(side, TOK_MARGIN_OUTER)
+	panel.add_child(margin)
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", TOK_ROW_SEP)
+	margin.add_child(vbox)
+
+	var hint := _body_label(tr("UI_WAREHOUSE_LOADOUT_HINT"), true)
+	vbox.add_child(hint)
 
 	var body := HBoxContainer.new()
 	body.add_theme_constant_override("separation", 28)
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	container.add_child(body)
+	vbox.add_child(body)
 
 	body.add_child(_build_character_column())
 	body.add_child(VSeparator.new())
 	body.add_child(_build_stash_column())
+	container.add_child(panel)
 
 
 # --- LEFT column: hero picker + equip slots --------------------------------
@@ -112,15 +129,15 @@ func _build_character_column() -> Control:
 
 	# Compact hero picker.
 	var hero_title := Label.new()
-	hero_title.text = tr("UI_WAREHOUSE_HERO_TITLE")
-	_style_label(hero_title, 20, accent, 2)
+	hero_title.text = tr("UI_WAREHOUSE_HERO_TITLE").to_upper()
+	_style_label(hero_title, TOK_FONT_SECTION, TOK_GOLD, 2)
 	col.add_child(hero_title)
 	col.add_child(_build_hero_picker())
 
 	# The 5 equipment slots as drop targets.
 	var slots_title := Label.new()
-	slots_title.text = tr("UI_WAREHOUSE_SLOTS_HEADER")
-	_style_label(slots_title, 20, accent, 2)
+	slots_title.text = tr("UI_WAREHOUSE_SLOTS_HEADER").to_upper()
+	_style_label(slots_title, TOK_FONT_SECTION, TOK_GOLD, 2)
 	col.add_child(slots_title)
 
 	for slot in RunManager.EQUIPMENT_SLOTS:
@@ -293,8 +310,10 @@ func _build_stash_column() -> Control:
 
 	var title := Label.new()
 	# Count only entries still available (not assigned to a slot) over capacity.
-	title.text = tr("UI_WAREHOUSE_STASH_HEADER").format({"n": available.size(), "cap": cap})
-	_style_label(title, 20, accent, 2)
+	title.text = (
+		tr("UI_WAREHOUSE_STASH_HEADER").format({"n": available.size(), "cap": cap}).to_upper()
+	)
+	_style_label(title, TOK_FONT_SECTION, TOK_GOLD, 2)
 	col.add_child(title)
 
 	var grid := GridContainer.new()
@@ -470,9 +489,15 @@ func _build_conversion(container: VBoxContainer) -> void:
 		container.add_child(_locked_note("conversion"))
 		return
 
+	# Group both conversion rows in one panel (mirrors the outpost Core-upgrades
+	# group) so they read as one function block instead of two loose rows.
+	var group := VBoxContainer.new()
+	group.add_theme_constant_override("separation", TOK_ROW_SEP)
+	container.add_child(group)
+
 	# Core → Caps (1:2, ~10% tax).
 	var core_out := _converted_amount(CONV_CORE_CHUNK, CONV_CORE_RATE)
-	container.add_child(
+	group.add_child(
 		_conversion_row(
 			tr("UI_WAREHOUSE_CONVERT_CORE").format({"src": CONV_CORE_CHUNK, "dst": core_out}),
 			MetaProgress.core >= CONV_CORE_CHUNK,
@@ -482,7 +507,7 @@ func _build_conversion(container: VBoxContainer) -> void:
 
 	# Caps → Scrap (4:1, ~10% tax).
 	var caps_out := _converted_amount(CONV_CAPS_CHUNK, CONV_CAPS_RATE)
-	container.add_child(
+	group.add_child(
 		_conversion_row(
 			tr("UI_WAREHOUSE_CONVERT_CAPS").format({"src": CONV_CAPS_CHUNK, "dst": caps_out}),
 			MetaProgress.caps >= CONV_CAPS_CHUNK,
@@ -497,15 +522,17 @@ func _converted_amount(chunk: int, rate: float) -> int:
 	return int(floor(chunk * rate * (1.0 - CONV_TAX)))
 
 
-func _conversion_row(label_text: String, affordable: bool, cb: Callable) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
+## One conversion row, built on the shared `_row_panel` helper so it matches the
+## bordered-row look of the upgrade rows on the other 4 screens instead of a
+## bare HBoxContainer floating on the background.
+func _conversion_row(label_text: String, affordable: bool, cb: Callable) -> Control:
+	var row := _row_panel()
 
 	var lbl := Label.new()
 	lbl.text = label_text
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_style_label(lbl, 17, Color(0.88, 0.82, 0.62), 1)
+	_style_label(lbl, TOK_FONT_BODY, TOK_TEXT, 1)
 	row.add_child(lbl)
 
 	var btn := Button.new()
@@ -516,7 +543,7 @@ func _conversion_row(label_text: String, affordable: bool, cb: Callable) -> HBox
 	if affordable:
 		btn.pressed.connect(cb)
 	row.add_child(btn)
-	return row
+	return row.get_meta("_panel")
 
 
 func _on_convert_core_to_caps() -> void:
@@ -591,22 +618,16 @@ func _flash_status(text: String) -> void:
 	_status_lbl.visible = true
 
 
-## A function sub-header: title plus a small tier-requirement tag.
-func _function_header(title: String, function: String) -> Label:
-	var lbl := Label.new()
+## A function sub-header: the shared section-header rule + gold title, plus a
+## small tier-requirement tag, so warehouse sections match the other 4 screens.
+func _function_header(title: String, function: String) -> Control:
 	var min_tier := _function_min_tier(function)
-	lbl.text = "%s  (T%d)" % [title, min_tier]
-	_style_label(lbl, 22, accent, 2)
-	return lbl
+	return _section_header("%s  (T%d)" % [title, min_tier])
 
 
 ## A standard "locked — needs tier N" note for an above-tier function.
 func _locked_note(function: String) -> Label:
-	var note := Label.new()
-	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	note.text = tr("UI_WAREHOUSE_FN_LOCKED").format({"n": _function_min_tier(function)})
-	_style_label(note, 17, Color(0.78, 0.60, 0.40), 1)
-	return note
+	return _body_label(tr("UI_WAREHOUSE_FN_LOCKED").format({"n": _function_min_tier(function)}), true)
 
 
 ## Minimum tier that gates a warehouse function (from BUILDING_DEFS). 99 if absent.

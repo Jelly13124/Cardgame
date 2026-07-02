@@ -36,8 +36,6 @@ const RARITY_COLORS := {
 	"uncommon": Color(0.45, 0.8, 1.0),
 	"rare": Color(1.0, 0.85, 0.35),
 }
-const SECTION_BG := Color(0.080, 0.055, 0.040, 0.92)
-const SECTION_BORDER := Color(0.55, 0.30, 0.13, 1.0)
 const PRICE_COLOR := Color(1.0, 0.84, 0.18)
 
 ## Rolled equipment stock — set once for the session in _build_content. Each
@@ -122,13 +120,23 @@ func _populate(container: VBoxContainer) -> void:
 # --- Balances --------------------------------------------------------------
 
 
+## Balances banner — matches the banner treatment on the other 4 screens (forge
+## Scrap / outpost Core / clinic Caps) so the Market's currency readout reads
+## as the same UI element instead of a bare label row.
 func _build_balances_row() -> Control:
+	var banner := _styled_panel(true)
+	var bm := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		bm.add_theme_constant_override(side, TOK_MARGIN_INNER)
+	banner.add_child(bm)
+
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 24)
+	bm.add_child(row)
 
 	var caps_title := Label.new()
 	caps_title.text = tr("UI_MARKET_CAPS")
-	_style_label(caps_title, 20, Color(0.90, 0.86, 0.70), 1)
+	_style_label(caps_title, 20, TOK_TEXT, 1)
 	row.add_child(caps_title)
 
 	_caps_label = Label.new()
@@ -138,7 +146,7 @@ func _build_balances_row() -> Control:
 
 	var core_title := Label.new()
 	core_title.text = tr("UI_MARKET_CORE")
-	_style_label(core_title, 20, Color(0.90, 0.86, 0.70), 1)
+	_style_label(core_title, 20, TOK_TEXT, 1)
 	row.add_child(core_title)
 
 	_mkt_core_label = Label.new()
@@ -146,7 +154,7 @@ func _build_balances_row() -> Control:
 	_style_label(_mkt_core_label, 22, Color(0.55, 0.85, 1.0), 2)
 	row.add_child(_mkt_core_label)
 
-	return row
+	return banner
 
 
 # --- Tool shop (T1, Caps) ---------------------------------------------------
@@ -399,26 +407,26 @@ func _on_refresh_stock() -> void:
 
 
 ## A titled panel; the inner content VBox is stored on the panel's "body" meta.
+## Uses the shared Phase-B panel token (`_styled_panel`) + gold section-title
+## color so the Market's shelves match the panel language on the other 4
+## screens instead of the market-only SECTION_BG/SECTION_BORDER it used before.
 func _make_section(title: String) -> PanelContainer:
-	var panel := PanelContainer.new()
+	var panel := _styled_panel(false)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override(
-		"panel", T.panel_with_shadow(SECTION_BG, SECTION_BORDER, 4, 2)
-	)
 
 	var margin := MarginContainer.new()
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		margin.add_theme_constant_override(side, 14)
+		margin.add_theme_constant_override(side, TOK_MARGIN_OUTER)
 	panel.add_child(margin)
 
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 8)
+	body.add_theme_constant_override("separation", TOK_ROW_SEP)
 	margin.add_child(body)
 
 	var header := Label.new()
-	header.text = title
-	_style_label(header, 22, Color(0.86, 0.78, 0.52), 2)
+	header.text = title.to_upper()
+	_style_label(header, TOK_FONT_SECTION, TOK_GOLD, 2)
 	body.add_child(header)
 
 	panel.set_meta("body", body)
@@ -429,11 +437,7 @@ func _make_section(title: String) -> PanelContainer:
 func _locked_section(title: String, tier: int) -> Control:
 	var section := _make_section(title)
 	var body := section.get_meta("body") as VBoxContainer
-	var hint := Label.new()
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.text = tr("UI_MARKET_LOCKED_HINT").format({"t": tier})
-	_style_label(hint, 18, Color(0.72, 0.64, 0.50), 1)
-	body.add_child(hint)
+	body.add_child(_body_label(tr("UI_MARKET_LOCKED_HINT").format({"t": tier}), true))
 	return section
 
 

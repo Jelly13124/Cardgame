@@ -30,6 +30,38 @@ const _ICON_DIR := "res://run_system/assets/images/home/buildings_runtime/"
 ## Placeholder per-building background path (Codex art swaps these in later).
 const _BG_DIR := "res://run_system/assets/images/buildings/"
 
+# ─── Phase B: shared visual tokens ──────────────────────────────────────────
+# One set of colors/sizes so all 5 building screens (forge/outpost/clinic/
+# market/warehouse) read as ONE UI instead of five hand-tuned ones. Screens
+# should pull from these + the `_section_header` / `_styled_panel` / `_row_panel`
+# helpers below rather than inventing their own Color(...)/font-size literals.
+# Reuses `wasteland_theme` colors where they already exist (T.TEXT_MAIN etc.);
+# these tokens are the subset that shows up over and over in building content.
+
+## Panel fills (dark → panel, matches T.PANEL_BG_DARK / T.PANEL_BG).
+const TOK_PANEL_BG := Color(0.11, 0.08, 0.06, 0.92)
+const TOK_PANEL_BG_DARK := Color(0.075, 0.055, 0.040, 0.94)
+## Hairline separators / faint dividers between rows.
+const TOK_LINE := Color(0.34, 0.28, 0.20, 0.85)
+## The warm gold accent used for section headers + emphasis (matches the header
+## title's default `accent`-adjacent look across screens).
+const TOK_GOLD := Color(1.0, 0.86, 0.40)
+## Body / dim text.
+const TOK_TEXT := Color(0.92, 0.88, 0.76)
+const TOK_TEXT_DIM := Color(0.74, 0.68, 0.56)
+
+## Font sizes: title (building name, handled by header) / section / body / dim.
+const TOK_FONT_SECTION := 21
+const TOK_FONT_BODY := 17
+const TOK_FONT_DIM := 14
+
+## Shared corner radius + margins so every panel/row matches.
+const TOK_RADIUS := 6
+const TOK_MARGIN_OUTER := 14
+const TOK_MARGIN_INNER := 10
+## Standard vertical gap between rows inside a section list.
+const TOK_ROW_SEP := 10
+
 
 func _ready() -> void:
 	# STOP so this full-rect overlay blocks the home base behind it.
@@ -258,3 +290,75 @@ func _style_label(label: Label, font_size: int, color: Color, outline_size: int)
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.90))
 	label.add_theme_constant_override("outline_size", outline_size)
+
+
+# ─── Phase B: shared building-content helpers ───────────────────────────────
+# Subclasses call these instead of hand-rolling PanelContainer/Label boilerplate
+# so the 5 screens share one visual language. Keep DRY: if a screen needs a
+# variant, extend the helper rather than forking a parallel styling path.
+
+
+## A section header for a block of content: a hairline rule, then a gold,
+## uppercased title. Use to open every logical group (a workbench, a shop
+## shelf, an upgrade category) so the 5 screens share one section rhythm.
+func _section_header(text: String) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	box.add_child(HSeparator.new())
+	var lbl := Label.new()
+	lbl.text = text.to_upper()
+	_style_label(lbl, TOK_FONT_SECTION, TOK_GOLD, 2)
+	box.add_child(lbl)
+	return box
+
+
+## A consistent StyleBox'd panel for a content block (a card, a shop shelf, a
+## workbench column). `dark` picks the darker recessed fill (nested panels /
+## drop targets); otherwise the standard panel fill. Wrap the returned
+## PanelContainer's single child in a MarginContainer for inner padding, or use
+## `_row_panel()` below when the content is a simple list row.
+func _styled_panel(dark: bool = false) -> PanelContainer:
+	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = TOK_PANEL_BG_DARK if dark else TOK_PANEL_BG
+	style.border_color = TOK_LINE
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(TOK_RADIUS)
+	style.content_margin_left = TOK_MARGIN_INNER
+	style.content_margin_right = TOK_MARGIN_INNER
+	style.content_margin_top = TOK_MARGIN_INNER
+	style.content_margin_bottom = TOK_MARGIN_INNER
+	panel.add_theme_stylebox_override("panel", style)
+	return panel
+
+
+## A single list row (an upgrade row, a stash line, a shop entry): a styled
+## panel pre-wired with an inner MarginContainer + HBoxContainer so callers
+## just `row.add_child(...)` their label/price/button in a horizontal line.
+## Returns the HBoxContainer — the caller adds THAT row's content, then adds
+## the owning panel (`row.get_meta("_panel")`) to its own parent container.
+func _row_panel() -> HBoxContainer:
+	var panel := _styled_panel(false)
+	var margin := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		margin.add_theme_constant_override(side, TOK_MARGIN_INNER)
+	panel.add_child(margin)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Stash the owning panel so a caller that needs the panel itself (e.g. to set
+	# custom_minimum_size or swap the stylebox) can fetch it back.
+	row.set_meta("_panel", panel)
+	margin.add_child(row)
+	return row
+
+
+## Apply the shared body/dim text styling in one call — thin wrapper over
+## `_style_label` with the Phase-B body-text token, so callers don't need to
+## remember the exact color/size for "ordinary paragraph text".
+func _body_label(text: String, dim: bool = false) -> Label:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(lbl, TOK_FONT_DIM if dim else TOK_FONT_BODY, TOK_TEXT_DIM if dim else TOK_TEXT, 1)
+	return lbl

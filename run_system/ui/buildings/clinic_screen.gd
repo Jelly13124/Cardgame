@@ -37,36 +37,40 @@ func _rebuild(container: VBoxContainer) -> void:
 	for child in container.get_children():
 		child.queue_free()
 
-	# Live Caps balance (services in the clinic spend Caps).
+	# Live Caps balance banner (services in the clinic spend Caps) — matches the
+	# banner treatment on the other 4 screens (forge Scrap / outpost Core).
+	var banner := _styled_panel(true)
+	var bm := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		bm.add_theme_constant_override(side, TOK_MARGIN_INNER)
+	banner.add_child(bm)
 	var caps_lbl := Label.new()
 	caps_lbl.text = tr("UI_CLINIC_CAPS").format({"n": MetaProgress.caps})
-	_style_label(caps_lbl, 18, Color(1.0, 0.82, 0.45), 1)
-	container.add_child(caps_lbl)
-
-	container.add_child(HSeparator.new())
+	_style_label(caps_lbl, 20, Color(1.0, 0.82, 0.45), 2)
+	bm.add_child(caps_lbl)
+	container.add_child(banner)
 
 	# --- T1: attribute perks (Caps) ---
-	_add_section_title(container, tr("UI_CLINIC_ATTR_TITLE"))
+	container.add_child(_section_header(tr("UI_CLINIC_ATTR_TITLE")))
 	if MetaProgress.building_can("clinic", "attr_perks"):
+		var attr_group := VBoxContainer.new()
+		attr_group.add_theme_constant_override("separation", TOK_ROW_SEP)
+		container.add_child(attr_group)
 		# Stable perk order so rows don't reshuffle between rebuilds.
 		for perk_id in MetaProgress.CYBER_DOC_PERKS.keys():
-			container.add_child(_build_attr_perk_row(str(perk_id)))
+			attr_group.add_child(_build_attr_perk_row(str(perk_id)))
 	else:
 		_add_locked_hint(container, tr("UI_CLINIC_LOCKED_ATTR"))
 
-	container.add_child(HSeparator.new())
-
 	# --- T2: Max-HP perk (Caps) ---
-	_add_section_title(container, tr("UI_CLINIC_HP_TITLE"))
+	container.add_child(_section_header(tr("UI_CLINIC_HP_TITLE")))
 	if MetaProgress.building_can("clinic", "max_hp_perk"):
 		container.add_child(_build_max_hp_row())
 	else:
 		_add_locked_hint(container, tr("UI_CLINIC_LOCKED_HP"))
 
-	container.add_child(HSeparator.new())
-
 	# --- T3: raised attribute level cap (display-only here) ---
-	_add_section_title(container, tr("UI_CLINIC_CAP_TITLE"))
+	container.add_child(_section_header(tr("UI_CLINIC_CAP_TITLE")))
 	var effective_cap := MetaProgress.attr_perk_cap()
 	var cap_note := Label.new()
 	cap_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -76,7 +80,7 @@ func _rebuild(container: VBoxContainer) -> void:
 		cap_note.text = (tr("UI_CLINIC_CAP_BASE").format(
 			{"cap": effective_cap, "high": HIGH_CAP_LEVEL}
 		))
-	_style_label(cap_note, 16, Color(0.8, 0.74, 0.6), 1)
+	_style_label(cap_note, TOK_FONT_BODY, TOK_TEXT_DIM, 1)
 	container.add_child(cap_note)
 
 
@@ -97,13 +101,12 @@ func _add_core_upgrade_row(container: VBoxContainer, upgrade_id: String) -> void
 	var tiers: Array = def.get("tiers", [])
 	var lvl: int = MetaProgress.get_upgrade_level(upgrade_id)
 
-	var row := PanelContainer.new()
-	row.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	var row := _styled_panel(true)
 	container.add_child(row)
 
 	var margin := MarginContainer.new()
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		margin.add_theme_constant_override(side, 14)
+		margin.add_theme_constant_override(side, TOK_MARGIN_OUTER)
 	row.add_child(margin)
 
 	var vbox := VBoxContainer.new()
@@ -111,7 +114,7 @@ func _add_core_upgrade_row(container: VBoxContainer, upgrade_id: String) -> void
 	margin.add_child(vbox)
 
 	var title := Label.new()
-	_style_label(title, 21, Color(1, 0.92, 0.55), 2)
+	_style_label(title, TOK_FONT_SECTION, TOK_GOLD, 2)
 	title.text = (
 		Settings.t("UPGRADE_%s_NAME" % upgrade_id, str(def.get("name", upgrade_id))).to_upper()
 	)
@@ -189,8 +192,7 @@ func _perk_card(
 	icon_path: String, name_text: String, lvl: int, max_lvl: int, cost: int, on_buy: Callable
 ) -> Control:
 	var maxed := lvl >= max_lvl
-	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	var card := _styled_panel(true)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 16)
@@ -278,16 +280,5 @@ func _build_max_hp_row() -> Control:
 	)
 
 
-func _add_section_title(container: VBoxContainer, text: String) -> void:
-	var title := Label.new()
-	title.text = text.to_upper()
-	_style_label(title, 20, Color(1, 0.92, 0.55), 2)
-	container.add_child(title)
-
-
 func _add_locked_hint(container: VBoxContainer, text: String) -> void:
-	var hint := Label.new()
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.text = text
-	_style_label(hint, 16, Color(0.78, 0.66, 0.52), 1)
-	container.add_child(hint)
+	container.add_child(_body_label(text, true))

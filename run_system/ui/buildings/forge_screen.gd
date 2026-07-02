@@ -63,8 +63,10 @@ func _build_content(container: VBoxContainer) -> void:
 
 
 ## Rebuild the whole content body from the current building tier + stash state.
-## Layout: scrap balance → two-column workbench (LEFT stash grid | RIGHT drop slot
-## + the selected item's affixes & dismantle/reforge actions) → craft control.
+## Layout: scrap balance banner → workbench section (LEFT stash grid | RIGHT drop
+## slot + the selected item's affixes & dismantle/reforge actions) → craft section.
+## Each logical group gets its own `_section_header` + `_styled_panel` so the page
+## reads as distinct blocks instead of one long stack.
 func _rebuild_body() -> void:
 	if not is_instance_valid(_body):
 		return
@@ -75,38 +77,62 @@ func _rebuild_body() -> void:
 	if _selected_index >= MetaProgress.stash.size():
 		_selected_index = -1
 
-	# Current Scrap balance.
+	# --- Balance banner: Scrap total, front and center. ---
+	var banner := _styled_panel(true)
+	var banner_row := HBoxContainer.new()
+	banner_row.add_theme_constant_override("separation", 12)
+	var bm := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		bm.add_theme_constant_override(side, TOK_MARGIN_INNER)
+	banner.add_child(bm)
+	bm.add_child(banner_row)
 	var scrap_lbl := Label.new()
 	scrap_lbl.text = tr("UI_FORGE_SCRAP").format({"n": int(MetaProgress.scrap)})
 	_style_label(scrap_lbl, 22, Color(0.78, 0.86, 0.62), 2)
-	_body.add_child(scrap_lbl)
+	banner_row.add_child(scrap_lbl)
+	_body.add_child(banner)
 
 	var can_dismantle := MetaProgress.building_can("forge", "dismantle")
 	var can_reforge := MetaProgress.building_can("forge", "reforge")
 	var can_craft := MetaProgress.building_can("forge", "craft")
 	var can_curse := MetaProgress.building_can("forge", "curse")
 
-	var hint := Label.new()
-	hint.text = tr("UI_FORGE_WORKBENCH_HINT")
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(hint, 16, Color(0.80, 0.74, 0.58), 1)
-	_body.add_child(hint)
+	# --- Workbench section: hint + two-column board, all inside one panel so the
+	# stash grid and the bench actions read as one grouped unit. ---
+	_body.add_child(_section_header(tr("UI_FORGE_BENCH_TITLE")))
+	var bench_panel := _styled_panel(false)
+	var bench_margin := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		bench_margin.add_theme_constant_override(side, TOK_MARGIN_OUTER)
+	bench_panel.add_child(bench_margin)
+	var bench_vbox := VBoxContainer.new()
+	bench_vbox.add_theme_constant_override("separation", TOK_ROW_SEP)
+	bench_margin.add_child(bench_vbox)
 
-	# --- Two-column workbench: LEFT stash | RIGHT drop slot + actions ---
+	var hint := _body_label(tr("UI_FORGE_WORKBENCH_HINT"), true)
+	bench_vbox.add_child(hint)
+
 	var board := HBoxContainer.new()
 	board.add_theme_constant_override("separation", 28)
 	board.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_body.add_child(board)
+	bench_vbox.add_child(board)
 	board.add_child(_build_stash_column())
 	board.add_child(VSeparator.new())
 	board.add_child(_build_workbench_column(can_dismantle, can_reforge, can_curse))
+	_body.add_child(bench_panel)
 
-	# --- Craft control (T2): mint a fresh item; independent of the workbench ---
-	_body.add_child(HSeparator.new())
+	# --- Craft section (T2): mint a fresh item; independent of the workbench ---
+	_body.add_child(_section_header(tr("UI_FORGE_CRAFT_TITLE")))
 	if can_craft:
 		_body.add_child(_build_craft_control())
 	else:
-		_body.add_child(_locked_hint(tr("UI_FORGE_CRAFT_LOCKED")))
+		var locked_panel := _styled_panel(true)
+		var lm := MarginContainer.new()
+		for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+			lm.add_theme_constant_override(side, TOK_MARGIN_INNER)
+		locked_panel.add_child(lm)
+		lm.add_child(_locked_hint(tr("UI_FORGE_CRAFT_LOCKED")))
+		_body.add_child(locked_panel)
 
 
 # --- LEFT column: the stash as a draggable / clickable grid -----------------
@@ -118,8 +144,8 @@ func _build_stash_column() -> Control:
 	col.custom_minimum_size = Vector2(520, 0)
 
 	var title := Label.new()
-	title.text = tr("UI_FORGE_STASH_TITLE").format({"n": MetaProgress.stash.size()})
-	_style_label(title, 20, accent, 2)
+	title.text = tr("UI_FORGE_STASH_TITLE").format({"n": MetaProgress.stash.size()}).to_upper()
+	_style_label(title, TOK_FONT_SECTION, TOK_GOLD, 2)
 	col.add_child(title)
 
 	if MetaProgress.stash.is_empty():
@@ -191,8 +217,8 @@ func _build_workbench_column(can_dismantle: bool, can_reforge: bool, can_curse: 
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var title := Label.new()
-	title.text = tr("UI_FORGE_BENCH_TITLE")
-	_style_label(title, 20, accent, 2)
+	title.text = tr("UI_FORGE_SELECTED_TITLE").to_upper()
+	_style_label(title, TOK_FONT_SECTION, TOK_GOLD, 2)
 	col.add_child(title)
 
 	var sel_inst: Dictionary = {}
@@ -449,23 +475,23 @@ func _forge_item_tooltip(inst: Dictionary) -> String:
 
 
 ## Craft picker (T2): two option buttons (slot + rarity) and a Craft button whose
-## label shows the current target's Scrap cost.
+## label shows the current target's Scrap cost. Wrapped in a styled panel (the
+## section header above already provides the title) so it groups visually with
+## the workbench panel above it instead of floating as bare controls.
 func _build_craft_control() -> Control:
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 8)
-
-	var title := Label.new()
-	title.text = tr("UI_FORGE_CRAFT_TITLE")
-	_style_label(title, 20, Color(1, 0.92, 0.55), 2)
-	box.add_child(title)
+	var panel := _styled_panel(false)
+	var margin := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		margin.add_theme_constant_override(side, TOK_MARGIN_OUTER)
+	panel.add_child(margin)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	box.add_child(row)
+	row.add_theme_constant_override("separation", 14)
+	margin.add_child(row)
 
 	var slot_lbl := Label.new()
 	slot_lbl.text = tr("UI_FORGE_SLOT")
-	_style_label(slot_lbl, 16, Color(0.86, 0.86, 0.8), 1)
+	_style_label(slot_lbl, 16, TOK_TEXT, 1)
 	row.add_child(slot_lbl)
 
 	var slot_opt := OptionButton.new()
@@ -482,7 +508,7 @@ func _build_craft_control() -> Control:
 
 	var rarity_lbl := Label.new()
 	rarity_lbl.text = tr("UI_FORGE_RARITY")
-	_style_label(rarity_lbl, 16, Color(0.86, 0.86, 0.8), 1)
+	_style_label(rarity_lbl, 16, TOK_TEXT, 1)
 	row.add_child(rarity_lbl)
 
 	var rarity_opt := OptionButton.new()
@@ -497,17 +523,21 @@ func _build_craft_control() -> Control:
 	)
 	row.add_child(rarity_opt)
 
+	var row_spacer := Control.new()
+	row_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(row_spacer)
+
 	var cost := int(CRAFT_COST.get(_craft_rarity, CRAFT_COST["common"]))
 	var craft_btn := Button.new()
 	craft_btn.text = tr("UI_FORGE_CRAFT").format({"n": cost})
-	craft_btn.custom_minimum_size = Vector2(170, 36)
+	craft_btn.custom_minimum_size = Vector2(170, 40)
 	T.apply_button_theme(craft_btn)
 	craft_btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
 	craft_btn.disabled = int(MetaProgress.scrap) < cost
 	craft_btn.pressed.connect(_on_craft_pressed)
 	row.add_child(craft_btn)
 
-	return box
+	return panel
 
 
 ## Spend Scrap and mint a fresh stash item of the selected slot + rarity.
@@ -540,10 +570,6 @@ func _curse_item(index: int) -> void:
 	_rebuild_body()
 
 
-## A dim italic-ish lock hint line for a function above the current tier.
+## A dim lock hint line for a function above the current tier.
 func _locked_hint(text: String) -> Control:
-	var lbl := Label.new()
-	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lbl.text = text
-	_style_label(lbl, 16, Color(0.66, 0.62, 0.54), 1)
-	return lbl
+	return _body_label(text, true)
