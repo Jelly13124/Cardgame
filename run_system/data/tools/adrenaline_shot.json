@@ -2,7 +2,6 @@
   "id": "adrenaline_shot",
   "title": "Adrenaline Shot",
   "target": "none",
-  "rarity": "common",
   "effects": [
     {
       "type": "draw_cards",

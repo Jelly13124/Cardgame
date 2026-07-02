@@ -168,8 +168,7 @@ func get_randomized_card_list() -> Array:
 		"defend",
 		"defend",
 		"defend",
-		"siphon",
-		"preemptive_strike"
+		"siphon"
 	]
 	list.shuffle()
 	return list

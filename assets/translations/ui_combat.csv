@@ -1,5 +1,4 @@
 keys,en,zh
-UI_COMBAT_DOUBLE_DAMAGE_ACTIVE,DOUBLE DAMAGE ACTIVE!,双倍伤害已激活！
 UI_COMBAT_ATTR_GAIN,{attr} +{n},{attr} +{n}
 UI_COMBAT_ATTR_STRENGTH,STRENGTH,力量
 UI_COMBAT_ATTR_CONSTITUTION,CONSTITUTION,体质
@@ -18,23 +17,19 @@ UI_COMBAT_ALL_STUN_X,ALL: STUN x{n},全体：眩晕 x{n}
 UI_COMBAT_APPLIED_STATUS,APPLIED {status} x{n},施加 {status} x{n}
 UI_COMBAT_ALL_STATUS,ALL: {status} x{n},全体：{status} x{n}
 UI_COMBAT_STATUS_BLEED,Bleed,流血
-UI_COMBAT_STATUS_BURN,Burn,灼烧
 UI_COMBAT_STATUS_WEAK,Weak,虚弱
 UI_COMBAT_STATUS_VULNERABLE,Vulnerable,易伤
-UI_COMBAT_STATUS_DOUBLE_DAMAGE,Double damage,双倍伤害
 UI_COMBAT_STATUS_STUN,Stun,眩晕
 UI_COMBAT_STATUS_REGEN,Regen,再生
 UI_COMBAT_STATUS_THORNS,Thorns,荆棘
 UI_COMBAT_STATUS_FRAIL,Frail,脆弱
 UI_COMBAT_STATUS_DODGE,Dodge,闪避
 UI_COMBAT_STATUS_BLEED_DESC,Take damage equal to stacks at the start of your turn. Then stacks are halved (rounded down).,每回合开始时受到等同层数的伤害。然后层数减半（向下取整）。
-UI_COMBAT_STATUS_BURN_DESC,Take damage equal to stacks at the end of your turn. Lose 1 stack at the start of each turn.,每回合结束时受到等同层数的伤害。每回合开始时层数 -1。
 UI_COMBAT_STATUS_WEAK_DESC,Outgoing attack damage reduced 25% per stack. Decays 1 per turn.,每层使造成的攻击伤害降低 25%。每回合衰减 1 层。
 UI_COMBAT_STATUS_VULNERABLE_DESC,Incoming attack damage increased 50% per stack. Decays 1 per turn.,每层使受到的攻击伤害提高 50%。每回合衰减 1 层。
-UI_COMBAT_STATUS_DOUBLE_DAMAGE_DESC,Next N attacks deal double damage. Consumed on use.,接下来 N 次攻击造成双倍伤害。使用后消耗。
 UI_COMBAT_STATUS_STUN_DESC,Enemy skips its next turn for each stack (enemy-only).,每层使敌人跳过其下一回合（仅敌人）。
 UI_COMBAT_STATUS_REGEN_DESC,Heal stacks HP at the start of your turn. Stacks decay by 1 each turn.,每回合开始时回复等同层数的生命值。每回合衰减 1 层。
-UI_COMBAT_STATUS_THORNS_DESC,"When hit by an attack, the attacker takes stacks damage. Loses 1 stack per turn.",被攻击命中时，攻击者受到等同层数的伤害。每回合减少 1 层。
+UI_COMBAT_STATUS_THORNS_DESC,"When hit by an attack, the attacker takes stacks damage. Loses 1 stack each time it triggers.",被攻击命中时，攻击者受到等同层数的伤害。每次触发时减少 1 层。
 UI_COMBAT_STATUS_HOT_STREAK,Hot Streak,走运
 UI_COMBAT_STATUS_HOT_STREAK_DESC,"Whenever you Crit, gain 2 gold.",每次暴击时获得 2 金币。
 UI_COMBAT_STATUS_ALL_IN,All In,梭哈
@@ -64,10 +59,8 @@ UI_COMBAT_INTENT_TIP_SUMMON,Summon — calls reinforcements,召唤 — 呼叫增
 UI_COMBAT_INTENT_TIP_UNKNOWN,Preparing an action,正在准备行动
 UI_COMBAT_SHORT_WEAK,Weak,虚弱
 UI_COMBAT_SHORT_VULNERABLE,Vuln,易伤
-UI_COMBAT_SHORT_BURN,Burn,灼烧
 UI_COMBAT_SHORT_BLEED,Bleed,流血
 UI_COMBAT_SHORT_STUN,Stun,眩晕
-UI_COMBAT_SHORT_DOUBLE_DAMAGE,Dbl,双倍
 UI_COMBAT_SHORT_DODGE,Dodge,闪避
 UI_COMBAT_SHORT_REGEN,Regen,再生
 UI_COMBAT_SHORT_THORNS,Thorns,荆棘
@@ -93,8 +86,6 @@ UI_COMBAT_STATUS_METALLICIZE,Plating,镀装
 UI_COMBAT_STATUS_METALLICIZE_DESC,At the start of your turn gain Block equal to stacks. Persistent.,每回合开始获得等同层数的格挡。持续。
 UI_COMBAT_STATUS_FEEL_NO_PAIN,Numb,镇痛
 UI_COMBAT_STATUS_FEEL_NO_PAIN_DESC,Whenever a card is Exhausted gain Block equal to stacks. Persistent.,每当一张牌被消耗时获得等同层数的格挡。持续。
-UI_COMBAT_STATUS_DARK_EMBRACE,Salvage,回收
-UI_COMBAT_STATUS_DARK_EMBRACE_DESC,Whenever a card is Exhausted draw cards equal to stacks. Persistent.,每当一张牌被消耗时抽取等同层数的牌。持续。
 UI_COMBAT_WEALTHY,💰 +{n} Gold,💰 +{n} 金币
 UI_COMBAT_HEAL,💚 +{n} HP,💚 +{n} 生命
 UI_COMBAT_FLEE,{name} flees!,{name} 逃跑了！

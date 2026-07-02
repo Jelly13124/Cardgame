@@ -3,8 +3,6 @@ CARD_strike_TITLE,"Strike","打击"
 CARD_strike_DESC,"Deal 3 damage.","造成 3 点伤害。"
 CARD_defend_TITLE,"Defend","防御"
 CARD_defend_DESC,"Gain 3 Block.","获得 3 点格挡。"
-CARD_preemptive_strike_TITLE,"Preemptive Strike","先发打击"
-CARD_preemptive_strike_DESC,"Your next attack deals double damage.","你的下一次攻击造成双倍伤害。"
 CARD_weak_strike_TITLE,"Weak Strike","虚弱打击"
 CARD_weak_strike_DESC,"Deal 3 damage. Apply [b]1 Weak[/b].","造成 3 点伤害。施加 [b]1 层虚弱[/b]。"
 CARD_stun_baton_TITLE,"Stun Baton","电击棍"
@@ -65,10 +63,6 @@ CARD_data_dump_TITLE,"Data Dump","数据倾泻"
 CARD_data_dump_DESC,"Draw 3 cards. Exhaust.","抽 3 张牌。消耗。"
 CARD_sweep_arc_TITLE,"Sweep Arc","横扫弧"
 CARD_sweep_arc_DESC,"Deal 8 fixed damage to ALL enemies (ignores Strength).","对所有敌人造成 8 点固定伤害（不受力量影响）。"
-CARD_incinerate_TITLE,"Incinerate","焚化"
-CARD_incinerate_DESC,"Deal 18 damage to ALL enemies. Apply 2 Burn to all.","对所有敌人造成 18 点伤害。对所有敌人施加 2 层燃烧。"
-CARD_wildfire_TITLE,"Wildfire","野火"
-CARD_wildfire_DESC,"Apply 4 Burn to ALL enemies.","对所有敌人施加 4 层燃烧。"
 CARD_lucky_streak_TITLE,"Lucky Streak","好运连连"
 CARD_lucky_streak_DESC,"Gain 2 Luck (raises crit chance and loot rarity).","获得 2 点幸运(提升暴击率与战利品稀有度)。"
 CARD_tape_patch_TITLE,"Tape Patch","胶带修补"
@@ -120,7 +114,7 @@ GEM_spark_DESC,"When played, gain 1 Energy.",打出时获得 1 点能量。
 GEM_leech_TITLE,Leech Gem,吸血宝石
 GEM_leech_DESC,"When played, heal 2 HP.",打出时恢复 2 点生命。
 TOOL_med_kit_TITLE,Med Kit,医疗包
-TOOL_med_kit_DESC,"Heal 6 HP.",回复 6 点生命。
+TOOL_med_kit_DESC,"Gain 3 Regen.",获得 3 层再生。
 TOOL_energy_cell_TITLE,Energy Cell,能量电池
 TOOL_energy_cell_DESC,"Gain 2 Energy this turn.",本回合获得 2 点能量。
 TOOL_adrenaline_shot_TITLE,Adrenaline Shot,肾上腺素
@@ -131,16 +125,16 @@ TOOL_smoke_bomb_TITLE,Smoke Bomb,烟雾弹
 TOOL_smoke_bomb_DESC,"Gain 10 Block.",获得 10 点格挡。
 TOOL_combat_stim_TITLE,Combat Stim,兴奋剂
 TOOL_combat_stim_DESC,"Gain 2 Strength.",获得 2 点力量。
-TOOL_toxin_vial_TITLE,Toxin Vial,毒瓶
+TOOL_toxin_vial_TITLE,Rusty Blade,生锈铁刀
 TOOL_toxin_vial_DESC,"Apply 4 Bleed to an enemy.",对一个敌人施加 4 层流血。
 TOOL_shock_charge_TITLE,Shock Charge,电荷
 TOOL_shock_charge_DESC,"Apply 2 Vulnerable and 1 Weak to an enemy.",对一个敌人施加 2 层易伤和 1 层虚弱。
 TOOL_blood_kit_TITLE,Blood Kit,采血工具包
 TOOL_blood_kit_DESC,"Discover a Bleed card. It costs 0 this combat.",发现一张流血牌，本场战斗中它的费用为 0。
 TOOL_munitions_crate_TITLE,Munitions Crate,军火箱
-TOOL_munitions_crate_DESC,Discover an attack.,发现一张攻击牌。
+TOOL_munitions_crate_DESC,"Discover an attack card. It costs 0 this combat.",发现一张攻击牌，本场战斗中它的费用为 0。
 TOOL_field_kit_TITLE,Field Kit,战术工具包
-TOOL_field_kit_DESC,Discover a skill.,发现一张技能牌。
+TOOL_field_kit_DESC,"Discover a skill card. It costs 0 this combat.",发现一张技能牌，本场战斗中它的费用为 0。
 CARD_radiation_dust_TITLE,Radiation Dust,辐射尘
 CARD_radiation_dust_DESC,Unplayable.,无法打出。
 CARD_leaking_wealth_TITLE,Leaking Wealth,漏财

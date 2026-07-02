@@ -1,0 +1,14 @@
+{
+  "source": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_052802cd7d705a81016a38dc2a7744819aae6d0b6ea6dfe208.png",
+  "output_dir": "run_system\\assets\\images\\ui\\tools",
+  "icons": [
+    "run_system\\assets\\images\\ui\\tools\\med_kit.png",
+    "run_system\\assets\\images\\ui\\tools\\energy_cell.png",
+    "run_system\\assets\\images\\ui\\tools\\adrenaline_shot.png",
+    "run_system\\assets\\images\\ui\\tools\\frag_grenade.png",
+    "run_system\\assets\\images\\ui\\tools\\smoke_bomb.png",
+    "run_system\\assets\\images\\ui\\tools\\combat_stim.png",
+    "run_system\\assets\\images\\ui\\tools\\toxin_vial.png",
+    "run_system\\assets\\images\\ui\\tools\\shock_charge.png"
+  ]
+}

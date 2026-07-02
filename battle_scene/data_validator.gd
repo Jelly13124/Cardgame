@@ -72,10 +72,8 @@ const ALLOWED_EFFECT_TYPES = [
 ]
 const ALLOWED_STATUS_NAMES = [
 	"bleed",
-	"burn",
 	"weak",
 	"vulnerable",
-	"double_damage",
 	"stun",
 	"regen",
 	"thorns",
@@ -83,7 +81,6 @@ const ALLOWED_STATUS_NAMES = [
 	"dodge",
 	"metallicize",
 	"feel_no_pain",
-	"dark_embrace",
 	"hot_streak",
 	"all_in",
 	"hemorrhage",

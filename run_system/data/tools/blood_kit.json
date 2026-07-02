@@ -1,10 +1,14 @@
 {
-	"id": "blood_kit",
-	"title": "Blood Kit",
-	"target": "none",
-	"rarity": "rare",
-	"effects": [
-		{ "type": "discover", "pool": "bleed", "count": 3, "free": true }
-	],
-	"icon": "res://run_system/assets/images/ui/tools/toxin_vial.png"
+  "id": "blood_kit",
+  "title": "Blood Kit",
+  "target": "none",
+  "effects": [
+    {
+      "type": "discover",
+      "pool": "bleed",
+      "count": 3,
+      "free": true
+    }
+  ],
+  "icon": "res://run_system/assets/images/ui/tools/toxin_vial.png"
 }

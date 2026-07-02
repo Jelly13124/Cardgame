@@ -1,7 +1,7 @@
 # Project Rules
 
 **Project:** Unnamed Sci-Fi Roguelite Card Game  
-**Last Updated:** 2026-06-03
+**Last Updated:** 2026-07-01
 
 ---
 
@@ -211,6 +211,29 @@ battle_scene/assets/images/
 | **New equipment** | 1. Add `card_info/equipment/{id}.json` with `bonuses`. |
 | **New relic** | 1. Add `run_system/data/relics/{id}.json`. 2. Add a shared trigger in `battle_scene/relic_effect_system.gd` only if existing triggers are insufficient. |
 | **New hero** | 1. Add hero JSON. 2. Add hero sprite under `heroes/{hero_id}/`. |
+
+### Content Catalog — Design-First Workflow (Non-Negotiable)
+
+The browsable tables under `docs/catalog_html/` (cards / relics / equipment / enemies /
+gems / tools / events / affixes / keywords) are the reference for *what content exists*.
+They are **generated** from the JSON data + translation CSVs + `affix_pool.gd` by
+`scripts/gen_catalog_html.py`. Treat the catalog as the design surface, and work in this
+order for ANY content add / remove / retune:
+
+1. **Design in the catalog first.** Before writing data, open the relevant catalog page
+   and plan the change against the full existing set — naming, cost/rarity/tier numbers,
+   power curve, and consistency with sibling content.
+2. **Then implement in the game data** — the JSON (+ translation CSVs + any wiring per the
+   checklist above).
+3. **Regenerate and verify.** Run `python scripts/gen_catalog_html.py` and confirm the new
+   content appears as intended. **A content change is not "done" until the catalog matches
+   the game data** and the smoke gate passes.
+
+**Never hand-edit the HTML** — a regen overwrites it. If a content type has no catalog page
+yet, add a `build_*()` for it in `gen_catalog_html.py` (plus a `nav()` link) rather than
+leaving it untracked. `docs/catalog_html/index.html` is the **combined single-page view**
+(left-side tabs over every category) — the handiest surface for balance/number passes; the
+per-category pages are kept too.
 
 ---
 

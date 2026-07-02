@@ -10,8 +10,8 @@
     },
     {
       "count": 5,
-      "label": "Attack cards apply Burn 1",
-      "effect": { "type": "attack_apply_status", "status": "burn", "stacks": 1 }
+      "label": "Attack cards apply Bleed 1",
+      "effect": { "type": "attack_apply_status", "status": "bleed", "stacks": 1 }
     }
   ]
 }

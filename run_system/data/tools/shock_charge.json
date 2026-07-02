@@ -2,17 +2,16 @@
   "id": "shock_charge",
   "title": "Shock Charge",
   "target": "enemy",
-  "rarity": "uncommon",
   "effects": [
     {
       "type": "apply_status",
       "status": "vulnerable",
-      "amount": 2
+      "stacks": 2
     },
     {
       "type": "apply_status",
       "status": "weak",
-      "amount": 1
+      "stacks": 1
     }
   ],
   "icon": "res://run_system/assets/images/ui/tools/shock_charge.png"

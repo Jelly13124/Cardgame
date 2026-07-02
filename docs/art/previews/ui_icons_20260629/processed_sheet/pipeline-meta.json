@@ -1,0 +1,101 @@
+{
+  "target": "asset",
+  "mode": "ui_icons_sample",
+  "prompt": "",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019e873c-36e7-7d13-a4b3-17563e1f72f5\\ig_0b9149c862e2bdc0016a42fab20b70819983450281e767c4ef.png",
+  "threshold": 18,
+  "edge_threshold": 150,
+  "duration": 200,
+  "rows": 1,
+  "cols": 2,
+  "cell_size": 128,
+  "fit_scale": 0.86,
+  "trim_border": 4,
+  "edge_clean_depth": 2,
+  "align": "center",
+  "shared_scale": false,
+  "component_mode": "largest",
+  "component_padding": 18,
+  "min_component_area": 1,
+  "edge_touch_margin": 0,
+  "frame_labels": [
+    "ui_icon_sample-1",
+    "ui_icon_sample-2"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        887,
+        887
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 167511,
+      "selected_component_bbox": [
+        100,
+        227,
+        810,
+        679
+      ],
+      "crop_bbox": [
+        82,
+        209,
+        828,
+        697
+      ],
+      "edge_touch": false,
+      "output_size": [
+        110,
+        72
+      ],
+      "paste_position": [
+        9,
+        28
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        887,
+        0,
+        1774,
+        887
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 244820,
+      "selected_component_bbox": [
+        51,
+        195,
+        775,
+        686
+      ],
+      "crop_bbox": [
+        33,
+        177,
+        793,
+        704
+      ],
+      "edge_touch": false,
+      "output_size": [
+        110,
+        76
+      ],
+      "paste_position": [
+        9,
+        26
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

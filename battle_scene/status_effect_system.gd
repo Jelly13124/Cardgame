@@ -7,7 +7,7 @@ class_name StatusEffectSystem
 
 var _statuses: Dictionary = {}
 
-const TURN_END_DECAY = ["weak", "vulnerable", "frail", "thorns"]
+const TURN_END_DECAY = ["weak", "vulnerable", "frail"]
 
 
 static func format_name(status_name: String) -> String:
@@ -27,10 +27,8 @@ static func format_name_localized(status_name: String) -> String:
 
 const STATUS_COLORS = {
 	"bleed": Color(1.0, 0.30, 0.37),
-	"burn": Color(1.0, 0.4, 0.1),
 	"weak": Color(0.7, 0.5, 0.9),
 	"vulnerable": Color(0.95, 0.45, 0.2),
-	"double_damage": Color(0.2, 0.8, 1.0),
 	"stun": Color(0.95, 0.95, 0.3),
 	"regen": Color(0.3, 1.0, 0.6),
 	"thorns": Color(0.7, 0.75, 0.8),
@@ -38,7 +36,6 @@ const STATUS_COLORS = {
 	"dodge": Color(0.6, 0.95, 1.0),
 	"metallicize": Color(0.72, 0.80, 0.86),
 	"feel_no_pain": Color(0.55, 0.80, 0.95),
-	"dark_embrace": Color(0.72, 0.42, 0.86),
 	"hot_streak": Color(1.0, 0.82, 0.3),
 	"all_in": Color(1.0, 0.45, 0.25),
 	"hemorrhage": Color(0.85, 0.15, 0.25),
@@ -48,10 +45,8 @@ const STATUS_COLORS = {
 
 const STATUS_LABELS = {
 	"bleed": "Bl",
-	"burn": "B",
 	"weak": "W",
 	"vulnerable": "V",
-	"double_damage": "D",
 	"stun": "⚡",
 	"regen": "R",
 	"thorns": "T",
@@ -59,7 +54,6 @@ const STATUS_LABELS = {
 	"dodge": "E",
 	"metallicize": "M",
 	"feel_no_pain": "¤",
-	"dark_embrace": "◆",
 	"hot_streak": "HS",
 	"all_in": "AI",
 	"hemorrhage": "Hm",
@@ -73,19 +67,16 @@ const STATUS_ICON_SIZE := 30.0
 const STATUS_DESCRIPTIONS = {
 	"bleed":
 	"Take damage equal to stacks at the start of your turn, then stacks are halved (rounded down).",
-	"burn":
-	"Take damage equal to stacks at the end of your turn. Lose 1 stack at the start of each turn.",
 	"weak": "Outgoing attack damage reduced 25% per stack. Decays 1 per turn.",
 	"vulnerable": "Incoming attack damage increased 50% per stack. Decays 1 per turn.",
-	"double_damage": "Next N attacks deal double damage. Consumed on use.",
 	"stun": "Enemy skips its next turn for each stack (enemy-only).",
 	"regen": "Heal stacks HP at the start of your turn. Stacks decay by 1 each turn.",
-	"thorns": "When hit by an attack, the attacker takes stacks damage. Decays 1 per turn.",
+	"thorns":
+	"When hit by an attack, the attacker takes stacks damage. Loses 1 stack each time it triggers.",
 	"frail": "Block gained is reduced 25%. Decays 1 per turn.",
 	"dodge": "Completely negates incoming attacks, one stack consumed per attack.",
 	"metallicize": "At the start of your turn, gain stacks Block. Persistent.",
 	"feel_no_pain": "Whenever a card is Exhausted, gain stacks Block. Persistent.",
-	"dark_embrace": "Whenever a card is Exhausted, draw stacks card(s). Persistent.",
 	"hot_streak": "Whenever you Crit, gain 2 gold. Persistent.",
 	"all_in": "Your Crits deal double damage, but non-Crit attacks deal 0. Persistent.",
 	"hemorrhage": "Your Bleed damage can Crit. Persistent.",
@@ -148,14 +139,6 @@ func on_turn_start(entity: Node) -> void:
 			_statuses.erase("bleed")
 		changed = true
 
-	# Burn now ticks at END of turn (see on_turn_end); the start of turn only
-	# decays it by 1 stack.
-	if has_status("burn"):
-		_statuses["burn"] -= 1
-		if _statuses["burn"] <= 0:
-			_statuses.erase("burn")
-		changed = true
-
 	if has_status("regen"):
 		var amt: int = _statuses["regen"]
 		if entity.has_method("heal"):
@@ -171,13 +154,6 @@ func on_turn_start(entity: Node) -> void:
 
 func on_turn_end(entity: Node) -> void:
 	var changed := false
-	# Burn deals its damage at the END of the turn (stacks are decayed at the next
-	# turn start). Does not consume stacks here — the start-of-turn −1 handles decay.
-	if has_status("burn"):
-		var burn_dmg: int = _statuses["burn"]
-		if entity.has_method("take_damage"):
-			entity.take_damage(burn_dmg)
-
 	for status_name in TURN_END_DECAY:
 		if not has_status(status_name):
 			continue
@@ -241,6 +217,18 @@ func try_consume_dodge(entity: Node) -> bool:
 		_statuses.erase("dodge")
 	_on_statuses_changed(entity)
 	return true
+
+
+## Spend N stacks of a status (min 0). Used by triggers that decay on use,
+## e.g. Thorns loses 1 stack each time it reflects an attack.
+func spend_stacks(status_name: String, n: int, entity: Node) -> void:
+	status_name = _canonicalize_status_name(status_name)
+	if not _statuses.has(status_name):
+		return
+	_statuses[status_name] -= n
+	if _statuses[status_name] <= 0:
+		_statuses.erase(status_name)
+	_on_statuses_changed(entity)
 
 
 func _canonicalize_status_name(status_name: String) -> String:

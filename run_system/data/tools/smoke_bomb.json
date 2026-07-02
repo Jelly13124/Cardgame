@@ -2,7 +2,6 @@
   "id": "smoke_bomb",
   "title": "Smoke Bomb",
   "target": "none",
-  "rarity": "common",
   "effects": [
     {
       "type": "gain_block",

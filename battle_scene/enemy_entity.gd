@@ -44,10 +44,8 @@ var status_system = STATUS_SYS.new()
 const _STATUS_SHORT_NAMES = {
 	"weak": "Weak",
 	"vulnerable": "Vuln",
-	"burn": "Burn",
 	"bleed": "Bleed",
 	"stun": "Stun",
-	"double_damage": "Dbl",
 }
 
 # ─── Action Pattern ───────────────────────────────────────────────────────────

@@ -73,7 +73,7 @@ RULES_TITLE,How to Play,玩法说明
 RULES_ENERGY,"Energy: you get 3 energy each turn. Playing a card costs energy; leftover energy is lost when the turn ends.","能量:每回合获得 3 点能量。打出卡牌消耗能量,回合结束时未用完的能量清零。"
 RULES_CARDS,"Cards: drag an ATTACK card onto an enemy to target it. Drag SKILL / ABILITY cards upward into the play zone.","卡牌:把攻击牌拖到敌人身上指定目标;把技能/能力牌向上拖入出牌区。"
 RULES_BLOCK,"Block: block absorbs incoming damage this turn, then resets to 0 at the start of your next turn.","格挡:格挡抵消本回合受到的伤害,下回合开始时归零。"
-RULES_ATTRS,"Attributes (5): Strength adds to all attack damage; Constitution to all block; Intelligence boosts tool effects and Bleed; Luck raises crit chance and loot rarity; Charm lowers shop prices and unlocks high-Charm event options. Level up in a run to raise them.","五维属性:力量加成所有攻击伤害;体质加成所有格挡;智力增强道具效果与流血;幸运提升暴击率与战利品稀有度;魅力降低商店价格并解锁高魅力事件选项。局内升级可提升属性。"
+RULES_ATTRS,"Attributes (5): Strength adds to all attack damage; Constitution to all block; Intelligence boosts tool effects and every status you apply; Luck raises crit chance and loot rarity; Charm lowers shop prices and unlocks high-Charm event options. Level up in a run to raise them.","五维属性:力量加成所有攻击伤害;体质加成所有格挡;智力增强道具效果与你施加的所有状态;幸运提升暴击率与战利品稀有度;魅力降低商店价格并解锁高魅力事件选项。局内升级可提升属性。"
 RULES_GEMS,"Gems: socket a gem into a card outside combat to permanently enhance that card for the rest of the run.","宝石:战斗外把宝石嵌入卡牌,在本局剩余时间永久强化该卡。"
 RULES_BACKPACK,"Backpack: gold, Core and gear share 20 cells. If you die you lose everything except the first safe cells.","背包:金币、核心和装备共用 20 格。死亡会丢失除前几个安全格以外的所有东西。"
 RULES_INTENT,"Intents: the icon above each enemy shows what it will do next turn — plan your block and attacks around it.","意图:敌人头顶的图标显示它下回合的行动,据此安排你的格挡和进攻。"

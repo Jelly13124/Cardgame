@@ -2,7 +2,6 @@
   "id": "frag_grenade",
   "title": "Frag Grenade",
   "target": "enemy",
-  "rarity": "common",
   "effects": [
     {
       "type": "deal_damage",
