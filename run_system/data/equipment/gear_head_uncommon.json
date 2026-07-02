@@ -1,0 +1,9 @@
+{
+    "id": "gear_head_uncommon",
+    "name": "Uncommon Headgear",
+    "slot": "head",
+    "rarity": "uncommon",
+    "bonuses": {},
+    "description": "Salvaged gear. Rolls its affixes on drop.",
+    "sprite": ""
+}

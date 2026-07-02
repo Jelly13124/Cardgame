@@ -1,0 +1,9 @@
+{
+    "id": "gear_chest_rare",
+    "name": "Rare Chestpiece",
+    "slot": "chest",
+    "rarity": "rare",
+    "bonuses": {},
+    "description": "Salvaged gear. Rolls its affixes on drop.",
+    "sprite": ""
+}

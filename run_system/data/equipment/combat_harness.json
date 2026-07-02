@@ -1,9 +1,0 @@
-{
-  "id": "combat_harness",
-  "name": "Combat Harness",
-  "slot": "accessory",
-  "rarity": "uncommon",
-  "bonuses": { "strength": 1, "constitution": 1 },
-  "description": "Straps, buckles, and just enough courage.",
-  "sprite": "equipment/lucky_charm.png"
-}

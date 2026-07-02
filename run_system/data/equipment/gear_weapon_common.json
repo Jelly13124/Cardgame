@@ -1,0 +1,9 @@
+{
+    "id": "gear_weapon_common",
+    "name": "Common Weapon",
+    "slot": "weapon",
+    "rarity": "common",
+    "bonuses": {},
+    "description": "Salvaged gear. Rolls its affixes on drop.",
+    "sprite": ""
+}

@@ -1,9 +1,0 @@
-{
-  "id": "scrap_breastplate",
-  "name": "Scrap Breastplate",
-  "slot": "chest",
-  "rarity": "common",
-  "bonuses": { "constitution": 1 },
-  "description": "Rivets going every which way.",
-  "sprite": "equipment/scrap_breastplate.png"
-}

@@ -1,9 +1,0 @@
-{
-  "id": "lucky_charm",
-  "name": "Lucky Charm",
-  "slot": "accessory",
-  "rarity": "uncommon",
-  "bonuses": { "luck": 2 },
-  "description": "Definitely magic. Probably.",
-  "sprite": "equipment/lucky_charm.png"
-}
