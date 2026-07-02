@@ -29,6 +29,7 @@ const SLOT_ICON_PATHS := {
 	"hands": "res://battle_scene/assets/images/ui/slots/hands.png",
 	"accessory": "res://battle_scene/assets/images/ui/slots/accessory.png",
 }
+const SHELL_ICON_DIR := "res://battle_scene/assets/images/ui/equipment/"
 ## Rarity border colors — white / blue / gold (matches the card frames).
 const RARITY_COLORS := {
 	"common": Color(0.95, 0.96, 0.98),  # white
@@ -118,7 +119,7 @@ func set_equipment(
 	_label.visible = true
 	_texture_rect.visible = false
 
-	# Try to load the real texture (fallback to placeholder if missing)
+	# 1) Bespoke sprite (set pieces keep their own art).
 	if sprite_path != "":
 		var full_path = "res://battle_scene/assets/images/" + sprite_path
 		if ResourceLoader.exists(full_path):
@@ -129,6 +130,17 @@ func set_equipment(
 				_texture_rect.visible = true
 				_label.visible = false
 				return
+	# 2) Shared generic-shell art by slot × rarity.
+	var shell_path := "%s%s_%s.png" % [SHELL_ICON_DIR, slot, rarity]
+	if ResourceLoader.exists(shell_path):
+		var shell_tex = load(shell_path) as Texture2D
+		if shell_tex:
+			_texture_rect.texture = shell_tex
+			_texture_rect.modulate = Color.WHITE
+			_texture_rect.visible = true
+			_label.visible = false
+			return
+	# 3) Fallback: slot icon / letter.
 	_try_show_slot_icon(slot, Color(1, 1, 1, 0.75))
 
 
