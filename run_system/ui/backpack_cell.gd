@@ -15,6 +15,8 @@
 ## fail on class_name for custom types).
 extends Control
 
+## Read-only mode (battle character window): blocks drag sources AND drop targets.
+var locked := false
 var drag_payload: Dictionary = {}
 var can_accept: Callable = Callable()
 var perform_drop: Callable = Callable()
@@ -43,13 +45,15 @@ func _on_exit() -> void:
 
 
 func _get_drag_data(_at_position: Vector2) -> Variant:
-	if drag_payload.is_empty():
+	if locked or drag_payload.is_empty():
 		return null
 	set_drag_preview(_make_preview())
 	return drag_payload.duplicate(true)
 
 
 func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
+	if locked:
+		return false
 	if typeof(data) != TYPE_DICTIONARY or not can_accept.is_valid():
 		return false
 	return bool(can_accept.call(data))

@@ -4,7 +4,7 @@ extends Node
 
 const ENERGY_CORE_TEX = preload("res://battle_scene/assets/images/ui/energy_core.png")
 const ENERGY_PANEL_TEX = preload("res://battle_scene/assets/images/ui/energy_panel_frame.png")
-const ATTRIBUTE_VIEW_SCRIPT = preload("res://battle_scene/ui/attribute_view.gd")
+const CHARACTER_WINDOW = preload("res://run_system/ui/window/character_window.gd")
 
 @export_group("UI Nodes")
 @export var energy_label: Label
@@ -23,8 +23,6 @@ var _energy_display: Control = null
 ## Tracks which pile the viewer is currently showing ("draw"/"discard"/"deck"/"")
 ## so the Q/E toggle logic doesn't compare against the (now localized) title text.
 var _current_pile_kind: String = ""
-## Read-only in-battle attribute view (toggled with the `i` key).
-var _attr_view_layer: CanvasLayer = null
 
 
 func _ready() -> void:
@@ -280,8 +278,16 @@ func _input(event: InputEvent) -> void:
 		return
 
 	if event.is_action_pressed("ui_cancel"):
-		if _attr_view_layer and is_instance_valid(_attr_view_layer):
-			_close_attr_view()
+		# Floating windows (read-only character window) close FIRST. This must
+		# happen here — battle_scene's root _input opens the pause panel and
+		# consumes ESC before WindowLayer's _unhandled_input would ever run, and
+		# this child _input runs before the parent's (reverse tree order).
+		var wl = main.get_node_or_null("WindowLayer")
+		if wl != null and wl.has_windows():
+			var top = wl.get_child(wl.get_child_count() - 1)
+			if top is Control and top.has_method("close"):
+				top.close()
+			get_viewport().set_input_as_handled()
 		elif inspect_layer and inspect_layer.visible:
 			close_inspection()
 		elif pile_viewer_layer and pile_viewer_layer.visible:
@@ -320,22 +326,5 @@ func _input(event: InputEvent) -> void:
 				main._on_end_round_button_pressed()
 
 		elif event.keycode == Settings.get_key("view_attributes"):
-			# `i` toggles the read-only attribute view (no backpack ops in battle).
-			_toggle_attr_view()
-
-
-## Open the read-only attribute view, or close it if already open.
-func _toggle_attr_view() -> void:
-	if _attr_view_layer and is_instance_valid(_attr_view_layer):
-		_close_attr_view()
-		return
-	_attr_view_layer = CanvasLayer.new()
-	_attr_view_layer.layer = 135
-	main.add_child(_attr_view_layer)
-	_attr_view_layer.add_child(ATTRIBUTE_VIEW_SCRIPT.new())
-
-
-func _close_attr_view() -> void:
-	if _attr_view_layer and is_instance_valid(_attr_view_layer):
-		_attr_view_layer.queue_free()
-	_attr_view_layer = null
+			# `i` toggles the read-only character window (no backpack ops in battle).
+			CHARACTER_WINDOW.open_window(main, "battle")

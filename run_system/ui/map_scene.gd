@@ -6,7 +6,7 @@ extends Control
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
 const MAP_RENDERER_SCRIPT = preload("res://run_system/ui/map_renderer.gd")
-const EQUIPMENT_PANEL_SCRIPT = preload("res://run_system/ui/equipment_panel.gd")
+const CHARACTER_WINDOW = preload("res://run_system/ui/window/character_window.gd")
 const RUN_DECK_VIEWER_MODAL = preload("res://run_system/ui/run_deck_viewer_modal.gd")
 const RUN_TOP_BAR = preload("res://run_system/ui/run_top_bar.gd")
 const SETTINGS_PANEL_SCRIPT = preload("res://run_system/ui/settings_panel.gd")
@@ -230,12 +230,12 @@ func _get_node_at(pos: Vector2) -> Dictionary:
 
 
 func _input(event: InputEvent) -> void:
-	# `i` toggles the character / equipment panel (full version on the map).
+	# `i` toggles the character window (full editable version on the map).
 	# Handled before the modal guard so it can also close itself; won't stack on
 	# top of another full-screen page.
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_I:
-		if get_node_or_null("EquipmentPanel") or not _is_page_open():
-			_open_equipment_panel()
+		if _is_character_window_open() or not _is_page_open():
+			_open_character_window()
 		return
 
 	# ESC → unified pause panel (settings / how-to / abandon / quit), unless a full
@@ -289,14 +289,18 @@ func _input(event: InputEvent) -> void:
 			queue_redraw()
 
 
-## True while a full-screen page (character / run-deck) is mounted over the map.
-## map_scene resolves node clicks in the GLOBAL _input(), which fires regardless
-## of the opaque page painted on top — without this gate, clicks pass through to
-## map nodes (the 误触 bug).
+## True while a page sits over the map: a floating window (character window on
+## WindowLayer) or the full-screen run-deck viewer. map_scene resolves node
+## clicks in the GLOBAL _input(), which fires regardless of what's painted on
+## top — without this gate, clicks pass through to map nodes (the 误触 bug).
 func _is_page_open() -> bool:
-	return (
-		get_node_or_null("EquipmentPanel") != null or get_node_or_null("RunDeckViewerModal") != null
-	)
+	var wl = get_node_or_null("WindowLayer")
+	return (wl != null and wl.has_windows()) or get_node_or_null("RunDeckViewerModal") != null
+
+
+func _is_character_window_open() -> bool:
+	var wl = get_node_or_null("WindowLayer")
+	return wl != null and wl.get_node_or_null("CharacterWindow") != null
 
 
 func _on_node_clicked(node: Dictionary) -> void:
@@ -726,7 +730,7 @@ func _build_top_bar() -> void:
 	bar.show_character_button = true
 	bar.show_settings_button = true
 	bar.deck_pressed.connect(_open_run_deck_viewer)
-	bar.character_pressed.connect(_open_equipment_panel)
+	bar.character_pressed.connect(_open_character_window)
 	bar.settings_pressed.connect(_open_pause)
 	layer.add_child(bar)
 
@@ -764,15 +768,11 @@ func _open_rules_panel() -> void:
 	layer.add_child(panel)
 
 
-func _open_equipment_panel() -> void:
-	var existing = get_node_or_null("EquipmentPanel")
-	if existing:
-		existing.queue_free()
-		return
-	var panel = EQUIPMENT_PANEL_SCRIPT.new()
-	panel.name = "EquipmentPanel"
-	add_child(panel)
-	_hide_top_bar_for_page(panel)
+## Toggle the floating character window (replaces the old fullscreen
+## EquipmentPanel). It lives on WindowLayer (CanvasLayer 60) ABOVE the top bar
+## (layer 50), so unlike the full-screen pages it needs no top-bar hiding.
+func _open_character_window() -> void:
+	CHARACTER_WINDOW.open_window(self, "map")
 
 
 func _open_run_deck_viewer() -> void:
