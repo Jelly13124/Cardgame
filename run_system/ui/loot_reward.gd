@@ -18,9 +18,9 @@ const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 
 # Card IDs available for drafting - must match filenames in card_info/player/
 ## The card pool from which draft choices are rolled. Populated at _ready
-## from MetaProgress.get_unlocked_card_pool() — the union of the always-
-## available INITIAL_CARD_POOL (25 cards) and any cards unlocked via
-## the Market screen's per-card unlock.
+## from MetaProgress.get_unlocked_card_pool() — every non-curse, non-basic card
+## on disk, minus other heroes' exclusive cards (all cards are draftable by
+## default; there is no per-card unlock system).
 var draft_pool: Array = []
 
 @onready var loot_root = $VBoxContainer

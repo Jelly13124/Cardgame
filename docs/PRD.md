@@ -224,7 +224,7 @@ full-screen, merchant-style screen. Three meta-currencies fund it:
 |---|---|
 | **Forge (锻造)** | Dismantle gear → Scrap; craft / reforge / curse equipment (tier-gated, Scrap) |
 | **Clinic (诊所)** | Caps-bought permanent attribute perks + a Max-HP perk (tier raises the cap) |
-| **Market (黑市)** | Caps equipment shop + Core card-unlock; tier 3 opens a card shop |
+| **Market (黑市)** | Caps tool shop (T1); Caps equipment shop (T2); refresh stock for Caps (T3). All non-curse, non-basic cards are draftable by default — no card-unlock system |
 | **Outpost (前哨站)** | Core upgrades: starting gold / in-run shop discount / safe cells / backpack size; difficulty (ascension) selector; starter-deck editor |
 | **Warehouse (仓库)** | Pick the hero + the starting equipment loadout (drag-to-equip); default-unlocked; tier-ups add stash slots + (T3) resource conversion |
 
@@ -518,6 +518,18 @@ Spec: `docs/superpowers/specs/2026-06-30-discover-mechanic-design.md`; plan: `�
   trigger discover; they route through the same `combat_engine._apply_effect` as any card. (Demo
   discover *cards* were prototyped then **removed 2026-07-01** — discover is **tool-only** now, to
   drop the card/tool redundancy and not tax the single tool slot.)
+
+### ✅ Phase 12 — Market retier + all-cards-draftable (shipped 2026-07-02)
+- ✅ **Removed the base card-unlock/card-shop system**: deleted `MetaProgress.unlock_card` /
+  `buy_card_caps` and the `unlocked_cards` / `purchased_cards` save fields. Every non-curse,
+  non-basic (`strike`/`defend`) card is now draftable by default — `get_unlocked_card_pool()`
+  directory-scans `battle_scene/card_info/player/*.json` instead of reading an unlock list
+  (hero-exclusive cards still gate to their own hero via `HERO_EXCLUSIVE_CARDS`).
+- ✅ **Market (黑市) retiered**: T1 **tool shop** (3 random tools from the whole pool, flat 40
+  Caps each, added straight to the backpack); T2 **equipment shop** (unchanged rarity-priced
+  Caps shelf, just moved from T1); T3 **refresh** (re-roll both stocks for Caps, price rises
+  +10 each use for the visit). `BUILDING_DEFS["market"].functions` is now
+  `{tool_shop:1, equip_shop:2, refresh:3}`.
 
 ### ✅ Phase 9 — Demo Polish (shipped 2026-06-24)
 Spec: `docs/superpowers/specs/2026-06-24-demo-polish-overnight-design.md`. Driven by a 4-dimension demo review.
