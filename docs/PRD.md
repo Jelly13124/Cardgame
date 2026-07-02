@@ -89,7 +89,7 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 | **Strength** | 力量 | Added GLOBALLY to ALL attack damage (`combat_engine._apply_effect()`, default +3); per-card `scaling` is deprecated |
 | **Constitution** | 体质 | Added GLOBALLY to ALL block (default +3); replaces old "Defense" |
 | **Intelligence** | 智力 | Adds +1 stack to EVERY status the player applies (`apply_status` / `apply_status_all`, incl. Bleed) + boosts tool effects (+8%/pt); no longer affects XP |
-| **Luck** | 幸运 | Crit chance (+2%/pt, +4% with Crit Clip, uncapped; 1.5× crit) + 1.5%/pt loot rarity + gem/tool/equipment find chance |
+| **Luck** | 幸运 | Crit chance (+2%/pt, +4% with Crit Clip, uncapped; 1.5× crit) + 1.5%/pt loot rarity + tool/equipment find chance |
 | **Charm** | 魅力 | Lowers shop prices (−2%/pt, floor 0.6×) + lowers per-level XP wall (−4%/pt, floor 0.6×) + gates high-Charm event options (the old enemy-flee mechanic was deleted) |
 
 > Equipment boosts these five stats. Attributes persist within a run via `RunManager.player_attributes`.
@@ -276,10 +276,10 @@ Central source of truth for a run. Persists across scene changes.
 
 ### Loot Reward
 Rewards are node-typed (see "Rewards by node type" in Phase 7):
-- **Normal**: Gold + a 3-choose-1 **Card Draft** (Luck may turn a slot into a gem) + a Luck-scaled **Tool** + a Luck-scaled **common Equipment** (independent rolls).
-- **Elite**: Card Draft + a 3-choose-1 **Gem** + a Luck-scaled **uncommon Equipment** (no tool).
-- **Boss**: a guaranteed **rare Equipment** + a Gem.
-- Gold is a flat per-fight amount (Luck no longer scales gold). Tools, equipment, and gems all claim into the **backpack**; tools are then equipped into a tool slot from the character panel.
+- **Normal**: Gold + a 3-choose-1 **Card Draft** + a Luck-scaled **Tool** + a Luck-scaled **common Equipment** (independent rolls).
+- **Elite**: Card Draft + a Luck-scaled **uncommon Equipment** (no tool).
+- **Boss**: a guaranteed **rare Equipment**.
+- Gold is a flat per-fight amount (Luck no longer scales gold). Tools and equipment claim into the **backpack**; tools are then equipped into a tool slot from the character panel.
 
 ---
 
@@ -433,8 +433,8 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 - ✅ Equipment drops are Luck-scaled (normal = common, elite = uncommon, boss = guaranteed rare; see 2026-06-22 economy pass); the treasure node is a 3-choose-1 relic pick
 - ✅ Relic system: passive run effects, JSON-driven (RelicEffectSystem)
 - ✅ Shop scene (merchant node): 3 cards + 3 tools + 3 relics + remove-card service (75g) — equipment is no longer sold
-- ✅ Rest site: choice between Heal 25% HP and Socket Gems (opens the deck/gem screen)
-- ⛔ ~~Card upgrade system (`_plus` variants + `upgrade_card_by_uid` + CardUpgradeModal)~~ — **REMOVED**; replaced by the gem-socket system (see Phase 6). All `_plus` cards + the upgrade UI were deleted.
+- ✅ Rest site: choice between Heal 25% HP and Upgrade a Card (opens `card_upgrade_modal.gd`)
+- ✅ Card upgrade system: in-run per-card upgrades resolved by `card_upgrade.gd` (deck entries carry an `upgraded` flag, applied at battle start). The interim gem-socket system that briefly replaced upgrades was removed 2026-07-02.
 - ✅ Character info panel (map screen): HP / Gold / Floor + equipment slots + inventory + active sets + relics + stats — one consolidated view
 
 ### 🟡 Phase 4 — Base Building & Meta-Progression (MVP shipped 2026-05-25)
@@ -452,7 +452,7 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 
 ### 🟡 Phase 5 — Content Expansion (in progress)
 - ✅ Cowboy Bill kit: luck/crit (`crit_clip`) + the StS2 Ironclad bruiser pool. (A second "Feng Shui Master" yin/yang hero was prototyped then **cut** 2026-06-18 — the demo ships Bill-only. Vestigial polarity plumbing remains inert.)
-- ✅ ~65 player cards (no upgrade variants — gems replace upgrades), incl. a re-skinned StS2 Ironclad port; per-hero pools + colourless pool
+- ✅ ~65 player cards (in-run upgrades via `card_upgrade.gd`, not `_plus` variants), incl. a re-skinned StS2 Ironclad port; per-hero pools + colourless pool
 - ✅ 13 enemy types (+2 summon-only adds); art migrating to the new style (ADR-0012)
 - ✅ 3 boss encounters (one per act) with multi-phase patterns + bespoke mechanics (enrage / summon / AoE)
 - ⬜ More heroes, more enemies, deeper boss gimmicks
@@ -466,18 +466,19 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 - ✅ Act-aware UI (map top bar / vitals / run history show the act) + i18n (zh) for events
 
 ### ✅ Phase 7 — Gems · In-Run Leveling · Reward Restructure (shipped 2026-06-09)
+> ⚠️ **Gem system removed 2026-07-02.** In-run card upgrades (`card_upgrade.gd` + rest-campfire modal) were restored as the growth axis and the entire gem system (data / socket UI / rewards / `gem_inventory`) was deleted; old saves migrate by stripping gem data. The gem bullets below are historical.
 See `docs/superpowers/specs/2026-06-09-gems-leveling-rewards-design.md` for the full design.
-- ✅ **Gem-socket system** (replaces card upgrades): run-scoped gems (`run_system/data/gems/*.json`, cleared on death), 1 socket/card, inserted out of combat and **locked after**. Gem effects fire after the card's own effects on play. Gems occupy **backpack cells** (1 gem = 1 cell; socketing frees the cell) — `add_gem_to_backpack / backpack_gem_ids / socket_gem / gem_pool`; socket UI reads `backpack_gem_ids()` in `run_deck_viewer_modal.gd`. (`gem_inventory` is now a vestigial migration-only field.) The old `wealthy` keyword is now a gem.
+- ⛔ ~~**Gem-socket system** (replaces card upgrades): run-scoped gems (`run_system/data/gems/*.json`, cleared on death), 1 socket/card, inserted out of combat and **locked after**.~~ **REMOVED** 2026-07-02 — card upgrades restored.
 - ✅ **In-run XP / level**: kill enemies → XP; each level-up grants a **pick-1-of-3 random attribute (+1)**. (Intelligence no longer scales XP — **Charm** lowers the per-level XP wall instead, −4%/pt.) `RunManager.xp / level / gain_xp / xp_to_next / pending_attr_points`.
-- ✅ **Starting attributes = 0** (heroes grow via level-ups / gear / gems).
-- ✅ **Rewards by node type** (updated 2026-06-22): normal = gold + 3-choose-1 card draft (Luck may swap a slot to a gem) + Luck-scaled tool + Luck-scaled common equipment; elite = card + 3-choose-1 gem + Luck-scaled uncommon equipment; boss = guaranteed rare equipment + gem. (Equipment now drops from normal/elite too, not boss-only.)
+- ✅ **Starting attributes = 0** (heroes grow via level-ups / gear).
+- ✅ **Rewards by node type** (updated 2026-07-02): normal = gold + 3-choose-1 card draft + Luck-scaled tool + Luck-scaled common equipment; elite = card + Luck-scaled uncommon equipment; boss = guaranteed rare equipment. (Equipment drops from normal/elite too, not boss-only. The interim gem draft slots were removed with the gem system.)
 - ✅ **StS2 Ironclad port** (`docs/sts2-port-audit.md`): re-skinned cards + 7 relics + 6 new combat mechanics; `bleed` replaced `poison`; `burn` retimed; `strength_up` removed.
 
 ### ✅ Phase 8 — Tools · Equipment Economy · A0 Balance (shipped 2026-06-21..22)
 Specs: `docs/superpowers/specs/2026-06-21-tools-attrs-loading-base-ui-design.md`, `…/2026-06-22-balance-equipment-economy-design.md`.
 - ✅ **Tool system** (StS2-style one-time consumables): `run_system/data/tools/*.json` (11: 8 original + 3 discover tools added 2026-06-30), a top-bar **tool shelf** (`run_top_bar.gd`), free instant use in battle (`battle_scene.use_tool`; enemy-target tools auto-target; effects reuse `combat_engine._apply_effect`, scaled ×(1+0.08·INT)). _Tool slots reworked in Phase 9 → **1 base slot**, tools held in the backpack + equipped from the character panel; see below._
 - ✅ **Attribute rework**: the Charm enemy-**flee** mechanic was **deleted**; INT off XP → boosts tools + Bleed; Charm lowers the per-level XP wall.
-- ✅ **Gems → backpack** (1 gem = 1 cell; socketing frees the cell), replacing the unlimited `gem_inventory` side-list.
+- ⛔ ~~**Gems → backpack** (1 gem = 1 cell; socketing frees the cell), replacing the unlimited `gem_inventory` side-list.~~ Moot — the gem system was removed 2026-07-02.
 - ✅ **Drop / shop restructure**: shop sells tools (not equipment); Luck-scaled tool + equipment drops (see Rewards by node type).
 - ✅ **Loading**: session card-info cache (`MetaProgress.get_card_info_cache` + `cached_card_factory.gd`) skips the per-battle JSON re-parse.
 - ✅ **Building detail pages** redesigned (icon + flavour + action card + locked-state preview, all 5 buildings). _Phase 9 moved the unlock/upgrade to the overview, dropped the action card, and made the pages fullscreen._

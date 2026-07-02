@@ -36,8 +36,6 @@ UI_MAP_CARD_UPGRADED,Card upgraded.,卡牌已强化。
 UI_UPGRADE_MODAL_TITLE,Upgrade a Card,升级一张卡
 UI_UPGRADE_MODAL_HINT,"Pick a card to permanently upgrade for this run","选择一张卡,本局永久升级"
 UI_UPGRADE_ALREADY,Upgraded,已升级
-UI_MAP_REST_GEMS_BTN,⛏ Mine a Gem,⛏ 挖掘宝石
-UI_MAP_MINED_GEM,Mined {gem}!,挖到了「{gem}」！
 UI_TOPBAR_ACT_SHORT,Act,幕
 UI_TOPBAR_FLOOR_SHORT,Floor,层
 UI_TOPBAR_LEVEL_FMT,Lv {lvl} · {xp}/{next},Lv {lvl} · {xp}/{next}

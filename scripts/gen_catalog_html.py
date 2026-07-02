@@ -127,7 +127,7 @@ document.querySelectorAll('.tag').forEach(tag=>tag.addEventListener('click',()=>
 NAV_ITEMS = [("index.html", "◫ All 总览"),
              ("cards.html", "Cards 卡牌"), ("relics.html", "Relics 遗物"),
              ("equipment.html", "Equipment 装备"), ("enemies.html", "Enemies 敌人"),
-             ("gems.html", "Gems 宝石"), ("tools.html", "Tools 工具"),
+             ("tools.html", "Tools 工具"),
              ("events.html", "Events 事件"),
              ("affixes.html", "Affixes 词条"), ("keywords.html", "Keywords 关键词")]
 # Categories that become tabs in the combined index (index.html itself excluded).
@@ -334,28 +334,6 @@ def build_relics():
     controls = "".join(f'<span class="tag" data-k="rarity" data-f="{r}">{r}</span>'
                        for r in ("common", "uncommon", "rare", "unique"))
     page("relics.html", "Relics · 遗物", "Passive run relics, grouped by rarity", controls, body, len(items))
-
-
-# ── Gems (run-scoped socketables) ───────────────────────────────────────────
-def build_gems():
-    items = load_json_dir("run_system/data/gems")
-    cards = []
-    for gid, d in items:
-        en = cards_tr.get(f"GEM_{gid}_TITLE", {}).get("en", d.get("title", gid))
-        zh = cards_tr.get(f"GEM_{gid}_TITLE", {}).get("zh", "")
-        desc = cards_tr.get(f"GEM_{gid}_DESC", {}).get("zh", "")
-        eff = "".join(f"<li>{esc(fmt_effect(e))}</li>" for e in d.get("effects", []))
-        search = f"{gid} {en} {zh}".lower()
-        cards.append(
-            f'<div class="card" data-search="{esc(search)}" style="border-left-color:#6fd3ff">'
-            f'<h3>{esc(en)} <span class="zh">{esc(zh)}</span></h3>'
-            f'<div class="meta"><span class="pill" style="color:#6fd3ff">{esc(gid)}</span>'
-            f'<span class="pill" style="color:#6b6256">on play</span></div>'
-            f'<div class="desc">{esc(desc)}</div><ul class="eff">{eff}</ul></div>')
-    body = section("Gems 宝石", len(cards), "".join(cards))
-    page("gems.html", "Gems · 宝石",
-         "Run-scoped socketable gems — slot 1 into a card; effects fire when the card is played",
-         "", body, len(items))
 
 
 # ── Tools (one-time battle consumables) ─────────────────────────────────────
@@ -586,7 +564,7 @@ def build_keywords():
         ("Strength", "力量", "Each point adds +1 to attack-card damage.", "每点 +1 攻击牌伤害。", "#ff8033"),
         ("Constitution", "体质", "Each point adds +1 to Block gained.", "每点 +1 获得的格挡。", "#4da6ff"),
         ("Intelligence", "智力", "Each point: +1 to the stacks of every status you apply; +8% tool effects.", "每点:你施加的每个状态层数 +1;并提升工具效果 +8%。", "#b366ff"),
-        ("Luck", "幸运", "Each point: +2% crit chance, +1.5% loot rarity, +chance to find gems/tools/equipment.", "每点:+2% 暴击、+1.5% 战利品稀有度、+发现宝石/工具/装备几率。", "#ffe14d"),
+        ("Luck", "幸运", "Each point: +2% crit chance, +1.5% loot rarity, +chance to find tools/equipment.", "每点:+2% 暴击、+1.5% 战利品稀有度、+发现工具/装备几率。", "#ffe14d"),
         ("Charm", "魅力", "Each point: -2% shop prices (to -40%); -4% level-up XP cost (to -40%); gates some event options.", "每点:-2% 商店价格(最低 -40%);-4% 升级所需经验(最低 -40%);解锁部分事件选项。", "#ff80c4"),
     ]
     ac = [kw_card(e, z, de, dz, c, e.lower()) for e, z, de, dz, c in attrs]
@@ -735,7 +713,6 @@ def build_index():
 
 build_cards()
 build_relics()
-build_gems()
 build_tools()
 build_equipment()
 build_enemies()

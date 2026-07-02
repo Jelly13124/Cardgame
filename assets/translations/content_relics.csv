@@ -50,7 +50,7 @@ RELIC_war_horn_DESC,"At the start of each combat, gain 1 Strength.",每场战斗
 
 RELIC_bounty_tags_TITLE,Bounty Tags,赏金标牌
 
-RELIC_bounty_tags_DESC,Gain a Wealthy gem — socket it into a card to earn gold when that card is played.,获得一颗富裕宝石 —— 镶嵌到卡牌上，打出该牌时获得金币。
+RELIC_bounty_tags_DESC,Gain 40 Gold when picked up.,拾取时获得 40 金币。
 
 RELIC_adrenaline_pump_TITLE,Adrenaline Pump,肾上腺素泵
 

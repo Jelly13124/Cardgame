@@ -97,22 +97,6 @@ CARD_breach_charge_TITLE,"Breach Charge","爆破装药"
 CARD_breach_charge_DESC,"Lose 1 HP. Deal 6 fixed damage to ALL enemies (ignores Strength).","失去 1 点生命。对所有敌人造成 6 点固定伤害（不受力量影响）。"
 CARD_limit_break_TITLE,"Limit Break","极限突破"
 CARD_limit_break_DESC,"Double the target's current Bleed. Exhaust.","使目标当前流血层数翻倍。消耗。"
-GEM_wealthy_TITLE,Wealthy Gem,富裕宝石
-GEM_wealthy_DESC,"When played, gain 5 gold (up to 3 times per combat).",打出时获得 5 金币（每场战斗最多 3 次）。
-GEM_keen_TITLE,Keen Gem,锋锐宝石
-GEM_keen_DESC,"When played, deal 3 extra damage.",打出时额外造成 3 点伤害。
-GEM_bulwark_TITLE,Bulwark Gem,壁垒宝石
-GEM_bulwark_DESC,"When played, gain 4 Block.",打出时获得 4 点格挡。
-GEM_swift_TITLE,Swift Gem,迅捷宝石
-GEM_swift_DESC,"When played, draw 1 card.",打出时抽 1 张牌。
-GEM_venom_TITLE,Venom Gem,毒囊宝石
-GEM_venom_DESC,"When played, apply 2 Bleed to the target.",打出时对目标施加 2 层流血。
-GEM_brute_TITLE,Brute Gem,蛮力宝石
-GEM_brute_DESC,"When played, gain 1 Strength.",打出时获得 1 点力量。
-GEM_spark_TITLE,Spark Gem,电火花宝石
-GEM_spark_DESC,"When played, gain 1 Energy.",打出时获得 1 点能量。
-GEM_leech_TITLE,Leech Gem,吸血宝石
-GEM_leech_DESC,"When played, heal 2 HP.",打出时恢复 2 点生命。
 TOOL_med_kit_TITLE,Med Kit,医疗包
 TOOL_med_kit_DESC,"Gain 3 Regen.",获得 3 层再生。
 TOOL_energy_cell_TITLE,Energy Cell,能量电池
