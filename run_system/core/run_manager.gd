@@ -1460,9 +1460,8 @@ func apply_event_effects(effects: Array) -> void:
 				add_relic(str(effect.get("id", "")))
 			"gain_equipment":
 				var rarity := str(effect.get("rarity", ""))
-				var item_id := roll_equipment_drop(rarity)
-				if item_id != "":
-					add_equip_to_backpack(make_equip_instance(item_id, rarity))
+				if rarity != "":
+					add_equip_to_backpack(roll_shell_drop(rarity))
 			"gain_attribute":
 				grant_attribute(str(effect.get("attr", "")), int(effect.get("amount", 0)))
 			"add_curse":
@@ -1837,19 +1836,13 @@ func consume_tool(index: int) -> void:
 		tools_changed.emit()
 
 
-## Pick a random tool id for a drop. Elites bias toward uncommon tools, normal
-## combats toward common; falls back to the whole pool if that tier is empty.
-func roll_tool_drop(node_type: String = "") -> String:
+## Pick a random tool id for a drop — uniform over the whole pool (tools have no
+## rarity tiers).
+func roll_tool_drop(_node_type: String = "") -> String:
 	var pool := tool_pool()
 	if pool.is_empty():
 		return ""
-	var prefer := "uncommon" if node_type == "elite" else "common"
-	var filtered: Array[String] = []
-	for tid in pool:
-		if str(get_tool_data(tid).get("rarity", "common")) == prefer:
-			filtered.append(tid)
-	var src: Array = filtered if not filtered.is_empty() else pool
-	return str(src[randi() % src.size()])
+	return str(pool[randi() % pool.size()])
 
 
 ## Spend gold to add a tool to the top-bar inventory. Returns false on insufficient
@@ -1896,23 +1889,46 @@ func get_equipment_set_data(set_id: String) -> Dictionary:
 	return _load_json_by_id(EQUIPMENT_SET_DATA_DIR, set_id)
 
 
-## Returns a random equipment id matching the given rarity. Returns "" if none.
-## rarity: "common" | "uncommon" | "rare"
-func roll_equipment_drop(rarity: String) -> String:
-	var dir = DirAccess.open(EQUIPMENT_DATA_DIR)
+## Ascension >= 3: a dropped GENERIC shell has this chance to roll as a cursed
+## variant (3 positives incl. 1 attribute + 1 curse). [tunable]
+const CURSE_DROP_CHANCE := 0.15
+## A drop has this chance to be a SET PIECE of the tier instead of a generic shell
+## (keeps sets collectible; shells are the mainline). [tunable]
+const SET_PIECE_DROP_CHANCE := 0.15
+const EQUIP_SLOTS := ["head", "chest", "weapon", "hands", "accessory"]
+
+
+## Roll a full equipment INSTANCE for a drop of the given tier (common/uncommon/rare).
+## ~15% chance it's a set piece of that tier (keeps sets collectible); otherwise a
+## generic shell. At Ascension >= 3 a generic shell may come out cursed (set pieces
+## are never cursed). This is the single entry point for all random equipment drops.
+func roll_shell_drop(tier: String) -> Dictionary:
+	if randf() < SET_PIECE_DROP_CHANCE:
+		var piece := _random_set_piece(tier)
+		if piece != "":
+			return make_equip_instance(piece, tier)
+	var slot: String = EQUIP_SLOTS[randi() % EQUIP_SLOTS.size()]
+	var base_id: String = "gear_%s_%s" % [slot, tier]
+	var is_cursed: bool = ascension >= 3 and randf() < CURSE_DROP_CHANCE
+	return make_equip_instance(base_id, tier, is_cursed)
+
+
+## Random set-piece base id whose rarity matches `tier` (set_id != ""). "" if none.
+func _random_set_piece(tier: String) -> String:
+	var dir := DirAccess.open(EQUIPMENT_DATA_DIR)
 	if dir == null:
 		return ""
-	var candidates: Array[String] = []
-	for file_name in dir.get_files():
-		if not file_name.ends_with(".json"):
+	var cands: Array[String] = []
+	for f in dir.get_files():
+		if not f.ends_with(".json"):
 			continue
-		var item_id = file_name.get_basename()
-		var data = get_equipment_data(item_id)
-		if str(data.get("rarity", "")) == rarity:
-			candidates.append(item_id)
-	if candidates.is_empty():
+		var id := f.get_basename()
+		var d := get_equipment_data(id)
+		if str(d.get("set_id", "")) != "" and str(d.get("rarity", "")) == tier:
+			cands.append(id)
+	if cands.is_empty():
 		return ""
-	return candidates[randi() % candidates.size()]
+	return cands[randi() % cands.size()]
 
 
 func get_unowned_relic_ids() -> Array[String]:

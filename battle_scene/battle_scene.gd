@@ -272,13 +272,6 @@ func _card_preview_damage(card: Control, target: Node) -> int:
 				has_damage = true
 	if not has_damage:
 		return -1
-	# Double Damage status doubles the hit (combat_engine applies card_mult=2).
-	if (
-		player
-		and player.has_method("get_status_stacks")
-		and player.get_status_stacks("double_damage") > 0
-	):
-		base_total *= 2
 	# preview=true: predicted number only — must not consume Deadeye's guaranteed
 	# crit or fire crit side effects (this runs every frame while aiming).
 	return combat_engine.calculate_attack_damage(base_total, player, target, true)
@@ -724,12 +717,10 @@ func _victory():
 			if not RunManager.add_gem_to_backpack(bgem):
 				# Bag full — warn rather than silently dropping the boss gem.
 				show_notification(tr("UI_LOOT_BACKPACK_FULL"), Color(1.0, 0.45, 0.4))
-		# Boss also drops equipment — now the ONLY equipment source in the run.
-		var boss_eq := RunManager.roll_equipment_drop("rare")
-		if boss_eq != "":
-			var eq_inst := RunManager.make_equip_instance(boss_eq, "rare")
-			if not RunManager.add_equip_to_backpack(eq_inst):
-				show_notification(tr("UI_LOOT_BACKPACK_FULL"), Color(1.0, 0.45, 0.4))
+		# Boss drops a rare-tier equipment (one of several drop sources; ~15% set piece).
+		var eq_inst := RunManager.roll_shell_drop("rare")
+		if not RunManager.add_equip_to_backpack(eq_inst):
+			show_notification(tr("UI_LOOT_BACKPACK_FULL"), Color(1.0, 0.45, 0.4))
 		var act: int = RunManager.current_act
 		var rewards: Dictionary = _extract_rewards_for_act(act)
 		if not rewards.is_empty():
@@ -1106,7 +1097,7 @@ func try_gain_gold(amount: int, cap: int) -> void:
 
 
 ## Fire the player's on-exhaust power triggers when a card routes to Exhaust:
-## feel_no_pain → gain Block, dark_embrace → draw. Called once per exhausted card.
+## feel_no_pain → gain Block. Called once per exhausted card.
 func _trigger_exhaust_powers() -> void:
 	if not is_instance_valid(player) or not player.status_system:
 		return
@@ -1115,9 +1106,6 @@ func _trigger_exhaust_powers() -> void:
 		player.add_block(fnp)
 		if player.has_method("play_block_pulse"):
 			player.play_block_pulse()
-	var de: int = player.status_system.get_stacks("dark_embrace")
-	if de > 0 and deck_manager:
-		deck_manager.draw_cards(de)
 
 
 ## Returns true if the card has an `exhaust_self` effect entry.

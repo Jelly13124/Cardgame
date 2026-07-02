@@ -808,14 +808,15 @@ func _hide_top_bar_for_page(page: Node) -> void:
 ## backpack; if every cell is taken the item is left behind with a notice.
 func _grant_treasure_equipment() -> void:
 	var rarity := "uncommon" if randf() < 0.7 else "rare"
-	var item_id = RunManager.roll_equipment_drop(rarity)
+	var einst = RunManager.roll_shell_drop(rarity)
+	var item_id = str(einst.get("base", ""))
 	if item_id == "":
 		_show_popup(tr("UI_MAP_CRATE_EMPTY"))
 		_node_click_pending = false
 		return
 	var data = RunManager.get_equipment_data(item_id)
 	var item_name = Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
-	if RunManager.add_equip_to_backpack(RunManager.make_equip_instance(item_id, rarity)):
+	if RunManager.add_equip_to_backpack(einst):
 		_show_popup(tr("UI_MAP_FOUND_EQUIPMENT").format({"n": item_name}))
 	else:
 		# Backpack full — gold/core/equipment all share the 20 cells now, so
