@@ -1,5 +1,6 @@
 keys,en,zh
 UI_HOME_START_RUN,START NEW RUN,开始新征程
+UI_HOME_CHARACTER_BTN,Character,角色
 UI_HOME_STASH_BTN,STASH,仓库
 UI_HOME_STASH,EQUIPMENT STASH,装备仓库
 UI_HOME_STASH_HINT,Click an item to carry it into your next run.,点击装备,带入下一局征程。
@@ -41,7 +42,6 @@ UI_BUILD_FORGE_NAME,Forge,铁匠铺
 UI_BUILD_CLINIC_NAME,Clinic,义体诊所
 UI_BUILD_MARKET_NAME,Market,黑市
 UI_BUILD_OUTPOST_NAME,Outpost,前哨站
-UI_BUILD_WAREHOUSE_NAME,Warehouse,仓库
 UI_BUILD_UNLOCK,Unlock — {n} Core,解锁 —— {n} 核心
 UI_BUILD_UPGRADE,Upgrade T{n} — {c} Core,升级 T{n} —— {c} 核心
 UI_BUILD_MAX,Max tier,已满级
@@ -81,10 +81,3 @@ UI_BUILD_OUTPOST_PREVIEW,"• Starting gold, discount, backpack & tool slots
 • Higher tiers: safe cells, deck editor","• 起始金币、折扣、背包与工具栏位
 • 奖励刷新与难度（飞升）
 • 更高等级：安全格、卡组编辑"
-UI_BUILD_WAREHOUSE_FLAVOUR,Warehouse — stash gear between runs.,仓库——跨周目存放装备。
-UI_BUILD_WAREHOUSE_UNLOCK_DESC,Unlock the Warehouse to stash equipment across runs.,解锁仓库，跨周目存放装备。
-UI_BUILD_WAREHOUSE_PREVIEW,"• Store equipment in the stash
-• Pull stashed gear into new runs
-• Higher tiers: more safe slots","• 在仓库中存放装备
-• 将装备带入新周目
-• 更高等级：更多安全栏位"

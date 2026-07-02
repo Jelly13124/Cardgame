@@ -1,5 +1,5 @@
 ## Home base scene — the boot scene + post-run return point.
-## Shows the Core/Caps/Scrap balance bar, the 5 building selector tiles,
+## Shows the global currency top bar, the 4 building selector tiles,
 ## START NEW RUN, and the recent-runs panel; `i` opens the floating character
 ## window (hero pick + next-run loadout + stash carry-marks). The base's actual
 ## functions now live in the per-building screens (run_system/ui/buildings/).
@@ -9,18 +9,18 @@ const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const MAP_PACKED = preload("res://run_system/ui/map_scene.tscn")
 const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
 const PAUSE_PANEL = preload("res://run_system/ui/pause_panel.gd")
-## Fallback hero when no Warehouse selection has been made — the base hero, always
-## available. Keeps START NEW RUN robust (a run never begins with an empty hero).
+## Fallback hero when no character-window selection has been made — the base hero,
+## always available. Keeps START NEW RUN robust (a run never begins with an empty hero).
 const DEFAULT_HERO_ID := "cowboy_bill"
 const CHARACTER_WINDOW = preload("res://run_system/ui/window/character_window.gd")
+const CURRENCY_TOP_BAR = preload("res://run_system/ui/window/currency_top_bar.gd")
 const BUILDING_SCREEN_BASE = preload("res://run_system/ui/buildings/building_screen_base.gd")
 ## Building selector order + per-building accent color. The tile art lives under
 ## run_system/assets/images/home/buildings/.
-const BUILDING_ORDER := ["forge", "clinic", "market", "outpost", "warehouse"]
-## Entry-screen arrangement: two flank columns + a centre column. The centre
-## column stacks the Warehouse tile above the START "door", so the layout reads
-## as "2 buildings left / 2 right / depart-door centre" (warehouse = loadout prep,
-## naturally the thing you touch last before leaving).
+const BUILDING_ORDER := ["forge", "clinic", "market", "outpost"]
+## Entry-screen arrangement: two flank columns + a centre column holding the
+## START "door", so the layout reads as "2 buildings left / 2 right /
+## depart-door centre".
 const LEFT_BUILDINGS := ["forge", "clinic"]
 const RIGHT_BUILDINGS := ["market", "outpost"]
 const BUILDING_IMAGE_DIR := "res://run_system/assets/images/home/buildings_runtime/"
@@ -29,14 +29,10 @@ const BUILDING_ACCENTS := {
 	"clinic": Color(0.46, 0.86, 0.78),
 	"market": Color(0.95, 0.82, 0.40),
 	"outpost": Color(0.62, 0.78, 0.96),
-	"warehouse": Color(0.78, 0.72, 0.60),
 }
 const HOME_BACKGROUND_PATH := "res://run_system/assets/images/home/home_base_empty_bg.png"
 const MAP_CANVAS_SIZE := Vector2(1920, 1080)
 
-var _core_label: Label
-var _caps_label: Label
-var _scrap_label: Label
 var _difficulty_buttons: Array[Button] = []
 ## Three-column building area (left flank / centre door / right flank), rebuilt
 ## on buildings_changed.
@@ -50,10 +46,8 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	AudioManager.play_music("home")
 	_build()
-	MetaProgress.core_changed.connect(func(_v): _refresh_core())
-	MetaProgress.caps_changed.connect(func(_v): _refresh_caps())
-	# Building selector: top-bar Scrap + lock/tier badges track these.
-	MetaProgress.scrap_changed.connect(func(_v): _refresh_scrap())
+	# Currency labels live in the global top bar now (it tracks the currency
+	# signals itself).
 	# Repaint the building sprites (lock → unlocked, tier badges) the moment a building
 	# changes — previously wired to the inert _rebuild_building_tiles, so the lock only
 	# cleared on a scene reload (the "must restart to see it unlocked" bug).
@@ -103,7 +97,7 @@ func _build() -> void:
 	_add_background()
 	_add_building_sprites()
 	_add_depart_controls()
-	_add_currency_hud()
+	_add_currency_top_bar()
 
 
 ## Open the How-to-Play panel (loaded at runtime; same pattern as map_scene._open_rules_panel).
@@ -146,27 +140,14 @@ func _add_background() -> void:
 	add_child(shade)
 
 
-func _add_currency_hud() -> void:
-	var row := HBoxContainer.new()
-	row.name = "CurrencyHud"
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_theme_constant_override("separation", 12)
-	row.anchor_left = 0.0
-	row.anchor_top = 0.0
-	row.anchor_right = 0.0
-	row.anchor_bottom = 0.0
-	row.offset_left = 22
-	row.offset_top = 28
-	row.offset_right = 530
-	row.offset_bottom = 92
-	add_child(row)
-
-	_core_label = _make_currency_chip(row, "core", Color(0.28, 0.90, 1.0))
-	_caps_label = _make_currency_chip(row, "caps", Color(1.0, 0.62, 0.34))
-	_scrap_label = _make_currency_chip(row, "scrap", Color(0.86, 0.80, 0.62))
-	_refresh_core()
-	_refresh_caps()
-	_refresh_scrap()
+## The Core/Caps/Scrap chips + Character button moved into the global
+## CurrencyTopBar (a CanvasLayer above the WindowLayer). It tracks the currency
+## signals itself; we just host it and hand it ourselves as the window target.
+func _add_currency_top_bar() -> void:
+	var bar = CURRENCY_TOP_BAR.new()
+	bar.name = "CurrencyTopBar"
+	bar.setup(self)
+	add_child(bar)
 
 
 func _add_building_sprites() -> void:
@@ -207,18 +188,11 @@ func _add_building_sprites() -> void:
 		tr("UI_BUILD_OUTPOST_NAME"),
 		func() -> void: _open_building_screen("outpost")
 	)
-	_add_interactive_building(
-		"warehouse",
-		Rect2(1510, 300, 360, 360),
-		tr("UI_BUILD_WAREHOUSE_NAME"),
-		func() -> void: _open_building_screen("warehouse")
-	)
 
 	_add_building_plaque("forge", Rect2(128, 218, 215, 78), tr("UI_BUILD_FORGE_NAME"))
 	_add_building_plaque("clinic", Rect2(482, 218, 215, 78), tr("UI_BUILD_CLINIC_NAME"))
 	_add_building_plaque("market", Rect2(852, 218, 215, 78), tr("UI_BUILD_MARKET_NAME"))
 	_add_building_plaque("outpost", Rect2(1218, 218, 215, 78), tr("UI_BUILD_OUTPOST_NAME"))
-	_add_building_plaque("warehouse", Rect2(1582, 218, 215, 78), tr("UI_BUILD_WAREHOUSE_NAME"))
 
 
 func _add_depart_controls() -> void:
@@ -554,41 +528,6 @@ func _load_home_texture(path: String) -> Texture2D:
 	return null
 
 
-## Currency chip: a big number + the Codex currency icon (T.currency_row), sat
-## bare on the scene (no background frame — owner request). If the icon PNG is
-## missing, currency_row falls back to a small currency-word label so the
-## counter stays readable even if the art regresses.
-func _make_currency_chip(parent: Control, _icon_id: String, _accent: Color) -> Label:
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(134, 64)
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	parent.add_child(panel)
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_right", 14)
-	margin.add_theme_constant_override("margin_top", 4)
-	margin.add_theme_constant_override("margin_bottom", 4)
-	panel.add_child(margin)
-
-	var row := T.currency_row(0, _icon_id, 31, 40)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	margin.add_child(row)
-
-	# Style the row's amount Label to match the prior big/bright HUD look and hand
-	# it back so _refresh_* can update it.
-	var label := row.get_meta("amount_label") as Label
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.78))
-	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.95))
-	label.add_theme_constant_override("outline_size", 6)
-	label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.5))
-	label.add_theme_constant_override("shadow_offset_y", 2)
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	return label
-
-
 func _style_readable_label(label: Label, font_size: int, color: Color, outline_size: int) -> void:
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
@@ -604,23 +543,8 @@ func _open_pause() -> void:
 	PAUSE_PANEL.open(self, RunManager.is_run_active)
 
 
-func _refresh_core() -> void:
-	if _core_label:
-		_core_label.text = str(MetaProgress.core)
-
-
-func _refresh_caps() -> void:
-	if _caps_label:
-		_caps_label.text = str(MetaProgress.caps)
-
-
-func _refresh_scrap() -> void:
-	if _scrap_label:
-		_scrap_label.text = str(MetaProgress.scrap)
-
-
 ## Rebuild the three-column building area: left flank (Forge/Clinic), centre
-## column (Warehouse tile + START door), right flank (Market/Outpost). Called on
+## column (the START door), right flank (Market/Outpost). Called on
 ## build and on every buildings_changed so lock→unlock / tier-up repaint live.
 func _rebuild_building_tiles() -> void:
 	if not is_instance_valid(_building_area):
@@ -642,12 +566,11 @@ func _make_building_column(building_ids: Array) -> Control:
 	return col
 
 
-## The centre column: the Warehouse tile sits directly above the START "door".
+## The centre column: just the START "door".
 func _make_center_column() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 24)
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_child(_make_building_tile("warehouse"))
 	col.add_child(_make_start_door())
 	return col
 
@@ -843,10 +766,10 @@ func _open_forge_windows() -> void:
 
 
 ## START NEW RUN launches the run directly (the hero-select screen was removed).
-## Hero + ascension come from the pending intent set by the Warehouse (hero) and
-## Outpost (difficulty) building screens; both fall back to safe defaults so a run
-## never starts with an empty hero. start_new_run also resolves these pending
-## values internally — passing them explicitly here keeps the behavior obvious.
+## Hero + ascension come from the pending intent set by the character window
+## (hero) and the Outpost (difficulty) building screen; both fall back to safe
+## defaults so a run never starts with an empty hero. start_new_run also resolves
+## these pending values internally — passing them explicitly keeps the behavior obvious.
 func _on_start_pressed() -> void:
 	var hero: String = (
 		RunManager.pending_hero_id if RunManager.pending_hero_id != "" else DEFAULT_HERO_ID

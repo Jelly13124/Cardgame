@@ -152,12 +152,12 @@ func _refresh_base() -> void:
 		child.queue_free()
 
 	# ── TOP: hero picker ──
-	_base_box.add_child(_section_title(tr("UI_WAREHOUSE_HERO_TITLE")))
+	_base_box.add_child(_section_title(tr("UI_EQUIP_HERO_TITLE")))
 	_base_box.add_child(_build_base_hero_picker())
 
 	# ── MIDDLE: the 5 equipment slots (drop targets → pending_equipped) ──
 	_base_box.add_child(HSeparator.new())
-	_base_box.add_child(_section_title(tr("UI_WAREHOUSE_SLOTS_HEADER")))
+	_base_box.add_child(_section_title(tr("UI_EQUIP_SLOTS_HEADER")))
 	var slot_row := HBoxContainer.new()
 	slot_row.add_theme_constant_override("separation", 8)
 	for slot in RunManager.EQUIPMENT_SLOTS:
@@ -171,7 +171,7 @@ func _refresh_base() -> void:
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 16)
 	head.add_child(
-		_section_title(tr("UI_WAREHOUSE_STASH_HEADER").format({"n": available.size(), "cap": cap}))
+		_section_title(tr("UI_EQUIP_STASH_HEADER").format({"n": available.size(), "cap": cap}))
 	)
 	var carry_lbl := Label.new()
 	carry_lbl.text = tr("UI_HOME_STASH_SELECTED").format({"n": _stash_selected.size()})
@@ -198,7 +198,7 @@ func _refresh_base() -> void:
 		grid.add_child(_make_empty_stash_cell())
 
 	var hint := Label.new()
-	hint.text = "%s %s" % [tr("UI_WAREHOUSE_LOADOUT_HINT"), tr("UI_HOME_STASH_HINT")]
+	hint.text = "%s %s" % [tr("UI_EQUIP_LOADOUT_HINT"), tr("UI_HOME_STASH_HINT")]
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.add_theme_color_override("font_color", Color(0.65, 0.6, 0.5))

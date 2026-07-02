@@ -52,6 +52,10 @@ UI_AFFIX_CURSE_ATTR_STRENGTH,{value} Strength (Curse),{value} 力量（诅咒）
 UI_AFFIX_CURSE_ATTR_CONSTITUTION,{value} Constitution (Curse),{value} 体质（诅咒）
 UI_AFFIX_CURSE_MAX_HP,{value} Max HP (Curse),{value} 生命上限（诅咒）
 UI_AFFIX_CURSE_CRIT,{value}% Crit (Curse),{value}% 暴击（诅咒）
+UI_EQUIP_HERO_TITLE,Choose Hero,选择英雄
+UI_EQUIP_SLOTS_HEADER,Equipment Slots,装备槽位
+UI_EQUIP_STASH_HEADER,"Stash ({n} / {cap})","仓库 ({n} / {cap})"
+UI_EQUIP_LOADOUT_HINT,"Drag gear from the stash onto a slot to start the run wearing it. Drag a slot back to the stash to remove it.","把仓库里的装备拖到槽位上,即可在出征时直接装备。把槽位拖回仓库则取下。"
 UI_EQUIP_TOOLS_TITLE,Tool Slots,工具槽
 UI_EQUIP_TOOL_EQUIP_HINT,Click to equip,点击装备到工具槽
 UI_EQUIP_TOOL_UNEQUIP_HINT,Click to unequip,点击卸下回背包

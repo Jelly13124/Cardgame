@@ -166,9 +166,10 @@ var starter_deck_override: Dictionary = {}
 ## Each entry is an equip INSTANCE dict (see RunManager.as_equip_instance), or a
 ## legacy item_id String from an older save — both are tolerated on read.
 var stash: Array = []
-## Buildings refactor (5 clickable base buildings). building_id → tier int
-## (0=locked, 1=unlocked, 2, 3). Persisted; back-compat default {}. Warehouse
-## reads as tier 1 by default (free) via get_building_tier even when absent here.
+## Buildings refactor (4 clickable base buildings). building_id → tier int
+## (0=locked, 1=unlocked, 2, 3). Persisted; back-compat default {}. Stale ids
+## from old saves (e.g. the removed warehouse) are kept but harmless — no live
+## code looks their tier up anymore.
 var buildings: Dictionary = {}
 
 const RUN_HISTORY_CAP := 50
@@ -197,10 +198,9 @@ const CYBER_DOC_PERKS := {
 ## the attribute perks — a single tier-aware cap keeps the clinic's perk model uniform.
 const CYBER_HP_PERK := "cyber_hp"
 const CYBER_HP_PER_LEVEL := 5
-## --- Buildings refactor: single source of truth for the 5 base buildings ---
+## --- Buildings refactor: single source of truth for the 4 base buildings ---
 ## Each entry: unlock_cost (Core to go locked→T1), tier_costs ([T2 cost, T3 cost]
-## in Core), functions (function key → minimum tier that gates it). Warehouse
-## unlock_cost is 0 (free) and it defaults to tier 1 via get_building_tier.
+## in Core), functions (function key → minimum tier that gates it).
 const BUILDING_DEFS := {
 	"forge":
 	{
@@ -232,12 +232,6 @@ const BUILDING_DEFS := {
 			"safe_cells": 2,
 			"deck_editor": 3,
 		},
-	},
-	"warehouse":
-	{
-		"unlock_cost": 0,
-		"tier_costs": [80, 150],
-		"functions": {"hero_select": 1, "loadout": 1, "more_slots": 2, "conversion": 3},
 	},
 }
 ## Building tier bounds. Tier 0 = locked, MAX_BUILDING_TIER = fully upgraded.
@@ -525,10 +519,9 @@ func effective_safe_cells() -> int:
 ## --- Buildings refactor: tiered Core-gated buildings ---
 
 
-## Current tier of a building (0=locked, 1=unlocked, 2, 3). Warehouse defaults to
-## tier 1 (free) when absent; all others default to 0 (locked).
+## Current tier of a building (0=locked, 1=unlocked, 2, 3). Absent → 0 (locked).
 func get_building_tier(id: String) -> int:
-	return int(buildings.get(id, 1 if id == "warehouse" else 0))
+	return int(buildings.get(id, 0))
 
 
 func is_building_unlocked(id: String) -> bool:
@@ -614,12 +607,11 @@ func _normalize_buildings() -> void:
 		buildings["outpost"] = maxi(get_building_tier("outpost"), 2)
 
 
-## Effective permanent-stash capacity. Derived from the warehouse building tier so
-## there is no separate persistent field to migrate: T1 (default) = STASH_CAP, each
-## tier above T1 adds 5 slots (T2 → +5, T3 → +10). The warehouse "more_slots"
-## function (T2) is exactly this raise, so upgrading the warehouse IS the slot raise.
+## Effective permanent-stash capacity. A flat, building-independent constant:
+## the warehouse building (whose tier used to raise this) was removed, so every
+## profile gets the full STASH_CAP outright — existing saves can't lose capacity.
 func effective_stash_cap() -> int:
-	return STASH_CAP + 5 * max(0, get_building_tier("warehouse") - 1)
+	return STASH_CAP
 
 
 ## Add an equip to the permanent stash. Accepts an instance dict or a legacy
@@ -878,7 +870,8 @@ func load_progress() -> void:
 			else:
 				stash.append(str(s))
 	# Back-compat: old saves predate the buildings refactor. Missing key →
-	# empty {} (all locked except warehouse, which reads tier 1 by default).
+	# empty {} (all buildings locked). Stale ids from removed buildings (e.g.
+	# "warehouse") are carried along harmlessly — nothing reads them.
 	# JSON int keys round-trip as Strings; values may parse as float, so coerce.
 	var raw_buildings = parsed.get("buildings", {})
 	buildings.clear()
