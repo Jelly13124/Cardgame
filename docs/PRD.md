@@ -88,7 +88,7 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 |---|---|---|
 | **Strength** | 力量 | Added GLOBALLY to ALL attack damage (`combat_engine._apply_effect()`, default +3); per-card `scaling` is deprecated |
 | **Constitution** | 体质 | Added GLOBALLY to ALL block (default +3); replaces old "Defense" |
-| **Intelligence** | 智力 | Boosts tool effects (+8%/pt) and card Bleed scaling (default scaling attr); no longer affects XP |
+| **Intelligence** | 智力 | Adds +1 stack to EVERY status the player applies (`apply_status` / `apply_status_all`, incl. Bleed) + boosts tool effects (+8%/pt); no longer affects XP |
 | **Luck** | 幸运 | Crit chance (+2%/pt, +4% with Crit Clip, uncapped; 1.5× crit) + 1.5%/pt loot rarity + gem/tool/equipment find chance |
 | **Charm** | 魅力 | Lowers shop prices (−2%/pt, floor 0.6×) + lowers per-level XP wall (−4%/pt, floor 0.6×) + gates high-Charm event options (the old enemy-flee mechanic was deleted) |
 
@@ -99,12 +99,11 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 | Status | Effect |
 |---|---|
 | **Bleed** | Start of turn: take damage = stacks, then stacks halve (round down) |
-| **Burn** 🔥 | Takes damage = stacks at END of turn; loses 1 stack at start of turn |
 | **Weak** | Direct attack damage dealt is reduced by 50%; stacks decrement at end of affected character turn |
 | **Vulnerable** | Direct attack damage taken is increased by 50%; stacks decrement at end of affected character turn |
 | **Stun** ⚡ | Enemy skips its next turn per stack; manual-consume, no decay; enemy-only; can interrupt a telegraphed attack |
-| **Regen / Thorns / Frail / Dodge / Double Damage** | heal-over-time / reflect-on-hit / −25% block / negate one attack / next N attacks doubled |
-| **Metallicize / Feel No Pain / Dark Embrace** | persistent powers (StS2 port): +Block per turn / +Block on Exhaust / draw on Exhaust |
+| **Regen / Thorns / Frail / Dodge** | heal-over-time / reflect-on-hit (loses 1 stack each time it triggers) / −25% block / negate one attack |
+| **Metallicize / Feel No Pain** | persistent powers (StS2 port): +Block per turn / +Block on Exhaust |
 
 ### Enemy System
 - Each enemy loads from `card_info/enemy/{id}.json` — includes a `sprite_id` for the art
@@ -137,6 +136,8 @@ A dropped piece becomes an **instance** that rolls its affixes at grant time (`R
 | `cursed` | 诅咒 | 3 **+ 1 curse** | red | 3 positive affixes + 1 negative curse affix (the trade-off) |
 
 `set` / `cursed` are **derived** at roll time (a piece with a `set_id` reads as `set`; a cursed roll as `cursed`). Affixes come from a fixed pool — positives (`attr_*` +1 to a stat, `crit_pct` +5%, `max_hp` +10) and curses (`curse_*`); `affix_pool.attribute_totals()` sums them and `recompute_attributes()` applies the totals on top of `base_attributes` for every equipped piece.
+
+**Generic-shell model (2026-07-02 refactor).** Equipment is no longer bespoke per item. The pool is **15 generic shells** (`gear_{slot}_{tier}`, 5 slots × common/uncommon/rare) that share art by `slot × rarity`, plus **15 set pieces** (3 sets × 5) that keep bespoke identity/art. **Every rolled item guarantees its first affix is a random attribute (`attr_*`)**; the rest are random. All random drops route through `RunManager.roll_shell_drop(tier)` — ~15% (`SET_PIECE_DROP_CHANCE`) a set piece, else a generic shell. **Cursed has two sources:** Ascension ≥ 3 drops (`CURSE_DROP_CHANCE` on generic shells) and the **forge** (`curse_stash_item`). The 8 old bespoke misc items were removed.
 
 ### Equipment JSON Schema (base item)
 ```json
@@ -406,7 +407,7 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 - Enemy intent system with action patterns
 - Player HP / block / energy UI (CharacterHUD)
 - Draw pile / discard pile viewer (Q/E shortcuts)
-- Status effect system (bleed, burn, weak, vulnerable, double_damage, stun, regen, thorns, frail, dodge, + StS2 powers)
+- Status effect system (bleed, weak, vulnerable, stun, regen, thorns, frail, dodge, + StS2 powers)
 - Combat sprites with static rest poses and attack animations
 
 ### 🔄 Phase 2 — Run System & Content (Active)
@@ -418,7 +419,7 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 - Loot reward with equipment drops
 
 ### ✅ Phase 3 — Equipment & Relics (Complete)
-- ✅ Equipment system: 5 body-part slots, **rolled affixes** (5-tier rarity common/uncommon/rare/set/cursed = 1/2/3/3/3+curse affixes; `affix_pool.gd`), 3 sets with tiered bonuses (3-piece / 5-piece), 23 base items (14 common / 6 uncommon / 3 rare on disk; set/cursed are derived at roll time)
+- ✅ Equipment system: 5 body-part slots, **rolled affixes** (5-tier common/uncommon/rare/set/cursed = 1/2/3/3/3+curse; `affix_pool.gd`; **each item guarantees 1 attribute affix**), 3 sets with tiered bonuses (3-piece / 5-piece). Gear = **15 generic shells** (`gear_{slot}_{tier}`, art shared by slot×rarity) + **15 set pieces**; set/cursed derived at roll time; cursed drops at Ascension ≥ 3 or via the forge. _(2026-07-02: replaced the 8 bespoke misc items.)_
 - ✅ Inventory (8-item cap) — later superseded by the 20-cell Extraction Backpack where Gold/Core/equipment share cells (see Extraction Backpack Economy)
 - ✅ Equipment drops are Luck-scaled (normal = common, elite = uncommon, boss = guaranteed rare; see 2026-06-22 economy pass); the treasure node is a 3-choose-1 relic pick
 - ✅ Relic system: passive run effects, JSON-driven (RelicEffectSystem)
@@ -438,7 +439,7 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 - ✅ Run history panel: home base shows last 5 runs (outcome icon + hero + floor + core)
 - ✅ Ascension difficulty: 5 levels, each adds a negative modifier (enemy HP+10%, player -5 max HP, -1 first-turn energy, +10% shop prices, elite-heavy maps)
 - ✅ Starter Boost upgrade: 3 tiers, +N random attribute points at run start
-- ✅ Card Research upgrade: 3 tiers unlocking 5 cards (flash_bang, bone_breaker, last_breath, preemptive_strike, junk_bomb)
+- ✅ Card Research upgrade: 3 tiers unlocking cards (flash_bang, bone_breaker, last_breath, junk_bomb)
 
 ### 🟡 Phase 5 — Content Expansion (in progress)
 - ✅ Cowboy Bill kit: luck/crit (`crit_clip`) + the StS2 Ironclad bruiser pool. (A second "Feng Shui Master" yin/yang hero was prototyped then **cut** 2026-06-18 — the demo ships Bill-only. Vestigial polarity plumbing remains inert.)
@@ -525,7 +526,7 @@ Spec: `docs/superpowers/specs/2026-06-24-demo-polish-overnight-design.md`. Drive
 - ✅ **Wishlist CTA**: real `OS.shell_open` button on BOTH win and defeat result screens + a "full game has more" teaser (`STORE_URL` is a TODO placeholder pending the real App ID).
 - ✅ **Onboarding**: rules panel now teaches Tools / Relics / Equipment / Crit / Base and fully defines Luck & Charm; also reachable from the home base.
 - ✅ **Combat juice**: damage-scaled screen shake + per-hit sprite feedback (removed the ≥10 gate) + enemy-death thud + energy-orb pop.
-- ✅ **Content**: 3 elites (was 1; now picks one at random per node) — `chrome_warden` + `siege_breaker` reuse existing sprites with distinct movesets; 2 Bill-pool cards (`wildfire` AoE-Burn, `lucky_streak` crit-rate source); event-node frequency bumped.
+- ✅ **Content**: 3 elites (was 1; now picks one at random per node) — `chrome_warden` + `siege_breaker` reuse existing sprites with distinct movesets; Bill-pool card `lucky_streak` (crit-rate source); event-node frequency bumped. _(The `wildfire` AoE-Burn card was removed 2026-07-01 along with the Burn status.)_
 - ✅ **Settings/QoL**: Battle Speed toggle (1×/1.5×/2×); one-shot legacy-save migration (`user://meta.json` → slot 1).
 
 ---
