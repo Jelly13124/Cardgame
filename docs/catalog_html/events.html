@@ -1,0 +1,68 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Events · 事件</title><style>
+:root{--bg:#13100c;--panel:#1d1812;--panel2:#262019;--line:#3a3026;--gold:#ffcf45;--txt:#e7ddc8;--dim:#9c917c;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:"Segoe UI",system-ui,sans-serif;}
+header{position:sticky;top:0;background:linear-gradient(180deg,#1d1812,#171309);border-bottom:2px solid var(--line);padding:16px 28px;z-index:10;}
+h1{margin:0;font-size:23px;color:var(--gold);letter-spacing:.5px}
+.sub{color:var(--dim);font-size:13px;margin-top:4px}
+.bar{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input[type=search]{background:#0e0b07;border:1px solid var(--line);color:var(--txt);padding:8px 12px;border-radius:8px;min-width:220px;font-size:14px}
+.tag{font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:20px;padding:3px 10px;cursor:pointer;user-select:none}
+.tag.active{color:#13100c;background:var(--gold);border-color:var(--gold)}
+.nav{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.nav a{color:var(--dim);text-decoration:none;font-size:13px;border:1px solid var(--line);padding:4px 12px;border-radius:6px}
+.nav a:hover,.nav a.cur{color:var(--gold);border-color:var(--gold)}
+.section{padding:18px 28px 2px;}
+.section h2{color:var(--gold);font-size:17px;margin:0 0 2px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.section .cnt{color:var(--dim);font-size:12px;font-weight:400}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;padding:14px 28px 4px;}
+.card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:14px 16px;transition:.12s}
+.card:hover{background:var(--panel2);transform:translateY(-2px)}
+.card h3{margin:0 0 2px;font-size:17px}
+.thumb{width:100%;aspect-ratio:512/320;object-fit:contain;border-radius:7px;border:1px solid var(--line);background:#0e0b07;display:block;margin-bottom:10px}
+.zh{color:var(--gold);font-size:15px;font-weight:600}
+.meta{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;font-size:11px}
+.pill{border-radius:5px;padding:2px 8px;background:#0e0b07;border:1px solid var(--line);color:var(--dim)}
+.desc{color:#c9bfa8;font-size:13px;font-style:italic;margin:6px 0}
+.eff{list-style:none;padding:0;margin:8px 0 0}
+.eff li{font-size:13px;color:var(--txt);padding:3px 0 3px 16px;position:relative}
+.eff li:before{content:"▸";position:absolute;left:0;color:var(--gold)}
+.eff li.bonus:before{content:"☯";color:#ffcf45}
+.hp{color:#ff8b6b;font-weight:700}
+.kw{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;padding:14px 28px}
+.kwc{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:9px;padding:12px 15px}
+.kwc h3{margin:0 0 4px;font-size:16px}
+.kwc .en{color:var(--dim);font-size:12px;font-weight:400}
+.kwc p{margin:6px 0 0;font-size:13px;color:#d7cdb6;line-height:1.5}
+.kwc .zhd{color:#c9bfa8;font-size:12.5px;margin-top:3px}
+</style></head><body>
+<header><h1>Events · 事件</h1><div class="sub">The &quot;?&quot; map node — each presents 2–3 attribute-gated choices · <span>12 entries</span></div>
+<div class="nav"><a class="" href="index.html">◫ All 总览</a><a class="" href="cards.html">Cards 卡牌</a><a class="" href="relics.html">Relics 遗物</a><a class="" href="equipment.html">Equipment 装备</a><a class="" href="enemies.html">Enemies 敌人</a><a class="" href="gems.html">Gems 宝石</a><a class="" href="tools.html">Tools 工具</a><a class="cur" href="events.html">Events 事件</a><a class="" href="affixes.html">Affixes 词条</a><a class="" href="keywords.html">Keywords 关键词</a></div>
+<div class="bar"><input id="q" type="search" placeholder="Search / 搜索…"></div>
+</header>
+<div class="section"><h2>Random Events 随机事件 <span class="cnt">(12)</span></h2></div><div class="grid"><div class="card" data-search="adrenaline_shot pre-war auto-injector 战前肾上腺素针" style="border-left-color:#e0584c"><h3>Pre-War Auto-Injector <span class="zh">战前肾上腺素针</span></h3><div class="meta"><span class="pill" style="color:#e0584c;border-color:#e0584c">curse-trap</span><span class="pill" style="color:#6b6256">adrenaline_shot</span><span class="pill">2 options</span></div><div class="desc">一支军用自动注射器，玻璃管里晃荡着泛出病态琥珀光的液体。一剂战前作战血清——保证让你出手更狠，此后却会对每一道阴影都心惊肉跳。</div><ul class="eff"><li><b>扎下去——感受那股灼烧（力量 +1，永久）</b><br><span style="color:#9c917c;font-size:12px">→ Gain +1 Strength · Add curse &#x27;panic&#x27; to deck</span></li><li><b>一脚碾碎药瓶</b><br><span style="color:#9c917c;font-size:12px">→ —</span></li></ul></div><div class="card" data-search="buried_cache buried cache 埋藏的暗格" style="border-left-color:#7fc7d9"><h3>Buried Cache <span class="zh">埋藏的暗格</span></h3><div class="meta"><span class="pill" style="color:#6b6256">buried_cache</span><span class="pill">2 options</span></div><div class="desc">一扇锈蚀的舱盖从沙丘里探出，半埋在沙中。旧民兵的标记警告下方封着一座补给库。那把锁看起来快撑不住了。</div><ul class="eff"><li><b>撬开它，把装备拿走</b><br><span style="color:#9c917c;font-size:12px">→ Gain equipment</span></li><li><b>[幸运] 赌那腐朽的地板，深入下去</b><br><span style="color:#9c917c;font-size:12px">→ —</span></li></ul></div><div class="card" data-search="caravan_checkpoint the caravan checkpoint 商队检查站" style="border-left-color:#7fc7d9"><h3>The Caravan Checkpoint <span class="zh">商队检查站</span></h3><div class="meta"><span class="pill" style="color:#6b6256">caravan_checkpoint</span><span class="pill">3 options</span></div><div class="desc">油桶和刺网搭成的临时关卡拦住了干涸的河床。两名穿着杂色护甲的卫兵懒洋洋地靠在阴影里，步枪横在膝上，看着你走近。</div><ul class="eff"><li><b>帮卫兵扶起倒下的油桶，换取通行</b><br><span style="color:#9c917c;font-size:12px">→ Gain 15 gold</span></li><li><b>[魅力 5] 靠嘴皮子通关——顺便了结一段旧人情</b><br><span style="color:#9c917c;font-size:12px">→ Gain 30 gold · Gain +1 Charm</span></li><li><b>[幸运] 虚张声势说自己有暗哨，量他们不敢拦</b><br><span style="color:#9c917c;font-size:12px">→ —</span></li></ul></div><div class="card" data-search="collapsed_overpass the collapsed overpass 坍塌的高架桥" style="border-left-color:#7fc7d9"><h3>The Collapsed Overpass <span class="zh">坍塌的高架桥</span></h3><div class="meta"><span class="pill" style="color:#6b6256">collapsed_overpass</span><span class="pill">3 options</span></div><div class="desc">一座高架公路桥拦腰断在峡谷上，锈蚀的钢筋刺向天空。瓦砾间闪着旧补给箱的微光——可每当风向一变，整块桥板就发出呻吟。</div><ul class="eff"><li><b>慢慢来、小心翼翼地把残骸捡干净</b><br><span style="color:#9c917c;font-size:12px">→ Gain 25 gold</span></li><li><b>[魅力 5] 拦下路过的拾荒队，分成请他们撑住桥板</b><br><span style="color:#9c917c;font-size:12px">→ Gain 50 gold · Gain 15 Core</span></li><li><b>[幸运] 钻到呻吟的桥板下，去掏最深处的补给</b><br><span style="color:#9c917c;font-size:12px">→ —</span></li></ul></div><div class="card" data-search="cursed_safe humming strongbox 嗡鸣保险箱" style="border-left-color:#e0584c"><h3>Humming Strongbox <span class="zh">嗡鸣保险箱</span></h3><div class="meta"><span class="pill" style="color:#e0584c;border-color:#e0584c">curse-trap</span><span class="pill" style="color:#6b6256">cursed_safe</span><span class="pill">2 options</span></div><div class="desc">一只凹陷的保险箱在龟裂的祭台上嗡嗡作响，缝隙里渗出病态的绿光。里面有金币闪烁——可空气里弥漫着腐烂与霉运的味道。</div><ul class="eff"><li><b>撬开它，把金币塞进兜里</b><br><span style="color:#9c917c;font-size:12px">→ Gain 40 gold · Add curse &#x27;rust&#x27; to deck</span></li><li><b>走开。会发绿光的东西没一样是白送的。</b><br><span style="color:#9c917c;font-size:12px">→ —</span></li></ul></div><div class="card" data-search="deserter_charm the deserter&#x27;s charm 逃兵的护符" style="border-left-color:#e0584c"><h3>The Deserter&#x27;s Charm <span class="zh">逃兵的护符</span></h3><div class="meta"><span class="pill" style="color:#e0584c;border-color:#e0584c">curse-trap</span><span class="pill" style="color:#6b6256">deserter_charm</span><span class="pill">2 options</span></div><div class="desc">一枚锈蚀的护符悬在逃兵被晒白的头骨上，仍带着微温。据说它让上一个主人活了下来——代价是让他逢战必逃。</div><ul class="eff"><li><b>戴上它——保命要紧（回满生命）</b><br><span style="color:#9c917c;font-size:12px">→ Heal 999 HP · Add curse &#x27;cowardice&#x27; to deck</span></li><li><b>让逝者留着它</b><br><span style="color:#9c917c;font-size:12px">→ —</span></li></ul></div><div class="card" data-search="fortune_shrine the fortune shrine 命运神龛" style="border-left-color:#7fc7d9"><h3>The Fortune Shrine <span class="zh">命运神龛</span></h3><div class="meta"><span class="pill" style="color:#6b6256">fortune_shrine</span><span class="pill">2 options</span></div><div class="desc">一座焊废件而成的粗陋祭坛斜倚在尘土里，四周环着供奉的硬币和打空的弹壳。中央摆着一只裂了口的骰盅，向你挑衅。</div><ul class="eff"><li><b>留下一枚硬币供奉，转身离开</b><br><span style="color:#9c917c;font-size:12px">→ Gain +1 Luck</span></li><li><b>[幸运] 掷那只裂口骰子，赌神龛的窖藏</b><br><span style="color:#9c917c;font-size:12px">→ —</span></li></ul></div><div class="card" data-search="hooded_stranger the hooded stranger 兜帽下的陌生人" style="border-left-color:#7fc7d9"><h3>The Hooded Stranger <span class="zh">兜帽下的陌生人</span></h3><div class="meta"><span class="pill" style="color:#6b6256">hooded_stranger</span><span class="pill">3 options</span></div><div class="desc">将熄的篝火旁坐着一个裹着灰布的身影，脸隐在阴影里。你们之间的一块平石上，扣着一副残破的命运卡。</div><ul class="eff"><li><b>分享你的口粮和你的故事</b><br><span style="color:#9c917c;font-size:12px">→ Heal 8 HP · Gain +1 Charm</span></li><li><b>[魅力 5] 请他用卡牌为你卜算未来</b><br><span style="color:#9c917c;font-size:12px">→ Gain +2 Luck</span></li><li><b>[幸运] 切牌，听凭命运给什么就拿什么</b><br><span style="color:#9c917c;font-size:12px">→ —</span></li></ul></div><div class="card" data-search="mutant_bazaar the mutant bazaar 变异者集市" style="border-left-color:#7fc7d9"><h3>The Mutant Bazaar <span class="zh">变异者集市</span></h3><div class="meta"><span class="pill" style="color:#6b6256">mutant_bazaar</span><span class="pill">3 options</span></div><div class="desc">拼缝兽皮的篷布下，一个四臂商人把废件摊满破桌。每个价码都只是起价——只要你嘴皮子够快。</div><ul class="eff"><li><b>照单全价买下一件饰物</b><br><span style="color:#9c917c;font-size:12px">→ Gain equipment</span></li><li><b>[魅力 6] 把他砍到血亏价</b><br><span style="color:#9c917c;font-size:12px">→ Gain a relic · Gain 8 gold</span></li><li><b>随便看看就走</b><br><span style="color:#9c917c;font-size:12px">→ Gain +1 Charm</span></li></ul></div><div class="card" data-search="rad_storm rad storm 辐射风暴" style="border-left-color:#7fc7d9"><h3>Rad Storm <span class="zh">辐射风暴</span></h3><div class="meta"><span class="pill" style="color:#6b6256">rad_storm</span><span class="pill">3 options</span></div><div class="desc">天空泛起淤青般的绿，呼啸的狂风卷着发光的尘埃扑面而来。你跑不赢它——只能选择如何熬过这阵浪潮。</div><ul class="eff"><li><b>蜷下身子硬扛过去（失去 4 点生命）</b><br><span style="color:#9c917c;font-size:12px">→ Lose 4 HP</span></li><li><b>[魅力 5] 拦下过路的车队求个庇护</b><br><span style="color:#9c917c;font-size:12px">→ Heal 6 HP · Gain 15 gold</span></li><li><b>[幸运] 冲过辉光，奔向一座地堡</b><br><span style="color:#9c917c;font-size:12px">→ —</span></li></ul></div><div class="card" data-search="stranded_trader stranded trader 困在荒野的商人" style="border-left-color:#7fc7d9"><h3>Stranded Trader <span class="zh">困在荒野的商人</span></h3><div class="meta"><span class="pill" style="color:#6b6256">stranded_trader</span><span class="pill">3 options</span></div><div class="desc">一辆商队车死在龟裂的盐碱地上，一只轮子陷进沙里。他从蒙尘的围巾上方眯眼打量你，手始终没离开枪套。</div><ul class="eff"><li><b>帮他把车挖出来（他付你 +40 金币）</b><br><span style="color:#9c917c;font-size:12px">→ Gain 40 gold</span></li><li><b>[魅力 5] 甜言蜜语，从他的货箱里讨件临别礼</b><br><span style="color:#9c917c;font-size:12px">→ Gain a relic</span></li><li><b>[幸运] 用他灌了铅的骰子赌那只保险箱</b><br><span style="color:#9c917c;font-size:12px">→ —</span></li></ul></div><div class="card" data-search="torn_coin_pouch torn coin pouch 破洞钱袋" style="border-left-color:#e0584c"><h3>Torn Coin Pouch <span class="zh">破洞钱袋</span></h3><div class="meta"><span class="pill" style="color:#e0584c;border-color:#e0584c">curse-trap</span><span class="pill" style="color:#6b6256">torn_coin_pouch</span><span class="pill">2 options</span></div><div class="desc">一个慌张的流浪汉把一只鼓胀的钱袋塞进你手里，没等你拒绝就溜了。缝线开裂、渗着锈迹——硬币已经从你指缝间漏了出来。</div><ul class="eff"><li><b>收下吧——钱就是钱（+100 金币）</b><br><span style="color:#9c917c;font-size:12px">→ Gain 100 gold · Add curse &#x27;leaking_wealth&#x27; to deck</span></li><li><b>丢下它，转身就走</b><br><span style="color:#9c917c;font-size:12px">→ —</span></li></ul></div></div>
+<script>
+const q=document.getElementById('q');
+function applyFilter(){
+  const t=(q?q.value:'').toLowerCase();
+  const af=document.querySelector('.tag.active');
+  const f=af?af.dataset.f:''; const fk=af?af.dataset.k:'';
+  document.querySelectorAll('.card,.kwc').forEach(c=>{
+    const okt=!t||(c.dataset.search||'').includes(t);
+    const okf=!f||(c.dataset[fk]===f);
+    c.style.display=(okt&&okf)?'':'none';
+  });
+  document.querySelectorAll('.section').forEach(s=>{
+    const any=[...s.parentElement.querySelectorAll('.card,.kwc')];
+  });
+}
+if(q)q.addEventListener('input',applyFilter);
+document.querySelectorAll('.tag').forEach(tag=>tag.addEventListener('click',()=>{
+  const was=tag.classList.contains('active');
+  document.querySelectorAll('.tag').forEach(t=>t.classList.remove('active'));
+  if(!was)tag.classList.add('active');
+  applyFilter();
+}));
+</script></body></html>
