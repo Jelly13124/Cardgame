@@ -113,12 +113,9 @@ var inventory_items: Array[String]:
 		return backpack_equip_ids()
 
 var relics: Array[String] = []
-## Run-scoped gems collected but not yet socketed into a card (cleared on death).
-var gem_inventory: Array[String] = []
 ## Run-scoped one-time tools (StS2-style top-bar consumables). NOT in the backpack.
 var tool_inventory: Array[String] = []
 var _tool_cache: Dictionary = {}
-var _gem_cache: Dictionary = {}
 
 ## In-run XP/level. Killing enemies grants XP; each level-up queues an attribute
 ## point (consumed by the loot screen via pending_attr_points). Reset in start_new_run.
@@ -686,7 +683,6 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	ascension = clampi(resolved_asc, 0, 5)
 
 	player_deck.clear()
-	gem_inventory.clear()
 	tool_inventory.clear()
 	xp = 0
 	level = 1
@@ -804,7 +800,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 
 func add_card_to_deck(card_id: String) -> void:
 	var uid = str(Time.get_ticks_usec()) + "_" + str(randi_range(1000, 9999))
-	var card_data = {"uid": uid, "card_id": card_id, "gems": []}
+	var card_data = {"uid": uid, "card_id": card_id}
 	player_deck.append(card_data)
 	emit_signal("deck_updated")
 
@@ -1095,46 +1091,6 @@ func add_equip_to_backpack(item: Variant) -> bool:
 	return true
 
 
-## Put a gem into the first free backpack cell (1 gem = 1 cell, like equipment).
-## Returns false when the backpack is full. Every gem grant (mining / draft / shop
-## / relic) routes through here so a full bag blocks the grant — the caller shows
-## the backpack-full toast — instead of stuffing an unlimited side-list.
-func add_gem_to_backpack(gem_id: String) -> bool:
-	if gem_id == "":
-		return false
-	_ensure_backpack()
-	var idx := _first_null_cell()
-	if idx == -1:
-		return false
-	backpack[idx] = {"kind": "gem", "id": gem_id}
-	emit_signal("backpack_changed")
-	return true
-
-
-## Gem ids currently held in the backpack (cell order) — replaces the old
-## gem_inventory side-list for the socketing UI.
-func backpack_gem_ids() -> Array[String]:
-	var out: Array[String] = []
-	for c in backpack:
-		if typeof(c) == TYPE_DICTIONARY and c.get("kind") == "gem":
-			out.append(str(c.get("id", "")))
-	return out
-
-
-## First backpack cell index holding `gem_id` (-1 if none). Used to free the cell
-## when the gem is socketed.
-func _find_gem_cell(gem_id: String) -> int:
-	for i in range(MAX_INVENTORY):
-		var c = backpack[i]
-		if (
-			typeof(c) == TYPE_DICTIONARY
-			and c.get("kind") == "gem"
-			and str(c.get("id", "")) == gem_id
-		):
-			return i
-	return -1
-
-
 ## Swap two backpack cells (panel uses this to move an item into/out of a safe
 ## cell). Safe-cell range is index 0..safe_cells-1.
 func move_cell(from_idx: int, to_idx: int) -> void:
@@ -1344,14 +1300,8 @@ func luck_rarity_bonus() -> float:
 	return _attr("luck") * RARITY_PER_LUCK
 
 
-## Probability that a level-up draft slot is a GEM instead of a card. Scales with
-## Luck (4% per point), capped at 50%.
-func luck_gem_chance() -> float:
-	return clampf(0.04 * float(_attr("luck")), 0.0, 0.5)
-
-
 ## Luck-scaled chance for a normal (non-elite, non-boss) combat to also drop a tool.
-## Elites give a gem + equipment chance instead; bosses give guaranteed equipment.
+## Elites give an equipment chance instead; bosses give guaranteed equipment.
 ## [tunable]
 func luck_tool_chance() -> float:
 	return clampf(0.25 + 0.03 * float(_attr("luck")), 0.0, 0.60)
@@ -1583,18 +1533,15 @@ func add_relic(relic_id: String) -> bool:
 
 
 ## Run any `on_pickup`-triggered relic effects the moment the relic is acquired
-## (outside combat). bounty_tags grants `amount` gems (its `keyword` is the gem id,
-## e.g. "wealthy") into the gem inventory to be socketed later.
+## (outside combat). bounty_tags grants a one-time gold windfall via `gain_gold`.
 func _apply_relic_on_pickup(relic_id: String) -> void:
 	var data := get_relic_data(relic_id)
 	for e in data.get("effects", []):
 		if typeof(e) != TYPE_DICTIONARY or str(e.get("trigger", "")) != "on_pickup":
 			continue
 		match str(e.get("type", "")):
-			"grant_card_keyword":
-				var gem_id := str(e.get("keyword", "wealthy"))
-				for _i in range(maxi(1, int(e.get("amount", 1)))):
-					add_gem_to_backpack(gem_id)
+			"gain_gold":
+				add_gold(int(e.get("amount", 0)))
 			"add_card":
 				# Inject N copies of a card into the deck (double-fire clip → 2 Reloads).
 				var card_id := str(e.get("card", ""))
@@ -1699,31 +1646,6 @@ func get_relic_data(relic_id: String) -> Dictionary:
 	return data
 
 
-# --- Gems (run-scoped socketables) ---
-
-const GEM_DATA_DIR := "res://run_system/data/gems/"
-
-
-## Load a gem JSON by id (cached). Returns {} on miss.
-func get_gem_data(gem_id: String) -> Dictionary:
-	if _gem_cache.has(gem_id):
-		return _gem_cache[gem_id]
-	var data := _load_json_by_id(GEM_DATA_DIR, gem_id)
-	_gem_cache[gem_id] = data
-	return data
-
-
-## All gem ids that have a JSON file in the gems dir (the elite/draft gem pool).
-func gem_pool() -> Array[String]:
-	var ids: Array[String] = []
-	var dir := DirAccess.open(GEM_DATA_DIR)
-	if dir:
-		for f in dir.get_files():
-			if f.ends_with(".json"):
-				ids.append(f.trim_suffix(".json"))
-	return ids
-
-
 const TOOL_DATA_DIR := "res://run_system/data/tools/"
 
 
@@ -1772,7 +1694,7 @@ func add_tool(tool_id: String) -> bool:
 	return add_tool_to_backpack(tool_id)
 
 
-## Put a tool into the first free backpack cell (1 tool = 1 cell, like gems). Returns
+## Put a tool into the first free backpack cell (1 tool = 1 cell, like equipment). Returns
 ## false when the backpack is full (the caller shows the inventory-full toast).
 func add_tool_to_backpack(tool_id: String) -> bool:
 	if tool_id == "":
@@ -1851,28 +1773,6 @@ func purchase_tool(tool_id: String, cost: int) -> bool:
 	add_resources(-cost, 0)
 	add_tool_to_backpack(tool_id)
 	return true
-
-
-## Socket `gem_id` (taken from the backpack) into the player_deck card with `uid`,
-## if it has a free slot (<1 gem). Frees the gem's backpack cell on success.
-## Locked after — no removal. Returns success.
-func socket_gem(uid: String, gem_id: String) -> bool:
-	var cell_idx := _find_gem_cell(gem_id)
-	if cell_idx == -1:
-		return false
-	for entry in player_deck:
-		if typeof(entry) != TYPE_DICTIONARY or str(entry.get("uid", "")) != uid:
-			continue
-		var gems: Array = entry.get("gems", [])
-		if gems.size() >= 1:
-			return false
-		gems.append(gem_id)
-		entry["gems"] = gems
-		backpack[cell_idx] = null
-		emit_signal("backpack_changed")
-		AudioManager.play_sfx("gem")
-		return true
-	return false
 
 
 ## Load equipment JSON by id. Returns empty dict on miss.
@@ -2092,7 +1992,6 @@ func save_run() -> void:
 		"equipped_items": equipped_items,
 		"backpack": backpack,
 		"relics": relics,
-		"gem_inventory": gem_inventory,
 		"tool_inventory": tool_inventory,
 		"xp": xp,
 		"level": level,
@@ -2145,17 +2044,19 @@ func load_run() -> bool:
 	current_floor = int(data.get("current_floor", 0))
 	current_act = int(data.get("current_act", 1))
 	player_deck = data.get("player_deck", [])
+	# Migrate legacy gem saves: gems were removed, so strip any leftover `gems`
+	# field from deck entries (fault-tolerant — old saves must load, not crash).
+	for e in player_deck:
+		if e is Dictionary:
+			e.erase("gems")
 	equipped_items = data.get("equipped_items", {})
 	backpack = data.get("backpack", [])
+	# Legacy gem backpack cells no longer exist — null them out so the bag is clean.
+	for i in range(backpack.size()):
+		var c = backpack[i]
+		if c is Dictionary and c.get("kind") == "gem":
+			backpack[i] = null
 	relics = _to_string_array(data.get("relics", []))
-	gem_inventory = _to_string_array(data.get("gem_inventory", []))
-	# Migrate legacy unlimited-gem saves into backpack cells (gems now occupy the
-	# bag). Runs AFTER backpack restore above; drops any that no longer fit. New
-	# saves keep gem_inventory empty so this is a no-op.
-	if not gem_inventory.is_empty():
-		for gid in gem_inventory:
-			add_gem_to_backpack(str(gid))
-		gem_inventory.clear()
 	tool_inventory = _to_string_array(data.get("tool_inventory", []))
 	xp = int(data.get("xp", 0))
 	level = int(data.get("level", 1))
