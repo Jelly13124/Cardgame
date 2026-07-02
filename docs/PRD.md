@@ -214,24 +214,33 @@ All loot lives in a single **20-cell backpack** where **Gold, Core, and equipmen
 ## Base Building System (基地建造)
 
 Between runs, players return to their **home base** — a 2-left / 2-right building
-layout with a centre "depart door" (Warehouse tile above it). Each building opens a
-full-screen, merchant-style screen. Three meta-currencies fund it:
-**Core** (unlock + tier-up buildings), **Caps** (Clinic / Market services), **Scrap**
-(Forge services). See `meta_progress.gd` `BUILDING_DEFS`.
+layout with a centre "depart door". A **global currency top bar** (`currency_top_bar.gd`,
+CanvasLayer 70) shows Core/Caps/Scrap at all times plus a **Character** button. Three
+meta-currencies fund the base: **Core** (unlock + tier-up buildings), **Caps** (Clinic /
+Market services), **Scrap** (Forge services). See `meta_progress.gd` `BUILDING_DEFS`.
 
-### The 5 buildings
+**Windowed UI (2026-07-02 refactor).** The base uses Diablo-style **draggable, coexisting
+windows** (`run_system/ui/window/`): pressing **i** (home base / map / battle) toggles the
+**CharacterWindow** — hero picker + 5 equip slots + stash/backpack grid with drag-drop;
+modes: `base` (stash + next-run loadout + carry marks), `map` (live equipment, editable),
+`battle` (read-only). Clicking the **Forge** opens the **ForgeWindow** (craft / dismantle /
+reforge / curse as 4 tabs) BESIDE the character window — gear drags from one window into
+the other. ESC closes the topmost window. Clinic / Market / Outpost still open fullscreen
+pages. The former Warehouse building was **removed** (hero+loadout → CharacterWindow;
+resource conversion → Market T3; stash cap now flat 40).
+
+### The 4 buildings
 | Building | Role |
 |---|---|
-| **Forge (锻造)** | Dismantle gear → Scrap; craft / reforge / curse equipment (tier-gated, Scrap) |
+| **Forge (锻造)** | Draggable 4-tab window: dismantle → Scrap; craft / reforge / curse (tier-gated, Scrap) |
 | **Clinic (诊所)** | Caps-bought permanent attribute perks + a Max-HP perk (tier raises the cap) |
-| **Market (黑市)** | Caps tool shop (T1); Caps equipment shop (T2); refresh stock for Caps (T3). All non-curse, non-basic cards are draftable by default — no card-unlock system |
+| **Market (黑市)** | Caps tool shop + stock refresh (T1); Caps equipment shop (T2); resource conversion Core→Caps→Scrap (T3). All non-curse, non-basic cards are draftable by default — no card-unlock system |
 | **Outpost (前哨站)** | Core upgrades: starting gold / in-run shop discount / safe cells / backpack size; difficulty (ascension) selector; starter-deck editor |
-| **Warehouse (仓库)** | Pick the hero + the starting equipment loadout (drag-to-equip); default-unlocked; tier-ups add stash slots + (T3) resource conversion |
 
 ### Rules
 - Core/Caps/Scrap are earned by extracting or completing runs — NOT from dying.
 - Building unlocks + tiers persist permanently across runs (true meta-progression).
-- Hero selection lives in the Warehouse (the standalone hero-select screen was removed).
+- Hero selection + next-run loadout live in the CharacterWindow's base mode (press **i**).
 - Some upgrades unlock new heroes or starting decks
 
 ---
