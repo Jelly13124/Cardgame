@@ -710,13 +710,6 @@ func _victory():
 	#   - final boss   → grant BOSS_VICTORY_CORE and return to home base
 	#   - non-boss     → normal loot modal
 	if RunManager.last_battle_node_type == "boss":
-		# Boss reward: grant 1 random gem (relic comes via the extract-choice rewards).
-		var boss_gems: Array = RunManager.gem_pool()
-		if not boss_gems.is_empty():
-			var bgem := str(boss_gems[randi() % boss_gems.size()])
-			if not RunManager.add_gem_to_backpack(bgem):
-				# Bag full — warn rather than silently dropping the boss gem.
-				show_notification(tr("UI_LOOT_BACKPACK_FULL"), Color(1.0, 0.45, 0.4))
 		# Boss drops a rare-tier equipment (one of several drop sources; ~15% set piece).
 		var eq_inst := RunManager.roll_shell_drop("rare")
 		if not RunManager.add_equip_to_backpack(eq_inst):
@@ -1082,8 +1075,8 @@ func play_spell(card: Control, target_node: Node):
 	refresh_hand_ui()
 
 
-## Gold from a card/gem `gain_gold` effect (the wealthy gem). When `cap > 0` the
-## grant is limited to `cap` triggers per combat (wealthy = 3); cap 0 = uncapped.
+## Gold from a card `gain_gold` effect. When `cap > 0` the
+## grant is limited to `cap` triggers per combat; cap 0 = uncapped.
 var _gold_effect_triggers: int = 0
 
 

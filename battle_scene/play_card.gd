@@ -38,9 +38,6 @@ const RARITY_COLORS: Dictionary = {
 	"curse": Color(0.62, 0.36, 0.78),  # dark purple — curse cards
 }
 
-# Reference to the single gem socket node (created in _ready)
-var _gem_socket_node: Control = null
-
 
 func _ready() -> void:
 	super._ready()
@@ -94,9 +91,6 @@ func _ready() -> void:
 	mouse_exited.connect(_on_mouse_exited)
 
 	pivot_offset = size / 2.0  # Ensure we scale from center
-
-	# ── Gem socket (single slot, top-right corner) ────────────────────────────
-	_build_gem_socket()
 
 
 func _style_cost_label() -> void:
@@ -212,9 +206,6 @@ func set_card_data(data: Dictionary) -> void:
 		art_frame_texture.texture = _rarity_frames.get("common")
 	art_frame_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	art_frame_texture.modulate = RARITY_COLORS.get(rarity, RARITY_COLORS["common"])
-
-	# ── Gem socket refresh ────────────────────────────────────────────────────
-	_refresh_gem_socket()
 
 	# ── Type label ────────────────────────────────────────────────────────────
 	# Card art is uniformly square now; the old attack-card V-shape mask was removed.
@@ -663,127 +654,3 @@ func _start_glow_pulse() -> void:
 	_glow_tween = create_tween().set_loops()
 	_glow_tween.tween_property(playable_glow, "modulate:a", 0.3, 0.8).set_trans(Tween.TRANS_SINE)
 	_glow_tween.tween_property(playable_glow, "modulate:a", 1.0, 0.8).set_trans(Tween.TRANS_SINE)
-
-
-# ─── Gem Socket ───────────────────────────────────────────────────────────────
-
-
-## Build the single gem socket Control and attach it to FrontFace.
-## Called once from _ready() — creates a small Panel (30×30) in the TOP-RIGHT
-## corner, mirroring the top-left cost badge, so the two top corners are symmetric.
-func _build_gem_socket() -> void:
-	var front_face = get_node_or_null("FrontFace")
-	if not is_instance_valid(front_face):
-		return
-	# Container panel for the socket — TOP-RIGHT corner, mirroring the top-left
-	# cost badge (card width ≈ 208).
-	var socket = Panel.new()
-	socket.name = "GemSocket"
-	# Mirror the top-left cost badge (left=14.3, top=11.7, 31.8×31.8) on the right
-	# edge so both top corners are symmetric and sit inside the card border.
-	socket.custom_minimum_size = Vector2(30, 30)
-	socket.size = Vector2(30, 30)
-	socket.position = Vector2(164, 12)
-	socket.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# Style: dark semi-transparent rounded background
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.10, 0.10, 0.12, 0.80)
-	style.border_width_left = 2
-	style.border_width_top = 2
-	style.border_width_right = 2
-	style.border_width_bottom = 2
-	style.border_color = Color(0.55, 0.55, 0.65, 0.90)
-	style.corner_radius_top_left = 6
-	style.corner_radius_top_right = 6
-	style.corner_radius_bottom_right = 6
-	style.corner_radius_bottom_left = 6
-	socket.add_theme_stylebox_override("panel", style)
-	front_face.add_child(socket)
-
-	# Label inside the socket — used to display gem letter / empty indicator
-	var lbl = Label.new()
-	lbl.name = "GemLabel"
-	lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 12)
-	lbl.add_theme_color_override("font_color", Color(0.80, 0.80, 0.90, 0.70))
-	lbl.text = "◇"
-	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	socket.add_child(lbl)
-
-	_gem_socket_node = socket
-
-
-## Refresh the gem socket display from card_info metadata.
-## Reads get_meta("gems") or card_info["gems"] (Array); element 0 is the gem id.
-func _refresh_gem_socket() -> void:
-	if not is_instance_valid(_gem_socket_node):
-		return
-	var lbl: Label = _gem_socket_node.get_node_or_null("GemLabel")
-	if not is_instance_valid(lbl):
-		return
-
-	# Resolve gem id from metadata (set by battle system) or card_info dict.
-	# deck_manager sets the meta AFTER set_card_data runs, so fall back to
-	# looking up the run deck entry by uid when the meta isn't present yet.
-	var gems: Array = []
-	if has_meta("gems"):
-		gems = get_meta("gems")
-	else:
-		gems = card_info.get("gems", [])
-	if gems.is_empty() and has_meta("uid"):
-		var uid_str := str(get_meta("uid"))
-		if uid_str != "" and is_instance_valid(RunManager):
-			for entry in RunManager.player_deck:
-				if typeof(entry) == TYPE_DICTIONARY and str(entry.get("uid", "")) == uid_str:
-					gems = entry.get("gems", [])
-					break
-
-	if gems.is_empty():
-		# Empty socket
-		lbl.text = "◇"
-		lbl.add_theme_color_override("font_color", Color(0.80, 0.80, 0.90, 0.70))
-		var style: StyleBoxFlat = _gem_socket_node.get_theme_stylebox("panel") as StyleBoxFlat
-		if is_instance_valid(style):
-			style.border_color = Color(0.55, 0.55, 0.65, 0.90)
-		return
-
-	# A gem is socketed
-	var gem_id: String = str(gems[0])
-	var gem_data: Dictionary = {}
-	if is_instance_valid(RunManager):
-		gem_data = RunManager.get_gem_data(gem_id)
-
-	# Try to show icon texture; fall back to first letter of gem name / id
-	var icon_path: String = gem_data.get("icon", "")
-	if icon_path != "" and ResourceLoader.exists(icon_path):
-		# Replace label with a TextureRect if not already set up
-		var existing_tr: TextureRect = _gem_socket_node.get_node_or_null("GemIcon")
-		if not is_instance_valid(existing_tr):
-			existing_tr = TextureRect.new()
-			existing_tr.name = "GemIcon"
-			existing_tr.set_anchors_preset(Control.PRESET_FULL_RECT)
-			existing_tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			existing_tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			existing_tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			_gem_socket_node.add_child(existing_tr)
-		existing_tr.texture = load(icon_path)
-		lbl.visible = false
-	else:
-		# Show first letter of gem display name (or gem_id) in a tinted color
-		var gem_name: String = gem_data.get("name", gem_id)
-		lbl.text = gem_name.substr(0, 1).to_upper()
-		lbl.visible = true
-		# Tint based on gem rarity if available
-		var gem_rarity: String = gem_data.get("rarity", "common").to_lower()
-		lbl.add_theme_color_override(
-			"font_color", RARITY_COLORS.get(gem_rarity, Color(0.90, 0.75, 0.30))
-		)
-
-	# Border color matches gem rarity
-	var gem_rarity2: String = gem_data.get("rarity", "common").to_lower()
-	var border_col: Color = RARITY_COLORS.get(gem_rarity2, Color(0.55, 0.55, 0.65))
-	var style2: StyleBoxFlat = _gem_socket_node.get_theme_stylebox("panel") as StyleBoxFlat
-	if is_instance_valid(style2):
-		style2.border_color = border_col

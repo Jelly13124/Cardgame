@@ -160,7 +160,7 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 		return
 
 	# Replay N (重放): the WHOLE card resolves 1 + N times — animation, effects,
-	# matched bonus, on-attack relics, and gems all re-trigger (Echo / Double-Tap
+	# matched bonus, and on-attack relics all re-trigger (Echo / Double-Tap
 	# style). N = the card's innate `replay` plus any relic grant (double-fire clip
 	# gives attack cards Replay 1). The attack-allowance is charged once per PLAY
 	# (in the play path), not per replay.
@@ -184,7 +184,7 @@ func _live_target(t) -> Node:
 
 
 ## One full resolution pass of a played card: gunshot anim → effects → polarity
-## matched bonus → on-attack relics → socketed gems. Called once normally, or
+## matched bonus → on-attack relics. Called once normally, or
 ## 1 + N times when the card has Replay N.
 func _resolve_card_once(
 	card: Control, effects: Array, type: String, target: Node, player: Node, card_mult: float
@@ -213,15 +213,6 @@ func _resolve_card_once(
 	# (sharpened_scrap → Bleed on the struck enemy).
 	if type == "attack" and _live_target(target) and main.relic_effect_system:
 		main.relic_effect_system.on_player_attack(target)
-	# Socketed gems: each gem's effects resolve AFTER the card's own effects (and
-	# matched bonus), reusing _apply_effect so they get the same target / global
-	# STR-CON / dodge / thorns handling. ≤1 gem per card; locked once socketed.
-	var gems: Array = card.get_meta("gems") if card.has_meta("gems") else []
-	for gem_id in gems:
-		var gdata: Dictionary = RunManager.get_gem_data(str(gem_id))
-		for ge in gdata.get("effects", []):
-			if typeof(ge) == TYPE_DICTIONARY:
-				await _apply_effect(ge, _live_target(target), player, card_mult)
 
 
 ## Total extra resolutions for a played card: its innate `replay` field plus any
@@ -653,13 +644,13 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			await get_tree().create_timer(0.2).timeout
 
 		"gain_gold":
-			# Card/gem gold (wealthy gem). `max_per_combat` caps triggers (battle_scene).
+			# Card gold. `max_per_combat` caps triggers (battle_scene).
 			if main and main.has_method("try_gain_gold"):
 				main.try_gain_gold(amount, int(effect.get("max_per_combat", 0)))
 			await get_tree().create_timer(0.1).timeout
 
 		"heal":
-			# Card/gem self-heal (leech gem).
+			# Card self-heal.
 			if player and player.has_method("heal"):
 				player.heal(amount)
 				main.show_notification(
