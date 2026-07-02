@@ -1,9 +1,0 @@
-{
-  "id": "reinforced_plating",
-  "name": "Reinforced Plating",
-  "slot": "chest",
-  "rarity": "common",
-  "bonuses": { "constitution": 1 },
-  "description": "Bolted-on scrap that takes the edge off a hit.",
-  "sprite": "equipment/scrap_breastplate.png"
-}

@@ -1,0 +1,9 @@
+{
+    "id": "gear_chest_common",
+    "name": "Common Chestpiece",
+    "slot": "chest",
+    "rarity": "common",
+    "bonuses": {},
+    "description": "Salvaged gear. Rolls its affixes on drop.",
+    "sprite": ""
+}

@@ -1,0 +1,9 @@
+{
+    "id": "gear_hands_rare",
+    "name": "Rare Handgear",
+    "slot": "hands",
+    "rarity": "rare",
+    "bonuses": {},
+    "description": "Salvaged gear. Rolls its affixes on drop.",
+    "sprite": ""
+}

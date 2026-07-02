@@ -1,0 +1,9 @@
+{
+    "id": "gear_accessory_uncommon",
+    "name": "Uncommon Trinket",
+    "slot": "accessory",
+    "rarity": "uncommon",
+    "bonuses": {},
+    "description": "Salvaged gear. Rolls its affixes on drop.",
+    "sprite": ""
+}

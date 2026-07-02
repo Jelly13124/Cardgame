@@ -1,0 +1,9 @@
+{
+    "id": "gear_accessory_rare",
+    "name": "Rare Trinket",
+    "slot": "accessory",
+    "rarity": "rare",
+    "bonuses": {},
+    "description": "Salvaged gear. Rolls its affixes on drop.",
+    "sprite": ""
+}
