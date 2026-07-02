@@ -69,15 +69,17 @@ resolve(base: Dictionary) -> Dictionary   # 返回"升级后"的有效卡数据
     return result
 ```
 
-**公式兵底 `formula(effects)`**(逐 effect 按类型 bump 已知数值字段,费用不碰):
+**公式兵底 `formula(effects)`**(只 bump **明确正向**的真实类型;费用不碰;字段名对齐真实 JSON——伤害/格挡/属性用 `amount`,状态用 `stacks`):
 | effect type | bump |
 |---|---|
-| `deal_damage` | `amount += 2` |
+| `deal_damage` / `deal_damage_all` | `amount += 2` |
 | `gain_block` | `amount += 3` |
-| `gain_strength` / 属性获取 | `amount += 1` |
-| `apply_bleed` / `apply_poison` / `apply_weak` / `apply_vulnerable` / 状态施加类 | `amount += 1` |
+| `gain_strength` / `gain_dexterity` / `gain_luck` / `gain_intelligence` / `gain_energy` | `amount += 1` |
+| `apply_status` / `apply_status_all`(**敌方**) | `stacks += 1` |
 | `draw_cards` | `amount += 1` |
-| 其它无可识别数值字段 | 不变 |
+| **排除**:`apply_status_self`(可能自我减益)、`apply_bleed_scaled`/`deal_damage_str_mult`/`scale_damage_by_attacks`/`double_target_bleed`(缩放)、`lose_hp`/`lose_gold`(代价)、其它无数值 | 不 bump → 走 bespoke |
+
+> 排除项若是某卡唯一效果 → 该卡公式升不动 → validator warn → Phase 5 必补手写 `upgrade` 块。
 
 **手写层 `upgrade` 块**(卡 JSON 内联,给公式覆盖不了或想要个性的卡):可含 `cost` / `title` / `description` / `effects`(整段)任意子集。**降费只走手写**。示例:
 ```json
