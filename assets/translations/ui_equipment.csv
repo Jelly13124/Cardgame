@@ -56,9 +56,12 @@ UI_EQUIP_HERO_TITLE,Choose Hero,选择英雄
 UI_EQUIP_SLOTS_HEADER,Equipment Slots,装备槽位
 UI_EQUIP_STASH_HEADER,"Stash ({n} / {cap})","仓库 ({n} / {cap})"
 UI_STASH_WINDOW_TITLE,Stash,仓库
-UI_EQUIP_D4_HINT,"Drag from the Stash into the backpack to bring gear along; equip from the backpack onto a slot.","从仓库拖进背包即可随身携带;从背包拖到槽位穿上。"
+UI_EQUIP_D4_HINT,"Stash → backpack to carry · backpack → slot to wear · locked cells await Outpost upgrades","仓库拖入背包随身携带 · 背包拖上槽位穿戴 · 锁定格待解锁"
 UI_EQUIP_TOOLS_TITLE,Tool Slots,工具槽
 UI_EQUIP_TOOL_EQUIP_HINT,Click to equip,点击装备到工具槽
 UI_EQUIP_TOOL_UNEQUIP_HINT,Click to unequip,点击卸下回背包
 UI_EQUIP_TOOL_SLOTS_FULL,Tool slots are full — unequip one first.,工具槽已满 —— 先卸下一个。
 UI_EQUIP_TOOL_SLOT_EMPTY,Empty tool slot — click a bag tool to equip it.,空工具槽 —— 点背包里的工具来装备。
+UI_EQUIP_CELL_LOCKED,Locked — upgrade the Backpack at the Outpost,未解锁 —— 到前哨站升级背包容量
+UI_EQUIP_BACKPACK_TITLE,BACKPACK,背包
+UI_EQUIP_STATS_LINE,STR {str} · CON {con} · INT {int} · LCK {luc} · CHA {cha},力量 {str} · 体质 {con} · 智力 {int} · 幸运 {luc} · 魅力 {cha}

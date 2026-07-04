@@ -42,6 +42,26 @@ const TEXT_MAIN = Color("#f0d8a8")  # high-contrast text on dark
 const TEXT_SECONDARY = Color("#b08060")  # dimmer text / subtitle
 const SHADOW_COLOR = Color(0.00, 0.00, 0.00, 0.42)
 
+# ─── Windowed-UI v2 chrome (approved character-window mockup palette) ────────
+const UI_WINDOW_BG = Color("#14100a")  # floating-window body
+const UI_TITLEBAR_BG = Color("#221610")  # title-bar strip
+const UI_BORDER_BRASS = Color("#6b5228")  # window / plate border
+const UI_HEADER_GOLD = Color("#f2c56a")  # section headers, window title
+const UI_LABEL_BROWN = Color("#9a7c4e")  # slot labels
+const UI_LABEL_DIM = Color("#8a7050")  # dim labels (stat line, counts)
+const UI_INSET_BG = Color("#0e0b07")  # recessed wells (paper-doll zone)
+const UI_INSET_BORDER = Color("#3a2c18")  # inset border + thin dividers
+const UI_SLOT_BORDER = Color("#55401f")  # empty equip-slot border
+const UI_SLOT_ICON_TINT = Color("#6e5834")  # empty-slot glyph + header hints
+const UI_BRASS_LIGHT = Color("#d9b06a")  # filled / hover brass
+const UI_LOCKED_BG = Color("#0a0805")  # locked backpack cell
+const UI_LOCKED_BORDER = Color("#241b10")
+const UI_LOCKED_GLYPH = Color("#3d2f1b")  # flat padlock color
+const UI_EMPTY_BG = Color("#0c0906")  # empty backpack cell
+const UI_EMPTY_BORDER = Color("#2e2318")
+const UI_NAMEPLATE_BG = Color("#1b1209")  # hero name plate
+const UI_TOOL_BORDER = Color("#4a3820")  # tool slot ("optional") border
+
 # ─── Builders ─────────────────────────────────────────────────────────────────
 
 
@@ -370,6 +390,141 @@ static func close_x_button() -> Button:
 	b.add_theme_stylebox_override("hover", button_textured("hover"))
 	b.add_theme_stylebox_override("pressed", button_textured("pressed"))
 	return b
+
+
+# ─── Windowed-UI v2 builders (character / stash / forge window chrome) ───────
+# Every shape routes through the Codex ui_kit texture hooks below
+# (docs/asset-spec-ui-kit.md). The kit is CONTRACTED but not delivered — a
+# missing PNG is NORMAL today and falls back to the programmatic StyleBoxFlat
+# silently (no warning); delivery is drop-in with zero code change.
+
+const _UI_KIT_DIR := "res://run_system/assets/images/ui_kit/"
+
+
+## A ui_kit texture by basename ("icon_lock" → ui_kit/icon_lock.png), or null
+## while the kit is undelivered. Callers must handle null with a flat fallback.
+static func ui_kit_tex(kit_name: String) -> Texture2D:
+	var path := _UI_KIT_DIR + kit_name + ".png"
+	if ResourceLoader.exists(path):
+		var tex = load(path)
+		if tex is Texture2D:
+			return tex
+	return null
+
+
+## StyleBoxTexture over a ui_kit 9-slice PNG, or `fallback` while the kit is
+## undelivered. margin_h / margin_v are the 9-slice texture margins from the
+## asset spec (margin_v = -1 mirrors margin_h).
+static func _ui_kit_box(
+	kit_name: String, fallback: StyleBoxFlat, margin_h: int = 0, margin_v: int = -1
+) -> StyleBox:
+	var tex := ui_kit_tex(kit_name)
+	if tex == null:
+		return fallback
+	var style := StyleBoxTexture.new()
+	style.texture = tex
+	if margin_v < 0:
+		margin_v = margin_h
+	style.texture_margin_left = margin_h
+	style.texture_margin_right = margin_h
+	style.texture_margin_top = margin_v
+	style.texture_margin_bottom = margin_v
+	return style
+
+
+## Floating-window body chrome (character / stash / forge windows).
+static func ui_panel() -> StyleBox:
+	return _ui_kit_box("panel_window", panel_with_shadow(UI_WINDOW_BG, UI_BORDER_BRASS, 6, 2), 48)
+
+
+## Floating-window title-bar strip.
+static func ui_titlebar() -> StyleBox:
+	return _ui_kit_box(
+		"panel_window_titlebar", panel_flat(UI_TITLEBAR_BG, UI_BORDER_BRASS, 4, 1), 48, 16
+	)
+
+
+## Recessed inner well (paper-doll spotlight / inset sections).
+static func ui_inset_panel() -> StyleBox:
+	return _ui_kit_box("panel_inset", panel_flat(UI_INSET_BG, UI_INSET_BORDER, 6, 1), 48)
+
+
+## Slot / backpack-cell box for the v2 window chrome. States:
+##   "empty"      — equip slot awaiting gear (slot glyph on inset bg)
+##   "cell_empty" — unlocked empty backpack grid cell
+##   "locked"     — backpack cell beyond the unlocked capacity
+##   "hover"      — brass hover/selected ring
+##   "filled"     — carries gear; pass the rarity color as border_override
+##   "tool"       — the optional tool slot (lighter border reads as "dashed")
+## Kit hooks slot_normal / slot_hover / slot_locked skin the non-informational
+## states; "filled" and "tool" stay flat so the rarity border is never lost.
+static func ui_slot_box(
+	state: String = "empty", border_override: Color = Color(0, 0, 0, 0)
+) -> StyleBox:
+	var kit_name := ""
+	match state:
+		"locked":
+			kit_name = "slot_locked"
+		"hover":
+			kit_name = "slot_hover"
+		"empty", "cell_empty":
+			kit_name = "slot_normal"
+	if kit_name != "":
+		var tex := ui_kit_tex(kit_name)
+		if tex:
+			var style := StyleBoxTexture.new()
+			style.texture = tex
+			return style
+	var fb: StyleBoxFlat
+	match state:
+		"locked":
+			fb = _base(UI_LOCKED_BG, UI_LOCKED_BORDER, 6, 2)
+		"cell_empty":
+			fb = _base(UI_EMPTY_BG, UI_EMPTY_BORDER, 6, 2)
+		"hover":
+			fb = _base(UI_INSET_BG, UI_BRASS_LIGHT, 6, 2)
+		"filled":
+			fb = _base(UI_NAMEPLATE_BG, UI_BRASS_LIGHT, 6, 2)
+		"tool":
+			fb = _base(UI_EMPTY_BG, UI_TOOL_BORDER, 6, 2)
+		_:
+			fb = _base(UI_INSET_BG, UI_SLOT_BORDER, 6, 2)
+	if border_override.a > 0.0:
+		fb.border_color = border_override
+	return fb
+
+
+## The hero-switcher name plate (and other small brass-rimmed plates).
+static func ui_nameplate_box() -> StyleBoxFlat:
+	var style := _base(UI_NAMEPLATE_BG, UI_BORDER_BRASS, 4, 1)
+	style.content_margin_left = 10.0
+	style.content_margin_right = 10.0
+	style.content_margin_top = 3.0
+	style.content_margin_bottom = 3.0
+	return style
+
+
+## Gold section-header Label (display font, wide glyph spacing) — the v2 window
+## chrome's section titles.
+static func ui_header_label(text: String, size: int = 14) -> Label:
+	var l := Label.new()
+	l.text = text
+	var fv := display_font(700)
+	fv.spacing_glyph = 2
+	l.add_theme_font_override("font", fv)
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", UI_HEADER_GOLD)
+	return l
+
+
+## A 1px-thin horizontal divider line (the v2 chrome's only separator shape).
+static func ui_divider() -> Control:
+	var line := Panel.new()
+	line.custom_minimum_size = Vector2(0, 1)
+	var style := StyleBoxFlat.new()
+	style.bg_color = UI_INSET_BORDER
+	line.add_theme_stylebox_override("panel", style)
+	return line
 
 
 # ─── Internal ─────────────────────────────────────────────────────────────────
