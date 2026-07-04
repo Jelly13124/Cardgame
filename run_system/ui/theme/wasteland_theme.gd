@@ -404,13 +404,19 @@ static func close_x_button() -> Button:
 # missing PNG is NORMAL today and falls back to the programmatic StyleBoxFlat
 # silently (no warning); delivery is drop-in with zero code change.
 
-const _UI_KIT_DIR := "res://run_system/assets/images/ui_kit/"
+## ACTIVE skin directory — every kit lookup (ui_kit_tex / _ui_kit_box) resolves
+## through this one const, so flipping it swaps the ENTIRE windowed-UI skin:
+##   "res://run_system/assets/images/ui_kit/"        — Codex wasteland kit
+##   "res://run_system/assets/images/ui_kit_kenney/" — Kenney CC0 comparison kit
+## (Same 16-file contract in both dirs; missing files still hit the flat fallbacks.)
+const UI_KIT_DIR := "res://run_system/assets/images/ui_kit_kenney/"
 
 
-## A ui_kit texture by basename ("icon_lock" → ui_kit/icon_lock.png), or null
-## while the kit is undelivered. Callers must handle null with a flat fallback.
+## A ui_kit texture by basename ("icon_lock" → <UI_KIT_DIR>/icon_lock.png), or
+## null while that file is undelivered. Callers must handle null with a flat
+## fallback.
 static func ui_kit_tex(kit_name: String) -> Texture2D:
-	var path := _UI_KIT_DIR + kit_name + ".png"
+	var path := UI_KIT_DIR + kit_name + ".png"
 	if ResourceLoader.exists(path):
 		var tex = load(path)
 		if tex is Texture2D:

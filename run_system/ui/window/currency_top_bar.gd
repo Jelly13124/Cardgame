@@ -37,8 +37,23 @@ const BAR_HEIGHT := 96.0
 const CENTER_BOTTOM_MARGIN := 10.0
 ## Left/right inset of the chip row and the right-side button row.
 const EDGE_MARGIN := 16.0
-## Gap between chips / between the right-side buttons.
+## Gap between the right-side buttons.
 const ITEM_GAP := 10
+## Gap BETWEEN currency chips.
+const CHIP_GAP := 24
+## Currency icon square size inside a chip.
+const CHIP_ICON_SIZE := 24
+## Gap between a chip's icon and its number.
+const CHIP_ICON_TEXT_GAP := 6
+## Chip number typography: warm off-white on a 2px-ish dark outline so the
+## figure sits on the textured bar art.
+const CHIP_FONT_SIZE := 22
+const CHIP_NUM_COLOR := Color("#e8d5a8")
+const CHIP_OUTLINE_COLOR := Color("#1a120a")
+const CHIP_OUTLINE_SIZE := 4
+
+## Where the Codex currency icons live (core / caps / scrap PNGs).
+const _CURRENCY_ICON_DIR := "res://run_system/assets/images/home/currency/"
 
 ## Containers the host scene fills. left_box is chip-owned; center_box stacks
 ## the host's difficulty button above its START button; right_box holds the
@@ -105,7 +120,7 @@ func _init() -> void:
 	left_box = HBoxContainer.new()
 	left_box.name = "LeftBox"
 	left_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	left_box.add_theme_constant_override("separation", ITEM_GAP)
+	left_box.add_theme_constant_override("separation", CHIP_GAP)
 	left_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	content_row.add_child(left_box)
 
@@ -158,40 +173,57 @@ func _ready() -> void:
 	_refresh_scrap()
 
 
-## Currency chip: a big number + the Codex currency icon (T.currency_row), sat
-## bare on the bar (no per-chip frame — the bar body IS the frame now). If the
-## icon PNG is missing, currency_row falls back to a small currency-word label
-## so the counter stays readable even if the art regresses. SHRINK_CENTER keeps
-## the 64px chip vertically centered inside the 96px bar instead of stretching.
+## Currency chip: [icon 24px][6px gap][number], left-aligned, sat bare on the
+## bar (no per-chip frame — the bar body IS the frame). The chip is a plain
+## shrink-to-content HBox — NO fixed min width and NO expand flags, so the
+## icon and number always sit tight together (the old 134px panel + EXPAND_FILL
+## label floated them apart). The number uses the Oswald display font with a
+## dark outline so it reads on the textured bar art. If the icon PNG is
+## missing, a dim currency-word label takes its place so the counter never
+## degrades to a bare number. Returns the number Label for _refresh_*.
 func _make_currency_chip(parent: Control, icon_id: String) -> Label:
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(134, 64)
-	panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	parent.add_child(panel)
+	var row := HBoxContainer.new()
+	row.name = icon_id.capitalize() + "Chip"
+	row.alignment = BoxContainer.ALIGNMENT_BEGIN
+	row.add_theme_constant_override("separation", CHIP_ICON_TEXT_GAP)
+	row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(row)
 
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_right", 14)
-	margin.add_theme_constant_override("margin_top", 4)
-	margin.add_theme_constant_override("margin_bottom", 4)
-	panel.add_child(margin)
+	var icon_path := "%s%s.png" % [_CURRENCY_ICON_DIR, icon_id]
+	var icon_tex: Texture2D = null
+	if ResourceLoader.exists(icon_path):
+		var loaded = load(icon_path)
+		if loaded is Texture2D:
+			icon_tex = loaded
+	if icon_tex != null:
+		var icon := TextureRect.new()
+		icon.texture = icon_tex
+		icon.custom_minimum_size = Vector2(CHIP_ICON_SIZE, CHIP_ICON_SIZE)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(icon)
+	else:
+		# Missing-art fallback: a small currency-word label keeps the number readable.
+		var word := Label.new()
+		word.text = icon_id
+		word.add_theme_font_size_override("font_size", CHIP_FONT_SIZE - 6)
+		word.add_theme_color_override("font_color", T.TEXT_SECONDARY)
+		word.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(word)
 
-	var row := T.currency_row(0, icon_id, 31, 40)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	margin.add_child(row)
-
-	# Style the row's amount Label to match the prior big/bright HUD look and hand
-	# it back so _refresh_* can update it.
-	var label := row.get_meta("amount_label") as Label
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.78))
-	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.95))
-	label.add_theme_constant_override("outline_size", 6)
-	label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.5))
-	label.add_theme_constant_override("shadow_offset_y", 2)
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var label := Label.new()
+	label.text = "0"
+	label.add_theme_font_override("font", T.display_font(700))
+	label.add_theme_font_size_override("font_size", CHIP_FONT_SIZE)
+	label.add_theme_color_override("font_color", CHIP_NUM_COLOR)
+	label.add_theme_color_override("font_outline_color", CHIP_OUTLINE_COLOR)
+	label.add_theme_constant_override("outline_size", CHIP_OUTLINE_SIZE)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(label)
 	return label
 
 
