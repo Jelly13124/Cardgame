@@ -1,9 +1,47 @@
-# Asset Spec — Windowed-UI kit (16 PNGs, 9-slice panels + buttons + slot frames)
+# Asset Spec — Windowed-UI kit
 
-**Owner:** Codex (ADR-0005 — Codex generates all PNGs under
-`run_system/assets/images/**`). **Status:** REVISION 2 REQUESTED 2026-07-04
-(v1 delivered but REJECTED by the owner as too ornate — parked at
-`run_system/assets/images/ui_kit_ref_v1/` for structure reference only).
+**Owner:** Codex (ADR-0005). **Status: V3 (2026-07-04) — CHROME RETIRED, GLYPHS ONLY.**
+
+## V3 — read this, ignore the chrome sections below
+
+After in-game comparison of THREE texture kits (Codex rev2 riveted, Kenney
+grey-steel, Kenney beige — parked at `ui_kit/`, `ui_kit_kenney/`,
+`ui_kit_kenney_rpg/`), the owner chose the MAIN MENU's minimal language
+instead: translucent dark-glass panels + 1px hairline borders, implemented
+programmatically in `wasteland_theme.gd`. **No 9-slice chrome art is needed
+anymore — do NOT regenerate panels/buttons/slots.** The rev1/rev2 sections
+below stay only as history.
+
+What Codex still owes: **8 small GLYPH PNGs** — quiet line-art pieces that sit
+ON the dark glass. Style: thick clean dark-outline cartoon linework matching
+the world art, filled in muted brass (#c9a35a range) with at most 2 values, no
+gradients, no glow, transparent bg. They must read at 20-56 px and stay
+UNDERSTATED (the glass is the chrome; these are punctuation).
+
+Delivery dir: `run_system/assets/images/ui_glyphs/`
+
+1. `glyph_lock.png` — 96×96 square canvas, chunky padlock, reads at 20px
+   (locked backpack cells) and 64px (locked buildings).
+2. `glyph_arrow_left.png` / 3. `glyph_arrow_right.png` — 64×64 thick chevrons
+   (hero switcher ‹ ›).
+4. `glyph_stash.png` — 96×96 salvage crate/strongbox (bottom-bar Stash button
+   face; drawn to sit centered on a 56px glass square).
+5. `glyph_character.png` — 96×96 cowboy bust silhouette (hat + scarf outline,
+   generic; bottom-bar Character button face).
+6. `glyph_forge.png` / 7. `glyph_dismantle.png` / 8. `glyph_reforge.png` —
+   64×64 anvil / pliers-scrap / hammer-spark glyphs (forge window tab faces;
+   optional polish, lowest priority).
+
+Contact-sheet approval gate still applies: preview sheet (pieces on a dark
+glass swatch) to `docs/art/previews/` FIRST, owner approves, then land in
+`ui_glyphs/` (theme hooks will be added by Claude after approval — landing the
+files does not auto-activate anything in v3).
+
+---
+
+*(History below: v1 REJECTED as too ornate — parked at
+`run_system/assets/images/ui_kit_ref_v1/`; rev2 delivered to `ui_kit/`,
+superseded by the glass direction.)*
 
 ## Revision 2 — what was wrong with v1 (read before regenerating)
 
