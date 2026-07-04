@@ -198,38 +198,43 @@ func _add_building_sprites() -> void:
 	# Keep the buildings just above the background (below the HUD / depart / help button)
 	# even when re-added last on a rebuild.
 	move_child(_buildings_root, 1)
-	# Centered row: 4×360 tiles + 3×30 gaps = 1530 wide → start x = (1920-1530)/2
-	# = 195, so the group is symmetric about the 960 screen centre.
-	_add_interactive_building(
-		"forge",
-		Rect2(195, 300, 360, 360),
-		tr("UI_BUILD_FORGE_NAME"),
-		func() -> void: _open_forge_windows()
-	)
+	# Organic placement matching the four packed-dirt pads baked into the
+	# Codex home_base_empty_bg (2026-07-04): two FAR pads up top (smaller
+	# tiles, added first so the near row draws over them if they ever touch)
+	# and two NEAR pads below (bigger tiles). Tile bottoms sit on their pad;
+	# per-art baseline alignment inside the tile is _building_art_offset()'s
+	# job. Tune HERE if the bg pads move.
 	_add_interactive_building(
 		"clinic",
-		Rect2(585, 300, 360, 360),
+		Rect2(485, 290, 310, 310),
 		tr("UI_BUILD_CLINIC_NAME"),
 		func() -> void: _open_building_screen("clinic")
 	)
 	_add_interactive_building(
 		"market",
-		Rect2(975, 300, 360, 360),
+		Rect2(1100, 300, 310, 310),
 		tr("UI_BUILD_MARKET_NAME"),
 		func() -> void: _open_building_screen("market")
 	)
 	_add_interactive_building(
+		"forge",
+		Rect2(210, 430, 370, 370),
+		tr("UI_BUILD_FORGE_NAME"),
+		func() -> void: _open_forge_windows()
+	)
+	_add_interactive_building(
 		"outpost",
-		Rect2(1365, 300, 360, 360),
+		Rect2(1260, 440, 370, 370),
 		tr("UI_BUILD_OUTPOST_NAME"),
 		func() -> void: _open_building_screen("outpost")
 	)
 
-	# Plaques stay centered above their tile: plaque_x = tile_x + (360-215)/2.
-	_add_building_plaque("forge", Rect2(267, 218, 215, 78), tr("UI_BUILD_FORGE_NAME"))
-	_add_building_plaque("clinic", Rect2(657, 218, 215, 78), tr("UI_BUILD_CLINIC_NAME"))
-	_add_building_plaque("market", Rect2(1047, 218, 215, 78), tr("UI_BUILD_MARKET_NAME"))
-	_add_building_plaque("outpost", Rect2(1437, 218, 215, 78), tr("UI_BUILD_OUTPOST_NAME"))
+	# Plaques stay centered above their tile: plaque_x = tile_x + (tile_w-215)/2,
+	# plaque_y = tile_y - 82 (far pads sit higher, near pads lower).
+	_add_building_plaque("clinic", Rect2(532, 208, 215, 78), tr("UI_BUILD_CLINIC_NAME"))
+	_add_building_plaque("market", Rect2(1147, 218, 215, 78), tr("UI_BUILD_MARKET_NAME"))
+	_add_building_plaque("forge", Rect2(287, 348, 215, 78), tr("UI_BUILD_FORGE_NAME"))
+	_add_building_plaque("outpost", Rect2(1337, 358, 215, 78), tr("UI_BUILD_OUTPOST_NAME"))
 
 
 ## Giant START button + the compact difficulty button directly above it,
