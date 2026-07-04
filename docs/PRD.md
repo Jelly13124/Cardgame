@@ -213,21 +213,27 @@ All loot lives in a single **20-cell backpack** where **Gold, Core, and equipmen
 
 ## Base Building System (基地建造)
 
-Between runs, players return to their **home base** — a 2-left / 2-right building
-layout with a centre "depart door". A **global currency top bar** (`currency_top_bar.gd`,
-CanvasLayer 70) shows Core/Caps/Scrap at all times plus a **Character** button. Three
-meta-currencies fund the base: **Core** (unlock + tier-up buildings), **Caps** (Clinic /
-Market services), **Scrap** (Forge services). See `meta_progress.gd` `BUILDING_DEFS`.
+Between runs, players return to their **home base**: 4 building tiles in a centered row,
+a **giant START button** bottom-centre with a **difficulty button** above it (opens an
+A0-A5 picker popup), a **bottom currency bar** (`currency_top_bar.gd`, CanvasLayer 70,
+Core/Caps/Scrap), and two **image buttons on the right edge** — Stash (old warehouse art)
+and Character (hero headshot, hover-highlight). Three meta-currencies fund the base:
+**Core** (unlock + tier-up buildings), **Caps** (Clinic / Market services), **Scrap**
+(Forge services). See `meta_progress.gd` `BUILDING_DEFS`.
 
-**Windowed UI (2026-07-02 refactor).** The base uses Diablo-style **draggable, coexisting
-windows** (`run_system/ui/window/`): pressing **i** (home base / map / battle) toggles the
-**CharacterWindow** — hero picker + 5 equip slots + stash/backpack grid with drag-drop;
-modes: `base` (stash + next-run loadout + carry marks), `map` (live equipment, editable),
-`battle` (read-only). Clicking the **Forge** opens the **ForgeWindow** (craft / dismantle /
-reforge / curse as 4 tabs) BESIDE the character window — gear drags from one window into
-the other. ESC closes the topmost window. Clinic / Market / Outpost still open fullscreen
-pages. The former Warehouse building was **removed** (hero+loadout → CharacterWindow;
-resource conversion → Market T3; stash cap now flat 40).
+**Windowed UI (2026-07-02/03 refactor).** The base uses Diablo-style **draggable,
+coexisting windows** (`run_system/ui/window/`). Pressing **i** (home base / map / battle)
+toggles the **CharacterWindow** — Diablo-4 layout: paper-doll CENTER, equip slots flanking
+it (head/chest/hands left; weapon/accessory + tools right), **backpack grid BELOW**; modes:
+`base` / `map` (editable) / `battle` (read-only). **Backpack ≠ stash (D4 model):** the
+**StashWindow** (40-slot storage, own window via the right-edge Stash button) is pure
+storage — gear must be dragged stash→backpack to be carried/equipped (equip slots reject
+stash payloads), backpack→stash to store; at base the backpack grid IS the next-run carry
+list (`pending_loadout`). Clicking the **Forge** opens the **ForgeWindow** (craft /
+dismantle / reforge / curse as 4 tabs) beside the character window — cross-window drag.
+ESC closes the topmost window. Clinic / Market / Outpost still open fullscreen pages. The
+former Warehouse building was **removed** (loadout → CharacterWindow+StashWindow; resource
+conversion → Market T3; stash cap flat 40).
 
 ### The 4 buildings
 | Building | Role |
