@@ -434,19 +434,35 @@ func _add_interactive_building(
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(callback)
 	_buildings_root.add_child(button)
-	# Locked buildings (not yet unlocked with Core) render dimmed with a lock badge so
-	# it reads at a glance which ones aren't available. Still clickable — the building
-	# screen is where you spend Core to unlock.
+	# Locked buildings (not yet unlocked with Core) render slightly dimmed with a
+	# lock badge so it reads at a glance which ones aren't available. Still
+	# clickable — clicking routes to the unlock confirm.
 	if MetaProgress.get_building_tier(asset_id) <= 0:
-		button.modulate = Color(0.5, 0.5, 0.55)
-		var lock := Label.new()
-		lock.text = "🔒"
-		lock.add_theme_font_size_override("font_size", 76)
-		lock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lock.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		lock.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_set_map_rect(lock, rect)
-		_buildings_root.add_child(lock)
+		button.modulate = Color(0.75, 0.75, 0.75)
+		var lock_tex := T.ui_kit_tex("icon_lock")
+		if lock_tex != null:
+			# Kit brass padlock (156×208 source — not square, so IGNORE_SIZE +
+			# KEEP_ASPECT_CENTERED inside a ~64×84 rect centered on the tile).
+			var lock := TextureRect.new()
+			lock.name = "Lock_%s" % asset_id
+			lock.texture = lock_tex
+			lock.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			lock.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			lock.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+			lock.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var lock_size := Vector2(64, 84)
+			_set_map_rect(lock, Rect2(rect.position + (rect.size - lock_size) * 0.5, lock_size))
+			_buildings_root.add_child(lock)
+		else:
+			# Fallback while the kit PNG is regenerating: the old glyph label.
+			var lock_lbl := Label.new()
+			lock_lbl.text = "🔒"
+			lock_lbl.add_theme_font_size_override("font_size", 76)
+			lock_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			lock_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			lock_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			_set_map_rect(lock_lbl, rect)
+			_buildings_root.add_child(lock_lbl)
 
 
 func _make_click_mask(texture: Texture2D) -> BitMap:
@@ -514,6 +530,15 @@ func _add_tier_button(building_id: String, plaque_rect: Rect2) -> void:
 	btn.text = ("解锁" if zh else "Unlock") if tier <= 0 else ("升级" if zh else "Upgrade")
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	btn.disabled = cost < 0 or MetaProgress.core < cost
+	# Contrast pass: the theme's default grey-brown label was near-invisible on
+	# the plaque — warm gold (UI_HEADER_GOLD #f2c56a) in every state, incl. the
+	# disabled (can't-afford) one, with a dark outline so it reads on desert.
+	btn.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
+	btn.add_theme_color_override("font_hover_color", T.UI_HEADER_GOLD.lightened(0.15))
+	btn.add_theme_color_override("font_pressed_color", T.UI_HEADER_GOLD)
+	btn.add_theme_color_override("font_disabled_color", Color(T.UI_HEADER_GOLD, 0.85))
+	btn.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
+	btn.add_theme_constant_override("outline_size", 3)
 	btn.pressed.connect(
 		func() -> void:
 			AudioManager.play_sfx("ui_click")
@@ -521,7 +546,13 @@ func _add_tier_button(building_id: String, plaque_rect: Rect2) -> void:
 	)
 	# Cost shown as amount+icon, overlaid on the button's right side (verb text
 	# stays as btn.text on the left) instead of the old "N 核心" word suffix.
-	btn.add_child(T.overlay_cost_badge(cost, "core", 15, 18, -10, -110))
+	var badge := T.overlay_cost_badge(cost, "core", 15, 18, -10, -110)
+	# Match the verb's gold on the cost number (the badge keeps its core icon).
+	if badge.get_child_count() > 0 and badge.get_child(0).has_meta("amount_label"):
+		var amount_lbl := badge.get_child(0).get_meta("amount_label") as Label
+		if amount_lbl != null:
+			amount_lbl.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
+	btn.add_child(badge)
 	var bw := 196.0
 	var br := Rect2(
 		plaque_rect.position.x + plaque_rect.size.x * 0.5 - bw * 0.5,

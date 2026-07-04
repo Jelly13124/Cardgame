@@ -13,8 +13,10 @@
 ## Architecture: the bar owns ONLY chrome + chips; interactive controls stay
 ## owned/wired by the host scene, which parents them into the exposed boxes.
 ## The whole structure is built in _init() so the boxes exist the moment the
-## host calls .new(); everything is anchor-based (bottom-full-width, grow up),
-## so it survives window resizes without fixed 1920-canvas rects.
+## host calls .new(). The bar root is anchor-based (bottom-full-width, grow
+## up); the left/right contents live in a full-rect MarginContainer + HBox row
+## (chips | stretch spacer | buttons) so they stay vertically centered, while
+## center_box is its own bottom-anchored overlay (it protrudes above the bar).
 ##
 ## Labels track MetaProgress.core/caps/scrap_changed; the bar is freed with its
 ## host scene, which drops the connections.
@@ -79,25 +81,54 @@ func _init() -> void:
 	body.mouse_filter = Control.MOUSE_FILTER_STOP
 	bar_root.add_child(body)
 
-	# LEFT: currency chips, vertically centered, EDGE_MARGIN from the left.
-	# Zero-width anchor rect + grow END → the row sizes itself rightward.
+	# LEFT + RIGHT content: one full-rect MarginContainer (16px side / 8px
+	# top-bottom insets) holding a single HBox row — chips left, stretch spacer,
+	# image buttons right. Every child SHRINK_CENTERs vertically so the row
+	# contents sit dead-centre in the 96px bar. (Replaces the old zero-width
+	# anchor math, which mis-centered and let the chips clip at the screen edge.)
+	var content_frame := MarginContainer.new()
+	content_frame.name = "ContentFrame"
+	content_frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content_frame.add_theme_constant_override("margin_left", int(EDGE_MARGIN))
+	content_frame.add_theme_constant_override("margin_right", int(EDGE_MARGIN))
+	content_frame.add_theme_constant_override("margin_top", 8)
+	content_frame.add_theme_constant_override("margin_bottom", 8)
+	bar_root.add_child(content_frame)
+
+	var content_row := HBoxContainer.new()
+	content_row.name = "ContentRow"
+	content_row.alignment = BoxContainer.ALIGNMENT_BEGIN
+	content_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content_frame.add_child(content_row)
+
 	left_box = HBoxContainer.new()
 	left_box.name = "LeftBox"
 	left_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	left_box.add_theme_constant_override("separation", ITEM_GAP)
-	left_box.anchor_left = 0.0
-	left_box.anchor_top = 0.0
-	left_box.anchor_right = 0.0
-	left_box.anchor_bottom = 1.0
-	left_box.offset_left = EDGE_MARGIN
-	left_box.offset_right = EDGE_MARGIN
-	left_box.grow_horizontal = Control.GROW_DIRECTION_END
-	bar_root.add_child(left_box)
+	left_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	content_row.add_child(left_box)
 
-	# CENTER: bottom-center anchored stack that grows UP from
-	# CENTER_BOTTOM_MARGIN above the screen edge — its content (START +
-	# difficulty) is taller than the bar and protrudes above the bar top,
-	# which is the approved mockup look (no clipping: plain child overflow).
+	# Stretch spacer pushes right_box to the far edge of the row.
+	var spacer := Control.new()
+	spacer.name = "Spacer"
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	content_row.add_child(spacer)
+
+	right_box = HBoxContainer.new()
+	right_box.name = "RightBox"
+	right_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	right_box.add_theme_constant_override("separation", ITEM_GAP)
+	right_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	content_row.add_child(right_box)
+
+	# CENTER: separately-positioned overlay (NOT in the content row — the START
+	# stack is taller than the bar and protrudes above the bar top, the approved
+	# mockup look). Bottom-center anchored, growing UP from CENTER_BOTTOM_MARGIN
+	# above the screen edge; ALIGNMENT_END + no expanding children keeps the
+	# difficulty pill docked exactly `separation` (6px) above START.
 	center_box = VBoxContainer.new()
 	center_box.name = "CenterBox"
 	center_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -112,20 +143,6 @@ func _init() -> void:
 	center_box.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	center_box.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	bar_root.add_child(center_box)
-
-	# RIGHT: image buttons row, EDGE_MARGIN from the right, growing leftward.
-	right_box = HBoxContainer.new()
-	right_box.name = "RightBox"
-	right_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	right_box.add_theme_constant_override("separation", ITEM_GAP)
-	right_box.anchor_left = 1.0
-	right_box.anchor_top = 0.0
-	right_box.anchor_right = 1.0
-	right_box.anchor_bottom = 1.0
-	right_box.offset_left = -EDGE_MARGIN
-	right_box.offset_right = -EDGE_MARGIN
-	right_box.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	bar_root.add_child(right_box)
 
 	_core_label = _make_currency_chip(left_box, "core")
 	_caps_label = _make_currency_chip(left_box, "caps")
