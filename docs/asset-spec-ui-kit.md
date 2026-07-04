@@ -97,6 +97,21 @@ same silhouette, state changes by value shift only, cel style)
 15. `icon_arrow_left.png` / 16. `icon_arrow_right.png` — 48×48 thick chevron
     arrows for the hero-switcher widget (‹ ›), brass on transparent.
 
+### Rev2 addendum (2026-07-04) — dedicated HUD icon buttons (6 PNGs)
+
+The bottom bar's Stash / Character buttons currently reuse the warehouse
+building sprite and Bill's headshot — the owner wants DEDICATED button art.
+Same rev2 style rules (near-black outlines, muted iron plates, brass garnish):
+
+17. `btn_stash_normal.png` / 18. `btn_stash_hover.png` / 19. `btn_stash_pressed.png`
+    — 96×96 square icon button: an iron-plate button face with a **salvage
+    crate / strongbox glyph** (reads "storage" at 56px). Hover = warmer rim,
+    pressed = darkened, same silhouette.
+20. `btn_char_normal.png` / 21. `btn_char_hover.png` / 22. `btn_char_pressed.png`
+    — 96×96 square icon button: same plate with a **cowboy-silhouette bust
+    glyph** (hat + scarf outline, generic — not Bill's actual portrait).
+    Same three-state logic.
+
 ## Prompt language anchor (per project-rules.md §5 — do not deviate)
 
 > original Offbeat Adult Sci-Fi Cartoon Wasteland game art, flat 2D adult
