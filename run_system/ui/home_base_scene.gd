@@ -1,8 +1,10 @@
 ## Home base scene — the boot scene + post-run return point.
-## Shows the global currency top bar, the 4 building selector tiles,
-## START NEW RUN, and the recent-runs panel; `i` opens the floating character
-## window (hero pick + next-run loadout + stash carry-marks). The base's actual
-## functions now live in the per-building screens (run_system/ui/buildings/).
+## Layout: the 4 building tiles centered in a row, a giant START NEW RUN button
+## bottom-centre with a compact difficulty button (→ picker popup) above it,
+## the global currency bar along the BOTTOM edge, and two image buttons on the
+## right edge (Stash / Character) that open the floating windows; `i` also
+## toggles the character window. The base's actual functions live in the
+## per-building screens (run_system/ui/buildings/).
 extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
@@ -32,8 +34,15 @@ const BUILDING_ACCENTS := {
 }
 const HOME_BACKGROUND_PATH := "res://run_system/assets/images/home/home_base_empty_bg.png"
 const MAP_CANVAS_SIZE := Vector2(1920, 1080)
+## Right-edge Character image button art: the square hero headshot (the same
+## avatar run_top_bar uses), with the character window's portrait as fallback.
+const HERO_HEADSHOT_PATH := "res://battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_headshot.png"
+const HERO_PORTRAIT_PATH := "res://battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_portrait.png"
 
+## The A0..A5 buttons inside the difficulty picker popup (rebuilt every open).
 var _difficulty_buttons: Array[Button] = []
+## Compact button above START — label shows the current pick ("难度 A{n}").
+var _difficulty_button: Button
 ## Three-column building area (left flank / centre door / right flank), rebuilt
 ## on buildings_changed.
 var _building_area: HBoxContainer
@@ -46,7 +55,7 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	AudioManager.play_music("home")
 	_build()
-	# Currency labels live in the global top bar now (it tracks the currency
+	# Currency labels live in the global bottom bar now (it tracks the currency
 	# signals itself).
 	# Repaint the building sprites (lock → unlocked, tier badges) the moment a building
 	# changes — previously wired to the inert _rebuild_building_tiles, so the lock only
@@ -76,7 +85,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		return  # already open
 	if get_node_or_null("BuildingOverlay") != null:
 		return  # the building screen's own _unhandled_input handles ESC first
-	if get_node_or_null("TierConfirm") != null or get_node_or_null("RulesLayer") != null:
+	if (
+		get_node_or_null("TierConfirm") != null
+		or get_node_or_null("RulesLayer") != null
+		or get_node_or_null("DifficultyPopup") != null
+	):
 		return  # let the open popup own ESC (none currently bind it; avoid stacking)
 	get_viewport().set_input_as_handled()
 	_open_pause()
@@ -90,6 +103,7 @@ func _overlay_blocking() -> bool:
 		or get_node_or_null("BuildingOverlay") != null
 		or get_node_or_null("TierConfirm") != null
 		or get_node_or_null("RulesLayer") != null
+		or get_node_or_null("DifficultyPopup") != null
 	)
 
 
@@ -97,7 +111,8 @@ func _build() -> void:
 	_add_background()
 	_add_building_sprites()
 	_add_depart_controls()
-	_add_currency_top_bar()
+	_add_side_buttons()
+	_add_currency_bar()
 
 
 ## Open the How-to-Play panel (loaded at runtime; same pattern as map_scene._open_rules_panel).
@@ -140,13 +155,13 @@ func _add_background() -> void:
 	add_child(shade)
 
 
-## The Core/Caps/Scrap chips + Character button moved into the global
-## CurrencyTopBar (a CanvasLayer above the WindowLayer). It tracks the currency
-## signals itself; we just host it and hand it ourselves as the window target.
-func _add_currency_top_bar() -> void:
+## The Core/Caps/Scrap chips live in the global currency bar (a CanvasLayer
+## above the WindowLayer, anchored along the BOTTOM edge). It tracks the
+## currency signals itself; we just host it. The Character entry moved to the
+## right-edge image buttons (_add_side_buttons).
+func _add_currency_bar() -> void:
 	var bar = CURRENCY_TOP_BAR.new()
-	bar.name = "CurrencyTopBar"
-	bar.setup(self)
+	bar.name = "CurrencyBar"
 	add_child(bar)
 
 
@@ -164,100 +179,171 @@ func _add_building_sprites() -> void:
 	# Keep the buildings just above the background (below the HUD / depart / help button)
 	# even when re-added last on a rebuild.
 	move_child(_buildings_root, 1)
+	# Centered row: 4×360 tiles + 3×30 gaps = 1530 wide → start x = (1920-1530)/2
+	# = 195, so the group is symmetric about the 960 screen centre.
 	_add_interactive_building(
 		"forge",
-		Rect2(55, 300, 360, 360),
+		Rect2(195, 300, 360, 360),
 		tr("UI_BUILD_FORGE_NAME"),
 		func() -> void: _open_forge_windows()
 	)
 	_add_interactive_building(
 		"clinic",
-		Rect2(410, 300, 360, 360),
+		Rect2(585, 300, 360, 360),
 		tr("UI_BUILD_CLINIC_NAME"),
 		func() -> void: _open_building_screen("clinic")
 	)
 	_add_interactive_building(
 		"market",
-		Rect2(780, 300, 360, 360),
+		Rect2(975, 300, 360, 360),
 		tr("UI_BUILD_MARKET_NAME"),
 		func() -> void: _open_building_screen("market")
 	)
 	_add_interactive_building(
 		"outpost",
-		Rect2(1145, 300, 360, 360),
+		Rect2(1365, 300, 360, 360),
 		tr("UI_BUILD_OUTPOST_NAME"),
 		func() -> void: _open_building_screen("outpost")
 	)
 
-	_add_building_plaque("forge", Rect2(128, 218, 215, 78), tr("UI_BUILD_FORGE_NAME"))
-	_add_building_plaque("clinic", Rect2(482, 218, 215, 78), tr("UI_BUILD_CLINIC_NAME"))
-	_add_building_plaque("market", Rect2(852, 218, 215, 78), tr("UI_BUILD_MARKET_NAME"))
-	_add_building_plaque("outpost", Rect2(1218, 218, 215, 78), tr("UI_BUILD_OUTPOST_NAME"))
+	# Plaques stay centered above their tile: plaque_x = tile_x + (360-215)/2.
+	_add_building_plaque("forge", Rect2(267, 218, 215, 78), tr("UI_BUILD_FORGE_NAME"))
+	_add_building_plaque("clinic", Rect2(657, 218, 215, 78), tr("UI_BUILD_CLINIC_NAME"))
+	_add_building_plaque("market", Rect2(1047, 218, 215, 78), tr("UI_BUILD_MARKET_NAME"))
+	_add_building_plaque("outpost", Rect2(1437, 218, 215, 78), tr("UI_BUILD_OUTPOST_NAME"))
 
 
+## Giant centered START button + the compact difficulty button directly above it.
+## The old always-visible difficulty bar row is gone — difficulty now lives in a
+## modal picker popup (_show_difficulty_popup).
 func _add_depart_controls() -> void:
 	var button := Button.new()
 	button.name = "StartRunButton"
 	button.text = TranslationServer.translate("UI_HOME_START_RUN")
-	button.custom_minimum_size = Vector2(320, 62)
-	button.add_theme_font_size_override("font_size", 26)
+	button.add_theme_font_size_override("font_size", 40)
 	T.apply_button_theme(button)
 	button.add_theme_color_override("font_color", Color(1.0, 0.88, 0.50))
 	button.add_theme_color_override("font_hover_color", Color(1.0, 0.96, 0.70))
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(_on_start_pressed)
-	_set_map_rect(button, Rect2(800, 812, 320, 64))
+	_set_map_rect(button, Rect2(710, 800, 500, 110))
 	add_child(button)
 
-	_add_difficulty_bar(Rect2(650, 886, 620, 82))
+	_add_difficulty_button(Rect2(860, 730, 200, 56))
 
 
-func _add_difficulty_bar(rect: Rect2) -> void:
-	var panel := PanelContainer.new()
-	panel.name = "DifficultyBar"
-	panel.add_theme_stylebox_override(
-		"panel",
-		T.panel_with_shadow(Color(0.085, 0.055, 0.035, 0.94), Color(0.78, 0.45, 0.18), 6, 3)
-	)
-	_set_map_rect(panel, rect)
-	add_child(panel)
+## Compact difficulty button above START — its label shows the current pick
+## ("Difficulty A{n}"); clicking opens the modal A0..A5 picker popup.
+func _add_difficulty_button(rect: Rect2) -> void:
+	var btn := Button.new()
+	btn.name = "DifficultyButton"
+	btn.add_theme_font_size_override("font_size", 20)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	T.apply_button_theme(btn)
+	btn.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
+	btn.pressed.connect(_show_difficulty_popup)
+	_set_map_rect(btn, rect)
+	add_child(btn)
+	_difficulty_button = btn
+	_refresh_difficulty_button()
 
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_right", 18)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
-	panel.add_child(margin)
 
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 10)
-	margin.add_child(row)
-
-	var title := Label.new()
-	title.custom_minimum_size = Vector2(72, 0)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.text = tr("UI_OUTPOST_SECT_DIFFICULTY")
-	_style_readable_label(title, 20, Color(1.0, 0.86, 0.54), 3)
-	row.add_child(title)
-
-	_difficulty_buttons.clear()
+## The same clamp the old difficulty bar applied on build: pending ascension
+## (or 0 when unset) clamped to the highest unlocked level, written back so
+## START uses exactly what the button displays.
+func _current_difficulty() -> int:
 	var max_unlocked: int = clampi(int(MetaProgress.max_ascension), 0, 5)
 	var pending: int = RunManager.pending_ascension if RunManager.pending_ascension >= 0 else 0
 	var current: int = clampi(pending, 0, max_unlocked)
 	RunManager.pending_ascension = current
+	return current
+
+
+func _refresh_difficulty_button() -> void:
+	if is_instance_valid(_difficulty_button):
+		_difficulty_button.text = (tr("UI_HOME_DIFFICULTY_BTN").format(
+			{"a": _current_difficulty()}
+		))
+
+
+## Modal difficulty picker — same overlay structure as the TierConfirm popup
+## (dim + centered panel on its own CanvasLayer). Unlock gating ported verbatim
+## from the removed difficulty bar: entries above MetaProgress.max_ascension
+## (clamped to 5) are disabled; the current pick renders selected. Picking one
+## sets RunManager.pending_ascension, closes the popup and refreshes the
+## button label; clicking the dim backs out without changing anything.
+func _show_difficulty_popup() -> void:
+	if get_node_or_null("DifficultyPopup") != null:
+		return  # already open
+	var layer := CanvasLayer.new()
+	layer.name = "DifficultyPopup"
+	layer.layer = 150
+	add_child(layer)
+	var dim := ColorRect.new()
+	dim.color = Color(0.0, 0.0, 0.0, 0.62)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	dim.gui_input.connect(
+		func(ev: InputEvent) -> void:
+			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+				AudioManager.play_sfx("ui_back")
+				layer.queue_free()
+	)
+	layer.add_child(dim)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	# IGNORE so clicks beside the panel reach the dim (close); the panel and its
+	# buttons still receive input themselves.
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(center)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(470, 0)
+	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	center.add_child(panel)
+	var m := MarginContainer.new()
+	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		m.add_theme_constant_override(s, 28)
+	panel.add_child(m)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 18)
+	m.add_child(box)
+
+	var title := Label.new()
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.text = tr("UI_HOME_DIFFICULTY_TITLE")
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color(1.0, 0.93, 0.78))
+	box.add_child(title)
+
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 10)
+	box.add_child(row)
+
+	_difficulty_buttons.clear()
+	var max_unlocked: int = clampi(int(MetaProgress.max_ascension), 0, 5)
+	var current: int = _current_difficulty()
 	for value in range(6):
 		var btn := Button.new()
 		btn.toggle_mode = true
 		btn.text = "A%d" % value
 		btn.custom_minimum_size = Vector2(58, 42)
 		btn.add_theme_font_size_override("font_size", 17)
+		btn.focus_mode = Control.FOCUS_NONE
 		btn.disabled = value > max_unlocked
 		btn.button_pressed = value == current
 		_style_difficulty_button(btn, btn.button_pressed, btn.disabled)
 		var asc := value
-		btn.pressed.connect(func() -> void: _on_home_difficulty_chosen(asc))
+		btn.pressed.connect(
+			func() -> void:
+				AudioManager.play_sfx("ui_click")
+				_on_home_difficulty_chosen(asc)
+				_refresh_difficulty_button()
+				layer.queue_free()
+		)
 		row.add_child(btn)
 		_difficulty_buttons.append(btn)
 
@@ -734,9 +820,103 @@ func _open_character_window() -> void:
 	CHARACTER_WINDOW.open_window(self, "base")
 
 
+## Right-edge image buttons (no text): Stash above, Character below. Stacked on
+## the free strip right of the outpost tile (tiles end at x=1725).
+func _add_side_buttons() -> void:
+	_add_stash_side_button(Rect2(1790, 380, 96, 96))
+	_add_character_side_button(Rect2(1790, 490, 96, 96))
+
+
+## Stash image button — reuses the removed warehouse building's art; the
+## _hover/_pressed texture swap IS the highlight. Opens the stash + character
+## window pair (_open_stash_windows).
+func _add_stash_side_button(rect: Rect2) -> void:
+	var normal_tex := _load_home_texture(BUILDING_IMAGE_DIR + "warehouse.png")
+	var hover_tex := _load_home_texture(BUILDING_IMAGE_DIR + "warehouse_hover.png")
+	var pressed_tex := _load_home_texture(BUILDING_IMAGE_DIR + "warehouse_pressed.png")
+	var button := TextureButton.new()
+	button.name = "StashSideButton"
+	button.texture_normal = normal_tex
+	button.texture_hover = hover_tex if hover_tex is Texture2D else normal_tex
+	button.texture_pressed = pressed_tex if pressed_tex is Texture2D else button.texture_hover
+	button.ignore_texture_size = true
+	button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	button.tooltip_text = tr("UI_STASH_WINDOW_TITLE")
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.mouse_entered.connect(func() -> void: AudioManager.play_sfx("ui_hover"))
+	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
+	button.pressed.connect(_open_stash_windows)
+	_set_map_rect(button, rect)
+	add_child(button)
+
+
+## Character image button — the square hero headshot (no hover PNG exists, so
+## the highlight is a modulate brighten) inside a subtle border frame. Toggles
+## the base-mode character window, same as KEY_I.
+func _add_character_side_button(rect: Rect2) -> void:
+	var tex := _load_home_texture(HERO_HEADSHOT_PATH)
+	if tex == null:
+		tex = _load_home_texture(HERO_PORTRAIT_PATH)
+	var button := TextureButton.new()
+	button.name = "CharacterSideButton"
+	button.texture_normal = tex
+	button.ignore_texture_size = true
+	button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	button.tooltip_text = tr("UI_EQUIP_TITLE_CHARACTER")
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.mouse_entered.connect(
+		func() -> void:
+			AudioManager.play_sfx("ui_hover")
+			button.modulate = Color(1.18, 1.18, 1.18)
+	)
+	button.mouse_exited.connect(func() -> void: button.modulate = Color.WHITE)
+	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
+	button.pressed.connect(_open_character_window)
+	_set_map_rect(button, rect)
+	add_child(button)
+	# Border-only frame overlay so the square portrait reads as a button.
+	var frame := Panel.new()
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := T.rounded_button(Color(0, 0, 0, 0), Color(0.62, 0.48, 0.28, 0.9), 6, 2)
+	sb.draw_center = false
+	frame.add_theme_stylebox_override("panel", sb)
+	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+	button.add_child(frame)
+
+
+## Stash side button — ENSURE both halves of the storage flow are open side by
+## side: StashWindow on the LEFT, base-mode CharacterWindow on the RIGHT (drag
+## gear between them). Unlike StashWindow.open_window (a toggle), pressing the
+## button never closes anything — windows already open are brought to front,
+## mirroring _open_forge_windows.
+func _open_stash_windows() -> void:
+	var wl = load("res://run_system/ui/window/window_layer.gd").ensure(self)
+	var sw = wl.get_node_or_null("StashWindow")
+	if sw == null or sw.is_queued_for_deletion():
+		sw = load("res://run_system/ui/window/stash_window.gd").new()
+		sw.name = "StashWindow"
+		wl.open(sw)
+		sw.position = Vector2(160, 160)  # stash on the LEFT
+	else:
+		wl.bring_to_front(sw)
+	var cw = wl.get_node_or_null("CharacterWindow")
+	if cw == null or cw.is_queued_for_deletion():
+		cw = CHARACTER_WINDOW.new()
+		cw.name = "CharacterWindow"
+		cw.mode = "base"
+		wl.open(cw)
+		cw.position = Vector2(760, 120)  # character window on the RIGHT
+	else:
+		wl.bring_to_front(cw)
+
+
 ## Forge entrance — dual floating windows instead of the old fullscreen
 ## BuildingOverlay: the ForgeWindow (560 wide) opens on the LEFT beside the
-## base-mode CharacterWindow (880 wide) on the RIGHT, so stash gear drags from
+## base-mode CharacterWindow (700 wide) on the RIGHT, so stash gear drags from
 ## the character window straight onto the forge bench (Diablo-style). A locked
 ## forge still routes to the unlock confirm like every other building. Windows
 ## already open are brought to front, never duplicated (positions are set AFTER
@@ -751,7 +931,7 @@ func _open_forge_windows() -> void:
 		fw = load("res://run_system/ui/window/forge_window.gd").new()
 		fw.name = "ForgeWindow"
 		wl.open(fw)
-		fw.position = Vector2(80, 120)  # forge on the LEFT
+		fw.position = Vector2(120, 140)  # forge on the LEFT
 	else:
 		wl.bring_to_front(fw)
 	var cw = wl.get_node_or_null("CharacterWindow")
@@ -760,7 +940,7 @@ func _open_forge_windows() -> void:
 		cw.name = "CharacterWindow"
 		cw.mode = "base"
 		wl.open(cw)
-		cw.position = Vector2(700, 120)  # character window on the RIGHT
+		cw.position = Vector2(800, 120)  # character window on the RIGHT
 	else:
 		wl.bring_to_front(cw)
 
