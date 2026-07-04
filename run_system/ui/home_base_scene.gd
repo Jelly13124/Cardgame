@@ -473,7 +473,21 @@ func _add_interactive_building(
 	# rebuild creates fresh buttons, so no stale material survives an unlock).
 	if MetaProgress.get_building_tier(asset_id) <= 0:
 		button.material = _get_locked_material()
+		# Lock glyph resolve chain: active skin dir → the V3 glyph dir (Codex,
+		# pending) → the rev2 brass padlock kept on disk (ui_kit/). Pinned
+		# explicitly so switching UI_KIT_DIR to the glass/none skin can never
+		# regress to the emoji fallback below.
 		var lock_tex := T.ui_kit_tex("icon_lock")
+		if (
+			lock_tex == null
+			and ResourceLoader.exists("res://run_system/assets/images/ui_glyphs/glyph_lock.png")
+		):
+			lock_tex = load("res://run_system/assets/images/ui_glyphs/glyph_lock.png")
+		if (
+			lock_tex == null
+			and ResourceLoader.exists("res://run_system/assets/images/ui_kit/icon_lock.png")
+		):
+			lock_tex = load("res://run_system/assets/images/ui_kit/icon_lock.png")
 		if lock_tex != null:
 			# Kit brass padlock (156×208 source — not square, so IGNORE_SIZE +
 			# KEEP_ASPECT_CENTERED inside a ~64×84 rect centered on the tile).
