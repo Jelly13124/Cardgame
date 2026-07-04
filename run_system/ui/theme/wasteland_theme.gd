@@ -61,6 +61,12 @@ const UI_EMPTY_BG = Color("#0c0906")  # empty backpack cell
 const UI_EMPTY_BORDER = Color("#2e2318")
 const UI_NAMEPLATE_BG = Color("#1b1209")  # hero name plate
 const UI_TOOL_BORDER = Color("#4a3820")  # tool slot ("optional") border
+const UI_BAR_BG = Color("#1a1209")  # bottom HUD bar body
+const UI_ACCENT_BG = Color("#c4462e")  # accent (START) red-clay plate
+const UI_ACCENT_BG_HOVER = Color("#d8543a")
+const UI_ACCENT_BG_PRESSED = Color("#a83a26")
+const UI_ACCENT_RIM = Color("#f0c060")  # accent gold rim
+const UI_ACCENT_TEXT = Color("#ffe8c0")  # accent button label
 
 # ─── Builders ─────────────────────────────────────────────────────────────────
 
@@ -515,6 +521,46 @@ static func ui_header_label(text: String, size: int = 14) -> Label:
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", UI_HEADER_GOLD)
 	return l
+
+
+## The home-base bottom HUD bar body — kit `panel_bottom_bar.png` (384×96
+## horizontal 9-slice, margins 64/24 per docs/asset-spec-ui-kit.md), else a
+## flat dark strip whose only drawn border is a 2px brass TOP edge (the other
+## three sides sit on the screen edge, so they stay width 0).
+static func ui_bottom_bar() -> StyleBox:
+	var fb := StyleBoxFlat.new()
+	fb.bg_color = UI_BAR_BG
+	fb.border_color = UI_BORDER_BRASS
+	fb.border_width_top = 2
+	return _ui_kit_box("panel_bottom_bar", fb, 64, 24)
+
+
+## Brass default bar-button — kit `btn_brass_<state>.png` (144×56 9-slice,
+## margins 24), else flat: dark plate + 1px brass border; hover brightens the
+## border, pressed darkens the plate. state: "normal" / "hover" / "pressed".
+static func ui_button_brass(state: String = "normal") -> StyleBox:
+	var fb: StyleBoxFlat
+	match state:
+		"hover":
+			fb = _base(UI_NAMEPLATE_BG, UI_BRASS_LIGHT, 6, 1)
+		"pressed":
+			fb = _base(UI_INSET_BG, UI_BORDER_BRASS, 6, 1)
+		_:
+			fb = _base(UI_NAMEPLATE_BG, UI_BORDER_BRASS, 6, 1)
+	return _ui_kit_box("btn_brass_" + state, fb, 24)
+
+
+## Accent (giant START) button — kit `btn_accent_<state>.png` (144×56 9-slice,
+## margins 24), else flat: red-clay plate + 2px gold rim; hover brighter plate,
+## pressed darker. Label text pairs with UI_ACCENT_TEXT.
+static func ui_button_accent(state: String = "normal") -> StyleBox:
+	var bg := UI_ACCENT_BG
+	match state:
+		"hover":
+			bg = UI_ACCENT_BG_HOVER
+		"pressed":
+			bg = UI_ACCENT_BG_PRESSED
+	return _ui_kit_box("btn_accent_" + state, _base(bg, UI_ACCENT_RIM, 6, 2), 24)
 
 
 ## A 1px-thin horizontal divider line (the v2 chrome's only separator shape).

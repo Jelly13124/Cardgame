@@ -1,10 +1,12 @@
 ## Home base scene — the boot scene + post-run return point.
-## Layout: the 4 building tiles centered in a row, a giant START NEW RUN button
-## bottom-centre with a compact difficulty button (→ picker popup) above it,
-## the global currency bar along the BOTTOM edge, and two image buttons on the
-## right edge (Stash / Character) that open the floating windows; `i` also
-## toggles the character window. The base's actual functions live in the
-## per-building screens (run_system/ui/buildings/).
+## Layout: the 4 building tiles centered in a row, and ONE full-width bottom
+## HUD bar (the CURRENCY_TOP_BAR component) holding everything else — currency
+## chips on the left, the giant START NEW RUN button with the compact
+## difficulty button (→ picker popup) stacked above it in the centre
+## (protruding above the bar top per the approved mockup), and the Stash /
+## Character image buttons on the right; `i` also toggles the character
+## window. The base's actual functions live in the per-building screens
+## (run_system/ui/buildings/).
 extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
@@ -34,7 +36,7 @@ const BUILDING_ACCENTS := {
 }
 const HOME_BACKGROUND_PATH := "res://run_system/assets/images/home/home_base_empty_bg.png"
 const MAP_CANVAS_SIZE := Vector2(1920, 1080)
-## Right-edge Character image button art: the square hero headshot (the same
+## Bottom-bar Character image button art: the square hero headshot (the same
 ## avatar run_top_bar uses), with the character window's portrait as fallback.
 const HERO_HEADSHOT_PATH := "res://battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_headshot.png"
 const HERO_PORTRAIT_PATH := "res://battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_portrait.png"
@@ -110,9 +112,7 @@ func _overlay_blocking() -> bool:
 func _build() -> void:
 	_add_background()
 	_add_building_sprites()
-	_add_depart_controls()
-	_add_side_buttons()
-	_add_currency_bar()
+	_add_bottom_bar()
 
 
 ## Open the How-to-Play panel (loaded at runtime; same pattern as map_scene._open_rules_panel).
@@ -155,14 +155,19 @@ func _add_background() -> void:
 	add_child(shade)
 
 
-## The Core/Caps/Scrap chips live in the global currency bar (a CanvasLayer
-## above the WindowLayer, anchored along the BOTTOM edge). It tracks the
-## currency signals itself; we just host it. The Character entry moved to the
-## right-edge image buttons (_add_side_buttons).
-func _add_currency_bar() -> void:
+## ONE full-width bottom HUD bar (approved mockup): the CURRENCY_TOP_BAR
+## component owns the chrome + the Core/Caps/Scrap chips (left) and exposes
+## center_box / right_box containers; this scene fills them with its own
+## controls — the START + difficulty stack in the centre and the Stash /
+## Character image buttons on the right — so all scene logic stays here.
+## The bar is a CanvasLayer (70), so the difficulty picker popup (150) and
+## the other fullscreen popups still open above it.
+func _add_bottom_bar() -> void:
 	var bar = CURRENCY_TOP_BAR.new()
 	bar.name = "CurrencyBar"
 	add_child(bar)
+	_add_depart_controls(bar.center_box)
+	_add_side_buttons(bar.right_box)
 
 
 func _add_building_sprites() -> void:
@@ -213,42 +218,61 @@ func _add_building_sprites() -> void:
 	_add_building_plaque("outpost", Rect2(1437, 218, 215, 78), tr("UI_BUILD_OUTPOST_NAME"))
 
 
-## Giant centered START button + the compact difficulty button directly above it.
-## The old always-visible difficulty bar row is gone — difficulty now lives in a
+## Giant START button + the compact difficulty button directly above it,
+## stacked into the bottom bar's centre box (difficulty first = on top). The
+## old always-visible difficulty bar row is gone — difficulty now lives in a
 ## modal picker popup (_show_difficulty_popup).
-func _add_depart_controls() -> void:
+func _add_depart_controls(parent: Control) -> void:
+	_add_difficulty_button(parent)
+
 	var button := Button.new()
 	button.name = "StartRunButton"
 	button.text = TranslationServer.translate("UI_HOME_START_RUN")
-	button.add_theme_font_size_override("font_size", 40)
-	T.apply_button_theme(button)
-	button.add_theme_color_override("font_color", Color(1.0, 0.88, 0.50))
-	button.add_theme_color_override("font_hover_color", Color(1.0, 0.96, 0.70))
+	button.custom_minimum_size = Vector2(500, 88)
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	button.add_theme_font_size_override("font_size", 38)
+	T.apply_button_theme(button)  # hover tick + scale-pop juice
+	# Accent restyle over the generic theme: red-clay plate + gold rim (kit
+	# btn_accent_* when delivered), warm cream label in every state.
+	button.add_theme_stylebox_override("normal", T.ui_button_accent("normal"))
+	button.add_theme_stylebox_override("hover", T.ui_button_accent("hover"))
+	button.add_theme_stylebox_override("pressed", T.ui_button_accent("pressed"))
+	button.add_theme_color_override("font_color", T.UI_ACCENT_TEXT)
+	button.add_theme_color_override("font_hover_color", T.UI_ACCENT_TEXT)
+	button.add_theme_color_override("font_pressed_color", T.UI_ACCENT_TEXT)
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(_on_start_pressed)
-	_set_map_rect(button, Rect2(710, 800, 500, 110))
-	add_child(button)
-
-	_add_difficulty_button(Rect2(860, 730, 200, 56))
+	parent.add_child(button)
 
 
 ## Compact difficulty button above START — its label shows the current pick
 ## ("Difficulty A{n}"); clicking opens the modal A0..A5 picker popup.
-func _add_difficulty_button(rect: Rect2) -> void:
+func _add_difficulty_button(parent: Control) -> void:
 	var btn := Button.new()
 	btn.name = "DifficultyButton"
+	btn.custom_minimum_size = Vector2(200, 48)
+	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	btn.add_theme_font_size_override("font_size", 20)
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	T.apply_button_theme(btn)
+	_style_brass_button(btn)
 	btn.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	btn.pressed.connect(_show_difficulty_popup)
-	_set_map_rect(btn, rect)
-	add_child(btn)
+	parent.add_child(btn)
 	_difficulty_button = btn
 	_refresh_difficulty_button()
+
+
+## Brass bar-button restyle over apply_button_theme (keeps its hover juice /
+## font colors, swaps the Kenney texture for the ui_kit brass set or its flat
+## fallback).
+func _style_brass_button(btn: Button) -> void:
+	btn.add_theme_stylebox_override("normal", T.ui_button_brass("normal"))
+	btn.add_theme_stylebox_override("hover", T.ui_button_brass("hover"))
+	btn.add_theme_stylebox_override("pressed", T.ui_button_brass("pressed"))
 
 
 ## The same clamp the old difficulty bar applied on build: pending ascension
@@ -820,22 +844,25 @@ func _open_character_window() -> void:
 	CHARACTER_WINDOW.open_window(self, "base")
 
 
-## Right-edge image buttons (no text): Stash above, Character below. Stacked on
-## the free strip right of the outpost tile (tiles end at x=1725).
-func _add_side_buttons() -> void:
-	_add_stash_side_button(Rect2(1790, 380, 96, 96))
-	_add_character_side_button(Rect2(1790, 490, 96, 96))
+## The two 56×56 image buttons INSIDE the bottom bar's right box (vertically
+## centered): Stash then Character. Same callbacks as the right-edge buttons
+## they replace.
+func _add_side_buttons(parent: Control) -> void:
+	parent.add_child(_make_stash_button())
+	parent.add_child(_make_character_button())
 
 
 ## Stash image button — reuses the removed warehouse building's art; the
 ## _hover/_pressed texture swap IS the highlight. Opens the stash + character
 ## window pair (_open_stash_windows).
-func _add_stash_side_button(rect: Rect2) -> void:
+func _make_stash_button() -> Control:
 	var normal_tex := _load_home_texture(BUILDING_IMAGE_DIR + "warehouse.png")
 	var hover_tex := _load_home_texture(BUILDING_IMAGE_DIR + "warehouse_hover.png")
 	var pressed_tex := _load_home_texture(BUILDING_IMAGE_DIR + "warehouse_pressed.png")
 	var button := TextureButton.new()
 	button.name = "StashSideButton"
+	button.custom_minimum_size = Vector2(56, 56)
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.texture_normal = normal_tex
 	button.texture_hover = hover_tex if hover_tex is Texture2D else normal_tex
 	button.texture_pressed = pressed_tex if pressed_tex is Texture2D else button.texture_hover
@@ -848,19 +875,20 @@ func _add_stash_side_button(rect: Rect2) -> void:
 	button.mouse_entered.connect(func() -> void: AudioManager.play_sfx("ui_hover"))
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(_open_stash_windows)
-	_set_map_rect(button, rect)
-	add_child(button)
+	return button
 
 
 ## Character image button — the square hero headshot (no hover PNG exists, so
 ## the highlight is a modulate brighten) inside a subtle border frame. Toggles
 ## the base-mode character window, same as KEY_I.
-func _add_character_side_button(rect: Rect2) -> void:
+func _make_character_button() -> Control:
 	var tex := _load_home_texture(HERO_HEADSHOT_PATH)
 	if tex == null:
 		tex = _load_home_texture(HERO_PORTRAIT_PATH)
 	var button := TextureButton.new()
 	button.name = "CharacterSideButton"
+	button.custom_minimum_size = Vector2(56, 56)
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.texture_normal = tex
 	button.ignore_texture_size = true
 	button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
@@ -876,8 +904,6 @@ func _add_character_side_button(rect: Rect2) -> void:
 	button.mouse_exited.connect(func() -> void: button.modulate = Color.WHITE)
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(_open_character_window)
-	_set_map_rect(button, rect)
-	add_child(button)
 	# Border-only frame overlay so the square portrait reads as a button.
 	var frame := Panel.new()
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -886,6 +912,7 @@ func _add_character_side_button(rect: Rect2) -> void:
 	frame.add_theme_stylebox_override("panel", sb)
 	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
 	button.add_child(frame)
+	return button
 
 
 ## Stash side button — ENSURE both halves of the storage flow are open side by
