@@ -1,7 +1,30 @@
 # Asset Spec — Windowed-UI kit (16 PNGs, 9-slice panels + buttons + slot frames)
 
 **Owner:** Codex (ADR-0005 — Codex generates all PNGs under
-`run_system/assets/images/**`). **Status:** REQUESTED 2026-07-03.
+`run_system/assets/images/**`). **Status:** REVISION 2 REQUESTED 2026-07-04
+(v1 delivered but REJECTED by the owner as too ornate — parked at
+`run_system/assets/images/ui_kit_ref_v1/` for structure reference only).
+
+## Revision 2 — what was wrong with v1 (read before regenerating)
+
+v1 inverted the game's outline language: it used **bright saturated gold as the
+frame/outline**, so the whole UI reads as gilded fantasy chrome that competes
+with the content. The world art (buildings, heroes) uses **near-black thick
+outlines with muted grey-brown metal bodies** — UI chrome must do the same and
+visually RECEDE. Concrete corrections, applied to every file below:
+
+1. **Outlines** = near-black dark brown (#1a120a-ish), thick, exactly like the
+   building sprites. NEVER gold/brass as the outer contour.
+2. **Plate bodies** = desaturated dark iron-brown (#241a10 → #3a2c1c range),
+   flat cel, worn but muted.
+3. **Brass is a garnish, not a frame**: corner bolts, a single thin inner seam
+   line, small hinge details — at most ~10% of the visible area. No full brass
+   rims.
+4. **Hover/pressed = value shift only** (edges warm up / darken). NO colored
+   stripes (v1's teal/green top bars are gone).
+5. **Accent (START) button**: worn desaturated red-clay (#8f3a28-ish), dark
+   outline, thin muted trim — not glossy red with a gold rim.
+6. Corner radius small (4-6px feel) — chunkier, squarer, more industrial.
 **Consumer:** `run_system/ui/theme/wasteland_theme.gd` — the code ships with
 programmatic StyleBoxFlat fallbacks TODAY; every file below is loaded via
 `ResourceLoader.exists` with warn-only fallback, so delivery is drop-in with
@@ -61,10 +84,11 @@ same silhouette, state changes by value shift only, cel style)
 ## Prompt language anchor (per project-rules.md §5 — do not deviate)
 
 > original Offbeat Adult Sci-Fi Cartoon Wasteland game art, flat 2D adult
-> sci-fi TV-animation look, thick clean dark cartoon outlines, large simple
-> shape blocks, sparse interior lines, broad two-to-three value cel shading,
-> dark riveted scrap-metal UI panel with worn brass trim, transparent
-> background, no text, no watermark
+> sci-fi TV-animation look, thick clean near-black cartoon outlines, large
+> simple shape blocks, sparse interior lines, broad two-to-three value cel
+> shading, muted desaturated dark iron-brown scrap-metal UI panel, tiny worn
+> brass bolt accents only, understated and dark so the UI recedes behind the
+> game content, transparent background, no text, no watermark
 
 ## Verification checklist (Codex, before marking delivered)
 
