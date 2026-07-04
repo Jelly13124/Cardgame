@@ -42,6 +42,23 @@ const TEXT_MAIN = Color("#f0d8a8")  # high-contrast text on dark
 const TEXT_SECONDARY = Color("#b08060")  # dimmer text / subtitle
 const SHADOW_COLOR = Color(0.00, 0.00, 0.00, 0.42)
 
+# ─── Menu-glass surfaces (the ACTIVE windowed-chrome look) ───────────────────
+# Sampled from main_menu.gd's slot cards — the minimal "dark glass" language the
+# owner approved: translucent very-dark warm brown, 1px hairline borders, gold
+# accents, art carries the screen. All ui_* builders below render these.
+const GLASS_BG = Color(0.10, 0.075, 0.04, 0.96)  # panel / button surface
+const GLASS_BG_TITLE = Color(0.13, 0.10, 0.055, 0.96)  # titlebar (a touch lighter)
+const GLASS_BG_HOVER = Color(0.13, 0.098, 0.052, 0.96)  # ≈ surface ×1.3
+const GLASS_BG_PRESSED = Color(0.07, 0.052, 0.028, 0.96)  # ≈ surface ×0.7
+const GLASS_BG_DEEP = Color(0.06, 0.045, 0.025, 0.9)  # inset wells / empty equip slots
+const GLASS_BG_CELL = Color(0.05, 0.038, 0.02, 0.9)  # empty backpack cells
+const GLASS_BG_LOCKED = Color(0.035, 0.028, 0.016, 0.92)  # locked cells (near-black)
+const GLASS_HAIRLINE = Color(0.34, 0.26, 0.15)  # the 1px border everywhere
+const GLASS_HAIRLINE_DIM = Color(0.24, 0.18, 0.10)  # backpack cells / quiet edges
+const GLASS_HAIRLINE_FAINT = Color(0.16, 0.12, 0.07)  # locked-cell border
+const GLASS_GOLD = Color(0.78, 0.56, 0.22)  # accent stripe / hover border
+const GLASS_GOLD_BRIGHT = Color(1.0, 0.81, 0.27)  # headline gold / hot hover
+
 # ─── Windowed-UI v2 chrome (approved character-window mockup palette) ────────
 const UI_WINDOW_BG = Color("#14100a")  # floating-window body
 const UI_TITLEBAR_BG = Color("#221610")  # title-bar strip
@@ -62,10 +79,10 @@ const UI_EMPTY_BORDER = Color("#2e2318")
 const UI_NAMEPLATE_BG = Color("#1b1209")  # hero name plate
 const UI_TOOL_BORDER = Color("#4a3820")  # tool slot ("optional") border
 const UI_BAR_BG = Color("#1a1209")  # bottom HUD bar body
-const UI_ACCENT_BG = Color("#c4462e")  # accent (START) red-clay plate
-const UI_ACCENT_BG_HOVER = Color("#d8543a")
-const UI_ACCENT_BG_PRESSED = Color("#a83a26")
-const UI_ACCENT_RIM = Color("#f0c060")  # accent gold rim
+const UI_ACCENT_BG = Color(0.42, 0.13, 0.08, 0.96)  # accent (START) warm dark-red glass
+const UI_ACCENT_BG_HOVER = Color(0.52, 0.17, 0.10, 0.96)
+const UI_ACCENT_BG_PRESSED = Color(0.30, 0.09, 0.055, 0.96)
+const UI_ACCENT_RIM = GLASS_GOLD  # accent gold rim (1px hairline)
 const UI_ACCENT_TEXT = Color("#ffe8c0")  # accent button label
 
 # ─── Builders ─────────────────────────────────────────────────────────────────
@@ -406,13 +423,18 @@ static func close_x_button() -> Button:
 
 ## ACTIVE skin directory — every kit lookup (ui_kit_tex / _ui_kit_box) resolves
 ## through this one const, so flipping it swaps the ENTIRE windowed-UI skin:
+##   "res://run_system/assets/images/ui_kit_none/"       — DISABLED (dir doesn't
+##       exist): every lookup misses → the programmatic menu-glass fallbacks
+##       below render everywhere. This is the ACTIVE look — the owner rejected
+##       all three texture kits in favor of main_menu's minimal dark glass.
 ##   "res://run_system/assets/images/ui_kit/"            — Codex wasteland kit
 ##   "res://run_system/assets/images/ui_kit_kenney/"     — Kenney CC0 grey-steel kit
 ##   "res://run_system/assets/images/ui_kit_kenney_rpg/" — Kenney CC0 beige/parchment
 ##       kit (UI Pack: RPG Expansion; stretch/tile middle bands are flattened to a
 ##       uniform color at build time, so it is safe under BOTH axis-stretch modes)
-## (Same 16-file contract in every dir; missing files still hit the flat fallbacks.)
-const UI_KIT_DIR := "res://run_system/assets/images/ui_kit_kenney_rpg/"
+## (Same 16-file contract in every kit dir; the three kit dirs stay on disk as
+## comparison history. Missing files always hit the flat fallbacks.)
+const UI_KIT_DIR := "res://run_system/assets/images/ui_kit_none/"
 
 
 ## A ui_kit texture by basename ("icon_lock" → <UI_KIT_DIR>/icon_lock.png), or
@@ -456,24 +478,39 @@ static func _ui_kit_box(
 	return style
 
 
-## Floating-window body chrome (character / stash / forge windows).
+## Floating-window body chrome (character / stash / forge windows) — menu glass:
+## translucent dark surface + 1px hairline, radius 7; a soft drop shadow keeps
+## the floating window separated from the scene beneath (depth, not ornament).
 static func ui_panel() -> StyleBox:
-	return _ui_kit_box("panel_window", panel_with_shadow(UI_WINDOW_BG, UI_BORDER_BRASS, 6, 2), 48)
+	var fb := _base(GLASS_BG, GLASS_HAIRLINE, 7, 1)
+	fb.shadow_color = SHADOW_COLOR
+	fb.shadow_size = 10
+	fb.shadow_offset = Vector2(0, 4)
+	return _ui_kit_box("panel_window", fb, 48)
 
 
-## Floating-window title-bar strip. Deliberately NOT tile_h: the titlebar
-## art's middle strip has a hard left↔right wrap discontinuity (measured seam
-## Δ≈12 mean / 104 peak vs ≈3 adjacent baseline), so tiling would draw visible
-## seam lines; windows top out at ~700px wide, so the stretch stays mild.
+## Floating-window title-bar strip — slightly lighter glass with the menu's 3px
+## gold LEFT accent stripe + a 1px bottom hairline separating it from the body.
+## (Deliberately NOT tile_h: the kit titlebar art's middle strip has a hard
+## left↔right wrap discontinuity — irrelevant while the kit is disabled, kept
+## for a future kit re-enable.)
 static func ui_titlebar() -> StyleBox:
-	return _ui_kit_box(
-		"panel_window_titlebar", panel_flat(UI_TITLEBAR_BG, UI_BORDER_BRASS, 4, 1), 48, 16
-	)
+	var fb := StyleBoxFlat.new()
+	fb.bg_color = GLASS_BG_TITLE
+	fb.border_color = GLASS_GOLD
+	fb.border_width_left = 3
+	fb.border_width_bottom = 1
+	fb.corner_radius_top_left = 7
+	fb.corner_radius_top_right = 7
+	fb.content_margin_left = 12.0
+	fb.content_margin_right = 8.0
+	return _ui_kit_box("panel_window_titlebar", fb, 48, 16)
 
 
-## Recessed inner well (paper-doll spotlight / inset sections).
+## Recessed inner well (paper-doll spotlight / inset sections) — darker glass +
+## hairline, radius 5.
 static func ui_inset_panel() -> StyleBox:
-	return _ui_kit_box("panel_inset", panel_flat(UI_INSET_BG, UI_INSET_BORDER, 6, 1), 48)
+	return _ui_kit_box("panel_inset", _base(GLASS_BG_DEEP, GLASS_HAIRLINE, 5, 1), 48)
 
 
 ## Slot / backpack-cell box for the v2 window chrome. States:
@@ -505,25 +542,27 @@ static func ui_slot_box(
 	var fb: StyleBoxFlat
 	match state:
 		"locked":
-			fb = _base(UI_LOCKED_BG, UI_LOCKED_BORDER, 6, 2)
+			fb = _base(GLASS_BG_LOCKED, GLASS_HAIRLINE_FAINT, 5, 1)
 		"cell_empty":
-			fb = _base(UI_EMPTY_BG, UI_EMPTY_BORDER, 6, 2)
+			fb = _base(GLASS_BG_CELL, GLASS_HAIRLINE_DIM, 5, 1)
 		"hover":
-			fb = _base(UI_INSET_BG, UI_BRASS_LIGHT, 6, 2)
+			fb = _base(GLASS_BG_HOVER, GLASS_GOLD, 5, 1)
 		"filled":
-			fb = _base(UI_NAMEPLATE_BG, UI_BRASS_LIGHT, 6, 2)
+			# 2px stays HERE ONLY: the border carries the rarity color (info,
+			# not ornament) and needs the weight to read at 56-76px cell sizes.
+			fb = _base(GLASS_BG, UI_BRASS_LIGHT, 5, 2)
 		"tool":
-			fb = _base(UI_EMPTY_BG, UI_TOOL_BORDER, 6, 2)
+			fb = _base(GLASS_BG_CELL, UI_TOOL_BORDER, 5, 1)
 		_:
-			fb = _base(UI_INSET_BG, UI_SLOT_BORDER, 6, 2)
+			fb = _base(GLASS_BG_DEEP, GLASS_HAIRLINE, 5, 1)
 	if border_override.a > 0.0:
 		fb.border_color = border_override
 	return fb
 
 
-## The hero-switcher name plate (and other small brass-rimmed plates).
+## The hero-switcher name plate (and other small hairline plates) — glass.
 static func ui_nameplate_box() -> StyleBoxFlat:
-	var style := _base(UI_NAMEPLATE_BG, UI_BORDER_BRASS, 4, 1)
+	var style := _base(GLASS_BG, GLASS_HAIRLINE, 5, 1)
 	style.content_margin_left = 10.0
 	style.content_margin_right = 10.0
 	style.content_margin_top = 3.0
@@ -544,50 +583,55 @@ static func ui_header_label(text: String, size: int = 14) -> Label:
 	return l
 
 
-## The home-base bottom HUD bar body — kit `panel_bottom_bar.png` (delivered
-## at 345×142, 9-slice margins 64/24), else a flat dark strip whose only drawn
-## border is a 2px brass TOP edge (the other three sides sit on the screen
-## edge, so they stay width 0). The middle column TILES horizontally instead
-## of stretching — 345→1920 smeared the baked rivets/seams; the strip's wrap
-## edges match (measured seam Δ≈4 vs ≈3 adjacent-column baseline), so tiling
-## repeats the pattern cleanly. Vertical stays a plain stretch.
+## The home-base bottom HUD bar body — one quiet glass strip: translucent dark
+## surface whose only drawn border is a 1px hairline TOP edge (the other three
+## sides sit on the screen edge, so they stay width 0). Kit hook kept for a
+## future re-enable (`panel_bottom_bar.png`, tile_h — see git history for the
+## seam measurements).
 static func ui_bottom_bar() -> StyleBox:
 	var fb := StyleBoxFlat.new()
-	fb.bg_color = UI_BAR_BG
-	fb.border_color = UI_BORDER_BRASS
-	fb.border_width_top = 2
+	fb.bg_color = GLASS_BG
+	fb.border_color = GLASS_HAIRLINE
+	fb.border_width_top = 1
 	return _ui_kit_box("panel_bottom_bar", fb, 64, 24, true)
 
 
-## Brass default bar-button — kit `btn_brass_<state>.png` (144×56 9-slice,
-## margins 24), else flat: dark plate + 1px brass border; hover brightens the
-## border, pressed darkens the plate. state: "normal" / "hover" / "pressed".
+## Default bar-button — menu glass: dark translucent surface + 1px hairline;
+## hover turns the border gold and lightens the surface a touch, pressed
+## darkens it, disabled goes darker with a faint hairline.
+## state: "normal" / "hover" / "pressed" / "disabled".
 static func ui_button_brass(state: String = "normal") -> StyleBox:
 	var fb: StyleBoxFlat
 	match state:
 		"hover":
-			fb = _base(UI_NAMEPLATE_BG, UI_BRASS_LIGHT, 6, 1)
+			fb = _base(GLASS_BG_HOVER, GLASS_GOLD, 7, 1)
 		"pressed":
-			fb = _base(UI_INSET_BG, UI_BORDER_BRASS, 6, 1)
+			fb = _base(GLASS_BG_PRESSED, GLASS_HAIRLINE, 7, 1)
+		"disabled":
+			fb = _base(GLASS_BG_PRESSED, GLASS_HAIRLINE_FAINT, 7, 1)
 		_:
-			fb = _base(UI_NAMEPLATE_BG, UI_BORDER_BRASS, 6, 1)
+			fb = _base(GLASS_BG, GLASS_HAIRLINE, 7, 1)
+	fb.content_margin_left = 16.0
+	fb.content_margin_right = 16.0
+	fb.content_margin_top = 10.0
+	fb.content_margin_bottom = 10.0
 	return _ui_kit_box("btn_brass_" + state, fb, 24)
 
 
-## Accent (giant START) button — kit `btn_accent_<state>.png` (delivered at
-## 273×128, 9-slice margins 24 h / 20 v — the shallower vertical margins leave
-## more of the plate in the scalable middle row, so drawing the 128px-tall art
-## at the ~96px button height compresses it less), else flat: red-clay plate +
-## 2px gold rim; hover brighter plate, pressed darker. Label text pairs with
-## UI_ACCENT_TEXT.
+## Accent (giant START) button — the same glass language but the surface is a
+## warm dark red with a 1px gold rim, so it reads as THE primary action without
+## turning candy. Hover brightens both surface and rim; pressed darkens. Label
+## text pairs with UI_ACCENT_TEXT (cream).
 static func ui_button_accent(state: String = "normal") -> StyleBox:
 	var bg := UI_ACCENT_BG
+	var rim := UI_ACCENT_RIM
 	match state:
 		"hover":
 			bg = UI_ACCENT_BG_HOVER
+			rim = GLASS_GOLD_BRIGHT
 		"pressed":
 			bg = UI_ACCENT_BG_PRESSED
-	return _ui_kit_box("btn_accent_" + state, _base(bg, UI_ACCENT_RIM, 6, 2), 24, 20)
+	return _ui_kit_box("btn_accent_" + state, _base(bg, rim, 7, 1), 24, 20)
 
 
 ## A 1px-thin horizontal divider line (the v2 chrome's only separator shape).
@@ -595,7 +639,7 @@ static func ui_divider() -> Control:
 	var line := Panel.new()
 	line.custom_minimum_size = Vector2(0, 1)
 	var style := StyleBoxFlat.new()
-	style.bg_color = UI_INSET_BORDER
+	style.bg_color = GLASS_HAIRLINE_DIM
 	line.add_theme_stylebox_override("panel", style)
 	return line
 

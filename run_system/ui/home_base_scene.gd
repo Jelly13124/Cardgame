@@ -289,13 +289,14 @@ func _add_difficulty_button(parent: Control) -> void:
 	_refresh_difficulty_button()
 
 
-## Brass bar-button restyle over apply_button_theme (keeps its hover juice /
-## font colors, swaps the Kenney texture for the ui_kit brass set or its flat
-## fallback).
+## Glass bar-button restyle over apply_button_theme (keeps its hover juice /
+## font colors, swaps the Kenney texture for the theme's menu-glass styles —
+## incl. the disabled state, which otherwise falls back to the engine grey).
 func _style_brass_button(btn: Button) -> void:
 	btn.add_theme_stylebox_override("normal", T.ui_button_brass("normal"))
 	btn.add_theme_stylebox_override("hover", T.ui_button_brass("hover"))
 	btn.add_theme_stylebox_override("pressed", T.ui_button_brass("pressed"))
+	btn.add_theme_stylebox_override("disabled", T.ui_button_brass("disabled"))
 
 
 ## The same clamp the old difficulty bar applied on build: pending ascension
@@ -599,6 +600,7 @@ func _add_tier_button(building_id: String, plaque_rect: Rect2) -> void:
 	btn.add_theme_font_size_override("font_size", 17)
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	T.apply_button_theme(btn)
+	_style_brass_button(btn)  # glass chip (the Kenney texture read muddy over the sky)
 	btn.text = ("解锁" if zh else "Unlock") if tier <= 0 else ("升级" if zh else "Upgrade")
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	btn.disabled = cost < 0 or MetaProgress.core < cost

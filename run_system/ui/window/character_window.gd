@@ -235,10 +235,11 @@ func _build_d4_middle_base() -> Control:
 	inner.add_theme_constant_override("separation", 8)
 	inner.alignment = BoxContainer.ALIGNMENT_CENTER
 	pad.add_child(inner)
-	var hero_data := _load_hero(str(RunManager.current_hero_id))
-	var tex := _load_portrait(str(hero_data.get("sprite_id", RunManager.current_hero_id)))
+	var hero_id := _effective_hero_id()
+	var hero_data := _load_hero(hero_id)
+	var tex := _load_portrait(str(hero_data.get("sprite_id", hero_id)))
 	inner.add_child(_make_doll_stack(tex, _parse_tint(str(hero_data.get("tint", "#ffffff")))))
-	inner.add_child(_build_hero_switcher(hero_data))
+	inner.add_child(_build_hero_switcher(hero_id, hero_data))
 	inner.add_child(_make_stat_line(hero_data.get("starting_attributes", {})))
 	row.add_child(frame)
 
@@ -261,10 +262,27 @@ func _build_d4_middle_base() -> Control:
 # --- base mode: hero switcher -------------------------------------------------
 
 
+## The hero the base-mode doll/nameplate should show. Pre-run, NOTHING has set
+## RunManager.current_hero_id yet (only start_new_run / load_run write it), so
+## a bare read renders an empty id ("HERO__NAME" nameplate + blank doll).
+## Resolution order: current_hero_id (in/after a run) → pending_hero_id (a
+## base-mode switcher pick) → the first roster entry (fresh save default).
+func _effective_hero_id() -> String:
+	var id := str(RunManager.current_hero_id)
+	if id == "":
+		id = str(RunManager.pending_hero_id)
+	if id == "":
+		var roster := _hero_roster()
+		if not roster.is_empty():
+			id = roster[0]
+	return id
+
+
 ## ‹ name › switcher under the paper-doll: cycles the demo-filtered roster with
 ## wraparound (the deleted picker strip's selection rule). Arrows hide when only
-## one hero exists — the plate stands alone.
-func _build_hero_switcher(hero_data: Dictionary) -> Control:
+## one hero exists — the plate stands alone. `hero_id` is the RESOLVED id from
+## _effective_hero_id() (never ""), `hero_data` its loaded JSON.
+func _build_hero_switcher(hero_id: String, hero_data: Dictionary) -> Control:
 	var row := HBoxContainer.new()
 	row.name = "HeroSwitcher"
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -275,9 +293,10 @@ func _build_hero_switcher(hero_data: Dictionary) -> Control:
 	var plate := PanelContainer.new()
 	plate.custom_minimum_size = Vector2(90, 26)
 	plate.add_theme_stylebox_override("panel", T.ui_nameplate_box())
-	var hero_id := str(RunManager.current_hero_id)
 	var name_lbl := Label.new()
-	name_lbl.text = Settings.t("HERO_%s_NAME" % hero_id, str(hero_data.get("name", hero_id)))
+	name_lbl.text = Settings.t(
+		"HERO_%s_NAME" % hero_id, str(hero_data.get("name", hero_data.get("title", hero_id)))
+	)
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.add_theme_font_size_override("font_size", 13)
 	name_lbl.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
@@ -302,11 +321,9 @@ func _make_hero_arrow(glyph: String, kit_icon: String, step: int) -> Button:
 		b.text = glyph
 		b.add_theme_font_size_override("font_size", 16)
 		b.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
-	var normal := T.rounded_button(T.UI_NAMEPLATE_BG, T.UI_BORDER_BRASS, 4, 1)
+	var normal := T.rounded_button(T.GLASS_BG, T.GLASS_HAIRLINE, 5, 1)
 	b.add_theme_stylebox_override("normal", normal)
-	b.add_theme_stylebox_override(
-		"hover", T.rounded_button(T.UI_NAMEPLATE_BG, T.UI_BRASS_LIGHT, 4, 1)
-	)
+	b.add_theme_stylebox_override("hover", T.rounded_button(T.GLASS_BG_HOVER, T.GLASS_GOLD, 5, 1))
 	b.add_theme_stylebox_override("pressed", normal)
 	b.pressed.connect(_cycle_hero.bind(step))
 	return b
@@ -331,7 +348,7 @@ func _cycle_hero(step: int) -> void:
 	var roster := _hero_roster()
 	if roster.size() <= 1:
 		return
-	var idx := maxi(roster.find(str(RunManager.current_hero_id)), 0)
+	var idx := maxi(roster.find(_effective_hero_id()), 0)
 	var picked := roster[(idx + step + roster.size()) % roster.size()]
 	RunManager.pending_hero_id = picked
 	RunManager.current_hero_id = picked
