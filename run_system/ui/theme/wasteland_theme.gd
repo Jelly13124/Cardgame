@@ -420,9 +420,16 @@ static func ui_kit_tex(kit_name: String) -> Texture2D:
 
 ## StyleBoxTexture over a ui_kit 9-slice PNG, or `fallback` while the kit is
 ## undelivered. margin_h / margin_v are the 9-slice texture margins from the
-## asset spec (margin_v = -1 mirrors margin_h).
+## asset spec (margin_v = -1 mirrors margin_h). `tile_h` switches the middle
+## column from STRETCH to TILE — for targets much wider than the source art
+## (the full-width bottom bar), where stretching smears the baked detail.
+## Only pass tile_h for art whose middle strip actually wraps cleanly.
 static func _ui_kit_box(
-	kit_name: String, fallback: StyleBoxFlat, margin_h: int = 0, margin_v: int = -1
+	kit_name: String,
+	fallback: StyleBoxFlat,
+	margin_h: int = 0,
+	margin_v: int = -1,
+	tile_h: bool = false
 ) -> StyleBox:
 	var tex := ui_kit_tex(kit_name)
 	if tex == null:
@@ -435,6 +442,8 @@ static func _ui_kit_box(
 	style.texture_margin_right = margin_h
 	style.texture_margin_top = margin_v
 	style.texture_margin_bottom = margin_v
+	if tile_h:
+		style.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
 	return style
 
 
@@ -443,7 +452,10 @@ static func ui_panel() -> StyleBox:
 	return _ui_kit_box("panel_window", panel_with_shadow(UI_WINDOW_BG, UI_BORDER_BRASS, 6, 2), 48)
 
 
-## Floating-window title-bar strip.
+## Floating-window title-bar strip. Deliberately NOT tile_h: the titlebar
+## art's middle strip has a hard left↔right wrap discontinuity (measured seam
+## Δ≈12 mean / 104 peak vs ≈3 adjacent baseline), so tiling would draw visible
+## seam lines; windows top out at ~700px wide, so the stretch stays mild.
 static func ui_titlebar() -> StyleBox:
 	return _ui_kit_box(
 		"panel_window_titlebar", panel_flat(UI_TITLEBAR_BG, UI_BORDER_BRASS, 4, 1), 48, 16
@@ -523,16 +535,19 @@ static func ui_header_label(text: String, size: int = 14) -> Label:
 	return l
 
 
-## The home-base bottom HUD bar body — kit `panel_bottom_bar.png` (384×96
-## horizontal 9-slice, margins 64/24 per docs/asset-spec-ui-kit.md), else a
-## flat dark strip whose only drawn border is a 2px brass TOP edge (the other
-## three sides sit on the screen edge, so they stay width 0).
+## The home-base bottom HUD bar body — kit `panel_bottom_bar.png` (delivered
+## at 345×142, 9-slice margins 64/24), else a flat dark strip whose only drawn
+## border is a 2px brass TOP edge (the other three sides sit on the screen
+## edge, so they stay width 0). The middle column TILES horizontally instead
+## of stretching — 345→1920 smeared the baked rivets/seams; the strip's wrap
+## edges match (measured seam Δ≈4 vs ≈3 adjacent-column baseline), so tiling
+## repeats the pattern cleanly. Vertical stays a plain stretch.
 static func ui_bottom_bar() -> StyleBox:
 	var fb := StyleBoxFlat.new()
 	fb.bg_color = UI_BAR_BG
 	fb.border_color = UI_BORDER_BRASS
 	fb.border_width_top = 2
-	return _ui_kit_box("panel_bottom_bar", fb, 64, 24)
+	return _ui_kit_box("panel_bottom_bar", fb, 64, 24, true)
 
 
 ## Brass default bar-button — kit `btn_brass_<state>.png` (144×56 9-slice,
@@ -550,9 +565,12 @@ static func ui_button_brass(state: String = "normal") -> StyleBox:
 	return _ui_kit_box("btn_brass_" + state, fb, 24)
 
 
-## Accent (giant START) button — kit `btn_accent_<state>.png` (144×56 9-slice,
-## margins 24), else flat: red-clay plate + 2px gold rim; hover brighter plate,
-## pressed darker. Label text pairs with UI_ACCENT_TEXT.
+## Accent (giant START) button — kit `btn_accent_<state>.png` (delivered at
+## 273×128, 9-slice margins 24 h / 20 v — the shallower vertical margins leave
+## more of the plate in the scalable middle row, so drawing the 128px-tall art
+## at the ~96px button height compresses it less), else flat: red-clay plate +
+## 2px gold rim; hover brighter plate, pressed darker. Label text pairs with
+## UI_ACCENT_TEXT.
 static func ui_button_accent(state: String = "normal") -> StyleBox:
 	var bg := UI_ACCENT_BG
 	match state:
@@ -560,7 +578,7 @@ static func ui_button_accent(state: String = "normal") -> StyleBox:
 			bg = UI_ACCENT_BG_HOVER
 		"pressed":
 			bg = UI_ACCENT_BG_PRESSED
-	return _ui_kit_box("btn_accent_" + state, _base(bg, UI_ACCENT_RIM, 6, 2), 24)
+	return _ui_kit_box("btn_accent_" + state, _base(bg, UI_ACCENT_RIM, 6, 2), 24, 20)
 
 
 ## A 1px-thin horizontal divider line (the v2 chrome's only separator shape).

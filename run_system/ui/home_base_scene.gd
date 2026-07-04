@@ -36,6 +36,14 @@ const BUILDING_ACCENTS := {
 }
 const HOME_BACKGROUND_PATH := "res://run_system/assets/images/home/home_base_empty_bg.png"
 const MAP_CANVAS_SIZE := Vector2(1920, 1080)
+## Grayscale-darken shader for LOCKED building buttons (replaces the old
+## too-subtle modulate 0.75 dim). Applied as the button's material only — the
+## brass lock overlay is a SIBLING TextureRect, so it stays full-color.
+const LOCKED_DESAT_SHADER = preload("res://run_system/ui/theme/locked_desat.gdshader")
+## Common visual ground line: every building's opaque art bottom sits this many
+## px above its tile's bottom edge (the PNGs carry uneven transparent padding,
+## so identical tile rects would otherwise render art at uneven baselines).
+const GROUND_INSET := 12.0
 ## Bottom-bar Character image button art: the square hero headshot (the same
 ## avatar run_top_bar uses), with the character window's portrait as fallback.
 const HERO_HEADSHOT_PATH := "res://battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_headshot.png"
@@ -51,6 +59,12 @@ var _building_area: HBoxContainer
 ## Container holding the interactive building sprites + plaques (lock / tier badges).
 ## Freed + rebuilt on buildings_changed so unlock / tier-up repaints live.
 var _buildings_root: Control
+## Per-building art-alignment offset (asset_id → Vector2), computed once from
+## the normal texture's opaque bbox so buildings_changed rebuilds don't
+## re-decode the PNGs every time.
+var _art_offset_cache: Dictionary = {}
+## Shared ShaderMaterial for locked building buttons (lazy; see LOCKED_DESAT_SHADER).
+var _locked_material: ShaderMaterial = null
 
 
 func _ready() -> void:
@@ -228,7 +242,11 @@ func _add_depart_controls(parent: Control) -> void:
 	var button := Button.new()
 	button.name = "StartRunButton"
 	button.text = TranslationServer.translate("UI_HOME_START_RUN")
-	button.custom_minimum_size = Vector2(500, 88)
+	# 500×96 (was ×88): the accent plate art is 128px tall, and together with the
+	# shallower 20px vertical 9-slice margins the taller button keeps the baked
+	# plate from reading vertically squashed. Composition is unchanged — bottom
+	# stays 10px above the screen edge, difficulty pill 6px above the button.
+	button.custom_minimum_size = Vector2(500, 96)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.add_theme_font_size_override("font_size", 38)
 	T.apply_button_theme(button)  # hover tick + scale-pop juice
@@ -426,7 +444,14 @@ func _add_interactive_building(
 	button.tooltip_text = tooltip
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	_set_map_rect(button, rect)
+	# Each building PNG carries different transparent padding, so identical tile
+	# rects would render the art at uneven baselines / off-centre. Shift the whole
+	# button (art + click mask move together) so the opaque art's horizontal
+	# centre sits on the tile centre and its bottom sits on the shared ground
+	# line (tile bottom − GROUND_INSET). Hover/pressed variants share the normal
+	# texture's canvas dimensions, so one offset aligns all three states.
+	var art_offset := _building_art_offset(asset_id, normal_tex, rect.size)
+	_set_map_rect(button, Rect2(rect.position + art_offset, rect.size))
 	# The building sprites already swap to a hover texture, but were silent — add the
 	# hover tick + click so the boot screen feels responsive (sound connected before
 	# the callback so it still fires when the callback opens a building overlay).
@@ -434,11 +459,14 @@ func _add_interactive_building(
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(callback)
 	_buildings_root.add_child(button)
-	# Locked buildings (not yet unlocked with Core) render slightly dimmed with a
-	# lock badge so it reads at a glance which ones aren't available. Still
-	# clickable — clicking routes to the unlock confirm.
+	# Locked buildings (not yet unlocked with Core) render grey-dark via the
+	# desaturation shader (material on the button node only — the lock overlay
+	# below is a sibling, so it keeps its brass color) with a lock badge so it
+	# reads at a glance which ones aren't available. Still clickable — clicking
+	# routes to the unlock confirm. Unlocked buttons keep material = null (every
+	# rebuild creates fresh buttons, so no stale material survives an unlock).
 	if MetaProgress.get_building_tier(asset_id) <= 0:
-		button.modulate = Color(0.75, 0.75, 0.75)
+		button.material = _get_locked_material()
 		var lock_tex := T.ui_kit_tex("icon_lock")
 		if lock_tex != null:
 			# Kit brass padlock (156×208 source — not square, so IGNORE_SIZE +
@@ -463,6 +491,45 @@ func _add_interactive_building(
 			lock_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			_set_map_rect(lock_lbl, rect)
 			_buildings_root.add_child(lock_lbl)
+
+
+## Alignment offset for a building's art inside its tile (cached per building —
+## see _add_interactive_building). STRETCH_KEEP_ASPECT_CENTERED math: the full
+## texture fits the tile at a uniform scale, centered; the opaque used-rect is
+## then located inside that drawn frame and the delta to "used-rect centre-x on
+## tile centre-x, used-rect bottom on tile bottom − GROUND_INSET" is returned.
+func _building_art_offset(asset_id: String, tex: Texture2D, tile_size: Vector2) -> Vector2:
+	if _art_offset_cache.has(asset_id):
+		return _art_offset_cache[asset_id]
+	var offset := Vector2.ZERO
+	if tex != null:
+		var img := tex.get_image()
+		if img != null:
+			if img.is_compressed():
+				img.decompress()
+			var used := img.get_used_rect()
+			if used.size.x > 0 and used.size.y > 0:
+				var tex_size := Vector2(img.get_width(), img.get_height())
+				var s: float = minf(tile_size.x / tex_size.x, tile_size.y / tex_size.y)
+				var drawn_origin := (tile_size - tex_size * s) * 0.5
+				var art_center_x := (
+					drawn_origin.x + (float(used.position.x) + used.size.x * 0.5) * s
+				)
+				var art_bottom_y := drawn_origin.y + float(used.position.y + used.size.y) * s
+				offset = Vector2(
+					tile_size.x * 0.5 - art_center_x, (tile_size.y - GROUND_INSET) - art_bottom_y
+				)
+	_art_offset_cache[asset_id] = offset
+	return offset
+
+
+## Shared grayscale-darken material for locked building buttons (lazy — built
+## once, reused across rebuilds; the shader's uniform defaults are the tuning).
+func _get_locked_material() -> ShaderMaterial:
+	if _locked_material == null:
+		_locked_material = ShaderMaterial.new()
+		_locked_material.shader = LOCKED_DESAT_SHADER
+	return _locked_material
 
 
 func _make_click_mask(texture: Texture2D) -> BitMap:
