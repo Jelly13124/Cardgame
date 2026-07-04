@@ -25,6 +25,22 @@ visually RECEDE. Concrete corrections, applied to every file below:
 5. **Accent (START) button**: worn desaturated red-clay (#8f3a28-ish), dark
    outline, thin muted trim — not glossy red with a gold rim.
 6. Corner radius small (4-6px feel) — chunkier, squarer, more industrial.
+
+### Mandatory workflow for rev2 (both are hard requirements)
+
+- **Style anchors — match these exact files, same world, same hand:** open and
+  visually match `run_system/assets/images/home/buildings_runtime/clinic.png`,
+  `forge.png`, `outpost.png` and `run_system/assets/images/home/home_base_bg.png`
+  (outline weight, value range, wear language). The UI must look like it was
+  cut from the same sheet as these buildings. v1 (parked at
+  `run_system/assets/images/ui_kit_ref_v1/`) shows correct STRUCTURE/layout per
+  file — copy its shapes, replace its palette/outline language entirely.
+- **Contact-sheet approval gate:** before writing anything into
+  `run_system/assets/images/ui_kit/`, deliver a single preview contact sheet
+  (all 16 pieces on one image, on a dark bg swatch AND overlaid on a crop of
+  the home-base screenshot) to `docs/art/previews/` and STOP for owner
+  approval. Only after the owner approves does the kit land in `ui_kit/`
+  (which auto-activates in-game).
 **Consumer:** `run_system/ui/theme/wasteland_theme.gd` — the code ships with
 programmatic StyleBoxFlat fallbacks TODAY; every file below is loaded via
 `ResourceLoader.exists` with warn-only fallback, so delivery is drop-in with
