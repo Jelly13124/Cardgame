@@ -406,10 +406,13 @@ static func close_x_button() -> Button:
 
 ## ACTIVE skin directory — every kit lookup (ui_kit_tex / _ui_kit_box) resolves
 ## through this one const, so flipping it swaps the ENTIRE windowed-UI skin:
-##   "res://run_system/assets/images/ui_kit/"        — Codex wasteland kit
-##   "res://run_system/assets/images/ui_kit_kenney/" — Kenney CC0 comparison kit
-## (Same 16-file contract in both dirs; missing files still hit the flat fallbacks.)
-const UI_KIT_DIR := "res://run_system/assets/images/ui_kit_kenney/"
+##   "res://run_system/assets/images/ui_kit/"            — Codex wasteland kit
+##   "res://run_system/assets/images/ui_kit_kenney/"     — Kenney CC0 grey-steel kit
+##   "res://run_system/assets/images/ui_kit_kenney_rpg/" — Kenney CC0 beige/parchment
+##       kit (UI Pack: RPG Expansion; stretch/tile middle bands are flattened to a
+##       uniform color at build time, so it is safe under BOTH axis-stretch modes)
+## (Same 16-file contract in every dir; missing files still hit the flat fallbacks.)
+const UI_KIT_DIR := "res://run_system/assets/images/ui_kit_kenney_rpg/"
 
 
 ## A ui_kit texture by basename ("icon_lock" → <UI_KIT_DIR>/icon_lock.png), or
