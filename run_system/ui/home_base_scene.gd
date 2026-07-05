@@ -971,13 +971,18 @@ func _add_side_buttons(parent: Control) -> void:
 	parent.add_child(_make_character_button())
 
 
-## Stash image button — reuses the removed warehouse building's art; the
-## _hover/_pressed texture swap IS the highlight. Opens the stash + character
-## window pair (_open_stash_windows).
+## Stash image button — dedicated kit art (btn_stash_*, ui-kit V4/v7); falls
+## back to the removed warehouse building's sprite if the kit files are absent.
+## The _hover/_pressed texture swap IS the highlight. Opens the stash +
+## character window pair (_open_stash_windows).
 func _make_stash_button() -> Control:
-	var normal_tex := _load_home_texture(BUILDING_IMAGE_DIR + "warehouse.png")
-	var hover_tex := _load_home_texture(BUILDING_IMAGE_DIR + "warehouse_hover.png")
-	var pressed_tex := _load_home_texture(BUILDING_IMAGE_DIR + "warehouse_pressed.png")
+	var normal_tex := T.ui_kit_tex("btn_stash_normal")
+	var hover_tex := T.ui_kit_tex("btn_stash_hover")
+	var pressed_tex := T.ui_kit_tex("btn_stash_pressed")
+	if normal_tex == null:
+		normal_tex = _load_home_texture(BUILDING_IMAGE_DIR + "warehouse.png")
+		hover_tex = _load_home_texture(BUILDING_IMAGE_DIR + "warehouse_hover.png")
+		pressed_tex = _load_home_texture(BUILDING_IMAGE_DIR + "warehouse_pressed.png")
 	var button := TextureButton.new()
 	button.name = "StashSideButton"
 	button.custom_minimum_size = Vector2(56, 56)
@@ -997,18 +1002,27 @@ func _make_stash_button() -> Control:
 	return button
 
 
-## Character image button — the square hero headshot (no hover PNG exists, so
-## the highlight is a modulate brighten) inside a subtle border frame. Toggles
-## the base-mode character window, same as KEY_I.
+## Character image button — dedicated kit art (btn_char_*, ui-kit V4/v7) with
+## real hover/pressed states; falls back to the hero headshot + modulate
+## brighten + border frame when the kit files are absent. Toggles the
+## base-mode character window, same as KEY_I.
 func _make_character_button() -> Control:
-	var tex := _load_home_texture(HERO_HEADSHOT_PATH)
-	if tex == null:
-		tex = _load_home_texture(HERO_PORTRAIT_PATH)
+	var normal_tex := T.ui_kit_tex("btn_char_normal")
+	var hover_tex := T.ui_kit_tex("btn_char_hover")
+	var pressed_tex := T.ui_kit_tex("btn_char_pressed")
+	var kit_mode := normal_tex != null
+	if not kit_mode:
+		normal_tex = _load_home_texture(HERO_HEADSHOT_PATH)
+		if normal_tex == null:
+			normal_tex = _load_home_texture(HERO_PORTRAIT_PATH)
 	var button := TextureButton.new()
 	button.name = "CharacterSideButton"
 	button.custom_minimum_size = Vector2(56, 56)
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	button.texture_normal = tex
+	button.texture_normal = normal_tex
+	if kit_mode:
+		button.texture_hover = hover_tex if hover_tex is Texture2D else normal_tex
+		button.texture_pressed = pressed_tex if pressed_tex is Texture2D else button.texture_hover
 	button.ignore_texture_size = true
 	button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
@@ -1018,19 +1032,21 @@ func _make_character_button() -> Control:
 	button.mouse_entered.connect(
 		func() -> void:
 			AudioManager.play_sfx("ui_hover")
-			button.modulate = Color(1.18, 1.18, 1.18)
+			if not kit_mode:
+				button.modulate = Color(1.18, 1.18, 1.18)
 	)
 	button.mouse_exited.connect(func() -> void: button.modulate = Color.WHITE)
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(_open_character_window)
-	# Border-only frame overlay so the square portrait reads as a button.
-	var frame := Panel.new()
-	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var sb := T.rounded_button(Color(0, 0, 0, 0), Color(0.62, 0.48, 0.28, 0.9), 6, 2)
-	sb.draw_center = false
-	frame.add_theme_stylebox_override("panel", sb)
-	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
-	button.add_child(frame)
+	if not kit_mode:
+		# Border-only frame overlay so the square portrait reads as a button.
+		var frame := Panel.new()
+		frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var sb := T.rounded_button(Color(0, 0, 0, 0), Color(0.62, 0.48, 0.28, 0.9), 6, 2)
+		sb.draw_center = false
+		frame.add_theme_stylebox_override("panel", sb)
+		frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+		button.add_child(frame)
 	return button
 
 
