@@ -1,47 +1,44 @@
 # Asset Spec — Windowed-UI kit
 
-**Owner:** Codex (ADR-0005). **Status: V3 (2026-07-04) — CHROME RETIRED, GLYPHS ONLY.**
+**Owner:** Codex (ADR-0005). **Status: V4 (2026-07-04) — FULL KIT REGEN (rev3), rev2 direction locked, density DOWN.**
 
-## V3 — read this, ignore the chrome sections below
+## V4 — the current ask (supersedes V3; read this, then the style sections below)
 
-After in-game comparison of THREE texture kits (Codex rev2 riveted, Kenney
-grey-steel, Kenney beige — parked at `ui_kit/`, `ui_kit_kenney/`,
-`ui_kit_kenney_rpg/`), the owner chose the MAIN MENU's minimal language
-instead: translucent dark-glass panels + 1px hairline borders, implemented
-programmatically in `wasteland_theme.gd`. **No 9-slice chrome art is needed
-anymore — do NOT regenerate panels/buttons/slots.** The rev1/rev2 sections
-below stay only as history.
+The owner compared four looks in-game (Codex rev2 riveted / Kenney grey /
+Kenney beige / programmatic dark-glass) and picked **the Codex direction —
+but wants the assets regenerated**. rev2's palette + outline language was
+RIGHT (near-black outlines, muted iron plates, brass garnish); its failure
+mode was **detail density** — too many rivets/seams per surface, so at UI
+scale it reads busy instead of 简约.
 
-What Codex still owes: **8 small GLYPH PNGs** — quiet line-art pieces that sit
-ON the dark glass. Style: thick clean dark-outline cartoon linework matching
-the world art, filled in muted brass (#c9a35a range) with at most 2 values, no
-gradients, no glow, transparent bg. They must read at 20-56 px and stay
-UNDERSTATED (the glass is the chrome; these are punctuation).
+Regenerate ALL pieces (list below) keeping rev2's language, with these deltas:
 
-Delivery dir: `run_system/assets/images/ui_glyphs/`
+1. **Density down ~50%**: large clean plate areas; rivets only at corners
+   (2-4 per panel, not rows of them); at most ONE seam line per surface.
+   Mid-sections of every 9-sliced piece must be VISUALLY QUIET.
+2. **Tile-safe middles are mandatory** for `panel_bottom_bar` and
+   `panel_window_titlebar` (the code TILES their mid-band horizontally —
+   rev2's bar only survived because we flattened it in post). Design the
+   middle band to repeat seamlessly: uniform plate, no centered feature.
+3. **Canvas sizes: match the rev2 files currently in
+   `run_system/assets/images/ui_kit/` exactly** (the code's 9-slice margins
+   are tuned to them — e.g. panel_window 284×261, btn_* ~275×128,
+   slot_* ~232×230, icon_lock 156×208). Same filenames.
+4. States stay value-shift-only (hover warms the rim, pressed darkens);
+   accent (START) stays worn desaturated red-clay with thin muted trim.
+5. **Plus the 6 HUD icon buttons** (spec'd in the Rev2 addendum below:
+   `btn_stash_*` / `btn_char_*` 96×96 ×3 states) — same low-density language.
 
-1. `glyph_lock.png` — 96×96 square canvas, chunky padlock, reads at 20px
-   (locked backpack cells) and 64px (locked buildings).
-2. `glyph_arrow_left.png` / 3. `glyph_arrow_right.png` — 64×64 thick chevrons
-   (hero switcher ‹ ›).
-4. `glyph_stash.png` — 96×96 salvage crate/strongbox (bottom-bar Stash button
-   face; drawn to sit centered on a 56px glass square).
-5. `glyph_character.png` — 96×96 cowboy bust silhouette (hat + scarf outline,
-   generic; bottom-bar Character button face).
-6. `glyph_forge.png` / 7. `glyph_dismantle.png` / 8. `glyph_reforge.png` —
-   64×64 anvil / pliers-scrap / hammer-spark glyphs (forge window tab faces;
-   optional polish, lowest priority).
+Total: 16 kit files (same names, overwrite in place) + 6 icon buttons = 22 PNGs.
 
-Contact-sheet approval gate still applies: preview sheet (pieces on a dark
-glass swatch) to `docs/art/previews/` FIRST, owner approves, then land in
-`ui_glyphs/` (theme hooks will be added by Claude after approval — landing the
-files does not auto-activate anything in v3).
+**Contact-sheet approval gate (unchanged):** render all 22 on a dark swatch
+AND overlaid on a home-base screenshot crop → `docs/art/previews/`, STOP for
+owner approval, only then overwrite `run_system/assets/images/ui_kit/`
+(overwriting there is auto-active in-game — do not land unapproved art).
 
----
-
-*(History below: v1 REJECTED as too ornate — parked at
-`run_system/assets/images/ui_kit_ref_v1/`; rev2 delivered to `ui_kit/`,
-superseded by the glass direction.)*
+*(History: v1 rejected as too ornate → `ui_kit_ref_v1/`; rev2 = current
+in-game look, direction approved / density rejected; V3 glyphs-only plan
+superseded by this V4. Kenney comparison kits parked at `ui_kit_kenney*`.)*
 
 ## Revision 2 — what was wrong with v1 (read before regenerating)
 

@@ -434,7 +434,7 @@ static func close_x_button() -> Button:
 ##       uniform color at build time, so it is safe under BOTH axis-stretch modes)
 ## (Same 16-file contract in every kit dir; the three kit dirs stay on disk as
 ## comparison history. Missing files always hit the flat fallbacks.)
-const UI_KIT_DIR := "res://run_system/assets/images/ui_kit_none/"
+const UI_KIT_DIR := "res://run_system/assets/images/ui_kit/"
 
 
 ## A ui_kit texture by basename ("icon_lock" → <UI_KIT_DIR>/icon_lock.png), or
