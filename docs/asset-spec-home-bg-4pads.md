@@ -1,7 +1,23 @@
 # Asset Spec — Home-base background touch-up (1 PNG, 4 building pads + bar strip)
 
-**Owner:** Codex (ADR-0005). **Status:** REQUESTED 2026-07-04. **Priority:** LOW —
-do AFTER the ui-kit rev2 polish settles; the current bg ships fine meanwhile.
+**Owner:** Codex (ADR-0005). **Status:** DELIVERED 2026-07-04 with a DEFECT —
+re-clean requested 2026-07-05. **Priority:** HIGH (visible artifact in-game).
+
+## DEFECT REPORT (2026-07-05) — fix this first
+
+The delivered `home_base_empty_bg.png` contains **hard-edged rectangular pale
+bands / ghost boxes** baked into the ground at the bottom-centre (roughly
+x 850-1150, y 650-1000 at 1920×1080): several straight-edged lighter strips
+that read in-game as glowing UI ghosts behind the START button. They look like
+mask/compositing residue from the "bottom quiet strip" pass (an un-blended
+selection rectangle), NOT intentional path art.
+
+Re-export the same image with the bottom-centre ground CONTINUOUS: organic
+dirt texture / path shapes only, no straight vertical/horizontal selection
+edges anywhere in the terrain. Everything else in the delivery (4 pads,
+converging paths, dark bottom strip, pad positions) is approved — keep it
+exactly, only remove the rectangular ghosting and blend the strip transition
+organically.
 
 ## What & why
 
