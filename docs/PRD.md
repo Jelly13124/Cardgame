@@ -1,6 +1,6 @@
 # Product Requirements Document
 **Project:** Unnamed Sci-Fi Roguelite Card Game  
-**Art Style:** Offbeat Adult Sci-Fi Cartoon Wasteland
+**Art Style:** Rick and Morty-style Sci-Fi Cartoon Wasteland
 **Engine:** Godot 4.6  
 **Last Updated:** 2026-06-03
 
@@ -8,7 +8,7 @@
 
 ## Overview
 
-A single-player roguelite deckbuilder set in a post-apocalyptic scrapyard wasteland. Players collect cards, relics, and equipment while fighting through escalating routes toward bosses. The visual language is locked to an original flat adult sci-fi cartoon direction: thick clean dark outlines, large simple shape blocks, weird sci-fi western silhouettes, broad cel shading, sparse texture, and bright toxic accent colors.
+A single-player roguelite deckbuilder set in a post-apocalyptic scrapyard wasteland. Players collect cards, relics, and equipment while fighting through escalating routes toward bosses. The visual language is locked to an original flat sci-fi cartoon direction: thick clean dark outlines, large simple shape blocks, weird sci-fi western silhouettes, broad cel shading, sparse texture, and bright toxic accent colors.
 
 Combat is **Slay the Spire style**: the player has a hand of cards, limited energy, and must choose each turn which cards to play to survive enemy attacks while defeating them.
 
@@ -16,7 +16,7 @@ Project documentation is centralized in `docs/`:
 - `docs/PRD.md` is the product and systems source of truth.
 - `docs/PROJECT_STRUCTURE.md` maps scenes, scripts, data, and assets.
 - `docs/project-rules.md` defines art, asset, naming, and architecture rules.
-- `docs/art-style-reference.md` defines the approved Offbeat Adult Sci-Fi Cartoon Wasteland style contract and in-game visual exemplars.
+- `docs/art-style-reference.md` defines the approved Rick and Morty-style Sci-Fi Cartoon Wasteland style contract and in-game visual exemplars.
 
 ---
 
@@ -405,9 +405,9 @@ BattleScene (Node)
 
 ---
 
-## Art Style - Offbeat Adult Sci-Fi Cartoon Wasteland
+## Art Style - Rick and Morty-style Sci-Fi Cartoon Wasteland
 
-The game's definitive art direction is **Offbeat Adult Sci-Fi Cartoon Wasteland**. The style target is original flat adult sci-fi western cartoon game art: thick clean dark outlines, large simple shape blocks, sparse interior linework, broad two-to-three value cel shading, weird alien desert forms, absurd salvage-tech silhouettes, dusty leather and brass, dented grey-green robot metal, patched red cloth, hoses, antennas, odd gadgets, and one or two bright toxic/cyan/orange glow accents.
+The game's definitive art direction is **Rick and Morty-style Sci-Fi Cartoon Wasteland**. The style target is original flat sci-fi western cartoon game art: thick clean dark outlines, large simple shape blocks, sparse interior linework, broad two-to-three value cel shading, weird alien desert forms, absurd salvage-tech silhouettes, dusty leather and brass, dented grey-green robot metal, patched red cloth, hoses, antennas, odd gadgets, and one or two bright toxic/cyan/orange glow accents.
 
 Do not use old project reference images as global style anchors. `docs/art/cowboy-bill-character-sheet-reference.png` may be used only to preserve Cowboy Bill's identity markers. Do not copy named show characters, logos, exact show-specific designs, franchise-specific props, or exact scene layouts.
 
@@ -427,7 +427,7 @@ All current playable player cards use `512x320` landscape PNG illustrations unde
 ### Visual Rules
 | Element | Rule |
 |---|---|
-| **Style target** | Original Offbeat Adult Sci-Fi Cartoon Wasteland game art matching the approved in-game exemplars; flat 2D adult sci-fi TV-animation-like look, clean outlines, broad simple shapes, sparse texture, original designs only, no copying named show characters, logos, exact scene layouts, or franchise-specific props. |
+| **Style target** | Original Rick and Morty-style Sci-Fi Cartoon Wasteland game art matching the approved in-game exemplars; flat 2D Rick and Morty-style sci-fi TV-animation-like look, clean outlines, broad simple shapes, sparse texture, original designs only, no copying named show characters, logos, exact scene layouts, or franchise-specific props. |
 | **Output sizes** | Use the dimensions required by each asset spec; size does not define the art style. |
 | **Silhouette** | Exaggerated and immediately readable: oversized hats, cylindrical robot heads, chunky boots, lanky limbs, patched capes, bulbous lenses, crooked antennas, rubbery alien shapes, bulky salvaged weapons, hoses, and improvised gadgets. |
 | **Materials** | Simplified dusty leather, red cloth scarf, brass cuffs, dented grey-green metal, patched fabric, rubber hoses, glass lenses, exposed springs, toxic sludge, glowing canisters, and flat alien terrain. |
@@ -444,7 +444,7 @@ All current playable player cards use `512x320` landscape PNG illustrations unde
 ### Mandatory Prompt Anchor
 Every generated asset prompt should preserve this wording:
 ```text
-original Offbeat Adult Sci-Fi Cartoon Wasteland game art, matching the approved in-game exemplars in battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png, battle_scene/assets/images/backgrounds/wasteland_battlefield.png, and run_system/assets/images/map/wasteland_route_map_pixel_bg.png, flat 2D adult sci-fi TV-animation look, thick clean dark cartoon outlines, large simple shape blocks, sparse interior lines, broad two-to-three value cel shading, weird sci-fi western wasteland, rubbery alien desert shapes, absurd salvage-tech silhouettes, dusty leather, brass, dented grey-green robot metal, patched red cloth, hoses, antennas, odd gadgets, bright toxic green, cyan, and warm orange glow accents used sparingly, clean game-ready edges, readable silhouettes, low texture noise, no text, no labels, no UI frame, no logo, no named show characters, no franchise-specific props, no exact scene copies
+original Rick and Morty-style Sci-Fi Cartoon Wasteland game art, matching the approved in-game exemplars in battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png, battle_scene/assets/images/backgrounds/wasteland_battlefield.png, and run_system/assets/images/map/wasteland_route_map_pixel_bg.png, flat 2D Rick and Morty-style sci-fi TV-animation look, thick clean dark cartoon outlines, large simple shape blocks, sparse interior lines, broad two-to-three value cel shading, weird sci-fi western wasteland, rubbery alien desert shapes, absurd salvage-tech silhouettes, dusty leather, brass, dented grey-green robot metal, patched red cloth, hoses, antennas, odd gadgets, bright toxic green, cyan, and warm orange glow accents used sparingly, clean game-ready edges, readable silhouettes, low texture noise, no text, no labels, no UI frame, no logo, no named show characters, no franchise-specific props, no exact scene copies
 ```
 
 ### Generation Pipeline

@@ -34,7 +34,7 @@ screen, with the spinner + loading text centered on top.
 - **Opaque, full-bleed** (no transparency needed — it's a backdrop). PNG.
 - Subject = on-world wasteland flavour: e.g. Cowboy Bill silhouetted against a
   dusty horizon, a salvage yard at dusk, a lone road through the wastes, a derelict
-  outpost. Match the locked **Offbeat Adult Sci-Fi Cartoon Wasteland** style
+  outpost. Match the locked **Rick and Morty-style Sci-Fi Cartoon Wasteland** style
   (thick outline, cel shading) and the existing building / hero art.
 
 Use the mandatory prompt anchor from `docs/PRD.md` (Art Style section), plus:

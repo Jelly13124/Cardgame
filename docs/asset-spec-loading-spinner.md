@@ -32,7 +32,7 @@ Right now the spinner is a placeholder **⚙ gear glyph**. We want a proper them
 - **Transparent background** (PNG with alpha). Only the spinner subject is opaque.
 - **Square**, delivered at **192×192** (rendered ~96px in-game; size is an output
   contract only, per project rules).
-- Style = the locked **Offbeat Adult Sci-Fi Cartoon Wasteland**: thick dark cartoon
+- Style = the locked **Rick and Morty-style Sci-Fi Cartoon Wasteland**: thick dark cartoon
   outline, 2–3 value cel shading, low texture noise. Warm brass/amber tones so it
   reads on a pure-black screen (the placeholder uses amber `#ffd673`); one bright
   accent highlight is welcome.

@@ -41,7 +41,7 @@ this is a touch-up, not a repaint) with two changes:
 ## Constraints
 
 - Same file path + dimensions (drop-in overwrite; zero code change).
-- project-rules §1 language: flat adult sci-fi cartoon wasteland, thick clean
+- project-rules §1 language: flat sci-fi cartoon wasteland, thick clean
   dark outlines on foreground props, broad cel shading, no painterly noise.
 - Keep the centre of the frame relatively calm (buildings + windows overlay it).
 - No text, no watermark, no baked UI.

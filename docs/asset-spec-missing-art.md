@@ -16,7 +16,7 @@
 
 - **PNG 带 alpha、透明背景**,主体居中,留白均匀。
 - **禁止烤入任何文字 / 数字 / 字母 / UI 框 / logo。**(尤其货币图标——当前 bug 就是烤了数字。)
-- 风格 = 锁定的 **Offbeat Adult Sci-Fi Cartoon Wasteland**:厚的深色卡通描边、大色块、
+- 风格 = 锁定的 **Rick and Morty-style Sci-Fi Cartoon Wasteland**:厚的深色卡通描边、大色块、
   内部线条稀疏、2–3 阶 cel 上色、低纹理噪点、亮色高光(toxic green / cyan / 暖橙)克制使用。
 - 尺寸是**输出契约**,不是像素画——按给定像素尺寸交清晰矢量感卡通图即可。
 - 直接对齐游戏内范例:牛仔 Bill
@@ -27,8 +27,8 @@
 ### 强制风格锚点(英文 prompt 前缀,每张都用)
 
 ```text
-original Offbeat Adult Sci-Fi Cartoon Wasteland game art,
-flat 2D adult sci-fi TV-animation look, thick clean dark cartoon outlines, large simple shape blocks, sparse interior lines, broad two-to-three value cel shading,
+original Rick and Morty-style Sci-Fi Cartoon Wasteland game art,
+flat 2D Rick and Morty-style sci-fi TV-animation look, thick clean dark cartoon outlines, large simple shape blocks, sparse interior lines, broad two-to-three value cel shading,
 weird sci-fi western wasteland, dusty leather, patched cloth, brass/scrap accents,
 bright toxic green, cyan, and warm orange glow accents used sparingly,
 clean game-ready edges, readable silhouettes, low texture noise,

@@ -32,7 +32,7 @@ the icon (re-add a `TextureRect` loading `home/currency/{id}.png` to the chip).
 - **Transparent background** (PNG with alpha), centered subject, even padding.
 - **Square**, delivered at **128×128** (rendered ~54px in-game; size is an output
   contract only, per project rules).
-- Style = the locked **Offbeat Adult Sci-Fi Cartoon Wasteland**: thick dark
+- Style = the locked **Rick and Morty-style Sci-Fi Cartoon Wasteland**: thick dark
   cartoon outline, 2–3 value cel shading, low texture noise, one or two bright
   accent glows. Match the existing in-game exemplars (Cowboy Bill, the building
   art under `home/buildings_runtime/`).

@@ -18,9 +18,11 @@ Do not reintroduce root-level local workflow docs such as `skills/`; shared proj
 
 ---
 
-## 1. Art Style - Offbeat Adult Sci-Fi Cartoon Wasteland (Non-Negotiable)
+## 1. Art Style - Rick and Morty-Style Sci-Fi Cartoon Wasteland (Non-Negotiable)
 
-All visual assets in this project **must** follow the approved **Offbeat Adult Sci-Fi Cartoon Wasteland** direction in `docs/art-style-reference.md`. The target is original flat adult sci-fi western cartoon game art: clean black outlines, large simple shapes, sparse interior linework, absurd salvage-tech silhouettes, bright toxic accents, and broad cel shading.
+All visual assets in this project **must** follow the approved **Rick and Morty-style Sci-Fi Cartoon Wasteland** direction in `docs/art-style-reference.md`. The tonal touchstone is the flat 2D **Rick and Morty** TV-animation look: clean thick black outlines, large simple shapes, sparse interior linework, absurd salvage-tech silhouettes, bright toxic accents, and broad cel shading — an original wasteland world rendered in that cartoon language.
+
+> **Rick and Morty is a style touchstone, not a copy target.** Match the flat, thick-outline TV-cartoon *look*. Never copy the show's actual characters, named cast, logos, props, or scene layouts — all designs stay original (see Prohibited below).
 
 Do not use old project reference images as global style references. `docs/art/cowboy-bill-character-sheet-reference.png` may be used only to preserve Cowboy Bill's identity markers. Designs must stay original and must not copy named show characters, logos, exact scene layouts, franchise-specific props, embedded text, labels, speech bubbles, or UI framing.
 
@@ -49,7 +51,7 @@ The approved production exemplars are:
 ### Character Anchors
 
 - **Style standard:** `docs/art-style-reference.md` is the active global style contract. The approved in-game exemplars listed above are the practical visual yardstick. Old reference images are not global style anchors.
-- **Cowboy Bill:** robot cowboy hero, exactly one large orange camera eye, cylindrical robot head, oversized hat with star badge, red scarf, patched duster/poncho, chunky boots, salvaged revolver, faces right. Preserve identity from the Bill sheet, but render him with the active flatter adult sci-fi cartoon language.
+- **Cowboy Bill:** robot cowboy hero, exactly one large orange camera eye, cylindrical robot head, oversized hat with star badge, red scarf, patched duster/poncho, chunky boots, salvaged revolver, faces right. Preserve identity from the Bill sheet, but render him with the active flatter sci-fi cartoon language.
 - **Enemies:** original junk-tech western robots, mutants, drones, creatures, or wasteland devices; enemies face left and must share the active flat sci-fi cartoon silhouette language.
 
 ### Mandatory Prompt Anchor
@@ -57,9 +59,9 @@ The approved production exemplars are:
 Every generated asset prompt must preserve this wording unless the asset type makes a clause impossible:
 
 ```text
-original Offbeat Adult Sci-Fi Cartoon Wasteland game art,
+original Rick and Morty-style Sci-Fi Cartoon Wasteland game art,
 matching the approved in-game exemplars in battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png, battle_scene/assets/images/backgrounds/wasteland_battlefield.png, and run_system/assets/images/map/wasteland_route_map_pixel_bg.png,
-flat 2D adult sci-fi TV-animation look, thick clean dark cartoon outlines, large simple shape blocks, sparse interior lines, broad two-to-three value cel shading,
+flat 2D Rick and Morty-style sci-fi TV-animation look, thick clean dark cartoon outlines, large simple shape blocks, sparse interior lines, broad two-to-three value cel shading,
 weird sci-fi western wasteland, rubbery alien desert shapes, absurd salvage-tech silhouettes, dusty leather, brass, dented grey-green robot metal, patched red cloth, hoses, antennas, odd gadgets,
 bright toxic green, cyan, and warm orange glow accents used sparingly,
 clean game-ready edges, readable silhouettes, low texture noise,
@@ -85,15 +87,15 @@ contained inside each frame with safe margins
 - No clean, shiny, futuristic-clean, realistic military, or glossy hard-surface concept-art aesthetics.
 - No realistic shading, photorealistic lighting, dense hatching, noisy grunge, or painterly over-rendering.
 - No previous art-reference family, pixel-art anchor, painterly rendered anchor, or generic cartoon reference.
-- No prompt language that treats file dimensions as the art style. Use the active Offbeat Adult Sci-Fi Cartoon Wasteland anchor instead of earlier anchors unless the owner explicitly asks for a one-off different style.
+- No prompt language that treats file dimensions as the art style. Use the active Rick and Morty-style Sci-Fi Cartoon Wasteland anchor instead of earlier anchors unless the owner explicitly asks for a one-off different style.
 - No dense noise, tiny repeated debris, cluttered map centers, or over-rendering that hides the cartoon silhouette.
-- No assets that do not visually fit the same Offbeat Adult Sci-Fi Cartoon Wasteland world.
+- No assets that do not visually fit the same Rick and Morty-style Sci-Fi Cartoon Wasteland world.
 
 ---
 
 ## 2. Asset Generation - Production Pipeline
 
-All final in-project visual assets must be PNG art that follows the Offbeat Adult Sci-Fi Cartoon Wasteland rules above. Source generation can use the available image-generation pipeline, but generated sheets must be post-processed into transparent or scene-ready PNGs before being referenced by Godot.
+All final in-project visual assets must be PNG art that follows the Rick and Morty-style Sci-Fi Cartoon Wasteland rules above. Source generation can use the available image-generation pipeline, but generated sheets must be post-processed into transparent or scene-ready PNGs before being referenced by Godot.
 
 ### Required Outputs
 
@@ -106,7 +108,7 @@ All final in-project visual assets must be PNG art that follows the Offbeat Adul
 
 ### Prompt Requirements
 
-- Preserve the exact Offbeat Adult Sci-Fi Cartoon Wasteland language from section 1 and `docs/art-style-reference.md`.
+- Preserve the exact Rick and Morty-style Sci-Fi Cartoon Wasteland language from section 1 and `docs/art-style-reference.md`.
 - Match the approved in-game exemplars before matching any written description.
 - Prefer side-view full-body sprites for combat units.
 - Final enemy frames must face left toward the player. Do not rely on a global runtime flip to correct mixed source orientations.

@@ -83,8 +83,8 @@ zero code change. Delivery dir: `run_system/assets/images/ui_kit/`.
 
 ## Style (non-negotiable — project-rules.md §1)
 
-Original **Offbeat Adult Sci-Fi Cartoon Wasteland** UI chrome, same world as the
-building sprites: flat 2D adult sci-fi TV-animation look, **thick clean dark
+Original **Rick and Morty-style Sci-Fi Cartoon Wasteland** UI chrome, same world as the
+building sprites: flat 2D Rick and Morty-style sci-fi TV-animation look, **thick clean dark
 cartoon outlines**, large simple shape blocks, sparse interior linework, broad
 2–3 value cel shading, **no painterly rendering, no pixel-art, no photo
 texture, no gradients**. Palette: dark oiled scrap-metal browns
@@ -149,7 +149,7 @@ Same rev2 style rules (near-black outlines, muted iron plates, brass garnish):
 
 ## Prompt language anchor (per project-rules.md §5 — do not deviate)
 
-> original Offbeat Adult Sci-Fi Cartoon Wasteland game art, flat 2D adult
+> original Rick and Morty-style Sci-Fi Cartoon Wasteland game art, flat 2D adult
 > sci-fi TV-animation look, thick clean near-black cartoon outlines, large
 > simple shape blocks, sparse interior lines, broad two-to-three value cel
 > shading, muted desaturated dark iron-brown scrap-metal UI panel, tiny worn

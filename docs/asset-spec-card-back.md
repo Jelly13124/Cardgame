@@ -38,7 +38,7 @@ background.
   project rules) — or 160×220 if regenerating at native size is cleaner.
 - **Soft anti-aliased rounded corners** against the transparent edge (no black
   fringe / matte halo left over from background removal).
-- Style = the locked **Offbeat Adult Sci-Fi Cartoon Wasteland** (thick dark
+- Style = the locked **Rick and Morty-style Sci-Fi Cartoon Wasteland** (thick dark
   cartoon outline on the card frame itself is fine and expected — that outline is
   part of the card, NOT a background; only the area *outside* the card outline
   must be transparent).

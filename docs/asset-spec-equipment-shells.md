@@ -59,7 +59,7 @@ each set has its own distinct silhouette/theme with a **green** tier tint:
 - **PNG with alpha, transparent background**, centered subject, even padding, reads at ~44px.
 - **ONE clear silhouette** + thick dark cartoon outline; 2–3 value cel shading; low texture noise.
 - **NO text / number / letter / UI frame / border** baked in (the cell draws the rarity border).
-- Style = locked **Offbeat Adult Sci-Fi Cartoon Wasteland** (match Cowboy Bill + existing
+- Style = locked **Rick and Morty-style Sci-Fi Cartoon Wasteland** (match Cowboy Bill + existing
   `ui/attributes/*.png` / `ui/slots/*.png`). 64×64 is an output contract only — never pixel art.
 - Use the mandatory prompt anchor from `docs/art-style-reference.md` (§Prompt Anchor) plus:
   `single game UI equipment icon, one clear silhouette, no text, no number, no frame, transparent background, 64x64`.

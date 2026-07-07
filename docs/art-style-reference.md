@@ -1,11 +1,11 @@
 # Art Style Reference
 
-**Canonical style name:** Offbeat Adult Sci-Fi Cartoon Wasteland  
+**Canonical style name:** Rick and Morty-style Sci-Fi Cartoon Wasteland  
 **Active style source:** this written style contract. Do not use old project reference images as global style references.  
 **Character identity note:** `docs/art/cowboy-bill-character-sheet-reference.png` may be used only to preserve Cowboy Bill's identity markers, not as the global art style.
 **Approved in-game exemplars:** `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`, `battle_scene/assets/images/backgrounds/wasteland_battlefield.png`, `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`, and the current playable card illustrations in `battle_scene/assets/images/cards/player/*.png`.
 
-This file defines the locked art direction. The target is original adult sci-fi western cartoon game art: clean flat 2D animation shapes, thick dark outlines, strange desert sci-fi props, absurd salvage-tech silhouettes, simple cel shading, and bright toxic accent colors. The project is not pixel art and should not use gritty rendered concept-art texture.
+This file defines the locked art direction. The target is original sci-fi western cartoon game art: clean flat 2D animation shapes, thick dark outlines, strange desert sci-fi props, absurd salvage-tech silhouettes, simple cel shading, and bright toxic accent colors. The project is not pixel art and should not use gritty rendered concept-art texture.
 
 Do not copy named show characters, logos, exact scene layouts, or franchise-specific props. The goal is an original game world with the same broad production language: graphic TV-animation clarity, weird sci-fi comedy, and readable game silhouettes.
 
@@ -52,14 +52,14 @@ Map and battle backgrounds must be simple, graphic, and readable behind UI.
 - Robot cowboy hero, exactly one large orange camera eye. No second eye, no paired human eyes.
 - Cylindrical robot head, oversized cowboy hat with star badge, red scarf, patched duster or poncho, large boots, belt pouches, skull belt badge, and salvaged revolver.
 - Preserve the identity markers from `docs/art/cowboy-bill-character-sheet-reference.png`: single orange eye, hat/star, red scarf, patched duster, chunky boots, revolver, plasma/acid/shield gadget language, and sci-fi western silhouette.
-- Reinterpret Bill into the active Offbeat Adult Sci-Fi Cartoon Wasteland style: flatter shapes, cleaner outlines, less rendered metal, fewer tiny scratches, and stronger animation-read poses.
+- Reinterpret Bill into the active Rick and Morty-style Sci-Fi Cartoon Wasteland style: flatter shapes, cleaner outlines, less rendered metal, fewer tiny scratches, and stronger animation-read poses.
 - The approved Bill implementation is `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png` plus the current 8-frame `idle/` and `attack/` runtime folders.
 - Combat hero frames face right.
 
 ### Enemies And Other Characters
 
-- Enemies, NPCs, equipment, relics, cards, and UI icons must share the active flat adult sci-fi cartoon language.
-- Enemies should read as weird adult sci-fi cartoon wasteland mutants, aliens, odd creatures, comedy goons, or simple salvage-tech machines. Mechanical enemies are allowed, but they must match Cowboy Bill's flat cartoon robot language: big readable shapes, thick outlines, sparse panel detail, warm brass/brown/grey materials, and one or two bright glow accents.
+- Enemies, NPCs, equipment, relics, cards, and UI icons must share the active flat sci-fi cartoon language.
+- Enemies should read as weird sci-fi cartoon wasteland mutants, aliens, odd creatures, comedy goons, or simple salvage-tech machines. Mechanical enemies are allowed, but they must match Cowboy Bill's flat cartoon robot language: big readable shapes, thick outlines, sparse panel detail, warm brass/brown/grey materials, and one or two bright glow accents.
 - Enemies face left in combat.
 - Prioritize funny-gross silhouettes, bulging lenses/eyes, odd proportions, simple body masses, bright toxic accents, and clear gameplay readability.
 - Avoid turning enemies into detailed mechs: no heavy rivet fields, chrome armor stacks, dense panel seams, realistic military shields, or high-detail rendered metal. If an enemy is mechanical, keep it closer to Cowboy Bill's simple toy-like salvage robot styling than realistic hard-surface armor.
@@ -83,9 +83,9 @@ UI icons are readability tools first and illustrations second.
 Use this prompt anchor for generated character, enemy, relic, card, UI icon, FX, map, and battle background assets:
 
 ```text
-original Offbeat Adult Sci-Fi Cartoon Wasteland game art,
+original Rick and Morty-style Sci-Fi Cartoon Wasteland game art,
 matching the approved in-game exemplars in battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png, battle_scene/assets/images/backgrounds/wasteland_battlefield.png, and run_system/assets/images/map/wasteland_route_map_pixel_bg.png,
-flat 2D adult sci-fi TV-animation look, thick clean dark cartoon outlines, large simple shape blocks, sparse interior lines, broad two-to-three value cel shading,
+flat 2D Rick and Morty-style sci-fi TV-animation look, thick clean dark cartoon outlines, large simple shape blocks, sparse interior lines, broad two-to-three value cel shading,
 weird sci-fi western wasteland, rubbery alien desert shapes, funny-gross mutants, odd comedy goons, dusty leather, patched cloth, flat alien skin, sparse brass/scrap accents, hoses, antennas, odd gadgets,
 bright toxic green, cyan, and warm orange glow accents used sparingly,
 clean game-ready edges, readable silhouettes, low texture noise,
