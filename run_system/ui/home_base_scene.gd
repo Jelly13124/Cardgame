@@ -1,11 +1,8 @@
 ## Home base scene — the boot scene + post-run return point.
-## Layout: the 4 building tiles centered in a row, and ONE full-width bottom
-## HUD bar (the CURRENCY_TOP_BAR component) holding everything else — currency
-## chips on the left, the giant START NEW RUN button with the compact
-## difficulty button (→ picker popup) stacked above it in the centre
-## (protruding above the bar top per the approved mockup), and the Stash /
-## Character image buttons on the right; `i` also toggles the character
-## window. The base's actual functions live in the per-building screens
+## Layout: the 4 interactive building sprites on the desert scene, plus a
+## base-only HUD: top resource chips, top-right difficulty/settings, bottom-left
+## daily task panel, bottom-center START, and bottom-right Warehouse / Character /
+## Gallery buttons. The base's actual functions live in the per-building screens
 ## (run_system/ui/buildings/).
 extends Control
 
@@ -17,7 +14,7 @@ const PAUSE_PANEL = preload("res://run_system/ui/pause_panel.gd")
 ## always available. Keeps START NEW RUN robust (a run never begins with an empty hero).
 const DEFAULT_HERO_ID := "cowboy_bill"
 const CHARACTER_WINDOW = preload("res://run_system/ui/window/character_window.gd")
-const CURRENCY_TOP_BAR = preload("res://run_system/ui/window/currency_top_bar.gd")
+const STASH_WINDOW = preload("res://run_system/ui/window/stash_window.gd")
 const BUILDING_SCREEN_BASE = preload("res://run_system/ui/buildings/building_screen_base.gd")
 ## Building selector order + per-building accent color. The tile art lives under
 ## run_system/assets/images/home/buildings/.
@@ -48,11 +45,23 @@ const GROUND_INSET := 12.0
 ## avatar run_top_bar uses), with the character window's portrait as fallback.
 const HERO_HEADSHOT_PATH := "res://battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_headshot.png"
 const HERO_PORTRAIT_PATH := "res://battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_portrait.png"
+const BASE_HUD_ICON_DIR := "res://run_system/assets/images/home/base_hud/"
+const CURRENCY_ICON_DIR := "res://run_system/assets/images/home/currency/"
+const CARD_DATA_DIR := "res://battle_scene/card_info/player/"
+const TOP_HUD_LAYER := 70
+
+const BUILDING_BADGE_ICONS := {
+	"forge": "badge_forge",
+	"clinic": "badge_clinic",
+	"market": "badge_market",
+	"outpost": "badge_outpost",
+}
 
 ## The A0..A5 buttons inside the difficulty picker popup (rebuilt every open).
 var _difficulty_buttons: Array[Button] = []
-## Compact button above START — label shows the current pick ("难度 A{n}").
+## Top-right difficulty button — label shows the current pick ("难度 A{n}").
 var _difficulty_button: Button
+var _top_currency_labels: Dictionary = {}
 ## Three-column building area (left flank / centre door / right flank), rebuilt
 ## on buildings_changed.
 var _building_area: HBoxContainer
@@ -71,8 +80,7 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	AudioManager.play_music("home")
 	_build()
-	# Currency labels live in the global bottom bar now (it tracks the currency
-	# signals itself).
+	_connect_home_hud_signals()
 	# Repaint the building sprites (lock → unlocked, tier badges) the moment a building
 	# changes — previously wired to the inert _rebuild_building_tiles, so the lock only
 	# cleared on a scene reload (the "must restart to see it unlocked" bug).
@@ -101,6 +109,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		return  # already open
 	if get_node_or_null("BuildingOverlay") != null:
 		return  # the building screen's own _unhandled_input handles ESC first
+	var gallery_layer := get_node_or_null("CardGalleryLayer")
+	if gallery_layer != null:
+		get_viewport().set_input_as_handled()
+		gallery_layer.queue_free()
+		return
 	if (
 		get_node_or_null("TierConfirm") != null
 		or get_node_or_null("RulesLayer") != null
@@ -120,13 +133,14 @@ func _overlay_blocking() -> bool:
 		or get_node_or_null("TierConfirm") != null
 		or get_node_or_null("RulesLayer") != null
 		or get_node_or_null("DifficultyPopup") != null
+		or get_node_or_null("CardGalleryLayer") != null
 	)
 
 
 func _build() -> void:
 	_add_background()
 	_add_building_sprites()
-	_add_bottom_bar()
+	_add_base_hud()
 
 
 ## Open the How-to-Play panel (loaded at runtime; same pattern as map_scene._open_rules_panel).
@@ -147,9 +161,10 @@ func _open_rules_panel() -> void:
 
 
 func _add_background() -> void:
-	if ResourceLoader.exists(HOME_BACKGROUND_PATH):
+	var bg_tex := _load_raw_png_texture(HOME_BACKGROUND_PATH)
+	if bg_tex != null:
 		var bg := TextureRect.new()
-		bg.texture = load(HOME_BACKGROUND_PATH)
+		bg.texture = bg_tex
 		bg.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
@@ -169,19 +184,579 @@ func _add_background() -> void:
 	add_child(shade)
 
 
-## ONE full-width bottom HUD bar (approved mockup): the CURRENCY_TOP_BAR
-## component owns the chrome + the Core/Caps/Scrap chips (left) and exposes
-## center_box / right_box containers; this scene fills them with its own
-## controls — the START + difficulty stack in the centre and the Stash /
-## Character image buttons on the right — so all scene logic stays here.
-## The bar is a CanvasLayer (70), so the difficulty picker popup (150) and
-## the other fullscreen popups still open above it.
-func _add_bottom_bar() -> void:
-	var bar = CURRENCY_TOP_BAR.new()
-	bar.name = "CurrencyBar"
-	add_child(bar)
-	_add_depart_controls(bar.center_box)
-	_add_side_buttons(bar.right_box)
+func _load_raw_png_texture(path: String) -> Texture2D:
+	if path.begins_with("res://"):
+		var image := Image.new()
+		var err := image.load(ProjectSettings.globalize_path(path))
+		if err == OK:
+			return ImageTexture.create_from_image(image)
+	if ResourceLoader.exists(path):
+		var tex = load(path)
+		if tex is Texture2D:
+			return tex
+	return null
+
+
+func _connect_home_hud_signals() -> void:
+	MetaProgress.caps_changed.connect(func(_v): _refresh_top_currency("caps"))
+	MetaProgress.core_changed.connect(func(_v): _refresh_top_currency("core"))
+	MetaProgress.scrap_changed.connect(func(_v): _refresh_top_currency("scrap"))
+	_refresh_top_currencies()
+
+
+func _add_base_hud() -> void:
+	var layer := CanvasLayer.new()
+	layer.name = "BaseHudLayer"
+	layer.layer = TOP_HUD_LAYER
+	add_child(layer)
+
+	var root := Control.new()
+	root.name = "BaseHudRoot"
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(root)
+
+	_add_top_hud(root)
+	_add_daily_tasks_panel(root)
+	_add_start_run_button(root)
+	_add_bottom_nav(root)
+
+
+func _add_top_hud(root: Control) -> void:
+	var top_body := Panel.new()
+	top_body.name = "TopHudBar"
+	top_body.anchor_left = 0.0
+	top_body.anchor_top = 0.0
+	top_body.anchor_right = 1.0
+	top_body.anchor_bottom = 0.0
+	top_body.offset_left = 0.0
+	top_body.offset_top = 0.0
+	top_body.offset_right = 0.0
+	top_body.offset_bottom = 88.0
+	top_body.mouse_filter = Control.MOUSE_FILTER_STOP
+	top_body.add_theme_stylebox_override("panel", _home_top_bar_style())
+	root.add_child(top_body)
+
+	var resources := HBoxContainer.new()
+	resources.name = "ResourceChips"
+	resources.alignment = BoxContainer.ALIGNMENT_CENTER
+	resources.add_theme_constant_override("separation", 24)
+	resources.anchor_left = 0.5
+	resources.anchor_top = 0.0
+	resources.anchor_right = 0.5
+	resources.anchor_bottom = 0.0
+	resources.offset_left = -410.0
+	resources.offset_top = 20.0
+	resources.offset_right = 410.0
+	resources.offset_bottom = 70.0
+	top_body.add_child(resources)
+
+	_top_currency_labels["caps"] = _make_top_currency_chip(resources, "caps")
+	_top_currency_labels["core"] = _make_top_currency_chip(resources, "core")
+	_top_currency_labels["scrap"] = _make_top_currency_chip(resources, "scrap")
+	_refresh_top_currencies()
+
+	var right_controls := HBoxContainer.new()
+	right_controls.name = "TopRightControls"
+	right_controls.alignment = BoxContainer.ALIGNMENT_END
+	right_controls.add_theme_constant_override("separation", 14)
+	right_controls.anchor_left = 1.0
+	right_controls.anchor_top = 0.0
+	right_controls.anchor_right = 1.0
+	right_controls.anchor_bottom = 0.0
+	right_controls.offset_left = -410.0
+	right_controls.offset_top = 16.0
+	right_controls.offset_right = -42.0
+	right_controls.offset_bottom = 72.0
+	top_body.add_child(right_controls)
+
+	right_controls.add_child(_make_top_difficulty_button())
+	right_controls.add_child(
+		_make_square_icon_button("icon_settings", tr("PAUSE_SETTINGS"), _open_pause)
+	)
+
+
+func _make_top_currency_chip(parent: Control, currency: String) -> Label:
+	var panel := PanelContainer.new()
+	panel.name = currency.capitalize() + "TopChip"
+	panel.custom_minimum_size = Vector2(180, 46)
+	panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override("panel", _home_chip_style())
+	parent.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 13)
+	margin.add_theme_constant_override("margin_right", 13)
+	margin.add_theme_constant_override("margin_top", 5)
+	margin.add_theme_constant_override("margin_bottom", 5)
+	panel.add_child(margin)
+
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 10)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(row)
+
+	var icon := _make_icon_rect(CURRENCY_ICON_DIR + currency + ".png", Vector2(34, 34))
+	row.add_child(icon)
+
+	var label := Label.new()
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_override("font", T.display_font(600))
+	label.add_theme_font_size_override("font_size", 25)
+	label.add_theme_color_override("font_color", Color(0.92, 0.82, 0.62, 1.0))
+	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.88))
+	label.add_theme_constant_override("outline_size", 3)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(label)
+	return label
+
+
+func _refresh_top_currencies() -> void:
+	_refresh_top_currency("caps")
+	_refresh_top_currency("core")
+	_refresh_top_currency("scrap")
+
+
+func _refresh_top_currency(currency: String) -> void:
+	var label = _top_currency_labels.get(currency, null)
+	if not (label is Label) or not is_instance_valid(label):
+		return
+	match currency:
+		"caps":
+			label.text = str(MetaProgress.caps)
+		"core":
+			label.text = str(MetaProgress.core)
+		"scrap":
+			label.text = str(MetaProgress.scrap)
+
+
+func _make_top_difficulty_button() -> Button:
+	var btn := Button.new()
+	btn.name = "DifficultyButton"
+	btn.custom_minimum_size = Vector2(278, 56)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	btn.add_theme_stylebox_override("normal", _home_button_style("normal"))
+	btn.add_theme_stylebox_override("hover", _home_button_style("hover"))
+	btn.add_theme_stylebox_override("pressed", _home_button_style("pressed"))
+	btn.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
+	btn.pressed.connect(_show_difficulty_popup)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	btn.add_child(margin)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(row)
+
+	row.add_child(_make_icon_rect(BASE_HUD_ICON_DIR + "icon_difficulty.png", Vector2(38, 38)))
+
+	var label := Label.new()
+	label.name = "DifficultyLabel"
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.add_theme_font_override("font", T.display_font(600))
+	label.add_theme_font_size_override("font_size", 24)
+	label.add_theme_color_override("font_color", Color(0.94, 0.82, 0.60, 1.0))
+	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
+	label.add_theme_constant_override("outline_size", 3)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(label)
+
+	var arrow := Label.new()
+	arrow.text = "v"
+	arrow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	arrow.add_theme_font_override("font", T.display_font(700))
+	arrow.add_theme_font_size_override("font_size", 24)
+	arrow.add_theme_color_override("font_color", Color(0.78, 0.58, 0.32, 1.0))
+	arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(arrow)
+
+	btn.set_meta("label", label)
+	_difficulty_button = btn
+	_refresh_difficulty_button()
+	return btn
+
+
+func _make_square_icon_button(icon_id: String, tooltip: String, callback: Callable) -> Button:
+	var btn := Button.new()
+	btn.name = icon_id.capitalize() + "Button"
+	btn.custom_minimum_size = Vector2(58, 56)
+	btn.tooltip_text = tooltip
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	btn.add_theme_stylebox_override("normal", _home_button_style("normal"))
+	btn.add_theme_stylebox_override("hover", _home_button_style("hover"))
+	btn.add_theme_stylebox_override("pressed", _home_button_style("pressed"))
+	btn.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
+	btn.pressed.connect(callback)
+
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	btn.add_child(center)
+	center.add_child(_make_icon_rect(BASE_HUD_ICON_DIR + icon_id + ".png", Vector2(38, 38)))
+	return btn
+
+
+func _add_daily_tasks_panel(root: Control) -> void:
+	var panel := PanelContainer.new()
+	panel.name = "DailyTasksPanel"
+	panel.anchor_left = 0.0
+	panel.anchor_top = 1.0
+	panel.anchor_right = 0.0
+	panel.anchor_bottom = 1.0
+	panel.offset_left = 48.0
+	panel.offset_top = -282.0
+	panel.offset_right = 466.0
+	panel.offset_bottom = -68.0
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.add_theme_stylebox_override("panel", _home_panel_style())
+	root.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 11)
+	margin.add_theme_constant_override("margin_bottom", 11)
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	margin.add_child(box)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 9)
+	box.add_child(header)
+	header.add_child(_make_icon_rect(BASE_HUD_ICON_DIR + "icon_daily_tasks.png", Vector2(28, 28)))
+
+	var title := Label.new()
+	title.text = _home_text("每日任务", "DAILY TASKS")
+	title.add_theme_font_override("font", T.display_font(600))
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color(1.0, 0.88, 0.60, 1.0))
+	title.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.85))
+	title.add_theme_constant_override("outline_size", 2)
+	header.add_child(title)
+
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(spacer)
+
+	var refresh := Label.new()
+	refresh.text = _home_text("刷新: %s", "Refresh: %s") % _daily_refresh_time()
+	refresh.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	refresh.add_theme_font_override("font", T.display_font(500))
+	refresh.add_theme_font_size_override("font_size", 16)
+	refresh.add_theme_color_override("font_color", Color(0.72, 0.62, 0.48, 1.0))
+	header.add_child(refresh)
+
+	box.add_child(_daily_divider())
+	box.add_child(_make_daily_task_row(_home_text("使用10张攻击牌", "Play 10 attack cards"), 6, 10, 100))
+	box.add_child(
+		_make_daily_task_row(_home_text("在战斗中获得150金币", "Earn 150 caps in battle"), 0, 150, 80)
+	)
+	box.add_child(_make_daily_task_row(_home_text("击败精英敌人2次", "Defeat 2 elite enemies"), 0, 2, 120))
+
+
+func _make_daily_task_row(title: String, current: int, target: int, reward: int) -> Control:
+	var row := HBoxContainer.new()
+	row.custom_minimum_size = Vector2(0, 43)
+	row.add_theme_constant_override("separation", 10)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var text_box := VBoxContainer.new()
+	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_box.add_theme_constant_override("separation", 3)
+	row.add_child(text_box)
+
+	var top := HBoxContainer.new()
+	text_box.add_child(top)
+
+	var name := Label.new()
+	name.text = title
+	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name.add_theme_font_override("font", T.display_font(500))
+	name.add_theme_font_size_override("font_size", 17)
+	name.add_theme_color_override("font_color", Color(0.90, 0.82, 0.66, 1.0))
+	top.add_child(name)
+
+	var progress_text := Label.new()
+	progress_text.text = "%d/%d" % [current, target]
+	progress_text.add_theme_font_override("font", T.display_font(500))
+	progress_text.add_theme_font_size_override("font_size", 16)
+	progress_text.add_theme_color_override("font_color", Color(0.78, 0.68, 0.52, 1.0))
+	top.add_child(progress_text)
+
+	var progress := ProgressBar.new()
+	progress.max_value = float(maxi(target, 1))
+	progress.value = float(current)
+	progress.show_percentage = false
+	progress.custom_minimum_size = Vector2(0, 6)
+	progress.add_theme_stylebox_override(
+		"background",
+		_home_flat_style(Color(0.08, 0.065, 0.045, 0.96), Color(0.12, 0.10, 0.075, 1.0), 2, 1)
+	)
+	progress.add_theme_stylebox_override(
+		"fill", _home_flat_style(Color(0.54, 0.42, 0.25, 1.0), Color(0.54, 0.42, 0.25, 1.0), 2, 0)
+	)
+	text_box.add_child(progress)
+
+	var reward_box := PanelContainer.new()
+	reward_box.custom_minimum_size = Vector2(82, 34)
+	reward_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	reward_box.add_theme_stylebox_override(
+		"panel",
+		_home_flat_style(Color(0.10, 0.075, 0.045, 0.96), Color(0.36, 0.27, 0.16, 1.0), 5, 1)
+	)
+	row.add_child(reward_box)
+
+	var reward_margin := MarginContainer.new()
+	reward_margin.add_theme_constant_override("margin_left", 8)
+	reward_margin.add_theme_constant_override("margin_right", 8)
+	reward_margin.add_theme_constant_override("margin_top", 4)
+	reward_margin.add_theme_constant_override("margin_bottom", 4)
+	reward_box.add_child(reward_margin)
+
+	var reward_row := HBoxContainer.new()
+	reward_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	reward_row.add_theme_constant_override("separation", 4)
+	reward_margin.add_child(reward_row)
+
+	var reward_label := Label.new()
+	reward_label.text = str(reward)
+	reward_label.add_theme_font_override("font", T.display_font(600))
+	reward_label.add_theme_font_size_override("font_size", 17)
+	reward_label.add_theme_color_override("font_color", Color(0.94, 0.82, 0.60, 1.0))
+	reward_row.add_child(reward_label)
+	reward_row.add_child(_make_icon_rect(CURRENCY_ICON_DIR + "core.png", Vector2(22, 22)))
+	return row
+
+
+func _add_start_run_button(root: Control) -> void:
+	var button := Button.new()
+	button.name = "StartRunButton"
+	button.text = _home_text("出发", "DEPART")
+	button.anchor_left = 0.5
+	button.anchor_top = 1.0
+	button.anchor_right = 0.5
+	button.anchor_bottom = 1.0
+	button.offset_left = -335.0
+	button.offset_top = -172.0
+	button.offset_right = 335.0
+	button.offset_bottom = -65.0
+	button.add_theme_font_override("font", T.display_font(700))
+	button.add_theme_font_size_override("font_size", 46)
+	button.add_theme_color_override("font_color", Color(1.0, 0.86, 0.64, 1.0))
+	button.add_theme_color_override("font_hover_color", Color(1.0, 0.93, 0.74, 1.0))
+	button.add_theme_color_override("font_pressed_color", Color(0.95, 0.78, 0.56, 1.0))
+	button.add_theme_color_override("font_outline_color", Color(0.10, 0.035, 0.02, 1.0))
+	button.add_theme_constant_override("outline_size", 5)
+	button.add_theme_stylebox_override("normal", _home_start_button_style("normal"))
+	button.add_theme_stylebox_override("hover", _home_start_button_style("hover"))
+	button.add_theme_stylebox_override("pressed", _home_start_button_style("pressed"))
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.focus_mode = Control.FOCUS_NONE
+	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
+	button.pressed.connect(_on_start_pressed)
+	root.add_child(button)
+
+
+func _add_bottom_nav(root: Control) -> void:
+	var row := HBoxContainer.new()
+	row.name = "BottomRightNav"
+	row.alignment = BoxContainer.ALIGNMENT_END
+	row.add_theme_constant_override("separation", 12)
+	row.anchor_left = 1.0
+	row.anchor_top = 1.0
+	row.anchor_right = 1.0
+	row.anchor_bottom = 1.0
+	row.offset_left = -480.0
+	row.offset_top = -206.0
+	row.offset_right = -70.0
+	row.offset_bottom = -52.0
+	root.add_child(row)
+
+	row.add_child(
+		_make_home_nav_button(
+			"icon_warehouse",
+			_home_text("仓库", "WAREHOUSE"),
+			tr("UI_STASH_WINDOW_TITLE"),
+			_open_stash_window
+		)
+	)
+	row.add_child(
+		_make_home_nav_button(
+			"icon_character",
+			_home_text("角色", "CHARACTER"),
+			tr("UI_EQUIP_TITLE_CHARACTER"),
+			_open_character_window
+		)
+	)
+	row.add_child(
+		_make_home_nav_button(
+			"icon_gallery",
+			_home_text("图鉴", "GALLERY"),
+			_home_text("卡牌图鉴", "CARD GALLERY"),
+			_open_card_gallery
+		)
+	)
+
+
+func _make_home_nav_button(
+	icon_id: String, label_text: String, tooltip: String, callback: Callable
+) -> Button:
+	var btn := Button.new()
+	btn.name = icon_id.capitalize() + "NavButton"
+	btn.custom_minimum_size = Vector2(126, 148)
+	btn.tooltip_text = tooltip
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	btn.add_theme_stylebox_override("normal", _home_button_style("normal"))
+	btn.add_theme_stylebox_override("hover", _home_button_style("hover"))
+	btn.add_theme_stylebox_override("pressed", _home_button_style("pressed"))
+	btn.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
+	btn.pressed.connect(callback)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_bottom", 10)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	btn.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 4)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(box)
+	box.add_child(_make_icon_rect(BASE_HUD_ICON_DIR + icon_id + ".png", Vector2(76, 76)))
+
+	var label := Label.new()
+	label.text = label_text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_override("font", T.display_font(600))
+	label.add_theme_font_size_override("font_size", 24)
+	label.add_theme_color_override("font_color", Color(0.94, 0.82, 0.60, 1.0))
+	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.88))
+	label.add_theme_constant_override("outline_size", 3)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(label)
+	return btn
+
+
+func _make_icon_rect(path: String, size: Vector2) -> TextureRect:
+	var icon := TextureRect.new()
+	icon.custom_minimum_size = size
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.texture = _load_home_texture(path)
+	return icon
+
+
+func _home_text(zh: String, en: String) -> String:
+	return zh if Settings.language == "zh" else en
+
+
+func _daily_refresh_time() -> String:
+	var now := Time.get_datetime_dict_from_system()
+	var seconds: int = (
+		int(now.get("hour", 0)) * 3600 + int(now.get("minute", 0)) * 60 + int(now.get("second", 0))
+	)
+	var left: int = maxi(0, 86400 - seconds)
+	var h := left / 3600
+	var m := (left % 3600) / 60
+	var s := left % 60
+	return "%02d:%02d:%02d" % [h, m, s]
+
+
+func _daily_divider() -> Control:
+	var line := Panel.new()
+	line.custom_minimum_size = Vector2(0, 1)
+	line.add_theme_stylebox_override(
+		"panel", _home_flat_style(Color(0.24, 0.18, 0.10, 0.75), Color(0, 0, 0, 0), 0, 0)
+	)
+	return line
+
+
+func _home_top_bar_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.06, 0.052, 0.04, 0.94)
+	style.border_color = Color(0.36, 0.27, 0.15, 1.0)
+	style.border_width_bottom = 2
+	return style
+
+
+func _home_panel_style() -> StyleBoxFlat:
+	var style := _home_flat_style(
+		Color(0.075, 0.060, 0.042, 0.94), Color(0.38, 0.29, 0.16, 1.0), 7, 2
+	)
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.42)
+	style.shadow_size = 8
+	style.shadow_offset = Vector2(0, 4)
+	return style
+
+
+func _home_chip_style() -> StyleBoxFlat:
+	return _home_flat_style(Color(0.055, 0.045, 0.032, 0.96), Color(0.39, 0.30, 0.18, 1.0), 7, 2)
+
+
+func _home_button_style(state: String) -> StyleBoxFlat:
+	match state:
+		"hover":
+			return _home_flat_style(
+				Color(0.12, 0.090, 0.052, 0.98), Color(0.76, 0.56, 0.24, 1.0), 7, 2
+			)
+		"pressed":
+			return _home_flat_style(
+				Color(0.045, 0.036, 0.024, 0.98), Color(0.25, 0.19, 0.11, 1.0), 7, 2
+			)
+		_:
+			return _home_flat_style(
+				Color(0.075, 0.060, 0.038, 0.98), Color(0.36, 0.28, 0.16, 1.0), 7, 2
+			)
+
+
+func _home_start_button_style(state: String) -> StyleBox:
+	var bg := Color(0.44, 0.12, 0.075, 0.98)
+	var border := Color(0.72, 0.45, 0.23, 1.0)
+	if state == "hover":
+		bg = Color(0.55, 0.16, 0.095, 0.99)
+		border = Color(0.96, 0.64, 0.28, 1.0)
+	elif state == "pressed":
+		bg = Color(0.31, 0.075, 0.050, 0.99)
+		border = Color(0.46, 0.27, 0.15, 1.0)
+	var style := _home_flat_style(bg, border, 8, 3)
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.50)
+	style.shadow_size = 10
+	style.shadow_offset = Vector2(0, 6)
+	style.content_margin_left = 28.0
+	style.content_margin_right = 28.0
+	style.content_margin_top = 22.0
+	style.content_margin_bottom = 18.0
+	return T.concept_box("depart_plaque_%s" % state, style, 58, 36, 28)
+
+
+func _home_flat_style(bg: Color, border: Color, radius: int, border_width: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg
+	style.border_color = border
+	style.set_border_width_all(border_width)
+	style.set_corner_radius_all(radius)
+	return style
 
 
 func _add_building_sprites() -> void:
@@ -312,9 +887,14 @@ func _current_difficulty() -> int:
 
 func _refresh_difficulty_button() -> void:
 	if is_instance_valid(_difficulty_button):
-		_difficulty_button.text = (tr("UI_HOME_DIFFICULTY_BTN").format(
-			{"a": _current_difficulty()}
-		))
+		var label_text := tr("UI_HOME_DIFFICULTY_BTN").format({"a": _current_difficulty()})
+		_difficulty_button.tooltip_text = label_text
+		if _difficulty_button.has_meta("label"):
+			var lbl = _difficulty_button.get_meta("label")
+			if lbl is Label and is_instance_valid(lbl):
+				lbl.text = label_text
+				return
+		_difficulty_button.text = label_text
 
 
 ## Modal difficulty picker — same overlay structure as the TierConfirm popup
@@ -563,42 +1143,58 @@ func _make_click_mask(texture: Texture2D) -> BitMap:
 	return mask
 
 
-## Floating building label: "Lv<tier>  <name>", centered, no box, gentle up-down bob.
+## Floating building plaque: circular icon badge + compact name/level plate.
 func _add_building_plaque(building_id: String, rect: Rect2, title: String) -> void:
+	var holder := Control.new()
+	holder.name = "Plaque_%s" % building_id
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_set_map_rect(holder, Rect2(rect.position + Vector2(0, -54), rect.size + Vector2(0, 54)))
+	_buildings_root.add_child(holder)
+
+	var icon_id: String = str(BUILDING_BADGE_ICONS.get(building_id, ""))
+	if icon_id != "":
+		var icon := _make_icon_rect(BASE_HUD_ICON_DIR + icon_id + ".png", Vector2(78, 78))
+		icon.anchor_left = 0.5
+		icon.anchor_top = 0.0
+		icon.anchor_right = 0.5
+		icon.anchor_bottom = 0.0
+		icon.offset_left = -39.0
+		icon.offset_top = 0.0
+		icon.offset_right = 39.0
+		icon.offset_bottom = 78.0
+		holder.add_child(icon)
+
+	var plaque := PanelContainer.new()
+	plaque.anchor_left = 0.5
+	plaque.anchor_top = 0.0
+	plaque.anchor_right = 0.5
+	plaque.anchor_bottom = 0.0
+	plaque.offset_left = -84.0
+	plaque.offset_top = 62.0
+	plaque.offset_right = 84.0
+	plaque.offset_bottom = 122.0
+	plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	plaque.add_theme_stylebox_override(
+		"panel",
+		_home_flat_style(Color(0.065, 0.052, 0.035, 0.98), Color(0.56, 0.42, 0.22, 1.0), 5, 2)
+	)
+	holder.add_child(plaque)
+
 	var label := Label.new()
-	label.name = "Plaque_%s" % building_id
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	if building_id == "depart_gate":
-		label.text = title
-	elif MetaProgress.get_building_tier(building_id) <= 0:
-		label.text = title  # locked: name only (the 🔒 sits on the sprite)
+	label.add_theme_font_override("font", T.display_font(600))
+	label.add_theme_font_size_override("font_size", 22)
+	label.add_theme_color_override("font_color", Color(0.96, 0.84, 0.58, 1.0))
+	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.88))
+	label.add_theme_constant_override("outline_size", 3)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var tier := MetaProgress.get_building_tier(building_id)
+	if tier <= 0:
+		label.text = "%s\n%s" % [title, tr("UI_BUILD_LOCKED")]
 	else:
-		label.text = "Lv%d  %s" % [MetaProgress.get_building_tier(building_id), title]
-	label.add_theme_font_size_override("font_size", 33)
-	label.add_theme_color_override("font_color", Color(1.0, 0.93, 0.68))
-	label.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02, 1.0))
-	label.add_theme_constant_override("outline_size", 9)
-	label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.55))
-	label.add_theme_constant_override("shadow_offset_x", 0)
-	label.add_theme_constant_override("shadow_offset_y", 5)
-	_set_map_rect(label, rect)
-	_buildings_root.add_child(label)
-	# Gentle bob; duration varies a touch per building so they drift out of lockstep.
-	var base_y := label.position.y
-	var dur := 1.7 + fmod(rect.position.x * 0.0017, 1.0) * 0.6
-	var tw := label.create_tween().set_loops()
-	tw.tween_property(label, "position:y", base_y - 7.0, dur).set_trans(Tween.TRANS_SINE).set_ease(
-		Tween.EASE_IN_OUT
-	)
-	tw.tween_property(label, "position:y", base_y, dur).set_trans(Tween.TRANS_SINE).set_ease(
-		Tween.EASE_IN_OUT
-	)
-	# Unlock / upgrade action lives here on the overview now (moved off the detail page).
-	if building_id != "depart_gate":
-		_add_tier_button(building_id, rect)
-	return
+		label.text = "%s\nLv.%d" % [title, tier]
+	plaque.add_child(label)
 
 
 ## Unlock / upgrade button under a building's floating label — confirms before spending Core.
@@ -659,8 +1255,12 @@ func _show_tier_confirm(building_id: String) -> void:
 		return  # a confirm popup is already open
 	var tier := MetaProgress.get_building_tier(building_id)
 	var cost := MetaProgress.next_building_cost(building_id)
-	if cost < 0 or MetaProgress.core < cost:
-		return
+	if cost < 0:
+		return  # already at max tier — nothing to offer
+	# NOTE: do NOT early-return when Core < cost — that silently ate the click
+	# (fresh saves have 0 Core, so locked buildings felt dead). Show the popup
+	# with a disabled Confirm + an "not enough Core" hint instead.
+	var affordable := MetaProgress.core >= cost
 	var zh := Settings.language == "zh"
 	var is_unlock := tier <= 0
 	var bname := tr("UI_BUILD_%s_NAME" % building_id.to_upper())
@@ -706,6 +1306,17 @@ func _show_tier_confirm(building_id: String) -> void:
 	cost_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_child(cost_row)
 
+	if not affordable:
+		var short := Label.new()
+		short.text = (
+			("核心不足(还差 %d)" if zh else "Not enough Core (%d more needed)")
+			% (cost - MetaProgress.core)
+		)
+		short.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		short.add_theme_font_size_override("font_size", 15)
+		short.add_theme_color_override("font_color", Color(0.9, 0.45, 0.35))
+		box.add_child(short)
+
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -715,6 +1326,9 @@ func _show_tier_confirm(building_id: String) -> void:
 	yes.custom_minimum_size = Vector2(150, 46)
 	yes.focus_mode = Control.FOCUS_NONE
 	T.apply_button_theme(yes)
+	if not affordable:
+		yes.disabled = true
+		yes.tooltip_text = "核心不足" if zh else "Not enough Core"
 	yes.pressed.connect(
 		func() -> void:
 			AudioManager.play_sfx("upgrade")
@@ -754,6 +1368,11 @@ func _load_home_texture(path: String) -> Texture2D:
 		var tex = load(path)
 		if tex is Texture2D:
 			return tex
+	if path.begins_with("res://"):
+		var image := Image.new()
+		var err := image.load(ProjectSettings.globalize_path(path))
+		if err == OK:
+			return ImageTexture.create_from_image(image)
 	return null
 
 
@@ -959,6 +1578,204 @@ func _open_building_screen(building_id: String) -> void:
 ## equipment loadout (→ RunManager.pending_equipped) and stash carry-marks
 ## (→ RunManager.pending_loadout). Replaces the old StashOverlay popup, whose
 ## select-to-carry logic now lives inside the window.
+func _open_card_gallery() -> void:
+	if get_node_or_null("CardGalleryLayer") != null:
+		return
+	var layer := CanvasLayer.new()
+	layer.name = "CardGalleryLayer"
+	layer.layer = 145
+	add_child(layer)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.0, 0.0, 0.0, 0.58)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	dim.gui_input.connect(
+		func(ev: InputEvent) -> void:
+			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+				AudioManager.play_sfx("ui_back")
+				layer.queue_free()
+	)
+	layer.add_child(dim)
+
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(center)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(1210, 820)
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.add_theme_stylebox_override("panel", _home_panel_style())
+	center.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 28)
+	margin.add_theme_constant_override("margin_right", 28)
+	margin.add_theme_constant_override("margin_top", 24)
+	margin.add_theme_constant_override("margin_bottom", 24)
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 16)
+	margin.add_child(box)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 12)
+	box.add_child(header)
+	header.add_child(_make_icon_rect(BASE_HUD_ICON_DIR + "icon_gallery.png", Vector2(42, 42)))
+
+	var title := Label.new()
+	title.text = _home_text("卡牌图鉴", "CARD GALLERY")
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_override("font", T.display_font(700))
+	title.add_theme_font_size_override("font_size", 34)
+	title.add_theme_color_override("font_color", Color(1.0, 0.86, 0.58, 1.0))
+	title.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.90))
+	title.add_theme_constant_override("outline_size", 3)
+	header.add_child(title)
+
+	var close := Button.new()
+	close.text = "X"
+	close.custom_minimum_size = Vector2(54, 48)
+	close.focus_mode = Control.FOCUS_NONE
+	close.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	close.add_theme_font_override("font", T.display_font(700))
+	close.add_theme_font_size_override("font_size", 24)
+	close.add_theme_stylebox_override("normal", _home_button_style("normal"))
+	close.add_theme_stylebox_override("hover", _home_button_style("hover"))
+	close.add_theme_stylebox_override("pressed", _home_button_style("pressed"))
+	close.add_theme_color_override("font_color", Color(0.94, 0.82, 0.60, 1.0))
+	close.pressed.connect(func() -> void: AudioManager.play_sfx("ui_back"))
+	close.pressed.connect(layer.queue_free)
+	header.add_child(close)
+
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 700)
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(scroll)
+
+	var grid := GridContainer.new()
+	grid.columns = 5
+	grid.add_theme_constant_override("h_separation", 14)
+	grid.add_theme_constant_override("v_separation", 16)
+	scroll.add_child(grid)
+
+	var card_ids := _gallery_card_ids()
+	if card_ids.is_empty():
+		var empty := Label.new()
+		empty.text = _home_text("暂无已解锁卡牌", "No cards unlocked yet.")
+		empty.add_theme_font_size_override("font_size", 22)
+		empty.add_theme_color_override("font_color", Color(0.78, 0.68, 0.52, 1.0))
+		grid.add_child(empty)
+		return
+	for card_id in card_ids:
+		grid.add_child(_make_gallery_card_slot(str(card_id)))
+
+
+func _gallery_card_ids() -> Array:
+	var ids: Array = []
+	for base_id in ["strike", "defend"]:
+		if FileAccess.file_exists(CARD_DATA_DIR + base_id + ".json"):
+			ids.append(base_id)
+	for card_id in MetaProgress.get_unlocked_card_pool():
+		var cid := str(card_id)
+		if not ids.has(cid):
+			ids.append(cid)
+	return ids
+
+
+func _make_gallery_card_slot(card_id: String) -> Control:
+	var slot := PanelContainer.new()
+	slot.custom_minimum_size = Vector2(214, 300)
+	slot.add_theme_stylebox_override(
+		"panel",
+		_home_flat_style(Color(0.045, 0.036, 0.026, 0.88), Color(0.26, 0.20, 0.12, 1.0), 6, 1)
+	)
+
+	var data := _load_card_json(CARD_DATA_DIR + card_id + ".json")
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 14)
+	margin.add_theme_constant_override("margin_bottom", 14)
+	slot.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 9)
+	margin.add_child(box)
+
+	var title := Label.new()
+	title.text = Settings.t("CARD_%s_TITLE" % card_id, str(data.get("title", card_id))).to_upper()
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title.add_theme_font_override("font", T.display_font(700))
+	title.add_theme_font_size_override("font_size", 21)
+	title.add_theme_color_override("font_color", Color(1.0, 0.86, 0.55, 1.0))
+	title.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
+	title.add_theme_constant_override("outline_size", 2)
+	box.add_child(title)
+
+	var meta := HBoxContainer.new()
+	meta.add_theme_constant_override("separation", 8)
+	box.add_child(meta)
+
+	var cost := Label.new()
+	cost.text = str(data.get("cost", "-"))
+	cost.custom_minimum_size = Vector2(34, 30)
+	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cost.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	cost.add_theme_font_override("font", T.display_font(700))
+	cost.add_theme_font_size_override("font_size", 20)
+	cost.add_theme_color_override("font_color", Color(0.85, 0.95, 1.0, 1.0))
+	cost.add_theme_stylebox_override(
+		"normal",
+		_home_flat_style(Color(0.06, 0.09, 0.10, 0.96), Color(0.18, 0.62, 0.72, 1.0), 5, 1)
+	)
+	meta.add_child(cost)
+
+	var type_id := str(data.get("type", "card")).to_upper()
+	var type_label := Label.new()
+	type_label.text = Settings.t("UI_BATTLE_CARD_TYPE_%s" % type_id, type_id)
+	type_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	type_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	type_label.add_theme_font_override("font", T.display_font(600))
+	type_label.add_theme_font_size_override("font_size", 17)
+	type_label.add_theme_color_override("font_color", Color(0.76, 0.66, 0.48, 1.0))
+	meta.add_child(type_label)
+
+	box.add_child(_daily_divider())
+
+	var desc := Label.new()
+	desc.text = _strip_bbcode(
+		Settings.t("CARD_%s_DESC" % card_id, str(data.get("description", "")))
+	)
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.add_theme_font_size_override("font_size", 16)
+	desc.add_theme_color_override("font_color", Color(0.88, 0.80, 0.66, 1.0))
+	desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(desc)
+	return slot
+
+
+func _load_card_json(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {}
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {}
+	var text := file.get_as_text()
+	file.close()
+	var parsed = JSON.parse_string(text)
+	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
+
+
+func _strip_bbcode(text: String) -> String:
+	return text.replace("[b]", "").replace("[/b]", "").replace("[i]", "").replace("[/i]", "")
+
+
 func _open_character_window() -> void:
 	CHARACTER_WINDOW.open_window(self, "base")
 
@@ -973,8 +1790,7 @@ func _add_side_buttons(parent: Control) -> void:
 
 ## Stash image button — dedicated kit art (btn_stash_*, ui-kit V4/v7); falls
 ## back to the removed warehouse building's sprite if the kit files are absent.
-## The _hover/_pressed texture swap IS the highlight. Opens the stash +
-## character window pair (_open_stash_windows).
+## The _hover/_pressed texture swap IS the highlight. Opens the stash window.
 func _make_stash_button() -> Control:
 	var normal_tex := T.ui_kit_tex("btn_stash_normal")
 	var hover_tex := T.ui_kit_tex("btn_stash_hover")
@@ -998,7 +1814,7 @@ func _make_stash_button() -> Control:
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.mouse_entered.connect(func() -> void: AudioManager.play_sfx("ui_hover"))
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
-	button.pressed.connect(_open_stash_windows)
+	button.pressed.connect(_open_stash_window)
 	return button
 
 
@@ -1050,30 +1866,10 @@ func _make_character_button() -> Control:
 	return button
 
 
-## Stash side button — ENSURE both halves of the storage flow are open side by
-## side: StashWindow on the LEFT, base-mode CharacterWindow on the RIGHT (drag
-## gear between them). Unlike StashWindow.open_window (a toggle), pressing the
-## button never closes anything — windows already open are brought to front,
-## mirroring _open_forge_windows.
-func _open_stash_windows() -> void:
-	var wl = load("res://run_system/ui/window/window_layer.gd").ensure(self)
-	var sw = wl.get_node_or_null("StashWindow")
-	if sw == null or sw.is_queued_for_deletion():
-		sw = load("res://run_system/ui/window/stash_window.gd").new()
-		sw.name = "StashWindow"
-		wl.open(sw)
-		sw.position = Vector2(160, 160)  # stash on the LEFT
-	else:
-		wl.bring_to_front(sw)
-	var cw = wl.get_node_or_null("CharacterWindow")
-	if cw == null or cw.is_queued_for_deletion():
-		cw = CHARACTER_WINDOW.new()
-		cw.name = "CharacterWindow"
-		cw.mode = "base"
-		wl.open(cw)
-		cw.position = Vector2(760, 120)  # character window on the RIGHT
-	else:
-		wl.bring_to_front(cw)
+## Stash side button: open the pure storage page. The character button opens the
+## separate character/backpack page; players can keep both open for drag flow.
+func _open_stash_window() -> void:
+	STASH_WINDOW.open_window(self)
 
 
 ## Forge entrance — dual floating windows instead of the old fullscreen
