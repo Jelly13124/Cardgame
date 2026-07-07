@@ -26,10 +26,18 @@ const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
 const HERO_SPRITE_DIR := "res://battle_scene/assets/images/heroes/"
 const HERO_DIR := "res://run_system/data/heroes/"
 const HOME_HUD_ICON_DIR := "res://run_system/assets/images/home/base_hud/"
-const BASE_OUTER_FRAME_TEX = preload("res://run_system/assets/images/ui/window_frames_v2/stash_outer_frame.png")
-const BASE_FOCUS_FRAME_TEX = preload("res://run_system/assets/images/ui/character_panels_v2/character_focus_frame.png")
-const BASE_BACKPACK_FRAME_TEX = preload("res://run_system/assets/images/ui/character_panels_v2/character_backpack_frame.png")
-const BASE_TITLE_PLAQUE_TEX = preload("res://run_system/assets/images/ui/concept_dark_panel/title_plaque.png")
+const BASE_OUTER_FRAME_TEX = preload(
+	"res://run_system/assets/images/ui/window_frames_v2/stash_outer_frame.png"
+)
+const BASE_FOCUS_FRAME_TEX = preload(
+	"res://run_system/assets/images/ui/character_panels_v2/character_focus_frame.png"
+)
+const BASE_BACKPACK_FRAME_TEX = preload(
+	"res://run_system/assets/images/ui/character_panels_v2/character_backpack_frame.png"
+)
+const BASE_TITLE_PLAQUE_TEX = preload(
+	"res://run_system/assets/images/ui/concept_dark_panel/title_plaque.png"
+)
 
 const MODE_BASE := "base"
 const MODE_MAP := "map"
@@ -111,7 +119,11 @@ static func open_window(host: Node, p_mode: String) -> Control:
 
 func _ready() -> void:
 	var is_base_mode := mode == MODE_BASE
-	init_window(tr("UI_EQUIP_TITLE_CHARACTER"), BASE_WIN_SIZE if is_base_mode else WIN_SIZE, not is_base_mode)
+	init_window(
+		tr("UI_EQUIP_TITLE_CHARACTER"),
+		BASE_WIN_SIZE if is_base_mode else WIN_SIZE,
+		not is_base_mode
+	)
 	if is_base_mode:
 		add_theme_stylebox_override("panel", _base_window_style())
 	_read_only = mode == MODE_BATTLE
@@ -124,8 +136,6 @@ func _ready() -> void:
 			# queue_free on close drops them automatically.
 			if not MetaProgress.buildings_changed.is_connected(_refresh_base):
 				MetaProgress.buildings_changed.connect(_refresh_base)
-			if not MetaProgress.core_changed.is_connected(_on_meta_currency_changed):
-				MetaProgress.core_changed.connect(_on_meta_currency_changed)
 			if not MetaProgress.caps_changed.is_connected(_on_meta_currency_changed):
 				MetaProgress.caps_changed.connect(_on_meta_currency_changed)
 			if not MetaProgress.scrap_changed.is_connected(_on_meta_currency_changed):
@@ -238,6 +248,7 @@ func _refresh_base() -> void:
 	_status_label.add_theme_font_size_override("font_size", 13)
 	_status_label.add_theme_color_override("font_color", Color(1, 0.4, 0.3))
 	_base_box.add_child(_status_label)
+	_base_box.add_child(_make_base_back_button())
 
 
 ## The base-mode middle zone: LEFT head/chest/hands · CENTER the pending hero's
@@ -455,56 +466,77 @@ func _build_base_backpack_panel(used: int, cap: int) -> GridContainer:
 ## Base-mode five-stat strip above the backpack, using the project attribute icons.
 func _build_base_attribute_strip(attrs: Variant) -> Control:
 	var a: Dictionary = attrs if typeof(attrs) == TYPE_DICTIONARY else {}
-	var panel := PanelContainer.new()
-	panel.name = "BaseAttributeStrip"
-	panel.custom_minimum_size = Vector2(0, 62)
-	panel.add_theme_stylebox_override("panel", _base_sheet_panel_style())
-	var pad := MarginContainer.new()
-	pad.add_theme_constant_override("margin_left", 8)
-	pad.add_theme_constant_override("margin_right", 8)
-	pad.add_theme_constant_override("margin_top", 7)
-	pad.add_theme_constant_override("margin_bottom", 7)
-	panel.add_child(pad)
+	var holder := CenterContainer.new()
+	holder.name = "BaseAttributeStrip"
+	holder.custom_minimum_size = Vector2(0, 42)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 8)
-	pad.add_child(row)
+	row.add_theme_constant_override("separation", 22)
+	holder.add_child(row)
 	for attr in ATTR_ORDER:
 		var pill := _make_base_attribute_pill(attr, int(a.get(attr, 0)))
-		pill.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(pill)
-	return panel
+	return holder
 
 
 func _make_base_attribute_pill(attr: String, value: int) -> Control:
-	var pill := PanelContainer.new()
+	var pill := HBoxContainer.new()
 	pill.name = "AttrPill_%s" % attr
-	pill.custom_minimum_size = Vector2(82, 42)
-	pill.add_theme_stylebox_override("panel", _base_stat_card_style())
-	pill.tooltip_text = tr("UI_EQUIP_ATTR_TIP")
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 6)
-	pill.add_child(row)
+	pill.custom_minimum_size = Vector2(58, 34)
+	pill.alignment = BoxContainer.ALIGNMENT_CENTER
+	pill.mouse_filter = Control.MOUSE_FILTER_STOP
+	pill.tooltip_text = _base_attribute_tooltip(attr)
+	pill.add_theme_constant_override("separation", 3)
 
 	var tex_path := str(ATTR_ICON_PATHS.get(attr, ""))
 	var icon := TextureRect.new()
-	icon.custom_minimum_size = Vector2(22, 22)
+	icon.custom_minimum_size = Vector2(24, 24)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if tex_path != "" and ResourceLoader.exists(tex_path):
 		icon.texture = load(tex_path)
-	row.add_child(icon)
+	pill.add_child(icon)
 
 	var label := Label.new()
 	label.text = str(value)
-	label.add_theme_font_size_override("font_size", 15)
+	label.add_theme_font_size_override("font_size", 20)
 	label.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(label)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pill.add_child(label)
 	return pill
+
+
+func _base_attribute_tooltip(attr: String) -> String:
+	var name := tr(str(ATTR_LABEL_KEYS.get(attr, attr)))
+	match attr:
+		"strength":
+			return "%s\n%s" % [name, "每点 +1 攻击伤害。"]
+		"constitution":
+			return "%s\n%s" % [name, "每点 +1 获得的格挡。"]
+		"intelligence":
+			return "%s\n%s" % [name, "每点使你施加的状态 +1 层，并增强工具效果。"]
+		"luck":
+			return "%s\n%s" % [name, "提高战利品稀有度，并增加发现工具的概率。"]
+		"charm":
+			return "%s\n%s" % [name, "降低商店价格，并影响部分事件选项。"]
+		_:
+			return name
+
+
+func _make_base_back_button() -> Button:
+	var b := Button.new()
+	b.name = "CharacterBackButton"
+	b.text = tr("PAUSE_BACK")
+	b.custom_minimum_size = Vector2(0, 68)
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.focus_mode = Control.FOCUS_NONE
+	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_style_base_back_button(b)
+	b.pressed.connect(close)
+	return b
 
 
 func _list_hero_ids() -> Array[String]:
@@ -628,7 +660,8 @@ func _style_slot_filled(slot: String, item_name: String, sprite: String, rarity:
 	icon.set_equipment(slot, item_name, sprite, rarity)
 	# Override the icon's own chunky style with the v2 filled box (2px rarity rim).
 	icon.add_theme_stylebox_override(
-		"panel", _base_slot_box_style("filled") if mode == MODE_BASE else T.ui_slot_box("filled", rc)
+		"panel",
+		_base_slot_box_style("filled") if mode == MODE_BASE else T.ui_slot_box("filled", rc)
 	)
 	var dot := parts["dot"] as Panel
 	dot.visible = true
@@ -856,7 +889,11 @@ func _make_locked_cell(cell_size: Vector2 = GRID_CELL_SIZE) -> Control:
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_theme_stylebox_override(
 		"panel",
-		_base_slot_box_style("cell_empty") if cell_size == BASE_GRID_CELL_SIZE else T.ui_slot_box("locked")
+		(
+			_base_slot_box_style("cell_empty")
+			if cell_size == BASE_GRID_CELL_SIZE
+			else T.ui_slot_box("locked")
+		)
 	)
 	cell.add_child(panel)
 	if T.ui_kit_tex("slot_locked") == null:
@@ -1057,7 +1094,7 @@ func _on_health_changed(_current: int, _maximum: int) -> void:
 	_refresh()
 
 
-func _on_resources_changed(_gold: int, _core: int) -> void:
+func _on_resources_changed(_gold: int, _scrap: int) -> void:
 	_refresh()
 
 
@@ -1397,7 +1434,7 @@ func _refresh() -> void:
 
 ## Build one backpack cell from RunManager.backpack[index] — the cell states:
 ## null = empty, {"kind":"equip"} = interactive gear icon, {"kind":"gold"} /
-## {"kind":"core"} = resource stack, {"kind":"tool"}.
+## {"kind":"scrap"} = resource stack, {"kind":"tool"}.
 func _make_grid_cell(index: int) -> Control:
 	var cell := _build_cell_content(index)
 	# Safe cells (index 0..safe-1) get a gold border; their contents survive death.
@@ -1423,13 +1460,13 @@ func _build_cell_content(index: int) -> Control:
 					index,
 					"gold"
 				)
-			"core":
+			"scrap":
 				return _make_resource_cell(
-					tr("UI_EQUIP_CELL_CORE"),
+					tr("UI_EQUIP_CELL_SCRAP"),
 					int(cell.get("amount", 0)),
 					T.ACCENT_NEON_BLUE,
 					index,
-					"core"
+					"scrap"
 				)
 			"tool":
 				return _make_tool_cell(str(cell.get("id", "")), index)
@@ -1679,7 +1716,7 @@ func _confirm_discard(index: int, item_id: String) -> void:
 	dlg.popup_centered()
 
 
-## A gold / Core resource stack cell. Draggable as a whole stack (move/swap via
+## A gold / Scrap resource stack cell. Draggable as a whole stack (move/swap via
 ## move_cell); middle-click still toggles safe.
 func _make_resource_cell(
 	label_text: String, amount: int, tint: Color, index: int, kind: String
@@ -1970,6 +2007,22 @@ func _base_title_plaque_style() -> StyleBox:
 	style.content_margin_top = 8
 	style.content_margin_bottom = 8
 	return style
+
+
+func _base_back_button_style(state: String) -> StyleBox:
+	var fallback := T.ui_button_accent(state)
+	return T.concept_box("button_red_wide_%s" % state, fallback, 34, 24, 12)
+
+
+func _style_base_back_button(button: Button) -> void:
+	button.add_theme_stylebox_override("normal", _base_back_button_style("normal"))
+	button.add_theme_stylebox_override("hover", _base_back_button_style("hover"))
+	button.add_theme_stylebox_override("pressed", _base_back_button_style("pressed"))
+	button.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
+	button.add_theme_color_override("font_hover_color", T.UI_BRASS_LIGHT)
+	button.add_theme_color_override("font_pressed_color", T.UI_HEADER_GOLD)
+	button.add_theme_font_override("font", T.display_font(700))
+	button.add_theme_font_size_override("font_size", 22)
 
 
 func _base_stat_card_style() -> StyleBox:
