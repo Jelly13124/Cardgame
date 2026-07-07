@@ -58,7 +58,7 @@ const RESULT_SCREEN_SCRIPT = preload("res://run_system/ui/result_screen.gd")
 const TUTORIAL_TIPS_SCRIPT = preload("res://battle_scene/ui/tutorial_tips.gd")
 const MAIN_MENU_PATH := "res://run_system/ui/main_menu.tscn"
 
-const BOSS_VICTORY_CORE := 130
+const BOSS_VICTORY_SCRAP := 130
 ## Extract reward per act (keyed by RunManager.current_act). The final act has
 ## NO entry — clearing its boss wins the run outright (no extract choice). Any
 ## non-final act missing here falls back to a formula so adding a future act
@@ -698,7 +698,7 @@ func _victory():
 	await get_tree().create_timer(3.0).timeout
 
 	# Caps award (Phase E2): accrue run-scoped caps sized by fight type. Like
-	# Core, caps stay at death-risk until banked by _settle_backpack on
+	# backpack scrap, caps stay at death-risk until banked by _settle_backpack on
 	# extract/victory. award_caps_for_combat dispatches boss/elite/normal so a
 	# boss fight grants ONLY the boss award (no boss + normal double-count).
 	RunManager.award_caps_for_combat(RunManager.last_battle_node_type)
@@ -714,7 +714,7 @@ func _victory():
 
 	# Boss victory routing:
 	#   - non-final act boss → extract choice modal (rewards by current_act)
-	#   - final boss   → grant BOSS_VICTORY_CORE and return to home base
+	#   - final boss   → grant BOSS_VICTORY_SCRAP and return to home base
 	#   - non-boss     → normal loot modal
 	if RunManager.last_battle_node_type == "boss":
 		# Boss drops a rare-tier equipment (one of several drop sources; ~15% set piece).
@@ -726,19 +726,19 @@ func _victory():
 		if not rewards.is_empty():
 			_show_extract_choice(act, rewards)
 			return
-		# Final boss path: Core drops into the backpack; _settle_backpack
-		# banks it during _teardown_run, so end_run_victory's banked-core arg
+		# Final boss path: Scrap drops into the backpack; _settle_backpack
+		# banks it during _teardown_run, so end_run_victory's banked arg
 		# is 0 to avoid double-counting.
-		RunManager.add_core_to_backpack(BOSS_VICTORY_CORE)
+		RunManager.add_scrap_to_backpack(BOSS_VICTORY_SCRAP)
 		RunManager.end_run_victory(0, "victory")
 		# Demo: the final-act (Act 2) boss kill ends the demo — show the
 		# demo-complete / wishlist screen instead of silently returning to base.
 		_show_result_screen("demo_complete")
 		return
-	# Elite kills drop a small amount of Core into the backpack (still at
+	# Elite kills drop a small amount of Scrap into the backpack (still at
 	# death risk until extraction); the normal loot flow handles the rest.
 	if RunManager.last_battle_node_type == "elite":
-		RunManager.add_core_to_backpack(randi_range(8, 16))
+		RunManager.add_scrap_to_backpack(randi_range(8, 16))
 	_show_loot_modal()
 
 
@@ -774,18 +774,18 @@ func _on_extract_chosen(extract: bool, rewards: Dictionary, canvas: CanvasLayer)
 	if is_instance_valid(canvas):
 		canvas.queue_free()
 	if extract:
-		# Extract: Core is already in the backpack from the boss kill, and
+		# Extract: Scrap is already in the backpack from the boss kill, and
 		# _settle_backpack banks it during _teardown_run, so pass 0 here.
 		var earned: int = int(rewards.get("extract", 0))
-		RunManager.add_core_to_backpack(earned)
+		RunManager.add_scrap_to_backpack(earned)
 		RunManager.end_run_victory(0, "extracted")
 		SceneTransition.change_to(HOME_BASE_PATH)
 	else:
-		# Push on: push-on Core drops into the backpack (still at death risk),
+		# Push on: push-on Scrap drops into the backpack (still at death risk),
 		# advance to the next act (regenerates its fresh map), then drop into the
 		# normal loot flow so the player still gets gold + a card pick out of the
 		# boss kill. Loot closes → MAP_SCENE shows the new act's map.
-		RunManager.add_core_to_backpack(int(rewards.get("continue", 0)))
+		RunManager.add_scrap_to_backpack(int(rewards.get("continue", 0)))
 		RunManager.advance_act()
 		_show_loot_modal()
 

@@ -1,11 +1,13 @@
 ## Persistent meta-progression. Survives across runs. Loaded from
 ## user://meta.json at autoload _ready; saved on every mutation.
 ##
-## Schema: { "core": int, "caps": int, "scrap": int, "upgrades": { "<id>": int } }
-##   - core: current spendable Core currency
-##   - caps: current spendable Caps currency (second permanent currency)
-##   - scrap: current spendable Scrap currency (third permanent currency; earned by
-##     dismantling equipment at the blacksmith, spent on reforging)
+## Schema: { "caps": int, "scrap": int, "upgrades": { "<id>": int } }
+##   - caps: current spendable Caps currency (the "money" currency — market/clinic
+##     purchases, building tier-ups, outpost permanent upgrades, run banking)
+##   - scrap: current spendable Scrap currency (the "salvage" currency — earned by
+##     dismantling equipment at the forge + battle drops; spent on reforging and
+##     building UNLOCKS). The old third "Core" currency was removed 2026-07-07;
+##     old saves' core balance is discarded (not migrated).
 ##   - upgrades: id → current level (0..3)
 extends Node
 
@@ -87,7 +89,6 @@ func peek_slot(slot: int) -> Dictionary:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return {}
 	return {
-		"core": int(parsed.get("core", 0)),
 		"caps": int(parsed.get("caps", 0)),
 		"scrap": int(parsed.get("scrap", 0)),
 		"runs": (parsed.get("run_history", []) as Array).size(),
@@ -107,7 +108,6 @@ func reset_for_new_game(slot: int) -> void:
 	if RunManager.has_method("clear_run_save"):
 		RunManager.clear_run_save()
 	save_progress()
-	emit_signal("core_changed", core)
 	emit_signal("caps_changed", caps)
 	emit_signal("scrap_changed", scrap)
 	emit_signal("buildings_changed")
@@ -116,7 +116,6 @@ func reset_for_new_game(slot: int) -> void:
 ## Reset all persisted profile state to first-boot defaults (no disk I/O). Used by
 ## set_active_slot before a load and by reset_for_new_game.
 func _reset_to_defaults() -> void:
-	core = 0
 	caps = 0
 	scrap = 0
 	upgrades = {}
@@ -135,7 +134,6 @@ func _reset_to_defaults() -> void:
 	cards_seen = {}
 
 
-signal core_changed(new_value: int)
 signal caps_changed(new_value: int)
 signal scrap_changed(new_value: int)
 signal upgrades_changed
@@ -148,19 +146,20 @@ signal bounty_completed(bounty_id: String)
 ## settle) so the bounty board / market shelf rebuild.
 signal bounties_changed
 
-var core: int = 0
-## Second permanent currency. Spent at base facilities; earned via E2.
+## "Money" currency. Spent at market/clinic, building tier-ups, outpost permanent
+## upgrades; earned via run banking (extract/victory) + contract rewards.
 var caps: int = 0
-## Third permanent currency. Earned by dismantling equipment at the blacksmith;
-## spent on reforging.
+## "Salvage" currency. Earned by dismantling equipment at the forge + battle drops
+## (banked to here on extract/victory); spent on reforging AND building unlocks.
 var scrap: int = 0
 var upgrades: Dictionary = {}
-## Facilities unlocked with Core (one-time). facility_id → true once unlocked.
+## Legacy facilities unlocked once (one-time). facility_id → true once unlocked.
+## Superseded by the tiered `buildings` model; kept for back-compat migration.
 var facilities: Dictionary = {}
 ## Tiered perks bought with Caps inside a facility. perk_id → int level.
 var caps_perk_levels: Dictionary = {}
 ## Last 50 run summaries (newest at end). Persisted to meta.json.
-## Each entry: { hero_id, floor, core_earned, outcome, timestamp }
+## Each entry: { hero_id, floor, scrap_earned, outcome, timestamp }
 var run_history: Array = []
 ## Highest difficulty completed. 0 means no ascension cleared.
 var max_ascension: int = 0
@@ -200,7 +199,7 @@ var cards_seen: Dictionary = {}
 
 const RUN_HISTORY_CAP := 50
 const ASCENSION_CAP := 5
-## Two-layer base model: facilities are unlocked once with Core, then Caps buy
+## Two-layer base model: facilities are unlocked once, then Caps buy
 ## tiered perks inside them.
 const FACILITY_UNLOCK_COSTS := {"cyber_doc": 300}
 const CAPS_PERK_BASE_COST := 300
@@ -225,8 +224,10 @@ const CYBER_DOC_PERKS := {
 const CYBER_HP_PERK := "cyber_hp"
 const CYBER_HP_PER_LEVEL := 5
 ## --- Buildings refactor: single source of truth for the 4 base buildings ---
-## Each entry: unlock_cost (Core to go locked→T1), tier_costs ([T2 cost, T3 cost]
-## in Core), functions (function key → minimum tier that gates it).
+## Each entry: unlock_cost (SCRAP to go locked→T1), tier_costs ([T2 cost, T3 cost]
+## in CAPS), functions (function key → minimum tier that gates it). Numbers are
+## [tunable] — unchanged from the pre-Core-removal values; the currency SEMANTICS
+## changed (unlock=Scrap, tier-up=Caps), not the amounts.
 const BUILDING_DEFS := {
 	"forge":
 	{
@@ -309,7 +310,7 @@ const HERO_EXCLUSIVE_CARDS := {
 
 ## One-shot migration: a pre-slots profile lived at user://meta.json. If it exists and
 ## slot 1 has no save yet, import it into slot 1 so a returning tester keeps their banked
-## Core / stash / unlocks instead of booting an empty profile after the slots update.
+## caps / scrap / stash / unlocks instead of booting an empty profile after the slots update.
 func _migrate_legacy_save() -> void:
 	if slot_exists(1) or not FileAccess.file_exists(LEGACY_SAVE_PATH):
 		return
@@ -429,22 +430,6 @@ func set_starter_deck_override(hero_id: String, deck: Array) -> void:
 	save_progress()
 
 
-func add_core(amount: int) -> void:
-	core = max(0, core + amount)
-	save_progress()
-	emit_signal("core_changed", core)
-
-
-## Spend Core (symmetric to spend_caps). Returns false if balance < amount.
-func spend_core(amount: int) -> bool:
-	if core < amount:
-		return false
-	core -= amount
-	save_progress()
-	emit_signal("core_changed", core)
-	return true
-
-
 func add_caps(amount: int) -> void:
 	caps = max(0, caps + amount)
 	save_progress()
@@ -479,7 +464,7 @@ func get_upgrade_level(id: String) -> int:
 	return int(upgrades.get(id, 0))
 
 
-## --- Two-layer base model: facilities (Core) + caps perks (Caps) ---
+## --- Two-layer base model: facilities (legacy, unlocked once) + caps perks (Caps) ---
 
 
 func is_facility_unlocked(id: String) -> bool:
@@ -517,9 +502,10 @@ func _facility_for_perk(perk_id: String) -> String:
 
 ## Spend Caps to buy one level of a perk. Requires the perk's facility unlocked,
 ## the perk below its (tier-aware) max level, and enough Caps. Returns false
-## otherwise. The attribute perks live under the "cyber_doc" facility (Core-
-## unlocked); the Max-HP perk (cyber_hp) lives under the "clinic" building and
-## requires it at T2 (max_hp_perk). Both share the attr_perk_cap() level ceiling.
+## otherwise. The attribute perks live under the legacy "cyber_doc" facility (now
+## gated by the clinic building's attr_perks function, not a separate unlock); the
+## Max-HP perk (cyber_hp) lives under the "clinic" building and requires it at T2
+## (max_hp_perk). Both share the attr_perk_cap() level ceiling.
 func buy_caps_perk(perk_id: String) -> bool:
 	var facility := _facility_for_perk(perk_id)
 	if facility == "":
@@ -558,7 +544,7 @@ func effective_safe_cells() -> int:
 	return SAFE_CELLS_BASE + get_upgrade_level("blacksmith")
 
 
-## --- Buildings refactor: tiered Core-gated buildings ---
+## --- Buildings refactor: tiered buildings (unlock=Scrap, tier-up=Caps) ---
 
 
 ## Current tier of a building (0=locked, 1=unlocked, 2, 3). Absent → 0 (locked).
@@ -570,26 +556,34 @@ func is_building_unlocked(id: String) -> bool:
 	return get_building_tier(id) >= 1
 
 
-## Spend Core to unlock a building (locked → T1). Idempotent (returns true if
-## already unlocked). Returns false on unknown id or insufficient Core.
+## The currency the NEXT action on a building spends: "scrap" for the unlock (while
+## locked), "caps" for a tier-up (already unlocked). UI reads this to pick the cost
+## icon + which balance to check for affordability. Unknown id → "caps" (harmless
+## default; next_building_cost returns -1 there so no purchase happens anyway).
+func building_cost_currency(id: String) -> String:
+	return "scrap" if get_building_tier(id) < 1 else "caps"
+
+
+## Spend SCRAP to unlock a building (locked → T1). Idempotent (returns true if
+## already unlocked). Returns false on unknown id or insufficient Scrap.
 func unlock_building(id: String) -> bool:
 	if not BUILDING_DEFS.has(id):
 		return false
 	if is_building_unlocked(id):
 		return true
 	var cost := int(BUILDING_DEFS[id].get("unlock_cost", -1))
-	if cost < 0 or core < cost:
+	if cost < 0 or scrap < cost:
 		return false
-	core -= cost
+	scrap -= cost
 	buildings[id] = 1
 	save_progress()
-	emit_signal("core_changed", core)
+	emit_signal("scrap_changed", scrap)
 	emit_signal("buildings_changed")
 	return true
 
 
-## Spend Core to upgrade a building one tier (T1→T2 or T2→T3). Returns false if
-## locked, already maxed, unknown id, or insufficient Core.
+## Spend CAPS to upgrade a building one tier (T1→T2 or T2→T3). Returns false if
+## locked, already maxed, unknown id, or insufficient Caps.
 func upgrade_building(id: String) -> bool:
 	if not BUILDING_DEFS.has(id):
 		return false
@@ -600,12 +594,12 @@ func upgrade_building(id: String) -> bool:
 	if cur - 1 >= tier_costs.size():
 		return false
 	var cost := int(tier_costs[cur - 1])
-	if core < cost:
+	if caps < cost:
 		return false
-	core -= cost
+	caps -= cost
 	buildings[id] = cur + 1
 	save_progress()
-	emit_signal("core_changed", core)
+	emit_signal("caps_changed", caps)
 	emit_signal("buildings_changed")
 	return true
 
@@ -619,8 +613,9 @@ func building_can(id: String, function: String) -> bool:
 	return get_building_tier(id) >= int(functions.get(function, 99))
 
 
-## Cost (Core) of the next action on a building: its unlock cost if locked, else
-## the next tier-up cost, else -1 if maxed or unknown. For UI button labels.
+## Cost of the next action on a building: its unlock cost (Scrap) if locked, else
+## the next tier-up cost (Caps), else -1 if maxed or unknown. For UI button labels.
+## Pair with building_cost_currency(id) to know which currency the number is in.
 func next_building_cost(id: String) -> int:
 	if not BUILDING_DEFS.has(id):
 		return -1
@@ -783,29 +778,30 @@ func can_purchase(id: String, definition: Dictionary) -> bool:
 	var lvl := get_upgrade_level(id)
 	if lvl >= tiers.size():
 		return false
-	return core >= int(tiers[lvl].get("cost", 999999))
+	return caps >= int(tiers[lvl].get("cost", 999999))
 
 
+## Buy the next tier of a base upgrade (outpost permanent upgrades). Spends CAPS
+## (was Core before the Core-removal refactor). Cost numbers unchanged [tunable].
 func purchase_upgrade(id: String, definition: Dictionary) -> bool:
 	if not can_purchase(id, definition):
 		return false
 	var lvl := get_upgrade_level(id)
 	var tier: Dictionary = definition["tiers"][lvl]
 	var cost := int(tier["cost"])
-	core -= cost
+	caps -= cost
 	upgrades[id] = lvl + 1
 
 	# All surviving base upgrades' effects are read on demand at run start; none
 	# carry a purchase-time side effect anymore.
 
 	save_progress()
-	emit_signal("core_changed", core)
+	emit_signal("caps_changed", caps)
 	emit_signal("upgrades_changed")
 	return true
 
 
 func reset_all() -> void:
-	core = 0
 	caps = 0
 	scrap = 0
 	upgrades.clear()
@@ -814,7 +810,6 @@ func reset_all() -> void:
 	buildings.clear()
 	starter_deck_override.clear()
 	save_progress()
-	emit_signal("core_changed", core)
 	emit_signal("caps_changed", caps)
 	emit_signal("scrap_changed", scrap)
 	emit_signal("upgrades_changed")
@@ -971,19 +966,21 @@ func bounty_progress_add(kind: String, amount: int) -> void:
 
 
 ## Grant a completed contract's reward, remove it from the board, and announce
-## it. Currency rewards go through add_caps/add_core/add_scrap (each persists);
-## an `equipment` reward rolls a shell of that tier into the permanent stash
+## it. Currency rewards go through add_caps/add_scrap (each persists); an
+## `equipment` reward rolls a shell of that tier into the permanent stash
 ## (silently lost if the stash is full — same rule as any other stash overflow).
+## Core was removed 2026-07-07; a legacy save's contract with a stale `core` reward
+## key is routed to scrap so no reward silently vanishes.
 func _settle_bounty(entry: Dictionary) -> void:
 	var bounty_id := str(entry.get("id", ""))
 	var reward = get_bounty_data(bounty_id).get("reward", {})
 	if typeof(reward) == TYPE_DICTIONARY:
 		if int(reward.get("caps", 0)) > 0:
 			add_caps(int(reward["caps"]))
-		if int(reward.get("core", 0)) > 0:
-			add_core(int(reward["core"]))
-		if int(reward.get("scrap", 0)) > 0:
-			add_scrap(int(reward["scrap"]))
+		# Scrap reward + back-compat: an old `core` key folds into scrap.
+		var scrap_reward := int(reward.get("scrap", 0)) + int(reward.get("core", 0))
+		if scrap_reward > 0:
+			add_scrap(scrap_reward)
 		var equip_tier := str(reward.get("equipment", ""))
 		if equip_tier != "":
 			add_to_stash(RunManager.roll_shell_drop(equip_tier))
@@ -1011,7 +1008,6 @@ func save_progress() -> void:
 		push_warning("MetaProgress: failed to open save file for write")
 		return
 	var payload := {
-		"core": core,
 		"caps": caps,
 		"scrap": scrap,
 		"upgrades": upgrades,
@@ -1047,7 +1043,9 @@ func load_progress() -> void:
 		push_warning("MetaProgress: corrupt save file at %s, renaming to .bak" % path)
 		DirAccess.rename_absolute(path, path + ".bak")
 		return
-	core = int(parsed.get("core", 0))
+	# Core was removed 2026-07-07: an old save's "core" key is simply ignored here
+	# (balance discarded, not migrated — owner decision). Missing/extra keys are
+	# fault-tolerant (JSON.get with defaults), so old and new saves both load clean.
 	caps = int(parsed.get("caps", 0))
 	scrap = int(parsed.get("scrap", 0))
 	var raw_upgrades = parsed.get("upgrades", {})

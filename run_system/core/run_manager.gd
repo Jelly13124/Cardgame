@@ -2,14 +2,14 @@ extends Node
 
 # --- Signals ---
 signal health_changed(current: int, maximum: int)
-signal resources_changed(gold: int, core: int)
+signal resources_changed(gold: int, scrap: int)
 signal deck_updated
 signal items_updated
 signal equipment_changed
 signal relics_updated
 ## Emitted when the run ends, win or lose. `summary` is the run-history
 ## payload for MetaProgress (and any future listener):
-##   { hero_id: String, floor: int, act: int, core_earned: int,
+##   { hero_id: String, floor: int, act: int, scrap_earned: int,
 ##     outcome: String, timestamp: int (unix seconds) }
 ## outcome is one of "victory" (final boss kill), "extracted", "defeat".
 signal run_ended(victory: bool, summary: Dictionary)
@@ -43,9 +43,9 @@ var gold: int:
 		return total_gold()
 	set(_v):
 		push_warning("RunManager.gold is read-only — use add_gold()/spend_gold()")
-## Vestigial in-run core counter (kept for add_resources compat). Run-core that
-## matters now lives in the backpack as core stacks; see total_run_core().
-var core: int = 0
+## Vestigial in-run counter (kept for add_resources compat; callers always pass 0).
+## Run-scrap that matters lives in the backpack as scrap stacks; see total_run_scrap().
+var _run_scrap_counter: int = 0
 
 # Progression
 var current_floor: int = 0
@@ -70,25 +70,27 @@ var equipped_items: Dictionary = {
 
 ## Backpack — the definitive store for unequipped loot. Fixed length
 ## MAX_INVENTORY. Each cell is one of:
-##   null | {"kind":"equip","item":<instance>} | {"kind":"gold","amount":int} | {"kind":"core","amount":int}
+##   null | {"kind":"equip","item":<instance>} | {"kind":"gold","amount":int} | {"kind":"scrap","amount":int}
 ## Equip cells now carry a full instance dict under "item"; the legacy
 ## {"kind":"equip","id":String} form is still READ (converted via
-## as_equip_instance) for back-compat. Gold / Core / equipment share these cells.
+## as_equip_instance) for back-compat. Gold / Scrap / equipment share these cells.
+## (The in-run resource stack was "core" before 2026-07-07; it is now "scrap",
+## banking to MetaProgress.scrap on extract/victory.)
 var backpack: Array = []
 signal backpack_changed
 signal tools_changed
 const GOLD_PER_CELL := 100
-const CORE_PER_CELL := 30
+const SCRAP_PER_CELL := 30
 
 ## ── Caps (瓶盖) earning — Phase E2 ──────────────────────────────────────────
-## Caps mirror Core's banking semantics: they accrue into a run-scoped counter
-## during the run and are banked to MetaProgress ONLY on extract / full victory
-## (see _settle_backpack). A death banks nothing — unbanked caps are lost, the
-## same rule Core follows for everything outside the safe cells.
+## Caps accrue into a run-scoped counter during the run and are banked to
+## MetaProgress ONLY on extract / full victory (see _settle_backpack). A death
+## banks nothing — unbanked caps are lost, the same rule backpack scrap follows
+## outside the safe cells.
 ## Tunables (grouped for easy balance):
 const CAPS_PER_COMBAT := 6  # normal (non-elite, non-boss) combat win
 const CAPS_PER_ELITE := 18  # elite win
-const CAPS_PER_BOSS := 45  # boss win (granted alongside BOSS_VICTORY_CORE)
+const CAPS_PER_BOSS := 45  # boss win (granted alongside BOSS_VICTORY_SCRAP)
 const GOLD_PER_CAP := 10  # extraction: floor(run gold / GOLD_PER_CAP) → caps
 const STARTING_GOLD := 99  # baseline purse every run begins with (Command Center stacks on top)
 ## Run-scoped caps accrued so far this run (banked on extract/victory only).
@@ -706,7 +708,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 
 	# Reset resources and health (hero max_health overrides default 50).
 	# gold is derived from the backpack — clearing the backpack zeroes it.
-	core = 0
+	_run_scrap_counter = 0
 	_run_caps = 0
 	current_floor = 0
 	current_act = 1
@@ -898,14 +900,17 @@ func set_max_health(amount: int, heal_to_full: bool = false) -> void:
 # --- Resources ---
 
 
+## Adjust run resources. `g` = gold delta (routed through the backpack). The
+## second arg is the vestigial in-run counter (all callers pass 0 — the meaningful
+## run-scrap lives in the backpack as scrap stacks). Kept for call-site compat.
 func add_resources(g: int, c: int) -> void:
 	# Gold now lives in the backpack; route through add_gold/spend_gold.
 	if g > 0:
 		add_gold(g)
 	elif g < 0:
 		spend_gold(-g)
-	core = max(0, core + c)
-	emit_signal("resources_changed", total_gold(), core)
+	_run_scrap_counter = max(0, _run_scrap_counter + c)
+	emit_signal("resources_changed", total_gold(), _run_scrap_counter)
 
 
 # --- Backpack (cell model) -------------------------------------------------
@@ -985,10 +990,12 @@ func total_gold() -> int:
 	return t
 
 
-func total_run_core() -> int:
+## Total scrap carried in the backpack this run (banks to MetaProgress.scrap on
+## extract/victory). Was total_run_core() before the 2026-07-07 Core removal.
+func total_run_scrap() -> int:
 	var t := 0
 	for c in backpack:
-		if c != null and c.get("kind") == "core":
+		if c != null and c.get("kind") == "scrap":
 			t += int(c["amount"])
 	return t
 
@@ -1004,14 +1011,15 @@ func add_gold(n: int) -> int:
 	return stored
 
 
-## Add run-core to the backpack (≤CORE_PER_CELL per cell). Returns amount stored.
-func add_core_to_backpack(n: int) -> int:
-	return _add_stacked("core", n, CORE_PER_CELL)
+## Add run-scrap to the backpack (≤SCRAP_PER_CELL per cell). Returns amount stored.
+## Was add_core_to_backpack() before the 2026-07-07 Core removal.
+func add_scrap_to_backpack(n: int) -> int:
+	return _add_stacked("scrap", n, SCRAP_PER_CELL)
 
 
 ## ── Caps earning helpers (Phase E2) ─────────────────────────────────────────
 ## Accrue caps into the run-scoped counter. Banked to MetaProgress only at
-## extract / victory (see _settle_backpack) — mirrors Core's backpack semantics.
+## extract / victory (see _settle_backpack) — mirrors the backpack-scrap banking.
 func award_run_caps(n: int) -> void:
 	if n <= 0:
 		return
@@ -1019,7 +1027,7 @@ func award_run_caps(n: int) -> void:
 
 
 ## Award caps for a combat win, sized by the battle node type. Called from the
-## victory path the same way Core is dropped per fight type, so a boss fight
+## victory path the same way scrap is dropped per fight type, so a boss fight
 ## grants the boss award only (never boss + normal).
 func award_caps_for_combat(node_type: String) -> void:
 	match node_type:
@@ -1418,8 +1426,8 @@ func apply_event_effects(effects: Array) -> void:
 				modify_health(-int(effect.get("amount", 0)))
 			"heal":
 				modify_health(int(effect.get("amount", 0)))
-			"gain_core":
-				add_core_to_backpack(int(effect.get("amount", 0)))
+			"gain_scrap":
+				add_scrap_to_backpack(int(effect.get("amount", 0)))
 			"gain_relic":
 				add_relic(str(effect.get("id", "")))
 			"gain_equipment":
@@ -1930,14 +1938,14 @@ func _apply_meta_upgrades() -> void:
 	# on-demand by effective_backpack_size(); nothing to apply here.)
 
 
-func _handle_run_loss(core_earned: int = 0) -> void:
-	_teardown_run(false, "defeat", core_earned)
-	# TODO: Trigger base-building retention logic (e.g. keep 30% of Core)
+func _handle_run_loss(scrap_earned: int = 0) -> void:
+	_teardown_run(false, "defeat", scrap_earned)
+	# TODO: Trigger base-building retention logic (e.g. keep 30% of scrap)
 	print("Player Hero defeated! Run ended.")
 
 
-## Mark the run as ended cleanly. `core_earned` is the Core grant for
-## THIS run (e.g. 150 for final boss, 50 for extract). `outcome` is
+## Mark the run as ended cleanly. `scrap_earned` is a display-only summary figure
+## (actual banking happens in _settle_backpack, so callers pass 0). `outcome` is
 ## "victory" for final boss kill, "extracted" for mid-act extract.
 ## Idempotent — calling twice is a no-op the second time.
 ## Voluntarily give up the run (pause-menu Abandon): settled as a loss like death
@@ -1946,14 +1954,14 @@ func abandon_run() -> void:
 	_teardown_run(false, "abandoned", 0)
 
 
-func end_run_victory(core_earned: int = 0, outcome: String = "victory") -> void:
-	_teardown_run(true, outcome, core_earned)
+func end_run_victory(scrap_earned: int = 0, outcome: String = "victory") -> void:
+	_teardown_run(true, outcome, scrap_earned)
 
 
 ## Shared run-teardown. Builds the summary dict, flips is_run_active false,
 ## emits run_ended(victory, summary). Both win and loss paths funnel here
 ## so future bookkeeping added once applies to both outcomes. Idempotent.
-func _teardown_run(victory: bool, outcome: String, core_earned: int) -> void:
+func _teardown_run(victory: bool, outcome: String, scrap_earned: int) -> void:
 	if not is_run_active:
 		return
 	# Bounty: successful extraction settles HERE, not at the UI call site —
@@ -1971,7 +1979,7 @@ func _teardown_run(victory: bool, outcome: String, core_earned: int) -> void:
 		"hero_id": current_hero_id,
 		"floor": current_floor,
 		"act": current_act,
-		"core_earned": core_earned,
+		"scrap_earned": scrap_earned,
 		"outcome": outcome,
 		"timestamp": int(Time.get_unix_time_from_system()),
 	}
@@ -2008,7 +2016,7 @@ func save_run() -> void:
 		"ascension": ascension,
 		"max_health": max_health,
 		"current_health": current_health,
-		"core": core,
+		"run_scrap": _run_scrap_counter,
 		"run_caps": _run_caps,
 		"current_floor": current_floor,
 		"current_act": current_act,
@@ -2063,7 +2071,9 @@ func load_run() -> bool:
 	ascension = int(data.get("ascension", 0))
 	max_health = int(data.get("max_health", 50))
 	current_health = int(data.get("current_health", max_health))
-	core = int(data.get("core", 0))
+	# Fault-tolerant on the old "core" run-save key (discarded; runs' banked scrap
+	# lives in the backpack cells, which round-trip under "backpack").
+	_run_scrap_counter = int(data.get("run_scrap", 0))
 	_run_caps = int(data.get("run_caps", 0))
 	current_floor = int(data.get("current_floor", 0))
 	current_act = int(data.get("current_act", 1))
@@ -2148,19 +2158,19 @@ func _normalize_map(raw) -> Array:
 
 
 ## Settle the backpack at run end.
-## Phase 1: extract/victory banks ALL carried run-core into permanent
-## MetaProgress.core; death banks nothing. (Phase 2 adds safe-cell survival on
+## Phase 1: extract/victory banks ALL carried run-scrap into permanent
+## MetaProgress.scrap; death banks nothing. (Phase 2 adds safe-cell survival on
 ## death; Phase 3 adds the permanent equipment stash.)
 func _settle_backpack(victory: bool, outcome: String) -> void:
 	if victory or outcome == "extracted":
-		# Extract / final victory: ALL carried Core banks, ALL backpack equipment
+		# Extract / final victory: ALL carried Scrap banks, ALL backpack equipment
 		# AND all equipped gear are carried out into the permanent stash.
-		var carried := total_run_core()
+		var carried := total_run_scrap()
 		if carried > 0:
-			MetaProgress.add_core(carried)
-		# Caps bank alongside Core: accrued per-fight caps + leftover run gold
-		# converted at GOLD_PER_CAP (floor). Mirrors Core — banked on extract /
-		# victory only; a death (else-branch below) banks no caps.
+			MetaProgress.add_scrap(carried)
+		# Caps bank alongside scrap: accrued per-fight caps + leftover run gold
+		# converted at GOLD_PER_CAP (floor). Banked on extract / victory only; a
+		# death (else-branch below) banks no caps.
 		var banked_caps := _run_caps + int(total_gold() / GOLD_PER_CAP)
 		if banked_caps > 0:
 			MetaProgress.add_caps(banked_caps)
@@ -2174,7 +2184,7 @@ func _settle_backpack(victory: bool, outcome: String) -> void:
 			if not eq.is_empty():
 				MetaProgress.add_to_stash(eq)
 	else:
-		# Death: ONLY safe-cell contents (index 0..safe-1) survive — Core banks,
+		# Death: ONLY safe-cell contents (index 0..safe-1) survive — Scrap banks,
 		# equipment goes to the stash. Everything else + all equipped gear is lost.
 		# Safe cells can never exceed the usable backpack size (or the array length).
 		var safe := mini(MetaProgress.effective_safe_cells(), effective_backpack_size())
@@ -2183,17 +2193,17 @@ func _settle_backpack(victory: bool, outcome: String) -> void:
 			var c = backpack[i]
 			if c == null:
 				continue
-			if c.get("kind") == "core":
+			if c.get("kind") == "scrap":
 				saved += int(c["amount"])
 			elif c.get("kind") == "equip":
 				MetaProgress.add_to_stash(_cell_equip_instance(c))
 		if saved > 0:
-			MetaProgress.add_core(saved)
+			MetaProgress.add_scrap(saved)
 
 
 func _emit_all_state() -> void:
 	emit_signal("health_changed", current_health, max_health)
-	emit_signal("resources_changed", gold, core)
+	emit_signal("resources_changed", gold, _run_scrap_counter)
 	emit_signal("deck_updated")
 	emit_signal("items_updated")
 	emit_signal("relics_updated")
@@ -2211,7 +2221,7 @@ func _input(event: InputEvent) -> void:
 				print("Deck Size: ", player_deck.size())
 				print("Deck Contents: ", player_deck)
 				print("Health: ", current_health, "/", max_health)
-				print("Resources - Gold: ", gold, " Core: ", core)
+				print("Resources - Gold: ", gold, " Scrap(bank): ", total_run_scrap())
 				print("Items: ", equipped_items, " Inventory: ", inventory_items)
 				print("Relics: ", relics)
 			KEY_F10:
