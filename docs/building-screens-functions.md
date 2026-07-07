@@ -1,8 +1,8 @@
 # Base Building Screens — Function Reference (for Codex concept UI)
 
 **Purpose:** 描述基地四栋楼各自的功能、货币、分级(tier)结构与界面内容,供 Codex
-生成**概念 UI**。美术必须守 `docs/project-rules.md §1`(Offbeat Sci-Fi Cartoon
-Wasteland:粗黑描边、大色块、平涂 cel、废土工业)。
+生成**概念 UI**。美术必须守 `docs/project-rules.md §1`(Rick and Morty 风格
+Sci-Fi Cartoon Wasteland:粗黑描边、大色块、平涂 cel、废土工业)。
 
 > **状态(2026-07-07 改版):** 本文是**新设计的功能规格**,代码尚未实装(等 Codex 概念
 > UI 出来后再改)。相对旧版的变化:**悬赏从黑市移到前哨站、承接免费**;前哨站 tier 重排;
