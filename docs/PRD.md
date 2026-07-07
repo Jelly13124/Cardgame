@@ -216,10 +216,12 @@ All loot lives in a single **20-cell backpack** where **Gold, Core, and equipmen
 Between runs, players return to their **home base**: 4 building tiles in a centered row,
 a **giant START button** bottom-centre with a **difficulty button** above it (opens an
 A0-A5 picker popup), a **bottom currency bar** (`currency_top_bar.gd`, CanvasLayer 70,
-Core/Caps/Scrap), and two **image buttons on the right edge** — Stash (old warehouse art)
-and Character (hero headshot, hover-highlight). Three meta-currencies fund the base:
-**Core** (unlock + tier-up buildings), **Caps** (Clinic / Market services), **Scrap**
-(Forge services). See `meta_progress.gd` `BUILDING_DEFS`.
+Core/Caps/Scrap), a **bounty board** panel bottom-left (held contracts + live progress —
+see "Bounty System" below), and three **nav image buttons bottom-right** — Warehouse
+(stash), Character (hero headshot) and Gallery (card codex — see "Card Gallery" below).
+Three meta-currencies fund the base: **Core** (unlock + tier-up buildings), **Caps**
+(Clinic / Market services), **Scrap** (Forge services). See `meta_progress.gd`
+`BUILDING_DEFS`.
 
 **Windowed UI (2026-07-02/03 refactor).** The base uses Diablo-style **draggable,
 coexisting windows** (`run_system/ui/window/`). Pressing **i** (home base / map / battle)
@@ -240,7 +242,7 @@ conversion → Market T3; stash cap flat 40).
 |---|---|
 | **Forge (锻造)** | Draggable 4-tab window: dismantle → Scrap; craft / reforge / curse (tier-gated, Scrap) |
 | **Clinic (诊所)** | Caps-bought permanent attribute perks + a Max-HP perk (tier raises the cap) |
-| **Market (黑市)** | Caps tool shop + stock refresh (T1); Caps equipment shop (T2); resource conversion Core→Caps→Scrap (T3). All non-curse, non-basic cards are draftable by default — no card-unlock system |
+| **Market (黑市)** | Daily **bounty shelf** (T1, see "Bounty System"); Caps tool shop + stock refresh (T1); Caps equipment shop (T2); resource conversion Core→Caps→Scrap (T3). All non-curse, non-basic cards are draftable by default — no card-unlock system |
 | **Outpost (前哨站)** | Core upgrades: starting gold / in-run shop discount / safe cells / backpack size; difficulty (ascension) selector; starter-deck editor |
 
 ### Rules
@@ -248,6 +250,54 @@ conversion → Market T3; stash cap flat 40).
 - Building unlocks + tiers persist permanently across runs (true meta-progression).
 - Hero selection + next-run loadout live in the CharacterWindow's base mode (press **i**).
 - Some upgrades unlock new heroes or starting decks
+
+---
+
+## Bounty System (悬赏契约)
+
+Market-sold contracts that **replace the old mock daily-tasks panel** — the panel's visual
+shell survives as the home-base **bounty board** (bottom-left), but every row is now a real
+held contract with live progress. Spec:
+`docs/superpowers/specs/2026-07-05-bounty-system-card-codex-design.md`. Contract data:
+`run_system/data/bounties/{bounty_id}.json` (validated by `validate_bounty` in
+`data_validator.gd` — the schema is `id / title / objective{type,count} / reward / price /
+tier`). Catalog page: `docs/catalog_html/bounties.html`.
+
+### Daily market shelf (T1 `bounty_shelf`)
+- Every local-date change rerolls a **3-contract shelf** at the Black Market: **1 free
+  claim** (once per day) **+ 2 Caps-priced buys**. The roll is seeded with the date, so
+  re-entering on the same day keeps the same shelf; already-held ids are excluded.
+- The shelf refresh runs on base entry AND market entry (`refresh_bounty_shelf_if_stale`).
+
+### Holding & settling
+- **Max 3 held** contracts (board full ⇒ shelf take is refused). Held contracts **never
+  expire** — they stay on the board until completed (the daily reroll never touches them).
+- Progress ticks **only while a run is active** (`RunManager.bounty_event` gates on
+  `is_run_active`); base/menu activity never counts.
+- **Instant settle**: the moment a contract's count is reached mid-run, the reward pays out
+  immediately (a toast announces it at base) — no manual turn-in step.
+- Rewards: any of **Caps / Core / Scrap** (ints) and/or an **equipment drop tier**
+  (common/uncommon/rare — rolled via `roll_shell_drop` into the permanent stash).
+
+### Objective types (7)
+`play_attack_cards` · `earn_gold` · `kill_enemies` · `kill_elites` · `kill_boss` ·
+`extract_alive` · `upgrade_cards` (campfire upgrades). Two-place rule: each type is
+emitted somewhere via `RunManager.bounty_event` AND listed in
+`ALLOWED_BOUNTY_OBJECTIVES` (`data_validator.gd`).
+
+> **`earn_gold` 口径**: counts all gold **entering the backpack** during an active run
+> (kill drops, reward payouts, extraction bonus). Starting gold and save-resume restores
+> do NOT count; spending gold never subtracts.
+
+Launch set: **10 contracts** (7 standard, 3 hard) — see the bounties catalog page for the
+price/reward table.
+
+### Card Gallery (卡牌图鉴)
+The **Gallery** nav button (home base, bottom-right) opens the card codex: every player
+card in the game, with a **collected counter**. Demo rule: **used = unlocked** — a card
+unlocks the first time it is *played* in battle (`MetaProgress.mark_card_seen`, persisted
+in `cards_seen`, write-throttled to new ids). Locked entries render as the battle
+card-back. There is no other unlock path (drafting alone doesn't count).
 
 ---
 
@@ -546,6 +596,19 @@ Spec: `docs/superpowers/specs/2026-06-30-discover-mechanic-design.md`; plan: `�
   Caps shelf, just moved from T1); T3 **refresh** (re-roll both stocks for Caps, price rises
   +10 each use for the visit). `BUILDING_DEFS["market"].functions` is now
   `{tool_shop:1, equip_shop:2, refresh:3}`.
+  _(2026-07-05: the daily **bounty shelf** joined the Market at T1 — see Phase 13; `functions` gained `bounty_shelf:1`.)_
+
+### ✅ Phase 13 — Bounty system + card gallery (shipped 2026-07-05)
+Spec: `docs/superpowers/specs/2026-07-05-bounty-system-card-codex-design.md`; plan: `…/plans/2026-07-05-bounty-system-card-codex.md`.
+- ✅ **Bounty contracts** (see "Bounty System" section): 10 JSON contracts in
+  `run_system/data/bounties/` + `validate_bounty` schema; daily date-seeded Market shelf
+  (1 free + 2 paid, T1); max-3 bounty board on the home base (replaces the mock
+  daily-tasks panel with real data); 6 in-run `bounty_event` hooks (attack plays, gold
+  into backpack, kills, elites/boss, extraction, campfire upgrades); instant settle with
+  Caps/Core/Scrap/equipment rewards.
+- ✅ **Card gallery**: Gallery nav button at base opens the codex — all player cards,
+  used = unlocked (`MetaProgress.cards_seen`, marked on first play), locked cards show the
+  card back, collected counter.
 
 ### ✅ Phase 9 — Demo Polish (shipped 2026-06-24)
 Spec: `docs/superpowers/specs/2026-06-24-demo-polish-overnight-design.md`. Driven by a 4-dimension demo review.
