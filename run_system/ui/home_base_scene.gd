@@ -254,8 +254,11 @@ func _add_top_hud(root: Control) -> void:
 	top_body.offset_top = 0.0
 	top_body.offset_right = 0.0
 	top_body.offset_bottom = 88.0
-	top_body.mouse_filter = Control.MOUSE_FILTER_STOP
-	top_body.add_theme_stylebox_override("panel", _home_top_bar_style())
+	# No top bar strip (owner request): the container is invisible + click-through
+	# so the currencies (top-left) and settings gear (top-right) float directly on
+	# the desert. Difficulty moved down to the START cluster.
+	top_body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top_body.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	root.add_child(top_body)
 
 	var resources := HBoxContainer.new()
@@ -291,7 +294,8 @@ func _add_top_hud(root: Control) -> void:
 	right_controls.offset_bottom = 72.0
 	top_body.add_child(right_controls)
 
-	right_controls.add_child(_make_top_difficulty_button())
+	# Difficulty is no longer up here — it lives in the START cluster now. Only the
+	# settings gear floats in the top-right corner.
 	right_controls.add_child(
 		_make_square_icon_button("icon_settings", tr("PAUSE_SETTINGS"), _open_pause)
 	)
@@ -729,6 +733,19 @@ func _add_start_run_button(root: Control) -> void:
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(_on_start_pressed)
 	root.add_child(button)
+
+	# Difficulty selector sits directly ABOVE the START button (a tight launch
+	# cluster), 278×56 centred, ~12px above START's top edge (-172).
+	var diff := _make_top_difficulty_button()
+	diff.anchor_left = 0.5
+	diff.anchor_top = 1.0
+	diff.anchor_right = 0.5
+	diff.anchor_bottom = 1.0
+	diff.offset_left = -139.0
+	diff.offset_top = -240.0
+	diff.offset_right = 139.0
+	diff.offset_bottom = -184.0
+	root.add_child(diff)
 
 
 func _add_bottom_nav(root: Control) -> void:
