@@ -48,6 +48,8 @@ const HERO_PORTRAIT_PATH := "res://battle_scene/assets/images/heroes/cowboy_bill
 const BASE_HUD_ICON_DIR := "res://run_system/assets/images/home/base_hud/"
 const CURRENCY_ICON_DIR := "res://run_system/assets/images/home/currency/"
 const CARD_DATA_DIR := "res://battle_scene/card_info/player/"
+## Locked-gallery slot art: the same card back battle uses (play_card.gd).
+const GALLERY_CARD_BACK := "res://battle_scene/assets/images/cards/ui/card_back.png"
 const TOP_HUD_LAYER := 70
 
 const BUILDING_BADGE_ICONS := {
@@ -1770,6 +1772,12 @@ func _open_card_gallery() -> void:
 	box.add_theme_constant_override("separation", 16)
 	margin.add_child(box)
 
+	var card_ids := _gallery_card_ids()
+	var seen_count := 0
+	for cid in card_ids:
+		if MetaProgress.cards_seen.has(str(cid)):
+			seen_count += 1
+
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 12)
 	box.add_child(header)
@@ -1785,6 +1793,16 @@ func _open_card_gallery() -> void:
 	title.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.90))
 	title.add_theme_constant_override("outline_size", 3)
 	header.add_child(title)
+
+	var counter := Label.new()
+	counter.text = (_home_text("已收录 %d / %d", "Collected %d / %d") % [seen_count, card_ids.size()])
+	counter.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	counter.add_theme_font_override("font", T.display_font(600))
+	counter.add_theme_font_size_override("font_size", 21)
+	counter.add_theme_color_override("font_color", Color(0.80, 0.70, 0.52, 1.0))
+	counter.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.90))
+	counter.add_theme_constant_override("outline_size", 2)
+	header.add_child(counter)
 
 	var close := Button.new()
 	close.text = "X"
@@ -1813,10 +1831,9 @@ func _open_card_gallery() -> void:
 	grid.add_theme_constant_override("v_separation", 16)
 	scroll.add_child(grid)
 
-	var card_ids := _gallery_card_ids()
 	if card_ids.is_empty():
 		var empty := Label.new()
-		empty.text = _home_text("暂无已解锁卡牌", "No cards unlocked yet.")
+		empty.text = _home_text("暂无卡牌数据", "No card data found.")
 		empty.add_theme_font_size_override("font_size", 22)
 		empty.add_theme_color_override("font_color", Color(0.78, 0.68, 0.52, 1.0))
 		grid.add_child(empty)
@@ -1825,19 +1842,51 @@ func _open_card_gallery() -> void:
 		grid.add_child(_make_gallery_card_slot(str(card_id)))
 
 
+## Every player card on disk — basics (strike/defend), curses, and ALL heroes'
+## exclusives included; the codex shows the full set whether seen or not.
+## Sort: type attack → skill → ability → curse, then rarity common → uncommon
+## → rare → curse/special, then alphabetical by id.
 func _gallery_card_ids() -> Array:
+	var type_order := {"attack": 0, "skill": 1, "ability": 2, "curse": 3}
+	var rarity_order := {"common": 0, "uncommon": 1, "rare": 2, "curse": 3, "special": 4}
+	var cache: Dictionary = MetaProgress.get_card_info_cache()
+	var entries: Array = []
+	var dir := DirAccess.open(CARD_DATA_DIR)
+	if dir == null:
+		push_warning("CardGallery: cannot open card dir %s" % CARD_DATA_DIR)
+		return []
+	for file_name in dir.get_files():
+		if not file_name.ends_with(".json"):
+			continue
+		var card_id := file_name.get_basename()
+		var data: Dictionary = cache.get(card_id, {})
+		(
+			entries
+			. append(
+				{
+					"id": card_id,
+					"type_rank": int(type_order.get(str(data.get("type", "")), 99)),
+					"rarity_rank": int(rarity_order.get(str(data.get("rarity", "")), 99)),
+				}
+			)
+		)
+	entries.sort_custom(
+		func(a: Dictionary, b: Dictionary) -> bool:
+			if a["type_rank"] != b["type_rank"]:
+				return a["type_rank"] < b["type_rank"]
+			if a["rarity_rank"] != b["rarity_rank"]:
+				return a["rarity_rank"] < b["rarity_rank"]
+			return str(a["id"]) < str(b["id"])
+	)
 	var ids: Array = []
-	for base_id in ["strike", "defend"]:
-		if FileAccess.file_exists(CARD_DATA_DIR + base_id + ".json"):
-			ids.append(base_id)
-	for card_id in MetaProgress.get_unlocked_card_pool():
-		var cid := str(card_id)
-		if not ids.has(cid):
-			ids.append(cid)
+	for entry in entries:
+		ids.append(str(entry["id"]))
 	return ids
 
 
 func _make_gallery_card_slot(card_id: String) -> Control:
+	if not MetaProgress.cards_seen.has(card_id):
+		return _make_gallery_locked_slot()
 	var slot := PanelContainer.new()
 	slot.custom_minimum_size = Vector2(214, 300)
 	slot.add_theme_stylebox_override(
@@ -1845,7 +1894,7 @@ func _make_gallery_card_slot(card_id: String) -> Control:
 		_home_flat_style(Color(0.045, 0.036, 0.026, 0.88), Color(0.26, 0.20, 0.12, 1.0), 6, 1)
 	)
 
-	var data := _load_card_json(CARD_DATA_DIR + card_id + ".json")
+	var data: Dictionary = MetaProgress.get_card_info_cache().get(card_id, {})
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 14)
 	margin.add_theme_constant_override("margin_right", 14)
@@ -1910,16 +1959,49 @@ func _make_gallery_card_slot(card_id: String) -> Control:
 	return slot
 
 
-func _load_card_json(path: String) -> Dictionary:
-	if not FileAccess.file_exists(path):
-		return {}
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {}
-	var text := file.get_as_text()
-	file.close()
-	var parsed = JSON.parse_string(text)
-	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
+## Locked codex slot: the battle card back (dark glass fallback while the
+## Codex asset regenerates) + a centered "???". Deliberately NO card name and
+## NO tooltip — unseen cards stay unspoiled.
+func _make_gallery_locked_slot() -> Control:
+	var slot := PanelContainer.new()
+	slot.custom_minimum_size = Vector2(214, 300)
+	slot.add_theme_stylebox_override(
+		"panel",
+		_home_flat_style(Color(0.030, 0.026, 0.020, 0.88), Color(0.17, 0.14, 0.10, 1.0), 6, 1)
+	)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_top", 14)
+	margin.add_theme_constant_override("margin_bottom", 14)
+	slot.add_child(margin)
+
+	if ResourceLoader.exists(GALLERY_CARD_BACK):
+		var back := TextureRect.new()
+		back.texture = load(GALLERY_CARD_BACK)
+		back.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		back.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		back.modulate = Color(0.58, 0.58, 0.58, 0.80)
+		margin.add_child(back)
+	else:
+		# Codex asset may still be regenerating — warn only, keep the dark glass.
+		push_warning("CardGallery: missing card back texture %s" % GALLERY_CARD_BACK)
+		var placeholder := ColorRect.new()
+		placeholder.color = Color(0.055, 0.048, 0.038, 0.75)
+		margin.add_child(placeholder)
+
+	var center := CenterContainer.new()
+	margin.add_child(center)
+	var mark := Label.new()
+	mark.text = "???"
+	mark.add_theme_font_override("font", T.display_font(700))
+	mark.add_theme_font_size_override("font_size", 32)
+	mark.add_theme_color_override("font_color", Color(0.74, 0.66, 0.52, 0.92))
+	mark.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.90))
+	mark.add_theme_constant_override("outline_size", 3)
+	center.add_child(mark)
+	return slot
 
 
 func _strip_bbcode(text: String) -> String:
