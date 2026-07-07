@@ -528,6 +528,15 @@ func buy_caps_perk(perk_id: String) -> bool:
 		# cyber_hp: gated by the clinic building's max_hp_perk function (T2).
 		if not building_can("clinic", "max_hp_perk"):
 			return false
+	elif facility == "cyber_doc":
+		# Cyber Doctor attribute perks gate on the clinic building's attr_perks
+		# function (T1). There is NO separate facility-unlock UI in the current
+		# base design, so requiring is_facility_unlocked("cyber_doc") made the
+		# perks permanently unbuyable (BUY silently no-op'd). The clinic tier IS
+		# the gate — matches the clinic screen, which shows the perk rows whenever
+		# building_can("clinic","attr_perks").
+		if not building_can("clinic", "attr_perks"):
+			return false
 	elif not is_facility_unlocked(facility):
 		return false
 	if get_caps_perk_level(perk_id) >= attr_perk_cap():

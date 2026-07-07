@@ -51,6 +51,11 @@ const CARD_DATA_DIR := "res://battle_scene/card_info/player/"
 ## Locked-gallery slot art: the same card back battle uses (play_card.gd).
 const GALLERY_CARD_BACK := "res://battle_scene/assets/images/cards/ui/card_back.png"
 const TOP_HUD_LAYER := 70
+## Fullscreen building detail pages sit ABOVE the persistent top/bottom HUD
+## (TOP_HUD_LAYER) so the overlay actually covers it — a plain scene-root Control
+## renders UNDER every CanvasLayer, which leaked the HUD through the building
+## pages and let the HUD steal their clicks.
+const BUILDING_OVERLAY_LAYER := 100
 
 const BUILDING_BADGE_ICONS := {
 	"forge": "badge_forge",
@@ -255,15 +260,15 @@ func _add_top_hud(root: Control) -> void:
 
 	var resources := HBoxContainer.new()
 	resources.name = "ResourceChips"
-	resources.alignment = BoxContainer.ALIGNMENT_CENTER
-	resources.add_theme_constant_override("separation", 24)
-	resources.anchor_left = 0.5
+	resources.alignment = BoxContainer.ALIGNMENT_BEGIN
+	resources.add_theme_constant_override("separation", 22)
+	resources.anchor_left = 0.0
 	resources.anchor_top = 0.0
-	resources.anchor_right = 0.5
+	resources.anchor_right = 0.0
 	resources.anchor_bottom = 0.0
-	resources.offset_left = -410.0
+	resources.offset_left = 40.0
 	resources.offset_top = 20.0
-	resources.offset_right = 410.0
+	resources.offset_right = 640.0
 	resources.offset_bottom = 70.0
 	top_body.add_child(resources)
 
@@ -293,24 +298,27 @@ func _add_top_hud(root: Control) -> void:
 
 
 func _make_top_currency_chip(parent: Control, currency: String) -> Label:
+	# Frameless chip (owner request): no panel background, just icon + number,
+	# packed to the top-left. StyleBoxEmpty keeps the PanelContainer for layout
+	# without drawing the old bordered box.
 	var panel := PanelContainer.new()
 	panel.name = currency.capitalize() + "TopChip"
-	panel.custom_minimum_size = Vector2(180, 46)
+	panel.custom_minimum_size = Vector2(0, 46)
 	panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override("panel", _home_chip_style())
+	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	parent.add_child(panel)
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 13)
-	margin.add_theme_constant_override("margin_right", 13)
+	margin.add_theme_constant_override("margin_left", 0)
+	margin.add_theme_constant_override("margin_right", 6)
 	margin.add_theme_constant_override("margin_top", 5)
 	margin.add_theme_constant_override("margin_bottom", 5)
 	panel.add_child(margin)
 
 	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 10)
+	row.alignment = BoxContainer.ALIGNMENT_BEGIN
+	row.add_theme_constant_override("separation", 8)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(row)
 
@@ -1716,14 +1724,20 @@ func _open_building_screen(building_id: String) -> void:
 		if ResourceLoader.exists(script_path)
 		else BUILDING_SCREEN_BASE.new()
 	)
-	screen.name = "BuildingOverlay"
+	# The overlay lives on its own CanvasLayer ABOVE the HUD (BUILDING_OVERLAY_LAYER)
+	# so the fullscreen page covers the top/bottom HUD instead of rendering under it.
+	# The layer is the node the ESC/open guards look up by name ("BuildingOverlay").
+	var overlay_layer := CanvasLayer.new()
+	overlay_layer.name = "BuildingOverlay"
+	overlay_layer.layer = BUILDING_OVERLAY_LAYER
+	add_child(overlay_layer)
 	screen.building_id = building_id
 	screen.accent = BUILDING_ACCENTS.get(building_id, Color(0.86, 0.78, 0.52))
 	screen.on_close = func() -> void:
-		if is_instance_valid(screen):
-			screen.queue_free()
+		if is_instance_valid(overlay_layer):
+			overlay_layer.queue_free()
 	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(screen)
+	overlay_layer.add_child(screen)
 
 
 ## Toggle the floating character window in base mode — hero picker, next-run
