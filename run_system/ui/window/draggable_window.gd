@@ -20,13 +20,19 @@ var _title_bar_box: HBoxContainer
 var _close_btn: Button
 
 
-func init_window(title: String, win_size: Vector2) -> void:
+func init_window(title: String, win_size: Vector2, show_title_bar: bool = true) -> void:
 	custom_minimum_size = win_size
 	size = win_size
 	add_theme_stylebox_override("panel", T.ui_panel())
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 0)
 	add_child(vbox)
+	if not show_title_bar:
+		content_root = VBoxContainer.new()
+		content_root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		vbox.add_child(content_root)
+		gui_input.connect(_on_window_input)
+		return
 
 	_title_bar = PanelContainer.new()
 	_title_bar.custom_minimum_size = Vector2(0, 42)
@@ -65,6 +71,9 @@ func init_window(title: String, win_size: Vector2) -> void:
 ## Button so callers can rename / restyle it. Call AFTER init_window.
 func add_title_button(text_or_icon: String, tooltip: String, cb: Callable) -> Button:
 	var b := Button.new()
+	if _title_bar_box == null:
+		push_warning("add_title_button called on a window without a title bar.")
+		return b
 	b.text = text_or_icon
 	b.tooltip_text = tooltip
 	b.flat = true
@@ -79,6 +88,11 @@ func add_title_button(text_or_icon: String, tooltip: String, cb: Callable) -> Bu
 	if is_instance_valid(_close_btn):
 		_title_bar_box.move_child(b, _close_btn.get_index())
 	return b
+
+
+func bind_drag_area(area: Control) -> void:
+	area.mouse_filter = Control.MOUSE_FILTER_STOP
+	area.gui_input.connect(_on_title_input)
 
 
 func close() -> void:

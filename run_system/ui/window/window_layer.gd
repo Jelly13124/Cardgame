@@ -13,7 +13,7 @@ static func ensure(host: Node) -> CanvasLayer:
 		return existing
 	var wl = load("res://run_system/ui/window/window_layer.gd").new()
 	wl.name = LAYER_NAME
-	wl.layer = 60  # above scene UI; currency top bar sits higher (layer 70)
+	wl.layer = 130  # above the base HUD (70), below modal popups (140+)
 	host.add_child(wl)
 	return wl
 

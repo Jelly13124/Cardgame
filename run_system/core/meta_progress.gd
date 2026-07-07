@@ -239,7 +239,7 @@ const MAX_BUILDING_TIER := 3
 ## Safe-cell baseline; effective count = this + the blacksmith upgrade level.
 const SAFE_CELLS_BASE := 2
 ## Permanent equipment stash capacity (gear carried out of runs).
-const STASH_CAP := 40
+const STASH_CAP := 25
 ## Blacksmith: scrap yielded by dismantling a stash item, by rarity. Cursed items
 ## yield +5 extra (the curse is "recycled").
 const DISMANTLE_SCRAP := {"common": 5, "uncommon": 12, "rare": 25}
@@ -609,7 +609,8 @@ func _normalize_buildings() -> void:
 
 ## Effective permanent-stash capacity. A flat, building-independent constant:
 ## the warehouse building (whose tier used to raise this) was removed, so every
-## profile gets the full STASH_CAP outright — existing saves can't lose capacity.
+## profile gets the full STASH_CAP outright. Existing over-cap saves keep their
+## items but cannot add more until they are below this cap.
 func effective_stash_cap() -> int:
 	return STASH_CAP
 

@@ -435,6 +435,53 @@ static func close_x_button() -> Button:
 ## (Same 16-file contract in every kit dir; the three kit dirs stay on disk as
 ## comparison history. Missing files always hit the flat fallbacks.)
 const UI_KIT_DIR := "res://run_system/assets/images/ui_kit/"
+const CONCEPT_UI_DIR := "res://run_system/assets/images/ui/concept_dark_panel/"
+
+static var _concept_tex_cache: Dictionary = {}
+
+
+static func concept_tex(asset_name: String) -> Texture2D:
+	if _concept_tex_cache.has(asset_name):
+		return _concept_tex_cache[asset_name]
+	var path := CONCEPT_UI_DIR + asset_name + ".png"
+	var tex: Texture2D = null
+	if ResourceLoader.exists(path):
+		var res = load(path)
+		if res is Texture2D:
+			tex = res
+	if tex == null:
+		var image := Image.new()
+		if image.load(ProjectSettings.globalize_path(path)) == OK:
+			tex = ImageTexture.create_from_image(image)
+	if tex != null:
+		_concept_tex_cache[asset_name] = tex
+	return tex
+
+
+static func concept_box(
+	asset_name: String,
+	fallback: StyleBox,
+	margin_h: int = 0,
+	margin_v: int = -1,
+	content_margin: int = 0
+) -> StyleBox:
+	var tex := concept_tex(asset_name)
+	if tex == null:
+		return fallback
+	var style := StyleBoxTexture.new()
+	style.texture = tex
+	if margin_v < 0:
+		margin_v = margin_h
+	style.texture_margin_left = margin_h
+	style.texture_margin_right = margin_h
+	style.texture_margin_top = margin_v
+	style.texture_margin_bottom = margin_v
+	if content_margin > 0:
+		style.content_margin_left = content_margin
+		style.content_margin_right = content_margin
+		style.content_margin_top = content_margin
+		style.content_margin_bottom = content_margin
+	return style
 
 
 ## A ui_kit texture by basename ("icon_lock" → <UI_KIT_DIR>/icon_lock.png), or

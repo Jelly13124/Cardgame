@@ -1,5 +1,5 @@
 keys,en,zh
-UI_HOME_START_RUN,START NEW RUN,开始新征程
+UI_HOME_START_RUN,DEPART,出发
 UI_HOME_DIFFICULTY_BTN,Difficulty A{a},难度 A{a}
 UI_HOME_DIFFICULTY_TITLE,Select Difficulty,选择难度
 UI_HOME_TITLE,HOME BASE,大本营
@@ -77,3 +77,13 @@ UI_BUILD_OUTPOST_PREVIEW,"• Starting gold, discount, backpack & tool slots
 • Higher tiers: safe cells, deck editor","• 起始金币、折扣、背包与工具栏位
 • 奖励刷新与难度（飞升）
 • 更高等级：安全格、卡组编辑"
+UI_HOME_DAILY_TASKS,DAILY TASKS,每日任务
+UI_HOME_DAILY_REFRESH,Refresh: {time},刷新：{time}
+UI_HOME_DAILY_ATTACK_CARDS,Play {n} attack cards,使用{n}张攻击牌
+UI_HOME_DAILY_EARN_CAPS,Earn {n} caps in battle,在战斗中获得{n}金币
+UI_HOME_DAILY_DEFEAT_ELITES,Defeat {n} elite enemies,击败精英敌人{n}次
+UI_HOME_ACTION_STASH,WAREHOUSE,仓库
+UI_HOME_ACTION_CHARACTER,CHARACTER,角色
+UI_HOME_ACTION_GALLERY,GALLERY,图鉴
+UI_HOME_CARD_GALLERY_TITLE,CARD GALLERY,卡牌图鉴
+UI_HOME_CARD_GALLERY_EMPTY,No cards unlocked yet.,暂无已解锁卡牌

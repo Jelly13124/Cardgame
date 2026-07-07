@@ -63,3 +63,4 @@ test-extract/
 .mcp/
 .gemini_key
 .gemini_art_tmp/
+__pycache__/

@@ -3,9 +3,9 @@
 ## battle). v2-mockup layout shared by all three modes:
 ##   TITLE   drag + ✕; base mode adds a 仓库 (Stash) toggle icon button
 ##   MIDDLE  the D4 zone — equip slots flanking the paper-doll inset well:
-##           LEFT head / chest / hands · CENTER doll (+ hero switcher + stat
-##           line) · RIGHT weapon / accessory + the tool-slot row
-##   BOTTOM  the fixed 30-cell backpack grid (10×3) — cells beyond the unlocked
+##           LEFT head / chest / hands · CENTER doll (+ hero switcher) · RIGHT
+##           weapon / accessory + the tool-slot row
+##   BOTTOM  the fixed 20-cell backpack grid (10×2) — cells beyond the unlocked
 ##           capacity render LOCKED with a flat padlock in every mode
 ## Modes:
 ##   MODE_MAP    — in-run map: RunManager.backpack, full editable (drag/drop/click)
@@ -25,21 +25,48 @@ const BACKPACK_CELL = preload("res://run_system/ui/backpack_cell.gd")
 const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
 const HERO_SPRITE_DIR := "res://battle_scene/assets/images/heroes/"
 const HERO_DIR := "res://run_system/data/heroes/"
+const HOME_HUD_ICON_DIR := "res://run_system/assets/images/home/base_hud/"
+const BASE_OUTER_FRAME_TEX = preload("res://run_system/assets/images/ui/window_frames_v2/stash_outer_frame.png")
+const BASE_FOCUS_FRAME_TEX = preload("res://run_system/assets/images/ui/character_panels_v2/character_focus_frame.png")
+const BASE_BACKPACK_FRAME_TEX = preload("res://run_system/assets/images/ui/character_panels_v2/character_backpack_frame.png")
+const BASE_TITLE_PLAQUE_TEX = preload("res://run_system/assets/images/ui/concept_dark_panel/title_plaque.png")
 
 const MODE_BASE := "base"
 const MODE_MAP := "map"
 const MODE_BATTLE := "battle"
 
-## Sized to sit beside the 560-wide StashWindow on a 1920x1080 viewport.
+## Run window keeps the compact map/battle footprint; base mode uses the taller
+## concept-layout character sheet with backpack, attributes and tabs.
 const WIN_SIZE := Vector2(700, 840)
+const BASE_WIN_SIZE := Vector2(680, 940)
 const GRID_COLUMNS := 10
-## The backpack grid ALWAYS renders 30 cells (10×3); cells at index >=
+const BASE_BACKPACK_GRID_COLUMNS := 7
+const BASE_BACKPACK_DISPLAY_CELLS := 21
+## The backpack grid ALWAYS renders 20 cells (10×2); cells at index >=
 ## RunManager.effective_backpack_size() are locked (Outpost upgrades unlock them).
-const BACKPACK_DISPLAY_CELLS := 30
+const BACKPACK_DISPLAY_CELLS := 20
 const SLOT_CELL_SIZE := Vector2(76, 76)  # equipment slots + tool cells
+const BASE_SLOT_CELL_SIZE := Vector2(66, 66)
 const GRID_CELL_SIZE := Vector2(56, 56)  # backpack grid cells
+const BASE_GRID_CELL_SIZE := Vector2(68, 68)
 const DOLL_SIZE := Vector2(220, 320)  # center paper-doll portrait
+const BASE_DOLL_SIZE := Vector2(220, 300)
 const SLOT_LETTERS := {"head": "H", "chest": "C", "weapon": "W", "hands": "Hd", "accessory": "Ac"}
+const ATTR_ORDER: Array[String] = ["strength", "constitution", "intelligence", "luck", "charm"]
+const ATTR_ICON_PATHS := {
+	"strength": "res://battle_scene/assets/images/ui/attributes/strength.png",
+	"constitution": "res://battle_scene/assets/images/ui/attributes/constitution.png",
+	"intelligence": "res://battle_scene/assets/images/ui/attributes/intelligence.png",
+	"luck": "res://battle_scene/assets/images/ui/attributes/luck.png",
+	"charm": "res://battle_scene/assets/images/ui/attributes/charm.png",
+}
+const ATTR_LABEL_KEYS := {
+	"strength": "UI_EQUIP_ATTR_SHORT_STRENGTH",
+	"constitution": "UI_EQUIP_ATTR_SHORT_CONSTITUTION",
+	"intelligence": "UI_EQUIP_ATTR_SHORT_INTELLIGENCE",
+	"luck": "UI_EQUIP_ATTR_SHORT_LUCK",
+	"charm": "UI_EQUIP_ATTR_SHORT_CHARM",
+}
 ## D4 split: slots flank the doll (left column / right column).
 const LEFT_SLOTS: Array[String] = ["head", "chest", "hands"]
 const RIGHT_SLOTS: Array[String] = ["weapon", "accessory"]
@@ -83,16 +110,13 @@ static func open_window(host: Node, p_mode: String) -> Control:
 
 
 func _ready() -> void:
-	init_window(tr("UI_EQUIP_TITLE_CHARACTER"), WIN_SIZE)
+	var is_base_mode := mode == MODE_BASE
+	init_window(tr("UI_EQUIP_TITLE_CHARACTER"), BASE_WIN_SIZE if is_base_mode else WIN_SIZE, not is_base_mode)
+	if is_base_mode:
+		add_theme_stylebox_override("panel", _base_window_style())
 	_read_only = mode == MODE_BATTLE
 	match mode:
 		MODE_BASE:
-			# The 仓库 toggle lives in the title bar (replaces the old in-body
-			# button); named so headless checks can find it.
-			var stash_btn := add_title_button(
-				"▣", tr("UI_STASH_WINDOW_TITLE"), _toggle_stash_window
-			)
-			stash_btn.name = "StashToggleButton"
 			_build_base()
 			# Stash / building mutations surface through these MetaProgress signals
 			# (there is no dedicated stash_changed signal; the forge mutates the
@@ -165,7 +189,7 @@ func _build_base() -> void:
 		margin.add_theme_constant_override(side, 18)
 	content_root.add_child(margin)
 	_base_box = VBoxContainer.new()
-	_base_box.add_theme_constant_override("separation", 14)
+	_base_box.add_theme_constant_override("separation", 12)
 	margin.add_child(_base_box)
 	_refresh_base()
 
@@ -187,23 +211,28 @@ func _refresh_base() -> void:
 		child.queue_free()
 	_slot_parts.clear()  # the layered slot visuals died with the old children
 
+	_base_box.add_child(_build_base_title_ribbon())
+
 	# ── MIDDLE: the D4 zone (slots flanking the doll + hero switcher) ──
 	_base_box.add_child(_build_d4_middle_base())
 
-	# ── BOTTOM: next-run backpack (pending_loadout), locked cells to 30 ──
-	_base_box.add_child(T.ui_divider())
+	var hero_data := _load_hero(_effective_hero_id())
+	_base_box.add_child(_build_base_attribute_strip(hero_data.get("starting_attributes", {})))
+
+	# ── BOTTOM: next-run backpack (pending_loadout), locked cells to 7×3 ──
 	var cap := RunManager.effective_backpack_size()
-	_base_box.add_child(
-		_build_backpack_header(RunManager.pending_loadout.size(), cap, tr("UI_EQUIP_D4_HINT"))
-	)
-	var grid := _make_backpack_grid()
-	_base_box.add_child(grid)
+	var visible_cap = mini(cap, BASE_BACKPACK_DISPLAY_CELLS)
+	var grid := _build_base_backpack_panel(RunManager.pending_loadout.size(), cap)
+	var shown := 0
 	for entry in RunManager.pending_loadout:
+		if shown >= BASE_BACKPACK_DISPLAY_CELLS:
+			break
 		grid.add_child(_make_carry_cell(entry))
-	for _e in range(maxi(0, cap - RunManager.pending_loadout.size())):
+		shown += 1
+	for _e in range(maxi(0, visible_cap - shown)):
 		grid.add_child(_make_carry_empty_cell())
-	for _l in range(maxi(0, BACKPACK_DISPLAY_CELLS - cap)):
-		grid.add_child(_make_locked_cell())
+	for _l in range(maxi(0, BASE_BACKPACK_DISPLAY_CELLS - visible_cap)):
+		grid.add_child(_make_locked_cell(BASE_GRID_CELL_SIZE))
 
 	_status_label = Label.new()
 	_status_label.add_theme_font_size_override("font_size", 13)
@@ -216,17 +245,19 @@ func _refresh_base() -> void:
 ## weapon/accessory + (cosmetic) tool slots. Slots read RunManager.pending_equipped.
 func _build_d4_middle_base() -> Control:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 14)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 12)
 
 	var left := VBoxContainer.new()
-	left.add_theme_constant_override("separation", 8)
+	left.add_theme_constant_override("separation", 10)
 	for slot in LEFT_SLOTS:
 		left.add_child(_make_base_slot_column(slot))
 	row.add_child(left)
 
 	var frame := PanelContainer.new()
-	frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	frame.add_theme_stylebox_override("panel", T.ui_inset_panel())
+	frame.custom_minimum_size = Vector2(340, 350)
+	frame.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	frame.add_theme_stylebox_override("panel", _base_focus_panel_style())
 	var pad := MarginContainer.new()
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		pad.add_theme_constant_override(side, 10)
@@ -238,23 +269,17 @@ func _build_d4_middle_base() -> Control:
 	var hero_id := _effective_hero_id()
 	var hero_data := _load_hero(hero_id)
 	var tex := _load_portrait(str(hero_data.get("sprite_id", hero_id)))
-	inner.add_child(_make_doll_stack(tex, _parse_tint(str(hero_data.get("tint", "#ffffff")))))
+	inner.add_child(
+		_make_doll_stack(tex, _parse_tint(str(hero_data.get("tint", "#ffffff"))), BASE_DOLL_SIZE)
+	)
 	inner.add_child(_build_hero_switcher(hero_id, hero_data))
-	inner.add_child(_make_stat_line(hero_data.get("starting_attributes", {})))
 	row.add_child(frame)
 
 	var right := VBoxContainer.new()
-	right.add_theme_constant_override("separation", 8)
+	right.add_theme_constant_override("separation", 10)
 	for slot in RIGHT_SLOTS:
 		right.add_child(_make_base_slot_column(slot))
-	right.add_child(_section_title(tr("UI_EQUIP_TOOLS_TITLE")))
-	var tools := HBoxContainer.new()
-	tools.add_theme_constant_override("separation", 6)
-	# Tools can't be pre-loaded from the base — render the empty frames so the
-	# skeleton matches map/battle.
-	for _i in range(RunManager.tool_slots()):
-		tools.add_child(_make_empty_tool_cell())
-	right.add_child(tools)
+	right.add_child(_make_base_tool_slot_column())
 	row.add_child(right)
 	return row
 
@@ -378,6 +403,110 @@ func _make_stat_line(attrs: Variant) -> Label:
 	return l
 
 
+func _build_base_title_ribbon() -> Control:
+	var holder := CenterContainer.new()
+	holder.custom_minimum_size = Vector2(0, 70)
+	var ribbon := PanelContainer.new()
+	ribbon.custom_minimum_size = Vector2(380, 64)
+	ribbon.add_theme_stylebox_override("panel", _base_title_plaque_style())
+	bind_drag_area(ribbon)
+	holder.add_child(ribbon)
+	var label := Label.new()
+	label.text = tr("UI_EQUIP_TITLE_CHARACTER")
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_override("font", T.display_font(700))
+	label.add_theme_font_size_override("font_size", 30)
+	label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.58, 1.0))
+	label.add_theme_color_override("font_outline_color", Color(0.08, 0.025, 0.01, 1.0))
+	label.add_theme_constant_override("outline_size", 4)
+	ribbon.add_child(label)
+	return holder
+
+
+func _build_base_backpack_panel(used: int, cap: int) -> GridContainer:
+	var panel := PanelContainer.new()
+	panel.name = "BaseBackpackPanel"
+	panel.custom_minimum_size = Vector2(628, 298)
+	panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _base_backpack_panel_style())
+	var pad := MarginContainer.new()
+	pad.add_theme_constant_override("margin_left", 12)
+	pad.add_theme_constant_override("margin_right", 12)
+	pad.add_theme_constant_override("margin_top", 10)
+	pad.add_theme_constant_override("margin_bottom", 12)
+	panel.add_child(pad)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 10)
+	pad.add_child(box)
+	box.add_child(_build_backpack_header(used, cap, ""))
+
+	var center := CenterContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(center)
+	var grid := _make_backpack_grid()
+	center.add_child(grid)
+	_base_box.add_child(panel)
+	return grid
+
+
+## Base-mode five-stat strip above the backpack, using the project attribute icons.
+func _build_base_attribute_strip(attrs: Variant) -> Control:
+	var a: Dictionary = attrs if typeof(attrs) == TYPE_DICTIONARY else {}
+	var panel := PanelContainer.new()
+	panel.name = "BaseAttributeStrip"
+	panel.custom_minimum_size = Vector2(0, 62)
+	panel.add_theme_stylebox_override("panel", _base_sheet_panel_style())
+	var pad := MarginContainer.new()
+	pad.add_theme_constant_override("margin_left", 8)
+	pad.add_theme_constant_override("margin_right", 8)
+	pad.add_theme_constant_override("margin_top", 7)
+	pad.add_theme_constant_override("margin_bottom", 7)
+	panel.add_child(pad)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 8)
+	pad.add_child(row)
+	for attr in ATTR_ORDER:
+		var pill := _make_base_attribute_pill(attr, int(a.get(attr, 0)))
+		pill.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(pill)
+	return panel
+
+
+func _make_base_attribute_pill(attr: String, value: int) -> Control:
+	var pill := PanelContainer.new()
+	pill.name = "AttrPill_%s" % attr
+	pill.custom_minimum_size = Vector2(82, 42)
+	pill.add_theme_stylebox_override("panel", _base_stat_card_style())
+	pill.tooltip_text = tr("UI_EQUIP_ATTR_TIP")
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 6)
+	pill.add_child(row)
+
+	var tex_path := str(ATTR_ICON_PATHS.get(attr, ""))
+	var icon := TextureRect.new()
+	icon.custom_minimum_size = Vector2(22, 22)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	if tex_path != "" and ResourceLoader.exists(tex_path):
+		icon.texture = load(tex_path)
+	row.add_child(icon)
+
+	var label := Label.new()
+	label.text = str(value)
+	label.add_theme_font_size_override("font_size", 15)
+	label.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
+	return pill
+
+
 func _list_hero_ids() -> Array[String]:
 	var ids: Array[String] = []
 	var dir := DirAccess.open(HERO_DIR)
@@ -411,23 +540,26 @@ func _load_hero(hero_id: String) -> Dictionary:
 ## EquipmentIcon for the filled state, (c) a hidden top-right rarity dot.
 ## Registered into _slot_parts / _slot_icons / _slot_cells for the stylers
 ## (_style_slot_empty / _style_slot_filled) to flip on every refresh.
-func _make_slot_cell_parts(slot: String) -> Dictionary:
-	var cell = _new_cell(SLOT_CELL_SIZE)
+func _make_slot_cell_parts(slot: String, cell_size: Vector2 = SLOT_CELL_SIZE) -> Dictionary:
+	var cell = _new_cell(cell_size)
 	cell.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 	var ph := Panel.new()
 	ph.set_anchors_preset(Control.PRESET_FULL_RECT)
 	ph.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ph.add_theme_stylebox_override("panel", T.ui_slot_box("empty"))
+	ph.add_theme_stylebox_override(
+		"panel", _base_slot_box_style("empty") if mode == MODE_BASE else T.ui_slot_box("empty")
+	)
 	var glyph_path := str(EQUIPMENT_ICON.SLOT_ICON_PATHS.get(slot, ""))
 	if glyph_path != "" and ResourceLoader.exists(glyph_path):
 		var glyph := TextureRect.new()
 		glyph.texture = load(glyph_path)
 		glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
-		glyph.offset_left = 14
-		glyph.offset_top = 14
-		glyph.offset_right = -14
-		glyph.offset_bottom = -14
+		var inset := 12 if cell_size.x < SLOT_CELL_SIZE.x else 14
+		glyph.offset_left = inset
+		glyph.offset_top = inset
+		glyph.offset_right = -inset
+		glyph.offset_bottom = -inset
 		glyph.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		glyph.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		glyph.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -495,7 +627,9 @@ func _style_slot_filled(slot: String, item_name: String, sprite: String, rarity:
 	icon.visible = true
 	icon.set_equipment(slot, item_name, sprite, rarity)
 	# Override the icon's own chunky style with the v2 filled box (2px rarity rim).
-	icon.add_theme_stylebox_override("panel", T.ui_slot_box("filled", rc))
+	icon.add_theme_stylebox_override(
+		"panel", _base_slot_box_style("filled") if mode == MODE_BASE else T.ui_slot_box("filled", rc)
+	)
 	var dot := parts["dot"] as Panel
 	dot.visible = true
 	var dsb := StyleBoxFlat.new()
@@ -515,12 +649,23 @@ func _style_slot_filled(slot: String, item_name: String, sprite: String, rarity:
 ## a matching-slot item dragged from this window's backpack grid (src "carry")
 ## — never a raw stash payload. Click or drag-off returns the item to the backpack.
 func _make_base_slot_column(slot: String) -> Control:
+	var frame := PanelContainer.new()
+	frame.custom_minimum_size = Vector2(98, 104)
+	frame.add_theme_stylebox_override("panel", _base_slot_holder_style())
+	var pad := MarginContainer.new()
+	pad.add_theme_constant_override("margin_left", 8)
+	pad.add_theme_constant_override("margin_right", 8)
+	pad.add_theme_constant_override("margin_top", 8)
+	pad.add_theme_constant_override("margin_bottom", 8)
+	frame.add_child(pad)
 	var col := VBoxContainer.new()
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	col.add_theme_constant_override("separation", 3)
+	pad.add_child(col)
 
 	var center := CenterContainer.new()
 	col.add_child(center)
-	var parts := _make_slot_cell_parts(slot)
+	var parts := _make_slot_cell_parts(slot, BASE_SLOT_CELL_SIZE)
 	var cell = parts["cell"]
 	center.add_child(cell)
 
@@ -532,8 +677,8 @@ func _make_base_slot_column(slot: String) -> Control:
 	var label := Label.new()
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.clip_text = true
-	label.custom_minimum_size = Vector2(96, 0)
-	label.add_theme_font_size_override("font_size", 11)
+	label.custom_minimum_size = Vector2(80, 0)
+	label.add_theme_font_size_override("font_size", 10)
 	col.add_child(label)
 	_slot_labels[slot] = label
 
@@ -563,7 +708,7 @@ func _make_base_slot_column(slot: String) -> Control:
 		cell.click_handler = func(btn):
 			if btn == MOUSE_BUTTON_LEFT:
 				_unassign_slot_to_carry(s)
-	return col
+	return frame
 
 
 # --- base mode: backpack grid (→ pending_loadout) ----------------------------
@@ -572,6 +717,49 @@ func _make_base_slot_column(slot: String) -> Control:
 ## One next-run backpack cell showing a pending_loadout entry. Drag source
 ## (src "carry") for the equip slots and the StashWindow; drop target for stash
 ## entries and queued slot items.
+func _make_base_tool_slot_column() -> Control:
+	var frame := PanelContainer.new()
+	frame.custom_minimum_size = Vector2(98, 104)
+	frame.add_theme_stylebox_override("panel", _base_slot_holder_style())
+	var pad := MarginContainer.new()
+	pad.add_theme_constant_override("margin_left", 8)
+	pad.add_theme_constant_override("margin_right", 8)
+	pad.add_theme_constant_override("margin_top", 8)
+	pad.add_theme_constant_override("margin_bottom", 8)
+	frame.add_child(pad)
+	var col := VBoxContainer.new()
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_theme_constant_override("separation", 4)
+	pad.add_child(col)
+
+	var center := CenterContainer.new()
+	col.add_child(center)
+	var card := PanelContainer.new()
+	card.custom_minimum_size = BASE_SLOT_CELL_SIZE
+	card.add_theme_stylebox_override("panel", _base_slot_box_style("tool"))
+	center.add_child(card)
+	var icon := TextureRect.new()
+	icon.custom_minimum_size = Vector2(42, 42)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var icon_path := HOME_HUD_ICON_DIR + "icon_settings.png"
+	if ResourceLoader.exists(icon_path):
+		icon.texture = load(icon_path)
+	card.add_child(icon)
+
+	var label := Label.new()
+	label.text = tr("UI_EQUIP_TOOLS_TITLE")
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.clip_text = true
+	label.custom_minimum_size = Vector2(90, 0)
+	label.add_theme_font_size_override("font_size", 11)
+	label.add_theme_color_override("font_color", T.UI_LABEL_BROWN)
+	col.add_child(label)
+	return frame
+
+
 func _make_carry_cell(entry: Variant) -> Control:
 	var inst: Dictionary = RunManager.as_equip_instance(entry)
 	var base_id: String = RunManager.equip_base(inst)
@@ -579,7 +767,7 @@ func _make_carry_cell(entry: Variant) -> Control:
 	var slot := str(data.get("slot", "head"))
 	var item_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
 
-	var cell = _new_cell(GRID_CELL_SIZE)
+	var cell = _new_cell(BASE_GRID_CELL_SIZE)
 	cell.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var icon = EQUIPMENT_ICON.new()
 	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -587,6 +775,7 @@ func _make_carry_cell(entry: Variant) -> Control:
 	icon.set_equipment(
 		slot, item_name, str(data.get("sprite", "")), str(data.get("rarity", "common"))
 	)
+	icon.add_theme_stylebox_override("panel", _base_slot_box_style("filled"))
 	cell.add_child(icon)
 
 	cell.hover_tip = _build_equipment_tooltip(data, slot, inst)
@@ -602,11 +791,11 @@ func _make_carry_cell(entry: Variant) -> Control:
 ## A recessed empty backpack frame — still a live drop target so the whole grid
 ## reads as the backpack area.
 func _make_carry_empty_cell() -> Control:
-	var cell = _new_cell(GRID_CELL_SIZE)
+	var cell = _new_cell(BASE_GRID_CELL_SIZE)
 	var blank := Panel.new()
 	blank.set_anchors_preset(Control.PRESET_FULL_RECT)
 	blank.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	blank.add_theme_stylebox_override("panel", T.ui_slot_box("cell_empty"))
+	blank.add_theme_stylebox_override("panel", _base_slot_box_style("cell_empty"))
 	cell.add_child(blank)
 	_wire_base_backpack_drop(cell)
 	return cell
@@ -619,9 +808,9 @@ func _make_carry_empty_cell() -> Control:
 func _make_backpack_grid() -> GridContainer:
 	var grid := GridContainer.new()
 	grid.name = "BackpackGrid"
-	grid.columns = GRID_COLUMNS
-	grid.add_theme_constant_override("h_separation", 6)
-	grid.add_theme_constant_override("v_separation", 6)
+	grid.columns = BASE_BACKPACK_GRID_COLUMNS if mode == MODE_BASE else GRID_COLUMNS
+	grid.add_theme_constant_override("h_separation", 8 if mode == MODE_BASE else 6)
+	grid.add_theme_constant_override("v_separation", 8 if mode == MODE_BASE else 6)
 	return grid
 
 
@@ -657,15 +846,18 @@ func _build_backpack_header(used: int, cap: int, hint_text: String) -> Control:
 ## click handlers. Only the tooltip talks (upgrade at the Outpost). Skinned by
 ## the kit's slot_locked.png when delivered (padlock baked into the art);
 ## until then the flat two-Panel padlock overlays the locked box.
-func _make_locked_cell() -> Control:
+func _make_locked_cell(cell_size: Vector2 = GRID_CELL_SIZE) -> Control:
 	var cell = BACKPACK_CELL.new()
-	cell.custom_minimum_size = GRID_CELL_SIZE
+	cell.custom_minimum_size = cell_size
 	cell.locked = true
 	cell.hover_tip = tr("UI_EQUIP_CELL_LOCKED")
 	var panel := Panel.new()
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override("panel", T.ui_slot_box("locked"))
+	panel.add_theme_stylebox_override(
+		"panel",
+		_base_slot_box_style("cell_empty") if cell_size == BASE_GRID_CELL_SIZE else T.ui_slot_box("locked")
+	)
 	cell.add_child(panel)
 	if T.ui_kit_tex("slot_locked") == null:
 		var center := CenterContainer.new()
@@ -1038,9 +1230,9 @@ func _make_run_slot_column(slot: String) -> Control:
 ## The paper-doll stack used by both base and run middles: a flat cel
 ## ground-shadow pill behind the feet + the 220x320 portrait on top. The
 ## TextureRect is stashed in meta "doll_rect" for live refresh.
-func _make_doll_stack(tex: Texture2D, tint: Color) -> Control:
+func _make_doll_stack(tex: Texture2D, tint: Color, doll_size: Vector2 = DOLL_SIZE) -> Control:
 	var holder := Control.new()
-	holder.custom_minimum_size = DOLL_SIZE
+	holder.custom_minimum_size = doll_size
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var shadow := Panel.new()
 	shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1048,8 +1240,8 @@ func _make_doll_stack(tex: Texture2D, tint: Color) -> Control:
 	shadow.anchor_right = 0.5
 	shadow.anchor_top = 1.0
 	shadow.anchor_bottom = 1.0
-	shadow.offset_left = -DOLL_SIZE.x * 0.28
-	shadow.offset_right = DOLL_SIZE.x * 0.28
+	shadow.offset_left = -doll_size.x * 0.28
+	shadow.offset_right = doll_size.x * 0.28
 	shadow.offset_top = -24
 	shadow.offset_bottom = -4
 	var sb := StyleBoxFlat.new()
@@ -1709,6 +1901,122 @@ func _slot_label(slot: String) -> String:
 			return tr("UI_EQUIP_SLOT_ACCESSORY")
 		_:
 			return slot.to_upper()
+
+
+func _base_window_style() -> StyleBox:
+	var style := StyleBoxTexture.new()
+	style.texture = BASE_OUTER_FRAME_TEX
+	style.texture_margin_left = 72
+	style.texture_margin_right = 72
+	style.texture_margin_top = 72
+	style.texture_margin_bottom = 72
+	style.content_margin_left = 18
+	style.content_margin_right = 18
+	style.content_margin_top = 18
+	style.content_margin_bottom = 18
+	return style
+
+
+func _base_slot_holder_style() -> StyleBox:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 0)
+	return style
+
+
+func _base_slot_box_style(state: String = "cell_empty") -> StyleBox:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.038, 0.036, 0.032, 0.96)
+	style.border_color = Color(0.38, 0.265, 0.135, 0.98)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(6)
+	style.content_margin_left = 4
+	style.content_margin_right = 4
+	style.content_margin_top = 4
+	style.content_margin_bottom = 4
+	if state == "filled":
+		style.bg_color = Color(0.052, 0.050, 0.044, 0.94)
+		style.border_color = Color(0.52, 0.36, 0.18, 1.0)
+	elif state == "tool":
+		style.bg_color = Color(0.050, 0.048, 0.043, 0.94)
+		style.border_color = Color(0.42, 0.30, 0.15, 0.96)
+	return style
+
+
+func _base_focus_panel_style() -> StyleBox:
+	var style := StyleBoxTexture.new()
+	style.texture = BASE_FOCUS_FRAME_TEX
+	return style
+
+
+func _base_backpack_panel_style() -> StyleBox:
+	var style := StyleBoxTexture.new()
+	style.texture = BASE_BACKPACK_FRAME_TEX
+	style.texture_margin_left = 28
+	style.texture_margin_right = 28
+	style.texture_margin_top = 26
+	style.texture_margin_bottom = 26
+	return style
+
+
+func _base_title_plaque_style() -> StyleBox:
+	var style := StyleBoxTexture.new()
+	style.texture = BASE_TITLE_PLAQUE_TEX
+	style.texture_margin_left = 72
+	style.texture_margin_right = 72
+	style.texture_margin_top = 34
+	style.texture_margin_bottom = 34
+	style.content_margin_left = 18
+	style.content_margin_right = 18
+	style.content_margin_top = 8
+	style.content_margin_bottom = 8
+	return style
+
+
+func _base_stat_card_style() -> StyleBox:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.050, 0.047, 0.040, 0.90)
+	style.border_color = Color(0.245, 0.175, 0.105, 0.82)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(5)
+	style.content_margin_left = 8
+	style.content_margin_right = 8
+	style.content_margin_top = 6
+	style.content_margin_bottom = 6
+	return style
+
+
+func _base_sheet_panel_style() -> StyleBox:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.038, 0.036, 0.032, 0.92)
+	style.border_color = Color(0.235, 0.165, 0.095, 0.76)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(7)
+	style.content_margin_left = 10
+	style.content_margin_right = 10
+	style.content_margin_top = 8
+	style.content_margin_bottom = 8
+	return style
+
+
+func _base_ribbon_style(state: String) -> StyleBox:
+	var bg := Color(0.085, 0.065, 0.042, 0.98)
+	var border := Color(0.40, 0.29, 0.15, 1.0)
+	if state == "selected":
+		bg = Color(0.40, 0.105, 0.060, 0.96)
+		border = Color(0.58, 0.38, 0.17, 0.86)
+	elif state == "hover":
+		bg = Color(0.12, 0.085, 0.048, 0.98)
+		border = Color(0.72, 0.50, 0.23, 1.0)
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg
+	style.border_color = border
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(6)
+	style.content_margin_left = 14.0
+	style.content_margin_right = 14.0
+	style.content_margin_top = 8.0
+	style.content_margin_bottom = 8.0
+	return style
 
 
 ## Gold v2 section header (display font, wide glyph spacing).

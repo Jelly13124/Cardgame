@@ -56,6 +56,13 @@ UI_EQUIP_HERO_TITLE,Choose Hero,选择英雄
 UI_EQUIP_SLOTS_HEADER,Equipment Slots,装备槽位
 UI_EQUIP_STASH_HEADER,"Stash ({n} / {cap})","仓库 ({n} / {cap})"
 UI_STASH_WINDOW_TITLE,Stash,仓库
+UI_STASH_EQUIPMENT_HEADER,"Equipment Stash ({n} / {cap})","装备仓库 ({n} / {cap})"
+UI_STASH_SORT_LABEL,Sort,排序
+UI_STASH_SORT_DEFAULT,Default,默认
+UI_STASH_SORT_RARITY,Rarity,稀有度
+UI_STASH_SORT_SLOT,Slot,部位
+UI_STASH_SORT_NAME,Name,名称
+UI_STASH_AUTO_ORGANIZE,Auto Organize,一键整理
 UI_EQUIP_D4_HINT,"Stash → backpack to carry · backpack → slot to wear · locked cells await Outpost upgrades","仓库拖入背包随身携带 · 背包拖上槽位穿戴 · 锁定格待解锁"
 UI_EQUIP_TOOLS_TITLE,Tool Slots,工具槽
 UI_EQUIP_TOOL_EQUIP_HINT,Click to equip,点击装备到工具槽
@@ -65,3 +72,10 @@ UI_EQUIP_TOOL_SLOT_EMPTY,Empty tool slot — click a bag tool to equip it.,空�
 UI_EQUIP_CELL_LOCKED,Locked — upgrade the Backpack at the Outpost,未解锁 —— 到前哨站升级背包容量
 UI_EQUIP_BACKPACK_TITLE,BACKPACK,背包
 UI_EQUIP_STATS_LINE,STR {str} · CON {con} · INT {int} · LCK {luc} · CHA {cha},力量 {str} · 体质 {con} · 智力 {int} · 幸运 {luc} · 魅力 {cha}
+UI_EQUIP_TAB_EQUIPMENT,EQUIPMENT,装备
+UI_EQUIP_TAB_SKILLS,SKILLS,技能
+UI_EQUIP_ATTR_SHORT_STRENGTH,STR,力量
+UI_EQUIP_ATTR_SHORT_CONSTITUTION,CON,体质
+UI_EQUIP_ATTR_SHORT_INTELLIGENCE,INT,智力
+UI_EQUIP_ATTR_SHORT_LUCK,LCK,幸运
+UI_EQUIP_ATTR_SHORT_CHARM,CHA,魅力
