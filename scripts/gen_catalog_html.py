@@ -47,6 +47,8 @@ enemy_tr = load_tr("content_enemies.csv")
 combat_tr = load_tr("ui_combat.csv")
 battle_tr = load_tr("ui_battle.csv")
 uiequip_tr = load_tr("ui_equipment.csv")
+bounty_tr = load_tr("content_bounties.csv")
+market_tr = load_tr("ui_build_market.csv")
 
 
 def esc(s):
@@ -103,6 +105,14 @@ input[type=search]{background:#0e0b07;border:1px solid var(--line);color:var(--t
 .kwc .en{color:var(--dim);font-size:12px;font-weight:400}
 .kwc p{margin:6px 0 0;font-size:13px;color:#d7cdb6;line-height:1.5}
 .kwc .zhd{color:#c9bfa8;font-size:12.5px;margin-top:3px}
+.btable{width:calc(100% - 56px);margin:14px 28px 4px;border-collapse:collapse;font-size:13px}
+.btable th{text-align:left;color:var(--dim);font-size:12px;letter-spacing:.4px;border-bottom:2px solid var(--line);padding:7px 10px}
+.btable td{border-bottom:1px solid var(--line);padding:8px 10px;vertical-align:top}
+.btable tr:hover td{background:var(--panel2)}
+.btable .bid{color:#6b6256;font-size:12px}
+.btable .bt-zh{color:var(--gold);font-weight:600}
+.btable .bt-en{color:var(--dim);font-size:12px}
+.bnote{margin:10px 28px 0;padding:9px 13px;border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:8px;background:var(--panel);color:#c9bfa8;font-size:12.5px;line-height:1.55}
 """
 
 SEARCH_JS = """
@@ -111,7 +121,7 @@ function applyFilter(){
   const t=(q?q.value:'').toLowerCase();
   const af=document.querySelector('.tag.active');
   const f=af?af.dataset.f:''; const fk=af?af.dataset.k:'';
-  document.querySelectorAll('.card,.kwc').forEach(c=>{
+  document.querySelectorAll('.card,.kwc,.brow').forEach(c=>{
     const okt=!t||(c.dataset.search||'').includes(t);
     const okf=!f||(c.dataset[fk]===f);
     c.style.display=(okt&&okf)?'':'none';
@@ -134,6 +144,7 @@ NAV_ITEMS = [("index.html", "◫ All 总览"),
              ("cards.html", "Cards 卡牌"), ("relics.html", "Relics 遗物"),
              ("equipment.html", "Equipment 装备"), ("enemies.html", "Enemies 敌人"),
              ("tools.html", "Tools 工具"),
+             ("bounties.html", "Bounties 悬赏"),
              ("events.html", "Events 事件"),
              ("affixes.html", "Affixes 词条"), ("keywords.html", "Keywords 关键词")]
 # Categories that become tabs in the combined index (index.html itself excluded).
@@ -435,6 +446,76 @@ def build_tools():
          "", body, len(items))
 
 
+# ── Bounties (market-sold contracts; board on home base) ───────────────────
+BOUNTY_TIER_COLORS = {"standard": "#9aa3ad", "hard": "#ff6b6b"}
+BOUNTY_REWARD_LABELS = {"caps": ("Caps", "瓶盖", "#ffcf45"),
+                        "core": ("Core", "核心", "#7fe0a0"),
+                        "scrap": ("Scrap", "废料", "#b8ccdb")}
+
+
+def fmt_bounty_objective(obj):
+    """Human text for an objective, reusing the in-game UI_BOUNTY_OBJ_* strings."""
+    ty = str(obj.get("type", "?"))
+    n = obj.get("count", 1)
+    tr = market_tr.get("UI_BOUNTY_OBJ_" + ty.upper(), {})
+    en = tr.get("en", "") or f"{cap(ty)} ×{n}"
+    zh = tr.get("zh", "")
+    fmt = lambda s: s.replace("{n}", str(n))
+    return fmt(en), fmt(zh)
+
+
+def fmt_bounty_reward(reward):
+    parts = []
+    for k, v in reward.items():
+        en, zh, color = BOUNTY_REWARD_LABELS.get(k, (cap(k), "", "#e7ddc8"))
+        parts.append(f'<span style="color:{color}">{esc(v)} {esc(en)} {esc(zh)}</span>')
+    return " + ".join(parts) or "—"
+
+
+def build_bounties():
+    items = load_json_dir("run_system/data/bounties")
+    by_tier = {"standard": [], "hard": []}
+    for bid, d in items:
+        by_tier.setdefault(str(d.get("tier", "standard")), []).append((bid, d))
+
+    def tier_table(tier, rows_src):
+        rows_src.sort(key=lambda kv: (kv[1].get("price", 0), kv[0]))
+        rows = ""
+        for bid, d in rows_src:
+            tr = bounty_tr.get(f"BOUNTY_{bid}_TITLE", {})
+            en = tr.get("en", d.get("title", bid))
+            zh = tr.get("zh", "")
+            obj_en, obj_zh = fmt_bounty_objective(d.get("objective", {}))
+            c = BOUNTY_TIER_COLORS.get(tier, "#9aa3ad")
+            search = f"{bid} {en} {zh} {obj_en} {obj_zh} {tier}".lower()
+            rows += (
+                f'<tr class="brow" data-search="{esc(search)}" data-tier="{tier}">'
+                f'<td class="bid">{esc(bid)}</td>'
+                f'<td><span class="bt-zh">{esc(zh)}</span><br><span class="bt-en">{esc(en)}</span></td>'
+                f'<td>{esc(obj_zh)}<br><span class="bt-en">{esc(obj_en)}</span></td>'
+                f'<td>{fmt_bounty_reward(d.get("reward", {}))}</td>'
+                f'<td>🔩 {esc(d.get("price", 0))}</td>'
+                f'<td><span class="pill" style="color:{c};border-color:{c}">{esc(tier)}</span></td></tr>')
+        head = ("<tr><th>ID</th><th>Title 名称</th><th>Objective 目标</th>"
+                "<th>Reward 奖励</th><th>Price 价格</th><th>Tier 层级</th></tr>")
+        return f'<table class="btable">{head}{rows}</table>'
+
+    note = ('<div class="bnote">📌 <b>earn_gold 口径</b>：统计一局进行中<b>进入背包的全部金币</b>'
+            '(击杀掉落、奖励结算、撤离加成等)；<b>开局初始金币</b>与<b>存档恢复回填的金币</b>不计入。</div>')
+    body = note
+    for tier, label in [("standard", "Standard 标准契约"), ("hard", "Hard 高难契约")]:
+        lst = by_tier.get(tier, [])
+        if not lst:
+            continue
+        body += (f'<div class="section"><h2>{esc(label)} <span class="cnt">({len(lst)})</span></h2></div>'
+                 + tier_table(tier, lst))
+    controls = "".join(f'<span class="tag" data-k="tier" data-f="{t}">{t}</span>'
+                       for t in ("standard", "hard"))
+    page("bounties.html", "Bounties · 悬赏契约",
+         "Market-sold contracts — daily shelf: 1 free + 2 paid (Caps); max 3 held, kept until done, instant settle",
+         controls, body, len(items))
+
+
 # ── Random events (the "?" map node) ────────────────────────────────────────
 def build_events():
     items = load_json_dir("run_system/data/random_events")
@@ -722,7 +803,7 @@ function applyFilter(){
   const t=(q?q.value:'').toLowerCase();
   const af=p.querySelector('.tag.active');
   const f=af?af.dataset.f:''; const fk=af?af.dataset.k:'';
-  p.querySelectorAll('.card,.kwc').forEach(c=>{
+  p.querySelectorAll('.card,.kwc,.brow').forEach(c=>{
     const okt=!t||(c.dataset.search||'').includes(t);
     const okf=!f||(c.dataset[fk]===f);
     c.style.display=(okt&&okf)?'':'none';
@@ -785,6 +866,7 @@ def build_index():
 build_cards()
 build_relics()
 build_tools()
+build_bounties()
 build_equipment()
 build_enemies()
 build_events()
