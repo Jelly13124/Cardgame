@@ -422,9 +422,9 @@ func _make_square_icon_button(icon_id: String, tooltip: String, callback: Callab
 	btn.tooltip_text = tooltip
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	btn.add_theme_stylebox_override("normal", _home_button_style("normal"))
-	btn.add_theme_stylebox_override("hover", _home_button_style("hover"))
-	btn.add_theme_stylebox_override("pressed", _home_button_style("pressed"))
+	btn.add_theme_stylebox_override("normal", _home_frameless_button_style("normal"))
+	btn.add_theme_stylebox_override("hover", _home_frameless_button_style("hover"))
+	btn.add_theme_stylebox_override("pressed", _home_frameless_button_style("pressed"))
 	btn.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	btn.pressed.connect(callback)
 
@@ -789,6 +789,20 @@ func _add_bottom_nav(root: Control) -> void:
 	)
 
 
+## Frameless styleboxes for the floating icon buttons (nav + settings gear) —
+## owner wants NO box behind them: invisible at rest, a faint warm wash on
+## hover / press so they still read as pressable.
+func _home_frameless_button_style(state: String) -> StyleBox:
+	if state == "normal":
+		return StyleBoxEmpty.new()
+	var sb := StyleBoxFlat.new()
+	sb.set_corner_radius_all(10)
+	sb.bg_color = (
+		Color(0.0, 0.0, 0.0, 0.22) if state == "pressed" else Color(1.0, 0.86, 0.55, 0.12)
+	)
+	return sb
+
+
 func _make_home_nav_button(
 	icon_id: String, label_text: String, tooltip: String, callback: Callable
 ) -> Button:
@@ -798,9 +812,9 @@ func _make_home_nav_button(
 	btn.tooltip_text = tooltip
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	btn.add_theme_stylebox_override("normal", _home_button_style("normal"))
-	btn.add_theme_stylebox_override("hover", _home_button_style("hover"))
-	btn.add_theme_stylebox_override("pressed", _home_button_style("pressed"))
+	btn.add_theme_stylebox_override("normal", _home_frameless_button_style("normal"))
+	btn.add_theme_stylebox_override("hover", _home_frameless_button_style("hover"))
+	btn.add_theme_stylebox_override("pressed", _home_frameless_button_style("pressed"))
 	btn.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	btn.pressed.connect(callback)
 
