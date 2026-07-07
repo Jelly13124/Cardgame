@@ -2,7 +2,7 @@
   "id": "head_hunter",
   "title": "Head Hunter",
   "objective": { "type": "kill_boss", "count": 1 },
-  "reward": { "core": 20 },
+  "reward": { "scrap": 40 },
   "price": 65,
   "tier": "hard"
 }

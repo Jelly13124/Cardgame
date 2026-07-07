@@ -24,7 +24,7 @@
       "luck_check": true,
       "effects_success": [
         { "type": "gain_gold", "amount": 25 },
-        { "type": "gain_core", "amount": 10 }
+        { "type": "gain_scrap", "amount": 10 }
       ],
       "effects_fail": [
         { "type": "lose_hp", "amount": 7 }

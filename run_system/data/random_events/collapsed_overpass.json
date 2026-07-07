@@ -15,7 +15,7 @@
       "requires": { "charm": 5 },
       "effects": [
         { "type": "gain_gold", "amount": 50 },
-        { "type": "gain_core", "amount": 15 }
+        { "type": "gain_scrap", "amount": 15 }
       ],
       "result": "Your easy patter wins over the scav crew. They jack the slab on hydraulics, you split the cache, and everyone walks away richer."
     },
@@ -23,7 +23,7 @@
       "text": "[Luck] Crawl under the groaning slab for the deep cache",
       "luck_check": true,
       "effects_success": [
-        { "type": "gain_core", "amount": 35 },
+        { "type": "gain_scrap", "amount": 35 },
         { "type": "gain_gold", "amount": 20 }
       ],
       "effects_fail": [

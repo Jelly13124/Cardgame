@@ -23,7 +23,7 @@
       "text": "[Luck] Sprint through the glow toward a bunker",
       "luck_check": true,
       "effects_success": [
-        { "type": "gain_core", "amount": 20 },
+        { "type": "gain_scrap", "amount": 20 },
         { "type": "gain_attribute", "attr": "luck", "amount": 1 }
       ],
       "effects_fail": [

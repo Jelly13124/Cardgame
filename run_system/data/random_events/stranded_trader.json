@@ -22,7 +22,7 @@
       "text": "[Luck] Roll his weighted dice for the strongbox",
       "luck_check": true,
       "effects_success": [
-        { "type": "gain_core", "amount": 30 }
+        { "type": "gain_scrap", "amount": 30 }
       ],
       "effects_fail": [
         { "type": "lose_hp", "amount": 6 }

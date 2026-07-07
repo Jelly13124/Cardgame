@@ -40,9 +40,9 @@ const ALLOWED_BOUNTY_OBJECTIVES := [
 	"kill_enemies",
 ]
 const ALLOWED_BOUNTY_TIERS = ["standard", "hard"]
-# Reward keys a bounty may grant. caps/core/scrap are currency ints; `equipment`
-# names a drop tier fed to RunManager.roll_shell_drop.
-const ALLOWED_BOUNTY_REWARD_CURRENCIES = ["caps", "core", "scrap"]
+# Reward keys a bounty may grant. caps/scrap are currency ints; `equipment`
+# names a drop tier fed to RunManager.roll_shell_drop. (Core removed 2026-07-07.)
+const ALLOWED_BOUNTY_REWARD_CURRENCIES = ["caps", "scrap"]
 const ALLOWED_BOUNTY_EQUIPMENT_TIERS = ["common", "uncommon", "rare"]
 
 # ─── Card schema ──────────────────────────────────────────────────────────────
@@ -241,7 +241,7 @@ const ALLOWED_EVENT_EFFECT_TYPES = [
 	"gain_gold",
 	"lose_hp",
 	"heal",
-	"gain_core",
+	"gain_scrap",
 	"gain_relic",
 	"gain_equipment",
 	"gain_attribute",
@@ -720,7 +720,7 @@ static func validate_tool(data: Dictionary, source_path: String) -> bool:
 
 
 ## Validate a single bounty contract JSON dictionary. Returns true on success.
-## Shape: { id, title, objective: {type, count}, reward: {caps/core/scrap/equipment},
+## Shape: { id, title, objective: {type, count}, reward: {caps/scrap/equipment},
 ## price, tier }. Reward must carry at least one entry; currency values are
 ## positive ints, `equipment` names a shell-drop tier.
 static func validate_bounty(data: Dictionary, source_path: String) -> bool:
