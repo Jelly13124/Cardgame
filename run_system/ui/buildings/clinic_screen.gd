@@ -14,10 +14,10 @@ extends "res://run_system/ui/buildings/building_screen_base.gd"
 const MAX_HP_PER_LEVEL := 5
 ## Effective attribute level cap with clinic at T3 (spec: 3 → 5). Display-only here.
 const HIGH_CAP_LEVEL := 5
-## Legacy Core base-upgrade tracks surfaced in the clinic (Core, not Caps): the
-## directory the JSON defs live in, plus the two upgrade ids to render. These are
-## the classic stat upgrades — med_bay (+max HP at run start) and starter_boost
-## (+starting attribute points) — driven exactly like the outpost's Core rows.
+## Legacy base-upgrade tracks (now Caps, like every base upgrade): the directory
+## the JSON defs live in, plus the two upgrade ids. These are the classic stat
+## upgrades — med_bay (+max HP at run start) and starter_boost (+starting
+## attribute points) — driven exactly like the outpost's permanent upgrade rows.
 const UPGRADE_DIR := "res://run_system/data/base_upgrades/"
 const MED_BAY_UPGRADE_ID := "med_bay"
 const STARTER_BOOST_UPGRADE_ID := "starter_boost"
@@ -38,7 +38,7 @@ func _rebuild(container: VBoxContainer) -> void:
 		child.queue_free()
 
 	# Live Caps balance banner (services in the clinic spend Caps) — matches the
-	# banner treatment on the other 4 screens (forge Scrap / outpost Core).
+	# banner treatment on the other 4 screens (forge Scrap / outpost Caps).
 	var banner := _styled_panel(true)
 	var bm := MarginContainer.new()
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:

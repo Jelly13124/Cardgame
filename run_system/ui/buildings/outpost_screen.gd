@@ -1,9 +1,9 @@
 ## Outpost (前哨站) building screen. Subclasses the shared building-screen shell
 ## and fills the content VBox with the Outpost's tier-gated functions:
-##   T1  gold        — starting-gold Core upgrade (absorbs the old Command Center).
-##   T1  discount    — in-run merchant-discount Core upgrade (absorbs Scrap Workshop).
+##   T1  gold        — starting-gold Caps upgrade (absorbs the old Command Center).
+##   T1  discount    — in-run merchant-discount Caps upgrade (absorbs Scrap Workshop).
 ##   T1  difficulty  — ascension selector (0..MetaProgress.max_ascension) for next run.
-##   T2  safe_cells  — safe-cell Core upgrade (absorbs the old Blacksmith upgrade).
+##   T2  safe_cells  — safe-cell Caps upgrade (absorbs the old Blacksmith upgrade).
 ##   T3  deck_editor  — starter-deck editor (swap <=2 default cards for unlocked ones).
 ##
 ## Reads ONLY the shared MetaProgress building/upgrade API + RunManager; edits no
@@ -19,7 +19,7 @@ extends "res://run_system/ui/buildings/building_screen_base.gd"
 
 const CARD_DIR := "res://battle_scene/card_info/player/"
 const UPGRADE_DIR := "res://run_system/data/base_upgrades/"
-## Outpost Core-upgrade ids → the base-upgrade JSON that drives each row.
+## Outpost permanent-upgrade ids → the base-upgrade JSON that drives each row (Caps).
 const GOLD_UPGRADE_ID := "command_center"
 const DISCOUNT_UPGRADE_ID := "scrap_workshop"
 const BACKPACK_UPGRADE_ID := "backpack"
@@ -52,7 +52,7 @@ func _build_content(container: VBoxContainer) -> void:
 	# these signals to its own `_refresh`; we add our own content rebuild.
 	MetaProgress.buildings_changed.connect(_rebuild_content)
 	MetaProgress.upgrades_changed.connect(_rebuild_content)
-	MetaProgress.core_changed.connect(func(_v): _rebuild_content())
+	MetaProgress.caps_changed.connect(func(_v): _rebuild_content())
 	_populate(container)
 
 
@@ -68,13 +68,13 @@ func _rebuild_content() -> void:
 func _populate(container: VBoxContainer) -> void:
 	var tier := MetaProgress.get_building_tier(building_id)
 
-	# --- Core balance banner (shared currency context for every action). ---
+	# --- Caps balance banner (permanent upgrades here spend Caps). ---
 	var banner := _styled_panel(true)
 	var bm := MarginContainer.new()
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		bm.add_theme_constant_override(side, TOK_MARGIN_INNER)
 	banner.add_child(bm)
-	bm.add_child(T.currency_row(MetaProgress.core, "core", 20, 24))
+	bm.add_child(T.currency_row(MetaProgress.caps, "caps", 20, 24))
 	container.add_child(banner)
 
 	if tier <= 0:
@@ -85,25 +85,25 @@ func _populate(container: VBoxContainer) -> void:
 		container.add_child(locked)
 		return
 
-	# --- T1: the five Core upgrade rows, grouped into ONE panel so they read as
-	# one "Core Upgrades" block instead of five loosely-spaced standalone rows
-	# each with their own header (the original cramped/ungrouped layout). Each
-	# row still carries its own name/level/cost via _add_upgrade_row. ---
-	container.add_child(_section_header(tr("UI_OUTPOST_SECT_CORE_UPGRADES")))
-	var core_group := VBoxContainer.new()
-	core_group.add_theme_constant_override("separation", TOK_ROW_SEP)
-	container.add_child(core_group)
-	_add_upgrade_row(core_group, GOLD_UPGRADE_ID)
-	_add_upgrade_row(core_group, DISCOUNT_UPGRADE_ID)
-	_add_upgrade_row(core_group, BACKPACK_UPGRADE_ID)
-	_add_upgrade_row(core_group, REROLL_UPGRADE_ID)
-	_add_upgrade_row(core_group, TOOL_SLOTS_UPGRADE_ID)
+	# --- T1: the five permanent upgrade rows, grouped into ONE panel so they read
+	# as one upgrades block instead of five loosely-spaced standalone rows each
+	# with their own header (the original cramped/ungrouped layout). Each row still
+	# carries its own name/level/cost via _add_upgrade_row (all spend Caps). ---
+	container.add_child(_section_header(tr("UI_OUTPOST_SECT_UPGRADES")))
+	var upgrades_group := VBoxContainer.new()
+	upgrades_group.add_theme_constant_override("separation", TOK_ROW_SEP)
+	container.add_child(upgrades_group)
+	_add_upgrade_row(upgrades_group, GOLD_UPGRADE_ID)
+	_add_upgrade_row(upgrades_group, DISCOUNT_UPGRADE_ID)
+	_add_upgrade_row(upgrades_group, BACKPACK_UPGRADE_ID)
+	_add_upgrade_row(upgrades_group, REROLL_UPGRADE_ID)
+	_add_upgrade_row(upgrades_group, TOOL_SLOTS_UPGRADE_ID)
 
 	# --- T1: difficulty selector. ---
 	container.add_child(_section_header(tr("UI_OUTPOST_SECT_DIFFICULTY")))
 	_add_difficulty_selector(container)
 
-	# --- T2: safe cells (Core upgrade row, gated). ---
+	# --- T2: safe cells (Caps upgrade row, gated). ---
 	container.add_child(_section_header(tr("UI_OUTPOST_SECT_SAFE_CELLS")))
 	if MetaProgress.building_can(building_id, "safe_cells"):
 		_add_upgrade_row(container, SAFE_CELLS_UPGRADE_ID)
@@ -118,10 +118,10 @@ func _populate(container: VBoxContainer) -> void:
 		_add_lock_note(container, tr("UI_OUTPOST_LOCK_DECK"))
 
 
-# --- Core upgrade rows (ported from upgrade_panel.gd) -----------------------
+# --- Permanent upgrade rows (ported from upgrade_panel.gd) ------------------
 
 
-## A single Core upgrade row: title, level dots, next-tier effect, cost, BUY.
+## A single Caps upgrade row: title, level dots, next-tier effect, cost, BUY.
 ## Loads the base-upgrade JSON by id and drives BUY via MetaProgress.purchase_upgrade.
 func _add_upgrade_row(container: VBoxContainer, upgrade_id: String) -> void:
 	var def := _load_upgrade_def(upgrade_id)
@@ -197,10 +197,10 @@ func _add_upgrade_row(container: VBoxContainer, upgrade_id: String) -> void:
 			str(next_tier.get("effect_text", ""))
 		)
 		effect_lbl.text = tr("UI_HOME_UPGRADE_NEXT").format({"text": effect_text})
-		cost_slot.add_child(T.currency_row(int(next_tier.get("cost", 0)), "core", 18, 20))
+		cost_slot.add_child(T.currency_row(int(next_tier.get("cost", 0)), "caps", 18, 20))
 		buy.text = tr("UI_HOME_UPGRADE_BUY")
 		buy.disabled = not MetaProgress.can_purchase(upgrade_id, def)
-		# purchase_upgrade emits core_changed + upgrades_changed → _rebuild_content.
+		# purchase_upgrade emits caps_changed + upgrades_changed → _rebuild_content.
 		buy.pressed.connect(func(): MetaProgress.purchase_upgrade(upgrade_id, def))
 
 

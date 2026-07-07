@@ -1,6 +1,6 @@
 ## BottomHudBar — the home-base bottom HUD bar as its own CanvasLayer: ONE
 ## full-width strip along the BOTTOM screen edge (T.ui_bottom_bar chrome, 96px
-## tall) holding the three permanent-currency chips (Core / Caps / Scrap) on
+## tall) holding the two permanent-currency chips (Caps / Scrap) on
 ## the LEFT, and exposing `center_box` / `right_box` containers the host scene
 ## fills with its own controls (giant START + difficulty stack in the centre —
 ## allowed to protrude above the bar's top edge per the approved mockup — and
@@ -18,7 +18,7 @@
 ## (chips | stretch spacer | buttons) so they stay vertically centered, while
 ## center_box is its own bottom-anchored overlay (it protrudes above the bar).
 ##
-## Labels track MetaProgress.core/caps/scrap_changed; the bar is freed with its
+## Labels track MetaProgress.caps/scrap_changed; the bar is freed with its
 ## host scene, which drops the connections.
 ##
 ## NO class_name (ADR-0006). Usage:
@@ -52,7 +52,7 @@ const CHIP_NUM_COLOR := Color("#e8d5a8")
 const CHIP_OUTLINE_COLOR := Color("#1a120a")
 const CHIP_OUTLINE_SIZE := 4
 
-## Where the Codex currency icons live (core / caps / scrap PNGs).
+## Where the Codex currency icons live (caps / scrap PNGs).
 const _CURRENCY_ICON_DIR := "res://run_system/assets/images/home/currency/"
 
 ## Containers the host scene fills. left_box is chip-owned; center_box stacks
@@ -62,7 +62,6 @@ var left_box: HBoxContainer
 var center_box: VBoxContainer
 var right_box: HBoxContainer
 
-var _core_label: Label
 var _caps_label: Label
 var _scrap_label: Label
 
@@ -159,16 +158,13 @@ func _init() -> void:
 	center_box.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	bar_root.add_child(center_box)
 
-	_core_label = _make_currency_chip(left_box, "core")
 	_caps_label = _make_currency_chip(left_box, "caps")
 	_scrap_label = _make_currency_chip(left_box, "scrap")
 
 
 func _ready() -> void:
-	MetaProgress.core_changed.connect(func(_v): _refresh_core())
 	MetaProgress.caps_changed.connect(func(_v): _refresh_caps())
 	MetaProgress.scrap_changed.connect(func(_v): _refresh_scrap())
-	_refresh_core()
 	_refresh_caps()
 	_refresh_scrap()
 
@@ -225,11 +221,6 @@ func _make_currency_chip(parent: Control, icon_id: String) -> Label:
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(label)
 	return label
-
-
-func _refresh_core() -> void:
-	if is_instance_valid(_core_label):
-		_core_label.text = str(MetaProgress.core)
 
 
 func _refresh_caps() -> void:

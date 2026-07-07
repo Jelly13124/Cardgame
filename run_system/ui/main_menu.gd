@@ -380,7 +380,7 @@ func _slot_summary_text(n: int, info: Dictionary) -> String:
 		. format(
 			{
 				"scrap": int(info.get("scrap", 0)),
-				"core": int(info.get("core", 0)),
+				"caps": int(info.get("caps", 0)),
 				"runs": int(info.get("runs", 0)),
 			}
 		)

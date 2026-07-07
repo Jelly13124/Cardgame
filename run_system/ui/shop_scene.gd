@@ -78,7 +78,7 @@ func _ready() -> void:
 	AudioManager.play_music("shop")
 
 
-func _on_resources_changed(_gold: int, _core: int) -> void:
+func _on_resources_changed(_gold: int, _scrap: int) -> void:
 	_refresh_gold_label()
 
 

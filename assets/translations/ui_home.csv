@@ -3,21 +3,20 @@ UI_HOME_START_RUN,DEPART,出发
 UI_HOME_DIFFICULTY_BTN,Difficulty A{a},难度 A{a}
 UI_HOME_DIFFICULTY_TITLE,Select Difficulty,选择难度
 UI_HOME_TITLE,HOME BASE,大本营
-UI_HOME_CORE,CORE: {n},核心：{n}
 UI_HOME_CAPS,🔩 CAPS: {n},🔩 瓶盖：{n}
 UI_HOME_RECENT_RUNS,RECENT RUNS,近期征程
 UI_HOME_NO_RUNS,(no runs yet),（暂无征程记录）
-UI_HOME_RUN_ROW,{icon}  {hero}  Act {act}·F{floor}  +{core} Core,{icon}  {hero}  第{act}幕·{floor}层  +{core} 核心
+UI_HOME_RUN_ROW,{icon}  {hero}  Act {act}·F{floor}  +{scrap} Scrap,{icon}  {hero}  第{act}幕·{floor}层  +{scrap} 废料
 UI_HOME_HERO_BILL,Bill,比尔
 UI_HOME_UPGRADE_LEVEL,Level: {dots}  ({cur}/{max}),等级：{dots}  ({cur}/{max})
 UI_HOME_UPGRADE_FULLY_UPGRADED,Fully upgraded.,已强化至满级。
 UI_HOME_UPGRADE_MAXED,MAXED,满级
 UI_HOME_UPGRADE_NEXT,Next: {text},下一级：{text}
-UI_HOME_UPGRADE_COST,Cost: {n} Core,花费：{n} 核心
+UI_HOME_UPGRADE_COST,Cost: {n} Caps,花费：{n} 瓶盖
 UI_HOME_UPGRADE_BUY,BUY,购买
 UI_HOME_CYBERDOC_NAME,Cyber Doctor,赛博医生
 UI_HOME_CYBERDOC_DESC,A back-alley ripperdoc. Unlock to augment your attributes with Caps.,后巷义体医师。解锁后可用瓶盖强化属性。
-UI_HOME_CYBERDOC_UNLOCK,Unlock — {n} Core,解锁 —— {n} 核心
+UI_HOME_CYBERDOC_UNLOCK,Unlock — {n} Scrap,解锁 —— {n} 废料
 UI_HOME_CYBERDOC_PERKS_HINT,Spend Caps to permanently boost an attribute (max 3 each).,花费瓶盖永久强化属性（每项最多 3 级）。
 UI_HOME_PERK_CYBER_STR,Strength Augment (+STR),力量强化（+力量）
 UI_HOME_PERK_CYBER_CON,Constitution Augment (+CON),体质强化（+体质）
@@ -38,8 +37,8 @@ UI_BUILD_FORGE_NAME,Forge,铁匠铺
 UI_BUILD_CLINIC_NAME,Clinic,义体诊所
 UI_BUILD_MARKET_NAME,Market,黑市
 UI_BUILD_OUTPOST_NAME,Outpost,前哨站
-UI_BUILD_UNLOCK,Unlock — {n} Core,解锁 —— {n} 核心
-UI_BUILD_UPGRADE,Upgrade T{n} — {c} Core,升级 T{n} —— {c} 核心
+UI_BUILD_UNLOCK,Unlock — {n} Scrap,解锁 —— {n} 废料
+UI_BUILD_UPGRADE,Upgrade T{n} — {c} Caps,升级 T{n} —— {c} 瓶盖
 UI_BUILD_MAX,Max tier,已满级
 UI_BUILD_LOCKED,Locked,未解锁
 UI_BUILD_COMING,Functions coming soon,功能即将到来

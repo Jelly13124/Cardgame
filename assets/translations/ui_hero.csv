@@ -2,9 +2,9 @@ keys,en,zh
 UI_HERO_SELECT_TITLE,SELECT YOUR COMMANDER,选择你的指挥官
 UI_HERO_ASCENSION,ASCENSION,进阶
 UI_HERO_ASCENSION_VALUE,A{n},A{n}
-UI_HERO_LOCKED,"🔒 {name}\n(UNLOCK 100 CORE)","🔒 {name}\n(解锁需 100 核心)"
+UI_HERO_LOCKED,"🔒 {name}\n(UNLOCK 100 SCRAP)","🔒 {name}\n(解锁需 100 废料)"
 UI_HERO_LOCKED_SHORT,🔒 LOCKED,🔒 已锁定
 UI_HERO_EXTRACT_TITLE,EXTRACT?,撤离？
 UI_HERO_EXTRACT_SUMMARY,You killed the act {n} boss.,你击杀了第{n}幕首领。
-UI_HERO_EXTRACT_NOW,"EXTRACT NOW   ( take the {n} Core in your backpack, end run )","立即撤离   ( 带走背包里的 {n} Core，结束本局 )"
-UI_HERO_PUSH_ON,"PUSH ON   ( +{n} Core to backpack, still at death risk )","继续深入   ( +{n} Core 进背包，背包 Core 仍有死亡风险 )"
+UI_HERO_EXTRACT_NOW,"EXTRACT NOW   ( take the {n} Scrap in your backpack, end run )","立即撤离   ( 带走背包里的 {n} 废料，结束本局 )"
+UI_HERO_PUSH_ON,"PUSH ON   ( +{n} Scrap to backpack, still at death risk )","继续深入   ( +{n} 废料 进背包，背包废料仍有死亡风险 )"

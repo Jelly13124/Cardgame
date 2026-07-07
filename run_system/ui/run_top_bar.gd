@@ -605,7 +605,7 @@ func _on_rm_health(_c: int, _m: int) -> void:
 	_refresh_vitals()
 
 
-func _on_rm_resources(_g: int, _co: int) -> void:
+func _on_rm_resources(_g: int, _scrap: int) -> void:
 	_refresh_gold_act()
 
 

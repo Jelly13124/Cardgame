@@ -23,10 +23,15 @@ var accent: Color = Color(0.86, 0.78, 0.52)
 
 var _tier_badge: Label
 var _content_box: VBoxContainer
-## Amount+icon Core chip (T.currency_row) in the header's right column.
-var _core_row: HBoxContainer
+## Amount+icon currency chip (T.currency_row) in the header's right column. Shows
+## the currency the building's NEXT action spends (Scrap while locked → unlock,
+## Caps once unlocked → tier-up), via MetaProgress.building_cost_currency.
+var _cost_row: HBoxContainer
 ## The row's amount Label — cached for cheap live updates.
-var _core_amount_lbl: Label
+var _cost_amount_lbl: Label
+## The header's right VBox — kept so the cost chip can be rebuilt when the cost
+## CURRENCY flips (locked→unlocked changes scrap→caps, so the icon must change).
+var _header_right_box: VBoxContainer
 
 ## Per-building header art (the same home-base runtime sprites).
 const _ICON_DIR := "res://run_system/assets/images/home/buildings_runtime/"
@@ -73,7 +78,6 @@ func _ready() -> void:
 	_build()
 	T.fade_in(self)  # soft entrance instead of a hard pop-in
 	MetaProgress.buildings_changed.connect(_refresh)
-	MetaProgress.core_changed.connect(func(_v): _refresh())
 	MetaProgress.caps_changed.connect(func(_v): _refresh())
 	MetaProgress.scrap_changed.connect(func(_v): _refresh())
 
@@ -125,7 +129,7 @@ func _build() -> void:
 	vbox.add_theme_constant_override("separation", 14)
 	margin.add_child(vbox)
 
-	# --- Header band: building icon + name/flavour, then tier + Core + close ---
+	# --- Header band: building icon + name/flavour, then tier + cost chip + close ---
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 18)
 	vbox.add_child(header)
@@ -167,15 +171,12 @@ func _build() -> void:
 	right_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	right_box.add_theme_constant_override("separation", 6)
 	header.add_child(right_box)
+	_header_right_box = right_box
 	_tier_badge = Label.new()
 	_tier_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_style_label(_tier_badge, 24, Color(0.90, 0.90, 0.86), 2)
 	right_box.add_child(_tier_badge)
-	_core_row = T.currency_row(0, "core", 22, 24)
-	_core_row.alignment = BoxContainer.ALIGNMENT_END
-	right_box.add_child(_core_row)
-	_core_amount_lbl = _core_row.get_meta("amount_label") as Label
-	_core_amount_lbl.add_theme_color_override("font_color", Color(0.64, 0.90, 1.0))
+	_rebuild_cost_row()
 
 	var close_btn := Button.new()
 	close_btn.text = "✕"
@@ -283,11 +284,29 @@ func _flavour_text() -> String:
 # --- State refresh ----------------------------------------------------------
 
 
-## Update the tier badge, Core chip, and action card to the current building state.
+## (Re)build the header cost chip: the currency the building's next action spends
+## (Scrap while locked, Caps once unlocked) with the matching live balance. Called
+## on build + whenever a currency/building signal fires (the currency can flip when
+## the building unlocks, so the whole row — icon included — is rebuilt).
+func _rebuild_cost_row() -> void:
+	if not is_instance_valid(_header_right_box):
+		return
+	if is_instance_valid(_cost_row):
+		_cost_row.queue_free()
+	var currency := MetaProgress.building_cost_currency(building_id)
+	var balance: int = MetaProgress.scrap if currency == "scrap" else MetaProgress.caps
+	_cost_row = T.currency_row(balance, currency, 22, 24)
+	_cost_row.alignment = BoxContainer.ALIGNMENT_END
+	_header_right_box.add_child(_cost_row)
+	_cost_amount_lbl = _cost_row.get_meta("amount_label") as Label
+	if is_instance_valid(_cost_amount_lbl):
+		_cost_amount_lbl.add_theme_color_override("font_color", Color(0.90, 0.86, 0.64))
+
+
+## Update the tier badge, cost chip, and action card to the current building state.
 ## Safe to call repeatedly (wired to buildings/currency change signals).
 func _refresh() -> void:
-	if is_instance_valid(_core_amount_lbl):
-		_core_amount_lbl.text = str(MetaProgress.core)
+	_rebuild_cost_row()
 	var tier := MetaProgress.get_building_tier(building_id)
 	if is_instance_valid(_tier_badge):
 		_tier_badge.text = tr("UI_BUILD_LOCKED") if tier <= 0 else "T%d" % tier

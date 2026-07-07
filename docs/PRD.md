@@ -37,9 +37,9 @@ Hero Select + Loadout -> Act 1 Map -> Battle -> Loot -> Map -> ... -> Act Boss
 1. **Hero Select + Loadout** - Pick a hero (fixed starter deck + attribute spread) and inject stashed gear into the backpack
 2. **Map** - Choose the next encounter node (normal / elite / rest / shop / treasure / ? event / boss) within the act's ~12-floor map
 3. **Battle** - STS-style card combat
-4. **Loot Reward** - Post-battle: claim gold/Core and optionally draft 1 new card
-5. **Boss Extraction Choice** _(after each non-final act boss)_ - Push on to the next act OR extract (bank carried Core, gear → permanent stash)
-6. **Base Building** - Between runs, spend Core to permanently upgrade the home base
+4. **Loot Reward** - Post-battle: claim gold/Scrap and optionally draft 1 new card
+5. **Boss Extraction Choice** _(after each non-final act boss)_ - Push on to the next act OR extract (bank carried Scrap, gear → permanent stash)
+6. **Base Building** - Between runs, spend Scrap (unlock buildings) + Caps (upgrade them) to permanently improve the home base
 
 ---
 
@@ -185,27 +185,27 @@ Relics are **passive effects that persist for the entire run**. Unlike equipment
 The run is **3 self-contained acts**, each its own ~12-floor map ending in a single boss (`ACT_BOSSES = [rust_titan, ash_warden, junkyard_tyrant]`; tracked by `RunManager.current_act` / `advance_act()`). Clearing a non-final act's boss opens an extract-vs-push choice; clearing the final act's boss wins the run.
 
 ### The backpack (20 cells)
-All loot lives in a single **20-cell backpack** where **Gold, Core, and equipment compete for space**:
+All loot lives in a single **20-cell backpack** where **Gold, Scrap, and equipment compete for space**:
 - **Gold** — physical stacks (≤100/cell, auto-merge, used for shop change-making). Gold does **NOT** carry across runs.
-- **Core** — in-run meta-currency dropped by elites / bosses / treasure / events (≤30/cell). Not spendable in-run; banks to permanent `MetaProgress.core` **only on extract or final victory**.
+- **Scrap** — in-run salvage dropped by elites / bosses / treasure / events (≤30/cell). Not spendable in-run; banks to permanent `MetaProgress.scrap` **only on extract or final victory**. (Was "Core" before the 2026-07-07 Core-currency removal; the risk/reward is identical, only the currency name changed.)
 - **Equipment** — one item per cell.
 
 ### Death, safe cells, and the permanent stash
 - **Death forfeits the entire backpack AND equipped gear — EXCEPT "safe cells."** The first N cells are safe (base 2, +1 per Outpost safe-cells upgrade level); their contents survive death.
-- **Extract / final victory** banks all carried Core and sends all carried + equipped gear to a **permanent base stash** (`MetaProgress.stash`).
+- **Extract / final victory** banks all carried Scrap and sends all carried + equipped gear to a **permanent base stash** (`MetaProgress.stash`).
 - A **loadout step** at the base injects chosen stashed gear into the next run's backpack (`RunManager.pending_loadout`).
 
 ### Extraction choice (after each non-final act boss)
-> **🚪 EXTRACT** — bank the Core in your backpack now and return to base (lower, but guaranteed).
+> **🚪 EXTRACT** — bank the Scrap in your backpack now and return to base (lower, but guaranteed).
 >
-> **⬆ PUSH ON** — take more Core (into the backpack, still at death risk) and continue to the next act (regenerates a fresh act map).
+> **⬆ PUSH ON** — take more Scrap (into the backpack, still at death risk) and continue to the next act (regenerates a fresh act map).
 
 ### End States
 
 | Outcome | Result |
 |---|---|
-| Extract after an act boss | Carried Core banks to `MetaProgress.core`; all gear → stash; run ends |
-| Push on | More Core into the backpack (still at death risk); next act map generated |
+| Extract after an act boss | Carried Scrap banks to `MetaProgress.scrap`; all gear → stash; run ends |
+| Push on | More Scrap into the backpack (still at death risk); next act map generated |
 | Clear the final-act boss | Full victory — everything banks |
 | Die on any floor | Lose the backpack + equipped gear, EXCEPT safe-cell contents |
 
@@ -215,13 +215,14 @@ All loot lives in a single **20-cell backpack** where **Gold, Core, and equipmen
 
 Between runs, players return to their **home base**: 4 building tiles in a centered row,
 a **giant START button** bottom-centre with a **difficulty button** above it (opens an
-A0-A5 picker popup), a **bottom currency bar** (`currency_top_bar.gd`, CanvasLayer 70,
-Core/Caps/Scrap), a **bounty board** panel bottom-left (held contracts + live progress —
+A0-A5 picker popup), a **top-left currency HUD** (Caps + Scrap chips in
+`home_base_scene.gd`), a **bounty board** panel bottom-left (held contracts + live progress —
 see "Bounty System" below), and three **nav image buttons bottom-right** — Warehouse
 (stash), Character (hero headshot) and Gallery (card codex — see "Card Gallery" below).
-Three meta-currencies fund the base: **Core** (unlock + tier-up buildings), **Caps**
-(Clinic / Market services), **Scrap** (Forge services). See `meta_progress.gd`
-`BUILDING_DEFS`.
+**Two** meta-currencies fund the base (the third, **Core**, was removed 2026-07-07):
+**Scrap** (Forge services + **building unlocks**) and **Caps** (Clinic / Market services +
+**building tier-ups** + Outpost permanent upgrades). See `meta_progress.gd` `BUILDING_DEFS`
++ `building_cost_currency()`.
 
 **Windowed UI (2026-07-02/03 refactor).** The base uses Diablo-style **draggable,
 coexisting windows** (`run_system/ui/window/`). Pressing **i** (home base / map / battle)
@@ -242,11 +243,12 @@ conversion → Market T3; stash cap flat 40).
 |---|---|
 | **Forge (锻造)** | Draggable 4-tab window: dismantle → Scrap; craft / reforge / curse (tier-gated, Scrap) |
 | **Clinic (诊所)** | Caps-bought permanent attribute perks + a Max-HP perk (tier raises the cap) |
-| **Market (黑市)** | Daily **bounty shelf** (T1, see "Bounty System"); Caps tool shop + stock refresh (T1); Caps equipment shop (T2); resource conversion Core→Caps→Scrap (T3). All non-curse, non-basic cards are draftable by default — no card-unlock system |
-| **Outpost (前哨站)** | Core upgrades: starting gold / in-run shop discount / safe cells / backpack size; difficulty (ascension) selector; starter-deck editor |
+| **Market (黑市)** | Daily **bounty shelf** (T1, see "Bounty System"); Caps tool shop + stock refresh (T1); Caps equipment shop (T2); resource conversion **Caps↔Scrap** bidirectional (T3). All non-curse, non-basic cards are draftable by default — no card-unlock system |
+| **Outpost (前哨站)** | Caps permanent upgrades: starting gold / in-run shop discount / safe cells / backpack size; difficulty (ascension) selector; starter-deck editor |
 
 ### Rules
-- Core/Caps/Scrap are earned by extracting or completing runs — NOT from dying.
+- **Building unlocks cost Scrap; tier-ups cost Caps** (`building_cost_currency()`).
+- Caps/Scrap are earned by extracting or completing runs — NOT from dying.
 - Building unlocks + tiers persist permanently across runs (true meta-progression).
 - Hero selection + next-run loadout live in the CharacterWindow's base mode (press **i**).
 - Some upgrades unlock new heroes or starting decks
@@ -276,7 +278,7 @@ tier`). Catalog page: `docs/catalog_html/bounties.html`.
   `is_run_active`); base/menu activity never counts.
 - **Instant settle**: the moment a contract's count is reached mid-run, the reward pays out
   immediately (a toast announces it at base) — no manual turn-in step.
-- Rewards: any of **Caps / Core / Scrap** (ints) and/or an **equipment drop tier**
+- Rewards: any of **Caps / Scrap** (ints) and/or an **equipment drop tier**
   (common/uncommon/rare — rolled via `roll_shell_drop` into the permanent stash).
 
 ### Objective types (7)
@@ -312,8 +314,7 @@ Central source of truth for a run. Persists across scene changes.
 | `player_deck` | Array of card dictionaries (uid + card_id) |
 | `player_attributes` | Five-dimension RPG stat dictionary (str/con/int/lck/chr) |
 | `current_encounter` | Enemy IDs for the next battle |
-| `gold` | Currency for shops |
-| `core` | Meta-progression resource (spent in base building) |
+| `gold` | In-run currency for shops (not banked across runs) |
 | `current_floor` | Which floor of the run (1–3) |
 | `equipped_items` | Up to 5 equipped item IDs (stat-boosting equipment) |
 | `relics` | Array of relic IDs (passive run effects) |
@@ -463,6 +464,23 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 ---
 
 ## Development Roadmap
+
+### ✅ Phase 14 — Core currency removed → two-currency economy (shipped 2026-07-07)
+Spec: `docs/superpowers/specs/2026-07-07-remove-core-currency-design.md`.
+- ✅ **Meta Core deleted** from `MetaProgress` (var / `core_changed` signal / `add_core` /
+  `spend_core` / save field all gone). Old saves' `core` balance is **discarded, not
+  migrated** — `load_progress` is fault-tolerant on the stale key.
+- ✅ **Split mapping**: building **unlocks cost Scrap**, **tier-ups + Outpost permanent
+  upgrades cost Caps** (`unlock_building`/`upgrade_building`/`purchase_upgrade`); new helper
+  `MetaProgress.building_cost_currency(id)` → `"scrap"` while locked, else `"caps"` (UI picks
+  the icon + affordability from it).
+- ✅ **In-run Core → Scrap rebrand**: battle drops + `total_run_scrap()` +
+  `add_scrap_to_backpack()` bank to `MetaProgress.scrap` on extract/victory (same risk/reward,
+  backpack cell kind `"scrap"`).
+- ✅ **Market convert** is now **Caps↔Scrap bidirectional** (Core→Caps row dropped).
+- ✅ **Contract rewards**: `elite_purge`/`head_hunter` core rewards → Scrap; validator drops
+  `core` from allowed bounty currencies; `gain_core` event effect → `gain_scrap` (4 events).
+- ✅ **UI**: currency HUD shows only Caps + Scrap; building unlock badge = Scrap, upgrade = Caps.
 
 ### ✅ Phase 1 — Core Combat (Complete)
 - STS card play loop (draw 3 / play / discard / enemy turn)

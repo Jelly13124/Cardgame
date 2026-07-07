@@ -5,8 +5,9 @@
 ##     2 Caps buys), rerolled per local date. Taken contracts go to the home-base
 ##     bounty board (spec §2.5).
 ##   - T2 equip_shop      : buy equipment INSTANCES with Caps (rarity-priced).
-##   - T3 resource_convert: currency exchange (Core→Caps, Caps→Scrap) with a
-##     ~10% tax — moved here from the removed Warehouse building.
+##   - T3 resource_convert: currency exchange (Caps↔Scrap, bidirectional) with a
+##     ~10% tax — moved here from the removed Warehouse building. (Core→Caps was
+##     dropped when the Core currency was removed 2026-07-07.)
 ## Refresh (re-roll the stocked tools + equipment for Caps) is ungated —
 ## available from T1.
 ##
@@ -36,13 +37,14 @@ const MARKET_TOOL_COUNT := 3
 const MARKET_REFRESH_BASE := 20
 const MARKET_REFRESH_STEP := 10
 
-## Conversion tunables (ported VERBATIM from the removed warehouse screen):
-## Core→Caps 1:2, Caps→Scrap 4:1, ~10% tax (floored). Each row converts a
-## fixed chunk of the source currency.
-const CONV_CORE_CHUNK := 50
-const CONV_CORE_RATE := 2.0
-const CONV_CAPS_CHUNK := 40
-const CONV_CAPS_RATE := 0.25
+## Conversion tunables (Caps↔Scrap bidirectional, ~10% tax floored) [tunable].
+## Caps→Scrap 4:1 (kept from the old warehouse rate); Scrap→Caps is the reverse
+## direction at the inverse chunk so grinding the loop always loses to the tax.
+## Each row converts a fixed chunk of the SOURCE currency.
+const CONV_CAPS_CHUNK := 40  # Caps → Scrap: spend 40 caps
+const CONV_CAPS_RATE := 0.25  # → 10 scrap gross (before tax)
+const CONV_SCRAP_CHUNK := 20  # Scrap → Caps: spend 20 scrap
+const CONV_SCRAP_RATE := 2.0  # → 40 caps gross (before tax)
 const CONV_TAX := 0.10
 
 const RARITY_ORDER := ["common", "uncommon", "rare"]
@@ -76,7 +78,7 @@ var _convert_status_text: String = ""
 
 ## Live-refresh handles so balances + buttons repaint without a full rebuild.
 var _caps_label: Label = null
-var _mkt_core_label: Label = null
+var _mkt_scrap_label: Label = null
 ## The whole content host, so currency/building changes can rebuild the lists.
 var _market_box: VBoxContainer = null
 
@@ -99,8 +101,8 @@ func _build_content(container: VBoxContainer) -> void:
 	# (badge/action button); we add our own content rebuild on the same signals.
 	if not MetaProgress.caps_changed.is_connected(_on_market_changed):
 		MetaProgress.caps_changed.connect(_on_market_changed)
-	if not MetaProgress.core_changed.is_connected(_on_market_changed):
-		MetaProgress.core_changed.connect(_on_market_changed)
+	if not MetaProgress.scrap_changed.is_connected(_on_market_changed):
+		MetaProgress.scrap_changed.connect(_on_market_changed)
 	if not MetaProgress.buildings_changed.is_connected(_rebuild_market):
 		MetaProgress.buildings_changed.connect(_rebuild_market)
 	if not MetaProgress.upgrades_changed.is_connected(_rebuild_market):
@@ -127,8 +129,8 @@ func _rebuild_market() -> void:
 func _refresh_balances() -> void:
 	if is_instance_valid(_caps_label):
 		_caps_label.text = "%d" % MetaProgress.caps
-	if is_instance_valid(_mkt_core_label):
-		_mkt_core_label.text = "%d" % MetaProgress.core
+	if is_instance_valid(_mkt_scrap_label):
+		_mkt_scrap_label.text = "%d" % MetaProgress.scrap
 
 
 func _populate(container: VBoxContainer) -> void:
@@ -155,7 +157,7 @@ func _populate(container: VBoxContainer) -> void:
 	# Refresh stock (Caps) — ungated, available from T1.
 	container.add_child(_build_refresh_section())
 
-	# T3: resource conversion (Core→Caps, Caps→Scrap) — from the old Warehouse.
+	# T3: resource conversion (Caps↔Scrap) — from the old Warehouse.
 	if MetaProgress.building_can("market", "resource_convert"):
 		container.add_child(_build_convert_section())
 	else:
@@ -166,8 +168,9 @@ func _populate(container: VBoxContainer) -> void:
 
 
 ## Balances banner — matches the banner treatment on the other 4 screens (forge
-## Scrap / outpost Core / clinic Caps) so the Market's currency readout reads
-## as the same UI element instead of a bare label row.
+## Scrap / outpost Caps / clinic Caps) so the Market's currency readout reads
+## as the same UI element instead of a bare label row. Shows Caps + Scrap (the two
+## currencies the conversion table trades between).
 func _build_balances_row() -> Control:
 	var banner := _styled_panel(true)
 	var bm := MarginContainer.new()
@@ -184,10 +187,10 @@ func _build_balances_row() -> Control:
 	_caps_label = caps_row.get_meta("amount_label") as Label
 	_caps_label.add_theme_color_override("font_color", PRICE_COLOR)
 
-	var core_row := T.currency_row(MetaProgress.core, "core", 22, 24)
-	row.add_child(core_row)
-	_mkt_core_label = core_row.get_meta("amount_label") as Label
-	_mkt_core_label.add_theme_color_override("font_color", Color(0.55, 0.85, 1.0))
+	var scrap_row := T.currency_row(MetaProgress.scrap, "scrap", 22, 24)
+	row.add_child(scrap_row)
+	_mkt_scrap_label = scrap_row.get_meta("amount_label") as Label
+	_mkt_scrap_label.add_theme_color_override("font_color", Color(0.78, 0.86, 0.62))
 
 	return banner
 
@@ -387,7 +390,7 @@ func _build_bounty_tile(bounty_id: String, is_free: bool) -> Control:
 	reward_line.add_theme_constant_override("separation", 10)
 	col.add_child(reward_line)
 	var first := true
-	for cur in ["caps", "core", "scrap"]:
+	for cur in ["caps", "scrap"]:
 		var amt := int(reward.get(cur, 0))
 		if amt <= 0:
 			continue
@@ -633,19 +636,6 @@ func _build_convert_section() -> Control:
 	group.add_theme_constant_override("separation", TOK_ROW_SEP)
 	body.add_child(group)
 
-	# Core → Caps (1:2, ~10% tax).
-	var core_out := _converted_amount(CONV_CORE_CHUNK, CONV_CORE_RATE)
-	group.add_child(
-		_conversion_row(
-			CONV_CORE_CHUNK,
-			"core",
-			core_out,
-			"caps",
-			MetaProgress.core >= CONV_CORE_CHUNK,
-			_on_convert_core_to_caps
-		)
-	)
-
 	# Caps → Scrap (4:1, ~10% tax).
 	var caps_out := _converted_amount(CONV_CAPS_CHUNK, CONV_CAPS_RATE)
 	group.add_child(
@@ -656,6 +646,19 @@ func _build_convert_section() -> Control:
 			"scrap",
 			MetaProgress.caps >= CONV_CAPS_CHUNK,
 			_on_convert_caps_to_scrap
+		)
+	)
+
+	# Scrap → Caps (reverse, ~10% tax).
+	var scrap_out := _converted_amount(CONV_SCRAP_CHUNK, CONV_SCRAP_RATE)
+	group.add_child(
+		_conversion_row(
+			CONV_SCRAP_CHUNK,
+			"scrap",
+			scrap_out,
+			"caps",
+			MetaProgress.scrap >= CONV_SCRAP_CHUNK,
+			_on_convert_scrap_to_caps
 		)
 	)
 
@@ -717,18 +720,16 @@ func _conversion_row(
 	return row.get_meta("_panel")
 
 
-func _on_convert_core_to_caps() -> void:
-	if MetaProgress.core < CONV_CORE_CHUNK:
+func _on_convert_scrap_to_caps() -> void:
+	if not MetaProgress.spend_scrap(CONV_SCRAP_CHUNK):
 		return
-	var out := _converted_amount(CONV_CORE_CHUNK, CONV_CORE_RATE)
-	# add_core(-n) clamps at 0 but we already checked the balance, so it is exact.
-	MetaProgress.add_core(-CONV_CORE_CHUNK)
+	var out := _converted_amount(CONV_SCRAP_CHUNK, CONV_SCRAP_RATE)
 	MetaProgress.add_caps(out)
 	_flash_status(
 		tr("UI_MARKET_CONVERT_OK").format(
 			{
-				"src": CONV_CORE_CHUNK,
-				"src_name": tr("UI_MARKET_CONVERT_CUR_CORE"),
+				"src": CONV_SCRAP_CHUNK,
+				"src_name": tr("UI_MARKET_CONVERT_CUR_SCRAP"),
 				"dst": out,
 				"dst_name": tr("UI_MARKET_CONVERT_CUR_CAPS")
 			}

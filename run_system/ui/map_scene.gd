@@ -393,7 +393,7 @@ func _open_event_node(floor_idx: int) -> void:
 ## "?" map node — rolls one of several outcomes for variety. Probabilities:
 ##   40% enemy ambush       — same as before, drops into combat
 ##   18% scavenge gold      — small pile of gold (5-20), into the backpack
-##   15% core cache         — 10-30 Core (only banks on extraction)
+##   15% scrap cache        — 10-30 Scrap (only banks on extraction)
 ##   12% scrap stash heal   — heal 6-12 HP (capped at max)
 ##    7% free equipment     — uses the treasure-style grant path
 ##    8% suspicious cache    — lose 6 HP, gain a relic (skipped if no relics left)
@@ -415,10 +415,10 @@ func _resolve_unknown_node(floor_idx: int) -> void:
 		return
 
 	if roll < 0.73:
-		# Core stays in the backpack and only counts on a successful extraction.
+		# Scrap stays in the backpack and only counts on a successful extraction.
 		var amt: int = randi_range(10, 30)
-		RunManager.add_core_to_backpack(amt)
-		_show_popup(tr("UI_MAP_CORE_DROP").format({"n": amt}))
+		RunManager.add_scrap_to_backpack(amt)
+		_show_popup(tr("UI_MAP_SCRAP_DROP").format({"n": amt}))
 		_node_click_pending = false
 		return
 
@@ -820,7 +820,7 @@ func _grant_treasure_equipment() -> void:
 	if RunManager.add_equip_to_backpack(einst):
 		_show_popup(tr("UI_MAP_FOUND_EQUIPMENT").format({"n": item_name}))
 	else:
-		# Backpack full — gold/core/equipment all share the 20 cells now, so
+		# Backpack full — gold/scrap/equipment all share the 20 cells now, so
 		# there is no dedicated equip overflow. Leave the item behind.
 		_show_popup(tr("UI_MAP_BACKPACK_FULL").format({"n": item_name}))
 	_node_click_pending = false

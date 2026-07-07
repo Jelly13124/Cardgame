@@ -214,7 +214,6 @@ func _load_raw_png_texture(path: String) -> Texture2D:
 
 func _connect_home_hud_signals() -> void:
 	MetaProgress.caps_changed.connect(func(_v): _refresh_top_currency("caps"))
-	MetaProgress.core_changed.connect(func(_v): _refresh_top_currency("core"))
 	MetaProgress.scrap_changed.connect(func(_v): _refresh_top_currency("scrap"))
 	# Bound methods (not lambdas) so the autoload connections auto-clean when this
 	# scene is freed. bounties_changed repaints the board (market claims/buys,
@@ -275,8 +274,8 @@ func _add_top_hud(root: Control) -> void:
 	resources.offset_bottom = 70.0
 	top_body.add_child(resources)
 
+	# Two-currency HUD (Core removed 2026-07-07): Caps (money) + Scrap (salvage).
 	_top_currency_labels["caps"] = _make_top_currency_chip(resources, "caps")
-	_top_currency_labels["core"] = _make_top_currency_chip(resources, "core")
 	_top_currency_labels["scrap"] = _make_top_currency_chip(resources, "scrap")
 	_refresh_top_currencies()
 
@@ -343,7 +342,6 @@ func _make_top_currency_chip(parent: Control, currency: String) -> Label:
 
 func _refresh_top_currencies() -> void:
 	_refresh_top_currency("caps")
-	_refresh_top_currency("core")
 	_refresh_top_currency("scrap")
 
 
@@ -354,8 +352,6 @@ func _refresh_top_currency(currency: String) -> void:
 	match currency:
 		"caps":
 			label.text = str(MetaProgress.caps)
-		"core":
-			label.text = str(MetaProgress.core)
 		"scrap":
 			label.text = str(MetaProgress.scrap)
 
@@ -515,7 +511,7 @@ func _rebuild_bounty_rows() -> void:
 
 ## One progress row per held contract, or a single empty-state hint pointing at
 ## the Black Market shelf. Reward chip shows the PRIMARY currency (caps first,
-## then core/scrap) with a trailing "+" when the contract pays out more kinds.
+## then scrap) with a trailing "+" when the contract pays out more kinds.
 func _fill_bounty_rows() -> void:
 	var added := 0
 	for entry in MetaProgress.active_bounties:
@@ -537,7 +533,7 @@ func _fill_bounty_rows() -> void:
 		var reward_amount := 0
 		var reward_currency := "caps"
 		var reward_parts := 0
-		for cur in ["caps", "core", "scrap"]:
+		for cur in ["caps", "scrap"]:
 			var amt := int(reward.get(cur, 0))
 			if amt <= 0:
 				continue
@@ -621,7 +617,7 @@ func _make_daily_task_row(
 	current: int,
 	target: int,
 	reward: int,
-	reward_currency: String = "core",
+	reward_currency: String = "caps",
 	reward_plus: bool = false
 ) -> Control:
 	var row := HBoxContainer.new()
@@ -1236,7 +1232,7 @@ func _add_interactive_building(
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(callback)
 	_buildings_root.add_child(button)
-	# Locked buildings (not yet unlocked with Core) render grey-dark via the
+	# Locked buildings (not yet unlocked with Scrap) render grey-dark via the
 	# desaturation shader (material on the button node only — the lock overlay
 	# below is a sibling, so it keeps its brass color) with a lock badge so it
 	# reads at a glance which ones aren't available. Still clickable — clicking
@@ -1388,13 +1384,16 @@ func _add_building_plaque(building_id: String, rect: Rect2, title: String) -> vo
 	plaque.add_child(label)
 
 
-## Unlock / upgrade button under a building's floating label — confirms before spending Core.
+## Unlock / upgrade button under a building's floating label — confirms before spending.
+## Unlock spends Scrap, tier-up spends Caps (building_cost_currency picks which).
 ## Hidden at max tier. Rebuilt with the plaques on buildings_changed so it stays live.
 func _add_tier_button(building_id: String, plaque_rect: Rect2) -> void:
 	var tier := MetaProgress.get_building_tier(building_id)
 	var cost := MetaProgress.next_building_cost(building_id)
 	if cost < 0:
 		return  # maxed (or no unlock cost) → no button
+	var currency := MetaProgress.building_cost_currency(building_id)
+	var balance := MetaProgress.scrap if currency == "scrap" else MetaProgress.caps
 	var zh := Settings.language == "zh"
 	var btn := Button.new()
 	btn.focus_mode = Control.FOCUS_NONE
@@ -1404,7 +1403,7 @@ func _add_tier_button(building_id: String, plaque_rect: Rect2) -> void:
 	_style_brass_button(btn)  # glass chip (the Kenney texture read muddy over the sky)
 	btn.text = ("解锁" if zh else "Unlock") if tier <= 0 else ("升级" if zh else "Upgrade")
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	btn.disabled = cost < 0 or MetaProgress.core < cost
+	btn.disabled = cost < 0 or balance < cost
 	# Contrast pass: the theme's default grey-brown label was near-invisible on
 	# the plaque — warm gold (UI_HEADER_GOLD #f2c56a) in every state, incl. the
 	# disabled (can't-afford) one, with a dark outline so it reads on desert.
@@ -1420,9 +1419,10 @@ func _add_tier_button(building_id: String, plaque_rect: Rect2) -> void:
 			_show_tier_confirm(building_id)
 	)
 	# Cost shown as amount+icon, overlaid on the button's right side (verb text
-	# stays as btn.text on the left) instead of the old "N 核心" word suffix.
-	var badge := T.overlay_cost_badge(cost, "core", 15, 18, -10, -110)
-	# Match the verb's gold on the cost number (the badge keeps its core icon).
+	# stays as btn.text on the left). Icon = the currency this action spends
+	# (scrap for unlock, caps for tier-up).
+	var badge := T.overlay_cost_badge(cost, currency, 15, 18, -10, -110)
+	# Match the verb's gold on the cost number (the badge keeps its currency icon).
 	if badge.get_child_count() > 0 and badge.get_child(0).has_meta("amount_label"):
 		var amount_lbl := badge.get_child(0).get_meta("amount_label") as Label
 		if amount_lbl != null:
@@ -1439,8 +1439,9 @@ func _add_tier_button(building_id: String, plaque_rect: Rect2) -> void:
 	_buildings_root.add_child(btn)
 
 
-## Confirmation popup for an unlock/upgrade. Confirm spends Core via MetaProgress
-## (→ buildings_changed → the overview rebuilds with the new tier).
+## Confirmation popup for an unlock/upgrade. Confirm spends Scrap (unlock) or Caps
+## (tier-up) via MetaProgress (→ its currency + buildings signals → the overview
+## rebuilds with the new tier).
 func _show_tier_confirm(building_id: String) -> void:
 	if get_node_or_null("TierConfirm") != null:
 		return  # a confirm popup is already open
@@ -1448,10 +1449,12 @@ func _show_tier_confirm(building_id: String) -> void:
 	var cost := MetaProgress.next_building_cost(building_id)
 	if cost < 0:
 		return  # already at max tier — nothing to offer
-	# NOTE: do NOT early-return when Core < cost — that silently ate the click
-	# (fresh saves have 0 Core, so locked buildings felt dead). Show the popup
-	# with a disabled Confirm + an "not enough Core" hint instead.
-	var affordable := MetaProgress.core >= cost
+	var currency := MetaProgress.building_cost_currency(building_id)
+	var balance := MetaProgress.scrap if currency == "scrap" else MetaProgress.caps
+	# NOTE: do NOT early-return when balance < cost — that silently ate the click
+	# (fresh saves have 0 of everything, so locked buildings felt dead). Show the
+	# popup with a disabled Confirm + a "not enough" hint instead.
+	var affordable := balance >= cost
 	var zh := Settings.language == "zh"
 	var is_unlock := tier <= 0
 	var bname := tr("UI_BUILD_%s_NAME" % building_id.to_upper())
@@ -1492,16 +1495,22 @@ func _show_tier_confirm(building_id: String) -> void:
 	msg.add_theme_color_override("font_color", Color(1.0, 0.93, 0.78))
 	box.add_child(msg)
 
-	# Cost as amount+icon (no "N 核心" word), centered under the question.
-	var cost_row := T.currency_row(cost, "core", 20, 22, "花费:" if zh else "Cost:")
+	# Cost as amount+icon (the currency this action spends), centered under the question.
+	var cost_row := T.currency_row(cost, currency, 20, 22, "花费:" if zh else "Cost:")
 	cost_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_child(cost_row)
 
+	# Localized currency word for the shortfall hint (icon already shown above).
+	var cur_word := (
+		("废料" if currency == "scrap" else "瓶盖")
+		if zh
+		else ("Scrap" if currency == "scrap" else "Caps")
+	)
 	if not affordable:
 		var short := Label.new()
 		short.text = (
-			("核心不足(还差 %d)" if zh else "Not enough Core (%d more needed)")
-			% (cost - MetaProgress.core)
+			("%s不足(还差 %d)" if zh else "Not enough %s (%d more needed)")
+			% ([cur_word, cost - balance] if zh else [cur_word, cost - balance])
 		)
 		short.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		short.add_theme_font_size_override("font_size", 15)
@@ -1519,7 +1528,7 @@ func _show_tier_confirm(building_id: String) -> void:
 	T.apply_button_theme(yes)
 	if not affordable:
 		yes.disabled = true
-		yes.tooltip_text = "核心不足" if zh else "Not enough Core"
+		yes.tooltip_text = ("%s不足" % cur_word) if zh else ("Not enough %s" % cur_word)
 	yes.pressed.connect(
 		func() -> void:
 			AudioManager.play_sfx("upgrade")
@@ -2239,11 +2248,12 @@ func _build_history_row(entry: Dictionary) -> Label:
 	var hero: String = _humanize_hero_id(str(entry.get("hero_id", "?")))
 	var floor_index: int = int(entry.get("floor", 0))
 	var act: int = int(entry.get("act", 1))  # legacy summaries predate `act`
-	var core_earned: int = int(entry.get("core_earned", 0))
+	# scrap_earned is the current key; old history entries used core_earned (fall back).
+	var scrap_earned: int = int(entry.get("scrap_earned", entry.get("core_earned", 0)))
 
 	var row := Label.new()
 	row.text = (tr("UI_HOME_RUN_ROW").format(
-		{"icon": icon, "hero": hero, "act": act, "floor": floor_index + 1, "core": core_earned}
+		{"icon": icon, "hero": hero, "act": act, "floor": floor_index + 1, "scrap": scrap_earned}
 	))
 	row.add_theme_color_override("font_color", color)
 	return row

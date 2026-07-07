@@ -293,21 +293,21 @@ static func button_textured(state: String = "normal") -> StyleBoxTexture:
 	return style
 
 
-## Currency icon PNGs (Codex art). Keyed by currency id: core / caps / scrap.
+## Currency icon PNGs (Codex art). Keyed by currency id: caps / scrap. (The `core`
+## icon PNG is left on disk but no longer referenced — Core removed 2026-07-07.)
 const _CURRENCY_ICON_DIR := "res://run_system/assets/images/home/currency/"
 
 ## Currency display fallback names (used only if the icon PNG is missing, so
 ## a regressed art pipeline never leaves the number without a unit).
 const _CURRENCY_FALLBACK_NAME := {
-	"core": {"zh": "核心", "en": "Core"},
 	"caps": {"zh": "瓶盖", "en": "Caps"},
 	"scrap": {"zh": "废料", "en": "Scrap"},
 }
 
 
 ## Amount + currency ICON row: an HBoxContainer with a number Label followed by a
-## small TextureRect icon (`home/currency/{currency}.png`; currency ∈ core/caps/
-## scrap). Falls back to "<amount> <currency-word>" text if the icon PNG is
+## small TextureRect icon (`home/currency/{currency}.png`; currency ∈ caps/scrap).
+## Falls back to "<amount> <currency-word>" text if the icon PNG is
 ## missing so a regressed art pipeline never leaves a bare, unlabeled number.
 ## `icon_size` controls the icon's square size (20–24px fits inline with body text).
 ## `prefix` optionally prepends a label before the row (e.g. "花费: <row>") — pass

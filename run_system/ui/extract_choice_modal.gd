@@ -1,5 +1,5 @@
 ## Modal shown after a mid-act boss death. Player chooses to extract now
-## (more Core, run ends, return to home base) or push deeper (less Core
+## (more Scrap, run ends, return to home base) or push deeper (less Scrap
 ## now, continue to next act).
 ##
 ## Owner instantiates, sets reward_continue / reward_extract / act_num,
@@ -90,7 +90,7 @@ func _build() -> void:
 
 # Debounce: queue_free is deferred so without this flag a double-click on
 # the same button (or rapid clicks across both buttons) would emit `chosen`
-# more than once, leading to double Core grants and stacked loot modals.
+# more than once, leading to double Scrap grants and stacked loot modals.
 func _on_extract_pressed() -> void:
 	if _resolved:
 		return
