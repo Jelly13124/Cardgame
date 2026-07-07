@@ -996,7 +996,12 @@ func total_run_core() -> int:
 ## Add gold to the backpack (fills partial stacks, then opens new cells).
 ## Returns the amount actually stored (< n if the backpack ran out of room).
 func add_gold(n: int) -> int:
-	return _add_stacked("gold", n, GOLD_PER_CELL)
+	var stored := _add_stacked("gold", n, GOLD_PER_CELL)
+	# Bounty: earn_gold counts only gold that actually entered the backpack
+	# (positive deltas; spend_gold is a separate path and never counts).
+	if stored > 0:
+		bounty_event("earn_gold", stored)
+	return stored
 
 
 ## Add run-core to the backpack (≤CORE_PER_CELL per cell). Returns amount stored.
@@ -1951,6 +1956,12 @@ func end_run_victory(core_earned: int = 0, outcome: String = "victory") -> void:
 func _teardown_run(victory: bool, outcome: String, core_earned: int) -> void:
 	if not is_run_active:
 		return
+	# Bounty: successful extraction settles HERE, not at the UI call site —
+	# every extract path funnels into this teardown. Must fire BEFORE the
+	# is_run_active=false flip below or the gated bounty_event() would no-op.
+	# The idempotency guard above makes it exactly-once.
+	if outcome == "extracted":
+		bounty_event("extract_alive")
 	_settle_backpack(victory, outcome)
 	is_run_active = false
 	# The run is over (death / extract / victory): drop any resumable save so the

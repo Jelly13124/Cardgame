@@ -705,6 +705,13 @@ func _victory():
 	# In-run XP: queue a card draft per level gained (consumed by the loot screen).
 	RunManager.gain_xp(RunManager.last_battle_node_type)
 
+	# Bounty: elite/boss victory. Single-fire (is_game_over guard above); must run
+	# BEFORE the boss branch's end_run_victory() flips is_run_active false.
+	if RunManager.last_battle_node_type == "elite":
+		RunManager.bounty_event("kill_elites")
+	elif RunManager.last_battle_node_type == "boss":
+		RunManager.bounty_event("kill_boss")
+
 	# Boss victory routing:
 	#   - non-final act boss → extract choice modal (rewards by current_act)
 	#   - final boss   → grant BOSS_VICTORY_CORE and return to home base
@@ -1021,6 +1028,11 @@ func play_spell(card: Control, target_node: Node):
 		play_sfx_name = "card_play_" + type
 	AudioManager.play_sfx(play_sfx_name)
 	spend_energy([card])
+	# Bounty + card-codex tracking: the play is committed at this point (all
+	# gates passed, energy spent). Fires once per PLAY, not per Replay pass.
+	if type == "attack":
+		RunManager.bounty_event("play_attack_cards")
+	MetaProgress.mark_card_seen(str(card.card_info.get("name", "")))
 	if card.card_container and card.card_container.has_card(card):
 		card.card_container.remove_card(card)
 

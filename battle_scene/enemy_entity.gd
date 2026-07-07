@@ -567,6 +567,10 @@ func take_damage(amount: int, silent: bool = false) -> void:
 		if is_elite:
 			kill_gold *= 2
 		RunManager.add_gold(kill_gold)
+		# Bounty: one kill event per death (this branch is the single death gate —
+		# it pays kill gold + emits `died` exactly once; _live_target guards
+		# upstream keep dead enemies from re-entering take_damage).
+		RunManager.bounty_event("kill_enemies")
 		# A small screen jolt punctuates the kill.
 		COMBAT_FX.shake_screen(get_tree().current_scene, 4.0, 0.18)
 		died.emit()

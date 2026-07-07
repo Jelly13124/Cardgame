@@ -176,6 +176,7 @@ func _make_card_slot(entry: Dictionary) -> Control:
 ## so mutating it here edits the live array element — no copy is involved.
 func _on_pick(entry: Dictionary) -> void:
 	entry["upgraded"] = true
+	RunManager.bounty_event("upgrade_cards")  # Bounty: one event per campfire upgrade.
 	AudioManager.play_sfx("ui_click")
 	emit_signal("upgraded")
 	queue_free()
