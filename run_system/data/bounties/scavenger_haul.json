@@ -1,0 +1,8 @@
+{
+  "id": "scavenger_haul",
+  "title": "Scavenger's Haul",
+  "objective": { "type": "earn_gold", "count": 150 },
+  "reward": { "caps": 90 },
+  "price": 35,
+  "tier": "standard"
+}

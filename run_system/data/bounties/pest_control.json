@@ -1,0 +1,8 @@
+{
+  "id": "pest_control",
+  "title": "Pest Control",
+  "objective": { "type": "kill_enemies", "count": 15 },
+  "reward": { "caps": 110 },
+  "price": 40,
+  "tier": "standard"
+}

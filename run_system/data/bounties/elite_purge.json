@@ -1,0 +1,8 @@
+{
+  "id": "elite_purge",
+  "title": "Elite Purge",
+  "objective": { "type": "kill_elites", "count": 4 },
+  "reward": { "core": 15, "caps": 100 },
+  "price": 70,
+  "tier": "hard"
+}

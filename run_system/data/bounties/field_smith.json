@@ -1,0 +1,8 @@
+{
+  "id": "field_smith",
+  "title": "Field Smith",
+  "objective": { "type": "upgrade_cards", "count": 2 },
+  "reward": { "caps": 90 },
+  "price": 35,
+  "tier": "standard"
+}

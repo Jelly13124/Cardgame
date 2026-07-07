@@ -1,0 +1,8 @@
+{
+  "id": "open_fire",
+  "title": "Open Fire",
+  "objective": { "type": "play_attack_cards", "count": 10 },
+  "reward": { "caps": 80 },
+  "price": 30,
+  "tier": "standard"
+}

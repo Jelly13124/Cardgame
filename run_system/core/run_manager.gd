@@ -861,6 +861,19 @@ func purchase_card_removal(uid: String, cost: int) -> bool:
 	return true
 
 
+# --- Bounty tracking (悬赏) ---
+
+
+## Single in-run entry point for bounty progress. Battle / reward paths call
+## this with an event kind (must be in data_validator.ALLOWED_BOUNTY_OBJECTIVES,
+## e.g. "kill_elites", "earn_gold") and an amount; forwarded to MetaProgress
+## only while a run is active — base-screen / menu activity never ticks bounties.
+func bounty_event(kind: String, amount: int = 1) -> void:
+	if not is_run_active:
+		return
+	MetaProgress.bounty_progress_add(kind, amount)
+
+
 # --- Health & Damage ---
 
 

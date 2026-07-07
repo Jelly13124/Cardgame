@@ -1,0 +1,8 @@
+{
+  "id": "war_profiteer",
+  "title": "War Profiteer",
+  "objective": { "type": "earn_gold", "count": 400 },
+  "reward": { "caps": 160, "scrap": 20 },
+  "price": 60,
+  "tier": "hard"
+}

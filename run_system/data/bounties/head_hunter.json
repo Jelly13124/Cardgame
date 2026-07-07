@@ -1,0 +1,8 @@
+{
+  "id": "head_hunter",
+  "title": "Head Hunter",
+  "objective": { "type": "kill_boss", "count": 1 },
+  "reward": { "core": 20 },
+  "price": 65,
+  "tier": "hard"
+}

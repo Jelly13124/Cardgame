@@ -1,0 +1,8 @@
+{
+  "id": "sustained_assault",
+  "title": "Sustained Assault",
+  "objective": { "type": "play_attack_cards", "count": 25 },
+  "reward": { "caps": 150 },
+  "price": 50,
+  "tier": "standard"
+}

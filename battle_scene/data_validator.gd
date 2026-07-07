@@ -21,9 +21,29 @@ const BASE_UPGRADE_DIR = "res://run_system/data/base_upgrades/"
 const HERO_DIR = "res://run_system/data/heroes/"
 const RANDOM_EVENT_DIR = "res://run_system/data/random_events/"
 const TOOL_DIR = "res://run_system/data/tools/"
+const BOUNTY_DATA_DIR = "res://run_system/data/bounties/"
 
 const REQUIRED_TOOL_KEYS = ["id", "title", "effects"]
 const ALLOWED_TOOL_TARGETS = ["enemy", "self", "none"]
+
+# ─── Bounty schema ───────────────────────────────────────────────────────────
+# Objective `type`s trackable by the in-run hooks (two-place rule: each kind is
+# emitted somewhere via RunManager.bounty_event AND listed here).
+const REQUIRED_BOUNTY_KEYS = ["id", "title", "objective", "reward", "price", "tier"]
+const ALLOWED_BOUNTY_OBJECTIVES := [
+	"play_attack_cards",
+	"earn_gold",
+	"kill_elites",
+	"kill_boss",
+	"extract_alive",
+	"upgrade_cards",
+	"kill_enemies",
+]
+const ALLOWED_BOUNTY_TIERS = ["standard", "hard"]
+# Reward keys a bounty may grant. caps/core/scrap are currency ints; `equipment`
+# names a drop tier fed to RunManager.roll_shell_drop.
+const ALLOWED_BOUNTY_REWARD_CURRENCIES = ["caps", "core", "scrap"]
+const ALLOWED_BOUNTY_EQUIPMENT_TIERS = ["common", "uncommon", "rare"]
 
 # ─── Card schema ──────────────────────────────────────────────────────────────
 const REQUIRED_CARD_KEYS = ["name", "title", "type", "cost", "effects"]
@@ -250,6 +270,9 @@ static func validate_all_data_at_startup() -> int:
 		failures += _validate_dir(RANDOM_EVENT_DIR, Callable(DataValidator, "validate_event"))
 	if DirAccess.dir_exists_absolute(TOOL_DIR):
 		failures += _validate_dir(TOOL_DIR, Callable(DataValidator, "validate_tool"))
+	# Bounty contracts are shipped data — validate unconditionally (fail loud on a
+	# missing dir, per the shipped-data rule).
+	failures += _validate_dir(BOUNTY_DATA_DIR, Callable(DataValidator, "validate_bounty"))
 	# Cross-check encounter pools so a typo in RunManager constants fails at
 	# startup instead of crashing the player mid-combat in enemy_entity.create().
 	failures += validate_encounter_pools()
@@ -694,6 +717,103 @@ static func validate_tool(data: Dictionary, source_path: String) -> bool:
 			if not _validate_card_effect(data["effects"][i], prefix, "effects", i):
 				ok = false
 	return ok
+
+
+## Validate a single bounty contract JSON dictionary. Returns true on success.
+## Shape: { id, title, objective: {type, count}, reward: {caps/core/scrap/equipment},
+## price, tier }. Reward must carry at least one entry; currency values are
+## positive ints, `equipment` names a shell-drop tier.
+static func validate_bounty(data: Dictionary, source_path: String) -> bool:
+	var prefix := "Bounty '%s'" % source_path
+	var ok := true
+
+	for key in REQUIRED_BOUNTY_KEYS:
+		if not data.has(key):
+			push_error("%s: missing required key '%s'" % [prefix, key])
+			ok = false
+	if not ok:
+		return false
+
+	if typeof(data["id"]) != TYPE_STRING or str(data["id"]).strip_edges() == "":
+		push_error("%s: 'id' must be a non-empty String" % prefix)
+		ok = false
+	if typeof(data["title"]) != TYPE_STRING or str(data["title"]).strip_edges() == "":
+		push_error("%s: 'title' must be a non-empty String" % prefix)
+		ok = false
+
+	# objective: { type: ALLOWED_BOUNTY_OBJECTIVES, count: int >= 1 }
+	var objective = data["objective"]
+	if typeof(objective) != TYPE_DICTIONARY:
+		push_error("%s: 'objective' must be a Dictionary" % prefix)
+		ok = false
+	else:
+		if not str(objective.get("type", "")) in ALLOWED_BOUNTY_OBJECTIVES:
+			push_error(
+				(
+					"%s: objective type '%s' not in %s"
+					% [prefix, objective.get("type", ""), ALLOWED_BOUNTY_OBJECTIVES]
+				)
+			)
+			ok = false
+		if not _is_whole_number(objective.get("count")) or int(objective.get("count", 0)) < 1:
+			push_error("%s: objective 'count' must be an int >= 1" % prefix)
+			ok = false
+
+	# reward: at least one entry; currencies are positive ints, equipment is a tier.
+	var reward = data["reward"]
+	if typeof(reward) != TYPE_DICTIONARY:
+		push_error("%s: 'reward' must be a Dictionary" % prefix)
+		ok = false
+	elif (reward as Dictionary).is_empty():
+		push_error("%s: 'reward' must carry at least one entry" % prefix)
+		ok = false
+	else:
+		for rkey in reward.keys():
+			if str(rkey) in ALLOWED_BOUNTY_REWARD_CURRENCIES:
+				if not _is_whole_number(reward[rkey]) or int(reward[rkey]) <= 0:
+					push_error("%s: reward '%s' must be an int > 0" % [prefix, rkey])
+					ok = false
+			elif str(rkey) == "equipment":
+				if not str(reward[rkey]) in ALLOWED_BOUNTY_EQUIPMENT_TIERS:
+					push_error(
+						(
+							"%s: reward equipment tier '%s' not in %s"
+							% [prefix, reward[rkey], ALLOWED_BOUNTY_EQUIPMENT_TIERS]
+						)
+					)
+					ok = false
+			else:
+				push_error(
+					(
+						"%s: unknown reward key '%s' (allowed: %s + 'equipment')"
+						% [prefix, rkey, ALLOWED_BOUNTY_REWARD_CURRENCIES]
+					)
+				)
+				ok = false
+
+	if not _is_whole_number(data["price"]) or int(data["price"]) < 0:
+		push_error("%s: 'price' must be an int >= 0" % prefix)
+		ok = false
+
+	if not str(data["tier"]) in ALLOWED_BOUNTY_TIERS:
+		push_error("%s: tier '%s' not in %s" % [prefix, data["tier"], ALLOWED_BOUNTY_TIERS])
+		ok = false
+
+	# Unknown top-level keys → warn (helps catch typos)
+	for key in data.keys():
+		if not key in REQUIRED_BOUNTY_KEYS:
+			push_warning("%s: unknown top-level key '%s' (typo?)" % [prefix, key])
+
+	return ok
+
+
+## True when `value` is an int, or a whole-valued float (Godot's JSON parser
+## yields every number as a float, so 2.0 must count as the int 2).
+static func _is_whole_number(value: Variant) -> bool:
+	return (
+		typeof(value) == TYPE_INT
+		or (typeof(value) == TYPE_FLOAT and float(value) == floor(float(value)))
+	)
 
 
 ## Validate a single equipment JSON dictionary. Returns true on success.

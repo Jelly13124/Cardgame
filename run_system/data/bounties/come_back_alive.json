@@ -1,0 +1,8 @@
+{
+  "id": "come_back_alive",
+  "title": "Come Back Alive",
+  "objective": { "type": "extract_alive", "count": 1 },
+  "reward": { "caps": 100 },
+  "price": 40,
+  "tier": "standard"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "cull_elites",
+  "title": "Cull the Elites",
+  "objective": { "type": "kill_elites", "count": 2 },
+  "reward": { "caps": 120 },
+  "price": 45,
+  "tier": "standard"
+}

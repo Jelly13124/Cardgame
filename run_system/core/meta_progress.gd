@@ -128,6 +128,11 @@ func _reset_to_defaults() -> void:
 	starter_deck_override = {}
 	stash = []
 	buildings = {}
+	active_bounties = []
+	bounty_shelf = []
+	bounty_shelf_date = ""
+	bounty_free_claimed = false
+	cards_seen = {}
 
 
 signal core_changed(new_value: int)
@@ -136,6 +141,12 @@ signal scrap_changed(new_value: int)
 signal upgrades_changed
 ## Emitted when a building's tier changes (unlock/upgrade/reset/migration).
 signal buildings_changed
+## Emitted when a held bounty reaches its objective and is settled (reward
+## granted + removed from active_bounties). UI shows the completion toast.
+signal bounty_completed(bounty_id: String)
+## Emitted whenever bounty state changes (shelf reroll, claim/buy, progress,
+## settle) so the bounty board / market shelf rebuild.
+signal bounties_changed
 
 var core: int = 0
 ## Second permanent currency. Spent at base facilities; earned via E2.
@@ -171,6 +182,21 @@ var stash: Array = []
 ## from old saves (e.g. the removed warehouse) are kept but harmless — no live
 ## code looks their tier up anymore.
 var buildings: Dictionary = {}
+## Held bounty contracts (cross-run, cross-day persistent). Each entry:
+## { "id": String, "progress": int }. Settled (reward granted + removed) the
+## moment progress reaches the objective count. Capped at MAX_ACTIVE_BOUNTIES.
+var active_bounties: Array = []
+## Today's market bounty shelf: bounty ids on offer (BOUNTY_SHELF_SIZE per day,
+## 1 free claim + the rest bought with Caps). Rerolled when the local date
+## changes (deterministic per date — same day, same shelf).
+var bounty_shelf: Array = []
+## Local date ("YYYY-MM-DD") the current shelf was rolled for.
+var bounty_shelf_date: String = ""
+## True once today's free shelf slot has been claimed. Reset on shelf reroll.
+var bounty_free_claimed: bool = false
+## Card codex unlock set: card_id → true once the card has been played (demo
+## rule: used = unlocked). Persisted; write-throttled in mark_card_seen.
+var cards_seen: Dictionary = {}
 
 const RUN_HISTORY_CAP := 50
 const ASCENSION_CAP := 5
@@ -247,6 +273,13 @@ const DISMANTLE_SCRAP := {"common": 5, "uncommon": 12, "rare": 25}
 const REFORGE_COST := {"common": 15, "uncommon": 30, "rare": 50}
 ## Affix roller (per-instance equipment); used by reforge_stash_item.
 const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
+## --- Bounty system (replaces the daily-task mock) ---
+## Contract JSONs (schema in data_validator.validate_bounty).
+const BOUNTY_DATA_DIR := "res://run_system/data/bounties/"
+## Max held contracts; the market shelf refuses claims/buys beyond this.
+const MAX_ACTIVE_BOUNTIES := 3
+## Contracts on the market shelf per day (1 free claim + the rest purchasable).
+const BOUNTY_SHELF_SIZE := 3
 
 ## Hero-exclusive draft cards: only offered (loot/shop) when that hero is active, so
 ## a hero's signature cards never roll in another hero's rewards.
@@ -788,6 +821,180 @@ func mark_tutorial_seen() -> void:
 	save_progress()
 
 
+## --- Bounty system: shelf refresh, claim/buy, progress + settle ---
+
+var _bounty_data_cache: Dictionary = {}
+
+
+## Load a bounty contract JSON by id (cached — contract data is immutable at
+## runtime). Returns {} on miss.
+func get_bounty_data(bounty_id: String) -> Dictionary:
+	if _bounty_data_cache.has(bounty_id):
+		return _bounty_data_cache[bounty_id]
+	var data := _load_card_json(BOUNTY_DATA_DIR + bounty_id + ".json")
+	_bounty_data_cache[bounty_id] = data
+	return data
+
+
+## All bounty ids that have a JSON file (the shelf roll pool). DirAccess returns
+## files alphabetically, so the pool order is stable across runs (keeps the
+## date-seeded shelf roll deterministic).
+func _bounty_pool_ids() -> Array:
+	var ids: Array = []
+	var dir := DirAccess.open(BOUNTY_DATA_DIR)
+	if dir == null:
+		return ids
+	for f in dir.get_files():
+		if f.ends_with(".json"):
+			ids.append(f.get_basename())
+	return ids
+
+
+## Reroll the market shelf when the LOCAL date differs from the stored one
+## (spec §2.2: real-time daily refresh; held contracts are never touched).
+## Deterministic per date — the roll RNG is seeded with hash(date string), so
+## re-entering on the same day keeps the same shelf. Ids already held are
+## excluded from the roll. Resets the daily free-claim flag.
+func refresh_bounty_shelf_if_stale() -> void:
+	var today := Time.get_date_string_from_system()
+	if bounty_shelf_date == today:
+		return
+	var held := {}
+	for entry in active_bounties:
+		if typeof(entry) == TYPE_DICTIONARY:
+			held[str(entry.get("id", ""))] = true
+	var candidates: Array = []
+	for id in _bounty_pool_ids():
+		if not held.has(str(id)):
+			candidates.append(str(id))
+	# Local RNG so the date-seeded roll never pollutes the global random stream.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(today)
+	var shelf: Array = []
+	while shelf.size() < BOUNTY_SHELF_SIZE and not candidates.is_empty():
+		var i := rng.randi_range(0, candidates.size() - 1)
+		shelf.append(candidates[i])
+		candidates.remove_at(i)
+	bounty_shelf = shelf
+	bounty_shelf_date = today
+	bounty_free_claimed = false
+	save_progress()
+	emit_signal("bounties_changed")
+
+
+## True if `bounty_id` is currently held (on the bounty board).
+func is_bounty_active(bounty_id: String) -> bool:
+	for entry in active_bounties:
+		if typeof(entry) == TYPE_DICTIONARY and str(entry.get("id", "")) == bounty_id:
+			return true
+	return false
+
+
+## Shared claim/buy guards: id on today's shelf, board not full, not already
+## held, and the contract JSON actually exists.
+func _can_take_bounty(bounty_id: String) -> bool:
+	if not bounty_id in bounty_shelf:
+		return false
+	if active_bounties.size() >= MAX_ACTIVE_BOUNTIES:
+		return false
+	if is_bounty_active(bounty_id):
+		return false
+	return not get_bounty_data(bounty_id).is_empty()
+
+
+func _take_bounty(bounty_id: String) -> void:
+	active_bounties.append({"id": bounty_id, "progress": 0})
+	save_progress()
+	emit_signal("bounties_changed")
+
+
+## Claim today's FREE shelf slot (once per shelf roll). Returns false when the
+## free claim is spent, the id is not on the shelf, the board is full, or the
+## contract is already held.
+func claim_free_bounty(bounty_id: String) -> bool:
+	if bounty_free_claimed:
+		return false
+	if not _can_take_bounty(bounty_id):
+		return false
+	bounty_free_claimed = true
+	_take_bounty(bounty_id)
+	return true
+
+
+## Buy a shelf contract with Caps at its JSON price. Same guards as the free
+## claim plus the Caps balance. Returns false on any failed guard.
+func buy_bounty(bounty_id: String) -> bool:
+	if not _can_take_bounty(bounty_id):
+		return false
+	var price := int(get_bounty_data(bounty_id).get("price", 0))
+	if not spend_caps(price):  # saves + emits caps_changed
+		return false
+	_take_bounty(bounty_id)
+	return true
+
+
+## Progress entry point (called via RunManager.bounty_event). Adds `amount` to
+## every held contract whose objective type matches `kind`; contracts that reach
+## their count are settled immediately (reward + removal + bounty_completed).
+func bounty_progress_add(kind: String, amount: int) -> void:
+	if amount <= 0 or active_bounties.is_empty():
+		return
+	var changed := false
+	var settled: Array = []
+	for entry in active_bounties:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var data := get_bounty_data(str(entry.get("id", "")))
+		var objective = data.get("objective", {})
+		if typeof(objective) != TYPE_DICTIONARY:
+			continue
+		if str(objective.get("type", "")) != kind:
+			continue
+		entry["progress"] = int(entry.get("progress", 0)) + amount
+		changed = true
+		if int(entry["progress"]) >= int(objective.get("count", 1)):
+			settled.append(entry)
+	for entry in settled:
+		_settle_bounty(entry)
+	if changed:
+		save_progress()
+		emit_signal("bounties_changed")
+
+
+## Grant a completed contract's reward, remove it from the board, and announce
+## it. Currency rewards go through add_caps/add_core/add_scrap (each persists);
+## an `equipment` reward rolls a shell of that tier into the permanent stash
+## (silently lost if the stash is full — same rule as any other stash overflow).
+func _settle_bounty(entry: Dictionary) -> void:
+	var bounty_id := str(entry.get("id", ""))
+	var reward = get_bounty_data(bounty_id).get("reward", {})
+	if typeof(reward) == TYPE_DICTIONARY:
+		if int(reward.get("caps", 0)) > 0:
+			add_caps(int(reward["caps"]))
+		if int(reward.get("core", 0)) > 0:
+			add_core(int(reward["core"]))
+		if int(reward.get("scrap", 0)) > 0:
+			add_scrap(int(reward["scrap"]))
+		var equip_tier := str(reward.get("equipment", ""))
+		if equip_tier != "":
+			add_to_stash(RunManager.roll_shell_drop(equip_tier))
+	active_bounties.erase(entry)
+	emit_signal("bounty_completed", bounty_id)
+
+
+## --- Card codex: seen-tracking (demo rule: played once = unlocked) ---
+
+
+## Record that `card_id` has been played. Write-throttled: only saves when the
+## card is NEW (already-seen cards are a no-op, so the battle hook can call this
+## on every play without disk churn).
+func mark_card_seen(card_id: String) -> void:
+	if card_id == "" or cards_seen.has(card_id):
+		return
+	cards_seen[card_id] = true
+	save_progress()
+
+
 func save_progress() -> void:
 	_ensure_slot_dir()
 	var f := FileAccess.open(_meta_path(), FileAccess.WRITE)
@@ -807,6 +1014,11 @@ func save_progress() -> void:
 		"stash": stash,
 		"buildings": buildings,
 		"tutorial_seen": tutorial_seen,
+		"active_bounties": active_bounties,
+		"bounty_shelf": bounty_shelf,
+		"bounty_shelf_date": bounty_shelf_date,
+		"bounty_free_claimed": bounty_free_claimed,
+		"cards_seen": cards_seen,
 	}
 	f.store_string(JSON.stringify(payload, "  "))
 	f.close()
@@ -882,6 +1094,29 @@ func load_progress() -> void:
 	# One-time migration: seed building tiers from legacy facility/upgrade state
 	# so no progress is lost. Idempotent (only raises tiers); legacy fields kept.
 	_normalize_buildings()
+	# Bounty system + card codex: old saves predate these keys → defaults (no
+	# held contracts, stale shelf date so the next base visit rolls a shelf,
+	# empty codex). Entries are re-coerced since JSON round-trips ints as floats.
+	active_bounties.clear()
+	var raw_bounties = parsed.get("active_bounties", [])
+	if typeof(raw_bounties) == TYPE_ARRAY:
+		for entry in raw_bounties:
+			if typeof(entry) == TYPE_DICTIONARY and str(entry.get("id", "")) != "":
+				active_bounties.append(
+					{"id": str(entry.get("id", "")), "progress": int(entry.get("progress", 0))}
+				)
+	bounty_shelf.clear()
+	var raw_shelf = parsed.get("bounty_shelf", [])
+	if typeof(raw_shelf) == TYPE_ARRAY:
+		for id in raw_shelf:
+			bounty_shelf.append(str(id))
+	bounty_shelf_date = str(parsed.get("bounty_shelf_date", ""))
+	bounty_free_claimed = bool(parsed.get("bounty_free_claimed", false))
+	cards_seen.clear()
+	var raw_seen = parsed.get("cards_seen", {})
+	if typeof(raw_seen) == TYPE_DICTIONARY:
+		for cid in raw_seen:
+			cards_seen[str(cid)] = true
 
 
 # --- Card-info cache (loading optimization, Phase 5) -----------------------
