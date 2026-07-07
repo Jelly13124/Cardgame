@@ -26,3 +26,20 @@ UI_MARKET_CONVERT_OK,"Converted {src} {src_name} into {dst} {dst_name}.","已将
 UI_MARKET_CONVERT_CUR_CORE,Core,核心
 UI_MARKET_CONVERT_CUR_CAPS,Caps,瓶盖
 UI_MARKET_CONVERT_CUR_SCRAP,Scrap,废料
+UI_MARKET_BOUNTY_SECTION,Bounty Contracts (Daily),悬赏契约(每日)
+UI_MARKET_BOUNTY_NOTE,"One free contract per day; the rest cost Caps. Held contracts show on the base bounty board and settle the moment they're done.","每日一份免费契约，其余用瓶盖承接。已承接的契约显示在基地悬赏板，达成即刻结算。"
+UI_MARKET_BOUNTY_EMPTY,No contracts on the shelf today.,今日货架暂无契约。
+UI_MARKET_BOUNTY_FREE_TAG,Today's free contract,今日免费
+UI_MARKET_BOUNTY_FREE,Claim Free,免费领取
+UI_MARKET_BOUNTY_TAKE,Take,承接
+UI_MARKET_BOUNTY_TAKEN,Taken,已承接
+UI_MARKET_BOUNTY_BOARD_FULL,"Bounty board full (3/3) — finish a contract first.",悬赏板已满(3/3)——先完成一份契约。
+UI_MARKET_BOUNTY_REWARD,Reward:,奖励：
+UI_BOUNTY_REWARD_EQUIP,Equipment ({t}),装备({t})
+UI_BOUNTY_OBJ_PLAY_ATTACK_CARDS,Play {n} attack cards,打出 {n} 张攻击牌
+UI_BOUNTY_OBJ_EARN_GOLD,Earn {n} gold in runs,局内获得 {n} 金币
+UI_BOUNTY_OBJ_KILL_ELITES,Kill {n} elite enemies,击杀 {n} 名精英
+UI_BOUNTY_OBJ_KILL_BOSS,Slay {n} boss,讨伐 {n} 名首领
+UI_BOUNTY_OBJ_EXTRACT_ALIVE,Extract alive {n} time,活着撤离 {n} 次
+UI_BOUNTY_OBJ_UPGRADE_CARDS,Upgrade {n} cards at campfires,在篝火升级 {n} 张卡牌
+UI_BOUNTY_OBJ_KILL_ENEMIES,Kill {n} enemies,击杀 {n} 名敌人

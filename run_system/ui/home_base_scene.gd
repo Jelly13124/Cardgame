@@ -1,9 +1,9 @@
 ## Home base scene — the boot scene + post-run return point.
 ## Layout: the 4 interactive building sprites on the desert scene, plus a
 ## base-only HUD: top resource chips, top-right difficulty/settings, bottom-left
-## daily task panel, bottom-center START, and bottom-right Warehouse / Character /
-## Gallery buttons. The base's actual functions live in the per-building screens
-## (run_system/ui/buildings/).
+## bounty board (held contracts + live progress), bottom-center START, and
+## bottom-right Warehouse / Character / Gallery buttons. The base's actual
+## functions live in the per-building screens (run_system/ui/buildings/).
 extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
@@ -74,11 +74,19 @@ var _buildings_root: Control
 var _art_offset_cache: Dictionary = {}
 ## Shared ShaderMaterial for locked building buttons (lazy; see LOCKED_DESAT_SHADER).
 var _locked_material: ShaderMaterial = null
+## The bounty board's rows container (inside the bottom-left panel) — cleared +
+## refilled on bounties_changed instead of rebuilding the whole panel chrome.
+var _bounty_rows_box: VBoxContainer = null
+## The HUD root Control the completion toast overlays onto.
+var _base_hud_root: Control = null
 
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	AudioManager.play_music("home")
+	# Roll today's bounty shelf on base entry (not just when the market opens) so
+	# the daily date rolls even if the player never visits the Black Market.
+	MetaProgress.refresh_bounty_shelf_if_stale()
 	_build()
 	_connect_home_hud_signals()
 	# Repaint the building sprites (lock → unlocked, tier badges) the moment a building
@@ -201,6 +209,11 @@ func _connect_home_hud_signals() -> void:
 	MetaProgress.caps_changed.connect(func(_v): _refresh_top_currency("caps"))
 	MetaProgress.core_changed.connect(func(_v): _refresh_top_currency("core"))
 	MetaProgress.scrap_changed.connect(func(_v): _refresh_top_currency("scrap"))
+	# Bound methods (not lambdas) so the autoload connections auto-clean when this
+	# scene is freed. bounties_changed repaints the board (market claims/buys,
+	# progress); bounty_completed additionally shows the completion toast.
+	MetaProgress.bounties_changed.connect(_rebuild_bounty_rows)
+	MetaProgress.bounty_completed.connect(_on_bounty_completed)
 	_refresh_top_currencies()
 
 
@@ -215,9 +228,10 @@ func _add_base_hud() -> void:
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(root)
+	_base_hud_root = root
 
 	_add_top_hud(root)
-	_add_daily_tasks_panel(root)
+	_add_bounty_board_panel(root)
 	_add_start_run_button(root)
 	_add_bottom_nav(root)
 
@@ -408,9 +422,14 @@ func _make_square_icon_button(icon_id: String, tooltip: String, callback: Callab
 	return btn
 
 
-func _add_daily_tasks_panel(root: Control) -> void:
+## Bounty board (bottom-left): the held contracts (MetaProgress.active_bounties,
+## max 3) with live progress. Replaces Codex's mock daily-tasks panel — the
+## visual shell (panel/header/row language) is Codex's, only the data is real.
+## Contracts are taken at the Black Market's bounty shelf; the refresh label
+## shows the time until the shelf's next daily reroll (local midnight).
+func _add_bounty_board_panel(root: Control) -> void:
 	var panel := PanelContainer.new()
-	panel.name = "DailyTasksPanel"
+	panel.name = "BountyBoardPanel"
 	panel.anchor_left = 0.0
 	panel.anchor_top = 1.0
 	panel.anchor_right = 0.0
@@ -440,7 +459,7 @@ func _add_daily_tasks_panel(root: Control) -> void:
 	header.add_child(_make_icon_rect(BASE_HUD_ICON_DIR + "icon_daily_tasks.png", Vector2(28, 28)))
 
 	var title := Label.new()
-	title.text = _home_text("每日任务", "DAILY TASKS")
+	title.text = _home_text("悬赏", "BOUNTIES")
 	title.add_theme_font_override("font", T.display_font(600))
 	title.add_theme_font_size_override("font_size", 22)
 	title.add_theme_color_override("font_color", Color(1.0, 0.88, 0.60, 1.0))
@@ -461,14 +480,136 @@ func _add_daily_tasks_panel(root: Control) -> void:
 	header.add_child(refresh)
 
 	box.add_child(_daily_divider())
-	box.add_child(_make_daily_task_row(_home_text("使用10张攻击牌", "Play 10 attack cards"), 6, 10, 100))
-	box.add_child(
-		_make_daily_task_row(_home_text("在战斗中获得150金币", "Earn 150 caps in battle"), 0, 150, 80)
-	)
-	box.add_child(_make_daily_task_row(_home_text("击败精英敌人2次", "Defeat 2 elite enemies"), 0, 2, 120))
+
+	var rows := VBoxContainer.new()
+	rows.name = "BountyRows"
+	rows.add_theme_constant_override("separation", 8)
+	box.add_child(rows)
+	_bounty_rows_box = rows
+	_fill_bounty_rows()
 
 
-func _make_daily_task_row(title: String, current: int, target: int, reward: int) -> Control:
+## Repaint just the board's data rows (the panel chrome survives). Connected to
+## MetaProgress.bounties_changed / bounty_completed.
+func _rebuild_bounty_rows() -> void:
+	if not is_instance_valid(_bounty_rows_box):
+		return
+	for child in _bounty_rows_box.get_children():
+		child.queue_free()
+	_fill_bounty_rows()
+
+
+## One progress row per held contract, or a single empty-state hint pointing at
+## the Black Market shelf. Reward chip shows the PRIMARY currency (caps first,
+## then core/scrap) with a trailing "+" when the contract pays out more kinds.
+func _fill_bounty_rows() -> void:
+	var added := 0
+	for entry in MetaProgress.active_bounties:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var id := str(entry.get("id", ""))
+		var data: Dictionary = MetaProgress.get_bounty_data(id)
+		if data.is_empty():
+			continue
+		var objective_v = data.get("objective", {})
+		var objective: Dictionary = objective_v if typeof(objective_v) == TYPE_DICTIONARY else {}
+		var reward_v = data.get("reward", {})
+		var reward: Dictionary = reward_v if typeof(reward_v) == TYPE_DICTIONARY else {}
+
+		var title := Settings.t("BOUNTY_%s_TITLE" % id, str(data.get("title", id)))
+		var current := int(entry.get("progress", 0))
+		var target := int(objective.get("count", 1))
+
+		var reward_amount := 0
+		var reward_currency := "caps"
+		var reward_parts := 0
+		for cur in ["caps", "core", "scrap"]:
+			var amt := int(reward.get(cur, 0))
+			if amt <= 0:
+				continue
+			reward_parts += 1
+			if reward_amount == 0:
+				reward_amount = amt
+				reward_currency = cur
+		if str(reward.get("equipment", "")) != "":
+			reward_parts += 1
+		_bounty_rows_box.add_child(
+			_make_daily_task_row(
+				title, current, target, reward_amount, reward_currency, reward_parts > 1
+			)
+		)
+		added += 1
+
+	if added == 0:
+		var empty := Label.new()
+		empty.text = _home_text("暂无悬赏——到黑市承接", "No bounties — visit the Black Market")
+		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		empty.add_theme_font_override("font", T.display_font(500))
+		empty.add_theme_font_size_override("font_size", 16)
+		empty.add_theme_color_override("font_color", Color(0.72, 0.62, 0.48, 1.0))
+		_bounty_rows_box.add_child(empty)
+
+
+## Completion handler: repaint (the settled contract leaves the board — also
+## covered by bounties_changed, but a manual emit must repaint too) + toast.
+func _on_bounty_completed(bounty_id: String) -> void:
+	_rebuild_bounty_rows()
+	var data: Dictionary = MetaProgress.get_bounty_data(bounty_id)
+	var title := Settings.t("BOUNTY_%s_TITLE" % bounty_id, str(data.get("title", bounty_id)))
+	_show_home_toast(_home_text("悬赏完成:%s", "Bounty complete: %s") % title)
+
+
+## Lightweight self-freeing toast over the base HUD (home base has no shared
+## popup helper — mirrors loot_reward's toast pattern, restyled to the home
+## glass look). Replaces any toast already showing.
+func _show_home_toast(text: String) -> void:
+	var host: Control = _base_hud_root if is_instance_valid(_base_hud_root) else self
+	var existing := host.get_node_or_null("HomeToast")
+	if existing != null:
+		existing.queue_free()
+
+	# Full-width holder band above the DEPART button; centers the label reliably.
+	var holder := CenterContainer.new()
+	holder.name = "HomeToast"
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.anchor_left = 0.0
+	holder.anchor_right = 1.0
+	holder.anchor_top = 1.0
+	holder.anchor_bottom = 1.0
+	holder.offset_top = -252.0
+	holder.offset_bottom = -196.0
+	host.add_child(holder)
+
+	var toast := Label.new()
+	toast.text = text
+	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	toast.add_theme_font_override("font", T.display_font(600))
+	toast.add_theme_font_size_override("font_size", 26)
+	toast.add_theme_color_override("font_color", Color(1.0, 0.88, 0.60, 1.0))
+	toast.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
+	toast.add_theme_constant_override("outline_size", 5)
+	toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(toast)
+
+	AudioManager.play_sfx("reward")
+	# Bound to the holder (not self) so a replacement toast auto-kills the tween.
+	var tween := holder.create_tween()
+	tween.tween_interval(2.2)
+	tween.tween_property(holder, "modulate:a", 0.0, 0.5)
+	tween.tween_callback(holder.queue_free)
+
+
+## One board row: title + progress bar + reward chip. Codex's daily-task row
+## visuals, extended with a reward currency icon choice + optional "+" suffix
+## (multi-currency contracts show their primary reward plus a "+").
+func _make_daily_task_row(
+	title: String,
+	current: int,
+	target: int,
+	reward: int,
+	reward_currency: String = "core",
+	reward_plus: bool = false
+) -> Control:
 	var row := HBoxContainer.new()
 	row.custom_minimum_size = Vector2(0, 43)
 	row.add_theme_constant_override("separation", 10)
@@ -538,7 +679,16 @@ func _make_daily_task_row(title: String, current: int, target: int, reward: int)
 	reward_label.add_theme_font_size_override("font_size", 17)
 	reward_label.add_theme_color_override("font_color", Color(0.94, 0.82, 0.60, 1.0))
 	reward_row.add_child(reward_label)
-	reward_row.add_child(_make_icon_rect(CURRENCY_ICON_DIR + "core.png", Vector2(22, 22)))
+	reward_row.add_child(
+		_make_icon_rect(CURRENCY_ICON_DIR + reward_currency + ".png", Vector2(22, 22))
+	)
+	if reward_plus:
+		var plus := Label.new()
+		plus.text = "+"
+		plus.add_theme_font_override("font", T.display_font(600))
+		plus.add_theme_font_size_override("font_size", 15)
+		plus.add_theme_color_override("font_color", Color(0.78, 0.68, 0.52, 1.0))
+		reward_row.add_child(plus)
 	return row
 
 
