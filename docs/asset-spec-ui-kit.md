@@ -149,8 +149,8 @@ Same rev2 style rules (near-black outlines, muted iron plates, brass garnish):
 
 ## Prompt language anchor (per project-rules.md §5 — do not deviate)
 
-> original Rick and Morty-style Sci-Fi Cartoon Wasteland game art, flat 2D adult
-> sci-fi TV-animation look, thick clean near-black cartoon outlines, large
+> original Rick and Morty-style Sci-Fi Cartoon Wasteland game art, flat 2D
+> Rick and Morty-style sci-fi TV-animation look, thick clean near-black cartoon outlines, large
 > simple shape blocks, sparse interior lines, broad two-to-three value cel
 > shading, muted desaturated dark iron-brown scrap-metal UI panel, tiny worn
 > brass bolt accents only, understated and dark so the UI recedes behind the
