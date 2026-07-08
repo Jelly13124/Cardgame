@@ -435,7 +435,7 @@ func _make_square_icon_button(icon_id: String, tooltip: String, callback: Callab
 ## Bounty board (bottom-left): the held contracts (MetaProgress.active_bounties,
 ## max 3) with live progress. Replaces Codex's mock daily-tasks panel — the
 ## visual shell (panel/header/row language) is Codex's, only the data is real.
-## Contracts are taken at the Black Market's bounty shelf; the refresh label
+## Contracts are taken (free) at the OUTPOST's bounty shelf; the refresh label
 ## shows the time until the shelf's next daily reroll (local midnight).
 func _add_bounty_board_panel(root: Control) -> void:
 	var panel := PanelContainer.new()
@@ -510,7 +510,7 @@ func _rebuild_bounty_rows() -> void:
 
 
 ## One progress row per held contract, or a single empty-state hint pointing at
-## the Black Market shelf. Reward chip shows the PRIMARY currency (caps first,
+## the Outpost shelf. Reward chip shows the PRIMARY currency (caps first,
 ## then scrap) with a trailing "+" when the contract pays out more kinds.
 func _fill_bounty_rows() -> void:
 	var added := 0
@@ -552,7 +552,7 @@ func _fill_bounty_rows() -> void:
 
 	if added == 0:
 		var empty := Label.new()
-		empty.text = _home_text("暂无悬赏——到黑市承接", "No bounties — visit the Black Market")
+		empty.text = _home_text("暂无悬赏——到前哨站承接", "No bounties — visit the Outpost")
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		empty.add_theme_font_override("font", T.display_font(500))
 		empty.add_theme_font_size_override("font_size", 16)

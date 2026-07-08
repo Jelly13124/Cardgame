@@ -1,15 +1,16 @@
 ## Market (黑市) building screen. Subclasses the shared building shell and fills
 ## the content VBox with the Market's tier-gated functions:
 ##   - T1 tool_shop       : buy 3 random tools with Caps (flat price).
-##   - T1 bounty_shelf    : the daily bounty shelf — 3 contracts (1 free claim +
-##     2 Caps buys), rerolled per local date. Taken contracts go to the home-base
-##     bounty board (spec §2.5).
 ##   - T2 equip_shop      : buy equipment INSTANCES with Caps (rarity-priced).
 ##   - T3 resource_convert: currency exchange (Caps↔Scrap, bidirectional) with a
 ##     ~10% tax — moved here from the removed Warehouse building. (Core→Caps was
 ##     dropped when the Core currency was removed 2026-07-07.)
 ## Refresh (re-roll the stocked tools + equipment for Caps) is ungated —
 ## available from T1.
+##
+## The bounty shelf moved to the OUTPOST in the 2026-07-07 redesign (taking is
+## free there — the "1 free + 2 Caps buys" model is gone); the Market no longer
+## has a bounty section.
 ##
 ## The base card-unlock/card-shop system was removed (Phase A refactor): every
 ## non-curse, non-basic card is draftable by default via
@@ -54,14 +55,6 @@ const RARITY_COLORS := {
 	"rare": Color(1.0, 0.85, 0.35),
 }
 const PRICE_COLOR := Color(1.0, 0.84, 0.18)
-## Bounty contract tile border by contract tier (standard = the tool-tile brass,
-## hard = a hotter ember so the pricier contracts read dangerous).
-const BOUNTY_TIER_COLORS := {
-	"standard": Color(0.62, 0.44, 0.22, 1.0),
-	"hard": Color(0.88, 0.46, 0.24, 1.0),
-}
-## Unaffordable price tint on a bounty tile's cost badge.
-const PRICE_SHORT_COLOR := Color(0.95, 0.38, 0.32)
 
 ## Rolled equipment stock — set once for the session in _build_content. Each
 ## entry: {base, rarity, price}. Stable until refreshed.
@@ -90,12 +83,6 @@ func _build_content(container: VBoxContainer) -> void:
 	if _equip_stock.is_empty():
 		_equip_stock = _roll_equip_stock()
 
-	# Roll today's bounty shelf if the local date changed. Done HERE — before the
-	# bounties_changed connection below — so a stale-date reroll can't re-enter
-	# _rebuild_market mid-populate. (Home base also refreshes on entry; this
-	# covers booting straight into the market after midnight.)
-	MetaProgress.refresh_bounty_shelf_if_stale()
-
 	_market_box = container
 	# Repaint on currency / building changes. The base already connects _refresh
 	# (badge/action button); we add our own content rebuild on the same signals.
@@ -107,9 +94,6 @@ func _build_content(container: VBoxContainer) -> void:
 		MetaProgress.buildings_changed.connect(_rebuild_market)
 	if not MetaProgress.upgrades_changed.is_connected(_rebuild_market):
 		MetaProgress.upgrades_changed.connect(_rebuild_market)
-	# Claim/buy → shelf buttons flip to Taken (and the board gains its row).
-	if not MetaProgress.bounties_changed.is_connected(_rebuild_market):
-		MetaProgress.bounties_changed.connect(_rebuild_market)
 
 	_populate(container)
 
@@ -135,12 +119,6 @@ func _refresh_balances() -> void:
 
 func _populate(container: VBoxContainer) -> void:
 	container.add_child(_build_balances_row())
-
-	# T1: bounty shelf (1 free + 2 Caps contracts, daily reroll).
-	if MetaProgress.building_can("market", "bounty_shelf"):
-		container.add_child(_build_bounty_section())
-	else:
-		container.add_child(_locked_section(tr("UI_MARKET_BOUNTY_SECTION"), 1))
 
 	# T1: tool shop (Caps).
 	if MetaProgress.building_can("market", "tool_shop"):
@@ -298,192 +276,6 @@ func _on_buy_tool(tool_id: String, btn: Button) -> void:
 		btn.text = tr("UI_MARKET_BOUGHT")
 	# caps_changed → _on_market_changed repaints balances + other buy buttons'
 	# disabled state via _refresh_balances; this button keeps its SOLD state.
-
-
-# --- Bounty shelf (T1; 1 free claim + Caps buys, daily reroll) ---------------
-
-
-## The daily contract shelf: one tile per shelf id. Slot 0 is the day's FREE
-## contract (the backend's claim_free_bounty accepts any shelf id once per day;
-## the UI exposes the claim on the first slot only so the shelf reads as the
-## spec's "1 free + 2 paid"). Claimed/bought ids stay in the shelf array — the
-## tiles grey them via is_bounty_active / bounty_free_claimed.
-func _build_bounty_section() -> Control:
-	var section := _make_section(tr("UI_MARKET_BOUNTY_SECTION"))
-	var body := section.get_meta("body") as VBoxContainer
-
-	var note := Label.new()
-	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	note.text = tr("UI_MARKET_BOUNTY_NOTE")
-	_style_label(note, TOK_FONT_DIM, TOK_TEXT_DIM, 1)
-	body.add_child(note)
-
-	if MetaProgress.bounty_shelf.is_empty():
-		body.add_child(_body_label(tr("UI_MARKET_BOUNTY_EMPTY"), true))
-		return section
-
-	var shelf := HFlowContainer.new()
-	shelf.add_theme_constant_override("h_separation", 14)
-	shelf.add_theme_constant_override("v_separation", 14)
-	shelf.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_child(shelf)
-	for i in range(MetaProgress.bounty_shelf.size()):
-		shelf.add_child(_build_bounty_tile(str(MetaProgress.bounty_shelf[i]), i == 0))
-	return section
-
-
-## One contract on the shelf: title, objective line, reward row, and the
-## claim/buy button with the full disabled-state matrix (taken / board full /
-## can't afford — price tinted red on the last).
-func _build_bounty_tile(bounty_id: String, is_free: bool) -> Control:
-	var data: Dictionary = MetaProgress.get_bounty_data(bounty_id)
-	var title := Settings.t("BOUNTY_%s_TITLE" % bounty_id, str(data.get("title", bounty_id)))
-	var tier := str(data.get("tier", "standard"))
-	var price := int(data.get("price", 0))
-	var objective_v = data.get("objective", {})
-	var objective: Dictionary = objective_v if typeof(objective_v) == TYPE_DICTIONARY else {}
-	var reward_v = data.get("reward", {})
-	var reward: Dictionary = reward_v if typeof(reward_v) == TYPE_DICTIONARY else {}
-
-	var tile := PanelContainer.new()
-	tile.add_theme_stylebox_override(
-		"panel",
-		T.panel_with_shadow(
-			Color(0.12, 0.085, 0.060, 0.95),
-			BOUNTY_TIER_COLORS.get(tier, BOUNTY_TIER_COLORS["standard"]),
-			3,
-			2
-		)
-	)
-	var tm := MarginContainer.new()
-	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		tm.add_theme_constant_override(s, 10)
-	tile.add_child(tm)
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 6)
-	col.custom_minimum_size = Vector2(210, 0)
-	tm.add_child(col)
-
-	var name_lbl := Label.new()
-	name_lbl.text = title
-	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(name_lbl, 17, TOK_GOLD if tier == "hard" else Color(0.95, 0.92, 0.85), 1)
-	col.add_child(name_lbl)
-
-	if is_free:
-		var free_tag := Label.new()
-		free_tag.text = tr("UI_MARKET_BOUNTY_FREE_TAG")
-		free_tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_style_label(free_tag, TOK_FONT_DIM, Color(0.62, 0.88, 0.55), 1)
-		col.add_child(free_tag)
-
-	var obj_lbl := Label.new()
-	obj_lbl.text = _bounty_objective_text(objective)
-	obj_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	obj_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(obj_lbl, 14, TOK_TEXT, 1)
-	col.add_child(obj_lbl)
-
-	var reward_line := HBoxContainer.new()
-	reward_line.alignment = BoxContainer.ALIGNMENT_CENTER
-	reward_line.add_theme_constant_override("separation", 10)
-	col.add_child(reward_line)
-	var first := true
-	for cur in ["caps", "scrap"]:
-		var amt := int(reward.get(cur, 0))
-		if amt <= 0:
-			continue
-		reward_line.add_child(
-			T.currency_row(
-				amt, cur, TOK_FONT_DIM + 2, 18, tr("UI_MARKET_BOUNTY_REWARD") if first else ""
-			)
-		)
-		first = false
-	var equip_tier := str(reward.get("equipment", ""))
-	if equip_tier != "":
-		var eq := Label.new()
-		eq.text = Settings.t("UI_BOUNTY_REWARD_EQUIP", "Equipment").format({"t": equip_tier})
-		_style_label(eq, TOK_FONT_DIM + 2, TOK_TEXT, 1)
-		reward_line.add_child(eq)
-
-	col.add_child(_bounty_action_button(bounty_id, is_free, price))
-	return tile
-
-
-## The tile's action button. State matrix (checked in this order):
-##   taken (held, or the day's free claim spent) → disabled "Taken"
-##   board full (3/3 held)                       → disabled + tooltip
-##   paid + can't afford                          → disabled, price in red
-##   otherwise                                    → live Claim / Take.
-func _bounty_action_button(bounty_id: String, is_free: bool, price: int) -> Button:
-	var btn := Button.new()
-	btn.custom_minimum_size = Vector2(0, 38)
-	btn.add_theme_font_size_override("font_size", 17)
-	T.apply_button_theme(btn)
-
-	var taken: bool = (
-		MetaProgress.is_bounty_active(bounty_id) or (is_free and MetaProgress.bounty_free_claimed)
-	)
-	var board_full: bool = MetaProgress.active_bounties.size() >= MetaProgress.MAX_ACTIVE_BOUNTIES
-
-	if taken:
-		btn.text = tr("UI_MARKET_BOUNTY_TAKEN")
-		btn.disabled = true
-		return btn
-
-	if is_free:
-		btn.text = tr("UI_MARKET_BOUNTY_FREE")
-		if board_full:
-			btn.disabled = true
-			btn.tooltip_text = tr("UI_MARKET_BOUNTY_BOARD_FULL")
-		else:
-			btn.pressed.connect(_on_take_bounty.bind(bounty_id, true))
-		return btn
-
-	btn.text = tr("UI_MARKET_BOUNTY_TAKE")
-	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	var badge := T.overlay_cost_badge(price, "caps", 15, 16, -8, -66)
-	btn.add_child(badge)
-	if board_full:
-		btn.disabled = true
-		btn.tooltip_text = tr("UI_MARKET_BOUNTY_BOARD_FULL")
-	elif MetaProgress.caps < price:
-		btn.disabled = true
-		# Tint the badge's amount red: the badge holder's only child is the
-		# currency_row, which exposes its number via the "amount_label" meta.
-		var badge_row := badge.get_child(0)
-		if badge_row != null and badge_row.has_meta("amount_label"):
-			(badge_row.get_meta("amount_label") as Label).add_theme_color_override(
-				"font_color", PRICE_SHORT_COLOR
-			)
-	else:
-		btn.pressed.connect(_on_take_bounty.bind(bounty_id, false))
-	return btn
-
-
-## Human-readable objective line ("Play {n} attack cards"). Key derived from the
-## objective type (validator-enforced set), with a raw "type × n" fallback so an
-## unmapped future type still renders something.
-func _bounty_objective_text(objective: Dictionary) -> String:
-	var type := str(objective.get("type", ""))
-	var count := int(objective.get("count", 1))
-	var text := Settings.t("UI_BOUNTY_OBJ_%s" % type.to_upper(), "%s × %d" % [type, count])
-	return text.format({"n": count})
-
-
-func _on_take_bounty(bounty_id: String, free: bool) -> void:
-	var ok := (
-		MetaProgress.claim_free_bounty(bounty_id) if free else MetaProgress.buy_bounty(bounty_id)
-	)
-	if not ok:
-		# Guards raced (e.g. board filled from another path) — the rebuild below
-		# won't fire without a state change, so just signal the miss.
-		AudioManager.play_sfx("error")
-		return
-	AudioManager.play_sfx("purchase")
-	# bounties_changed → _rebuild_market flips this tile to Taken; the home-base
-	# bounty board gains its row through the same signal.
 
 
 # --- Equipment shop (T2, Caps) ----------------------------------------------

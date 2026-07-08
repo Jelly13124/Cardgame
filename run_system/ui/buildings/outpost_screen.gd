@@ -1,58 +1,70 @@
-## Outpost (前哨站) building screen. Subclasses the shared building-screen shell
-## and fills the content VBox with the Outpost's tier-gated functions:
-##   T1  gold        — starting-gold Caps upgrade (absorbs the old Command Center).
-##   T1  discount    — in-run merchant-discount Caps upgrade (absorbs Scrap Workshop).
-##   T1  difficulty  — ascension selector (0..MetaProgress.max_ascension) for next run.
-##   T2  safe_cells  — safe-cell Caps upgrade (absorbs the old Blacksmith upgrade).
-##   T3  deck_editor  — starter-deck editor (swap <=2 default cards for unlocked ones).
+## Outpost (前哨站) building screen, rebuilt to the 2026-07-07 "lightline"
+## concept (docs/art/previews/base_building_outpost_ui_simple_comic_no_held_
+## large_upgrades_20260707.png). The Outpost is the bounty centre + permanent-
+## upgrade hub now:
+##   LEFT (wide)   T1 bounties            — 可接悬赏: today's shelf as parchment
+##                 wanted-poster cards (poster art placeholder + title +
+##                 objective + REAL reward icons + orange 免费承接 button).
+##                 Taking is FREE (MetaProgress.take_bounty — no Caps price, no
+##                 daily-one-free limit). Held contracts show on the HOME
+##                 bounty board, not here (no_held concept variant).
+##   RIGHT top     T2 safe_cells          — 安全格: safe-crate illustration +
+##                 cyan progress dots + orange Caps buy (the existing
+##                 `blacksmith` base-upgrade backend).
+##   RIGHT bottom  T3 permanent_upgrades  — 永久升级: 4 rows (起始金币 / 背包格数 /
+##                 刷新代币 / 工具槽), each icon + name + dots + orange Caps buy
+##                 via the existing MetaProgress.purchase_upgrade backend.
 ##
-## Reads ONLY the shared MetaProgress building/upgrade API + RunManager; edits no
-## shared file. NO class_name (ADR-0006) — instantiate via the base preload and
-## subclass through the path string below.
+## REMOVED in this redesign: the starter-deck editor (deck_editor), the merchant
+## discount row (scrap_workshop — old saves keep their levels passively), and
+## the difficulty selector (difficulty lives on the home START cluster now).
 ##
-## Wiring (F0d backends):
-##   * difficulty: writes RunManager.pending_ascension; start_new_run reads it as the
-##     next run's ascension when no explicit `asc` is passed.
-##   * deck_editor: SAVE persists the edited deck (≤2 swaps) via
-##     MetaProgress.set_starter_deck_override(hero_id, deck); start_new_run applies it.
+## Every lightline PNG lookup falls back to a programmatic StyleBox / spacer so
+## a missing Codex asset never crashes (warn-free placeholder rule). Reads ONLY
+## the shared MetaProgress upgrade/bounty API; edits no shared file.
+## NO class_name (ADR-0006) — instantiate via the base preload below.
 extends "res://run_system/ui/buildings/building_screen_base.gd"
 
-const CARD_DIR := "res://battle_scene/card_info/player/"
 const UPGRADE_DIR := "res://run_system/data/base_upgrades/"
 ## Outpost permanent-upgrade ids → the base-upgrade JSON that drives each row (Caps).
 const GOLD_UPGRADE_ID := "command_center"
-const DISCOUNT_UPGRADE_ID := "scrap_workshop"
 const BACKPACK_UPGRADE_ID := "backpack"
 const SAFE_CELLS_UPGRADE_ID := "blacksmith"
 const REROLL_UPGRADE_ID := "reroll_tokens"
 const TOOL_SLOTS_UPGRADE_ID := "tool_slots"
-## Max cards swappable in the starter-deck editor (spec: <=2).
-const MAX_DECK_SWAPS := 2
 
-## Re-entrancy guard: the difficulty selector writes RunManager.ascension, which
-## does not emit a signal, so we hold the chosen value here for the active session.
-var _chosen_ascension: int = -1
+## The T3 permanent-upgrade rows in concept order: upgrade id → lightline icon.
+const PERMANENT_UPGRADE_ROWS := [
+	{"id": GOLD_UPGRADE_ID, "icon": "icon_coin_gold"},
+	{"id": BACKPACK_UPGRADE_ID, "icon": "icon_backpack"},
+	{"id": REROLL_UPGRADE_ID, "icon": "icon_refresh"},
+	{"id": TOOL_SLOTS_UPGRADE_ID, "icon": "icon_wrench"},
+]
 
-## Starter-deck editor working state (in-memory only — see header note).
-## `_deck_working` is the current edited deck (Array[String], default-length);
-## `_deck_default` is the hero's untouched default for swap-count accounting.
-var _deck_default: Array = []
-var _deck_working: Array = []
-## Index in `_deck_working` the player has selected to replace (-1 = none).
-var _deck_selected_slot: int = -1
-## True once the current working deck has been saved (clears on any further edit).
-var _deck_saved: bool = false
+## Poster-card fixed width (concept: 4 upright parchment cards in a row).
+const POSTER_CARD_WIDTH := 190.0
+## Poster art placeholder height inside the card.
+const POSTER_ART_HEIGHT := 150.0
+## Progress-dot size (cyan filled / grey empty).
+const DOT_SIZE := 18.0
 
 
-## Fill the content area. Called once by the base `_build()`; rebuilt wholesale by
-## `_refresh_content()` on building/currency change so tier gating stays live.
+## Fill the content area. Called once by the base `_build()`; rebuilt wholesale
+## by `_rebuild_content()` on building/currency/bounty change so tier gating,
+## affordability, and taken-states stay live.
 func _build_content(container: VBoxContainer) -> void:
-	# Rebuild content whenever the building tier or any currency changes so newly
-	# unlocked functions appear and lock messaging clears. The base already wires
-	# these signals to its own `_refresh`; we add our own content rebuild.
+	# Roll today's shelf BEFORE connecting bounties_changed so a stale-date
+	# reroll can't re-enter the rebuild mid-populate (same guard as the old
+	# market screen; home base also refreshes on entry — this covers booting
+	# straight into the outpost after midnight).
+	MetaProgress.refresh_bounty_shelf_if_stale()
+
 	MetaProgress.buildings_changed.connect(_rebuild_content)
 	MetaProgress.upgrades_changed.connect(_rebuild_content)
 	MetaProgress.caps_changed.connect(func(_v): _rebuild_content())
+	# Taking a contract flips its poster button to 已承接 (and may grey the rest
+	# at 3/3 held); settling one frees a board slot — both arrive here.
+	MetaProgress.bounties_changed.connect(_rebuild_content)
 	_populate(container)
 
 
@@ -68,15 +80,6 @@ func _rebuild_content() -> void:
 func _populate(container: VBoxContainer) -> void:
 	var tier := MetaProgress.get_building_tier(building_id)
 
-	# --- Caps balance banner (permanent upgrades here spend Caps). ---
-	var banner := _styled_panel(true)
-	var bm := MarginContainer.new()
-	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		bm.add_theme_constant_override(side, TOK_MARGIN_INNER)
-	banner.add_child(bm)
-	bm.add_child(T.currency_row(MetaProgress.caps, "caps", 20, 24))
-	container.add_child(banner)
-
 	if tier <= 0:
 		var locked := Label.new()
 		locked.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -85,385 +88,465 @@ func _populate(container: VBoxContainer) -> void:
 		container.add_child(locked)
 		return
 
-	# --- T1: the five permanent upgrade rows, grouped into ONE panel so they read
-	# as one upgrades block instead of five loosely-spaced standalone rows each
-	# with their own header (the original cramped/ungrouped layout). Each row still
-	# carries its own name/level/cost via _add_upgrade_row (all spend Caps). ---
-	container.add_child(_section_header(tr("UI_OUTPOST_SECT_UPGRADES")))
-	var upgrades_group := VBoxContainer.new()
-	upgrades_group.add_theme_constant_override("separation", TOK_ROW_SEP)
-	container.add_child(upgrades_group)
-	_add_upgrade_row(upgrades_group, GOLD_UPGRADE_ID)
-	_add_upgrade_row(upgrades_group, DISCOUNT_UPGRADE_ID)
-	_add_upgrade_row(upgrades_group, BACKPACK_UPGRADE_ID)
-	_add_upgrade_row(upgrades_group, REROLL_UPGRADE_ID)
-	_add_upgrade_row(upgrades_group, TOOL_SLOTS_UPGRADE_ID)
+	# Concept layout: LEFT wide bounty column + RIGHT column (safe cells over
+	# permanent upgrades).
+	var columns := HBoxContainer.new()
+	columns.add_theme_constant_override("separation", 14)
+	columns.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	container.add_child(columns)
 
-	# --- T1: difficulty selector. ---
-	container.add_child(_section_header(tr("UI_OUTPOST_SECT_DIFFICULTY")))
-	_add_difficulty_selector(container)
+	# --- LEFT: 可接悬赏 (T1). ---
+	var left := _lightline_section(tr("UI_OUTPOST_SECT_BOUNTIES"), "icon_poster")
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left.size_flags_stretch_ratio = 1.55
+	left.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	columns.add_child(left)
+	_fill_bounty_section(left.get_meta("body") as VBoxContainer)
 
-	# --- T2: safe cells (Caps upgrade row, gated). ---
-	container.add_child(_section_header(tr("UI_OUTPOST_SECT_SAFE_CELLS")))
+	# --- RIGHT: 安全格 (T2) + 永久升级 (T3). ---
+	var right := VBoxContainer.new()
+	right.add_theme_constant_override("separation", 14)
+	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right.size_flags_stretch_ratio = 1.0
+	columns.add_child(right)
+
+	var safe := _lightline_section(tr("UI_OUTPOST_SECT_SAFE_CELLS"), "icon_lock")
+	right.add_child(safe)
 	if MetaProgress.building_can(building_id, "safe_cells"):
-		_add_upgrade_row(container, SAFE_CELLS_UPGRADE_ID)
+		_fill_safe_cells(safe.get_meta("body") as VBoxContainer)
 	else:
-		_add_lock_note(container, tr("UI_OUTPOST_LOCK_SAFE_CELLS"))
+		_add_lock_note(safe.get_meta("body") as VBoxContainer, tr("UI_OUTPOST_LOCK_SAFE_CELLS"))
 
-	# --- T3: starter-deck editor (gated). ---
-	container.add_child(_section_header(tr("UI_OUTPOST_SECT_DECK")))
-	if MetaProgress.building_can(building_id, "deck_editor"):
-		_add_deck_editor(container)
+	var perm := _lightline_section(tr("UI_OUTPOST_SECT_UPGRADES"), "icon_uparrow")
+	right.add_child(perm)
+	if MetaProgress.building_can(building_id, "permanent_upgrades"):
+		var body := perm.get_meta("body") as VBoxContainer
+		for row_def in PERMANENT_UPGRADE_ROWS:
+			_add_upgrade_row(body, str(row_def["id"]), str(row_def["icon"]))
 	else:
-		_add_lock_note(container, tr("UI_OUTPOST_LOCK_DECK"))
+		_add_lock_note(perm.get_meta("body") as VBoxContainer, tr("UI_OUTPOST_LOCK_UPGRADES"))
 
 
-# --- Permanent upgrade rows (ported from upgrade_panel.gd) ------------------
+# --- 可接悬赏 (T1, free take) -------------------------------------------------
 
 
-## A single Caps upgrade row: title, level dots, next-tier effect, cost, BUY.
-## Loads the base-upgrade JSON by id and drives BUY via MetaProgress.purchase_upgrade.
-func _add_upgrade_row(container: VBoxContainer, upgrade_id: String) -> void:
-	var def := _load_upgrade_def(upgrade_id)
-	if def.is_empty():
-		var err := Label.new()
-		_style_label(err, 18, Color(0.86, 0.5, 0.5), 1)
-		err.text = tr("UI_OUTPOST_UPGRADE_MISSING").format({"id": upgrade_id})
-		container.add_child(err)
+## The poster shelf: one parchment wanted-poster card per shelf contract.
+## Taken contracts stay on the shelf greyed (已承接); at 3/3 held every open
+## button disables with the 悬赏已满 tooltip. Held contracts + progress live on
+## the HOME bounty board, not here.
+func _fill_bounty_section(body: VBoxContainer) -> void:
+	if MetaProgress.bounty_shelf.is_empty():
+		body.add_child(_body_label(tr("UI_OUTPOST_BOUNTY_EMPTY"), true))
 		return
 
-	var tiers: Array = def.get("tiers", [])
-	var lvl := MetaProgress.get_upgrade_level(upgrade_id)
+	var shelf := HFlowContainer.new()
+	shelf.add_theme_constant_override("h_separation", 12)
+	shelf.add_theme_constant_override("v_separation", 12)
+	shelf.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_child(shelf)
+	for id in MetaProgress.bounty_shelf:
+		shelf.add_child(_build_poster_card(str(id)))
 
-	var row := _styled_panel(true)
-	container.add_child(row)
 
-	var margin := MarginContainer.new()
+## One wanted-poster card: card_poster frame, poster-art placeholder (named node
+## per contract so Codex per-bounty art drops in later), translated title,
+## objective line, REAL reward icon row, and the orange 免费承接 button.
+func _build_poster_card(bounty_id: String) -> Control:
+	var data: Dictionary = MetaProgress.get_bounty_data(bounty_id)
+	var title := Settings.t("BOUNTY_%s_TITLE" % bounty_id, str(data.get("title", bounty_id)))
+	var objective_v = data.get("objective", {})
+	var objective: Dictionary = objective_v if typeof(objective_v) == TYPE_DICTIONARY else {}
+	var reward_v = data.get("reward", {})
+	var reward: Dictionary = reward_v if typeof(reward_v) == TYPE_DICTIONARY else {}
+
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(POSTER_CARD_WIDTH, 0)
+	# card_poster has no 9-slice margins in the manifest → lightline_box falls
+	# back to the arg margins; the parchment centre stretches fine.
+	card.add_theme_stylebox_override(
+		"panel", T.lightline_box("card_poster", _poster_fallback_style(), 26)
+	)
+	var m := MarginContainer.new()
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		margin.add_theme_constant_override(side, TOK_MARGIN_OUTER)
-	row.add_child(margin)
+		m.add_theme_constant_override(side, 12)
+	card.add_child(m)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	m.add_child(col)
 
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 6)
-	margin.add_child(vbox)
+	# Poster art placeholder — a NAMED node per contract so later per-bounty
+	# Codex art can be slotted in by node path without touching this layout.
+	var art := PanelContainer.new()
+	art.name = "PosterArt_%s" % bounty_id
+	art.custom_minimum_size = Vector2(0, POSTER_ART_HEIGHT)
+	art.add_theme_stylebox_override("panel", T.ll_inset())
+	var art_center := CenterContainer.new()
+	art_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	art.add_child(art_center)
+	art_center.add_child(_ll_icon("icon_poster", 84))
+	col.add_child(art)
 
-	var title := Label.new()
-	_style_label(title, TOK_FONT_SECTION, TOK_GOLD, 2)
-	title.text = (
-		Settings.t("UPGRADE_%s_NAME" % upgrade_id, str(def.get("name", upgrade_id))).to_upper()
-	)
-	vbox.add_child(title)
+	var name_lbl := Label.new()
+	name_lbl.text = title
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(name_lbl, 17, Color(0.97, 0.93, 0.84), 1)
+	col.add_child(name_lbl)
 
-	var dots := ""
-	for i in range(tiers.size()):
-		dots += "●" if i < lvl else "○"
-	var level_lbl := Label.new()
-	_style_label(level_lbl, 18, Color(0.90, 0.90, 0.86), 1)
-	level_lbl.text = tr("UI_HOME_UPGRADE_LEVEL").format(
-		{"dots": dots, "cur": lvl, "max": tiers.size()}
-	)
-	vbox.add_child(level_lbl)
+	var obj_lbl := Label.new()
+	obj_lbl.text = _bounty_objective_text(objective)
+	obj_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	obj_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(obj_lbl, 14, TOK_TEXT_DIM, 1)
+	col.add_child(obj_lbl)
 
+	col.add_child(_build_reward_row(reward))
+	col.add_child(_build_take_button(bounty_id))
+	return card
+
+
+## The concept's reward strip: real currency icons (icon_caps / icon_scrap) with
+## amounts, plus icon_armor + tier letter for an equipment reward.
+func _build_reward_row(reward: Dictionary) -> Control:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 10)
+	for cur in ["caps", "scrap"]:
+		var amt := int(reward.get(cur, 0))
+		if amt <= 0:
+			continue
+		var chip := HBoxContainer.new()
+		chip.add_theme_constant_override("separation", 3)
+		chip.add_child(_ll_icon("icon_%s" % cur, 26))
+		var amt_lbl := Label.new()
+		amt_lbl.text = str(amt)
+		_style_label(amt_lbl, 16, TOK_GOLD if cur == "caps" else Color(0.78, 0.86, 0.62), 1)
+		chip.add_child(amt_lbl)
+		row.add_child(chip)
+	var equip_tier := str(reward.get("equipment", ""))
+	if equip_tier != "":
+		var echip := HBoxContainer.new()
+		echip.add_theme_constant_override("separation", 3)
+		echip.add_child(_ll_icon("icon_armor", 26))
+		var tier_lbl := Label.new()
+		tier_lbl.text = equip_tier.substr(0, 1).to_upper()
+		tier_lbl.tooltip_text = Settings.t("UI_BOUNTY_REWARD_EQUIP", "Equipment ({t})").format(
+			{"t": equip_tier}
+		)
+		_style_label(tier_lbl, 16, Color(0.62, 0.82, 1.0), 1)
+		echip.add_child(tier_lbl)
+		row.add_child(echip)
+	return row
+
+
+## The poster's action button. State matrix (in order):
+##   held already          → disabled 已承接
+##   board full (3/3 held) → disabled + 悬赏已满 tooltip
+##   otherwise             → live orange 免费承接 → MetaProgress.take_bounty.
+func _build_take_button(bounty_id: String) -> Button:
+	var btn := _orange_button(tr("UI_OUTPOST_BOUNTY_TAKE"))
+	if MetaProgress.is_bounty_active(bounty_id):
+		btn.text = tr("UI_OUTPOST_BOUNTY_TAKEN")
+		btn.disabled = true
+	elif MetaProgress.active_bounties.size() >= MetaProgress.MAX_ACTIVE_BOUNTIES:
+		btn.disabled = true
+		btn.tooltip_text = tr("UI_OUTPOST_BOUNTY_FULL")
+	else:
+		btn.pressed.connect(_on_take_bounty.bind(bounty_id))
+	return btn
+
+
+func _on_take_bounty(bounty_id: String) -> void:
+	if not MetaProgress.take_bounty(bounty_id):
+		# Guards raced (e.g. board filled from another path) — no state change
+		# means no rebuild fires, so just signal the miss.
+		AudioManager.play_sfx("error")
+		return
+	AudioManager.play_sfx("purchase")
+	# bounties_changed → _rebuild_content flips this poster to 已承接; the home
+	# bounty board gains its progress row through the same signal.
+
+
+## Human-readable objective line ("Play {n} attack cards"). Keys are the shared
+## UI_BOUNTY_OBJ_* set (they live in ui_build_market.csv; tr()/Settings.t works
+## globally), with a raw "type × n" fallback for an unmapped future type.
+func _bounty_objective_text(objective: Dictionary) -> String:
+	var type := str(objective.get("type", ""))
+	var count := int(objective.get("count", 1))
+	var text := Settings.t("UI_BOUNTY_OBJ_%s" % type.to_upper(), "%s × %d" % [type, count])
+	return text.format({"n": count})
+
+
+# --- 安全格 (T2, Caps — the `blacksmith` base-upgrade backend) ----------------
+
+
+## The concept's safe-crate panel: crate illustration (card_device), the current
+## effective cell count, cyan level dots, next-tier effect, and the orange Caps
+## buy button. Backend unchanged: MetaProgress.purchase_upgrade("blacksmith").
+func _fill_safe_cells(body: VBoxContainer) -> void:
+	var def := _load_upgrade_def(SAFE_CELLS_UPGRADE_ID)
+	if def.is_empty():
+		body.add_child(
+			_body_label(tr("UI_OUTPOST_UPGRADE_MISSING").format({"id": SAFE_CELLS_UPGRADE_ID}))
+		)
+		return
+	var tiers: Array = def.get("tiers", [])
+	var lvl := MetaProgress.get_upgrade_level(SAFE_CELLS_UPGRADE_ID)
+
+	# Crate illustration (concept: armored safe crate, cyan-lit).
+	var art_row := CenterContainer.new()
+	var crate := T.lightline_tex("card_device")
+	if crate != null:
+		var rect := TextureRect.new()
+		rect.texture = crate
+		rect.custom_minimum_size = Vector2(150, 164)
+		rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		art_row.add_child(rect)
+	else:
+		art_row.add_child(_ll_icon("icon_device", 96))
+	body.add_child(art_row)
+
+	# Current effective safe cells (base + upgrade level).
+	var now_lbl := Label.new()
+	now_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	now_lbl.text = tr("UI_OUTPOST_SAFE_CELLS_NOW").format({"n": MetaProgress.SAFE_CELLS_BASE + lvl})
+	_style_label(now_lbl, 16, Color(0.62, 0.90, 0.94), 1)
+	body.add_child(now_lbl)
+
+	# Cyan progress dots.
+	var dots_row := _dots_row(lvl, tiers.size())
+	var dots_center := CenterContainer.new()
+	dots_center.add_child(dots_row)
+	body.add_child(dots_center)
+
+	# Next effect + buy (or maxed).
 	var effect_lbl := Label.new()
+	effect_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	effect_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(effect_lbl, 17, Color(0.94, 0.90, 0.78), 1)
-	vbox.add_child(effect_lbl)
+	_style_label(effect_lbl, 15, Color(0.94, 0.90, 0.78), 1)
+	body.add_child(effect_lbl)
 
-	var bottom := HBoxContainer.new()
-	bottom.add_theme_constant_override("separation", 12)
-	vbox.add_child(bottom)
-
-	var cost_slot := HBoxContainer.new()
-	bottom.add_child(cost_slot)
-
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bottom.add_child(spacer)
-
-	var buy := Button.new()
-	buy.custom_minimum_size = Vector2(120, 36)
-	T.apply_button_theme(buy)
-	buy.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
-	bottom.add_child(buy)
-
+	var buy := _orange_button("")
 	if lvl >= tiers.size():
 		effect_lbl.text = tr("UI_HOME_UPGRADE_FULLY_UPGRADED")
 		buy.text = tr("UI_HOME_UPGRADE_MAXED")
 		buy.disabled = true
 	else:
 		var next_tier: Dictionary = tiers[lvl]
-		var effect_text := Settings.t(
-			"UPGRADE_%s_TIER%d" % [upgrade_id, int(next_tier.get("level", lvl + 1))],
-			str(next_tier.get("effect_text", ""))
+		effect_lbl.text = tr("UI_HOME_UPGRADE_NEXT").format(
+			{
+				"text":
+				Settings.t(
+					(
+						"UPGRADE_%s_TIER%d"
+						% [SAFE_CELLS_UPGRADE_ID, int(next_tier.get("level", lvl + 1))]
+					),
+					str(next_tier.get("effect_text", ""))
+				)
+			}
 		)
-		effect_lbl.text = tr("UI_HOME_UPGRADE_NEXT").format({"text": effect_text})
-		cost_slot.add_child(T.currency_row(int(next_tier.get("cost", 0)), "caps", 18, 20))
 		buy.text = tr("UI_HOME_UPGRADE_BUY")
-		buy.disabled = not MetaProgress.can_purchase(upgrade_id, def)
+		buy.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		buy.add_child(T.overlay_cost_badge(int(next_tier.get("cost", 0)), "caps", 15, 16, -10, -70))
+		buy.disabled = not MetaProgress.can_purchase(SAFE_CELLS_UPGRADE_ID, def)
 		# purchase_upgrade emits caps_changed + upgrades_changed → _rebuild_content.
-		buy.pressed.connect(func(): MetaProgress.purchase_upgrade(upgrade_id, def))
+		buy.pressed.connect(func(): MetaProgress.purchase_upgrade(SAFE_CELLS_UPGRADE_ID, def))
+	body.add_child(buy)
 
 
-# --- T1 difficulty selector -------------------------------------------------
+# --- 永久升级 (T3, Caps rows) --------------------------------------------------
 
 
-## Ascension selector: a row of 0..MetaProgress.max_ascension buttons. Selecting a
-## value sets RunManager.pending_ascension, which start_new_run reads as the next
-## run's difficulty (it falls back to this when no explicit `asc` is passed).
-func _add_difficulty_selector(container: VBoxContainer) -> void:
-	var max_asc: int = int(MetaProgress.max_ascension)
+## One concept upgrade row: lightline icon + name + cyan/grey level dots + the
+## orange buy button with a Caps cost badge. Backend: MetaProgress.purchase_upgrade.
+func _add_upgrade_row(container: VBoxContainer, upgrade_id: String, icon_name: String) -> void:
+	var def := _load_upgrade_def(upgrade_id)
+	if def.is_empty():
+		container.add_child(
+			_body_label(tr("UI_OUTPOST_UPGRADE_MISSING").format({"id": upgrade_id}))
+		)
+		return
+	var tiers: Array = def.get("tiers", [])
+	var lvl := MetaProgress.get_upgrade_level(upgrade_id)
 
-	var note := Label.new()
-	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(note, 16, Color(0.86, 0.78, 0.6), 1)
-	note.text = tr("UI_OUTPOST_DIFFICULTY_NOTE")
-	container.add_child(note)
-
-	# Current effective selection: the session choice if made, else the pending
-	# ascension (clamped to the unlocked range; -1 pending → default 0).
-	var pending: int = int(RunManager.pending_ascension)
-	var current: int = _chosen_ascension if _chosen_ascension >= 0 else maxi(pending, 0)
-	current = clampi(current, 0, max_asc)
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", T.ll_inset())
+	container.add_child(panel)
+	var m := MarginContainer.new()
+	for side in ["margin_left", "margin_right"]:
+		m.add_theme_constant_override(side, 10)
+	for side in ["margin_top", "margin_bottom"]:
+		m.add_theme_constant_override(side, 8)
+	panel.add_child(m)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	container.add_child(row)
+	row.add_theme_constant_override("separation", 10)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	m.add_child(row)
 
-	for a in range(max_asc + 1):
-		var btn := Button.new()
-		btn.toggle_mode = true
-		btn.custom_minimum_size = Vector2(56, 40)
-		btn.add_theme_font_size_override("font_size", 18)
-		T.apply_button_theme(btn)
-		btn.text = "A%d" % a
-		btn.button_pressed = (a == current)
-		var value := a
-		btn.pressed.connect(func(): _on_difficulty_chosen(value))
-		row.add_child(btn)
+	row.add_child(_ll_icon(icon_name, 34))
 
-	var chosen_lbl := Label.new()
-	_style_label(chosen_lbl, 17, Color(0.7, 0.92, 0.7), 1)
-	chosen_lbl.text = tr("UI_OUTPOST_DIFFICULTY_CHOSEN").format({"n": current})
-	container.add_child(chosen_lbl)
+	var mid := VBoxContainer.new()
+	mid.add_theme_constant_override("separation", 4)
+	mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	mid.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_child(mid)
+	var name_lbl := Label.new()
+	name_lbl.text = Settings.t("UPGRADE_%s_NAME" % upgrade_id, str(def.get("name", upgrade_id)))
+	_style_label(name_lbl, 16, TOK_TEXT, 1)
+	mid.add_child(name_lbl)
+	mid.add_child(_dots_row(lvl, tiers.size()))
 
-
-func _on_difficulty_chosen(value: int) -> void:
-	_chosen_ascension = value
-	# Persist the choice into RunManager.pending_ascension; start_new_run reads it
-	# as the next run's difficulty. Clamp to the engine's accepted 0..5 range.
-	RunManager.pending_ascension = clampi(value, 0, 5)
-	_rebuild_content()
-
-
-# --- T3 starter-deck editor (in-memory only) --------------------------------
-
-
-## Starter-deck editor. Shows the active hero's default starter_deck as a list of
-## slots; selecting a slot then an unlocked replacement performs an in-memory swap
-## (capped at MAX_DECK_SWAPS). SAVE is disabled — persistence needs a new
-## MetaProgress field (see header note). RESET reverts the working copy.
-func _add_deck_editor(container: VBoxContainer) -> void:
-	_ensure_deck_state()
-
-	var hero_id: String = str(RunManager.current_hero_id)
-	var hero_lbl := Label.new()
-	_style_label(hero_lbl, 17, Color(0.86, 0.78, 0.6), 1)
-	if hero_id == "":
-		hero_lbl.text = tr("UI_OUTPOST_DECK_NO_HERO")
-		container.add_child(hero_lbl)
+	var buy := _orange_button("")
+	buy.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(buy)
+	if lvl >= tiers.size():
+		buy.text = tr("UI_HOME_UPGRADE_MAXED")
+		buy.disabled = true
 		return
-	hero_lbl.text = tr("UI_OUTPOST_DECK_HERO").format({"hero": _hero_display_name(hero_id)})
-	container.add_child(hero_lbl)
-
-	var swaps := _swap_count()
-	var swaps_lbl := Label.new()
-	_style_label(swaps_lbl, 16, Color(0.7, 0.9, 1.0), 1)
-	swaps_lbl.text = tr("UI_OUTPOST_DECK_SWAPS").format({"cur": swaps, "max": MAX_DECK_SWAPS})
-	container.add_child(swaps_lbl)
-
-	# Current deck (selectable slots).
-	var deck_lbl := Label.new()
-	_style_label(deck_lbl, 17, Color(1, 0.92, 0.55), 1)
-	deck_lbl.text = tr("UI_OUTPOST_DECK_CURRENT")
-	container.add_child(deck_lbl)
-
-	var deck_grid := GridContainer.new()
-	deck_grid.columns = 3
-	deck_grid.add_theme_constant_override("h_separation", 8)
-	deck_grid.add_theme_constant_override("v_separation", 6)
-	container.add_child(deck_grid)
-
-	for i in range(_deck_working.size()):
-		var card_id := str(_deck_working[i])
-		var slot_btn := Button.new()
-		slot_btn.toggle_mode = true
-		slot_btn.custom_minimum_size = Vector2(180, 36)
-		slot_btn.add_theme_font_size_override("font_size", 16)
-		T.apply_button_theme(slot_btn)
-		slot_btn.text = _card_display_name(card_id)
-		slot_btn.button_pressed = (i == _deck_selected_slot)
-		var idx := i
-		slot_btn.pressed.connect(func(): _on_deck_slot_selected(idx))
-		deck_grid.add_child(slot_btn)
-
-	# Replacement pool (unlocked cards), shown only when a slot is selected.
-	if _deck_selected_slot >= 0:
-		var pool_lbl := Label.new()
-		_style_label(pool_lbl, 17, Color(1, 0.92, 0.55), 1)
-		pool_lbl.text = tr("UI_OUTPOST_DECK_REPLACE")
-		container.add_child(pool_lbl)
-
-		var pool_grid := GridContainer.new()
-		pool_grid.columns = 3
-		pool_grid.add_theme_constant_override("h_separation", 8)
-		pool_grid.add_theme_constant_override("v_separation", 6)
-		container.add_child(pool_grid)
-
-		for card_id in MetaProgress.get_unlocked_card_pool():
-			var cid := str(card_id)
-			var pick := Button.new()
-			pick.custom_minimum_size = Vector2(180, 34)
-			pick.add_theme_font_size_override("font_size", 15)
-			T.apply_button_theme(pick)
-			pick.text = _card_display_name(cid)
-			# Disallow a swap that would exceed the cap (unless this slot is already
-			# a swapped slot being changed, which doesn't raise the count).
-			pick.disabled = not _can_swap_slot_to(_deck_selected_slot, cid)
-			pick.pressed.connect(func(): _on_replacement_chosen(cid))
-			pool_grid.add_child(pick)
-
-	# Controls: RESET (in-memory) + disabled SAVE with explanatory note.
-	var controls := HBoxContainer.new()
-	controls.add_theme_constant_override("separation", 12)
-	container.add_child(controls)
-
-	var reset_btn := Button.new()
-	reset_btn.custom_minimum_size = Vector2(120, 38)
-	reset_btn.add_theme_font_size_override("font_size", 17)
-	T.apply_button_theme(reset_btn)
-	reset_btn.text = tr("UI_OUTPOST_DECK_RESET")
-	reset_btn.pressed.connect(_on_deck_reset)
-	controls.add_child(reset_btn)
-
-	var save_btn := Button.new()
-	save_btn.custom_minimum_size = Vector2(120, 38)
-	save_btn.add_theme_font_size_override("font_size", 17)
-	T.apply_button_theme(save_btn)
-	save_btn.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
-	save_btn.text = tr("UI_OUTPOST_DECK_SAVE")
-	# Persist the edited deck (≤2 swaps already enforced) onto this hero via
-	# MetaProgress.set_starter_deck_override; start_new_run applies it.
-	save_btn.pressed.connect(_on_deck_save.bind(hero_id))
-	controls.add_child(save_btn)
-
-	var save_note := Label.new()
-	save_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(save_note, 15, Color(0.7, 0.92, 0.7) if _deck_saved else Color(0.86, 0.78, 0.6), 1)
-	save_note.text = tr("UI_OUTPOST_DECK_SAVED") if _deck_saved else tr("UI_OUTPOST_DECK_SAVE_HINT")
-	container.add_child(save_note)
-
-
-## Seed the working deck from the active hero's default the first time (or if the
-## hero changed / state is empty). Idempotent for repeated rebuilds.
-func _ensure_deck_state() -> void:
-	var default_deck := _hero_default_deck()
-	if _deck_default != default_deck:
-		_deck_default = default_deck.duplicate()
-		_deck_working = default_deck.duplicate()
-		_deck_selected_slot = -1
-
-
-## The active hero's default starter deck (Array[String]). Falls back to
-## RunManager.DEFAULT_STARTER_DECK when no hero is loaded / the hero JSON omits it.
-func _hero_default_deck() -> Array:
-	var hero_id: String = str(RunManager.current_hero_id)
-	if hero_id != "":
-		var hero := _load_hero_def(hero_id)
-		var sd: Variant = hero.get("starter_deck", [])
-		if typeof(sd) == TYPE_ARRAY and not (sd as Array).is_empty():
-			var out: Array = []
-			for c in sd:
-				out.append(str(c))
-			return out
-	var fallback: Array = []
-	for c in RunManager.DEFAULT_STARTER_DECK:
-		fallback.append(str(c))
-	return fallback
-
-
-## Number of slots whose card differs from the hero default (the swap count).
-func _swap_count() -> int:
-	var n := 0
-	for i in range(_deck_working.size()):
-		if i < _deck_default.size() and str(_deck_working[i]) != str(_deck_default[i]):
-			n += 1
-	return n
-
-
-## True if setting slot `idx` to `card_id` is allowed under the swap cap. Changing
-## a slot that is ALREADY swapped (back toward or to another non-default card) does
-## not raise the count; changing a still-default slot must keep the count <= cap.
-func _can_swap_slot_to(idx: int, card_id: String) -> bool:
-	if idx < 0 or idx >= _deck_working.size():
-		return false
-	var slot_is_default := (
-		idx < _deck_default.size() and str(_deck_working[idx]) == str(_deck_default[idx])
+	var next_tier: Dictionary = tiers[lvl]
+	# Surface the next tier's effect as the row tooltip (the concept row has no
+	# room for an effect line; hover reveals it).
+	var effect_text := Settings.t(
+		"UPGRADE_%s_TIER%d" % [upgrade_id, int(next_tier.get("level", lvl + 1))],
+		str(next_tier.get("effect_text", ""))
 	)
-	if not slot_is_default:
-		return true  # already counts as a swap; replacing it doesn't add another
-	return _swap_count() < MAX_DECK_SWAPS
-
-
-func _on_deck_slot_selected(idx: int) -> void:
-	_deck_selected_slot = -1 if idx == _deck_selected_slot else idx
-	_rebuild_content()
-
-
-func _on_replacement_chosen(card_id: String) -> void:
-	if _deck_selected_slot < 0 or _deck_selected_slot >= _deck_working.size():
-		return
-	if not _can_swap_slot_to(_deck_selected_slot, card_id):
-		return
-	_deck_working[_deck_selected_slot] = card_id
-	_deck_selected_slot = -1
-	_deck_saved = false
-	_rebuild_content()
-
-
-func _on_deck_reset() -> void:
-	_deck_working = _deck_default.duplicate()
-	_deck_selected_slot = -1
-	_deck_saved = false
-	_rebuild_content()
-
-
-## Persist the edited deck for `hero_id`. The editor already caps swaps at ≤2, so
-## the working array is safe to hand straight to MetaProgress.set_starter_deck_override.
-func _on_deck_save(hero_id: String) -> void:
-	if hero_id == "":
-		return
-	MetaProgress.set_starter_deck_override(hero_id, _deck_working)
-	_deck_saved = true
-	_rebuild_content()
+	panel.tooltip_text = tr("UI_HOME_UPGRADE_NEXT").format({"text": effect_text})
+	buy.text = tr("UI_HOME_UPGRADE_BUY")
+	buy.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	buy.add_child(T.overlay_cost_badge(int(next_tier.get("cost", 0)), "caps", 14, 15, -8, -62))
+	buy.disabled = not MetaProgress.can_purchase(upgrade_id, def)
+	# purchase_upgrade emits caps_changed + upgrades_changed → _rebuild_content.
+	buy.pressed.connect(func(): MetaProgress.purchase_upgrade(upgrade_id, def))
 
 
 # --- Small UI + data helpers ------------------------------------------------
 
 
+## A lightline-framed titled section: ll_section panel + a header row (small
+## lightline icon + gold title) over a content VBox stored on the "body" meta.
+func _lightline_section(title: String, icon_name: String) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", T.ll_section())
+
+	var margin := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		margin.add_theme_constant_override(side, TOK_MARGIN_OUTER)
+	panel.add_child(margin)
+
+	var body := VBoxContainer.new()
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", TOK_ROW_SEP)
+	margin.add_child(body)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 8)
+	body.add_child(header)
+	header.add_child(_ll_icon(icon_name, 28))
+	var lbl := Label.new()
+	lbl.text = title
+	_style_label(lbl, TOK_FONT_SECTION, TOK_GOLD, 2)
+	header.add_child(lbl)
+
+	panel.set_meta("body", body)
+	return panel
+
+
+## The concept's cyan/grey progress dots: `cur` filled (icon_dot_cyan) out of
+## `total`. Empty dots reuse the cyan PNG desaturated dark; a missing PNG falls
+## back to text dots so the row never renders blank.
+func _dots_row(cur: int, total: int) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 5)
+	var dot_tex := T.lightline_tex("icon_dot_cyan")
+	if dot_tex == null:
+		var lbl := Label.new()
+		var dots := ""
+		for i in range(total):
+			dots += "●" if i < cur else "○"
+		lbl.text = dots
+		_style_label(lbl, 16, Color(0.55, 0.88, 0.92), 1)
+		row.add_child(lbl)
+		return row
+	for i in range(total):
+		var dot := TextureRect.new()
+		dot.texture = dot_tex
+		dot.custom_minimum_size = Vector2(DOT_SIZE, DOT_SIZE)
+		dot.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		dot.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		if i >= cur:
+			dot.modulate = Color(0.42, 0.42, 0.42, 0.85)
+		row.add_child(dot)
+	return row
+
+
+## An orange lightline primary button (concept's main action button).
+func _orange_button(text: String) -> Button:
+	var btn := Button.new()
+	btn.text = text
+	btn.custom_minimum_size = Vector2(0, 40)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_size_override("font_size", 16)
+	btn.add_theme_color_override("font_color", Color(0.16, 0.10, 0.04))
+	btn.add_theme_color_override("font_hover_color", Color(0.20, 0.13, 0.05))
+	btn.add_theme_color_override("font_pressed_color", Color(0.12, 0.08, 0.03))
+	btn.add_theme_color_override("font_disabled_color", Color(0.30, 0.24, 0.16, 0.9))
+	btn.add_theme_color_override("font_outline_color", Color(1.0, 0.92, 0.72, 0.35))
+	btn.add_theme_constant_override("outline_size", 1)
+	btn.add_theme_stylebox_override("normal", T.ll_button("normal"))
+	btn.add_theme_stylebox_override("hover", T.ll_button("hover"))
+	btn.add_theme_stylebox_override("pressed", T.ll_button("pressed"))
+	var disabled_box := T.ll_button("normal")
+	if disabled_box is StyleBoxTexture:
+		(disabled_box as StyleBoxTexture).modulate_color = Color(0.55, 0.55, 0.55)
+	btn.add_theme_stylebox_override("disabled", disabled_box)
+	return btn
+
+
+## A lightline PNG as a fixed-size TextureRect, or an equal-size empty spacer
+## when the art is undelivered (warn-free placeholder).
+func _ll_icon(icon_name: String, px: float) -> Control:
+	var tex := T.lightline_tex(icon_name)
+	if tex == null:
+		var spacer := Control.new()
+		spacer.custom_minimum_size = Vector2(px, px)
+		return spacer
+	var rect := TextureRect.new()
+	rect.texture = tex
+	rect.custom_minimum_size = Vector2(px, px)
+	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return rect
+
+
+## Parchment-toned fallback for the poster card while card_poster.png is absent.
+func _poster_fallback_style() -> StyleBox:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.72, 0.62, 0.44, 0.16)
+	style.border_color = Color(0.62, 0.52, 0.34, 0.9)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(TOK_RADIUS)
+	return style
+
+
 func _add_lock_note(container: VBoxContainer, text: String) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	row.add_child(_ll_icon("icon_lock", 26))
 	var lbl := Label.new()
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(lbl, 18, Color(0.78, 0.6, 0.5), 1)
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_label(lbl, 17, Color(0.78, 0.6, 0.5), 1)
 	lbl.text = text
-	container.add_child(lbl)
+	row.add_child(lbl)
+	container.add_child(row)
 
 
 func _load_upgrade_def(id: String) -> Dictionary:
 	return _load_json(UPGRADE_DIR + id + ".json")
-
-
-func _load_hero_def(id: String) -> Dictionary:
-	return _load_json("res://run_system/data/heroes/" + id + ".json")
 
 
 func _load_json(path: String) -> Dictionary:
@@ -476,13 +559,3 @@ func _load_json(path: String) -> Dictionary:
 	f.close()
 	var parsed: Variant = JSON.parse_string(raw)
 	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
-
-
-func _card_display_name(card_id: String) -> String:
-	var data := _load_json(CARD_DIR + card_id + ".json")
-	return Settings.t("CARD_%s_NAME" % card_id, str(data.get("name", card_id)))
-
-
-func _hero_display_name(hero_id: String) -> String:
-	var data := _load_hero_def(hero_id)
-	return Settings.t("HERO_%s_NAME" % hero_id, str(data.get("name", hero_id)))

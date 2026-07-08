@@ -142,8 +142,8 @@ signal buildings_changed
 ## Emitted when a held bounty reaches its objective and is settled (reward
 ## granted + removed from active_bounties). UI shows the completion toast.
 signal bounty_completed(bounty_id: String)
-## Emitted whenever bounty state changes (shelf reroll, claim/buy, progress,
-## settle) so the bounty board / market shelf rebuild.
+## Emitted whenever bounty state changes (shelf reroll, take, progress,
+## settle) so the bounty board / outpost shelf rebuild.
 signal bounties_changed
 
 ## "Money" currency. Spent at market/clinic, building tier-ups, outpost permanent
@@ -185,13 +185,15 @@ var buildings: Dictionary = {}
 ## { "id": String, "progress": int }. Settled (reward granted + removed) the
 ## moment progress reaches the objective count. Capped at MAX_ACTIVE_BOUNTIES.
 var active_bounties: Array = []
-## Today's market bounty shelf: bounty ids on offer (BOUNTY_SHELF_SIZE per day,
-## 1 free claim + the rest bought with Caps). Rerolled when the local date
-## changes (deterministic per date — same day, same shelf).
+## Today's outpost bounty shelf: bounty ids on offer (BOUNTY_SHELF_SIZE per day,
+## every contract is FREE to take). Rerolled when the local date changes
+## (deterministic per date — same day, same shelf).
 var bounty_shelf: Array = []
 ## Local date ("YYYY-MM-DD") the current shelf was rolled for.
 var bounty_shelf_date: String = ""
-## True once today's free shelf slot has been claimed. Reset on shelf reroll.
+## Legacy daily-free-claim flag from the market's "1 free + 2 paid" model.
+## UNUSED since the 2026-07-07 outpost redesign (every take is free) — kept
+## (and still persisted) only for save-file compatibility.
 var bounty_free_claimed: bool = false
 ## Card codex unlock set: card_id → true once the card has been played (demo
 ## rule: used = unlocked). Persisted; write-throttled in mark_card_seen.
@@ -245,19 +247,19 @@ const BUILDING_DEFS := {
 	{
 		"unlock_cost": 100,
 		"tier_costs": [140, 240],
-		"functions": {"tool_shop": 1, "bounty_shelf": 1, "equip_shop": 2, "resource_convert": 3},
+		"functions": {"tool_shop": 1, "equip_shop": 2, "resource_convert": 3},
 	},
+	# 2026-07-07 redesign: bounties moved here from the market (taking is FREE);
+	# deck_editor + discount removed; difficulty lives on the home START cluster.
 	"outpost":
 	{
 		"unlock_cost": 70,
 		"tier_costs": [100, 180],
 		"functions":
 		{
-			"gold": 1,
-			"discount": 1,
-			"difficulty": 1,
+			"bounties": 1,
 			"safe_cells": 2,
-			"deck_editor": 3,
+			"permanent_upgrades": 3,
 		},
 	},
 }
@@ -281,9 +283,9 @@ const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
 ## --- Bounty system (replaces the daily-task mock) ---
 ## Contract JSONs (schema in data_validator.validate_bounty).
 const BOUNTY_DATA_DIR := "res://run_system/data/bounties/"
-## Max held contracts; the market shelf refuses claims/buys beyond this.
+## Max held contracts; the outpost shelf refuses takes beyond this.
 const MAX_ACTIVE_BOUNTIES := 3
-## Contracts on the market shelf per day (1 free claim + the rest purchasable).
+## Contracts on the outpost shelf per day (all free to take).
 const BOUNTY_SHELF_SIZE := 3
 
 ## Hero-exclusive draft cards: only offered (loot/shop) when that hero is active, so
@@ -921,11 +923,12 @@ func _bounty_pool_ids() -> Array:
 	return ids
 
 
-## Reroll the market shelf when the LOCAL date differs from the stored one
+## Reroll the outpost shelf when the LOCAL date differs from the stored one
 ## (spec §2.2: real-time daily refresh; held contracts are never touched).
 ## Deterministic per date — the roll RNG is seeded with hash(date string), so
 ## re-entering on the same day keeps the same shelf. Ids already held are
-## excluded from the roll. Resets the daily free-claim flag.
+## excluded from the roll. Still resets the legacy free-claim flag (unused —
+## kept for save-compat only).
 func refresh_bounty_shelf_if_stale() -> void:
 	var today := Time.get_date_string_from_system()
 	if bounty_shelf_date == today:
@@ -961,8 +964,8 @@ func is_bounty_active(bounty_id: String) -> bool:
 	return false
 
 
-## Shared claim/buy guards: id on today's shelf, board not full, not already
-## held, and the contract JSON actually exists.
+## Take guards: id on today's shelf, board not full, not already held, and the
+## contract JSON actually exists.
 func _can_take_bounty(bounty_id: String) -> bool:
 	if not bounty_id in bounty_shelf:
 		return false
@@ -979,29 +982,23 @@ func _take_bounty(bounty_id: String) -> void:
 	emit_signal("bounties_changed")
 
 
-## Claim today's FREE shelf slot (once per shelf roll). Returns false when the
-## free claim is spent, the id is not on the shelf, the board is full, or the
-## contract is already held.
+## Take a shelf contract onto the bounty board — FREE, no currency spent
+## (2026-07-07 outpost redesign: the market's "1 free + 2 Caps buys" model is
+## gone; a contract JSON's `price` field is ignored). Guards: on today's shelf,
+## board not full (< MAX_ACTIVE_BOUNTIES), not already held. Returns false on
+## any failed guard.
+func take_bounty(bounty_id: String) -> bool:
+	if not _can_take_bounty(bounty_id):
+		return false
+	_take_bounty(bounty_id)
+	return true
+
+
+## Back-compat alias for the pre-redesign market-shelf API. The daily
+## one-free-claim restriction (bounty_free_claimed) is gone — every take is
+## free now, so this simply forwards to take_bounty.
 func claim_free_bounty(bounty_id: String) -> bool:
-	if bounty_free_claimed:
-		return false
-	if not _can_take_bounty(bounty_id):
-		return false
-	bounty_free_claimed = true
-	_take_bounty(bounty_id)
-	return true
-
-
-## Buy a shelf contract with Caps at its JSON price. Same guards as the free
-## claim plus the Caps balance. Returns false on any failed guard.
-func buy_bounty(bounty_id: String) -> bool:
-	if not _can_take_bounty(bounty_id):
-		return false
-	var price := int(get_bounty_data(bounty_id).get("price", 0))
-	if not spend_caps(price):  # saves + emits caps_changed
-		return false
-	_take_bounty(bounty_id)
-	return true
+	return take_bounty(bounty_id)
 
 
 ## Progress entry point (called via RunManager.bounty_event). Adds `amount` to

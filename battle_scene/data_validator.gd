@@ -29,7 +29,11 @@ const ALLOWED_TOOL_TARGETS = ["enemy", "self", "none"]
 # ─── Bounty schema ───────────────────────────────────────────────────────────
 # Objective `type`s trackable by the in-run hooks (two-place rule: each kind is
 # emitted somewhere via RunManager.bounty_event AND listed here).
-const REQUIRED_BOUNTY_KEYS = ["id", "title", "objective", "reward", "price", "tier"]
+const REQUIRED_BOUNTY_KEYS = ["id", "title", "objective", "reward", "tier"]
+# `price` is a legacy field from the market's paid-bounty model — bounty taking
+# is free since 2026-07-07, so the field is OPTIONAL and ignored at runtime
+# (still type-checked when present so a typo'd contract fails loud).
+const OPTIONAL_BOUNTY_KEYS = ["price"]
 const ALLOWED_BOUNTY_OBJECTIVES := [
 	"play_attack_cards",
 	"earn_gold",
@@ -721,7 +725,7 @@ static func validate_tool(data: Dictionary, source_path: String) -> bool:
 
 ## Validate a single bounty contract JSON dictionary. Returns true on success.
 ## Shape: { id, title, objective: {type, count}, reward: {caps/scrap/equipment},
-## price, tier }. Reward must carry at least one entry; currency values are
+## tier [, price] }. Reward must carry at least one entry; currency values are
 ## positive ints, `equipment` names a shell-drop tier.
 static func validate_bounty(data: Dictionary, source_path: String) -> bool:
 	var prefix := "Bounty '%s'" % source_path
@@ -791,7 +795,9 @@ static func validate_bounty(data: Dictionary, source_path: String) -> bool:
 				)
 				ok = false
 
-	if not _is_whole_number(data["price"]) or int(data["price"]) < 0:
+	# Optional legacy `price` (ignored at runtime — taking is free) — still
+	# type-checked when present.
+	if data.has("price") and (not _is_whole_number(data["price"]) or int(data["price"]) < 0):
 		push_error("%s: 'price' must be an int >= 0" % prefix)
 		ok = false
 
@@ -801,7 +807,7 @@ static func validate_bounty(data: Dictionary, source_path: String) -> bool:
 
 	# Unknown top-level keys → warn (helps catch typos)
 	for key in data.keys():
-		if not key in REQUIRED_BOUNTY_KEYS:
+		if not key in REQUIRED_BOUNTY_KEYS and not key in OPTIONAL_BOUNTY_KEYS:
 			push_warning("%s: unknown top-level key '%s' (typo?)" % [prefix, key])
 
 	return ok
