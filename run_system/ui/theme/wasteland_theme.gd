@@ -131,9 +131,10 @@ static func icon_frame_style() -> StyleBoxFlat:
 
 
 ## Apply panel + hover + pressed stylebox triplet to a Button.
-## Updated to use codex's textured button_normal/hover/pressed PNGs (9-slice).
-## The `bg`/`border`/`radius` params are now ignored — kept for caller signature
-## compatibility. Callers that need pure programmatic style can use rounded_button().
+## Routes through button_textured(), i.e. the active lightline ink set — the
+## game-wide default button. The `bg`/`border`/`radius` params are ignored —
+## kept for caller signature compatibility. Callers that need pure programmatic
+## style can use rounded_button().
 static func apply_button_theme(
 	button: Button, _bg: Color = Color.WHITE, _border: Color = Color.WHITE, _radius: int = 4
 ) -> void:
@@ -229,68 +230,32 @@ static func style_display(label: Label, size: int, weight: int = 600, spacing: i
 
 
 # ─── Textured (PNG-based) builders ────────────────────────────────────────────
-# Codex delivers 9-slice PNG components — these helpers wrap them in
-# StyleBoxTexture so .add_theme_stylebox_override("panel", ...) Just Works.
-
-# Kenney UI Pack (CC0) 9-slice art, tinted to wasteland tones via modulate_color.
-const _K_PANEL = preload("res://run_system/assets/images/ui/kenney/panel.png")
-const _K_PANEL_RECESSED = preload("res://run_system/assets/images/ui/kenney/panel_recessed.png")
-const _K_BTN_NORMAL = preload("res://run_system/assets/images/ui/kenney/button_normal.png")
-const _K_BTN_HOVER = preload("res://run_system/assets/images/ui/kenney/button_hover.png")
-const _K_BTN_PRESSED = preload("res://run_system/assets/images/ui/kenney/button_pressed.png")
-
-# Wasteland tints applied over the grey Kenney art.
-const _TINT_PANEL = Color(0.40, 0.29, 0.17)
-const _TINT_PANEL_DARK = Color(0.26, 0.18, 0.10)
-const _TINT_BTN = Color(0.60, 0.45, 0.26)
-const _TINT_BTN_HOVER = Color(0.82, 0.64, 0.36)
-const _TINT_BTN_PRESSED = Color(0.46, 0.33, 0.19)
+# The game-wide default panel / button skin. Since 2026-07-08 these resolve to
+# the ACTIVE lightline ink set (ui_kit_lightline/<INK_SET>_*) — the same flat
+# charcoal + thin gold-line language as the building pages and the draggable
+# windows. (The Kenney CC0 placeholder art these used to wrap was deleted with
+# this change; a missing lightline PNG falls back to the programmatic
+# menu-glass styles, so a regenerating kit never breaks boot.)
 
 
-## 9-slice panel (Kenney art, wasteland-tinted). variant: "default" / "dark".
-static func panel_textured(variant: String = "default") -> StyleBoxTexture:
-	var style = StyleBoxTexture.new()
-	style.texture = _K_PANEL_RECESSED if variant == "dark" else _K_PANEL
-	style.modulate_color = _TINT_PANEL_DARK if variant == "dark" else _TINT_PANEL
-	for s in [
-		&"texture_margin_left",
-		&"texture_margin_right",
-		&"texture_margin_top",
-		&"texture_margin_bottom"
-	]:
-		style.set(s, 34)
-	for s in [
-		&"content_margin_left",
-		&"content_margin_right",
-		&"content_margin_top",
-		&"content_margin_bottom"
-	]:
-		style.set(s, 16)
-	return style
+## 9-slice panel — the ink-set charcoal window panel. The `variant` arg
+## ("default" / "dark") is kept for caller signature compatibility; both
+## variants resolve to the same lightline panel now that the tinted Kenney
+## pair is gone.
+static func panel_textured(_variant: String = "default") -> StyleBox:
+	var fb := _base(GLASS_BG, GLASS_HAIRLINE, 7, 1)
+	fb.set_content_margin_all(16.0)
+	var box := lightline_box(INK_SET + "_panel", fb, 34)
+	if box is StyleBoxTexture:
+		(box as StyleBoxTexture).set_content_margin_all(16.0)
+	return box
 
 
-## 9-slice button stylebox (Kenney art, brass-tinted). state: normal/hover/pressed.
-static func button_textured(state: String = "normal") -> StyleBoxTexture:
-	var style = StyleBoxTexture.new()
-	match state:
-		"hover":
-			style.texture = _K_BTN_HOVER
-			style.modulate_color = _TINT_BTN_HOVER
-		"pressed":
-			style.texture = _K_BTN_PRESSED
-			style.modulate_color = _TINT_BTN_PRESSED
-		_:
-			style.texture = _K_BTN_NORMAL
-			style.modulate_color = _TINT_BTN
-	style.texture_margin_left = 18
-	style.texture_margin_right = 18
-	style.texture_margin_top = 14
-	style.texture_margin_bottom = 20
-	style.content_margin_left = 16
-	style.content_margin_right = 16
-	style.content_margin_top = 6
-	style.content_margin_bottom = 10
-	return style
+## 9-slice button stylebox — the ink-set olive (secondary) button, the quiet
+## game-wide default; primary CTAs use ll_button() (orange) directly.
+## state: normal / hover / pressed.
+static func button_textured(state: String = "normal") -> StyleBox:
+	return ll_button_olive(state)
 
 
 ## Currency icon PNGs (Codex art). Keyed by currency id: caps / scrap. (The `core`
@@ -401,18 +366,9 @@ static func overlay_cost_badge(
 
 ## A square ✕ close button for the full-screen pages (character / run-deck).
 ## The caller anchors it to the page's top-right corner and connects `pressed`.
+## Resolves to the lightline square ✕ — the same art as the draggable windows.
 static func close_x_button() -> Button:
-	var b := Button.new()
-	b.text = "✕"
-	b.custom_minimum_size = Vector2(48, 48)
-	b.focus_mode = Control.FOCUS_NONE
-	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	b.add_theme_font_size_override("font_size", 24)
-	b.add_theme_color_override("font_color", TEXT_MAIN)
-	b.add_theme_stylebox_override("normal", button_textured("normal"))
-	b.add_theme_stylebox_override("hover", button_textured("hover"))
-	b.add_theme_stylebox_override("pressed", button_textured("pressed"))
-	return b
+	return ll_close_button(48.0)
 
 
 # ─── Windowed-UI v2 builders (character / stash / forge window chrome) ───────

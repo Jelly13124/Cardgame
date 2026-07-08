@@ -145,7 +145,7 @@ func _reskin_chrome() -> void:
 func _reskin_close_button() -> void:
 	if not is_instance_valid(_close_btn):
 		return
-	var tex := T.lightline_tex("ul_btn_close")
+	var tex := T.lightline_tex("lw_btn_close")
 	if tex == null:
 		return  # keep the base "✕" glyph button
 	_close_btn.text = ""

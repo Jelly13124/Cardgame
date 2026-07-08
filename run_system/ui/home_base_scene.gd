@@ -1052,7 +1052,7 @@ func _add_difficulty_button(parent: Control) -> void:
 
 
 ## Glass bar-button restyle over apply_button_theme (keeps its hover juice /
-## font colors, swaps the Kenney texture for the theme's menu-glass styles —
+## font colors, swaps the textured skin for the theme's menu-glass styles —
 ## incl. the disabled state, which otherwise falls back to the engine grey).
 func _style_brass_button(btn: Button) -> void:
 	btn.add_theme_stylebox_override("normal", T.ui_button_brass("normal"))
@@ -1240,11 +1240,14 @@ func _add_interactive_building(
 	# rebuild creates fresh buttons, so no stale material survives an unlock).
 	if MetaProgress.get_building_tier(asset_id) <= 0:
 		button.material = _get_locked_material()
-		# Lock glyph resolve chain: active skin dir → the V3 glyph dir (Codex,
-		# pending) → the rev2 brass padlock kept on disk (ui_kit/). Pinned
+		# Lock glyph resolve chain: lightline ink lock (the active component
+		# language) → active skin dir → the V3 glyph dir (Codex, pending) → the
+		# rev2 brass padlock kept on disk (ui_kit/). The last one is pinned
 		# explicitly so switching UI_KIT_DIR to the glass/none skin can never
 		# regress to the emoji fallback below.
-		var lock_tex := T.ui_kit_tex("icon_lock")
+		var lock_tex := T.lightline_tex("icon_lock")
+		if lock_tex == null:
+			lock_tex = T.ui_kit_tex("icon_lock")
 		if (
 			lock_tex == null
 			and ResourceLoader.exists("res://run_system/assets/images/ui_glyphs/glyph_lock.png")
@@ -1406,7 +1409,7 @@ func _add_tier_button(building_id: String, plaque_rect: Rect2) -> void:
 	btn.add_theme_font_size_override("font_size", 17)
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	T.apply_button_theme(btn)
-	_style_brass_button(btn)  # glass chip (the Kenney texture read muddy over the sky)
+	_style_brass_button(btn)  # glass chip (a textured button read muddy over the sky)
 	btn.text = ("解锁" if zh else "Unlock") if tier <= 0 else ("升级" if zh else "Upgrade")
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	# Contrast pass: the theme's default grey-brown label was near-invisible on

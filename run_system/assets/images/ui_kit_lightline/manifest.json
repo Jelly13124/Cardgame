@@ -1,7 +1,7 @@
 [
  {
   "name": "bar_plain",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    49,
    871,
@@ -9,15 +9,15 @@
    76
   ],
   "size": [
-   727,
-   76
+   453,
+   58
   ],
   "role": "bar",
   "nine_slice": {
-   "left": 8,
-   "top": 4,
-   "right": 8,
-   "bottom": 4
+   "left": 26,
+   "top": 20,
+   "right": 26,
+   "bottom": 20
   }
  },
  {
@@ -54,7 +54,7 @@
  },
  {
   "name": "btn_close",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    1069,
    913,
@@ -62,8 +62,8 @@
    100
   ],
   "size": [
-   102,
-   100
+   114,
+   124
   ],
   "role": "button",
   "nine_slice": {
@@ -75,7 +75,7 @@
  },
  {
   "name": "btn_dark",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    905,
    912,
@@ -83,20 +83,20 @@
    100
   ],
   "size": [
-   109,
-   100
+   210,
+   216
   ],
   "role": "button",
   "nine_slice": {
-   "left": 8,
-   "top": 8,
-   "right": 8,
-   "bottom": 8
+   "left": 28,
+   "top": 28,
+   "right": 28,
+   "bottom": 28
   }
  },
  {
   "name": "btn_grey",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    626,
    918,
@@ -104,15 +104,15 @@
    88
   ],
   "size": [
-   233,
-   88
+   225,
+   115
   ],
   "role": "button",
   "nine_slice": {
-   "left": 10,
-   "top": 8,
-   "right": 10,
-   "bottom": 8
+   "left": 26,
+   "top": 24,
+   "right": 26,
+   "bottom": 24
   }
  },
  {
@@ -165,7 +165,7 @@
  },
  {
   "name": "btn_olive",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    349,
    918,
@@ -173,20 +173,20 @@
    88
   ],
   "size": [
-   240,
-   88
+   225,
+   115
   ],
   "role": "button",
   "nine_slice": {
-   "left": 10,
-   "top": 8,
-   "right": 10,
-   "bottom": 8
+   "left": 26,
+   "top": 24,
+   "right": 26,
+   "bottom": 24
   }
  },
  {
   "name": "btn_orange_normal",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    59,
    918,
@@ -194,15 +194,15 @@
    87
   ],
   "size": [
-   250,
-   87
+   246,
+   116
   ],
   "role": "button",
   "nine_slice": {
-   "left": 10,
-   "top": 8,
-   "right": 10,
-   "bottom": 8
+   "left": 26,
+   "top": 24,
+   "right": 26,
+   "bottom": 24
   }
  },
  {
@@ -303,7 +303,7 @@
  },
  {
   "name": "drop_slot_anvil",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    70,
    49,
@@ -311,8 +311,8 @@
    211
   ],
   "size": [
-   210,
-   211
+   184,
+   192
   ],
   "role": "dropslot",
   "nine_slice": null
@@ -911,7 +911,7 @@
  },
  {
   "name": "panel_bubble",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    59,
    736,
@@ -919,15 +919,15 @@
    146
   ],
   "size": [
-   330,
-   146
+   300,
+   136
   ],
   "role": "panel",
   "nine_slice": null
  },
  {
   "name": "panel_framed",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    430,
    725,
@@ -935,20 +935,20 @@
    166
   ],
   "size": [
-   459,
-   166
+   391,
+   168
   ],
   "role": "panel",
   "nine_slice": {
-   "left": 10,
-   "top": 10,
-   "right": 10,
-   "bottom": 10
+   "left": 34,
+   "top": 34,
+   "right": 34,
+   "bottom": 34
   }
  },
  {
   "name": "panel_section",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    390,
    285,
@@ -956,20 +956,20 @@
    129
   ],
   "size": [
-   398,
-   129
+   391,
+   168
   ],
   "role": "panel",
   "nine_slice": {
-   "left": 10,
-   "top": 8,
-   "right": 10,
-   "bottom": 8
+   "left": 34,
+   "top": 34,
+   "right": 34,
+   "bottom": 34
   }
  },
  {
   "name": "panel_small",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    943,
    772,
@@ -977,20 +977,20 @@
    96
   ],
   "size": [
-   242,
-   96
+   210,
+   216
   ],
   "role": "panel",
   "nine_slice": {
-   "left": 8,
-   "top": 8,
-   "right": 8,
-   "bottom": 8
+   "left": 28,
+   "top": 28,
+   "right": 28,
+   "bottom": 28
   }
  },
  {
   "name": "panel_square",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    395,
    450,
@@ -998,20 +998,20 @@
    247
   ],
   "size": [
-   260,
-   247
+   380,
+   358
   ],
   "role": "panel",
   "nine_slice": {
-   "left": 10,
-   "top": 10,
-   "right": 10,
-   "bottom": 10
+   "left": 34,
+   "top": 34,
+   "right": 34,
+   "bottom": 34
   }
  },
  {
   "name": "panel_strip",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    829,
    325,
@@ -1019,20 +1019,20 @@
    66
   ],
   "size": [
-   369,
-   66
+   453,
+   58
   ],
   "role": "panel",
   "nine_slice": {
-   "left": 8,
-   "top": 6,
-   "right": 8,
-   "bottom": 6
+   "left": 26,
+   "top": 20,
+   "right": 26,
+   "bottom": 20
   }
  },
  {
   "name": "panel_titlebar",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    392,
    62,
@@ -1040,20 +1040,20 @@
    172
   ],
   "size": [
-   818,
-   172
+   453,
+   58
   ],
   "role": "titlebar",
   "nine_slice": {
-   "left": 10,
-   "top": 8,
-   "right": 10,
-   "bottom": 8
+   "left": 26,
+   "top": 20,
+   "right": 26,
+   "bottom": 20
   }
  },
  {
   "name": "panel_titlebar_wide",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    352,
    76,
@@ -1061,20 +1061,20 @@
    129
   ],
   "size": [
-   592,
-   129
+   453,
+   58
   ],
   "role": "titlebar",
   "nine_slice": {
-   "left": 10,
-   "top": 8,
-   "right": 10,
-   "bottom": 8
+   "left": 26,
+   "top": 20,
+   "right": 26,
+   "bottom": 20
   }
  },
  {
   "name": "panel_wide",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    696,
    450,
@@ -1082,20 +1082,20 @@
    250
   ],
   "size": [
-   503,
-   250
+   391,
+   168
   ],
   "role": "panel",
   "nine_slice": {
-   "left": 10,
-   "top": 10,
-   "right": 10,
-   "bottom": 10
+   "left": 34,
+   "top": 34,
+   "right": 34,
+   "bottom": 34
   }
  },
  {
   "name": "panel_window",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    46,
    61,
@@ -1103,20 +1103,20 @@
    639
   ],
   "size": [
-   309,
-   639
+   220,
+   433
   ],
   "role": "panel",
   "nine_slice": {
-   "left": 10,
-   "top": 10,
-   "right": 10,
-   "bottom": 10
+   "left": 34,
+   "top": 34,
+   "right": 34,
+   "bottom": 34
   }
  },
  {
   "name": "slot_dashed",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": [
    1073,
    715,
@@ -1124,26 +1124,26 @@
    129
   ],
   "size": [
-   132,
-   129
+   184,
+   192
   ],
   "role": "slot",
   "nine_slice": null
  },
  {
   "name": "panel_window_charcoal",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
   "bbox": null,
   "size": [
-   347,
-   175
+   391,
+   168
   ],
   "role": "panel",
   "nine_slice": {
-   "left": 10,
-   "top": 8,
-   "right": 10,
-   "bottom": 8
+   "left": 34,
+   "top": 34,
+   "right": 34,
+   "bottom": 34
   }
  },
  {
@@ -1314,183 +1314,6 @@
    "right": 30,
    "bottom": 30
   }
- },
- {
-  "name": "ul_panel_tall",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
-  "bbox": null,
-  "size": [
-   233,
-   481
-  ],
-  "role": "panel",
-  "nine_slice": {
-   "left": 34,
-   "top": 34,
-   "right": 34,
-   "bottom": 34
-  }
- },
- {
-  "name": "ul_panel",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
-  "bbox": null,
-  "size": [
-   428,
-   398
-  ],
-  "role": "panel",
-  "nine_slice": {
-   "left": 34,
-   "top": 34,
-   "right": 34,
-   "bottom": 34
-  }
- },
- {
-  "name": "ul_bar",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
-  "bbox": null,
-  "size": [
-   402,
-   61
-  ],
-  "role": "panel",
-  "nine_slice": {
-   "left": 26,
-   "top": 20,
-   "right": 26,
-   "bottom": 20
-  }
- },
- {
-  "name": "ul_panel_wide",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
-  "bbox": null,
-  "size": [
-   384,
-   168
-  ],
-  "role": "panel",
-  "nine_slice": {
-   "left": 34,
-   "top": 34,
-   "right": 34,
-   "bottom": 34
-  }
- },
- {
-  "name": "ul_panel_sm",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
-  "bbox": null,
-  "size": [
-   202,
-   207
-  ],
-  "role": "panel",
-  "nine_slice": {
-   "left": 28,
-   "top": 28,
-   "right": 28,
-   "bottom": 28
-  }
- },
- {
-  "name": "ul_divider",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
-  "bbox": null,
-  "size": [
-   284,
-   19
-  ],
-  "role": "panel",
-  "nine_slice": null
- },
- {
-  "name": "ul_btn_orange",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
-  "bbox": null,
-  "size": [
-   252,
-   107
-  ],
-  "role": "button",
-  "nine_slice": {
-   "left": 26,
-   "top": 24,
-   "right": 26,
-   "bottom": 24
-  }
- },
- {
-  "name": "ul_btn_olive",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
-  "bbox": null,
-  "size": [
-   241,
-   108
-  ],
-  "role": "button",
-  "nine_slice": {
-   "left": 26,
-   "top": 24,
-   "right": 26,
-   "bottom": 24
-  }
- },
- {
-  "name": "ul_panel_pill",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
-  "bbox": null,
-  "size": [
-   157,
-   79
-  ],
-  "role": "panel",
-  "nine_slice": {
-   "left": 22,
-   "top": 22,
-   "right": 22,
-   "bottom": 22
-  }
- },
- {
-  "name": "ul_btn_close",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
-  "bbox": null,
-  "size": [
-   117,
-   123
-  ],
-  "role": "button",
-  "nine_slice": null
- },
- {
-  "name": "ul_slot_brackets",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
-  "bbox": null,
-  "size": [
-   187,
-   192
-  ],
-  "role": "panel",
-  "nine_slice": {
-   "left": 42,
-   "top": 42,
-   "right": 42,
-   "bottom": 42
-  }
- },
- {
-  "name": "ul_bubble",
-  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
-  "bbox": null,
-  "size": [
-   295,
-   135
-  ],
-  "role": "panel",
-  "nine_slice": null
  },
  {
   "name": "lw_panel_tall",
@@ -1667,6 +1490,394 @@
    136
   ],
   "role": "panel",
+  "nine_slice": null
+ },
+ {
+  "name": "hud_energy_core",
+  "source_sheet": "ui_components_09_battle_hud_transparent.png",
+  "bbox": null,
+  "size": [
+   425,
+   440
+  ],
+  "role": "widget",
+  "nine_slice": null
+ },
+ {
+  "name": "hud_panel_orange",
+  "source_sheet": "ui_components_09_battle_hud_transparent.png",
+  "bbox": null,
+  "size": [
+   712,
+   254
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 44,
+   "top": 44,
+   "right": 44,
+   "bottom": 44
+  }
+ },
+ {
+  "name": "hud_bar_track",
+  "source_sheet": "ui_components_09_battle_hud_transparent.png",
+  "bbox": null,
+  "size": [
+   703,
+   110
+  ],
+  "role": "bar",
+  "nine_slice": {
+   "left": 61,
+   "top": 53,
+   "right": 61,
+   "bottom": 53
+  }
+ },
+ {
+  "name": "hud_block_shield",
+  "source_sheet": "ui_components_09_battle_hud_transparent.png",
+  "bbox": null,
+  "size": [
+   192,
+   252
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "hud_intent_attack",
+  "source_sheet": "ui_components_09_battle_hud_transparent.png",
+  "bbox": null,
+  "size": [
+   186,
+   196
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "hud_intent_defend",
+  "source_sheet": "ui_components_09_battle_hud_transparent.png",
+  "bbox": null,
+  "size": [
+   186,
+   195
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "hud_intent_buff",
+  "source_sheet": "ui_components_09_battle_hud_transparent.png",
+  "bbox": null,
+  "size": [
+   186,
+   195
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "hud_intent_special",
+  "source_sheet": "ui_components_09_battle_hud_transparent.png",
+  "bbox": null,
+  "size": [
+   186,
+   194
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "hud_intent_debuff",
+  "source_sheet": "ui_components_09_battle_hud_transparent.png",
+  "bbox": null,
+  "size": [
+   187,
+   195
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "hud_target_arrow",
+  "source_sheet": "ui_components_09_battle_hud_transparent.png",
+  "bbox": null,
+  "size": [
+   231,
+   236
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "hud_ribbon_name",
+  "source_sheet": "ui_components_09_battle_hud_transparent.png",
+  "bbox": null,
+  "size": [
+   884,
+   161
+  ],
+  "role": "ribbon",
+  "nine_slice": {
+   "left": 123,
+   "top": 40,
+   "right": 123,
+   "bottom": 40
+  }
+ },
+ {
+  "name": "mapkit_node_battle",
+  "source_sheet": "ui_components_10_map_kit_transparent.png",
+  "bbox": null,
+  "size": [
+   282,
+   291
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "mapkit_node_elite",
+  "source_sheet": "ui_components_10_map_kit_transparent.png",
+  "bbox": null,
+  "size": [
+   281,
+   291
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "mapkit_node_boss",
+  "source_sheet": "ui_components_10_map_kit_transparent.png",
+  "bbox": null,
+  "size": [
+   280,
+   291
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "mapkit_node_shop",
+  "source_sheet": "ui_components_10_map_kit_transparent.png",
+  "bbox": null,
+  "size": [
+   282,
+   290
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "mapkit_node_rest",
+  "source_sheet": "ui_components_10_map_kit_transparent.png",
+  "bbox": null,
+  "size": [
+   282,
+   293
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "mapkit_node_treasure",
+  "source_sheet": "ui_components_10_map_kit_transparent.png",
+  "bbox": null,
+  "size": [
+   279,
+   293
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "mapkit_node_star",
+  "source_sheet": "ui_components_10_map_kit_transparent.png",
+  "bbox": null,
+  "size": [
+   280,
+   293
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "mapkit_node_event",
+  "source_sheet": "ui_components_10_map_kit_transparent.png",
+  "bbox": null,
+  "size": [
+   282,
+   292
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "mapkit_pin_player",
+  "source_sheet": "ui_components_10_map_kit_transparent.png",
+  "bbox": null,
+  "size": [
+   221,
+   257
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "mapkit_check_done",
+  "source_sheet": "ui_components_10_map_kit_transparent.png",
+  "bbox": null,
+  "size": [
+   227,
+   236
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "mapkit_cross_fail",
+  "source_sheet": "ui_components_10_map_kit_transparent.png",
+  "bbox": null,
+  "size": [
+   224,
+   235
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "mapkit_dot_path",
+  "source_sheet": "ui_components_10_map_kit_transparent.png",
+  "bbox": null,
+  "size": [
+   86,
+   87
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "base_plaque_orange",
+  "source_sheet": "ui_components_11_base_kit_transparent.png",
+  "bbox": null,
+  "size": [
+   1336,
+   412
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 44,
+   "top": 44,
+   "right": 44,
+   "bottom": 44
+  }
+ },
+ {
+  "name": "base_medallion",
+  "source_sheet": "ui_components_11_base_kit_transparent.png",
+  "bbox": null,
+  "size": [
+   347,
+   351
+  ],
+  "role": "ornament",
+  "nine_slice": null
+ },
+ {
+  "name": "base_tier_pip",
+  "source_sheet": "ui_components_11_base_kit_transparent.png",
+  "bbox": null,
+  "size": [
+   131,
+   137
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "base_dropdown",
+  "source_sheet": "ui_components_11_base_kit_transparent.png",
+  "bbox": null,
+  "size": [
+   616,
+   154
+  ],
+  "role": "field",
+  "nine_slice": {
+   "left": 30,
+   "top": 26,
+   "right": 110,
+   "bottom": 26
+  }
+ },
+ {
+  "name": "iconb_skull",
+  "source_sheet": "ui_components_12_icons_b_transparent.png",
+  "bbox": null,
+  "size": [
+   301,
+   332
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "iconb_cards_fan",
+  "source_sheet": "ui_components_12_icons_b_transparent.png",
+  "bbox": null,
+  "size": [
+   363,
+   346
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "iconb_robot_sheriff",
+  "source_sheet": "ui_components_12_icons_b_transparent.png",
+  "bbox": null,
+  "size": [
+   410,
+   362
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "iconb_deck_stack",
+  "source_sheet": "ui_components_12_icons_b_transparent.png",
+  "bbox": null,
+  "size": [
+   336,
+   352
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "iconb_clock",
+  "source_sheet": "ui_components_12_icons_b_transparent.png",
+  "bbox": null,
+  "size": [
+   307,
+   330
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "iconb_flag",
+  "source_sheet": "ui_components_12_icons_b_transparent.png",
+  "bbox": null,
+  "size": [
+   329,
+   344
+  ],
+  "role": "icon",
   "nine_slice": null
  }
 ]
