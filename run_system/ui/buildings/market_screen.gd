@@ -1,21 +1,32 @@
-## Market (黑市) building screen. Subclasses the shared building shell and fills
-## the content VBox with the Market's tier-gated functions:
-##   - T1 tool_shop       : buy 3 random tools with Caps (flat price).
-##   - T2 equip_shop      : buy equipment INSTANCES with Caps (rarity-priced).
-##   - T3 resource_convert: currency exchange (Caps↔Scrap, bidirectional) with a
-##     ~10% tax — moved here from the removed Warehouse building. (Core→Caps was
-##     dropped when the Core currency was removed 2026-07-07.)
-## Refresh (re-roll the stocked tools + equipment for Caps) is ungated —
-## available from T1.
+## Market (黑市) building screen, re-skinned to the 2026-07-07 "lightline"
+## concept (docs/art/previews/base_building_market_ui_simple_comic_20260707.png —
+## the 3-tool layout; the `_6tools_` variant is deliberately NOT implemented):
+##   工具货架 (T1 tool_shop)        — 3 shop cards (item icon + recessed name bar
+##                                    + orange Caps price footer, the
+##                                    btn_icon_syringe/armor/bag card language),
+##                                    olive 刷新 button in the section header.
+##   装备货架 (T2 equip_shop)       — equipment shelf cards in the same framing
+##                                    (rarity-tinted names), own 刷新 button.
+##   资源兑换 (T3 resource_convert) — row_convert-style rows: src icon + amount
+##                                    field → dst icon + amount field + olive
+##                                    swap button; scrap balance chip in the
+##                                    section header.
+## Refresh stays UNGATED (available from T1): the tool-shelf header carries the
+## olive refresh button even while that shelf is still locked, so the function
+## is reachable at every tier exactly as before; the equipment-shelf header adds
+## a second button (concept parity) wired to the SAME reroll action/cost.
 ##
-## The bounty shelf moved to the OUTPOST in the 2026-07-07 redesign (taking is
-## free there — the "1 free + 2 Caps buys" model is gone); the Market no longer
-## has a bounty section.
+## VISUAL RESKIN ONLY — backend untouched: purchase (spend_caps + add_tool /
+## make_equip_instance + add_to_stash with full-refund guards), escalating
+## refresh cost, conversion math/handlers, and the tier gating via
+## `_locked_section` are all the pre-reskin code paths.
 ##
-## The base card-unlock/card-shop system was removed (Phase A refactor): every
-## non-curse, non-basic card is draftable by default via
-## MetaProgress.get_unlocked_card_pool(), so the Market no longer sells cards.
+## The bounty shelf moved to the OUTPOST in the 2026-07-07 redesign; the Market
+## no longer has a bounty section. The base card-unlock/card-shop system was
+## removed (Phase A refactor) — the Market doesn't sell cards.
 ##
+## Every lightline PNG lookup falls back to a programmatic StyleBox / spacer /
+## text so a missing Codex asset never crashes (warn-free placeholder rule).
 ## NO class_name (ADR-0006: subclass via path string, instantiate with `.new()`).
 ## Reads only the shared MetaProgress / RunManager API; edits no shared file.
 extends "res://run_system/ui/buildings/building_screen_base.gd"
@@ -23,8 +34,10 @@ extends "res://run_system/ui/buildings/building_screen_base.gd"
 const EQUIPMENT_DIR := "res://run_system/data/equipment/"
 const EQUIPMENT_ICON := preload("res://run_system/ui/equipment_icon.gd")
 
-## Equipment shelf-tile icon size.
-const SHELF_ICON := Vector2(96, 96)
+## Shop-card item icon size (tools + equipment).
+const SHELF_ICON := Vector2(84, 84)
+## Shop-card minimum width (concept: wide cards filling the shelf row).
+const SHELF_CARD_MIN_W := 170.0
 
 ## Equipment buy prices in Caps, by rarity (spec: 60/140/280).
 const EQUIP_CAPS_PRICE := {"common": 60, "uncommon": 140, "rare": 280}
@@ -69,8 +82,8 @@ var _refresh_uses: int = 0
 ## conversion section re-renders it after each rebuild.
 var _convert_status_text: String = ""
 
-## Live-refresh handles so balances + buttons repaint without a full rebuild.
-var _caps_label: Label = null
+## Live-refresh handle: the convert-section scrap balance chip (the Caps balance
+## lives on the base header's cost chip, so the content doesn't duplicate it).
 var _mkt_scrap_label: Label = null
 ## The whole content host, so currency/building changes can rebuild the lists.
 var _market_box: VBoxContainer = null
@@ -111,73 +124,38 @@ func _rebuild_market() -> void:
 
 
 func _refresh_balances() -> void:
-	if is_instance_valid(_caps_label):
-		_caps_label.text = "%d" % MetaProgress.caps
 	if is_instance_valid(_mkt_scrap_label):
 		_mkt_scrap_label.text = "%d" % MetaProgress.scrap
 
 
+## Concept section order: tool shelf → equipment shelf → resource exchange.
+## (No balances banner — the base header's cost chip already shows Caps.)
 func _populate(container: VBoxContainer) -> void:
-	container.add_child(_build_balances_row())
-
-	# T1: tool shop (Caps).
+	# T1: tool shop (Caps). The header refresh button renders in BOTH states so
+	# the ungated refresh stays reachable exactly as before the reskin.
 	if MetaProgress.building_can("market", "tool_shop"):
 		container.add_child(_build_tool_section())
 	else:
-		container.add_child(_locked_section(tr("UI_MARKET_TOOL_SECTION"), 1))
+		container.add_child(_locked_section(tr("UI_MARKET_TOOL_SHELF"), 1, true))
 
 	# T2: equipment shop (Caps).
 	if MetaProgress.building_can("market", "equip_shop"):
 		container.add_child(_build_equip_section())
 	else:
-		container.add_child(_locked_section(tr("UI_MARKET_EQUIP_SECTION"), 2))
-
-	# Refresh stock (Caps) — ungated, available from T1.
-	container.add_child(_build_refresh_section())
+		container.add_child(_locked_section(tr("UI_MARKET_EQUIP_SHELF"), 2))
 
 	# T3: resource conversion (Caps↔Scrap) — from the old Warehouse.
 	if MetaProgress.building_can("market", "resource_convert"):
 		container.add_child(_build_convert_section())
 	else:
-		container.add_child(_locked_section(tr("UI_MARKET_CONVERT_SECTION"), 3))
-
-
-# --- Balances --------------------------------------------------------------
-
-
-## Balances banner — matches the banner treatment on the other 4 screens (forge
-## Scrap / outpost Caps / clinic Caps) so the Market's currency readout reads
-## as the same UI element instead of a bare label row. Shows Caps + Scrap (the two
-## currencies the conversion table trades between).
-func _build_balances_row() -> Control:
-	var banner := _styled_panel(true)
-	var bm := MarginContainer.new()
-	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		bm.add_theme_constant_override(side, TOK_MARGIN_INNER)
-	banner.add_child(bm)
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 24)
-	bm.add_child(row)
-
-	var caps_row := T.currency_row(MetaProgress.caps, "caps", 22, 24)
-	row.add_child(caps_row)
-	_caps_label = caps_row.get_meta("amount_label") as Label
-	_caps_label.add_theme_color_override("font_color", PRICE_COLOR)
-
-	var scrap_row := T.currency_row(MetaProgress.scrap, "scrap", 22, 24)
-	row.add_child(scrap_row)
-	_mkt_scrap_label = scrap_row.get_meta("amount_label") as Label
-	_mkt_scrap_label.add_theme_color_override("font_color", Color(0.78, 0.86, 0.62))
-
-	return banner
+		container.add_child(_locked_section(tr("UI_MARKET_CONVERT_TITLE"), 3))
 
 
 # --- Tool shop (T1, Caps) ---------------------------------------------------
 
 
 func _build_tool_section() -> Control:
-	var section := _make_section(tr("UI_MARKET_TOOL_SECTION"))
+	var section := _make_section(tr("UI_MARKET_TOOL_SHELF"), true)
 	var body := section.get_meta("body") as VBoxContainer
 
 	if _tool_stock.is_empty():
@@ -187,9 +165,9 @@ func _build_tool_section() -> Control:
 		body.add_child(empty)
 		return section
 
-	var shelf := HFlowContainer.new()
-	shelf.add_theme_constant_override("h_separation", 14)
-	shelf.add_theme_constant_override("v_separation", 14)
+	# Concept: the 3 tool cards stretch to fill the shelf row.
+	var shelf := HBoxContainer.new()
+	shelf.add_theme_constant_override("separation", 14)
 	shelf.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_child(shelf)
 	for tool_id in _tool_stock:
@@ -197,27 +175,30 @@ func _build_tool_section() -> Control:
 	return section
 
 
-## One tool sitting on the shelf: an icon (or glyph fallback), its name, and a
-## Caps buy button. Mirrors shop_scene._build_tool_stall's data lookups.
+## One concept shop card (btn_icon_* language): framed dark card with the item
+## icon on top, a recessed name bar, and the orange Caps price footer (the buy
+## button). The tool description moves to the card tooltip.
+## Purchase path unchanged: _on_buy_tool (spend → add_tool_to_backpack → refund
+## on full backpack).
 func _build_tool_tile(tool_id: String) -> Control:
 	var data := RunManager.get_tool_data(tool_id)
 	var tool_name := Settings.t("TOOL_%s_TITLE" % tool_id, str(data.get("title", tool_id)))
 
 	var tile := PanelContainer.new()
-	tile.add_theme_stylebox_override(
-		"panel",
-		T.panel_with_shadow(Color(0.12, 0.085, 0.060, 0.95), Color(0.62, 0.44, 0.22, 1.0), 3, 2)
-	)
+	tile.add_theme_stylebox_override("panel", T.ll_inset())
+	tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tile.tooltip_text = Settings.t("TOOL_%s_DESC" % tool_id, "")
 	var tm := MarginContainer.new()
 	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		tm.add_theme_constant_override(s, 10)
 	tile.add_child(tm)
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 6)
-	col.custom_minimum_size = Vector2(150, 0)
+	col.add_theme_constant_override("separation", 8)
+	col.custom_minimum_size = Vector2(SHELF_CARD_MIN_W, 0)
 	tm.add_child(col)
 
 	var icon_holder := CenterContainer.new()
+	icon_holder.custom_minimum_size = Vector2(0, SHELF_ICON.y + 12)
 	col.add_child(icon_holder)
 	var icon_path := str(data.get("icon", ""))
 	var tex: Texture2D = null
@@ -240,21 +221,9 @@ func _build_tool_tile(tool_id: String) -> Control:
 		glyph.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
 		icon_holder.add_child(glyph)
 
-	var name_lbl := Label.new()
-	name_lbl.text = tool_name
-	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(name_lbl, 16, Color(0.95, 0.92, 0.85), 1)
-	col.add_child(name_lbl)
+	col.add_child(_name_bar(tool_name, Color(0.95, 0.92, 0.85)))
 
-	var desc_lbl := Label.new()
-	desc_lbl.text = Settings.t("TOOL_%s_DESC" % tool_id, "")
-	desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(desc_lbl, 13, Color(0.82, 0.76, 0.62), 1)
-	col.add_child(desc_lbl)
-
-	var buy_btn := _caps_cost_button(MARKET_TOOL_PRICE, Vector2(0, 38))
+	var buy_btn := _price_footer(MARKET_TOOL_PRICE)
 	buy_btn.disabled = MetaProgress.caps < MARKET_TOOL_PRICE
 	buy_btn.pressed.connect(_on_buy_tool.bind(tool_id, buy_btn))
 	col.add_child(buy_btn)
@@ -274,15 +243,17 @@ func _on_buy_tool(tool_id: String, btn: Button) -> void:
 	if is_instance_valid(btn):
 		btn.disabled = true
 		btn.text = tr("UI_MARKET_BOUGHT")
-	# caps_changed → _on_market_changed repaints balances + other buy buttons'
-	# disabled state via _refresh_balances; this button keeps its SOLD state.
+	# caps_changed → _on_market_changed repaints the scrap chip; this button
+	# keeps its SOLD state (pre-reskin behavior: other buttons repaint on the
+	# next full rebuild).
 
 
 # --- Equipment shop (T2, Caps) ----------------------------------------------
 
 
 func _build_equip_section() -> Control:
-	var section := _make_section(tr("UI_MARKET_EQUIP_SECTION"))
+	# Second refresh button (concept parity) — same reroll action + cost.
+	var section := _make_section(tr("UI_MARKET_EQUIP_SHELF"), true)
 	var body := section.get_meta("body") as VBoxContainer
 
 	if _equip_stock.is_empty():
@@ -292,10 +263,8 @@ func _build_equip_section() -> Control:
 		body.add_child(empty)
 		return section
 
-	# Lay the stock out as tiles on a shelf (wrapping grid) instead of a text list.
-	var shelf := HFlowContainer.new()
-	shelf.add_theme_constant_override("h_separation", 14)
-	shelf.add_theme_constant_override("v_separation", 14)
+	var shelf := HBoxContainer.new()
+	shelf.add_theme_constant_override("separation", 14)
 	shelf.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_child(shelf)
 	for entry in _equip_stock:
@@ -303,8 +272,11 @@ func _build_equip_section() -> Control:
 	return section
 
 
-## One piece of gear sitting on the shelf: a rarity-framed tile with the item icon,
-## its name, and a Caps buy button (which doubles as the price tag).
+## One equipment shop card: same btn_icon_* framing as the tool cards, with the
+## rarity-framed EQUIPMENT_ICON (its hover tooltip is unchanged), a rarity-
+## tinted name bar, and the orange Caps price footer.
+## Purchase path unchanged: _on_buy_equipment (spend → instance → stash → refund
+## on full stash).
 func _build_equip_tile(entry: Dictionary) -> Control:
 	var base_id: String = str(entry.get("base", ""))
 	var rarity: String = str(entry.get("rarity", "common"))
@@ -314,22 +286,19 @@ func _build_equip_tile(entry: Dictionary) -> Control:
 	var equip_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
 
 	var tile := PanelContainer.new()
-	tile.add_theme_stylebox_override(
-		"panel",
-		T.panel_with_shadow(
-			Color(0.12, 0.085, 0.060, 0.95), RARITY_COLORS.get(rarity, Color(0.6, 0.5, 0.4)), 3, 2
-		)
-	)
+	tile.add_theme_stylebox_override("panel", T.ll_inset())
+	tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var tm := MarginContainer.new()
 	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		tm.add_theme_constant_override(s, 10)
 	tile.add_child(tm)
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 6)
-	col.custom_minimum_size = Vector2(150, 0)
+	col.add_theme_constant_override("separation", 8)
+	col.custom_minimum_size = Vector2(SHELF_CARD_MIN_W, 0)
 	tm.add_child(col)
 
 	var icon_holder := CenterContainer.new()
+	icon_holder.custom_minimum_size = Vector2(0, SHELF_ICON.y + 12)
 	var icon := EQUIPMENT_ICON.new()
 	icon.custom_minimum_size = SHELF_ICON
 	icon.set_equipment(slot, equip_name, str(data.get("sprite", "")), rarity)
@@ -339,14 +308,9 @@ func _build_equip_tile(entry: Dictionary) -> Control:
 	icon_holder.add_child(icon)
 	col.add_child(icon_holder)
 
-	var name_lbl := Label.new()
-	name_lbl.text = equip_name
-	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(name_lbl, 16, RARITY_COLORS.get(rarity, Color(0.95, 0.92, 0.85)), 1)
-	col.add_child(name_lbl)
+	col.add_child(_name_bar(equip_name, RARITY_COLORS.get(rarity, Color(0.95, 0.92, 0.85))))
 
-	var buy_btn := _caps_cost_button(price, Vector2(0, 38))
+	var buy_btn := _price_footer(price)
 	buy_btn.disabled = MetaProgress.caps < price
 	buy_btn.pressed.connect(_on_buy_equipment.bind(base_id, rarity, price, buy_btn))
 	col.add_child(buy_btn)
@@ -367,36 +331,11 @@ func _on_buy_equipment(base_id: String, rarity: String, price: int, btn: Button)
 	if is_instance_valid(btn):
 		btn.disabled = true
 		btn.text = tr("UI_MARKET_BOUGHT")
-	# caps_changed → _on_market_changed repaints balances + other buy buttons'
-	# disabled state via _refresh_balances; this button keeps its SOLD state.
+	# caps_changed → _on_market_changed repaints the scrap chip; this button
+	# keeps its SOLD state (pre-reskin behavior).
 
 
 # --- Refresh (ungated, Caps) --------------------------------------------------
-
-
-func _build_refresh_section() -> Control:
-	var section := _make_section(tr("UI_MARKET_REFRESH_SECTION"))
-	var body := section.get_meta("body") as VBoxContainer
-
-	var note := Label.new()
-	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	note.text = tr("UI_MARKET_REFRESH_NOTE")
-	_style_label(note, 17, Color(0.85, 0.66, 0.40), 1)
-	body.add_child(note)
-
-	var cost := _refresh_cost()
-	var btn := Button.new()
-	btn.custom_minimum_size = Vector2(220, 44)
-	btn.add_theme_font_size_override("font_size", 18)
-	T.apply_button_theme(btn)
-	btn.text = tr("UI_MARKET_REFRESH_VERB")
-	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	btn.disabled = MetaProgress.caps < cost
-	btn.pressed.connect(_on_refresh_stock)
-	btn.add_child(T.overlay_cost_badge(cost, "caps", 16, 18, -10, -76))
-	body.add_child(btn)
-
-	return section
 
 
 func _refresh_cost() -> int:
@@ -413,15 +352,43 @@ func _on_refresh_stock() -> void:
 	_rebuild_market()
 
 
+## The concept's section-header refresh control: an olive lightline button with
+## the refresh icon, 刷新 verb, and the escalating Caps cost badge. Both shelf
+## headers get one; they trigger the SAME reroll (one spend rerolls both stocks,
+## exactly the pre-reskin behavior).
+func _refresh_button() -> Button:
+	var cost := _refresh_cost()
+	var btn := _olive_button(tr("UI_MARKET_REFRESH_VERB"))
+	btn.custom_minimum_size = Vector2(176, 42)
+	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	btn.tooltip_text = tr("UI_MARKET_REFRESH_NOTE")
+	var icon_tex := T.lightline_tex("icon_refresh")
+	if icon_tex != null:
+		btn.icon = icon_tex
+		btn.add_theme_constant_override("icon_max_width", 22)
+	btn.disabled = MetaProgress.caps < cost
+	btn.pressed.connect(_on_refresh_stock)
+	btn.add_child(T.overlay_cost_badge(cost, "caps", 14, 15, -8, -62))
+	return btn
+
+
 # --- Resource conversion (T3, from the removed Warehouse) --------------------
 # The rows, math, and handlers are ported verbatim from warehouse_screen.gd's
-# T3 conversion block (economy unchanged); only the status feedback adapts to
-# this screen's rebuild-on-currency-change flow.
+# T3 conversion block (economy unchanged); only the row VISUAL follows the
+# concept's row_convert language now.
 
 
 func _build_convert_section() -> Control:
-	var section := _make_section(tr("UI_MARKET_CONVERT_SECTION"))
+	var section := _make_section(tr("UI_MARKET_CONVERT_TITLE"))
 	var body := section.get_meta("body") as VBoxContainer
+
+	# Live Scrap balance chip in the section header (Caps already shows on the
+	# base header chip; Scrap is the one balance this screen must add).
+	var header := section.get_meta("header") as HBoxContainer
+	var scrap_row := T.currency_row(MetaProgress.scrap, "scrap", 20, 22)
+	header.add_child(scrap_row)
+	_mkt_scrap_label = scrap_row.get_meta("amount_label") as Label
+	_mkt_scrap_label.add_theme_color_override("font_color", Color(0.78, 0.86, 0.62))
 
 	# Group both conversion rows in one block so they read as one function.
 	var group := VBoxContainer.new()
@@ -454,6 +421,12 @@ func _build_convert_section() -> Control:
 		)
 	)
 
+	var tax_lbl := Label.new()
+	tax_lbl.text = tr("UI_MARKET_CONVERT_TAX_NOTE")
+	tax_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(tax_lbl, TOK_FONT_DIM, TOK_TEXT_DIM, 1)
+	body.add_child(tax_lbl)
+
 	# Last-conversion feedback (survives the rebuild the currency change causes).
 	if _convert_status_text != "":
 		var status := Label.new()
@@ -470,9 +443,9 @@ func _converted_amount(chunk: int, rate: float) -> int:
 	return int(floor(chunk * rate * (1.0 - CONV_TAX)))
 
 
-## One conversion row, built on the shared `_row_panel` helper so it matches the
-## bordered-row look of the upgrade rows on the other screens. Shows "<src
-## amount+icon> → <dst amount+icon> (after 10% tax)" plus a Convert button.
+## One concept conversion row (row_convert language): [src icon][amount field] →
+## [dst icon][amount field] ... [olive swap button]. Same math + handlers as the
+## pre-reskin row; the tax note lives on the section (and the row tooltip).
 func _conversion_row(
 	src_amount: int,
 	src_cur: String,
@@ -481,35 +454,48 @@ func _conversion_row(
 	affordable: bool,
 	cb: Callable
 ) -> Control:
-	var row := _row_panel()
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", T.ll_inset())
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.tooltip_text = tr("UI_MARKET_CONVERT_TAX_NOTE")
+
+	var m := MarginContainer.new()
+	for side in ["margin_left", "margin_right"]:
+		m.add_theme_constant_override(side, 12)
+	for side in ["margin_top", "margin_bottom"]:
+		m.add_theme_constant_override(side, 8)
+	panel.add_child(m)
 
 	var line := HBoxContainer.new()
-	line.add_theme_constant_override("separation", 8)
+	line.add_theme_constant_override("separation", 12)
 	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(line)
+	m.add_child(line)
 
-	line.add_child(T.currency_row(src_amount, src_cur, TOK_FONT_BODY, 20))
-	var arrow := Label.new()
-	arrow.text = "→"
-	_style_label(arrow, TOK_FONT_BODY, TOK_TEXT, 1)
-	line.add_child(arrow)
-	line.add_child(T.currency_row(dst_amount, dst_cur, TOK_FONT_BODY, 20))
+	line.add_child(_ll_icon("icon_%s" % src_cur, 34))
+	line.add_child(_amount_field(src_amount))
+	line.add_child(_ll_icon("icon_arrow_right", 26))
+	line.add_child(_ll_icon("icon_%s" % dst_cur, 34))
+	line.add_child(_amount_field(dst_amount))
 
-	var tax_lbl := Label.new()
-	tax_lbl.text = tr("UI_MARKET_CONVERT_TAX_NOTE")
-	tax_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(tax_lbl, TOK_FONT_DIM, TOK_TEXT_DIM, 1)
-	line.add_child(tax_lbl)
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	line.add_child(spacer)
 
-	var btn := Button.new()
-	btn.custom_minimum_size = Vector2(150, 40)
-	btn.text = tr("UI_MARKET_CONVERT_DO")
-	T.apply_button_theme(btn)
+	var btn := _olive_button("")
+	btn.custom_minimum_size = Vector2(110, 42)
+	var swap_tex := T.lightline_tex("icon_swap")
+	if swap_tex != null:
+		btn.icon = swap_tex
+		btn.add_theme_constant_override("icon_max_width", 24)
+		btn.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		btn.tooltip_text = tr("UI_MARKET_CONVERT_DO")
+	else:
+		btn.text = tr("UI_MARKET_CONVERT_DO")
 	btn.disabled = not affordable
 	if affordable:
 		btn.pressed.connect(cb)
-	row.add_child(btn)
-	return row.get_meta("_panel")
+	line.add_child(btn)
+	return panel
 
 
 func _on_convert_scrap_to_caps() -> void:
@@ -557,13 +543,13 @@ func _flash_status(text: String) -> void:
 # --- Section / helpers ------------------------------------------------------
 
 
-## A titled panel; the inner content VBox is stored on the panel's "body" meta.
-## Uses the shared Phase-B panel token (`_styled_panel`) + gold section-title
-## color so the Market's shelves match the panel language on the other 4
-## screens instead of the market-only SECTION_BG/SECTION_BORDER it used before.
-func _make_section(title: String) -> PanelContainer:
-	var panel := _styled_panel(false)
+## A lightline shelf section: ll_section panel, a header row (gold title left,
+## optional olive refresh button right — the header HBox is stored on the
+## "header" meta for extra chips), and a content VBox on the "body" meta.
+func _make_section(title: String, with_refresh: bool = false) -> PanelContainer:
+	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", T.ll_section())
 
 	var margin := MarginContainer.new()
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
@@ -575,21 +561,160 @@ func _make_section(title: String) -> PanelContainer:
 	body.add_theme_constant_override("separation", TOK_ROW_SEP)
 	margin.add_child(body)
 
-	var header := Label.new()
-	header.text = title.to_upper()
-	_style_label(header, TOK_FONT_SECTION, TOK_GOLD, 2)
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 12)
 	body.add_child(header)
+	var header_lbl := Label.new()
+	header_lbl.text = title
+	_style_label(header_lbl, TOK_FONT_SECTION, TOK_GOLD, 2)
+	header.add_child(header_lbl)
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(spacer)
+	if with_refresh:
+		header.add_child(_refresh_button())
 
+	panel.set_meta("header", header)
 	panel.set_meta("body", body)
 	return panel
 
 
 ## A locked-function placeholder section with the tier needed to unlock it.
-func _locked_section(title: String, tier: int) -> Control:
-	var section := _make_section(title)
+## `with_refresh` keeps the ungated refresh reachable from a locked shelf header.
+func _locked_section(title: String, tier: int, with_refresh: bool = false) -> Control:
+	var section := _make_section(title, with_refresh)
 	var body := section.get_meta("body") as VBoxContainer
-	body.add_child(_body_label(tr("UI_MARKET_LOCKED_HINT").format({"t": tier}), true))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	row.add_child(_ll_icon("icon_lock", 26))
+	var lbl := Label.new()
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_label(lbl, 17, Color(0.78, 0.6, 0.5), 1)
+	lbl.text = tr("UI_MARKET_LOCKED_HINT").format({"t": tier})
+	row.add_child(lbl)
+	body.add_child(row)
 	return section
+
+
+## The recessed name bar under a shop card's item icon (concept: a slim dark
+## framed strip). bar_plain 9-slice when delivered, flat dark box otherwise.
+func _name_bar(text: String, color: Color) -> Control:
+	var bar := PanelContainer.new()
+	var fallback := StyleBoxFlat.new()
+	fallback.bg_color = Color(0.07, 0.065, 0.055, 0.95)
+	fallback.border_color = Color(0.34, 0.30, 0.20, 0.9)
+	fallback.set_border_width_all(1)
+	fallback.set_corner_radius_all(4)
+	var box := T.lightline_box("bar_plain", fallback, 24)
+	box.content_margin_left = 10
+	box.content_margin_right = 10
+	box.content_margin_top = 5
+	box.content_margin_bottom = 5
+	bar.add_theme_stylebox_override("panel", box)
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(lbl, 15, color, 1)
+	bar.add_child(lbl)
+	return bar
+
+
+## The orange price footer (buy button) on a shop card: 购买 verb left, Caps
+## amount+icon badge right. Caller still sets `.disabled` / `.pressed`.
+func _price_footer(price: int) -> Button:
+	var btn := _orange_button(tr("UI_MARKET_BUY_VERB"))
+	btn.custom_minimum_size = Vector2(0, 40)
+	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	btn.add_theme_font_size_override("font_size", 15)
+	btn.add_child(T.overlay_cost_badge(price, "caps", 14, 15, -8, -64))
+	return btn
+
+
+## An orange lightline primary button (concept's main action button).
+func _orange_button(text: String) -> Button:
+	var btn := Button.new()
+	btn.text = text
+	btn.custom_minimum_size = Vector2(0, 40)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_size_override("font_size", 16)
+	btn.add_theme_color_override("font_color", Color(0.16, 0.10, 0.04))
+	btn.add_theme_color_override("font_hover_color", Color(0.20, 0.13, 0.05))
+	btn.add_theme_color_override("font_pressed_color", Color(0.12, 0.08, 0.03))
+	btn.add_theme_color_override("font_disabled_color", Color(0.30, 0.24, 0.16, 0.9))
+	btn.add_theme_color_override("font_outline_color", Color(1.0, 0.92, 0.72, 0.35))
+	btn.add_theme_constant_override("outline_size", 1)
+	btn.add_theme_stylebox_override("normal", T.ll_button("normal"))
+	btn.add_theme_stylebox_override("hover", T.ll_button("hover"))
+	btn.add_theme_stylebox_override("pressed", T.ll_button("pressed"))
+	var disabled_box := T.ll_button("normal")
+	if disabled_box is StyleBoxTexture:
+		(disabled_box as StyleBoxTexture).modulate_color = Color(0.55, 0.55, 0.55)
+	btn.add_theme_stylebox_override("disabled", disabled_box)
+	return btn
+
+
+## An olive lightline secondary button (refresh / swap actions), cream text.
+func _olive_button(text: String) -> Button:
+	var btn := Button.new()
+	btn.text = text
+	btn.custom_minimum_size = Vector2(0, 40)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_size_override("font_size", 16)
+	btn.add_theme_color_override("font_color", Color(0.93, 0.90, 0.78))
+	btn.add_theme_color_override("font_hover_color", Color(1.0, 0.97, 0.86))
+	btn.add_theme_color_override("font_pressed_color", Color(0.80, 0.77, 0.66))
+	btn.add_theme_color_override("font_disabled_color", Color(0.55, 0.52, 0.44, 0.9))
+	btn.add_theme_stylebox_override("normal", T.ll_button_olive("normal"))
+	btn.add_theme_stylebox_override("hover", T.ll_button_olive("hover"))
+	btn.add_theme_stylebox_override("pressed", T.ll_button_olive("pressed"))
+	var disabled_box := T.ll_button_olive("normal")
+	if disabled_box is StyleBoxTexture:
+		(disabled_box as StyleBoxTexture).modulate_color = Color(0.55, 0.55, 0.55)
+	btn.add_theme_stylebox_override("disabled", disabled_box)
+	return btn
+
+
+## The concept's recessed amount field in a conversion row.
+func _amount_field(amount: int) -> Control:
+	var field := PanelContainer.new()
+	field.custom_minimum_size = Vector2(110, 42)
+	var fallback := StyleBoxFlat.new()
+	fallback.bg_color = Color(0.07, 0.065, 0.055, 0.95)
+	fallback.border_color = Color(0.34, 0.30, 0.20, 0.9)
+	fallback.set_border_width_all(1)
+	fallback.set_corner_radius_all(4)
+	var box := T.lightline_box("bar_plain", fallback, 24)
+	box.content_margin_left = 10
+	box.content_margin_right = 10
+	box.content_margin_top = 5
+	box.content_margin_bottom = 5
+	field.add_theme_stylebox_override("panel", box)
+	var lbl := Label.new()
+	lbl.text = str(amount)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_style_label(lbl, 18, PRICE_COLOR, 1)
+	field.add_child(lbl)
+	return field
+
+
+## A lightline PNG as a fixed-size TextureRect, or an equal-size empty spacer
+## when the art is undelivered (warn-free placeholder).
+func _ll_icon(icon_name: String, px: float) -> Control:
+	var tex := T.lightline_tex(icon_name)
+	if tex == null:
+		var spacer := Control.new()
+		spacer.custom_minimum_size = Vector2(px, px)
+		return spacer
+	var rect := TextureRect.new()
+	rect.texture = tex
+	rect.custom_minimum_size = Vector2(px, px)
+	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return rect
 
 
 ## Roll a small, session-stable tool stock from the whole tool pool.
@@ -654,17 +779,3 @@ func _load_json(path: String) -> Dictionary:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return {}
 	return parsed
-
-
-## A "Buy" button with a Caps amount+icon row overlaid on the right — replaces
-## the old "Buy (N Caps)" text-only label. Caller still sets `.disabled` /
-## `.pressed` after this returns.
-func _caps_cost_button(price: int, min_size: Vector2) -> Button:
-	var btn := Button.new()
-	btn.custom_minimum_size = min_size
-	btn.add_theme_font_size_override("font_size", 17)
-	T.apply_button_theme(btn)
-	btn.text = tr("UI_MARKET_BUY_VERB")
-	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	btn.add_child(T.overlay_cost_badge(price, "caps", 15, 16, -8, -66))
-	return btn

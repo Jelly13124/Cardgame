@@ -1,9 +1,26 @@
-## Clinic (义体诊所) building screen. Spends Caps on cybernetic attribute perks
-## (the ported Cyber Doctor model), and — at higher tiers — a Max-HP perk (T2)
-## and a raised attribute level cap (T3).
+## Clinic (义体诊所) building screen, rebuilt to the 2026-07-07 "lightline"
+## concept (docs/art/previews/base_building_clinic_ui_simple_comic_20260707.png):
+##   FAR LEFT      ClinicDecoArt        — deco strip (canister_medkit +
+##                 canister_blue illustrations; named node so future Codex
+##                 clinic art can slot in by node path).
+##   MAIN (wide)   T1 attr_perks        — five attribute rows, each a lightline
+##                 bar: framed attr icon + bare attribute name + level dots
+##                 (orange filled / dark empty / faint beyond the current cap)
+##                 + the orange Caps buy button.
+##   RIGHT top     T2 max_hp_perk       — 生命上限 card: cyan heart icon + cyan
+##                 level dots + the orange Caps buy (cyber_hp backend).
+##   RIGHT bottom  T3 high_cap          — 强化上限 card: up-arrow icon + cyan
+##                 cap dots + the cap note. Display-only: the cap raise comes
+##                 from the clinic reaching T3 (bought on the base overview),
+##                 so unlike the concept sketch this card has no buy button.
 ##
-## Tier-gated functions (MetaProgress.BUILDING_DEFS["clinic"].functions):
-##   attr_perks (T1) · max_hp_perk (T2) · high_cap (T3).
+## VISUAL REBUILD ONLY — the backend is untouched: MetaProgress.buy_caps_perk /
+## caps_perk_cost / attr_perk_cap / get_caps_perk_level, rebuilt live on the
+## caps/buildings/upgrades signals exactly as before.
+##
+## Every lightline PNG lookup falls back to a programmatic StyleBox / spacer /
+## legacy attribute PNG so a missing Codex asset never crashes (warn-free
+## placeholder rule).
 ##
 ## NO class_name (ADR-0006): subclasses the base screen via its resource path.
 ## Reads ONLY the shared MetaProgress building/caps-perk API; edits no shared file.
@@ -12,15 +29,29 @@ extends "res://run_system/ui/buildings/building_screen_base.gd"
 ## Max-HP perk (cyber_hp): +5 max HP per level. Cost/level is sourced from
 ## MetaProgress.caps_perk_cost(CYBER_HP_PERK); the +HP value is display-only here.
 const MAX_HP_PER_LEVEL := 5
-## Effective attribute level cap with clinic at T3 (spec: 3 → 5). Display-only here.
+## Effective attribute level cap with clinic at T3 (spec: 3 → 5). Display-only
+## here — also the total dot count per row (dots beyond the current cap render
+## faint, selling the T3 cap raise like the concept's fixed 5-dot rows).
 const HIGH_CAP_LEVEL := 5
-## Legacy base-upgrade tracks (now Caps, like every base upgrade): the directory
-## the JSON defs live in, plus the two upgrade ids. These are the classic stat
-## upgrades — med_bay (+max HP at run start) and starter_boost (+starting
-## attribute points) — driven exactly like the outpost's permanent upgrade rows.
-const UPGRADE_DIR := "res://run_system/data/base_upgrades/"
-const MED_BAY_UPGRADE_ID := "med_bay"
-const STARTER_BOOST_UPGRADE_ID := "starter_boost"
+
+## Lightline icon per base attribute (concept row order = CYBER_DOC_PERKS order).
+## Missing PNGs fall back to the legacy attribute icons, then to a spacer.
+const ATTR_LL_ICONS := {
+	"strength": "icon_fist",
+	"constitution": "icon_torso",
+	"intelligence": "icon_brain",
+	"luck": "icon_clover",
+	"charm": "icon_star",
+}
+## Legacy attribute icon dir (pre-lightline art) — fallback for ATTR_LL_ICONS.
+const LEGACY_ATTR_ICON_DIR := "res://battle_scene/assets/images/ui/attributes/"
+
+## Level-dot diameter (attr rows + right-column cards).
+const DOT_SIZE := 18.0
+## Concept dot colors: orange filled (attr rows), cyan handled by icon_dot_cyan.
+const DOT_FILL := Color(0.95, 0.62, 0.16)
+const DOT_EMPTY_BG := Color(0.13, 0.12, 0.10)
+const DOT_RING := Color(0.42, 0.38, 0.28)
 
 
 func _build_content(container: VBoxContainer) -> void:
@@ -37,39 +68,187 @@ func _rebuild(container: VBoxContainer) -> void:
 	for child in container.get_children():
 		child.queue_free()
 
-	# Live Caps balance banner (services in the clinic spend Caps) — matches the
-	# banner treatment on the other 4 screens (forge Scrap / outpost Caps).
-	var banner := _styled_panel(true)
-	var bm := MarginContainer.new()
-	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		bm.add_theme_constant_override(side, TOK_MARGIN_INNER)
-	banner.add_child(bm)
-	bm.add_child(T.currency_row(MetaProgress.caps, "caps", 20, 24))
-	container.add_child(banner)
+	# Concept layout: deco strip | five attribute rows (wide) | vitals + cap cards.
+	var columns := HBoxContainer.new()
+	columns.add_theme_constant_override("separation", 16)
+	columns.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	container.add_child(columns)
 
-	# --- T1: attribute perks (Caps) ---
-	container.add_child(_section_header(tr("UI_CLINIC_ATTR_TITLE")))
+	columns.add_child(_build_deco_column())
+
+	# --- MAIN: T1 attribute perk rows (Caps). ---
+	var main_col := VBoxContainer.new()
+	main_col.add_theme_constant_override("separation", TOK_ROW_SEP)
+	main_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_col.size_flags_stretch_ratio = 2.2
+	columns.add_child(main_col)
 	if MetaProgress.building_can("clinic", "attr_perks"):
-		var attr_group := VBoxContainer.new()
-		attr_group.add_theme_constant_override("separation", TOK_ROW_SEP)
-		container.add_child(attr_group)
 		# Stable perk order so rows don't reshuffle between rebuilds.
 		for perk_id in MetaProgress.CYBER_DOC_PERKS.keys():
-			attr_group.add_child(_build_attr_perk_row(str(perk_id)))
+			main_col.add_child(_build_attr_perk_row(str(perk_id)))
 	else:
-		_add_locked_hint(container, tr("UI_CLINIC_LOCKED_ATTR"))
+		_add_lock_note(main_col, tr("UI_CLINIC_LOCKED_ATTR"))
 
-	# --- T2: Max-HP perk (Caps) ---
-	container.add_child(_section_header(tr("UI_CLINIC_HP_TITLE")))
-	if MetaProgress.building_can("clinic", "max_hp_perk"):
-		container.add_child(_build_max_hp_row())
-	else:
-		_add_locked_hint(container, tr("UI_CLINIC_LOCKED_HP"))
+	# --- RIGHT: 生命上限 (T2) card over 强化上限 (T3) card. ---
+	var right_col := VBoxContainer.new()
+	right_col.add_theme_constant_override("separation", 14)
+	right_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_col.size_flags_stretch_ratio = 1.0
+	columns.add_child(right_col)
+	right_col.add_child(_build_vitals_card())
+	right_col.add_child(_build_cap_card())
 
-	# --- T3: raised attribute level cap (display-only here) ---
-	container.add_child(_section_header(tr("UI_CLINIC_CAP_TITLE")))
+
+## The concept's far-left clinic dressing: stacked canister illustrations.
+## NAMED node ("ClinicDecoArt") so future per-building Codex art can be slotted
+## in by node path without touching this layout. Missing PNGs leave spacers.
+func _build_deco_column() -> Control:
+	var deco := VBoxContainer.new()
+	deco.name = "ClinicDecoArt"
+	deco.alignment = BoxContainer.ALIGNMENT_CENTER
+	deco.add_theme_constant_override("separation", 20)
+	deco.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	deco.custom_minimum_size = Vector2(120, 0)
+	deco.add_child(_ll_art("canister_medkit", Vector2(110, 174)))
+	deco.add_child(_ll_art("canister_blue", Vector2(100, 180)))
+	return deco
+
+
+# --- T1: attribute perk rows ---------------------------------------------------
+
+
+## One concept attribute row: [framed attr icon] [name] .. [dots] .. [orange buy].
+## Backend unchanged: get_caps_perk_level / attr_perk_cap / caps_perk_cost /
+## buy_caps_perk (caps_changed then triggers the rebuild that repaints levels).
+func _build_attr_perk_row(perk_id: String) -> Control:
+	var attr: String = str(MetaProgress.CYBER_DOC_PERKS.get(perk_id, ""))
+	var lvl := MetaProgress.get_caps_perk_level(perk_id)
+	var cap := MetaProgress.attr_perk_cap()
+	var cost := MetaProgress.caps_perk_cost(perk_id)
+
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", T.ll_inset())
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Full perk name + level on hover (the concept row only shows the bare
+	# attribute name, so the descriptive copy moves to the tooltip).
+	panel.tooltip_text = (
+		"%s — %s"
+		% [
+			tr("UI_CLINIC_PERK_%s" % perk_id.to_upper()),
+			tr("UI_CLINIC_PERK_LEVEL").format({"cur": lvl, "max": cap}),
+		]
+	)
+
+	var m := MarginContainer.new()
+	for side in ["margin_left", "margin_right"]:
+		m.add_theme_constant_override(side, 12)
+	for side in ["margin_top", "margin_bottom"]:
+		m.add_theme_constant_override(side, 8)
+	panel.add_child(m)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	m.add_child(row)
+
+	# Framed icon plate (concept: the icon sits in its own bordered square).
+	var plate := PanelContainer.new()
+	plate.add_theme_stylebox_override("panel", T.ll_slot("normal"))
+	plate.custom_minimum_size = Vector2(56, 56)
+	plate.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var plate_center := CenterContainer.new()
+	plate.add_child(plate_center)
+	plate_center.add_child(_attr_icon(attr, 40))
+	row.add_child(plate)
+
+	# Bare attribute name (concept) — shared UI_COMBAT_ATTR_* keys (力量/体质/…).
+	var name_lbl := Label.new()
+	name_lbl.text = tr("UI_COMBAT_ATTR_%s" % attr.to_upper())
+	_style_label(name_lbl, 21, Color(0.97, 0.93, 0.84), 1)
+	name_lbl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(name_lbl)
+
+	var pre_spacer := Control.new()
+	pre_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(pre_spacer)
+
+	var dots := _perk_dots(lvl, cap)
+	dots.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(dots)
+
+	var post_spacer := Control.new()
+	post_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(post_spacer)
+
+	row.add_child(_buy_button(lvl, cap, cost, func() -> void: MetaProgress.buy_caps_perk(perk_id)))
+	return panel
+
+
+# --- T2: 生命上限 (Max-HP perk, cyber_hp) ---------------------------------------
+
+
+## The concept's right-column vitals card: title, cyan heart, level dots, orange
+## Caps buy. Backend unchanged: MetaProgress.buy_caps_perk(CYBER_HP_PERK), gated
+## on the clinic's T2 max_hp_perk function inside buy_caps_perk itself.
+func _build_vitals_card() -> Control:
+	var card := _ll_card(tr("UI_CLINIC_VITALS_TITLE"))
+	var body := card.get_meta("body") as VBoxContainer
+
+	var icon_center := CenterContainer.new()
+	icon_center.add_child(_ll_icon("icon_heart", 60))
+	body.add_child(icon_center)
+
+	if not MetaProgress.building_can("clinic", "max_hp_perk"):
+		_add_lock_note(body, tr("UI_CLINIC_LOCKED_HP"))
+		return card
+
+	var perk_id := MetaProgress.CYBER_HP_PERK
+	var lvl := MetaProgress.get_caps_perk_level(perk_id)
+	var cap := MetaProgress.attr_perk_cap()
+
+	var dots_center := CenterContainer.new()
+	dots_center.add_child(_cyan_dots(lvl, HIGH_CAP_LEVEL, cap))
+	body.add_child(dots_center)
+
+	var note := Label.new()
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.text = tr("UI_CLINIC_HP_PERK").format({"hp": MAX_HP_PER_LEVEL})
+	_style_label(note, TOK_FONT_DIM, TOK_TEXT_DIM, 1)
+	body.add_child(note)
+
+	body.add_child(
+		_buy_button(
+			lvl,
+			cap,
+			MetaProgress.caps_perk_cost(perk_id),
+			func() -> void: MetaProgress.buy_caps_perk(perk_id)
+		)
+	)
+	return card
+
+
+# --- T3: 强化上限 (display-only) -------------------------------------------------
+
+
+## The concept's cap card. Display-only on purpose: the cap raise IS the clinic's
+## T3 tier (bought on the base overview), so the concept sketch's buy button has
+## no backend action to wire — the card shows the effective cap + how to raise it.
+func _build_cap_card() -> Control:
+	var card := _ll_card(tr("UI_CLINIC_CAP_TITLE"))
+	var body := card.get_meta("body") as VBoxContainer
+
+	var icon_center := CenterContainer.new()
+	icon_center.add_child(_ll_icon("icon_uparrow", 56))
+	body.add_child(icon_center)
+
 	var effective_cap := MetaProgress.attr_perk_cap()
+	var dots_center := CenterContainer.new()
+	dots_center.add_child(_cyan_dots(effective_cap, HIGH_CAP_LEVEL, HIGH_CAP_LEVEL))
+	body.add_child(dots_center)
+
 	var cap_note := Label.new()
+	cap_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cap_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if MetaProgress.building_can("clinic", "high_cap"):
 		cap_note.text = tr("UI_CLINIC_CAP_HIGH").format({"cap": effective_cap})
@@ -77,119 +256,200 @@ func _rebuild(container: VBoxContainer) -> void:
 		cap_note.text = (tr("UI_CLINIC_CAP_BASE").format(
 			{"cap": effective_cap, "high": HIGH_CAP_LEVEL}
 		))
-	_style_label(cap_note, TOK_FONT_BODY, TOK_TEXT_DIM, 1)
-	container.add_child(cap_note)
+	_style_label(cap_note, TOK_FONT_DIM, TOK_TEXT_DIM, 1)
+	body.add_child(cap_note)
+	return card
 
 
-## Minimal JSON loader (mirrors the outpost screen). Returns {} when the file is
-## absent or not a JSON object, so callers can render a missing-def fallback.
-func _load_json(path: String) -> Dictionary:
-	if not FileAccess.file_exists(path):
-		return {}
-	var f := FileAccess.open(path, FileAccess.READ)
-	if f == null:
-		return {}
-	var raw := f.get_as_text()
-	f.close()
-	var parsed: Variant = JSON.parse_string(raw)
-	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
+# --- Small UI helpers (lightline, PNG-optional) --------------------------------
 
 
-## Card-style perk row: [icon]  name + level pips ........... [ BUY  cost ] / MAX.
-## Shared by the attribute perks and the Max-HP perk. `on_buy` runs on purchase.
-func _perk_card(
-	icon_path: String, name_text: String, lvl: int, max_lvl: int, cost: int, on_buy: Callable
-) -> Control:
-	var maxed := lvl >= max_lvl
-	var card := _styled_panel(true)
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 16)
-	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 10)
-	margin.add_theme_constant_override("margin_bottom", 10)
-	card.add_child(margin)
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
-	margin.add_child(row)
-
-	if icon_path != "" and ResourceLoader.exists(icon_path):
-		var icon := TextureRect.new()
-		icon.texture = load(icon_path)
-		icon.custom_minimum_size = Vector2(46, 46)
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-		icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		row.add_child(icon)
-
-	var info := VBoxContainer.new()
-	info.add_theme_constant_override("separation", 4)
-	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(info)
-
-	var name_lbl := Label.new()
-	name_lbl.text = name_text
-	_style_label(name_lbl, 21, Color(1, 0.92, 0.62), 2)
-	info.add_child(name_lbl)
-
-	var pips := ""
-	for i in range(max_lvl):
-		pips += "●" if i < lvl else "○"
-	var pips_lbl := Label.new()
-	pips_lbl.text = "%s   %d/%d" % [pips, lvl, max_lvl]
-	_style_label(pips_lbl, 18, Color(0.60, 0.92, 1.0), 1)
-	info.add_child(pips_lbl)
-
-	var buy := Button.new()
-	buy.custom_minimum_size = Vector2(176, 46)
+## The orange lightline buy button shared by every purchasable in this screen:
+## MAX + disabled at the cap, otherwise 购买 with the Caps cost badge, disabled
+## while Caps are short. `on_buy` is the existing backend call.
+func _buy_button(lvl: int, max_lvl: int, cost: int, on_buy: Callable) -> Button:
+	var buy := _orange_button("")
+	buy.custom_minimum_size = Vector2(172, 44)
 	buy.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	buy.add_theme_font_size_override("font_size", 19)
-	T.apply_button_theme(buy)
-	buy.add_theme_color_override("font_disabled_color", Color(0.70, 0.62, 0.50, 0.9))
-	if maxed:
+	if lvl >= max_lvl:
 		buy.text = tr("UI_CLINIC_PERK_MAX")
 		buy.disabled = true
 	else:
 		buy.text = tr("UI_CLINIC_BUY")
 		buy.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		buy.disabled = MetaProgress.caps < cost
-		if not buy.disabled:
-			buy.add_theme_color_override("font_color", Color(0.74, 1.0, 0.64))  # affordable
 		buy.pressed.connect(on_buy)
-		buy.add_child(T.overlay_cost_badge(cost, "caps", 17, 18, -8, -70))
-	row.add_child(buy)
-
-	return card
+		buy.add_child(T.overlay_cost_badge(cost, "caps", 15, 16, -10, -72))
+	return buy
 
 
-func _build_attr_perk_row(perk_id: String) -> Control:
-	var attr: String = str(MetaProgress.CYBER_DOC_PERKS.get(perk_id, ""))
-	return _perk_card(
-		"res://battle_scene/assets/images/ui/attributes/%s.png" % attr,
-		tr("UI_CLINIC_PERK_%s" % perk_id.to_upper()),
-		MetaProgress.get_caps_perk_level(perk_id),
-		MetaProgress.attr_perk_cap(),
-		MetaProgress.caps_perk_cost(perk_id),
-		func() -> void: MetaProgress.buy_caps_perk(perk_id)
-	)
+## A lightline-framed titled card (right column): ll_section panel + centered
+## gold title over a content VBox stored on the "body" meta.
+func _ll_card(title: String) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", T.ll_section())
+
+	var margin := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		margin.add_theme_constant_override(side, TOK_MARGIN_OUTER)
+	panel.add_child(margin)
+
+	var body := VBoxContainer.new()
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", TOK_ROW_SEP)
+	margin.add_child(body)
+
+	var lbl := Label.new()
+	lbl.text = title
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_style_label(lbl, TOK_FONT_SECTION, TOK_GOLD, 2)
+	body.add_child(lbl)
+
+	panel.set_meta("body", body)
+	return panel
 
 
-## Max-HP perk row (cyber_hp). Buys one level via MetaProgress.buy_caps_perk, which
-## gates on the clinic's T2 max_hp_perk function and the shared attr_perk_cap().
-func _build_max_hp_row() -> Control:
-	var perk_id := MetaProgress.CYBER_HP_PERK
-	return _perk_card(
-		"res://battle_scene/assets/images/ui/attributes/constitution.png",
-		tr("UI_CLINIC_HP_PERK").format({"hp": MAX_HP_PER_LEVEL}),
-		MetaProgress.get_caps_perk_level(perk_id),
-		MetaProgress.attr_perk_cap(),
-		MetaProgress.caps_perk_cost(perk_id),
-		func() -> void: MetaProgress.buy_caps_perk(perk_id)
-	)
+## The concept attr-row dots: HIGH_CAP_LEVEL circles — orange filled up to `lvl`,
+## dark ring while within the current cap, extra-faint beyond it (sells the T3
+## cap raise). Programmatic circles (StyleBoxFlat), so no PNG dependency.
+func _perk_dots(lvl: int, cap: int) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	for i in range(HIGH_CAP_LEVEL):
+		var dot := Panel.new()
+		dot.custom_minimum_size = Vector2(DOT_SIZE, DOT_SIZE)
+		var sb := StyleBoxFlat.new()
+		sb.set_corner_radius_all(int(DOT_SIZE / 2.0))
+		if i < lvl:
+			sb.bg_color = DOT_FILL
+		else:
+			sb.bg_color = DOT_EMPTY_BG
+			sb.border_color = DOT_RING
+			sb.set_border_width_all(1)
+			if i >= cap:
+				sb.bg_color = Color(DOT_EMPTY_BG, 0.45)
+				sb.border_color = Color(DOT_RING, 0.35)
+		dot.add_theme_stylebox_override("panel", sb)
+		row.add_child(dot)
+	return row
 
 
-func _add_locked_hint(container: VBoxContainer, text: String) -> void:
-	container.add_child(_body_label(text, true))
+## The concept right-column dots: `total` dots, cyan-filled up to `cur`
+## (icon_dot_cyan), grey-dimmed empties, extra-faint beyond `cap`. Falls back to
+## text dots when the PNG is absent so the row never renders blank.
+func _cyan_dots(cur: int, total: int, cap: int) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 5)
+	var dot_tex := T.lightline_tex("icon_dot_cyan")
+	if dot_tex == null:
+		var lbl := Label.new()
+		var dots := ""
+		for i in range(total):
+			dots += "●" if i < cur else "○"
+		lbl.text = dots
+		_style_label(lbl, 16, Color(0.55, 0.88, 0.92), 1)
+		row.add_child(lbl)
+		return row
+	for i in range(total):
+		var dot := TextureRect.new()
+		dot.texture = dot_tex
+		dot.custom_minimum_size = Vector2(DOT_SIZE, DOT_SIZE)
+		dot.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		dot.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		if i >= cur:
+			dot.modulate = Color(0.42, 0.42, 0.42, 0.85)
+		if i >= cap:
+			dot.modulate = Color(0.30, 0.30, 0.30, 0.45)
+		row.add_child(dot)
+	return row
+
+
+## An orange lightline primary button (concept's main action button).
+func _orange_button(text: String) -> Button:
+	var btn := Button.new()
+	btn.text = text
+	btn.custom_minimum_size = Vector2(0, 40)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_size_override("font_size", 16)
+	btn.add_theme_color_override("font_color", Color(0.16, 0.10, 0.04))
+	btn.add_theme_color_override("font_hover_color", Color(0.20, 0.13, 0.05))
+	btn.add_theme_color_override("font_pressed_color", Color(0.12, 0.08, 0.03))
+	btn.add_theme_color_override("font_disabled_color", Color(0.30, 0.24, 0.16, 0.9))
+	btn.add_theme_color_override("font_outline_color", Color(1.0, 0.92, 0.72, 0.35))
+	btn.add_theme_constant_override("outline_size", 1)
+	btn.add_theme_stylebox_override("normal", T.ll_button("normal"))
+	btn.add_theme_stylebox_override("hover", T.ll_button("hover"))
+	btn.add_theme_stylebox_override("pressed", T.ll_button("pressed"))
+	var disabled_box := T.ll_button("normal")
+	if disabled_box is StyleBoxTexture:
+		(disabled_box as StyleBoxTexture).modulate_color = Color(0.55, 0.55, 0.55)
+	btn.add_theme_stylebox_override("disabled", disabled_box)
+	return btn
+
+
+## Attribute icon with a lightline → legacy-PNG → spacer fallback chain.
+func _attr_icon(attr: String, px: float) -> Control:
+	var tex := T.lightline_tex(str(ATTR_LL_ICONS.get(attr, "")))
+	if tex == null:
+		var legacy_path := "%s%s.png" % [LEGACY_ATTR_ICON_DIR, attr]
+		if ResourceLoader.exists(legacy_path):
+			tex = load(legacy_path) as Texture2D
+	if tex == null:
+		var spacer := Control.new()
+		spacer.custom_minimum_size = Vector2(px, px)
+		return spacer
+	var rect := TextureRect.new()
+	rect.texture = tex
+	rect.custom_minimum_size = Vector2(px, px)
+	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return rect
+
+
+## A lightline PNG as a fixed-size TextureRect, or an equal-size empty spacer
+## when the art is undelivered (warn-free placeholder).
+func _ll_icon(icon_name: String, px: float) -> Control:
+	var tex := T.lightline_tex(icon_name)
+	if tex == null:
+		var spacer := Control.new()
+		spacer.custom_minimum_size = Vector2(px, px)
+		return spacer
+	var rect := TextureRect.new()
+	rect.texture = tex
+	rect.custom_minimum_size = Vector2(px, px)
+	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return rect
+
+
+## A lightline illustration at an arbitrary rect size (deco pieces).
+func _ll_art(art_name: String, box: Vector2) -> Control:
+	var tex := T.lightline_tex(art_name)
+	if tex == null:
+		var spacer := Control.new()
+		spacer.custom_minimum_size = box
+		return spacer
+	var rect := TextureRect.new()
+	rect.texture = tex
+	rect.custom_minimum_size = box
+	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	return rect
+
+
+func _add_lock_note(container: VBoxContainer, text: String) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	row.add_child(_ll_icon("icon_lock", 26))
+	var lbl := Label.new()
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_label(lbl, 17, Color(0.78, 0.6, 0.5), 1)
+	lbl.text = text
+	row.add_child(lbl)
+	container.add_child(row)

@@ -32,3 +32,6 @@ UI_BOUNTY_OBJ_KILL_BOSS,Slay {n} boss,讨伐 {n} 名首领
 UI_BOUNTY_OBJ_EXTRACT_ALIVE,Extract alive {n} time,活着撤离 {n} 次
 UI_BOUNTY_OBJ_UPGRADE_CARDS,Upgrade {n} cards at campfires,在篝火升级 {n} 张卡牌
 UI_BOUNTY_OBJ_KILL_ENEMIES,Kill {n} enemies,击杀 {n} 名敌人
+UI_MARKET_TOOL_SHELF,Tool Shelf,工具货架
+UI_MARKET_EQUIP_SHELF,Equipment Shelf,装备货架
+UI_MARKET_CONVERT_TITLE,Resource Exchange,资源兑换
