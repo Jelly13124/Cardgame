@@ -220,7 +220,7 @@ func _refresh_base() -> void:
 		child.queue_free()
 	_slot_parts.clear()  # the layered slot visuals died with the old children
 
-	_base_box.add_child(_build_charcoal_header())
+	_mount_header()
 
 	# ── MIDDLE: the D4 zone (slots flanking the doll + hero switcher) ──
 	_base_box.add_child(_build_d4_middle_base())
@@ -411,6 +411,23 @@ func _make_stat_line(attrs: Variant) -> Label:
 	l.add_theme_font_size_override("font_size", 11)
 	l.add_theme_color_override("font_color", T.UI_LABEL_DIM)
 	return l
+
+
+## (Re)build the charcoal header into the base-class header_root — the fixed
+## strip ABOVE the content scroll, so the drag handle can neither scroll away
+## nor lose the pointer mid-drag. Clears first: base mode re-mounts on every
+## _refresh_base without stacking; map/battle mounts once. The margin mirrors
+## the body's 18px side padding (bottom stays 0 — the body margin provides the
+## gap below).
+func _mount_header() -> void:
+	for child in header_root.get_children():
+		header_root.remove_child(child)
+		child.queue_free()
+	var m := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top"]:
+		m.add_theme_constant_override(side, 18)
+	m.add_child(_build_charcoal_header())
+	header_root.add_child(m)
 
 
 ## The charcoal window header (all modes, concept 2026-07-08): round gear
@@ -1153,8 +1170,9 @@ func _build_map_battle() -> void:
 	vroot.add_theme_constant_override("separation", 14)
 	margin.add_child(vroot)
 
-	# ── Header: the charcoal chrome strip (drag + ✕), then the vitals line ──
-	vroot.add_child(_build_charcoal_header())
+	# ── Header: the charcoal chrome strip (drag + ✕) mounts into the FIXED
+	# header_root above the scroll; the scrolled body starts at the vitals line ──
+	_mount_header()
 	_vitals_label = Label.new()
 	_vitals_label.add_theme_font_size_override("font_size", 15)
 	_vitals_label.add_theme_color_override("font_color", T.UI_HEADER_GOLD)

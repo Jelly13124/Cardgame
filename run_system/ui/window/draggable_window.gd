@@ -3,16 +3,24 @@
 ## title-bar icon buttons (add_title_button). Subclass via
 ## `extends "res://run_system/ui/window/draggable_window.gd"` (no class_name,
 ## ADR-0006), call `init_window(title, size)` in _ready, then add content into
-## `content_root`. Hosted by window_layer.gd (which owns z-order + ESC-close).
-## Chrome uses the v2 scrap-brown + brass theme (T.ui_panel / T.ui_titlebar —
-## programmatic fallbacks until the Codex ui_kit lands).
+## `content_root`. Windows that build their OWN header (show_title_bar=false)
+## put it into `header_root` — the fixed strip ABOVE the content scroll — and
+## mark it draggable with bind_drag_area(). Hosted by window_layer.gd (which
+## owns z-order + ESC-close). Chrome uses the v2 scrap-brown + brass theme
+## (T.ui_panel / T.ui_titlebar — programmatic fallbacks until the Codex ui_kit
+## lands).
 extends PanelContainer
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 
 signal closed
 
+## Scrolled body: content beyond the viewport-capped height scrolls.
 var content_root: VBoxContainer
+## Fixed strip between the (optional) stock title bar and the content scroll —
+## custom headers mounted here stay put (and stay draggable) while the body
+## scrolls. Empty (zero-height) unless a subclass adds to it.
+var header_root: VBoxContainer
 var _drag_active := false
 var _drag_offset := Vector2.ZERO
 var _title_bar: PanelContainer
@@ -46,8 +54,7 @@ func init_window(title: String, win_size: Vector2, show_title_bar: bool = true) 
 	_title_bar = PanelContainer.new()
 	_title_bar.custom_minimum_size = Vector2(0, 42)
 	_title_bar.add_theme_stylebox_override("panel", T.ui_titlebar())
-	_title_bar.mouse_filter = Control.MOUSE_FILTER_STOP
-	_title_bar.gui_input.connect(_on_title_input)
+	bind_drag_area(_title_bar)
 	vbox.add_child(_title_bar)
 
 	_title_bar_box = HBoxContainer.new()
@@ -71,11 +78,16 @@ func init_window(title: String, win_size: Vector2, show_title_bar: bool = true) 
 	gui_input.connect(_on_window_input)
 
 
-## The window body: content_root inside a v-scroll. The scroll is what makes the
-## viewport cap safe — a tab whose content minimum outgrows the window scrolls
-## instead of pushing the frame off-screen. When content fits, the scrollbar
-## never shows and the layout is identical to the pre-scroll version.
+## The window body: a fixed header_root strip, then content_root inside a
+## v-scroll. The scroll is what makes the viewport cap safe — a tab whose
+## content minimum outgrows the window scrolls instead of pushing the frame
+## off-screen. When content fits, the scrollbar never shows and the layout is
+## identical to the pre-scroll version. header_root sits OUTSIDE the scroll so
+## custom headers (char/stash) never scroll away from under the cursor.
 func _add_scrolled_content(vbox: VBoxContainer) -> void:
+	header_root = VBoxContainer.new()
+	header_root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_child(header_root)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -123,7 +135,7 @@ func add_title_button(text_or_icon: String, tooltip: String, cb: Callable) -> Bu
 
 func bind_drag_area(area: Control) -> void:
 	area.mouse_filter = Control.MOUSE_FILTER_STOP
-	area.gui_input.connect(_on_title_input)
+	area.gui_input.connect(_on_title_input.bind(area))
 
 
 func close() -> void:
@@ -138,16 +150,27 @@ func _on_window_input(event: InputEvent) -> void:
 			wl.bring_to_front(self)
 
 
-func _on_title_input(event: InputEvent) -> void:
+## Drag math is EVENT-driven on purpose: `event.position` is local to `area`
+## (the bound control the signal fired on), lifted into layer space via the
+## area's global transform — the same space as this window's global_position.
+## The old get_global_mouse_position() polled the OS cursor through the
+## DisplayServer, which desyncs from the delivered gui events under the
+## viewport-stretch transform, touch emulation (finger drag moves no OS
+## cursor), pen input, and synthetic/injected events — presses landed
+## (_drag_active flipped) but the move resolved to `pos = mouse - (mouse -
+## pos)` = frozen window (2026-07-08 "can't drag any base window" report).
+func _on_title_input(event: InputEvent, area: Control) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		_drag_active = event.pressed
-		_drag_offset = get_global_mouse_position() - global_position
+		_drag_offset = area.get_global_transform() * event.position - global_position
 		if event.pressed:
 			var wl := get_parent()
 			if wl and wl.has_method("bring_to_front"):
 				wl.bring_to_front(self)
 	elif event is InputEventMouseMotion and _drag_active:
+		var mouse: Vector2 = area.get_global_transform() * event.position
 		var vp := get_viewport_rect().size
-		global_position = (get_global_mouse_position() - _drag_offset).clamp(
-			Vector2.ZERO, vp - size
-		)
+		# .max guards a window larger than the viewport: a negative clamp range
+		# would invert (max < min) and pin the window off-screen.
+		var max_pos := (vp - size).max(Vector2.ZERO)
+		global_position = (mouse - _drag_offset).clamp(Vector2.ZERO, max_pos)

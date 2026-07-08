@@ -122,8 +122,7 @@ func refresh() -> void:
 	_stash_page = clampi(_stash_page, 0, page_count - 1)
 	var page_start := _stash_page * STASH_PAGE_CELLS
 
-	_body.add_child(_build_title_row())
-	_body.add_child(_build_sort_row())
+	_mount_header()
 
 	var grid_row := HBoxContainer.new()
 	grid_row.name = "StashPageRow"
@@ -164,6 +163,26 @@ func refresh() -> void:
 	if dots != null:
 		_body.add_child(dots)
 	_body.add_child(_build_drag_hint_row())
+
+
+## (Re)build the title row + sort row into the base-class header_root — the
+## fixed strip ABOVE the content scroll, so the drag handle can't scroll away
+## and the sort controls stay reachable however long the grid gets. Clears
+## first: refresh() re-mounts on every stash mutation (the n/cap counter lives
+## in the title row) without stacking. Margins mirror the body's 10px padding.
+func _mount_header() -> void:
+	for child in header_root.get_children():
+		header_root.remove_child(child)
+		child.queue_free()
+	var m := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top"]:
+		m.add_theme_constant_override(side, 10)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 10)
+	box.add_child(_build_title_row())
+	box.add_child(_build_sort_row())
+	m.add_child(box)
+	header_root.add_child(m)
 
 
 ## Header row (concept): crate icon left, recessed titleplate 仓库 centered,
