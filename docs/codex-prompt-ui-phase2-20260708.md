@@ -20,75 +20,29 @@
 **注(owner 2026-07-08):不出概念图 — 下面的组件 sheet 直接生成,风格锚死参考图;
 观感在实装截图上迭代。**
 
-## 批次 1 — Sheet 09:战斗 HUD 组件
-
-**输出**:`ui_components_09_battle_hud_transparent.png`,~1254×1254,透明,网格摆放不重叠。
-
-```
-[全局风格前缀]
-
-A component sheet of separate battle-HUD pieces on a grid, generous
-transparent spacing:
-
-1. ENERGY CORE medallion (about 220x220): round charcoal plate, thin brass
-   ring, a subtle inner glow ring of warm orange, big EMPTY center zone.
-2. END TURN button (about 300x110): large orange rounded-rect with thin brass
-   outline, EMPTY label zone.
-3. HP BAR FRAME (about 420x64): slim capsule frame, charcoal with thin brass
-   outline, hollow interior for a code-drawn fill.
-4. BLOCK BADGE (about 120x120): small blue shield chip, thin outline, empty
-   number zone.
-5. FIVE INTENT ICONS (about 110x110 each): red sword (attack), blue shield
-   (block), green up-arrow (buff), orange spark/warning (charge), purple
-   down-arrow (debuff) — extremely simple, readable at 32px, flat fills +
-   black outline.
-6. TARGET ARROW HEAD (about 140x140): chunky comic arrowhead, warm orange
-   with black outline, pointing up-right.
-7. TURN BANNER strip (about 520x90): slim dark strip with thin brass edge,
-   empty center.
-```
+## ~~批次 1 — 战斗 HUD 组件~~(**取消**,owner 目检定案 2026-07-08)
+意图图标/能量核/血条/格挡章**全部保留**(平涂+描边,风格合格);旧棕底
+`energy_panel_frame`/`button_*` 由现有 lw 件在接线时替代——战斗重做零新美术。
 
 ## ~~批次 2 — 地图组件~~(取消:现有 map/nodes 节点章保留,地图无新美术需求)
 
-## 批次 3 — Sheet 11:基地组件
+## 批次 3 — Sheet 11:基地小件 ×2
 
-**输出**:`ui_components_11_base_kit_transparent.png`,~1254×900。
+**输出**:`ui_components_11_base_kit_transparent.png`,~900×500。
 
 ```
 [全局风格前缀]
 
-A component sheet of HOME-BASE pieces on a grid, matching the home-base
-concept reference:
+A component sheet of TWO home-base pieces on a grid, matching the home-base
+concept reference, generous transparent spacing:
 
-1. GIANT DEPART BUTTON (about 760x150): extra-large warm-orange plate with
-   thin dark outline and slightly angled corner cuts (like the concept's 出发
-   button), EMPTY label zone.
-2. NAMEPLATE MEDALLION (about 150x150): round charcoal disc with thin brass
+1. NAMEPLATE MEDALLION (about 150x150): round charcoal disc with thin brass
    ring, EMPTY center (building icons overlay in code).
-3. TIER PIP (about 60x60): a small faceted diamond/gem shape in plain light
+2. TIER PIP (about 60x60): a small faceted diamond/gem shape in plain light
    grey (the game tints it), thin black outline.
-4. DROPDOWN FIELD (about 300x84): slim charcoal recessed field with thin
-   brass outline and a small down-chevron zone at the right end.
 ```
 
-## 批次 4 — Sheet 12:图标补充(与 sheet 03 同族)
-
-**输出**:`ui_components_12_icons_b_transparent.png`,~1254×700。
-
-```
-[全局风格前缀]
-
-A sheet of SIX small game icons on a grid (about 130x130 each), flat fills +
-thick black outlines, same family as the reference icon sheet:
-
-1. SKULL — simple cartoon skull, front view (difficulty marker).
-2. CARDS — three fanned playing cards with a star on the front card
-   (collection / codex).
-3. HERO — cowboy hat over a simple robot head silhouette (character nav).
-4. DECK — a tidy stack of cards, top card showing a back pattern.
-5. CLOCK — round alarm clock, simple hands (daily refresh countdown).
-6. FLAG — small tattered banner on a pole (floor progress).
-```
+## ~~批次 4 — 图标补充~~(**取消**,owner 目检定案:现有图标够用)
 
 ## 批次 5 — 篝火插画
 
