@@ -161,12 +161,13 @@ func _build_poster_card(bounty_id: String) -> Control:
 
 	var card := PanelContainer.new()
 	card.custom_minimum_size = Vector2(POSTER_CARD_WIDTH, 0)
-	# Do NOT 9-slice card_poster.png here: it is a PRE-COMPOSED poster (inner art
-	# frame + a dark button plate baked into the art). Stretched as a stylebox,
-	# those baked elements land behind the real children — double frames and a
-	# phantom plate under the take button (2026-07-08 owner bug report). The flat
-	# parchment style is the frame until Codex delivers a clean 9-slice poster.
-	card.add_theme_stylebox_override("panel", _poster_fallback_style())
+	# poster_frame_blank = the CLEAN 9-slice parchment frame (2026-07-08 Codex
+	# delivery). Its predecessor card_poster was a pre-composed poster whose
+	# baked art frame + button plate ghosted behind the real children — never
+	# use that one as a stylebox.
+	card.add_theme_stylebox_override(
+		"panel", T.lightline_box("poster_frame_blank", _poster_fallback_style(), 30)
+	)
 	var m := MarginContainer.new()
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		m.add_theme_constant_override(side, 12)
@@ -175,30 +176,47 @@ func _build_poster_card(bounty_id: String) -> Control:
 	col.add_theme_constant_override("separation", 8)
 	m.add_child(col)
 
-	# Poster art placeholder — a NAMED node per contract so later per-bounty
-	# Codex art can be slotted in by node path without touching this layout.
+	# Poster art — the per-contract Codex illustration (2026-07-08 delivery);
+	# a named node with the inset+icon placeholder while an id's art is absent.
 	var art := PanelContainer.new()
 	art.name = "PosterArt_%s" % bounty_id
 	art.custom_minimum_size = Vector2(0, POSTER_ART_HEIGHT)
-	art.add_theme_stylebox_override("panel", T.ll_inset())
-	var art_center := CenterContainer.new()
-	art_center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	art.add_child(art_center)
-	art_center.add_child(_ll_icon("icon_poster", 84))
+	var art_path := "res://run_system/assets/images/ui/bounty_posters/poster_art_%s.png" % bounty_id
+	var art_tex: Texture2D = null
+	if ResourceLoader.exists(art_path):
+		art_tex = load(art_path) as Texture2D
+	if art_tex != null:
+		var pic := TextureRect.new()
+		pic.texture = art_tex
+		pic.custom_minimum_size = Vector2(0, POSTER_ART_HEIGHT)
+		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		art.add_child(pic)
+	else:
+		art.add_theme_stylebox_override("panel", T.ll_inset())
+		var art_center := CenterContainer.new()
+		art_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+		art.add_child(art_center)
+		art_center.add_child(_ll_icon("icon_poster", 84))
 	col.add_child(art)
 
+	# INK text — the card background is opaque parchment now, so poster copy
+	# reads dark-on-light (the old light-on-dark colors washed out).
 	var name_lbl := Label.new()
 	name_lbl.text = title
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(name_lbl, 17, Color(0.97, 0.93, 0.84), 1)
+	name_lbl.add_theme_font_size_override("font_size", 17)
+	name_lbl.add_theme_color_override("font_color", Color(0.18, 0.12, 0.07))
 	col.add_child(name_lbl)
 
 	var obj_lbl := Label.new()
 	obj_lbl.text = _bounty_objective_text(objective)
 	obj_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	obj_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(obj_lbl, 14, TOK_TEXT_DIM, 1)
+	obj_lbl.add_theme_font_size_override("font_size", 14)
+	obj_lbl.add_theme_color_override("font_color", Color(0.38, 0.29, 0.19))
 	col.add_child(obj_lbl)
 
 	col.add_child(_build_reward_row(reward))
@@ -221,7 +239,9 @@ func _build_reward_row(reward: Dictionary) -> Control:
 		chip.add_child(_ll_icon("icon_%s" % cur, 26))
 		var amt_lbl := Label.new()
 		amt_lbl.text = str(amt)
-		_style_label(amt_lbl, 16, TOK_GOLD if cur == "caps" else Color(0.78, 0.86, 0.62), 1)
+		# Ink on parchment (the poster card is opaque parchment now).
+		amt_lbl.add_theme_font_size_override("font_size", 16)
+		amt_lbl.add_theme_color_override("font_color", Color(0.24, 0.16, 0.09))
 		chip.add_child(amt_lbl)
 		row.add_child(chip)
 	var equip_tier := str(reward.get("equipment", ""))
@@ -234,7 +254,9 @@ func _build_reward_row(reward: Dictionary) -> Control:
 		tier_lbl.tooltip_text = Settings.t("UI_BOUNTY_REWARD_EQUIP", "Equipment ({t})").format(
 			{"t": equip_tier}
 		)
-		_style_label(tier_lbl, 16, Color(0.62, 0.82, 1.0), 1)
+		# Ink on parchment (the poster card is opaque parchment now).
+		tier_lbl.add_theme_font_size_override("font_size", 16)
+		tier_lbl.add_theme_color_override("font_color", Color(0.18, 0.26, 0.38))
 		echip.add_child(tier_lbl)
 		row.add_child(echip)
 	return row

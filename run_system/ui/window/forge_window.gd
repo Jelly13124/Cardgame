@@ -304,8 +304,8 @@ func _build_left_column() -> Control:
 	col.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_theme_constant_override("separation", 10)
 
-	# Blacksmith NPC portrait — placeholder (the lightline furnace illustration)
-	# until Codex delivers the orc portrait. Named node so the drop-in is zero-code.
+	# Blacksmith NPC portrait — the Codex orc bust (2026-07-08 delivery); falls
+	# back to the lightline furnace, then a bare anvil icon, if regenerating.
 	var npc := PanelContainer.new()
 	npc.name = "ForgeNpcPortrait"
 	npc.custom_minimum_size = Vector2(150, 196)
@@ -313,11 +313,13 @@ func _build_left_column() -> Control:
 	var npc_center := CenterContainer.new()
 	npc_center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	npc.add_child(npc_center)
-	var furnace_tex := T.lightline_tex("furnace")
-	if furnace_tex != null:
+	var npc_tex := _load_tex_or_null("res://run_system/assets/images/ui/forge/npc_blacksmith.png")
+	if npc_tex == null:
+		npc_tex = T.lightline_tex("furnace")
+	if npc_tex != null:
 		var portrait := TextureRect.new()
-		portrait.texture = furnace_tex
-		portrait.custom_minimum_size = Vector2(126, 126)
+		portrait.texture = npc_tex
+		portrait.custom_minimum_size = Vector2(138, 180)
 		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -326,8 +328,8 @@ func _build_left_column() -> Control:
 		npc_center.add_child(_ll_icon("icon_anvil", 68))
 	col.add_child(npc)
 
-	# Anvil illustration — a large icon_anvil on a section panel (the concept's
-	# tall hammer-striking-anvil banner; Codex art replaces it later).
+	# Anvil illustration — the Codex hammer-striking-anvil banner (2026-07-08);
+	# falls back to a large icon_anvil while regenerating.
 	var art := PanelContainer.new()
 	art.name = "ForgeAnvilArt"
 	art.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -335,9 +337,29 @@ func _build_left_column() -> Control:
 	var art_center := CenterContainer.new()
 	art_center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	art.add_child(art_center)
-	art_center.add_child(_ll_icon("icon_anvil", 104))
+	var anvil_tex := _load_tex_or_null("res://run_system/assets/images/ui/forge/anvil_art.png")
+	if anvil_tex != null:
+		var banner := TextureRect.new()
+		banner.texture = anvil_tex
+		banner.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		banner.custom_minimum_size = Vector2(138, 220)
+		banner.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		banner.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		art_center.add_child(banner)
+	else:
+		art_center.add_child(_ll_icon("icon_anvil", 104))
 	col.add_child(art)
 	return col
+
+
+## A Texture2D from an exact path, or null (warn-free placeholder rule).
+func _load_tex_or_null(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var tex = load(path)
+		if tex is Texture2D:
+			return tex
+	return null
 
 
 # --- DISMANTLE tab -------------------------------------------------------------

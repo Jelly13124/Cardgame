@@ -1517,5 +1517,190 @@
   ],
   "role": "toggle",
   "nine_slice": null
+ },
+ {
+  "name": "panel_window_charcoal",
+  "source_sheet": "ui_components_05_charcoal_window_transparent.png",
+  "bbox": null,
+  "size": [
+   579,
+   293
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 62,
+   "top": 62,
+   "right": 62,
+   "bottom": 62
+  }
+ },
+ {
+  "name": "panel_titleplate",
+  "source_sheet": "ui_components_05_charcoal_window_transparent.png",
+  "bbox": null,
+  "size": [
+   667,
+   127
+  ],
+  "role": "titlebar",
+  "nine_slice": {
+   "left": 36,
+   "top": 30,
+   "right": 36,
+   "bottom": 30
+  }
+ },
+ {
+  "name": "field_dropdown",
+  "source_sheet": "ui_components_05_charcoal_window_transparent.png",
+  "bbox": null,
+  "size": [
+   330,
+   143
+  ],
+  "role": "field",
+  "nine_slice": {
+   "left": 28,
+   "top": 26,
+   "right": 92,
+   "bottom": 26
+  }
+ },
+ {
+  "name": "ribbon_rarity_corner",
+  "source_sheet": "ui_components_05_charcoal_window_transparent.png",
+  "bbox": null,
+  "size": [
+   151,
+   151
+  ],
+  "role": "ribbon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_pencil",
+  "source_sheet": "ui_components_05_charcoal_window_transparent.png",
+  "bbox": null,
+  "size": [
+   238,
+   238
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_crate",
+  "source_sheet": "ui_components_05_charcoal_window_transparent.png",
+  "bbox": null,
+  "size": [
+   263,
+   242
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_arrow_down",
+  "source_sheet": "ui_components_05_charcoal_window_transparent.png",
+  "bbox": null,
+  "size": [
+   222,
+   204
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "ornament_medallion",
+  "source_sheet": "ui_components_05_charcoal_window_transparent.png",
+  "bbox": null,
+  "size": [
+   280,
+   263
+  ],
+  "role": "ornament",
+  "nine_slice": null
+ },
+ {
+  "name": "ghost_head",
+  "source_sheet": "ui_components_05_charcoal_window_transparent.png",
+  "bbox": null,
+  "size": [
+   177,
+   178
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "ghost_chest",
+  "source_sheet": "ui_components_05_charcoal_window_transparent.png",
+  "bbox": null,
+  "size": [
+   177,
+   178
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "ghost_hands",
+  "source_sheet": "ui_components_05_charcoal_window_transparent.png",
+  "bbox": null,
+  "size": [
+   177,
+   178
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "ghost_weapon",
+  "source_sheet": "ui_components_05_charcoal_window_transparent.png",
+  "bbox": null,
+  "size": [
+   177,
+   178
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "ghost_accessory",
+  "source_sheet": "ui_components_05_charcoal_window_transparent.png",
+  "bbox": null,
+  "size": [
+   177,
+   178
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "ghost_tool",
+  "source_sheet": "ui_components_05_charcoal_window_transparent.png",
+  "bbox": null,
+  "size": [
+   177,
+   178
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "poster_frame_blank",
+  "source_sheet": "standalone",
+  "bbox": null,
+  "size": [
+   240,
+   400
+  ],
+  "role": "card",
+  "nine_slice": {
+   "left": 30,
+   "top": 30,
+   "right": 30,
+   "bottom": 30
+  }
  }
 ]

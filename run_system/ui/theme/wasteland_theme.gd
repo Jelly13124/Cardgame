@@ -822,6 +822,36 @@ static func _ll_button_from(base_name: String, state: String) -> StyleBox:
 	return tb
 
 
+## Charcoal (gunmetal) window body — the 2026-07-08 character/stash window
+## family (sheet 05). Interior is baked opaque near-black; TILE edges so the
+## riveted bars repeat instead of smearing when the frame stretches. Falls back
+## to the olive lightline panel while the PNG is undelivered.
+static func ll_charcoal_panel() -> StyleBox:
+	var box := lightline_box("panel_window_charcoal", ll_panel(), 62)
+	var tb := box as StyleBoxTexture
+	if tb != null:
+		tb.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
+		tb.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
+		tb.content_margin_left = 30.0
+		tb.content_margin_right = 30.0
+		tb.content_margin_top = 26.0
+		tb.content_margin_bottom = 26.0
+	return box
+
+
+## Charcoal recessed title plate (the 角色/仓库 header slot) — 9-slice
+## panel_titleplate, else the glass titlebar.
+static func ll_titleplate() -> StyleBox:
+	var box := lightline_box("panel_titleplate", ui_titlebar(), 36, 30)
+	var tb := box as StyleBoxTexture
+	if tb != null:
+		tb.content_margin_left = 20.0
+		tb.content_margin_right = 20.0
+		tb.content_margin_top = 8.0
+		tb.content_margin_bottom = 8.0
+	return box
+
+
 ## The lightline square ✕ close button (btn_close.png at its NATIVE 102:100
 ## aspect — owner rule 2026-07-08: never stretch it wide). Fixed square size;
 ## hover/pressed derive from the same art by modulate. Falls back to a themed
