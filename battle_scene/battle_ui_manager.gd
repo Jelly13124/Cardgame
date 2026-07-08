@@ -3,8 +3,8 @@ extends Node
 ## BattleUIManager handles notifications, inspection, and pile viewing.
 
 const ENERGY_CORE_TEX = preload("res://battle_scene/assets/images/ui/energy_core.png")
-const ENERGY_PANEL_TEX = preload("res://battle_scene/assets/images/ui/energy_panel_frame.png")
 const CHARACTER_WINDOW = preload("res://run_system/ui/window/character_window.gd")
+const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 
 @export_group("UI Nodes")
 @export var energy_label: Label
@@ -52,7 +52,9 @@ func _ready() -> void:
 
 func update_labels(energy: int, max_energy: int) -> void:
 	if energy_label:
-		energy_label.text = "%d / %d" % [energy, max_energy]
+		# Compact "3/3" (no spaces) so the number sits inside the round medal's
+		# inner ring instead of poking past its edges.
+		energy_label.text = "%d/%d" % [energy, max_energy]
 	_pop_energy()
 
 
@@ -61,7 +63,7 @@ func update_labels(energy: int, max_energy: int) -> void:
 func _pop_energy() -> void:
 	if _energy_display == null or not is_instance_valid(_energy_display):
 		return
-	_energy_display.pivot_offset = Vector2(78, 22)  # centre of the 156x44 panel
+	_energy_display.pivot_offset = Vector2(76, 22)  # centre of the number medal
 	_energy_display.scale = Vector2(1.16, 1.16)
 	var tw := create_tween()
 	(
@@ -90,17 +92,24 @@ func _build_energy_display() -> void:
 	_energy_display.z_index = 20
 	main.add_child(_energy_display)
 
-	var frame = NinePatchRect.new()
-	frame.name = "Frame"
-	frame.texture = ENERGY_PANEL_TEX
-	frame.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	frame.patch_margin_left = 12
-	frame.patch_margin_top = 10
-	frame.patch_margin_right = 12
-	frame.patch_margin_bottom = 10
-	frame.size = Vector2(156, 44)
-	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_energy_display.add_child(frame)
+	# Round lightline energy medal (hud_energy_core) replaces the retired brown
+	# pill frame (energy_panel_frame.png, deleted): the energy number centres ON
+	# the medal; the lightning orb (energy_core.png — owner-kept) stays as the
+	# left emblem. Medal PNG absent → no backing plate, orb + number still render
+	# (silent fallback).
+	var medal_rect := Rect2(46.0, -8.0, 60.0, 60.0)
+	var medal_tex := T.lightline_tex("hud_energy_core")
+	if medal_tex != null:
+		var medal := TextureRect.new()
+		medal.name = "Frame"
+		medal.texture = medal_tex
+		medal.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		medal.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		medal.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		medal.position = medal_rect.position
+		medal.size = medal_rect.size
+		medal.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_energy_display.add_child(medal)
 
 	var core = TextureRect.new()
 	core.name = "EnergyCore"
@@ -121,10 +130,10 @@ func _build_energy_display() -> void:
 	energy_label.anchor_top = 0.0
 	energy_label.anchor_right = 0.0
 	energy_label.anchor_bottom = 0.0
-	energy_label.offset_left = 50.0
-	energy_label.offset_top = 5.0
-	energy_label.offset_right = 144.0
-	energy_label.offset_bottom = 37.0
+	energy_label.offset_left = medal_rect.position.x
+	energy_label.offset_top = medal_rect.position.y
+	energy_label.offset_right = medal_rect.end.x
+	energy_label.offset_bottom = medal_rect.end.y
 	energy_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	energy_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	energy_label.add_theme_font_size_override("font_size", 24)

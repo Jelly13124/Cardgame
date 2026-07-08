@@ -64,6 +64,17 @@ const BUILDING_BADGE_ICONS := {
 	"outpost": "badge_outpost",
 }
 
+## Tier-pip tint per building (concept 20260708 palette: forge orange / clinic
+## cyan / market purple / outpost green). base_tier_pip is a white template
+## diamond, so a straight modulate carries the color; the baked black outline
+## stays black.
+const PLAQUE_PIP_COLORS := {
+	"forge": Color("#e08830"),
+	"clinic": Color("#3bc7eb"),
+	"market": Color("#a06bd9"),
+	"outpost": Color("#8ce04a"),
+}
+
 ## The A0..A5 buttons inside the difficulty picker popup (rebuilt every open).
 var _difficulty_buttons: Array[Button] = []
 ## Top-right difficulty button — label shows the current pick ("难度 A{n}").
@@ -382,7 +393,13 @@ func _make_top_difficulty_button() -> Button:
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(row)
 
-	row.add_child(_make_icon_rect(BASE_HUD_ICON_DIR + "icon_difficulty.png", Vector2(38, 38)))
+	# Concept "💀 难度 A0" capsule: the lightline skull leads the label; the old
+	# bottle-cap difficulty icon stays as the fallback while the kit PNG is absent.
+	var skull_tex := T.lightline_tex("iconb_skull")
+	if skull_tex != null:
+		row.add_child(_make_lightline_icon(skull_tex, Vector2(22, 22)))
+	else:
+		row.add_child(_make_icon_rect(BASE_HUD_ICON_DIR + "icon_difficulty.png", Vector2(38, 38)))
 
 	var label := Label.new()
 	label.name = "DifficultyLabel"
@@ -480,6 +497,11 @@ func _add_bounty_board_panel(root: Control) -> void:
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(spacer)
+
+	# Little alarm clock leading the daily-reroll countdown (kit PNG absent → text only).
+	var clock_tex := T.lightline_tex("iconb_clock")
+	if clock_tex != null:
+		header.add_child(_make_lightline_icon(clock_tex, Vector2(18, 18)))
 
 	var refresh := Label.new()
 	refresh.text = _home_text("刷新: %s", "Refresh: %s") % _daily_refresh_time()
@@ -851,6 +873,21 @@ func _make_icon_rect(path: String, size: Vector2) -> TextureRect:
 	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon.texture = _load_home_texture(path)
+	return icon
+
+
+## Fixed-size icon rect over an already-resolved lightline kit texture. Callers
+## check T.lightline_tex(name) != null FIRST and keep their old art / skip the
+## icon when the kit piece is absent (silent fallback per project rule) — this
+## helper never receives null.
+func _make_lightline_icon(tex: Texture2D, size: Vector2) -> TextureRect:
+	var icon := TextureRect.new()
+	icon.texture = tex
+	icon.custom_minimum_size = size
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return icon
 
 
@@ -1341,19 +1378,12 @@ func _add_building_plaque(building_id: String, rect: Rect2, title: String) -> vo
 	_set_map_rect(holder, Rect2(rect.position + Vector2(0, -54), rect.size + Vector2(0, 54)))
 	_buildings_root.add_child(holder)
 
+	var tier := MetaProgress.get_building_tier(building_id)
 	var icon_id: String = str(BUILDING_BADGE_ICONS.get(building_id, ""))
-	if icon_id != "":
-		var icon := _make_icon_rect(BASE_HUD_ICON_DIR + icon_id + ".png", Vector2(78, 78))
-		icon.anchor_left = 0.5
-		icon.anchor_top = 0.0
-		icon.anchor_right = 0.5
-		icon.anchor_bottom = 0.0
-		icon.offset_left = -39.0
-		icon.offset_top = 0.0
-		icon.offset_right = 39.0
-		icon.offset_bottom = 78.0
-		holder.add_child(icon)
+	var medallion_tex := T.lightline_tex("base_medallion")
 
+	# Single lightweight plate (unchanged chrome) — the concept nameplate keeps
+	# ONE thin frame; the medallion + pips below carry the new look.
 	var plaque := PanelContainer.new()
 	plaque.anchor_left = 0.5
 	plaque.anchor_top = 0.0
@@ -1379,12 +1409,71 @@ func _add_building_plaque(building_id: String, rect: Rect2, title: String) -> vo
 	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.88))
 	label.add_theme_constant_override("outline_size", 3)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var tier := MetaProgress.get_building_tier(building_id)
+	# Bottom line: locked keeps the LOCKED wording; an unlocked tier renders as
+	# building-tinted diamond pips (concept parity) when the kit pip art is
+	# present, else the old "Lv.N" text (silent fallback).
+	var pip_tex := T.lightline_tex("base_tier_pip") if tier > 0 else null
 	if tier <= 0:
 		label.text = "%s\n%s" % [title, tr("UI_BUILD_LOCKED")]
-	else:
+		plaque.add_child(label)
+	elif pip_tex == null:
 		label.text = "%s\nLv.%d" % [title, tier]
-	plaque.add_child(label)
+		plaque.add_child(label)
+	else:
+		label.text = title
+		var content := VBoxContainer.new()
+		content.alignment = BoxContainer.ALIGNMENT_CENTER
+		content.add_theme_constant_override("separation", 3)
+		content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		plaque.add_child(content)
+		content.add_child(label)
+		var pips := HBoxContainer.new()
+		pips.alignment = BoxContainer.ALIGNMENT_CENTER
+		pips.add_theme_constant_override("separation", 5)
+		pips.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		content.add_child(pips)
+		var pip_color: Color = PLAQUE_PIP_COLORS.get(building_id, Color.WHITE)
+		for _i in range(tier):
+			var pip := _make_lightline_icon(pip_tex, Vector2(16, 16))
+			pip.modulate = pip_color
+			pips.add_child(pip)
+
+	# Round medallion base centred on the plaque's LEFT edge, the building badge
+	# inset on top (concept look). Kit medallion absent → the badge keeps its old
+	# spot centred above the plaque, so the plaque never loses its icon.
+	if medallion_tex != null:
+		var medallion := _make_lightline_icon(medallion_tex, Vector2(72, 72))
+		medallion.anchor_left = 0.5
+		medallion.anchor_top = 0.0
+		medallion.anchor_right = 0.5
+		medallion.anchor_bottom = 0.0
+		medallion.offset_left = -120.0
+		medallion.offset_top = 56.0
+		medallion.offset_right = -48.0
+		medallion.offset_bottom = 128.0
+		holder.add_child(medallion)
+		if icon_id != "":
+			var icon := _make_icon_rect(BASE_HUD_ICON_DIR + icon_id + ".png", Vector2(52, 52))
+			icon.anchor_left = 0.5
+			icon.anchor_top = 0.0
+			icon.anchor_right = 0.5
+			icon.anchor_bottom = 0.0
+			icon.offset_left = -110.0
+			icon.offset_top = 66.0
+			icon.offset_right = -58.0
+			icon.offset_bottom = 118.0
+			holder.add_child(icon)
+	elif icon_id != "":
+		var icon := _make_icon_rect(BASE_HUD_ICON_DIR + icon_id + ".png", Vector2(78, 78))
+		icon.anchor_left = 0.5
+		icon.anchor_top = 0.0
+		icon.anchor_right = 0.5
+		icon.anchor_bottom = 0.0
+		icon.offset_left = -39.0
+		icon.offset_top = 0.0
+		icon.offset_right = 39.0
+		icon.offset_bottom = 78.0
+		holder.add_child(icon)
 
 	# Unlock / upgrade lives HERE on the overview (detail pages are services-only,
 	# see building_screen_base). This call got dropped in a plaque rework (6e08d33),

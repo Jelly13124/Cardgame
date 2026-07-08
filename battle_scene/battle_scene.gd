@@ -113,6 +113,7 @@ func _ready():
 	# Apply textured wasteland button skin to the End Round button.
 	if end_round_button:
 		T.apply_button_theme(end_round_button)
+		_style_end_round_button()
 
 	# Connect TurnManager
 	turn_manager.round_changed.connect(_on_round_changed)
@@ -137,6 +138,51 @@ func _ready():
 
 	# First-battle tutorial tips — shown once ever, gated on MetaProgress.
 	_maybe_show_tutorial()
+
+
+## Lightline restyle over apply_button_theme (which keeps the hover juice +
+## fallback skin): the End Round button wears the hud_panel_orange plate, with
+## hover / pressed / disabled derived from the ONE PNG by modulate — the same
+## scheme as T._ll_button_from. Dark ink label replaces the cream default (cream
+## on orange is unreadable). The manifest's 44px 9-slice margins exceed this
+## 44px-tall button (top+bottom slices would swallow the bottom edge line), so
+## vertical texture margins are capped to fit the rect. Kit PNG absent → return
+## early, keeping the generic olive skin (silent fallback).
+func _style_end_round_button() -> void:
+	var plate_tex := T.lightline_tex("hud_panel_orange")
+	if plate_tex == null:
+		return
+	# Explicit float: end_round_button is an untyped @onready, so `:=` can't infer.
+	var btn_h: float = end_round_button.size.y
+	if btn_h <= 0.0:
+		btn_h = 44.0  # tscn-declared height, in case size isn't resolved yet
+	var vcap := maxf(4.0, btn_h * 0.5 - 2.0)
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var box := T.lightline_box("hud_panel_orange", T.button_textured("normal"), 44)
+		var tb := box as StyleBoxTexture
+		if tb == null:
+			return  # unreachable while plate_tex exists; belt-and-braces
+		match state:
+			"hover":
+				tb.modulate_color = Color(1.12, 1.12, 1.12)
+			"pressed":
+				tb.modulate_color = Color(0.86, 0.86, 0.86)
+			"disabled":
+				tb.modulate_color = Color(0.58, 0.58, 0.58)
+		tb.texture_margin_top = minf(tb.texture_margin_top, vcap)
+		tb.texture_margin_bottom = minf(tb.texture_margin_bottom, vcap)
+		tb.content_margin_left = 18
+		tb.content_margin_right = 18
+		tb.content_margin_top = 8
+		tb.content_margin_bottom = 8
+		end_round_button.add_theme_stylebox_override(state, tb)
+	var ink := Color(0.13, 0.08, 0.04, 1.0)
+	end_round_button.add_theme_color_override("font_color", ink)
+	end_round_button.add_theme_color_override("font_hover_color", Color(0.09, 0.05, 0.03, 1.0))
+	end_round_button.add_theme_color_override("font_pressed_color", ink)
+	end_round_button.add_theme_color_override("font_disabled_color", Color(0.24, 0.16, 0.10, 0.9))
+	end_round_button.add_theme_color_override("font_outline_color", Color(1.0, 0.88, 0.62, 0.35))
+	end_round_button.add_theme_constant_override("outline_size", 1)
 
 
 ## Show the first-battle tip sequence the very first time the player enters a
