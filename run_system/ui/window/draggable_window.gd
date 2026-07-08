@@ -50,10 +50,9 @@ func init_window(title: String, win_size: Vector2, show_title_bar: bool = true) 
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_title_bar_box.add_child(lbl)
-	_close_btn = Button.new()
-	_close_btn.text = "✕"
-	_close_btn.flat = true
-	_close_btn.focus_mode = Control.FOCUS_NONE
+	# Square lightline ✕ at its native aspect (owner: no stretched close buttons).
+	_close_btn = T.ll_close_button(32.0)
+	_close_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_close_btn.pressed.connect(close)
 	_title_bar_box.add_child(_close_btn)
 

@@ -21,7 +21,10 @@ extends "res://run_system/ui/window/draggable_window.gd"
 const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 const BACKPACK_CELL = preload("res://run_system/ui/backpack_cell.gd")
 const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
-const STASH_OUTER_FRAME_TEX = preload("res://run_system/assets/images/ui/window_frames_v2/character_outer_frame.png")
+const EQUIP_TOOLTIP = preload("res://run_system/ui/equip_tooltip.gd")
+const STASH_OUTER_FRAME_TEX = preload(
+	"res://run_system/assets/images/ui/window_frames_v2/character_outer_frame.png"
+)
 
 const WIN_SIZE := Vector2(860, 980)
 const GRID_COLUMNS := 5
@@ -276,9 +279,21 @@ func _style_stash_button(button: Button, accent: bool = false) -> void:
 		button.add_theme_color_override("font_hover_color", T.UI_BRASS_LIGHT)
 		button.add_theme_color_override("font_pressed_color", T.UI_HEADER_GOLD)
 	else:
-		var normal := _stash_dropdown_style("normal") if button is OptionButton else _stash_dark_button_style("normal")
-		var hover := _stash_dropdown_style("hover") if button is OptionButton else _stash_dark_button_style("hover")
-		var pressed := _stash_dropdown_style("pressed") if button is OptionButton else _stash_dark_button_style("pressed")
+		var normal := (
+			_stash_dropdown_style("normal")
+			if button is OptionButton
+			else _stash_dark_button_style("normal")
+		)
+		var hover := (
+			_stash_dropdown_style("hover")
+			if button is OptionButton
+			else _stash_dark_button_style("hover")
+		)
+		var pressed := (
+			_stash_dropdown_style("pressed")
+			if button is OptionButton
+			else _stash_dark_button_style("pressed")
+		)
 		button.add_theme_stylebox_override("normal", normal)
 		button.add_theme_stylebox_override("hover", hover)
 		button.add_theme_stylebox_override("pressed", pressed)
@@ -295,9 +310,7 @@ func _on_sort_selected(index: int) -> void:
 
 
 func _auto_organize_stash() -> void:
-	MetaProgress.stash.sort_custom(
-		func(a, b): return _entry_sort_less(a, b, ORGANIZE_SORT_MODE)
-	)
+	MetaProgress.stash.sort_custom(func(a, b): return _entry_sort_less(a, b, ORGANIZE_SORT_MODE))
 	_sort_mode = SORT_DEFAULT
 	_stash_page = 0
 	MetaProgress.save_progress()
@@ -402,7 +415,10 @@ func _apply_view_sort(indices: Array[int]) -> void:
 	if _sort_mode == SORT_DEFAULT or indices.size() <= 1:
 		return
 	indices.sort_custom(
-		func(a, b): return _entry_sort_less(MetaProgress.stash[int(a)], MetaProgress.stash[int(b)], _sort_mode)
+		func(a, b):
+			return _entry_sort_less(
+				MetaProgress.stash[int(a)], MetaProgress.stash[int(b)], _sort_mode
+			)
 	)
 
 
@@ -513,44 +529,11 @@ func _load_equip_tex(sprite_path: String) -> Texture2D:
 	return null
 
 
-## Rich equipment tooltip (duplicated from character_window — a shared helper
-## would need a preload back-reference; forge_window sets the same precedent).
+## Rich equipment tooltip — delegates to the shared EQUIP_TOOLTIP helper
+## (owner 2026-07-08: rarity·slot header, no generated name; set pieces keep
+## theirs). Replaces the old per-window duplicated builders.
 func _equipment_tooltip(data: Dictionary, slot: String, instance: Dictionary) -> String:
-	var item_id := str(data.get("id", ""))
-	var name_str := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", "?")))
-	var rarity := str(instance.get("rarity", data.get("rarity", "common")))
-	var rarity_str := Settings.t("UI_FORGE_RARITY_%s" % rarity.to_upper(), rarity)
-	var desc := Settings.t("EQUIP_%s_DESC" % item_id, str(data.get("description", "")))
-	var set_id := str(instance.get("set_id", data.get("set_id", "")))
-
-	var lines: Array = []
-	lines.append("[b]%s[/b]" % name_str)
-	lines.append("[i]%s · %s[/i]" % [_slot_label(slot), rarity_str])
-	lines.append("")
-	var affixes: Array = RunManager.equip_affixes(instance) if not instance.is_empty() else []
-	if affixes.is_empty():
-		var bonuses = data.get("bonuses", {})
-		if typeof(bonuses) == TYPE_DICTIONARY and not bonuses.is_empty():
-			var parts: Array = []
-			for attr in bonuses.keys():
-				parts.append("+%d %s" % [int(bonuses[attr]), str(attr).substr(0, 3)])
-			lines.append(", ".join(parts))
-		else:
-			lines.append(tr("UI_EQUIP_NO_BONUSES"))
-	else:
-		for affix in affixes:
-			var label := AFFIX_POOL.describe(affix as Dictionary)
-			if AFFIX_POOL.is_curse(affix as Dictionary):
-				lines.append("[color=#e0584c]%s[/color]" % label)
-			else:
-				lines.append("[color=#5fd06a]%s[/color]" % label)
-	if set_id != "":
-		var equipment_set_name := Settings.t("EQUIP_SET_%s_NAME" % set_id, set_id.replace("_", " "))
-		lines.append("[i]%s[/i]" % tr("UI_EQUIP_SET_PREFIX").format({"name": equipment_set_name}))
-	if desc != "":
-		lines.append("")
-		lines.append(desc)
-	return "\n".join(lines)
+	return EQUIP_TOOLTIP.text(data, slot, instance)
 
 
 func _slot_label(slot: String) -> String:

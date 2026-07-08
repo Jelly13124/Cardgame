@@ -107,15 +107,13 @@ func _build() -> void:
 		outer.add_theme_constant_override(side, 40)
 	add_child(outer)
 
-	# The big framed board. Accent tints the border so each building reads distinct.
+	# The big framed board — the lightline window frame (concept parity), same
+	# olive-metal chrome on all four buildings. The accent survives on the header
+	# title/icon, not the frame.
 	var board := PanelContainer.new()
 	board.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	board.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	var border := accent
-	border.a = 1.0
-	board.add_theme_stylebox_override(
-		"panel", T.panel_with_shadow(Color(0.055, 0.045, 0.038, 0.96), border, 6, 3)
-	)
+	board.add_theme_stylebox_override("panel", T.ll_panel())
 	outer.add_child(board)
 
 	var margin := MarginContainer.new()
@@ -178,11 +176,9 @@ func _build() -> void:
 	right_box.add_child(_tier_badge)
 	_rebuild_cost_row()
 
-	var close_btn := Button.new()
-	close_btn.text = "✕"
-	close_btn.custom_minimum_size = Vector2(56, 48)
-	close_btn.add_theme_font_size_override("font_size", 22)
-	T.apply_button_theme(close_btn)
+	# Square lightline ✕ at its native aspect (owner: no stretched close buttons).
+	var close_btn := T.ll_close_button(48.0)
+	close_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	close_btn.pressed.connect(_close)
 	header.add_child(close_btn)
 

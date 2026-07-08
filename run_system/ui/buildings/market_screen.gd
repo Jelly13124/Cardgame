@@ -1,12 +1,13 @@
 ## Market (黑市) building screen, re-skinned to the 2026-07-07 "lightline"
-## concept (docs/art/previews/base_building_market_ui_simple_comic_20260707.png —
-## the 3-tool layout; the `_6tools_` variant is deliberately NOT implemented):
-##   工具货架 (T1 tool_shop)        — 3 shop cards (item icon + recessed name bar
-##                                    + orange Caps price footer, the
-##                                    btn_icon_syringe/armor/bag card language),
+## concept — the `_6tools_` variant since 2026-07-08 (owner: 6 tools, ONE frame
+## per item, bigger icons):
+##   工具货架 (T1 tool_shop)        — 6 shop items: a single slot-framed icon +
+##                                    frameless name + orange Caps price button,
 ##                                    olive 刷新 button in the section header.
-##   装备货架 (T2 equip_shop)       — equipment shelf cards in the same framing
-##                                    (rarity-tinted names), own 刷新 button.
+##   装备货架 (T2 equip_shop)       — FIVE items, one per equipment slot; the
+##                                    rarity-framed EQUIPMENT_ICON is the single
+##                                    frame, a rarity·slot line replaces the
+##                                    generated name; own 刷新 button.
 ##   资源兑换 (T3 resource_convert) — row_convert-style rows: src icon + amount
 ##                                    field → dst icon + amount field + olive
 ##                                    swap button; scrap balance chip in the
@@ -33,20 +34,24 @@ extends "res://run_system/ui/buildings/building_screen_base.gd"
 
 const EQUIPMENT_DIR := "res://run_system/data/equipment/"
 const EQUIPMENT_ICON := preload("res://run_system/ui/equipment_icon.gd")
+const EQUIP_TOOLTIP := preload("res://run_system/ui/equip_tooltip.gd")
 
-## Shop-card item icon size (tools + equipment).
-const SHELF_ICON := Vector2(84, 84)
-## Shop-card minimum width (concept: wide cards filling the shelf row).
-const SHELF_CARD_MIN_W := 170.0
+## Shop item icon sizes (owner 2026-07-08: bigger — the icon IS the card now).
+const SHELF_ICON := Vector2(96, 96)
+const EQUIP_SHELF_ICON := Vector2(112, 112)
+## Shop-item minimum width (items stretch to fill the shelf row).
+const SHELF_CARD_MIN_W := 150.0
 
 ## Equipment buy prices in Caps, by rarity (spec: 60/140/280).
 const EQUIP_CAPS_PRICE := {"common": 60, "uncommon": 140, "rare": 280}
-## How many equipment items to stock per rarity bucket.
-const EQUIP_STOCK_PER_RARITY := {"common": 2, "uncommon": 2, "rare": 1}
+## Equipment shelf: FIVE items — one per equipment slot (owner 2026-07-08),
+## rarity rolled per slot by these weights.
+const EQUIP_SLOT_ORDER := ["weapon", "head", "chest", "hands", "accessory"]
+const EQUIP_RARITY_WEIGHTS := {"common": 50, "uncommon": 35, "rare": 15}
 ## Flat Caps price per tool (tools have no rarity tiers).
 const MARKET_TOOL_PRICE := 40
-## How many random tools to stock.
-const MARKET_TOOL_COUNT := 3
+## How many random tools to stock (owner 2026-07-08: 6, the _6tools_ concept).
+const MARKET_TOOL_COUNT := 6
 ## Refresh (ungated): base Caps cost, +10 per use this visit.
 const MARKET_REFRESH_BASE := 20
 const MARKET_REFRESH_STEP := 10
@@ -175,31 +180,29 @@ func _build_tool_section() -> Control:
 	return section
 
 
-## One concept shop card (btn_icon_* language): framed dark card with the item
-## icon on top, a recessed name bar, and the orange Caps price footer (the buy
-## button). The tool description moves to the card tooltip.
+## One tool shelf item (owner 2026-07-08: ONE frame per item): a single slot-
+## framed icon, frameless name text under it, then the orange price button.
+## The tool description is the frame's hover tooltip.
 ## Purchase path unchanged: _on_buy_tool (spend → add_tool_to_backpack → refund
 ## on full backpack).
 func _build_tool_tile(tool_id: String) -> Control:
 	var data := RunManager.get_tool_data(tool_id)
 	var tool_name := Settings.t("TOOL_%s_TITLE" % tool_id, str(data.get("title", tool_id)))
 
-	var tile := PanelContainer.new()
-	tile.add_theme_stylebox_override("panel", T.ll_inset())
-	tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	tile.tooltip_text = Settings.t("TOOL_%s_DESC" % tool_id, "")
-	var tm := MarginContainer.new()
-	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		tm.add_theme_constant_override(s, 10)
-	tile.add_child(tm)
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 8)
+	col.add_theme_constant_override("separation", 6)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	col.custom_minimum_size = Vector2(SHELF_CARD_MIN_W, 0)
-	tm.add_child(col)
 
+	# The single frame: an ll_slot box around the item icon.
+	var frame := PanelContainer.new()
+	frame.add_theme_stylebox_override("panel", T.ll_slot("normal"))
+	frame.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	frame.tooltip_text = Settings.t("TOOL_%s_DESC" % tool_id, "")
+	col.add_child(frame)
 	var icon_holder := CenterContainer.new()
-	icon_holder.custom_minimum_size = Vector2(0, SHELF_ICON.y + 12)
-	col.add_child(icon_holder)
+	icon_holder.custom_minimum_size = SHELF_ICON + Vector2(16, 16)
+	frame.add_child(icon_holder)
 	var icon_path := str(data.get("icon", ""))
 	var tex: Texture2D = null
 	if icon_path != "" and ResourceLoader.exists(icon_path):
@@ -217,18 +220,24 @@ func _build_tool_tile(tool_id: String) -> Control:
 		glyph.text = tool_name.substr(0, 1) if tool_name != "" else "?"
 		glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		glyph.add_theme_font_size_override("font_size", 30)
+		glyph.add_theme_font_size_override("font_size", 34)
 		glyph.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
 		icon_holder.add_child(glyph)
 
-	col.add_child(_name_bar(tool_name, Color(0.95, 0.92, 0.85)))
+	# Frameless name line (tools keep their names — they're hand-authored).
+	var name_lbl := Label.new()
+	name_lbl.text = tool_name
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(name_lbl, 15, Color(0.95, 0.92, 0.85), 1)
+	col.add_child(name_lbl)
 
 	var buy_btn := _price_footer(MARKET_TOOL_PRICE)
 	buy_btn.disabled = MetaProgress.caps < MARKET_TOOL_PRICE
 	buy_btn.pressed.connect(_on_buy_tool.bind(tool_id, buy_btn))
 	col.add_child(buy_btn)
 
-	return tile
+	return col
 
 
 func _on_buy_tool(tool_id: String, btn: Button) -> void:
@@ -272,9 +281,10 @@ func _build_equip_section() -> Control:
 	return section
 
 
-## One equipment shop card: same btn_icon_* framing as the tool cards, with the
-## rarity-framed EQUIPMENT_ICON (its hover tooltip is unchanged), a rarity-
-## tinted name bar, and the orange Caps price footer.
+## One equipment shelf item (owner 2026-07-08: ONE frame per item, NO generated
+## name): the rarity-framed EQUIPMENT_ICON is the single frame, a frameless
+## rarity·slot line replaces the name, then the orange price button. Hover shows
+## the shared rarity/slot/set tooltip (affixes roll at purchase — none to list).
 ## Purchase path unchanged: _on_buy_equipment (spend → instance → stash → refund
 ## on full stash).
 func _build_equip_tile(entry: Dictionary) -> Control:
@@ -285,37 +295,38 @@ func _build_equip_tile(entry: Dictionary) -> Control:
 	var slot := str(data.get("slot", "head"))
 	var equip_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
 
-	var tile := PanelContainer.new()
-	tile.add_theme_stylebox_override("panel", T.ll_inset())
-	tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var tm := MarginContainer.new()
-	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		tm.add_theme_constant_override(s, 10)
-	tile.add_child(tm)
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 8)
+	col.add_theme_constant_override("separation", 6)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	col.custom_minimum_size = Vector2(SHELF_CARD_MIN_W, 0)
-	tm.add_child(col)
 
 	var icon_holder := CenterContainer.new()
-	icon_holder.custom_minimum_size = Vector2(0, SHELF_ICON.y + 12)
 	var icon := EQUIPMENT_ICON.new()
-	icon.custom_minimum_size = SHELF_ICON
+	icon.custom_minimum_size = EQUIP_SHELF_ICON
 	icon.set_equipment(slot, equip_name, str(data.get("sprite", "")), rarity)
-	icon.set_hover_tooltip(
-		"[b]%s[/b]\n%s" % [equip_name, tr("UI_MARKET_RARITY_%s" % rarity.to_upper())]
-	)
+	icon.set_hover_tooltip(EQUIP_TOOLTIP.text(data, slot, {"rarity": rarity}))
 	icon_holder.add_child(icon)
 	col.add_child(icon_holder)
 
-	col.add_child(_name_bar(equip_name, RARITY_COLORS.get(rarity, Color(0.95, 0.92, 0.85))))
+	# Rarity · slot line, rarity-tinted — generated names are noise (owner).
+	var kind_lbl := Label.new()
+	kind_lbl.text = (
+		"%s · %s"
+		% [
+			tr("UI_MARKET_RARITY_%s" % rarity.to_upper()),
+			tr("UI_EQUIP_SLOT_%s" % slot.to_upper()),
+		]
+	)
+	kind_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_style_label(kind_lbl, 15, RARITY_COLORS.get(rarity, Color(0.95, 0.92, 0.85)), 1)
+	col.add_child(kind_lbl)
 
 	var buy_btn := _price_footer(price)
 	buy_btn.disabled = MetaProgress.caps < price
 	buy_btn.pressed.connect(_on_buy_equipment.bind(base_id, rarity, price, buy_btn))
 	col.add_child(buy_btn)
 
-	return tile
+	return col
 
 
 func _on_buy_equipment(base_id: String, rarity: String, price: int, btn: Button) -> void:
@@ -597,30 +608,6 @@ func _locked_section(title: String, tier: int, with_refresh: bool = false) -> Co
 	return section
 
 
-## The recessed name bar under a shop card's item icon (concept: a slim dark
-## framed strip). bar_plain 9-slice when delivered, flat dark box otherwise.
-func _name_bar(text: String, color: Color) -> Control:
-	var bar := PanelContainer.new()
-	var fallback := StyleBoxFlat.new()
-	fallback.bg_color = Color(0.07, 0.065, 0.055, 0.95)
-	fallback.border_color = Color(0.34, 0.30, 0.20, 0.9)
-	fallback.set_border_width_all(1)
-	fallback.set_corner_radius_all(4)
-	var box := T.lightline_box("bar_plain", fallback, 24)
-	box.content_margin_left = 10
-	box.content_margin_right = 10
-	box.content_margin_top = 5
-	box.content_margin_bottom = 5
-	bar.add_theme_stylebox_override("panel", box)
-	var lbl := Label.new()
-	lbl.text = text
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(lbl, 15, color, 1)
-	bar.add_child(lbl)
-	return bar
-
-
 ## The orange price footer (buy button) on a shop card: 购买 verb left, Caps
 ## amount+icon badge right. Caller still sets `.disabled` / `.pressed`.
 func _price_footer(price: int) -> Button:
@@ -727,45 +714,69 @@ func _roll_tool_stock() -> Array:
 	return stock
 
 
-## Roll a small, session-stable equipment stock from disk, bucketed by rarity.
+## Roll the equipment shelf: ONE item per equipment slot (owner 2026-07-08).
+## Per slot: roll a rarity by EQUIP_RARITY_WEIGHTS, pick a random base with that
+## slot+rarity; if no base exists at that exact rarity, pick any base of the
+## slot and keep its own rarity. Price follows the final rarity.
 func _roll_equip_stock() -> Array:
-	var by_rarity := _list_equipment_by_rarity()
+	var by_slot := _list_equipment_by_slot()
 	var stock: Array = []
-	for rarity in RARITY_ORDER:
-		var pool: Array = (by_rarity.get(rarity, []) as Array).duplicate()
-		pool.shuffle()
-		var want := int(EQUIP_STOCK_PER_RARITY.get(rarity, 1))
-		var taken := 0
-		for base_id in pool:
-			if taken >= want:
-				break
-			(
-				stock
-				. append(
-					{
-						"base": str(base_id),
-						"rarity": rarity,
-						"price": int(EQUIP_CAPS_PRICE.get(rarity, EQUIP_CAPS_PRICE["common"])),
-					}
-				)
+	for slot in EQUIP_SLOT_ORDER:
+		var entries: Array = by_slot.get(slot, [])
+		if entries.is_empty():
+			continue
+		var rarity := _roll_rarity()
+		var pool: Array = entries.filter(func(e): return str(e.get("rarity", "")) == rarity)
+		var picked: Dictionary
+		if pool.is_empty():
+			picked = entries[randi() % entries.size()]
+			rarity = str(picked.get("rarity", "common"))
+		else:
+			picked = pool[randi() % pool.size()]
+		(
+			stock
+			. append(
+				{
+					"base": str(picked.get("id", "")),
+					"rarity": rarity,
+					"price": int(EQUIP_CAPS_PRICE.get(rarity, EQUIP_CAPS_PRICE["common"])),
+				}
 			)
-			taken += 1
+		)
 	return stock
 
 
-func _list_equipment_by_rarity() -> Dictionary:
-	var result := {"common": [], "uncommon": [], "rare": []}
+## Weighted rarity roll for one shelf slot.
+func _roll_rarity() -> String:
+	var total := 0
+	for r in EQUIP_RARITY_WEIGHTS:
+		total += int(EQUIP_RARITY_WEIGHTS[r])
+	var roll := randi() % maxi(total, 1)
+	for r in RARITY_ORDER:
+		roll -= int(EQUIP_RARITY_WEIGHTS.get(r, 0))
+		if roll < 0:
+			return r
+	return "common"
+
+
+## slot → Array of {id, rarity} for every sellable base on disk. Only the three
+## shop rarities go on the shelf (set/cursed exotics drop elsewhere).
+func _list_equipment_by_slot() -> Dictionary:
+	var result := {}
 	var dir = DirAccess.open(EQUIPMENT_DIR)
 	if dir == null:
 		return result
 	for file_name in dir.get_files():
 		if not file_name.ends_with(".json"):
 			continue
-		var item_id := file_name.get_basename()
 		var data := _load_json(EQUIPMENT_DIR + file_name)
+		var slot := str(data.get("slot", ""))
 		var rarity := str(data.get("rarity", "common"))
-		if rarity in result:
-			result[rarity].append(item_id)
+		if slot == "" or not rarity in RARITY_ORDER:
+			continue
+		if not result.has(slot):
+			result[slot] = []
+		(result[slot] as Array).append({"id": file_name.get_basename(), "rarity": rarity})
 	return result
 
 

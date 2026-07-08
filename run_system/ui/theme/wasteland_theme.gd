@@ -822,6 +822,36 @@ static func _ll_button_from(base_name: String, state: String) -> StyleBox:
 	return tb
 
 
+## The lightline square ✕ close button (btn_close.png at its NATIVE 102:100
+## aspect — owner rule 2026-07-08: never stretch it wide). Fixed square size;
+## hover/pressed derive from the same art by modulate. Falls back to a themed
+## text-✕ button while the PNG is undelivered.
+static func ll_close_button(px: float = 48.0) -> Button:
+	var btn := Button.new()
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var tex := lightline_tex("btn_close")
+	if tex == null:
+		btn.text = "✕"
+		btn.custom_minimum_size = Vector2(px, px)
+		btn.add_theme_font_size_override("font_size", int(px * 0.45))
+		apply_button_theme(btn)
+		return btn
+	btn.custom_minimum_size = Vector2(px, px * 100.0 / 102.0)
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var box := StyleBoxTexture.new()
+		box.texture = tex
+		match state:
+			"hover":
+				box.modulate_color = Color(1.15, 1.15, 1.15)
+			"pressed":
+				box.modulate_color = Color(0.82, 0.82, 0.82)
+			"disabled":
+				box.modulate_color = Color(0.55, 0.55, 0.55)
+		btn.add_theme_stylebox_override(state, box)
+	return btn
+
+
 ## Lightline slot box. state: normal / selected (cyan) / locked (padlock) — routes
 ## to the matching slot PNG, else the programmatic ui_slot_box fallback.
 static func ll_slot(state: String = "normal") -> StyleBox:

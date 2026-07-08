@@ -161,11 +161,12 @@ func _build_poster_card(bounty_id: String) -> Control:
 
 	var card := PanelContainer.new()
 	card.custom_minimum_size = Vector2(POSTER_CARD_WIDTH, 0)
-	# card_poster has no 9-slice margins in the manifest → lightline_box falls
-	# back to the arg margins; the parchment centre stretches fine.
-	card.add_theme_stylebox_override(
-		"panel", T.lightline_box("card_poster", _poster_fallback_style(), 26)
-	)
+	# Do NOT 9-slice card_poster.png here: it is a PRE-COMPOSED poster (inner art
+	# frame + a dark button plate baked into the art). Stretched as a stylebox,
+	# those baked elements land behind the real children — double frames and a
+	# phantom plate under the take button (2026-07-08 owner bug report). The flat
+	# parchment style is the frame until Codex delivers a clean 9-slice poster.
+	card.add_theme_stylebox_override("panel", _poster_fallback_style())
 	var m := MarginContainer.new()
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		m.add_theme_constant_override(side, 12)

@@ -27,6 +27,7 @@
 extends "res://run_system/ui/window/draggable_window.gd"
 
 const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
+const EQUIP_TOOLTIP = preload("res://run_system/ui/equip_tooltip.gd")
 const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 const BACKPACK_CELL = preload("res://run_system/ui/backpack_cell.gd")
 
@@ -1082,20 +1083,12 @@ func _load_equip_tex(sprite_path: String) -> Texture2D:
 	return null
 
 
+## Delegates to the shared EQUIP_TOOLTIP helper (owner 2026-07-08: rarity·slot
+## header, no generated name; set pieces keep theirs).
 func _forge_item_tooltip(inst: Dictionary) -> String:
 	var base_id := str(inst.get("base", ""))
 	var data: Dictionary = RunManager.get_equipment_data(base_id)
-	var nm := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
-	var lines: Array[String] = ["[b]%s[/b]" % nm]
-	for affix in RunManager.equip_affixes(inst):
-		if typeof(affix) != TYPE_DICTIONARY:
-			continue
-		var label := AFFIX_POOL.describe(affix)
-		if AFFIX_POOL.is_curse(affix):
-			lines.append("[color=#e0584c]%s[/color]" % label)
-		else:
-			lines.append("[color=#5fd06a]%s[/color]" % label)
-	return "\n".join(lines)
+	return EQUIP_TOOLTIP.text(data, str(data.get("slot", "")), inst)
 
 
 func _section_title(text: String) -> Label:
