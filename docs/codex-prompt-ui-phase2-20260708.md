@@ -17,50 +17,8 @@
 
 ---
 
-## 批次 0A — 地图界面概念图(先行)
-
-**输出**:`docs/art/previews/map_screen_ui_simple_comic_concept_20260708.png`,1920×1080。
-
-```
-[全局风格前缀 — 概念图例外:这是一张完整界面 mock,深色废土场景做底]
-
-Full-screen CONCEPT mockup of the RUN MAP for this deckbuilder. A weathered
-wasteland route map fills the screen (dusty parchment-on-metal board look,
-desert canyon backdrop): a branching Slay-the-Spire style node graph flows
-BOTTOM to TOP with 5-6 floors, nodes connected by dotted trails. Node types
-read as small round badges: bandit skull (enemy), horned skull (elite), big
-crowned skull (boss), goblin merchant tent, campfire, treasure crate, relic
-star, question mark (unknown). The player's current node is marked with a
-small cowboy-hat pin; cleared nodes carry a check stamp; unreachable paths are
-dimmed. TOP bar: slim dark strip with HP heart chip, bottle-cap money chip,
-scrap chip, deck button, floor progress "3/12"-style pill (blank number zones),
-settings gear at top-right. Style: same charcoal + thin brass hairline UI
-language as the reference sheet, same chip/plate shapes as the home-base
-concept. Leave all text zones EMPTY (code renders text).
-```
-
-## 批次 0B — 战斗界面概念图(先行)
-
-**输出**:`docs/art/previews/battle_scene_ui_simple_comic_concept_20260708.png`,1920×1080。
-
-```
-[全局风格前缀 — 概念图例外:完整界面 mock]
-
-Full-screen CONCEPT mockup of the BATTLE scene. Robot cowboy hero stands left
-facing right, two junk-tech mutant enemies right facing left, flat wasteland
-battlefield backdrop. UI in the charcoal + thin brass hairline language of the
-reference sheet: BOTTOM = a hand of 5 playing cards fanned; bottom-left a round
-ENERGY CORE medallion with a big empty number zone; bottom-right a large orange
-END TURN button (empty label zone). Player HP = slim capsule bar under the
-hero; each enemy has a slim HP capsule + an INTENT chip above its head (red
-sword attack / blue shield block / green arrow buff / orange spark charge).
-Status-effect icon chips line up under HP bars. TOP: slim strip with deck pile
-icon (left), discard pile (right), relic chips row, tool-belt slots (3 small
-bracket slots), floor pill, settings gear. A faint targeting arrow arcs from a
-lifted card to an enemy. All text zones EMPTY.
-```
-
----
+**注(owner 2026-07-08):不出概念图 — 下面的组件 sheet 直接生成,风格锚死参考图;
+观感在实装截图上迭代。**
 
 ## 批次 1 — Sheet 09:战斗 HUD 组件
 

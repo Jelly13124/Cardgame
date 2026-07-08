@@ -6,11 +6,12 @@ owner 定案的现役 UI 语言:炭黑平色 + 细金边墨线,轻量、无铆�
 `docs/art/previews/home_base_ui_simple_comic_concept_20260708.png`(基地概念,已过审)。
 配套提示词:`docs/codex-prompt-ui-phase2-20260708.md`。
 
-## 流程(沿用已验证管线)
+## 流程(owner 2026-07-08:**不出概念图**,组件 sheet 直出)
 
-1. **概念图先行**:地图界面 + 战斗界面各 1 张全景(基地已有)→ 项目主过审;
-2. 过审后按下方清单出**组件 sheet**(透明、不重叠、可切片);
-3. Claude 切片(`lw2_*`/按 sheet 前缀)→ manifest → 主题钩子/场景接线 → smoke。
+1. Codex 按下方清单直接出**组件 sheet**(透明、不重叠、可切片),风格锚死
+   sheet 07 + 已有的基地概念图;
+2. Claude 切片(`hud_*`/`map_*`/`base_*`/`icon_*`)→ manifest → 场景接线 → smoke;
+3. 观感问题在实装截图上迭代,不走概念图轮。
 
 ## 现有可复用(不用重新生成)
 
@@ -22,12 +23,7 @@ owner 定案的现役 UI 语言:炭黑平色 + 细金边墨线,轻量、无铆�
 
 ## 缺口清单(= Codex 生成任务)
 
-### 批次 0 — 概念图 ×2(先行,1920×1080)
-- `map_screen_ui_simple_comic_concept`:StS 式分叉路线图 + 顶部资源栏 + 节点章。
-- `battle_scene_ui_simple_comic_concept`:战斗 HUD(能量核、回合结束、双方血条、
-  意图、状态条、手牌区、工具带、遗物条)。
-
-### 批次 1 — Sheet 09 战斗 HUD 件(概念过审后)
+### 批次 1 — Sheet 09 战斗 HUD 件
 | 件 | 用途 / 落点 |
 |---|---|
 | `hud_energy_core` | 圆形能量核底章(中心留数字区)替 `battle_scene/ui/energy_core.png` |
