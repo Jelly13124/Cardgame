@@ -267,7 +267,7 @@ func _build_d4_middle_base() -> Control:
 	var frame := PanelContainer.new()
 	frame.custom_minimum_size = Vector2(340, 350)
 	frame.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	frame.add_theme_stylebox_override("panel", T.ll_inset())
+	frame.add_theme_stylebox_override("panel", T.ll_inset_thin())
 	var pad := MarginContainer.new()
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		pad.add_theme_constant_override(side, 10)
@@ -470,7 +470,7 @@ func _build_base_backpack_panel(used: int, cap: int) -> GridContainer:
 	panel.custom_minimum_size = Vector2(628, 298)
 	panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", T.ll_inset())
+	panel.add_theme_stylebox_override("panel", T.ll_inset_thin())
 	var pad := MarginContainer.new()
 	pad.add_theme_constant_override("margin_left", 12)
 	pad.add_theme_constant_override("margin_right", 12)
@@ -934,14 +934,13 @@ func _make_locked_cell(cell_size: Vector2 = GRID_CELL_SIZE) -> Control:
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_theme_stylebox_override("panel", T.ll_slot("locked"))
 	cell.add_child(panel)
-	# Both slot_locked arts bake the padlock in; the glyph overlay is only for
-	# the flat programmatic fallback.
-	if T.lightline_tex("slot_locked") == null and T.ui_kit_tex("slot_locked") == null:
-		var center := CenterContainer.new()
-		center.set_anchors_preset(Control.PRESET_FULL_RECT)
-		center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		center.add_child(_make_lock_glyph())
-		cell.add_child(center)
+	# ll_slot is a thin flat box since 2026-07-08 (no padlock baked in), so the
+	# lock glyph ALWAYS overlays — it resolves to the lightline icon_lock first.
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	center.add_child(_make_lock_glyph())
+	cell.add_child(center)
 	return cell
 
 
@@ -1222,7 +1221,7 @@ func _build_d4_middle_run() -> Control:
 
 	var frame := PanelContainer.new()
 	frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	frame.add_theme_stylebox_override("panel", T.ll_inset())
+	frame.add_theme_stylebox_override("panel", T.ll_inset_thin())
 	var pad := MarginContainer.new()
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		pad.add_theme_constant_override(side, 10)
@@ -1995,8 +1994,8 @@ func _base_slot_box_style(state: String = "cell_empty") -> StyleBox:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.045, 0.048, 0.045, 0.96)
 	style.border_color = Color(0.25, 0.26, 0.24, 0.95)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(6)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(4)
 	style.content_margin_left = 4
 	style.content_margin_right = 4
 	style.content_margin_top = 4

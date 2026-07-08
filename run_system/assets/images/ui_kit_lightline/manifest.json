@@ -1523,15 +1523,15 @@
   "source_sheet": "ui_components_05_charcoal_window_transparent.png",
   "bbox": null,
   "size": [
-   579,
-   293
+   347,
+   175
   ],
   "role": "panel",
   "nine_slice": {
-   "left": 62,
-   "top": 62,
-   "right": 62,
-   "bottom": 62
+   "left": 37,
+   "top": 37,
+   "right": 37,
+   "bottom": 37
   }
  },
  {

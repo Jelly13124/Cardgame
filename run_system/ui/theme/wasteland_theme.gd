@@ -827,15 +827,17 @@ static func _ll_button_from(base_name: String, state: String) -> StyleBox:
 ## riveted bars repeat instead of smearing when the frame stretches. Falls back
 ## to the olive lightline panel while the PNG is undelivered.
 static func ll_charcoal_panel() -> StyleBox:
-	var box := lightline_box("panel_window_charcoal", ll_panel(), 62)
+	# 37px margins: the frame ships at 30% of its generated size (owner
+	# 2026-07-08: lightweight — big corner plates/screws read too heavy).
+	var box := lightline_box("panel_window_charcoal", ll_panel(), 37)
 	var tb := box as StyleBoxTexture
 	if tb != null:
 		tb.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
 		tb.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
-		tb.content_margin_left = 30.0
-		tb.content_margin_right = 30.0
-		tb.content_margin_top = 26.0
-		tb.content_margin_bottom = 26.0
+		tb.content_margin_left = 20.0
+		tb.content_margin_right = 20.0
+		tb.content_margin_top = 16.0
+		tb.content_margin_bottom = 16.0
 	return box
 
 
@@ -882,19 +884,38 @@ static func ll_close_button(px: float = 48.0) -> Button:
 	return btn
 
 
-## Lightline slot box. state: normal / selected (cyan) / locked (padlock) — routes
-## to the matching slot PNG, else the programmatic ui_slot_box fallback.
+## Lightline slot box — since 2026-07-08 a THIN programmatic cell (owner: the
+## lightweight concept look; the olive slot_*.png bevels read too heavy at cell
+## size). state: normal (1px warm-grey hairline) / selected (orange ring) /
+## locked (dimmed — nothing baked in anymore, pair with a lock-glyph overlay).
 static func ll_slot(state: String = "normal") -> StyleBox:
-	var kit := "slot_normal"
-	var fb_state := "empty"
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.055, 0.058, 0.068, 0.94)
+	style.border_color = Color(0.36, 0.36, 0.31, 0.9)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(4)
+	style.set_content_margin_all(3)
 	match state:
 		"selected":
-			kit = "slot_selected"
-			fb_state = "hover"
+			style.border_color = Color(0.95, 0.62, 0.25, 1.0)
+			style.set_border_width_all(2)
 		"locked":
-			kit = "slot_locked"
-			fb_state = "locked"
-	return lightline_box(kit, ui_slot_box(fb_state), 26)
+			style.bg_color = Color(0.040, 0.042, 0.050, 0.92)
+			style.border_color = Color(0.22, 0.22, 0.20, 0.85)
+	return style
+
+
+## Thin recessed well (charcoal concept) — the lightweight sibling of ll_inset
+## for the character/stash windows: flat dark fill + 1px hairline, no chunky
+## double border.
+static func ll_inset_thin() -> StyleBox:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.045, 0.048, 0.056, 0.92)
+	style.border_color = Color(0.30, 0.30, 0.26, 0.9)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(4)
+	style.set_content_margin_all(6)
+	return style
 
 
 # ─── Internal ─────────────────────────────────────────────────────────────────

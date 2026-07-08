@@ -348,7 +348,7 @@ func _build_drag_hint_row() -> Control:
 	panel.name = "StashDragHintRow"
 	panel.custom_minimum_size = Vector2(0, 66)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override("panel", T.ll_inset())
+	panel.add_theme_stylebox_override("panel", T.ll_inset_thin())
 	var box := HBoxContainer.new()
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_theme_constant_override("separation", 14)
