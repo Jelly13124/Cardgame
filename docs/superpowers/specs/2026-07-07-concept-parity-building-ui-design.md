@@ -1,6 +1,6 @@
 # 概念图对齐:基地四栋楼 UI 重构 + 组件库 Design Spec
 
-**Date:** 2026-07-07  **Status:** Approved (owner) → implement.
+**Date:** 2026-07-07  **Status:** SHIPPED 2026-07-07 — commits `718237f`(lightline 组件库切片)+ `e0adf41`(forge 4-tab + 批量拆解)+ `a359a6b`(outpost 重建/悬赏迁入 + market 去悬赏货架)+ `a495a5b`(clinic + market 换装)。
 **Scope:** 用 Codex 的 lightline 组件 sheet + 四栋楼概念图,把基地建筑 UI 重构成**和概念图 1:1**,
 并装上真实逻辑(含批量拆解新功能 + 悬赏迁到前哨站)。
 

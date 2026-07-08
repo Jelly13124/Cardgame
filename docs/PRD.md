@@ -241,10 +241,10 @@ conversion → Market T3; stash cap flat 40).
 ### The 4 buildings
 | Building | Role |
 |---|---|
-| **Forge (锻造)** | Draggable 4-tab window: dismantle → Scrap; craft / reforge / curse (tier-gated, Scrap) |
+| **Forge (锻造)** | Draggable 4-tab window (lightline icon-tabs): dismantle → Scrap incl. **bulk dismantle by rarity** (confirm dialog; set/cursed gear excluded); craft / reforge / curse (tier-gated, Scrap) |
 | **Clinic (诊所)** | Caps-bought permanent attribute perks + a Max-HP perk (tier raises the cap) |
-| **Market (黑市)** | Daily **bounty shelf** (T1, see "Bounty System"); Caps tool shop + stock refresh (T1); Caps equipment shop (T2); resource conversion **Caps↔Scrap** bidirectional (T3). All non-curse, non-basic cards are draftable by default — no card-unlock system |
-| **Outpost (前哨站)** | Caps permanent upgrades: starting gold / in-run shop discount / safe cells / backpack size; difficulty (ascension) selector; starter-deck editor |
+| **Market (黑市)** | Caps tool shop + stock refresh (T1); Caps equipment shop (T2); resource conversion **Caps↔Scrap** bidirectional (T3). All non-curse, non-basic cards are draftable by default — no card-unlock system. _(The daily bounty shelf moved to the Outpost 2026-07-07.)_ |
+| **Outpost (前哨站)** | **Bounty center** (T1, see "Bounty System"): daily shelf, taking is **FREE**, max 3 held; **safe cells** (T2); Caps **permanent upgrades** (T3): starting gold / backpack size / reward-reroll tokens / tool slots. _(The starter-deck editor and in-run shop-discount upgrade were **removed** 2026-07-07; the difficulty selector lives above the home-screen START button, not in any building.)_ |
 
 ### Rules
 - **Building unlocks cost Scrap; tier-ups cost Caps** (`building_cost_currency()`).
@@ -257,22 +257,24 @@ conversion → Market T3; stash cap flat 40).
 
 ## Bounty System (悬赏契约)
 
-Market-sold contracts that **replace the old mock daily-tasks panel** — the panel's visual
-shell survives as the home-base **bounty board** (bottom-left), but every row is now a real
-held contract with live progress. Spec:
-`docs/superpowers/specs/2026-07-05-bounty-system-card-codex-design.md`. Contract data:
+Contracts taken at the **Outpost** (they replaced the old mock daily-tasks panel; moved
+from the Market 2026-07-07 and taking became **free**). Held contracts show on the
+home-base **bounty board** (bottom-left) with live progress. Specs:
+`docs/superpowers/specs/2026-07-05-bounty-system-card-codex-design.md` +
+`…/2026-07-07-concept-parity-building-ui-design.md`. Contract data:
 `run_system/data/bounties/{bounty_id}.json` (validated by `validate_bounty` in
-`data_validator.gd` — the schema is `id / title / objective{type,count} / reward / price /
-tier`). Catalog page: `docs/catalog_html/bounties.html`.
+`data_validator.gd` — the schema is `id / title / objective{type,count} / reward /
+tier [, price]`; `price` is a legacy optional field, **ignored at runtime**). Catalog
+page: `docs/catalog_html/bounties.html`.
 
-### Daily market shelf (T1 `bounty_shelf`)
-- Every local-date change rerolls a **3-contract shelf** at the Black Market: **1 free
-  claim** (once per day) **+ 2 Caps-priced buys**. The roll is seeded with the date, so
-  re-entering on the same day keeps the same shelf; already-held ids are excluded.
-- The shelf refresh runs on base entry AND market entry (`refresh_bounty_shelf_if_stale`).
+### Daily outpost shelf (T1 `bounties`)
+- Every local-date change rerolls a **3-contract shelf** at the Outpost — **all free to
+  take** (no Caps price, no once-per-day free-claim cap). The roll is seeded with the
+  date, so re-entering on the same day keeps the same shelf; already-held ids are excluded.
+- The shelf refresh runs on base entry AND outpost entry (`refresh_bounty_shelf_if_stale`).
 
 ### Holding & settling
-- **Max 3 held** contracts (board full ⇒ shelf take is refused). Held contracts **never
+- **Max 3 held** contracts (board full ⇒ the outpost's take buttons grey out). Held contracts **never
   expire** — they stay on the board until completed (the daily reroll never touches them).
 - Progress ticks **only while a run is active** (`RunManager.bounty_event` gates on
   `is_run_active`); base/menu activity never counts.
@@ -292,7 +294,7 @@ emitted somewhere via `RunManager.bounty_event` AND listed in
 > do NOT count; spending gold never subtracts.
 
 Launch set: **10 contracts** (7 standard, 3 hard) — see the bounties catalog page for the
-price/reward table.
+objective/reward table.
 
 ### Card Gallery (卡牌图鉴)
 The **Gallery** nav button (home base, bottom-right) opens the card codex: every player
@@ -465,6 +467,24 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 
 ## Development Roadmap
 
+### ✅ Phase 15 — Concept-parity building UI rebuild (shipped 2026-07-07)
+Spec: `docs/superpowers/specs/2026-07-07-concept-parity-building-ui-design.md`.
+Function reference: `docs/building-screens-functions.md`.
+- ✅ **Lightline component library**: Codex imagegen sheets sliced into a named PNG kit —
+  `run_system/assets/images/ui_kit_lightline/` (89 pieces + `manifest.json` with 9-slice
+  margins) — consumed via `wasteland_theme.gd` `ll_*` StyleBox hooks (`ll_panel` /
+  `ll_titlebar` / `ll_section` / `ll_inset` / `ll_button(_olive)` / `ll_slot`).
+- ✅ **Forge window rebuilt to concept**: 4 icon-tabs + NEW **bulk dismantle by rarity**
+  (common/uncommon/rare with confirm dialog; **set + cursed gear excluded** —
+  `BULK_DISMANTLE_RARITIES` / `dismantle_stash_by_rarity`).
+- ✅ **Outpost rebuilt to concept**: **bounties moved here from the Market** — daily shelf,
+  taking is **FREE** (`price` now optional/ignored in `validate_bounty`); safe cells (T2);
+  Caps permanent upgrades (T3): starting gold / backpack / reward-reroll tokens / tool
+  slots. **Removed**: starter-deck editor + in-run shop-discount upgrade + the in-building
+  difficulty selector (difficulty stays above the home START button).
+- ✅ **Market**: bounty shelf dropped; reskinned to concept (tools T1 / equip T2 / convert T3).
+- ✅ **Clinic**: reskinned to concept (lightline cards/rows; logic unchanged).
+
 ### ✅ Phase 14 — Core currency removed → two-currency economy (shipped 2026-07-07)
 Spec: `docs/superpowers/specs/2026-07-07-remove-core-currency-design.md`.
 - ✅ **Meta Core deleted** from `MetaProgress` (var / `core_changed` signal / `add_core` /
@@ -614,16 +634,17 @@ Spec: `docs/superpowers/specs/2026-06-30-discover-mechanic-design.md`; plan: `�
   Caps shelf, just moved from T1); T3 **refresh** (re-roll both stocks for Caps, price rises
   +10 each use for the visit). `BUILDING_DEFS["market"].functions` is now
   `{tool_shop:1, equip_shop:2, refresh:3}`.
-  _(2026-07-05: the daily **bounty shelf** joined the Market at T1 — see Phase 13; `functions` gained `bounty_shelf:1`.)_
+  _(2026-07-05: the daily **bounty shelf** joined the Market at T1 — see Phase 13. 2026-07-07: it moved on to the Outpost, free to take — see Phase 15; market `functions` back to `{tool_shop:1, equip_shop:2, resource_convert:3}`.)_
 
 ### ✅ Phase 13 — Bounty system + card gallery (shipped 2026-07-05)
 Spec: `docs/superpowers/specs/2026-07-05-bounty-system-card-codex-design.md`; plan: `…/plans/2026-07-05-bounty-system-card-codex.md`.
 - ✅ **Bounty contracts** (see "Bounty System" section): 10 JSON contracts in
   `run_system/data/bounties/` + `validate_bounty` schema; daily date-seeded Market shelf
-  (1 free + 2 paid, T1); max-3 bounty board on the home base (replaces the mock
+  (1 free + 2 paid, T1) _(2026-07-07: shelf moved to the Outpost, ALL takes free — see
+  Phase 15)_; max-3 bounty board on the home base (replaces the mock
   daily-tasks panel with real data); 6 in-run `bounty_event` hooks (attack plays, gold
   into backpack, kills, elites/boss, extraction, campfire upgrades); instant settle with
-  Caps/Core/Scrap/equipment rewards.
+  Caps/Core/Scrap/equipment rewards _(Core rewards → Scrap in Phase 14)_.
 - ✅ **Card gallery**: Gallery nav button at base opens the codex — all player cards,
   used = unlocked (`MetaProgress.cards_seen`, marked on first play), locked cards show the
   card back, collected counter.
