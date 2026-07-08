@@ -1383,17 +1383,23 @@ func _add_building_plaque(building_id: String, rect: Rect2, title: String) -> vo
 		label.text = "%s\nLv.%d" % [title, tier]
 	plaque.add_child(label)
 
+	# Unlock / upgrade lives HERE on the overview (detail pages are services-only,
+	# see building_screen_base). This call got dropped in a plaque rework (6e08d33),
+	# which left tier-ups unreachable once a building was unlocked.
+	_add_tier_button(building_id, rect)
+
 
 ## Unlock / upgrade button under a building's floating label — confirms before spending.
 ## Unlock spends Scrap, tier-up spends Caps (building_cost_currency picks which).
 ## Hidden at max tier. Rebuilt with the plaques on buildings_changed so it stays live.
+## NOT balance-disabled: currency changes (e.g. market convert) don't rebuild plaques,
+## so a balance-based grey-out goes stale — the confirm popup is the affordability gate.
 func _add_tier_button(building_id: String, plaque_rect: Rect2) -> void:
 	var tier := MetaProgress.get_building_tier(building_id)
 	var cost := MetaProgress.next_building_cost(building_id)
 	if cost < 0:
 		return  # maxed (or no unlock cost) → no button
 	var currency := MetaProgress.building_cost_currency(building_id)
-	var balance := MetaProgress.scrap if currency == "scrap" else MetaProgress.caps
 	var zh := Settings.language == "zh"
 	var btn := Button.new()
 	btn.focus_mode = Control.FOCUS_NONE
@@ -1403,10 +1409,9 @@ func _add_tier_button(building_id: String, plaque_rect: Rect2) -> void:
 	_style_brass_button(btn)  # glass chip (the Kenney texture read muddy over the sky)
 	btn.text = ("解锁" if zh else "Unlock") if tier <= 0 else ("升级" if zh else "Upgrade")
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	btn.disabled = cost < 0 or balance < cost
 	# Contrast pass: the theme's default grey-brown label was near-invisible on
-	# the plaque — warm gold (UI_HEADER_GOLD #f2c56a) in every state, incl. the
-	# disabled (can't-afford) one, with a dark outline so it reads on desert.
+	# the plaque — warm gold (UI_HEADER_GOLD #f2c56a) in every state, with a dark
+	# outline so it reads on desert.
 	btn.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
 	btn.add_theme_color_override("font_hover_color", T.UI_HEADER_GOLD.lightened(0.15))
 	btn.add_theme_color_override("font_pressed_color", T.UI_HEADER_GOLD)
