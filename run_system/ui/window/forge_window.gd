@@ -719,7 +719,7 @@ func _build_drop_slot(dismantle_on_drop: bool) -> Control:
 	if dismantle_on_drop:
 		# Ink language (sheet 08): corner-bracket drop target + a dim anvil ghost
 		# (the old drop_slot_anvil baked both in the heavier dashed style).
-		anvil_slot_tex = T.lightline_tex("ul_slot_brackets")
+		anvil_slot_tex = T.lightline_tex(T.INK_SET + "_slot_brackets")
 	if anvil_slot_tex != null:
 		var slot_rect := TextureRect.new()
 		slot_rect.texture = anvil_slot_tex

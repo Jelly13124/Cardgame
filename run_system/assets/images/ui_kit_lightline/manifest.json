@@ -1491,5 +1491,182 @@
   ],
   "role": "panel",
   "nine_slice": null
+ },
+ {
+  "name": "lw_panel_tall",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
+  "bbox": null,
+  "size": [
+   220,
+   433
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 34,
+   "top": 34,
+   "right": 34,
+   "bottom": 34
+  }
+ },
+ {
+  "name": "lw_panel",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
+  "bbox": null,
+  "size": [
+   380,
+   358
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 34,
+   "top": 34,
+   "right": 34,
+   "bottom": 34
+  }
+ },
+ {
+  "name": "lw_bar",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
+  "bbox": null,
+  "size": [
+   453,
+   58
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 26,
+   "top": 20,
+   "right": 26,
+   "bottom": 20
+  }
+ },
+ {
+  "name": "lw_panel_wide",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
+  "bbox": null,
+  "size": [
+   391,
+   168
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 34,
+   "top": 34,
+   "right": 34,
+   "bottom": 34
+  }
+ },
+ {
+  "name": "lw_panel_sm",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
+  "bbox": null,
+  "size": [
+   210,
+   216
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 28,
+   "top": 28,
+   "right": 28,
+   "bottom": 28
+  }
+ },
+ {
+  "name": "lw_divider",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
+  "bbox": null,
+  "size": [
+   292,
+   25
+  ],
+  "role": "panel",
+  "nine_slice": null
+ },
+ {
+  "name": "lw_btn_orange",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
+  "bbox": null,
+  "size": [
+   246,
+   116
+  ],
+  "role": "button",
+  "nine_slice": {
+   "left": 26,
+   "top": 24,
+   "right": 26,
+   "bottom": 24
+  }
+ },
+ {
+  "name": "lw_btn_olive",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
+  "bbox": null,
+  "size": [
+   225,
+   115
+  ],
+  "role": "button",
+  "nine_slice": {
+   "left": 26,
+   "top": 24,
+   "right": 26,
+   "bottom": 24
+  }
+ },
+ {
+  "name": "lw_panel_pill",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
+  "bbox": null,
+  "size": [
+   153,
+   85
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 22,
+   "top": 22,
+   "right": 22,
+   "bottom": 22
+  }
+ },
+ {
+  "name": "lw_btn_close",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
+  "bbox": null,
+  "size": [
+   114,
+   124
+  ],
+  "role": "button",
+  "nine_slice": null
+ },
+ {
+  "name": "lw_slot_brackets",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
+  "bbox": null,
+  "size": [
+   184,
+   192
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 42,
+   "top": 42,
+   "right": 42,
+   "bottom": 42
+  }
+ },
+ {
+  "name": "lw_bubble",
+  "source_sheet": "ui_components_07_core_lightweight_transparent.png",
+  "bbox": null,
+  "size": [
+   300,
+   136
+  ],
+  "role": "panel",
+  "nine_slice": null
  }
 ]

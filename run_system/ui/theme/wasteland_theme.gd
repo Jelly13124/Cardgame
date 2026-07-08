@@ -768,39 +768,46 @@ static func lightline_box(
 
 
 ## Lightline floating-window body — 9-slice panel_window, else the menu-glass panel.
-## Since 2026-07-08 every ll_* hook resolves to the sheet-08 ULTRALIGHT pieces
-## (owner decision): flat charcoal fills + one uniform black ink outline — the
-## same pen as the character/card art. The older olive/brass and charcoal-rivet
-## pieces stay on disk for posters/ghosts but no chrome hook points at them.
+## Active ink-UI component set (owner A/B, 2026-07-08): "ul" = sheet 08
+## ultralight (pure black comic outline) / "lw" = sheet 07 lightweight (thin
+## brass rim). This ONE word flips every ll_* chrome hook below — both sets
+## ship the same 12-piece contract (<set>_panel / _bar / _btn_orange / ...).
+const INK_SET := "lw"
+
+
+## Every ll_* hook resolves to the active ink set: flat charcoal fills + one
+## thin outline — the lightweight language the owner locked on 2026-07-08. The
+## older olive/brass and charcoal-rivet pieces stay on disk for posters/ghosts
+## but no chrome hook points at them.
 static func ll_panel() -> StyleBox:
-	return lightline_box("ul_panel", ui_panel(), 34)
+	return lightline_box(INK_SET + "_panel", ui_panel(), 34)
 
 
 ## Title-bar strip — the thin ink bar, else the glass titlebar.
 static func ll_titlebar() -> StyleBox:
-	return lightline_box("ul_bar", ui_titlebar(), 26, 20)
+	return lightline_box(INK_SET + "_bar", ui_titlebar(), 26, 20)
 
 
 ## Section panel — the wide ink panel, else a hairline glass panel.
 static func ll_section() -> StyleBox:
-	return lightline_box("ul_panel_wide", _base(GLASS_BG, GLASS_HAIRLINE, 6, 1), 34)
+	return lightline_box(INK_SET + "_panel_wide", _base(GLASS_BG, GLASS_HAIRLINE, 6, 1), 34)
 
 
 ## Recessed inset well — the small ink card, else deep glass.
 static func ll_inset() -> StyleBox:
-	return lightline_box("ul_panel_sm", _base(GLASS_BG_DEEP, GLASS_HAIRLINE, 5, 1), 28)
+	return lightline_box(INK_SET + "_panel_sm", _base(GLASS_BG_DEEP, GLASS_HAIRLINE, 5, 1), 28)
 
 
 ## Primary (orange) button. state: normal / hover / pressed — one flat ink-
 ## outlined base PNG with hover/pressed derived by modulate, else the
 ## programmatic brass button.
 static func ll_button(state: String = "normal") -> StyleBox:
-	return _ll_button_from("ul_btn_orange", state)
+	return _ll_button_from(INK_SET + "_btn_orange", state)
 
 
 ## Secondary (olive) button — same single-base + modulate-state scheme.
 static func ll_button_olive(state: String = "normal") -> StyleBox:
-	return _ll_button_from("ul_btn_olive", state)
+	return _ll_button_from(INK_SET + "_btn_olive", state)
 
 
 ## Shared body for ll_button / ll_button_olive: 9-slice the base PNG (fallback to
@@ -828,7 +835,7 @@ static func _ll_button_from(base_name: String, state: String) -> StyleBox:
 ## frame retired per the no-ornament rule); kept as its own hook so windows can
 ## diverge from fullscreen pages again later without touching call sites.
 static func ll_charcoal_panel() -> StyleBox:
-	var box := lightline_box("ul_panel", ui_panel(), 34)
+	var box := lightline_box(INK_SET + "_panel", ui_panel(), 34)
 	var tb := box as StyleBoxTexture
 	if tb != null:
 		tb.content_margin_left = 16.0
@@ -840,7 +847,7 @@ static func ll_charcoal_panel() -> StyleBox:
 
 ## Recessed title plate (the 角色/仓库 header slot) — the thin ink bar.
 static func ll_titleplate() -> StyleBox:
-	var box := lightline_box("ul_bar", ui_titlebar(), 26, 20)
+	var box := lightline_box(INK_SET + "_bar", ui_titlebar(), 26, 20)
 	var tb := box as StyleBoxTexture
 	if tb != null:
 		tb.content_margin_left = 20.0
@@ -850,22 +857,22 @@ static func ll_titleplate() -> StyleBox:
 	return box
 
 
-## The square ✕ close button (ul_btn_close at its NATIVE 117:123 aspect — owner
-## rule 2026-07-08: never stretch it wide). Fixed square size; hover/pressed
-## derive from the same art by modulate. Falls back to a themed text-✕ button
-## while the PNG is undelivered.
+## The square ✕ close button (the active set's btn_close at its NATIVE aspect —
+## owner rule 2026-07-08: never stretch it wide). Fixed square size; hover/
+## pressed derive from the same art by modulate. Falls back to a themed text-✕
+## button while the PNG is undelivered.
 static func ll_close_button(px: float = 48.0) -> Button:
 	var btn := Button.new()
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var tex := lightline_tex("ul_btn_close")
+	var tex := lightline_tex(INK_SET + "_btn_close")
 	if tex == null:
 		btn.text = "✕"
 		btn.custom_minimum_size = Vector2(px, px)
 		btn.add_theme_font_size_override("font_size", int(px * 0.45))
 		apply_button_theme(btn)
 		return btn
-	btn.custom_minimum_size = Vector2(px, px * 123.0 / 117.0)
+	btn.custom_minimum_size = Vector2(px, px * tex.get_height() / maxf(tex.get_width(), 1.0))
 	for state in ["normal", "hover", "pressed", "disabled"]:
 		var box := StyleBoxTexture.new()
 		box.texture = tex
