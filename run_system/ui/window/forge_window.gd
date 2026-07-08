@@ -31,7 +31,10 @@ const EQUIP_TOOLTIP = preload("res://run_system/ui/equip_tooltip.gd")
 const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 const BACKPACK_CELL = preload("res://run_system/ui/backpack_cell.gd")
 
-const WIN_SIZE := Vector2(560, 760)
+# 920: the dismantle tab (drop slot + bulk column + stash strip) needs the
+# room; the draggable_window viewport cap + content scroll absorb anything
+# beyond the screen (2026-07-08 overflow fix).
+const WIN_SIZE := Vector2(560, 920)
 const GRID_CELL_SIZE := Vector2(56, 56)
 const BENCH_CELL_SIZE := Vector2(84, 84)
 

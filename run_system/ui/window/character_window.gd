@@ -47,7 +47,10 @@ const MODE_BATTLE := "battle"
 ## Run window keeps the compact map/battle footprint; base mode uses the taller
 ## concept-layout character sheet with backpack, attributes and tabs.
 const WIN_SIZE := Vector2(700, 840)
-const BASE_WIN_SIZE := Vector2(680, 940)
+# 1000: portrait + attrs + backpack grid + return button; the draggable_window
+# viewport cap + content scroll absorb anything beyond the screen
+# (2026-07-08 overflow fix).
+const BASE_WIN_SIZE := Vector2(680, 1000)
 const GRID_COLUMNS := 10
 const BASE_BACKPACK_GRID_COLUMNS := 7
 const BASE_BACKPACK_DISPLAY_CELLS := 21

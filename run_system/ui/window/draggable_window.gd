@@ -21,16 +21,25 @@ var _close_btn: Button
 
 
 func init_window(title: String, win_size: Vector2, show_title_bar: bool = true) -> void:
+	# Cap to the canvas: a window taller/wider than the viewport can never be
+	# closed or dragged sensibly (2026-07-08 owner report: forge + character
+	# windows overflowed the bottom). Content beyond the cap scrolls — see
+	# _add_scrolled_content, which is also what stops content minimums from
+	# growing the PanelContainer past this size.
+	var vp := get_viewport_rect().size
+	if vp.y > 0.0:
+		win_size = Vector2(minf(win_size.x, vp.x - 48.0), minf(win_size.y, vp.y - 48.0))
 	custom_minimum_size = win_size
 	size = win_size
 	add_theme_stylebox_override("panel", T.ui_panel())
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 0)
 	add_child(vbox)
+	# Openers set position right after WindowLayer.open(); pull the whole frame
+	# on-screen once that has happened.
+	call_deferred("_clamp_into_viewport")
 	if not show_title_bar:
-		content_root = VBoxContainer.new()
-		content_root.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		vbox.add_child(content_root)
+		_add_scrolled_content(vbox)
 		gui_input.connect(_on_window_input)
 		return
 
@@ -56,12 +65,35 @@ func init_window(title: String, win_size: Vector2, show_title_bar: bool = true) 
 	_close_btn.pressed.connect(close)
 	_title_bar_box.add_child(_close_btn)
 
-	content_root = VBoxContainer.new()
-	content_root.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	vbox.add_child(content_root)
+	_add_scrolled_content(vbox)
 
 	# Click anywhere on the window body → bring to front.
 	gui_input.connect(_on_window_input)
+
+
+## The window body: content_root inside a v-scroll. The scroll is what makes the
+## viewport cap safe — a tab whose content minimum outgrows the window scrolls
+## instead of pushing the frame off-screen. When content fits, the scrollbar
+## never shows and the layout is identical to the pre-scroll version.
+func _add_scrolled_content(vbox: VBoxContainer) -> void:
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	vbox.add_child(scroll)
+	content_root = VBoxContainer.new()
+	content_root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.add_child(content_root)
+
+
+## Pull the window fully inside the viewport (deferred from init_window so the
+## opener's position assignment lands first).
+func _clamp_into_viewport() -> void:
+	if not is_inside_tree():
+		return
+	var vp := get_viewport_rect().size
+	var max_pos := (vp - size - Vector2(8.0, 8.0)).max(Vector2(8.0, 8.0))
+	position = position.clamp(Vector2(8.0, 8.0), max_pos)
 
 
 ## Insert a small flat icon button into the title bar, BEFORE the ✕ close
