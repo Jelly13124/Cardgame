@@ -145,7 +145,7 @@ func _reskin_chrome() -> void:
 func _reskin_close_button() -> void:
 	if not is_instance_valid(_close_btn):
 		return
-	var tex := T.lightline_tex("btn_close")
+	var tex := T.lightline_tex("ul_btn_close")
 	if tex == null:
 		return  # keep the base "✕" glyph button
 	_close_btn.text = ""
@@ -717,9 +717,10 @@ func _build_drop_slot(dismantle_on_drop: bool) -> Control:
 	slot_cell.custom_minimum_size = BENCH_CELL_SIZE
 	var anvil_slot_tex: Texture2D = null
 	if dismantle_on_drop:
-		anvil_slot_tex = T.lightline_tex("drop_slot_anvil")
+		# Ink language (sheet 08): corner-bracket drop target + a dim anvil ghost
+		# (the old drop_slot_anvil baked both in the heavier dashed style).
+		anvil_slot_tex = T.lightline_tex("ul_slot_brackets")
 	if anvil_slot_tex != null:
-		# Dismantle: the concept's dashed anvil drop-target IS the slot visual.
 		var slot_rect := TextureRect.new()
 		slot_rect.texture = anvil_slot_tex
 		slot_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -727,6 +728,20 @@ func _build_drop_slot(dismantle_on_drop: bool) -> Control:
 		slot_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		slot_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		slot_cell.add_child(slot_rect)
+		var ghost := T.lightline_tex("icon_anvil")
+		if ghost != null:
+			var ghost_rect := TextureRect.new()
+			ghost_rect.texture = ghost
+			ghost_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+			ghost_rect.offset_left = 26
+			ghost_rect.offset_top = 26
+			ghost_rect.offset_right = -26
+			ghost_rect.offset_bottom = -26
+			ghost_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			ghost_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			ghost_rect.modulate = Color(1, 1, 1, 0.28)
+			ghost_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			slot_cell.add_child(ghost_rect)
 	else:
 		var slot_icon = EQUIPMENT_ICON.new()
 		slot_icon.set_anchors_preset(Control.PRESET_FULL_RECT)

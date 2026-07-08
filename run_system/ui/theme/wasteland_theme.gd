@@ -768,36 +768,39 @@ static func lightline_box(
 
 
 ## Lightline floating-window body — 9-slice panel_window, else the menu-glass panel.
+## Since 2026-07-08 every ll_* hook resolves to the sheet-08 ULTRALIGHT pieces
+## (owner decision): flat charcoal fills + one uniform black ink outline — the
+## same pen as the character/card art. The older olive/brass and charcoal-rivet
+## pieces stay on disk for posters/ghosts but no chrome hook points at them.
 static func ll_panel() -> StyleBox:
-	return lightline_box("panel_window", ui_panel(), 44)
+	return lightline_box("ul_panel", ui_panel(), 34)
 
 
-## Lightline title-bar strip — 9-slice panel_titlebar_wide (the clean empty bar),
-## else the glass titlebar.
+## Title-bar strip — the thin ink bar, else the glass titlebar.
 static func ll_titlebar() -> StyleBox:
-	return lightline_box("panel_titlebar_wide", ui_titlebar(), 40, 34)
+	return lightline_box("ul_bar", ui_titlebar(), 26, 20)
 
 
-## Lightline section panel — 9-slice panel_section, else a hairline glass panel.
+## Section panel — the wide ink panel, else a hairline glass panel.
 static func ll_section() -> StyleBox:
-	return lightline_box("panel_section", _base(GLASS_BG, GLASS_HAIRLINE, 6, 1), 34)
+	return lightline_box("ul_panel_wide", _base(GLASS_BG, GLASS_HAIRLINE, 6, 1), 34)
 
 
-## Lightline recessed inset well — 9-slice panel_square (double-border), else deep glass.
+## Recessed inset well — the small ink card, else deep glass.
 static func ll_inset() -> StyleBox:
-	return lightline_box("panel_square", _base(GLASS_BG_DEEP, GLASS_HAIRLINE, 5, 1), 30)
+	return lightline_box("ul_panel_sm", _base(GLASS_BG_DEEP, GLASS_HAIRLINE, 5, 1), 28)
 
 
-## Lightline primary (orange) button. state: normal / hover / pressed — a single
-## orange base PNG with hover/pressed derived by modulate (keeps one art file),
-## else the programmatic brass button.
+## Primary (orange) button. state: normal / hover / pressed — one flat ink-
+## outlined base PNG with hover/pressed derived by modulate, else the
+## programmatic brass button.
 static func ll_button(state: String = "normal") -> StyleBox:
-	return _ll_button_from("btn_orange_normal", state)
+	return _ll_button_from("ul_btn_orange", state)
 
 
-## Lightline secondary (olive) button — same single-base + modulate-state scheme.
+## Secondary (olive) button — same single-base + modulate-state scheme.
 static func ll_button_olive(state: String = "normal") -> StyleBox:
-	return _ll_button_from("btn_olive", state)
+	return _ll_button_from("ul_btn_olive", state)
 
 
 ## Shared body for ll_button / ll_button_olive: 9-slice the base PNG (fallback to
@@ -820,54 +823,49 @@ static func _ll_button_from(base_name: String, state: String) -> StyleBox:
 	return tb
 
 
-## Charcoal (gunmetal) window body — the 2026-07-08 character/stash window
-## family (sheet 05). Interior is baked opaque near-black; TILE edges so the
-## riveted bars repeat instead of smearing when the frame stretches. Falls back
-## to the olive lightline panel while the PNG is undelivered.
+## Window body for the draggable character/stash/forge windows — since the
+## sheet-08 switch this is the SAME ink panel as ll_panel (the riveted charcoal
+## frame retired per the no-ornament rule); kept as its own hook so windows can
+## diverge from fullscreen pages again later without touching call sites.
 static func ll_charcoal_panel() -> StyleBox:
-	# 37px margins: the frame ships at 30% of its generated size (owner
-	# 2026-07-08: lightweight — big corner plates/screws read too heavy).
-	var box := lightline_box("panel_window_charcoal", ll_panel(), 37)
+	var box := lightline_box("ul_panel", ui_panel(), 34)
 	var tb := box as StyleBoxTexture
 	if tb != null:
-		tb.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
-		tb.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
-		tb.content_margin_left = 20.0
-		tb.content_margin_right = 20.0
-		tb.content_margin_top = 16.0
-		tb.content_margin_bottom = 16.0
+		tb.content_margin_left = 16.0
+		tb.content_margin_right = 16.0
+		tb.content_margin_top = 12.0
+		tb.content_margin_bottom = 12.0
 	return box
 
 
-## Charcoal recessed title plate (the 角色/仓库 header slot) — 9-slice
-## panel_titleplate, else the glass titlebar.
+## Recessed title plate (the 角色/仓库 header slot) — the thin ink bar.
 static func ll_titleplate() -> StyleBox:
-	var box := lightline_box("panel_titleplate", ui_titlebar(), 36, 30)
+	var box := lightline_box("ul_bar", ui_titlebar(), 26, 20)
 	var tb := box as StyleBoxTexture
 	if tb != null:
 		tb.content_margin_left = 20.0
 		tb.content_margin_right = 20.0
-		tb.content_margin_top = 8.0
-		tb.content_margin_bottom = 8.0
+		tb.content_margin_top = 6.0
+		tb.content_margin_bottom = 6.0
 	return box
 
 
-## The lightline square ✕ close button (btn_close.png at its NATIVE 102:100
-## aspect — owner rule 2026-07-08: never stretch it wide). Fixed square size;
-## hover/pressed derive from the same art by modulate. Falls back to a themed
-## text-✕ button while the PNG is undelivered.
+## The square ✕ close button (ul_btn_close at its NATIVE 117:123 aspect — owner
+## rule 2026-07-08: never stretch it wide). Fixed square size; hover/pressed
+## derive from the same art by modulate. Falls back to a themed text-✕ button
+## while the PNG is undelivered.
 static func ll_close_button(px: float = 48.0) -> Button:
 	var btn := Button.new()
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var tex := lightline_tex("btn_close")
+	var tex := lightline_tex("ul_btn_close")
 	if tex == null:
 		btn.text = "✕"
 		btn.custom_minimum_size = Vector2(px, px)
 		btn.add_theme_font_size_override("font_size", int(px * 0.45))
 		apply_button_theme(btn)
 		return btn
-	btn.custom_minimum_size = Vector2(px, px * 100.0 / 102.0)
+	btn.custom_minimum_size = Vector2(px, px * 123.0 / 117.0)
 	for state in ["normal", "hover", "pressed", "disabled"]:
 		var box := StyleBoxTexture.new()
 		box.texture = tex

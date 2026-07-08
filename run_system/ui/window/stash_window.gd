@@ -385,7 +385,7 @@ func _build_drag_hint_row() -> Control:
 ## per side (orange crate / cyan backpack, like the concept); the icon stays
 ## full-color. Null when neither texture is delivered.
 func _make_hint_slot(icon_name: String, frame_tint: Color) -> Control:
-	var frame_tex := T.lightline_tex("slot_dashed")
+	var frame_tex := T.lightline_tex("ul_slot_brackets")
 	var icon_tex := T.lightline_tex(icon_name)
 	if frame_tex == null and icon_tex == null:
 		return null

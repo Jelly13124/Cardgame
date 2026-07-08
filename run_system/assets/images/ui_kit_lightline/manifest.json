@@ -1,55 +1,7 @@
 [
  {
-  "name": "bar_bottom_vitals",
-  "source_sheet": "ui_components_04_building_widgets_transparent.png",
-  "bbox": [
-   59,
-   949,
-   895,
-   271
-  ],
-  "size": [
-   895,
-   271
-  ],
-  "role": "bar",
-  "nine_slice": null
- },
- {
-  "name": "bar_chevron",
-  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
-  "bbox": [
-   45,
-   980,
-   735,
-   92
-  ],
-  "size": [
-   735,
-   92
-  ],
-  "role": "bar",
-  "nine_slice": null
- },
- {
-  "name": "bar_dots",
-  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
-  "bbox": [
-   635,
-   580,
-   540,
-   105
-  ],
-  "size": [
-   540,
-   105
-  ],
-  "role": "bar",
-  "nine_slice": null
- },
- {
   "name": "bar_plain",
-  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    49,
    871,
@@ -62,80 +14,11 @@
   ],
   "role": "bar",
   "nine_slice": {
-   "left": 40,
-   "top": 24,
-   "right": 40,
-   "bottom": 24
+   "left": 8,
+   "top": 4,
+   "right": 8,
+   "bottom": 4
   }
- },
- {
-  "name": "bar_progress_knob",
-  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
-  "bbox": [
-   43,
-   728,
-   579,
-   102
-  ],
-  "size": [
-   579,
-   102
-  ],
-  "role": "bar",
-  "nine_slice": null
- },
- {
-  "name": "bar_slot_button",
-  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
-  "bbox": [
-   43,
-   580,
-   548,
-   105
-  ],
-  "size": [
-   548,
-   105
-  ],
-  "role": "bar",
-  "nine_slice": {
-   "left": 70,
-   "top": 30,
-   "right": 110,
-   "bottom": 30
-  }
- },
- {
-  "name": "bar_slot_dots_a",
-  "source_sheet": "ui_components_04_building_widgets_transparent.png",
-  "bbox": [
-   359,
-   285,
-   584,
-   125
-  ],
-  "size": [
-   584,
-   125
-  ],
-  "role": "bar",
-  "nine_slice": null
- },
- {
-  "name": "bar_slot_dots_b",
-  "source_sheet": "ui_components_04_building_widgets_transparent.png",
-  "bbox": [
-   60,
-   450,
-   588,
-   120
-  ],
-  "size": [
-   588,
-   120
-  ],
-  "role": "bar",
-  "nine_slice": null
  },
  {
   "name": "btn_arrow_left",
@@ -171,7 +54,7 @@
  },
  {
   "name": "btn_close",
-  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    1069,
    913,
@@ -184,15 +67,15 @@
   ],
   "role": "button",
   "nine_slice": {
-   "left": 24,
-   "top": 24,
-   "right": 24,
-   "bottom": 24
+   "left": 8,
+   "top": 8,
+   "right": 8,
+   "bottom": 8
   }
  },
  {
   "name": "btn_dark",
-  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    905,
    912,
@@ -205,15 +88,15 @@
   ],
   "role": "button",
   "nine_slice": {
-   "left": 24,
-   "top": 24,
-   "right": 24,
-   "bottom": 24
+   "left": 8,
+   "top": 8,
+   "right": 8,
+   "bottom": 8
   }
  },
  {
   "name": "btn_grey",
-  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    626,
    918,
@@ -226,10 +109,10 @@
   ],
   "role": "button",
   "nine_slice": {
-   "left": 26,
-   "top": 26,
-   "right": 26,
-   "bottom": 26
+   "left": 10,
+   "top": 8,
+   "right": 10,
+   "bottom": 8
   }
  },
  {
@@ -282,7 +165,7 @@
  },
  {
   "name": "btn_olive",
-  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    349,
    918,
@@ -295,15 +178,15 @@
   ],
   "role": "button",
   "nine_slice": {
-   "left": 26,
-   "top": 26,
-   "right": 26,
-   "bottom": 26
+   "left": 10,
+   "top": 8,
+   "right": 10,
+   "bottom": 8
   }
  },
  {
   "name": "btn_orange_normal",
-  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    59,
    918,
@@ -316,10 +199,10 @@
   ],
   "role": "button",
   "nine_slice": {
-   "left": 26,
-   "top": 26,
-   "right": 26,
-   "bottom": 26
+   "left": 10,
+   "top": 8,
+   "right": 10,
+   "bottom": 8
   }
  },
  {
@@ -371,54 +254,6 @@
   "nine_slice": null
  },
  {
-  "name": "card_building_a",
-  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
-  "bbox": [
-   43,
-   61,
-   329,
-   479
-  ],
-  "size": [
-   329,
-   479
-  ],
-  "role": "card",
-  "nine_slice": null
- },
- {
-  "name": "card_building_b",
-  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
-  "bbox": [
-   415,
-   61,
-   347,
-   479
-  ],
-  "size": [
-   347,
-   479
-  ],
-  "role": "card",
-  "nine_slice": null
- },
- {
-  "name": "card_building_gold",
-  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
-  "bbox": [
-   809,
-   62,
-   364,
-   480
-  ],
-  "size": [
-   364,
-   480
-  ],
-  "role": "card",
-  "nine_slice": null
- },
- {
   "name": "card_device",
   "source_sheet": "ui_components_02_cards_widgets_transparent.png",
   "bbox": [
@@ -430,22 +265,6 @@
   "size": [
    282,
    309
-  ],
-  "role": "card",
-  "nine_slice": null
- },
- {
-  "name": "card_poster",
-  "source_sheet": "ui_components_04_building_widgets_transparent.png",
-  "bbox": [
-   970,
-   717,
-   241,
-   406
-  ],
-  "size": [
-   241,
-   406
   ],
   "role": "card",
   "nine_slice": null
@@ -484,7 +303,7 @@
  },
  {
   "name": "drop_slot_anvil",
-  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    70,
    49,
@@ -1092,7 +911,7 @@
  },
  {
   "name": "panel_bubble",
-  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    59,
    736,
@@ -1108,7 +927,7 @@
  },
  {
   "name": "panel_framed",
-  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    430,
    725,
@@ -1121,15 +940,15 @@
   ],
   "role": "panel",
   "nine_slice": {
-   "left": 34,
-   "top": 34,
-   "right": 34,
-   "bottom": 34
+   "left": 10,
+   "top": 10,
+   "right": 10,
+   "bottom": 10
   }
  },
  {
   "name": "panel_section",
-  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    390,
    285,
@@ -1142,15 +961,15 @@
   ],
   "role": "panel",
   "nine_slice": {
-   "left": 34,
-   "top": 34,
-   "right": 34,
-   "bottom": 34
+   "left": 10,
+   "top": 8,
+   "right": 10,
+   "bottom": 8
   }
  },
  {
   "name": "panel_small",
-  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    943,
    772,
@@ -1163,15 +982,15 @@
   ],
   "role": "panel",
   "nine_slice": {
-   "left": 24,
-   "top": 24,
-   "right": 24,
-   "bottom": 24
+   "left": 8,
+   "top": 8,
+   "right": 8,
+   "bottom": 8
   }
  },
  {
   "name": "panel_square",
-  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    395,
    450,
@@ -1184,36 +1003,15 @@
   ],
   "role": "panel",
   "nine_slice": {
-   "left": 30,
-   "top": 30,
-   "right": 30,
-   "bottom": 30
-  }
- },
- {
-  "name": "panel_square_red",
-  "source_sheet": "ui_components_04_building_widgets_transparent.png",
-  "bbox": [
-   1016,
-   66,
-   142,
-   138
-  ],
-  "size": [
-   142,
-   138
-  ],
-  "role": "panel",
-  "nine_slice": {
-   "left": 28,
-   "top": 28,
-   "right": 28,
-   "bottom": 28
+   "left": 10,
+   "top": 10,
+   "right": 10,
+   "bottom": 10
   }
  },
  {
   "name": "panel_strip",
-  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    829,
    325,
@@ -1226,15 +1024,15 @@
   ],
   "role": "panel",
   "nine_slice": {
-   "left": 22,
-   "top": 22,
-   "right": 22,
-   "bottom": 22
+   "left": 8,
+   "top": 6,
+   "right": 8,
+   "bottom": 6
   }
  },
  {
   "name": "panel_titlebar",
-  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    392,
    62,
@@ -1246,11 +1044,16 @@
    172
   ],
   "role": "titlebar",
-  "nine_slice": null
+  "nine_slice": {
+   "left": 10,
+   "top": 8,
+   "right": 10,
+   "bottom": 8
+  }
  },
  {
   "name": "panel_titlebar_wide",
-  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    352,
    76,
@@ -1263,31 +1066,15 @@
   ],
   "role": "titlebar",
   "nine_slice": {
-   "left": 40,
-   "top": 34,
-   "right": 40,
-   "bottom": 34
+   "left": 10,
+   "top": 8,
+   "right": 10,
+   "bottom": 8
   }
  },
  {
-  "name": "panel_vitals",
-  "source_sheet": "ui_components_04_building_widgets_transparent.png",
-  "bbox": [
-   697,
-   437,
-   247,
-   341
-  ],
-  "size": [
-   247,
-   341
-  ],
-  "role": "panel",
-  "nine_slice": null
- },
- {
   "name": "panel_wide",
-  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    696,
    450,
@@ -1300,15 +1087,15 @@
   ],
   "role": "panel",
   "nine_slice": {
-   "left": 34,
-   "top": 34,
-   "right": 34,
-   "bottom": 34
+   "left": 10,
+   "top": 10,
+   "right": 10,
+   "bottom": 10
   }
  },
  {
   "name": "panel_window",
-  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    46,
    61,
@@ -1321,95 +1108,15 @@
   ],
   "role": "panel",
   "nine_slice": {
-   "left": 44,
-   "top": 44,
-   "right": 44,
-   "bottom": 44
+   "left": 10,
+   "top": 10,
+   "right": 10,
+   "bottom": 10
   }
  },
  {
-  "name": "row_convert",
-  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
-  "bbox": [
-   59,
-   1102,
-   705,
-   88
-  ],
-  "size": [
-   705,
-   88
-  ],
-  "role": "row",
-  "nine_slice": null
- },
- {
-  "name": "row_convert_b",
-  "source_sheet": "ui_components_04_building_widgets_transparent.png",
-  "bbox": [
-   60,
-   815,
-   494,
-   112
-  ],
-  "size": [
-   494,
-   112
-  ],
-  "role": "row",
-  "nine_slice": null
- },
- {
-  "name": "row_refresh_button",
-  "source_sheet": "ui_components_04_building_widgets_transparent.png",
-  "bbox": [
-   600,
-   816,
-   311,
-   106
-  ],
-  "size": [
-   311,
-   106
-  ],
-  "role": "row",
-  "nine_slice": null
- },
- {
-  "name": "scrollbar_v",
-  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
-  "bbox": [
-   1128,
-   996,
-   49,
-   173
-  ],
-  "size": [
-   49,
-   173
-  ],
-  "role": "scrollbar",
-  "nine_slice": null
- },
- {
-  "name": "slider_orange",
-  "source_sheet": "ui_components_01_basic_controls_transparent.png",
-  "bbox": [
-   501,
-   1026,
-   351,
-   100
-  ],
-  "size": [
-   351,
-   100
-  ],
-  "role": "slider",
-  "nine_slice": null
- },
- {
   "name": "slot_dashed",
-  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": [
    1073,
    715,
@@ -1424,103 +1131,8 @@
   "nine_slice": null
  },
  {
-  "name": "slot_locked",
-  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
-  "bbox": [
-   928,
-   715,
-   129,
-   126
-  ],
-  "size": [
-   129,
-   126
-  ],
-  "role": "slot",
-  "nine_slice": {
-   "left": 26,
-   "top": 26,
-   "right": 26,
-   "bottom": 26
-  }
- },
- {
-  "name": "slot_normal",
-  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
-  "bbox": [
-   640,
-   715,
-   128,
-   126
-  ],
-  "size": [
-   128,
-   126
-  ],
-  "role": "slot",
-  "nine_slice": {
-   "left": 26,
-   "top": 26,
-   "right": 26,
-   "bottom": 26
-  }
- },
- {
-  "name": "slot_selected",
-  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
-  "bbox": [
-   784,
-   714,
-   128,
-   127
-  ],
-  "size": [
-   128,
-   127
-  ],
-  "role": "slot",
-  "nine_slice": {
-   "left": 26,
-   "top": 26,
-   "right": 26,
-   "bottom": 26
-  }
- },
- {
-  "name": "toggle_off",
-  "source_sheet": "ui_components_01_basic_controls_transparent.png",
-  "bbox": [
-   896,
-   1054,
-   121,
-   60
-  ],
-  "size": [
-   121,
-   60
-  ],
-  "role": "toggle",
-  "nine_slice": null
- },
- {
-  "name": "toggle_on",
-  "source_sheet": "ui_components_01_basic_controls_transparent.png",
-  "bbox": [
-   1057,
-   1054,
-   119,
-   60
-  ],
-  "size": [
-   119,
-   60
-  ],
-  "role": "toggle",
-  "nine_slice": null
- },
- {
   "name": "panel_window_charcoal",
-  "source_sheet": "ui_components_05_charcoal_window_transparent.png",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
   "bbox": null,
   "size": [
    347,
@@ -1528,10 +1140,10 @@
   ],
   "role": "panel",
   "nine_slice": {
-   "left": 37,
-   "top": 37,
-   "right": 37,
-   "bottom": 37
+   "left": 10,
+   "top": 8,
+   "right": 10,
+   "bottom": 8
   }
  },
  {
@@ -1544,10 +1156,10 @@
   ],
   "role": "titlebar",
   "nine_slice": {
-   "left": 36,
-   "top": 30,
-   "right": 36,
-   "bottom": 30
+   "left": 22,
+   "top": 18,
+   "right": 22,
+   "bottom": 18
   }
  },
  {
@@ -1560,10 +1172,10 @@
   ],
   "role": "field",
   "nine_slice": {
-   "left": 28,
-   "top": 26,
-   "right": 92,
-   "bottom": 26
+   "left": 18,
+   "top": 18,
+   "right": 56,
+   "bottom": 18
   }
  },
  {
@@ -1702,5 +1314,182 @@
    "right": 30,
    "bottom": 30
   }
+ },
+ {
+  "name": "ul_panel_tall",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "bbox": null,
+  "size": [
+   233,
+   481
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 34,
+   "top": 34,
+   "right": 34,
+   "bottom": 34
+  }
+ },
+ {
+  "name": "ul_panel",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "bbox": null,
+  "size": [
+   428,
+   398
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 34,
+   "top": 34,
+   "right": 34,
+   "bottom": 34
+  }
+ },
+ {
+  "name": "ul_bar",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "bbox": null,
+  "size": [
+   402,
+   61
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 26,
+   "top": 20,
+   "right": 26,
+   "bottom": 20
+  }
+ },
+ {
+  "name": "ul_panel_wide",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "bbox": null,
+  "size": [
+   384,
+   168
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 34,
+   "top": 34,
+   "right": 34,
+   "bottom": 34
+  }
+ },
+ {
+  "name": "ul_panel_sm",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "bbox": null,
+  "size": [
+   202,
+   207
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 28,
+   "top": 28,
+   "right": 28,
+   "bottom": 28
+  }
+ },
+ {
+  "name": "ul_divider",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "bbox": null,
+  "size": [
+   284,
+   19
+  ],
+  "role": "panel",
+  "nine_slice": null
+ },
+ {
+  "name": "ul_btn_orange",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "bbox": null,
+  "size": [
+   252,
+   107
+  ],
+  "role": "button",
+  "nine_slice": {
+   "left": 26,
+   "top": 24,
+   "right": 26,
+   "bottom": 24
+  }
+ },
+ {
+  "name": "ul_btn_olive",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "bbox": null,
+  "size": [
+   241,
+   108
+  ],
+  "role": "button",
+  "nine_slice": {
+   "left": 26,
+   "top": 24,
+   "right": 26,
+   "bottom": 24
+  }
+ },
+ {
+  "name": "ul_panel_pill",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "bbox": null,
+  "size": [
+   157,
+   79
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 22,
+   "top": 22,
+   "right": 22,
+   "bottom": 22
+  }
+ },
+ {
+  "name": "ul_btn_close",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "bbox": null,
+  "size": [
+   117,
+   123
+  ],
+  "role": "button",
+  "nine_slice": null
+ },
+ {
+  "name": "ul_slot_brackets",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "bbox": null,
+  "size": [
+   187,
+   192
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 42,
+   "top": 42,
+   "right": 42,
+   "bottom": 42
+  }
+ },
+ {
+  "name": "ul_bubble",
+  "source_sheet": "ui_components_08_core_ultralight_transparent.png",
+  "bbox": null,
+  "size": [
+   295,
+   135
+  ],
+  "role": "panel",
+  "nine_slice": null
  }
 ]
