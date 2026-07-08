@@ -304,36 +304,46 @@ func _build_left_column() -> Control:
 	col.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_theme_constant_override("separation", 10)
 
-	# Blacksmith NPC portrait — the Codex orc bust (2026-07-08 delivery); falls
-	# back to the lightline furnace, then a bare anvil icon, if regenerating.
+	# Blacksmith NPC portrait — concept-parity rule (owner 2026-07-08): ONE thin
+	# frame, the art BLEEDS edge-to-edge inside it (keep-aspect COVERED + clip).
+	# No inner container, no floating margins — double-framing a single picture
+	# reads as clutter. Falls back to the centered furnace/anvil glyph while the
+	# Codex bust is regenerating (small fallback art can't cover-fill).
 	var npc := PanelContainer.new()
 	npc.name = "ForgeNpcPortrait"
 	npc.custom_minimum_size = Vector2(150, 196)
-	npc.add_theme_stylebox_override("panel", T.ll_inset())
-	var npc_center := CenterContainer.new()
-	npc_center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	npc.add_child(npc_center)
+	npc.add_theme_stylebox_override("panel", T.ll_inset_thin())
+	npc.clip_contents = true
 	var npc_tex := _load_tex_or_null("res://run_system/assets/images/ui/forge/npc_blacksmith.png")
-	if npc_tex == null:
-		npc_tex = T.lightline_tex("furnace")
 	if npc_tex != null:
 		var portrait := TextureRect.new()
 		portrait.texture = npc_tex
-		portrait.custom_minimum_size = Vector2(138, 180)
 		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		npc_center.add_child(portrait)
+		npc.add_child(portrait)
 	else:
-		npc_center.add_child(_ll_icon("icon_anvil", 68))
+		var npc_center := CenterContainer.new()
+		npc.add_child(npc_center)
+		var furnace_tex := T.lightline_tex("furnace")
+		if furnace_tex != null:
+			var fallback := TextureRect.new()
+			fallback.texture = furnace_tex
+			fallback.custom_minimum_size = Vector2(126, 126)
+			fallback.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			fallback.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			fallback.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			npc_center.add_child(fallback)
+		else:
+			npc_center.add_child(_ll_icon("icon_anvil", 68))
 	col.add_child(npc)
 
-	# Anvil illustration — the Codex hammer-striking-anvil banner (2026-07-08);
-	# falls back to a large icon_anvil while regenerating.
+	# Anvil illustration — same rule: ONE thin dark plate, pictogram directly on
+	# it (the old ll_section wrapper was a second frame around a single picture).
 	var art := PanelContainer.new()
 	art.name = "ForgeAnvilArt"
 	art.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	art.add_theme_stylebox_override("panel", T.ll_section())
+	art.add_theme_stylebox_override("panel", T.ll_inset_thin())
 	var art_center := CenterContainer.new()
 	art_center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	art.add_child(art_center)
