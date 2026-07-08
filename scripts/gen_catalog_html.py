@@ -446,10 +446,9 @@ def build_tools():
          "", body, len(items))
 
 
-# ── Bounties (market-sold contracts; board on home base) ───────────────────
+# ── Bounties (taken FREE at the Outpost; held board on home base) ──────────
 BOUNTY_TIER_COLORS = {"standard": "#9aa3ad", "hard": "#ff6b6b"}
 BOUNTY_REWARD_LABELS = {"caps": ("Caps", "瓶盖", "#ffcf45"),
-                        "core": ("Core", "核心", "#7fe0a0"),
                         "scrap": ("Scrap", "废料", "#b8ccdb")}
 
 
@@ -479,7 +478,8 @@ def build_bounties():
         by_tier.setdefault(str(d.get("tier", "standard")), []).append((bid, d))
 
     def tier_table(tier, rows_src):
-        rows_src.sort(key=lambda kv: (kv[1].get("price", 0), kv[0]))
+        # `price` is a legacy JSON field (taking is free at the outpost) — sort by id.
+        rows_src.sort(key=lambda kv: kv[0])
         rows = ""
         for bid, d in rows_src:
             tr = bounty_tr.get(f"BOUNTY_{bid}_TITLE", {})
@@ -494,10 +494,9 @@ def build_bounties():
                 f'<td><span class="bt-zh">{esc(zh)}</span><br><span class="bt-en">{esc(en)}</span></td>'
                 f'<td>{esc(obj_zh)}<br><span class="bt-en">{esc(obj_en)}</span></td>'
                 f'<td>{fmt_bounty_reward(d.get("reward", {}))}</td>'
-                f'<td>🔩 {esc(d.get("price", 0))}</td>'
                 f'<td><span class="pill" style="color:{c};border-color:{c}">{esc(tier)}</span></td></tr>')
         head = ("<tr><th>ID</th><th>Title 名称</th><th>Objective 目标</th>"
-                "<th>Reward 奖励</th><th>Price 价格</th><th>Tier 层级</th></tr>")
+                "<th>Reward 奖励</th><th>Tier 层级</th></tr>")
         return f'<table class="btable">{head}{rows}</table>'
 
     note = ('<div class="bnote">📌 <b>earn_gold 口径</b>：统计一局进行中<b>进入背包的全部金币</b>'
@@ -512,7 +511,7 @@ def build_bounties():
     controls = "".join(f'<span class="tag" data-k="tier" data-f="{t}">{t}</span>'
                        for t in ("standard", "hard"))
     page("bounties.html", "Bounties · 悬赏契约",
-         "Market-sold contracts — daily shelf: 1 free + 2 paid (Caps); max 3 held, kept until done, instant settle",
+         "Taken at the Outpost — daily 3-contract shelf, ALL free to take; max 3 held, kept until done, instant settle",
          controls, body, len(items))
 
 
