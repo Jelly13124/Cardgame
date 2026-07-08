@@ -1075,6 +1075,10 @@ func _settle_bounty(entry: Dictionary) -> void:
 		if equip_tier != "":
 			add_to_stash(RunManager.roll_shell_drop(equip_tier))
 	active_bounties.erase(entry)
+	# Taking is FREE now, so a settled contract must leave TODAY'S shelf too —
+	# otherwise the same contract could be re-taken and farmed all day. It comes
+	# back naturally when a future daily reroll draws it again.
+	bounty_shelf.erase(bounty_id)
 	emit_signal("bounty_completed", bounty_id)
 
 
