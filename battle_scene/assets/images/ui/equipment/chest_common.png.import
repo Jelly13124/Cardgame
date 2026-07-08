@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b5lod2mi2hk63"
-path="res://.godot/imported/old_world_relic.png-17f2352eea1091331ac6a321ed293d1f.ctex"
+uid="uid://dp27gbg5cucuw"
+path="res://.godot/imported/chest_common.png-ca45abe6e4ac13201e103e92e5e1054c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/equipment/old_world_relic.png"
-dest_files=["res://.godot/imported/old_world_relic.png-17f2352eea1091331ac6a321ed293d1f.ctex"]
+source_file="res://battle_scene/assets/images/ui/equipment/chest_common.png"
+dest_files=["res://.godot/imported/chest_common.png-ca45abe6e4ac13201e103e92e5e1054c.ctex"]
 
 [params]
 

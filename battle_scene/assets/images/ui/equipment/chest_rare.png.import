@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dak26sx2u7n2i"
-path="res://.godot/imported/rusted_dagger.png-a88c60ff2c7796f3cb6d502e340e48df.ctex"
+uid="uid://b2cyfajvbpge5"
+path="res://.godot/imported/chest_rare.png-62909f1e341e0ac33d20a100872fd02d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/equipment/rusted_dagger.png"
-dest_files=["res://.godot/imported/rusted_dagger.png-a88c60ff2c7796f3cb6d502e340e48df.ctex"]
+source_file="res://battle_scene/assets/images/ui/equipment/chest_rare.png"
+dest_files=["res://.godot/imported/chest_rare.png-62909f1e341e0ac33d20a100872fd02d.ctex"]
 
 [params]
 

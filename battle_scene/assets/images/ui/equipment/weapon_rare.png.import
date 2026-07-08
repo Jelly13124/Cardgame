@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://0d3emeufug48"
-path="res://.godot/imported/scrap_breastplate.png-e2d4c04a364c5a42dda8c37b739af8c5.ctex"
+uid="uid://c475vs6l2yyl7"
+path="res://.godot/imported/weapon_rare.png-4fae655b44eef57be39fd98b9bf42f7f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/equipment/scrap_breastplate.png"
-dest_files=["res://.godot/imported/scrap_breastplate.png-e2d4c04a364c5a42dda8c37b739af8c5.ctex"]
+source_file="res://battle_scene/assets/images/ui/equipment/weapon_rare.png"
+dest_files=["res://.godot/imported/weapon_rare.png-4fae655b44eef57be39fd98b9bf42f7f.ctex"]
 
 [params]
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cairqhaivik6o"
-path="res://.godot/imported/wasteland_revolver.png-3d13498945badea7d5f08c0eb855c600.ctex"
+uid="uid://chqrqcqaya2na"
+path="res://.godot/imported/head_uncommon.png-7ba5bb35c9c47102b91c5a99abf4327d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/equipment/wasteland_revolver.png"
-dest_files=["res://.godot/imported/wasteland_revolver.png-3d13498945badea7d5f08c0eb855c600.ctex"]
+source_file="res://battle_scene/assets/images/ui/equipment/head_uncommon.png"
+dest_files=["res://.godot/imported/head_uncommon.png-7ba5bb35c9c47102b91c5a99abf4327d.ctex"]
 
 [params]
 

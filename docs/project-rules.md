@@ -34,6 +34,7 @@ The approved production exemplars are:
 - `battle_scene/assets/images/backgrounds/wasteland_battlefield.png`
 - `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`
 - `battle_scene/assets/images/cards/player/*.png`
+- `docs/art/previews/base_building_forge_ui_dismantle_simple_comic_20260707.png` for persistent UI screen style
 
 ### Visual Rules
 
@@ -47,6 +48,7 @@ The approved production exemplars are:
 - **Background:** Character, card, UI, and FX sprites use transparent backgrounds; full-scene map and battle backgrounds are scene-ready PNGs with no UI, text, labels, or characters baked in. Background centers must stay low-detail and readable behind gameplay.
 - **Card illustrations:** Player card art must be `512x320` landscape PNGs. They are illustrations only and must not bake in card borders, cost badges, titles, rarity labels, type labels, description boxes, speech bubbles, UI, or text.
 - **UI icons:** Small UI components and combat intent icons must prioritize simple readability over themed detail. Attack is a simple red sword, block is a simple blue shield, buff is a simple green arrow/glow, and charge is a simple orange warning mark. Avoid skulls, character faces, clutter, and tiny salvage decoration in these icons.
+- **UI screens:** Base, shop, forge, clinic, market, outpost, inventory, and modal screens use the simple line-art 2D American comic / TV-animation UI direction anchored by `docs/art/previews/base_building_forge_ui_dismantle_simple_comic_20260707.png`: lightweight borders, flat color blocks, sparse panel lines, clear button hierarchy, and minimal material rendering. Avoid thick metal frames, bulky corner plates, rivet fields, dense scratches, heavy bevels, dark fantasy ornament, and Diablo-like rendered-metal UI.
 
 ### Character Anchors
 

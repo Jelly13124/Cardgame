@@ -428,12 +428,10 @@ static func close_x_button() -> Button:
 ##       below render everywhere. This is the ACTIVE look — the owner rejected
 ##       all three texture kits in favor of main_menu's minimal dark glass.
 ##   "res://run_system/assets/images/ui_kit/"            — Codex wasteland kit
-##   "res://run_system/assets/images/ui_kit_kenney/"     — Kenney CC0 grey-steel kit
-##   "res://run_system/assets/images/ui_kit_kenney_rpg/" — Kenney CC0 beige/parchment
-##       kit (UI Pack: RPG Expansion; stretch/tile middle bands are flattened to a
-##       uniform color at build time, so it is safe under BOTH axis-stretch modes)
-## (Same 16-file contract in every kit dir; the three kit dirs stay on disk as
-## comparison history. Missing files always hit the flat fallbacks.)
+## (The rejected Kenney comparison kits were deleted in the 2026-07-08 art audit
+## — style rule §1 is Rick and Morty-style flat comic with LIGHTWEIGHT UI, and
+## off-style kits on disk kept misleading art passes. Missing files always hit
+## the flat fallbacks.)
 const UI_KIT_DIR := "res://run_system/assets/images/ui_kit/"
 const CONCEPT_UI_DIR := "res://run_system/assets/images/ui/concept_dark_panel/"
 

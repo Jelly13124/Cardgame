@@ -3,7 +3,7 @@
 **Canonical style name:** Rick and Morty-style Sci-Fi Cartoon Wasteland  
 **Active style source:** this written style contract. Do not use old project reference images as global style references.  
 **Character identity note:** `docs/art/cowboy-bill-character-sheet-reference.png` may be used only to preserve Cowboy Bill's identity markers, not as the global art style.
-**Approved in-game exemplars:** `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`, `battle_scene/assets/images/backgrounds/wasteland_battlefield.png`, `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`, and the current playable card illustrations in `battle_scene/assets/images/cards/player/*.png`.
+**Approved in-game exemplars:** `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`, `battle_scene/assets/images/backgrounds/wasteland_battlefield.png`, `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`, the current playable card illustrations in `battle_scene/assets/images/cards/player/*.png`, and the persistent UI screen style anchor `docs/art/previews/base_building_forge_ui_dismantle_simple_comic_20260707.png`.
 
 This file defines the locked art direction. The target is original sci-fi western cartoon game art: clean flat 2D animation shapes, thick dark outlines, strange desert sci-fi props, absurd salvage-tech silhouettes, simple cel shading, and bright toxic accent colors. The project is not pixel art and should not use gritty rendered concept-art texture.
 
@@ -22,6 +22,7 @@ Do not copy named show characters, logos, exact scene layouts, or franchise-spec
 - **Background policy:** scene backgrounds are full-scene PNGs with no UI, text, labels, or characters baked in. Sprites, card objects, icons, and FX use transparent PNGs or solid `#FF00FF` cleanup backgrounds.
 - **Card illustration policy:** player card art is a `512x320` landscape illustration PNG. The image is art only: no cost badge, no title label, no rarity text, no type label, no description box, no speech bubble, and no card frame baked into the illustration.
 - **UI icon policy:** UI components and combat intent icons must be as simple as possible. Prefer one clear silhouette and one main color: red sword for attack, blue shield for block, green arrow/glow for buff, orange warning mark for charge. Do not add character faces, skulls, props, texture, or extra salvage detail unless the icon's gameplay meaning requires it.
+- **UI screen policy:** persistent UI screens follow `docs/art/previews/base_building_forge_ui_dismantle_simple_comic_20260707.png`: simple line-art 2D American comic / TV-animation UI, lightweight borders, flat panel fills, sparse icon silhouettes, clear button hierarchy, and minimal texture. Avoid thick rendered metal frames, bulky armored corners, rivet fields, heavy bevels, dense scratches, dark fantasy ornament, and Diablo-like material rendering.
 
 ## Approved Exemplars
 
@@ -31,6 +32,7 @@ These files are the current production look. New art should match their flatness
 - **Battle background style:** `battle_scene/assets/images/backgrounds/wasteland_battlefield.png`
 - **Route map background style:** `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`
 - **Playable card illustration style:** `battle_scene/assets/images/cards/player/strike.png`, `battle_scene/assets/images/cards/player/charged_shot.png`, `battle_scene/assets/images/cards/player/deflector.png`, and the rest of `battle_scene/assets/images/cards/player/*.png`
+- **Persistent UI screen style:** `docs/art/previews/base_building_forge_ui_dismantle_simple_comic_20260707.png`
 
 The old Cowboy Bill character sheet is identity documentation only. It is useful for checking Bill's one orange eye, hat/star, red scarf, patched duster, boots, revolver, and gadget motifs. It must not pull new assets back toward rendered concept-sheet detail.
 
@@ -77,6 +79,8 @@ UI icons are readability tools first and illustrations second.
 - Block intent uses a simple blue shield silhouette.
 - Avoid ornate frames, skull motifs, tiny bolts, dense linework, or themed props in small UI icons.
 - If a UI asset becomes less readable when styled, simplify it before adding project-world detail.
+- Full UI screens and concept screens should prioritize simple line drawings, flat color blocks, light frame lines, and readable button/list rhythm. Use the forge dismantle concept anchor above as the default for future base-building screens.
+- Do not turn UI screens into heavy rendered metal props. Keep salvage-tech flavor in small accents, silhouettes, and color choices instead of thick borders, rivet fields, bevel stacks, scratches, or dark fantasy ornament.
 
 ## Prompt Anchor
 

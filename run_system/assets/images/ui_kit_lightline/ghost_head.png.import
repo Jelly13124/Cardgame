@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c32vra1tchhfx"
-path="res://.godot/imported/lucky_charm.png-ce648bd97b84b767d1cdf64876af9563.ctex"
+uid="uid://bfhplmwowlipk"
+path="res://.godot/imported/ghost_head.png-77d5bfee91c99d6ae04af1cdfe07aec2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/equipment/lucky_charm.png"
-dest_files=["res://.godot/imported/lucky_charm.png-ce648bd97b84b767d1cdf64876af9563.ctex"]
+source_file="res://run_system/assets/images/ui_kit_lightline/ghost_head.png"
+dest_files=["res://.godot/imported/ghost_head.png-77d5bfee91c99d6ae04af1cdfe07aec2.ctex"]
 
 [params]
 
