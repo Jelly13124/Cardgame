@@ -63,6 +63,7 @@ UI_STASH_SORT_RARITY,Rarity,稀有度
 UI_STASH_SORT_SLOT,Slot,部位
 UI_STASH_SORT_NAME,Name,名称
 UI_STASH_AUTO_ORGANIZE,Auto Organize,一键整理
+UI_STASH_DRAG_HINT,Drag items to your backpack,拖拽物品到背包
 UI_EQUIP_D4_HINT,"Stash → backpack to carry · backpack → slot to wear · locked cells await Outpost upgrades","仓库拖入背包随身携带 · 背包拖上槽位穿戴 · 锁定格待解锁"
 UI_EQUIP_TOOLS_TITLE,Tool Slots,工具槽
 UI_EQUIP_TOOL_EQUIP_HINT,Click to equip,点击装备到工具槽

@@ -16,17 +16,21 @@
 ## Cross-window sync: after a drop, both this window and the sibling
 ## CharacterWindow rebuild via their public refresh(). Base-context only (no
 ## map/battle callers). NO class_name (ADR-0006) — loaded by path.
+##
+## VISUALS (2026-07-08): charcoal lightline window per
+## docs/art/previews/stash_page_ui_simple_comic_concept_20260708.png — riveted
+## charcoal frame, crate + titleplate + n/cap + square ✕ header row, dropdown +
+## segmented sort buttons + orange auto-organize, rarity corner ribbons on
+## filled cells, dashed-slot drag hint footer. Every lightline texture is
+## null-guarded (silent programmatic fallback while Codex art regenerates).
 extends "res://run_system/ui/window/draggable_window.gd"
 
 const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 const BACKPACK_CELL = preload("res://run_system/ui/backpack_cell.gd")
 const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
 const EQUIP_TOOLTIP = preload("res://run_system/ui/equip_tooltip.gd")
-const STASH_OUTER_FRAME_TEX = preload(
-	"res://run_system/assets/images/ui/window_frames_v2/character_outer_frame.png"
-)
 
-const WIN_SIZE := Vector2(860, 980)
+const WIN_SIZE := Vector2(860, 1000)
 const GRID_COLUMNS := 5
 const STASH_PAGE_CELLS := 25
 const GRID_CELL_SIZE := Vector2(124, 124)
@@ -38,6 +42,13 @@ const SORT_NAME := 3
 const ORGANIZE_SORT_MODE := SORT_RARITY
 const RARITY_RANK := {"rare": 0, "uncommon": 1, "common": 2}
 const SLOT_RANK := {"weapon": 0, "head": 1, "chest": 2, "hands": 3, "accessory": 4}
+## Segmented sort-bar labels, in display order (concept: 默认/稀有度/部位/名称).
+const SORT_KEYS := {
+	SORT_DEFAULT: "UI_STASH_SORT_DEFAULT",
+	SORT_RARITY: "UI_STASH_SORT_RARITY",
+	SORT_SLOT: "UI_STASH_SORT_SLOT",
+	SORT_NAME: "UI_STASH_SORT_NAME",
+}
 
 ## Body VBox, rebuilt wholesale on every refresh.
 var _body: VBoxContainer
@@ -72,11 +83,11 @@ static func open_window(host: Node) -> Control:
 
 func _ready() -> void:
 	init_window(tr("UI_STASH_WINDOW_TITLE"), WIN_SIZE, false)
-	add_theme_stylebox_override("panel", _stash_window_style())
+	add_theme_stylebox_override("panel", T.ll_charcoal_panel())
 	var margin := MarginContainer.new()
 	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		margin.add_theme_constant_override(side, 24)
+		margin.add_theme_constant_override(side, 10)
 	content_root.add_child(margin)
 	_body = VBoxContainer.new()
 	_body.add_theme_constant_override("separation", 10)
@@ -111,8 +122,8 @@ func refresh() -> void:
 	_stash_page = clampi(_stash_page, 0, page_count - 1)
 	var page_start := _stash_page * STASH_PAGE_CELLS
 
-	_body.add_child(_build_stash_title_plaque())
-	_body.add_child(_build_stash_top_bar())
+	_body.add_child(_build_title_row())
+	_body.add_child(_build_sort_row())
 
 	var grid_row := HBoxContainer.new()
 	grid_row.name = "StashPageRow"
@@ -122,7 +133,7 @@ func refresh() -> void:
 	grid_row.add_theme_constant_override("separation", 12)
 	_body.add_child(grid_row)
 
-	var prev := _make_page_button("‹", -1, Vector2(40, 180))
+	var prev := _make_page_button(-1)
 	prev.name = "StashPrevPageButton"
 	prev.disabled = _stash_page <= 0
 	grid_row.add_child(prev)
@@ -134,8 +145,8 @@ func refresh() -> void:
 	var grid := GridContainer.new()
 	grid.name = "StashGrid"
 	grid.columns = GRID_COLUMNS
-	grid.add_theme_constant_override("h_separation", 14)
-	grid.add_theme_constant_override("v_separation", 14)
+	grid.add_theme_constant_override("h_separation", 12)
+	grid.add_theme_constant_override("v_separation", 12)
 	center.add_child(grid)
 	for offset in range(STASH_PAGE_CELLS):
 		var absolute_index := page_start + offset
@@ -144,162 +155,351 @@ func refresh() -> void:
 		else:
 			grid.add_child(_make_empty_cell())
 
-	var next := _make_page_button("›", 1, Vector2(40, 180))
+	var next := _make_page_button(1)
 	next.name = "StashNextPageButton"
 	next.disabled = _stash_page >= page_count - 1
 	grid_row.add_child(next)
 
-	_body.add_child(T.ui_divider())
-	_body.add_child(_make_back_button())
+	var dots := _build_page_dots(page_count)
+	if dots != null:
+		_body.add_child(dots)
+	_body.add_child(_build_drag_hint_row())
 
 
-func _build_stash_title_plaque() -> Control:
-	var holder := CenterContainer.new()
-	holder.custom_minimum_size = Vector2(0, 82)
+## Header row (concept): crate icon left, recessed titleplate 仓库 centered,
+## used/cap counter + square red ✕ right. The whole strip is the drag handle
+## (this window has no stock title bar).
+func _build_title_row() -> Control:
+	var row := HBoxContainer.new()
+	row.name = "StashTitleRow"
+	row.custom_minimum_size = Vector2(0, 64)
+	row.add_theme_constant_override("separation", 10)
+	bind_drag_area(row)
+
+	var left := HBoxContainer.new()
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left.alignment = BoxContainer.ALIGNMENT_BEGIN
+	left.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(left)
+	var crate_tex := T.lightline_tex("icon_crate")
+	if crate_tex != null:
+		var crate := TextureRect.new()
+		crate.texture = crate_tex
+		crate.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		crate.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		crate.custom_minimum_size = Vector2(56, 52)
+		crate.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		crate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		left.add_child(crate)
+
 	var plaque := PanelContainer.new()
-	plaque.custom_minimum_size = Vector2(520, 78)
-	plaque.add_theme_stylebox_override(
-		"panel", T.concept_box("title_plaque", _stash_red_button_style("normal"), 52, 30, 16)
-	)
+	plaque.custom_minimum_size = Vector2(300, 58)
+	plaque.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	plaque.add_theme_stylebox_override("panel", T.ll_titleplate())
 	bind_drag_area(plaque)
-	holder.add_child(plaque)
-	var label := Label.new()
-	label.text = tr("UI_STASH_WINDOW_TITLE")
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_override("font", T.display_font(700))
-	label.add_theme_font_size_override("font_size", 30)
-	label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.58, 1.0))
-	label.add_theme_color_override("font_outline_color", Color(0.08, 0.025, 0.01, 1.0))
-	label.add_theme_constant_override("outline_size", 4)
-	plaque.add_child(label)
-	return holder
+	row.add_child(plaque)
+	var title := Label.new()
+	title.text = tr("UI_STASH_WINDOW_TITLE")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.add_theme_font_override("font", T.display_font(700))
+	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
+	title.add_theme_color_override("font_outline_color", Color(0.06, 0.05, 0.04, 1.0))
+	title.add_theme_constant_override("outline_size", 4)
+	plaque.add_child(title)
+
+	var right := HBoxContainer.new()
+	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right.alignment = BoxContainer.ALIGNMENT_END
+	right.add_theme_constant_override("separation", 14)
+	right.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(right)
+	var cap_label := Label.new()
+	cap_label.name = "StashCapacityLabel"
+	cap_label.text = "%d/%d" % [_stored_count(), MetaProgress.effective_stash_cap()]
+	cap_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	cap_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	cap_label.add_theme_font_override("font", T.display_font(600))
+	cap_label.add_theme_font_size_override("font_size", 24)
+	cap_label.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
+	right.add_child(cap_label)
+	var close_btn := T.ll_close_button(44.0)
+	close_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	close_btn.pressed.connect(close)
+	right.add_child(close_btn)
+	return row
 
 
-func _build_stash_top_bar() -> Control:
-	var header := HBoxContainer.new()
-	header.custom_minimum_size = Vector2(0, 68)
-	header.alignment = BoxContainer.ALIGNMENT_CENTER
-	header.add_theme_constant_override("separation", 14)
+## Sort strip (concept): 排序 label + dropdown + four segmented mode buttons
+## (selected = orange, rest = dark) + the orange 一键整理 button. Both the
+## dropdown and the segments drive the SAME existing _on_sort_selected.
+func _build_sort_row() -> Control:
+	var row := HBoxContainer.new()
+	row.name = "StashSortRow"
+	row.custom_minimum_size = Vector2(0, 56)
+	row.add_theme_constant_override("separation", 8)
+
+	var sort_label := Label.new()
+	sort_label.text = tr("UI_STASH_SORT_LABEL")
+	sort_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	sort_label.add_theme_font_size_override("font_size", 18)
+	sort_label.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
+	row.add_child(sort_label)
 
 	var sort := OptionButton.new()
 	sort.name = "StashSortOption"
-	sort.custom_minimum_size = Vector2(250, 54)
+	sort.custom_minimum_size = Vector2(190, 54)
+	sort.add_theme_font_size_override("font_size", 17)
 	sort.add_item(tr("UI_STASH_SORT_DEFAULT"), SORT_DEFAULT)
 	sort.add_item(tr("UI_STASH_SORT_RARITY"), SORT_RARITY)
 	sort.add_item(tr("UI_STASH_SORT_SLOT"), SORT_SLOT)
 	sort.add_item(tr("UI_STASH_SORT_NAME"), SORT_NAME)
 	sort.select(_sort_mode)
-	_style_stash_button(sort)
+	_style_sort_dropdown(sort)
 	sort.item_selected.connect(_on_sort_selected)
-	header.add_child(sort)
+	row.add_child(sort)
+
+	for mode in [SORT_DEFAULT, SORT_RARITY, SORT_SLOT, SORT_NAME]:
+		var seg := Button.new()
+		seg.name = "StashSortSegment%d" % int(mode)
+		seg.text = tr(str(SORT_KEYS[mode]))
+		seg.custom_minimum_size = Vector2(0, 54)
+		seg.add_theme_font_size_override("font_size", 17)
+		_style_ll_button(seg, int(mode) == _sort_mode)
+		seg.pressed.connect(_on_sort_selected.bind(int(mode)))
+		row.add_child(seg)
+
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(spacer)
 
 	var organize := Button.new()
 	organize.name = "StashAutoOrganizeButton"
 	organize.text = tr("UI_STASH_AUTO_ORGANIZE")
-	organize.custom_minimum_size = Vector2(250, 54)
-	_style_stash_button(organize, true)
+	organize.custom_minimum_size = Vector2(150, 54)
+	organize.add_theme_font_size_override("font_size", 18)
+	_style_ll_button(organize, true)
 	organize.pressed.connect(_auto_organize_stash)
-	header.add_child(organize)
-	return header
+	row.add_child(organize)
+	return row
 
 
-func _make_page_button(text: String, delta: int, min_size: Vector2 = Vector2(54, 54)) -> Button:
+## Lightline ◀ / ▶ page arrow at its native square-ish aspect; text fallback
+## while the arrow PNGs are undelivered.
+func _make_page_button(delta: int) -> Button:
 	var b := Button.new()
-	b.text = text
-	b.custom_minimum_size = min_size
 	b.focus_mode = Control.FOCUS_NONE
 	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	b.add_theme_font_size_override("font_size", 28)
-	_style_stash_button(b)
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	b.custom_minimum_size = Vector2(40, 39)
+	var tex := T.lightline_tex("btn_arrow_left" if delta < 0 else "btn_arrow_right")
+	if tex != null:
+		for state in ["normal", "hover", "pressed", "disabled"]:
+			var box := StyleBoxTexture.new()
+			box.texture = tex
+			match state:
+				"hover":
+					box.modulate_color = Color(1.15, 1.15, 1.15)
+				"pressed":
+					box.modulate_color = Color(0.82, 0.82, 0.82)
+				"disabled":
+					box.modulate_color = Color(0.45, 0.45, 0.45, 0.8)
+			b.add_theme_stylebox_override(state, box)
+	else:
+		b.text = "‹" if delta < 0 else "›"
+		b.add_theme_font_size_override("font_size", 26)
+		T.apply_button_theme(b)
 	b.pressed.connect(_change_page.bind(delta))
 	return b
 
 
-func _make_back_button() -> Button:
-	var b := Button.new()
-	b.name = "StashBackButton"
-	b.text = tr("PAUSE_BACK")
-	b.custom_minimum_size = Vector2(0, 64)
-	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_style_stash_button(b, true)
-	b.pressed.connect(close)
-	return b
+## Cyan progress dots under the grid — current page lit, others dimmed.
+## Decoration only; returns null on a single page or while the dot PNG is absent.
+func _build_page_dots(page_count: int) -> Control:
+	if page_count <= 1:
+		return null
+	var tex := T.lightline_tex("icon_dot_cyan")
+	if tex == null:
+		return null
+	var row := HBoxContainer.new()
+	row.name = "StashPageDots"
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 10)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for i in range(page_count):
+		var dot := TextureRect.new()
+		dot.texture = tex
+		dot.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		dot.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		dot.custom_minimum_size = Vector2(14, 14)
+		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if i != _stash_page:
+			dot.modulate = Color(0.38, 0.42, 0.44, 0.9)
+		row.add_child(dot)
+	return row
 
 
-func _stash_window_style() -> StyleBox:
-	var style := StyleBoxTexture.new()
-	style.texture = STASH_OUTER_FRAME_TEX
-	style.texture_margin_left = 72
-	style.texture_margin_right = 72
-	style.texture_margin_top = 72
-	style.texture_margin_bottom = 72
-	style.content_margin_left = 14
-	style.content_margin_right = 14
-	style.content_margin_top = 14
-	style.content_margin_bottom = 14
-	return style
+## Footer hint strip (concept): dashed crate slot → “拖拽物品到背包” → arrow →
+## dashed backpack slot. Pure decoration — no input.
+func _build_drag_hint_row() -> Control:
+	var panel := PanelContainer.new()
+	panel.name = "StashDragHintRow"
+	panel.custom_minimum_size = Vector2(0, 66)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override("panel", T.ll_inset())
+	var box := HBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 14)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(box)
+
+	var crate := _make_hint_slot("icon_crate", Color(1.0, 0.66, 0.24))
+	if crate != null:
+		box.add_child(crate)
+	var label := Label.new()
+	label.text = tr("UI_STASH_DRAG_HINT")
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
+	box.add_child(label)
+	var arrow_tex := T.lightline_tex("icon_arrow_right")
+	if arrow_tex != null:
+		var arrow := TextureRect.new()
+		arrow.texture = arrow_tex
+		arrow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		arrow.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		arrow.custom_minimum_size = Vector2(24, 30)
+		arrow.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_child(arrow)
+	var bag := _make_hint_slot("icon_backpack", Color(0.45, 0.83, 0.95))
+	if bag != null:
+		box.add_child(bag)
+	return panel
 
 
-func _stash_slot_style() -> StyleBox:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.038, 0.036, 0.032, 0.96)
-	style.border_color = Color(0.39, 0.27, 0.14, 0.98)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(6)
-	style.content_margin_left = 4
-	style.content_margin_right = 4
-	style.content_margin_top = 4
-	style.content_margin_bottom = 4
-	return style
+## One dashed mini-slot with an icon inside (hint row). The dashed frame tints
+## per side (orange crate / cyan backpack, like the concept); the icon stays
+## full-color. Null when neither texture is delivered.
+func _make_hint_slot(icon_name: String, frame_tint: Color) -> Control:
+	var frame_tex := T.lightline_tex("slot_dashed")
+	var icon_tex := T.lightline_tex(icon_name)
+	if frame_tex == null and icon_tex == null:
+		return null
+	var holder := Control.new()
+	holder.custom_minimum_size = Vector2(52, 51)
+	holder.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if frame_tex != null:
+		var frame := TextureRect.new()
+		frame.texture = frame_tex
+		frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		frame.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+		frame.modulate = frame_tint
+		frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		holder.add_child(frame)
+	if icon_tex != null:
+		var icon := TextureRect.new()
+		icon.texture = icon_tex
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+		icon.offset_left = 11
+		icon.offset_top = 11
+		icon.offset_right = -11
+		icon.offset_bottom = -11
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		holder.add_child(icon)
+	return holder
 
 
-func _stash_red_button_style(state: String) -> StyleBox:
-	var fb := T.ui_button_accent(state)
-	return T.concept_box("button_red_wide_%s" % state, fb, 34, 24, 12)
+## Number of gear entries actually stored (header counter). Counts the WHOLE
+## stash — entries queued for the next run still occupy storage capacity.
+func _stored_count() -> int:
+	var n := 0
+	for entry in MetaProgress.stash:
+		if not RunManager.as_equip_instance(entry).is_empty():
+			n += 1
+	return n
 
 
-func _stash_dark_button_style(state: String) -> StyleBox:
-	var fb := T.ui_button_brass(state)
-	return T.concept_box("button_dark_%s" % state, fb, 30, 24, 10)
-
-
-func _stash_dropdown_style(_state: String) -> StyleBox:
-	return T.concept_box("dropdown_frame", T.ui_button_brass("normal"), 30, 22, 10)
-
-
-func _style_stash_button(button: Button, accent: bool = false) -> void:
+## Orange (selected/primary) vs dark (unselected) lightline button styling for
+## the sort segments + auto-organize.
+func _style_ll_button(button: Button, accent: bool) -> void:
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	for state in ["normal", "hover", "pressed"]:
+		var box: StyleBox = T.ll_button(state) if accent else _dark_button_box(state)
+		button.add_theme_stylebox_override(state, box)
 	if accent:
-		button.add_theme_stylebox_override("normal", _stash_red_button_style("normal"))
-		button.add_theme_stylebox_override("hover", _stash_red_button_style("hover"))
-		button.add_theme_stylebox_override("pressed", _stash_red_button_style("pressed"))
-		button.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
-		button.add_theme_color_override("font_hover_color", T.UI_BRASS_LIGHT)
-		button.add_theme_color_override("font_pressed_color", T.UI_HEADER_GOLD)
+		button.add_theme_color_override("font_color", T.UI_ACCENT_TEXT)
+		button.add_theme_color_override("font_hover_color", T.UI_ACCENT_TEXT)
+		button.add_theme_color_override("font_pressed_color", T.UI_ACCENT_TEXT)
 	else:
-		var normal := (
-			_stash_dropdown_style("normal")
-			if button is OptionButton
-			else _stash_dark_button_style("normal")
-		)
-		var hover := (
-			_stash_dropdown_style("hover")
-			if button is OptionButton
-			else _stash_dark_button_style("hover")
-		)
-		var pressed := (
-			_stash_dropdown_style("pressed")
-			if button is OptionButton
-			else _stash_dark_button_style("pressed")
-		)
-		button.add_theme_stylebox_override("normal", normal)
-		button.add_theme_stylebox_override("hover", hover)
-		button.add_theme_stylebox_override("pressed", pressed)
 		button.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
 		button.add_theme_color_override("font_hover_color", T.UI_HEADER_GOLD)
 		button.add_theme_color_override("font_pressed_color", T.UI_HEADER_GOLD)
+	button.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.8))
+	button.add_theme_constant_override("outline_size", 2)
+
+
+## Dark segmented-button box (btn_dark 9-slice, hover/pressed by modulate),
+## programmatic brass fallback while the PNG is undelivered.
+func _dark_button_box(state: String) -> StyleBox:
+	var box := T.lightline_box("btn_dark", T.ui_button_brass(state), 24)
+	var tb := box as StyleBoxTexture
+	if tb != null:
+		match state:
+			"hover":
+				tb.modulate_color = Color(1.15, 1.15, 1.15)
+			"pressed":
+				tb.modulate_color = Color(0.85, 0.85, 0.85)
+		tb.content_margin_left = 16
+		tb.content_margin_right = 16
+		tb.content_margin_top = 8
+		tb.content_margin_bottom = 10
+	return box
+
+
+## Style the sort OptionButton with the lightline dropdown field (its ▼ cap is
+## baked into the art, so the theme arrow is blanked). Themed-button fallback
+## while the PNG is undelivered.
+func _style_sort_dropdown(sort: OptionButton) -> void:
+	sort.focus_mode = Control.FOCUS_NONE
+	sort.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	sort.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
+	sort.add_theme_color_override("font_hover_color", T.UI_HEADER_GOLD)
+	sort.add_theme_color_override("font_pressed_color", T.UI_HEADER_GOLD)
+	var tex := T.lightline_tex("field_dropdown")
+	if tex == null:
+		T.apply_button_theme(sort)
+		return
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var box := StyleBoxTexture.new()
+		box.texture = tex
+		box.texture_margin_left = 28
+		box.texture_margin_top = 26
+		box.texture_margin_right = 92
+		box.texture_margin_bottom = 26
+		box.content_margin_left = 18
+		box.content_margin_right = 68
+		box.content_margin_top = 4
+		box.content_margin_bottom = 6
+		match state:
+			"hover":
+				box.modulate_color = Color(1.1, 1.1, 1.1)
+			"pressed":
+				box.modulate_color = Color(0.86, 0.86, 0.86)
+			"disabled":
+				box.modulate_color = Color(0.6, 0.6, 0.6)
+		sort.add_theme_stylebox_override(state, box)
+	# Blank the built-in arrow — the field art already bakes its own ▼ cap.
+	var blank := Image.create_empty(2, 2, false, Image.FORMAT_RGBA8)
+	sort.add_theme_icon_override("arrow", ImageTexture.create_from_image(blank))
 
 
 func _on_sort_selected(index: int) -> void:
@@ -462,8 +662,9 @@ func _entry_sort_key(entry: Variant, mode: int) -> Array:
 			return [base_id, name]
 
 
-## One stash cell: gear icon + tooltip. Drag OUT to the CharacterWindow backpack
-## (carry it) or the ForgeWindow bench; also a drop target for storing.
+## One stash cell: lightline slot frame + gear icon + rarity corner ribbon +
+## tooltip. Drag OUT to the CharacterWindow backpack (carry it) or the
+## ForgeWindow bench; also a drop target for storing.
 func _make_stash_cell(stash_index: int) -> Control:
 	var entry: Variant = MetaProgress.stash[stash_index]
 	var inst: Dictionary = RunManager.as_equip_instance(entry)
@@ -475,14 +676,28 @@ func _make_stash_cell(stash_index: int) -> Control:
 	var cell = BACKPACK_CELL.new()
 	cell.custom_minimum_size = GRID_CELL_SIZE
 	cell.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var frame := Panel.new()
+	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	frame.add_theme_stylebox_override("panel", T.ll_slot("normal"))
+	cell.add_child(frame)
 	var icon = EQUIPMENT_ICON.new()
 	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+	icon.offset_left = 12
+	icon.offset_top = 12
+	icon.offset_right = -12
+	icon.offset_bottom = -12
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon.set_equipment(
 		slot, item_name, str(data.get("sprite", "")), str(data.get("rarity", "common"))
 	)
-	icon.add_theme_stylebox_override("panel", _stash_slot_style())
+	# The lightline slot frame carries the border; the icon panel goes bare and
+	# rarity moves to the corner ribbon (concept look).
+	icon.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	cell.add_child(icon)
+	var ribbon := _make_rarity_ribbon(str(inst.get("rarity", data.get("rarity", "common"))))
+	if ribbon != null:
+		cell.add_child(ribbon)
 
 	cell.hover_tip = _equipment_tooltip(data, slot, inst)
 	# The payload carries the actual stash entry (forge + character window both
@@ -495,6 +710,26 @@ func _make_stash_cell(stash_index: int) -> Control:
 	return cell
 
 
+## Top-left rarity triangle ribbon — the light lightline template tinted with
+## the shared EQUIPMENT_ICON rarity color. Null while the PNG is undelivered.
+func _make_rarity_ribbon(rarity: String) -> Control:
+	var tex := T.lightline_tex("ribbon_rarity_corner")
+	if tex == null:
+		return null
+	var ribbon := TextureRect.new()
+	ribbon.texture = tex
+	ribbon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ribbon.stretch_mode = TextureRect.STRETCH_SCALE
+	ribbon.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	ribbon.offset_left = 7
+	ribbon.offset_top = 7
+	ribbon.offset_right = 7 + 36
+	ribbon.offset_bottom = 7 + 36
+	ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ribbon.modulate = EQUIPMENT_ICON.RARITY_COLORS.get(rarity, Color.WHITE)
+	return ribbon
+
+
 ## A recessed empty storage frame — still a live drop target.
 func _make_empty_cell() -> Control:
 	var cell = BACKPACK_CELL.new()
@@ -502,7 +737,7 @@ func _make_empty_cell() -> Control:
 	var blank := Panel.new()
 	blank.set_anchors_preset(Control.PRESET_FULL_RECT)
 	blank.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	blank.add_theme_stylebox_override("panel", _stash_slot_style())
+	blank.add_theme_stylebox_override("panel", T.ll_slot("normal"))
 	cell.add_child(blank)
 	_wire_store_drop(cell)
 	return cell

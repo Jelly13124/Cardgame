@@ -1,7 +1,10 @@
 # Asset Spec — 建筑 UI(lightline)缺口素材
 
 **Date:** 2026-07-08 **Owner:** Codex(透明件)/ Gemini 管线(不透明背景,Claude 自产)
-**Status:** OPEN — 全部走占位,到货即插即用(命名节点/固定路径,零代码改动)。
+**Status:** 大部分已交付并实装 2026-07-08(commit 4e5641a)——
+poster_frame_blank ✓、悬赏海报插画×10 ✓、npc_blacksmith ✓、anvil_art ✓,
+另加计划外的 sheet 05(炭黑窗框组件×14)与 sheet 06(装备壳图标×15,落
+`battle_scene/assets/images/ui/equipment/`)。**仍欠**:4 张室内背景(Gemini 管线)。
 
 ## 风格锚点(必读)
 

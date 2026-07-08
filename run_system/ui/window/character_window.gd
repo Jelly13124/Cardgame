@@ -1,7 +1,8 @@
 ## CharacterWindow — the character / equipment / backpack page as a floating
 ## DraggableWindow (replaces the old fullscreen equipment_panel.gd for map and
 ## battle). v2-mockup layout shared by all three modes:
-##   TITLE   drag + ✕; base mode adds a 仓库 (Stash) toggle icon button
+##   TITLE   charcoal header (gear medallion · recessed 角色 titleplate · square
+##           red ✕) — the strip doubles as the drag handle in every mode
 ##   MIDDLE  the D4 zone — equip slots flanking the paper-doll inset well:
 ##           LEFT head / chest / hands · CENTER doll (+ hero switcher) · RIGHT
 ##           weapon / accessory + the tool-slot row
@@ -26,19 +27,6 @@ const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
 const EQUIP_TOOLTIP = preload("res://run_system/ui/equip_tooltip.gd")
 const HERO_SPRITE_DIR := "res://battle_scene/assets/images/heroes/"
 const HERO_DIR := "res://run_system/data/heroes/"
-const HOME_HUD_ICON_DIR := "res://run_system/assets/images/home/base_hud/"
-const BASE_OUTER_FRAME_TEX = preload(
-	"res://run_system/assets/images/ui/window_frames_v2/stash_outer_frame.png"
-)
-const BASE_FOCUS_FRAME_TEX = preload(
-	"res://run_system/assets/images/ui/character_panels_v2/character_focus_frame.png"
-)
-const BASE_BACKPACK_FRAME_TEX = preload(
-	"res://run_system/assets/images/ui/character_panels_v2/character_backpack_frame.png"
-)
-const BASE_TITLE_PLAQUE_TEX = preload(
-	"res://run_system/assets/images/ui/concept_dark_panel/title_plaque.png"
-)
 
 const MODE_BASE := "base"
 const MODE_MAP := "map"
@@ -78,6 +66,15 @@ const ATTR_LABEL_KEYS := {
 	"intelligence": "UI_EQUIP_ATTR_SHORT_INTELLIGENCE",
 	"luck": "UI_EQUIP_ATTR_SHORT_LUCK",
 	"charm": "UI_EQUIP_ATTR_SHORT_CHARM",
+}
+## Lightline stat-icon names for the attribute chips (charcoal concept
+## 2026-07-08); ATTR_ICON_PATHS stays as the pre-kit fallback per icon.
+const ATTR_LL_ICONS := {
+	"strength": "icon_fist",
+	"constitution": "icon_torso",
+	"intelligence": "icon_brain",
+	"luck": "icon_clover",
+	"charm": "icon_star",
 }
 ## D4 split: slots flank the doll (left column / right column).
 const LEFT_SLOTS: Array[String] = ["head", "chest", "hands"]
@@ -123,13 +120,11 @@ static func open_window(host: Node, p_mode: String) -> Control:
 
 func _ready() -> void:
 	var is_base_mode := mode == MODE_BASE
-	init_window(
-		tr("UI_EQUIP_TITLE_CHARACTER"),
-		BASE_WIN_SIZE if is_base_mode else WIN_SIZE,
-		not is_base_mode
-	)
-	if is_base_mode:
-		add_theme_stylebox_override("panel", _base_window_style())
+	# Every mode builds its own charcoal header (medallion + titleplate + ✕), so
+	# the stock title bar stays off; the charcoal riveted frame replaces both the
+	# old glass panel (map/battle) and the brown stash outer frame (base).
+	init_window(tr("UI_EQUIP_TITLE_CHARACTER"), BASE_WIN_SIZE if is_base_mode else WIN_SIZE, false)
+	add_theme_stylebox_override("panel", T.ll_charcoal_panel())
 	_read_only = mode == MODE_BATTLE
 	match mode:
 		MODE_BASE:
@@ -225,7 +220,7 @@ func _refresh_base() -> void:
 		child.queue_free()
 	_slot_parts.clear()  # the layered slot visuals died with the old children
 
-	_base_box.add_child(_build_base_title_ribbon())
+	_base_box.add_child(_build_charcoal_header())
 
 	# ── MIDDLE: the D4 zone (slots flanking the doll + hero switcher) ──
 	_base_box.add_child(_build_d4_middle_base())
@@ -272,7 +267,7 @@ func _build_d4_middle_base() -> Control:
 	var frame := PanelContainer.new()
 	frame.custom_minimum_size = Vector2(340, 350)
 	frame.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	frame.add_theme_stylebox_override("panel", _base_focus_panel_style())
+	frame.add_theme_stylebox_override("panel", T.ll_inset())
 	var pad := MarginContainer.new()
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		pad.add_theme_constant_override(side, 10)
@@ -418,25 +413,55 @@ func _make_stat_line(attrs: Variant) -> Label:
 	return l
 
 
-func _build_base_title_ribbon() -> Control:
-	var holder := CenterContainer.new()
-	holder.custom_minimum_size = Vector2(0, 70)
-	var ribbon := PanelContainer.new()
-	ribbon.custom_minimum_size = Vector2(380, 64)
-	ribbon.add_theme_stylebox_override("panel", _base_title_plaque_style())
-	bind_drag_area(ribbon)
-	holder.add_child(ribbon)
+## The charcoal window header (all modes, concept 2026-07-08): round gear
+## medallion on the LEFT, the recessed 角色 titleplate in the CENTER, the square
+## red ✕ on the RIGHT. The strip AND the plate double as drag handles. Every
+## texture degrades silently: missing medallion → omitted, missing plate PNG →
+## ll_titleplate's glass fallback, missing ✕ art → themed text button.
+func _build_charcoal_header() -> Control:
+	var row := HBoxContainer.new()
+	row.name = "CharcoalHeader"
+	row.custom_minimum_size = Vector2(0, 64)
+	row.add_theme_constant_override("separation", 8)
+	bind_drag_area(row)
+
+	var medal_tex := T.lightline_tex("ornament_medallion")
+	if medal_tex != null:
+		var medal := TextureRect.new()
+		medal.texture = medal_tex
+		medal.custom_minimum_size = Vector2(48, 48)
+		medal.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		medal.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		medal.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		medal.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		medal.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(medal)
+
+	var center := CenterContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(center)
+	var plate := PanelContainer.new()
+	# 60 = the titleplate art's top+bottom 9-slice margins — shorter squashes it.
+	plate.custom_minimum_size = Vector2(300, 60)
+	plate.add_theme_stylebox_override("panel", T.ll_titleplate())
+	bind_drag_area(plate)
+	center.add_child(plate)
 	var label := Label.new()
 	label.text = tr("UI_EQUIP_TITLE_CHARACTER")
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_override("font", T.display_font(700))
-	label.add_theme_font_size_override("font_size", 30)
+	label.add_theme_font_size_override("font_size", 28)
 	label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.58, 1.0))
 	label.add_theme_color_override("font_outline_color", Color(0.08, 0.025, 0.01, 1.0))
 	label.add_theme_constant_override("outline_size", 4)
-	ribbon.add_child(label)
-	return holder
+	plate.add_child(label)
+
+	var close_btn := T.ll_close_button(40.0)
+	close_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	close_btn.pressed.connect(close)
+	row.add_child(close_btn)
+	return row
 
 
 func _build_base_backpack_panel(used: int, cap: int) -> GridContainer:
@@ -445,7 +470,7 @@ func _build_base_backpack_panel(used: int, cap: int) -> GridContainer:
 	panel.custom_minimum_size = Vector2(628, 298)
 	panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", _base_backpack_panel_style())
+	panel.add_theme_stylebox_override("panel", T.ll_inset())
 	var pad := MarginContainer.new()
 	pad.add_theme_constant_override("margin_left", 12)
 	pad.add_theme_constant_override("margin_right", 12)
@@ -472,10 +497,10 @@ func _build_base_attribute_strip(attrs: Variant) -> Control:
 	var a: Dictionary = attrs if typeof(attrs) == TYPE_DICTIONARY else {}
 	var holder := CenterContainer.new()
 	holder.name = "BaseAttributeStrip"
-	holder.custom_minimum_size = Vector2(0, 42)
+	holder.custom_minimum_size = Vector2(0, 48)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 22)
+	row.add_theme_constant_override("separation", 14)
 	holder.add_child(row)
 	for attr in ATTR_ORDER:
 		var pill := _make_base_attribute_pill(attr, int(a.get(attr, 0)))
@@ -483,24 +508,37 @@ func _build_base_attribute_strip(attrs: Variant) -> Control:
 	return holder
 
 
+## One attribute chip (charcoal concept): a dark gunmetal cell holding the stat
+## icon + its value. Prefers the lightline stat icons (fist/torso/brain/clover/
+## star); falls back to the battle-scene attribute art, else value-only.
 func _make_base_attribute_pill(attr: String, value: int) -> Control:
-	var pill := HBoxContainer.new()
-	pill.name = "AttrPill_%s" % attr
-	pill.custom_minimum_size = Vector2(58, 34)
-	pill.alignment = BoxContainer.ALIGNMENT_CENTER
-	pill.mouse_filter = Control.MOUSE_FILTER_STOP
-	pill.tooltip_text = _base_attribute_tooltip(attr)
-	pill.add_theme_constant_override("separation", 3)
+	var chip := PanelContainer.new()
+	chip.name = "AttrPill_%s" % attr
+	chip.custom_minimum_size = Vector2(88, 40)
+	chip.mouse_filter = Control.MOUSE_FILTER_STOP
+	chip.tooltip_text = _base_attribute_tooltip(attr)
+	chip.add_theme_stylebox_override("panel", _charcoal_chip_style())
 
-	var tex_path := str(ATTR_ICON_PATHS.get(attr, ""))
-	var icon := TextureRect.new()
-	icon.custom_minimum_size = Vector2(24, 24)
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if tex_path != "" and ResourceLoader.exists(tex_path):
-		icon.texture = load(tex_path)
-	pill.add_child(icon)
+	var pill := HBoxContainer.new()
+	pill.alignment = BoxContainer.ALIGNMENT_CENTER
+	pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pill.add_theme_constant_override("separation", 6)
+	chip.add_child(pill)
+
+	var tex := T.lightline_tex(str(ATTR_LL_ICONS.get(attr, "")))
+	if tex == null:
+		var tex_path := str(ATTR_ICON_PATHS.get(attr, ""))
+		if tex_path != "" and ResourceLoader.exists(tex_path):
+			tex = load(tex_path) as Texture2D
+	if tex != null:
+		var icon := TextureRect.new()
+		icon.texture = tex
+		icon.custom_minimum_size = Vector2(24, 24)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pill.add_child(icon)
 
 	var label := Label.new()
 	label.text = str(value)
@@ -510,7 +548,7 @@ func _make_base_attribute_pill(attr: String, value: int) -> Control:
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pill.add_child(label)
-	return pill
+	return chip
 
 
 func _base_attribute_tooltip(attr: String) -> String:
@@ -572,46 +610,62 @@ func _load_hero(hero_id: String) -> Dictionary:
 
 
 ## Shared v2 slot-cell scaffold: a 76px BackpackCell layered with (a) the
-## empty-state placeholder (slot glyph tinted on the slot box), (b) a hidden
-## EquipmentIcon for the filled state, (c) a hidden top-right rarity dot.
-## Registered into _slot_parts / _slot_icons / _slot_cells for the stylers
-## (_style_slot_empty / _style_slot_filled) to flip on every refresh.
+## empty-state placeholder — the finished lightline ghost board (dark plate +
+## embossed slot icon baked by Codex), else the pre-kit slot box + glyph —
+## (b) a hidden EquipmentIcon for the filled state, (c) a hidden top-right
+## rarity dot. Registered into _slot_parts / _slot_icons / _slot_cells for the
+## stylers (_style_slot_empty / _style_slot_filled) to flip on every refresh.
 func _make_slot_cell_parts(slot: String, cell_size: Vector2 = SLOT_CELL_SIZE) -> Dictionary:
 	var cell = _new_cell(cell_size)
 	cell.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
-	var ph := Panel.new()
-	ph.set_anchors_preset(Control.PRESET_FULL_RECT)
-	ph.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ph.add_theme_stylebox_override(
-		"panel", _base_slot_box_style("empty") if mode == MODE_BASE else T.ui_slot_box("empty")
-	)
-	var glyph_path := str(EQUIPMENT_ICON.SLOT_ICON_PATHS.get(slot, ""))
-	if glyph_path != "" and ResourceLoader.exists(glyph_path):
-		var glyph := TextureRect.new()
-		glyph.texture = load(glyph_path)
-		glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
-		var inset := 12 if cell_size.x < SLOT_CELL_SIZE.x else 14
-		glyph.offset_left = inset
-		glyph.offset_top = inset
-		glyph.offset_right = -inset
-		glyph.offset_bottom = -inset
-		glyph.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		glyph.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		glyph.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		glyph.modulate = T.UI_SLOT_ICON_TINT
-		glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		ph.add_child(glyph)
+	var ph: Control
+	var ghost := T.lightline_tex("ghost_" + slot)
+	if ghost != null:
+		# Charcoal concept: the empty slot IS the whole ghost board — no extra
+		# frame layered on top.
+		var board := TextureRect.new()
+		board.texture = ghost
+		board.set_anchors_preset(Control.PRESET_FULL_RECT)
+		board.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		board.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		board.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		board.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ph = board
 	else:
-		var letter := Label.new()
-		letter.text = str(SLOT_LETTERS.get(slot, "?"))
-		letter.set_anchors_preset(Control.PRESET_FULL_RECT)
-		letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		letter.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		letter.add_theme_font_size_override("font_size", 20)
-		letter.add_theme_color_override("font_color", T.UI_SLOT_ICON_TINT)
-		letter.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		ph.add_child(letter)
+		var box := Panel.new()
+		box.set_anchors_preset(Control.PRESET_FULL_RECT)
+		box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_theme_stylebox_override(
+			"panel", _base_slot_box_style("empty") if mode == MODE_BASE else T.ui_slot_box("empty")
+		)
+		var glyph_path := str(EQUIPMENT_ICON.SLOT_ICON_PATHS.get(slot, ""))
+		if glyph_path != "" and ResourceLoader.exists(glyph_path):
+			var glyph := TextureRect.new()
+			glyph.texture = load(glyph_path)
+			glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
+			var inset := 12 if cell_size.x < SLOT_CELL_SIZE.x else 14
+			glyph.offset_left = inset
+			glyph.offset_top = inset
+			glyph.offset_right = -inset
+			glyph.offset_bottom = -inset
+			glyph.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			glyph.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			glyph.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			glyph.modulate = T.UI_SLOT_ICON_TINT
+			glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			box.add_child(glyph)
+		else:
+			var letter := Label.new()
+			letter.text = str(SLOT_LETTERS.get(slot, "?"))
+			letter.set_anchors_preset(Control.PRESET_FULL_RECT)
+			letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			letter.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			letter.add_theme_font_size_override("font_size", 20)
+			letter.add_theme_color_override("font_color", T.UI_SLOT_ICON_TINT)
+			letter.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			box.add_child(letter)
+		ph = box
 	cell.add_child(ph)
 
 	var icon = EQUIPMENT_ICON.new()
@@ -771,20 +825,7 @@ func _make_base_tool_slot_column() -> Control:
 
 	var center := CenterContainer.new()
 	col.add_child(center)
-	var card := PanelContainer.new()
-	card.custom_minimum_size = BASE_SLOT_CELL_SIZE
-	card.add_theme_stylebox_override("panel", _base_slot_box_style("tool"))
-	center.add_child(card)
-	var icon := TextureRect.new()
-	icon.custom_minimum_size = Vector2(42, 42)
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var icon_path := HOME_HUD_ICON_DIR + "icon_settings.png"
-	if ResourceLoader.exists(icon_path):
-		icon.texture = load(icon_path)
-	card.add_child(icon)
+	center.add_child(_make_tool_board(BASE_SLOT_CELL_SIZE))
 
 	var label := Label.new()
 	label.text = tr("UI_EQUIP_TOOLS_TITLE")
@@ -832,7 +873,7 @@ func _make_carry_empty_cell() -> Control:
 	var blank := Panel.new()
 	blank.set_anchors_preset(Control.PRESET_FULL_RECT)
 	blank.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	blank.add_theme_stylebox_override("panel", _base_slot_box_style("cell_empty"))
+	blank.add_theme_stylebox_override("panel", T.ll_slot("normal"))
 	cell.add_child(blank)
 	_wire_base_backpack_drop(cell)
 	return cell
@@ -881,8 +922,8 @@ func _build_backpack_header(used: int, cap: int, hint_text: String) -> Control:
 ## One LOCKED backpack cell (index >= effective capacity): inert in every mode —
 ## no drag payload, can_accept stays invalid and `locked` hard-blocks drops, no
 ## click handlers. Only the tooltip talks (upgrade at the Outpost). Skinned by
-## the kit's slot_locked.png when delivered (padlock baked into the art);
-## until then the flat two-Panel padlock overlays the locked box.
+## the lightline slot_locked.png (padlock baked into the art); while that PNG is
+## absent the flat lock glyph overlays the programmatic locked box.
 func _make_locked_cell(cell_size: Vector2 = GRID_CELL_SIZE) -> Control:
 	var cell = BACKPACK_CELL.new()
 	cell.custom_minimum_size = cell_size
@@ -891,16 +932,11 @@ func _make_locked_cell(cell_size: Vector2 = GRID_CELL_SIZE) -> Control:
 	var panel := Panel.new()
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override(
-		"panel",
-		(
-			_base_slot_box_style("cell_empty")
-			if cell_size == BASE_GRID_CELL_SIZE
-			else T.ui_slot_box("locked")
-		)
-	)
+	panel.add_theme_stylebox_override("panel", T.ll_slot("locked"))
 	cell.add_child(panel)
-	if T.ui_kit_tex("slot_locked") == null:
+	# Both slot_locked arts bake the padlock in; the glyph overlay is only for
+	# the flat programmatic fallback.
+	if T.lightline_tex("slot_locked") == null and T.ui_kit_tex("slot_locked") == null:
 		var center := CenterContainer.new()
 		center.set_anchors_preset(Control.PRESET_FULL_RECT)
 		center.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -911,9 +947,12 @@ func _make_locked_cell(cell_size: Vector2 = GRID_CELL_SIZE) -> Control:
 
 ## A tiny flat padlock built from two Panels (border-only shackle ring over a
 ## filled body) — no font/emoji dependency, so it renders identically headless
-## and under any locale font. Kit hook: icon_lock.png replaces it when delivered.
+## and under any locale font. Kit hook: icon_lock.png replaces it when delivered
+## (lightline first, then the old ui_kit).
 func _make_lock_glyph() -> Control:
-	var tex := T.ui_kit_tex("icon_lock")
+	var tex := T.lightline_tex("icon_lock")
+	if tex == null:
+		tex = T.ui_kit_tex("icon_lock")
 	if tex:
 		var icon := TextureRect.new()
 		icon.texture = tex
@@ -1115,7 +1154,8 @@ func _build_map_battle() -> void:
 	vroot.add_theme_constant_override("separation", 14)
 	margin.add_child(vroot)
 
-	# ── Header: vitals only (the window title bar already shows the page name) ──
+	# ── Header: the charcoal chrome strip (drag + ✕), then the vitals line ──
+	vroot.add_child(_build_charcoal_header())
 	_vitals_label = Label.new()
 	_vitals_label.add_theme_font_size_override("font_size", 15)
 	_vitals_label.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
@@ -1182,7 +1222,7 @@ func _build_d4_middle_run() -> Control:
 
 	var frame := PanelContainer.new()
 	frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	frame.add_theme_stylebox_override("panel", T.ui_inset_panel())
+	frame.add_theme_stylebox_override("panel", T.ll_inset())
 	var pad := MarginContainer.new()
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		pad.add_theme_constant_override(side, 10)
@@ -1479,7 +1519,7 @@ func _build_cell_content(index: int) -> Control:
 	var blank := Panel.new()
 	blank.set_anchors_preset(Control.PRESET_FULL_RECT)
 	blank.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	blank.add_theme_stylebox_override("panel", T.ui_slot_box("cell_empty"))
+	blank.add_theme_stylebox_override("panel", T.ll_slot("normal"))
 	wrapper.add_child(blank)
 	_wire_backpack_drop(wrapper, index)
 	return wrapper
@@ -1659,25 +1699,62 @@ func _make_equipped_tool_cell(index: int, tool_id: String) -> Control:
 	return b
 
 
-## An empty tool slot: the v2 "optional" look — lighter border + a faded ⚙
-## glyph (StyleBoxFlat can't dash a border; the value drop reads as optional).
+## An empty tool slot: the charcoal-concept tool board with its orange
+## highlight ring.
 func _make_empty_tool_cell() -> Control:
-	var p := Panel.new()
-	p.custom_minimum_size = SLOT_CELL_SIZE
-	p.add_theme_stylebox_override("panel", T.ui_slot_box("tool"))
+	var p := _make_tool_board(SLOT_CELL_SIZE)
+	p.mouse_filter = Control.MOUSE_FILTER_STOP
 	p.tooltip_text = tr("UI_EQUIP_TOOL_SLOT_EMPTY")
-	var glyph := Label.new()
-	glyph.text = "⚙"
-	glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
-	glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	glyph.add_theme_font_size_override("font_size", 20)
-	var tint := T.UI_SLOT_ICON_TINT
-	tint.a = 0.55  # reduced opacity — reads as "optional"
-	glyph.add_theme_color_override("font_color", tint)
-	glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	p.add_child(glyph)
 	return p
+
+
+## The empty tool-slot visual (charcoal concept): the lightline ghost_tool board
+## (dark plate + embossed wrench) under a thin orange highlight ring — the
+## concept marks the tool slot apart from the five gear slots. Fallbacks are
+## silent: no board PNG → the orange lightline slot frame (ll_slot "selected",
+## itself falling back to a flat hover box) with a faded ⚙ glyph.
+func _make_tool_board(cell_size: Vector2) -> Control:
+	var holder := Control.new()
+	holder.custom_minimum_size = cell_size
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var ghost := T.lightline_tex("ghost_tool")
+	if ghost != null:
+		var board := TextureRect.new()
+		board.texture = ghost
+		board.set_anchors_preset(Control.PRESET_FULL_RECT)
+		board.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		board.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		board.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		board.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		holder.add_child(board)
+		var ring := Panel.new()
+		ring.set_anchors_preset(Control.PRESET_FULL_RECT)
+		ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var rsb := StyleBoxFlat.new()
+		rsb.bg_color = Color(0, 0, 0, 0)
+		rsb.border_color = Color(0.93, 0.56, 0.18, 0.9)  # concept orange highlight
+		rsb.set_border_width_all(2)
+		rsb.set_corner_radius_all(6)
+		ring.add_theme_stylebox_override("panel", rsb)
+		holder.add_child(ring)
+	else:
+		var panel := Panel.new()
+		panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		panel.add_theme_stylebox_override("panel", T.ll_slot("selected"))
+		holder.add_child(panel)
+		var glyph := Label.new()
+		glyph.text = "⚙"
+		glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
+		glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		glyph.add_theme_font_size_override("font_size", 20)
+		var tint := T.UI_SLOT_ICON_TINT
+		tint.a = 0.55  # reduced opacity — reads as "optional"
+		glyph.add_theme_color_override("font_color", tint)
+		glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		holder.add_child(glyph)
+	return holder
 
 
 ## Equip a backpack tool (cell `index`) into a free tool slot, or flash a hint when
@@ -1905,30 +1982,19 @@ func _slot_label(slot: String) -> String:
 			return slot.to_upper()
 
 
-func _base_window_style() -> StyleBox:
-	var style := StyleBoxTexture.new()
-	style.texture = BASE_OUTER_FRAME_TEX
-	style.texture_margin_left = 72
-	style.texture_margin_right = 72
-	style.texture_margin_top = 72
-	style.texture_margin_bottom = 72
-	style.content_margin_left = 18
-	style.content_margin_right = 18
-	style.content_margin_top = 18
-	style.content_margin_bottom = 18
-	return style
-
-
 func _base_slot_holder_style() -> StyleBox:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0, 0, 0, 0)
 	return style
 
 
+## Programmatic charcoal box for the base-mode FILLED cells (where no lightline
+## PNG applies — the border must stay flat so it never fights the rarity info)
+## plus the pre-ghost "empty" fallback. Neutral gunmetal, not the old warm brown.
 func _base_slot_box_style(state: String = "cell_empty") -> StyleBox:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.038, 0.036, 0.032, 0.96)
-	style.border_color = Color(0.38, 0.265, 0.135, 0.98)
+	style.bg_color = Color(0.045, 0.048, 0.045, 0.96)
+	style.border_color = Color(0.25, 0.26, 0.24, 0.95)
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(6)
 	style.content_margin_left = 4
@@ -1936,47 +2002,27 @@ func _base_slot_box_style(state: String = "cell_empty") -> StyleBox:
 	style.content_margin_top = 4
 	style.content_margin_bottom = 4
 	if state == "filled":
-		style.bg_color = Color(0.052, 0.050, 0.044, 0.94)
-		style.border_color = Color(0.52, 0.36, 0.18, 1.0)
-	elif state == "tool":
-		style.bg_color = Color(0.050, 0.048, 0.043, 0.94)
-		style.border_color = Color(0.42, 0.30, 0.15, 0.96)
+		style.bg_color = Color(0.058, 0.060, 0.055, 0.94)
+		style.border_color = Color(0.43, 0.43, 0.37, 1.0)
 	return style
 
 
-func _base_focus_panel_style() -> StyleBox:
-	var style := StyleBoxTexture.new()
-	style.texture = BASE_FOCUS_FRAME_TEX
-	return style
-
-
-func _base_backpack_panel_style() -> StyleBox:
-	var style := StyleBoxTexture.new()
-	style.texture = BASE_BACKPACK_FRAME_TEX
-	style.texture_margin_left = 28
-	style.texture_margin_right = 28
-	style.texture_margin_top = 26
-	style.texture_margin_bottom = 26
-	return style
-
-
-func _base_title_plaque_style() -> StyleBox:
-	var style := StyleBoxTexture.new()
-	style.texture = BASE_TITLE_PLAQUE_TEX
-	style.texture_margin_left = 72
-	style.texture_margin_right = 72
-	style.texture_margin_top = 34
-	style.texture_margin_bottom = 34
-	style.content_margin_left = 18
-	style.content_margin_right = 18
-	style.content_margin_top = 8
-	style.content_margin_bottom = 8
+## The attribute-chip cell (charcoal concept): a small dark gunmetal plate.
+func _charcoal_chip_style() -> StyleBox:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.052, 0.056, 0.052, 0.95)
+	style.border_color = Color(0.27, 0.28, 0.25, 0.9)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(5)
+	style.content_margin_left = 8
+	style.content_margin_right = 10
+	style.content_margin_top = 4
+	style.content_margin_bottom = 4
 	return style
 
 
 func _base_back_button_style(state: String) -> StyleBox:
-	var fallback := T.ui_button_accent(state)
-	return T.concept_box("button_red_wide_%s" % state, fallback, 34, 24, 12)
+	return T.ll_button(state)  # lightline orange primary (glass-brass fallback)
 
 
 func _style_base_back_button(button: Button) -> void:
@@ -1988,53 +2034,6 @@ func _style_base_back_button(button: Button) -> void:
 	button.add_theme_color_override("font_pressed_color", T.UI_HEADER_GOLD)
 	button.add_theme_font_override("font", T.display_font(700))
 	button.add_theme_font_size_override("font_size", 22)
-
-
-func _base_stat_card_style() -> StyleBox:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.050, 0.047, 0.040, 0.90)
-	style.border_color = Color(0.245, 0.175, 0.105, 0.82)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(5)
-	style.content_margin_left = 8
-	style.content_margin_right = 8
-	style.content_margin_top = 6
-	style.content_margin_bottom = 6
-	return style
-
-
-func _base_sheet_panel_style() -> StyleBox:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.038, 0.036, 0.032, 0.92)
-	style.border_color = Color(0.235, 0.165, 0.095, 0.76)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(7)
-	style.content_margin_left = 10
-	style.content_margin_right = 10
-	style.content_margin_top = 8
-	style.content_margin_bottom = 8
-	return style
-
-
-func _base_ribbon_style(state: String) -> StyleBox:
-	var bg := Color(0.085, 0.065, 0.042, 0.98)
-	var border := Color(0.40, 0.29, 0.15, 1.0)
-	if state == "selected":
-		bg = Color(0.40, 0.105, 0.060, 0.96)
-		border = Color(0.58, 0.38, 0.17, 0.86)
-	elif state == "hover":
-		bg = Color(0.12, 0.085, 0.048, 0.98)
-		border = Color(0.72, 0.50, 0.23, 1.0)
-	var style := StyleBoxFlat.new()
-	style.bg_color = bg
-	style.border_color = border
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(6)
-	style.content_margin_left = 14.0
-	style.content_margin_right = 14.0
-	style.content_margin_top = 8.0
-	style.content_margin_bottom = 8.0
-	return style
 
 
 ## Gold v2 section header (display font, wide glyph spacing).
