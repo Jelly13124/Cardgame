@@ -1,0 +1,1521 @@
+[
+ {
+  "name": "bar_bottom_vitals",
+  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "bbox": [
+   59,
+   949,
+   895,
+   271
+  ],
+  "size": [
+   895,
+   271
+  ],
+  "role": "bar",
+  "nine_slice": null
+ },
+ {
+  "name": "bar_chevron",
+  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
+  "bbox": [
+   45,
+   980,
+   735,
+   92
+  ],
+  "size": [
+   735,
+   92
+  ],
+  "role": "bar",
+  "nine_slice": null
+ },
+ {
+  "name": "bar_dots",
+  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
+  "bbox": [
+   635,
+   580,
+   540,
+   105
+  ],
+  "size": [
+   540,
+   105
+  ],
+  "role": "bar",
+  "nine_slice": null
+ },
+ {
+  "name": "bar_plain",
+  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
+  "bbox": [
+   49,
+   871,
+   727,
+   76
+  ],
+  "size": [
+   727,
+   76
+  ],
+  "role": "bar",
+  "nine_slice": {
+   "left": 40,
+   "top": 24,
+   "right": 40,
+   "bottom": 24
+  }
+ },
+ {
+  "name": "bar_progress_knob",
+  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
+  "bbox": [
+   43,
+   728,
+   579,
+   102
+  ],
+  "size": [
+   579,
+   102
+  ],
+  "role": "bar",
+  "nine_slice": null
+ },
+ {
+  "name": "bar_slot_button",
+  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
+  "bbox": [
+   43,
+   580,
+   548,
+   105
+  ],
+  "size": [
+   548,
+   105
+  ],
+  "role": "bar",
+  "nine_slice": {
+   "left": 70,
+   "top": 30,
+   "right": 110,
+   "bottom": 30
+  }
+ },
+ {
+  "name": "bar_slot_dots_a",
+  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "bbox": [
+   359,
+   285,
+   584,
+   125
+  ],
+  "size": [
+   584,
+   125
+  ],
+  "role": "bar",
+  "nine_slice": null
+ },
+ {
+  "name": "bar_slot_dots_b",
+  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "bbox": [
+   60,
+   450,
+   588,
+   120
+  ],
+  "size": [
+   588,
+   120
+  ],
+  "role": "bar",
+  "nine_slice": null
+ },
+ {
+  "name": "btn_arrow_left",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   208,
+   1029,
+   102,
+   99
+  ],
+  "size": [
+   102,
+   99
+  ],
+  "role": "button",
+  "nine_slice": null
+ },
+ {
+  "name": "btn_arrow_right",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   351,
+   1029,
+   102,
+   99
+  ],
+  "size": [
+   102,
+   99
+  ],
+  "role": "button",
+  "nine_slice": null
+ },
+ {
+  "name": "btn_close",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   1069,
+   913,
+   102,
+   100
+  ],
+  "size": [
+   102,
+   100
+  ],
+  "role": "button",
+  "nine_slice": {
+   "left": 24,
+   "top": 24,
+   "right": 24,
+   "bottom": 24
+  }
+ },
+ {
+  "name": "btn_dark",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   905,
+   912,
+   109,
+   100
+  ],
+  "size": [
+   109,
+   100
+  ],
+  "role": "button",
+  "nine_slice": {
+   "left": 24,
+   "top": 24,
+   "right": 24,
+   "bottom": 24
+  }
+ },
+ {
+  "name": "btn_grey",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   626,
+   918,
+   233,
+   88
+  ],
+  "size": [
+   233,
+   88
+  ],
+  "role": "button",
+  "nine_slice": {
+   "left": 26,
+   "top": 26,
+   "right": 26,
+   "bottom": 26
+  }
+ },
+ {
+  "name": "btn_icon_armor",
+  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "bbox": [
+   265,
+   596,
+   177,
+   188
+  ],
+  "size": [
+   177,
+   188
+  ],
+  "role": "button_icon",
+  "nine_slice": null
+ },
+ {
+  "name": "btn_icon_bag",
+  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "bbox": [
+   471,
+   597,
+   176,
+   188
+  ],
+  "size": [
+   176,
+   188
+  ],
+  "role": "button_icon",
+  "nine_slice": null
+ },
+ {
+  "name": "btn_icon_syringe",
+  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "bbox": [
+   59,
+   595,
+   177,
+   188
+  ],
+  "size": [
+   177,
+   188
+  ],
+  "role": "button_icon",
+  "nine_slice": null
+ },
+ {
+  "name": "btn_olive",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   349,
+   918,
+   240,
+   88
+  ],
+  "size": [
+   240,
+   88
+  ],
+  "role": "button",
+  "nine_slice": {
+   "left": 26,
+   "top": 26,
+   "right": 26,
+   "bottom": 26
+  }
+ },
+ {
+  "name": "btn_orange_normal",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   59,
+   918,
+   250,
+   87
+  ],
+  "size": [
+   250,
+   87
+  ],
+  "role": "button",
+  "nine_slice": {
+   "left": 26,
+   "top": 26,
+   "right": 26,
+   "bottom": 26
+  }
+ },
+ {
+  "name": "btn_refresh",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   58,
+   1029,
+   103,
+   99
+  ],
+  "size": [
+   103,
+   99
+  ],
+  "role": "button",
+  "nine_slice": null
+ },
+ {
+  "name": "canister_blue",
+  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "bbox": [
+   1038,
+   236,
+   106,
+   192
+  ],
+  "size": [
+   106,
+   192
+  ],
+  "role": "widget",
+  "nine_slice": null
+ },
+ {
+  "name": "canister_medkit",
+  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "bbox": [
+   1023,
+   455,
+   139,
+   221
+  ],
+  "size": [
+   139,
+   221
+  ],
+  "role": "widget",
+  "nine_slice": null
+ },
+ {
+  "name": "card_building_a",
+  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
+  "bbox": [
+   43,
+   61,
+   329,
+   479
+  ],
+  "size": [
+   329,
+   479
+  ],
+  "role": "card",
+  "nine_slice": null
+ },
+ {
+  "name": "card_building_b",
+  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
+  "bbox": [
+   415,
+   61,
+   347,
+   479
+  ],
+  "size": [
+   347,
+   479
+  ],
+  "role": "card",
+  "nine_slice": null
+ },
+ {
+  "name": "card_building_gold",
+  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
+  "bbox": [
+   809,
+   62,
+   364,
+   480
+  ],
+  "size": [
+   364,
+   480
+  ],
+  "role": "card",
+  "nine_slice": null
+ },
+ {
+  "name": "card_device",
+  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
+  "bbox": [
+   816,
+   861,
+   282,
+   309
+  ],
+  "size": [
+   282,
+   309
+  ],
+  "role": "card",
+  "nine_slice": null
+ },
+ {
+  "name": "card_poster",
+  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "bbox": [
+   970,
+   717,
+   241,
+   406
+  ],
+  "size": [
+   241,
+   406
+  ],
+  "role": "card",
+  "nine_slice": null
+ },
+ {
+  "name": "dots_cyan",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   623,
+   1159,
+   531,
+   38
+  ],
+  "size": [
+   531,
+   38
+  ],
+  "role": "dots",
+  "nine_slice": null
+ },
+ {
+  "name": "dots_grey",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   72,
+   1158,
+   473,
+   39
+  ],
+  "size": [
+   473,
+   39
+  ],
+  "role": "dots",
+  "nine_slice": null
+ },
+ {
+  "name": "drop_slot_anvil",
+  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "bbox": [
+   70,
+   49,
+   210,
+   211
+  ],
+  "size": [
+   210,
+   211
+  ],
+  "role": "dropslot",
+  "nine_slice": null
+ },
+ {
+  "name": "furnace",
+  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "bbox": [
+   94,
+   289,
+   173,
+   125
+  ],
+  "size": [
+   173,
+   125
+  ],
+  "role": "widget",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_anvil",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   541,
+   151,
+   142,
+   105
+  ],
+  "size": [
+   142,
+   105
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_armor",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   323,
+   607,
+   180,
+   143
+  ],
+  "size": [
+   180,
+   143
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_arrow_left",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   322,
+   1071,
+   81,
+   108
+  ],
+  "size": [
+   81,
+   108
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_arrow_right",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   515,
+   1071,
+   81,
+   108
+  ],
+  "size": [
+   81,
+   108
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_backpack",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   821,
+   842,
+   141,
+   158
+  ],
+  "size": [
+   141,
+   158
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_bag",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   980,
+   141,
+   110,
+   121
+  ],
+  "size": [
+   110,
+   121
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_brain",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   827,
+   362,
+   125,
+   137
+  ],
+  "size": [
+   125,
+   137
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_caps",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   23,
+   131,
+   146,
+   131
+  ],
+  "size": [
+   146,
+   131
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_cart",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   24,
+   612,
+   132,
+   123
+  ],
+  "size": [
+   132,
+   123
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_check",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   1105,
+   631,
+   125,
+   104
+  ],
+  "size": [
+   125,
+   104
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_clover",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   974,
+   370,
+   114,
+   128
+  ],
+  "size": [
+   114,
+   128
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_coin_gold",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   980,
+   866,
+   112,
+   125
+  ],
+  "size": [
+   112,
+   125
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_coin_grey",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   1111,
+   862,
+   124,
+   132
+  ],
+  "size": [
+   124,
+   132
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_device",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   349,
+   842,
+   165,
+   161
+  ],
+  "size": [
+   165,
+   161
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_dot_cyan",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   664,
+   1093,
+   63,
+   63
+  ],
+  "size": [
+   63,
+   63
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_fist",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   514,
+   362,
+   124,
+   144
+  ],
+  "size": [
+   124,
+   144
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_gear",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   382,
+   126,
+   134,
+   135
+  ],
+  "size": [
+   134,
+   135
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_hammer",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   688,
+   133,
+   124,
+   127
+  ],
+  "size": [
+   124,
+   127
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_heart",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   360,
+   376,
+   120,
+   114
+  ],
+  "size": [
+   120,
+   114
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_lock",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   979,
+   610,
+   101,
+   139
+  ],
+  "size": [
+   101,
+   139
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_medkit",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   26,
+   371,
+   123,
+   119
+  ],
+  "size": [
+   123,
+   119
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_poster",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   184,
+   840,
+   133,
+   160
+  ],
+  "size": [
+   133,
+   160
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_refresh",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   684,
+   616,
+   118,
+   126
+  ],
+  "size": [
+   118,
+   126
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_satellite",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   550,
+   836,
+   117,
+   167
+  ],
+  "size": [
+   117,
+   167
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_scrap",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   185,
+   112,
+   177,
+   164
+  ],
+  "size": [
+   177,
+   164
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_shield",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   845,
+   131,
+   103,
+   131
+  ],
+  "size": [
+   103,
+   131
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_square_orange",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   802,
+   1081,
+   101,
+   98
+  ],
+  "size": [
+   101,
+   98
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_star",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   1116,
+   373,
+   114,
+   118
+  ],
+  "size": [
+   114,
+   118
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_swap",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   530,
+   616,
+   105,
+   131
+  ],
+  "size": [
+   105,
+   131
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_syringe",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   181,
+   355,
+   149,
+   155
+  ],
+  "size": [
+   149,
+   155
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_toolcan",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   185,
+   594,
+   112,
+   153
+  ],
+  "size": [
+   112,
+   153
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_torso",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   667,
+   361,
+   137,
+   140
+  ],
+  "size": [
+   137,
+   140
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_uparrow",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   700,
+   855,
+   97,
+   138
+  ],
+  "size": [
+   97,
+   138
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_warning",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   21,
+   855,
+   133,
+   128
+  ],
+  "size": [
+   133,
+   128
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_wrench",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   1110,
+   131,
+   120,
+   137
+  ],
+  "size": [
+   120,
+   137
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "icon_x",
+  "source_sheet": "ui_components_03_icons_transparent.png",
+  "bbox": [
+   836,
+   622,
+   111,
+   116
+  ],
+  "size": [
+   111,
+   116
+  ],
+  "role": "icon",
+  "nine_slice": null
+ },
+ {
+  "name": "panel_bubble",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   59,
+   736,
+   330,
+   146
+  ],
+  "size": [
+   330,
+   146
+  ],
+  "role": "panel",
+  "nine_slice": null
+ },
+ {
+  "name": "panel_framed",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   430,
+   725,
+   459,
+   166
+  ],
+  "size": [
+   459,
+   166
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 34,
+   "top": 34,
+   "right": 34,
+   "bottom": 34
+  }
+ },
+ {
+  "name": "panel_section",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   390,
+   285,
+   398,
+   129
+  ],
+  "size": [
+   398,
+   129
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 34,
+   "top": 34,
+   "right": 34,
+   "bottom": 34
+  }
+ },
+ {
+  "name": "panel_small",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   943,
+   772,
+   242,
+   96
+  ],
+  "size": [
+   242,
+   96
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 24,
+   "top": 24,
+   "right": 24,
+   "bottom": 24
+  }
+ },
+ {
+  "name": "panel_square",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   395,
+   450,
+   260,
+   247
+  ],
+  "size": [
+   260,
+   247
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 30,
+   "top": 30,
+   "right": 30,
+   "bottom": 30
+  }
+ },
+ {
+  "name": "panel_square_red",
+  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "bbox": [
+   1016,
+   66,
+   142,
+   138
+  ],
+  "size": [
+   142,
+   138
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 28,
+   "top": 28,
+   "right": 28,
+   "bottom": 28
+  }
+ },
+ {
+  "name": "panel_strip",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   829,
+   325,
+   369,
+   66
+  ],
+  "size": [
+   369,
+   66
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 22,
+   "top": 22,
+   "right": 22,
+   "bottom": 22
+  }
+ },
+ {
+  "name": "panel_titlebar",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   392,
+   62,
+   818,
+   172
+  ],
+  "size": [
+   818,
+   172
+  ],
+  "role": "titlebar",
+  "nine_slice": null
+ },
+ {
+  "name": "panel_titlebar_wide",
+  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "bbox": [
+   352,
+   76,
+   592,
+   129
+  ],
+  "size": [
+   592,
+   129
+  ],
+  "role": "titlebar",
+  "nine_slice": {
+   "left": 40,
+   "top": 34,
+   "right": 40,
+   "bottom": 34
+  }
+ },
+ {
+  "name": "panel_vitals",
+  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "bbox": [
+   697,
+   437,
+   247,
+   341
+  ],
+  "size": [
+   247,
+   341
+  ],
+  "role": "panel",
+  "nine_slice": null
+ },
+ {
+  "name": "panel_wide",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   696,
+   450,
+   503,
+   250
+  ],
+  "size": [
+   503,
+   250
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 34,
+   "top": 34,
+   "right": 34,
+   "bottom": 34
+  }
+ },
+ {
+  "name": "panel_window",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   46,
+   61,
+   309,
+   639
+  ],
+  "size": [
+   309,
+   639
+  ],
+  "role": "panel",
+  "nine_slice": {
+   "left": 44,
+   "top": 44,
+   "right": 44,
+   "bottom": 44
+  }
+ },
+ {
+  "name": "row_convert",
+  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
+  "bbox": [
+   59,
+   1102,
+   705,
+   88
+  ],
+  "size": [
+   705,
+   88
+  ],
+  "role": "row",
+  "nine_slice": null
+ },
+ {
+  "name": "row_convert_b",
+  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "bbox": [
+   60,
+   815,
+   494,
+   112
+  ],
+  "size": [
+   494,
+   112
+  ],
+  "role": "row",
+  "nine_slice": null
+ },
+ {
+  "name": "row_refresh_button",
+  "source_sheet": "ui_components_04_building_widgets_transparent.png",
+  "bbox": [
+   600,
+   816,
+   311,
+   106
+  ],
+  "size": [
+   311,
+   106
+  ],
+  "role": "row",
+  "nine_slice": null
+ },
+ {
+  "name": "scrollbar_v",
+  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
+  "bbox": [
+   1128,
+   996,
+   49,
+   173
+  ],
+  "size": [
+   49,
+   173
+  ],
+  "role": "scrollbar",
+  "nine_slice": null
+ },
+ {
+  "name": "slider_orange",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   501,
+   1026,
+   351,
+   100
+  ],
+  "size": [
+   351,
+   100
+  ],
+  "role": "slider",
+  "nine_slice": null
+ },
+ {
+  "name": "slot_dashed",
+  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
+  "bbox": [
+   1073,
+   715,
+   132,
+   129
+  ],
+  "size": [
+   132,
+   129
+  ],
+  "role": "slot",
+  "nine_slice": null
+ },
+ {
+  "name": "slot_locked",
+  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
+  "bbox": [
+   928,
+   715,
+   129,
+   126
+  ],
+  "size": [
+   129,
+   126
+  ],
+  "role": "slot",
+  "nine_slice": {
+   "left": 26,
+   "top": 26,
+   "right": 26,
+   "bottom": 26
+  }
+ },
+ {
+  "name": "slot_normal",
+  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
+  "bbox": [
+   640,
+   715,
+   128,
+   126
+  ],
+  "size": [
+   128,
+   126
+  ],
+  "role": "slot",
+  "nine_slice": {
+   "left": 26,
+   "top": 26,
+   "right": 26,
+   "bottom": 26
+  }
+ },
+ {
+  "name": "slot_selected",
+  "source_sheet": "ui_components_02_cards_widgets_transparent.png",
+  "bbox": [
+   784,
+   714,
+   128,
+   127
+  ],
+  "size": [
+   128,
+   127
+  ],
+  "role": "slot",
+  "nine_slice": {
+   "left": 26,
+   "top": 26,
+   "right": 26,
+   "bottom": 26
+  }
+ },
+ {
+  "name": "toggle_off",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   896,
+   1054,
+   121,
+   60
+  ],
+  "size": [
+   121,
+   60
+  ],
+  "role": "toggle",
+  "nine_slice": null
+ },
+ {
+  "name": "toggle_on",
+  "source_sheet": "ui_components_01_basic_controls_transparent.png",
+  "bbox": [
+   1057,
+   1054,
+   119,
+   60
+  ],
+  "size": [
+   119,
+   60
+  ],
+  "role": "toggle",
+  "nine_slice": null
+ }
+]

@@ -691,6 +691,152 @@ static func ui_divider() -> Control:
 	return line
 
 
+# ─── Lightline component kit (concept-parity building UIs) ───────────────────
+# A Codex "lightline" component sheet set (olive-brass metal frames + orange
+# primary buttons) sliced into named transparent PNGs under ui_kit_lightline/;
+# manifest.json carries each piece's bbox + 9-slice margins. These hooks mirror
+# the ui_kit_tex / _ui_kit_box pattern: use the PNG when present, fall back to a
+# programmatic StyleBox otherwise. ADDITIVE — no existing surface switches to
+# them yet (Phase 1 foundation; later phases wire the building windows here).
+const LIGHTLINE_DIR := "res://run_system/assets/images/ui_kit_lightline/"
+const LIGHTLINE_MANIFEST := "res://run_system/assets/images/ui_kit_lightline/manifest.json"
+
+static var _ll_margins_cache: Dictionary = {}
+static var _ll_margins_loaded: bool = false
+
+
+## Parse manifest.json once → {name: {left,top,right,bottom}} for the 9-sliceable
+## pieces (nine_slice != null). Cached; a missing/invalid manifest yields an empty
+## map, so lightline_box() falls back to its mh / mv args silently.
+static func _ll_margins() -> Dictionary:
+	if _ll_margins_loaded:
+		return _ll_margins_cache
+	_ll_margins_loaded = true
+	if not FileAccess.file_exists(LIGHTLINE_MANIFEST):
+		return _ll_margins_cache
+	var f := FileAccess.open(LIGHTLINE_MANIFEST, FileAccess.READ)
+	if f == null:
+		return _ll_margins_cache
+	var parsed = JSON.parse_string(f.get_as_text())
+	f.close()
+	if not (parsed is Array):
+		return _ll_margins_cache
+	for entry in parsed:
+		if entry is Dictionary and entry.get("nine_slice", null) is Dictionary:
+			_ll_margins_cache[str(entry.get("name", ""))] = entry["nine_slice"]
+	return _ll_margins_cache
+
+
+## A lightline PNG by basename ("panel_window" → ui_kit_lightline/panel_window.png),
+## or null while that file is undelivered. Callers must handle null with a fallback.
+static func lightline_tex(tex_name: String) -> Texture2D:
+	var path := LIGHTLINE_DIR + tex_name + ".png"
+	if ResourceLoader.exists(path):
+		var tex = load(path)
+		if tex is Texture2D:
+			return tex
+	return null
+
+
+## StyleBoxTexture over a lightline 9-slice PNG, or `fallback` while the PNG is
+## absent. 9-slice margins come from manifest.json when the piece has them; the
+## mh / mv args are the fallback margins used when the manifest lacks an entry
+## (mv = -1 mirrors mh).
+static func lightline_box(
+	box_name: String, fallback: StyleBox, mh: int = 24, mv: int = -1
+) -> StyleBox:
+	var tex := lightline_tex(box_name)
+	if tex == null:
+		return fallback
+	if mv < 0:
+		mv = mh
+	var l := mh
+	var r := mh
+	var t := mv
+	var b := mv
+	var m: Dictionary = _ll_margins().get(box_name, {})
+	if not m.is_empty():
+		l = int(m.get("left", mh))
+		r = int(m.get("right", mh))
+		t = int(m.get("top", mv))
+		b = int(m.get("bottom", mv))
+	var style := StyleBoxTexture.new()
+	style.texture = tex
+	style.texture_margin_left = l
+	style.texture_margin_right = r
+	style.texture_margin_top = t
+	style.texture_margin_bottom = b
+	return style
+
+
+## Lightline floating-window body — 9-slice panel_window, else the menu-glass panel.
+static func ll_panel() -> StyleBox:
+	return lightline_box("panel_window", ui_panel(), 44)
+
+
+## Lightline title-bar strip — 9-slice panel_titlebar_wide (the clean empty bar),
+## else the glass titlebar.
+static func ll_titlebar() -> StyleBox:
+	return lightline_box("panel_titlebar_wide", ui_titlebar(), 40, 34)
+
+
+## Lightline section panel — 9-slice panel_section, else a hairline glass panel.
+static func ll_section() -> StyleBox:
+	return lightline_box("panel_section", _base(GLASS_BG, GLASS_HAIRLINE, 6, 1), 34)
+
+
+## Lightline recessed inset well — 9-slice panel_square (double-border), else deep glass.
+static func ll_inset() -> StyleBox:
+	return lightline_box("panel_square", _base(GLASS_BG_DEEP, GLASS_HAIRLINE, 5, 1), 30)
+
+
+## Lightline primary (orange) button. state: normal / hover / pressed — a single
+## orange base PNG with hover/pressed derived by modulate (keeps one art file),
+## else the programmatic brass button.
+static func ll_button(state: String = "normal") -> StyleBox:
+	return _ll_button_from("btn_orange_normal", state)
+
+
+## Lightline secondary (olive) button — same single-base + modulate-state scheme.
+static func ll_button_olive(state: String = "normal") -> StyleBox:
+	return _ll_button_from("btn_olive", state)
+
+
+## Shared body for ll_button / ll_button_olive: 9-slice the base PNG (fallback to
+## the brass button), then tint hover brighter / pressed darker and add label
+## content margins so text doesn't crowd the ornamented edges.
+static func _ll_button_from(base_name: String, state: String) -> StyleBox:
+	var box := lightline_box(base_name, ui_button_brass(state), 26)
+	var tb := box as StyleBoxTexture
+	if tb == null:
+		return box
+	match state:
+		"hover":
+			tb.modulate_color = Color(1.12, 1.12, 1.12)
+		"pressed":
+			tb.modulate_color = Color(0.86, 0.86, 0.86)
+	tb.content_margin_left = 18
+	tb.content_margin_right = 18
+	tb.content_margin_top = 10
+	tb.content_margin_bottom = 12
+	return tb
+
+
+## Lightline slot box. state: normal / selected (cyan) / locked (padlock) — routes
+## to the matching slot PNG, else the programmatic ui_slot_box fallback.
+static func ll_slot(state: String = "normal") -> StyleBox:
+	var kit := "slot_normal"
+	var fb_state := "empty"
+	match state:
+		"selected":
+			kit = "slot_selected"
+			fb_state = "hover"
+		"locked":
+			kit = "slot_locked"
+			fb_state = "locked"
+	return lightline_box(kit, ui_slot_box(fb_state), 26)
+
+
 # ─── Internal ─────────────────────────────────────────────────────────────────
 
 
