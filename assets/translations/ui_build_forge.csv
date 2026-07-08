@@ -17,8 +17,8 @@ UI_FORGE_SLOT_WEAPON,Weapon,武器
 UI_FORGE_SLOT_HANDS,Hands,手部
 UI_FORGE_SLOT_ACCESSORY,Accessory,饰品
 UI_FORGE_RARITY_COMMON,Common,普通
-UI_FORGE_RARITY_UNCOMMON,Uncommon,稀有
-UI_FORGE_RARITY_RARE,Rare,罕见
+UI_FORGE_RARITY_UNCOMMON,Uncommon,罕见
+UI_FORGE_RARITY_RARE,Rare,稀有
 UI_FORGE_RARITY_SET,Set,套装
 UI_FORGE_RARITY_CURSED,Cursed,诅咒
 UI_FORGE_CRAFT_LOCKED,Craft unlocks at Forge T2.,锻造在铁匠铺 T2 解锁。
@@ -31,3 +31,12 @@ UI_FORGE_BENCH_EMPTY,Drop a piece of gear here to work on it.,把一件装备放
 UI_FORGE_REFORGE_LOCKED_AT,Locked to this affix · reforged {n}×,已锁定此词条 · 已重铸 {n} 次
 UI_FORGE_REFORGE_PICK,Pick an affix above to reforge it.,点上方一条词条来重铸它。
 UI_FORGE_REFORGE_FIRST,First reforge locks this affix; cost climbs each time.,首次重铸会锁定此词条；之后每次更贵。
+UI_FORGE_BULK_TITLE,Dismantle All,全部分解
+UI_FORGE_BULK_COMMON,Common,普通
+UI_FORGE_BULK_UNCOMMON,Uncommon,罕见
+UI_FORGE_BULK_RARE,Rare,稀有
+UI_FORGE_BULK_ALL,All Items,所有物品
+UI_FORGE_BULK_CONFIRM_TITLE,Bulk Dismantle,批量拆解
+UI_FORGE_BULK_CONFIRM,"Dismantle {n} items for {s} scrap?",将拆解 {n} 件装备，获得 {s} 废料？
+UI_FORGE_BULK_NONE,No items of this rarity to dismantle.,没有该品质的装备可拆解。
+UI_FORGE_DISMANTLE_DROP_HINT,"Drag a stash item here to dismantle it — or bulk-dismantle by rarity below.",把仓库装备拖到这里即可拆解 —— 或用下方按钮按品质批量拆解。

@@ -270,6 +270,10 @@ const STASH_CAP := 25
 ## Blacksmith: scrap yielded by dismantling a stash item, by rarity. Cursed items
 ## yield +5 extra (the curse is "recycled").
 const DISMANTLE_SCRAP := {"common": 5, "uncommon": 12, "rare": 25}
+## Rarities eligible for BULK dismantle (dismantle_stash_by_rarity). Set + cursed
+## gear is always protected from bulk operations — only the drop-slot single path
+## (dismantle_stash_item) can scrap those.
+const BULK_DISMANTLE_RARITIES := ["common", "uncommon", "rare"]
 ## Blacksmith: scrap cost to reforge (reroll one affix on) a stash item, by rarity.
 const REFORGE_COST := {"common": 15, "uncommon": 30, "rare": 50}
 ## Affix roller (per-instance equipment); used by reforge_stash_item.
@@ -701,6 +705,69 @@ func dismantle_stash_item(index: int) -> bool:
 	save_progress()
 	emit_signal("upgrades_changed")
 	return true
+
+
+## True when a resolved stash instance may be BULK-dismantled: its rarity is one of
+## common/uncommon/rare AND it is neither a set piece nor cursed. `rarity_filter`
+## (""=any of the three) narrows the match to a single rarity. Set/cursed gear is
+## protected from bulk operations (recognised by set_id / cursed / the "set" /
+## "cursed" tiers) — only the single drop-slot path can scrap those.
+func _bulk_dismantlable(inst: Dictionary, rarity_filter: String) -> bool:
+	if bool(inst.get("cursed", false)):
+		return false
+	if str(inst.get("set_id", "")) != "":
+		return false
+	var r: String = str(inst.get("rarity", "common"))
+	if r == "set" or r == "cursed":
+		return false
+	if not BULK_DISMANTLE_RARITIES.has(r):
+		return false
+	if rarity_filter != "" and r != rarity_filter:
+		return false
+	return true
+
+
+## Read-only preview of a bulk dismantle: {count, scrap} — how many stash items
+## match `rarity` (""=all common/uncommon/rare) and the total scrap they would
+## yield. Set + cursed gear is always excluded. Mutates nothing (feeds the confirm
+## dialog so the numbers shown match what dismantle_stash_by_rarity will do).
+func preview_dismantle_by_rarity(rarity: String) -> Dictionary:
+	var count := 0
+	var scrap_total := 0
+	for entry in stash:
+		var inst: Dictionary = RunManager.as_equip_instance(entry)
+		if not _bulk_dismantlable(inst, rarity):
+			continue
+		count += 1
+		var r: String = str(inst.get("rarity", "common"))
+		scrap_total += int(DISMANTLE_SCRAP.get(r, DISMANTLE_SCRAP["common"]))
+	return {"count": count, "scrap": scrap_total}
+
+
+## Bulk-dismantle every stash item matching `rarity` (""=all common/uncommon/rare),
+## granting the summed scrap. Set + cursed gear is NEVER bulk-dismantled (protected;
+## use dismantle_stash_item for those). Emits scrap_changed (via add_scrap) +
+## upgrades_changed ONCE. Returns {count, scrap} (both 0 when nothing matched — no
+## signal is emitted in that case).
+func dismantle_stash_by_rarity(rarity: String) -> Dictionary:
+	var kept: Array = []
+	var count := 0
+	var scrap_total := 0
+	for entry in stash:
+		var inst: Dictionary = RunManager.as_equip_instance(entry)
+		if _bulk_dismantlable(inst, rarity):
+			count += 1
+			var r: String = str(inst.get("rarity", "common"))
+			scrap_total += int(DISMANTLE_SCRAP.get(r, DISMANTLE_SCRAP["common"]))
+		else:
+			kept.append(entry)
+	if count == 0:
+		return {"count": 0, "scrap": 0}
+	stash = kept
+	add_scrap(scrap_total)  # saves + emits scrap_changed
+	save_progress()
+	emit_signal("upgrades_changed")
+	return {"count": count, "scrap": scrap_total}
 
 
 ## Scrap cost of the NEXT reforge on this instance: rarity base × (reforge_count + 1),
