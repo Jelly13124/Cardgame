@@ -34,14 +34,10 @@ owner 定案的现役 UI 语言:炭黑平色 + 细金边墨线,轻量、无铆�
 | `hud_target_arrow` | 拖拽指向箭头头部 |
 | `hud_turn_banner` | 回合横幅条(可选,lw_bar 可代) |
 
-### 批次 2 — Sheet 10 地图件
-| 件 | 用途 |
-|---|---|
-| `map_node_{enemy,elite,boss,merchant,rest,treasure,relic,unknown}` | 8 个节点圆章,墨线重绘(现 map/nodes/*.png 为旧风格) |
-| `map_marker_here` | 当前位置钉(牛仔帽/靴印) |
-| `map_stamp_cleared` | 已清勾章 |
-| `map_stamp_blocked` | 不可达淡叉 |
-| `map_path_dot` | 路径圆点(虚线程序化排布) |
+### ~~批次 2 — 地图件~~(**取消**,owner 2026-07-08)
+现有 `map/nodes/*.png` 8 个节点章**质量合格、风格契合,保留不重绘**;
+当前位置/已清/不可达/路径均为程序化表现,不需要新美术。地图界面重做只动
+chrome(顶栏/面板走现有 lw 件)。
 
 ### 批次 3 — Sheet 11 基地件(对齐已过审基地概念)
 | 件 | 用途 |
@@ -60,7 +56,7 @@ owner 定案的现役 UI 语言:炭黑平色 + 细金边墨线,轻量、无铆�
 
 ## 退役预告(接线完成后清理)
 `battle_scene/ui/{energy_core,energy_panel_frame,hp_bar_*,intent_*,block_badge,button_*}.png`、
-`run_system/map/nodes/*.png`(旧章)、`ui/topbar/{character,deck}.png`、`loot_ui/*.png`。
+`ui/topbar/{character,deck}.png`、`loot_ui/*.png`。(`map/nodes/*.png` **保留**——owner 定案。)
 
 ## 验收
 透明通道干净;无烘焙文字;sheet 件间不接触;与 07 sheet 同一支笔(细金边+墨线,

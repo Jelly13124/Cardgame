@@ -48,31 +48,7 @@ transparent spacing:
    empty center.
 ```
 
-## 批次 2 — Sheet 10:地图组件
-
-**输出**:`ui_components_10_map_kit_transparent.png`,~1254×1254。
-
-```
-[全局风格前缀]
-
-A component sheet of MAP pieces on a grid, generous transparent spacing:
-
-1. EIGHT round MAP NODE BADGES (about 150x150 each), all sharing one badge
-   base: charcoal disc + thin brass ring + flat icon with black outline:
-   - bandit skull (enemy fight)
-   - horned skull with crossed blades (elite)
-   - large crowned skull (boss)
-   - goblin merchant tent front
-   - campfire with flame
-   - banded treasure crate
-   - glowing relic star
-   - bold question mark (unknown)
-2. CURRENT-POSITION MARKER (about 130x150): small cowboy hat pin with a
-   ground shadow tick.
-3. CLEARED STAMP (about 110x110): hand-stamped check mark, warm green ink.
-4. BLOCKED STAMP (about 110x110): faint grey X stamp.
-5. PATH DOT (about 44x44): single round trail dot, warm tan, black outline.
-```
+## ~~批次 2 — 地图组件~~(取消:现有 map/nodes 节点章保留,地图无新美术需求)
 
 ## 批次 3 — Sheet 11:基地组件
 
