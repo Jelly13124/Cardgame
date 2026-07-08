@@ -526,9 +526,11 @@ func _fill_craft() -> void:
 	)
 	_content.add_child(_picker_row("icon_star", tr("UI_FORGE_RARITY"), rarity_opt))
 
-	# Craft action.
+	# Craft action. Disabled when Scrap is short OR the stash has no room for the
+	# minted item (the handler still refunds as the trust boundary).
 	var cost := int(CRAFT_COST.get(_craft_rarity, CRAFT_COST["common"]))
-	var enabled := int(MetaProgress.scrap) >= cost
+	var stash_has_room: bool = MetaProgress.stash.size() < MetaProgress.effective_stash_cap()
+	var enabled := int(MetaProgress.scrap) >= cost and stash_has_room
 	_content.add_child(
 		_icon_action_row("icon_hammer", tr("UI_FORGE_CRAFT_VERB"), cost, enabled, _on_craft_pressed)
 	)
@@ -540,12 +542,17 @@ func _on_craft_pressed() -> void:
 	var base_id := str(CRAFT_BASE_BY_SLOT.get(_craft_slot, ""))
 	if base_id == "":
 		return
-	if not MetaProgress.spend_scrap(cost):
-		return
+	# Mint BEFORE charging so a bad base id can never eat Scrap (pure roll — no
+	# side effects until add_to_stash).
 	var inst: Dictionary = RunManager.make_equip_instance(base_id, _craft_rarity)
 	if inst.is_empty():
 		return
-	MetaProgress.add_to_stash(inst)
+	if not MetaProgress.spend_scrap(cost):
+		return
+	if not MetaProgress.add_to_stash(inst):
+		# Stash full → refund, same contract as the market's stash-full path.
+		MetaProgress.add_scrap(cost)
+		return
 	AudioManager.play_sfx("forge_craft")
 	_rebuild()
 

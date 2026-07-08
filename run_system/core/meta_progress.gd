@@ -693,9 +693,12 @@ func remove_from_stash(item: Variant) -> bool:
 
 ## Dismantle stash item `index`: remove it and grant scrap based on its rarity
 ## (+5 if cursed). Emits scrap_changed (via add_scrap) and upgrades_changed so the
-## blacksmith panel rebuilds. Returns false for an out-of-range index.
+## blacksmith panel rebuilds. Returns false for an out-of-range index or an entry
+## reserved by the next-run loadout queue (dismantling those would dupe the item).
 func dismantle_stash_item(index: int) -> bool:
 	if index < 0 or index >= stash.size():
+		return false
+	if _stash_entry_reserved(stash[index]):
 		return false
 	var inst: Dictionary = RunManager.as_equip_instance(stash[index])
 	var rarity: String = str(inst.get("rarity", "common"))
@@ -709,11 +712,27 @@ func dismantle_stash_item(index: int) -> bool:
 	return true
 
 
+## True when a stash entry is referenced by the NEXT-RUN loadout queue
+## (`RunManager.pending_loadout` / `pending_equipped`). Queued entries stay in the
+## stash until `start_new_run` consumes them (`remove_from_stash` by value), so
+## dismantling one would pay Scrap AND still inject the item into the run — a
+## duplication exploit. Matches by value, mirroring remove_from_stash.
+func _stash_entry_reserved(entry: Variant) -> bool:
+	if RunManager.pending_loadout.has(entry):
+		return true
+	for slot in RunManager.pending_equipped:
+		if RunManager.pending_equipped[slot] == entry:
+			return true
+	return false
+
+
 ## True when a resolved stash instance may be BULK-dismantled: its rarity is one of
 ## common/uncommon/rare AND it is neither a set piece nor cursed. `rarity_filter`
 ## (""=any of the three) narrows the match to a single rarity. Set/cursed gear is
 ## protected from bulk operations (recognised by set_id / cursed / the "set" /
 ## "cursed" tiers) — only the single drop-slot path can scrap those.
+## (Callers must ALSO skip _stash_entry_reserved entries — this predicate only
+## sees the resolved instance, not the raw stash entry.)
 func _bulk_dismantlable(inst: Dictionary, rarity_filter: String) -> bool:
 	if bool(inst.get("cursed", false)):
 		return false
@@ -731,12 +750,15 @@ func _bulk_dismantlable(inst: Dictionary, rarity_filter: String) -> bool:
 
 ## Read-only preview of a bulk dismantle: {count, scrap} — how many stash items
 ## match `rarity` (""=all common/uncommon/rare) and the total scrap they would
-## yield. Set + cursed gear is always excluded. Mutates nothing (feeds the confirm
-## dialog so the numbers shown match what dismantle_stash_by_rarity will do).
+## yield. Set + cursed gear and next-run-queued (pending_*) entries are always
+## excluded. Mutates nothing (feeds the confirm dialog so the numbers shown match
+## what dismantle_stash_by_rarity will do).
 func preview_dismantle_by_rarity(rarity: String) -> Dictionary:
 	var count := 0
 	var scrap_total := 0
 	for entry in stash:
+		if _stash_entry_reserved(entry):
+			continue
 		var inst: Dictionary = RunManager.as_equip_instance(entry)
 		if not _bulk_dismantlable(inst, rarity):
 			continue
@@ -748,7 +770,8 @@ func preview_dismantle_by_rarity(rarity: String) -> Dictionary:
 
 ## Bulk-dismantle every stash item matching `rarity` (""=all common/uncommon/rare),
 ## granting the summed scrap. Set + cursed gear is NEVER bulk-dismantled (protected;
-## use dismantle_stash_item for those). Emits scrap_changed (via add_scrap) +
+## use dismantle_stash_item for those), and next-run-queued (pending_*) entries are
+## skipped (see _stash_entry_reserved). Emits scrap_changed (via add_scrap) +
 ## upgrades_changed ONCE. Returns {count, scrap} (both 0 when nothing matched — no
 ## signal is emitted in that case).
 func dismantle_stash_by_rarity(rarity: String) -> Dictionary:
@@ -756,6 +779,9 @@ func dismantle_stash_by_rarity(rarity: String) -> Dictionary:
 	var count := 0
 	var scrap_total := 0
 	for entry in stash:
+		if _stash_entry_reserved(entry):
+			kept.append(entry)
+			continue
 		var inst: Dictionary = RunManager.as_equip_instance(entry)
 		if _bulk_dismantlable(inst, rarity):
 			count += 1
