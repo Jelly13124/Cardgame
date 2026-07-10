@@ -2,7 +2,6 @@ extends Node
 
 ## BattleUIManager handles notifications, inspection, and pile viewing.
 
-const ENERGY_CORE_TEX = preload("res://battle_scene/assets/images/ui/energy_core.png")
 const CHARACTER_WINDOW = preload("res://run_system/ui/window/character_window.gd")
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 
@@ -63,7 +62,7 @@ func update_labels(energy: int, max_energy: int) -> void:
 func _pop_energy() -> void:
 	if _energy_display == null or not is_instance_valid(_energy_display):
 		return
-	_energy_display.pivot_offset = Vector2(76, 22)  # centre of the number medal
+	_energy_display.pivot_offset = Vector2(52, 52)
 	_energy_display.scale = Vector2(1.16, 1.16)
 	var tw := create_tween()
 	(
@@ -84,21 +83,19 @@ func _build_energy_display() -> void:
 	_energy_display.anchor_top = 1.0
 	_energy_display.anchor_right = 0.0
 	_energy_display.anchor_bottom = 1.0
-	_energy_display.offset_left = 36.0
-	_energy_display.offset_top = -336.0
-	_energy_display.offset_right = 192.0
+	# One compact hand-inked token, bottom-aligned with End Round across the hand.
+	_energy_display.offset_left = 32.0
+	_energy_display.offset_top = -396.0
+	_energy_display.offset_right = 136.0
 	_energy_display.offset_bottom = -292.0
 	_energy_display.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_energy_display.z_index = 20
 	main.add_child(_energy_display)
 
-	# Round lightline energy medal (hud_energy_core) replaces the retired brown
-	# pill frame (energy_panel_frame.png, deleted): the energy number centres ON
-	# the medal; the lightning orb (energy_core.png — owner-kept) stays as the
-	# left emblem. Medal PNG absent → no backing plate, orb + number still render
-	# (silent fallback).
-	var medal_rect := Rect2(46.0, -8.0, 60.0, 60.0)
-	var medal_tex := T.lightline_tex("hud_energy_core")
+	# The single faceted badge is the entire energy visual. The localized numeric
+	# value stays deterministic and is reparented over its empty centre.
+	var medal_rect := Rect2(0.0, 0.0, 104.0, 104.0)
+	var medal_tex := T.lightline_tex("hud_energy_badge_sts2")
 	if medal_tex != null:
 		var medal := TextureRect.new()
 		medal.name = "Frame"
@@ -110,17 +107,6 @@ func _build_energy_display() -> void:
 		medal.size = medal_rect.size
 		medal.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_energy_display.add_child(medal)
-
-	var core = TextureRect.new()
-	core.name = "EnergyCore"
-	core.texture = ENERGY_CORE_TEX
-	core.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	core.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	core.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	core.size = Vector2(42, 42)
-	core.position = Vector2(1, 1)
-	core.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_energy_display.add_child(core)
 
 	var old_parent = energy_label.get_parent()
 	if old_parent:
@@ -136,11 +122,11 @@ func _build_energy_display() -> void:
 	energy_label.offset_bottom = medal_rect.end.y
 	energy_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	energy_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	energy_label.add_theme_font_size_override("font_size", 24)
-	energy_label.add_theme_color_override("font_color", Color(0.74, 0.95, 1.0))
-	energy_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.95))
-	energy_label.add_theme_constant_override("shadow_offset_x", 2)
-	energy_label.add_theme_constant_override("shadow_offset_y", 2)
+	energy_label.add_theme_font_override("font", T.display_font(700))
+	energy_label.add_theme_font_size_override("font_size", 32)
+	energy_label.add_theme_color_override("font_color", Color(0.035, 0.07, 0.08, 1.0))
+	energy_label.add_theme_color_override("font_outline_color", Color(0.80, 0.92, 0.94, 0.30))
+	energy_label.add_theme_constant_override("outline_size", 1)
 	energy_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 

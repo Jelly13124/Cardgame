@@ -2,6 +2,7 @@
 	"id": "scrap_rat",
 	"name": "Scrap Rat",
 	"sprite_id": "scrap_rat",
+	"tier": "minion",
 	"max_health": 12,
 	"action_pattern": [
 		{ "type": "attack", "amount": 4, "label": "⚔ 4" },

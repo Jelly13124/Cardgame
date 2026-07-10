@@ -8,16 +8,16 @@ UI_MAP_LEGEND_REST,Rest,休整
 UI_MAP_LEGEND_ENEMY,Enemy,敌人
 UI_MAP_LEGEND_ELITE,Elite,精英
 UI_MAP_LEGEND_BOSS,Boss,首领
-UI_MAP_TOPBAR_GOLD,Gold: {n},金币：{n}
+UI_MAP_TOPBAR_GOLD,Caps: {n},瓶盖：{n}
 UI_MAP_ENTER_ACT,⟐ ENTERING ACT {n},⟐ 进入第 {n} 幕
 UI_MAP_CHOOSE_STARTING_RELIC,Choose Your Starting Relic,选择起始遗物
 UI_MAP_CHOOSE_A_RELIC,Choose a Relic,选择一件遗物
 UI_MAP_RELIC_PICK_HINT,Pick one. Relics are unique for this run.,选择一件。遗物在本局中唯一。
-UI_MAP_SCAVENGED_GOLD,Scavenged {n} gold.,搜刮到{n}金币。
+UI_MAP_SCAVENGED_GOLD,Scavenged {n} caps.,搜刮到{n}瓶盖。
 UI_MAP_SCRAP_MEDKIT_HEAL,Found a scrap medkit. Healed {n} HP.,找到一个废料医疗包。治疗{n}生命。
-UI_MAP_CACHE_EMPTY_GOLD,Cache empty. Salvaged {n} gold.,暗格空空如也。回收到{n}金币。
+UI_MAP_CACHE_EMPTY_GOLD,Cache empty. Salvaged {n} caps.,暗格空空如也。回收到{n}瓶盖。
 UI_MAP_CACHE_PRIED_OPEN,Pried Open the Cache (-{n} HP),撬开暗格（-{n}生命）
-UI_MAP_NO_RELICS_FOUND_GOLD,No relics remain. Found {n} gold!,已无遗物可得。找到{n}金币！
+UI_MAP_NO_RELICS_FOUND_GOLD,No relics remain. Found {n} caps!,已无遗物可得。找到{n}瓶盖！
 UI_MAP_NO_RELICS_REMAIN,No relics remain.,已无遗物可得。
 UI_MAP_GAINED_RELIC,Gained relic: {n},获得遗物：{n}
 UI_MAP_ALREADY_HAVE_RELIC,Already have that relic.,已拥有该遗物。

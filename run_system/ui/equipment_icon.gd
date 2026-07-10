@@ -119,29 +119,36 @@ func set_equipment(
 	_label.visible = true
 	_texture_rect.visible = false
 
-	# 1) Bespoke sprite (set pieces keep their own art).
-	if sprite_path != "":
-		var full_path = "res://battle_scene/assets/images/" + sprite_path
-		if ResourceLoader.exists(full_path):
-			var tex = load(full_path) as Texture2D
-			if tex:
-				_texture_rect.texture = tex
-				_texture_rect.modulate = Color.WHITE
-				_texture_rect.visible = true
-				_label.visible = false
-				return
-	# 2) Shared generic-shell art by slot × rarity.
-	var shell_path := "%s%s_%s.png" % [SHELL_ICON_DIR, slot, rarity]
-	if ResourceLoader.exists(shell_path):
-		var shell_tex = load(shell_path) as Texture2D
-		if shell_tex:
-			_texture_rect.texture = shell_tex
-			_texture_rect.modulate = Color.WHITE
-			_texture_rect.visible = true
-			_label.visible = false
-			return
+	var resolved := resolve_equipment_texture(sprite_path, slot, rarity)
+	if resolved:
+		_texture_rect.texture = resolved
+		_texture_rect.modulate = Color.WHITE
+		_texture_rect.visible = true
+		_label.visible = false
+		return
 	# 3) Fallback: slot icon / letter.
 	_try_show_slot_icon(slot, Color(1, 1, 1, 0.75))
+
+
+## Resolve equipment art once for normal tiles and every drag preview. Set pieces
+## prefer their explicit sprite; generic shells fall back to slot × rarity art.
+static func resolve_equipment_texture(
+	sprite_path: String, slot: String, rarity: String
+) -> Texture2D:
+	var candidates: Array[String] = []
+	if sprite_path != "":
+		candidates.append("res://battle_scene/assets/images/" + sprite_path)
+	candidates.append("%s%s_%s.png" % [SHELL_ICON_DIR, slot, rarity])
+	for path in candidates:
+		if ResourceLoader.exists(path):
+			var tex := load(path) as Texture2D
+			if tex:
+				return tex
+		if FileAccess.file_exists(path):
+			var image := Image.load_from_file(path)
+			if image:
+				return ImageTexture.create_from_image(image)
+	return null
 
 
 ## Slot-colored fill with a rarity-colored border, single-sourcing the equipment

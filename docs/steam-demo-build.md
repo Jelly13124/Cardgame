@@ -39,9 +39,9 @@ binary_format/architecture="x86_64"
 application/modify_resources=true
 application/file_version="0.1.0.0"
 application/product_version="0.1.0.0"
-application/company_name="Wasteland Salvage"
-application/product_name="Wasteland Salvage Demo"
-application/file_description="Wasteland Salvage — Steam Demo"
+application/company_name="Cap Hunter"
+application/product_name="Cap Hunter Demo"
+application/file_description="Cap Hunter — Steam Demo"
 ```
 
 ## One-time setup

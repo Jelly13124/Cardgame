@@ -2,6 +2,7 @@
 	"id": "chrome_warden",
 	"name": "Chrome Warden",
 	"sprite_id": "chrome_hound",
+	"tier": "elite",
 	"max_health": 60,
 	"action_pattern": [
 		{ "type": "block",         "amount": 18,                                       "label": "🛡 18" },

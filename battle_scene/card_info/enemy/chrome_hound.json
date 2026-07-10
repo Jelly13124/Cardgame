@@ -2,6 +2,7 @@
 	"id": "chrome_hound",
 	"name": "Chrome Hound",
 	"sprite_id": "chrome_hound",
+	"tier": "normal",
 	"max_health": 32,
 	"action_pattern": [
 		{ "type": "attack", "amount": 8,  "label": "⚔ 8" },

@@ -101,6 +101,7 @@ func _run() -> void:
 	var allowed: Array = validator_constants.get("ALLOWED_ENEMY_TIERS", [])
 	_expect(allowed == ALLOWED_TIERS, "validator exposes the exact allowed enemy tiers")
 	_expect(DATA_VALIDATOR.validate_encounter_pools() == 0, "encounter pool validator accepts the approved pools")
+	_test_selection_bands()
 
 	if failures.is_empty():
 		print("[OK] Enemy tier and encounter balance contract passed")
@@ -140,3 +141,27 @@ func _validate_pool(pool_name: String, pools: Array, enemies: Dictionary) -> voi
 		if pool_name != "ENCOUNTER_POOLS_OPENING" and "minion" in tiers:
 			_expect(encounter.size() == 2, "post-opening minion encounter %s has exactly two enemies" % [encounter])
 			_expect(tiers.count("minion") == 1 or tiers.count("minion") == 2, "post-opening minion role is valid")
+
+
+func _test_selection_bands() -> void:
+	var original_act := RunManager.current_act
+	var samples := [
+		[1, 0, "ENCOUNTER_POOLS_OPENING"],
+		[1, 2, "ENCOUNTER_POOLS_EARLY"],
+		[1, 4, "ENCOUNTER_POOLS_MID"],
+		[1, 8, "ENCOUNTER_POOLS_LATE"],
+		[2, 0, "ENCOUNTER_POOLS_MID"],
+		[3, 0, "ENCOUNTER_POOLS_LATE"],
+	]
+	for sample in samples:
+		RunManager.current_act = int(sample[0])
+		var floor_idx := int(sample[1])
+		var pool_name := str(sample[2])
+		var allowed: Array = EXPECTED_POOLS[pool_name]
+		for _i in range(24):
+			var encounter := RunManager.select_encounter("enemy", floor_idx)
+			_expect(
+				allowed.has(encounter),
+				"act %d floor %d selects only from %s" % [RunManager.current_act, floor_idx, pool_name]
+			)
+	RunManager.current_act = original_act

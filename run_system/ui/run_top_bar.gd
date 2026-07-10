@@ -14,15 +14,19 @@ const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const RELIC_DATA_DIR := "res://run_system/data/relics/"
 const TOPBAR_ICON_DIR := "res://run_system/assets/images/ui/topbar/"
 const HERO_IDLE_DIR := "res://battle_scene/assets/images/heroes/"
-const GOLD_ICON := "res://run_system/assets/images/loot_ui/gold_reward.png"
+const TOPBAR_BACKGROUND := "res://run_system/assets/images/ui_kit_lightline/hud_topbar_sts2.png"
+const TIMER_ICON := "res://run_system/assets/images/ui_kit_lightline/iconb_clock.png"
+const DECK_ICON := "res://run_system/assets/images/ui_kit_lightline/iconb_deck_stack.png"
+# In-run currency is Caps (owner 2026-07-08): same bottle-cap icon as the base.
+const GOLD_ICON := "res://run_system/assets/images/home/currency/caps.png"
 
 # â”€â”€â”€ Layout constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-# StS-style slim strip: portrait | HP bar | XP bar | gold ... act/floor | deck/settings/time
-const PORTRAIT_SIZE := 56.0
-const MAIN_BAR_HEIGHT := 64.0
-const RELIC_ROW_TOP := 68.0
+# StS2-style roomy strip: portrait | HP/XP | caps | one tool ... floor | deck/settings/time
+const PORTRAIT_SIZE := 64.0
+const MAIN_BAR_HEIGHT := 80.0
+const RELIC_ROW_TOP := 84.0
 const RELIC_ROW_HEIGHT := 46.0
-const BAR_HEIGHT := 118.0
+const BAR_HEIGHT := 132.0
 const HP_BAR_W := 210.0
 const HP_BAR_H := 25.0
 const XP_BAR_W := 210.0
@@ -46,7 +50,7 @@ var _hp_label: Label
 var _xp_bar: ProgressBar
 var _xp_label: Label
 var _gold_label: Label
-var _act_label: Label
+var _floor_label: Label
 var _relic_shelf: HBoxContainer
 var _tool_shelf: HBoxContainer
 var _portrait_label: Label  # fallback initial letter when no sprite
@@ -69,26 +73,18 @@ func _ready() -> void:
 
 
 func _build() -> void:
-	# Full-width dark background covering the main bar area
-	var bg := PanelContainer.new()
-	bg.name = "Background"
+	# Full-width matte comic strip. The irregular lower ink edge is baked into
+	# the generated PNG; all information remains deterministic Godot UI above it.
+	var bg := TextureRect.new()
+	bg.name = "BackgroundArt"
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bg.anchor_right = 1.0
 	bg.offset_bottom = MAIN_BAR_HEIGHT
-	bg.add_theme_stylebox_override(
-		"panel", T.panel_flat(Color(0.055, 0.048, 0.042, 0.95), Color(0.16, 0.13, 0.10), 0, 2)
-	)
+	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_SCALE
+	if ResourceLoader.exists(TOPBAR_BACKGROUND):
+		bg.texture = load(TOPBAR_BACKGROUND)
 	add_child(bg)
-
-	# Accent bottom border line
-	var bottom_line := ColorRect.new()
-	bottom_line.name = "BottomLine"
-	bottom_line.color = Color(0.42, 0.34, 0.20, 0.70)
-	bottom_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bottom_line.anchor_right = 1.0
-	bottom_line.offset_top = MAIN_BAR_HEIGHT - 3.0
-	bottom_line.offset_bottom = MAIN_BAR_HEIGHT
-	add_child(bottom_line)
 
 	# â”€â”€ Hero portrait badge (far left, flush top) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 	# StS2-style "hole": the portrait sits in a dark recessed socket (no ornate
@@ -195,14 +191,15 @@ func _build() -> void:
 		RunManager.tools_changed.connect(refresh_tools)
 	refresh_tools()
 
-	# Spacer pushes the right cluster (act/floor · deck · settings · time) right.
+	# Spacer pushes the right cluster (floor · deck · settings · time) right.
 	var spacer := Control.new()
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(spacer)
 
-	# Act/Floor: plain frameless text.
-	_act_label = _make_plain_label(row, 18, Color(0.90, 0.86, 0.76))
+	# Floor only. The Act readout is intentionally removed from this compact HUD.
+	_floor_label = _make_plain_label(row, 18, Color(0.90, 0.86, 0.76))
+	_floor_label.name = "FloorLabel"
 
 	var deck_btn := _make_icon_button("", tr("UI_BATTLE_VIEW_RUN_DECK"), "deck")
 	deck_btn.pressed.connect(func(): deck_pressed.emit())
@@ -214,8 +211,25 @@ func _build() -> void:
 		set_btn.pressed.connect(func(): settings_pressed.emit())
 		row.add_child(set_btn)
 
-	# Run timer (StS-style clock at the far right). Updated once per second.
-	_time_label = _make_plain_label(row, 18, Color(0.92, 0.90, 0.82))
+	# Run timer with the previously generated alarm-clock icon.
+	var timer_group := HBoxContainer.new()
+	timer_group.name = "TimerGroup"
+	timer_group.alignment = BoxContainer.ALIGNMENT_CENTER
+	timer_group.add_theme_constant_override("separation", 4)
+	timer_group.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(timer_group)
+	var timer_icon := TextureRect.new()
+	timer_icon.name = "TimerIcon"
+	timer_icon.custom_minimum_size = Vector2(32, 32)
+	timer_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	timer_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	timer_icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	timer_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if ResourceLoader.exists(TIMER_ICON):
+		timer_icon.texture = load(TIMER_ICON)
+	timer_group.add_child(timer_icon)
+	_time_label = _make_plain_label(timer_group, 18, Color(0.92, 0.90, 0.82))
+	_time_label.name = "TimeLabel"
 	_time_label.text = "0:00:00"
 
 	# â”€â”€ Relic shelf (second row below main bar) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -399,7 +413,7 @@ func _make_icon_button(text: String, tooltip: String, icon_id: String = "") -> B
 
 
 func _load_topbar_icon(icon_id: String) -> Texture2D:
-	var path := "%s%s.png" % [TOPBAR_ICON_DIR, icon_id]
+	var path := DECK_ICON if icon_id == "deck" else "%s%s.png" % [TOPBAR_ICON_DIR, icon_id]
 	if ResourceLoader.exists(path):
 		var tex = load(path)
 		if tex is Texture2D:
@@ -429,7 +443,7 @@ func _connect_once(source: Object, signal_name: String, method_name: String) -> 
 
 func _refresh_all() -> void:
 	_refresh_vitals()
-	_refresh_gold_act()
+	_refresh_caps_floor()
 	_refresh_relics()
 
 
@@ -456,20 +470,12 @@ func _refresh_vitals() -> void:
 	_xp_label.text = tr("UI_TOPBAR_LEVEL_FMT").format({"lvl": lvl, "xp": have, "next": need})
 
 
-func _refresh_gold_act() -> void:
+func _refresh_caps_floor() -> void:
 	if not _gold_label:
 		return
 	_gold_label.text = str(RunManager.gold)
-	_act_label.text = (
-		"%s %d/%d · %s %d"
-		% [
-			tr("UI_TOPBAR_ACT_SHORT"),
-			RunManager.current_act,
-			RunManager.acts_total(),
-			tr("UI_TOPBAR_FLOOR_SHORT"),
-			RunManager.current_floor
-		]
-	)
+	if _floor_label:
+		_floor_label.text = "%s %d" % [tr("UI_TOPBAR_FLOOR_SHORT"), RunManager.current_floor]
 
 
 ## Rebuild the top-bar tool slots from RunManager.tool_inventory (StS2-style).
@@ -479,17 +485,18 @@ func refresh_tools() -> void:
 	for c in _tool_shelf.get_children():
 		c.queue_free()
 	var inv: Array = RunManager.tool_inventory
-	var slots: int = RunManager.tool_slots()
-	for i in range(slots):
-		if i < inv.size():
-			_tool_shelf.add_child(_make_tool_slot(i, str(inv[i])))
-		else:
-			_tool_shelf.add_child(_make_empty_tool_slot())
+	# The compact shared HUD exposes exactly one active tool at a time. If the
+	# run owns more, consuming index 0 naturally advances the next one into view.
+	if not inv.is_empty():
+		_tool_shelf.add_child(_make_tool_slot(0, str(inv[0])))
+	else:
+		_tool_shelf.add_child(_make_empty_tool_slot())
 
 
 func _make_empty_tool_slot() -> Control:
 	var p := Panel.new()
 	p.custom_minimum_size = Vector2(40, 40)
+	p.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0, 0, 0, 0.22)
@@ -510,6 +517,7 @@ func _make_tool_slot(index: int, tool_id: String) -> Button:
 	var desc := Settings.t("TOOL_%s_DESC" % tool_id, "")
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(40, 40)
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	b.focus_mode = Control.FOCUS_NONE
 	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	b.tooltip_text = ("%s\n%s" % [title, desc]) if not desc.is_empty() else title
@@ -606,11 +614,11 @@ func _on_rm_health(_c: int, _m: int) -> void:
 
 
 func _on_rm_resources(_g: int, _scrap: int) -> void:
-	_refresh_gold_act()
+	_refresh_caps_floor()
 
 
 func _on_rm_backpack() -> void:
-	_refresh_gold_act()
+	_refresh_caps_floor()
 
 
 func _on_rm_relics() -> void:

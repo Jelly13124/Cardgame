@@ -7,7 +7,6 @@
 [ext_resource type="PackedScene" path="res://battle_scene/my_card_factory.tscn" id="3_l4bd6"]
 [ext_resource type="Script" path="res://addons/card-framework/card_manager.gd" id="3_urm3r"]
 [ext_resource type="PackedScene" path="res://addons/card-framework/hand.tscn" id="3_xp5g3"]
-[ext_resource type="Texture2D" path="res://battle_scene/assets/images/cards/ui/card_back.png" id="6_uv8m4"]
 [ext_resource type="PackedScene" path="res://battle_scene/player.tscn" id="7_player"]
 [ext_resource type="Script" path="res://addons/card-framework/hand.gd" id="10_wrush"]
 [ext_resource type="Script" path="res://battle_scene/no_reorder_hand.gd" id="11_noreorder"]
@@ -19,7 +18,7 @@
 [ext_resource type="Script" path="res://battle_scene/battle_ui_manager.gd" id="19_ui"]
 [ext_resource type="Script" path="res://battle_scene/card_play_zone.gd" id="20_playzone"]
 [ext_resource type="Script" path="res://battle_scene/ui/battle_top_bar.gd" id="21_topbar"]
-[ext_resource type="Texture2D" path="res://battle_scene/assets/images/backgrounds/wasteland_battlefield.png" id="22_bg"]
+[ext_resource type="Texture2D" path="res://battle_scene/assets/images/backgrounds/wasteland_battlefield_sts2.png" id="22_bg"]
 
 [sub_resource type="Curve" id="Curve_lsli3"]
 _limits = [-15.0, 15.0, 0.0, 1.0]
@@ -104,16 +103,6 @@ card_face_up = false
 allow_card_movement = false
 hide_cards = true
 
-[node name="CardBackVisual" type="TextureRect" parent="CardManager/Deck"]
-layout_mode = 0
-offset_right = 160.0
-offset_bottom = 220.0
-texture = ExtResource("6_uv8m4")
-expand_mode = 1
-stretch_mode = 5
-texture_filter = 2
-mouse_filter = 2
-
 [node name="DiscardPile" type="Control" parent="CardManager" unique_id=196193801 instance=ExtResource("2_xkfcc")]
 layout_mode = 1
 anchors_preset = 3
@@ -132,16 +121,6 @@ script = ExtResource("12_ixui7")
 card_face_up = false
 allow_card_movement = false
 hide_cards = true
-
-[node name="CardBackVisual" type="TextureRect" parent="CardManager/DiscardPile"]
-layout_mode = 0
-offset_right = 160.0
-offset_bottom = 220.0
-texture = ExtResource("6_uv8m4")
-expand_mode = 1
-stretch_mode = 5
-texture_filter = 2
-mouse_filter = 2
 
 [node name="Player" parent="." instance=ExtResource("7_player")]
 position = Vector2(360, 610)
@@ -169,14 +148,14 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -270.0
-offset_top = -336.0
+offset_left = -250.0
+offset_top = -364.0
 offset_right = -20.0
 offset_bottom = -292.0
 grow_horizontal = 0
 grow_vertical = 0
 theme_override_colors/font_color = Color(1, 0.8, 0, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 24
 text = "UI_BATTLE_END_ROUND"
 
 [node name="NotificationLabel" type="Label" parent="." unique_id=659079838]
@@ -204,7 +183,7 @@ layer = 30
 layout_mode = 3
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 108.0
+offset_bottom = 132.0
 grow_horizontal = 2
 mouse_filter = 1
 script = ExtResource("21_topbar")

@@ -33,7 +33,7 @@ The old root-level `skills/` workflow docs have been removed. Project convention
 *   **Player Cards**: `battle_scene/card_info/player/`
     *   *Where individual cards (Strike, Defend, etc.) are defined with their stats, rarity, and effects.*
 *   **Enemy Cards**: `battle_scene/card_info/enemy/`
-    *   *Definitions for enemy moves and behavior patterns.*
+    *   *Definitions for enemy moves, behavior patterns, and required encounter identity `tier` (`minion|normal|heavy|elite|boss`).*
 
 ---
 
@@ -89,7 +89,7 @@ The old root-level `skills/` workflow docs have been removed. Project convention
 ### 🏃 Run Management
 *   **Run Shape**: a run is **3 self-contained acts**, each a ~12-floor map ending in a boss. Loot lives in a **20-cell backpack** where Gold / Scrap / equipment compete for space, with safe-cells preserved on death, a permanent base stash, and a next-run loadout (`RunManager.backpack` / `RunManager.pending_loadout`; `MetaProgress.stash`). (The in-run resource was "Core" before 2026-07-07; it is now Scrap, banking to `MetaProgress.scrap`.)
 *   **Global State**: `run_system/core/run_manager.gd` (autoload)
-    *   *Gold, deck, equipped items, inventory, base_attributes, player_attributes (computed), relics, tools (**equipped** in `tool_inventory`, **held** in backpack `{"kind":"tool"}` cells), XP/level, map state. Public API: `add_card_to_deck`, `remove_card_from_deck_by_uid`, `gain_xp` / `xp_to_next`, `equip_to_slot`, `unequip_slot`, `add_to_inventory`, `discard_from_inventory`, `add_tool_to_backpack` / `equip_tool_from_backpack` / `unequip_tool` / `tool_slots` (1 base + Outpost + relic), `purchase_*` (shop-gated wrappers), `recompute_attributes`, `get_active_set_tiers`. `start_new_run` calls `_apply_meta_upgrades` to read MetaProgress and add max HP / starting gold / starter inventory.*
+    *   *Gold, deck, equipped items, inventory, base_attributes, player_attributes (computed), relics, tools (**equipped** in `tool_inventory`, **held** in backpack `{"kind":"tool"}` cells), XP/level, map state. Public API: `add_card_to_deck`, `remove_card_from_deck_by_uid`, `gain_xp` / `xp_to_next`, `equip_to_slot`, `unequip_slot`, `add_to_inventory`, `discard_from_inventory`, `add_tool_to_backpack` / `equip_tool_from_backpack` / `unequip_tool` / `unequip_tool_to_backpack` / `tool_slots` (1 base + Outpost + relic), `purchase_*` (shop-gated wrappers), `recompute_attributes`, `get_active_set_tiers`. Normal encounter constants are explicit four-band rosters: `ENCOUNTER_POOLS_OPENING` (combined floor 0–1), EARLY (2–3), MID (4–7), LATE (8+), validated against role and base-HP budgets at startup. `start_new_run` calls `_apply_meta_upgrades` to read MetaProgress and add max HP / starting gold / starter inventory.*
 
 ### 🏠 Base Building (Meta-Progression)
 *   **Persistent State**: `run_system/core/meta_progress.gd` (autoload, owns `user://slot_<n>/meta.json` — 3 save slots; the legacy global `user://meta.json` is no longer read) — **two currencies** (**Caps / Scrap**; Core removed 2026-07-07, old-save balance discarded) + `buildings{}` (per-building tier) + `BUILDING_DEFS`. API: `add_caps/scrap` + `spend_*`, `get_building_tier`, `is_building_unlocked`, `unlock_building` (spends **Scrap**), `upgrade_building` (spends **Caps**), `building_cost_currency` (→ scrap while locked / caps once unlocked), `building_can`, `get_unlocked_card_pool` (directory-scans all cards; no unlock system), `set_starter_deck_override`, `stash` + `dismantle_stash_item` / `reforge_stash_item_locked` (single-affix lock + escalating cost) / `curse_stash_item`.
@@ -120,7 +120,7 @@ The old root-level `skills/` workflow docs have been removed. Project convention
 All gameplay content is data-driven. Add GDScript only when introducing a new shared effect, trigger, or UI surface.
 
 *   **Player Cards**: `battle_scene/card_info/player/{card_id}.json` (one JSON per card; in-run upgrades are resolved by `card_upgrade.gd`, not stored as `_plus` variants)
-*   **Enemies**: `battle_scene/card_info/enemy/{enemy_id}.json`
+*   **Enemies**: `battle_scene/card_info/enemy/{enemy_id}.json` — every file requires `tier` (`minion|normal|heavy|elite|boss`); the generated enemy catalog groups by this field and `DataValidator` cross-checks every normal/elite/boss roster.
 *   **Relics**: `run_system/data/relics/{relic_id}.json`
 *   **Equipment**: `run_system/data/equipment/{item_id}.json` — **15 generic shells** (`gear_{slot}_{tier}`, empty `bonuses`/`sprite`; art shared by slot×rarity) + **15 set pieces** (bespoke `set_id`/`sprite`). Real stats are **rolled affixes** at drop time (5-tier = 1/2/3/3/3+curse, **each guaranteeing 1 attribute affix**) via `run_system/core/affix_pool.gd`; `bonuses` is a dead back-compat baseline (ignored on new drops).
 *   **Equipment Sets**: `run_system/data/equipment_sets/{set_id}.json` (each set has 2 tiers: 3-piece + 5-piece)

@@ -1,30 +1,20 @@
-## SceneTransition (autoload) — fade-to-black scene swaps so screens cross-fade
-## instead of hard-cutting. Use `SceneTransition.change_to(path)` or
-## `.change_to_packed(packed)` in place of `get_tree().change_scene_to_*()`.
-## Reference directly as `SceneTransition` (autoload convention; ADR-0006).
+## SceneTransition (autoload) — STS2-style scene swaps.
 ##
-## The fade overlay is a CanvasLayer child of root, so it survives the scene swap
-## and hides the hard cut underneath. Tweens are bound to THIS node (not the
-## SceneTree) on purpose — a SceneTree-bound tween would be killed by the swap.
+## Core-loop transitions deliberately avoid a separate loading screen: the current
+## scene fades to black, the scene swap happens behind that blackout, and the next
+## scene fades in once it has entered the tree. Path-based swaps use Godot's
+## threaded ResourceLoader so the blackout tween can keep rendering while resource
+## dependencies are read from disk.
 ##
-## During the black hold a loading indicator (spinner + "加载中") fills the screen
-## so a slow load (the battle scene preloads its card pool) isn't a dead black
-## frame. The spinner uses the Codex art at SPINNER_TEX_PATH when present, else a
-## rotating gear glyph. NOTE: a synchronous scene load blocks the main thread, so
-## the spinner can't smoothly animate *through* the heaviest instantiation frame —
-## it still gives the screen a clear "loading" state instead of pure black.
+## Use `SceneTransition.change_to(path)` or `.change_to_packed(packed)` instead of
+## calling `get_tree().change_scene_to_*()` directly. The overlay lives in this
+## autoload CanvasLayer, so it survives replacement of the current scene.
 extends CanvasLayer
 
 const FADE_OUT := 0.18
 const FADE_IN := 0.24
-const SPINNER_TEX_PATH := "res://run_system/assets/images/ui/loading_spinner.png"
-const LOADING_BG_PATH := "res://run_system/assets/images/ui/loading_bg.png"
 
 var _rect: ColorRect
-var _bg: TextureRect
-var _loading: Control
-var _spinner: Control
-var _spin_tween: Tween
 var _busy := false
 
 
@@ -37,130 +27,80 @@ func _ready() -> void:
 	_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_rect.visible = false
 	add_child(_rect)
-	_build_bg()
-	_build_loading()
 
 
-## Optional full-screen loading-screen art behind the spinner (dimmed so the
-## spinner + text read on top). Falls back to plain black when the Codex art at
-## LOADING_BG_PATH is absent. Sits above the black rect, below the spinner.
-func _build_bg() -> void:
-	_bg = TextureRect.new()
-	_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	_bg.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	_bg.modulate = Color(0.82, 0.82, 0.82)  # lightly dim the backdrop so the spinner pops
-	_bg.visible = false
-	if ResourceLoader.exists(LOADING_BG_PATH):
-		_bg.texture = load(LOADING_BG_PATH)
-	add_child(_bg)
-
-
-## Centered spinner + label, on top of the black rect, hidden until a load is in
-## flight. Its own visibility is independent of the rect's fade alpha.
-func _build_loading() -> void:
-	_loading = Control.new()
-	_loading.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_loading.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_loading.visible = false
-	add_child(_loading)
-
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_loading.add_child(center)
-
-	var box := VBoxContainer.new()
-	box.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_theme_constant_override("separation", 18)
-	center.add_child(box)
-
-	# Spinner: Codex art (rotated) if delivered, else a rotating gear glyph.
-	if ResourceLoader.exists(SPINNER_TEX_PATH):
-		var tex := TextureRect.new()
-		tex.texture = load(SPINNER_TEX_PATH)
-		tex.custom_minimum_size = Vector2(96, 96)
-		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tex.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-		tex.pivot_offset = Vector2(48, 48)
-		tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_spinner = tex
-	else:
-		var glyph := Label.new()
-		glyph.text = "⚙"
-		glyph.custom_minimum_size = Vector2(96, 96)
-		glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		glyph.add_theme_font_size_override("font_size", 72)
-		glyph.add_theme_color_override("font_color", Color(1.0, 0.84, 0.45))
-		glyph.pivot_offset = Vector2(48, 48)
-		glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_spinner = glyph
-	box.add_child(_spinner)
-
-	var label := Label.new()
-	label.text = "加载中…" if Settings.language == "zh" else "Loading…"
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 22)
-	label.add_theme_color_override("font_color", Color(0.86, 0.78, 0.60))
-	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.7))
-	label.add_theme_constant_override("outline_size", 3)
-	box.add_child(label)
-
-
-func _start_spinner() -> void:
-	if _bg.texture != null:
-		_bg.visible = true
-	_loading.visible = true
-	if _spin_tween and _spin_tween.is_valid():
-		_spin_tween.kill()
-	_spinner.rotation = 0.0
-	_spin_tween = create_tween().set_loops()
-	_spin_tween.tween_property(_spinner, "rotation", TAU, 0.9).from(0.0)
-
-
-func _stop_spinner() -> void:
-	if _spin_tween and _spin_tween.is_valid():
-		_spin_tween.kill()
-	_loading.visible = false
-	_bg.visible = false
-
-
-## Fade to black, change to the scene at `path`, fade back in.
+## Fade to black while the target scene loads in the background, swap, then reveal.
 func change_to(path: String) -> void:
-	await _run(func() -> void: get_tree().change_scene_to_file(path))
+	if not _begin_transition():
+		return
+
+	# Start I/O before the fade so short loads disappear entirely behind the motion.
+	var request_error := ResourceLoader.load_threaded_request(path, "PackedScene")
+	var request_started := request_error == OK or request_error == ERR_BUSY
+	await _fade_to_black()
+	var packed := await _load_scene_threaded(path, request_started)
+	if packed == null:
+		push_error("SceneTransition: failed to load scene: %s (error %d)" % [path, request_error])
+		await _fade_from_black()
+		return
+
+	var change_error := get_tree().change_scene_to_packed(packed)
+	if change_error != OK:
+		push_error("SceneTransition: failed to change scene: %s (error %d)" % [path, change_error])
+		await _fade_from_black()
+		return
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await _fade_from_black()
 
 
-## Same as change_to() for a preloaded PackedScene.
+## Same visual transition for a PackedScene that is already resident in memory.
 func change_to_packed(packed: PackedScene) -> void:
 	await _run(func() -> void: get_tree().change_scene_to_packed(packed))
 
 
-## Shared fade-out → swap → fade-in. Re-entrant calls are ignored so a double-click
-## (or a transition firing mid-transition) can't stack scene swaps.
-func _run(swap: Callable) -> void:
+## Load a PackedScene without blocking the main thread. When `request_started` is
+## true, the caller already queued the request so loading overlaps the fade-out.
+func _load_scene_threaded(path: String, request_started := false) -> PackedScene:
+	if not request_started:
+		var request_error := ResourceLoader.load_threaded_request(path, "PackedScene")
+		if request_error != OK and request_error != ERR_BUSY:
+			return null
+
+	while true:
+		var status := ResourceLoader.load_threaded_get_status(path)
+		match status:
+			ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+				await get_tree().process_frame
+			ResourceLoader.THREAD_LOAD_LOADED:
+				return ResourceLoader.load_threaded_get(path) as PackedScene
+			ResourceLoader.THREAD_LOAD_FAILED, ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+				return null
+			_:
+				return null
+	return null
+
+
+## Acquire the persistent blackout overlay. Re-entrant requests are ignored so a
+## double-click cannot stack scene swaps.
+func _begin_transition() -> bool:
 	if _busy:
-		return
+		return false
 	_busy = true
 	_rect.visible = true
-	_rect.mouse_filter = Control.MOUSE_FILTER_STOP  # eat input during the fade
+	_rect.mouse_filter = Control.MOUSE_FILTER_STOP
+	return true
+
+
+func _fade_to_black() -> void:
 	var fade_out := create_tween()
 	fade_out.tween_property(_rect, "color:a", 1.0, FADE_OUT).set_trans(Tween.TRANS_SINE).set_ease(
 		Tween.EASE_IN_OUT
 	)
 	await fade_out.finished
-	# Screen is black — show the loading indicator and render a frame so it's on
-	# screen before the (blocking) scene swap.
-	_start_spinner()
-	await get_tree().process_frame
-	swap.call()
-	# Let the new scene enter the tree + run a frame before we reveal it.
-	await get_tree().process_frame
-	await get_tree().process_frame
-	_stop_spinner()
+
+
+func _fade_from_black() -> void:
 	var fade_in := create_tween()
 	fade_in.tween_property(_rect, "color:a", 0.0, FADE_IN).set_trans(Tween.TRANS_SINE).set_ease(
 		Tween.EASE_IN_OUT
@@ -169,3 +109,15 @@ func _run(swap: Callable) -> void:
 	_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_rect.visible = false
 	_busy = false
+
+
+## Shared fade-out → swap → fade-in for already-loaded PackedScenes.
+func _run(swap: Callable) -> void:
+	if not _begin_transition():
+		return
+	await _fade_to_black()
+	swap.call()
+	# Let the new scene enter the tree and settle before revealing it.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await _fade_from_black()

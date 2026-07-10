@@ -43,7 +43,9 @@ func _run() -> void:
 	_original_backpack = RunManager.backpack.duplicate(true)
 	_original_tools = RunManager.tool_inventory.duplicate()
 	await _test_equipment_resolution_and_names()
+	await _test_equipment_cell_sizing()
 	await _test_tool_destination_and_slot_dragging()
+	await _test_default_unequip_refreshes_immediately()
 	await _test_shop_tool_stall()
 	await _test_deck_icon()
 	_restore_run_state()
@@ -97,6 +99,47 @@ func _test_equipment_resolution_and_names() -> void:
 	await get_tree().process_frame
 
 
+func _test_equipment_cell_sizing() -> void:
+	_reset_run_inventory()
+	RunManager.backpack[0] = {"kind": "equip", "id": "gear_hands_common"}
+	var window := CHARACTER_WINDOW.new()
+	window.mode = "map"
+	add_child(window)
+	await _frames(3)
+
+	var grid := window.find_child("BackpackGrid", true, false) as GridContainer
+	_expect(grid != null, "character backpack exposes its sizing grid")
+	if grid != null:
+		var min_width := INF
+		var max_width := 0.0
+		var all_minimums_fit := true
+		for child in grid.get_children():
+			var control := child as Control
+			min_width = minf(min_width, control.size.x)
+			max_width = maxf(max_width, control.size.x)
+			all_minimums_fit = all_minimums_fit and control.custom_minimum_size.x >= 64.0
+		_expect(
+			all_minimums_fit,
+			"every backpack cell is at least as wide as its 64 px equipment icon"
+		)
+		_expect(
+			is_equal_approx(min_width, max_width),
+			"equipment content cannot widen only selected backpack columns"
+		)
+
+	var slot_cells: Dictionary = window.get("_slot_cells")
+	_expect(slot_cells.size() == RunManager.EQUIPMENT_SLOTS.size(), "all equipment slots are registered")
+	for slot in slot_cells:
+		var slot_cell := slot_cells[slot] as Control
+		_expect(
+			slot_cell.custom_minimum_size.x >= 84.0,
+			"%s equipment slot scales up with the backpack grid" % slot
+		)
+
+	window.queue_free()
+	await get_tree().process_frame
+
+
 func _test_tool_destination_and_slot_dragging() -> void:
 	_reset_run_inventory()
 	RunManager.tool_inventory.assign(["med_kit"])
@@ -135,11 +178,19 @@ func _test_tool_destination_and_slot_dragging() -> void:
 			not bool(empty_slot.call("_can_drop_data", Vector2.ZERO, {"src": "backpack", "kind": "equip", "index": 0})),
 			"empty tool slot rejects equipment"
 		)
+		_expect(
+			not _texture_paths(empty_slot).any(func(path): return str(path).ends_with("/med_kit.png")),
+			"empty tool slot shows only the ghost tool art"
+		)
 	empty_window.queue_free()
 	await get_tree().process_frame
 
 	_reset_run_inventory()
-	RunManager.tool_inventory.assign(["med_kit"])
+	var full_tools: Array[String] = []
+	for _i in range(RunManager.tool_slots()):
+		full_tools.append("med_kit")
+	RunManager.tool_inventory.assign(full_tools)
+	RunManager.backpack[0] = {"kind": "tool", "id": "smoke_bomb"}
 	var filled_window := CHARACTER_WINDOW.new()
 	filled_window.mode = "map"
 	add_child(filled_window)
@@ -150,8 +201,107 @@ func _test_tool_destination_and_slot_dragging() -> void:
 		var payload: Dictionary = filled_slot.get("drag_payload")
 		_expect(payload.get("src") == "tool_slot", "filled tool slot produces tool_slot drag data")
 		_expect(payload.get("index") == 0, "filled tool slot drag data preserves slot index")
+		var texture_paths := _texture_paths(filled_slot)
+		_expect(
+			texture_paths.has(str(RunManager.get_tool_data("med_kit").get("icon", ""))),
+			"filled tool slot shows the real med-kit icon"
+		)
+		_expect(
+			not texture_paths.any(func(path): return str(path).ends_with("/ghost_tool.png")),
+			"filled tool slot hides the ghost wrench"
+		)
+		var incoming := {"src": "backpack", "kind": "tool", "index": 0, "tool_id": "smoke_bomb"}
+		var accepts_replacement := bool(filled_slot.call("_can_drop_data", Vector2.ZERO, incoming))
+		_expect(accepts_replacement, "filled tool slot accepts a backpack tool for replacement")
+		if accepts_replacement:
+			filled_slot.call("_drop_data", Vector2.ZERO, incoming)
+			await _frames(2)
+			_expect(RunManager.tool_inventory[0] == "smoke_bomb", "dropped tool replaces the target slot")
+			_expect(
+				RunManager.backpack[0] == {"kind": "tool", "id": "med_kit"},
+				"replaced tool returns to the incoming tool's backpack cell"
+			)
 	filled_window.queue_free()
 	await get_tree().process_frame
+
+	_reset_run_inventory()
+	full_tools.clear()
+	for _i in range(RunManager.tool_slots()):
+		full_tools.append("med_kit")
+	RunManager.tool_inventory.assign(full_tools)
+	RunManager.backpack[0] = {"kind": "tool", "id": "smoke_bomb"}
+	var click_window := CHARACTER_WINDOW.new()
+	click_window.mode = "map"
+	add_child(click_window)
+	await _frames(3)
+	click_window.call("_equip_tool", 0)
+	_expect(RunManager.tool_inventory[0] == "smoke_bomb", "clicking a tool replaces slot zero when full")
+	_expect(
+		RunManager.backpack[0] == {"kind": "tool", "id": "med_kit"},
+		"click replacement swaps the old tool back into the backpack"
+	)
+	click_window.queue_free()
+	await get_tree().process_frame
+
+
+func _test_default_unequip_refreshes_immediately() -> void:
+	_reset_run_inventory()
+	RunManager.tool_inventory.assign(["energy_cell"])
+	var observed_states: Array[Dictionary] = []
+	var observe := func(source: String) -> void:
+		observed_states.append(
+			{
+				"source": source,
+				"tools": RunManager.tool_inventory.duplicate(),
+				"backpack_tools": RunManager.backpack_tool_ids(),
+			}
+		)
+	var on_backpack := func() -> void: observe.call("backpack")
+	var on_tools := func() -> void: observe.call("tools")
+	RunManager.backpack_changed.connect(on_backpack, CONNECT_ONE_SHOT)
+	RunManager.tools_changed.connect(on_tools, CONNECT_ONE_SHOT)
+
+	var window := CHARACTER_WINDOW.new()
+	window.mode = "map"
+	add_child(window)
+	await _frames(3)
+	_expect(RunManager.unequip_tool(0), "default unequip succeeds with backpack space")
+	await _frames(2)
+
+	_expect(observed_states.size() == 2, "unequip emits both inventory signals once")
+	for state in observed_states:
+		_expect(state.tools.is_empty(), "%s observer sees no equipped tool" % state.source)
+		_expect(
+			state.backpack_tools == ["energy_cell"],
+			"%s observer sees the backpacked tool" % state.source
+		)
+	var tool_row := window.get("_tool_row") as HBoxContainer
+	var slot: Control = null
+	if tool_row != null and tool_row.get_child_count() > 0:
+		slot = tool_row.get_child(tool_row.get_child_count() - 1) as Control
+	_expect(slot != null, "character window keeps a visible tool slot")
+	if slot != null:
+		_expect(
+			not _texture_paths(slot).has(
+				str(RunManager.get_tool_data("energy_cell").get("icon", ""))
+			),
+			"tool slot clears immediately after unequip"
+		)
+
+	window.queue_free()
+	await get_tree().process_frame
+
+	_reset_run_inventory()
+	for i in range(RunManager.effective_backpack_size()):
+		RunManager.backpack[i] = {"kind": "gold", "amount": 1}
+	RunManager.tool_inventory.assign(["energy_cell"])
+	var full_snapshot := RunManager.backpack.duplicate(true)
+	_expect(not RunManager.unequip_tool(0), "full backpack rejects default unequip")
+	_expect(
+		RunManager.tool_inventory == ["energy_cell"],
+		"failed unequip keeps the tool equipped"
+	)
+	_expect(RunManager.backpack == full_snapshot, "failed unequip leaves the backpack unchanged")
 
 
 func _test_shop_tool_stall() -> void:
@@ -190,6 +340,15 @@ func _script_has_method(script: Script, method_name: String) -> bool:
 		if str(method.get("name", "")) == method_name:
 			return true
 	return false
+
+
+func _texture_paths(root: Node) -> Array[String]:
+	var paths: Array[String] = []
+	for node in root.find_children("*", "TextureRect", true, false):
+		var rect := node as TextureRect
+		if rect.texture:
+			paths.append(rect.texture.resource_path)
+	return paths
 
 
 func _frames(count: int) -> void:

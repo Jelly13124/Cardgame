@@ -30,7 +30,7 @@
 
 ## 现有装备图
 
-继续使用 `battle_scene/assets/images/ui/equipment/{slot}_{rarity}.png` 的 15 张现有图片，不重新设计主体。清除图片边缘串入的相邻素材残片；不改变画布尺寸、主体方向、颜色或装备造型。最终仍为 `256×256` 透明 PNG，孤立残片不得接触画布边缘。
+继续使用 `battle_scene/assets/images/ui/equipment/{slot}_{rarity}.png` 的 15 张现有图片，不重新设计主体。清除图片边缘串入的相邻素材残片；不改变各文件现有画布尺寸、主体方向、颜色或装备造型。最终仍为透明 PNG，孤立残片不得接触画布边缘。
 
 ## 装备拖拽预览
 

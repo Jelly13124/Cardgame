@@ -38,7 +38,10 @@ static func open(host: Node, abandon: bool, on_resume: Callable = Callable()) ->
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	# and_offsets variant: plain set_anchors_preset AFTER entering the tree recomputes
+	# the offsets to preserve the current (0×0) rect, collapsing the panel to the
+	# top-left corner and killing the dim overlay.
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build_frame()
 	_show_menu()
@@ -199,18 +202,26 @@ func _menu_button(text: String, cb: Callable, danger: bool = false) -> Button:
 	b.add_theme_font_size_override("font_size", 21)
 	T.apply_button_theme(b)
 	if danger:
-		# Whole button red (not just the label) for the destructive Abandon / Quit actions.
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = Color(0.52, 0.13, 0.11)
-		sb.set_border_width_all(2)
-		sb.border_color = Color(0.86, 0.32, 0.26)
-		sb.set_corner_radius_all(6)
-		sb.set_content_margin_all(8)
-		var sb_hover: StyleBoxFlat = sb.duplicate()
-		sb_hover.bg_color = Color(0.68, 0.17, 0.14)
-		b.add_theme_stylebox_override("normal", sb)
-		b.add_theme_stylebox_override("hover", sb_hover)
-		b.add_theme_stylebox_override("pressed", sb_hover)
+		# Whole button red (not just the label) for the destructive Abandon / Quit actions:
+		# the lw orange button re-tinted crimson so the ink chrome matches the other rows.
+		var danger_tints := {
+			"normal": Color(0.70, 0.25, 0.21),
+			"hover": Color(0.84, 0.32, 0.26),
+			"pressed": Color(0.55, 0.20, 0.17),
+		}
+		for state in danger_tints:
+			var box := T.ll_button("normal")
+			if box is StyleBoxTexture:
+				(box as StyleBoxTexture).modulate_color = danger_tints[state]
+			else:
+				# lw PNG absent — programmatic red fallback keeps the danger read.
+				box = StyleBoxFlat.new()
+				(box as StyleBoxFlat).bg_color = Color(0.52, 0.13, 0.11)
+				(box as StyleBoxFlat).set_border_width_all(2)
+				(box as StyleBoxFlat).border_color = Color(0.86, 0.32, 0.26)
+				(box as StyleBoxFlat).set_corner_radius_all(6)
+				(box as StyleBoxFlat).set_content_margin_all(8)
+			b.add_theme_stylebox_override(state, box)
 		b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 		b.add_theme_color_override("font_color", Color(1.0, 0.93, 0.90))
 		b.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0))

@@ -78,7 +78,7 @@ CARD_bulkhead_bleed_DESC,"Lose 2 HP. Gain 12 Block.","失去 2 点生命。获�
 CARD_hemo_drive_TITLE,"Hemo Drive","血力驱动"
 CARD_hemo_drive_DESC,"Lose 2 HP. Deal 9 damage.","失去 2 点生命。造成 9 点伤害。"
 CARD_hot_streak_TITLE,"Hot Streak","走运"
-CARD_hot_streak_DESC,"This combat, whenever you Crit, gain 2 gold.","本场战斗，每当你暴击时，获得 2 金币。"
+CARD_hot_streak_DESC,"This combat, whenever you Crit, gain 2 Caps.","本场战斗，每当你暴击时，获得 2 瓶盖。"
 CARD_all_in_TITLE,"All In","梭哈"
 CARD_all_in_DESC,"This combat, your Crits deal DOUBLE damage, but your non-Crit attacks deal 0.","本场战斗，你的暴击造成双倍伤害，但未暴击的攻击造成 0 伤害。"
 CARD_hemorrhage_TITLE,"Hemorrhage","致命失血"
@@ -122,7 +122,7 @@ TOOL_field_kit_DESC,"Discover a skill card. It costs 0 this combat.",发现一�
 CARD_radiation_dust_TITLE,Radiation Dust,辐射尘
 CARD_radiation_dust_DESC,Unplayable.,无法打出。
 CARD_leaking_wealth_TITLE,Leaking Wealth,漏财
-CARD_leaking_wealth_DESC,"Unplayable. At the end of your turn while in hand, lose 5 Gold.",无法打出。回合结束时若在手牌中，失去 5 金币。
+CARD_leaking_wealth_DESC,"Unplayable. At the end of your turn while in hand, lose 5 Caps.",无法打出。回合结束时若在手牌中，失去 5 瓶盖。
 CARD_rust_TITLE,Rust,铁锈
 CARD_rust_DESC,"Unplayable. At the end of your turn while in hand, lose 2 HP.",无法打出。回合结束时若在手牌中，失去 2 点生命。
 CARD_cowardice_TITLE,Cowardice,怯懦

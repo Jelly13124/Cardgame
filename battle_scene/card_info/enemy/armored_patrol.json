@@ -2,6 +2,7 @@
 	"id": "armored_patrol",
 	"name": "Armored Patrol",
 	"sprite_id": "armored_patrol",
+	"tier": "elite",
 	"max_health": 50,
 	"action_pattern": [
 		{ "type": "block",         "amount": 12,                                      "label": "🛡 12" },

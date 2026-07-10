@@ -116,7 +116,10 @@ func on_combat_victory(player: Node) -> void:
 					_mark_used_once(entry)
 			"gain_gold":
 				RunManager.add_resources(amount, 0)
-				_notify("%s: +%d Gold" % [str(entry["title"]), amount], Color(1.0, 0.85, 0.24))
+				_notify(
+					"%s: +%d %s" % [str(entry["title"]), amount, tr("UI_EQUIP_CELL_GOLD")],
+					Color(1.0, 0.85, 0.24)
+				)
 				_mark_used_once(entry)
 
 

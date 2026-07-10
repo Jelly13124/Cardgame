@@ -20,10 +20,10 @@ UPGRADE_scrap_workshop_TIER1,All shop prices reduced by 10%,所有商店价格�
 UPGRADE_scrap_workshop_TIER2,All shop prices reduced by 20%,所有商店价格降低20%
 UPGRADE_scrap_workshop_TIER3,All shop prices reduced by 30%,所有商店价格降低30%
 UPGRADE_command_center_NAME,COMMAND CENTER,指挥中心
-UPGRADE_command_center_DESC,Begin each run with extra gold from your stockpile.,每场冒险开局时从储备中获得额外金币。
-UPGRADE_command_center_TIER1,+50 starting gold,初始金币+50
-UPGRADE_command_center_TIER2,+120 starting gold,初始金币+120
-UPGRADE_command_center_TIER3,+200 starting gold,初始金币+200
+UPGRADE_command_center_DESC,Begin each run with extra Caps from your stockpile.,每场冒险开局时从储备中获得额外瓶盖。
+UPGRADE_command_center_TIER1,+50 starting Caps,初始瓶盖+50
+UPGRADE_command_center_TIER2,+120 starting Caps,初始瓶盖+120
+UPGRADE_command_center_TIER3,+200 starting Caps,初始瓶盖+200
 UPGRADE_starter_boost_NAME,STARTER BOOST,起步强化
 UPGRADE_starter_boost_DESC,Distribute extra attribute points at the start of each run.,每场冒险开局时分配额外属性点。
 UPGRADE_starter_boost_TIER1,+1 random attribute point at run start,开局时随机属性点+1

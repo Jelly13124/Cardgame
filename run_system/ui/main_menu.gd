@@ -12,7 +12,14 @@ const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
 const HOME_BASE_PATH := "res://run_system/ui/home_base_scene.tscn"
 const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 const RULES_PANEL_PATH := "res://run_system/ui/rules_panel.gd"
-const BG_TEXTURE_PATH := "res://battle_scene/assets/images/backgrounds/title_key_art.png"
+const START_BG_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/bottlecap_hunter_start_background.png"
+const START_TITLE_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/title_bottlecap_hunter.png"
+const START_DIVIDER_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/divider_bottlecap.png"
+const START_BUTTON_NORMAL_PATH := "res://run_system/assets/images/ui/start_screen/button_normal.png"
+const START_BUTTON_SELECTED_PATH := "res://run_system/assets/images/ui/start_screen/button_start_selected.png"
+const START_SAVE_STRIP_PATH := "res://run_system/assets/images/ui/start_screen/save_info_strip.png"
+const START_LANGUAGE_BUTTON_PATH := "res://run_system/assets/images/ui/start_screen/icon_button_language.png"
+const START_SETTINGS_BUTTON_PATH := "res://run_system/assets/images/ui/start_screen/icon_button_settings.png"
 
 var _settings_layer: CanvasLayer = null
 ## The currently-open slot picker / saves manager (one at a time). ESC closes it.
@@ -21,6 +28,10 @@ var _modal_layer: CanvasLayer = null
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	# OS window title carries the brand name. project.godot's config/name stays
+	# "CardFramework" on purpose — it anchors the user:// save directory, and
+	# renaming it would orphan every existing save.
+	get_window().title = tr("MENU_TITLE")
 	# Title screen is intentionally silent (menu BGM removed). stop_music() also kills
 	# any track that carried over when returning to the menu from another scene.
 	AudioManager.stop_music()
@@ -29,112 +40,229 @@ func _ready() -> void:
 
 
 func _build() -> void:
-	# ── Background art (stays visible to the left of the menu panel) ──
-	var bg_tex = load(BG_TEXTURE_PATH) if ResourceLoader.exists(BG_TEXTURE_PATH) else null
+	_build_start_screen_concept()
+
+
+func _build_start_screen_concept() -> void:
+	var bg_tex := _load_texture(START_BG_TEXTURE_PATH)
 	if bg_tex:
-		var tex := TextureRect.new()
-		tex.texture = bg_tex
-		tex.set_anchors_preset(Control.PRESET_FULL_RECT)
-		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(tex)
+		var bg := TextureRect.new()
+		bg.texture = bg_tex
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(bg)
 	var dim := ColorRect.new()
-	dim.color = Color(0.05, 0.035, 0.02, 0.4 if bg_tex else 1.0)
+	dim.color = Color(0.035, 0.024, 0.018, 0.16 if bg_tex else 1.0)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(dim)
 
-	# ── Right-side menu panel (dark, gold left edge) ──
-	var panel := Panel.new()
-	panel.anchor_left = 1.0
-	panel.anchor_right = 1.0
-	panel.anchor_top = 0.0
-	panel.anchor_bottom = 1.0
-	panel.offset_left = -470.0
-	var ps := StyleBoxFlat.new()
-	ps.bg_color = Color(0.11, 0.08, 0.045, 0.97)
-	ps.border_width_left = 3
-	ps.border_color = Color(0.78, 0.56, 0.22)
-	panel.add_theme_stylebox_override("panel", ps)
-	add_child(panel)
+	var title_tex := _place_image(START_TITLE_TEXTURE_PATH, Rect2(72, 92, 740, 236))
+	if title_tex == null:
+		var title := Label.new()
+		title.text = tr("MENU_TITLE")
+		T.style_display(title, 76, 700)
+		title.add_theme_color_override("font_color", Color(1.0, 0.81, 0.27))
+		_place_control(title, Rect2(120, 68, 1020, 130))
+	_place_image(START_DIVIDER_TEXTURE_PATH, Rect2(150, 326, 610, 92))
 
-	var margin := MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 52)
-	margin.add_theme_constant_override("margin_right", 52)
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	panel.add_child(center)
-	center.add_child(margin)
+	_place_control(_start_icon_button(START_LANGUAGE_BUTTON_PATH, _on_settings), Rect2(1678, 28, 92, 92))
+	_place_control(_start_icon_button(START_SETTINGS_BUTTON_PATH, _on_settings), Rect2(1782, 28, 92, 92))
 
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 10)
-	box.custom_minimum_size = Vector2(360, 0)
-	margin.add_child(box)
+	var button_y := 403.0
+	var button_x := 226.0
+	var button_size := Vector2(420, 96)
+	var button_gap := -2.0
+	var new_game := _start_menu_button(tr("MENU_NEW_GAME"), _on_new_game, true)
+	_place_control(new_game, Rect2(button_x, button_y, button_size.x, button_size.y))
 
-	# Title (Oswald) — gold; falls back to Noto for zh.
-	var title := Label.new()
-	title.text = tr("MENU_TITLE")
-	title.autowrap_mode = TextServer.AUTOWRAP_WORD
-	title.custom_minimum_size = Vector2(360, 0)
-	T.style_display(title, 52, 700)
-	title.add_theme_color_override("font_color", Color(1.0, 0.81, 0.27))
-	title.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
-	title.add_theme_constant_override("shadow_offset_x", 2)
-	title.add_theme_constant_override("shadow_offset_y", 2)
-	box.add_child(title)
-
-	# DEMO tag (cyan pill)
-	var tag := Label.new()
-	tag.text = tr("MENU_SUBTITLE")
-	T.style_display(tag, 16, 600)
-	tag.add_theme_color_override("font_color", Color(0.06, 0.09, 0.11))
-	var tagbg := StyleBoxFlat.new()
-	tagbg.bg_color = T.ACCENT_NEON_BLUE
-	tagbg.set_corner_radius_all(6)
-	tagbg.content_margin_left = 9
-	tagbg.content_margin_right = 9
-	tagbg.content_margin_top = 2
-	tagbg.content_margin_bottom = 2
-	var tagwrap := PanelContainer.new()
-	tagwrap.add_theme_stylebox_override("panel", tagbg)
-	tagwrap.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	tagwrap.add_child(tag)
-	box.add_child(tagwrap)
-
-	var gap := Control.new()
-	gap.custom_minimum_size = Vector2(0, 26)
-	box.add_child(gap)
-
-	# ── Three primary actions ──
-	box.add_child(_menu_button(tr("MENU_NEW_GAME"), _on_new_game))
-	var cont := _menu_button(tr("MENU_CONTINUE"), _on_continue)
+	var cont := _start_menu_button(tr("MENU_CONTINUE"), _on_continue)
 	cont.disabled = MetaProgress.most_recent_slot() == 0
-	box.add_child(cont)
-	box.add_child(_menu_button(tr("MENU_SAVES"), _on_saves))
-	box.add_child(_menu_button(tr("MENU_HOWTO"), _on_howto))
+	_place_control(cont, Rect2(button_x, button_y + (button_size.y + button_gap), button_size.x, button_size.y))
+	_place_control(_start_menu_button(tr("MENU_SETTINGS"), _on_settings), Rect2(button_x, button_y + (button_size.y + button_gap) * 2.0, button_size.x, button_size.y))
+	_place_control(_start_menu_button(tr("MENU_QUIT"), _on_quit), Rect2(button_x, button_y + (button_size.y + button_gap) * 3.0, button_size.x, button_size.y))
 
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 9)
-	var sbtn := _menu_button(tr("MENU_SETTINGS"), _on_settings)
-	sbtn.custom_minimum_size = Vector2(0, 52)
-	sbtn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var qbtn := _menu_button(tr("MENU_QUIT"), _on_quit)
-	qbtn.custom_minimum_size = Vector2(0, 52)
-	qbtn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(sbtn)
-	row.add_child(qbtn)
-	box.add_child(row)
+	_place_control(_start_save_info_button(), Rect2(44, 956, 298, 76))
 
-	var vgap := Control.new()
-	vgap.custom_minimum_size = Vector2(0, 18)
-	box.add_child(vgap)
-	var ver := Label.new()
-	ver.text = tr("MENU_VERSION")
-	T.style_display(ver, 13, 500)
-	ver.add_theme_color_override("font_color", Color(0.5, 0.39, 0.25))
-	box.add_child(ver)
+
+func _place_control(control: Control, rect: Rect2) -> Control:
+	control.position = rect.position
+	control.size = rect.size
+	control.custom_minimum_size = rect.size
+	add_child(control)
+	return control
+
+
+func _place_image(path: String, rect: Rect2) -> TextureRect:
+	var tex := _load_texture(path)
+	if tex == null:
+		return null
+	var image := TextureRect.new()
+	image.texture = tex
+	image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	image.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_place_control(image, rect)
+	return image
+
+
+func _load_texture(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var res = load(path)
+		if res is Texture2D:
+			return res
+	return null
+
+
+func _start_stylebox(path: String, state: String = "normal") -> StyleBox:
+	var tex := _load_texture(path)
+	if tex == null:
+		return T.ll_button("normal") if path == START_BUTTON_SELECTED_PATH else T.ll_button_olive("normal")
+	var box := StyleBoxTexture.new()
+	box.texture = tex
+	box.texture_margin_left = 30
+	box.texture_margin_right = 30
+	box.texture_margin_top = 20
+	box.texture_margin_bottom = 20
+	box.content_margin_left = 22
+	box.content_margin_right = 22
+	box.content_margin_top = 12
+	box.content_margin_bottom = 12
+	match state:
+		"hover":
+			box.modulate_color = Color(1.10, 1.10, 1.10, 1.0)
+		"pressed":
+			box.modulate_color = Color(0.86, 0.86, 0.86, 1.0)
+		"disabled":
+			box.modulate_color = Color(0.46, 0.46, 0.46, 0.82)
+	return box
+
+
+func _start_menu_button(text: String, handler: Callable, selected: bool = false) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.custom_minimum_size = Vector2(420, 96)
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.add_theme_font_override("font", T.display_font(700))
+	button.add_theme_font_size_override("font_size", 26)
+	button.add_theme_stylebox_override(
+		"normal", _start_stylebox(START_BUTTON_SELECTED_PATH if selected else START_BUTTON_NORMAL_PATH)
+	)
+	button.add_theme_stylebox_override("hover", _start_stylebox(START_BUTTON_SELECTED_PATH, "hover"))
+	button.add_theme_stylebox_override("pressed", _start_stylebox(START_BUTTON_SELECTED_PATH, "pressed"))
+	button.add_theme_stylebox_override("disabled", _start_stylebox(START_BUTTON_NORMAL_PATH, "disabled"))
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	button.add_theme_color_override("font_color", Color(0.93, 0.80, 0.56))
+	button.add_theme_color_override("font_hover_color", Color(1.0, 0.93, 0.70))
+	button.add_theme_color_override("font_pressed_color", Color(1.0, 0.88, 0.62))
+	button.add_theme_color_override("font_disabled_color", Color(0.60, 0.52, 0.40, 0.86))
+	button.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.02, 0.92))
+	button.add_theme_constant_override("outline_size", 3)
+	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
+	button.pressed.connect(handler)
+	button.mouse_entered.connect(
+		func() -> void:
+			if not is_instance_valid(button) or button.disabled:
+				return
+			AudioManager.play_sfx("ui_hover")
+			T._button_pop(button, Vector2(1.035, 1.035), 0.08)
+	)
+	button.mouse_exited.connect(
+		func() -> void:
+			if is_instance_valid(button):
+				T._button_pop(button, Vector2.ONE, 0.10)
+	)
+	return button
+
+
+func _start_icon_button(texture_path: String, handler: Callable) -> Button:
+	var button := Button.new()
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
+	button.pressed.connect(handler)
+	var icon := TextureRect.new()
+	icon.texture = _load_texture(texture_path)
+	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(icon)
+	button.mouse_entered.connect(
+		func() -> void:
+			if not is_instance_valid(button):
+				return
+			AudioManager.play_sfx("ui_hover")
+			T._button_pop(button, Vector2(1.035, 1.035), 0.08)
+	)
+	button.mouse_exited.connect(
+		func() -> void:
+			if is_instance_valid(button):
+				T._button_pop(button, Vector2.ONE, 0.10)
+	)
+	return button
+
+
+func _start_save_info_button() -> Button:
+	var slot := Settings.active_slot
+	if slot < 1:
+		slot = MetaProgress.most_recent_slot()
+	if slot < 1:
+		slot = 1
+	var button := Button.new()
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
+	button.pressed.connect(_on_saves)
+
+	var bg := TextureRect.new()
+	bg.texture = _load_texture(START_SAVE_STRIP_PATH)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_SCALE
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(bg)
+
+	var pad := MarginContainer.new()
+	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pad.set_anchors_preset(Control.PRESET_FULL_RECT)
+	pad.add_theme_constant_override("margin_left", 88)
+	pad.add_theme_constant_override("margin_right", 16)
+	pad.add_theme_constant_override("margin_top", 13)
+	pad.add_theme_constant_override("margin_bottom", 10)
+	button.add_child(pad)
+
+	var labels := VBoxContainer.new()
+	labels.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	labels.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	labels.add_theme_constant_override("separation", 0)
+	pad.add_child(labels)
+
+	var slot_label := Label.new()
+	slot_label.text = "存档槽位： %d" % slot
+	T.style_display(slot_label, 16, 600)
+	slot_label.add_theme_color_override("font_color", Color(0.93, 0.80, 0.56))
+	slot_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	labels.add_child(slot_label)
+
+	var version := Label.new()
+	version.text = "v0.1.0"
+	T.style_display(version, 15, 600)
+	version.add_theme_color_override("font_color", Color(0.78, 0.66, 0.46))
+	version.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	labels.add_child(version)
+	return button
 
 
 func _menu_button(text: String, handler: Callable) -> Button:

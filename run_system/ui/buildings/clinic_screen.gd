@@ -127,7 +127,13 @@ func _build_attr_perk_row(perk_id: String) -> Control:
 	var cost := MetaProgress.caps_perk_cost(perk_id)
 
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", T.ll_inset())
+	# ll_inset ships a 28px content margin on every side (9-slice default); at
+	# five rows that overflows the scroll viewport and clips the 魅力 row. The
+	# ink border itself is thin — 10px vertical padding clears it fine.
+	var row_box := T.ll_inset()
+	row_box.content_margin_top = 10.0
+	row_box.content_margin_bottom = 10.0
+	panel.add_theme_stylebox_override("panel", row_box)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# Full perk name + level on hover (the concept row only shows the bare
 	# attribute name, so the descriptive copy moves to the tooltip).
@@ -265,22 +271,38 @@ func _build_cap_card() -> Control:
 
 
 ## The orange lightline buy button shared by every purchasable in this screen:
-## MAX + disabled at the cap, otherwise 购买 with the Caps cost badge, disabled
+## a quiet MAX chip at the cap, otherwise 购买 with the Caps cost badge, disabled
 ## while Caps are short. `on_buy` is the existing backend call.
-func _buy_button(lvl: int, max_lvl: int, cost: int, on_buy: Callable) -> Button:
+func _buy_button(lvl: int, max_lvl: int, cost: int, on_buy: Callable) -> Control:
+	if lvl >= max_lvl:
+		# A dead disabled button at the cap reads as broken; a calm chip doesn't.
+		var chip := _maxed_chip()
+		chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		return chip
 	var buy := _orange_button("")
 	buy.custom_minimum_size = Vector2(172, 44)
 	buy.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	if lvl >= max_lvl:
-		buy.text = tr("UI_CLINIC_PERK_MAX")
-		buy.disabled = true
-	else:
-		buy.text = tr("UI_CLINIC_BUY")
-		buy.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		buy.disabled = MetaProgress.caps < cost
-		buy.pressed.connect(on_buy)
-		buy.add_child(T.overlay_cost_badge(cost, "caps", 15, 16, -10, -72))
+	buy.text = tr("UI_CLINIC_BUY")
+	buy.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	buy.disabled = MetaProgress.caps < cost
+	buy.pressed.connect(on_buy)
+	buy.add_child(T.overlay_cost_badge(cost, "caps", 15, 16, -10, -72))
 	return buy
+
+
+## Quiet non-interactive MAX chip — same width as the buy button so attribute
+## rows don't shift when a stat caps out.
+func _maxed_chip() -> Control:
+	var chip := PanelContainer.new()
+	chip.add_theme_stylebox_override("panel", T.ll_slot("locked"))
+	chip.custom_minimum_size = Vector2(172, 44)
+	var center := CenterContainer.new()
+	chip.add_child(center)
+	var lbl := Label.new()
+	lbl.text = tr("UI_CLINIC_PERK_MAX")
+	_style_label(lbl, 15, Color(0.72, 0.62, 0.42), 1)
+	center.add_child(lbl)
+	return chip
 
 
 ## A lightline-framed titled card (right column): ll_section panel + centered
@@ -375,7 +397,8 @@ func _orange_button(text: String) -> Button:
 	btn.add_theme_color_override("font_color", Color(0.16, 0.10, 0.04))
 	btn.add_theme_color_override("font_hover_color", Color(0.20, 0.13, 0.05))
 	btn.add_theme_color_override("font_pressed_color", Color(0.12, 0.08, 0.03))
-	btn.add_theme_color_override("font_disabled_color", Color(0.30, 0.24, 0.16, 0.9))
+	# Disabled = clearly darker plate + light text (dark-on-dim was unreadable).
+	btn.add_theme_color_override("font_disabled_color", Color(0.88, 0.82, 0.68, 0.95))
 	btn.add_theme_color_override("font_outline_color", Color(1.0, 0.92, 0.72, 0.35))
 	btn.add_theme_constant_override("outline_size", 1)
 	btn.add_theme_stylebox_override("normal", T.ll_button("normal"))
@@ -383,7 +406,7 @@ func _orange_button(text: String) -> Button:
 	btn.add_theme_stylebox_override("pressed", T.ll_button("pressed"))
 	var disabled_box := T.ll_button("normal")
 	if disabled_box is StyleBoxTexture:
-		(disabled_box as StyleBoxTexture).modulate_color = Color(0.55, 0.55, 0.55)
+		(disabled_box as StyleBoxTexture).modulate_color = Color(0.42, 0.42, 0.42)
 	btn.add_theme_stylebox_override("disabled", disabled_box)
 	return btn
 

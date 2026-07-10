@@ -223,32 +223,35 @@ var last_battle_node_type: String = "enemy"
 ## Encounter pools by node type and floor band.
 ## MapScene calls `select_encounter(type, floor)` before loading the battle scene
 ## to populate `current_encounter`.
-const ENCOUNTER_POOLS_EARLY = [
+const ENCOUNTER_POOLS_OPENING = [
 	["scrap_rat"],
-	["trash_robot"],
-	["scrap_rat", "scrap_rat"],
-	["wasteland_killer"],
 	["hex_drone"],
+	["acid_spitter"],
+]
+const ENCOUNTER_POOLS_EARLY = [
+	["wasteland_killer"],
+	["scrap_rat", "scrap_rat"],
+	["riot_hound"],
+	["mortar_cart"],
+	["trash_robot"],
 ]
 const ENCOUNTER_POOLS_MID = [
 	["riot_hound"],
-	["rust_brute"],
-	["trash_robot", "scrap_rat"],
 	["mortar_cart"],
-	["wasteland_killer", "scrap_rat"],
 	["slag_walker"],
 	["acid_spitter", "scrap_rat"],
+	["wasteland_killer", "scrap_rat"],
+	["chrome_hound"],
+	["riot_hound_alpha"],
 ]
 const ENCOUNTER_POOLS_LATE = [
-	["riot_hound", "riot_hound"],
-	["rust_brute", "scrap_rat"],
-	["mortar_cart", "scrap_rat"],
-	["rust_brute", "riot_hound"],
-	["chrome_hound"],
-	["chrome_hound", "scrap_rat"],
-	["slag_walker", "acid_spitter"],
 	["riot_hound_alpha"],
+	["rust_brute"],
+	["mortar_cart", "scrap_rat"],
+	["chrome_hound", "scrap_rat"],
 	["mortar_cart_siege", "scrap_rat"],
+	["slag_walker", "acid_spitter"],
+	["riot_hound", "riot_hound"],
 ]
 const ELITE_ROSTER: Array = ["armored_patrol", "chrome_warden", "siege_breaker"]
 ## Acts (大层). Each act is its OWN FLOORS_PER_ACT-tall map ending in a single
@@ -633,7 +636,9 @@ func select_encounter(node_type: String, floor_idx: int) -> Array[String]:
 		"enemy", "unknown":
 			var pool: Array
 			var tier_floor: int = floor_idx + (current_act - 1) * ACT_POOL_OFFSET
-			if tier_floor <= 3:
+			if tier_floor <= 1:
+				pool = ENCOUNTER_POOLS_OPENING
+			elif tier_floor <= 3:
 				pool = ENCOUNTER_POOLS_EARLY
 			elif tier_floor <= 7:
 				pool = ENCOUNTER_POOLS_MID
@@ -1743,19 +1748,35 @@ func backpack_tool_ids() -> Array[String]:
 	return out
 
 
-## Equip the backpack tool at cell `index` into a free tool slot. Returns false on a
-## non-tool cell or when every slot is full.
-func equip_tool_from_backpack(index: int) -> bool:
+## Equip the backpack tool at cell `index`. A filled target slot is replaced
+## atomically: the displaced tool returns to the source backpack cell. Without an
+## explicit target, use the first free slot or replace slot zero when all are full.
+func equip_tool_from_backpack(index: int, target_slot: int = -1) -> bool:
 	_ensure_backpack()
 	if index < 0 or index >= backpack.size():
 		return false
 	var c = backpack[index]
 	if typeof(c) != TYPE_DICTIONARY or c.get("kind") != "tool":
 		return false
-	if tool_inventory.size() >= tool_slots():
+	var slot_count := tool_slots()
+	if slot_count <= 0:
 		return false
-	tool_inventory.append(str(c.get("id", "")))
-	backpack[index] = null
+	var resolved_slot := target_slot
+	if resolved_slot < 0:
+		resolved_slot = tool_inventory.size() if tool_inventory.size() < slot_count else 0
+	if resolved_slot < 0 or resolved_slot >= slot_count:
+		return false
+	# tool_inventory is dense; dropping onto a later empty visual slot still fills
+	# the first available position instead of creating holes in the array.
+	resolved_slot = mini(resolved_slot, tool_inventory.size())
+	var incoming_id := str(c.get("id", ""))
+	if resolved_slot < tool_inventory.size():
+		var displaced_id := tool_inventory[resolved_slot]
+		tool_inventory[resolved_slot] = incoming_id
+		backpack[index] = {"kind": "tool", "id": displaced_id}
+	else:
+		tool_inventory.append(incoming_id)
+		backpack[index] = null
 	emit_signal("backpack_changed")
 	tools_changed.emit()
 	return true
@@ -1764,11 +1785,32 @@ func equip_tool_from_backpack(index: int) -> bool:
 ## Unequip the tool in slot `index` back into the backpack. Returns false when the
 ## backpack is full (the tool stays equipped).
 func unequip_tool(index: int) -> bool:
+	_ensure_backpack()
 	if index < 0 or index >= tool_inventory.size():
 		return false
-	if not add_tool_to_backpack(tool_inventory[index]):
+	var backpack_index := _first_null_cell()
+	if backpack_index == -1:
 		return false
+	backpack[backpack_index] = {"kind": "tool", "id": tool_inventory[index]}
 	tool_inventory.remove_at(index)
+	backpack_changed.emit()
+	tools_changed.emit()
+	return true
+
+
+## Unequip a tool into the exact empty backpack cell selected by a drag target.
+## Unlike unequip_tool(), this never falls back to another free cell.
+func unequip_tool_to_backpack(tool_index: int, backpack_index: int) -> bool:
+	_ensure_backpack()
+	if tool_index < 0 or tool_index >= tool_inventory.size():
+		return false
+	if backpack_index < 0 or backpack_index >= effective_backpack_size():
+		return false
+	if backpack[backpack_index] != null:
+		return false
+	backpack[backpack_index] = {"kind": "tool", "id": tool_inventory[tool_index]}
+	tool_inventory.remove_at(tool_index)
+	backpack_changed.emit()
 	tools_changed.emit()
 	return true
 

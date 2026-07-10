@@ -31,7 +31,7 @@ UI_COMBAT_STATUS_STUN_DESC,Enemy skips its next turn for each stack (enemy-only)
 UI_COMBAT_STATUS_REGEN_DESC,Heal stacks HP at the start of your turn. Stacks decay by 1 each turn.,每回合开始时回复等同层数的生命值。每回合衰减 1 层。
 UI_COMBAT_STATUS_THORNS_DESC,"When hit by an attack, the attacker takes stacks damage. Loses 1 stack each time it triggers.",被攻击命中时，攻击者受到等同层数的伤害。每次触发时减少 1 层。
 UI_COMBAT_STATUS_HOT_STREAK,Hot Streak,走运
-UI_COMBAT_STATUS_HOT_STREAK_DESC,"Whenever you Crit, gain 2 gold.",每次暴击时获得 2 金币。
+UI_COMBAT_STATUS_HOT_STREAK_DESC,"Whenever you Crit, gain 2 Caps.",每次暴击时获得 2 瓶盖。
 UI_COMBAT_STATUS_ALL_IN,All In,梭哈
 UI_COMBAT_STATUS_ALL_IN_DESC,"Crits deal double damage, but non-Crit attacks deal 0.",暴击造成双倍伤害，但非暴击攻击造成 0 点伤害。
 UI_COMBAT_STATUS_HEMORRHAGE,Hemorrhage,致命失血
@@ -80,12 +80,12 @@ UI_COMBAT_ENEMY_CHARGING,{name} CHARGING...,{name} 蓄力中……
 UI_COMBAT_ENEMY_SUMMONS,{name} SUMMONS REINFORCEMENTS!,{name} 召唤了援军！
 UI_COMBAT_ENEMY_BUFFS_SELF,{name} EMPOWERS ITSELF (+{status})!,{name} 强化了自身（+{status}）！
 UI_COMBAT_LOSE_HP,Lose {n} HP,失去 {n} 生命
-UI_COMBAT_LOSE_GOLD,Lose {n} Gold,失去 {n} 金币
+UI_COMBAT_LOSE_GOLD,Lose {n} Caps,失去 {n} 瓶盖
 UI_COMBAT_DOUBLE_STRENGTH,STRENGTH DOUBLED!,力量翻倍！
 UI_COMBAT_STATUS_METALLICIZE,Plating,镀装
 UI_COMBAT_STATUS_METALLICIZE_DESC,At the start of your turn gain Block equal to stacks. Persistent.,每回合开始获得等同层数的格挡。持续。
 UI_COMBAT_STATUS_FEEL_NO_PAIN,Numb,镇痛
 UI_COMBAT_STATUS_FEEL_NO_PAIN_DESC,Whenever a card is Exhausted gain Block equal to stacks. Persistent.,每当一张牌被消耗时获得等同层数的格挡。持续。
-UI_COMBAT_WEALTHY,💰 +{n} Gold,💰 +{n} 金币
+UI_COMBAT_WEALTHY,💰 +{n} Caps,💰 +{n} 瓶盖
 UI_COMBAT_HEAL,💚 +{n} HP,💚 +{n} 生命
 UI_COMBAT_FLEE,{name} flees!,{name} 逃跑了！

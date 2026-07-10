@@ -82,10 +82,13 @@ A card may carry an optional top-level `"upgrade"` dict that **overrides** the b
   "id": "enemy_id",            // matches filename
   "name": "Display Name",
   "sprite_id": "sprite_id",    // folder name under enemies/
+  "tier": "normal",            // minion|normal|heavy|elite|boss
   "max_health": 30,
   "action_pattern": [ ... ]
 }
 ```
+`tier` is required encounter identity metadata. Heavy enemies may appear on normal nodes but only solo; post-opening minions must be paired; elites and bosses belong only to their dedicated rosters. `validate_encounter_pools()` enforces the explicit four-band HP budgets (12–18 / 20–30 / 25–34 / 34–50).
+
 Each action entry needs `type` (one of `ALLOWED_ENEMY_ACTION_TYPES`). `attack_status` actions also need `status` + `stacks`. Attacks marked `"interruptible": true` can be cancelled by 1 stack of stun.
 
 Optional `phases` (array) — HP-threshold phase transitions. Each phase has `hp_below` (fraction in `(0, 1]`), an `action_pattern` (validated like the top-level one), and an optional `on_enter` array of actions fired once on entering the phase.

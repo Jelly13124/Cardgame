@@ -350,31 +350,29 @@ func _fill_safe_cells(body: VBoxContainer) -> void:
 	_style_label(effect_lbl, 15, Color(0.94, 0.90, 0.78), 1)
 	body.add_child(effect_lbl)
 
-	var buy := _orange_button("")
 	if lvl >= tiers.size():
+		# Maxed: the effect line already says it — a dead disabled button on top
+		# of "已强化至满级" + full dots was three ways of saying the same thing.
 		effect_lbl.text = tr("UI_HOME_UPGRADE_FULLY_UPGRADED")
-		buy.text = tr("UI_HOME_UPGRADE_MAXED")
-		buy.disabled = true
-	else:
-		var next_tier: Dictionary = tiers[lvl]
-		effect_lbl.text = tr("UI_HOME_UPGRADE_NEXT").format(
-			{
-				"text":
-				Settings.t(
-					(
-						"UPGRADE_%s_TIER%d"
-						% [SAFE_CELLS_UPGRADE_ID, int(next_tier.get("level", lvl + 1))]
-					),
-					str(next_tier.get("effect_text", ""))
-				)
-			}
-		)
-		buy.text = tr("UI_HOME_UPGRADE_BUY")
-		buy.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		buy.add_child(T.overlay_cost_badge(int(next_tier.get("cost", 0)), "caps", 15, 16, -10, -70))
-		buy.disabled = not MetaProgress.can_purchase(SAFE_CELLS_UPGRADE_ID, def)
-		# purchase_upgrade emits caps_changed + upgrades_changed → _rebuild_content.
-		buy.pressed.connect(func(): MetaProgress.purchase_upgrade(SAFE_CELLS_UPGRADE_ID, def))
+		return
+
+	var buy := _orange_button("")
+	var next_tier: Dictionary = tiers[lvl]
+	effect_lbl.text = tr("UI_HOME_UPGRADE_NEXT").format(
+		{
+			"text":
+			Settings.t(
+				"UPGRADE_%s_TIER%d" % [SAFE_CELLS_UPGRADE_ID, int(next_tier.get("level", lvl + 1))],
+				str(next_tier.get("effect_text", ""))
+			)
+		}
+	)
+	buy.text = tr("UI_HOME_UPGRADE_BUY")
+	buy.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	buy.add_child(T.overlay_cost_badge(int(next_tier.get("cost", 0)), "caps", 15, 16, -10, -70))
+	buy.disabled = not MetaProgress.can_purchase(SAFE_CELLS_UPGRADE_ID, def)
+	# purchase_upgrade emits caps_changed + upgrades_changed → _rebuild_content.
+	buy.pressed.connect(func(): MetaProgress.purchase_upgrade(SAFE_CELLS_UPGRADE_ID, def))
 	body.add_child(buy)
 
 
@@ -421,13 +419,14 @@ func _add_upgrade_row(container: VBoxContainer, upgrade_id: String, icon_name: S
 	mid.add_child(name_lbl)
 	mid.add_child(_dots_row(lvl, tiers.size()))
 
+	if lvl >= tiers.size():
+		var chip := _maxed_chip()
+		chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(chip)
+		return
 	var buy := _orange_button("")
 	buy.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(buy)
-	if lvl >= tiers.size():
-		buy.text = tr("UI_HOME_UPGRADE_MAXED")
-		buy.disabled = true
-		return
 	var next_tier: Dictionary = tiers[lvl]
 	# Surface the next tier's effect as the row tooltip (the concept row has no
 	# room for an effect line; hover reveals it).
@@ -515,7 +514,8 @@ func _orange_button(text: String) -> Button:
 	btn.add_theme_color_override("font_color", Color(0.16, 0.10, 0.04))
 	btn.add_theme_color_override("font_hover_color", Color(0.20, 0.13, 0.05))
 	btn.add_theme_color_override("font_pressed_color", Color(0.12, 0.08, 0.03))
-	btn.add_theme_color_override("font_disabled_color", Color(0.30, 0.24, 0.16, 0.9))
+	# Disabled = clearly darker plate + light text (dark-on-dim was unreadable).
+	btn.add_theme_color_override("font_disabled_color", Color(0.88, 0.82, 0.68, 0.95))
 	btn.add_theme_color_override("font_outline_color", Color(1.0, 0.92, 0.72, 0.35))
 	btn.add_theme_constant_override("outline_size", 1)
 	btn.add_theme_stylebox_override("normal", T.ll_button("normal"))
@@ -523,9 +523,24 @@ func _orange_button(text: String) -> Button:
 	btn.add_theme_stylebox_override("pressed", T.ll_button("pressed"))
 	var disabled_box := T.ll_button("normal")
 	if disabled_box is StyleBoxTexture:
-		(disabled_box as StyleBoxTexture).modulate_color = Color(0.55, 0.55, 0.55)
+		(disabled_box as StyleBoxTexture).modulate_color = Color(0.42, 0.42, 0.42)
 	btn.add_theme_stylebox_override("disabled", disabled_box)
 	return btn
+
+
+## Quiet non-interactive MAX chip — replaces the disabled buy button at cap
+## (a dead orange button reads as broken; this stays calm and readable).
+func _maxed_chip() -> Control:
+	var chip := PanelContainer.new()
+	chip.add_theme_stylebox_override("panel", T.ll_slot("locked"))
+	chip.custom_minimum_size = Vector2(92, 40)
+	var center := CenterContainer.new()
+	chip.add_child(center)
+	var lbl := Label.new()
+	lbl.text = tr("UI_HOME_UPGRADE_MAXED")
+	_style_label(lbl, 15, Color(0.72, 0.62, 0.42), 1)
+	center.add_child(lbl)
+	return chip
 
 
 ## A lightline PNG as a fixed-size TextureRect, or an equal-size empty spacer

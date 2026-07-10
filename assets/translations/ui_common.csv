@@ -20,13 +20,13 @@ SETTINGS_LANG_NOTE,(restarts battle),(重启战斗)
 SETTINGS_BUTTON,Settings,设置
 SETTINGS_EXIT,Exit,退出
 UI_COMMON_UPGRADE_A_CARD,UPGRADE A CARD,强化卡牌
-UI_COMMON_UPGRADE_PICK_HINT,"Pick a card to permanently upgrade for the rest of the run.","选择一张卡牌，在本次运行剩余时间内永久强化。"
+UI_COMMON_UPGRADE_PICK_HINT,"Pick a card to permanently upgrade for the rest of the run.","选择一张卡牌，本局余下时间永久强化。"
 UI_COMMON_UPGRADE_NONE_AVAILABLE,(All cards in your deck are already upgraded.),（牌组中的卡牌均已强化。）
 UI_COMMON_CANCEL,CANCEL,取消
-UI_COMMON_RUN_DECK_TITLE,RUN DECK ({n} cards),运行牌组（{n} 张卡牌）
+UI_COMMON_RUN_DECK_TITLE,RUN DECK ({n} cards),本局牌组（{n} 张卡牌）
 UI_COMMON_DECK_UPGRADE_HINT,Upgraded cards show a [+] suffix on their name.,已强化的卡牌名称带有 [+] 后缀。
 UI_COMMON_DECK_EMPTY,(Deck is empty.),（牌组为空。）
-MENU_TITLE,Wasteland Salvage,废土拾荒
+MENU_TITLE,Cap Hunter,瓶盖猎人
 MENU_SUBTITLE,DEMO,试玩版
 MENU_PLAY,Play,开始游戏
 MENU_CONTINUE,Continue,继续游戏
@@ -40,7 +40,7 @@ CHAR_VIEW_HP,HP,生命
 CHAR_VIEW_LEVEL,Level,等级
 CHAR_VIEW_HINT,Press I or ESC to close,按 I 或 ESC 关闭
 MENU_SLOTS,Save Slots,选择存档
-MENU_NEW_GAME,New Game,新游戏
+MENU_NEW_GAME,New Game,开始游戏
 SLOT_FULL_TITLE,Save slots full — delete one to start a new game,存档已满 —— 删除一个以开始新游戏
 SLOT_DELETE,Delete,删除
 SLOT_SELECT_TITLE,Select a Save Slot,选择存档栏位
@@ -71,7 +71,7 @@ RULES_ENERGY,"Energy: you get 3 energy each turn. Playing a card costs energy; l
 RULES_CARDS,"Cards: drag an ATTACK card onto an enemy to target it. Drag SKILL / ABILITY cards upward into the play zone.","卡牌:把攻击牌拖到敌人身上指定目标;把技能/能力牌向上拖入出牌区。"
 RULES_BLOCK,"Block: block absorbs incoming damage this turn, then resets to 0 at the start of your next turn.","格挡:格挡抵消本回合受到的伤害,下回合开始时归零。"
 RULES_ATTRS,"Attributes (5): Strength adds to all attack damage; Constitution to all block; Intelligence boosts tool effects and every status you apply; Luck raises crit chance and loot rarity; Charm lowers shop prices and unlocks high-Charm event options. Level up in a run to raise them.","五维属性:力量加成所有攻击伤害;体质加成所有格挡;智力增强道具效果与你施加的所有状态;幸运提升暴击率与战利品稀有度;魅力降低商店价格并解锁高魅力事件选项。局内升级可提升属性。"
-RULES_BACKPACK,"Backpack: gold, Scrap and gear share 20 cells. If you die you lose everything except the first safe cells.","背包:金币、废料和装备共用 20 格。死亡会丢失除前几个安全格以外的所有东西。"
+RULES_BACKPACK,"Backpack: Caps, Scrap and gear share 20 cells. If you die you lose everything except the first safe cells.","背包:瓶盖、废料和装备共用 20 格。死亡会丢失除前几个安全格以外的所有东西。"
 RULES_INTENT,"Intents: the icon above each enemy shows what it will do next turn — plan your block and attacks around it.","意图:敌人头顶的图标显示它下回合的行动,据此安排你的格挡和进攻。"
 RULES_CRIT,"Crit: your attacks have a crit chance from Luck (and Bill's Crit Clip). A crit deals 1.5x damage — stack Luck to crit more often.","暴击:攻击有暴击率,来自幸运(以及 Bill 的暴击弹匣)。暴击造成 1.5 倍伤害——堆幸运可更频繁暴击。"
 RULES_TOOLS,"Tools: one-time gadgets on the top-bar shelf. Use one free in battle for an instant effect (scaled by Intelligence). You start with 2 tool slots.","道具:顶栏的一次性小工具。战斗中免费使用一个,立即生效(受智力加成)。初始有 2 个道具槽。"

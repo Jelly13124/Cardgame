@@ -38,6 +38,8 @@ var _ending_turn: bool = false  # guards end_turn across the discard animation a
 ## playing attacks and topped up by Reload cards; at 0, attacks are unplayable.
 var _attack_limit_per_turn: int = 0
 var _attacks_left_this_turn: int = 0
+var _tool_confirm: Control = null
+var _tool_resolving := false
 
 const TARGETING_ARROW_SCRIPT = preload("res://battle_scene/targeting_arrow.gd")
 const RELIC_EFFECT_SYSTEM = preload("res://battle_scene/relic_effect_system.gd")
@@ -46,6 +48,7 @@ const CARD_ANIMATOR_SCRIPT = preload("res://battle_scene/card_animator.gd")
 const DECK_MANAGER_SCRIPT = preload("res://battle_scene/deck_manager.gd")
 const DISCOVER_MODAL = preload("res://battle_scene/discover_modal.gd")
 const DISCOVER_POOL = preload("res://run_system/core/discover_pool.gd")
+const TOOL_USE_CONFIRM = preload("res://battle_scene/ui/tool_use_confirm.gd")
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 # NOTE: map_scene + home_base_scene are loaded lazily at the call site
 # (not preloaded) because doing so would create a cyclic dep
@@ -115,6 +118,12 @@ func _ready():
 		T.apply_button_theme(end_round_button)
 		_style_end_round_button()
 
+	# Bare iconb glyphs replace the raw card-back stacks on both piles
+	# (owner 2026-07-08: same card fan on both sides, draw side mirrored;
+	# no frames). hide_cards is the framework's own stack-invisibility switch.
+	_setup_pile_icon(deck, "iconb_cards_fan", true)
+	_setup_pile_icon(discard_pile, "iconb_cards_fan", false)
+
 	# Connect TurnManager
 	turn_manager.round_changed.connect(_on_round_changed)
 	turn_manager.turn_started.connect(_on_turn_started)
@@ -140,49 +149,37 @@ func _ready():
 	_maybe_show_tutorial()
 
 
-## Lightline restyle over apply_button_theme (which keeps the hover juice +
-## fallback skin): the End Round button wears the hud_panel_orange plate, with
-## hover / pressed / disabled derived from the ONE PNG by modulate — the same
-## scheme as T._ll_button_from. Dark ink label replaces the cream default (cream
-## on orange is unreadable). The manifest's 44px 9-slice margins exceed this
-## 44px-tall button (top+bottom slices would swallow the bottom edge line), so
-## vertical texture margins are capped to fit the rect. Kit PNG absent → return
-## early, keeping the generic olive skin (silent fallback).
+## Compact comic placard. One generated plate supplies every interaction state;
+## Godot keeps the localized label and applies only a restrained value shift.
 func _style_end_round_button() -> void:
-	var plate_tex := T.lightline_tex("hud_panel_orange")
+	var plate_tex := T.lightline_tex("hud_end_turn_sts2")
 	if plate_tex == null:
 		return
-	# Explicit float: end_round_button is an untyped @onready, so `:=` can't infer.
-	var btn_h: float = end_round_button.size.y
-	if btn_h <= 0.0:
-		btn_h = 44.0  # tscn-declared height, in case size isn't resolved yet
-	var vcap := maxf(4.0, btn_h * 0.5 - 2.0)
 	for state in ["normal", "hover", "pressed", "disabled"]:
-		var box := T.lightline_box("hud_panel_orange", T.button_textured("normal"), 44)
-		var tb := box as StyleBoxTexture
-		if tb == null:
-			return  # unreachable while plate_tex exists; belt-and-braces
+		# Scale the compact plate as a whole. It is already authored at the same
+		# aspect family as the runtime button, so a 9-slice would over-extend its
+		# clipped ends into decorative horizontal rails.
+		var tb := StyleBoxTexture.new()
+		tb.texture = plate_tex
 		match state:
 			"hover":
-				tb.modulate_color = Color(1.12, 1.12, 1.12)
+				tb.modulate_color = Color(1.08, 1.08, 1.08)
 			"pressed":
-				tb.modulate_color = Color(0.86, 0.86, 0.86)
+				tb.modulate_color = Color(0.88, 0.88, 0.88)
 			"disabled":
 				tb.modulate_color = Color(0.58, 0.58, 0.58)
-		tb.texture_margin_top = minf(tb.texture_margin_top, vcap)
-		tb.texture_margin_bottom = minf(tb.texture_margin_bottom, vcap)
-		tb.content_margin_left = 18
-		tb.content_margin_right = 18
+		tb.content_margin_left = 28
+		tb.content_margin_right = 28
 		tb.content_margin_top = 8
 		tb.content_margin_bottom = 8
 		end_round_button.add_theme_stylebox_override(state, tb)
-	var ink := Color(0.13, 0.08, 0.04, 1.0)
-	end_round_button.add_theme_color_override("font_color", ink)
-	end_round_button.add_theme_color_override("font_hover_color", Color(0.09, 0.05, 0.03, 1.0))
-	end_round_button.add_theme_color_override("font_pressed_color", ink)
-	end_round_button.add_theme_color_override("font_disabled_color", Color(0.24, 0.16, 0.10, 0.9))
-	end_round_button.add_theme_color_override("font_outline_color", Color(1.0, 0.88, 0.62, 0.35))
-	end_round_button.add_theme_constant_override("outline_size", 1)
+	var cream := Color(0.96, 0.90, 0.74, 1.0)
+	end_round_button.add_theme_color_override("font_color", cream)
+	end_round_button.add_theme_color_override("font_hover_color", Color(1.0, 0.95, 0.82, 1.0))
+	end_round_button.add_theme_color_override("font_pressed_color", cream)
+	end_round_button.add_theme_color_override("font_disabled_color", Color(0.62, 0.59, 0.52, 0.9))
+	end_round_button.add_theme_color_override("font_outline_color", Color(0.02, 0.025, 0.025, 0.95))
+	end_round_button.add_theme_constant_override("outline_size", 3)
 
 
 ## Show the first-battle tip sequence the very first time the player enters a
@@ -428,29 +425,67 @@ func show_notification(text: String, color: Color = Color.WHITE):
 	ui_manager.show_notification(text, color)
 
 
-## Use a top-bar tool (StS2-style one-time consumable). Self/none tools resolve
-## immediately; enemy tools hit the first alive enemy (multi-enemy pick is a later
-## refinement). Effect amounts scale with Intelligence; consumed after resolving.
+## Open a compact confirmation before resolving a top-bar tool. Enemy tools keep
+## the current first-alive-enemy targeting rule; actual effects stay in _resolve_tool.
 func use_tool(index: int) -> void:
+	if is_instance_valid(_tool_confirm) or _tool_resolving:
+		return
 	if index < 0 or index >= RunManager.tool_inventory.size():
 		return
-	var tdata: Dictionary = RunManager.get_tool_data(str(RunManager.tool_inventory[index]))
+	var tool_id := str(RunManager.tool_inventory[index])
+	var tdata: Dictionary = RunManager.get_tool_data(tool_id)
 	if tdata.is_empty():
 		return
-	var target: Node = null
-	if str(tdata.get("target", "none")) == "enemy":
-		for c in enemy_container.get_children():
-			if (
-				is_instance_valid(c)
-				and not c.is_queued_for_deletion()
-				and c.has_method("take_damage")
-			):
-				target = c
-				break
-		if target == null:
-			AudioManager.play_sfx("error")
-			return
+	if str(tdata.get("target", "none")) == "enemy" and _find_tool_target(tdata) == null:
+		AudioManager.play_sfx("error")
+		return
+	var overlay := TOOL_USE_CONFIRM.new()
+	overlay.setup(index, tool_id, tdata)
+	overlay.confirmed.connect(_on_tool_use_confirmed)
+	overlay.cancelled.connect(_on_tool_use_cancelled)
+	overlay.tree_exited.connect(_on_tool_confirm_exited.bind(overlay))
+	_tool_confirm = overlay
+	add_child(overlay)
+
+
+func _on_tool_use_confirmed(index: int, expected_tool_id: String) -> void:
+	_tool_confirm = null
+	if index < 0 or index >= RunManager.tool_inventory.size():
+		return
+	if str(RunManager.tool_inventory[index]) != expected_tool_id:
+		return
+	var tdata: Dictionary = RunManager.get_tool_data(expected_tool_id)
+	if tdata.is_empty():
+		return
+	var target := _find_tool_target(tdata)
+	if str(tdata.get("target", "none")) == "enemy" and target == null:
+		AudioManager.play_sfx("error")
+		return
+	_tool_resolving = true
 	await _resolve_tool(index, tdata, target)
+	_tool_resolving = false
+
+
+func _on_tool_use_cancelled() -> void:
+	_tool_confirm = null
+
+
+func _on_tool_confirm_exited(overlay: Control) -> void:
+	if _tool_confirm == overlay:
+		_tool_confirm = null
+
+
+func _find_tool_target(tdata: Dictionary) -> Node:
+	if str(tdata.get("target", "none")) != "enemy":
+		return null
+	for candidate in enemy_container.get_children():
+		if (
+			is_instance_valid(candidate)
+			and not candidate.is_queued_for_deletion()
+			and candidate.has_method("take_damage")
+		):
+			return candidate
+	return null
 
 
 func _resolve_tool(index: int, tdata: Dictionary, target: Node) -> void:
@@ -585,12 +620,51 @@ func _refresh_all_enemy_intents() -> void:
 
 func refresh_hand_ui():
 	for card in hand.get_cards():
+		# Cards resting in a pile are hidden (the pile glyph stands in for them);
+		# anything that reaches the hand must be visible again.
+		if card is CanvasItem:
+			card.visible = true
 		if card.has_method("update_display"):
 			card.update_display()
 	_refresh_pile_counts()
 
 
-## Draw-pile / discard-pile card counts, drawn on each pile's back. Refreshed on
+## One bare iconb glyph per pile (no frame, no card-back stack): the icon IS the
+## pile's whole visual, with the count label on top of it. Uses the framework's
+## own Pile.hide_cards switch, which re-applies on every stack update (a manual
+## per-card hide gets overwritten by _update_target_positions).
+func _setup_pile_icon(pile: Node, icon_name: String, mirrored: bool) -> void:
+	if pile == null or pile.get_node_or_null("PileIcon") != null:
+		return
+	# The pile owns no visible card surface in battle. This is intentional: the
+	# old CardBackVisual nodes were static scene art and hide_cards cannot control
+	# them. Keep this true even if the replacement icon is unavailable.
+	pile.hide_cards = true
+	for legacy_name in ["CardBackVisual", "Placeholder"]:
+		var legacy := pile.get_node_or_null(legacy_name)
+		if legacy != null:
+			legacy.queue_free()
+	var tex := T.lightline_tex(icon_name)
+	if tex == null:
+		return
+	var icon := TextureRect.new()
+	icon.name = "PileIcon"
+	icon.texture = tex
+	icon.flip_h = mirrored
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	icon.offset_left = 5.0
+	icon.offset_top = -150.0
+	icon.offset_right = 155.0
+	icon.offset_bottom = 0.0
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.z_index = 25
+	pile.add_child(icon)
+
+
+## Draw-pile / discard-pile card counts, drawn on each pile's glyph. Refreshed on
 ## every hand change so the numbers track draws / discards / reshuffles.
 func _refresh_pile_counts() -> void:
 	if is_instance_valid(deck):
@@ -605,7 +679,12 @@ func _set_pile_count(pile: Node, n: int) -> void:
 	if lbl == null:
 		lbl = Label.new()
 		lbl.name = "CountLabel"
-		lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+		# Sits over the glyph's upper portion (owner: count rides high, not center).
+		lbl.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+		lbl.offset_left = 5.0
+		lbl.offset_top = -190.0
+		lbl.offset_right = 155.0
+		lbl.offset_bottom = -132.0
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE

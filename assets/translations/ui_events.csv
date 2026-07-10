@@ -2,7 +2,7 @@ keys,en,zh
 UI_EVENT_CONTINUE,Continue,继续
 EVENT_STRANDED_TRADER_TITLE,Stranded Trader,困在荒野的商人
 EVENT_STRANDED_TRADER_DESC,"A merchant's rig sits dead in the cracked salt-flat, one wheel buried. He squints at you over a dust-caked scarf, hand never far from his holster.","一辆商队车死在龟裂的盐碱地上，一只轮子陷进沙里。他从蒙尘的围巾上方眯眼打量你，手始终没离开枪套。"
-EVENT_STRANDED_TRADER_OPT0_TEXT,Help dig the rig free (he pays you +40 gold),帮他把车挖出来（他付你 +40 金币）
+EVENT_STRANDED_TRADER_OPT0_TEXT,Help dig the rig free (he pays you +40 Caps),帮他把车挖出来（他付你 +40 瓶盖）
 EVENT_STRANDED_TRADER_OPT0_RESULT,"Hours of shoveling later the rig lurches loose. He counts forty into your palm and rolls off into the haze.","铲了几个钟头，车终于猛地松脱。他数了四十枚塞进你掌心，碾着尘雾扬长而去。"
 EVENT_STRANDED_TRADER_OPT1_TEXT,[Charm 5] Sweet-talk a parting gift from his crate,[魅力 5] 甜言蜜语，从他的货箱里讨件临别礼
 EVENT_STRANDED_TRADER_OPT1_RESULT,"Your easy smile wins him over. He digs out a Lucky Cog and presses it into your hand for the company.","你随和的笑容打动了他。他翻出一枚幸运齿轮，塞进你手里，谢你一路作伴。"
@@ -68,14 +68,14 @@ EVENT_COLLAPSED_OVERPASS_OPT2_TEXT,[Luck] Crawl under the groaning slab for the 
 EVENT_COLLAPSED_OVERPASS_OPT2_RESULT_OK,The slab holds. You drag out a sealed crate of refined core and a fat purse before scrambling clear.,桥板撑住了。你拖出一箱密封的精炼核心和一只鼓囊囊的钱袋，赶在塌落前爬了出来。
 EVENT_COLLAPSED_OVERPASS_OPT2_RESULT_FAIL,"The wind shifts. Concrete shears loose and pins your leg — you wrench free bleeding, the cache buried for good.",风向变了。混凝土崩落，压住了你的腿——你流着血挣脱出来，补给就此永远埋在了下面。
 EVENT_CURSED_SAFE_TITLE,Humming Strongbox,嗡鸣保险箱
-EVENT_CURSED_SAFE_DESC,"A dented strongbox hums on a cracked altar, leaking sickly green light through its seams. Coins glint inside — but the air tastes of rot and bad luck.",一只凹陷的保险箱在龟裂的祭台上嗡嗡作响，缝隙里渗出病态的绿光。里面有金币闪烁——可空气里弥漫着腐烂与霉运的味道。
-EVENT_CURSED_SAFE_OPT0_TEXT,Crack it open and pocket the coins,撬开它，把金币塞进兜里
-EVENT_CURSED_SAFE_OPT0_RESULT,"Coins spill into your hands — and a film of orange rust creeps up your arm. A curse settles into your pack.",金币落进你手心——一层橙色的锈迹顺着手臂爬上来。一张诅咒钻进了你的行囊。
+EVENT_CURSED_SAFE_DESC,"A dented strongbox hums on a cracked altar, leaking sickly green light through its seams. Caps glint inside — but the air tastes of rot and bad luck.",一只凹陷的保险箱在龟裂的祭台上嗡嗡作响，缝隙里渗出病态的绿光。里面有瓶盖闪烁——可空气里弥漫着腐烂与霉运的味道。
+EVENT_CURSED_SAFE_OPT0_TEXT,Crack it open and pocket the caps,撬开它，把瓶盖塞进兜里
+EVENT_CURSED_SAFE_OPT0_RESULT,"Caps spill into your hands — and a film of orange rust creeps up your arm. A curse settles into your pack.",瓶盖落进你手心——一层橙色的锈迹顺着手臂爬上来。一张诅咒钻进了你的行囊。
 EVENT_CURSED_SAFE_OPT1_TEXT,Leave it. Nothing glows green for free.,走开。会发绿光的东西没一样是白送的。
 EVENT_CURSED_SAFE_OPT1_RESULT,"You back away. The box hums on, waiting for someone greedier.",你退开了。箱子继续嗡鸣，等着更贪心的人。
 EVENT_TORN_COIN_POUCH_TITLE,Torn Coin Pouch,破洞钱袋
 EVENT_TORN_COIN_POUCH_DESC,"A jittery drifter shoves a bulging coin-pouch into your hands and bolts before you can refuse. The seams are split and weeping rust — coins already trickling out between your fingers.","一个慌张的流浪汉把一只鼓胀的钱袋塞进你手里，没等你拒绝就溜了。缝线开裂、渗着锈迹——硬币已经从你指缝间漏了出来。"
-EVENT_TORN_COIN_POUCH_OPT0_TEXT,"Pocket it — coin is coin (+100 Gold)","收下吧——钱就是钱（+100 金币）"
+EVENT_TORN_COIN_POUCH_OPT0_TEXT,"Pocket it — caps are caps (+100 Caps)","收下吧——钱就是钱（+100 瓶盖）"
 EVENT_TORN_COIN_POUCH_OPT0_RESULT,"You stuff the pouch away, a hundred richer. But the tear won't hold — with every step, a coin or two slips loose into the dust behind you.","你把钱袋塞好，凭空多了一百。可那道裂口撑不住——你每走一步，就有一两枚硬币漏进身后的尘土。"
 EVENT_TORN_COIN_POUCH_OPT1_TEXT,Drop it and walk away,丢下它，转身就走
 EVENT_TORN_COIN_POUCH_OPT1_RESULT,"You let the cursed thing fall. Whatever's wrong with it, it isn't your problem now.","你松手让那不祥之物落地。不管它出了什么毛病，现在都不关你的事了。"

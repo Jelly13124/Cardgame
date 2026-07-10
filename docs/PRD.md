@@ -106,11 +106,13 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 | **Metallicize / Feel No Pain** | persistent powers (StS2 port): +Block per turn / +Block on Exhaust |
 
 ### Enemy System
-- Each enemy loads from `card_info/enemy/{id}.json` — includes a `sprite_id` for the art
+- Each enemy loads from `card_info/enemy/{id}.json` — includes a `sprite_id` for the art and a required encounter identity `tier` (`minion | normal | heavy | elite | boss`)
 - Action types: `attack`, `attack_status`, `attack_all`, `block`, `heal`, `telegraph`, plus `summon` (spawn add enemies, capped at 4 on the field) and `buff_self` (apply a status to itself, e.g. `thorns`)
 - **Bosses have bespoke mechanics** via an optional `phases` field: at an HP threshold the boss runs one-time `on_enter` actions and swaps to a tougher `action_pattern`. The three act bosses: **rust_titan** (tougher phase-2 loop at 50%), **ash_warden** (debuff + summons `ember_wisp`), **junkyard_tyrant** (summons `scrap_shard` + AoE + self-heal). Killing the boss ends the fight even if summoned adds are still alive.
 - **Per-act difficulty scaling**: non-boss enemy HP ×[1.0, 1.25, 1.5] and damage ×[1.0, 1.15, 1.3] by act; the enemy pool also shifts tougher each act. Bosses are exempt (tuned per-boss).
 - **Intent badge** displayed above enemy HUD with emoji; multiple enemies per encounter supported
+
+Normal nodes use four explicit base-HP bands keyed by `floor_idx + (current_act - 1) * 4`: opening 0–1 (12–18 HP), early 2–3 (20–30), mid 4–7 (25–34), and late 8+ (34–50). `heavy` enemies must be solo, post-opening `minion` enemies must be a two-minion encounter or support one `normal`, and `elite` / `boss` identities are restricted to their dedicated rosters. These budgets are checked by `DataValidator` before play.
 
 ---
 
@@ -398,6 +400,7 @@ BattleScene (Node)
     "id": "enemy_id",
     "name": "Display Name",
     "sprite_id": "sprite_prefix",
+	"tier": "minion | normal | heavy | elite | boss",
     "max_health": 30,
     "action_pattern": [
         { "type": "attack", "amount": 6, "label": "⚔ 6" },

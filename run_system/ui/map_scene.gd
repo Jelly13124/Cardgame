@@ -16,7 +16,7 @@ const EVENT_MODAL_SCRIPT = preload("res://run_system/ui/event_modal.gd")
 const T_THEME = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const BATTLE_PACKED = preload("res://battle_scene/battle_scene.tscn")
 const SHOP_PACKED = preload("res://run_system/ui/shop_scene.tscn")
-const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_pixel_bg.png"
+const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_sts2_bg.png"
 const NODE_ICON_DIR = "res://run_system/assets/images/map/nodes/"
 
 const MAP_LEFT: float = 180.0

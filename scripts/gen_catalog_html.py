@@ -608,7 +608,23 @@ def build_equipment():
     page("equipment.html", "Equipment · 装备", "Gear by slot + set bonuses", controls, body, len(items))
 
 
-# ── Enemies (grouped Normal / Elite / Boss) ─────────────────────────────────
+# ── Enemies (grouped by required JSON tier) ─────────────────────────────────
+ENEMY_TIERS = [
+    ("minion", "Minions 杂兵"),
+    ("normal", "Normal 普通"),
+    ("heavy", "Heavy 重型"),
+    ("elite", "Elites 精英"),
+    ("boss", "Bosses 首领"),
+]
+ENEMY_TIER_COLORS = {
+    "minion": "#9aa3ad",
+    "normal": "#4fb0ff",
+    "heavy": "#ffcf45",
+    "elite": "#c77dff",
+    "boss": RARITY["boss"],
+}
+
+
 def fmt_move(a):
     t = a.get("type", "")
     amt = a.get("amount")
@@ -626,39 +642,37 @@ def fmt_move(a):
     return f"{esc(lbl)}  —  {esc(base)}{flags}"
 
 
-def enemy_block(eid, d, is_boss):
+def enemy_block(eid, d, tier):
     en = enemy_tr.get(f"ENEMY_{eid}_NAME", {}).get("en", d.get("name", eid))
     zh = enemy_tr.get(f"ENEMY_{eid}_NAME", {}).get("zh", "")
     hp = d.get("max_health", "?")
-    c = RARITY["boss"] if is_boss else "#9aa3ad"
+    c = ENEMY_TIER_COLORS.get(tier, "#9aa3ad")
     moves = "".join(f"<li>{fmt_move(a)}</li>" for a in d.get("action_pattern", []))
     ph = ""
     for p in d.get("phases", []):
         below = int(float(p.get("hp_below", 0)) * 100)
         oe = "".join(f"<li>⤷ on enter: {fmt_move(a)}</li>" for a in p.get("on_enter", []))
         pm = "".join(f"<li>{fmt_move(a)}</li>" for a in p.get("action_pattern", []))
-        ph += f'<li style="color:{RARITY["boss"]}"><b>Phase @ HP &lt; {below}%</b></li>{oe}{pm}'
-    bp = f'<span class="pill" style="color:{RARITY["boss"]};border-color:{RARITY["boss"]}">BOSS</span>' if is_boss else ""
-    search = f"{eid} {en} {zh}".lower()
+        ph += f'<li style="color:{c}"><b>Phase @ HP &lt; {below}%</b></li>{oe}{pm}'
+    tier_pill = f'<span class="pill" style="color:{c};border-color:{c}">{esc(tier.upper())}</span>'
+    search = f"{eid} {en} {zh} {tier}".lower()
     return (f'<div class="card" data-search="{esc(search)}" style="border-left-color:{c}">'
             f'<h3>{esc(en)} <span class="zh">{esc(zh)}</span></h3>'
-            f'<div class="meta"><span class="pill hp">❤ {esc(hp)} HP</span>{bp}'
+            f'<div class="meta"><span class="pill hp">❤ {esc(hp)} HP</span>{tier_pill}'
             f'<span class="pill" style="color:#6b6256">{esc(eid)}</span></div>'
             f'<ul class="eff">{moves}{ph}</ul></div>')
 
 
 def build_enemies():
     items = load_json_dir("battle_scene/card_info/enemy")
-    bosses = {"rust_titan", "ash_warden", "junkyard_tyrant"}
-    # heuristic: summon-only adds vs normal — keep simple: bosses vs rest
-    normal, boss = [], []
+    by_tier = {tier: [] for tier, _label in ENEMY_TIERS}
     for eid, d in items:
-        (boss if eid in bosses else normal).append((eid, d))
-    normal.sort(key=lambda kv: kv[1].get("max_health", 0))
-    boss.sort(key=lambda kv: kv[1].get("max_health", 0))
-    body = section("Normal & Adds 普通/召唤", len(normal),
-                   "".join(enemy_block(e, d, False) for e, d in normal))
-    body += section("Bosses 首领", len(boss), "".join(enemy_block(e, d, True) for e, d in boss))
+        by_tier.setdefault(str(d.get("tier", "normal")), []).append((eid, d))
+    body = ""
+    for tier, label in ENEMY_TIERS:
+        group = by_tier.get(tier, [])
+        group.sort(key=lambda kv: kv[1].get("max_health", 0))
+        body += section(label, len(group), "".join(enemy_block(e, d, tier) for e, d in group))
     page("enemies.html", "Enemies · 敌人", "All enemies + boss phases, grouped by tier", "", body, len(items))
 
 

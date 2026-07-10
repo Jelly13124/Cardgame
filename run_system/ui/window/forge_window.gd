@@ -78,12 +78,15 @@ const TAB_LOCK_KEYS := {
 	"curse": "UI_FORGE_CURSE_LOCKED",
 }
 
-## The four bulk-dismantle buttons: rarity filter ("" = all) + label key + row icon.
+## The four bulk-dismantle buttons: rarity filter ("" = all) + label key + row
+## icon. Rarity rows lead with a dot in that rarity's frame color instead of an
+## icon (the old hammer/anvil/star trio had nothing to do with rarity, and the
+## star collided with the charm attribute icon); "all" keeps a real icon.
 const BULK_BUTTONS := [
-	{"rarity": "common", "key": "UI_FORGE_BULK_COMMON", "icon": "icon_hammer"},
-	{"rarity": "uncommon", "key": "UI_FORGE_BULK_UNCOMMON", "icon": "icon_anvil"},
-	{"rarity": "rare", "key": "UI_FORGE_BULK_RARE", "icon": "icon_star"},
-	{"rarity": "", "key": "UI_FORGE_BULK_ALL", "icon": "icon_shield"},
+	{"rarity": "common", "key": "UI_FORGE_BULK_COMMON", "icon": ""},
+	{"rarity": "uncommon", "key": "UI_FORGE_BULK_UNCOMMON", "icon": ""},
+	{"rarity": "rare", "key": "UI_FORGE_BULK_RARE", "icon": ""},
+	{"rarity": "", "key": "UI_FORGE_BULK_ALL", "icon": "icon_swap"},
 ]
 
 ## The selected tab (one of TABS); forced back to the first unlocked tab if the
@@ -427,13 +430,31 @@ func _bulk_button_row(rarity: String, label_key: String, icon_name: String) -> C
 	var rar := rarity
 	var cb := func() -> void:
 		_show_bulk_confirm(rar)
-	var row := _icon_button_row(icon_name, tr(label_key), enabled, cb)
+	var leading: Control = _rarity_dot(rarity) if rarity != "" else null
+	var row := _icon_button_row(icon_name, tr(label_key), enabled, cb, leading)
 	if not enabled:
 		# Grey out + tell the player why nothing happens.
 		for c in row.get_children():
 			if c is Button:
 				(c as Button).tooltip_text = tr("UI_FORGE_BULK_NONE")
 	return row
+
+
+## A filled dot in the rarity's frame color (equipment_icon.gd RARITY_COLORS) —
+## the bulk rows key by rarity, so the leading glyph IS the rarity color.
+func _rarity_dot(rarity: String) -> Control:
+	var holder := CenterContainer.new()
+	holder.custom_minimum_size = Vector2(40, 40)
+	var dot := Panel.new()
+	dot.custom_minimum_size = Vector2(20, 20)
+	var sb := StyleBoxFlat.new()
+	sb.set_corner_radius_all(10)
+	sb.bg_color = EQUIPMENT_ICON.RARITY_COLORS.get(rarity, Color(0.95, 0.96, 0.98))
+	sb.border_color = Color(0.0, 0.0, 0.0, 0.55)
+	sb.set_border_width_all(2)
+	dot.add_theme_stylebox_override("panel", sb)
+	holder.add_child(dot)
+	return holder
 
 
 ## Bulk-dismantle confirm: a centered glass modal (matches the tier-confirm popup
@@ -560,7 +581,8 @@ func _fill_craft() -> void:
 			_craft_rarity = str(CRAFT_RARITIES[idx])
 			_rebuild()
 	)
-	_content.add_child(_picker_row("icon_star", tr("UI_FORGE_RARITY"), rarity_opt))
+	# ribbon_rarity_corner, not icon_star: the star is the charm attribute's icon.
+	_content.add_child(_picker_row("ribbon_rarity_corner", tr("UI_FORGE_RARITY"), rarity_opt))
 
 	# Craft action. Disabled when Scrap is short OR the stash has no room for the
 	# minted item (the handler still refunds as the trust boundary).
@@ -935,7 +957,9 @@ func _build_forge_stash_cell(index: int) -> Control:
 	cell.drag_payload = {"src": "forge_stash", "index": index}
 	cell.preview_text = item_name.substr(0, 1)
 	cell.preview_color = Color(1.0, 0.86, 0.4)
-	cell.preview_tex = _load_equip_tex(str(data.get("sprite", "")))
+	cell.preview_tex = EQUIPMENT_ICON.resolve_equipment_texture(
+		str(data.get("sprite", "")), slot, str(data.get("rarity", "common"))
+	)
 	var idx := index
 	cell.click_handler = func(btn): if btn == MOUSE_BUTTON_LEFT: _select_item(idx)
 
@@ -958,11 +982,13 @@ func _build_forge_stash_cell(index: int) -> Control:
 
 ## A dismantle-style row: left icon + wide dark button + orange arrow, BOTH the
 ## button and the arrow firing `cb`. Used for the bulk buttons.
-func _icon_button_row(icon_name: String, verb: String, enabled: bool, cb: Callable) -> Control:
+func _icon_button_row(
+	icon_name: String, verb: String, enabled: bool, cb: Callable, leading: Control = null
+) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	row.custom_minimum_size = Vector2(0, 56)
-	row.add_child(_ll_icon(icon_name, 40))
+	row.add_child(leading if leading != null else _ll_icon(icon_name, 40))
 	var btn := Button.new()
 	btn.text = verb
 	btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -1118,19 +1144,6 @@ func _warm_hover_style() -> StyleBoxFlat:
 	st.set_border_width_all(1)
 	st.set_corner_radius_all(6)
 	return st
-
-
-func _load_equip_tex(sprite_path: String) -> Texture2D:
-	if sprite_path == "":
-		return null
-	var full := "res://battle_scene/assets/images/" + sprite_path
-	if ResourceLoader.exists(full):
-		return load(full) as Texture2D
-	if FileAccess.file_exists(full):
-		var img := Image.load_from_file(full)
-		if img:
-			return ImageTexture.create_from_image(img)
-	return null
 
 
 ## Delegates to the shared EQUIP_TOOLTIP helper (owner 2026-07-08: rarity·slot

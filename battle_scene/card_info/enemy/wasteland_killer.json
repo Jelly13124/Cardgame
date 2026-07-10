@@ -2,6 +2,7 @@
 	"id": "wasteland_killer",
 	"name": "Wasteland Killer",
 	"sprite_id": "wasteland_killer",
+	"tier": "normal",
 	"max_health": 20,
 	"action_pattern": [
 		{ "type": "block",     "amount": 8,                          "label": "🛡 8" },

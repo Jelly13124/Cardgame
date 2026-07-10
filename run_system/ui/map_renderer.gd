@@ -7,8 +7,10 @@
 extends RefCounted
 class_name MapRenderer
 
-const NODE_RADIUS: float = 40.0
-const NODE_ICON_SIZE: float = 78.0
+const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
+
+const NODE_RADIUS: float = 32.0
+const NODE_ICON_SIZE: float = 64.0
 const LEGEND_NODE_ICON_SIZE: float = 24.0
 
 # Legend labels are localized at draw time via tr() (see _draw_legend); the
@@ -37,6 +39,10 @@ const TYPE_COLORS = {
 
 var _scene: Control
 var _font: Font
+## Held as a member: StyleBox.draw() only submits canvas commands — if the box
+## (and the texture it holds) is a temporary, the texture RID dangles by the
+## next redraw and the nine-patch renders as a white rect.
+var _legend_box: StyleBox = null
 
 
 func _init(scene: Control) -> void:
@@ -85,20 +91,14 @@ func _draw_all_paths(vp: Vector2) -> void:
 			# current node and the child hasn't been entered yet.
 			var available: bool = (node.id == current_id) and not (child_id in visited)
 
+			# StS2-style route graph: quiet, straight dotted links. Curved glowing
+			# trails made the map look like wiring and competed with the node art.
 			if walked:
-				# Walked route: solid glowing cyan (slightly warm tint to read as "past")
-				var core = Color(0.55, 1.0, 0.98, 0.92)
-				_draw_solid_glow_line(from, to, core, 2.5, 9.0)
+				_draw_dotted_trail(from, to, Color(0.86, 0.72, 0.38, 0.92), 2.8, 15.0)
 			elif available:
-				# Available (next step): solid glowing bright cyan — most prominent
-				var core = Color(0.40, 0.96, 1.0, 1.0)
-				_draw_solid_glow_line(from, to, core, 2.8, 12.0)
+				_draw_dotted_trail(from, to, Color(0.50, 0.92, 0.88, 1.0), 3.0, 14.0)
 			else:
-				# Unreachable / future: grey dashed — dark enough to read on the
-				# bright sand (alpha 0.22 was invisible), still clearly secondary.
-				_draw_pixel_dashed_line(
-					from, to, Color(0.24, 0.22, 0.20, 0.55), 2.2, 12.0, 8.0, Vector2.ZERO
-				)
+				_draw_dotted_trail(from, to, Color(0.24, 0.18, 0.12, 0.68), 2.4, 16.0)
 
 
 func _draw_all_nodes(vp: Vector2) -> void:
@@ -218,18 +218,16 @@ func _draw_legend(vp: Vector2) -> void:
 	var pw = 156.0
 	var ph = 248.0
 	var px = vp.x - pw - 18.0
-	# Start below the taller framed top bar (main bar ≈ 86px) so it isn't occluded.
-	var py = 96.0
+	# Start below the 80px main strip plus its relic shelf.
+	var py = 136.0
 	var rect = Rect2(px, py, pw, ph)
 
-	# Drop shadow
+	# Drop shadow, then the lw ink panel — same chrome as the floating windows
+	# (the old hand-drawn cyan box was the last sci-fi holdout on this screen).
 	_scene.draw_rect(Rect2(rect.position + Vector2(4, 5), rect.size), Color(0.0, 0.0, 0.0, 0.55))
-	# Dark background panel
-	_scene.draw_rect(rect, Color(0.06, 0.07, 0.09, 0.94))
-	# Subtle inner highlight at top (gives depth)
-	_scene.draw_rect(Rect2(px, py, pw, 2.0), Color(0.35, 0.80, 0.95, 0.22))
-	# Cyan-tinted border to match the glowing path theme
-	_scene.draw_rect(rect, Color(0.28, 0.72, 0.85, 0.75), false, 1.5)
+	if _legend_box == null:
+		_legend_box = T.ll_inset()
+	_legend_box.draw(_scene.get_canvas_item(), rect)
 
 	# Title
 	var y = py + 24.0
@@ -242,12 +240,12 @@ func _draw_legend(vp: Vector2) -> void:
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
 		15,
-		Color(0.70, 0.92, 0.98, 1.0)
+		Color(1.0, 0.86, 0.48)
 	)
 	y += 7.0
-	# Separator line in dim cyan
+	# Separator line in dim warm gold
 	_scene.draw_line(
-		Vector2(px + 8, y), Vector2(px + pw - 8, y), Color(0.30, 0.72, 0.88, 0.45), 1.0
+		Vector2(px + 8, y), Vector2(px + pw - 8, y), Color(0.72, 0.58, 0.32, 0.45), 1.0
 	)
 	y += 16.0
 
@@ -262,33 +260,25 @@ func _draw_legend(vp: Vector2) -> void:
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1,
 			14,
-			Color(0.82, 0.88, 0.92, 0.95)
+			Color(0.92, 0.88, 0.76, 0.95)
 		)
 		y += 26.0
 
 
-## Draws a solid glowing line: a wide translucent glow underlay + a bright thin core on top.
-## Used for walked and available edges so the active route reads as a lit, solid path.
-func _draw_solid_glow_line(
-	from: Vector2, to: Vector2, core_color: Color, core_width: float, glow_width: float
+## Straight route dots, with both ends inset so the link never runs through a
+## node icon. This is deliberately geometry-light and does not resize any UI
+## texture.
+func _draw_dotted_trail(
+	from: Vector2, to: Vector2, color: Color, dot_radius: float, spacing: float
 ) -> void:
-	var glow_color = Color(core_color.r, core_color.g, core_color.b, core_color.a * 0.22)
-	_scene.draw_line(from, to, glow_color, glow_width)
-	var mid_color = Color(core_color.r, core_color.g, core_color.b, core_color.a * 0.50)
-	_scene.draw_line(from, to, mid_color, glow_width * 0.50)
-	_scene.draw_line(from, to, core_color, core_width)
-
-
-func _draw_pixel_dashed_line(
-	from: Vector2, to: Vector2, color: Color, width: float, dash: float, gap: float, offset: Vector2
-) -> void:
-	var length = from.distance_to(to)
-	if length < 1.0:
+	var full := from.distance_to(to)
+	if full < 100.0:
 		return
-	var dir = (to - from).normalized()
-	var distance = 0.0
-	while distance < length:
-		var start = from + dir * distance + offset
-		var end = from + dir * minf(distance + dash, length) + offset
-		_scene.draw_line(start, end, color, width)
-		distance += dash + gap
+	var dir := (to - from) / full
+	var start := from + dir * 38.0
+	var end := to - dir * 38.0
+	var length := start.distance_to(end)
+	var count := maxi(1, int(length / spacing))
+	for i in range(count + 1):
+		var point := start.lerp(end, float(i) / float(count))
+		_scene.draw_circle(point, dot_radius, color)

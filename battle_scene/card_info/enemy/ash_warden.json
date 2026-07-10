@@ -2,6 +2,7 @@
 	"id": "ash_warden",
 	"name": "Ash Warden",
 	"sprite_id": "ash_warden",
+	"tier": "boss",
 	"max_health": 95,
 	"action_pattern": [
 		{ "type": "attack_status", "amount": 6, "status": "bleed",      "stacks": 2, "label": "🩸 6 + Bl2" },

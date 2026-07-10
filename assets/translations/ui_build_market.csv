@@ -17,7 +17,7 @@ UI_MARKET_RARITY_CURSED,Cursed,诅咒
 UI_MARKET_LOCKED_HINT,"Upgrade the Market to tier {t} to unlock this.","将黑市升级至 T{t} 以解锁此功能。"
 UI_MARKET_REFRESH_NOTE,"Reroll the stocked tools and equipment. Price rises each use this visit.","重新刷新工具与装备库存。每次刷新价格递增(仅本次到访)。"
 UI_MARKET_REFRESH_BTN,"Refresh ({n} Caps)","刷新({n} 瓶盖)"
-UI_MARKET_REFRESH_VERB,Refresh,刷新
+UI_MARKET_REFRESH_VERB,Refresh Shelves,刷新货架
 UI_MARKET_CONVERT_SECTION,Resource Trading,资源交易
 UI_MARKET_CONVERT_TAX_NOTE,(after 10% tax),（已扣 10% 税）
 UI_MARKET_CONVERT_DO,Convert,兑换
@@ -26,7 +26,7 @@ UI_MARKET_CONVERT_CUR_CAPS,Caps,瓶盖
 UI_MARKET_CONVERT_CUR_SCRAP,Scrap,废料
 UI_BOUNTY_REWARD_EQUIP,Equipment ({t}),装备({t})
 UI_BOUNTY_OBJ_PLAY_ATTACK_CARDS,Play {n} attack cards,打出 {n} 张攻击牌
-UI_BOUNTY_OBJ_EARN_GOLD,Earn {n} gold in runs,局内获得 {n} 金币
+UI_BOUNTY_OBJ_EARN_GOLD,Earn {n} Caps in runs,局内获得 {n} 瓶盖
 UI_BOUNTY_OBJ_KILL_ELITES,Kill {n} elite enemies,击杀 {n} 名精英
 UI_BOUNTY_OBJ_KILL_BOSS,Slay {n} boss,讨伐 {n} 名首领
 UI_BOUNTY_OBJ_EXTRACT_ALIVE,Extract alive {n} time,活着撤离 {n} 次

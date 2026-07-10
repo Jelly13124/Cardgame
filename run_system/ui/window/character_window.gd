@@ -3,10 +3,10 @@
 ## battle). v2-mockup layout shared by all three modes:
 ##   TITLE   charcoal header (gear medallion · recessed 角色 titleplate · square
 ##           red ✕) — the strip doubles as the drag handle in every mode
-##   MIDDLE  the D4 zone — equip slots flanking the paper-doll inset well:
+##   MIDDLE  the D4 zone — equip slots flanking the unframed paper doll:
 ##           LEFT head / chest / hands · CENTER doll (+ hero switcher) · RIGHT
 ##           weapon / accessory + the tool-slot row
-##   BOTTOM  the fixed 20-cell backpack grid (10×2) — cells beyond the unlocked
+##   BOTTOM  the fixed 21-cell backpack grid (7×3) — cells beyond the unlocked
 ##           capacity render LOCKED with a flat padlock in every mode
 ## Modes:
 ##   MODE_MAP    — in-run map: RunManager.backpack, full editable (drag/drop/click)
@@ -34,20 +34,18 @@ const MODE_BATTLE := "battle"
 
 ## Run window keeps the compact map/battle footprint; base mode uses the taller
 ## concept-layout character sheet with backpack, attributes and tabs.
-const WIN_SIZE := Vector2(700, 840)
+const WIN_SIZE := Vector2(580, 800)
 # 1000: portrait + attrs + backpack grid + return button; the draggable_window
 # viewport cap + content scroll absorb anything beyond the screen
 # (2026-07-08 overflow fix).
 const BASE_WIN_SIZE := Vector2(680, 1000)
-const GRID_COLUMNS := 10
-const BASE_BACKPACK_GRID_COLUMNS := 7
-const BASE_BACKPACK_DISPLAY_CELLS := 21
-## The backpack grid ALWAYS renders 20 cells (10×2); cells at index >=
-## RunManager.effective_backpack_size() are locked (Outpost upgrades unlock them).
-const BACKPACK_DISPLAY_CELLS := 20
-const SLOT_CELL_SIZE := Vector2(76, 76)  # equipment slots + tool cells
+const BACKPACK_GRID_COLUMNS := 7
+## Every character-window backpack renders a 7×3 board. RunManager still caps usable inventory
+## at 20, so the final visual cell remains locked at maximum capacity.
+const BACKPACK_DISPLAY_CELLS := 21
+const SLOT_CELL_SIZE := Vector2(84, 84)  # equipment slots + tool cells
 const BASE_SLOT_CELL_SIZE := Vector2(66, 66)
-const GRID_CELL_SIZE := Vector2(56, 56)  # backpack grid cells
+const GRID_CELL_SIZE := Vector2(64, 64)  # backpack grid cells; matches EquipmentIcon minimum
 const BASE_GRID_CELL_SIZE := Vector2(68, 68)
 const DOLL_SIZE := Vector2(220, 320)  # center paper-doll portrait
 const BASE_DOLL_SIZE := Vector2(220, 300)
@@ -90,11 +88,9 @@ var _slot_parts: Dictionary = {}  # slot → {placeholder, icon, dot} (v2 layers
 var _grid: GridContainer
 var _tool_row: HBoxContainer  # equipped tool slots (tools are held in the backpack)
 var _portrait_rect: TextureRect
-var _attrs_label: Label
+var _attr_value_labels: Dictionary = {}  # attr → value Label (run-mode strip)
 var _vitals_label: Label
 var _inv_title: Label
-var _sets_container: VBoxContainer
-var _relics_container: HFlowContainer
 var _status_label: Label
 
 # --- base-mode state ---
@@ -153,6 +149,8 @@ func _ready() -> void:
 				RunManager.relics_updated.connect(_refresh)
 			if not RunManager.backpack_changed.is_connected(_refresh):
 				RunManager.backpack_changed.connect(_refresh)
+			if not RunManager.tools_changed.is_connected(_refresh):
+				RunManager.tools_changed.connect(_refresh)
 			_refresh()
 
 
@@ -230,17 +228,17 @@ func _refresh_base() -> void:
 
 	# ── BOTTOM: next-run backpack (pending_loadout), locked cells to 7×3 ──
 	var cap := RunManager.effective_backpack_size()
-	var visible_cap = mini(cap, BASE_BACKPACK_DISPLAY_CELLS)
+	var visible_cap = mini(cap, BACKPACK_DISPLAY_CELLS)
 	var grid := _build_base_backpack_panel(RunManager.pending_loadout.size(), cap)
 	var shown := 0
 	for entry in RunManager.pending_loadout:
-		if shown >= BASE_BACKPACK_DISPLAY_CELLS:
+		if shown >= BACKPACK_DISPLAY_CELLS:
 			break
 		grid.add_child(_make_carry_cell(entry))
 		shown += 1
 	for _e in range(maxi(0, visible_cap - shown)):
 		grid.add_child(_make_carry_empty_cell())
-	for _l in range(maxi(0, BASE_BACKPACK_DISPLAY_CELLS - visible_cap)):
+	for _l in range(maxi(0, BACKPACK_DISPLAY_CELLS - visible_cap)):
 		grid.add_child(_make_locked_cell(BASE_GRID_CELL_SIZE))
 
 	_status_label = Label.new()
@@ -391,26 +389,42 @@ func _cycle_hero(step: int) -> void:
 	_refresh_base()
 
 
-## The dim 5-attribute line under the switcher (11px, `力量 X · 体质 X · …`).
-func _make_stat_line(attrs: Variant) -> Label:
-	var a: Dictionary = attrs if typeof(attrs) == TYPE_DICTIONARY else {}
-	var l := Label.new()
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.text = (
-		tr("UI_EQUIP_STATS_LINE")
-		. format(
-			{
-				"str": int(a.get("strength", 0)),
-				"con": int(a.get("constitution", 0)),
-				"int": int(a.get("intelligence", 0)),
-				"luc": int(a.get("luck", 0)),
-				"cha": int(a.get("charm", 0)),
-			}
-		)
-	)
-	l.add_theme_font_size_override("font_size", 11)
-	l.add_theme_color_override("font_color", T.UI_LABEL_DIM)
-	return l
+## Run-mode five-attribute chip strip under the doll: the SAME lw stat icons as
+## the base strip (fist/torso/brain/clover/star — the canonical set), a value
+## Label per attribute registered in _attr_value_labels for live _refresh()
+## updates, and the shared per-attribute tooltip.
+func _make_run_attr_strip() -> Control:
+	_attr_value_labels.clear()
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 12)
+	for attr in ATTR_ORDER:
+		var pair := HBoxContainer.new()
+		pair.add_theme_constant_override("separation", 3)
+		pair.mouse_filter = Control.MOUSE_FILTER_STOP
+		pair.tooltip_text = _base_attribute_tooltip(attr)
+		var tex := T.lightline_tex(str(ATTR_LL_ICONS.get(attr, "")))
+		if tex == null:
+			var tex_path := str(ATTR_ICON_PATHS.get(attr, ""))
+			if tex_path != "" and ResourceLoader.exists(tex_path):
+				tex = load(tex_path) as Texture2D
+		if tex != null:
+			var icon := TextureRect.new()
+			icon.texture = tex
+			icon.custom_minimum_size = Vector2(18, 18)
+			icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+			icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			pair.add_child(icon)
+		var value := Label.new()
+		value.add_theme_font_size_override("font_size", 14)
+		value.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
+		value.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pair.add_child(value)
+		_attr_value_labels[attr] = value
+		row.add_child(pair)
+	return row
 
 
 ## (Re)build the charcoal header into the base-class header_root — the fixed
@@ -811,7 +825,9 @@ func _make_base_slot_column(slot: String) -> Control:
 		cell.drag_payload = {"src": "slot", "slot": slot, "entry": queued}
 		cell.preview_text = str(SLOT_LETTERS.get(slot, "?"))
 		cell.preview_color = Color(1.0, 0.86, 0.4)
-		cell.preview_tex = _load_equip_tex(str(data.get("sprite", "")))
+		cell.preview_tex = EQUIPMENT_ICON.resolve_equipment_texture(
+			str(data.get("sprite", "")), slot, str(data.get("rarity", "common"))
+		)
 		cell.hover_tip = _build_equipment_tooltip(data, slot, inst)
 		cell.click_handler = func(btn):
 			if btn == MOUSE_BUTTON_LEFT:
@@ -878,7 +894,9 @@ func _make_carry_cell(entry: Variant) -> Control:
 	cell.drag_payload = {"src": "carry", "slot": slot, "entry": entry}
 	cell.preview_text = str(SLOT_LETTERS.get(slot, "?"))
 	cell.preview_color = Color(1.0, 0.86, 0.4)
-	cell.preview_tex = _load_equip_tex(str(data.get("sprite", "")))
+	cell.preview_tex = EQUIPMENT_ICON.resolve_equipment_texture(
+		str(data.get("sprite", "")), slot, str(data.get("rarity", "common"))
+	)
 	_wire_base_backpack_drop(cell)
 	return cell
 
@@ -899,11 +917,11 @@ func _make_carry_empty_cell() -> Control:
 # --- shared: backpack grid chrome (header / locked cells / lock glyph) --------
 
 
-## The fixed 30-cell display grid (10×3), shared by all three modes.
+## Fixed 7×3 display grid shared by all three modes.
 func _make_backpack_grid() -> GridContainer:
 	var grid := GridContainer.new()
 	grid.name = "BackpackGrid"
-	grid.columns = BASE_BACKPACK_GRID_COLUMNS if mode == MODE_BASE else GRID_COLUMNS
+	grid.columns = BACKPACK_GRID_COLUMNS
 	grid.add_theme_constant_override("h_separation", 8 if mode == MODE_BASE else 6)
 	grid.add_theme_constant_override("v_separation", 8 if mode == MODE_BASE else 6)
 	return grid
@@ -1157,8 +1175,8 @@ func _on_resources_changed(_gold: int, _scrap: int) -> void:
 	_refresh()
 
 
-## The map/battle body — same D4 skeleton as base: vitals line, slots flanking
-## the doll, a slim sets/relics strip, then the backpack grid.
+## The map/battle body — vitals, slots flanking the unframed doll, then the
+## 7×3 backpack grid. Sets and relics intentionally live outside this window.
 func _build_map_battle() -> void:
 	var margin := MarginContainer.new()
 	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -1181,42 +1199,17 @@ func _build_map_battle() -> void:
 	# ── MIDDLE: the D4 zone ──
 	vroot.add_child(_build_d4_middle_run())
 
-	# ── Slim strip: sets + relics (fixed height, scrolls if it overflows) ──
-	vroot.add_child(T.ui_divider())
-	var strip_scroll := ScrollContainer.new()
-	strip_scroll.custom_minimum_size = Vector2(0, 60)
-	strip_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	strip_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	vroot.add_child(strip_scroll)
-	var strip := HBoxContainer.new()
-	strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	strip.add_theme_constant_override("separation", 24)
-	strip_scroll.add_child(strip)
-
-	var sets_col := VBoxContainer.new()
-	sets_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	strip.add_child(sets_col)
-	sets_col.add_child(_section_title(tr("UI_EQUIP_ACTIVE_SETS")))
-	_sets_container = VBoxContainer.new()
-	_sets_container.add_theme_constant_override("separation", 2)
-	sets_col.add_child(_sets_container)
-
-	var relics_col := VBoxContainer.new()
-	relics_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	strip.add_child(relics_col)
-	relics_col.add_child(_section_title(tr("UI_EQUIP_RELICS")))
-	_relics_container = HFlowContainer.new()
-	_relics_container.add_theme_constant_override("h_separation", 6)
-	_relics_container.add_theme_constant_override("v_separation", 4)
-	relics_col.add_child(_relics_container)
-
-	# ── BOTTOM: backpack header + fixed 30-cell grid (hint hidden in battle) ──
+	# ── BOTTOM: backpack header + fixed 7×3 grid (hint hidden in battle) ──
 	vroot.add_child(T.ui_divider())
 	vroot.add_child(
 		_build_backpack_header(0, 0, "" if _read_only else tr("UI_EQUIP_BACKPACK_HINT"))
 	)
 	_grid = _make_backpack_grid()
-	vroot.add_child(_grid)
+	var grid_center := CenterContainer.new()
+	grid_center.name = "BackpackGridCenter"
+	grid_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid_center.add_child(_grid)
+	vroot.add_child(grid_center)
 
 	_status_label = Label.new()
 	_status_label.add_theme_font_size_override("font_size", 13)
@@ -1229,6 +1222,7 @@ func _build_map_battle() -> void:
 ## (refilled by _refresh), matching the old equipment-zone behavior.
 func _build_d4_middle_run() -> Control:
 	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 14)
 
 	var left := VBoxContainer.new()
@@ -1237,45 +1231,20 @@ func _build_d4_middle_run() -> Control:
 		left.add_child(_make_run_slot_column(slot))
 	row.add_child(left)
 
-	var frame := PanelContainer.new()
-	frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	frame.add_theme_stylebox_override("panel", T.ll_inset_thin())
-	var pad := MarginContainer.new()
-	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		pad.add_theme_constant_override(side, 10)
-	frame.add_child(pad)
-	var inner := VBoxContainer.new()
-	inner.add_theme_constant_override("separation", 6)
-	inner.alignment = BoxContainer.ALIGNMENT_CENTER
-	pad.add_child(inner)
+	var portrait_stage := VBoxContainer.new()
+	portrait_stage.name = "PortraitStage"
+	portrait_stage.custom_minimum_size = Vector2(DOLL_SIZE.x, 0)
+	portrait_stage.add_theme_constant_override("separation", 6)
+	portrait_stage.alignment = BoxContainer.ALIGNMENT_CENTER
 
 	var stack := _make_doll_stack(null, Color.WHITE)
 	_portrait_rect = stack.get_meta("doll_rect")
-	inner.add_child(stack)
+	portrait_stage.add_child(stack)
 
-	_attrs_label = Label.new()
-	_attrs_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_attrs_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_attrs_label.add_theme_font_size_override("font_size", 11)
-	_attrs_label.add_theme_color_override("font_color", T.UI_LABEL_DIM)
-	_attrs_label.mouse_filter = Control.MOUSE_FILTER_STOP
-	# Tooltip on hover: what each of the five attributes does.
-	var attrs_ref: Label = _attrs_label
-	var attrs_id: int = _attrs_label.get_instance_id()
-	_attrs_label.mouse_entered.connect(
-		func():
-			if not is_instance_valid(attrs_ref):
-				return
-			Tooltip.show(
-				tr("UI_EQUIP_ATTR_TIP"),
-				attrs_ref.global_position + Vector2(attrs_ref.size.x * 0.5, 0),
-				attrs_id
-			)
-	)
-	_attrs_label.mouse_exited.connect(Tooltip.hide_if_owner.bind(attrs_id))
-	_attrs_label.tree_exited.connect(Tooltip.hide_if_owner.bind(attrs_id))
-	inner.add_child(_attrs_label)
-	row.add_child(frame)
+	# Five-attribute chip strip (lw stat icons + values, per-attr hover tooltip)
+	# — replaces the old dim 11px text line so run mode matches the base strip.
+	portrait_stage.add_child(_make_run_attr_strip())
+	row.add_child(portrait_stage)
 
 	var right := VBoxContainer.new()
 	right.add_theme_constant_override("separation", 8)
@@ -1348,6 +1317,7 @@ func _make_doll_stack(tex: Texture2D, tint: Color, doll_size: Vector2 = DOLL_SIZ
 	shadow.add_theme_stylebox_override("panel", sb)
 	holder.add_child(shadow)
 	var doll := TextureRect.new()
+	doll.name = "HeroPortrait"
 	doll.set_anchors_preset(Control.PRESET_FULL_RECT)
 	doll.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	doll.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -1395,20 +1365,10 @@ func _refresh() -> void:
 		_portrait_rect.modulate = _parse_tint(
 			str(RunManager.current_hero_data.get("tint", "#ffffff"))
 		)
-	if _attrs_label:
-		var p = RunManager.player_attributes
-		_attrs_label.text = (
-			tr("UI_EQUIP_STATS_LINE")
-			. format(
-				{
-					"str": int(p.get("strength", 0)),
-					"con": int(p.get("constitution", 0)),
-					"int": int(p.get("intelligence", 0)),
-					"luc": int(p.get("luck", 0)),
-					"cha": int(p.get("charm", 0)),
-				}
-			)
-		)
+	for attr in _attr_value_labels:
+		var value_lbl: Label = _attr_value_labels[attr]
+		if is_instance_valid(value_lbl):
+			value_lbl.text = str(int(RunManager.player_attributes.get(attr, 0)))
 
 	# Equipment slots (v2 stylers flip the layered cell visuals)
 	for slot in RunManager.EQUIPMENT_SLOTS:
@@ -1436,7 +1396,9 @@ func _refresh() -> void:
 			cell.drag_payload = {"src": "slot", "slot": slot, "item_id": item_id}
 			cell.preview_text = str(SLOT_LETTERS.get(slot, "?"))
 			cell.preview_color = Color(1.0, 0.86, 0.4)
-			cell.preview_tex = _load_equip_tex(str(data.get("sprite", "")))
+			cell.preview_tex = EQUIPMENT_ICON.resolve_equipment_texture(
+				str(data.get("sprite", "")), slot, str(data.get("rarity", "common"))
+			)
 			cell.hover_tip = _build_equipment_tooltip(data, slot, slot_inst)
 
 	# Equipped tool slots (filled from tool_inventory; the rest show empty slots).
@@ -1449,10 +1411,10 @@ func _refresh() -> void:
 			if i < inv.size():
 				_tool_row.add_child(_make_equipped_tool_cell(i, str(inv[i])))
 			else:
-				_tool_row.add_child(_make_empty_tool_cell())
+				_tool_row.add_child(_make_empty_tool_cell(i))
 
-	# Backpack grid (rebuild every refresh): the unlocked cells, then locked
-	# padding up to the fixed 30-cell display.
+	# Backpack grid (rebuild every refresh): unlocked cells, then locked padding
+	# up to the fixed 7×3 display.
 	var cap := RunManager.effective_backpack_size()
 	if _inv_title:
 		_inv_title.text = "%d / %d" % [RunManager.backpack_count_used(), cap]
@@ -1462,33 +1424,6 @@ func _refresh() -> void:
 		_grid.add_child(_make_grid_cell(i))
 	for _l in range(maxi(0, BACKPACK_DISPLAY_CELLS - cap)):
 		_grid.add_child(_make_locked_cell())
-
-	# Active sets
-	for child in _sets_container.get_children():
-		child.queue_free()
-	var active_tiers: Dictionary = RunManager.get_active_set_tiers()
-	if active_tiers.is_empty():
-		var none := Label.new()
-		none.text = tr("UI_EQUIP_NONE_YET")
-		none.add_theme_font_size_override("font_size", 13)
-		none.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
-		_sets_container.add_child(none)
-	else:
-		for set_id in active_tiers.keys():
-			_sets_container.add_child(_build_set_row(str(set_id), int(active_tiers[set_id])))
-
-	# Relics (chips with hover tooltip)
-	for child in _relics_container.get_children():
-		child.queue_free()
-	if RunManager.relics.is_empty():
-		var none := Label.new()
-		none.text = tr("UI_EQUIP_NONE_YET")
-		none.add_theme_font_size_override("font_size", 13)
-		none.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
-		_relics_container.add_child(none)
-	else:
-		for relic_id in RunManager.relics:
-			_relics_container.add_child(_build_relic_chip(str(relic_id)))
 
 	_status_label.text = ""
 
@@ -1556,21 +1491,6 @@ func _add_safe_border(cell: Control) -> void:
 	cell.add_child(border)
 
 
-## Load an equipment sprite texture (same resolution rule as EquipmentIcon), or
-## null if the art is missing. Used for the drag preview.
-func _load_equip_tex(sprite_path: String) -> Texture2D:
-	if sprite_path == "":
-		return null
-	var full := "res://battle_scene/assets/images/" + sprite_path
-	if ResourceLoader.exists(full):
-		return load(full) as Texture2D
-	if FileAccess.file_exists(full):
-		var img := Image.load_from_file(full)
-		if img:
-			return ImageTexture.create_from_image(img)
-	return null
-
-
 ## Wire a backpack cell as a drop target: accepts another backpack cell (swap via
 ## move_cell) or an equipped item dragged from a slot (unequip into the bag).
 func _wire_backpack_drop(cell, index: int) -> void:
@@ -1578,12 +1498,23 @@ func _wire_backpack_drop(cell, index: int) -> void:
 		return (
 			(data.get("src") == "backpack" and int(data.get("index", -1)) != index)
 			or data.get("src") == "slot"
+			or (
+				data.get("src") == "tool_slot"
+				and index < RunManager.effective_backpack_size()
+				and RunManager.backpack[index] == null
+			)
 		)
 	cell.perform_drop = func(data):
 		if data.get("src") == "backpack":
 			RunManager.move_cell(int(data.get("index", 0)), index)
 		elif data.get("src") == "slot":
 			_on_unequip_pressed(str(data.get("slot", "")))
+		elif data.get("src") == "tool_slot":
+			if RunManager.unequip_tool_to_backpack(int(data.get("index", -1)), index):
+				AudioManager.play_sfx("ui_back")
+			else:
+				_status_label.text = tr("UI_LOOT_BACKPACK_FULL")
+				AudioManager.play_sfx("error")
 
 
 ## An equipment cell: gear icon. Drag onto a slot to equip / onto another cell to
@@ -1607,7 +1538,9 @@ func _make_equip_cell(item_id: String, index: int, instance: Dictionary = {}) ->
 	}
 	cell.preview_text = str(SLOT_LETTERS.get(slot, "?"))
 	cell.preview_color = Color(1.0, 0.86, 0.4)
-	cell.preview_tex = _load_equip_tex(str(data.get("sprite", "")))
+	cell.preview_tex = EQUIPMENT_ICON.resolve_equipment_texture(
+		str(data.get("sprite", "")), slot, str(data.get("rarity", "common"))
+	)
 	_wire_backpack_drop(cell, index)
 	if not _read_only:
 		cell.click_handler = func(btn):
@@ -1683,53 +1616,92 @@ func _make_tool_cell(tool_id: String, index: int) -> Control:
 	return cell
 
 
-## An equipped tool slot (the worn tool): icon + tooltip; click unequips it back into
-## the backpack (map mode only — read-only in battle).
+## An equipped tool slot (the worn tool): real icon + cyan outline. BackpackCell
+## owns drag/click so it can move to an exact empty backpack target in map mode.
 func _make_equipped_tool_cell(index: int, tool_id: String) -> Control:
 	var data: Dictionary = RunManager.get_tool_data(tool_id)
 	var title := Settings.t("TOOL_%s_TITLE" % tool_id, str(data.get("title", tool_id)))
 	var desc := Settings.t("TOOL_%s_DESC" % tool_id, "")
-	var b := Button.new()
-	b.custom_minimum_size = SLOT_CELL_SIZE
-	b.focus_mode = Control.FOCUS_NONE
-	if _read_only:
-		b.tooltip_text = "%s\n%s" % [title, desc] if desc != "" else title
-	else:
-		b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		var unhint := tr("UI_EQUIP_TOOL_UNEQUIP_HINT")
-		b.tooltip_text = (
-			"%s\n%s\n%s" % [title, desc, unhint] if desc != "" else "%s\n%s" % [title, unhint]
-		)
-		b.pressed.connect(func() -> void: _unequip_tool(index))
+	var cell = _new_cell(SLOT_CELL_SIZE)
+	cell.name = "ToolSlot%d" % index
+	cell.mouse_default_cursor_shape = (
+		Control.CURSOR_ARROW if _read_only else Control.CURSOR_POINTING_HAND
+	)
+
+	var frame := Panel.new()
+	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.08, 0.12, 0.14, 0.92)
+	sb.border_color = T.ACCENT_NEON_BLUE
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(5)
+	frame.add_theme_stylebox_override("panel", sb)
+	cell.add_child(frame)
+
 	var icon_path := str(data.get("icon", ""))
+	var tex: Texture2D = null
 	if icon_path != "" and ResourceLoader.exists(icon_path):
-		b.icon = load(icon_path)
-		b.expand_icon = true
+		tex = load(icon_path) as Texture2D
+	if tex:
+		var icon := TextureRect.new()
+		icon.texture = tex
+		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+		icon.offset_left = 5
+		icon.offset_top = 5
+		icon.offset_right = -5
+		icon.offset_bottom = -5
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		frame.add_child(icon)
 	else:
-		b.text = title.substr(0, 1).to_upper()
-		b.add_theme_font_size_override("font_size", 16)
-	var sb := T.ui_slot_box("filled")  # worn tool: brass-rimmed filled box
-	b.add_theme_stylebox_override("normal", sb)
-	b.add_theme_stylebox_override("hover", T.ui_slot_box("hover"))
-	b.add_theme_stylebox_override("pressed", sb)
-	b.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
-	return b
+		var glyph := Label.new()
+		glyph.text = title.substr(0, 1).to_upper()
+		glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
+		glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		glyph.add_theme_font_size_override("font_size", 16)
+		glyph.add_theme_color_override("font_color", T.ACCENT_NEON_BLUE)
+		glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		frame.add_child(glyph)
+
+	var unhint := "" if _read_only else tr("UI_EQUIP_TOOL_UNEQUIP_HINT")
+	cell.hover_tip = title
+	if desc != "":
+		cell.hover_tip += "\n%s" % desc
+	if unhint != "":
+		cell.hover_tip += "\n[color=#9fd0ff]%s[/color]" % unhint
+	cell.drag_payload = {"src": "tool_slot", "index": index, "tool_id": tool_id}
+	cell.preview_text = title.substr(0, 1).to_upper()
+	cell.preview_color = T.ACCENT_NEON_BLUE
+	cell.preview_tex = tex
+	var target_slot := index
+	cell.can_accept = func(data):
+		return data.get("src") == "backpack" and data.get("kind") == "tool"
+	cell.perform_drop = func(data): _equip_tool(int(data.get("index", -1)), target_slot)
+	if not _read_only:
+		cell.click_handler = func(btn):
+			if btn == MOUSE_BUTTON_LEFT:
+				_unequip_tool(index)
+	return cell
 
 
-## An empty tool slot: the charcoal-concept tool board with its orange
-## highlight ring.
-func _make_empty_tool_cell() -> Control:
-	var p := _make_tool_board(SLOT_CELL_SIZE)
-	p.mouse_filter = Control.MOUSE_FILTER_STOP
-	p.tooltip_text = tr("UI_EQUIP_TOOL_SLOT_EMPTY")
-	return p
+## An empty tool slot: simple ghost wrench board inside a live BackpackCell.
+func _make_empty_tool_cell(index: int) -> Control:
+	var cell = _new_cell(SLOT_CELL_SIZE)
+	cell.name = "ToolSlot%d" % index
+	cell.hover_tip = tr("UI_EQUIP_TOOL_SLOT_EMPTY")
+	cell.can_accept = func(data):
+		return data.get("src") == "backpack" and data.get("kind") == "tool"
+	var target_slot := index
+	cell.perform_drop = func(data): _equip_tool(int(data.get("index", -1)), target_slot)
+	cell.add_child(_make_tool_board(SLOT_CELL_SIZE))
+	return cell
 
 
-## The empty tool-slot visual (charcoal concept): the lightline ghost_tool board
-## (dark plate + embossed wrench) under a thin orange highlight ring — the
-## concept marks the tool slot apart from the five gear slots. Fallbacks are
-## silent: no board PNG → the orange lightline slot frame (ll_slot "selected",
-## itself falling back to a flat hover box) with a faded ⚙ glyph.
+## The empty tool-slot visual: a single ghost_tool board with no second frame.
+## Missing art falls back to the neutral lightline slot plus a faded wrench glyph.
 func _make_tool_board(cell_size: Vector2) -> Control:
 	var holder := Control.new()
 	holder.custom_minimum_size = cell_size
@@ -1744,21 +1716,11 @@ func _make_tool_board(cell_size: Vector2) -> Control:
 		board.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		board.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		holder.add_child(board)
-		var ring := Panel.new()
-		ring.set_anchors_preset(Control.PRESET_FULL_RECT)
-		ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var rsb := StyleBoxFlat.new()
-		rsb.bg_color = Color(0, 0, 0, 0)
-		rsb.border_color = Color(0.93, 0.56, 0.18, 0.9)  # concept orange highlight
-		rsb.set_border_width_all(2)
-		rsb.set_corner_radius_all(6)
-		ring.add_theme_stylebox_override("panel", rsb)
-		holder.add_child(ring)
 	else:
 		var panel := Panel.new()
 		panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		panel.add_theme_stylebox_override("panel", T.ll_slot("selected"))
+		panel.add_theme_stylebox_override("panel", T.ll_slot("normal"))
 		holder.add_child(panel)
 		var glyph := Label.new()
 		glyph.text = "⚙"
@@ -1774,12 +1736,13 @@ func _make_tool_board(cell_size: Vector2) -> Control:
 	return holder
 
 
-## Equip a backpack tool (cell `index`) into a free tool slot, or flash a hint when
-## every slot is full.
-func _equip_tool(index: int) -> void:
+## Equip a backpack tool into a free slot or atomically replace `target_slot`.
+## With no explicit target and every slot full, slot zero is replaced so the
+## common one-slot flow never requires a manual unequip first.
+func _equip_tool(index: int, target_slot: int = -1) -> void:
 	if _read_only:
 		return
-	if RunManager.equip_tool_from_backpack(index):
+	if RunManager.equip_tool_from_backpack(index, target_slot):
 		AudioManager.play_sfx("ui_click")
 	else:
 		_status_label.text = tr("UI_EQUIP_TOOL_SLOTS_FULL")
@@ -1895,67 +1858,6 @@ func _on_unequip_pressed(slot: String) -> void:
 		return
 	if not RunManager.unequip_slot(slot):
 		_status_label.text = tr("UI_EQUIP_FULL_UNEQUIP")
-
-
-func _build_relic_chip(relic_id: String) -> Control:
-	var data = RunManager.get_relic_data(relic_id)
-	var title = Settings.t("RELIC_%s_TITLE" % relic_id, str(data.get("title", relic_id)))
-	var description = Settings.t("RELIC_%s_DESC" % relic_id, str(data.get("description", "")))
-	var chip := PanelContainer.new()
-	chip.add_theme_stylebox_override("panel", T.reward_row_style(T.PANEL_BG, T.PANEL_BORDER))
-	chip.mouse_filter = Control.MOUSE_FILTER_STOP
-	var lbl := Label.new()
-	lbl.text = title
-	lbl.add_theme_font_size_override("font_size", 13)
-	lbl.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
-	chip.add_child(lbl)
-	chip.mouse_entered.connect(
-		func() -> void:
-			Tooltip.show(
-				"[b]%s[/b]\n%s" % [title, description],
-				chip.global_position + Vector2(chip.size.x * 0.5, 0),
-				chip.get_instance_id()
-			)
-	)
-	chip.mouse_exited.connect(func() -> void: Tooltip.hide_if_owner(chip.get_instance_id()))
-	chip.tree_exited.connect(func() -> void: Tooltip.hide_if_owner(chip.get_instance_id()))
-	return chip
-
-
-func _build_set_row(set_id: String, count: int) -> HBoxContainer:
-	var set_data = RunManager.get_equipment_set_data(set_id)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-
-	var equipment_set_name := Settings.t(
-		"EQUIP_SET_%s_NAME" % set_id, str(set_data.get("name", set_id))
-	)
-	var name_lbl := Label.new()
-	name_lbl.text = "%s  %d/5" % [equipment_set_name, count]
-	name_lbl.add_theme_font_size_override("font_size", 13)
-	name_lbl.add_theme_color_override("font_color", Color(1, 0.95, 0.5))
-	name_lbl.custom_minimum_size = Vector2(140, 0)
-	row.add_child(name_lbl)
-
-	var tier_list = set_data.get("tiers", [])
-	if typeof(tier_list) == TYPE_ARRAY:
-		for tier in tier_list:
-			if typeof(tier) != TYPE_DICTIONARY:
-				continue
-			var threshold = int(tier.get("count", 0))
-			var tier_label := Settings.t(
-				"EQUIP_SET_%s_TIER_%d" % [set_id, threshold], str(tier.get("label", ""))
-			)
-			var label = Label.new()
-			label.text = "[%d] %s" % [threshold, tier_label]
-			label.add_theme_font_size_override("font_size", 12)
-			if count >= threshold:
-				label.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
-			else:
-				label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
-			row.add_child(label)
-
-	return row
 
 
 func _load_portrait(sprite_id: String) -> Texture2D:

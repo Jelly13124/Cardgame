@@ -2,6 +2,7 @@
 	"id": "riot_hound_alpha",
 	"name": "Riot Hound Alpha",
 	"sprite_id": "riot_hound",
+	"tier": "normal",
 	"max_health": 34,
 	"action_pattern": [
 		{ "type": "attack_status", "amount": 7, "status": "weak", "stacks": 1,        "label": "⚔ 7 +Weak" },

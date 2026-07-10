@@ -10,7 +10,7 @@ UI_BATTLE_EXHAUST_PILE,Exhaust Pile,消耗牌堆
 UI_BATTLE_EXHAUST_SHORT,✕ {n},消耗 {n}
 UI_BATTLE_RUN_DECK,Run Deck,本局牌组
 UI_BATTLE_VIEW_RUN_DECK,View run deck,查看本局牌组
-UI_BATTLE_RUN_STATUS,HP {hp}/{max}    Gold {gold}    Floor {floor},生命 {hp}/{max}    金币 {gold}    层 {floor}
+UI_BATTLE_RUN_STATUS,HP {hp}/{max}    Caps {gold}    Floor {floor},生命 {hp}/{max}    瓶盖 {gold}    层 {floor}
 UI_BATTLE_NO_RELICS,No relics,无遗物
 UI_BATTLE_END_ROUND,END ROUND,结束回合
 UI_BATTLE_ENERGY,Energy: 3 / 3,能量：3 / 3
@@ -68,3 +68,5 @@ UI_DISCOVER_TITLE_SKILL,Discover · Skill,发现 · 技能
 UI_DISCOVER_TITLE_ATTACK,Discover · Attack,发现 · 攻击
 UI_DISCOVER_TITLE_BLEED,Discover · Bleed,发现 · 流血
 UI_DISCOVER_EMPTY,Nothing to discover.,没有可发现的牌。
+UI_BATTLE_TOOL_CONFIRM_TITLE,USE TOOL?,确认使用工具？
+UI_BATTLE_TOOL_USE,USE,使用

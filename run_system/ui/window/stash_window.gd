@@ -724,7 +724,9 @@ func _make_stash_cell(stash_index: int) -> Control:
 	cell.drag_payload = {"src": "stash", "slot": slot, "entry": entry}
 	cell.preview_text = str(SLOT_LETTERS.get(slot, "?"))
 	cell.preview_color = Color(1.0, 0.86, 0.4)
-	cell.preview_tex = _load_equip_tex(str(data.get("sprite", "")))
+	cell.preview_tex = EQUIPMENT_ICON.resolve_equipment_texture(
+		str(data.get("sprite", "")), slot, str(data.get("rarity", "common"))
+	)
 	_wire_store_drop(cell)
 	return cell
 
@@ -767,20 +769,6 @@ func _wire_store_drop(cell) -> void:
 		var src := str(data.get("src", ""))
 		return src == "carry" or src == "slot"
 	cell.perform_drop = func(data): _handle_drop(data)
-
-
-## Load an equipment sprite texture for the drag preview (mirrors character_window).
-func _load_equip_tex(sprite_path: String) -> Texture2D:
-	if sprite_path == "":
-		return null
-	var full := "res://battle_scene/assets/images/" + sprite_path
-	if ResourceLoader.exists(full):
-		return load(full) as Texture2D
-	if FileAccess.file_exists(full):
-		var img := Image.load_from_file(full)
-		if img:
-			return ImageTexture.create_from_image(img)
-	return null
 
 
 ## Rich equipment tooltip — delegates to the shared EQUIP_TOOLTIP helper

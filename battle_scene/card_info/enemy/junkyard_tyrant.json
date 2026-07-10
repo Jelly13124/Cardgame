@@ -2,6 +2,7 @@
 	"id": "junkyard_tyrant",
 	"name": "Junkyard Tyrant",
 	"sprite_id": "junkyard_tyrant",
+	"tier": "boss",
 	"max_health": 110,
 	"action_pattern": [
 		{ "type": "attack",     "amount": 10,                                  "label": "⚔ 10" },

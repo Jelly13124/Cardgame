@@ -164,7 +164,14 @@ const ALLOWED_RELIC_EFFECT_TYPES = [
 ]
 
 # ─── Enemy schema ─────────────────────────────────────────────────────────────
-const REQUIRED_ENEMY_KEYS = ["id", "name", "sprite_id", "max_health", "action_pattern"]
+const REQUIRED_ENEMY_KEYS = ["id", "name", "sprite_id", "tier", "max_health", "action_pattern"]
+const ALLOWED_ENEMY_TIERS = ["minion", "normal", "heavy", "elite", "boss"]
+const ENCOUNTER_BUDGETS := {
+	"ENCOUNTER_POOLS_OPENING": Vector2i(12, 18),
+	"ENCOUNTER_POOLS_EARLY": Vector2i(20, 30),
+	"ENCOUNTER_POOLS_MID": Vector2i(25, 34),
+	"ENCOUNTER_POOLS_LATE": Vector2i(34, 50),
+}
 const ALLOWED_ENEMY_ACTION_TYPES = [
 	"attack",
 	"attack_status",
@@ -288,37 +295,90 @@ static func validate_all_data_at_startup() -> int:
 	return failures
 
 
-## Walk every enemy ID referenced by RunManager's encounter constants and
-## confirm a matching JSON file exists. Catches typos like "scrap_rats" vs
-## "scrap_rat" before they crash a battle.
+## Validate every explicit encounter roster against enemy identity and base-HP
+## budgets so invalid combinations fail before a battle can load.
 static func validate_encounter_pools() -> int:
 	var failures = 0
-	var known_ids: Dictionary = _list_enemy_ids()
-
-	var sources = {
+	var enemies: Dictionary = _load_enemy_summaries()
+	var normal_sources: Dictionary = {
+		"ENCOUNTER_POOLS_OPENING": RunManager.ENCOUNTER_POOLS_OPENING,
 		"ENCOUNTER_POOLS_EARLY": RunManager.ENCOUNTER_POOLS_EARLY,
 		"ENCOUNTER_POOLS_MID": RunManager.ENCOUNTER_POOLS_MID,
 		"ENCOUNTER_POOLS_LATE": RunManager.ENCOUNTER_POOLS_LATE,
-		"ELITE_ROSTER": [RunManager.ELITE_ROSTER],
-		"BOSS_ROSTER": [RunManager.BOSS_ROSTER],
-		"ACT_BOSSES": [RunManager.ACT_BOSSES],
 	}
-	for source_name in sources:
-		var pools = sources[source_name]
+	for source_name in normal_sources:
+		var pools: Array = normal_sources[source_name]
+		var budget: Vector2i = ENCOUNTER_BUDGETS[source_name]
 		for pool in pools:
+			var total_hp := 0
+			var tiers: Array[String] = []
 			for enemy_id in pool:
-				if not known_ids.has(str(enemy_id)):
+				var id := str(enemy_id)
+				if not enemies.has(id):
 					push_error(
 						(
 							"DataValidator: %s references unknown enemy id '%s' — add %s%s.json or fix the constant."
-							% [source_name, enemy_id, ENEMY_DIR, enemy_id]
+							% [source_name, id, ENEMY_DIR, id]
 						)
 					)
 					failures += 1
+					continue
+				var summary: Dictionary = enemies[id]
+				total_hp += int(summary.get("max_health", 0))
+				tiers.append(str(summary.get("tier", "")))
+			if total_hp < budget.x or total_hp > budget.y:
+				push_error(
+					"DataValidator: %s encounter %s has %d base HP; expected %d-%d."
+					% [source_name, pool, total_hp, budget.x, budget.y]
+				)
+				failures += 1
+			if "elite" in tiers or "boss" in tiers:
+				push_error("DataValidator: %s encounter %s contains elite/boss enemies." % [source_name, pool])
+				failures += 1
+			if "heavy" in tiers and pool.size() != 1:
+				push_error("DataValidator: heavy encounter %s must contain exactly one enemy." % [pool])
+				failures += 1
+			if source_name != "ENCOUNTER_POOLS_OPENING" and "minion" in tiers:
+				if pool.size() != 2:
+					push_error("DataValidator: post-opening minion encounter %s must contain two enemies." % [pool])
+					failures += 1
+				elif tiers.count("minion") == 1:
+					for tier in tiers:
+						if tier != "minion" and tier != "normal":
+							push_error("DataValidator: minion support encounter %s must pair with a normal enemy." % [pool])
+							failures += 1
+				elif tiers.count("minion") != 2:
+					push_error("DataValidator: invalid minion composition %s." % [pool])
+					failures += 1
+
+	failures += _validate_tier_roster("ELITE_ROSTER", RunManager.ELITE_ROSTER, "elite", enemies)
+	failures += _validate_tier_roster("BOSS_ROSTER", RunManager.BOSS_ROSTER, "boss", enemies)
+	failures += _validate_tier_roster("ACT_BOSSES", RunManager.ACT_BOSSES, "boss", enemies)
 	return failures
 
 
-static func _list_enemy_ids() -> Dictionary:
+static func _validate_tier_roster(
+	source_name: String, roster: Array, required_tier: String, enemies: Dictionary
+) -> int:
+	var failures := 0
+	for enemy_id in roster:
+		var id := str(enemy_id)
+		if not enemies.has(id):
+			push_error("DataValidator: %s references unknown enemy id '%s'." % [source_name, id])
+			failures += 1
+			continue
+		var summary: Dictionary = enemies[id]
+		var actual := str(summary.get("tier", ""))
+		if actual != required_tier:
+			push_error(
+				"DataValidator: %s enemy '%s' has tier '%s'; expected '%s'."
+				% [source_name, id, actual, required_tier]
+			)
+			failures += 1
+	return failures
+
+
+static func _load_enemy_summaries() -> Dictionary:
 	var result: Dictionary = {}
 	var dir = DirAccess.open(ENEMY_DIR)
 	if dir == null:
@@ -327,7 +387,12 @@ static func _list_enemy_ids() -> Dictionary:
 	var file_name = dir.get_next()
 	while file_name != "":
 		if file_name.ends_with(".json") and not dir.current_is_dir():
-			result[file_name.get_basename()] = true
+			var parsed = JSON.parse_string(FileAccess.get_file_as_string(ENEMY_DIR + file_name))
+			if typeof(parsed) == TYPE_DICTIONARY:
+				result[file_name.get_basename()] = {
+					"tier": str(parsed.get("tier", "")),
+					"max_health": int(parsed.get("max_health", 0)),
+				}
 		file_name = dir.get_next()
 	return result
 
@@ -561,6 +626,13 @@ static func validate_enemy(data: Dictionary, source_path: String) -> bool:
 
 	if not ok:
 		return false
+
+	var tier := str(data["tier"])
+	if not tier in ALLOWED_ENEMY_TIERS:
+		push_error(
+			"%s: tier '%s' is invalid; expected one of %s" % [prefix, tier, ALLOWED_ENEMY_TIERS]
+		)
+		ok = false
 
 	var pattern = data["action_pattern"]
 	if typeof(pattern) != TYPE_ARRAY:

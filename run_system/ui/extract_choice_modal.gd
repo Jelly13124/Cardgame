@@ -21,7 +21,10 @@ var _resolved: bool = false
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	# and_offsets variant: plain set_anchors_preset AFTER entering the tree recomputes
+	# the offsets to preserve the current (0×0) rect — the modal would collapse to the
+	# top-left and its click-blocking scrim would stop covering the battle behind it.
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build()
 

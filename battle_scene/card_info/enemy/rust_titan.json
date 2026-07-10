@@ -2,6 +2,7 @@
 	"id": "rust_titan",
 	"name": "Rust Titan",
 	"sprite_id": "rust_titan",
+	"tier": "boss",
 	"max_health": 90,
 	"action_pattern": [
 		{ "type": "attack",        "amount": 8,                                       "label": "⚔ 8" },

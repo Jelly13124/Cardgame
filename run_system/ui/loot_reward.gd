@@ -6,8 +6,9 @@ extends Control
 ## direct-change behavior in _on_proceed_pressed.
 signal closed
 
-const GOLD_ICON_PATH := "res://run_system/assets/images/loot_ui/gold_reward.png"
-const CARD_REWARD_ICON_PATH := "res://run_system/assets/images/loot_ui/card_reward.png"
+# In-run currency is Caps (owner 2026-07-08): same bottle-cap icon as the base.
+const GOLD_ICON_PATH := "res://run_system/assets/images/home/currency/caps.png"
+const CARD_REWARD_ICON_PATH := "res://run_system/assets/images/ui_kit_lightline/iconb_cards_fan.png"
 
 # Shared palette lives in run_system/ui/theme/wasteland_theme.gd as
 # `T.PANEL_BG` etc. — see wasteland_theme.gd for all colors / builders.
@@ -27,6 +28,7 @@ var draft_pool: Array = []
 @onready var loot_list_container = $VBoxContainer/LootPanel/MarginContainer/LootList
 @onready var proceed_button = $VBoxContainer/BottomRow/MarginContainer/ProceedButton
 @onready var draft_overlay = $DraftOverlay
+@onready var draft_title = $DraftOverlay/VBoxContainer/TitleLabel
 @onready
 var draft_card_container = $DraftOverlay/VBoxContainer/DraftPanel/MarginContainer/CardsContainer
 @onready
@@ -59,6 +61,9 @@ func _ready() -> void:
 
 
 func _apply_static_theme() -> void:
+	# lw pass 2026-07-08: the whole screen now wears the lightline ink chrome —
+	# the old orange StyleBoxFlat frames + neon-blue claim plates were the last
+	# pre-lw holdouts on the battle path.
 	$BackgroundColor.color = Color(0.035, 0.027, 0.020, 0.72)
 	$VBoxContainer.add_theme_constant_override("separation", 14)
 	$VBoxContainer/BannerPanel.custom_minimum_size = Vector2(520, 104)
@@ -85,8 +90,8 @@ func _apply_static_theme() -> void:
 	$VBoxContainer/LootPanel/MarginContainer.add_theme_constant_override("margin_bottom", 24)
 	loot_list_container.add_theme_constant_override("separation", 12)
 
-	$VBoxContainer/BannerPanel.add_theme_stylebox_override("panel", _make_banner_style())
-	$VBoxContainer/LootPanel.add_theme_stylebox_override("panel", _make_loot_panel_style())
+	$VBoxContainer/BannerPanel.add_theme_stylebox_override("panel", T.ll_section())
+	$VBoxContainer/LootPanel.add_theme_stylebox_override("panel", T.ll_panel())
 	$DraftOverlay/VBoxContainer/DraftPanel.add_theme_stylebox_override(
 		"panel", T.panel_textured("dark")
 	)
@@ -198,9 +203,9 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.focus_mode = Control.FOCUS_NONE
 	button.text = ""
-	button.add_theme_stylebox_override("normal", _make_reward_row_style(false))
-	button.add_theme_stylebox_override("hover", _make_reward_row_style(true))
-	button.add_theme_stylebox_override("pressed", _make_reward_row_pressed_style())
+	button.add_theme_stylebox_override("normal", _row_box(1.0))
+	button.add_theme_stylebox_override("hover", _row_box(1.22))
+	button.add_theme_stylebox_override("pressed", _row_box(0.82))
 	button.pressed.connect(_on_loot_selected.bind(str(loot["id"]), button))
 
 	var margin = MarginContainer.new()
@@ -250,42 +255,41 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	return button
 
 
-func _make_icon_well(icon_path: String, loot_type: String = "") -> PanelContainer:
-	var frame = PanelContainer.new()
+func _make_icon_well(icon_path: String, loot_type: String = "") -> Control:
+	# Bare art, no framing box (owner 2026-07-08: stop framing every item —
+	# the reward icons carry themselves).
 	var is_primary_reward := loot_type in ["gold", "cards"]
-	frame.custom_minimum_size = Vector2(88, 88) if is_primary_reward else Vector2(76, 76)
-	frame.add_theme_stylebox_override("panel", _make_icon_well_style())
-	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	var center = CenterContainer.new()
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	frame.add_child(center)
+	var holder = CenterContainer.new()
+	holder.custom_minimum_size = Vector2(76, 76)
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var texture = _load_texture(icon_path)
 	if texture:
 		var icon = TextureRect.new()
-		icon.custom_minimum_size = Vector2(78, 78) if is_primary_reward else Vector2(62, 62)
+		icon.custom_minimum_size = Vector2(58, 58) if is_primary_reward else Vector2(52, 52)
 		icon.texture = texture
 		icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		center.add_child(icon)
+		holder.add_child(icon)
 	else:
 		var fallback = Label.new()
 		fallback.text = "?"
 		fallback.add_theme_font_size_override("font_size", 34)
 		fallback.add_theme_color_override("font_color", T.TEXT_MAIN)
 		fallback.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		center.add_child(fallback)
+		holder.add_child(fallback)
 
-	return frame
+	return holder
 
 
 func _make_claim_plate(label_text: String = "") -> PanelContainer:
+	# The lw orange action plate (same read as the buildings' buy buttons) —
+	# replaces the old neon-blue box that fought the warm palette.
 	var plate = PanelContainer.new()
 	plate.custom_minimum_size = Vector2(112, 54)
-	plate.add_theme_stylebox_override("panel", _make_claim_plate_style())
+	plate.add_theme_stylebox_override("panel", T.ll_button("normal"))
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var label = Label.new()
@@ -293,71 +297,23 @@ func _make_claim_plate(label_text: String = "") -> PanelContainer:
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 20)
-	label.add_theme_color_override("font_color", Color(0.80, 0.98, 1.0, 1.0))
-	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.80))
-	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_color_override("font_color", Color(0.16, 0.10, 0.04))
+	label.add_theme_color_override("font_outline_color", Color(1.0, 0.92, 0.72, 0.35))
+	label.add_theme_constant_override("outline_size", 1)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	plate.add_child(label)
 	return plate
 
 
-func _make_banner_style() -> StyleBoxFlat:
-	var style := T.panel_with_shadow(
-		Color(0.13, 0.075, 0.045, 0.98), Color(0.78, 0.38, 0.16, 1.0), 6, 3
-	)
-	style.shadow_size = 12
-	style.shadow_offset = Vector2(3, 5)
-	style.content_margin_left = 18.0
-	style.content_margin_right = 18.0
-	style.content_margin_top = 8.0
-	style.content_margin_bottom = 8.0
-	return style
-
-
-func _make_loot_panel_style() -> StyleBoxFlat:
-	var style := T.panel_with_shadow(
-		Color(0.075, 0.046, 0.030, 0.96), Color(0.60, 0.30, 0.14, 1.0), 6, 3
-	)
-	style.shadow_size = 14
-	style.shadow_offset = Vector2(5, 7)
-	return style
-
-
-func _make_reward_row_style(hovered: bool) -> StyleBoxFlat:
-	var bg := Color(0.105, 0.065, 0.042, 0.96) if not hovered else Color(0.145, 0.088, 0.050, 0.98)
-	var border := Color(0.55, 0.29, 0.14, 1.0) if not hovered else T.ACCENT_NEON_BLUE
-	var style := T.panel_with_shadow(bg, border, 5, 2)
-	style.shadow_size = 6
-	style.shadow_offset = Vector2(3, 4)
-	style.content_margin_left = 12.0
-	style.content_margin_right = 12.0
-	style.content_margin_top = 8.0
-	style.content_margin_bottom = 8.0
-	return style
-
-
-func _make_reward_row_pressed_style() -> StyleBoxFlat:
-	var style := _make_reward_row_style(true)
-	style.bg_color = Color(0.16, 0.082, 0.044, 1.0)
-	style.border_color = T.ACCENT_DANGER
-	return style
-
-
-func _make_icon_well_style() -> StyleBoxFlat:
-	var style := T.panel_with_shadow(
-		Color(0.035, 0.029, 0.023, 1.0), Color(0.80, 0.50, 0.20, 1.0), 4, 2
-	)
-	style.shadow_size = 4
-	style.shadow_offset = Vector2(2, 2)
-	return style
-
-
-func _make_claim_plate_style() -> StyleBoxFlat:
-	var style := T.panel_with_shadow(Color(0.035, 0.145, 0.165, 0.98), T.ACCENT_NEON_BLUE, 5, 3)
-	style.shadow_color = Color(0.0, 0.0, 0.0, 0.45)
-	style.shadow_size = 5
-	style.shadow_offset = Vector2(2, 3)
-	return style
+## One lw inset per reward row; `brightness` derives the hover (lighter) and
+## pressed (darker) states from the same ink texture via modulate.
+func _row_box(brightness: float) -> StyleBox:
+	var box := T.ll_inset()
+	box.content_margin_top = 10.0
+	box.content_margin_bottom = 10.0
+	if brightness != 1.0 and box is StyleBoxTexture:
+		(box as StyleBoxTexture).modulate_color = Color(brightness, brightness, brightness)
+	return box
 
 
 func _on_loot_selected(loot_id: String, button: Button) -> void:
@@ -409,12 +365,24 @@ func _on_proceed_pressed() -> void:
 
 ## --- Level-up attribute choice: pick 1 of 3 random attributes (+1) per level. ---
 const _ATTR_KEYS := ["strength", "constitution", "intelligence", "luck", "charm"]
+## The canonical lw stat icons (same set as clinic / character window); the
+## legacy battle_scene attribute PNGs stay as the per-icon fallback.
+const _ATTR_LL_ICONS := {
+	"strength": "icon_fist",
+	"constitution": "icon_torso",
+	"intelligence": "icon_brain",
+	"luck": "icon_clover",
+	"charm": "icon_star",
+}
 
 
 func _open_attr_choice() -> void:
 	_in_attr = true
 	loot_root.visible = false
 	draft_overlay.visible = true
+	# The overlay is shared with the card draft — retitle it for the level-up pick.
+	draft_title.text = tr("UI_LOOT_ATTR_TITLE")
+	draft_skip_button.text = tr("UI_LOOT_ATTR_SKIP")
 	_generate_attr_options()
 	# Attribute pick has no reroll — hide the card-draft reroll button if present.
 	if _reroll_btn:
@@ -433,11 +401,10 @@ func _generate_attr_options() -> void:
 func _make_attr_slot(attr: String) -> Control:
 	var wrapper = Control.new()
 	wrapper.custom_minimum_size = Vector2(300, 400)
+	wrapper.pivot_offset = wrapper.custom_minimum_size * 0.5
 	var frame = Panel.new()
 	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
-	frame.add_theme_stylebox_override(
-		"panel", T.panel_with_shadow(Color(0.10, 0.085, 0.06, 0.95), Color(1.0, 0.82, 0.4), 4)
-	)
+	frame.add_theme_stylebox_override("panel", T.panel_textured("dark"))
 	wrapper.add_child(frame)
 	var box = VBoxContainer.new()
 	box.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -445,14 +412,17 @@ func _make_attr_slot(attr: String) -> Control:
 	box.add_theme_constant_override("separation", 12)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	wrapper.add_child(box)
-	# Attribute portrait — reuse the same generated icons the stats panel shows
-	# (res://battle_scene/assets/images/ui/attributes/<attr>.png). Guarded so a
-	# missing / still-regenerating Codex asset just drops back to the text-only card.
-	var icon_path := "res://battle_scene/assets/images/ui/attributes/%s.png" % attr
-	if ResourceLoader.exists(icon_path):
+	# Attribute portrait — the canonical lw stat icon, falling back to the legacy
+	# battle_scene PNG (then text-only) so a missing asset never crashes the pick.
+	var icon_tex := T.lightline_tex(str(_ATTR_LL_ICONS.get(attr, "")))
+	if icon_tex == null:
+		var legacy_path := "res://battle_scene/assets/images/ui/attributes/%s.png" % attr
+		if ResourceLoader.exists(legacy_path):
+			icon_tex = load(legacy_path) as Texture2D
+	if icon_tex != null:
 		var icon := TextureRect.new()
 		icon.custom_minimum_size = Vector2(132, 132)
-		icon.texture = load(icon_path)
+		icon.texture = icon_tex
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
@@ -477,6 +447,17 @@ func _make_attr_slot(attr: String) -> Control:
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.pressed.connect(_on_attr_picked.bind(attr))
 	wrapper.add_child(button)
+	# Hover pop, mirroring the card draft's feel (the old version had no feedback).
+	button.mouse_entered.connect(
+		func():
+			var tween = wrapper.create_tween()
+			tween.tween_property(wrapper, "scale", Vector2(1.05, 1.05), 0.10)
+	)
+	button.mouse_exited.connect(
+		func():
+			var tween = wrapper.create_tween()
+			tween.tween_property(wrapper, "scale", Vector2.ONE, 0.10)
+	)
 	return wrapper
 
 
@@ -504,6 +485,8 @@ func _finish_loot() -> void:
 func _open_card_draft() -> void:
 	loot_root.visible = false
 	draft_overlay.visible = true
+	draft_title.text = tr("UI_LOOT_DRAFT_TITLE")
+	draft_skip_button.text = tr("UI_LOOT_SKIP_CARD")
 	_generate_draft_options()
 	_refresh_reroll_btn()
 

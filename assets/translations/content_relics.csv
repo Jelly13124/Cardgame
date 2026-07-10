@@ -30,7 +30,7 @@ RELIC_repair_kit_DESC,"After each combat, heal 2 HP.",战斗结束后，治疗2�
 
 RELIC_lucky_cog_TITLE,Lucky Cog,幸运齿轮
 
-RELIC_lucky_cog_DESC,"After combat, gain 5 Gold.",战斗结束后，获得5金币。
+RELIC_lucky_cog_DESC,"After combat, gain 5 Caps.",战斗结束后，获得5瓶盖。
 
 RELIC_bulk_actuator_TITLE,Bulk Actuator,重型作动器
 
@@ -50,7 +50,7 @@ RELIC_war_horn_DESC,"At the start of each combat, gain 1 Strength.",每场战斗
 
 RELIC_bounty_tags_TITLE,Bounty Tags,赏金标牌
 
-RELIC_bounty_tags_DESC,Gain 40 Gold when picked up.,拾取时获得 40 金币。
+RELIC_bounty_tags_DESC,Gain 40 Caps when picked up.,拾取时获得 40 瓶盖。
 
 RELIC_adrenaline_pump_TITLE,Adrenaline Pump,肾上腺素泵
 

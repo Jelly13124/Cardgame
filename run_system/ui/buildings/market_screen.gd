@@ -261,8 +261,9 @@ func _on_buy_tool(tool_id: String, btn: Button) -> void:
 
 
 func _build_equip_section() -> Control:
-	# Second refresh button (concept parity) — same reroll action + cost.
-	var section := _make_section(tr("UI_MARKET_EQUIP_SHELF"), true)
+	# No refresh button here: the tool-shelf one rerolls BOTH shelves for one
+	# cost, so a second identical button just misled (owner 2026-07-08).
+	var section := _make_section(tr("UI_MARKET_EQUIP_SHELF"))
 	var body := section.get_meta("body") as VBoxContainer
 
 	if _equip_stock.is_empty():
@@ -629,7 +630,8 @@ func _orange_button(text: String) -> Button:
 	btn.add_theme_color_override("font_color", Color(0.16, 0.10, 0.04))
 	btn.add_theme_color_override("font_hover_color", Color(0.20, 0.13, 0.05))
 	btn.add_theme_color_override("font_pressed_color", Color(0.12, 0.08, 0.03))
-	btn.add_theme_color_override("font_disabled_color", Color(0.30, 0.24, 0.16, 0.9))
+	# Disabled = clearly darker plate + light text (dark-on-dim was unreadable).
+	btn.add_theme_color_override("font_disabled_color", Color(0.88, 0.82, 0.68, 0.95))
 	btn.add_theme_color_override("font_outline_color", Color(1.0, 0.92, 0.72, 0.35))
 	btn.add_theme_constant_override("outline_size", 1)
 	btn.add_theme_stylebox_override("normal", T.ll_button("normal"))
@@ -637,7 +639,7 @@ func _orange_button(text: String) -> Button:
 	btn.add_theme_stylebox_override("pressed", T.ll_button("pressed"))
 	var disabled_box := T.ll_button("normal")
 	if disabled_box is StyleBoxTexture:
-		(disabled_box as StyleBoxTexture).modulate_color = Color(0.55, 0.55, 0.55)
+		(disabled_box as StyleBoxTexture).modulate_color = Color(0.42, 0.42, 0.42)
 	btn.add_theme_stylebox_override("disabled", disabled_box)
 	return btn
 

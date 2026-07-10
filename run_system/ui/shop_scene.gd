@@ -28,6 +28,7 @@ const SHOP_PANEL_BG := Color(0.080, 0.055, 0.040, 0.92)
 const SHOP_PANEL_BG_DARK := Color(0.045, 0.035, 0.030, 0.96)
 const SHOP_PANEL_BORDER := Color(0.55, 0.30, 0.13, 1.0)
 const SHOP_PRICE := Color(1.0, 0.84, 0.18)
+const TOOL_ACCENT := Color(0.38, 0.80, 0.93)
 
 const RARITY_COLORS := {
 	"common": Color(0.85, 0.85, 0.85),
@@ -587,9 +588,7 @@ func _build_tool_stall(entry: Dictionary) -> Control:
 		glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		glyph.add_theme_font_size_override("font_size", 30)
-		glyph.add_theme_color_override(
-			"font_color", RARITY_COLORS.get(str(entry["rarity"]), Color.WHITE)
-		)
+		glyph.add_theme_color_override("font_color", TOOL_ACCENT)
 		icon_holder.add_child(glyph)
 
 	var name_lbl := Label.new()
@@ -607,9 +606,7 @@ func _build_tool_stall(entry: Dictionary) -> Control:
 	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc_lbl.custom_minimum_size = Vector2(150, 0)
 	desc_lbl.add_theme_font_size_override("font_size", 13)
-	desc_lbl.add_theme_color_override(
-		"font_color", RARITY_COLORS.get(str(entry["rarity"]), Color.WHITE)
-	)
+	desc_lbl.add_theme_color_override("font_color", TOOL_ACCENT)
 	wrapper.add_child(desc_lbl)
 
 	var price_row := HBoxContainer.new()

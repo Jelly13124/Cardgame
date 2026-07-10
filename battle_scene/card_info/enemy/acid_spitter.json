@@ -2,6 +2,7 @@
 	"id": "acid_spitter",
 	"name": "Acid Spitter",
 	"sprite_id": "acid_spitter",
+	"tier": "normal",
 	"max_health": 18,
 	"action_pattern": [
 		{ "type": "attack_status", "amount": 4, "status": "bleed", "stacks": 2, "label": "☠ 4 + Bl2" },

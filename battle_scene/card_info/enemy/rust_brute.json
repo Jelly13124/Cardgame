@@ -2,6 +2,7 @@
 	"id": "rust_brute",
 	"name": "Rust Brute",
 	"sprite_id": "rust_brute",
+	"tier": "heavy",
 	"max_health": 40,
 	"action_pattern": [
 		{ "type": "block",         "amount": 10,                                 "label": "🛡 10" },

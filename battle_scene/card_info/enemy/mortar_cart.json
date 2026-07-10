@@ -2,6 +2,7 @@
 	"id": "mortar_cart",
 	"name": "Mortar Cart",
 	"sprite_id": "mortar_cart",
+	"tier": "normal",
 	"max_health": 28,
 	"action_pattern": [
 		{ "type": "block",     "amount": 4,  "label": "🛡 4" },

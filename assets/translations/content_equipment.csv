@@ -32,33 +32,33 @@ EQUIP_warden_pendant_DESC,A coal still warm with the Warden's last breath.,一�
 SET_weak_hunter_NAME,Weak Hunter,弱猎人
 SET_tank_engineer_NAME,Tank Engineer,坦克工程师
 SET_warden_NAME,Warden,守望者
-EQUIP_gear_head_common_NAME,Common Headgear,普通·头部装备
+EQUIP_gear_head_common_NAME,Scavenger Cowboy Hat,拾荒者牛仔帽
 EQUIP_gear_head_common_DESC,"Rolls 1 affix (an attribute).",随机 1 条词条(1 属性)。
-EQUIP_gear_head_uncommon_NAME,Uncommon Headgear,罕见·头部装备
+EQUIP_gear_head_uncommon_NAME,Ranger Scout Hat,游骑兵侦察帽
 EQUIP_gear_head_uncommon_DESC,"Rolls 2 affixes, incl. 1 attribute.",随机 2 条词条(含 1 属性)。
-EQUIP_gear_head_rare_NAME,Rare Headgear,稀有·头部装备
+EQUIP_gear_head_rare_NAME,Officer's Battle Cap,军官战帽
 EQUIP_gear_head_rare_DESC,"Rolls 3 affixes, incl. 1 attribute.",随机 3 条词条(含 1 属性)。
-EQUIP_gear_chest_common_NAME,Common Chestpiece,普通·胸部装备
+EQUIP_gear_chest_common_NAME,Scavenger Leather Vest,拾荒者皮背心
 EQUIP_gear_chest_common_DESC,"Rolls 1 affix (an attribute).",随机 1 条词条(1 属性)。
-EQUIP_gear_chest_uncommon_NAME,Uncommon Chestpiece,罕见·胸部装备
+EQUIP_gear_chest_uncommon_NAME,Ranger Tactical Vest,游骑兵战术背心
 EQUIP_gear_chest_uncommon_DESC,"Rolls 2 affixes, incl. 1 attribute.",随机 2 条词条(含 1 属性)。
-EQUIP_gear_chest_rare_NAME,Rare Chestpiece,稀有·胸部装备
+EQUIP_gear_chest_rare_NAME,Officer's Heavy Armor,军官重甲
 EQUIP_gear_chest_rare_DESC,"Rolls 3 affixes, incl. 1 attribute.",随机 3 条词条(含 1 属性)。
-EQUIP_gear_weapon_common_NAME,Common Weapon,普通·武器
+EQUIP_gear_weapon_common_NAME,Scavenger Revolver,拾荒者左轮
 EQUIP_gear_weapon_common_DESC,"Rolls 1 affix (an attribute).",随机 1 条词条(1 属性)。
-EQUIP_gear_weapon_uncommon_NAME,Uncommon Weapon,罕见·武器
+EQUIP_gear_weapon_uncommon_NAME,Ranger Revolver,游骑兵左轮
 EQUIP_gear_weapon_uncommon_DESC,"Rolls 2 affixes, incl. 1 attribute.",随机 2 条词条(含 1 属性)。
-EQUIP_gear_weapon_rare_NAME,Rare Weapon,稀有·武器
+EQUIP_gear_weapon_rare_NAME,Officer's Charged Revolver,军官蓄能左轮
 EQUIP_gear_weapon_rare_DESC,"Rolls 3 affixes, incl. 1 attribute.",随机 3 条词条(含 1 属性)。
-EQUIP_gear_hands_common_NAME,Common Handgear,普通·手部装备
+EQUIP_gear_hands_common_NAME,Scavenger Gauntlet,拾荒者护手
 EQUIP_gear_hands_common_DESC,"Rolls 1 affix (an attribute).",随机 1 条词条(1 属性)。
-EQUIP_gear_hands_uncommon_NAME,Uncommon Handgear,罕见·手部装备
+EQUIP_gear_hands_uncommon_NAME,Ranger Gauntlet,游骑兵护手
 EQUIP_gear_hands_uncommon_DESC,"Rolls 2 affixes, incl. 1 attribute.",随机 2 条词条(含 1 属性)。
-EQUIP_gear_hands_rare_NAME,Rare Handgear,稀有·手部装备
+EQUIP_gear_hands_rare_NAME,Officer's Power Gauntlet,军官动力护手
 EQUIP_gear_hands_rare_DESC,"Rolls 3 affixes, incl. 1 attribute.",随机 3 条词条(含 1 属性)。
-EQUIP_gear_accessory_common_NAME,Common Trinket,普通·饰品
+EQUIP_gear_accessory_common_NAME,Scavenger Fang Necklace,拾荒者牙链
 EQUIP_gear_accessory_common_DESC,"Rolls 1 affix (an attribute).",随机 1 条词条(1 属性)。
-EQUIP_gear_accessory_uncommon_NAME,Uncommon Trinket,罕见·饰品
+EQUIP_gear_accessory_uncommon_NAME,Ranger Dog Tags,游骑兵铭牌
 EQUIP_gear_accessory_uncommon_DESC,"Rolls 2 affixes, incl. 1 attribute.",随机 2 条词条(含 1 属性)。
-EQUIP_gear_accessory_rare_NAME,Rare Trinket,稀有·饰品
+EQUIP_gear_accessory_rare_NAME,Officer's Core Medal,军官核心勋章
 EQUIP_gear_accessory_rare_DESC,"Rolls 3 affixes, incl. 1 attribute.",随机 3 条词条(含 1 属性)。

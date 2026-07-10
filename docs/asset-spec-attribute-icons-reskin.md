@@ -1,4 +1,4 @@
-# Asset Spec — Attribute icon re-skin (Luck / Intelligence / Constitution)
+# Asset Spec — Attribute icon color palette (Five attributes)
 
 **Owner:** Codex (ADR-0005 — Codex generates all PNGs under `**/assets/images/**`).
 **Status:** Requested 2026-07-01.
@@ -8,18 +8,18 @@
 
 The 5 five-attribute icons live at `battle_scene/assets/images/ui/attributes/*.png`
 (**64×64**, flat cartoon, one clear shape + one main color + thick dark outline,
-transparent background). Three are being re-skinned to new subjects/colors so all five
-read as a distinct-color set:
+transparent background). The active UI07 stat icons and legacy fallbacks should keep
+distinct main colors so all five read as a clear set:
 
 | Attribute | Current icon | New icon | Main color |
 |---|---|---|---|
-| Strength (力量) | orange muscle arm | *unchanged* | orange |
-| Charm (魅力) | pink star face | *unchanged* | pink |
+| Strength (力量) | orange muscle arm | red-tinted existing silhouette | **red** |
+| Charm (魅力) | pink star face | pink / rose existing silhouette | **pink / rose** |
 | **Luck (幸运)** | gold horseshoe + star | **four-leaf clover** | **green** |
 | **Intelligence (智力)** | purple gear-brain | **brain** (drop the gear) | **blue** |
 | **Constitution (体质)** | blue chest plate | **shield** | **gold / brass** |
 
-Colors are chosen so the five stay mutually distinct: orange / pink / green / blue / gold.
+Colors are chosen so the five stay mutually distinct: red / gold / blue / green / pink.
 
 ## Deliverables — 3 PNGs, **64×64**, transparent, overwrite in place
 

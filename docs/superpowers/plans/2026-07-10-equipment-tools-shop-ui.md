@@ -14,7 +14,7 @@
 - 通用装备系列固定为 `拾荒者 / 游骑兵 / 军官`，不新增 `set_id` 或套装效果。
 - 工具没有稀有度；商店统一使用 `TOOL_ACCENT`。
 - 顶部栏继续保持一个工具格和 48×48 无框卡组按钮。
-- 15 张装备 PNG 保持 256×256、透明、主体造型/颜色/方向不变。
+- 15 张装备 PNG 保持各文件现有画布尺寸与透明通道，主体造型/颜色/方向不变。
 - 保留工作区既有改动，不提交无关文件或 `.import` / `.uid`。
 
 ---
@@ -210,7 +210,7 @@ git commit --only -m "fix: stabilize tool shop and update deck icon" -- run_syst
 - Generated: `docs/catalog_html/index.html`
 
 **Interfaces:**
-- Consumes: existing 256×256 RGBA equipment art.
+- Consumes: existing RGBA equipment art with per-file canvas dimensions.
 - Produces: identical main connected component with edge-only foreign components cleared.
 
 - [ ] **Step 1: Prove the current edge artifact check fails**
@@ -219,7 +219,7 @@ Analyze alpha-connected components and assert that `hands_common.png` and `hands
 
 - [ ] **Step 2: Remove only edge-connected non-primary components**
 
-Use an 8-neighbor alpha mask, retain the largest subject component and all non-edge components, and zero RGBA only for smaller components touching x/y canvas bounds. Verify every output is still 256×256 RGBA and the main component pixel count is unchanged.
+Use an 8-neighbor alpha mask, retain the largest subject component and all non-edge components, and zero RGBA only for smaller components touching x/y canvas bounds. Verify every output keeps its original dimensions/RGBA mode and the main component pixel count is unchanged.
 
 - [ ] **Step 3: Regenerate catalogs and run all relevant tests**
 
