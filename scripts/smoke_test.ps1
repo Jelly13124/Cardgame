@@ -67,7 +67,7 @@ if ($failures.Count -gt 0) {
 if ($output -match 'DataValidator: all .* passed schema check') {
     Write-Host "[OK] DataValidator: all schemas passed." -ForegroundColor Green
 } else {
-    Write-Host "[WARN] DataValidator did not print 'all passed' — autoload may not have run." -ForegroundColor Yellow
+    Write-Host "[WARN] DataValidator did not print 'all passed' -- autoload may not have run." -ForegroundColor Yellow
     Write-Host $output
     exit 1
 }

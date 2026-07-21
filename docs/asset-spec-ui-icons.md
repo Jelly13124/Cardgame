@@ -52,7 +52,7 @@ a ~44–74px square cell on a dark slot fill, so the silhouette must read at sma
 
 - **PNG with alpha, transparent background**, centered subject, even padding.
 - **NO text / numbers / letters / UI frame baked in.**
-- Style = the locked **Rick and Morty-style Sci-Fi Cartoon Wasteland**: thick dark cartoon
+- Style = the locked **original 2D American-comic sci-fi western**: thick dark cartoon
   outline, 2–3 value cel shading, low texture noise, one or two bright accent glows.
   Match the in-game exemplars (Cowboy Bill, the building art under
   `home/buildings_runtime/`, the existing `relics/*.png` + `ui/attributes/*.png`).

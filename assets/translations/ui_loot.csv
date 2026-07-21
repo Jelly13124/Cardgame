@@ -15,3 +15,4 @@ UI_LOOT_DEFAULT_TITLE,Reward,奖励
 UI_LOOT_BACKPACK_FULL,"Backpack full — left it behind","背包已满 —— 只能放弃"
 UI_LOOT_REROLL,Reroll ({n}),刷新（{n}）
 UI_LOOT_TOOL_SLOTS_FULL,"Tool slots full — left it behind","工具栏已满 —— 只能放弃"
+UI_LOOT_DEMO_SET_SUBTITLE,"Featured {set} set piece — equip 3 pieces to activate its first bonus","本局精选的{set}套装——装备3件即可激活第一层效果"

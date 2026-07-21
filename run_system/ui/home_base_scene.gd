@@ -32,6 +32,7 @@ const BUILDING_ACCENTS := {
 	"outpost": Color(0.62, 0.78, 0.96),
 }
 const HOME_BACKGROUND_PATH := "res://run_system/assets/images/home/home_base_empty_bg.png"
+const FORGE_BACKDROP_PATH := "res://run_system/assets/images/buildings/forge_bg.png"
 const MAP_CANVAS_SIZE := Vector2(1920, 1080)
 ## Grayscale-darken shader for LOCKED building buttons (replaces the old
 ## too-subtle modulate 0.75 dim). Applied as the button's material only — the
@@ -46,6 +47,8 @@ const GROUND_INSET := 12.0
 const HERO_HEADSHOT_PATH := "res://battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_headshot.png"
 const HERO_PORTRAIT_PATH := "res://battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_portrait.png"
 const BASE_HUD_ICON_DIR := "res://run_system/assets/images/home/base_hud/"
+const BOUNTY_BOARD_FRAME := "res://run_system/assets/images/home/base_hud/bounty_board_frame_exact.png"
+const BOUNTY_HEADER_CLIPBOARD := "res://run_system/assets/images/home/base_hud/bounty_header_clipboard.png"
 const CURRENCY_ICON_DIR := "res://run_system/assets/images/home/currency/"
 const CARD_DATA_DIR := "res://battle_scene/card_info/player/"
 ## Locked-gallery slot art: the same card back battle uses (play_card.gd).
@@ -62,17 +65,6 @@ const BUILDING_BADGE_ICONS := {
 	"clinic": "badge_clinic",
 	"market": "badge_market",
 	"outpost": "badge_outpost",
-}
-
-## Tier-pip tint per building (concept 20260708 palette: forge orange / clinic
-## cyan / market purple / outpost green). base_tier_pip is a white template
-## diamond, so a straight modulate carries the color; the baked black outline
-## stays black.
-const PLAQUE_PIP_COLORS := {
-	"forge": Color("#e08830"),
-	"clinic": Color("#3bc7eb"),
-	"market": Color("#a06bd9"),
-	"outpost": Color("#8ce04a"),
 }
 
 ## The A0..A5 buttons inside the difficulty picker popup (rebuilt every open).
@@ -118,9 +110,8 @@ func _ready() -> void:
 ## wiring). Both are guarded against the full-page overlays / popups: ESC doesn't
 ## double-open if a panel is already up and defers to any overlay currently open
 ## (BuildingOverlay owns its own ESC — it backs out to this overview first;
-## TierConfirm/RulesLayer are simple popups without their own ESC handler, so ESC
-## here would otherwise fall through to Settings while one is open — skip in that
-## case too so a stray ESC doesn't stack panels). The character window shouldn't
+## RulesLayer is a simple popup without its own ESC handler, so ESC here would
+## otherwise fall through to Settings while it is open). The character window shouldn't
 ## open under those overlays either, so KEY_I shares the same guard set.
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_I:
@@ -140,11 +131,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		gallery_layer.queue_free()
 		return
-	if (
-		get_node_or_null("TierConfirm") != null
-		or get_node_or_null("RulesLayer") != null
-		or get_node_or_null("DifficultyPopup") != null
-	):
+	if get_node_or_null("RulesLayer") != null or get_node_or_null("DifficultyPopup") != null:
 		return  # let the open popup own ESC (none currently bind it; avoid stacking)
 	get_viewport().set_input_as_handled()
 	_open_pause()
@@ -156,7 +143,6 @@ func _overlay_blocking() -> bool:
 	return (
 		get_node_or_null("PauseLayer") != null
 		or get_node_or_null("BuildingOverlay") != null
-		or get_node_or_null("TierConfirm") != null
 		or get_node_or_null("RulesLayer") != null
 		or get_node_or_null("DifficultyPopup") != null
 		or get_node_or_null("CardGalleryLayer") != null
@@ -452,8 +438,9 @@ func _make_square_icon_button(icon_id: String, tooltip: String, callback: Callab
 ## Bounty board (bottom-left): the held contracts (MetaProgress.active_bounties,
 ## max 3) with live progress. Replaces Codex's mock daily-tasks panel — the
 ## visual shell (panel/header/row language) is Codex's, only the data is real.
-## Contracts are taken (free) at the OUTPOST's bounty shelf; the refresh label
-## shows the time until the shelf's next daily reroll (local midnight).
+## Contracts are taken (free) at the OUTPOST's bounty shelf. This overview keeps
+## only held-contract progress and the Outpost hint. The shelf still refreshes
+## in the data layer; no refresh timer or per-row reward seals are shown here.
 func _add_bounty_board_panel(root: Control) -> void:
 	var panel := PanelContainer.new()
 	panel.name = "BountyBoardPanel"
@@ -462,63 +449,86 @@ func _add_bounty_board_panel(root: Control) -> void:
 	panel.anchor_right = 0.0
 	panel.anchor_bottom = 1.0
 	panel.offset_left = 48.0
-	panel.offset_top = -282.0
-	panel.offset_right = 466.0
+	panel.offset_top = -294.0
+	panel.offset_right = 408.0
 	panel.offset_bottom = -68.0
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	panel.add_theme_stylebox_override("panel", _home_panel_style())
+	panel.add_theme_stylebox_override("panel", _home_bounty_frame_style(BOUNTY_BOARD_FRAME))
 	root.add_child(panel)
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 14)
-	margin.add_theme_constant_override("margin_right", 14)
-	margin.add_theme_constant_override("margin_top", 11)
-	margin.add_theme_constant_override("margin_bottom", 11)
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 23)
+	margin.add_theme_constant_override("margin_top", 15)
+	margin.add_theme_constant_override("margin_bottom", 10)
 	panel.add_child(margin)
 
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 8)
+	box.add_theme_constant_override("separation", 0)
 	margin.add_child(box)
 
 	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 9)
+	header.custom_minimum_size = Vector2(0, 30)
+	header.add_theme_constant_override("separation", 7)
 	box.add_child(header)
-	header.add_child(_make_icon_rect(BASE_HUD_ICON_DIR + "icon_daily_tasks.png", Vector2(28, 28)))
+	header.add_child(_make_icon_rect(BOUNTY_HEADER_CLIPBOARD, Vector2(26, 26)))
 
 	var title := Label.new()
 	title.text = _home_text("悬赏", "BOUNTIES")
-	title.add_theme_font_override("font", T.display_font(600))
-	title.add_theme_font_size_override("font_size", 22)
-	title.add_theme_color_override("font_color", Color(1.0, 0.88, 0.60, 1.0))
-	title.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.85))
-	title.add_theme_constant_override("outline_size", 2)
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.add_theme_font_override("font", T.display_font(650))
+	title.add_theme_font_size_override("font_size", 20)
+	title.add_theme_color_override("font_color", Color("#dbc087"))
+	title.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.72))
+	title.add_theme_constant_override("outline_size", 1)
 	header.add_child(title)
 
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(spacer)
-
-	# Little alarm clock leading the daily-reroll countdown (kit PNG absent → text only).
-	var clock_tex := T.lightline_tex("iconb_clock")
-	if clock_tex != null:
-		header.add_child(_make_lightline_icon(clock_tex, Vector2(18, 18)))
-
-	var refresh := Label.new()
-	refresh.text = _home_text("刷新: %s", "Refresh: %s") % _daily_refresh_time()
-	refresh.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	refresh.add_theme_font_override("font", T.display_font(500))
-	refresh.add_theme_font_size_override("font_size", 16)
-	refresh.add_theme_color_override("font_color", Color(0.72, 0.62, 0.48, 1.0))
-	header.add_child(refresh)
-
-	box.add_child(_daily_divider())
+	var header_gap := Control.new()
+	header_gap.custom_minimum_size = Vector2(0, 4)
+	box.add_child(header_gap)
+	box.add_child(_bounty_divider())
+	var rows_gap := Control.new()
+	rows_gap.custom_minimum_size = Vector2(0, 1)
+	box.add_child(rows_gap)
 
 	var rows := VBoxContainer.new()
 	rows.name = "BountyRows"
-	rows.add_theme_constant_override("separation", 8)
+	rows.custom_minimum_size = Vector2(0, 123)
+	rows.add_theme_constant_override("separation", 0)
 	box.add_child(rows)
 	_bounty_rows_box = rows
 	_fill_bounty_rows()
+	var footer_gap := Control.new()
+	footer_gap.custom_minimum_size = Vector2(0, 8)
+	box.add_child(footer_gap)
+
+	var pickup_row := HBoxContainer.new()
+	pickup_row.name = "BountyPickupHint"
+	pickup_row.custom_minimum_size = Vector2(0, 25)
+	pickup_row.add_theme_constant_override("separation", 7)
+	box.add_child(pickup_row)
+	var pickup_badge := PanelContainer.new()
+	pickup_badge.custom_minimum_size = Vector2(23, 23)
+	pickup_badge.add_theme_stylebox_override(
+		"panel", _home_flat_style(Color(0.025, 0.12, 0.14, 0.96), Color(0.10, 0.78, 0.86, 1.0), 12, 2)
+	)
+	pickup_row.add_child(pickup_badge)
+	var pickup_plus := Label.new()
+	pickup_plus.text = "+"
+	pickup_plus.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pickup_plus.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	pickup_plus.add_theme_font_override("font", T.display_font(700))
+	pickup_plus.add_theme_font_size_override("font_size", 16)
+	pickup_plus.add_theme_color_override("font_color", Color(0.18, 0.84, 0.90, 1.0))
+	pickup_badge.add_child(pickup_plus)
+	var pickup_hint := Label.new()
+	pickup_hint.text = _home_text("新悬赏请进入前哨站领取", "Enter the Outpost to claim new bounties")
+	pickup_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	pickup_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	pickup_hint.add_theme_font_override("font", T.display_font(600))
+	pickup_hint.add_theme_font_size_override("font_size", 14)
+	pickup_hint.add_theme_color_override("font_color", Color("#2fc0cf"))
+	pickup_row.add_child(pickup_hint)
 
 
 ## Repaint just the board's data rows (the panel chrome survives). Connected to
@@ -532,8 +542,8 @@ func _rebuild_bounty_rows() -> void:
 
 
 ## One progress row per held contract, or a single empty-state hint pointing at
-## the Outpost shelf. Reward chip shows the PRIMARY currency (caps first,
-## then scrap) with a trailing "+" when the contract pays out more kinds.
+## the Outpost shelf. Rewards are shown while accepting a contract at the
+## Outpost; this compact overview deliberately shows progress only.
 func _fill_bounty_rows() -> void:
 	var added := 0
 	for entry in MetaProgress.active_bounties:
@@ -545,29 +555,16 @@ func _fill_bounty_rows() -> void:
 			continue
 		var objective_v = data.get("objective", {})
 		var objective: Dictionary = objective_v if typeof(objective_v) == TYPE_DICTIONARY else {}
-		var reward_v = data.get("reward", {})
-		var reward: Dictionary = reward_v if typeof(reward_v) == TYPE_DICTIONARY else {}
 
 		var title := Settings.t("BOUNTY_%s_TITLE" % id, str(data.get("title", id)))
 		var current := int(entry.get("progress", 0))
 		var target := int(objective.get("count", 1))
-
-		var reward_amount := 0
-		var reward_currency := "caps"
-		var reward_parts := 0
-		for cur in ["caps", "scrap"]:
-			var amt := int(reward.get(cur, 0))
-			if amt <= 0:
-				continue
-			reward_parts += 1
-			if reward_amount == 0:
-				reward_amount = amt
-				reward_currency = cur
-		if str(reward.get("equipment", "")) != "":
-			reward_parts += 1
 		_bounty_rows_box.add_child(
 			_make_daily_task_row(
-				title, current, target, reward_amount, reward_currency, reward_parts > 1
+				title,
+				current,
+				target,
+				added == 0
 			)
 		)
 		added += 1
@@ -631,26 +628,32 @@ func _show_home_toast(text: String) -> void:
 	tween.tween_callback(holder.queue_free)
 
 
-## One board row: title + progress bar + reward chip. Codex's daily-task row
-## visuals, extended with a reward currency icon choice + optional "+" suffix
-## (multi-currency contracts show their primary reward plus a "+").
+## One approved concept row: title/count, a full-width progress rail and a
+## hairline divider. The first held bounty carries the orange focus
+## rail; the remaining rows use the concept's cyan rail.
 func _make_daily_task_row(
 	title: String,
 	current: int,
 	target: int,
-	reward: int,
-	reward_currency: String = "caps",
-	reward_plus: bool = false
+	highlighted: bool = false
 ) -> Control:
-	var row := HBoxContainer.new()
-	row.custom_minimum_size = Vector2(0, 43)
-	row.add_theme_constant_override("separation", 10)
+	var row := VBoxContainer.new()
+	row.name = "BountyProgressRow"
+	row.custom_minimum_size = Vector2(0, 41)
+	row.add_theme_constant_override("separation", 0)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
+	var body := HBoxContainer.new()
+	body.custom_minimum_size = Vector2(0, 40)
+	body.add_theme_constant_override("separation", 7)
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(body)
+
 	var text_box := VBoxContainer.new()
+	text_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	text_box.add_theme_constant_override("separation", 3)
-	row.add_child(text_box)
+	text_box.add_theme_constant_override("separation", 2)
+	body.add_child(text_box)
 
 	var top := HBoxContainer.new()
 	text_box.add_child(top)
@@ -658,69 +661,34 @@ func _make_daily_task_row(
 	var name := Label.new()
 	name.text = title
 	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name.add_theme_font_override("font", T.display_font(500))
-	name.add_theme_font_size_override("font_size", 17)
-	name.add_theme_color_override("font_color", Color(0.90, 0.82, 0.66, 1.0))
+	name.add_theme_font_override("font", T.display_font(600))
+	name.add_theme_font_size_override("font_size", 16)
+	name.add_theme_color_override("font_color", Color("#d6bf94"))
 	top.add_child(name)
 
 	var progress_text := Label.new()
 	progress_text.text = "%d/%d" % [current, target]
-	progress_text.add_theme_font_override("font", T.display_font(500))
-	progress_text.add_theme_font_size_override("font_size", 16)
-	progress_text.add_theme_color_override("font_color", Color(0.78, 0.68, 0.52, 1.0))
+	progress_text.add_theme_font_override("font", T.display_font(600))
+	progress_text.add_theme_font_size_override("font_size", 15)
+	progress_text.add_theme_color_override("font_color", Color("#d6bf94"))
 	top.add_child(progress_text)
 
 	var progress := ProgressBar.new()
 	progress.max_value = float(maxi(target, 1))
 	progress.value = float(current)
 	progress.show_percentage = false
-	progress.custom_minimum_size = Vector2(0, 6)
+	progress.custom_minimum_size = Vector2(0, 5)
+	progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	progress.add_theme_stylebox_override(
 		"background",
-		_home_flat_style(Color(0.08, 0.065, 0.045, 0.96), Color(0.12, 0.10, 0.075, 1.0), 2, 1)
+		_home_flat_style(Color("#36332e"), Color("#36332e"), 2, 0)
 	)
+	var fill_color := Color("#c77a20") if highlighted else Color("#289ba7")
 	progress.add_theme_stylebox_override(
-		"fill", _home_flat_style(Color(0.54, 0.42, 0.25, 1.0), Color(0.54, 0.42, 0.25, 1.0), 2, 0)
+		"fill", _home_flat_style(fill_color, fill_color, 2, 0)
 	)
 	text_box.add_child(progress)
-
-	var reward_box := PanelContainer.new()
-	reward_box.custom_minimum_size = Vector2(82, 34)
-	reward_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	reward_box.add_theme_stylebox_override(
-		"panel",
-		_home_flat_style(Color(0.10, 0.075, 0.045, 0.96), Color(0.36, 0.27, 0.16, 1.0), 5, 1)
-	)
-	row.add_child(reward_box)
-
-	var reward_margin := MarginContainer.new()
-	reward_margin.add_theme_constant_override("margin_left", 8)
-	reward_margin.add_theme_constant_override("margin_right", 8)
-	reward_margin.add_theme_constant_override("margin_top", 4)
-	reward_margin.add_theme_constant_override("margin_bottom", 4)
-	reward_box.add_child(reward_margin)
-
-	var reward_row := HBoxContainer.new()
-	reward_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	reward_row.add_theme_constant_override("separation", 4)
-	reward_margin.add_child(reward_row)
-
-	var reward_label := Label.new()
-	reward_label.text = str(reward)
-	reward_label.add_theme_font_override("font", T.display_font(600))
-	reward_label.add_theme_font_size_override("font_size", 17)
-	reward_label.add_theme_color_override("font_color", Color(0.94, 0.82, 0.60, 1.0))
-	reward_row.add_child(reward_label)
-	reward_row.add_child(
-		_make_icon_rect(CURRENCY_ICON_DIR + reward_currency + ".png", Vector2(22, 22))
-	)
-	if reward_plus:
-		var plus := Label.new()
-		plus.text = "+"
-		plus.add_theme_font_override("font", T.display_font(600))
-		plus.add_theme_font_size_override("font_size", 15)
-		plus.add_theme_color_override("font_color", Color(0.78, 0.68, 0.52, 1.0))
-		reward_row.add_child(plus)
+	row.add_child(_bounty_divider())
 	return row
 
 
@@ -895,24 +863,20 @@ func _home_text(zh: String, en: String) -> String:
 	return zh if Settings.language == "zh" else en
 
 
-func _daily_refresh_time() -> String:
-	var now := Time.get_datetime_dict_from_system()
-	var seconds: int = (
-		int(now.get("hour", 0)) * 3600 + int(now.get("minute", 0)) * 60 + int(now.get("second", 0))
-	)
-	var left: int = maxi(0, 86400 - seconds)
-	var h := left / 3600
-	var m := (left % 3600) / 60
-	var s := left % 60
-	return "%02d:%02d:%02d" % [h, m, s]
-
-
 func _daily_divider() -> Control:
 	var line := Panel.new()
 	line.custom_minimum_size = Vector2(0, 1)
 	line.add_theme_stylebox_override(
 		"panel", _home_flat_style(Color(0.24, 0.18, 0.10, 0.75), Color(0, 0, 0, 0), 0, 0)
 	)
+	return line
+
+
+func _bounty_divider() -> Control:
+	var line := ColorRect.new()
+	line.custom_minimum_size = Vector2(0, 1)
+	line.color = Color("#302c26")
+	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return line
 
 
@@ -931,6 +895,16 @@ func _home_panel_style() -> StyleBoxFlat:
 	style.shadow_color = Color(0.0, 0.0, 0.0, 0.42)
 	style.shadow_size = 8
 	style.shadow_offset = Vector2(0, 4)
+	return style
+
+
+func _home_bounty_frame_style(path: String) -> StyleBox:
+	var texture := _load_home_texture(path)
+	if texture == null:
+		return _home_panel_style()
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	style.draw_center = true
 	return style
 
 
@@ -1028,12 +1002,12 @@ func _add_building_sprites() -> void:
 		func() -> void: _open_building_screen("outpost")
 	)
 
-	# Plaques stay centered above their tile: plaque_x = tile_x + (tile_w-215)/2,
-	# plaque_y = tile_y - 82 (far pads sit higher, near pads lower).
-	_add_building_plaque("clinic", Rect2(532, 208, 215, 78), tr("UI_BUILD_CLINIC_NAME"))
-	_add_building_plaque("market", Rect2(1147, 218, 215, 78), tr("UI_BUILD_MARKET_NAME"))
-	_add_building_plaque("forge", Rect2(287, 348, 215, 78), tr("UI_BUILD_FORGE_NAME"))
-	_add_building_plaque("outpost", Rect2(1337, 358, 215, 78), tr("UI_BUILD_OUTPOST_NAME"))
+	# One round icon floats above each building. Names, tiers and upgrade controls
+	# live inside the building instead of obscuring the scene overview.
+	_add_building_icon("clinic", Rect2(532, 208, 215, 78))
+	_add_building_icon("market", Rect2(1147, 218, 215, 78))
+	_add_building_icon("forge", Rect2(287, 348, 215, 78))
+	_add_building_icon("outpost", Rect2(1337, 358, 215, 78))
 
 
 ## Giant START button + the compact difficulty button directly above it,
@@ -1121,7 +1095,7 @@ func _refresh_difficulty_button() -> void:
 		_difficulty_button.text = label_text
 
 
-## Modal difficulty picker — same overlay structure as the TierConfirm popup
+## Modal difficulty picker — a lightweight base-HUD popup.
 ## (dim + centered panel on its own CanvasLayer). Unlock gating ported verbatim
 ## from the removed difficulty bar: entries above MetaProgress.max_ascension
 ## (clamped to 5) are disabled; the current pick renders selected. Picking one
@@ -1237,7 +1211,7 @@ func _style_difficulty_button(button: Button, selected: bool, disabled: bool) ->
 
 
 func _add_interactive_building(
-	asset_id: String, rect: Rect2, tooltip: String, callback: Callable
+	asset_id: String, rect: Rect2, _tooltip: String, callback: Callable
 ) -> void:
 	var normal_tex := _load_home_texture("%s%s.png" % [BUILDING_IMAGE_DIR, asset_id])
 	var hover_tex := _load_home_texture("%s%s_hover.png" % [BUILDING_IMAGE_DIR, asset_id])
@@ -1251,7 +1225,9 @@ func _add_interactive_building(
 	button.ignore_texture_size = true
 	button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	button.tooltip_text = tooltip
+	# The separate icon-only medallion owns the facility tooltip. Keep the large
+	# art button tooltip-free so it never lingers above an interior screen.
+	button.tooltip_text = ""
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	# Each building PNG carries different transparent padding, so identical tile
@@ -1273,7 +1249,7 @@ func _add_interactive_building(
 	# desaturation shader (material on the button node only — the lock overlay
 	# below is a sibling, so it keeps its brass color) with a lock badge so it
 	# reads at a glance which ones aren't available. Still clickable — clicking
-	# routes to the unlock confirm. Unlocked buttons keep material = null (every
+	# enters the facility and exposes its inline unlock row. Unlocked buttons keep material = null (every
 	# rebuild creates fresh buttons, so no stale material survives an unlock).
 	if MetaProgress.get_building_tier(asset_id) <= 0:
 		button.material = _get_locked_material()
@@ -1370,283 +1346,59 @@ func _make_click_mask(texture: Texture2D) -> BitMap:
 	return mask
 
 
-## Floating building plaque: circular icon badge + compact name/level plate.
-func _add_building_plaque(building_id: String, rect: Rect2, title: String) -> void:
-	var holder := Control.new()
-	holder.name = "Plaque_%s" % building_id
-	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_set_map_rect(holder, Rect2(rect.position + Vector2(0, -54), rect.size + Vector2(0, 54)))
-	_buildings_root.add_child(holder)
-
-	var tier := MetaProgress.get_building_tier(building_id)
-	var icon_id: String = str(BUILDING_BADGE_ICONS.get(building_id, ""))
-	var medallion_tex := T.lightline_tex("base_medallion")
-
-	# Single lightweight plate (unchanged chrome) — the concept nameplate keeps
-	# ONE thin frame; the medallion + pips below carry the new look.
-	var plaque := PanelContainer.new()
-	plaque.anchor_left = 0.5
-	plaque.anchor_top = 0.0
-	plaque.anchor_right = 0.5
-	plaque.anchor_bottom = 0.0
-	plaque.offset_left = -84.0
-	plaque.offset_top = 62.0
-	plaque.offset_right = 84.0
-	plaque.offset_bottom = 122.0
-	plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	plaque.add_theme_stylebox_override(
-		"panel",
-		_home_flat_style(Color(0.065, 0.052, 0.035, 0.98), Color(0.56, 0.42, 0.22, 1.0), 5, 2)
+## One standalone facility badge above a building. The badge PNG already owns
+## its circular frame, so the invisible Button adds no second ring or medallion.
+## Names, tiers and Scrap upgrade actions are available inside the facility.
+func _add_building_icon(building_id: String, rect: Rect2) -> void:
+	var icon_button := Button.new()
+	icon_button.name = "BuildingIconOnly_%s" % building_id
+	icon_button.focus_mode = Control.FOCUS_NONE
+	icon_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	icon_button.tooltip_text = "%s · %s" % [
+		tr("UI_BUILD_%s_NAME" % building_id.to_upper()),
+		(
+			tr("UI_BUILD_LOCKED")
+			if MetaProgress.get_building_tier(building_id) <= 0
+			else "T%d" % MetaProgress.get_building_tier(building_id)
+		),
+	]
+	var icon_rect := Rect2(
+		rect.position + Vector2((rect.size.x - 84.0) * 0.5, -4.0),
+		Vector2(84.0, 84.0)
 	)
-	holder.add_child(plaque)
+	_set_map_rect(icon_button, icon_rect)
+	var empty_style := StyleBoxEmpty.new()
+	for state in ["normal", "hover", "pressed", "focus"]:
+		icon_button.add_theme_stylebox_override(state, empty_style)
+	_buildings_root.add_child(icon_button)
 
-	var label := Label.new()
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_override("font", T.display_font(600))
-	label.add_theme_font_size_override("font_size", 22)
-	label.add_theme_color_override("font_color", Color(0.96, 0.84, 0.58, 1.0))
-	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.88))
-	label.add_theme_constant_override("outline_size", 3)
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# Bottom line: locked keeps the LOCKED wording; an unlocked tier renders as
-	# building-tinted diamond pips (concept parity) when the kit pip art is
-	# present, else the old "Lv.N" text (silent fallback).
-	var pip_tex := T.lightline_tex("base_tier_pip") if tier > 0 else null
-	if tier <= 0:
-		label.text = "%s\n%s" % [title, tr("UI_BUILD_LOCKED")]
-		plaque.add_child(label)
-	elif pip_tex == null:
-		label.text = "%s\nLv.%d" % [title, tier]
-		plaque.add_child(label)
-	else:
-		label.text = title
-		var content := VBoxContainer.new()
-		content.alignment = BoxContainer.ALIGNMENT_CENTER
-		content.add_theme_constant_override("separation", 3)
-		content.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		plaque.add_child(content)
-		content.add_child(label)
-		var pips := HBoxContainer.new()
-		pips.alignment = BoxContainer.ALIGNMENT_CENTER
-		pips.add_theme_constant_override("separation", 5)
-		pips.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		content.add_child(pips)
-		var pip_color: Color = PLAQUE_PIP_COLORS.get(building_id, Color.WHITE)
-		for _i in range(tier):
-			var pip := _make_lightline_icon(pip_tex, Vector2(16, 16))
-			pip.modulate = pip_color
-			pips.add_child(pip)
+	var icon_id: String = str(BUILDING_BADGE_ICONS.get(building_id, ""))
+	if icon_id != "":
+		var badge := _make_icon_rect(BASE_HUD_ICON_DIR + icon_id + ".png", Vector2(84, 84))
+		badge.set_anchors_preset(Control.PRESET_FULL_RECT)
+		badge.offset_left = 0.0
+		badge.offset_top = 0.0
+		badge.offset_right = 0.0
+		badge.offset_bottom = 0.0
+		badge.modulate = (
+			Color(0.60, 0.60, 0.56, 0.90)
+			if MetaProgress.get_building_tier(building_id) <= 0
+			else Color.WHITE
+		)
+		badge.pivot_offset = Vector2(42.0, 42.0)
+		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon_button.add_child(badge)
+		icon_button.mouse_entered.connect(func() -> void: badge.scale = Vector2(1.05, 1.05))
+		icon_button.mouse_exited.connect(func() -> void: badge.scale = Vector2.ONE)
 
-	# Round medallion base centred on the plaque's LEFT edge, the building badge
-	# inset on top (concept look). Kit medallion absent → the badge keeps its old
-	# spot centred above the plaque, so the plaque never loses its icon.
-	if medallion_tex != null:
-		var medallion := _make_lightline_icon(medallion_tex, Vector2(72, 72))
-		medallion.anchor_left = 0.5
-		medallion.anchor_top = 0.0
-		medallion.anchor_right = 0.5
-		medallion.anchor_bottom = 0.0
-		medallion.offset_left = -120.0
-		medallion.offset_top = 56.0
-		medallion.offset_right = -48.0
-		medallion.offset_bottom = 128.0
-		holder.add_child(medallion)
-		if icon_id != "":
-			var icon := _make_icon_rect(BASE_HUD_ICON_DIR + icon_id + ".png", Vector2(52, 52))
-			icon.anchor_left = 0.5
-			icon.anchor_top = 0.0
-			icon.anchor_right = 0.5
-			icon.anchor_bottom = 0.0
-			icon.offset_left = -110.0
-			icon.offset_top = 66.0
-			icon.offset_right = -58.0
-			icon.offset_bottom = 118.0
-			holder.add_child(icon)
-	elif icon_id != "":
-		var icon := _make_icon_rect(BASE_HUD_ICON_DIR + icon_id + ".png", Vector2(78, 78))
-		icon.anchor_left = 0.5
-		icon.anchor_top = 0.0
-		icon.anchor_right = 0.5
-		icon.anchor_bottom = 0.0
-		icon.offset_left = -39.0
-		icon.offset_top = 0.0
-		icon.offset_right = 39.0
-		icon.offset_bottom = 78.0
-		holder.add_child(icon)
-
-	# Unlock / upgrade lives HERE on the overview (detail pages are services-only,
-	# see building_screen_base). This call got dropped in a plaque rework (6e08d33),
-	# which left tier-ups unreachable once a building was unlocked.
-	_add_tier_button(building_id, rect)
-
-
-## Unlock / upgrade button under a building's floating label — confirms before spending.
-## Unlock spends Scrap, tier-up spends Caps (building_cost_currency picks which).
-## Hidden at max tier. Rebuilt with the plaques on buildings_changed so it stays live.
-## NOT balance-disabled: currency changes (e.g. market convert) don't rebuild plaques,
-## so a balance-based grey-out goes stale — the confirm popup is the affordability gate.
-func _add_tier_button(building_id: String, plaque_rect: Rect2) -> void:
-	var tier := MetaProgress.get_building_tier(building_id)
-	var cost := MetaProgress.next_building_cost(building_id)
-	if cost < 0:
-		return  # maxed (or no unlock cost) → no button
-	var currency := MetaProgress.building_cost_currency(building_id)
-	var zh := Settings.language == "zh"
-	var btn := Button.new()
-	btn.focus_mode = Control.FOCUS_NONE
-	btn.add_theme_font_size_override("font_size", 17)
-	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	T.apply_button_theme(btn)
-	_style_brass_button(btn)  # glass chip (a textured button read muddy over the sky)
-	btn.text = ("解锁" if zh else "Unlock") if tier <= 0 else ("升级" if zh else "Upgrade")
-	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	# Contrast pass: the theme's default grey-brown label was near-invisible on
-	# the plaque — warm gold (UI_HEADER_GOLD #f2c56a) in every state, with a dark
-	# outline so it reads on desert.
-	btn.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
-	btn.add_theme_color_override("font_hover_color", T.UI_HEADER_GOLD.lightened(0.15))
-	btn.add_theme_color_override("font_pressed_color", T.UI_HEADER_GOLD)
-	btn.add_theme_color_override("font_disabled_color", Color(T.UI_HEADER_GOLD, 0.85))
-	btn.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
-	btn.add_theme_constant_override("outline_size", 3)
-	btn.pressed.connect(
+	icon_button.pressed.connect(
 		func() -> void:
 			AudioManager.play_sfx("ui_click")
-			_show_tier_confirm(building_id)
-	)
-	# Cost shown as amount+icon, overlaid on the button's right side (verb text
-	# stays as btn.text on the left). Icon = the currency this action spends
-	# (scrap for unlock, caps for tier-up).
-	var badge := T.overlay_cost_badge(cost, currency, 15, 18, -10, -110)
-	# Match the verb's gold on the cost number (the badge keeps its currency icon).
-	if badge.get_child_count() > 0 and badge.get_child(0).has_meta("amount_label"):
-		var amount_lbl := badge.get_child(0).get_meta("amount_label") as Label
-		if amount_lbl != null:
-			amount_lbl.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
-	btn.add_child(badge)
-	var bw := 196.0
-	var br := Rect2(
-		plaque_rect.position.x + plaque_rect.size.x * 0.5 - bw * 0.5,
-		plaque_rect.position.y + plaque_rect.size.y - 4,
-		bw,
-		40
-	)
-	_set_map_rect(btn, br)
-	_buildings_root.add_child(btn)
-
-
-## Confirmation popup for an unlock/upgrade. Confirm spends Scrap (unlock) or Caps
-## (tier-up) via MetaProgress (→ its currency + buildings signals → the overview
-## rebuilds with the new tier).
-func _show_tier_confirm(building_id: String) -> void:
-	if get_node_or_null("TierConfirm") != null:
-		return  # a confirm popup is already open
-	var tier := MetaProgress.get_building_tier(building_id)
-	var cost := MetaProgress.next_building_cost(building_id)
-	if cost < 0:
-		return  # already at max tier — nothing to offer
-	var currency := MetaProgress.building_cost_currency(building_id)
-	var balance := MetaProgress.scrap if currency == "scrap" else MetaProgress.caps
-	# NOTE: do NOT early-return when balance < cost — that silently ate the click
-	# (fresh saves have 0 of everything, so locked buildings felt dead). Show the
-	# popup with a disabled Confirm + a "not enough" hint instead.
-	var affordable := balance >= cost
-	var zh := Settings.language == "zh"
-	var is_unlock := tier <= 0
-	var bname := tr("UI_BUILD_%s_NAME" % building_id.to_upper())
-
-	var layer := CanvasLayer.new()
-	layer.name = "TierConfirm"
-	layer.layer = 155
-	add_child(layer)
-	var dim := ColorRect.new()
-	dim.color = Color(0.0, 0.0, 0.0, 0.62)
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.mouse_filter = Control.MOUSE_FILTER_STOP
-	layer.add_child(dim)
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	layer.add_child(center)
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(470, 0)
-	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
-	center.add_child(panel)
-	var m := MarginContainer.new()
-	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		m.add_theme_constant_override(s, 28)
-	panel.add_child(m)
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 18)
-	m.add_child(box)
-
-	var msg := Label.new()
-	msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	if is_unlock:
-		msg.text = ("解锁「%s」?" if zh else 'Unlock "%s"?') % bname
-	else:
-		var t2 := tier + 1
-		msg.text = ("把「%s」升级到 T%d?" if zh else 'Upgrade "%s" to T%d?') % [bname, t2]
-	msg.add_theme_font_size_override("font_size", 22)
-	msg.add_theme_color_override("font_color", Color(1.0, 0.93, 0.78))
-	box.add_child(msg)
-
-	# Cost as amount+icon (the currency this action spends), centered under the question.
-	var cost_row := T.currency_row(cost, currency, 20, 22, "花费:" if zh else "Cost:")
-	cost_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_child(cost_row)
-
-	# Localized currency word for the shortfall hint (icon already shown above).
-	var cur_word := (
-		("废料" if currency == "scrap" else "瓶盖")
-		if zh
-		else ("Scrap" if currency == "scrap" else "Caps")
-	)
-	if not affordable:
-		var short := Label.new()
-		short.text = (
-			("%s不足(还差 %d)" if zh else "Not enough %s (%d more needed)")
-			% ([cur_word, cost - balance] if zh else [cur_word, cost - balance])
-		)
-		short.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		short.add_theme_font_size_override("font_size", 15)
-		short.add_theme_color_override("font_color", Color(0.9, 0.45, 0.35))
-		box.add_child(short)
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_child(row)
-	var yes := Button.new()
-	yes.text = "确认" if zh else "Confirm"
-	yes.custom_minimum_size = Vector2(150, 46)
-	yes.focus_mode = Control.FOCUS_NONE
-	T.apply_button_theme(yes)
-	if not affordable:
-		yes.disabled = true
-		yes.tooltip_text = ("%s不足" % cur_word) if zh else ("Not enough %s" % cur_word)
-	yes.pressed.connect(
-		func() -> void:
-			AudioManager.play_sfx("upgrade")
-			if is_unlock:
-				MetaProgress.unlock_building(building_id)
+			if building_id == "forge":
+				_open_forge_windows()
 			else:
-				MetaProgress.upgrade_building(building_id)
-			layer.queue_free()
+				_open_building_screen(building_id)
 	)
-	row.add_child(yes)
-	var no := Button.new()
-	no.text = "取消" if zh else "Cancel"
-	no.custom_minimum_size = Vector2(150, 46)
-	no.focus_mode = Control.FOCUS_NONE
-	T.apply_button_theme(no)
-	no.pressed.connect(
-		func() -> void:
-			AudioManager.play_sfx("ui_back")
-			layer.queue_free()
-	)
-	row.add_child(no)
 
 
 func _set_map_rect(control: Control, rect: Rect2) -> void:
@@ -1841,16 +1593,10 @@ func _load_building_texture(building_id: String) -> Texture2D:
 	return null
 
 
-## Open a building's screen as a full-rect overlay child. Phase 1 swaps in
-## per-building subclasses of BUILDING_SCREEN_BASE; for now every tile opens the
-## shared base screen (real unlock/upgrade buttons, placeholder content).
+## Open a building's screen as a full-rect overlay child. Locked facilities open
+## too: their interior tier panel owns the unlock action and keeps services hidden.
 func _open_building_screen(building_id: String) -> void:
 	if get_node_or_null("BuildingOverlay") != null:
-		return
-	if MetaProgress.get_building_tier(building_id) <= 0:
-		# Locked: the unlock action moved to the overview — show its confirm popup
-		# instead of opening an empty services page.
-		_show_tier_confirm(building_id)
 		return
 	# Convention: load run_system/ui/buildings/<id>_screen.gd (a BUILDING_SCREEN_BASE
 	# subclass) if it exists, else fall back to the shared base (placeholder content).
@@ -2259,20 +2005,38 @@ func _open_stash_window() -> void:
 ## BuildingOverlay: the ForgeWindow (560 wide) opens on the LEFT beside the
 ## base-mode CharacterWindow (700 wide) on the RIGHT, so stash gear drags from
 ## the character window straight onto the forge bench (Diablo-style). A locked
-## forge still routes to the unlock confirm like every other building. Windows
+## forge opens its own inline unlock panel, with forge services hidden. Windows
 ## already open are brought to front, never duplicated (positions are set AFTER
 ## WindowLayer.open(), which centers by default).
 func _open_forge_windows() -> void:
-	if MetaProgress.get_building_tier("forge") <= 0:
-		_show_tier_confirm("forge")
-		return
 	var wl = load("res://run_system/ui/window/window_layer.gd").ensure(self)
+	var backdrop := wl.get_node_or_null("ForgeBackdrop") as TextureRect
+	if backdrop == null:
+		backdrop = TextureRect.new()
+		backdrop.name = "ForgeBackdrop"
+		backdrop.texture = load(FORGE_BACKDROP_PATH)
+		backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		backdrop.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+		backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
+		backdrop.offset_left = 0.0
+		backdrop.offset_top = 0.0
+		backdrop.offset_right = 0.0
+		backdrop.offset_bottom = 0.0
+		wl.add_child(backdrop)
+		wl.move_child(backdrop, 0)
 	var fw = wl.get_node_or_null("ForgeWindow")
 	if fw == null or fw.is_queued_for_deletion():
 		fw = load("res://run_system/ui/window/forge_window.gd").new()
 		fw.name = "ForgeWindow"
 		wl.open(fw)
 		fw.position = Vector2(120, 140)  # forge on the LEFT
+		fw.tree_exited.connect(
+			func() -> void:
+				if is_instance_valid(backdrop):
+					backdrop.queue_free()
+		)
 	else:
 		wl.bring_to_front(fw)
 	var cw = wl.get_node_or_null("CharacterWindow")

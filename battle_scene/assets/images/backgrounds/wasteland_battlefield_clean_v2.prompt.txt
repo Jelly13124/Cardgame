@@ -1,0 +1,4 @@
+16:9 1920x1080 2D game battle background for a roguelike deckbuilder.
+Clean STS2-like combat backdrop: open alien western desert, no foreground pipe,
+no characters, no UI, no text, very clean center play area, sparse edge props,
+muted tan/ochre palette, thick dark 2D American comic outlines, broad cel shading.

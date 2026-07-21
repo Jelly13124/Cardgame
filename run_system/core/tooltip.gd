@@ -14,6 +14,8 @@ const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const MAX_WIDTH := 320.0
 const PADDING := 10
 const OFFSET_FROM_ANCHOR := Vector2(0, -12)  # lift above anchor
+const TOOLTIP_TEXT_META := &"global_tooltip_text"
+const TOOLTIP_BOUND_META := &"global_tooltip_bound"
 
 var _layer: CanvasLayer
 var _panel: PanelContainer
@@ -90,6 +92,34 @@ func _process(_dt: float) -> void:
 		hide()
 
 
+## Bind one Control to this project-owned rich tooltip. This deliberately clears
+## Control.tooltip_text so Godot's native black tooltip can never appear on top
+## of the lightline UI. Rebinding only updates the text; signal hooks are added
+## once. owner_id keeps stale mouse/tree exits from hiding a newer tooltip.
+func bind_hover(control: Control, text: String) -> void:
+	if control == null:
+		return
+	control.tooltip_text = ""
+	control.set_meta(TOOLTIP_TEXT_META, text)
+	if bool(control.get_meta(TOOLTIP_BOUND_META, false)):
+		return
+	control.set_meta(TOOLTIP_BOUND_META, true)
+	var owner_id := control.get_instance_id()
+	control.mouse_entered.connect(_show_bound_hover.bind(weakref(control), owner_id))
+	control.mouse_exited.connect(hide_if_owner.bind(owner_id))
+	control.tree_exited.connect(hide_if_owner.bind(owner_id))
+
+
+func _show_bound_hover(control_ref: WeakRef, owner_id: int) -> void:
+	var control := control_ref.get_ref() as Control
+	if control == null or not control.is_inside_tree():
+		return
+	var text := str(control.get_meta(TOOLTIP_TEXT_META, ""))
+	if text.is_empty():
+		return
+	show(text, control.global_position + Vector2(control.size.x * 0.5, 0), owner_id)
+
+
 ## Show tooltip with `text`. If `anchor_global_pos` is Vector2.ZERO the
 ## tooltip follows the mouse; otherwise it anchors above that position.
 ## `owner_id` is the calling node's instance_id — pass it so hide_if_owner
@@ -150,10 +180,13 @@ func _position_panel(anchor: Vector2) -> void:
 func _measure_text_width(text: String) -> float:
 	# Approximate — RichTextLabel's fit_content handles real wrapping.
 	var longest_line := 0
+	var bbcode_pattern := RegEx.new()
+	bbcode_pattern.compile("\\[[^\\]]+\\]")
 	for line in text.split("\n"):
-		var stripped := line.replace("[b]", "").replace("[/b]", "").replace("[i]", "").replace(
-			"[/i]", ""
-		)
+		# Strip every BBCode tag, including parameterized tags such as
+		# [color=#9fd0ff]. Counting those control characters made rich equipment
+		# and tool hints hit MAX_WIDTH even when their visible text was short.
+		var stripped := bbcode_pattern.sub(line, "", true)
 		if stripped.length() > longest_line:
 			longest_line = stripped.length()
 	return float(longest_line) * 8.5  # rough px-per-char at 16pt

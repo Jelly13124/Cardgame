@@ -26,7 +26,8 @@ static func format_name_localized(status_name: String) -> String:
 
 
 const STATUS_COLORS = {
-	"bleed": Color(1.0, 0.30, 0.37),
+	"short_circuit": Color(0.20, 0.92, 1.0),
+	"burn": Color(1.0, 0.48, 0.18),
 	"weak": Color(0.7, 0.5, 0.9),
 	"vulnerable": Color(0.95, 0.45, 0.2),
 	"stun": Color(0.95, 0.95, 0.3),
@@ -38,13 +39,14 @@ const STATUS_COLORS = {
 	"feel_no_pain": Color(0.55, 0.80, 0.95),
 	"hot_streak": Color(1.0, 0.82, 0.3),
 	"all_in": Color(1.0, 0.45, 0.25),
-	"hemorrhage": Color(0.85, 0.15, 0.25),
+	"detonation_protocol": Color(0.20, 0.92, 1.0),
 	"covering_reload": Color(0.55, 0.78, 0.95),
 	"bullet": Color(1.0, 0.78, 0.35),
 }
 
 const STATUS_LABELS = {
-	"bleed": "Bl",
+	"short_circuit": "SC",
+	"burn": "B",
 	"weak": "W",
 	"vulnerable": "V",
 	"stun": "⚡",
@@ -56,7 +58,7 @@ const STATUS_LABELS = {
 	"feel_no_pain": "¤",
 	"hot_streak": "HS",
 	"all_in": "AI",
-	"hemorrhage": "Hm",
+	"detonation_protocol": "DP",
 	"covering_reload": "CR",
 	"bullet": "●",
 }
@@ -65,7 +67,9 @@ const STATUS_ICON_DIR := "res://battle_scene/assets/images/ui/status/"
 const STATUS_ICON_SIZE := 30.0
 
 const STATUS_DESCRIPTIONS = {
-	"bleed":
+	"short_circuit":
+	"Stored charge. It does not deal damage or decay until a card detonates or removes it.",
+	"burn":
 	"Take damage equal to stacks at the start of your turn, then stacks are halved (rounded down).",
 	"weak": "Outgoing attack damage reduced 25% per stack. Decays 1 per turn.",
 	"vulnerable": "Incoming attack damage increased 50% per stack. Decays 1 per turn.",
@@ -79,7 +83,7 @@ const STATUS_DESCRIPTIONS = {
 	"feel_no_pain": "Whenever a card is Exhausted, gain stacks Block. Persistent.",
 	"hot_streak": "Whenever you Crit, gain 2 gold. Persistent.",
 	"all_in": "Your Crits deal double damage, but non-Crit attacks deal 0. Persistent.",
-	"hemorrhage": "Your Bleed damage can Crit. Persistent.",
+	"detonation_protocol": "Your Short Circuit detonations can Crit. Persistent.",
 	"covering_reload": "Whenever you Reload, gain 3 Block. Persistent.",
 	"bullet":
 	"Ammo for attacks (double-fire clip). 1 at the start of each turn, max 1; spent by attacking, restored by Reload.",
@@ -114,29 +118,25 @@ func has_status(status_name: String) -> bool:
 
 func on_turn_start(entity: Node) -> void:
 	var changed := false
-	if has_status("bleed"):
-		var dmg: int = _statuses["bleed"]
-		# Hemorrhage power: the PLAYER's Bleed on enemies can Crit. The player's own
-		# Bleed (enemy-applied) does not — the player entity is in "player_entity".
-		if entity and not entity.is_in_group("player_entity"):
-			var tree = entity.get_tree()
-			var pl = tree.get_first_node_in_group("player_entity") if tree else null
-			if (
-				pl
-				and pl.has_method("get_status_stacks")
-				and pl.get_status_stacks("hemorrhage") > 0
-				and randf() < RunManager.crit_chance()
-			):
-				dmg = int(round(dmg * RunManager.CRIT_MULT))
+	if has_status("burn"):
+		var dmg: int = _statuses["burn"]
 		if entity.has_method("take_damage"):
-			# silent=false → CombatFX floating damage number IS the readout
-			# now that _notify is deleted.
-			entity.take_damage(dmg)
-			AudioManager.play_sfx("bleed")
+			# DoT uses the same ordered feedback/readout, while source="status" keeps
+			# it detached from attack-only triggers such as Thorns.
+			entity.take_damage(
+				dmg,
+				false,
+				{
+					"source": "status",
+					"status": "burn",
+					"critical": false,
+				}
+			)
+			AudioManager.play_sfx("attack_hit", -4.0, 1.18, 0.03)
 		# Halve remaining stacks, rounded down (int division floors for positives).
-		_statuses["bleed"] = _statuses["bleed"] / 2
-		if _statuses["bleed"] <= 0:
-			_statuses.erase("bleed")
+		_statuses["burn"] = _statuses["burn"] / 2
+		if _statuses["burn"] <= 0:
+			_statuses.erase("burn")
 		changed = true
 
 	if has_status("regen"):
@@ -235,10 +235,9 @@ func _canonicalize_status_name(status_name: String) -> String:
 	return status_name.to_lower()
 
 
-## Center-screen yellow status text removed per UX feedback — visual
-## feedback for DoT now lives in CombatFX floating damage numbers (see
-## on_turn_start passing silent=false to take_damage). Kept as a no-op
-## so existing call sites don't error.
+## Center-screen yellow status text removed per UX feedback. DoT uses the local
+## impact, damage number, trailing HP bar, and dedicated sound instead. Kept as a
+## no-op so existing call sites don't error.
 func _notify(_entity: Node, _text: String, _color: Color) -> void:
 	pass
 

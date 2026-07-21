@@ -10,8 +10,8 @@
     },
     {
       "count": 5,
-      "label": "Attack cards apply Bleed 1",
-      "effect": { "type": "attack_apply_status", "status": "bleed", "stacks": 1 }
+      "label": "Attack cards apply Short Circuit 2",
+      "effect": { "type": "attack_apply_status", "status": "short_circuit", "stacks": 2 }
     }
   ]
 }

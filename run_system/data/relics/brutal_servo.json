@@ -1,14 +1,14 @@
 {
   "id": "brutal_servo",
-  "title": "Brutal Servo",
-  "description": "Whenever you apply Bleed, apply 1 additional Bleed.",
+  "title": "Surge Servo",
+  "description": "Whenever you apply Short Circuit, apply 2 additional Short Circuit.",
   "icon": "res://run_system/assets/images/relics/brutal_servo.png",
   "rarity": "uncommon",
   "effects": [
     {
-      "trigger": "on_apply_bleed",
-      "type": "add_bleed",
-      "amount": 1
+      "trigger": "on_apply_short_circuit",
+      "type": "add_short_circuit",
+      "amount": 2
     }
   ]
 }

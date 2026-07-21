@@ -81,11 +81,11 @@ the App ID and the file is ignored.)
 ## Demo scope reminder
 
 The demo is gated by `RunManager.DEMO_BUILD` (`run_system/core/run_manager.gd`):
-- `DEMO_MAX_ACTS = 2` — Acts 1–2; the Act-1 boss offers extract-vs-push, and clearing the Act-2 boss (`ash_warden`) wins the demo.
+- `DEMO_MAX_ACTS = 1` — one 12-floor act; floor 12 is the fixed `rust_titan` boss, and defeating it completes and banks the demo run without an extract-vs-push choice.
 - `DEMO_ALLOWED_HEROES = ["cowboy_bill"]` — only Cowboy Bill in the Warehouse picker.
 
-Flip `DEMO_BUILD = false` to build the full 3-act, all-heroes game from the same
-codebase.
+Flip `DEMO_BUILD = false` to enable the planned full 3-act, all-heroes ruleset
+from the same codebase. That full-game path is not part of the public demo scope.
 
 ## Where Steamworks plugs in later (when an App ID exists)
 
@@ -96,10 +96,18 @@ cloud saves:
    Windows binary, per its install guide. (Per ADR-0005 / project rules, vendored
    addons are not hand-edited.)
 2. Replace `480` in `steam_appid.txt` with the real App ID.
-3. Initialize Steam early (e.g. a `SteamInit` autoload) and guard every call
+3. Add the real store page to `project.godot` so the result-screen CTA becomes
+   visible (it stays hidden while this is absent):
+
+   ```ini
+   [application]
+   config/store_url="https://store.steampowered.com/app/<REAL_APP_ID>/<slug>/"
+   ```
+
+4. Initialize Steam early (e.g. a `SteamInit` autoload) and guard every call
    behind an `OS.has_feature` / availability check so non-Steam (itch, dev) runs
    still work.
-4. Map achievements to existing run-end events (`RunManager.run_ended`) and the
+5. Map achievements to existing run-end events (`RunManager.run_ended`) and the
    demo-complete screen.
 
 None of that is required to ship a functional demo build — the steps above

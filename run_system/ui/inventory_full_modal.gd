@@ -103,7 +103,7 @@ func _build() -> void:
 	var set_tag := ""
 	var inc_set_id := str(inc_data.get("set_id", ""))
 	if inc_set_id != "":
-		set_tag = "  [%s]" % Settings.t("EQUIP_SET_%s_NAME" % inc_set_id, inc_set_id)
+		set_tag = "  [%s]" % Settings.t("SET_%s_NAME" % inc_set_id, inc_set_id)
 	inc_label.text = "%s%s" % [inc_name, set_tag]
 	incoming_box.add_child(inc_label)
 

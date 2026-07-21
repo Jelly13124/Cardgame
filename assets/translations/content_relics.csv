@@ -4,9 +4,9 @@ RELIC_double_fire_clip_TITLE,Double-Fire Clip,双发弹夹
 
 RELIC_double_fire_clip_DESC,"Your attack cards gain Replay 1 (they fire twice), but you may play only 1 attack card per turn. Adds 2 Reload cards to your deck.","你的攻击牌获得重放 1（攻击两次），但每回合只能打出 1 张攻击牌。往牌组加入 2 张装弹。"
 
-RELIC_serrated_barbs_TITLE,Serrated Barbs,锯齿倒刺
+RELIC_serrated_barbs_TITLE,Arc Spines,电弧尖刺
 
-RELIC_serrated_barbs_DESC,"Your Thorns damage also applies that much Bleed to the attacker.","你的荆棘造成的伤害会对攻击者额外施加等量的流血。"
+RELIC_serrated_barbs_DESC,"Your Thorns damage also applies that much Short Circuit to the attacker.","你的荆棘伤害会对攻击者额外施加等量的短路。"
 
 RELIC_cracked_battery_TITLE,Cracked Battery,破裂电池
 
@@ -16,9 +16,9 @@ RELIC_steel_plating_TITLE,Steel Plating,钢制镀层
 
 RELIC_steel_plating_DESC,"At the start of your first turn each combat, gain 6 Block.",每场战斗首个回合开始时，获得6点格挡。
 
-RELIC_sharpened_scrap_TITLE,Sharpened Scrap,磨利废铁
+RELIC_sharpened_scrap_TITLE,Conductive Scrap,导电废铁
 
-RELIC_sharpened_scrap_DESC,Your attack cards apply 1 Bleed to the target.,你的攻击牌对目标施加 1 层流血。
+RELIC_sharpened_scrap_DESC,Your attack cards apply 2 Short Circuit to the target.,你的攻击牌对目标施加 2 层短路。
 
 RELIC_signal_jammer_TITLE,Signal Jammer,信号干扰器
 
@@ -82,9 +82,9 @@ RELIC_thorn_harness_TITLE,"Thorn Harness","尖刺挽具"
 
 RELIC_thorn_harness_DESC,"At the start of combat, gain 3 Thorns.","战斗开始时，获得 3 层荆棘。"
 
-RELIC_brutal_servo_TITLE,"Brutal Servo","残暴伺服"
+RELIC_brutal_servo_TITLE,"Surge Servo","浪涌伺服"
 
-RELIC_brutal_servo_DESC,"Whenever you apply Bleed, apply 1 additional Bleed.",每当你施加流血时，额外施加 1 层流血。
+RELIC_brutal_servo_DESC,"Whenever you apply Short Circuit, apply 2 additional Short Circuit.",每当你施加短路时，额外施加 2 层短路。
 
 RELIC_bulwark_plating_TITLE,"Bulwark Plating","壁垒镀装"
 

@@ -35,7 +35,7 @@ Colors are chosen so the five stay mutually distinct: red / gold / blue / green 
 - **ONE clear silhouette, ONE main color** + the thick dark cartoon outline; 2–3 value cel
   shading; low texture noise; at most one small bright accent glow.
 - **NO text / number / letter / UI frame / background** baked in.
-- Style = the locked **Rick and Morty-style Sci-Fi Cartoon Wasteland** (match Cowboy Bill + the
+- Style = the locked **original 2D American-comic sci-fi western** (match Cowboy Bill + the
   existing `ui/attributes/strength.png` & `charm.png` treatment). 64×64 is an output
   contract only — never pixel art.
 

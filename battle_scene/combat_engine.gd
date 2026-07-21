@@ -17,7 +17,6 @@ const ATTRIBUTE_COLORS = {
 
 const MUZZLE_FLASH_TEX = preload("res://battle_scene/assets/images/fx/gunshot/muzzle_flash.png")
 const BULLET_TEX = preload("res://battle_scene/assets/images/fx/gunshot/bullet.png")
-const IMPACT_TEX = preload("res://battle_scene/assets/images/fx/gunshot/impact.png")
 const PLAYER_GUNSHOT_WINDUP_SECONDS := 0.22
 
 @onready var main = get_parent()
@@ -33,15 +32,19 @@ func declare_victory() -> void:
 
 ## `preview` = true for the targeting damage preview (called every frame while
 ## aiming). Preview must be side-effect-free: it reads the predicted number but
-## must NOT consume Deadeye's once-per-turn crit, play the crit SFX/banner, grant
+## must NOT consume Deadeye's once-per-turn crit, mark feedback as critical, grant
 ## Hot Streak gold, or trigger Ricochet Loader. Real resolution passes false.
 func calculate_attack_damage(
-	base_damage: int, attacker: Node, defender: Node, preview: bool = false
+	base_damage: int,
+	attacker: Node,
+	defender: Node,
+	preview: bool = false,
+	feedback_tags: Dictionary = {}
 ) -> int:
 	var modified_base = base_damage
 	if main and main.has_method("modify_player_attack_damage") and attacker == main.player:
 		modified_base = main.modify_player_attack_damage(modified_base, attacker, defender)
-		modified_base = _apply_player_crit(modified_base, preview)
+		modified_base = _apply_player_crit(modified_base, preview, feedback_tags)
 
 	var outgoing_mult := 1.0
 	var incoming_mult := 1.0
@@ -56,7 +59,9 @@ func calculate_attack_damage(
 ## mechanic (RunManager.crit_chance). Powers (player statuses) modify it:
 ##   all_in     → crits deal 2x (not 1.5x) AND non-crit attacks deal 0
 ##   hot_streak → gain 2 gold on each crit
-func _apply_player_crit(damage: int, preview: bool = false) -> int:
+func _apply_player_crit(
+	damage: int, preview: bool = false, feedback_tags: Dictionary = {}
+) -> int:
 	if damage <= 0:
 		return damage
 	var p = main.player
@@ -80,14 +85,12 @@ func _apply_player_crit(damage: int, preview: bool = false) -> int:
 		var mult := 2.0 if all_in else float(RunManager.CRIT_MULT)
 		if not all_in and main.relic_effect_system:
 			mult = main.relic_effect_system.crit_mult(mult)
-		# Side effects (sound, banner, Hot Streak gold, Ricochet Loader's free Reload)
+		# Side effects (feedback tag, Hot Streak gold, Ricochet Loader's free Reload)
 		# belong to the real attack only — never the per-frame preview.
 		if not preview:
+			feedback_tags["critical"] = true
 			if has_power and p.get_status_stacks("hot_streak") > 0:
 				RunManager.add_gold(2)
-			AudioManager.play_sfx("crit")
-			if main.has_method("show_notification"):
-				main.show_notification("CRIT!", Color(1, 0.85, 0.2))
 			if main.relic_effect_system:
 				main.relic_effect_system.on_player_crit(p)
 		return int(round(damage * mult))
@@ -124,16 +127,18 @@ func apply_thorns_reflection(attacker: Node, defender: Node) -> void:
 		and is_instance_valid(attacker)
 		and attacker.has_method("take_damage")
 	):
-		attacker.take_damage(thorns)
-		# Relic (thorn_bleed): the PLAYER's Thorns also apply equal Bleed to the
+		attacker.take_damage(
+			thorns, false, {"source": "thorns", "heavy": false, "critical": false}
+		)
+		# Relic (Arc Spines): the PLAYER's Thorns also apply equal Short Circuit to the
 		# attacker. Only fires for the player's own Thorns (defender == player).
 		if (
 			defender == main.player
 			and main.relic_effect_system
-			and main.relic_effect_system.thorns_apply_bleed()
+			and main.relic_effect_system.thorns_apply_short_circuit()
 			and attacker.has_method("add_status")
 		):
-			attacker.add_status("bleed", thorns)
+			attacker.add_status("short_circuit", thorns)
 		# Thorns decays on trigger (not per turn): lose 1 stack each time it reflects.
 		var ss = defender.get("status_system")
 		if ss:
@@ -196,7 +201,7 @@ func _resolve_card_once(
 		# An earlier effect (or DOT) may have killed and freed the target mid-
 		# resolution; never pass a freed Object into _apply_effect's typed
 		# `target: Node` param. Re-validate each iteration (null == "no target").
-		await _apply_effect(effect, _live_target(target), player, card_mult)
+		await _apply_effect(effect, _live_target(target), player, card_mult, card)
 
 	# Polarity matched bonus — resolved after the normal effects (so any
 	# flip_polarity earlier in this same card has already applied). Reuses every
@@ -207,10 +212,10 @@ func _resolve_card_once(
 		if bonus is Array:
 			for be in bonus:
 				if typeof(be) == TYPE_DICTIONARY:
-					await _apply_effect(be, _live_target(target), player, card_mult)
+					await _apply_effect(be, _live_target(target), player, card_mult, card)
 
 	# Relic: an attack card that landed on a target fires on-attack relics
-	# (sharpened_scrap → Bleed on the struck enemy).
+	# (Conductive Scrap → Short Circuit on the struck enemy).
 	if type == "attack" and _live_target(target) and main.relic_effect_system:
 		main.relic_effect_system.on_player_attack(target)
 
@@ -224,7 +229,55 @@ func _replay_count(card: Control, type: String) -> int:
 	return n
 
 
-func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: float = 1.0) -> void:
+func _feedback_tags_for(effect: Dictionary) -> Dictionary:
+	return {
+		"source": "player",
+		"critical": false,
+		"heavy": bool(effect.get("heavy", false)),
+	}
+
+
+func _consume_short_circuit(target: Node) -> int:
+	if (
+		target == null
+		or not is_instance_valid(target)
+		or not target.has_method("get_status_stacks")
+	):
+		return 0
+	var stacks := int(target.get_status_stacks("short_circuit"))
+	if stacks <= 0:
+		return 0
+	var status_system = target.get("status_system")
+	if status_system:
+		status_system.spend_stacks("short_circuit", stacks, target)
+	return stacks
+
+
+func _short_circuit_detonation(stacks: int, player: Node) -> Dictionary:
+	var damage := stacks
+	var critical := false
+	var protocol_active: bool = (
+		player
+		and player.has_method("get_status_stacks")
+		and player.get_status_stacks("detonation_protocol") > 0
+	)
+	if protocol_active and randf() < RunManager.crit_chance():
+		damage = int(round(float(damage) * RunManager.CRIT_MULT))
+		critical = true
+		if player.get_status_stacks("hot_streak") > 0:
+			RunManager.add_gold(2)
+		if main.relic_effect_system:
+			main.relic_effect_system.on_player_crit(player)
+	return {"damage": damage, "critical": critical}
+
+
+func _apply_effect(
+	effect: Dictionary,
+	target: Node,
+	player: Node,
+	card_mult: float = 1.0,
+	source_card: Control = null
+) -> void:
 	var effect_type: String = effect.get("type", "")
 	var amount: int = int(effect.get("amount", 0))
 	var multiplier: float = float(effect.get("multiplier", 1))
@@ -269,29 +322,28 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				if _check_dodge(target):
 					pass  # attack negated by Dodge
 				else:
-					if main.equipment_set_system and main.current_resolving_card:
+					if main.equipment_set_system and source_card:
 						amount = main.equipment_set_system.modify_card_damage(
-							main.current_resolving_card, amount
+							source_card, amount
 						)
-					var outgoing = calculate_attack_damage(amount, player, target)
-					target.take_damage(outgoing)
-					AudioManager.play_sfx("enemy_hurt")
-					_register_player_attack()
-					main.show_notification(
-						tr("UI_COMBAT_DEALT_DAMAGE").format({"n": outgoing}), Color(1.0, 0.4, 0.3)
+					var feedback_tags := _feedback_tags_for(effect)
+					var outgoing = calculate_attack_damage(
+						amount, player, target, false, feedback_tags
 					)
-					if main.equipment_set_system and main.current_resolving_card:
+					await target.take_damage(outgoing, false, feedback_tags)
+					_register_player_attack()
+					if main.equipment_set_system and source_card:
 						main.equipment_set_system.on_card_damage_resolved(
-							main.current_resolving_card, target
+							source_card, target
 						)
 					apply_thorns_reflection(player, target)
 			else:
 				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
 
 		"gain_block":
-			if main.equipment_set_system and main.current_resolving_card:
+			if main.equipment_set_system and source_card:
 				amount = main.equipment_set_system.modify_card_block(
-					main.current_resolving_card, amount
+					source_card, amount
 				)
 			if player and "status_system" in player and player.status_system:
 				amount = int(amount * player.status_system.get_block_multiplier())
@@ -308,19 +360,27 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			)
 			await get_tree().create_timer(0.2).timeout
 
-		"gain_block_from_bleed":
-			# Coagulate: gain Block equal to total Bleed across all enemies (1:1).
-			var total_bleed := 0
+		"consume_short_circuit_for_block":
+			# Charge Sink: consume every enemy's stored charge and turn it into Block.
+			var total_charge := 0
 			for enemy in main.enemy_container.get_children():
 				if is_instance_valid(enemy) and enemy.has_method("get_status_stacks"):
-					total_bleed += enemy.get_status_stacks("bleed")
-			if player and player.has_method("add_block"):
-				player.add_block(total_bleed)
-				if player.has_method("play_block_pulse"):
-					player.play_block_pulse()
-			main.show_notification(
-				tr("UI_COMBAT_GAIN_BLOCK").format({"n": total_bleed}), Color(0.4, 0.6, 1.0)
-			)
+					total_charge += _consume_short_circuit(enemy)
+			if total_charge <= 0:
+				main.show_notification(tr("UI_COMBAT_NO_SHORT_CIRCUIT"), Color(0.4, 0.85, 1.0))
+			else:
+				var block_amount := total_charge
+				if player and "status_system" in player and player.status_system:
+					block_amount = int(block_amount * player.status_system.get_block_multiplier())
+				if main.relic_effect_system:
+					block_amount = main.relic_effect_system.on_player_gain_block(player, block_amount)
+				if player and player.has_method("add_block"):
+					player.add_block(block_amount)
+					if player.has_method("play_block_pulse"):
+						player.play_block_pulse()
+				main.show_notification(
+					tr("UI_COMBAT_GAIN_BLOCK").format({"n": block_amount}), Color(0.4, 0.6, 1.0)
+				)
 			await get_tree().create_timer(0.2).timeout
 
 		"add_card_to_hand":
@@ -366,23 +426,35 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 
 		"deal_damage_all":
 			var per_target_amount = amount
-			if main.equipment_set_system and main.current_resolving_card:
+			if main.equipment_set_system and source_card:
 				per_target_amount = main.equipment_set_system.modify_card_damage(
-					main.current_resolving_card, per_target_amount
+					source_card, per_target_amount
 				)
 			for enemy in main.enemy_container.get_children():
-				if is_instance_valid(enemy) and enemy.has_method("take_damage"):
+				if (
+					is_instance_valid(enemy)
+					and not enemy.is_queued_for_deletion()
+					and enemy.has_method("take_damage")
+				):
 					if _check_dodge(enemy):
 						continue  # this enemy dodged
-					enemy.take_damage(calculate_attack_damage(per_target_amount, player, enemy))
-					if main.equipment_set_system and main.current_resolving_card:
+					var was_boss := bool(enemy.get("is_boss"))
+					var feedback_tags := _feedback_tags_for(effect)
+					var outgoing := calculate_attack_damage(
+						per_target_amount, player, enemy, false, feedback_tags
+					)
+					await enemy.take_damage(outgoing, false, feedback_tags)
+					if main.equipment_set_system and source_card:
 						main.equipment_set_system.on_card_damage_resolved(
-							main.current_resolving_card, enemy
+							source_card, enemy
 						)
 					apply_thorns_reflection(player, enemy)
+					# Boss death ends the encounter and frees summons on the next frame.
+					# Do not start another awaited hit on an add that is about to disappear.
+					if main.is_game_over or (was_boss and int(enemy.get("health")) <= 0):
+						break
 			_register_player_attack()
 			AudioManager.play_sfx("attack_slash")
-			main.show_notification(tr("UI_COMBAT_ALL_ENEMIES_HIT"), Color(1.0, 0.3, 0.2))
 			await get_tree().create_timer(0.3).timeout
 
 		"scale_damage_by_attacks":
@@ -401,12 +473,12 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				if _check_dodge(target):
 					pass  # attack negated by Dodge
 				else:
-					var outgoing = calculate_attack_damage(dynamic, player, target)
-					target.take_damage(outgoing)
-					_register_player_attack()
-					main.show_notification(
-						tr("UI_COMBAT_DEALT_DAMAGE").format({"n": outgoing}), Color(1.0, 0.4, 0.3)
+					var feedback_tags := _feedback_tags_for(effect)
+					var outgoing = calculate_attack_damage(
+						dynamic, player, target, false, feedback_tags
 					)
+					await target.take_damage(outgoing, false, feedback_tags)
+					_register_player_attack()
 					apply_thorns_reflection(player, target)
 			else:
 				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
@@ -422,21 +494,21 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				if _check_dodge(target):
 					pass  # attack negated by Dodge
 				else:
-					if main.equipment_set_system and main.current_resolving_card:
+					if main.equipment_set_system and source_card:
 						str_dmg = main.equipment_set_system.modify_card_damage(
-							main.current_resolving_card, str_dmg
+							source_card, str_dmg
 						)
 					if card_mult != 1.0:
 						str_dmg = int(str_dmg * card_mult)
-					var outgoing = calculate_attack_damage(str_dmg, player, target)
-					target.take_damage(outgoing)
-					_register_player_attack()
-					main.show_notification(
-						tr("UI_COMBAT_DEALT_DAMAGE").format({"n": outgoing}), Color(1.0, 0.4, 0.3)
+					var feedback_tags := _feedback_tags_for(effect)
+					var outgoing = calculate_attack_damage(
+						str_dmg, player, target, false, feedback_tags
 					)
-					if main.equipment_set_system and main.current_resolving_card:
+					await target.take_damage(outgoing, false, feedback_tags)
+					_register_player_attack()
+					if main.equipment_set_system and source_card:
 						main.equipment_set_system.on_card_damage_resolved(
-							main.current_resolving_card, target
+							source_card, target
 						)
 					apply_thorns_reflection(player, target)
 			else:
@@ -487,9 +559,9 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			var stacks: int = int(effect.get("stacks", 1))
 			# Intelligence boosts every status the player applies (+INT stacks).
 			stacks += int(player.get("intelligence"))
-			# brutal_servo: every Bleed the player applies gets bonus stacks.
-			if status == "bleed" and main.relic_effect_system:
-				stacks += main.relic_effect_system.bleed_bonus_stacks()
+			# Surge Servo: every Short Circuit application gets bonus stacks.
+			if status == "short_circuit" and main.relic_effect_system:
+				stacks += main.relic_effect_system.short_circuit_bonus_stacks()
 			if target and is_instance_valid(target) and target.has_method("add_status"):
 				target.add_status(status, stacks)
 				main.show_notification(
@@ -502,27 +574,31 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
 			await get_tree().create_timer(0.2).timeout
 
-		"apply_bleed_scaled":
-			# Bleed = `amount` + an attribute (default Intelligence). With
-			# "double_if_bleeding": true, the applied stacks DOUBLE when the target
-			# is already Bleeding (Lacerate). Without it, just the scaled value.
+		"apply_short_circuit_scaled":
+			# Short Circuit = `amount` + an attribute (default Intelligence). Voltage
+			# Tear doubles the application when the target already has stored charge.
 			var attr: String = str(effect.get("attr", "intelligence"))
 			var attr_mult: int = int(effect.get("attr_mult", 1))
-			var bstacks: int = int(effect.get("amount", 0)) + int(player.get(attr)) * attr_mult
-			if bool(effect.get("double_if_bleeding", false)):
+			var circuit_stacks: int = (
+				int(effect.get("amount", 0)) + int(player.get(attr)) * attr_mult
+			)
+			if bool(effect.get("double_if_short_circuited", false)):
 				if target and is_instance_valid(target) and target.has_method("get_status_stacks"):
-					if target.get_status_stacks("bleed") > 0:
-						bstacks *= 2
-			# brutal_servo and friends still add their flat bonus.
+					if target.get_status_stacks("short_circuit") > 0:
+						circuit_stacks *= 2
+			# Surge Servo and friends still add their flat bonus.
 			if main.relic_effect_system:
-				bstacks += main.relic_effect_system.bleed_bonus_stacks()
+				circuit_stacks += main.relic_effect_system.short_circuit_bonus_stacks()
 			if target and is_instance_valid(target) and target.has_method("add_status"):
-				target.add_status("bleed", bstacks)
+				target.add_status("short_circuit", circuit_stacks)
 				main.show_notification(
 					tr("UI_COMBAT_APPLIED_STATUS").format(
-						{"status": STATUS_SYS.format_name_localized("bleed"), "n": bstacks}
+						{
+							"status": STATUS_SYS.format_name_localized("short_circuit"),
+							"n": circuit_stacks,
+						}
 					),
-					Color(0.6, 0.9, 0.3)
+					Color(0.2, 0.92, 1.0)
 				)
 			else:
 				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
@@ -546,9 +622,9 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 			var stacks: int = int(effect.get("stacks", 1))
 			# Intelligence boosts every status the player applies (+INT stacks).
 			stacks += int(player.get("intelligence"))
-			# brutal_servo: every Bleed the player applies gets bonus stacks.
-			if status == "bleed" and main.relic_effect_system:
-				stacks += main.relic_effect_system.bleed_bonus_stacks()
+			# Surge Servo: every Short Circuit application gets bonus stacks.
+			if status == "short_circuit" and main.relic_effect_system:
+				stacks += main.relic_effect_system.short_circuit_bonus_stacks()
 			for enemy in main.enemy_container.get_children():
 				if is_instance_valid(enemy) and enemy.has_method("add_status"):
 					enemy.add_status(status, stacks)
@@ -594,27 +670,96 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				)
 			await get_tree().create_timer(0.2).timeout
 
-		"double_target_bleed":
-			# Limit Break (reworked) - double the target's current Bleed stacks.
+		"double_target_short_circuit":
+			# Overload doubles stored charge before the following detonation effect.
 			if (
 				target
 				and is_instance_valid(target)
 				and target.has_method("get_status_stacks")
 				and target.has_method("add_status")
 			):
-				var cur_bleed := int(target.get_status_stacks("bleed"))
-				if cur_bleed > 0:
-					target.add_status("bleed", cur_bleed)
+				var current_charge := int(target.get_status_stacks("short_circuit"))
+				if current_charge > 0:
+					target.add_status("short_circuit", current_charge)
 					main.show_notification(
 						tr("UI_COMBAT_APPLIED_STATUS").format(
-							{"status": STATUS_SYS.format_name_localized("bleed"), "n": cur_bleed}
+							{
+								"status": STATUS_SYS.format_name_localized("short_circuit"),
+								"n": current_charge,
+							}
 						),
-						Color(0.9, 0.2, 0.3)
+						Color(0.2, 0.92, 1.0)
 					)
 				else:
 					main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
 			else:
 				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
+			await get_tree().create_timer(0.2).timeout
+
+		"detonate_short_circuit":
+			var consumed := _consume_short_circuit(target)
+			if (
+				consumed > 0
+				and target
+				and is_instance_valid(target)
+				and target.has_method("take_damage")
+			):
+				var detonation := _short_circuit_detonation(consumed, player)
+				var critical := bool(detonation.get("critical", false))
+				await target.take_damage(
+					int(detonation.get("damage", consumed)),
+					false,
+					{
+						"source": "status",
+						"status": "short_circuit",
+						"critical": critical,
+						"heavy": consumed >= 12,
+					}
+				)
+				AudioManager.play_sfx(
+					"crit" if critical else "attack_hit",
+					-1.5 if critical else -3.0,
+					1.08,
+					0.03
+				)
+			else:
+				main.show_notification(tr("UI_COMBAT_NO_SHORT_CIRCUIT"), Color(0.4, 0.85, 1.0))
+			await get_tree().create_timer(0.2).timeout
+
+		"detonate_short_circuit_all":
+			var detonated_any := false
+			var critical_any := false
+			for enemy in main.enemy_container.get_children():
+				if not is_instance_valid(enemy) or enemy.is_queued_for_deletion():
+					continue
+				var consumed := _consume_short_circuit(enemy)
+				if consumed <= 0 or not enemy.has_method("take_damage"):
+					continue
+				detonated_any = true
+				var detonation := _short_circuit_detonation(consumed, player)
+				var critical := bool(detonation.get("critical", false))
+				critical_any = critical_any or critical
+				await enemy.take_damage(
+					int(detonation.get("damage", consumed)),
+					false,
+					{
+						"source": "status",
+						"status": "short_circuit",
+						"critical": critical,
+						"heavy": consumed >= 12,
+					}
+				)
+				if main.is_game_over:
+					break
+			if detonated_any:
+				AudioManager.play_sfx(
+					"crit" if critical_any else "attack_hit",
+					-1.5 if critical_any else -2.0,
+					1.12,
+					0.03
+				)
+			else:
+				main.show_notification(tr("UI_COMBAT_NO_SHORT_CIRCUIT"), Color(0.4, 0.85, 1.0))
 			await get_tree().create_timer(0.2).timeout
 
 		"deal_damage_block_mult":
@@ -626,18 +771,18 @@ func _apply_effect(effect: Dictionary, target: Node, player: Node, card_mult: fl
 				if _check_dodge(target):
 					pass  # attack negated by Dodge
 				else:
-					if main.equipment_set_system and main.current_resolving_card:
+					if main.equipment_set_system and source_card:
 						block_dmg = main.equipment_set_system.modify_card_damage(
-							main.current_resolving_card, block_dmg
+							source_card, block_dmg
 						)
 					if card_mult != 1.0:
 						block_dmg = int(block_dmg * card_mult)
-					var outgoing = calculate_attack_damage(block_dmg, player, target)
-					target.take_damage(outgoing)
-					_register_player_attack()
-					main.show_notification(
-						tr("UI_COMBAT_DEALT_DAMAGE").format({"n": outgoing}), Color(1.0, 0.4, 0.3)
+					var feedback_tags := _feedback_tags_for(effect)
+					var outgoing = calculate_attack_damage(
+						block_dmg, player, target, false, feedback_tags
 					)
+					await target.take_damage(outgoing, false, feedback_tags)
+					_register_player_attack()
 					apply_thorns_reflection(player, target)
 			else:
 				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
@@ -710,20 +855,9 @@ func _animate_player_gunshot(player: Node, target: Node) -> void:
 	if is_instance_valid(bullet):
 		bullet.queue_free()
 
-	var impact = _make_fx_sprite(IMPACT_TEX, hit, Vector2(0.55, 0.55))
-	var burst = create_tween().set_parallel(true)
-	(
-		burst
-		. tween_property(impact, "scale", Vector2(0.78, 0.78), 0.08)
-		. set_trans(Tween.TRANS_QUAD)
-		. set_ease(Tween.EASE_OUT)
-	)
-	burst.tween_property(impact, "modulate:a", 0.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(
-		Tween.EASE_IN
-	)
-	await burst.finished
-	if is_instance_valid(impact):
-		impact.queue_free()
+	# Contact is handed off immediately to take_damage(). The shared feedback
+	# controller owns the impact burst, hitstop, reaction, and damage number so
+	# the projectile no longer waits through a second legacy impact animation.
 
 
 func _get_player_muzzle_position(player: Node) -> Vector2:

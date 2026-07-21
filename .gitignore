@@ -60,6 +60,11 @@ releases/
 *.zip
 *.tar.gz
 test-extract/ 
+
+# Local Codex/Godot working artifacts
+tmp/
+.planning/
+
 .mcp/
 .gemini_key
 .gemini_art_tmp/

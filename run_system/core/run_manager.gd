@@ -49,9 +49,10 @@ var _run_scrap_counter: int = 0
 
 # Progression
 var current_floor: int = 0
-## Which act (大层) the player is on, 1..ACTS_TOTAL. Each act is its own
-## FLOORS_PER_ACT-tall map ending in a single boss. Reset to 1 by start_new_run,
-## bumped by advance_act() after a mid-act extract "push on".
+## Which act (大层) the player is on, 1..acts_total(). Each act is its own
+## FLOORS_PER_ACT-tall map ending in a single boss. Reset to 1 by start_new_run.
+## advance_act() is retained for the full-game build; the one-act demo cannot
+## advance beyond act 1.
 var current_act: int = 1
 var player_deck: Array = []  # Array of Dictionaries (uid, card_id, bonus_attack, bonus_health)
 
@@ -95,17 +96,18 @@ const GOLD_PER_CAP := 10  # extraction: floor(run gold / GOLD_PER_CAP) → caps
 const STARTING_GOLD := 99  # baseline purse every run begins with (Command Center stacks on top)
 ## Run-scoped caps accrued so far this run (banked on extract/victory only).
 var _run_caps: int = 0
-## Equipment queued (from the base stash) to inject into the backpack at the
-## next start_new_run. Each entry is an equip instance dict (or a legacy item_id
-## String — tolerated via as_equip_instance). Filled by the Phase-3 loadout UI.
+## Equipment physically owned by the base backpack between runs. Each entry is
+## an equip instance dict (or a legacy item_id String, tolerated through
+## as_equip_instance). Unlike the old reference model, these entries are NOT
+## duplicates/references of MetaProgress.stash: dragging between the two moves
+## ownership atomically. MetaProgress persists this array in the active profile.
+## start_new_run consumes it into the real run backpack.
 var pending_loadout: Array = []
 
-## Equipment queued (from the base stash) to start the run already EQUIPPED into
-## a slot. Maps slot (one of EQUIPMENT_SLOTS) → equip instance (or legacy String).
-## Filled by the warehouse loadout screen's drag-to-equip; consumed + cleared in
-## start_new_run AFTER pending_loadout, removing each placed entry from the stash
-## so it is granted exactly once. Run-scoped, NOT persisted — defaults to {} so
-## back-compat callers that never touch it behave exactly as before.
+## Equipment physically worn at the base and carried into the next run already
+## equipped. Maps slot (one of EQUIPMENT_SLOTS) to an owned instance (or legacy
+## String). It is persisted beside pending_loadout and is disjoint from the
+## permanent stash; only an explicit drag into StashWindow stores it there.
 var pending_equipped: Dictionary = {}
 
 ## Compatibility read-only view: the equip item_ids currently in the backpack
@@ -145,7 +147,7 @@ func xp_to_next(lvl: int) -> int:
 
 ## Award XP for a combat win by node type; rolls up level-ups and returns how many
 ## levels were gained (→ that many attribute picks). Intelligence no longer touches
-## XP (it scales tools + Bleed cards now); Charm lowers the wall via xp_to_next.
+## XP (it scales tools + Short Circuit cards now); Charm lowers the wall via xp_to_next.
 func gain_xp(node_type: String) -> int:
 	var base: int = int(XP_PER_KILL.get(node_type, XP_PER_KILL["enemy"]))
 	xp += base
@@ -207,6 +209,17 @@ var _equipment_crit_pct_bonus: int = 0
 ## Cached random-event definitions (loaded from RANDOM_EVENT_DATA_DIR). Each entry
 ## is the parsed JSON Dictionary. Populated by load_random_events().
 var _random_events: Array = []
+## Events already dealt during this run. The one-act demo uses a no-replacement
+## event deck so a route cannot repeat the same vignette.
+var _seen_random_event_ids: Array[String] = []
+
+## Demo-only set onboarding track. Three milestone combat rewards offer distinct
+## pieces from one featured set, ensuring the equipment differentiator becomes
+## playable before the boss instead of existing only as a rare random drop.
+const DEMO_SET_TRACK_FLOORS: Array[int] = [2, 5, 8]
+const DEMO_FEATURED_SET_IDS: Array[String] = ["weak_hunter", "tank_engineer", "warden"]
+var demo_featured_set_id: String = ""
+var demo_set_piece_ids_claimed: Array[String] = []
 
 ## Memoized relic JSON by id. Relic data is immutable at runtime, so get_relic_data
 ## parses each file at most once — the relic effect system reads this per attack hit.
@@ -262,22 +275,20 @@ const ACTS_TOTAL: int = 3
 const ACT_BOSSES: Array[String] = ["rust_titan", "ash_warden", "junkyard_tyrant"]
 ## Floors per act map (indices 0..FLOORS_PER_ACT-1); the top floor is the boss.
 const FLOORS_PER_ACT: int = 12
-## Legacy alias — some pre-act code paths still read BOSS_ROSTER as a fallback.
-const BOSS_ROSTER: Array = ["junkyard_tyrant"]
 
 ## ── DEMO BUILD ────────────────────────────────────────────────────────────
-## Flip DEMO_BUILD to false to restore the full 3-act, all-heroes game. Every
-## demo restriction routes through this one toggle so the full game is one edit
-## away. acts_total() is the demo-aware cap used by is_final_act()/advance_act();
+## Flip DEMO_BUILD to false to restore the planned 3-act, all-heroes game.
+## The public demo is one authored 12-floor act, always ending at Rust Titan.
+## acts_total() is the demo-aware cap used by is_final_act()/advance_act();
 ## DEMO_ALLOWED_HEROES filters the Warehouse hero picker.
 const DEMO_BUILD: bool = true
-const DEMO_MAX_ACTS: int = 2
+const DEMO_MAX_ACTS: int = 1
+const DEMO_BOSS: String = "rust_titan"
 const DEMO_ALLOWED_HEROES: Array[String] = ["cowboy_bill"]
 
 
-## Demo-aware act count. The full game has ACTS_TOTAL acts; the demo caps at
-## DEMO_MAX_ACTS (= 2): the Act-1 boss offers the extract-vs-push choice and
-## clearing the Act-2 boss (the demo's final act) wins the run.
+## Demo-aware act count. The full game has ACTS_TOTAL acts; the demo caps at one
+## act, so its boss victory ends and banks the run without a push-on choice.
 func acts_total() -> int:
 	return DEMO_MAX_ACTS if DEMO_BUILD else ACTS_TOTAL
 
@@ -287,8 +298,11 @@ func is_boss_floor(floor_idx: int) -> bool:
 	return floor_idx == FLOORS_PER_ACT - 1
 
 
-## The boss enemy id for the act the player is currently on.
+## The boss enemy id for the act the player is currently on. Demo selection is
+## explicit so stale act state can never substitute a later full-game boss.
 func current_act_boss() -> String:
+	if DEMO_BUILD:
+		return DEMO_BOSS
 	var idx: int = clampi(current_act - 1, 0, ACT_BOSSES.size() - 1)
 	return ACT_BOSSES[idx]
 
@@ -696,18 +710,23 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	pending_attr_points = 0
 	reward_rerolls = 0
 	run_started_msec = Time.get_ticks_msec()
+	_seen_random_event_ids.clear()
+	demo_set_piece_ids_claimed.clear()
+	demo_featured_set_id = (
+		DEMO_FEATURED_SET_IDS[randi() % DEMO_FEATURED_SET_IDS.size()] if DEMO_BUILD else ""
+	)
 	# Base deck = explicit `starter_deck` arg, else hero JSON's starter_deck, else
-	# DEFAULT_STARTER_DECK. A persistent per-hero starter-deck override (outpost deck
-	# editor) takes precedence over ALL of the above when set (it already encodes the
-	# hero default + ≤2 swaps).
+	# DEFAULT_STARTER_DECK. The removed deck-editor override is intentionally not
+	# read: old profiles are cleaned/refunded by MetaProgress's schema migration.
 	var deck_to_use: Array = starter_deck
-	if current_hero_data.has("starter_deck") and current_hero_data["starter_deck"] is Array:
+	if (
+		deck_to_use.is_empty()
+		and current_hero_data.has("starter_deck")
+		and current_hero_data["starter_deck"] is Array
+	):
 		deck_to_use = current_hero_data["starter_deck"]
 	if deck_to_use.is_empty():
 		deck_to_use = DEFAULT_STARTER_DECK
-	var override: Array = MetaProgress.starter_deck_override.get(hero_id, [])
-	if not override.is_empty():
-		deck_to_use = override
 	for card_id in deck_to_use:
 		add_card_to_deck(str(card_id))
 
@@ -728,17 +747,17 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	_ensure_backpack()
 	for i in range(MAX_INVENTORY):
 		backpack[i] = null
-	# Every run starts with a baseline purse so the merchant is usable from floor 1.
-	# (Command Center's +starting-gold meta upgrade stacks on top in _apply_meta_upgrades.)
-	add_gold(STARTING_GOLD)
-	# Inject the pending loadout (selected from the base stash) into the backpack,
-	# removing each taken entry from the permanent stash so it isn't duplicated.
-	# Entries are instances (or legacy strings, tolerated by add_equip_to_backpack).
-	for entry in pending_loadout:
-		if add_equip_to_backpack(entry):
-			MetaProgress.remove_from_stash(entry)
+	# Consume the owned base backpack into the run backpack. Gear is injected
+	# before starting Gold so a full carry can never silently delete equipment;
+	# physical currencies simply fill whatever cells remain.
+	var base_carry: Array = pending_loadout.duplicate(true)
 	pending_loadout.clear()
-	# Inject the warehouse's slot loadout: each pending_equipped entry starts the
+	for entry in base_carry:
+		if not add_equip_to_backpack(entry):
+			# Defensive only (the base UI caps this list to effective backpack size):
+			# retain an overflow/corrupt-save item at base rather than destroying it.
+			pending_loadout.append(entry)
+	# Inject the base's slot loadout: each pending_equipped entry starts the
 	# run already EQUIPPED into its slot (not in the backpack), so it is never
 	# double-granted. We write the slot DIRECTLY rather than via equip_to_slot:
 	# the slots were reset to {} just above (no prev to bounce) and the queued item
@@ -746,23 +765,31 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	# (with its rolled affixes) instead of equip_to_slot's base-id bag-search, which
 	# could otherwise grab a same-base loadout copy from the backpack. We re-validate
 	# the JSON slot here (the UI gates it, but start_new_run is the trust boundary)
-	# and remove the consumed instance from the permanent stash exactly once.
+	# and consume the exact owned instance exactly once.
 	var equipped_any := false
+	var base_equipped: Dictionary = pending_equipped.duplicate(true)
+	pending_equipped.clear()
 	for slot in EQUIPMENT_SLOTS:
-		var queued: Variant = pending_equipped.get(slot, null)
+		var queued: Variant = base_equipped.get(slot, null)
 		if queued == null:
 			continue
 		var inst := as_equip_instance(queued)
 		if inst.is_empty():
+			pending_equipped[slot] = queued
 			continue
 		var base_id := equip_base(inst)
 		var data: Dictionary = get_equipment_data(base_id)
 		if str(data.get("slot", "")) != slot:
-			continue  # slot mismatch / unknown item — leave it in the stash
+			pending_equipped[slot] = queued
+			continue  # slot mismatch / unknown item: preserve it at base
 		equipped_items[slot] = inst
-		MetaProgress.remove_from_stash(queued)
 		equipped_any = true
-	pending_equipped.clear()
+	# Consuming base-owned gear changes profile state. One save covers both arrays
+	# and any defensive overflow retained above.
+	MetaProgress.save_progress()
+	# Every run starts with a baseline purse so the merchant is usable from floor 1.
+	# (Command Center's +starting-gold meta upgrade stacks on top in _apply_meta_upgrades.)
+	add_gold(STARTING_GOLD)
 	# NOTE: equipment attributes are folded in by recompute_attributes() further
 	# below — AFTER player_attributes is reset from base_attributes — so we do NOT
 	# recompute here (it would be clobbered by that reset).
@@ -1156,7 +1183,7 @@ func move_cell(from_idx: int, to_idx: int) -> void:
 func as_equip_instance(x: Variant) -> Dictionary:
 	if typeof(x) == TYPE_DICTIONARY:
 		if x.has("base"):
-			return x  # already an instance
+			return _normalize_set_equip_instance(x)
 		return {}
 	if typeof(x) == TYPE_STRING:
 		var item_id: String = x
@@ -1168,14 +1195,65 @@ func as_equip_instance(x: Variant) -> Dictionary:
 		if typeof(bonuses) == TYPE_DICTIONARY:
 			for attr in bonuses.keys():
 				affixes.append({"type": "attr_" + str(attr), "value": int(bonuses[attr])})
-		return {
+		return _normalize_set_equip_instance({
 			"base": item_id,
 			"rarity": str(data.get("rarity", "common")),
 			"affixes": affixes,
 			"cursed": false,
 			"set_id": str(data.get("set_id", "")),
-		}
+		})
 	return {}
+
+
+## Compatibility repair for the retired "ordinary set" state. Early profiles
+## may hold either a bare set item id or an instance minted before set rarity was
+## centralized. Keep any valid positive affixes, then deterministically fill to
+## three so repeated reads of a legacy string never reroll the player's stats.
+func _normalize_set_equip_instance(instance: Dictionary) -> Dictionary:
+	var base_id := str(instance.get("base", ""))
+	if base_id == "":
+		return instance
+	var data := get_equipment_data(base_id)
+	var set_id := str(instance.get("set_id", data.get("set_id", "")))
+	if set_id == "":
+		return instance
+
+	var source_affixes: Variant = instance.get("affixes", [])
+	var affixes: Array = []
+	var used_types := {}
+	if typeof(source_affixes) == TYPE_ARRAY:
+		for entry in source_affixes:
+			if typeof(entry) != TYPE_DICTIONARY or AFFIX_POOL.is_curse(entry):
+				continue
+			var affix_type := str(entry.get("type", ""))
+			if affix_type == "" or used_types.has(affix_type):
+				continue
+			affixes.append((entry as Dictionary).duplicate(true))
+			used_types[affix_type] = true
+			if affixes.size() == 3:
+				break
+	for template in AFFIX_POOL.POSITIVE:
+		if affixes.size() == 3:
+			break
+		var affix_type := str(template.get("type", ""))
+		if used_types.has(affix_type):
+			continue
+		affixes.append((template as Dictionary).duplicate(true))
+		used_types[affix_type] = true
+
+	if (
+		str(instance.get("rarity", "")) == "set"
+		and str(instance.get("set_id", "")) == set_id
+		and not bool(instance.get("cursed", false))
+		and instance.get("affixes", []) == affixes
+	):
+		return instance
+	var normalized := instance.duplicate(true)
+	normalized["rarity"] = "set"
+	normalized["set_id"] = set_id
+	normalized["cursed"] = false
+	normalized["affixes"] = affixes
+	return normalized
 
 
 ## Build a FRESH rolled equipment instance for a base item_id. Reads slot/set_id
@@ -1351,7 +1429,7 @@ func charm_shop_mult() -> float:
 
 
 ## Permanently raise a BASE attribute by `amount` and refresh derived totals.
-## Single-sources the "bump a base attribute" idiom (random events + starter_boost).
+## Single-sources the "bump a base attribute" idiom used by random events.
 func grant_attribute(attr: String, amount: int) -> void:
 	if attr == "":
 		return
@@ -1391,11 +1469,26 @@ func load_random_events() -> void:
 			_random_events.append(parsed)
 
 
-## Pick a uniformly random cached event. Returns {} when none are loaded.
+## Deal a random event without replacement for the current run. Once every event
+## has been seen, start a fresh deck as a defensive fallback for unusually long
+## custom runs. Returns {} when none are loaded.
 func pick_random_event() -> Dictionary:
 	if _random_events.is_empty():
 		return {}
-	return _random_events[randi() % _random_events.size()]
+	var available: Array = []
+	for event in _random_events:
+		if typeof(event) != TYPE_DICTIONARY:
+			continue
+		if not str(event.get("id", "")) in _seen_random_event_ids:
+			available.append(event)
+	if available.is_empty():
+		_seen_random_event_ids.clear()
+		available = _random_events.duplicate()
+	var picked: Dictionary = available[randi() % available.size()]
+	var picked_id := str(picked.get("id", ""))
+	if picked_id != "":
+		_seen_random_event_ids.append(picked_id)
+	return picked
 
 
 ## True if an event option's `requires` (luck/charm) gate is met by current
@@ -1895,6 +1988,61 @@ func _random_set_piece(tier: String) -> String:
 	return cands[randi() % cands.size()]
 
 
+## True when the next non-boss combat reward should advance the demo's featured
+## three-piece set track. Floor values are zero-based map indices.
+func should_offer_demo_set_piece() -> bool:
+	if not DEMO_BUILD or current_act != 1 or demo_featured_set_id == "":
+		return false
+	var milestone := demo_set_piece_ids_claimed.size()
+	if milestone >= DEMO_SET_TRACK_FLOORS.size():
+		return false
+	return current_floor >= DEMO_SET_TRACK_FLOORS[milestone]
+
+
+## Roll the next distinct piece from the run's featured set, preferring common
+## pieces so the reward remains legible as onboarding. Progress is recorded only
+## after the player actually takes it; skipping a drop repeats that milestone.
+func roll_demo_set_piece() -> Dictionary:
+	if not should_offer_demo_set_piece():
+		return {}
+	var candidates: Array[String] = []
+	var dir := DirAccess.open(EQUIPMENT_DATA_DIR)
+	if dir == null:
+		return {}
+	for rarity in ["common", "uncommon", "rare"]:
+		var rarity_candidates: Array[String] = []
+		for file_name in dir.get_files():
+			if not file_name.ends_with(".json"):
+				continue
+			var item_id := file_name.get_basename()
+			if item_id in demo_set_piece_ids_claimed:
+				continue
+			var data := get_equipment_data(item_id)
+			if (
+				str(data.get("set_id", "")) == demo_featured_set_id
+				and str(data.get("rarity", "common")) == rarity
+			):
+				rarity_candidates.append(item_id)
+		rarity_candidates.sort()
+		candidates.append_array(rarity_candidates)
+	if candidates.is_empty():
+		return {}
+	var chosen := candidates[0]
+	var chosen_data := get_equipment_data(chosen)
+	return make_equip_instance(chosen, str(chosen_data.get("rarity", "common")))
+
+
+func mark_demo_set_piece_claimed(instance: Dictionary) -> void:
+	if not DEMO_BUILD or instance.is_empty():
+		return
+	var item_id := equip_base(instance)
+	var data := get_equipment_data(item_id)
+	if str(data.get("set_id", "")) != demo_featured_set_id:
+		return
+	if item_id not in demo_set_piece_ids_claimed:
+		demo_set_piece_ids_claimed.append(item_id)
+
+
 func get_unowned_relic_ids() -> Array[String]:
 	var ids: Array[String] = []
 	var dir = DirAccess.open(RELIC_DATA_DIR)
@@ -1936,25 +2084,17 @@ func _humanize_id(value: String) -> String:
 ## Called at the END of start_new_run (after defaults are set so we can add
 ## on top of them). Pure additive — never reduces a base value.
 func _apply_meta_upgrades() -> void:
-	# Ascension A2+: -5 max HP per level. Applied BEFORE Med Bay so the
-	# upgrade can partially offset the penalty (intentional — investing
-	# in meta unlocks softer ramps).
+	# Ascension A2+: -5 max HP per level.
 	if ascension >= 2:
 		var penalty: int = (ascension - 1) * 5  # A2=-5, A3=-10, A4=-15, A5=-20
 		max_health = max(10, max_health - penalty)
-		current_health = max_health
-
-	# Med Bay → +max HP
-	var hp := int(_get_meta_effect_value("med_bay").get("hp", 0))
-	if hp > 0:
-		max_health += hp
 		current_health = max_health
 
 	# Reroll Tokens → N reward-screen card rerolls this run.
 	reward_rerolls = int(_get_meta_effect_value("reroll_tokens").get("rerolls", 0))
 
 	# Clinic Max-HP caps perk (cyber_hp) → +CYBER_HP_PER_LEVEL max HP per level.
-	# Applied here (alongside Med Bay) so it stacks additively and is consumed
+	# Applied here so it is consumed
 	# exactly once per run — start_new_run calls _apply_meta_upgrades() once.
 	var cyber_hp_lvl := MetaProgress.get_caps_perk_level(MetaProgress.CYBER_HP_PERK)
 	if cyber_hp_lvl > 0:
@@ -1966,18 +2106,7 @@ func _apply_meta_upgrades() -> void:
 	if bonus_gold > 0:
 		add_gold(bonus_gold)
 
-	# Starter Boost → +N random attribute points (each picks a random
-	# attribute from STR/CON/INT/LCK/CHA and increments by 1).
-	var starter := _get_meta_effect_value("starter_boost")
-	if not starter.is_empty():
-		var points: int = int(starter.get("points", 0))
-		var attr_keys: Array = ["strength", "constitution", "intelligence", "luck", "charm"]
-		for i in range(points):
-			var pick: String = attr_keys[randi() % attr_keys.size()]
-			grant_attribute(pick, 1)
-
-	# (shop_discount is read on-demand by shop_scene; backpack_cells is read
-	# on-demand by effective_backpack_size(); nothing to apply here.)
+	# backpack_cells is read on-demand by effective_backpack_size().
 
 
 func _handle_run_loss(scrap_earned: int = 0) -> void:
@@ -2071,11 +2200,22 @@ func save_run() -> void:
 		"level": level,
 		"pending_attr_points": pending_attr_points,
 		"reward_rerolls": reward_rerolls,
+		# Monotonic tick timestamps are process-local. Persist elapsed duration so
+		# continuing a run after restarting the game cannot jump the HUD timer.
+		"run_elapsed_msec": (
+			maxi(0, Time.get_ticks_msec() - run_started_msec)
+			if run_started_msec > 0
+			else 0
+		),
+		# Kept for tolerant reads by older builds; new loads use run_elapsed_msec.
 		"run_started_msec": run_started_msec,
 		"base_attributes": base_attributes,
 		"player_attributes": player_attributes,
 		"current_encounter": current_encounter,
 		"last_battle_node_type": last_battle_node_type,
+		"seen_random_event_ids": _seen_random_event_ids,
+		"demo_featured_set_id": demo_featured_set_id,
+		"demo_set_piece_ids_claimed": demo_set_piece_ids_claimed,
 		"map_data": map_data,
 		"current_node_id": current_node_id,
 		"visited_node_ids": visited_node_ids,
@@ -2138,11 +2278,24 @@ func load_run() -> bool:
 	level = int(data.get("level", 1))
 	pending_attr_points = int(data.get("pending_attr_points", 0))
 	reward_rerolls = int(data.get("reward_rerolls", 0))
-	run_started_msec = int(data.get("run_started_msec", 0))
+	var saved_elapsed_msec := int(data.get("run_elapsed_msec", -1))
+	if saved_elapsed_msec >= 0:
+		run_started_msec = Time.get_ticks_msec() - saved_elapsed_msec
+	else:
+		# Old saves only stored a process-local tick timestamp. It cannot be
+		# reconstructed safely after a restart, so resume their timer from zero.
+		run_started_msec = Time.get_ticks_msec()
 	base_attributes = data.get("base_attributes", base_attributes)
 	player_attributes = data.get("player_attributes", player_attributes)
 	current_encounter = _to_string_array(data.get("current_encounter", []))
 	last_battle_node_type = str(data.get("last_battle_node_type", "enemy"))
+	_seen_random_event_ids = _to_string_array(data.get("seen_random_event_ids", []))
+	demo_featured_set_id = str(data.get("demo_featured_set_id", ""))
+	demo_set_piece_ids_claimed = _to_string_array(
+		data.get("demo_set_piece_ids_claimed", data.get("demo_set_piece_ids_offered", []))
+	)
+	if DEMO_BUILD and demo_featured_set_id == "":
+		demo_featured_set_id = DEMO_FEATURED_SET_IDS[0]
 	map_data = _normalize_map(data.get("map_data", []))
 	current_node_id = str(data.get("current_node_id", ""))
 	visited_node_ids = _to_string_array(data.get("visited_node_ids", []))
@@ -2199,14 +2352,17 @@ func _normalize_map(raw) -> Array:
 	return out
 
 
-## Settle the backpack at run end.
-## Phase 1: extract/victory banks ALL carried run-scrap into permanent
-## MetaProgress.scrap; death banks nothing. (Phase 2 adds safe-cell survival on
-## death; Phase 3 adds the permanent equipment stash.)
+## Settle the backpack at run end. Currency banks automatically; equipment never
+## enters MetaProgress.stash here. Successful runs recover every backpack
+## equipment item plus worn gear into the owned base backpack/loadout. On defeat,
+## only equipment in safe cells survives (worn gear and unsafe cells are lost).
 func _settle_backpack(victory: bool, outcome: String) -> void:
+	# A valid run start consumes these collections completely. If a corrupt or
+	# over-cap profile left a defensive remainder, merge the returned gear into it
+	# rather than turning settlement into a deletion path.
 	if victory or outcome == "extracted":
-		# Extract / final victory: ALL carried Scrap banks, ALL backpack equipment
-		# AND all equipped gear are carried out into the permanent stash.
+		# Extract / final victory: bank all carried currency. Equipment remains
+		# player-carried and is persisted separately from the warehouse.
 		var carried := total_run_scrap()
 		if carried > 0:
 			MetaProgress.add_scrap(carried)
@@ -2220,14 +2376,14 @@ func _settle_backpack(victory: bool, outcome: String) -> void:
 		for c in backpack:
 			var inst := _cell_equip_instance(c)
 			if not inst.is_empty():
-				MetaProgress.add_to_stash(inst)
+				pending_loadout.append(inst.duplicate(true))
 		for slot in EQUIPMENT_SLOTS:
 			var eq := as_equip_instance(equipped_items.get(slot, {}))
 			if not eq.is_empty():
-				MetaProgress.add_to_stash(eq)
+				pending_equipped[slot] = eq.duplicate(true)
 	else:
-		# Death: ONLY safe-cell contents (index 0..safe-1) survive — Scrap banks,
-		# equipment goes to the stash. Everything else + all equipped gear is lost.
+		# Death: ONLY safe-cell contents (index 0..safe-1) survive. Scrap banks;
+		# equipment returns to the base backpack. Everything else + worn gear is lost.
 		# Safe cells can never exceed the usable backpack size (or the array length).
 		var safe := mini(MetaProgress.effective_safe_cells(), effective_backpack_size())
 		var saved := 0
@@ -2238,9 +2394,15 @@ func _settle_backpack(victory: bool, outcome: String) -> void:
 			if c.get("kind") == "scrap":
 				saved += int(c["amount"])
 			elif c.get("kind") == "equip":
-				MetaProgress.add_to_stash(_cell_equip_instance(c))
+				var safe_inst := _cell_equip_instance(c)
+				if not safe_inst.is_empty():
+					pending_loadout.append(safe_inst.duplicate(true))
 		if saved > 0:
 			MetaProgress.add_scrap(saved)
+	# MetaProgress owns the profile file even though RunManager owns the live
+	# arrays. Persist after currency calls so the saved base inventory is the final
+	# post-settlement state and never relies on the now-deleted run save.
+	MetaProgress.save_progress()
 
 
 func _emit_all_state() -> void:

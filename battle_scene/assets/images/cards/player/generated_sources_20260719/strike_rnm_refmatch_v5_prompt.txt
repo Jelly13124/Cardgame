@@ -1,0 +1,22 @@
+Built-in ImageGen style-reference edit, 2026-07-19
+
+Asset: final Strike card illustration, 512x320 landscape, no UI.
+
+Image 1 is the user's Rick and Morty frame and the only style reference. Match
+its medium-thin muted grey-brown outlines, long skinny awkward proportions,
+sparse interior lines, simple flat character fills, restrained one-step cel
+shading, and low-contrast soft alien landscape. Do not copy its characters,
+vehicle, exact scenery, subtitle, or watermark.
+
+Preserve the original Strike action and Cowboy Bill identity: exactly one orange
+camera eye, cylindrical head, sagging brown cowboy hat with a small crooked star,
+one antenna, muted red scarf, simple patched duster, small skull belt icon, plain
+boots, and one revolver. Bill faces right. One lanky grey-green junk robot faces
+left and recoils from exactly one hit. Use one small muzzle flash attached to the
+barrel and one small impact star.
+
+Simplify mechanical parts aggressively: no thick black contour, chibi or toy
+proportions, glossy metal, detailed joints, dense seams, scratches, rivets,
+hatching, painterly rendering, cinematic lighting, or 3D. No extra eye, weapon,
+character, projectile, or explosion. No text, watermark, logo, card frame, badge,
+title, ribbon, type tab, description box, or other UI. Original designs only.

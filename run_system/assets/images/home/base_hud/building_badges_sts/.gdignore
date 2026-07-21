@@ -1,0 +1,2 @@
+# Source sheets and pipeline intermediates retained for art provenance only.
+# Runtime uses the four processed badge_*.png files in the parent directory.

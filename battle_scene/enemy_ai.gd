@@ -54,9 +54,6 @@ func spawn_enemy_units() -> void:
 
 		# Wire death → victory check
 		enemy.died.connect(_on_enemy_died)
-		main.show_notification(
-			tr("UI_COMBAT_ENEMY_APPEARED").format({"name": enemy.enemy_name}), Color(1, 0.3, 0.3)
-		)
 
 
 ## Instantiate a single add mid-combat, position it after the existing enemies,
@@ -152,7 +149,7 @@ func execute_enemy_turn() -> void:
 ## Resolve an enemy attack landing on the player: Dodge negates it (consuming a
 ## stack), otherwise the player takes `outgoing` and Thorns reflects back at the
 ## attacker. Returns true if the hit landed, false if it was dodged.
-func _resolve_enemy_hit(enemy: Node, outgoing: int) -> bool:
+func _resolve_enemy_hit(enemy: Node, outgoing: int, is_heavy: bool = false) -> bool:
 	if not (main.player and is_instance_valid(main.player)):
 		return false
 	if "status_system" in main.player and main.player.status_system:
@@ -161,7 +158,12 @@ func _resolve_enemy_hit(enemy: Node, outgoing: int) -> bool:
 			return false
 	var hp_before: int = int(main.player.health)
 	AudioManager.play_sfx("enemy_attack")
-	main.player.take_damage(outgoing)
+	var feedback_tags := {
+		"source": "enemy",
+		"heavy": is_heavy,
+		"critical": false,
+	}
+	await main.player.take_damage(outgoing, false, feedback_tags)
 	# Relic: medkit_drone heals only when the player ACTUALLY lost HP — a hit fully
 	# absorbed by Block does not trigger it.
 	if main.relic_effect_system and int(main.player.health) < hp_before:
@@ -178,7 +180,7 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 	# Interruptible attacks (e.g. boss Crushing Blow after a telegraph) can be
 	# cancelled by spending 1 stun stack on the enemy. This is the shared
 	# cancel logic for mortar_cart and the Junkyard Tyrant Boss.
-	var is_attack_like = action_type in ["attack", "attack_status", "attack_all"]
+	var is_attack_like = action_type in ["attack", "attack_ramp", "attack_status", "attack_all"]
 	if is_attack_like and bool(action.get("interruptible", false)):
 		if enemy.has_method("consume_stun_if_present") and enemy.consume_stun_if_present():
 			var interrupt_label := str(action.get("label", tr("UI_COMBAT_INTERRUPT_DEFAULT_LABEL")))
@@ -194,7 +196,7 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 			return
 
 	match action_type:
-		"attack":
+		"attack", "attack_ramp":
 			await _play_enemy_attack_once(enemy)
 			if main.player and is_instance_valid(main.player):
 				var outgoing = main.combat_engine.calculate_attack_damage(
@@ -202,10 +204,7 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 				)
 				if main.has_method("modify_enemy_attack_damage"):
 					outgoing = main.modify_enemy_attack_damage(outgoing, enemy, main.player)
-				if _resolve_enemy_hit(enemy, outgoing):
-					main.show_notification(
-						tr("UI_COMBAT_ENEMY_ATTACKS").format({"n": outgoing}), Color(1, 0.3, 0.3)
-					)
+				await _resolve_enemy_hit(enemy, outgoing, bool(action.get("heavy", false)))
 		"attack_status":
 			# Damage + apply a status to the player.
 			# JSON: {"type":"attack_status", "amount":5, "status":"weak", "stacks":1, "label":"⚔ 5 +Weak"}
@@ -216,7 +215,7 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 				)
 				if main.has_method("modify_enemy_attack_damage"):
 					outgoing = main.modify_enemy_attack_damage(outgoing, enemy, main.player)
-				if _resolve_enemy_hit(enemy, outgoing):
+				if await _resolve_enemy_hit(enemy, outgoing, bool(action.get("heavy", false))):
 					var status: String = str(action.get("status", ""))
 					var stacks: int = int(action.get("stacks", 1))
 					if status != "" and main.player.has_method("add_status"):
@@ -237,10 +236,7 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 				)
 				if main.has_method("modify_enemy_attack_damage"):
 					outgoing = main.modify_enemy_attack_damage(outgoing, enemy, main.player)
-				if _resolve_enemy_hit(enemy, outgoing):
-					main.show_notification(
-						tr("UI_COMBAT_BIG_HIT").format({"n": outgoing}), Color(1.0, 0.2, 0.2)
-					)
+				await _resolve_enemy_hit(enemy, outgoing, true)
 		"block":
 			if "status_system" in enemy and enemy.status_system:
 				amount = int(amount * enemy.status_system.get_block_multiplier())
@@ -253,6 +249,42 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 			t.tween_property(enemy, "scale", Vector2(1.2, 1.2), 0.1)
 			t.tween_property(enemy, "scale", Vector2(1.0, 1.0), 0.1)
 			await t.finished
+
+		"breakable_block":
+			if "status_system" in enemy and enemy.status_system:
+				amount = int(amount * enemy.status_system.get_block_multiplier())
+			var break_status := str(action.get("status", "vulnerable"))
+			var break_stacks := int(action.get("stacks", 1))
+			if enemy.has_method("add_breakable_armor"):
+				enemy.add_breakable_armor(amount, break_status, break_stacks)
+			else:
+				enemy.add_block(amount)
+			main.show_notification(
+				tr("UI_COMBAT_ENEMY_BREAKABLE_ARMOR").format({"n": amount}),
+				Color(0.45, 0.72, 1.0)
+			)
+			var armor_tween = create_tween()
+			armor_tween.tween_property(enemy, "scale", Vector2(1.16, 1.16), 0.1)
+			armor_tween.tween_property(enemy, "scale", Vector2.ONE, 0.1)
+			await armor_tween.finished
+
+		"reflective_plating":
+			if "status_system" in enemy and enemy.status_system:
+				amount = int(amount * enemy.status_system.get_block_multiplier())
+			enemy.add_block(amount)
+			var thorns := int(action.get("thorns", 1))
+			if enemy.has_method("add_status"):
+				enemy.add_status("thorns", thorns)
+			main.show_notification(
+				tr("UI_COMBAT_ENEMY_REFLECTIVE_PLATING").format(
+					{"block": amount, "thorns": thorns}
+				),
+				Color(0.62, 0.86, 1.0)
+			)
+			var plating_tween = create_tween()
+			plating_tween.tween_property(enemy, "modulate", Color(1.25, 1.35, 1.5), 0.16)
+			plating_tween.tween_property(enemy, "modulate", Color.WHITE, 0.16)
+			await plating_tween.finished
 
 		"heal":
 			if enemy.has_method("heal"):

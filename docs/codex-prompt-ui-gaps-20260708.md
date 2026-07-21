@@ -9,7 +9,7 @@
 
 ## 全局风格前缀(每条提示词开头都带上)
 
-> Rick and Morty-style sci-fi cartoon wasteland game UI art. Thick black outlines,
+> Original 2D American-comic sci-fi western game UI art. Thick black outlines,
 > big flat color blocks, flat cel shading, post-apocalyptic industrial hardware.
 > Same visual language as the reference images: dark charcoal gunmetal panels with
 > riveted corner screws, olive-green metal accents, warm orange primary highlights.

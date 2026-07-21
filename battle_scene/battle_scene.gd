@@ -19,7 +19,6 @@ const PAUSE_PANEL = preload("res://run_system/ui/pause_panel.gd")
 var deck_manager: Node  # DeckManager (deck_manager.gd) instance
 var relic_effect_system: RefCounted  # RelicEffectSystem (relic_effect_system.gd) instance
 var equipment_set_system: RefCounted  # EquipmentSetSystem (equipment_set_system.gd) instance
-var current_resolving_card: Node = null  # Set by play_spell during _apply_effect; combat_engine reads it.
 # Typed via the preloaded CARD_ANIMATOR_SCRIPT below — kept as Node so this
 # file parses even before Godot has scanned the class_name registry.
 var card_animator: Node  # CardAnimator (card_animator.gd) instance
@@ -40,6 +39,9 @@ var _attack_limit_per_turn: int = 0
 var _attacks_left_this_turn: int = 0
 var _tool_confirm: Control = null
 var _tool_resolving := false
+var _pending_tool_index := -1
+var _pending_tool_id := ""
+var _pending_tool_data: Dictionary = {}
 
 const TARGETING_ARROW_SCRIPT = preload("res://battle_scene/targeting_arrow.gd")
 const RELIC_EFFECT_SYSTEM = preload("res://battle_scene/relic_effect_system.gd")
@@ -75,8 +77,8 @@ const EXTRACT_REWARDS := {
 ## Returns the {continue, extract} reward dict for the given act's boss, or
 ## {} if `act` is the final act (no extract choice — full victory).
 func _extract_rewards_for_act(act: int) -> Dictionary:
-	# Demo-aware: on the final act (Act 2 in the demo) there is no extract-vs-push
-	# choice — the boss kill wins outright. acts_total() is 2 in the demo.
+	# Demo-aware: on the final act (Act 1 in the public demo) there is no
+	# extract-vs-push choice — the boss kill wins outright.
 	if act >= RunManager.acts_total():
 		return {}
 	if EXTRACT_REWARDS.has(act):
@@ -118,11 +120,11 @@ func _ready():
 		T.apply_button_theme(end_round_button)
 		_style_end_round_button()
 
-	# Bare iconb glyphs replace the raw card-back stacks on both piles
-	# (owner 2026-07-08: same card fan on both sides, draw side mirrored;
-	# no frames). hide_cards is the framework's own stack-invisibility switch.
-	_setup_pile_icon(deck, "iconb_cards_fan", true)
-	_setup_pile_icon(discard_pile, "iconb_cards_fan", false)
+	# The shared deck-book glyph replaces the old card-fan/card-back art on both
+	# piles. Mirroring gives the draw and discard sides opposite directions while
+	# keeping one visual language with the top-bar deck icon.
+	_setup_pile_icon(deck, "iconb_deck_stack", true)
+	_setup_pile_icon(discard_pile, "iconb_deck_stack", false)
 
 	# Connect TurnManager
 	turn_manager.round_changed.connect(_on_round_changed)
@@ -152,7 +154,7 @@ func _ready():
 ## Compact comic placard. One generated plate supplies every interaction state;
 ## Godot keeps the localized label and applies only a restrained value shift.
 func _style_end_round_button() -> void:
-	var plate_tex := T.lightline_tex("hud_end_turn_sts2")
+	var plate_tex := T.lightline_tex("hud_end_turn_orange")
 	if plate_tex == null:
 		return
 	for state in ["normal", "hover", "pressed", "disabled"]:
@@ -182,24 +184,29 @@ func _style_end_round_button() -> void:
 	end_round_button.add_theme_constant_override("outline_size", 3)
 
 
-## Show the first-battle tip sequence the very first time the player enters a
-## battle, then mark it seen so it never reappears.
+## Show the first-battle tip sequence until the player actually finishes it.
+## Closing the game mid-tutorial no longer burns the one-time onboarding flag.
 func _maybe_show_tutorial() -> void:
 	if MetaProgress.tutorial_seen:
 		return
-	MetaProgress.mark_tutorial_seen()
 	var canvas := CanvasLayer.new()
 	canvas.layer = 240
 	add_child(canvas)
-	canvas.add_child(TUTORIAL_TIPS_SCRIPT.new())
+	var tips: Control = TUTORIAL_TIPS_SCRIPT.new()
+	tips.completed.connect(
+		func() -> void:
+			MetaProgress.mark_tutorial_seen()
+			if is_instance_valid(canvas):
+				canvas.queue_free()
+	)
+	canvas.add_child(tips)
 
 
 # ─── Input ────────────────────────────────────────────────────────────────────
 
 
-## _input fires before any Control node.
-## ONLY intercepts right-click during targeting — never keyboard events,
-## so Q/E pile-viewer shortcuts can still reach BattleUIManager.
+## _input fires before any Control node. It owns target confirm/cancel input;
+## unrelated keyboard events still pass through to BattleUIManager.
 func _input(event: InputEvent) -> void:
 	# ESC → unified pause panel (settings / how-to / abandon / quit). Suppressed while
 	# targeting so ESC there stays free to cancel the targeting arrow.
@@ -227,23 +234,32 @@ func _input(event: InputEvent) -> void:
 		var enemy = _get_unit_at_position(mouse_pos)
 		if enemy and is_instance_valid(enemy) and enemy.has_method("take_damage"):
 			show_notification("DEBUG: killed %s" % enemy.name, Color(1, 0.4, 1))
-			enemy.take_damage(99999)
+			enemy.take_damage(99999, false, {"source": "debug", "heavy": true})
 			get_viewport().set_input_as_handled()
 			return
 
 	if not is_targeting:
 		return
-	# Only handle mouse buttons, never keyboard
+	# Escape and right-click both cancel the active card/tool targeting gesture.
+	# Keeping this at the battle root prevents a pending tool from surviving after
+	# its confirmation overlay has already closed.
+	if event.is_action_pressed("ui_cancel"):
+		_cancel_active_targeting()
+		get_viewport().set_input_as_handled()
+		return
+	# Other keyboard input remains available to BattleUIManager.
 	if not (event is InputEventMouseButton):
 		return
 	if event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
-		_cancel_spell_targeting()
+		_cancel_active_targeting()
 		get_viewport().set_input_as_handled()
 	elif event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if targeting_card and is_instance_valid(targeting_card):
+		if _is_tool_targeting():
+			_confirm_tool_targeting(_get_unit_at_position(get_viewport().get_mouse_position()))
+		elif targeting_card and is_instance_valid(targeting_card):
 			confirm_spell_targeting(targeting_card)
 		else:
-			_cancel_spell_targeting()
+			_cancel_active_targeting()
 		get_viewport().set_input_as_handled()
 
 
@@ -425,10 +441,11 @@ func show_notification(text: String, color: Color = Color.WHITE):
 	ui_manager.show_notification(text, color)
 
 
-## Open a compact confirmation before resolving a top-bar tool. Enemy tools keep
-## the current first-alive-enemy targeting rule; actual effects stay in _resolve_tool.
+## Open a compact confirmation before resolving a top-bar tool. Enemy-targeted
+## tools enter the same arrow + click-target interaction as attack cards only
+## after confirmation; self/no-target tools still resolve immediately.
 func use_tool(index: int) -> void:
-	if is_instance_valid(_tool_confirm) or _tool_resolving:
+	if is_instance_valid(_tool_confirm) or _tool_resolving or is_targeting or is_game_over:
 		return
 	if index < 0 or index >= RunManager.tool_inventory.size():
 		return
@@ -457,12 +474,14 @@ func _on_tool_use_confirmed(index: int, expected_tool_id: String) -> void:
 	var tdata: Dictionary = RunManager.get_tool_data(expected_tool_id)
 	if tdata.is_empty():
 		return
-	var target := _find_tool_target(tdata)
-	if str(tdata.get("target", "none")) == "enemy" and target == null:
-		AudioManager.play_sfx("error")
+	if str(tdata.get("target", "none")) == "enemy":
+		if _find_tool_target(tdata) == null:
+			AudioManager.play_sfx("error")
+			return
+		_begin_tool_targeting(index, expected_tool_id, tdata)
 		return
 	_tool_resolving = true
-	await _resolve_tool(index, tdata, target)
+	await _resolve_tool(index, tdata, null)
 	_tool_resolving = false
 
 
@@ -479,16 +498,102 @@ func _find_tool_target(tdata: Dictionary) -> Node:
 	if str(tdata.get("target", "none")) != "enemy":
 		return null
 	for candidate in enemy_container.get_children():
-		if (
-			is_instance_valid(candidate)
-			and not candidate.is_queued_for_deletion()
-			and candidate.has_method("take_damage")
-		):
+		if _is_valid_tool_target(candidate):
 			return candidate
 	return null
 
 
+func _is_valid_tool_target(candidate: Node) -> bool:
+	if (
+		not is_instance_valid(candidate)
+		or candidate.is_queued_for_deletion()
+		or not candidate.has_method("take_damage")
+	):
+		return false
+	var health_value: Variant = candidate.get("health")
+	return health_value == null or int(health_value) > 0
+
+
+func _is_tool_targeting() -> bool:
+	return _pending_tool_index >= 0 and not _pending_tool_id.is_empty()
+
+
+func _begin_tool_targeting(index: int, tool_id: String, tdata: Dictionary) -> void:
+	if is_targeting or _tool_resolving or _is_tool_targeting():
+		return
+	_pending_tool_index = index
+	_pending_tool_id = tool_id
+	_pending_tool_data = tdata.duplicate(true)
+	is_targeting = true
+	targeting_card = null
+
+	if not targeting_arrow:
+		targeting_arrow = TARGETING_ARROW_SCRIPT.new()
+		add_child(targeting_arrow)
+	targeting_arrow.start(_tool_targeting_origin(index))
+
+
+func _tool_targeting_origin(index: int) -> Vector2:
+	var top_bar := get_node_or_null("TopBarLayer/TopBar")
+	if top_bar:
+		var shelf := top_bar.find_child("ToolShelf", true, false) as Control
+		if shelf and shelf.get_child_count() > 0:
+			# The shared HUD currently exposes one active slot. Clamp keeps this
+			# correct if it later displays the whole inventory again.
+			var slot_index := clampi(index, 0, shelf.get_child_count() - 1)
+			var slot := shelf.get_child(slot_index) as Control
+			if slot:
+				return slot.get_global_rect().get_center()
+	var viewport_size := get_viewport().get_visible_rect().size
+	return Vector2(minf(260.0, viewport_size.x * 0.2), 80.0)
+
+
+## Resolve the pending enemy tool against an explicit clicked target. An invalid
+## click deliberately keeps targeting active so the player can try again or
+## cancel; inventory is not touched until _resolve_tool completes.
+func _confirm_tool_targeting(target: Node) -> void:
+	if not is_targeting or not _is_tool_targeting() or _tool_resolving:
+		return
+	if not _is_valid_tool_target(target):
+		show_notification(tr("UI_BATTLE_NO_TARGET"), Color(1, 0.6, 0.2))
+		return
+
+	var index := _pending_tool_index
+	var expected_tool_id := _pending_tool_id
+	var tdata := _pending_tool_data.duplicate(true)
+	if (
+		index < 0
+		or index >= RunManager.tool_inventory.size()
+		or str(RunManager.tool_inventory[index]) != expected_tool_id
+	):
+		_cancel_tool_targeting()
+		AudioManager.play_sfx("error")
+		return
+
+	_cancel_tool_targeting()
+	_tool_resolving = true
+	await _resolve_tool(index, tdata, target)
+	_tool_resolving = false
+
+
+func _cancel_tool_targeting() -> void:
+	_clear_targeting_visuals()
+	_pending_tool_index = -1
+	_pending_tool_id = ""
+	_pending_tool_data.clear()
+
+
+func _cancel_active_targeting() -> void:
+	if _is_tool_targeting():
+		_cancel_tool_targeting()
+	else:
+		_cancel_spell_targeting()
+
+
 func _resolve_tool(index: int, tdata: Dictionary, target: Node) -> void:
+	if str(tdata.get("target", "none")) == "enemy" and not _is_valid_tool_target(target):
+		AudioManager.play_sfx("error")
+		return
 	AudioManager.play_sfx("ui_click")
 	var int_mult: float = 1.0 + 0.08 * float(RunManager._attr("intelligence"))
 	for eff in tdata.get("effects", []):
@@ -655,10 +760,14 @@ func _setup_pile_icon(pile: Node, icon_name: String, mirrored: bool) -> void:
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	icon.offset_left = 5.0
-	icon.offset_top = -150.0
-	icon.offset_right = 155.0
-	icon.offset_bottom = 0.0
+	# This is a pile glyph, not a rendered stack of full-size cards. Keep it
+	# compact inside the existing 160x220 pile interaction area. Bias the draw
+	# glyph toward the left edge and the discard glyph toward the right so the
+	# fanned hand cannot cover either one.
+	icon.offset_left = 10.0 if mirrored else 70.0
+	icon.offset_top = -104.0
+	icon.offset_right = icon.offset_left + 80.0
+	icon.offset_bottom = -20.0
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon.z_index = 25
 	pile.add_child(icon)
@@ -679,20 +788,24 @@ func _set_pile_count(pile: Node, n: int) -> void:
 	if lbl == null:
 		lbl = Label.new()
 		lbl.name = "CountLabel"
-		# Sits over the glyph's upper portion (owner: count rides high, not center).
+		# Attach the count to the compact glyph instead of leaving a large floating
+		# numeral where the old full-size card stack used to be.
+		var pile_icon := pile.get_node_or_null("PileIcon") as Control
+		var icon_left := pile_icon.offset_left if pile_icon else 40.0
+		var icon_right := pile_icon.offset_right if pile_icon else 120.0
 		lbl.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-		lbl.offset_left = 5.0
-		lbl.offset_top = -190.0
-		lbl.offset_right = 155.0
-		lbl.offset_bottom = -132.0
+		lbl.offset_left = icon_left
+		lbl.offset_top = -138.0
+		lbl.offset_right = icon_right
+		lbl.offset_bottom = -102.0
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		lbl.z_index = 30
-		lbl.add_theme_font_size_override("font_size", 30)
+		lbl.add_theme_font_size_override("font_size", 22)
 		lbl.add_theme_color_override("font_color", Color(1.0, 0.96, 0.85))
 		lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.95))
-		lbl.add_theme_constant_override("outline_size", 6)
+		lbl.add_theme_constant_override("outline_size", 4)
 		pile.add_child(lbl)
 	lbl.text = str(n)
 
@@ -772,7 +885,7 @@ func _start_new_game():
 func _on_end_round_button_pressed():
 	# Guard against double-fire across the discard-animation await (auto-end +
 	# manual click, or two fast clicks). Reset at the next player turn start.
-	if _ending_turn or not turn_manager.is_player_turn:
+	if _ending_turn or not turn_manager.is_player_turn or is_targeting:
 		return
 	_ending_turn = true
 	if turn_manager.is_player_turn:
@@ -805,6 +918,8 @@ func _on_end_round_button_pressed():
 func _victory():
 	if is_game_over:
 		return
+	if is_targeting:
+		_cancel_active_targeting()
 	is_game_over = true
 	AudioManager.play_sfx("victory")
 	# Combat is over — neutralise any in-flight card drag NOW, before the 3s gap +
@@ -856,7 +971,7 @@ func _victory():
 		# is 0 to avoid double-counting.
 		RunManager.add_scrap_to_backpack(BOSS_VICTORY_SCRAP)
 		RunManager.end_run_victory(0, "victory")
-		# Demo: the final-act (Act 2) boss kill ends the demo — show the
+		# Demo: the final-act (Act 1) boss kill ends the demo — show the
 		# demo-complete / wishlist screen instead of silently returning to base.
 		_show_result_screen("demo_complete")
 		return
@@ -885,7 +1000,7 @@ func _reset_hand_drag_state() -> void:
 
 func _show_extract_choice(act: int, rewards: Dictionary) -> void:
 	var canvas := CanvasLayer.new()
-	canvas.layer = 200
+	canvas.layer = 140
 	add_child(canvas)
 	var modal = EXTRACT_CHOICE_MODAL_SCRIPT.new()
 	modal.act_num = act
@@ -916,11 +1031,10 @@ func _on_extract_chosen(extract: bool, rewards: Dictionary, canvas: CanvasLayer)
 
 
 func _show_loot_modal() -> void:
-	# Wrap in a CanvasLayer with high `layer` so the modal renders above
-	# battle_scene's TopBar/Inspect/PileViewer CanvasLayers (layers 30/100/101)
-	# AND eats mouse events so cards in hand don't react to hover.
+	# Render above inspect/pile views but below the persistent run top bar. The
+	# modal still eats mouse events so cards in hand do not react to hover.
 	var canvas := CanvasLayer.new()
-	canvas.layer = 200
+	canvas.layer = 140
 	add_child(canvas)
 	var modal = LOOT_REWARD_SCENE.instantiate()
 	modal.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -937,6 +1051,8 @@ func _on_loot_closed(canvas: CanvasLayer) -> void:
 func _game_over():
 	if is_game_over:
 		return
+	if is_targeting:
+		_cancel_active_targeting()
 	is_game_over = true
 	AudioManager.play_sfx("defeat")
 	# Defeat path: route through the death gate so _handle_run_loss fires
@@ -1164,10 +1280,8 @@ func play_spell(card: Control, target_node: Node):
 	card_animator.prepare_for_play(card)
 	await card_animator.fly_to_play_area(card, target_node)
 
-	# Resolve combat effects (may await animations). current_resolving_card
-	# lets combat_engine + equipment_set_system identify the card behind each
-	# effect (needed to know whether a gain_block came from a "skill" card etc.).
-	current_resolving_card = card
+	# Resolve combat effects (may await animations). The resolver carries this card
+	# explicitly through every effect so parallel cards cannot overwrite context.
 	# target_node can be freed DURING the fly_to_play_area await above — the
 	# targeted enemy may have died from a parallel in-flight card or a DOT tick.
 	# A previously-freed Object fails resolve_card_effect's typed `target: Node`
@@ -1176,7 +1290,6 @@ func play_spell(card: Control, target_node: Node):
 	# "no target" (skill/ability cards pass null routinely).
 	var safe_target: Node = target_node if is_instance_valid(target_node) else null
 	await combat_engine.resolve_card_effect(card, safe_target, player)
-	current_resolving_card = null
 
 	# Release the per-card play lock NOW. The play is logically complete —
 	# what's left below is pure animation/routing. If we don't release here,
@@ -1253,6 +1366,8 @@ func _card_has_exhaust(card: Control) -> bool:
 
 
 func start_spell_targeting(card: Control) -> void:
+	if is_targeting or is_instance_valid(_tool_confirm) or _tool_resolving:
+		return
 	if not can_afford([card]):
 		show_notification(tr("UI_BATTLE_NOT_ENOUGH_ENERGY"), Color(1, 0.2, 0.2))
 		return
@@ -1291,11 +1406,16 @@ func _sole_alive_enemy() -> Node:
 
 
 func _cancel_spell_targeting() -> void:
+	_clear_targeting_visuals()
+
+
+func _clear_targeting_visuals() -> void:
 	if hovered_unit:
 		_set_hover_effect(hovered_unit, false)
 		hovered_unit = null
 	is_targeting = false
 	targeting_card = null
+	_hide_damage_preview()
 	if targeting_arrow:
 		targeting_arrow.stop()
 		targeting_arrow.queue_free()

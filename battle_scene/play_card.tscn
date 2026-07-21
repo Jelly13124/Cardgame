@@ -63,6 +63,15 @@ grow_vertical = 2
 expand_mode = 1
 stretch_mode = 6
 
+[node name="GeneratedShell" type="TextureRect" parent="FrontFace"]
+visible = false
+layout_mode = 0
+offset_right = 208
+offset_bottom = 286
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 0
+
 [node name="ArtFrameTexture" type="TextureRect" parent="FrontFace"]
 layout_mode = 0
 offset_left = 10.0

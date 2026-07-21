@@ -145,6 +145,67 @@ func _test_battle_confirmation_flow() -> void:
 		"stale confirmation cannot consume a replacement tool"
 	)
 
+	# Enemy-targeted tools have a two-step contract: confirmation only arms the
+	# target arrow; the inventory changes after a valid enemy click. Invalid
+	# clicks and explicit cancellation leave the tool untouched.
+	RunManager.tool_inventory.assign(["toxin_vial"])
+	battle.use_tool(0)
+	await get_tree().process_frame
+	var enemy_confirmation := battle.find_child("ToolUseConfirm", true, false)
+	_expect(enemy_confirmation != null, "enemy tool opens confirmation first")
+	if enemy_confirmation != null:
+		enemy_confirmation.confirm()
+	await _frames(2)
+	_expect(battle.is_targeting, "confirming an enemy tool enters target selection")
+	_expect(battle.call("_is_tool_targeting"), "target selection tracks a pending tool")
+	_expect(
+		RunManager.tool_inventory == ["toxin_vial"],
+		"confirming an enemy tool does not consume before target selection"
+	)
+	battle.use_tool(0)
+	await get_tree().process_frame
+	_expect(
+		battle.find_child("ToolUseConfirm", true, false) == null,
+		"tool clicks are ignored while target selection is active"
+	)
+	battle.call("_confirm_tool_targeting", null)
+	await get_tree().process_frame
+	_expect(battle.is_targeting, "an invalid target keeps selection active")
+	_expect(
+		RunManager.tool_inventory == ["toxin_vial"],
+		"an invalid target does not consume the pending tool"
+	)
+
+	var escape_targeting := InputEventAction.new()
+	escape_targeting.action = "ui_cancel"
+	escape_targeting.pressed = true
+	battle.call("_input", escape_targeting)
+	await get_tree().process_frame
+	_expect(not battle.is_targeting, "Escape cancels enemy tool target selection")
+	_expect(
+		RunManager.tool_inventory == ["toxin_vial"],
+		"cancelling target selection leaves the tool inventory unchanged"
+	)
+
+	# Re-arm and choose a concrete living enemy. Consumption is exactly once and
+	# targeting state is cleared synchronously before effects begin resolving.
+	battle.use_tool(0)
+	await get_tree().process_frame
+	enemy_confirmation = battle.find_child("ToolUseConfirm", true, false)
+	if enemy_confirmation != null:
+		enemy_confirmation.confirm()
+	await _frames(2)
+	var chosen_enemy: Node = battle.call("_find_tool_target", RunManager.get_tool_data("toxin_vial"))
+	_expect(chosen_enemy != null, "enemy tool selection has a living candidate")
+	if chosen_enemy != null:
+		battle.call("_confirm_tool_targeting", chosen_enemy)
+	var enemy_tool_resolved := await _wait_until(
+		func() -> bool: return RunManager.tool_inventory.is_empty()
+	)
+	_expect(enemy_tool_resolved, "choosing an enemy resolves and consumes exactly one tool")
+	_expect(not battle.is_targeting, "successful enemy tool use clears target selection")
+	_expect(not battle.call("_is_tool_targeting"), "successful use clears pending tool state")
+
 	for enemy in battle.enemy_container.get_children():
 		enemy.queue_free()
 	await get_tree().process_frame

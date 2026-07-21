@@ -2,14 +2,16 @@
 ##
 ## Owner sets `mode` ("defeat" | "demo_complete") BEFORE add_child, then adds it
 ## on a CanvasLayer. Reads the (already torn-down) run summary off RunManager,
-## shows it, and routes Back to Menu to the title screen. No class_name per ADR-0006.
+## shows it, and routes the player back to the home base. No class_name per ADR-0006.
 extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
+const HOME_BASE_PATH := "res://run_system/ui/home_base_scene.tscn"
 const MAIN_MENU_PATH := "res://run_system/ui/main_menu.tscn"
-## Wishlist CTA target. TODO: swap for the real Steam store page (App ID) once it
-## exists — steam_appid.txt is still the 480 placeholder.
-const STORE_URL := "https://store.steampowered.com/"
+## Set this project setting to the real app page before shipping. An empty or
+## generic URL deliberately hides the CTA instead of sending players to Steam's
+## home page and pretending the store integration is finished.
+const STORE_URL_SETTING := "application/config/store_url"
 
 ## "defeat" or "demo_complete". Set by the owner before add_child.
 var mode: String = "defeat"
@@ -74,32 +76,39 @@ func _build() -> void:
 	summary.add_theme_color_override("font_color", T.TEXT_SECONDARY)
 	box.add_child(summary)
 
-	# Wishlist CTA — shown on BOTH win and defeat. Most demo players exit via defeat,
-	# so the conversion ask (and the "there's more" teaser) must live on both paths.
-	var teaser := Label.new()
-	teaser.text = tr("RESULT_TEASER")
-	teaser.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	teaser.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	teaser.custom_minimum_size = Vector2(560, 0)
-	teaser.add_theme_font_size_override("font_size", 18)
-	teaser.add_theme_color_override("font_color", T.ACCENT_NEON_BLUE)
-	box.add_child(teaser)
+	var details := Label.new()
+	details.text = _detail_text()
+	details.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	details.add_theme_font_size_override("font_size", 17)
+	details.add_theme_color_override("font_color", T.TEXT_SECONDARY)
+	box.add_child(details)
 
-	var wishlist_btn := Button.new()
-	wishlist_btn.text = tr("RESULT_WISHLIST")
-	wishlist_btn.custom_minimum_size = Vector2(360, 52)
-	wishlist_btn.focus_mode = Control.FOCUS_NONE
-	wishlist_btn.add_theme_font_size_override("font_size", 20)
-	T.apply_button_theme(wishlist_btn)
-	wishlist_btn.pressed.connect(_on_wishlist)
-	box.add_child(wishlist_btn)
+	if _store_url() != "":
+		# The conversion ask belongs on both paths once a real page is configured.
+		var teaser := Label.new()
+		teaser.text = tr("RESULT_TEASER")
+		teaser.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		teaser.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		teaser.custom_minimum_size = Vector2(560, 0)
+		teaser.add_theme_font_size_override("font_size", 18)
+		teaser.add_theme_color_override("font_color", T.ACCENT_NEON_BLUE)
+		box.add_child(teaser)
+
+		var wishlist_btn := Button.new()
+		wishlist_btn.text = tr("RESULT_WISHLIST")
+		wishlist_btn.custom_minimum_size = Vector2(360, 52)
+		wishlist_btn.focus_mode = Control.FOCUS_NONE
+		wishlist_btn.add_theme_font_size_override("font_size", 20)
+		T.apply_button_theme(wishlist_btn)
+		wishlist_btn.pressed.connect(_on_wishlist)
+		box.add_child(wishlist_btn)
 
 	var gap := Control.new()
 	gap.custom_minimum_size = Vector2(0, 12)
 	box.add_child(gap)
 
 	var back := Button.new()
-	back.text = tr("RESULT_BACK_TO_MENU")
+	back.text = tr("RESULT_BACK_TO_MENU") if is_win else tr("RESULT_BACK_TO_BASE")
 	back.custom_minimum_size = Vector2(320, 56)
 	back.focus_mode = Control.FOCUS_NONE
 	back.add_theme_font_size_override("font_size", 22)
@@ -126,12 +135,38 @@ func _summary_text() -> String:
 	)
 
 
+func _detail_text() -> String:
+	var gear_count := 0
+	for slot in RunManager.EQUIPMENT_SLOTS:
+		if not RunManager.as_equip_instance(RunManager.equipped_items.get(slot, {})).is_empty():
+			gear_count += 1
+	return (
+		tr("RESULT_SUMMARY_DETAILS")
+		. format(
+			{
+				"cards": RunManager.player_deck.size(),
+				"relics": RunManager.relics.size(),
+				"gear": gear_count,
+			}
+		)
+	)
+
+
+func _store_url() -> String:
+	var url := str(ProjectSettings.get_setting(STORE_URL_SETTING, "")).strip_edges()
+	if not url.begins_with("https://store.steampowered.com/app/"):
+		return ""
+	return url
+
+
 func _on_back() -> void:
 	AudioManager.play_sfx("ui_back")
-	SceneTransition.change_to(MAIN_MENU_PATH)
+	var destination := MAIN_MENU_PATH if mode == "demo_complete" else HOME_BASE_PATH
+	SceneTransition.change_to(destination)
 
 
 func _on_wishlist() -> void:
 	AudioManager.play_sfx("ui_click")
-	# Opens the store page in the default browser. Harmless no-op if unsupported.
-	OS.shell_open(STORE_URL)
+	var url := _store_url()
+	if url != "":
+		OS.shell_open(url)

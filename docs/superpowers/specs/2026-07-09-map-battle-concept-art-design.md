@@ -39,7 +39,7 @@ Preserve the current battle coordinate logic and bottom-HUD interaction zones.
 - Keep the center battlefield open for targeting, effects, and intent readability.
 - Keep compact HP bars directly beneath combatants and a small intent icon/number above the enemy.
 - Show a three-card hand centered at the bottom without changing the existing fan/spread logic.
-- Draw and discard piles remain at the bottom-left and bottom-right edges. Each uses the approved cream `iconb_cards_fan` silhouette; its count is a small anchored badge attached to the icon, never a large floating numeral.
+- Draw and discard piles remain at the bottom-left and bottom-right edges. Each uses a mirrored copy of the approved `iconb_deck_stack` book silhouette; its count is a small anchored badge attached to the icon, never a large floating numeral.
 - Energy sits quietly above the draw pile as three small cyan energy dots/capsules plus a compact `3/3` label. Do not use the current large ornate energy ring.
 - End Turn stays at the lower-right in a slim charcoal button with a warm-orange/brass accent, clear of the discard pile.
 - The shared top bar is visually identical to the map top bar, apart from battle-specific settings/tools state.
@@ -60,4 +60,3 @@ Preserve the current battle coordinate logic and bottom-HUD interaction zones.
 - Energy is compact; pile counts are attached badges.
 - UI remains lightweight and avoids all prohibited heavy mechanical chrome.
 - The images contain no watermark and no accidental franchise-specific content.
-

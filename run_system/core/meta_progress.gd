@@ -3,10 +3,10 @@
 ##
 ## Schema: { "caps": int, "scrap": int, "upgrades": { "<id>": int } }
 ##   - caps: current spendable Caps currency (the "money" currency — market/clinic
-##     purchases, building tier-ups, outpost permanent upgrades, run banking)
+##     services, outpost permanent upgrades, run banking)
 ##   - scrap: current spendable Scrap currency (the "salvage" currency — earned by
 ##     dismantling equipment at the forge + battle drops; spent on reforging and
-##     building UNLOCKS). The old third "Core" currency was removed 2026-07-07;
+##     every building unlock/tier-up). The old third "Core" currency was removed 2026-07-07;
 ##     old saves' core balance is discarded (not migrated).
 ##   - upgrades: id → current level (0..3)
 extends Node
@@ -124,8 +124,9 @@ func _reset_to_defaults() -> void:
 	run_history = []
 	max_ascension = 0
 	tutorial_seen = false
-	starter_deck_override = {}
 	stash = []
+	RunManager.pending_loadout.clear()
+	RunManager.pending_equipped.clear()
 	buildings = {}
 	active_bounties = []
 	bounty_shelf = []
@@ -146,11 +147,11 @@ signal bounty_completed(bounty_id: String)
 ## settle) so the bounty board / outpost shelf rebuild.
 signal bounties_changed
 
-## "Money" currency. Spent at market/clinic, building tier-ups, outpost permanent
+## "Money" currency. Spent at market/clinic and on outpost permanent
 ## upgrades; earned via run banking (extract/victory) + contract rewards.
 var caps: int = 0
 ## "Salvage" currency. Earned by dismantling equipment at the forge + battle drops
-## (banked to here on extract/victory); spent on reforging AND building unlocks.
+## (banked to here on extract/victory); spent on reforging and all building tiers.
 var scrap: int = 0
 var upgrades: Dictionary = {}
 ## Legacy facilities unlocked once (one-time). facility_id → true once unlocked.
@@ -166,13 +167,9 @@ var max_ascension: int = 0
 ## True once the player has seen the first-battle tutorial tips. Persisted so the
 ## tips show exactly once across all runs. Set via mark_tutorial_seen().
 var tutorial_seen: bool = false
-## Per-hero starter-deck override set by the outpost deck editor. hero_id → Array
-## of card_id Strings (the full, ≤2-swap deck). When non-empty for the run's hero,
-## start_new_run uses it instead of the hero JSON / DEFAULT_STARTER_DECK. Persistent;
-## back-compat default {}.
-var starter_deck_override: Dictionary = {}
-## Permanent equipment stash — gear carried out by extracting/surviving (in a
-## safe cell). Persists across runs; loaded into a run via the loadout step.
+## Permanent equipment stash — pure storage populated only by an explicit
+## backpack/slot → stash transfer (plus legacy/base reward producers that have
+## not yet moved to the backpack contract). Run settlement never writes here.
 ## Each entry is an equip INSTANCE dict (see RunManager.as_equip_instance), or a
 ## legacy item_id String from an older save — both are tolerated on read.
 var stash: Array = []
@@ -229,7 +226,7 @@ const CYBER_HP_PER_LEVEL := 5
 ## Each entry: unlock_cost (SCRAP to go locked→T1), tier_costs ([T2 cost, T3 cost]
 ## in CAPS), functions (function key → minimum tier that gates it). Numbers are
 ## [tunable] — unchanged from the pre-Core-removal values; the currency SEMANTICS
-## changed (unlock=Scrap, tier-up=Caps), not the amounts.
+## changed (unlock + tier-up = Scrap), not the amounts.
 const BUILDING_DEFS := {
 	"forge":
 	{
@@ -291,7 +288,8 @@ const BOUNTY_SHELF_SIZE := 3
 ## Hero-exclusive draft cards: only offered (loot/shop) when that hero is active, so
 ## a hero's signature cards never roll in another hero's rewards.
 const HERO_EXCLUSIVE_CARDS := {
-	# Cowboy Bill — the StS2 Ironclad bruiser kit (strength / blood / exhaust).
+	# Cowboy Bill — malfunctioning gunslinger: reload, critical hits, Short Circuit and
+	# risky self-damage. Keep this identity separate from future heroes.
 	"cowboy_bill":
 	[
 		"piston_jab",
@@ -311,6 +309,61 @@ const HERO_EXCLUSIVE_CARDS := {
 		"breach_charge",
 		"limit_break",
 	],
+}
+
+## The public demo deliberately uses a focused reward pool. All card JSON remains
+## available to old saves and the full game; this only controls newly rolled
+## reward/shop choices while DEMO_BUILD is active.
+const DEMO_REWARD_POOLS := {
+	"cowboy_bill": [
+		# Bill signature package (16)
+		"piston_jab",
+		"pipe_swing",
+		"combat_stim",
+		"load_up",
+		"coagulate",
+		"dissect",
+		"hot_streak",
+		"all_in",
+		"hemorrhage",
+		"covering_reload",
+		"focusing_blow",
+		"siphon_valve",
+		"bulkhead_bleed",
+		"hemo_drive",
+		"breach_charge",
+		"limit_break",
+		# Curated shared support (20)
+		"arc_flash",
+		"brace",
+		"crowbar_smash",
+		"hot_swap",
+		"rebar_wave",
+		"recoil_shot",
+		"reload",
+		"siphon",
+		"tape_patch",
+		"vent_plating",
+		"cascade",
+		"chain_link",
+		"charged_shot",
+		"data_dump",
+		"deflector",
+		"lucky_streak",
+		"spiked_guard",
+		"sweep_arc",
+		"bone_breaker",
+		"stun_baton",
+	]
+}
+
+## Removed upgrades used to grant invisible bonuses after their UI was deleted.
+## On the next load, refund exactly the Caps spent at each owned level, erase the
+## stale ids, and save the cleaned profile. Erasure makes the migration idempotent.
+const REMOVED_UPGRADE_REFUND_COSTS := {
+	"med_bay": [50, 110, 180],
+	"starter_boost": [50, 110, 180],
+	"scrap_workshop": [50, 110, 180],
 }
 
 
@@ -378,8 +431,17 @@ const BASIC_CARD_IDS := ["strike", "defend"]
 ## hero's exclusive cards (the active hero's own exclusives ARE included).
 ## Directory-scanned so newly added card JSON is draftable with no unlock step.
 func get_unlocked_card_pool() -> Array[String]:
-	var pool: Array[String] = []
 	var hero_id: String = str(RunManager.current_hero_id) if RunManager else ""
+	if RunManager and RunManager.DEMO_BUILD and DEMO_REWARD_POOLS.has(hero_id):
+		var focused: Array[String] = []
+		for card_id in DEMO_REWARD_POOLS[hero_id]:
+			var id := str(card_id)
+			var data := _load_card_json(CARD_DATA_DIR + id + ".json")
+			if not data.is_empty() and str(data.get("type", "")) != "curse":
+				focused.append(id)
+		return focused
+
+	var pool: Array[String] = []
 	var blocked := {}
 	for h in HERO_EXCLUSIVE_CARDS:
 		if h != hero_id:
@@ -414,26 +476,6 @@ func _load_card_json(path: String) -> Dictionary:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return {}
 	return parsed
-
-
-## --- Market: starter-deck override ---
-
-
-## Persist a per-hero starter-deck override (outpost deck editor). `deck` is the
-## full edited deck (Array of card_id Strings, encoding ≤2 swaps off the hero
-## default). Stored under hero_id; consumed by start_new_run. An empty `deck`
-## clears the override for that hero.
-func set_starter_deck_override(hero_id: String, deck: Array) -> void:
-	if hero_id == "":
-		return
-	if deck.is_empty():
-		starter_deck_override.erase(hero_id)
-	else:
-		var out: Array = []
-		for c in deck:
-			out.append(str(c))
-		starter_deck_override[hero_id] = out
-	save_progress()
 
 
 func add_caps(amount: int) -> void:
@@ -550,7 +592,7 @@ func effective_safe_cells() -> int:
 	return SAFE_CELLS_BASE + get_upgrade_level("blacksmith")
 
 
-## --- Buildings refactor: tiered buildings (unlock=Scrap, tier-up=Caps) ---
+## --- Buildings refactor: tiered buildings (unlock + tier-up = Scrap) ---
 
 
 ## Current tier of a building (0=locked, 1=unlocked, 2, 3). Absent → 0 (locked).
@@ -562,12 +604,10 @@ func is_building_unlocked(id: String) -> bool:
 	return get_building_tier(id) >= 1
 
 
-## The currency the NEXT action on a building spends: "scrap" for the unlock (while
-## locked), "caps" for a tier-up (already unlocked). UI reads this to pick the cost
-## icon + which balance to check for affordability. Unknown id → "caps" (harmless
-## default; next_building_cost returns -1 there so no purchase happens anyway).
-func building_cost_currency(id: String) -> String:
-	return "scrap" if get_building_tier(id) < 1 else "caps"
+## Every building unlock and tier-up spends Scrap. Caps remain the service and
+## permanent-upgrade currency inside buildings such as the Outpost.
+func building_cost_currency(_id: String) -> String:
+	return "scrap"
 
 
 ## Spend SCRAP to unlock a building (locked → T1). Idempotent (returns true if
@@ -588,8 +628,8 @@ func unlock_building(id: String) -> bool:
 	return true
 
 
-## Spend CAPS to upgrade a building one tier (T1→T2 or T2→T3). Returns false if
-## locked, already maxed, unknown id, or insufficient Caps.
+## Spend SCRAP to upgrade a building one tier (T1→T2 or T2→T3). Returns false if
+## locked, already maxed, unknown id, or insufficient Scrap.
 func upgrade_building(id: String) -> bool:
 	if not BUILDING_DEFS.has(id):
 		return false
@@ -600,12 +640,12 @@ func upgrade_building(id: String) -> bool:
 	if cur - 1 >= tier_costs.size():
 		return false
 	var cost := int(tier_costs[cur - 1])
-	if caps < cost:
+	if scrap < cost:
 		return false
-	caps -= cost
+	scrap -= cost
 	buildings[id] = cur + 1
 	save_progress()
-	emit_signal("caps_changed", caps)
+	emit_signal("scrap_changed", scrap)
 	emit_signal("buildings_changed")
 	return true
 
@@ -619,9 +659,7 @@ func building_can(id: String, function: String) -> bool:
 	return get_building_tier(id) >= int(functions.get(function, 99))
 
 
-## Cost of the next action on a building: its unlock cost (Scrap) if locked, else
-## the next tier-up cost (Caps), else -1 if maxed or unknown. For UI button labels.
-## Pair with building_cost_currency(id) to know which currency the number is in.
+## Cost of the next building action in Scrap, else -1 if maxed or unknown.
 func next_building_cost(id: String) -> int:
 	if not BUILDING_DEFS.has(id):
 		return -1
@@ -688,17 +726,78 @@ func remove_from_stash(item: Variant) -> bool:
 	return true
 
 
+## Add a newly granted base reward directly to the owned backpack without ever
+## routing it through storage. Used by meta rewards that are intentionally safe
+## across the current run; shop/craft callers can adopt the same API separately.
+func add_to_base_backpack(item: Variant) -> bool:
+	if RunManager.pending_loadout.size() >= RunManager.effective_backpack_size():
+		return false
+	if RunManager.as_equip_instance(item).is_empty():
+		return false
+	RunManager.pending_loadout.append(item)
+	save_progress()
+	return true
+
+
+## Explicit storage transfer: move one value-matched stash entry into the owned
+## base backpack. Both collections mutate before a single save, so a stale drag,
+## full backpack, or write boundary can never duplicate/delete the item.
+func move_stash_to_base_backpack(item: Variant) -> bool:
+	if RunManager.pending_loadout.size() >= RunManager.effective_backpack_size():
+		return false
+	var idx := stash.find(item)
+	if idx < 0:
+		return false
+	var entry: Variant = stash[idx]
+	if RunManager.as_equip_instance(entry).is_empty():
+		return false
+	stash.remove_at(idx)
+	RunManager.pending_loadout.append(entry)
+	save_progress()
+	return true
+
+
+## Explicit storage transfer: move one owned base-backpack entry into stash.
+## Capacity and stale-payload checks happen before either collection changes.
+func move_base_backpack_to_stash(item: Variant) -> bool:
+	if stash.size() >= effective_stash_cap():
+		return false
+	var idx := RunManager.pending_loadout.find(item)
+	if idx < 0:
+		return false
+	var entry: Variant = RunManager.pending_loadout[idx]
+	if RunManager.as_equip_instance(entry).is_empty():
+		return false
+	RunManager.pending_loadout.remove_at(idx)
+	stash.append(entry)
+	save_progress()
+	return true
+
+
+## Explicit storage transfer for a worn base item. A full stash leaves the slot
+## untouched; success moves the exact instance and clears its base slot.
+func move_base_slot_to_stash(slot: String) -> bool:
+	if slot not in RunManager.EQUIPMENT_SLOTS or stash.size() >= effective_stash_cap():
+		return false
+	if not RunManager.pending_equipped.has(slot):
+		return false
+	var entry: Variant = RunManager.pending_equipped[slot]
+	if RunManager.as_equip_instance(entry).is_empty():
+		return false
+	RunManager.pending_equipped.erase(slot)
+	stash.append(entry)
+	save_progress()
+	return true
+
+
 ## --- Blacksmith: dismantle (→ scrap) + reforge (spend scrap, reroll affix) ---
 
 
 ## Dismantle stash item `index`: remove it and grant scrap based on its rarity
-## (+5 if cursed). Emits scrap_changed (via add_scrap) and upgrades_changed so the
-## blacksmith panel rebuilds. Returns false for an out-of-range index or an entry
-## reserved by the next-run loadout queue (dismantling those would dupe the item).
+## (+5 if cursed). Base-carried items are physically absent from stash, so every
+## valid stash index is unambiguously owned by storage.
 func dismantle_stash_item(index: int) -> bool:
 	if index < 0 or index >= stash.size():
-		return false
-	if _stash_entry_reserved(stash[index]):
 		return false
 	var inst: Dictionary = RunManager.as_equip_instance(stash[index])
 	var rarity: String = str(inst.get("rarity", "common"))
@@ -711,28 +810,11 @@ func dismantle_stash_item(index: int) -> bool:
 	emit_signal("upgrades_changed")
 	return true
 
-
-## True when a stash entry is referenced by the NEXT-RUN loadout queue
-## (`RunManager.pending_loadout` / `pending_equipped`). Queued entries stay in the
-## stash until `start_new_run` consumes them (`remove_from_stash` by value), so
-## dismantling one would pay Scrap AND still inject the item into the run — a
-## duplication exploit. Matches by value, mirroring remove_from_stash.
-func _stash_entry_reserved(entry: Variant) -> bool:
-	if RunManager.pending_loadout.has(entry):
-		return true
-	for slot in RunManager.pending_equipped:
-		if RunManager.pending_equipped[slot] == entry:
-			return true
-	return false
-
-
 ## True when a resolved stash instance may be BULK-dismantled: its rarity is one of
 ## common/uncommon/rare AND it is neither a set piece nor cursed. `rarity_filter`
 ## (""=any of the three) narrows the match to a single rarity. Set/cursed gear is
 ## protected from bulk operations (recognised by set_id / cursed / the "set" /
 ## "cursed" tiers) — only the single drop-slot path can scrap those.
-## (Callers must ALSO skip _stash_entry_reserved entries — this predicate only
-## sees the resolved instance, not the raw stash entry.)
 func _bulk_dismantlable(inst: Dictionary, rarity_filter: String) -> bool:
 	if bool(inst.get("cursed", false)):
 		return false
@@ -750,15 +832,12 @@ func _bulk_dismantlable(inst: Dictionary, rarity_filter: String) -> bool:
 
 ## Read-only preview of a bulk dismantle: {count, scrap} — how many stash items
 ## match `rarity` (""=all common/uncommon/rare) and the total scrap they would
-## yield. Set + cursed gear and next-run-queued (pending_*) entries are always
-## excluded. Mutates nothing (feeds the confirm dialog so the numbers shown match
-## what dismantle_stash_by_rarity will do).
+## yield. Set + cursed gear are excluded. Mutates nothing (feeds the confirm
+## dialog so the numbers shown match what dismantle_stash_by_rarity will do).
 func preview_dismantle_by_rarity(rarity: String) -> Dictionary:
 	var count := 0
 	var scrap_total := 0
 	for entry in stash:
-		if _stash_entry_reserved(entry):
-			continue
 		var inst: Dictionary = RunManager.as_equip_instance(entry)
 		if not _bulk_dismantlable(inst, rarity):
 			continue
@@ -770,18 +849,13 @@ func preview_dismantle_by_rarity(rarity: String) -> Dictionary:
 
 ## Bulk-dismantle every stash item matching `rarity` (""=all common/uncommon/rare),
 ## granting the summed scrap. Set + cursed gear is NEVER bulk-dismantled (protected;
-## use dismantle_stash_item for those), and next-run-queued (pending_*) entries are
-## skipped (see _stash_entry_reserved). Emits scrap_changed (via add_scrap) +
-## upgrades_changed ONCE. Returns {count, scrap} (both 0 when nothing matched — no
-## signal is emitted in that case).
+## use dismantle_stash_item for those). Emits scrap_changed (via add_scrap) and
+## upgrades_changed ONCE. Returns {count, scrap} (both 0 when nothing matched).
 func dismantle_stash_by_rarity(rarity: String) -> Dictionary:
 	var kept: Array = []
 	var count := 0
 	var scrap_total := 0
 	for entry in stash:
-		if _stash_entry_reserved(entry):
-			kept.append(entry)
-			continue
 		var inst: Dictionary = RunManager.as_equip_instance(entry)
 		if _bulk_dismantlable(inst, rarity):
 			count += 1
@@ -903,7 +977,6 @@ func reset_all() -> void:
 	facilities.clear()
 	caps_perk_levels.clear()
 	buildings.clear()
-	starter_deck_override.clear()
 	save_progress()
 	emit_signal("caps_changed", caps)
 	emit_signal("scrap_changed", scrap)
@@ -1057,8 +1130,9 @@ func bounty_progress_add(kind: String, amount: int) -> void:
 
 ## Grant a completed contract's reward, remove it from the board, and announce
 ## it. Currency rewards go through add_caps/add_scrap (each persists); an
-## `equipment` reward rolls a shell of that tier into the permanent stash
-## (silently lost if the stash is full — same rule as any other stash overflow).
+## `equipment` reward rolls a shell into the active run backpack (the only place
+## bounty progress can normally settle), never into storage. The defensive
+## out-of-run fallback uses the owned base backpack.
 ## Core was removed 2026-07-07; a legacy save's contract with a stale `core` reward
 ## key is routed to scrap so no reward silently vanishes.
 func _settle_bounty(entry: Dictionary) -> void:
@@ -1073,7 +1147,11 @@ func _settle_bounty(entry: Dictionary) -> void:
 			add_scrap(scrap_reward)
 		var equip_tier := str(reward.get("equipment", ""))
 		if equip_tier != "":
-			add_to_stash(RunManager.roll_shell_drop(equip_tier))
+			var reward_item := RunManager.roll_shell_drop(equip_tier)
+			if RunManager.is_run_active:
+				RunManager.add_equip_to_backpack(reward_item)
+			else:
+				add_to_base_backpack(reward_item)
 	active_bounties.erase(entry)
 	# Taking is FREE now, so a settled contract must leave TODAY'S shelf too —
 	# otherwise the same contract could be re-taken and farmed all day. It comes
@@ -1109,8 +1187,11 @@ func save_progress() -> void:
 		"caps_perk_levels": caps_perk_levels,
 		"run_history": run_history,
 		"max_ascension": max_ascension,
-		"starter_deck_override": starter_deck_override,
 		"stash": stash,
+		# The base backpack/equipment slots own these entries independently of
+		# stash. Kept in the profile so returned gear survives relaunches.
+		"base_loadout": RunManager.pending_loadout,
+		"base_equipped": RunManager.pending_equipped,
 		"buildings": buildings,
 		"tutorial_seen": tutorial_seen,
 		"active_bounties": active_bounties,
@@ -1158,19 +1239,6 @@ func load_progress() -> void:
 		run_history = raw_history
 	max_ascension = clampi(int(parsed.get("max_ascension", 0)), 0, ASCENSION_CAP)
 	tutorial_seen = bool(parsed.get("tutorial_seen", false))
-	# Back-compat: older saves carry two now-removed keys from the deleted base
-	# card-unlock/card-shop system. Those keys are simply left unread here —
-	# every card is draftable by default now (get_unlocked_card_pool scans disk).
-	var raw_override = parsed.get("starter_deck_override", {})
-	starter_deck_override.clear()
-	if typeof(raw_override) == TYPE_DICTIONARY:
-		for hid in raw_override:
-			var deck = raw_override[hid]
-			if typeof(deck) == TYPE_ARRAY:
-				var out: Array = []
-				for c in deck:
-					out.append(str(c))
-				starter_deck_override[str(hid)] = out
 	# Stash entries may be equip INSTANCE dicts (new) or legacy item_id Strings
 	# (old saves). Preserve both as-is — RunManager.as_equip_instance converts
 	# strings on read; no normalization needed here (lower-risk than rewriting
@@ -1183,6 +1251,28 @@ func load_progress() -> void:
 				stash.append(s)
 			else:
 				stash.append(str(s))
+	# Base-owned gear is separate from stash. Old profiles lack these keys and
+	# therefore load an empty base backpack without altering their stored gear.
+	RunManager.pending_loadout.clear()
+	var raw_base_loadout = parsed.get("base_loadout", [])
+	if typeof(raw_base_loadout) == TYPE_ARRAY:
+		for entry in raw_base_loadout:
+			if not RunManager.as_equip_instance(entry).is_empty():
+				RunManager.pending_loadout.append(entry)
+	RunManager.pending_equipped.clear()
+	var raw_base_equipped = parsed.get("base_equipped", {})
+	if typeof(raw_base_equipped) == TYPE_DICTIONARY:
+		for raw_slot in raw_base_equipped:
+			var slot := str(raw_slot)
+			if slot not in RunManager.EQUIPMENT_SLOTS:
+				continue
+			var entry: Variant = raw_base_equipped[raw_slot]
+			var inst := RunManager.as_equip_instance(entry)
+			if inst.is_empty():
+				continue
+			var data := RunManager.get_equipment_data(RunManager.equip_base(inst))
+			if str(data.get("slot", "")) == slot:
+				RunManager.pending_equipped[slot] = entry
 	# Back-compat: old saves predate the buildings refactor. Missing key →
 	# empty {} (all buildings locked). Stale ids from removed buildings (e.g.
 	# "warehouse") are carried along harmlessly — nothing reads them.
@@ -1218,6 +1308,30 @@ func load_progress() -> void:
 	if typeof(raw_seen) == TYPE_DICTIONARY:
 		for cid in raw_seen:
 			cards_seen[str(cid)] = true
+	if _migrate_removed_profile_state(parsed):
+		save_progress()
+		emit_signal("caps_changed", caps)
+		emit_signal("upgrades_changed")
+
+
+## Refund and erase profile fields whose gameplay/UI no longer exists. The raw
+## payload is accepted so a stale starter_deck_override key is also stripped even
+## when no removed upgrade was owned.
+func _migrate_removed_profile_state(raw_profile: Dictionary) -> bool:
+	var changed := raw_profile.has("starter_deck_override")
+	var refund := 0
+	for upgrade_id in REMOVED_UPGRADE_REFUND_COSTS:
+		if not upgrades.has(upgrade_id):
+			continue
+		var costs: Array = REMOVED_UPGRADE_REFUND_COSTS[upgrade_id]
+		var level := clampi(int(upgrades.get(upgrade_id, 0)), 0, costs.size())
+		for i in range(level):
+			refund += int(costs[i])
+		upgrades.erase(upgrade_id)
+		changed = true
+	if refund > 0:
+		caps += refund
+	return changed
 
 
 # --- Card-info cache (loading optimization, Phase 5) -----------------------

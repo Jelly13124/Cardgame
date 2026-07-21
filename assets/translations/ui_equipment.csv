@@ -29,6 +29,7 @@ UI_EQUIP_NO_BONUSES,(no bonuses),(无加成)
 UI_EQUIP_FULL_SWAP,INVENTORY FULL — discard something first to swap,背包已满 — 请先丢弃物品再替换
 UI_EQUIP_FULL_UNEQUIP,INVENTORY FULL — discard something first to unequip,背包已满 — 请先丢弃物品再卸下
 UI_EQUIP_SET_PREFIX,Set: {name},套装：{name}
+UI_EQUIP_SET_TRIGGER,{set} set bonus,{set}套装效果
 UI_EQUIP_SLOT_HEAD,HEAD,头部
 UI_EQUIP_SLOT_CHEST,CHEST,胸甲
 UI_EQUIP_SLOT_WEAPON,WEAPON,武器

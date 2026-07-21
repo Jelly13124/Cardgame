@@ -1,15 +1,15 @@
 {
   "name": "hemorrhage",
-  "title": "Hemorrhage",
+  "title": "Critical Discharge",
   "rarity": "rare",
   "type": "ability",
   "cost": 2,
   "polarity": "neutral",
-  "description": "This combat, your Bleed damage can Crit.",
+  "description": "This combat, your Short Circuit detonations can Crit.",
   "front_image": "player/hemorrhage.png",
   "side": "player",
   "effects": [
-    { "type": "apply_status_self", "status": "hemorrhage", "stacks": 1 }
+    { "type": "apply_status_self", "status": "detonation_protocol", "stacks": 1 }
   ],
   "upgrade": {
     "cost": 1

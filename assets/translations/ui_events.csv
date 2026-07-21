@@ -7,7 +7,7 @@ EVENT_STRANDED_TRADER_OPT0_RESULT,"Hours of shoveling later the rig lurches loos
 EVENT_STRANDED_TRADER_OPT1_TEXT,[Charm 5] Sweet-talk a parting gift from his crate,[魅力 5] 甜言蜜语，从他的货箱里讨件临别礼
 EVENT_STRANDED_TRADER_OPT1_RESULT,"Your easy smile wins him over. He digs out a Lucky Cog and presses it into your hand for the company.","你随和的笑容打动了他。他翻出一枚幸运齿轮，塞进你手里，谢你一路作伴。"
 EVENT_STRANDED_TRADER_OPT2_TEXT,[Luck] Roll his weighted dice for the strongbox,[幸运] 用他灌了铅的骰子赌那只保险箱
-EVENT_STRANDED_TRADER_OPT2_RESULT_OK,The bones come up sevens. He grumbles and tosses you the core from the strongbox.,骰子掷出七点。他嘟囔着，把保险箱里的核心抛给你。
+EVENT_STRANDED_TRADER_OPT2_RESULT_OK,The bones come up sevens. He grumbles and tosses you a bundle of clean scrap from the strongbox.,骰子掷出七点。他嘟囔着，把保险箱里的一捆精炼废料抛给你。
 EVENT_STRANDED_TRADER_OPT2_RESULT_FAIL,"Snake eyes. He laughs, draws iron, and clips your shoulder before you back off.","两个一点。他大笑，拔枪，在你退开前擦伤了你的肩膀。"
 EVENT_BURIED_CACHE_TITLE,Buried Cache,埋藏的暗格
 EVENT_BURIED_CACHE_DESC,"A rusted hatch juts from the dune, half-swallowed by sand. Old militia markings warn of a sealed supply vault beneath. The lock looks ready to give.","一扇锈蚀的舱盖从沙丘里探出，半埋在沙中。旧民兵的标记警告下方封着一座补给库。那把锁看起来快撑不住了。"
@@ -15,7 +15,7 @@ EVENT_BURIED_CACHE_OPT0_TEXT,Pry it open and grab the gear,撬开它，把装备
 EVENT_BURIED_CACHE_OPT0_RESULT,"The hatch shrieks open. Inside, vacuum-sealed and waiting, sits a piece of pre-collapse equipment.","舱盖刺耳地弹开。里头真空封存着一件大崩溃前的装备，静静等着。"
 EVENT_BURIED_CACHE_OPT1_TEXT,[Luck] Trust the rotting floor and dive deep,[幸运] 赌那腐朽的地板，深入下去
 EVENT_BURIED_CACHE_OPT1_RESULT_OK,"The boards hold. In the deepest locker you find a rare relic of the old world and a cache of coin.","木板撑住了。在最深处的储物柜里，你找到一件旧世界的稀有遗物，还有一小笔藏起来的钱。"
-EVENT_BURIED_CACHE_OPT1_RESULT_FAIL,"The floor caves. You crash through onto twisted rebar and crawl out empty-handed and bleeding.","地板塌了。你摔在扭曲的钢筋上，空着手、淌着血爬了出来。"
+EVENT_BURIED_CACHE_OPT1_RESULT_FAIL,"The floor caves. You crash through onto twisted rebar and crawl out empty-handed, leaking coolant.","地板塌了。你摔在扭曲的钢筋上，空着手、漏着冷却液爬了出来。"
 EVENT_HOODED_STRANGER_TITLE,The Hooded Stranger,兜帽下的陌生人
 EVENT_HOODED_STRANGER_DESC,"By a guttering fire sits a figure swathed in grey rags, face lost in shadow. A cracked deck of fortune cards waits face-down on a flat stone between you.","将熄的篝火旁坐着一个裹着灰布的身影，脸隐在阴影里。你们之间的一块平石上，扣着一副残破的命运卡。"
 EVENT_HOODED_STRANGER_OPT0_TEXT,Share your rations and your story,分享你的口粮和你的故事
@@ -32,7 +32,7 @@ EVENT_RAD_STORM_OPT0_RESULT,"You wrap up tight and breathe through your scarf. T
 EVENT_RAD_STORM_OPT1_TEXT,[Charm 5] Wave down a passing convoy for shelter,[魅力 5] 拦下过路的车队求个庇护
 EVENT_RAD_STORM_OPT1_RESULT,"Your frantic charm earns a wave back. They haul you into a sealed truck, patch you up, and slip you some coin for the road.","你拼命挥手、巧言相求，换来对方回应。他们把你拽进密封货车，替你包扎，还塞给你些路费。"
 EVENT_RAD_STORM_OPT2_TEXT,[Luck] Sprint through the glow toward a bunker,[幸运] 冲过辉光，奔向一座地堡
-EVENT_RAD_STORM_OPT2_RESULT_OK,"You thread the worst of it and slam the bunker hatch. Inside, an intact core hums in the dark — and you feel charmed.","你穿过最凶的一段，砰地关上地堡舱门。黑暗里，一枚完好的核心嗡嗡作响——你只觉时运在身。"
+EVENT_RAD_STORM_OPT2_RESULT_OK,"You thread the worst of it and slam the bunker hatch. Inside, a sealed crate of pre-war scrap waits in the dark — and you feel charmed.","你穿过最凶的一段，砰地关上地堡舱门。黑暗里，一箱密封的战前废料静静等着——你只觉时运在身。"
 EVENT_RAD_STORM_OPT2_RESULT_FAIL,"The storm catches you in the open. You reach the bunker scorched and retching, the dose still burning in your lungs.","风暴在旷野里逮住了你。你抵达地堡时焦灼欲呕，那股辐射还在肺里灼烧。"
 EVENT_MUTANT_BAZAAR_TITLE,The Mutant Bazaar,变异者集市
 EVENT_MUTANT_BAZAAR_DESC,"Under a tarp of stitched hides, a four-armed trader fans out salvage across a battered table. Every price is a starting price — if you can talk fast enough.","拼缝兽皮的篷布下，一个四臂商人把废件摊满破桌。每个价码都只是起价——只要你嘴皮子够快。"
@@ -65,8 +65,8 @@ EVENT_COLLAPSED_OVERPASS_OPT0_RESULT,"You spend the afternoon prying loose what 
 EVENT_COLLAPSED_OVERPASS_OPT1_TEXT,[Charm 5] Flag down a passing scav crew to brace it for a cut,[魅力 5] 拦下路过的拾荒队，分成请他们撑住桥板
 EVENT_COLLAPSED_OVERPASS_OPT1_RESULT,"Your easy patter wins over the scav crew. They jack the slab on hydraulics, you split the cache, and everyone walks away richer.",你三言两语就说动了拾荒队。他们用液压顶撑起桥板，你们平分了补给，各自满载而归。
 EVENT_COLLAPSED_OVERPASS_OPT2_TEXT,[Luck] Crawl under the groaning slab for the deep cache,[幸运] 钻到呻吟的桥板下，去掏最深处的补给
-EVENT_COLLAPSED_OVERPASS_OPT2_RESULT_OK,The slab holds. You drag out a sealed crate of refined core and a fat purse before scrambling clear.,桥板撑住了。你拖出一箱密封的精炼核心和一只鼓囊囊的钱袋，赶在塌落前爬了出来。
-EVENT_COLLAPSED_OVERPASS_OPT2_RESULT_FAIL,"The wind shifts. Concrete shears loose and pins your leg — you wrench free bleeding, the cache buried for good.",风向变了。混凝土崩落，压住了你的腿——你流着血挣脱出来，补给就此永远埋在了下面。
+EVENT_COLLAPSED_OVERPASS_OPT2_RESULT_OK,The slab holds. You drag out a sealed crate of refined scrap and a fat purse before scrambling clear.,桥板撑住了。你拖出一箱密封的精炼废料和一只鼓囊囊的钱袋，赶在塌落前爬了出来。
+EVENT_COLLAPSED_OVERPASS_OPT2_RESULT_FAIL,"The wind shifts. Concrete shears loose and pins your leg — you wrench free with torn wiring, the cache buried for good.",风向变了。混凝土崩落，压住了你的腿——你扯断受损线路挣脱出来，补给就此永远埋在了下面。
 EVENT_CURSED_SAFE_TITLE,Humming Strongbox,嗡鸣保险箱
 EVENT_CURSED_SAFE_DESC,"A dented strongbox hums on a cracked altar, leaking sickly green light through its seams. Caps glint inside — but the air tastes of rot and bad luck.",一只凹陷的保险箱在龟裂的祭台上嗡嗡作响，缝隙里渗出病态的绿光。里面有瓶盖闪烁——可空气里弥漫着腐烂与霉运的味道。
 EVENT_CURSED_SAFE_OPT0_TEXT,Crack it open and pocket the caps,撬开它，把瓶盖塞进兜里

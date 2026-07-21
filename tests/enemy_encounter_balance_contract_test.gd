@@ -1,6 +1,7 @@
 extends Node
 
 const DATA_VALIDATOR = preload("res://battle_scene/data_validator.gd")
+const ENEMY_ENTITY_SCRIPT = preload("res://battle_scene/enemy_entity.gd")
 const ENEMY_DIR := "res://battle_scene/card_info/enemy/"
 const ALLOWED_TIERS := ["minion", "normal", "heavy", "elite", "boss"]
 const EXPECTED_TIERS := {
@@ -100,7 +101,11 @@ func _run() -> void:
 	_expect("tier" in required, "enemy schema requires tier")
 	var allowed: Array = validator_constants.get("ALLOWED_ENEMY_TIERS", [])
 	_expect(allowed == ALLOWED_TIERS, "validator exposes the exact allowed enemy tiers")
+	var action_types: Array = validator_constants.get("ALLOWED_ENEMY_ACTION_TYPES", [])
+	for action_type in ["attack_ramp", "breakable_block", "reflective_plating"]:
+		_expect(action_type in action_types, "enemy schema allows %s" % action_type)
 	_expect(DATA_VALIDATOR.validate_encounter_pools() == 0, "encounter pool validator accepts the approved pools")
+	_test_enemy_identities(enemies)
 	_test_selection_bands()
 
 	if failures.is_empty():
@@ -141,6 +146,46 @@ func _validate_pool(pool_name: String, pools: Array, enemies: Dictionary) -> voi
 		if pool_name != "ENCOUNTER_POOLS_OPENING" and "minion" in tiers:
 			_expect(encounter.size() == 2, "post-opening minion encounter %s has exactly two enemies" % [encounter])
 			_expect(tiers.count("minion") == 1 or tiers.count("minion") == 2, "post-opening minion role is valid")
+
+
+func _test_enemy_identities(enemies: Dictionary) -> void:
+	var killer := ENEMY_ENTITY_SCRIPT.create("wasteland_killer")
+	for expected_damage in [2, 4, 8, 16, 32]:
+		var preview: Dictionary = killer.peek_next_action()
+		_expect(str(preview.get("type", "")) == "attack_ramp", "Wasteland Killer uses its ramp attack")
+		_expect(int(preview.get("amount", 0)) == expected_damage, "Wasteland Killer intent reaches %d" % expected_damage)
+		var consumed: Dictionary = killer.consume_next_action()
+		_expect(int(consumed.get("amount", 0)) == expected_damage, "Wasteland Killer executes the displayed %d damage" % expected_damage)
+	killer.free()
+
+	var armored := ENEMY_ENTITY_SCRIPT.create("armored_patrol")
+	armored.add_breakable_armor(14, "vulnerable", 2)
+	armored.take_damage(14, true, {"source": "player"})
+	_expect(armored.block == 0, "Armored Patrol's armor can be fully broken")
+	_expect(armored.get_status_stacks("vulnerable") == 2, "breaking armor exposes Armored Patrol for two turns")
+	armored.free()
+
+	var armored_pattern: Array = enemies.get("armored_patrol", {}).get("action_pattern", [])
+	_expect(
+		armored_pattern.any(func(action): return str(action.get("type", "")) == "breakable_block"),
+		"Armored Patrol exposes a breakable armor window"
+	)
+	var chrome_pattern: Array = enemies.get("chrome_warden", {}).get("action_pattern", [])
+	_expect(
+		chrome_pattern.any(func(action): return str(action.get("type", "")) == "reflective_plating"),
+		"Chrome Warden uses reflective plating"
+	)
+	var siege_pattern: Array = enemies.get("siege_breaker", {}).get("action_pattern", [])
+	var telegraph_index := -1
+	var payoff_index := -1
+	for i in range(siege_pattern.size()):
+		var action: Dictionary = siege_pattern[i]
+		if str(action.get("type", "")) == "telegraph":
+			telegraph_index = i
+		if bool(action.get("interruptible", false)) and bool(action.get("heavy", false)):
+			payoff_index = i
+	_expect(telegraph_index >= 0, "Siege Breaker visibly telegraphs its siege round")
+	_expect(payoff_index == telegraph_index + 1, "Siege Breaker's interruptible heavy hit immediately follows its telegraph")
 
 
 func _test_selection_bands() -> void:

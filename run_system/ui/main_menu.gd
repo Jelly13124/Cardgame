@@ -15,9 +15,9 @@ const RULES_PANEL_PATH := "res://run_system/ui/rules_panel.gd"
 const START_BG_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/bottlecap_hunter_start_background.png"
 const START_TITLE_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/title_bottlecap_hunter.png"
 const START_DIVIDER_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/divider_bottlecap.png"
-const START_BUTTON_NORMAL_PATH := "res://run_system/assets/images/ui/start_screen/button_normal.png"
-const START_BUTTON_SELECTED_PATH := "res://run_system/assets/images/ui/start_screen/button_start_selected.png"
-const START_SAVE_STRIP_PATH := "res://run_system/assets/images/ui/start_screen/save_info_strip.png"
+const START_BUTTON_NORMAL_PATH := "res://run_system/assets/images/ui/start_screen/button_main_normal_v2.png"
+const START_BUTTON_SELECTED_PATH := "res://run_system/assets/images/ui/start_screen/button_main_selected_v2.png"
+const START_SAVE_STRIP_PATH := "res://run_system/assets/images/ui/start_screen/save_info_strip_clean.png"
 const START_LANGUAGE_BUTTON_PATH := "res://run_system/assets/images/ui/start_screen/icon_button_language.png"
 const START_SETTINGS_BUTTON_PATH := "res://run_system/assets/images/ui/start_screen/icon_button_settings.png"
 
@@ -75,7 +75,7 @@ func _build_start_screen_concept() -> void:
 	var button_x := 226.0
 	var button_size := Vector2(420, 96)
 	var button_gap := -2.0
-	var new_game := _start_menu_button(tr("MENU_NEW_GAME"), _on_new_game, true)
+	var new_game := _start_menu_button(tr("MENU_NEW_GAME"), _on_new_game)
 	_place_control(new_game, Rect2(button_x, button_y, button_size.x, button_size.y))
 
 	var cont := _start_menu_button(tr("MENU_CONTINUE"), _on_continue)
@@ -140,7 +140,7 @@ func _start_stylebox(path: String, state: String = "normal") -> StyleBox:
 	return box
 
 
-func _start_menu_button(text: String, handler: Callable, selected: bool = false) -> Button:
+func _start_menu_button(text: String, handler: Callable) -> Button:
 	var button := Button.new()
 	button.text = text
 	button.custom_minimum_size = Vector2(420, 96)
@@ -148,9 +148,7 @@ func _start_menu_button(text: String, handler: Callable, selected: bool = false)
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.add_theme_font_override("font", T.display_font(700))
 	button.add_theme_font_size_override("font_size", 26)
-	button.add_theme_stylebox_override(
-		"normal", _start_stylebox(START_BUTTON_SELECTED_PATH if selected else START_BUTTON_NORMAL_PATH)
-	)
+	button.add_theme_stylebox_override("normal", _start_stylebox(START_BUTTON_NORMAL_PATH))
 	button.add_theme_stylebox_override("hover", _start_stylebox(START_BUTTON_SELECTED_PATH, "hover"))
 	button.add_theme_stylebox_override("pressed", _start_stylebox(START_BUTTON_SELECTED_PATH, "pressed"))
 	button.add_theme_stylebox_override("disabled", _start_stylebox(START_BUTTON_NORMAL_PATH, "disabled"))
@@ -226,18 +224,23 @@ func _start_save_info_button() -> Button:
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(_on_saves)
 
-	var bg := TextureRect.new()
+	var bg := NinePatchRect.new()
+	bg.name = "SaveStripBackground"
 	bg.texture = _load_texture(START_SAVE_STRIP_PATH)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	bg.stretch_mode = TextureRect.STRETCH_SCALE
+	bg.patch_margin_left = 30
+	bg.patch_margin_top = 22
+	bg.patch_margin_right = 30
+	bg.patch_margin_bottom = 22
+	bg.axis_stretch_horizontal = NinePatchRect.AXIS_STRETCH_MODE_STRETCH
+	bg.axis_stretch_vertical = NinePatchRect.AXIS_STRETCH_MODE_STRETCH
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(bg)
 
 	var pad := MarginContainer.new()
 	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pad.set_anchors_preset(Control.PRESET_FULL_RECT)
-	pad.add_theme_constant_override("margin_left", 88)
+	pad.add_theme_constant_override("margin_left", 24)
 	pad.add_theme_constant_override("margin_right", 16)
 	pad.add_theme_constant_override("margin_top", 13)
 	pad.add_theme_constant_override("margin_bottom", 10)

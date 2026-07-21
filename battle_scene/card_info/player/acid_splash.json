@@ -4,7 +4,7 @@
 	"rarity": "uncommon",
 	"type": "attack",
 	"cost": 1,
-	"description": "Deal [b]2[/b] fixed damage to ALL enemies (ignores Strength) and apply [b]2 Bleed[/b] to ALL.",
+	"description": "Deal [b]2[/b] fixed damage to ALL enemies (ignores Strength). Apply [b]5 Short Circuit[/b] to ALL.",
 	"front_image": "player/acid_splash.png",
 	"side": "player",
 	"effects": [
@@ -15,8 +15,14 @@
 		},
 		{
 			"type": "apply_status_all",
-			"status": "bleed",
-			"stacks": 2
+			"status": "short_circuit",
+			"stacks": 5
 		}
-	]
+	],
+	"upgrade": {
+		"effects": [
+			{ "type": "deal_damage_all", "amount": 3, "no_str": true },
+			{ "type": "apply_status_all", "status": "short_circuit", "stacks": 7 }
+		]
+	}
 }

@@ -3,6 +3,7 @@ class_name PlayCard
 
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
 const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
+const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 
 @onready var cost_label = $FrontFace/CostCircle/CostLabel
 @onready var cost_badge = $FrontFace/CostCircle
@@ -10,38 +11,42 @@ const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
 @onready var desc_label = $FrontFace/DescriptionBox/DescriptionLabel
 @onready var type_label = $FrontFace/RaceBox/RaceLabel
 @onready var card_bg_texture = $FrontFace/TextureRect
+@onready var generated_shell = $FrontFace/GeneratedShell
 @onready var desc_box_texture = $FrontFace/DescriptionBox
 @onready var type_badge_texture = $FrontFace/RaceBox
 @onready var playable_glow = $FrontFace/PlayableGlow
 @onready var art_frame_texture = $FrontFace/ArtFrameTexture
 @onready var art_bg = $FrontFace/ArtBackground
+@onready var art_container = $FrontFace/ArtContainer
 @onready var art_texture = $FrontFace/ArtContainer/ArtTexture
 
 const UI_ASSET_PATH = "res://battle_scene/assets/images/cards/ui/"
+const GENERATED_UI_PATH = UI_ASSET_PATH + "generated/"
 const COST_BADGE_PATH = UI_ASSET_PATH + "card_cost_badge.png"
 const DESC_BOX_PATH = UI_ASSET_PATH + "card_description_box.png"
 const TYPE_BADGE_PATH = UI_ASSET_PATH + "card_type_badge.png"
+const GENERATED_COST_POSITION := Vector2(3, 1)
+const GENERATED_COST_SIZE := Vector2(37, 37)
+const GENERATED_COST_FONT_SIZE := 25
+const GENERATED_COST_FONT_EMBOLDEN := 0.8
 
 var _hover_tween: Tween
-var _glow_tween: Tween
 ## Discover candidates aren't hand cards — suppress the "can I afford it" glow.
 var suppress_playable_glow: bool = false
-
 var _rarity_frames: Dictionary = {}
 
-# Per-rarity accent colors.
-# Applied as modulate to ArtFrameTexture AND as border on the rarity ring panel.
+# Legacy fallback colors. The combat card face deliberately does not display
+# rarity; these remain only for the old fallback skin used outside a hero run.
 const RARITY_COLORS: Dictionary = {
-	"common": Color(0.95, 0.96, 0.98),  # white
-	"uncommon": Color(0.31, 0.69, 1.0),  # blue
-	"rare": Color(1.0, 0.81, 0.27),  # gold
-	"curse": Color(0.62, 0.36, 0.78),  # dark purple — curse cards
+	"common": Color(0.95, 0.96, 0.98),
+	"uncommon": Color(0.31, 0.69, 1.0),
+	"rare": Color(1.0, 0.81, 0.27),
+	"curse": Color(0.62, 0.36, 0.78),
 }
 
 
 func _ready() -> void:
 	super._ready()
-	# Load the card background art (front)
 	var bg = load(UI_ASSET_PATH + "card_bg.png")
 	if bg and is_instance_valid(card_bg_texture):
 		card_bg_texture.texture = bg
@@ -78,11 +83,10 @@ func _ready() -> void:
 		back_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		back_rect.stretch_mode = TextureRect.STRETCH_SCALE
 		back_rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	# Pre-cache rarity frame textures
-	for r in ["common", "uncommon", "rare"]:
-		var tex = load(UI_ASSET_PATH + "art_frame_%s.png" % r)
-		if tex:
-			_rarity_frames[r] = tex
+	for rarity in ["common", "uncommon", "rare"]:
+		var frame_tex = load(UI_ASSET_PATH + "art_frame_%s.png" % rarity)
+		if frame_tex:
+			_rarity_frames[rarity] = frame_tex
 	if not card_info.is_empty():
 		set_card_data(card_info)
 
@@ -101,12 +105,128 @@ func _style_cost_label() -> void:
 	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	cost_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.58, 1.0))
-	cost_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 1.0))
+	cost_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	cost_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.0))
 	cost_label.add_theme_constant_override("outline_size", 2)
 	cost_label.add_theme_constant_override("shadow_offset_x", 0)
 	cost_label.add_theme_constant_override("shadow_offset_y", 0)
+	cost_label.remove_theme_font_override("font")
 	cost_label.add_theme_font_size_override("font_size", 19)
+
+
+func _configure_generated_skin(data: Dictionary) -> bool:
+	var skin_id := _resolve_skin_id(data)
+	if skin_id == "":
+		return false
+	var shell_path := GENERATED_UI_PATH + "card_shell_%s.png" % skin_id
+	var cost_path := GENERATED_UI_PATH + "card_cost_%s.png" % skin_id
+	var card_type := str(data.get("type", "skill")).to_lower()
+	var type_path := GENERATED_UI_PATH + "card_type_%s_%s.png" % [skin_id, card_type]
+	var shell_tex := _load_texture_fallback(shell_path)
+	var generated_cost_tex := _load_texture_fallback(cost_path)
+	var generated_type_tex := _load_texture_fallback(type_path)
+	if shell_tex == null or generated_cost_tex == null:
+		push_warning("Generated card UI skin is incomplete: %s / %s" % [shell_path, cost_path])
+		return false
+
+	generated_shell.texture = shell_tex
+	generated_shell.visible = true
+	generated_shell.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	generated_shell.position = Vector2.ZERO
+	generated_shell.size = size
+	generated_shell.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	generated_shell.stretch_mode = TextureRect.STRETCH_SCALE
+	card_bg_texture.visible = false
+	cost_badge.texture = generated_cost_tex
+	cost_badge.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	desc_box_texture.texture = null
+	type_badge_texture.texture = generated_type_tex
+	type_badge_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	type_badge_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	type_badge_texture.stretch_mode = TextureRect.STRETCH_SCALE
+	art_frame_texture.visible = false
+	art_bg.visible = false
+
+	# Pixel layout measured from the approved V3 concept and normalized to the
+	# factory's canonical 208x286 card size.
+	art_container.position = Vector2(15, 37)
+	art_container.size = Vector2(178, 133)
+	name_label.position = Vector2(32, 10)
+	name_label.size = Vector2(150, 28)
+	desc_box_texture.position = Vector2(15, 174)
+	desc_box_texture.size = Vector2(178, 95)
+	desc_label.position = Vector2(7, 6)
+	desc_label.size = Vector2(164, 83)
+	# The profession shell intentionally has no baked type plaque. This is the
+	# single type marker, so attack / skill / ability never read as stacked tabs.
+	type_badge_texture.position = Vector2(58, 160)
+	type_badge_texture.size = Vector2(92, 24)
+	# Match the approved concept hierarchy: the cost medallion overlaps the
+	# title plate and remains the first readable datum at hand-card scale.
+	cost_badge.position = GENERATED_COST_POSITION
+	cost_badge.size = GENERATED_COST_SIZE
+	cost_label.position = Vector2.ZERO
+	cost_label.size = cost_badge.size
+
+	# Chinese uses the bundled Noto fallback, whose only face is Regular. Apply a
+	# small glyph embolden here so card text keeps the intended hierarchy instead
+	# of becoming thin and soft after hand rotation.
+	var generated_title_font := T.display_font(700)
+	generated_title_font.variation_embolden = 0.45
+	var generated_type_font := T.display_font(700)
+	generated_type_font.variation_embolden = 0.4
+	var generated_description_font := T.display_font(600)
+	generated_description_font.variation_embolden = 0.22
+	name_label.add_theme_font_override("font", generated_title_font)
+	name_label.add_theme_font_size_override("font_size", 16)
+	name_label.add_theme_color_override("font_color", Color("#171613"))
+	name_label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	type_label.add_theme_font_override("font", generated_type_font)
+	type_label.add_theme_font_size_override("font_size", 13)
+	type_label.add_theme_color_override("font_color", Color("#17130e"))
+	type_label.add_theme_color_override("font_outline_color", Color.TRANSPARENT)
+	type_label.add_theme_constant_override("outline_size", 0)
+	desc_label.add_theme_font_override("normal_font", generated_description_font)
+	desc_label.add_theme_font_size_override("normal_font_size", 14)
+	desc_label.add_theme_color_override("default_color", Color("#f0d4a1"))
+	desc_label.add_theme_color_override("font_outline_color", Color.TRANSPARENT)
+	desc_label.add_theme_constant_override("outline_size", 0)
+	desc_label.add_theme_constant_override("line_separation", 1)
+	# Keep the compact serif numeral from the approved concept, but embolden the
+	# actual glyph so the cost stays dominant after cards shrink into the hand.
+	# Kreon's useful weight range tops out below the former 800 request, which
+	# made the rendered numeral look thinner than intended.
+	var generated_cost_font := T.combat_font(700)
+	generated_cost_font.variation_embolden = GENERATED_COST_FONT_EMBOLDEN
+	cost_label.add_theme_font_override("font", generated_cost_font)
+	cost_label.add_theme_font_size_override("font_size", GENERATED_COST_FONT_SIZE)
+	cost_label.add_theme_color_override("font_color", Color("#fff2cf"))
+	cost_label.add_theme_color_override("font_outline_color", Color("#17130e"))
+	cost_label.add_theme_constant_override("outline_size", 2)
+	return true
+
+
+## Card colors belong to the active profession, not the individual card. A card
+## may explicitly override the skin for a special case, but shared cards inherit
+## the hero's `card_ui_skin`, so future professions can own distinct palettes.
+func _resolve_skin_id(data: Dictionary) -> String:
+	var override_id := str(data.get("ui_skin", "")).strip_edges()
+	if override_id != "":
+		return override_id
+	if RunManager and typeof(RunManager.current_hero_data) == TYPE_DICTIONARY:
+		var current := str(RunManager.current_hero_data.get("card_ui_skin", "")).strip_edges()
+		if current != "":
+			return current
+	var hero_id := str(RunManager.current_hero_id).strip_edges() if RunManager else ""
+	if hero_id == "":
+		return ""
+	var path := "res://run_system/data/heroes/%s.json" % hero_id
+	if not FileAccess.file_exists(path):
+		return ""
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return ""
+	return str(parsed.get("card_ui_skin", "")).strip_edges()
 
 
 func set_faces(front: Texture2D, back: Texture2D) -> void:
@@ -192,40 +312,75 @@ func set_card_data(data: Dictionary) -> void:
 		Settings.t("CARD_%s_TITLE" % card_id, str(data.get("title", card_name))).to_upper()
 	)
 
+	# Generated skins are authored PNG components. Legacy cards keep the previous
+	# texture stack until their own rarity/profession assets are delivered.
+	var uses_generated_skin := _configure_generated_skin(data)
+
 	# ── Description: build from effects[] showing real calculated numbers ────
 	var desc = _build_description(data)
-	desc_label.parse_bbcode(
-		"[center][font_size=13]" + _colorize_keywords(desc) + "[/font_size][/center]"
-	)
-
-	# ── Rarity: swap the art FRAME texture + apply accent color tint ─────────
-	var rarity = data.get("rarity", "common").to_lower()
-	if rarity in _rarity_frames:
-		art_frame_texture.texture = _rarity_frames[rarity]
+	if uses_generated_skin:
+		desc_label.parse_bbcode("[center]" + _colorize_keywords(desc) + "[/center]")
+		call_deferred("_fit_and_center_description")
 	else:
-		art_frame_texture.texture = _rarity_frames.get("common")
-	art_frame_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	art_frame_texture.modulate = RARITY_COLORS.get(rarity, RARITY_COLORS["common"])
+		desc_label.parse_bbcode(
+			"[center][font_size=13]" + _colorize_keywords(desc) + "[/font_size][/center]"
+		)
+
+	# Legacy rarity frame. Generated skins encode rarity only in their title-panel PNG.
+	if not uses_generated_skin:
+		var rarity = data.get("rarity", "common").to_lower()
+		if rarity in _rarity_frames:
+			art_frame_texture.texture = _rarity_frames[rarity]
+		else:
+			art_frame_texture.texture = _rarity_frames.get("common")
+		art_frame_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		art_frame_texture.modulate = RARITY_COLORS.get(rarity, RARITY_COLORS["common"])
 
 	# ── Type label ────────────────────────────────────────────────────────────
-	# Card art is uniformly square now; the old attack-card V-shape mask was removed.
+	# Source art stays rectangular, while the generated shell is rendered above it
+	# and supplies the authored chamfered aperture and inner border.
 	var c_type = data.get("type", "skill").to_lower()
 	var is_atk = c_type == "attack"
 
 	if is_atk:
 		type_label.text = tr("UI_BATTLE_CARD_TYPE_ATTACK")
-		type_label.modulate = Color(1, 0.4, 0.4)
+		if not uses_generated_skin:
+			type_label.modulate = Color(1, 0.4, 0.4)
 	elif c_type == "skill":
 		type_label.text = tr("UI_BATTLE_CARD_TYPE_SKILL")
-		type_label.modulate = Color(0.4, 0.8, 1.0)
+		if not uses_generated_skin:
+			type_label.modulate = Color(0.4, 0.8, 1.0)
 	elif c_type == "ability":
 		type_label.text = tr("UI_BATTLE_CARD_TYPE_ABILITY")
-		type_label.modulate = Color(0.8, 0.4, 1.0)
+		if not uses_generated_skin:
+			type_label.modulate = Color(0.8, 0.4, 1.0)
 	elif c_type == "curse":
 		type_label.text = tr("UI_BATTLE_CARD_TYPE_CURSE")
-		type_label.modulate = Color(0.7, 0.45, 0.85)
+		if not uses_generated_skin:
+			type_label.modulate = Color(0.7, 0.45, 0.85)
 	else:
 		type_label.text = c_type.to_upper()
+	if uses_generated_skin:
+		type_label.modulate = Color.WHITE
+
+
+## Keep short copy at the approved 13px size; only long cards step down until
+## they fit. The label is then vertically centered inside the authored panel.
+func _fit_and_center_description() -> void:
+	if not is_instance_valid(desc_label) or not is_instance_valid(desc_box_texture):
+		return
+	var available_width := 164.0
+	var available_height := 83.0
+	desc_label.position = Vector2(7, 6)
+	desc_label.size = Vector2(available_width, available_height)
+	for font_size in range(14, 9, -1):
+		desc_label.add_theme_font_size_override("normal_font_size", font_size)
+		desc_label.size = Vector2(available_width, available_height)
+		if desc_label.get_content_height() <= available_height:
+			break
+	var content_height := clampf(desc_label.get_content_height(), 18.0, available_height)
+	desc_label.position.y = (desc_box_texture.size.y - content_height) * 0.5
+	desc_label.size.y = content_height
 
 
 ## Build a plain-text description from the effects[] array.
@@ -403,25 +558,39 @@ func _build_description(data: Dictionary) -> String:
 				var ac_name: String = Settings.t("CARD_%s_TITLE" % ac_id, ac_id)
 				lines.append(tr("UI_BATTLE_DESC_ADD_CARD").format({"n": ac_n, "card": ac_name}))
 
-			"apply_bleed_scaled":
-				var bs_base: int = int(effect.get("amount", 0))
-				var bs_attr: String = tr(
+			"apply_short_circuit_scaled":
+				var circuit_base: int = int(effect.get("amount", 0))
+				var circuit_attr: String = tr(
 					"UI_COMBAT_ATTR_%s" % str(effect.get("attr", "intelligence")).to_upper()
 				)
-				lines.append(
-					tr("UI_BATTLE_DESC_BLEED_SCALED").format({"base": bs_base, "attr": bs_attr})
+				var circuit_mult: int = int(effect.get("attr_mult", 1))
+				var attr_term := (
+					circuit_attr if circuit_mult == 1 else "%d×%s" % [circuit_mult, circuit_attr]
 				)
+				lines.append(
+					tr("UI_BATTLE_DESC_SHORT_CIRCUIT_SCALED").format(
+						{"base": circuit_base, "attr": attr_term}
+					)
+				)
+				if bool(effect.get("double_if_short_circuited", false)):
+					lines.append(tr("UI_BATTLE_DESC_DOUBLE_IF_SHORT_CIRCUITED"))
 
 			"deal_damage_block_mult":
 				lines.append(
 					tr("UI_BATTLE_DESC_DMG_BLOCK_MULT").format({"mult": int(effect.get("mult", 1))})
 				)
 
-			"double_target_bleed":
-				lines.append(tr("UI_BATTLE_DESC_DOUBLE_BLEED"))
+			"double_target_short_circuit":
+				lines.append(tr("UI_BATTLE_DESC_DOUBLE_SHORT_CIRCUIT"))
 
-			"gain_block_from_bleed":
-				lines.append(tr("UI_BATTLE_DESC_BLOCK_FROM_BLEED"))
+			"detonate_short_circuit":
+				lines.append(tr("UI_BATTLE_DESC_DETONATE_SHORT_CIRCUIT"))
+
+			"detonate_short_circuit_all":
+				lines.append(tr("UI_BATTLE_DESC_DETONATE_SHORT_CIRCUIT_ALL"))
+
+			"consume_short_circuit_for_block":
+				lines.append(tr("UI_BATTLE_DESC_SHORT_CIRCUIT_TO_BLOCK"))
 
 			"lose_hp":
 				lines.append(
@@ -481,7 +650,7 @@ func _color_num(val: int, base_plus_stat: int) -> String:
 
 ## StS-style keyword tinting: colour status / keyword terms in a card's description
 ## so the player sees at a glance what it touches (definitions show in the hover
-## glossary). Terms resolve in the current locale, so 流血/Bleed, 虚弱/Weak … match.
+## glossary). Terms resolve in the current locale, so 短路/Short Circuit and 虚弱/Weak match.
 func _colorize_keywords(text: String) -> String:
 	var terms: Array = []  # [[term, hex], ...]
 	for status in STATUS_SYS.STATUS_COLORS:
@@ -527,6 +696,8 @@ func _on_mouse_entered() -> void:
 	_hover_tween = create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_hover_tween.tween_property(self, "scale", Vector2(1.12, 1.12), 0.15)
 	z_index = 10  # bring to front
+	if is_instance_valid(playable_glow):
+		playable_glow.visible = true
 
 	# Keyword glossary tooltip: explain any statuses / attributes this card uses.
 	var glossary := _build_keyword_glossary()
@@ -540,6 +711,8 @@ func _on_mouse_exited() -> void:
 	_hover_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_hover_tween.tween_property(self, "scale", Vector2(1.0, 1.0), 0.15)
 	z_index = 1
+	if is_instance_valid(playable_glow):
+		playable_glow.visible = false
 	Tooltip.hide_if_owner(get_instance_id())
 
 
@@ -565,7 +738,7 @@ func _build_keyword_glossary() -> String:
 				attrs["LUCK"] = true
 			"gain_charm":
 				attrs["CHARM"] = true
-			"apply_bleed_scaled":
+			"apply_short_circuit_scaled":
 				attrs[str(effect.get("attr", "intelligence")).to_upper()] = true
 	for attr_key in ["STRENGTH", "CONSTITUTION", "INTELLIGENCE", "LUCK", "CHARM"]:
 		if not attrs.has(attr_key):
@@ -589,6 +762,31 @@ func _build_keyword_glossary() -> String:
 			desc = str(STATUS_SYS.STATUS_DESCRIPTIONS.get(status, ""))
 		if desc != "":
 			lines.append("[b]%s[/b]: %s" % [kw_name, desc])
+
+	# Short Circuit's specialized apply/detonate effects do not carry a `status`
+	# field, but the card still needs the same keyword explanation on hover.
+	for effect in effects:
+		var effect_type := str(effect.get("type", ""))
+		if (
+			effect_type
+			in [
+				"apply_short_circuit_scaled",
+				"double_target_short_circuit",
+				"detonate_short_circuit",
+				"detonate_short_circuit_all",
+				"consume_short_circuit_for_block",
+			]
+			and not seen.has("short_circuit")
+		):
+			seen["short_circuit"] = true
+			lines.append(
+				"[b]%s[/b]: %s"
+				% [
+					tr("UI_COMBAT_STATUS_SHORT_CIRCUIT"),
+					tr("UI_COMBAT_STATUS_SHORT_CIRCUIT_DESC"),
+				]
+			)
+			break
 
 	# --- Stun: its own effect type (apply_stun / _all), with no `status` field. ---
 	for effect in effects:
@@ -624,33 +822,10 @@ func _build_keyword_glossary() -> String:
 	return "\n".join(lines)
 
 
-## Toggles the "can afford" glow and pulse animation.
+## Affordability is deliberately quiet: only the cost disc dims. The outline is
+## interaction feedback and appears on hover, never as permanent decoration.
 func update_playable(current_energy: int) -> void:
-	if not is_instance_valid(playable_glow):
-		return
-	if suppress_playable_glow:
-		playable_glow.visible = false
-		return
-
-	var cost = int(card_info.get("cost", 0))
+	var cost := int(cost_label.text) if is_instance_valid(cost_label) else int(card_info.get("cost", 0))
 	var can_afford = current_energy >= cost
-
-	playable_glow.visible = can_afford
 	if is_instance_valid(cost_badge):
-		cost_badge.modulate = Color(1, 1, 1, 1) if can_afford else Color(0.62, 0.52, 0.45, 0.86)
-
-	if can_afford:
-		if not _glow_tween or not _glow_tween.is_running():
-			_start_glow_pulse()
-	else:
-		if _glow_tween:
-			_glow_tween.kill()
-		playable_glow.modulate.a = 1.0
-
-
-func _start_glow_pulse() -> void:
-	if _glow_tween:
-		_glow_tween.kill()
-	_glow_tween = create_tween().set_loops()
-	_glow_tween.tween_property(playable_glow, "modulate:a", 0.3, 0.8).set_trans(Tween.TRANS_SINE)
-	_glow_tween.tween_property(playable_glow, "modulate:a", 1.0, 0.8).set_trans(Tween.TRANS_SINE)
+		cost_badge.modulate = Color.WHITE if can_afford else Color(0.58, 0.58, 0.54, 0.82)

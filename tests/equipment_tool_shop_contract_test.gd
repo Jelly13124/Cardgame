@@ -1,9 +1,15 @@
 extends Node
 
 const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
+const BACKPACK_CELL = preload("res://run_system/ui/backpack_cell.gd")
 const CHARACTER_WINDOW = preload("res://run_system/ui/window/character_window.gd")
+const MARKET_SCREEN = preload("res://run_system/ui/buildings/market_screen.gd")
 const SHOP_SCENE = preload("res://run_system/ui/shop_scene.gd")
 const RUN_TOP_BAR = preload("res://run_system/ui/run_top_bar.gd")
+
+const GENERIC_EQUIPMENT_DIR := "res://battle_scene/assets/images/ui/equipment/"
+const GENERIC_EQUIPMENT_SLOTS := ["head", "chest", "weapon", "hands", "accessory"]
+const GENERIC_EQUIPMENT_RARITIES := ["common", "uncommon", "rare"]
 
 const EXPECTED_EQUIPMENT_NAMES := {
 	"gear_head_common": "Scavenger Cowboy Hat",
@@ -22,6 +28,20 @@ const EXPECTED_EQUIPMENT_NAMES := {
 	"gear_hands_rare": "Officer's Power Gauntlet",
 	"gear_accessory_rare": "Officer's Core Medal",
 }
+
+const EXPECTED_TOOL_IDS := [
+	"adrenaline_shot",
+	"blood_kit",
+	"combat_stim",
+	"energy_cell",
+	"field_kit",
+	"frag_grenade",
+	"med_kit",
+	"munitions_crate",
+	"shock_charge",
+	"smoke_bomb",
+	"toxin_vial",
+]
 
 var failures: PackedStringArray = []
 var _original_backpack: Array = []
@@ -43,6 +63,8 @@ func _run() -> void:
 	_original_backpack = RunManager.backpack.duplicate(true)
 	_original_tools = RunManager.tool_inventory.duplicate()
 	await _test_equipment_resolution_and_names()
+	_test_generic_equipment_asset_contract()
+	_test_tool_icon_assets()
 	await _test_equipment_cell_sizing()
 	await _test_tool_destination_and_slot_dragging()
 	await _test_default_unequip_refreshes_immediately()
@@ -97,6 +119,129 @@ func _test_equipment_resolution_and_names() -> void:
 			_expect(tex.resource_path.ends_with("/hands_common.png"), "drag preview resolves hands_common.png")
 	window.queue_free()
 	await get_tree().process_frame
+
+
+func _test_generic_equipment_asset_contract() -> void:
+	var seen_paths := {}
+	var resolved_count := 0
+	for slot in GENERIC_EQUIPMENT_SLOTS:
+		for rarity in GENERIC_EQUIPMENT_RARITIES:
+			var basename := "%s_%s.png" % [slot, rarity]
+			var expected_path := GENERIC_EQUIPMENT_DIR + basename
+			_expect(
+				not seen_paths.has(expected_path),
+				"%s generic equipment path is unique" % basename
+			)
+			seen_paths[expected_path] = true
+			_expect(
+				ResourceLoader.exists(expected_path),
+				"%s generic equipment asset exists" % basename
+			)
+
+			var texture := EQUIPMENT_ICON.resolve_equipment_texture("", slot, rarity)
+			_expect(texture != null, "%s resolves through EquipmentIcon" % basename)
+			if texture == null:
+				continue
+			resolved_count += 1
+			_expect(
+				texture.resource_path == expected_path,
+				"%s resolves its same-named generic texture (got %s)"
+				% [basename, texture.resource_path]
+			)
+
+			var image := texture.get_image()
+			_expect(image != null and not image.is_empty(), "%s yields readable image data" % basename)
+			if image == null or image.is_empty():
+				continue
+			_expect(
+				image.get_width() == 256 and image.get_height() == 256,
+				"%s uses the 256x256 production canvas" % basename
+			)
+			_expect(
+				image.get_format() == Image.FORMAT_RGBA8,
+				"%s imports as RGBA8 rather than opaque RGB" % basename
+			)
+			_expect(
+				image.detect_alpha() != Image.ALPHA_NONE,
+				"%s preserves a real alpha channel" % basename
+			)
+			_expect(
+				_image_edges_are_transparent(image),
+				"%s keeps every pixel on all four canvas edges transparent" % basename
+			)
+
+	_expect(seen_paths.size() == 15, "equipment contract covers 5 slots x 3 rarities")
+	_expect(resolved_count == 15, "all 15 generic equipment textures resolve")
+
+	# The reusable inventory icon owns the normal equipment presentation.
+	var icon := EQUIPMENT_ICON.new()
+	icon.set_equipment("head", "Contract Hat", "", "common")
+	var icon_rect := icon.get("_texture_rect") as TextureRect
+	_expect(
+		icon_rect != null
+		and icon_rect.texture != null
+		and icon_rect.texture_filter == CanvasItem.TEXTURE_FILTER_LINEAR,
+		"EquipmentIcon renders smooth 256px comic art with LINEAR filtering"
+	)
+	icon.free()
+
+	# BackpackCell owns the drag preview used by character/stash/forge inventory.
+	var cell := BACKPACK_CELL.new()
+	cell.preview_tex = EQUIPMENT_ICON.resolve_equipment_texture("", "hands", "uncommon")
+	var preview := cell.call("_make_preview") as Control
+	var preview_rect := _find_texture_rect(preview, GENERIC_EQUIPMENT_DIR + "hands_uncommon.png")
+	_expect(
+		preview_rect != null
+		and preview_rect.texture_filter == CanvasItem.TEXTURE_FILTER_LINEAR,
+		"BackpackCell equipment drag preview uses LINEAR filtering"
+	)
+	preview.free()
+	cell.free()
+
+	# Market cards bypass EquipmentIcon's slot frame, so verify their direct art
+	# presentation uses the same smooth filter too.
+	var market := MARKET_SCREEN.new()
+	var market_card := market.call(
+		"_build_equip_tile",
+		{"base": "gear_weapon_rare", "rarity": "rare", "price": 280}
+	) as Control
+	var market_rect := _find_texture_rect(
+		market_card, GENERIC_EQUIPMENT_DIR + "weapon_rare.png"
+	)
+	_expect(
+		market_rect != null
+		and market_rect.texture_filter == CanvasItem.TEXTURE_FILTER_LINEAR,
+		"market equipment art uses LINEAR filtering"
+	)
+	market_card.free()
+	market.free()
+
+
+func _test_tool_icon_assets() -> void:
+	var seen_paths := {}
+	for tool_id in EXPECTED_TOOL_IDS:
+		var data: Dictionary = RunManager.get_tool_data(tool_id)
+		var icon_path := str(data.get("icon", ""))
+		_expect(icon_path != "", "%s declares an icon path" % tool_id)
+		_expect(not seen_paths.has(icon_path), "%s has a unique semantic icon" % tool_id)
+		seen_paths[icon_path] = true
+		_expect(ResourceLoader.exists(icon_path), "%s icon exists" % tool_id)
+		if not ResourceLoader.exists(icon_path):
+			continue
+		var texture := load(icon_path) as Texture2D
+		_expect(texture != null, "%s icon imports as a texture" % tool_id)
+		if texture == null:
+			continue
+		var image := texture.get_image()
+		_expect(
+			image.get_width() == 256 and image.get_height() == 256,
+			"%s icon uses the 256x256 production canvas" % tool_id
+		)
+		for corner in [Vector2i(0, 0), Vector2i(255, 0), Vector2i(0, 255), Vector2i(255, 255)]:
+			_expect(
+				image.get_pixelv(corner).a <= 0.05,
+				"%s keeps transparent canvas corners" % tool_id
+			)
 
 
 func _test_equipment_cell_sizing() -> void:
@@ -349,6 +494,30 @@ func _texture_paths(root: Node) -> Array[String]:
 		if rect.texture:
 			paths.append(rect.texture.resource_path)
 	return paths
+
+
+func _find_texture_rect(root: Node, texture_path: String) -> TextureRect:
+	if root == null:
+		return null
+	for node in root.find_children("*", "TextureRect", true, false):
+		var rect := node as TextureRect
+		if rect.texture != null and rect.texture.resource_path == texture_path:
+			return rect
+	return null
+
+
+func _image_edges_are_transparent(image: Image) -> bool:
+	if image == null or image.is_empty():
+		return false
+	var last_x := image.get_width() - 1
+	var last_y := image.get_height() - 1
+	for x in range(image.get_width()):
+		if image.get_pixel(x, 0).a > 0.05 or image.get_pixel(x, last_y).a > 0.05:
+			return false
+	for y in range(image.get_height()):
+		if image.get_pixel(0, y).a > 0.05 or image.get_pixel(last_x, y).a > 0.05:
+			return false
+	return true
 
 
 func _frames(count: int) -> void:

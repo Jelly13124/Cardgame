@@ -5,7 +5,7 @@
 	"type": "attack",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Deal 2 (+STR) damage and apply 1 Vulnerable to ALL enemies.",
+	"description": "Deal [b]2[/b] (+STR) damage to ALL enemies. Detonate Short Circuit on ALL enemies.",
 	"front_image": "player/arc_flash.png",
 	"side": "player",
 	"effects": [
@@ -13,10 +13,12 @@
 			"type": "deal_damage_all",
 			"amount": 2
 		},
-		{
-			"type": "apply_status_all",
-			"status": "vulnerable",
-			"stacks": 1
-		}
-	]
+		{ "type": "detonate_short_circuit_all" }
+	],
+	"upgrade": {
+		"effects": [
+			{ "type": "deal_damage_all", "amount": 4 },
+			{ "type": "detonate_short_circuit_all" }
+		]
+	}
 }

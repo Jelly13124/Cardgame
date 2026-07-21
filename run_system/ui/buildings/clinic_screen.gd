@@ -1,18 +1,16 @@
-## Clinic (义体诊所) building screen, rebuilt to the 2026-07-07 "lightline"
-## concept (docs/art/previews/base_building_clinic_ui_simple_comic_20260707.png):
-##   FAR LEFT      ClinicDecoArt        — deco strip (canister_medkit +
-##                 canister_blue illustrations; named node so future Codex
-##                 clinic art can slot in by node path).
+## Clinic (义体诊所) building content, matched to the accepted 2026-07-13
+## top-bar concept. BuildingScreenBase owns the shared top bar; this script only
+## builds the service area below it:
 ##   MAIN (wide)   T1 attr_perks        — five attribute rows, each a lightline
 ##                 bar: framed attr icon + bare attribute name + level dots
 ##                 (orange filled / dark empty / faint beyond the current cap)
 ##                 + the orange Caps buy button.
 ##   RIGHT top     T2 max_hp_perk       — 生命上限 card: cyan heart icon + cyan
 ##                 level dots + the orange Caps buy (cyber_hp backend).
-##   RIGHT bottom  T3 high_cap          — 强化上限 card: up-arrow icon + cyan
-##                 cap dots + the cap note. Display-only: the cap raise comes
-##                 from the clinic reaching T3 (bought on the base overview),
-##                 so unlike the concept sketch this card has no buy button.
+##   RIGHT bottom  T3 high_cap          — binary 强化上限 unlock. There is no
+##                 progress track: before T3 it reads "T3 解锁"; at T3 it reads
+##                 "强化上限 5 / 已解锁". The actual cap remains single-sourced
+##                 from MetaProgress.attr_perk_cap().
 ##
 ## VISUAL REBUILD ONLY — the backend is untouched: MetaProgress.buy_caps_perk /
 ## caps_perk_cost / attr_perk_cap / get_caps_perk_level, rebuilt live on the
@@ -26,12 +24,14 @@
 ## Reads ONLY the shared MetaProgress building/caps-perk API; edits no shared file.
 extends "res://run_system/ui/buildings/building_screen_base.gd"
 
+const CLINIC_NPC_PATH := "res://run_system/assets/images/ui/clinic/npc_cyber_doctor.png"
+
 ## Max-HP perk (cyber_hp): +5 max HP per level. Cost/level is sourced from
 ## MetaProgress.caps_perk_cost(CYBER_HP_PERK); the +HP value is display-only here.
 const MAX_HP_PER_LEVEL := 5
-## Effective attribute level cap with clinic at T3 (spec: 3 → 5). Display-only
-## here — also the total dot count per row (dots beyond the current cap render
-## faint, selling the T3 cap raise like the concept's fixed 5-dot rows).
+## Effective attribute level cap with clinic at T3 (spec: 3 → 5). This remains
+## the total dot count for purchasable perk rows; the separate cap-unlock card
+## deliberately has no dots because the tier unlock is binary.
 const HIGH_CAP_LEVEL := 5
 
 ## Lightline icon per base attribute (concept row order = CYBER_DOC_PERKS order).
@@ -52,6 +52,10 @@ const DOT_SIZE := 18.0
 const DOT_FILL := Color(0.95, 0.62, 0.16)
 const DOT_EMPTY_BG := Color(0.13, 0.12, 0.10)
 const DOT_RING := Color(0.42, 0.38, 0.28)
+## Keeps the two right-hand concept cards close to the bottom edge at 1080p;
+## smaller windows remain safe because BuildingScreenBase owns the ScrollContainer.
+const CONTENT_MIN_HEIGHT := 710.0
+const NPC_STAGE_WIDTH := 440.0
 
 
 func _build_content(container: VBoxContainer) -> void:
@@ -68,19 +72,31 @@ func _rebuild(container: VBoxContainer) -> void:
 	for child in container.get_children():
 		child.queue_free()
 
-	# Concept layout: deco strip | five attribute rows (wide) | vitals + cap cards.
+	# Accepted concept layout: robot doctor | five attribute rows | two cards.
+	# The doctor is frameless scene dressing; every actual purchase remains a
+	# normal button in the centre/right service columns.
 	var columns := HBoxContainer.new()
-	columns.add_theme_constant_override("separation", 16)
+	columns.add_theme_constant_override("separation", 18)
 	columns.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	columns.custom_minimum_size = Vector2(0, CONTENT_MIN_HEIGHT)
 	container.add_child(columns)
 
-	columns.add_child(_build_deco_column())
+	# --- LEFT: approved cyber-doctor character art. ---
+	var npc := _build_npc_art_stage(
+		CLINIC_NPC_PATH,
+		"ClinicCyberDoctor",
+		Vector2(NPC_STAGE_WIDTH, CONTENT_MIN_HEIGHT),
+		"icon_heart",
+	)
+	npc.size_flags_horizontal = Control.SIZE_FILL
+	columns.add_child(npc)
 
-	# --- MAIN: T1 attribute perk rows (Caps). ---
+	# --- CENTRE: T1 attribute perk rows (Caps). ---
 	var main_col := VBoxContainer.new()
 	main_col.add_theme_constant_override("separation", TOK_ROW_SEP)
 	main_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	main_col.size_flags_stretch_ratio = 2.2
+	main_col.size_flags_stretch_ratio = 1.75
 	columns.add_child(main_col)
 	if MetaProgress.building_can("clinic", "attr_perks"):
 		# Stable perk order so rows don't reshuffle between rebuilds.
@@ -91,27 +107,13 @@ func _rebuild(container: VBoxContainer) -> void:
 
 	# --- RIGHT: 生命上限 (T2) card over 强化上限 (T3) card. ---
 	var right_col := VBoxContainer.new()
-	right_col.add_theme_constant_override("separation", 14)
+	right_col.add_theme_constant_override("separation", 16)
 	right_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_col.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right_col.size_flags_stretch_ratio = 1.0
 	columns.add_child(right_col)
 	right_col.add_child(_build_vitals_card())
 	right_col.add_child(_build_cap_card())
-
-
-## The concept's far-left clinic dressing: stacked canister illustrations.
-## NAMED node ("ClinicDecoArt") so future per-building Codex art can be slotted
-## in by node path without touching this layout. Missing PNGs leave spacers.
-func _build_deco_column() -> Control:
-	var deco := VBoxContainer.new()
-	deco.name = "ClinicDecoArt"
-	deco.alignment = BoxContainer.ALIGNMENT_CENTER
-	deco.add_theme_constant_override("separation", 20)
-	deco.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	deco.custom_minimum_size = Vector2(120, 0)
-	deco.add_child(_ll_art("canister_medkit", Vector2(110, 174)))
-	deco.add_child(_ll_art("canister_blue", Vector2(100, 180)))
-	return deco
 
 
 # --- T1: attribute perk rows ---------------------------------------------------
@@ -127,6 +129,7 @@ func _build_attr_perk_row(perk_id: String) -> Control:
 	var cost := MetaProgress.caps_perk_cost(perk_id)
 
 	var panel := PanelContainer.new()
+	panel.name = "ClinicAttribute_%s" % attr
 	# ll_inset ships a 28px content margin on every side (9-slice default); at
 	# five rows that overflows the scroll viewport and clips the 魅力 row. The
 	# ink border itself is thin — 10px vertical padding clears it fine.
@@ -135,6 +138,8 @@ func _build_attr_perk_row(perk_id: String) -> Control:
 	row_box.content_margin_bottom = 10.0
 	panel.add_theme_stylebox_override("panel", row_box)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.size_flags_stretch_ratio = 1.0
 	# Full perk name + level on hover (the concept row only shows the bare
 	# attribute name, so the descriptive copy moves to the tooltip).
 	panel.tooltip_text = (
@@ -198,9 +203,11 @@ func _build_attr_perk_row(perk_id: String) -> Control:
 ## on the clinic's T2 max_hp_perk function inside buy_caps_perk itself.
 func _build_vitals_card() -> Control:
 	var card := _ll_card(tr("UI_CLINIC_VITALS_TITLE"))
+	card.name = "ClinicVitalsCard"
 	var body := card.get_meta("body") as VBoxContainer
 
 	var icon_center := CenterContainer.new()
+	icon_center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	icon_center.add_child(_ll_icon("icon_heart", 60))
 	body.add_child(icon_center)
 
@@ -228,74 +235,89 @@ func _build_vitals_card() -> Control:
 			lvl,
 			cap,
 			MetaProgress.caps_perk_cost(perk_id),
-			func() -> void: MetaProgress.buy_caps_perk(perk_id)
+			func() -> void: MetaProgress.buy_caps_perk(perk_id),
+			Vector2(184, 65)
 		)
 	)
 	return card
 
 
-# --- T3: 强化上限 (display-only) -------------------------------------------------
+# --- T3: 强化上限 (binary, display-only) -----------------------------------------
 
 
-## The concept's cap card. Display-only on purpose: the cap raise IS the clinic's
-## T3 tier (bought on the base overview), so the concept sketch's buy button has
-## no backend action to wire — the card shows the effective cap + how to raise it.
+## The cap raise IS the clinic's T3 tier, so this card has no buy action and no
+## point track. It is intentionally binary: locked below T3, then cap 5 unlocked.
 func _build_cap_card() -> Control:
 	var card := _ll_card(tr("UI_CLINIC_CAP_TITLE"))
+	card.name = "ClinicCapCard"
 	var body := card.get_meta("body") as VBoxContainer
 
 	var icon_center := CenterContainer.new()
+	icon_center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	icon_center.add_child(_ll_icon("icon_uparrow", 56))
 	body.add_child(icon_center)
 
-	var effective_cap := MetaProgress.attr_perk_cap()
-	var dots_center := CenterContainer.new()
-	dots_center.add_child(_cyan_dots(effective_cap, HIGH_CAP_LEVEL, HIGH_CAP_LEVEL))
-	body.add_child(dots_center)
-
-	var cap_note := Label.new()
-	cap_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cap_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if MetaProgress.building_can("clinic", "high_cap"):
-		cap_note.text = tr("UI_CLINIC_CAP_HIGH").format({"cap": effective_cap})
+		var value_lbl := Label.new()
+		value_lbl.text = "%s %d" % [tr("UI_CLINIC_CAP_TITLE"), HIGH_CAP_LEVEL]
+		value_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_style_label(value_lbl, 22, Color(0.36, 0.86, 0.91), 2)
+		body.add_child(value_lbl)
+
+		var unlocked_lbl := Label.new()
+		unlocked_lbl.text = tr("UI_CLINIC_CAP_UNLOCKED")
+		unlocked_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_style_label(unlocked_lbl, TOK_FONT_BODY, TOK_TEXT, 1)
+		body.add_child(unlocked_lbl)
 	else:
-		cap_note.text = (tr("UI_CLINIC_CAP_BASE").format(
-			{"cap": effective_cap, "high": HIGH_CAP_LEVEL}
-		))
-	_style_label(cap_note, TOK_FONT_DIM, TOK_TEXT_DIM, 1)
-	body.add_child(cap_note)
+		var lock_row := HBoxContainer.new()
+		lock_row.alignment = BoxContainer.ALIGNMENT_CENTER
+		lock_row.add_theme_constant_override("separation", 8)
+		lock_row.add_child(_ll_icon("icon_lock", 28))
+		var locked_lbl := Label.new()
+		locked_lbl.text = tr("UI_CLINIC_CAP_T3_UNLOCK")
+		_style_label(locked_lbl, TOK_FONT_BODY, TOK_TEXT_DIM, 1)
+		lock_row.add_child(locked_lbl)
+		body.add_child(lock_row)
 	return card
 
 
 # --- Small UI helpers (lightline, PNG-optional) --------------------------------
 
 
-## The orange lightline buy button shared by every purchasable in this screen:
-## a quiet MAX chip at the cap, otherwise 购买 with the Caps cost badge, disabled
-## while Caps are short. `on_buy` is the existing backend call.
-func _buy_button(lvl: int, max_lvl: int, cost: int, on_buy: Callable) -> Control:
+## The orange lightline price plaque shared by every purchasable in this screen:
+## a quiet MAX chip at the cap, otherwise centered Caps icon -> amount with no
+## redundant 购买 verb, disabled while Caps are short. `on_buy` is the backend.
+func _buy_button(
+	lvl: int,
+	max_lvl: int,
+	cost: int,
+	on_buy: Callable,
+	plaque_size: Vector2 = Vector2(146, 60)
+) -> Control:
 	if lvl >= max_lvl:
 		# A dead disabled button at the cap reads as broken; a calm chip doesn't.
-		var chip := _maxed_chip()
+		var chip := _maxed_chip(plaque_size)
 		chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		return chip
 	var buy := _orange_button("")
-	buy.custom_minimum_size = Vector2(172, 44)
+	T.apply_concept_price_button(buy, "orange")
+	buy.custom_minimum_size = plaque_size
+	buy.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	buy.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	buy.text = tr("UI_CLINIC_BUY")
-	buy.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	buy.disabled = MetaProgress.caps < cost
 	buy.pressed.connect(on_buy)
-	buy.add_child(T.overlay_cost_badge(cost, "caps", 15, 16, -10, -72))
+	T.centered_currency_button_content(buy, cost, "caps", 23, 29, true, 8)
 	return buy
 
 
 ## Quiet non-interactive MAX chip — same width as the buy button so attribute
 ## rows don't shift when a stat caps out.
-func _maxed_chip() -> Control:
+func _maxed_chip(plaque_size: Vector2 = Vector2(146, 60)) -> Control:
 	var chip := PanelContainer.new()
 	chip.add_theme_stylebox_override("panel", T.ll_slot("locked"))
-	chip.custom_minimum_size = Vector2(172, 44)
+	chip.custom_minimum_size = plaque_size
+	chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	var center := CenterContainer.new()
 	chip.add_child(center)
 	var lbl := Label.new()
@@ -310,6 +332,8 @@ func _maxed_chip() -> Control:
 func _ll_card(title: String) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.size_flags_stretch_ratio = 1.0
 	panel.add_theme_stylebox_override("panel", T.ll_section())
 
 	var margin := MarginContainer.new()
@@ -319,6 +343,7 @@ func _ll_card(title: String) -> PanelContainer:
 
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", TOK_ROW_SEP)
 	margin.add_child(body)
 
@@ -445,23 +470,6 @@ func _ll_icon(icon_name: String, px: float) -> Control:
 	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return rect
-
-
-## A lightline illustration at an arbitrary rect size (deco pieces).
-func _ll_art(art_name: String, box: Vector2) -> Control:
-	var tex := T.lightline_tex(art_name)
-	if tex == null:
-		var spacer := Control.new()
-		spacer.custom_minimum_size = box
-		return spacer
-	var rect := TextureRect.new()
-	rect.texture = tex
-	rect.custom_minimum_size = box
-	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	return rect
 
 

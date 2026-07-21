@@ -73,7 +73,9 @@ func _build() -> void:
 
 	# Texture (hidden until set)
 	_texture_rect = TextureRect.new()
-	_texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	# Equipment art is clean HD 2D comic work, not pixel art. Linear filtering
+	# keeps the 256px source smooth in 56-92px inventory presentations.
+	_texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_texture_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 	_texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_texture_rect.set_anchors_preset(Control.PRESET_FULL_RECT)

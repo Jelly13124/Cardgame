@@ -2,6 +2,7 @@
   "id": "cowboy_bill",
   "name": "Cowboy Bill",
   "sprite_id": "cowboy_bill",
+  "card_ui_skin": "cowboy_bill",
   "tint": "#ffffff",
   "max_health": 50,
   "starter_deck": [
@@ -22,5 +23,5 @@
     "luck": 0,
     "charm": 0
   },
-  "description": "One-eyed gunslinger. Reliable, average across the board."
+  "description": "A circuit-damaged robot with one surviving memory: an old western. Bill insists he is human, and the frontier seems willing to play along."
 }

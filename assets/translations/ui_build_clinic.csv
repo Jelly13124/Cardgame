@@ -19,3 +19,5 @@ UI_CLINIC_LOCKED_HP,"Upgrade the Clinic to T2 to unlock the Max-HP augment.",升
 UI_CLINIC_CAP_BASE,"Augment level cap is {cap}. Upgrade the Clinic to T3 to raise it to {high}.","强化等级上限为 {cap}。升级义体诊所至 T3 可提升至 {high}。"
 UI_CLINIC_CAP_HIGH,Augment level cap raised to {cap} (Clinic T3).,强化等级上限已提升至 {cap}（义体诊所 T3）。
 UI_CLINIC_VITALS_TITLE,Max HP,生命上限
+UI_CLINIC_CAP_T3_UNLOCK,Unlocks at T3,T3 解锁
+UI_CLINIC_CAP_UNLOCKED,Unlocked,已解锁

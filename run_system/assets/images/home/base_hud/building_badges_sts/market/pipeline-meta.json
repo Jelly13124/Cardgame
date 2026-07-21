@@ -1,0 +1,59 @@
+{
+  "target": "asset",
+  "mode": "sheet",
+  "prompt": "Black-market badge: ragged money pouch with bottle-cap coins.",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\Desktop\\Cardgame\\run_system\\assets\\images\\home\\base_hud\\building_badges_sts\\badge-3.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 200,
+  "rows": 1,
+  "cols": 1,
+  "cell_size": 128,
+  "fit_scale": 0.82,
+  "trim_border": 4,
+  "edge_clean_depth": 1,
+  "align": "center",
+  "shared_scale": false,
+  "component_mode": "all",
+  "component_padding": 3,
+  "min_component_area": 6,
+  "edge_touch_margin": 2,
+  "frame_labels": [
+    "icon-1"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "component_mode": "all",
+      "component_count": 7,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        8,
+        12,
+        112,
+        108
+      ],
+      "edge_touch": false,
+      "output_size": [
+        104,
+        96
+      ],
+      "paste_position": [
+        12,
+        16
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

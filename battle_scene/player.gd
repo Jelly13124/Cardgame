@@ -23,9 +23,11 @@ signal died
 const HUD_SCRIPT = preload("res://battle_scene/ui/character_hud.gd")
 const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
 const COMBAT_FX = preload("res://battle_scene/combat_fx.gd")
+const COMBAT_FEEDBACK_CONTROLLER = preload("res://battle_scene/combat_feedback_controller.gd")
 const HERO_DIR = "res://battle_scene/assets/images/heroes/"
 const DEFAULT_HERO_SPRITE_ID = "cowboy_bill"  # fallback when no hero data loaded
 const TARGET_DISPLAY_HEIGHT := 256.0
+const PLAYER_HUD_SIZE := Vector2i(200, 10)
 const MUZZLE_NATIVE_POSITION := Vector2(224, 94)
 const MAX_ANIMATION_FRAMES := 16
 
@@ -33,6 +35,8 @@ var _sprite: AnimatedSprite2D
 var _fallback_sprite: Sprite2D
 var _hud: Node
 var status_system = STATUS_SYS.new()
+var _death_resolving: bool = false
+var _death_settled: bool = false
 
 # ─── Yin/Yang polarity (Feng Shui Master hero) ────────────────────────────────
 ## Per-battle polarity state. A polarity hero's deck is split into Yin (阴) and
@@ -115,8 +119,7 @@ func _hero_tint() -> Color:
 
 
 func _ready() -> void:
-	# Tag the player so per-entity systems (e.g. the Bleed tick checking the
-	# Hemorrhage power) can tell the player apart from enemies.
+	# Tag the player so per-entity combat systems can distinguish the hero from enemies.
 	add_to_group("player_entity")
 	_build_visual()
 
@@ -131,8 +134,10 @@ func _build_visual() -> void:
 	_hud.max_health = max_health
 	_hud.current_health = health
 	_hud.current_block = block
-	_hud.bar_width = 225
-	_hud.position = Vector2(-112.5, 28)
+	_hud.is_player_hud = true
+	_hud.bar_width = PLAYER_HUD_SIZE.x
+	_hud.bar_height = PLAYER_HUD_SIZE.y
+	_hud.position = Vector2(-float(PLAYER_HUD_SIZE.x) * 0.5, 28)
 	add_child(_hud)
 
 
@@ -153,7 +158,7 @@ func _build_animated_visual() -> void:
 
 	var frames = SpriteFrames.new()
 	_sprite.sprite_frames = frames
-	_add_animation_frames(frames, "idle", true, 12.0)
+	_add_animation_frames(frames, "idle", true, 6.0)
 	_add_animation_frames(frames, "attack", false, 18.0)
 	_apply_display_scale(frames)
 	_sprite.modulate = _hero_tint()
@@ -262,7 +267,6 @@ func _show_rest_pose() -> void:
 	var frames = _sprite.sprite_frames
 	if frames and frames.has_animation("idle") and frames.get_frame_count("idle") > 0:
 		_sprite.play("idle")
-		_sprite.pause()
 		_sprite.frame = 0
 		return
 	if frames and frames.has_animation("attack") and frames.get_frame_count("attack") > 0:
@@ -301,9 +305,13 @@ func get_muzzle_global_position() -> Vector2:
 	return global_position + Vector2(TARGET_DISPLAY_HEIGHT * 0.38, -TARGET_DISPLAY_HEIGHT * 0.41)
 
 
+func get_hit_global_position() -> Vector2:
+	return global_position + Vector2(0, -TARGET_DISPLAY_HEIGHT * 0.44)
+
+
 ## Returns whichever sprite is actually visible right now: the AnimatedSprite2D
-## if it has playable frames, otherwise the fallback Sprite2D. Used by COMBAT_FX.shake
-## so heavy hits actually wobble the rendered art (not the invisible alternate).
+## if it has playable frames, otherwise the fallback Sprite2D. The feedback
+## controller reacts on this art node so the HUD and status badges stay steady.
 func _visible_sprite() -> Node2D:
 	if _current_sprite_texture():
 		return _sprite
@@ -337,51 +345,78 @@ func notify_status_changed() -> void:
 	status_changed.emit()
 
 
-func take_damage(amount: int, silent: bool = false) -> void:
-	var dmg_after_block = max(0, amount - block)
-	var blocked_amount = min(block, amount)
-	block = max(0, block - amount)
-	health -= dmg_after_block
-	health = max(0, health)
-	block_changed.emit(block)
-	health_changed.emit(health)
-	_refresh_hud()
+func take_damage(
+	amount: int, silent: bool = false, feedback_tags: Dictionary = {}
+) -> void:
+	if _death_resolving or amount <= 0:
+		return
 
-	# Hit reaction: a red flash when HP damage actually lands (a hit fully absorbed
-	# by Block does NOT flash). Mirrors the enemy's _hit_flash for consistent feedback.
-	if dmg_after_block > 0:
-		_hit_flash()
-		if not silent:
-			AudioManager.play_sfx("player_hurt")
+	var dmg_after_block := maxi(0, amount - block)
+	var blocked_amount := mini(block, amount)
+	var remaining_block := maxi(0, block - amount)
+	var remaining_health := maxi(0, health - dmg_after_block)
+	var will_kill := remaining_health <= 0 and health > 0
+	var apply_health_change := func() -> void:
+		self.block = remaining_block
+		self.health = remaining_health
+		if self.health <= 0:
+			self._death_resolving = true
+		self.block_changed.emit(self.block)
+		self.health_changed.emit(self.health)
+		self._refresh_hud()
 
-	# Floating damage number + shake. silent=true skips both — DoT ticks
-	# (bleed/burn) already produce a "BLEED N" / "BURN N" notification
-	# from status_effect_system, so showing a floating number too would
-	# stack two damage callouts on every tick.
-	if not silent:
-		var scene := get_tree().current_scene
-		if scene:
-			var spawn_pos: Vector2 = global_position + Vector2(0, -TARGET_DISPLAY_HEIGHT * 0.5)
-			COMBAT_FX.spawn_damage_number(scene, spawn_pos, dmg_after_block, blocked_amount)
-			# Shake the VISIBLE sprite only (not `self`) so the HUD / status
-			# badges that are children of this entity don't wobble. If the
-			# AnimatedSprite2D has no frames loaded, the fallback Sprite2D is
-			# the actually-rendered art.
-			# Every HP-damage hit now gives kinetic feedback: small hits nudge, big
-			# hits jolt. Sprite shake scales with damage, and the whole battlefield
-			# screen-shakes on top — proportional to the blow.
-			if dmg_after_block > 0:
-				var shake_target: Node2D = _visible_sprite()
-				if shake_target:
-					COMBAT_FX.shake(
-						shake_target, clampf(4.0 + float(dmg_after_block) * 0.6, 4.0, 16.0), 0.22
-					)
-				COMBAT_FX.shake_screen(
-					scene, clampf(2.0 + float(dmg_after_block) * 0.4, 2.0, 10.0), 0.22
+	if silent:
+		apply_health_change.call()
+	else:
+		var scene := COMBAT_FEEDBACK_CONTROLLER.scene_root_for(self)
+		var controller: Node = COMBAT_FEEDBACK_CONTROLLER.ensure(scene)
+		if controller:
+			var profile := str(
+				controller.call(
+					"profile_for_hit",
+					dmg_after_block,
+					blocked_amount,
+					will_kill,
+					bool(feedback_tags.get("heavy", false)),
+					bool(feedback_tags.get("critical", false))
 				)
+			)
+			_play_hit_audio(profile, feedback_tags)
+			var reaction_target: Node2D = _visible_sprite()
+			if reaction_target == null:
+				reaction_target = self
+			var play_args := [
+				scene,
+				reaction_target,
+				get_hit_global_position(),
+				dmg_after_block,
+				blocked_amount,
+				profile,
+				apply_health_change,
+			]
+			if _uses_detached_feedback(feedback_tags):
+				controller.callv("play_hit", play_args)
+			else:
+				await controller.callv("play_hit", play_args)
+		else:
+			apply_health_change.call()
 
-	if health <= 0:
-		died.emit()
+	if will_kill:
+		_settle_death_once()
+
+
+func _play_hit_audio(profile: String, feedback_tags: Dictionary) -> void:
+	if str(feedback_tags.get("source", "")) == "status":
+		return
+	if profile == "blocked":
+		AudioManager.play_sfx("block_gain", -3.0, 1.12, 0.03)
+		return
+	var pitch := 0.84 if profile in ["heavy", "kill"] else 1.0
+	AudioManager.play_sfx("player_hurt", 0.0, pitch, 0.04)
+
+
+func _uses_detached_feedback(feedback_tags: Dictionary) -> bool:
+	return str(feedback_tags.get("source", "")) in ["status", "relic", "thorns", "debug"]
 
 
 ## Red flash on the rendered sprite when hit — mirrors EnemyEntity._hit_flash. Tweens
@@ -407,8 +442,9 @@ func heal(amount: int) -> void:
 ## Direct HP loss that bypasses Block (blood-cost cards: Siphon Valve, Hemo Drive,
 ## …). Shows a floating damage number like take_damage but ignores Block/Dodge.
 func lose_hp(amount: int) -> void:
-	if amount <= 0:
+	if amount <= 0 or _death_resolving:
 		return
+	var will_kill := health > 0 and health - amount <= 0
 	health = max(0, health - amount)
 	health_changed.emit(health)
 	_refresh_hud()
@@ -417,8 +453,16 @@ func lose_hp(amount: int) -> void:
 	if scene:
 		var spawn_pos: Vector2 = global_position + Vector2(0, -TARGET_DISPLAY_HEIGHT * 0.5)
 		COMBAT_FX.spawn_damage_number(scene, spawn_pos, amount, 0)
-	if health <= 0:
-		died.emit()
+	if will_kill:
+		_settle_death_once()
+
+
+func _settle_death_once() -> void:
+	if _death_settled:
+		return
+	_death_resolving = true
+	_death_settled = true
+	died.emit()
 
 
 func add_block(amount: int) -> void:

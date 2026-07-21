@@ -53,7 +53,7 @@ func on_player_turn_started(player: Node, round_number: int) -> void:
 					_mark_used_once(entry)
 			"deal_damage_all":
 				# Chip every alive enemy at turn start (e.g. cracked_battery).
-				if _deal_to_all_enemies(amount):
+				if _deal_to_all_enemies(amount, str(entry["relic_id"]), "deal_damage_all"):
 					_notify("%s: %d to all" % [str(entry["title"]), amount], Color(1.0, 0.4, 0.3))
 					_mark_used_once(entry)
 			"gain_temp_strength":
@@ -168,7 +168,11 @@ func on_player_gain_block(_player: Node, amount: int) -> int:
 						_battle_scene.show_notification("BLOCK CRIT!", Color(0.45, 0.7, 1.0))
 				_mark_used_once(entry)
 			"block_gain_damage":
-				_deal_to_random_enemy(int(effect.get("amount", 0)))
+				_deal_to_random_enemy(
+					int(effect.get("amount", 0)),
+					str(entry["relic_id"]),
+					"block_gain_damage"
+				)
 				_mark_used_once(entry)
 			"gain_block":
 				# Flat bonus Block whenever the player gains Block (inertial_dampener).
@@ -178,7 +182,7 @@ func on_player_gain_block(_player: Node, amount: int) -> int:
 
 
 ## Fired from combat_engine after a player ATTACK card resolves on `target`.
-## sharpened_scrap applies Bleed to the struck enemy (with the brutal_servo bonus).
+## conductive_scrap applies Short Circuit to the struck enemy (with Surge Servo's bonus).
 func on_player_attack(target: Node) -> void:
 	if target == null or not is_instance_valid(target) or not target.has_method("add_status"):
 		return
@@ -190,8 +194,8 @@ func on_player_attack(target: Node) -> void:
 			"apply_status":
 				var status := str(effect.get("status", ""))
 				var n := int(effect.get("amount", effect.get("stacks", 1)))
-				if status == "bleed":
-					n += bleed_bonus_stacks()
+				if status == "short_circuit":
+					n += short_circuit_bonus_stacks()
 				target.add_status(status, n)
 				_mark_used_once(entry)
 
@@ -211,13 +215,13 @@ func on_player_take_damage(player: Node) -> void:
 					_mark_used_once(entry)
 
 
-## Total bonus Bleed stacks added whenever the player applies Bleed (brutal_servo).
-## Returns 0 when no on_apply_bleed relic is owned.
-func bleed_bonus_stacks() -> int:
+## Total bonus Short Circuit added whenever the player applies it (Surge Servo).
+## Returns 0 when no on_apply_short_circuit relic is owned.
+func short_circuit_bonus_stacks() -> int:
 	var bonus := 0
-	for entry in _get_effect_entries("on_apply_bleed"):
+	for entry in _get_effect_entries("on_apply_short_circuit"):
 		var effect: Dictionary = entry["effect"]
-		if str(effect.get("type", "")) == "add_bleed":
+		if str(effect.get("type", "")) == "add_short_circuit":
 			bonus += int(effect.get("amount", 0))
 	return bonus
 
@@ -274,10 +278,10 @@ func first_turn_bonus_allowance() -> int:
 
 
 ## True if a held relic makes the player's Thorns reflection also apply equal
-## Bleed to the attacker (Serrated Barbs). Read by combat_engine.
-func thorns_apply_bleed() -> bool:
+## Short Circuit to the attacker (Arc Spines). Read by combat_engine.
+func thorns_apply_short_circuit() -> bool:
 	for entry in _get_effect_entries("on_thorns_damage"):
-		if str(entry["effect"].get("type", "")) == "thorns_bleed":
+		if str(entry["effect"].get("type", "")) == "thorns_short_circuit":
 			return true
 	return false
 
@@ -301,7 +305,7 @@ func on_player_crit(_player: Node) -> void:
 
 ## Deal `amount` to every alive enemy. Returns true if at least one enemy was hit
 ## (so the caller can gate its notification / once_per_combat marking).
-func _deal_to_all_enemies(amount: int) -> bool:
+func _deal_to_all_enemies(amount: int, relic_id: String, effect_type: String) -> bool:
 	if amount <= 0 or _battle_scene == null:
 		return false
 	var container = _battle_scene.get("enemy_container")
@@ -309,15 +313,22 @@ func _deal_to_all_enemies(amount: int) -> bool:
 		return false
 	var hit := false
 	for enemy in container.get_children():
-		if is_instance_valid(enemy) and enemy.has_method("take_damage"):
-			enemy.take_damage(amount)
+		if (
+			is_instance_valid(enemy)
+			and not enemy.is_queued_for_deletion()
+			and int(enemy.get("health")) > 0
+			and enemy.has_method("take_damage")
+		):
+			# play_hit applies HP before its first await, so synchronous relic hooks can
+			# still launch the normal impact profile without delaying their game logic.
+			enemy.take_damage(amount, false, _relic_feedback_tags(relic_id, effect_type))
 			hit = true
 	return hit
 
 
 ## Deal `amount` to one random alive enemy (scavenger_lens). No-op when no
 ## enemies remain. The chosen enemy may die; we touch it only once.
-func _deal_to_random_enemy(amount: int) -> void:
+func _deal_to_random_enemy(amount: int, relic_id: String, effect_type: String) -> void:
 	if amount <= 0 or _battle_scene == null:
 		return
 	var container = _battle_scene.get("enemy_container")
@@ -325,13 +336,26 @@ func _deal_to_random_enemy(amount: int) -> void:
 		return
 	var alive: Array = []
 	for enemy in container.get_children():
-		if is_instance_valid(enemy) and enemy.has_method("take_damage"):
+		if (
+			is_instance_valid(enemy)
+			and not enemy.is_queued_for_deletion()
+			and int(enemy.get("health")) > 0
+			and enemy.has_method("take_damage")
+		):
 			alive.append(enemy)
 	if alive.is_empty():
 		return
 	var target: Node = alive[randi() % alive.size()]
 	if is_instance_valid(target):
-		target.take_damage(amount)
+		target.take_damage(amount, false, _relic_feedback_tags(relic_id, effect_type))
+
+
+func _relic_feedback_tags(relic_id: String, effect_type: String) -> Dictionary:
+	return {
+		"source": "relic",
+		"relic": relic_id,
+		"effect": effect_type,
+	}
 
 
 func _get_effect_entries(trigger: String) -> Array:

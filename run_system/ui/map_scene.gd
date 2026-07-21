@@ -18,6 +18,7 @@ const BATTLE_PACKED = preload("res://battle_scene/battle_scene.tscn")
 const SHOP_PACKED = preload("res://run_system/ui/shop_scene.tscn")
 const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_sts2_bg.png"
 const NODE_ICON_DIR = "res://run_system/assets/images/map/nodes/"
+const REST_SITE_BACKGROUND_PATH = "res://run_system/assets/images/rest/rest_site_bg.png"
 
 const MAP_LEFT: float = 180.0
 const MAP_TOP: float = 155.0
@@ -723,7 +724,7 @@ func _humanize_id(value: String) -> String:
 func _build_top_bar() -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "TopBarLayer"
-	layer.layer = 50
+	layer.layer = RUN_TOP_BAR.CANVAS_LAYER
 	add_child(layer)
 
 	var bar := RUN_TOP_BAR.new()
@@ -784,25 +785,6 @@ func _open_run_deck_viewer() -> void:
 	var modal = RUN_DECK_VIEWER_MODAL.new()
 	modal.name = "RunDeckViewerModal"
 	add_child(modal)
-	_hide_top_bar_for_page(modal)
-
-
-## A full-screen page (character / run-deck) sits at map_scene's canvas layer,
-## BELOW the TopBarLayer (CanvasLayer, layer 50) — so the top bar (incl. its relic
-## shelf) bled over the page and doubled the relics. Hide the bar while a page is
-## up; restore it when the page closes (X / ESC / toggle) via tree_exited. Capture
-## the layer node directly + guard it, so a scene-change teardown can't deref a
-## freed map_scene.
-func _hide_top_bar_for_page(page: Node) -> void:
-	var bar_layer := get_node_or_null("TopBarLayer")
-	if not bar_layer:
-		return
-	bar_layer.visible = false
-	page.tree_exited.connect(
-		func():
-			if is_instance_valid(bar_layer):
-				bar_layer.visible = true
-	)
 
 
 ## Treasure equipment drop: 70% uncommon / 30% rare. Drops straight into the
@@ -829,7 +811,7 @@ func _grant_treasure_equipment() -> void:
 ## Rest-stop choice modal. Player picks HEAL (25% HP) or UPGRADE (open card
 ## picker). Cancelling the picker returns to this choice; once a path
 ## resolves, the modal closes and the rest is consumed.
-func _open_rest_choice() -> void:
+func _open_rest_choice_legacy() -> void:
 	var existing = get_node_or_null("RestChoiceModal")
 	if existing:
 		return  # already open
@@ -867,7 +849,7 @@ func _open_rest_choice() -> void:
 	margin.add_child(vbox)
 
 	var title := Label.new()
-	title.text = tr("UI_MAP_REST_STOP")
+	title.text = "休息处" if Settings.language == "zh" else "REST SITE"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 22)
 	title.add_theme_color_override("font_color", Color(1, 0.95, 0.5))
@@ -916,3 +898,132 @@ func _open_rest_choice() -> void:
 			picker.cancelled.connect(func(): _node_click_pending = false, CONNECT_ONE_SHOT)
 	)
 	buttons.add_child(upgrade_btn)
+
+
+## Accepted UI07 rest-site page: scene-first interaction with the live top bar
+## still visible. Gameplay effects are unchanged from the former center modal.
+func _open_rest_choice() -> void:
+	var existing = get_node_or_null("RestChoiceModal")
+	if existing:
+		return
+
+	var modal := Control.new()
+	modal.name = "RestChoiceModal"
+	modal.set_anchors_preset(Control.PRESET_FULL_RECT)
+	modal.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(modal)
+
+	var bg := TextureRect.new()
+	bg.name = "RestSiteArt"
+	if ResourceLoader.exists(REST_SITE_BACKGROUND_PATH):
+		bg.texture = load(REST_SITE_BACKGROUND_PATH)
+	bg.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	bg.anchor_right = 1.0
+	bg.anchor_bottom = 1.0
+	bg.offset_top = RUN_TOP_BAR.PAGE_ART_TOP
+	bg.mouse_filter = Control.MOUSE_FILTER_STOP
+	modal.add_child(bg)
+
+	var title := Label.new()
+	title.text = tr("UI_MAP_REST_STOP")
+	title.offset_left = 48.0
+	title.offset_top = RUN_TOP_BAR.BAR_HEIGHT + 24.0
+	title.offset_right = 320.0
+	title.offset_bottom = RUN_TOP_BAR.BAR_HEIGHT + 74.0
+	title.add_theme_font_override("font", T_THEME.display_font(700))
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", Color(0.95, 0.77, 0.48))
+	modal.add_child(title)
+
+	var rule := ColorRect.new()
+	rule.color = Color(0.92, 0.54, 0.15, 0.95)
+	rule.offset_left = 48.0
+	rule.offset_top = RUN_TOP_BAR.BAR_HEIGHT + 80.0
+	rule.offset_right = 300.0
+	rule.offset_bottom = RUN_TOP_BAR.BAR_HEIGHT + 82.0
+	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	modal.add_child(rule)
+
+	var heal_amount := int(rm.max_health * 0.25)
+	var heal_text := ("休息\n恢复 %d" % heal_amount) if Settings.language == "zh" else ("REST\nHEAL %d" % heal_amount)
+	var heal_btn := _rest_hotspot(Rect2(0.075, 0.55, 0.25, 0.23), heal_text)
+	heal_btn.pressed.connect(
+		func():
+			rm.modify_health(heal_amount)
+			_show_popup(tr("UI_MAP_RESTED_HEAL").format({"n": heal_amount}))
+			modal.queue_free()
+			_node_click_pending = false
+	)
+	modal.add_child(heal_btn)
+
+	var upgrade_text := "升级" if Settings.language == "zh" else "UPGRADE"
+	var upgrade_btn := _rest_hotspot(Rect2(0.50, 0.58, 0.28, 0.22), upgrade_text)
+	upgrade_btn.pressed.connect(
+		func():
+			modal.queue_free()
+			var picker := CARD_UPGRADE_MODAL.new()
+			add_child(picker)
+			picker.upgraded.connect(
+				func():
+					_show_popup(tr("UI_MAP_CARD_UPGRADED"))
+					_node_click_pending = false,
+				CONNECT_ONE_SHOT
+			)
+			picker.cancelled.connect(_open_rest_choice, CONNECT_ONE_SHOT)
+	)
+	modal.add_child(upgrade_btn)
+
+	var leave_btn := Button.new()
+	leave_btn.text = tr("UI_SHOP_LEAVE")
+	leave_btn.anchor_left = 1.0
+	leave_btn.anchor_right = 1.0
+	leave_btn.anchor_top = 1.0
+	leave_btn.anchor_bottom = 1.0
+	leave_btn.offset_left = -286.0
+	leave_btn.offset_top = -108.0
+	leave_btn.offset_right = -48.0
+	leave_btn.offset_bottom = -42.0
+	leave_btn.focus_mode = Control.FOCUS_NONE
+	leave_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	leave_btn.add_theme_font_override("font", T_THEME.display_font(700))
+	leave_btn.add_theme_font_size_override("font_size", 22)
+	for state in ["normal", "hover", "pressed"]:
+		leave_btn.add_theme_stylebox_override(
+			state, T_THEME.ll_button("hover" if state == "hover" else "normal")
+		)
+	leave_btn.pressed.connect(
+		func():
+			modal.queue_free()
+			_node_click_pending = false
+	)
+	modal.add_child(leave_btn)
+
+
+func _rest_hotspot(rect: Rect2, label_text: String) -> Button:
+	var button := Button.new()
+	button.text = label_text
+	button.anchor_left = rect.position.x
+	button.anchor_top = rect.position.y
+	button.anchor_right = rect.end.x
+	button.anchor_bottom = rect.end.y
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button.add_theme_font_override("font", T_THEME.display_font(650))
+	button.add_theme_font_size_override("font_size", 20)
+	button.add_theme_color_override("font_color", Color(0.96, 0.83, 0.58))
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(0.02, 0.03, 0.035, 0.10)
+	normal.set_corner_radius_all(12)
+	button.add_theme_stylebox_override("normal", normal)
+	var hover := normal.duplicate() as StyleBoxFlat
+	hover.bg_color = Color(0.06, 0.07, 0.07, 0.14)
+	hover.border_color = Color(1.0, 0.42, 0.04, 0.95)
+	hover.set_border_width_all(3)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", hover)
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	return button

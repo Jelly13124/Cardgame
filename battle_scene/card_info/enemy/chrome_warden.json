@@ -5,9 +5,8 @@
 	"tier": "elite",
 	"max_health": 60,
 	"action_pattern": [
-		{ "type": "block",         "amount": 18,                                       "label": "🛡 18" },
-		{ "type": "attack_status", "amount": 10, "status": "weak",  "stacks": 1,        "label": "⚔ 10 +Weak" },
-		{ "type": "attack",        "amount": 13,                                       "label": "⚔ 13" },
-		{ "type": "attack_status", "amount": 11, "status": "frail", "stacks": 1,        "label": "🔨 11 +Frail" }
+		{ "type": "reflective_plating", "amount": 12, "thorns": 3,                       "label": "🛡 REFLECTIVE PLATING" },
+		{ "type": "attack_status",     "amount": 9,  "status": "weak", "stacks": 1, "label": "⚔ 9 +Weak" },
+		{ "type": "attack",            "amount": 14,                                      "label": "⚔ 14" }
 	]
 }

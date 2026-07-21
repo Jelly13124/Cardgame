@@ -1,4 +1,5 @@
 keys,en,zh
+UI_MARKET_BACKPACK_FULL,Backpack Full,背包已满
 UI_MARKET_CAPS,Caps,瓶盖
 UI_MARKET_TOOL_SECTION,Tools (Caps),工具(瓶盖)
 UI_MARKET_EQUIP_SECTION,Equipment (Caps),装备(瓶盖)
@@ -6,7 +7,6 @@ UI_MARKET_REFRESH_SECTION,Refresh Stock (Caps),刷新库存(瓶盖)
 UI_MARKET_BUY_CAPS,"Buy ({n} Caps)","购买({n} 瓶盖)"
 UI_MARKET_BUY_VERB,Buy,购买
 UI_MARKET_BOUGHT,Bought,已购买
-UI_MARKET_STASH_FULL,Stash Full,仓库已满
 UI_MARKET_EQUIP_EMPTY,No equipment in stock.,暂无装备库存。
 UI_MARKET_TOOL_EMPTY,No tools in stock.,暂无工具库存。
 UI_MARKET_RARITY_COMMON,Common,普通
@@ -17,7 +17,7 @@ UI_MARKET_RARITY_CURSED,Cursed,诅咒
 UI_MARKET_LOCKED_HINT,"Upgrade the Market to tier {t} to unlock this.","将黑市升级至 T{t} 以解锁此功能。"
 UI_MARKET_REFRESH_NOTE,"Reroll the stocked tools and equipment. Price rises each use this visit.","重新刷新工具与装备库存。每次刷新价格递增(仅本次到访)。"
 UI_MARKET_REFRESH_BTN,"Refresh ({n} Caps)","刷新({n} 瓶盖)"
-UI_MARKET_REFRESH_VERB,Refresh Shelves,刷新货架
+UI_MARKET_REFRESH_VERB,Refresh,刷新
 UI_MARKET_CONVERT_SECTION,Resource Trading,资源交易
 UI_MARKET_CONVERT_TAX_NOTE,(after 10% tax),（已扣 10% 税）
 UI_MARKET_CONVERT_DO,Convert,兑换

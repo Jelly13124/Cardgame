@@ -1,8 +1,8 @@
 # Product Requirements Document
 **Project:** Unnamed Sci-Fi Roguelite Card Game  
-**Art Style:** Rick and Morty-style Sci-Fi Cartoon Wasteland
+**Art Style:** Original 2D American-comic sci-fi western
 **Engine:** Godot 4.6  
-**Last Updated:** 2026-06-03
+**Last Updated:** 2026-07-13
 
 ---
 
@@ -16,30 +16,23 @@ Project documentation is centralized in `docs/`:
 - `docs/PRD.md` is the product and systems source of truth.
 - `docs/PROJECT_STRUCTURE.md` maps scenes, scripts, data, and assets.
 - `docs/project-rules.md` defines art, asset, naming, and architecture rules.
-- `docs/art-style-reference.md` defines the approved Rick and Morty-style Sci-Fi Cartoon Wasteland style contract and in-game visual exemplars.
+- `docs/art-style-reference.md` defines the approved original 2D American-comic style contract and in-game visual exemplars.
 
 ---
 
 ## Core Gameplay Loop
 
-```
-Hero Select + Loadout -> Act 1 Map -> Battle -> Loot -> Map -> ... -> Act Boss
-                                                                              ↓
-                                                              Extract OR Push on to Act 2
-                                                                              ↓
-                                                              Act 2 → ... → Boss
-                                                                              ↓
-                                                              Extract OR Push on to Act 3
-                                                                              ↓
-                                                              Act 3 → Final Boss → Victory
-```
+**Current public-demo contract:** Cowboy Bill + loadout → one 12-floor Act 1 map
+→ fixed `rust_titan` boss → victory/settlement → base. There is no push-on choice
+or second act in the demo. The three-act extract-or-push structure remains a
+full-game ruleset behind `RunManager.DEMO_BUILD = false`.
 
-1. **Hero Select + Loadout** - Pick a hero (fixed starter deck + attribute spread) and inject stashed gear into the backpack
+1. **Hero Select + Loadout** - The demo uses Cowboy Bill (fixed starter deck + attribute spread); the player explicitly moves stored gear into the owned base backpack, which becomes the next-run carry
 2. **Map** - Choose the next encounter node (normal / elite / rest / shop / treasure / ? event / boss) within the act's ~12-floor map
 3. **Battle** - STS-style card combat
 4. **Loot Reward** - Post-battle: claim gold/Scrap and optionally draft 1 new card
-5. **Boss Extraction Choice** _(after each non-final act boss)_ - Push on to the next act OR extract (bank carried Scrap, gear → permanent stash)
-6. **Base Building** - Between runs, spend Scrap (unlock buildings) + Caps (upgrade them) to permanently improve the home base
+5. **Demo Boss Victory** - Defeat Rust Titan on floor 12; bank carried currencies while gear returns to the owned base backpack/equipment slots, show the result, and return to base
+6. **Base Building** - Between runs, spend Scrap to unlock and tier-up buildings; Caps remain an inside-building service/permanent-upgrade currency
 
 ---
 
@@ -107,7 +100,7 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 
 ### Enemy System
 - Each enemy loads from `card_info/enemy/{id}.json` — includes a `sprite_id` for the art and a required encounter identity `tier` (`minion | normal | heavy | elite | boss`)
-- Action types: `attack`, `attack_status`, `attack_all`, `block`, `heal`, `telegraph`, plus `summon` (spawn add enemies, capped at 4 on the field) and `buff_self` (apply a status to itself, e.g. `thorns`)
+- Action types include `attack`, `attack_ramp`, `attack_status`, `attack_all`, `block`, `breakable_block`, `reflective_plating`, `heal`, `telegraph`, `summon`, `buff_self`, and `add_curse`; `DataValidator.ALLOWED_ENEMY_ACTION_TYPES` is authoritative.
 - **Bosses have bespoke mechanics** via an optional `phases` field: at an HP threshold the boss runs one-time `on_enter` actions and swaps to a tougher `action_pattern`. The three act bosses: **rust_titan** (tougher phase-2 loop at 50%), **ash_warden** (debuff + summons `ember_wisp`), **junkyard_tyrant** (summons `scrap_shard` + AoE + self-heal). Killing the boss ends the fight even if summoned adds are still alive.
 - **Per-act difficulty scaling**: non-boss enemy HP ×[1.0, 1.25, 1.5] and damage ×[1.0, 1.15, 1.3] by act; the enemy pool also shifts tougher each act. Bosses are exempt (tuned per-boss).
 - **Intent badge** displayed above enemy HUD with emoji; multiple enemies per encounter supported
@@ -123,7 +116,7 @@ Equipment is gear the player equips to **boost their five attributes** via rolle
 ### Rules
 - Player has **5 equipment slots**: head / chest / weapon / hands / accessory
 - Equipment is held in the backpack and **equipped from the character panel**; it cannot be swapped during combat
-- Equipment is looted from encounters (Luck-scaled) and forged / reforged at the base — it is **no longer sold in the shop** (the shop sells tools)
+- Equipment is looted from encounters (Luck-scaled), forged / reforged at the base, and sold by the Market's T2 equipment shelf
 - Each piece shows its rolled affixes, a rarity color, and flavor text
 
 ### Rarity & Affixes (5-tier)
@@ -139,7 +132,13 @@ A dropped piece becomes an **instance** that rolls its affixes at grant time (`R
 
 `set` / `cursed` are **derived** at roll time (a piece with a `set_id` reads as `set`; a cursed roll as `cursed`). Affixes come from a fixed pool — positives (`attr_*` +1 to a stat, `crit_pct` +5%, `max_hp` +10) and curses (`curse_*`); `affix_pool.attribute_totals()` sums them and `recompute_attributes()` applies the totals on top of `base_attributes` for every equipped piece.
 
-**Generic-shell model (2026-07-02 refactor).** Equipment is no longer bespoke per item. The pool is **15 generic shells** (`gear_{slot}_{tier}`, 5 slots × common/uncommon/rare) that share art by `slot × rarity`, plus **15 set pieces** (3 sets × 5) that keep bespoke identity/art. **Every rolled item guarantees its first affix is a random attribute (`attr_*`)**; the rest are random. All random drops route through `RunManager.roll_shell_drop(tier)` — ~15% (`SET_PIECE_DROP_CHANCE`) a set piece, else a generic shell. **Cursed has two sources:** Ascension ≥ 3 drops (`CURSE_DROP_CHANCE` on generic shells) and the **forge** (`curse_stash_item`). The 8 old bespoke misc items were removed.
+**Generic-shell model (2026-07-02 refactor).** Equipment is no longer bespoke per item. The pool is **15 generic shells** (`gear_{slot}_{tier}`, 5 slots × common/uncommon/rare) that share art by `slot × rarity`, plus **15 set pieces** (3 sets × 5) that keep bespoke identity/art. **Every rolled item guarantees its first affix is a random attribute (`attr_*`)**; the rest are random. All random drops route through `RunManager.roll_shell_drop(tier)` — ~15% (`SET_PIECE_DROP_CHANCE`) a set piece, else a generic shell. **Cursed has two sources:** Ascension ≥ 3 drops (`CURSE_DROP_CHANCE` on generic shells) and the Forge's base-backpack curse action. The 8 old bespoke misc items were removed.
+
+**Demo exposure rule.** One set is featured per run. Combat rewards at the
+floor-3, floor-6, and floor-9 milestones offer three distinct pieces from that
+set; the milestone advances only when the player claims the item. Set activations
+surface a small local combat callout, so equipment is a playable differentiator
+rather than a codex-only feature.
 
 ### Equipment JSON Schema (base item)
 ```json
@@ -158,7 +157,7 @@ A dropped piece becomes an **instance** that rolls its affixes at grant time (`R
 - `bonuses` — a **back-compat baseline only**: freshly-dropped pieces roll affixes anew and ignore it; a legacy stash entry stored as a bare item-id string derives its affixes from `bonuses` (`as_equip_instance`). New stat design lives in the rolled affixes, not here.
 
 ### Forge (铁匠铺)
-At the base: **dismantle** gear into Scrap, or **reforge** a single affix — the first reforge locks the item to that affix and each later reforge of it costs more (`reforge_stash_item_locked`, cost = rarity-base × (count + 1)). Curse affixes can't be reforged.
+At the base, the Forge acts only on gear dragged from the owned base backpack: **dismantle** into Scrap, or **reforge** a single affix. The first reforge locks the item to that affix and each later reforge costs more (rarity-base × (count + 1)); curse affixes cannot be reforged.
 
 ---
 
@@ -184,7 +183,7 @@ Relics are **passive effects that persist for the entire run**. Unlike equipment
 
 ## Extraction Backpack Economy (撤离背包经济)
 
-The run is **3 self-contained acts**, each its own ~12-floor map ending in a single boss (`ACT_BOSSES = [rust_titan, ash_warden, junkyard_tyrant]`; tracked by `RunManager.current_act` / `advance_act()`). Clearing a non-final act's boss opens an extract-vs-push choice; clearing the final act's boss wins the run.
+The planned full game is **3 self-contained acts**, each its own ~12-floor map ending in a single boss (`ACT_BOSSES = [rust_titan, ash_warden, junkyard_tyrant]`; tracked by `RunManager.current_act` / `advance_act()`). The current public demo deliberately caps this architecture to **Act 1 only** (`DEMO_MAX_ACTS = 1`) and fixes its boss to `rust_titan`; defeating that boss is a final victory, so the extract-vs-push flow is not shown in the demo.
 
 ### The backpack (20 cells)
 All loot lives in a single **20-cell backpack** where **Gold, Scrap, and equipment compete for space**:
@@ -192,12 +191,12 @@ All loot lives in a single **20-cell backpack** where **Gold, Scrap, and equipme
 - **Scrap** — in-run salvage dropped by elites / bosses / treasure / events (≤30/cell). Not spendable in-run; banks to permanent `MetaProgress.scrap` **only on extract or final victory**. (Was "Core" before the 2026-07-07 Core-currency removal; the risk/reward is identical, only the currency name changed.)
 - **Equipment** — one item per cell.
 
-### Death, safe cells, and the permanent stash
-- **Death forfeits the entire backpack AND equipped gear — EXCEPT "safe cells."** The first N cells are safe (base 2, +1 per Outpost safe-cells upgrade level); their contents survive death.
-- **Extract / final victory** banks all carried Scrap and sends all carried + equipped gear to a **permanent base stash** (`MetaProgress.stash`).
-- A **loadout step** at the base injects chosen stashed gear into the next run's backpack (`RunManager.pending_loadout`).
+### Death, safe cells, the base backpack, and permanent storage
+- **Death forfeits the entire run backpack AND equipped gear — EXCEPT "safe cells."** The first N cells are safe (base 2, +1 per Outpost safe-cells upgrade level); safe-cell equipment returns to the owned base backpack and safe-cell Scrap banks automatically.
+- **Extract / final victory** banks currencies only. Carried equipment returns to the owned base backpack (`RunManager.pending_loadout`) and worn equipment returns to the owned base slots (`pending_equipped`).
+- The permanent stash (`MetaProgress.stash`) is storage only. It changes only through an explicit player drag between StashWindow and the base backpack/slots; settlement, Market purchases, Forge crafting, and bounty equipment do not auto-store gear.
 
-### Extraction choice (after each non-final act boss)
+### Full-game extraction choice (not active in the one-act demo)
 > **🚪 EXTRACT** — bank the Scrap in your backpack now and return to base (lower, but guaranteed).
 >
 > **⬆ PUSH ON** — take more Scrap (into the backpack, still at death risk) and continue to the next act (regenerates a fresh act map).
@@ -206,24 +205,26 @@ All loot lives in a single **20-cell backpack** where **Gold, Scrap, and equipme
 
 | Outcome | Result |
 |---|---|
-| Extract after an act boss | Carried Scrap banks to `MetaProgress.scrap`; all gear → stash; run ends |
+| Extract after an act boss | Carried Scrap/Caps bank; gear returns to the owned base backpack/slots; stash is unchanged; run ends |
 | Push on | More Scrap into the backpack (still at death risk); next act map generated |
-| Clear the final-act boss | Full victory — everything banks |
-| Die on any floor | Lose the backpack + equipped gear, EXCEPT safe-cell contents |
+| Clear the final-act boss | Full victory — currencies bank; gear returns to the owned base backpack/slots |
+| Die on any floor | Lose the backpack + equipped gear, EXCEPT safe-cell contents; stash is unchanged |
 
 ---
 
 ## Base Building System (基地建造)
 
-Between runs, players return to their **home base**: 4 building tiles in a centered row,
+Between runs, players return to their **home base**: 4 illustrated buildings with
+**icon-only circular entry markers** floating above them (no name/level plaques),
 a **giant START button** bottom-centre with a **difficulty button** above it (opens an
 A0-A5 picker popup), a **top-left currency HUD** (Caps + Scrap chips in
-`home_base_scene.gd`), a **bounty board** panel bottom-left (held contracts + live progress —
-see "Bounty System" below), and three **nav image buttons bottom-right** — Warehouse
+`home_base_scene.gd`), a compact **bounty board** panel bottom-left (held contracts + live
+progress only — no reward seals or refresh countdown; see "Bounty System" below), and three
+**nav image buttons bottom-right** — Warehouse
 (stash), Character (hero headshot) and Gallery (card codex — see "Card Gallery" below).
 **Two** meta-currencies fund the base (the third, **Core**, was removed 2026-07-07):
-**Scrap** (Forge services + **building unlocks**) and **Caps** (Clinic / Market services +
-**building tier-ups** + Outpost permanent upgrades). See `meta_progress.gd` `BUILDING_DEFS`
+**Scrap** (Forge services + **building unlocks/tier-ups**) and **Caps** (Clinic / Market services +
+Outpost permanent upgrades). See `meta_progress.gd` `BUILDING_DEFS`
 + `building_cost_currency()`.
 
 **Windowed UI (2026-07-02/03 refactor).** The base uses Diablo-style **draggable,
@@ -231,14 +232,20 @@ coexisting windows** (`run_system/ui/window/`). Pressing **i** (home base / map 
 toggles the **CharacterWindow** — Diablo-4 layout: paper-doll CENTER, equip slots flanking
 it (head/chest/hands left; weapon/accessory + tools right), **backpack grid BELOW**; modes:
 `base` / `map` (editable) / `battle` (read-only). **Backpack ≠ stash (D4 model):** the
-**StashWindow** (40-slot storage, own window via the right-edge Stash button) is pure
+**StashWindow** (25-slot storage, own window via the right-edge Stash button) is pure
 storage — gear must be dragged stash→backpack to be carried/equipped (equip slots reject
 stash payloads), backpack→stash to store; at base the backpack grid IS the next-run carry
 list (`pending_loadout`). Clicking the **Forge** opens the **ForgeWindow** (craft /
 dismantle / reforge / curse as 4 tabs) beside the character window — cross-window drag.
 ESC closes the topmost window. Clinic / Market / Outpost still open fullscreen pages. The
 former Warehouse building was **removed** (loadout → CharacterWindow+StashWindow; resource
-conversion → Market T3; stash cap flat 40).
+conversion → Market T3; stash cap flat 25).
+
+Every building opens even at tier 0. Its integrated top bar owns the upgrade icon,
+Caps balance, centered building identity, and close control. Clicking the upgrade icon
+opens the shared `building_upgrade_popover.gd`, which shows the current/next tier and
+Scrap cost. Locked facilities keep their service content hidden until unlocked. The
+Forge uses the same popover but keeps its distinct workbench header composition.
 
 ### The 4 buildings
 | Building | Role |
@@ -249,11 +256,11 @@ conversion → Market T3; stash cap flat 40).
 | **Outpost (前哨站)** | **Bounty center** (T1, see "Bounty System"): daily shelf, taking is **FREE**, max 3 held; **safe cells** (T2); Caps **permanent upgrades** (T3): starting gold / backpack size / reward-reroll tokens / tool slots. _(The starter-deck editor and in-run shop-discount upgrade were **removed** 2026-07-07; the difficulty selector lives above the home-screen START button, not in any building.)_ |
 
 ### Rules
-- **Building unlocks cost Scrap; tier-ups cost Caps** (`building_cost_currency()`).
+- **Building unlocks and tier-ups both cost Scrap** (`building_cost_currency()`).
 - Caps/Scrap are earned by extracting or completing runs — NOT from dying.
 - Building unlocks + tiers persist permanently across runs (true meta-progression).
 - Hero selection + next-run loadout live in the CharacterWindow's base mode (press **i**).
-- Some upgrades unlock new heroes or starting decks
+- Retired hidden tracks (`med_bay`, `starter_boost`, `scrap_workshop`) are removed; old save levels are refunded once and erased.
 
 ---
 
@@ -283,7 +290,8 @@ page: `docs/catalog_html/bounties.html`.
 - **Instant settle**: the moment a contract's count is reached mid-run, the reward pays out
   immediately (a toast announces it at base) — no manual turn-in step.
 - Rewards: any of **Caps / Scrap** (ints) and/or an **equipment drop tier**
-  (common/uncommon/rare — rolled via `roll_shell_drop` into the permanent stash).
+  (common/uncommon/rare — rolled via `roll_shell_drop` into the active run backpack,
+  with the owned base backpack as the defensive out-of-run fallback).
 
 ### Objective types (7)
 `play_attack_cards` · `earn_gold` · `kill_enemies` · `kill_elites` · `kill_boss` ·
@@ -411,9 +419,15 @@ BattleScene (Node)
 
 ---
 
-## Art Style - Rick and Morty-style Sci-Fi Cartoon Wasteland
+## Art Style - Original 2D American-Comic Sci-Fi Western
 
-The game's definitive art direction is **Rick and Morty-style Sci-Fi Cartoon Wasteland**. The style target is original flat sci-fi western cartoon game art: thick clean dark outlines, large simple shape blocks, sparse interior linework, broad two-to-three value cel shading, weird alien desert forms, absurd salvage-tech silhouettes, dusty leather and brass, dented grey-green robot metal, patched red cloth, hoses, antennas, odd gadgets, and one or two bright toxic/cyan/orange glow accents.
+The definitive direction is an **original flat 2D American-comic sci-fi western**:
+clean dark outlines, large readable shape blocks, sparse interior linework, broad
+two-to-three-value cel shading, unusual desert forms, salvage-tech silhouettes,
+dusty leather and brass, dented grey-green robot metal, patched red cloth, hoses,
+antennas, odd gadgets, and restrained cyan/orange/toxic accents. UI follows the
+lightweight UI07 language: thin ink-and-brass borders, charcoal fills, simple
+silhouettes, and minimal material noise.
 
 Do not use old project reference images as global style anchors. `docs/art/cowboy-bill-character-sheet-reference.png` may be used only to preserve Cowboy Bill's identity markers. Do not copy named show characters, logos, exact show-specific designs, franchise-specific props, or exact scene layouts.
 
@@ -433,7 +447,7 @@ All current playable player cards use `512x320` landscape PNG illustrations unde
 ### Visual Rules
 | Element | Rule |
 |---|---|
-| **Style target** | Original Rick and Morty-style Sci-Fi Cartoon Wasteland game art matching the approved in-game exemplars; flat 2D Rick and Morty-style sci-fi TV-animation-like look, clean outlines, broad simple shapes, sparse texture, original designs only, no copying named show characters, logos, exact scene layouts, or franchise-specific props. |
+| **Style target** | Original flat 2D American-comic sci-fi western matching the approved in-game exemplars: clean outlines, broad shapes, sparse texture, lightweight UI07 panels, and original designs only; no copied characters, logos, scene layouts, or franchise-specific props. |
 | **Output sizes** | Use the dimensions required by each asset spec; size does not define the art style. |
 | **Silhouette** | Exaggerated and immediately readable: oversized hats, cylindrical robot heads, chunky boots, lanky limbs, patched capes, bulbous lenses, crooked antennas, rubbery alien shapes, bulky salvaged weapons, hoses, and improvised gadgets. |
 | **Materials** | Simplified dusty leather, red cloth scarf, brass cuffs, dented grey-green metal, patched fabric, rubber hoses, glass lenses, exposed springs, toxic sludge, glowing canisters, and flat alien terrain. |
@@ -450,7 +464,7 @@ All current playable player cards use `512x320` landscape PNG illustrations unde
 ### Mandatory Prompt Anchor
 Every generated asset prompt should preserve this wording:
 ```text
-original Rick and Morty-style Sci-Fi Cartoon Wasteland game art, matching the approved in-game exemplars in battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png, battle_scene/assets/images/backgrounds/wasteland_battlefield.png, and run_system/assets/images/map/wasteland_route_map_pixel_bg.png, flat 2D Rick and Morty-style sci-fi TV-animation look, thick clean dark cartoon outlines, large simple shape blocks, sparse interior lines, broad two-to-three value cel shading, weird sci-fi western wasteland, rubbery alien desert shapes, absurd salvage-tech silhouettes, dusty leather, brass, dented grey-green robot metal, patched red cloth, hoses, antennas, odd gadgets, bright toxic green, cyan, and warm orange glow accents used sparingly, clean game-ready edges, readable silhouettes, low texture noise, no text, no labels, no UI frame, no logo, no named show characters, no franchise-specific props, no exact scene copies
+original flat 2D American-comic sci-fi western game art, matching the approved in-game exemplars in battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png, battle_scene/assets/images/backgrounds/wasteland_battlefield.png, and run_system/assets/images/map/wasteland_route_map_pixel_bg.png, clean dark cartoon outlines, large simple shape blocks, sparse interior lines, broad two-to-three-value cel shading, unusual western wasteland silhouettes, salvage-built machinery, dusty leather, brass, dented grey-green robot metal, patched red cloth, hoses, antennas, odd gadgets, cyan and warm orange accents used sparingly, clean game-ready edges, readable silhouettes, low texture noise, no text, no labels, no UI frame, no logo, no copied franchise characters or props, no exact scene copies
 ```
 
 ### Generation Pipeline
@@ -470,6 +484,10 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 
 ## Development Roadmap
 
+> The numbered phases below are a historical delivery log, not a second source of
+> current gameplay truth. When a historical bullet conflicts with the demo contract
+> above, the current contract and the latest superseding phase win.
+
 ### ✅ Phase 15 — Concept-parity building UI rebuild (shipped 2026-07-07)
 Spec: `docs/superpowers/specs/2026-07-07-concept-parity-building-ui-design.md`.
 Function reference: `docs/building-screens-functions.md`.
@@ -477,9 +495,9 @@ Function reference: `docs/building-screens-functions.md`.
   `run_system/assets/images/ui_kit_lightline/` (89 pieces + `manifest.json` with 9-slice
   margins) — consumed via `wasteland_theme.gd` `ll_*` StyleBox hooks (`ll_panel` /
   `ll_titlebar` / `ll_section` / `ll_inset` / `ll_button(_olive)` / `ll_slot`).
-- ✅ **Forge window rebuilt to concept**: 4 icon-tabs + NEW **bulk dismantle by rarity**
-  (common/uncommon/rare with confirm dialog; **set + cursed gear excluded** —
-  `BULK_DISMANTLE_RARITIES` / `dismantle_stash_by_rarity`).
+- ✅ **Forge window rebuilt to concept**: 4 icon-tabs + vertical **bulk dismantle by rarity**
+  (all/common/uncommon/rare with confirm dialog; **set + cursed gear excluded**).
+  Every Forge action consumes or mutates the owned base backpack; the Forge never reads the stash.
 - ✅ **Outpost rebuilt to concept**: **bounties moved here from the Market** — daily shelf,
   taking is **FREE** (`price` now optional/ignored in `validate_bounty`); safe cells (T2);
   Caps permanent upgrades (T3): starting gold / backpack / reward-reroll tokens / tool
@@ -493,17 +511,16 @@ Spec: `docs/superpowers/specs/2026-07-07-remove-core-currency-design.md`.
 - ✅ **Meta Core deleted** from `MetaProgress` (var / `core_changed` signal / `add_core` /
   `spend_core` / save field all gone). Old saves' `core` balance is **discarded, not
   migrated** — `load_progress` is fault-tolerant on the stale key.
-- ✅ **Split mapping**: building **unlocks cost Scrap**, **tier-ups + Outpost permanent
-  upgrades cost Caps** (`unlock_building`/`upgrade_building`/`purchase_upgrade`); new helper
-  `MetaProgress.building_cost_currency(id)` → `"scrap"` while locked, else `"caps"` (UI picks
-  the icon + affordability from it).
+- ✅ **Two-currency mapping**: building **unlocks and tier-ups cost Scrap**
+  (`unlock_building`/`upgrade_building`; `building_cost_currency(id)` always returns
+  `"scrap"` for building actions), while Outpost permanent upgrades cost Caps.
 - ✅ **In-run Core → Scrap rebrand**: battle drops + `total_run_scrap()` +
   `add_scrap_to_backpack()` bank to `MetaProgress.scrap` on extract/victory (same risk/reward,
   backpack cell kind `"scrap"`).
 - ✅ **Market convert** is now **Caps↔Scrap bidirectional** (Core→Caps row dropped).
 - ✅ **Contract rewards**: `elite_purge`/`head_hunter` core rewards → Scrap; validator drops
   `core` from allowed bounty currencies; `gain_core` event effect → `gain_scrap` (4 events).
-- ✅ **UI**: currency HUD shows only Caps + Scrap; building unlock badge = Scrap, upgrade = Caps.
+- ✅ **UI**: currency HUD shows only Caps + Scrap; building unlock and upgrade badges both use Scrap.
 
 ### ✅ Phase 1 — Core Combat (Complete)
 - STS card play loop (draw 3 / play / discard / enemy turn)
@@ -516,20 +533,20 @@ Spec: `docs/superpowers/specs/2026-07-07-remove-core-currency-design.md`.
 - Status effect system (bleed, weak, vulnerable, stun, regen, thorns, frail, dodge, + StS2 powers)
 - Combat sprites with static rest poses and attack animations
 
-### 🔄 Phase 2 — Run System & Content (Active)
-- Map scene with selectable encounter nodes per floor
-- 3-floor structure with boss extraction choice screen
-- 3–5 enemy types with distinct action patterns + final sprite art
-- 10–15 player cards covering all three types
-- Fixed starter decks with map/reward progression
-- Loot reward with equipment drops
+### ✅ Phase 2 — Run System & Content (prototype complete; superseded by current demo contract)
+- Selectable encounter map evolved into the current authored 12-floor demo act.
+- Public demo ends at the fixed Rust Titan boss; the three-act/extraction architecture is retained
+  only for the later full-game build.
+- Bill uses a fixed starter deck and a curated 36-card reward pool.
+- Normal/elite/boss rewards now include the current card, tool, relic and equipment economy;
+  three planned set pieces are surfaced before the boss so the equipment differentiator is playable.
 
 ### ✅ Phase 3 — Equipment & Relics (Complete)
 - ✅ Equipment system: 5 body-part slots, **rolled affixes** (5-tier common/uncommon/rare/set/cursed = 1/2/3/3/3+curse; `affix_pool.gd`; **each item guarantees 1 attribute affix**), 3 sets with tiered bonuses (3-piece / 5-piece). Gear = **15 generic shells** (`gear_{slot}_{tier}`, art shared by slot×rarity) + **15 set pieces**; set/cursed derived at roll time; cursed drops at Ascension ≥ 3 or via the forge. _(2026-07-02: replaced the 8 bespoke misc items.)_
 - ✅ Inventory (8-item cap) — later superseded by the 20-cell Extraction Backpack where Gold/Core/equipment share cells (see Extraction Backpack Economy)
 - ✅ Equipment drops are Luck-scaled (normal = common, elite = uncommon, boss = guaranteed rare; see 2026-06-22 economy pass); the treasure node is a 3-choose-1 relic pick
 - ✅ Relic system: passive run effects, JSON-driven (RelicEffectSystem)
-- ✅ Shop scene (merchant node): 3 cards + 3 tools + 3 relics + remove-card service (75g) — equipment is no longer sold
+- ✅ Shop scene (merchant node): 6 cards + 3 tools + 3 relics + remove-card service (75g) — equipment is no longer sold
 - ✅ Rest site: choice between Heal 25% HP and Upgrade a Card (opens `card_upgrade_modal.gd`)
 - ✅ Card upgrade system: in-run per-card upgrades resolved by `card_upgrade.gd` (deck entries carry an `upgraded` flag, applied at battle start). **Hybrid model**: a card either carries a bespoke `upgrade` block (overrides any of cost/title/description/effects; effects = full replacement) or falls back to a generic numeric formula (`deal_damage` +2, `gain_block` +3, attribute/energy gains +1, `apply_status` stacks +1, `draw_cards` +1); **curses are never upgradeable**. Growth axes: rest campfire = heal-or-upgrade-a-card; elites give a card + Luck-scaled equipment (no gem); boss gives a guaranteed rare relic/equipment. The interim gem-socket system that briefly replaced upgrades was removed 2026-07-02. _(Deferred: 力量流档案扩充 — a broader Strength-archetype profile expansion is a future pass, not in this refactor.)_
 - ✅ Character info panel (map screen): HP / Gold / Floor + equipment slots + inventory + active sets + relics + stats — one consolidated view
@@ -573,27 +590,27 @@ See `docs/superpowers/specs/2026-06-09-gems-leveling-rewards-design.md` for the 
 
 ### ✅ Phase 8 — Tools · Equipment Economy · A0 Balance (shipped 2026-06-21..22)
 Specs: `docs/superpowers/specs/2026-06-21-tools-attrs-loading-base-ui-design.md`, `…/2026-06-22-balance-equipment-economy-design.md`.
-- ✅ **Tool system** (StS2-style one-time consumables): `run_system/data/tools/*.json` (11: 8 original + 3 discover tools added 2026-06-30), a top-bar **tool shelf** (`run_top_bar.gd`), free instant use in battle (`battle_scene.use_tool`; enemy-target tools auto-target; effects reuse `combat_engine._apply_effect`, scaled ×(1+0.08·INT)). _Tool slots reworked in Phase 9 → **1 base slot**, tools held in the backpack + equipped from the character panel; see below._
+- ✅ **Tool system** (StS2-style one-time consumables): `run_system/data/tools/*.json` (11: 8 original + 3 discover tools added 2026-06-30), a top-bar **tool shelf** (`run_top_bar.gd`), confirmation before use, and explicit arrow/click target selection for enemy tools. Cancellation never consumes the item; effects reuse `combat_engine._apply_effect`, scaled ×(1+0.08·INT). _Tool slots reworked in Phase 9 → **1 base slot**, tools held in the backpack + equipped from the character panel; see below._
 - ✅ **Attribute rework**: the Charm enemy-**flee** mechanic was **deleted**; INT off XP → boosts tools + Bleed; Charm lowers the per-level XP wall.
 - ⛔ ~~**Gems → backpack** (1 gem = 1 cell; socketing frees the cell), replacing the unlimited `gem_inventory` side-list.~~ Moot — the gem system was removed 2026-07-02.
 - ✅ **Drop / shop restructure**: shop sells tools (not equipment); Luck-scaled tool + equipment drops (see Rewards by node type).
 - ✅ **Loading**: session card-info cache (`MetaProgress.get_card_info_cache` + `cached_card_factory.gd`) skips the per-battle JSON re-parse.
-- ✅ **Building detail pages** redesigned (icon + flavour + action card + locked-state preview, all 5 buildings). _Phase 9 moved the unlock/upgrade to the overview, dropped the action card, and made the pages fullscreen._
+- ✅ **Building detail pages** redesigned for four buildings. The current UI integrates identity/actions into the top bar and opens a shared compact `building_upgrade_popover.gd`; Forge retains its distinct workbench header.
 - ✅ **A0 balance pass**: deflated the over-statted 1-cost cards, raised enemy aggression (block→attack), retuned the Act-1 boss `rust_titan` into a 2-3-try skill gate (geared+leveled clears comfortably).
 
 ### ✅ Phase 9 — Base/shop/forge UI + tool-system rework (shipped 2026-06-25)
 Spec: `docs/superpowers/specs/2026-06-25-base-shop-forge-tools-overhaul.md`.
-- ✅ **Building unlock/upgrade → the overview**: a button under each building's floating
-  "Lv<n> Name" label (or 🔒) → a confirm popup → spend Core. The detail-page action card is
-  gone; clicking a locked building opens the same unlock confirm. Detail pages are services-only.
+- ✅ **Historical — building unlock/upgrade → the overview**: this phase used a button under
+  each building's floating "Lv<n> Name" label (or 🔒) and a confirm popup. _Superseded by the
+  current icon-only overview: clicking any building opens it, and the top-bar upgrade icon opens
+  the shared upgrade popover; locked services remain hidden._
 - ✅ **Building detail pages are fullscreen** (the shared shell fills the viewport minus a frame
-  margin), so big grids fit. Warehouse shows the full **40-slot** stash (8-col grid of filled
-  items + empty frames) + a **hero portrait** picker.
+  margin), so big grids fit. The stash window shows the full **25-slot** storage grid.
 - ✅ **Market (黑市)**: equipment sits on a **shelf** (rarity-framed icon tiles + price), and the
   card-unlock / card-shop sections render **real card art** (`my_card_factory`).
-- ✅ **Forge (铁匠铺) bench**: LEFT stash grid + RIGHT drop slot; drag/click an item onto the bench
-  to see its affixes, then **Dismantle** or **Reforge a specific affix** (`affix_pool.reroll_at` +
-  `MetaProgress.reforge_stash_item_affix`). Curse/Craft retained.
+- ✅ **Forge (铁匠铺) bench**: originally shipped with an embedded stash grid; superseded by the
+  current backpack-only workbench and vertical bulk-dismantle list. Drag gear from CharacterWindow,
+  then Dismantle/Reforge/Curse it in place; Craft adds the result to the base backpack.
 - ✅ **Tool rework**: `tool_slots()` base 2 → **1** (+ Outpost Tool Rack + relic). Tools are now
   **held in the backpack** (`{"kind":"tool"}` cells) and **equipped** into a slot from the
   character panel (`equipment_panel`: 工具槽 row + click-to-equip). New relic **Tool Belt**
@@ -630,8 +647,9 @@ Spec: `docs/superpowers/specs/2026-06-30-discover-mechanic-design.md`; plan: `�
 - ✅ **Removed the base card-unlock/card-shop system**: deleted `MetaProgress.unlock_card` /
   `buy_card_caps` and the `unlocked_cards` / `purchased_cards` save fields. Every non-curse,
   non-basic (`strike`/`defend`) card is now draftable by default — `get_unlocked_card_pool()`
-  directory-scans `battle_scene/card_info/player/*.json` instead of reading an unlock list
-  (hero-exclusive cards still gate to their own hero via `HERO_EXCLUSIVE_CARDS`).
+  directory-scans `battle_scene/card_info/player/*.json` instead of reading an unlock list in
+  the full-game path. The public Bill demo uses a curated 36-card reward pool so its combat
+  identity is not diluted (hero-exclusive cards still gate through `HERO_EXCLUSIVE_CARDS`).
 - ✅ **Market (黑市) retiered**: T1 **tool shop** (3 random tools from the whole pool, flat 40
   Caps each, added straight to the backpack); T2 **equipment shop** (unchanged rarity-priced
   Caps shelf, just moved from T1); T3 **refresh** (re-roll both stocks for Caps, price rises
@@ -655,9 +673,9 @@ Spec: `docs/superpowers/specs/2026-07-05-bounty-system-card-codex-design.md`; pl
 ### ✅ Phase 9 — Demo Polish (shipped 2026-06-24)
 Spec: `docs/superpowers/specs/2026-06-24-demo-polish-overnight-design.md`. Driven by a 4-dimension demo review.
 - ✅ **Audio overhaul**: procedural BGM regenerated ~50–60s with seamless loop points + new `shop`/`event` slots; all SFX replaced with **Kenney CC0** samples. Licensing in `assets/audio/{music,sfx}/README.md`. _(The licensed menu track was later removed — the title screen is now silent; see `main_menu._ready()`.)_
-- ✅ **Economy**: 99-gold start + per-kill gold drops (toughness-scaled, elites ×2) + shop price retune — the merchant is usable across a 2-act run.
-- ✅ **Wishlist CTA**: real `OS.shell_open` button on BOTH win and defeat result screens + a "full game has more" teaser (`STORE_URL` is a TODO placeholder pending the real App ID).
-- ✅ **Onboarding**: rules panel now teaches Tools / Relics / Equipment / Crit / Base and fully defines Luck & Charm; also reachable from the home base.
+- ✅ **Economy**: 99-gold start + per-kill gold drops (toughness-scaled, elites ×2) + shop price retune — the merchant is usable within the one-act demo.
+- ✅ **Wishlist CTA**: result screens expose an `OS.shell_open` button only when `application/config/store_url` is a real Steam `/app/…` URL. Development builds no longer send players to the generic Steam homepage.
+- ✅ **Onboarding**: rules teach Tools / Relics / Equipment sets / Crit / Base and fully define Luck & Charm; the first-battle sequence is persisted only after its final page is completed.
 - ✅ **Combat juice**: damage-scaled screen shake + per-hit sprite feedback (removed the ≥10 gate) + enemy-death thud + energy-orb pop.
 - ✅ **Content**: 3 elites (was 1; now picks one at random per node) — `chrome_warden` + `siege_breaker` reuse existing sprites with distinct movesets; Bill-pool card `lucky_streak` (crit-rate source); event-node frequency bumped. _(The `wildfire` AoE-Burn card was removed 2026-07-01 along with the Burn status.)_
 - ✅ **Settings/QoL**: Battle Speed toggle (1×/1.5×/2×); one-shot legacy-save migration (`user://meta.json` → slot 1).
@@ -669,7 +687,7 @@ Spec: `docs/superpowers/specs/2026-06-24-demo-polish-overnight-design.md`. Drive
 | Priority | Issue |
 |---|---|
 | 🟢 | `Sharpened Scrap` relic's `_mark_used_once()` call is harmless dead code for non-`once_per_combat` relics — minor readability |
-| P3 | Some historical generated-sheet intermediates remain for traceability; current playable cards reference PNG art only |
+| P3 | Historical generated-sheet intermediates remain for traceability but are excluded from Godot import with `.gdignore`; current runtime references only production assets. |
 | ⚠️ | **The pre-2026-05-25 PixelLab key in `generate_enemy.ps1`** is in git history and should be rotated on the PixelLab side. The file now reads from `$env:PIXELLAB_API_KEY` but the old key remains exposed in historical commits. |
-| P3 | Demo-polish deferred (need windowed visual verification): enemy idle-breathe + full death-fade + block/status number pops; a resolution dropdown; act-2-exclusive enemies (the 3-elite variety + per-act scaling partly cover this). |
-| ⚠️ | Wishlist `STORE_URL` (`result_screen.gd`) + `steam_appid.txt` are placeholders — set the real Steam App ID before shipping the demo. |
+| P3 | Windowed visual verification is still needed at every supported aspect ratio; enemy idle-breathe/full death-fade and a resolution dropdown remain polish candidates. |
+| ⚠️ | `steam_appid.txt` is still the test App ID `480`; set the real App ID and `application/config/store_url` before shipping the demo. |

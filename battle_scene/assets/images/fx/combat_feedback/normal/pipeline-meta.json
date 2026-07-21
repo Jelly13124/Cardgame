@@ -1,0 +1,155 @@
+{
+  "target": "asset",
+  "mode": "impact",
+  "prompt": "Project-native 2D American-comic normal impact, 2x2, four phases, solid #FF00FF background.",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019f4960-1b38-7902-9185-24c2c07cfcfa\\exec-0f5f7f84-bbd7-4a4a-bbca-e77d608b48cb.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 90,
+  "rows": 2,
+  "cols": 2,
+  "cell_size": 128,
+  "fit_scale": 0.82,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 8,
+  "min_component_area": 8,
+  "edge_touch_margin": 2,
+  "frame_labels": [
+    "impact_normal-1",
+    "impact_normal-2",
+    "impact_normal-3",
+    "impact_normal-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "component_mode": "all",
+      "component_count": 6,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        248,
+        254,
+        385,
+        392
+      ],
+      "edge_touch": false,
+      "output_size": [
+        31,
+        31
+      ],
+      "paste_position": [
+        48,
+        48
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        627,
+        0,
+        1254,
+        627
+      ],
+      "component_mode": "all",
+      "component_count": 13,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        129,
+        169,
+        434,
+        455
+      ],
+      "edge_touch": false,
+      "output_size": [
+        70,
+        65
+      ],
+      "paste_position": [
+        29,
+        31
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        627,
+        627,
+        1254
+      ],
+      "component_mode": "all",
+      "component_count": 20,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        107,
+        53,
+        563,
+        503
+      ],
+      "edge_touch": false,
+      "output_size": [
+        104,
+        103
+      ],
+      "paste_position": [
+        12,
+        12
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        627,
+        627,
+        1254,
+        1254
+      ],
+      "component_mode": "all",
+      "component_count": 27,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        156,
+        154,
+        418,
+        430
+      ],
+      "edge_touch": false,
+      "output_size": [
+        60,
+        63
+      ],
+      "paste_position": [
+        34,
+        32
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

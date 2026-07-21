@@ -8,6 +8,10 @@ extends Control
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
 const CARD_FACTORY_SCENE = preload("res://battle_scene/my_card_factory.tscn")
+const RUN_TOP_BAR = preload("res://run_system/ui/run_top_bar.gd")
+const CHARACTER_WINDOW = preload("res://run_system/ui/window/character_window.gd")
+const RUN_DECK_VIEWER_MODAL = preload("res://run_system/ui/run_deck_viewer_modal.gd")
+const PAUSE_PANEL = preload("res://run_system/ui/pause_panel.gd")
 # Lazy-loaded at call site to avoid map→shop→map cyclic preload.
 const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
 const SHOP_BACKGROUND_PATH := "res://run_system/assets/images/shop/shop_interior_bg.png"
@@ -43,15 +47,12 @@ var _stock_relics: Array = []  # [{relic_id, price}]
 var _remove_price: int = 75
 
 
-## Apply Scrap Workshop discount to a base price. Always rounds up so
+## Apply the current price modifiers to a base price. Always rounds up so
 ## the player never gets things free due to rounding.
 func _discounted_price(base_cost: int) -> int:
-	var bias = RunManager._get_meta_effect_value("scrap_workshop")
-	var multiplier := float(bias.get("multiplier", 1.0))
-	# Charm lowers merchant prices (floored at 0.60x), stacking with the
-	# Scrap Workshop discount and the ascension surcharge below.
-	var price: float = float(base_cost) * multiplier * RunManager.charm_shop_mult()
-	# Ascension A4+: +10% surcharge ON TOP of any Scrap Workshop discount.
+	# Charm lowers merchant prices (floored at 0.60x).
+	var price: float = float(base_cost) * RunManager.charm_shop_mult()
+	# Ascension A4+: +10% surcharge on top of the Charm price.
 	if RunManager.ascension >= 4:
 		price *= 1.10
 	return int(ceil(price))
@@ -223,7 +224,7 @@ func _load_json(path: String) -> Dictionary:
 # --- UI build --------------------------------------------------------------
 
 
-func _build_ui() -> void:
+func _build_ui_legacy() -> void:
 	# Backdrop — solid dark with subtle warmth
 	_add_scene_art()
 
@@ -366,6 +367,259 @@ func _build_ui() -> void:
 	services_body.add_child(_build_remove_service_row())
 
 
+## Accepted UI07 merchant layout: the shop interior is the page, not a stack of
+## framed inventory panels. Cards remain the primary row, relics sit on the high
+## shelf, tools stay available as compact secondary goods, and removal is the one
+## persistent service at lower left.
+func _build_ui() -> void:
+	_add_scene_art()
+
+	var topbar_layer := CanvasLayer.new()
+	topbar_layer.name = "TopBarLayer"
+	topbar_layer.layer = RUN_TOP_BAR.CANVAS_LAYER
+	add_child(topbar_layer)
+
+	var topbar := RUN_TOP_BAR.new()
+	topbar.name = "RunTopBar"
+	topbar.show_character_button = true
+	topbar.show_settings_button = true
+	topbar.show_tools = false
+	topbar.deck_pressed.connect(_open_run_deck_viewer)
+	topbar.character_pressed.connect(
+		func(): CHARACTER_WINDOW.open_window(self, CHARACTER_WINDOW.MODE_MAP)
+	)
+	topbar.settings_pressed.connect(func(): PAUSE_PANEL.open(self, RunManager.is_run_active))
+	topbar_layer.add_child(topbar)
+
+	var title := Label.new()
+	title.text = tr("UI_SHOP_TITLE")
+	title.offset_left = 52.0
+	title.offset_top = RUN_TOP_BAR.BAR_HEIGHT + 20.0
+	title.offset_right = 340.0
+	title.offset_bottom = RUN_TOP_BAR.BAR_HEIGHT + 68.0
+	title.add_theme_font_override("font", T.display_font(700))
+	title.add_theme_font_size_override("font_size", 30)
+	title.add_theme_color_override("font_color", Color(0.95, 0.77, 0.48))
+	add_child(title)
+
+	var rule := ColorRect.new()
+	rule.color = Color(0.82, 0.55, 0.27, 0.92)
+	rule.offset_left = 52.0
+	rule.offset_top = RUN_TOP_BAR.BAR_HEIGHT + 76.0
+	rule.offset_right = 314.0
+	rule.offset_bottom = RUN_TOP_BAR.BAR_HEIGHT + 78.0
+	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(rule)
+
+	# Relics: three large, immediately readable objects on the wall shelf.
+	var relic_shelf := HBoxContainer.new()
+	relic_shelf.name = "RelicShelf"
+	relic_shelf.anchor_left = 0.31
+	relic_shelf.anchor_top = 0.19
+	relic_shelf.anchor_right = 0.67
+	relic_shelf.anchor_bottom = 0.43
+	relic_shelf.alignment = BoxContainer.ALIGNMENT_CENTER
+	relic_shelf.add_theme_constant_override("separation", 44)
+	add_child(relic_shelf)
+	for entry in _stock_relics:
+		relic_shelf.add_child(_build_relic_offer(entry))
+
+	var shelf_line := ColorRect.new()
+	shelf_line.color = Color(0.075, 0.065, 0.052, 0.96)
+	shelf_line.anchor_left = 0.30
+	shelf_line.anchor_top = 0.425
+	shelf_line.anchor_right = 0.68
+	shelf_line.anchor_bottom = 0.432
+	shelf_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(shelf_line)
+	move_child(shelf_line, relic_shelf.get_index())
+
+	# Tools remain in the current shop economy but are deliberately subordinate
+	# to cards and relics so the accepted composition stays light.
+	var tool_shelf := HBoxContainer.new()
+	tool_shelf.name = "ToolShelf"
+	tool_shelf.anchor_left = 0.06
+	tool_shelf.anchor_top = 0.29
+	tool_shelf.anchor_right = 0.28
+	tool_shelf.anchor_bottom = 0.49
+	tool_shelf.alignment = BoxContainer.ALIGNMENT_CENTER
+	tool_shelf.add_theme_constant_override("separation", 12)
+	add_child(tool_shelf)
+	for entry in _stock_tools:
+		tool_shelf.add_child(_build_tool_offer(entry))
+
+	# Six cards fit in one clean row. The card itself remains the visual target;
+	# price and buy action collapse into one small footer chip.
+	var card_row := HBoxContainer.new()
+	card_row.name = "CardShelf"
+	card_row.anchor_left = 0.22
+	card_row.anchor_top = 0.54
+	card_row.anchor_right = 0.84
+	card_row.anchor_bottom = 0.91
+	card_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	card_row.add_theme_constant_override("separation", 18)
+	add_child(card_row)
+	for entry in _stock_cards:
+		card_row.add_child(_build_card_offer(entry))
+
+	var remove := Button.new()
+	remove.name = "RemoveCardService"
+	remove.text = "%s\n%d" % [tr("UI_SHOP_REMOVE"), _remove_price]
+	remove.anchor_left = 0.03
+	remove.anchor_top = 0.69
+	remove.anchor_right = 0.16
+	remove.anchor_bottom = 0.84
+	remove.focus_mode = Control.FOCUS_NONE
+	remove.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	remove.add_theme_font_override("font", T.display_font(650))
+	remove.add_theme_font_size_override("font_size", 20)
+	_style_offer_button(remove, Color(0.67, 0.54, 0.34))
+	remove.pressed.connect(_on_remove_service_pressed)
+	_remove_service_btn = remove
+	add_child(remove)
+
+	var leave_btn := Button.new()
+	leave_btn.name = "LeaveButton"
+	leave_btn.text = tr("UI_SHOP_LEAVE")
+	leave_btn.anchor_left = 1.0
+	leave_btn.anchor_top = 1.0
+	leave_btn.anchor_right = 1.0
+	leave_btn.anchor_bottom = 1.0
+	leave_btn.offset_left = -268.0
+	leave_btn.offset_top = -102.0
+	leave_btn.offset_right = -46.0
+	leave_btn.offset_bottom = -40.0
+	leave_btn.focus_mode = Control.FOCUS_NONE
+	leave_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	leave_btn.add_theme_font_override("font", T.display_font(700))
+	leave_btn.add_theme_font_size_override("font_size", 22)
+	for state in ["normal", "hover", "pressed"]:
+		leave_btn.add_theme_stylebox_override(
+			state, T.ll_button("hover" if state == "hover" else "normal")
+		)
+	leave_btn.pressed.connect(_on_leave_pressed)
+	add_child(leave_btn)
+
+
+func _build_card_offer(entry: Dictionary) -> Control:
+	var wrapper := VBoxContainer.new()
+	wrapper.custom_minimum_size = Vector2(148, 252)
+	wrapper.alignment = BoxContainer.ALIGNMENT_CENTER
+	wrapper.add_theme_constant_override("separation", 5)
+
+	var holder := Control.new()
+	holder.custom_minimum_size = Vector2(146, 202)
+	wrapper.add_child(holder)
+
+	var card_id := str(entry.get("card_id", ""))
+	var card = _card_factory.create_card(card_id, null)
+	if card:
+		if card.get_parent():
+			card.get_parent().remove_child(card)
+		card.can_be_interacted_with = false
+		card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card.position = Vector2(2, 2)
+		card.pivot_offset = Vector2.ZERO
+		card.scale = Vector2.ONE * 0.69
+		holder.add_child(card)
+		_add_stall_hover(holder)
+
+	var buy := Button.new()
+	buy.text = str(int(entry.get("price", 0)))
+	buy.custom_minimum_size = Vector2(118, 38)
+	buy.focus_mode = Control.FOCUS_NONE
+	buy.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	buy.add_theme_font_override("font", T.display_font(650))
+	buy.add_theme_font_size_override("font_size", 18)
+	_style_offer_button(buy, RARITY_COLORS.get(str(entry.get("rarity", "common")), SHOP_PRICE))
+	buy.pressed.connect(_on_buy_card.bind(card_id, int(entry.get("price", 0)), buy))
+	wrapper.add_child(buy)
+	return wrapper
+
+
+func _build_relic_offer(entry: Dictionary) -> Control:
+	var relic_id := str(entry.get("relic_id", ""))
+	var data := RunManager.get_relic_data(relic_id)
+	var wrapper := VBoxContainer.new()
+	wrapper.custom_minimum_size = Vector2(132, 180)
+	wrapper.alignment = BoxContainer.ALIGNMENT_CENTER
+	wrapper.add_theme_constant_override("separation", 4)
+
+	var icon_button := Button.new()
+	icon_button.custom_minimum_size = Vector2(104, 104)
+	icon_button.focus_mode = Control.FOCUS_NONE
+	icon_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	icon_button.tooltip_text = Settings.t("RELIC_%s_TITLE" % relic_id, str(data.get("title", relic_id)))
+	var icon_path := str(data.get("icon", ""))
+	if icon_path != "" and ResourceLoader.exists(icon_path):
+		icon_button.icon = load(icon_path)
+		icon_button.expand_icon = true
+	for state in ["normal", "hover", "pressed", "focus"]:
+		icon_button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	wrapper.add_child(icon_button)
+
+	var buy := Button.new()
+	buy.text = str(int(entry.get("price", 0)))
+	buy.custom_minimum_size = Vector2(96, 34)
+	buy.focus_mode = Control.FOCUS_NONE
+	buy.add_theme_font_override("font", T.display_font(650))
+	buy.add_theme_font_size_override("font_size", 18)
+	_style_offer_button(buy, Color(0.84, 0.68, 0.33))
+	buy.pressed.connect(_on_buy_relic.bind(relic_id, int(entry.get("price", 0)), buy))
+	icon_button.pressed.connect(buy.emit_signal.bind("pressed"))
+	wrapper.add_child(buy)
+	return wrapper
+
+
+func _build_tool_offer(entry: Dictionary) -> Control:
+	var tool_id := str(entry.get("tool_id", ""))
+	var data := RunManager.get_tool_data(tool_id)
+	var wrapper := VBoxContainer.new()
+	wrapper.custom_minimum_size = Vector2(92, 132)
+	wrapper.alignment = BoxContainer.ALIGNMENT_CENTER
+
+	var buy := Button.new()
+	buy.custom_minimum_size = Vector2(82, 90)
+	buy.focus_mode = Control.FOCUS_NONE
+	buy.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	buy.tooltip_text = Settings.t("TOOL_%s_TITLE" % tool_id, str(data.get("title", tool_id)))
+	var icon_path := str(data.get("icon", ""))
+	if icon_path != "" and ResourceLoader.exists(icon_path):
+		buy.icon = load(icon_path)
+		buy.expand_icon = true
+	_style_offer_button(buy, TOOL_ACCENT)
+	buy.pressed.connect(_on_buy_tool.bind(tool_id, int(entry.get("price", 0)), buy))
+	wrapper.add_child(buy)
+
+	var price := Label.new()
+	price.text = str(int(entry.get("price", 0)))
+	price.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	price.add_theme_font_override("font", T.display_font(650))
+	price.add_theme_font_size_override("font_size", 16)
+	price.add_theme_color_override("font_color", SHOP_PRICE)
+	wrapper.add_child(price)
+	return wrapper
+
+
+func _style_offer_button(button: Button, accent: Color) -> void:
+	for state in ["normal", "pressed", "disabled"]:
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color(0.045, 0.055, 0.055, 0.94)
+		style.border_color = accent if state != "disabled" else Color(0.28, 0.28, 0.27, 0.75)
+		style.set_border_width_all(1)
+		style.set_corner_radius_all(5)
+		button.add_theme_stylebox_override(state, style)
+	var hover := StyleBoxFlat.new()
+	hover.bg_color = Color(0.08, 0.09, 0.085, 0.98)
+	hover.border_color = accent.lightened(0.18)
+	hover.set_border_width_all(2)
+	hover.set_corner_radius_all(5)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	button.add_theme_color_override("font_color", Color(0.97, 0.85, 0.58))
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+
+
 func _add_scene_art() -> void:
 	if ResourceLoader.exists(SHOP_BACKGROUND_PATH):
 		var bg := TextureRect.new()
@@ -383,7 +637,7 @@ func _add_scene_art() -> void:
 		add_child(bg)
 
 	var shade := ColorRect.new()
-	shade.color = Color(0.0, 0.0, 0.0, 0.40)
+	shade.color = Color(0.015, 0.010, 0.006, 0.16)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(shade)
@@ -399,10 +653,10 @@ func _add_scene_art() -> void:
 		keeper.anchor_top = 1.0
 		keeper.anchor_right = 1.0
 		keeper.anchor_bottom = 1.0
-		keeper.offset_left = -330
-		keeper.offset_top = -520
-		keeper.offset_right = -36
-		keeper.offset_bottom = -32
+		keeper.offset_left = -430
+		keeper.offset_top = -650
+		keeper.offset_right = -38
+		keeper.offset_bottom = -34
 		add_child(keeper)
 
 
@@ -579,6 +833,7 @@ func _build_tool_stall(entry: Dictionary) -> Control:
 		icon.texture = tex
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		icon_holder.add_child(icon)
 	else:
 		# Glyph fallback (first char of the localized name) until art lands.
@@ -914,6 +1169,16 @@ func _on_remove_cancel(modal: Control) -> void:
 
 
 # --- Leave -----------------------------------------------------------------
+
+
+func _open_run_deck_viewer() -> void:
+	var existing := get_node_or_null("RunDeckViewerModal")
+	if existing:
+		existing.queue_free()
+		return
+	var modal := RUN_DECK_VIEWER_MODAL.new()
+	modal.name = "RunDeckViewerModal"
+	add_child(modal)
 
 
 func _on_leave_pressed() -> void:

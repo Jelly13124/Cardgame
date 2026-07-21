@@ -1,0 +1,28 @@
+Built-in ImageGen edit prompt, 2026-07-19
+
+Asset: production Strike player-card illustration; final runtime crop 512x320.
+
+Image 1 supplies only the left-to-right shooting action. Image 2 supplies Cowboy
+Bill's identity. Reimagine the scene as original flat adult sci-fi television
+cartoon art with a strong Rick-and-Morty-style visual language but no copied
+franchise designs.
+
+Preserve Bill's exactly one huge orange camera eye, cylindrical head, oversized
+lumpy brown hat with crooked gold star, one antenna, red scarf, patched ragged
+duster, skull belt badge, chunky boots, and one salvaged revolver. Exaggerate a
+large head and hat, skinny crooked segmented limbs, awkward rubbery hands, and an
+asymmetrical stance. One grey-green trash robot on the right recoils from exactly
+one hit with bent limbs, claw hands, one face opening, and two loose wires.
+
+Use visibly hand-wobbled dark outlines, uneven line weight, lumpy silhouettes,
+rubber-hose joints, off-model asymmetry, simple flat cel colors, at most one broad
+hard-edged shadow shape, and minimal interior lines. Keep the alien desert to five
+or fewer broad flat shapes with almost no ground marks. Use one compact muzzle
+flash and one compact impact star.
+
+No extra eye, gun, character, projectile, or explosion. No text, title, speech
+bubble, logo, watermark, card frame, UI, badge, ribbon, type tab, or description
+box. No painterly or cinematic lighting, photorealism, 3D, glossy metal, heroic
+concept-art pose, corporate vector smoothness, preschool illustration, anime,
+hatching, scratch texture, rivet fields, dense panel seams, tiny debris, busy
+rocks, or copied franchise characters, props, and locations.

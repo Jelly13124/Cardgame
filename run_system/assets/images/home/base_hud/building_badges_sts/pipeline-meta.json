@@ -1,0 +1,160 @@
+{
+  "target": "asset",
+  "mode": "sheet",
+  "prompt": "Four project-native hand-drawn facility UI icons: forge anvil and hammer, clinic cyan medical cross, black-market bottle-cap money pouch, and outpost radio mast; simple roguelike readability; no medallion or frame.",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019f4960-1b38-7902-9185-24c2c07cfcfa\\exec-a9cdb58f-da1b-4682-9cb8-d6a6983b1b18.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 200,
+  "rows": 1,
+  "cols": 4,
+  "cell_size": 128,
+  "fit_scale": 0.82,
+  "trim_border": 4,
+  "edge_clean_depth": 1,
+  "align": "center",
+  "shared_scale": false,
+  "component_mode": "all",
+  "component_padding": 3,
+  "min_component_area": 6,
+  "edge_touch_margin": 2,
+  "frame_labels": [
+    "badge-1",
+    "badge-2",
+    "badge-3",
+    "badge-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        464,
+        846
+      ],
+      "component_mode": "all",
+      "component_count": 2,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        111,
+        212,
+        456,
+        589
+      ],
+      "edge_touch": false,
+      "output_size": [
+        96,
+        104
+      ],
+      "paste_position": [
+        16,
+        12
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        464,
+        0,
+        928,
+        846
+      ],
+      "component_mode": "all",
+      "component_count": 2,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        0,
+        253,
+        379,
+        580
+      ],
+      "edge_touch": true,
+      "output_size": [
+        104,
+        90
+      ],
+      "paste_position": [
+        12,
+        19
+      ]
+    },
+    {
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        928,
+        0,
+        1392,
+        846
+      ],
+      "component_mode": "all",
+      "component_count": 1,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        16,
+        249,
+        382,
+        587
+      ],
+      "edge_touch": false,
+      "output_size": [
+        104,
+        96
+      ],
+      "paste_position": [
+        12,
+        16
+      ]
+    },
+    {
+      "grid": [
+        0,
+        3
+      ],
+      "source_box": [
+        1392,
+        0,
+        1856,
+        846
+      ],
+      "component_mode": "all",
+      "component_count": 7,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        48,
+        220,
+        316,
+        601
+      ],
+      "edge_touch": false,
+      "output_size": [
+        73,
+        104
+      ],
+      "paste_position": [
+        27,
+        12
+      ]
+    }
+  ],
+  "edge_touch_frames": [
+    [
+      0,
+      1
+    ]
+  ]
+}

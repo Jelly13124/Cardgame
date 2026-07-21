@@ -21,7 +21,7 @@
         { "type": "lose_hp", "amount": 8 }
       ],
       "result_success": "The boards hold. In the deepest locker you find a rare relic of the old world and a cache of coin.",
-      "result_fail": "The floor caves. You crash through onto twisted rebar and crawl out empty-handed and bleeding."
+      "result_fail": "The floor caves. You crash through onto twisted rebar and crawl out empty-handed, leaking coolant."
     }
   ]
 }

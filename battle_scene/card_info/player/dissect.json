@@ -1,19 +1,19 @@
 {
   "name": "dissect",
-  "title": "Dissect",
+  "title": "Circuit Diagnosis",
   "rarity": "uncommon",
   "type": "attack",
   "cost": 1,
   "polarity": "neutral",
-  "description": "Apply Bleed equal to twice your Intelligence.",
+  "description": "Apply [b]8 + 2×INT[/b] Short Circuit.",
   "front_image": "player/dissect.png",
   "side": "player",
   "effects": [
-    { "type": "apply_bleed_scaled", "amount": 0, "attr": "intelligence", "attr_mult": 2 }
+    { "type": "apply_short_circuit_scaled", "amount": 8, "attr": "intelligence", "attr_mult": 2 }
   ],
   "upgrade": {
     "effects": [
-      { "type": "apply_bleed_scaled", "amount": 2, "attr": "intelligence", "attr_mult": 3 }
+      { "type": "apply_short_circuit_scaled", "amount": 10, "attr": "intelligence", "attr_mult": 3 }
     ]
   }
 }

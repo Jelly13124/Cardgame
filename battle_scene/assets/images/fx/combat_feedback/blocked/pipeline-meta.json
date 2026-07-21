@@ -1,0 +1,155 @@
+{
+  "target": "asset",
+  "mode": "impact",
+  "prompt": "Project-native 2D American-comic fully blocked shield impact, 2x2, four phases, solid #FF00FF background.",
+  "role": "",
+  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019f4960-1b38-7902-9185-24c2c07cfcfa\\exec-10b53255-ccb6-4858-bf77-4dc2e55da361.png",
+  "threshold": 100,
+  "edge_threshold": 150,
+  "duration": 100,
+  "rows": 2,
+  "cols": 2,
+  "cell_size": 128,
+  "fit_scale": 0.8,
+  "trim_border": 4,
+  "edge_clean_depth": 3,
+  "align": "center",
+  "shared_scale": true,
+  "component_mode": "all",
+  "component_padding": 8,
+  "min_component_area": 8,
+  "edge_touch_margin": 2,
+  "frame_labels": [
+    "impact_blocked-1",
+    "impact_blocked-2",
+    "impact_blocked-3",
+    "impact_blocked-4"
+  ],
+  "frames": [
+    {
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "component_mode": "all",
+      "component_count": 8,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        254,
+        218,
+        416,
+        452
+      ],
+      "edge_touch": false,
+      "output_size": [
+        38,
+        55
+      ],
+      "paste_position": [
+        45,
+        36
+      ]
+    },
+    {
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        627,
+        0,
+        1254,
+        627
+      ],
+      "component_mode": "all",
+      "component_count": 14,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        111,
+        117,
+        401,
+        547
+      ],
+      "edge_touch": false,
+      "output_size": [
+        69,
+        102
+      ],
+      "paste_position": [
+        29,
+        13
+      ]
+    },
+    {
+      "grid": [
+        1,
+        0
+      ],
+      "source_box": [
+        0,
+        627,
+        627,
+        1254
+      ],
+      "component_mode": "all",
+      "component_count": 20,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        118,
+        63,
+        535,
+        471
+      ],
+      "edge_touch": false,
+      "output_size": [
+        99,
+        97
+      ],
+      "paste_position": [
+        14,
+        15
+      ]
+    },
+    {
+      "grid": [
+        1,
+        1
+      ],
+      "source_box": [
+        627,
+        627,
+        1254,
+        1254
+      ],
+      "component_mode": "all",
+      "component_count": 41,
+      "selected_component_area": null,
+      "selected_component_bbox": null,
+      "crop_bbox": [
+        90,
+        73,
+        445,
+        464
+      ],
+      "edge_touch": false,
+      "output_size": [
+        84,
+        93
+      ],
+      "paste_position": [
+        22,
+        17
+      ]
+    }
+  ],
+  "edge_touch_frames": []
+}

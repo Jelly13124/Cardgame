@@ -1,14 +1,14 @@
 {
   "id": "blood_kit",
-  "title": "Blood Kit",
+  "title": "Circuit Kit",
   "target": "none",
   "effects": [
     {
       "type": "discover",
-      "pool": "bleed",
+      "pool": "short_circuit",
       "count": 3,
       "free": true
     }
   ],
-  "icon": "res://run_system/assets/images/ui/tools/toxin_vial.png"
+  "icon": "res://run_system/assets/images/ui/tools/blood_kit.png"
 }

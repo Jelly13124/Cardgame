@@ -1,33 +1,28 @@
 ## Market (黑市) building screen, re-skinned to the 2026-07-07 "lightline"
-## concept — the `_6tools_` variant since 2026-07-08 (owner: 6 tools, ONE frame
-## per item, bigger icons):
-##   工具货架 (T1 tool_shop)        — 6 shop items: a single slot-framed icon +
-##                                    frameless name + orange Caps price button,
-##                                    olive 刷新 button in the section header.
+## concept — the exact five-tool layout approved on 2026-07-14:
+##   工具货架 (T1 tool_shop)        — 5 full-height product cards, large icon,
+##                                    centered name + compact olive Caps plaque.
 ##   装备货架 (T2 equip_shop)       — FIVE items, one per equipment slot; the
-##                                    rarity-framed EQUIPMENT_ICON is the single
-##                                    frame, a rarity·slot line replaces the
-##                                    generated name; own 刷新 button.
-##   资源兑换 (T3 resource_convert) — row_convert-style rows: src icon + amount
-##                                    field → dst icon + amount field + olive
-##                                    swap button; scrap balance chip in the
-##                                    section header.
+##                                    complete card owns the rarity frame; a
+##                                    rarity·slot line replaces generated names.
+##   资源兑换 (T3 resource_convert) — a compact bottom strip with both exchange
+##                                    directions side by side.
 ## Refresh stays UNGATED (available from T1): the tool-shelf header carries the
 ## olive refresh button even while that shelf is still locked, so the function
-## is reachable at every tier exactly as before; the equipment-shelf header adds
-## a second button (concept parity) wired to the SAME reroll action/cost.
+## is reachable at every tier exactly as before. One refresh rerolls both shelves.
 ##
-## VISUAL RESKIN ONLY — backend untouched: purchase (spend_caps + add_tool /
-## make_equip_instance + add_to_stash with full-refund guards), escalating
-## refresh cost, conversion math/handlers, and the tier gating via
+## Purchase routes equipment into the player-owned base backpack; permanent
+## storage changes only when the player explicitly drags gear into the stash.
+## Tool purchases retain their backpack full-refund guard. Escalating refresh
+## cost, conversion math/handlers, and tier gating via
 ## `_locked_section` are all the pre-reskin code paths.
 ##
 ## The bounty shelf moved to the OUTPOST in the 2026-07-07 redesign; the Market
 ## no longer has a bounty section. The base card-unlock/card-shop system was
 ## removed (Phase A refactor) — the Market doesn't sell cards.
 ##
-## Every lightline PNG lookup falls back to a programmatic StyleBox / spacer /
-## text so a missing Codex asset never crashes (warn-free placeholder rule).
+## Every generated market PNG lookup falls back to a programmatic StyleBox /
+## spacer / text so a missing asset never crashes (warn-free placeholder rule).
 ## NO class_name (ADR-0006: subclass via path string, instantiate with `.new()`).
 ## Reads only the shared MetaProgress / RunManager API; edits no shared file.
 extends "res://run_system/ui/buildings/building_screen_base.gd"
@@ -35,12 +30,29 @@ extends "res://run_system/ui/buildings/building_screen_base.gd"
 const EQUIPMENT_DIR := "res://run_system/data/equipment/"
 const EQUIPMENT_ICON := preload("res://run_system/ui/equipment_icon.gd")
 const EQUIP_TOOLTIP := preload("res://run_system/ui/equip_tooltip.gd")
+const MARKET_UI_DIR := "res://run_system/assets/images/ui/market/"
+const MARKET_SHELF_FRAME_PATH := MARKET_UI_DIR + "market_shelf_panel_frame.png"
+const MARKET_TOOL_CARD_PATH := MARKET_UI_DIR + "market_tool_card_frame.png"
+const MARKET_EQUIP_CARD_PATHS := {
+	"common": MARKET_UI_DIR + "market_equip_card_common.png",
+	"uncommon": MARKET_UI_DIR + "market_equip_card_uncommon.png",
+	"rare": MARKET_UI_DIR + "market_equip_card_rare.png",
+}
+const MARKET_EXCHANGE_ROW_PATH := MARKET_UI_DIR + "market_exchange_row_frame.png"
 
-## Shop item icon sizes (owner 2026-07-08: bigger — the icon IS the card now).
-const SHELF_ICON := Vector2(96, 96)
-const EQUIP_SHELF_ICON := Vector2(112, 112)
-## Shop-item minimum width (items stretch to fill the shelf row).
-const SHELF_CARD_MIN_W := 150.0
+## Pixel geometry measured from the accepted 1672×941 concept and mapped to
+## 1920×1080. The normal project stretch policy scales this composition at
+## other resolutions without changing the internal proportions.
+const CONTENT_MIN_HEIGHT := 869.0
+const MERCHANT_SCENE_WIDTH := 456.0
+const TOOL_SECTION_HEIGHT := 329.0
+const EQUIP_SECTION_HEIGHT := 367.0
+const CONVERT_SECTION_HEIGHT := 169.0
+const TOOL_CARD_HEIGHT := 254.0
+const EQUIP_CARD_HEIGHT := 301.0
+const SHELF_CARD_GAP := 17
+const SHELF_ICON := Vector2(116, 116)
+const EQUIP_SHELF_ICON := Vector2(154, 154)
 
 ## Equipment buy prices in Caps, by rarity (spec: 60/140/280).
 const EQUIP_CAPS_PRICE := {"common": 60, "uncommon": 140, "rare": 280}
@@ -50,8 +62,8 @@ const EQUIP_SLOT_ORDER := ["weapon", "head", "chest", "hands", "accessory"]
 const EQUIP_RARITY_WEIGHTS := {"common": 50, "uncommon": 35, "rare": 15}
 ## Flat Caps price per tool (tools have no rarity tiers).
 const MARKET_TOOL_PRICE := 40
-## How many random tools to stock (owner 2026-07-08: 6, the _6tools_ concept).
-const MARKET_TOOL_COUNT := 6
+## How many random tools to stock (owner 2026-07-14: five, concept parity).
+const MARKET_TOOL_COUNT := 5
 ## Refresh (ungated): base Caps cost, +10 per use this visit.
 const MARKET_REFRESH_BASE := 20
 const MARKET_REFRESH_STEP := 10
@@ -70,7 +82,7 @@ const RARITY_ORDER := ["common", "uncommon", "rare"]
 const RARITY_COLORS := {
 	"common": Color(0.85, 0.85, 0.85),
 	"uncommon": Color(0.45, 0.8, 1.0),
-	"rare": Color(1.0, 0.85, 0.35),
+	"rare": Color(0.72, 0.42, 0.84),
 }
 const PRICE_COLOR := Color(1.0, 0.84, 0.18)
 
@@ -87,9 +99,6 @@ var _refresh_uses: int = 0
 ## conversion section re-renders it after each rebuild.
 var _convert_status_text: String = ""
 
-## Live-refresh handle: the convert-section scrap balance chip (the Caps balance
-## lives on the base header's cost chip, so the content doesn't duplicate it).
-var _mkt_scrap_label: Label = null
 ## The whole content host, so currency/building changes can rebuild the lists.
 var _market_box: VBoxContainer = null
 
@@ -117,7 +126,9 @@ func _build_content(container: VBoxContainer) -> void:
 
 
 func _on_market_changed(_v: int) -> void:
-	_refresh_balances()
+	# The shared top bar owns the only persistent balance readout. Purchase and
+	# conversion handlers update their local state/rebuild explicitly.
+	pass
 
 
 func _rebuild_market() -> void:
@@ -128,32 +139,56 @@ func _rebuild_market() -> void:
 	_populate(_market_box)
 
 
-func _refresh_balances() -> void:
-	if is_instance_valid(_mkt_scrap_label):
-		_mkt_scrap_label.text = "%d" % MetaProgress.scrap
-
-
-## Concept section order: tool shelf → equipment shelf → resource exchange.
-## (No balances banner — the base header's cost chip already shows Caps.)
+## Exact concept composition. The regenerated scene background already contains
+## the merchant and counter as one illustration; this transparent spacer only
+## protects their measured 456px left-side footprint from the service column.
 func _populate(container: VBoxContainer) -> void:
+	var columns := HBoxContainer.new()
+	columns.name = "MarketNpcAndServices"
+	columns.add_theme_constant_override("separation", 18)
+	columns.custom_minimum_size = Vector2(0, CONTENT_MIN_HEIGHT)
+	columns.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	container.add_child(columns)
+
+	var merchant_space := Control.new()
+	merchant_space.name = "MarketMerchantSceneSpacer"
+	merchant_space.custom_minimum_size = Vector2(MERCHANT_SCENE_WIDTH, CONTENT_MIN_HEIGHT)
+	merchant_space.size_flags_horizontal = Control.SIZE_FILL
+	merchant_space.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	columns.add_child(merchant_space)
+
+	var services := VBoxContainer.new()
+	services.name = "MarketServiceColumn"
+	services.add_theme_constant_override("separation", 2)
+	services.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	services.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	columns.add_child(services)
+
 	# T1: tool shop (Caps). The header refresh button renders in BOTH states so
 	# the ungated refresh stays reachable exactly as before the reskin.
 	if MetaProgress.building_can("market", "tool_shop"):
-		container.add_child(_build_tool_section())
+		services.add_child(_build_tool_section())
 	else:
-		container.add_child(_locked_section(tr("UI_MARKET_TOOL_SHELF"), 1, true))
+		services.add_child(
+			_locked_section(tr("UI_MARKET_TOOL_SHELF"), 1, true, TOOL_SECTION_HEIGHT)
+		)
 
 	# T2: equipment shop (Caps).
 	if MetaProgress.building_can("market", "equip_shop"):
-		container.add_child(_build_equip_section())
+		services.add_child(_build_equip_section())
 	else:
-		container.add_child(_locked_section(tr("UI_MARKET_EQUIP_SHELF"), 2))
+		services.add_child(
+			_locked_section(tr("UI_MARKET_EQUIP_SHELF"), 2, false, EQUIP_SECTION_HEIGHT)
+		)
 
 	# T3: resource conversion (Caps↔Scrap) — from the old Warehouse.
 	if MetaProgress.building_can("market", "resource_convert"):
-		container.add_child(_build_convert_section())
+		services.add_child(_build_convert_section())
 	else:
-		container.add_child(_locked_section(tr("UI_MARKET_CONVERT_TITLE"), 3))
+		services.add_child(
+			_locked_section(tr("UI_MARKET_CONVERT_TITLE"), 3, false, CONVERT_SECTION_HEIGHT)
+		)
 
 
 # --- Tool shop (T1, Caps) ---------------------------------------------------
@@ -161,6 +196,8 @@ func _populate(container: VBoxContainer) -> void:
 
 func _build_tool_section() -> Control:
 	var section := _make_section(tr("UI_MARKET_TOOL_SHELF"), true)
+	section.name = "MarketToolShelf"
+	section.custom_minimum_size = Vector2(0, TOOL_SECTION_HEIGHT)
 	var body := section.get_meta("body") as VBoxContainer
 
 	if _tool_stock.is_empty():
@@ -170,9 +207,9 @@ func _build_tool_section() -> Control:
 		body.add_child(empty)
 		return section
 
-	# Concept: the 3 tool cards stretch to fill the shelf row.
+	# Concept: five tool cards stretch to fill one dominant shelf row.
 	var shelf := HBoxContainer.new()
-	shelf.add_theme_constant_override("separation", 14)
+	shelf.add_theme_constant_override("separation", SHELF_CARD_GAP)
 	shelf.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_child(shelf)
 	for tool_id in _tool_stock:
@@ -180,29 +217,45 @@ func _build_tool_section() -> Control:
 	return section
 
 
-## One tool shelf item (owner 2026-07-08: ONE frame per item): a single slot-
-## framed icon, frameless name text under it, then the orange price button.
-## The tool description is the frame's hover tooltip.
+## One exact-concept tool card. The generated full-height card is the only item
+## frame; icon, name and price are laid over its quiet interior.
 ## Purchase path unchanged: _on_buy_tool (spend → add_tool_to_backpack → refund
 ## on full backpack).
 func _build_tool_tile(tool_id: String) -> Control:
 	var data := RunManager.get_tool_data(tool_id)
 	var tool_name := Settings.t("TOOL_%s_TITLE" % tool_id, str(data.get("title", tool_id)))
 
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 6)
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.custom_minimum_size = Vector2(SHELF_CARD_MIN_W, 0)
+	var card := PanelContainer.new()
+	card.name = "MarketToolTile_%s" % tool_id
+	card.custom_minimum_size = Vector2(0, TOOL_CARD_HEIGHT)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var tool_desc := Settings.t("TOOL_%s_DESC" % tool_id, "")
+	var tool_tip := "[b]%s[/b]" % tool_name
+	if not tool_desc.is_empty():
+		tool_tip += "\n%s" % tool_desc
+	Tooltip.bind_hover(card, tool_tip)
+	card.add_theme_stylebox_override(
+		"panel", _market_texture_style(MARKET_TOOL_CARD_PATH, T.ll_inset(), 16, 16, 0)
+	)
 
-	# The single frame: an ll_slot box around the item icon.
-	var frame := PanelContainer.new()
-	frame.add_theme_stylebox_override("panel", T.ll_slot("normal"))
-	frame.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	frame.tooltip_text = Settings.t("TOOL_%s_DESC" % tool_id, "")
-	col.add_child(frame)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 10)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_bottom", 8)
+	card.add_child(margin)
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 2)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	margin.add_child(col)
+
 	var icon_holder := CenterContainer.new()
-	icon_holder.custom_minimum_size = SHELF_ICON + Vector2(16, 16)
-	frame.add_child(icon_holder)
+	icon_holder.custom_minimum_size = Vector2(0, 143)
+	icon_holder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	icon_holder.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(icon_holder)
 	var icon_path := str(data.get("icon", ""))
 	var tex: Texture2D = null
 	if icon_path != "" and ResourceLoader.exists(icon_path):
@@ -213,6 +266,7 @@ func _build_tool_tile(tool_id: String) -> Control:
 		icon.texture = tex
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		icon_holder.add_child(icon)
 	else:
 		var glyph := Label.new()
@@ -227,17 +281,19 @@ func _build_tool_tile(tool_id: String) -> Control:
 	# Frameless name line (tools keep their names — they're hand-authored).
 	var name_lbl := Label.new()
 	name_lbl.text = tool_name
+	name_lbl.custom_minimum_size = Vector2(0, 32)
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(name_lbl, 15, Color(0.95, 0.92, 0.85), 1)
+	_style_label(name_lbl, 18, Color(0.95, 0.70, 0.24), 1)
 	col.add_child(name_lbl)
 
-	var buy_btn := _price_footer(MARKET_TOOL_PRICE)
+	var buy_btn := _price_footer(MARKET_TOOL_PRICE, 175.0, 47.0)
 	buy_btn.disabled = MetaProgress.caps < MARKET_TOOL_PRICE
 	buy_btn.pressed.connect(_on_buy_tool.bind(tool_id, buy_btn))
 	col.add_child(buy_btn)
 
-	return col
+	return card
 
 
 func _on_buy_tool(tool_id: String, btn: Button) -> void:
@@ -247,11 +303,11 @@ func _on_buy_tool(tool_id: String, btn: Button) -> void:
 		# Backpack full → refund the Caps so the player isn't charged for nothing.
 		MetaProgress.add_caps(MARKET_TOOL_PRICE)
 		if is_instance_valid(btn):
-			btn.text = tr("UI_MARKET_STASH_FULL")
+			_set_price_button_status(btn, tr("UI_MARKET_BACKPACK_FULL"))
 		return
 	if is_instance_valid(btn):
 		btn.disabled = true
-		btn.text = tr("UI_MARKET_BOUGHT")
+		_set_price_button_status(btn, tr("UI_MARKET_BOUGHT"))
 	# caps_changed → _on_market_changed repaints the scrap chip; this button
 	# keeps its SOLD state (pre-reskin behavior: other buttons repaint on the
 	# next full rebuild).
@@ -264,6 +320,8 @@ func _build_equip_section() -> Control:
 	# No refresh button here: the tool-shelf one rerolls BOTH shelves for one
 	# cost, so a second identical button just misled (owner 2026-07-08).
 	var section := _make_section(tr("UI_MARKET_EQUIP_SHELF"))
+	section.name = "MarketEquipmentShelf"
+	section.custom_minimum_size = Vector2(0, EQUIP_SECTION_HEIGHT)
 	var body := section.get_meta("body") as VBoxContainer
 
 	if _equip_stock.is_empty():
@@ -274,7 +332,7 @@ func _build_equip_section() -> Control:
 		return section
 
 	var shelf := HBoxContainer.new()
-	shelf.add_theme_constant_override("separation", 14)
+	shelf.add_theme_constant_override("separation", SHELF_CARD_GAP)
 	shelf.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_child(shelf)
 	for entry in _equip_stock:
@@ -282,10 +340,9 @@ func _build_equip_section() -> Control:
 	return section
 
 
-## One equipment shelf item (owner 2026-07-08: ONE frame per item, NO generated
-## name): the rarity-framed EQUIPMENT_ICON is the single frame, a frameless
-## rarity·slot line replaces the name, then the orange price button. Hover shows
-## the shared rarity/slot/set tooltip (affixes roll at purchase — none to list).
+## One exact-concept equipment card. The generated complete card shell owns the
+## rarity frame; the inner EquipmentIcon contributes only the illustration.
+## A rarity·slot line replaces generated names. Hover shows the shared tooltip.
 ## Purchase path unchanged: _on_buy_equipment (spend → instance → stash → refund
 ## on full stash).
 func _build_equip_tile(entry: Dictionary) -> Control:
@@ -296,17 +353,53 @@ func _build_equip_tile(entry: Dictionary) -> Control:
 	var slot := str(data.get("slot", "head"))
 	var equip_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
 
+	var card := PanelContainer.new()
+	card.name = "MarketEquipmentTile_%s" % base_id
+	card.custom_minimum_size = Vector2(0, EQUIP_CARD_HEIGHT)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	Tooltip.bind_hover(card, EQUIP_TOOLTIP.text(data, slot, {"rarity": rarity}))
+	var frame_path := str(MARKET_EQUIP_CARD_PATHS.get(rarity, MARKET_EQUIP_CARD_PATHS["common"]))
+	card.add_theme_stylebox_override(
+		"panel", _market_texture_style(frame_path, T.ll_inset(), 16, 16, 0)
+	)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 10)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_bottom", 8)
+	card.add_child(margin)
+
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 6)
+	col.add_theme_constant_override("separation", 2)
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.custom_minimum_size = Vector2(SHELF_CARD_MIN_W, 0)
+	col.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	margin.add_child(col)
 
 	var icon_holder := CenterContainer.new()
-	var icon := EQUIPMENT_ICON.new()
-	icon.custom_minimum_size = EQUIP_SHELF_ICON
-	icon.set_equipment(slot, equip_name, str(data.get("sprite", "")), rarity)
-	icon.set_hover_tooltip(EQUIP_TOOLTIP.text(data, slot, {"rarity": rarity}))
-	icon_holder.add_child(icon)
+	icon_holder.custom_minimum_size = Vector2(0, 184)
+	icon_holder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	icon_holder.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# The reusable inventory EquipmentIcon intentionally resets itself to 64px in
+	# _ready(). A market product card needs the accepted 154px illustration, so
+	# render the same resolved equipment texture directly without its slot frame.
+	var resolved := EQUIPMENT_ICON.resolve_equipment_texture(
+		str(data.get("sprite", "")), slot, rarity
+	)
+	if resolved != null:
+		var art := TextureRect.new()
+		art.texture = resolved
+		art.custom_minimum_size = EQUIP_SHELF_ICON
+		art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon_holder.add_child(art)
+	else:
+		var fallback_icon := EQUIPMENT_ICON.new()
+		fallback_icon.set_equipment(slot, equip_name, "", rarity)
+		fallback_icon.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+		icon_holder.add_child(fallback_icon)
 	col.add_child(icon_holder)
 
 	# Rarity · slot line, rarity-tinted — generated names are noise (owner).
@@ -318,31 +411,33 @@ func _build_equip_tile(entry: Dictionary) -> Control:
 			tr("UI_EQUIP_SLOT_%s" % slot.to_upper()),
 		]
 	)
+	kind_lbl.custom_minimum_size = Vector2(0, 43)
 	kind_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_style_label(kind_lbl, 15, RARITY_COLORS.get(rarity, Color(0.95, 0.92, 0.85)), 1)
+	kind_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_style_label(kind_lbl, 18, RARITY_COLORS.get(rarity, Color(0.95, 0.92, 0.85)), 1)
 	col.add_child(kind_lbl)
 
-	var buy_btn := _price_footer(price)
+	var buy_btn := _price_footer(price, 184.0, 50.0)
 	buy_btn.disabled = MetaProgress.caps < price
 	buy_btn.pressed.connect(_on_buy_equipment.bind(base_id, rarity, price, buy_btn))
 	col.add_child(buy_btn)
 
-	return col
+	return card
 
 
 func _on_buy_equipment(base_id: String, rarity: String, price: int, btn: Button) -> void:
 	if not MetaProgress.spend_caps(price):
 		return
 	var inst := RunManager.make_equip_instance(base_id, rarity)
-	if not MetaProgress.add_to_stash(inst):
-		# Stash full → refund the Caps so the player isn't charged for nothing.
+	if not MetaProgress.add_to_base_backpack(inst):
+		# Base backpack full → refund the Caps so the player isn't charged for nothing.
 		MetaProgress.add_caps(price)
 		if is_instance_valid(btn):
-			btn.text = tr("UI_MARKET_STASH_FULL")
+			_set_price_button_status(btn, tr("UI_MARKET_BACKPACK_FULL"))
 		return
 	if is_instance_valid(btn):
 		btn.disabled = true
-		btn.text = tr("UI_MARKET_BOUGHT")
+		_set_price_button_status(btn, tr("UI_MARKET_BOUGHT"))
 	# caps_changed → _on_market_changed repaints the scrap chip; this button
 	# keeps its SOLD state (pre-reskin behavior).
 
@@ -365,22 +460,23 @@ func _on_refresh_stock() -> void:
 
 
 ## The concept's section-header refresh control: an olive lightline button with
-## the refresh icon, 刷新 verb, and the escalating Caps cost badge. Both shelf
-## headers get one; they trigger the SAME reroll (one spend rerolls both stocks,
-## exactly the pre-reskin behavior).
+## the refresh icon and 刷新 verb. The tool-shelf button rerolls both stocks
+## with one spend, exactly the pre-reskin behavior.
 func _refresh_button() -> Button:
 	var cost := _refresh_cost()
 	var btn := _olive_button(tr("UI_MARKET_REFRESH_VERB"))
-	btn.custom_minimum_size = Vector2(176, 42)
-	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	btn.tooltip_text = tr("UI_MARKET_REFRESH_NOTE")
+	btn.custom_minimum_size = Vector2(152, 38)
+	Tooltip.bind_hover(btn, "%s\n%s" % [
+		tr("UI_MARKET_REFRESH_NOTE"),
+		tr("UI_HOME_UPGRADE_COST").format({"n": cost}),
+	])
 	var icon_tex := T.lightline_tex("icon_refresh")
 	if icon_tex != null:
 		btn.icon = icon_tex
 		btn.add_theme_constant_override("icon_max_width", 22)
+		btn.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	btn.disabled = MetaProgress.caps < cost
 	btn.pressed.connect(_on_refresh_stock)
-	btn.add_child(T.overlay_cost_badge(cost, "caps", 14, 15, -8, -62))
 	return btn
 
 
@@ -392,19 +488,21 @@ func _refresh_button() -> Button:
 
 func _build_convert_section() -> Control:
 	var section := _make_section(tr("UI_MARKET_CONVERT_TITLE"))
+	section.name = "MarketConversionPanel"
+	section.custom_minimum_size = Vector2(0, CONVERT_SECTION_HEIGHT)
+	Tooltip.bind_hover(section, (
+		_convert_status_text if _convert_status_text != "" else tr("UI_MARKET_CONVERT_TAX_NOTE")
+	))
 	var body := section.get_meta("body") as VBoxContainer
 
-	# Live Scrap balance chip in the section header (Caps already shows on the
-	# base header chip; Scrap is the one balance this screen must add).
-	var header := section.get_meta("header") as HBoxContainer
-	var scrap_row := T.currency_row(MetaProgress.scrap, "scrap", 20, 22)
-	header.add_child(scrap_row)
-	_mkt_scrap_label = scrap_row.get_meta("amount_label") as Label
-	_mkt_scrap_label.add_theme_color_override("font_color", Color(0.78, 0.86, 0.62))
-
-	# Group both conversion rows in one block so they read as one function.
-	var group := VBoxContainer.new()
-	group.add_theme_constant_override("separation", TOK_ROW_SEP)
+	# Compact bottom strip: both directions share one line so the actual goods
+	# keep most of the market's vertical space.
+	var group := HBoxContainer.new()
+	group.name = "MarketConversionStrip"
+	group.custom_minimum_size = Vector2(0, 80)
+	group.add_theme_constant_override("separation", 9)
+	group.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	Tooltip.bind_hover(group, tr("UI_MARKET_CONVERT_TAX_NOTE"))
 	body.add_child(group)
 
 	# Caps → Scrap (4:1, ~10% tax).
@@ -433,19 +531,6 @@ func _build_convert_section() -> Control:
 		)
 	)
 
-	var tax_lbl := Label.new()
-	tax_lbl.text = tr("UI_MARKET_CONVERT_TAX_NOTE")
-	tax_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(tax_lbl, TOK_FONT_DIM, TOK_TEXT_DIM, 1)
-	body.add_child(tax_lbl)
-
-	# Last-conversion feedback (survives the rebuild the currency change causes).
-	if _convert_status_text != "":
-		var status := Label.new()
-		status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_style_label(status, 17, Color(0.70, 0.86, 0.55), 1)
-		status.text = _convert_status_text
-		body.add_child(status)
 	return section
 
 
@@ -467,9 +552,13 @@ func _conversion_row(
 	cb: Callable
 ) -> Control:
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", T.ll_inset())
+	panel.name = "MarketConversion_%s_to_%s" % [src_cur, dst_cur]
+	panel.custom_minimum_size = Vector2(0, 80)
+	panel.add_theme_stylebox_override(
+		"panel", _market_texture_style(MARKET_EXCHANGE_ROW_PATH, T.ll_inset(), 14, 14, 0)
+	)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.tooltip_text = tr("UI_MARKET_CONVERT_TAX_NOTE")
+	Tooltip.bind_hover(panel, tr("UI_MARKET_CONVERT_TAX_NOTE"))
 
 	var m := MarginContainer.new()
 	for side in ["margin_left", "margin_right"]:
@@ -479,30 +568,24 @@ func _conversion_row(
 	panel.add_child(m)
 
 	var line := HBoxContainer.new()
-	line.add_theme_constant_override("separation", 12)
+	line.add_theme_constant_override("separation", 10)
 	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	m.add_child(line)
 
-	line.add_child(_ll_icon("icon_%s" % src_cur, 34))
+	line.add_child(_ll_icon("icon_%s" % src_cur, 38))
 	line.add_child(_amount_field(src_amount))
-	line.add_child(_ll_icon("icon_arrow_right", 26))
-	line.add_child(_ll_icon("icon_%s" % dst_cur, 34))
+	line.add_child(_ll_icon("icon_arrow_right", 32))
+	line.add_child(_ll_icon("icon_%s" % dst_cur, 38))
 	line.add_child(_amount_field(dst_amount))
 
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	line.add_child(spacer)
 
-	var btn := _olive_button("")
-	btn.custom_minimum_size = Vector2(110, 42)
-	var swap_tex := T.lightline_tex("icon_swap")
-	if swap_tex != null:
-		btn.icon = swap_tex
-		btn.add_theme_constant_override("icon_max_width", 24)
-		btn.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		btn.tooltip_text = tr("UI_MARKET_CONVERT_DO")
-	else:
-		btn.text = tr("UI_MARKET_CONVERT_DO")
+	var btn := _olive_button(tr("UI_MARKET_CONVERT_DO"))
+	btn.custom_minimum_size = Vector2(144, 63)
+	btn.add_theme_font_size_override("font_size", 16)
+	Tooltip.bind_hover(btn, tr("UI_MARKET_CONVERT_TAX_NOTE"))
 	btn.disabled = not affordable
 	if affordable:
 		btn.pressed.connect(cb)
@@ -555,22 +638,28 @@ func _flash_status(text: String) -> void:
 # --- Section / helpers ------------------------------------------------------
 
 
-## A lightline shelf section: ll_section panel, a header row (gold title left,
-## optional olive refresh button right — the header HBox is stored on the
-## "header" meta for extra chips), and a content VBox on the "body" meta.
+## A concept-specific shelf section. The generated panel frame, header and card
+## inset reproduce the accepted 1920×1080 geometry instead of inheriting the
+## generic building-panel proportions.
 func _make_section(title: String, with_refresh: bool = false) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", T.ll_section())
+	panel.add_theme_stylebox_override(
+		"panel", _market_texture_style(MARKET_SHELF_FRAME_PATH, T.ll_section(), 22, 18, 7)
+	)
 
 	var margin := MarginContainer.new()
-	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
-		margin.add_theme_constant_override(side, TOK_MARGIN_OUTER)
+	# 7px StyleBox content inset + 17px layout inset = the measured 24px
+	# shelf-to-first-card offset in the accepted concept.
+	margin.add_theme_constant_override("margin_left", 17)
+	margin.add_theme_constant_override("margin_right", 17)
+	margin.add_theme_constant_override("margin_top", 5)
+	margin.add_theme_constant_override("margin_bottom", 5)
 	panel.add_child(margin)
 
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", TOK_ROW_SEP)
+	body.add_theme_constant_override("separation", 7)
 	margin.add_child(body)
 
 	var header := HBoxContainer.new()
@@ -593,8 +682,12 @@ func _make_section(title: String, with_refresh: bool = false) -> PanelContainer:
 
 ## A locked-function placeholder section with the tier needed to unlock it.
 ## `with_refresh` keeps the ungated refresh reachable from a locked shelf header.
-func _locked_section(title: String, tier: int, with_refresh: bool = false) -> Control:
+func _locked_section(
+	title: String, tier: int, with_refresh: bool = false, min_height: float = 0.0
+) -> Control:
 	var section := _make_section(title, with_refresh)
+	if min_height > 0.0:
+		section.custom_minimum_size = Vector2(0, min_height)
 	var body := section.get_meta("body") as VBoxContainer
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
@@ -609,15 +702,27 @@ func _locked_section(title: String, tier: int, with_refresh: bool = false) -> Co
 	return section
 
 
-## The orange price footer (buy button) on a shop card: 购买 verb left, Caps
-## amount+icon badge right. Caller still sets `.disabled` / `.pressed`.
-func _price_footer(price: int) -> Button:
-	var btn := _orange_button(tr("UI_MARKET_BUY_VERB"))
-	btn.custom_minimum_size = Vector2(0, 40)
-	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	btn.add_theme_font_size_override("font_size", 15)
-	btn.add_child(T.overlay_cost_badge(price, "caps", 14, 15, -8, -64))
+## The concept-matched price footer on a shop card: compact olive plaque with
+## centered amount -> Caps icon and no redundant 购买 verb. Caller still sets
+## `.disabled` / `.pressed`.
+func _price_footer(price: int, plaque_width: float, plaque_height: float) -> Button:
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(plaque_width, plaque_height)
+	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	T.apply_concept_price_button(btn, "olive")
+	T.centered_currency_button_content(btn, price, "caps", 20, 22, false, 10)
 	return btn
+
+
+func _set_price_button_status(btn: Button, status: String) -> void:
+	var holder := btn.get_node_or_null("CenteredCurrencyContent") as Control
+	if is_instance_valid(holder):
+		holder.visible = false
+	btn.text = status
+	btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn.add_theme_font_size_override("font_size", 14)
 
 
 ## An orange lightline primary button (concept's main action button).
@@ -655,20 +760,14 @@ func _olive_button(text: String) -> Button:
 	btn.add_theme_color_override("font_hover_color", Color(1.0, 0.97, 0.86))
 	btn.add_theme_color_override("font_pressed_color", Color(0.80, 0.77, 0.66))
 	btn.add_theme_color_override("font_disabled_color", Color(0.55, 0.52, 0.44, 0.9))
-	btn.add_theme_stylebox_override("normal", T.ll_button_olive("normal"))
-	btn.add_theme_stylebox_override("hover", T.ll_button_olive("hover"))
-	btn.add_theme_stylebox_override("pressed", T.ll_button_olive("pressed"))
-	var disabled_box := T.ll_button_olive("normal")
-	if disabled_box is StyleBoxTexture:
-		(disabled_box as StyleBoxTexture).modulate_color = Color(0.55, 0.55, 0.55)
-	btn.add_theme_stylebox_override("disabled", disabled_box)
+	T.apply_concept_price_button(btn, "olive")
 	return btn
 
 
 ## The concept's recessed amount field in a conversion row.
 func _amount_field(amount: int) -> Control:
 	var field := PanelContainer.new()
-	field.custom_minimum_size = Vector2(110, 42)
+	field.custom_minimum_size = Vector2(106, 51)
 	var fallback := StyleBoxFlat.new()
 	fallback.bg_color = Color(0.07, 0.065, 0.055, 0.95)
 	fallback.border_color = Color(0.34, 0.30, 0.20, 0.9)
@@ -687,6 +786,33 @@ func _amount_field(amount: int) -> Control:
 	_style_label(lbl, 18, PRICE_COLOR, 1)
 	field.add_child(lbl)
 	return field
+
+
+## Load one generated market frame as a nine-slice StyleBox. Every frame keeps
+## a programmatic fallback, so a missing/importing asset cannot crash the shop.
+func _market_texture_style(
+	texture_path: String,
+	fallback: StyleBox,
+	margin_h: int,
+	margin_v: int,
+	content_margin: int
+) -> StyleBox:
+	if not ResourceLoader.exists(texture_path):
+		return fallback
+	var texture := load(texture_path) as Texture2D
+	if texture == null:
+		return fallback
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	style.texture_margin_left = margin_h
+	style.texture_margin_right = margin_h
+	style.texture_margin_top = margin_v
+	style.texture_margin_bottom = margin_v
+	style.content_margin_left = content_margin
+	style.content_margin_right = content_margin
+	style.content_margin_top = content_margin
+	style.content_margin_bottom = content_margin
+	return style
 
 
 ## A lightline PNG as a fixed-size TextureRect, or an equal-size empty spacer
@@ -774,6 +900,10 @@ func _list_equipment_by_slot() -> Dictionary:
 		var data := _load_json(EQUIPMENT_DIR + file_name)
 		var slot := str(data.get("slot", ""))
 		var rarity := str(data.get("rarity", "common"))
+		# Set pieces are exotic drops. Their base JSON keeps a compatibility rarity,
+		# but showing that value on the shelf made set art read as ordinary gear.
+		if str(data.get("set_id", "")) != "":
+			continue
 		if slot == "" or not rarity in RARITY_ORDER:
 			continue
 		if not result.has(slot):

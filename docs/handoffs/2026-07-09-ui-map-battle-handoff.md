@@ -20,8 +20,8 @@ The latest unresolved visual feedback is:
 - The runtime map remains horizontal and uses straight dotted route links. The curved route and multi-layer cyan glow were removed.
 - Map node radius/icon size were reduced to improve readability.
 - Both static `CardBackVisual` children were removed from `battle_scene.tscn`, including the unused old `card_back.png` scene resource.
-- Draw/discard piles now use the cream card-fan glyph `iconb_cards_fan.png`; pile cards stay hidden through `Pile.hide_cards`.
-- Draw/discard count labels were moved upward (`offset_top = -190`, `offset_bottom = -132`).
+- Draw/discard piles now use mirrored copies of the deck-book glyph `iconb_deck_stack.png`; pile cards stay hidden through `Pile.hide_cards`.
+- Draw/discard counts are compact labels attached just above the 80 px deck-book glyphs, rather than large floating numerals.
 - The current title screen uses the generated Bottlecap Hunter background/title/button components and the requested left-column layout.
 
 ## In progress / not approved

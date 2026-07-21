@@ -30,7 +30,7 @@
         { "type": "lose_hp", "amount": 8 }
       ],
       "result_success": "The slab holds. You drag out a sealed crate of refined core and a fat purse before scrambling clear.",
-      "result_fail": "The wind shifts. Concrete shears loose and pins your leg — you wrench free bleeding, the cache buried for good."
+      "result_fail": "The wind shifts. Concrete shears loose and pins your leg — you wrench free with torn wiring, the cache buried for good."
     }
   ]
 }

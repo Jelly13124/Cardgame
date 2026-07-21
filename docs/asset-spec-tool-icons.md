@@ -1,51 +1,45 @@
-# Asset Spec — Tool Icons (Codex)
+# Asset Spec — Tool Icons
 
-> **For Codex (ADR-0005).** 8 one-time battle tools (StS2-style consumables).
-> They sit in the battle top bar's **tool shelf** (`run_system/ui/run_top_bar.gd`
-> `_make_tool_slot`). Before delivery, each slot rendered a 1–2 char glyph fallback
-> (`_short_label`) because the icon PNGs did not exist yet. This spec is for those
-> per-tool icons; the loader already points at the paths below.
+> Runtime contract for the one-use battle tools shown in the backpack, market,
+> battle top bar, merchant, and use-confirmation dialog.
 
-**Status:** Delivered 2026-06-21. All 8 tool icons were generated as 64x64
-transparent PNGs at `run_system/assets/images/ui/tools/<id>.png`; no wiring
-changes were required.
+**Status:** Rebuilt 2026-07-14. The complete 11-icon set is delivered at
+`run_system/assets/images/ui/tools/<id>.png`, and every tool JSON points to a
+unique semantic icon.
 
-## Deliverable
+## Production contract
 
-One PNG per tool id below.
+- Canvas: 256×256 RGBA PNG with transparent corners.
+- Composition: one centered physical prop, strong silhouette, even safe margin,
+  and no UI frame, caption, floor shadow, or character hand.
+- Style: original flat 2D American-comic sci-fi western. Use thick clean
+  dark-brown outlines, large shapes, sparse interior lines, and broad 2–3 value
+  cel shading. Materials lean dusty tan, warm brown, muted red, and grey-green,
+  with at most one cyan/orange/toxic accent.
+- Avoid: pixel-art edges, realistic metal rendering, painterly grime, dense
+  scratches/rivets, dark-fantasy ornament, and glossy 3D lighting.
+- Filtering: tool presentation surfaces use linear filtering. The silhouette
+  must remain legible at the 40px top-bar size.
+- Rarity: tools do not have a rarity field. Do not bake rarity frames or rarity
+  glows into their icons.
 
-- **Target path:** `run_system/assets/images/ui/tools/<id>.png`
-  (matches the `"icon"` field already in each `run_system/data/tools/<id>.json`).
-- **Source size:** 64×64, transparent background. Displayed small (~34×34 in the
-  shelf), so the silhouette must read at tiny size — one bold object, high
-  contrast, thick dark outline so it stays legible on the dark top-bar strip.
-- **Style:** match the existing wasteland / salvaged-tech look of the currency and
-  status icons — hand-painted, slightly grimy, warm metal + worn paint. Each tool
-  is a physical scavenged gadget, not a flat UI glyph.
-- **Rarity tint (subtle):** commons lean grey/steel; uncommons get a faint warm
-  rim-light or brass accent so the player can feel "uncommon" at a glance. Don't
-  add gem-frames or borders — the shelf slot draws its own frame.
+## Delivered set
 
-## No wiring needed after art lands
+| id | visual identity | runtime effect |
+|---|---|---|
+| `adrenaline_shot` | chunky brass auto-injector, amber chamber | draw 2 cards |
+| `blood_kit` | red-brown collection roll, blood-drop patch and tube | discover 1 of 3 Bleed cards; free |
+| `combat_stim` | squat brass stim cylinder, orange up-arrow | gain 2 Strength |
+| `energy_cell` | salvaged battery canister, cyan bolt window | gain 2 Energy this turn |
+| `field_kit` | sand canvas tool roll, wrench and wire spool | discover 1 of 3 Skill cards; free |
+| `frag_grenade` | olive fragmentation grenade, lever and pull ring | deal 10 damage to one enemy |
+| `med_kit` | off-white hard medical case, red cross | gain 3 Regeneration |
+| `munitions_crate` | dented ammunition box with visible cartridges | discover 1 of 3 Attack cards; free |
+| `shock_charge` | flat EMP puck with two cyan electrodes | apply 2 Vulnerable and 1 Weak |
+| `smoke_bomb` | crooked vented canister and one simple smoke puff | gain 10 Block |
+| `toxin_vial` | historical id; icon is the localized Rusty Blade | apply 4 Bleed to one enemy |
 
-The shelf already calls `load(tool.icon)` and only falls back to the glyph when the
-texture is missing, so dropping the PNGs in is enough — no code or JSON change.
-(If a path is wrong the slot silently shows the glyph again, never errors.)
-
-## Tools
-
-| id | name (en / zh) | rarity | effect | current glyph | icon direction |
-|----|----------------|--------|--------|---------------|----------------|
-| `med_kit` | Med Kit / 医疗包 | common | Heal 6 | 医 | first-aid tin / red-cross kit, lid ajar |
-| `energy_cell` | Energy Cell / 能量电池 | common | +2 Energy this turn | 能 | salvaged battery cell, glowing bolt mark |
-| `adrenaline_shot` | Adrenaline Shot / 肾上腺素 | common | Draw 2 cards | 抽 | auto-injector / syringe, amber fluid |
-| `frag_grenade` | Frag Grenade / 碎片手雷 | common | Deal 10 to one enemy | 手 | pineapple grenade, pin + lever |
-| `smoke_bomb` | Smoke Bomb / 烟雾弹 | common | Gain 12 Block | 烟 | thrown canister venting grey smoke |
-| `combat_stim` | Combat Stim / 战斗兴奋剂 | uncommon | +2 Strength | 力 | stim vial w/ up-arrow / flexed bolt, brass cap |
-| `toxin_vial` | Toxin Vial / 毒素瓶 | uncommon | Apply 4 Bleed to one enemy | 毒 | green poison vial, dripping skull-tint |
-| `shock_charge` | Shock Charge / 电击装置 | uncommon | Apply 2 Vulnerable + 2 Weak to one enemy | 电 | sparking EMP puck / arcing electrodes |
-
-Display names + descriptions live in `assets/translations/content_cards.csv` as
-`TOOL_<ID>_TITLE` / `TOOL_<ID>_DESC` (zh-primary). Enemy-target tools
-(`frag_grenade`, `toxin_vial`, `shock_charge`) read as offensive; the rest are
-self/utility.
+Display names and descriptions live in `assets/translations/content_cards.csv`
+under `TOOL_<ID>_TITLE` and `TOOL_<ID>_DESC`. Keep the historical
+`toxin_vial` id for save compatibility even though its current player-facing
+identity is Rusty Blade.

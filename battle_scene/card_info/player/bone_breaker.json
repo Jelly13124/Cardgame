@@ -1,23 +1,23 @@
 {
 	"name": "bone_breaker",
-	"title": "Lacerate",
+	"title": "Voltage Tear",
 	"rarity": "rare",
 	"type": "attack",
 	"cost": 2,
-	"description": "Apply [b]3 (+INT)[/b] Bleed. If the target is already Bleeding, apply DOUBLE.",
+	"description": "Apply [b]10 (+INT)[/b] Short Circuit. If the target already has Short Circuit, apply DOUBLE.",
 	"front_image": "player/bone_breaker.png",
 	"side": "player",
 	"effects": [
 		{
-			"type": "apply_bleed_scaled",
-			"amount": 3,
+			"type": "apply_short_circuit_scaled",
+			"amount": 10,
 			"attr": "intelligence",
-			"double_if_bleeding": true
+			"double_if_short_circuited": true
 		}
 	],
 	"upgrade": {
 		"effects": [
-			{ "type": "apply_bleed_scaled", "amount": 5, "attr": "intelligence", "double_if_bleeding": true }
+			{ "type": "apply_short_circuit_scaled", "amount": 13, "attr": "intelligence", "double_if_short_circuited": true }
 		]
 	}
 }

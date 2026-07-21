@@ -1,10 +1,9 @@
 extends Control
 
-## Shared StS-style top bar used by BOTH the map and battle scenes.
-## Renders a hero-portrait badge (far left), HP + XP bars (prominent, framed),
-## a gold chip, an act/floor chip, a configurable button group, and a relic shelf
-## row below the main bar.  All panels use T.panel_textured() 9-slice frames for
-## the heavy "framed-metal" look (placeholder until Codex delivers bespoke frames).
+## Shared StS-style top bar used by every in-run screen (map, battle, shop,
+## events, rest/upgrade pages, and deck views).
+## Renders a hero portrait, cartoon-heart HP readout, compact XP tick, caps,
+## tools, floor utilities, and a relic shelf below the main strip.
 ##
 ## Scene-agnostic: it reads RunManager (autoload) state and emits intent
 ## signals; the HOST scene wires the buttons to its own handlers. Set the
@@ -15,8 +14,10 @@ const RELIC_DATA_DIR := "res://run_system/data/relics/"
 const TOPBAR_ICON_DIR := "res://run_system/assets/images/ui/topbar/"
 const HERO_IDLE_DIR := "res://battle_scene/assets/images/heroes/"
 const TOPBAR_BACKGROUND := "res://run_system/assets/images/ui_kit_lightline/hud_topbar_sts2.png"
+const HEART_ICON := "res://run_system/assets/images/ui_kit_lightline/icon_heart.png"
 const TIMER_ICON := "res://run_system/assets/images/ui_kit_lightline/iconb_clock.png"
 const DECK_ICON := "res://run_system/assets/images/ui_kit_lightline/iconb_deck_stack.png"
+const SETTINGS_ICON := "res://run_system/assets/images/ui_kit_lightline/icon_gear.png"
 # In-run currency is Caps (owner 2026-07-08): same bottle-cap icon as the base.
 const GOLD_ICON := "res://run_system/assets/images/home/currency/caps.png"
 
@@ -24,13 +25,19 @@ const GOLD_ICON := "res://run_system/assets/images/home/currency/caps.png"
 # StS2-style roomy strip: portrait | HP/XP | caps | one tool ... floor | deck/settings/time
 const PORTRAIT_SIZE := 64.0
 const MAIN_BAR_HEIGHT := 80.0
+# Full-page art may continue behind the transparent relic shelf from this Y.
+# Interactive page content still begins at BAR_HEIGHT.
+const PAGE_ART_TOP := MAIN_BAR_HEIGHT
 const RELIC_ROW_TOP := 84.0
 const RELIC_ROW_HEIGHT := 46.0
 const BAR_HEIGHT := 132.0
-const HP_BAR_W := 210.0
-const HP_BAR_H := 25.0
-const XP_BAR_W := 210.0
-const XP_BAR_H := 17.0
+# The persistent run HUD owns this layer. Full-screen in-run pages and their
+# illustration layers must stay below it; blocking pause/tutorial/transition
+# overlays may intentionally use a higher layer.
+const CANVAS_LAYER := 150
+const HEART_SIZE := 42.0
+const XP_TICK_WIDTH := 68.0
+const XP_TICK_HEIGHT := 4.0
 
 signal deck_pressed
 signal character_pressed
@@ -45,10 +52,9 @@ var show_settings_button: bool = false  # battle only
 var show_tools: bool = false  # battle = tool slots are clickable/usable
 
 ## â”€â”€â”€ Cached nodes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-var _hp_bar: ProgressBar
 var _hp_label: Label
-var _xp_bar: ProgressBar
 var _xp_label: Label
+var _xp_tick: ProgressBar
 var _gold_label: Label
 var _floor_label: Label
 var _relic_shelf: HBoxContainer
@@ -157,26 +163,40 @@ func _build() -> void:
 	margin.add_child(row)
 
 	# â”€â”€ Vitals: big HP bar + thin XP bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-	# Frameless StS-style: HP + XP bars sit directly on the strip, no panel box.
-	var vitals := VBoxContainer.new()
-	vitals.add_theme_constant_override("separation", 3)
+	# Frameless UI03 iconography on the lightweight UI07 strip.
+	var vitals := HBoxContainer.new()
+	vitals.name = "VitalsGroup"
+	vitals.alignment = BoxContainer.ALIGNMENT_CENTER
+	vitals.add_theme_constant_override("separation", 7)
 	vitals.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vitals.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(vitals)
 
-	var hp_pair := _make_stat_bar(
-		HP_BAR_W, HP_BAR_H, Color(0.86, 0.15, 0.10), Color(0.20, 0.045, 0.035), 15, true
-	)
-	_hp_bar = hp_pair[0]
-	_hp_label = hp_pair[1]
-	vitals.add_child(_hp_bar)
+	var heart := TextureRect.new()
+	heart.name = "HeartIcon"
+	heart.custom_minimum_size = Vector2(HEART_SIZE, HEART_SIZE)
+	heart.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	heart.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	heart.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	heart.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if ResourceLoader.exists(HEART_ICON):
+		heart.texture = load(HEART_ICON)
+	vitals.add_child(heart)
 
-	var xp_pair := _make_stat_bar(
-		XP_BAR_W, XP_BAR_H, Color(0.27, 0.74, 0.86), Color(0.05, 0.085, 0.10), 13, false
-	)
-	_xp_bar = xp_pair[0]
-	_xp_label = xp_pair[1]
-	vitals.add_child(_xp_bar)
+	_hp_label = _make_plain_label(vitals, 25, Color(1.0, 0.34, 0.24))
+	_hp_label.name = "HpLabel"
+	_hp_label.custom_minimum_size.x = 92.0
+
+	var xp_group := VBoxContainer.new()
+	xp_group.name = "XpGroup"
+	xp_group.add_theme_constant_override("separation", 2)
+	xp_group.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	xp_group.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vitals.add_child(xp_group)
+	_xp_label = _make_plain_label(xp_group, 16, Color(0.92, 0.86, 0.74))
+	_xp_label.name = "XpLabel"
+	_xp_tick = _make_xp_tick()
+	xp_group.add_child(_xp_tick)
 
 	# Gold sits LEFT next to the vitals, StS-style: bare icon + number, no frame.
 	_gold_label = _make_icon_value(row, GOLD_ICON, 21, Color(1.0, 0.86, 0.45))
@@ -207,7 +227,7 @@ func _build() -> void:
 
 	# (Character entry now lives on the clickable hero portrait, far left.)
 	if show_settings_button:
-		var set_btn := _make_icon_button("⚙", tr("SETTINGS_BUTTON"))
+		var set_btn := _make_icon_button("", tr("SETTINGS_BUTTON"), "settings")
 		set_btn.pressed.connect(func(): settings_pressed.emit())
 		row.add_child(set_btn)
 
@@ -293,31 +313,22 @@ func _load_hero_portrait() -> void:
 # â”€â”€â”€ Stat bar builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
-func _make_stat_bar(
-	width: float, height: float, fill: Color, track: Color, font_size: int, bold_label: bool
-) -> Array:
-	var bar := ProgressBar.new()
-	bar.custom_minimum_size = Vector2(width, height)
-	bar.show_percentage = false
-	bar.min_value = 0.0
-	bar.max_value = 1.0
-	bar.value = 1.0
-	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bar.add_theme_stylebox_override("background", T.panel_flat(track, T.PANEL_BORDER, 4, 2))
-	bar.add_theme_stylebox_override("fill", T.panel_flat(fill, fill, 4, 0))
-
-	var label := Label.new()
-	label.set_anchors_preset(Control.PRESET_FULL_RECT)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.add_theme_font_override("font", T.display_font(600))
-	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_color", T.TEXT_MAIN)
-	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
-	label.add_theme_constant_override("outline_size", 4 if bold_label else 2)
-	bar.add_child(label)
-	return [bar, label]
+func _make_xp_tick() -> ProgressBar:
+	var tick := ProgressBar.new()
+	tick.name = "XpTick"
+	tick.custom_minimum_size = Vector2(XP_TICK_WIDTH, XP_TICK_HEIGHT)
+	tick.show_percentage = false
+	tick.min_value = 0.0
+	tick.max_value = 1.0
+	tick.value = 0.0
+	tick.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tick.add_theme_stylebox_override(
+		"background", T.panel_flat(Color(0.02, 0.035, 0.04, 0.82), Color(0, 0, 0, 0), 2, 0)
+	)
+	tick.add_theme_stylebox_override(
+		"fill", T.panel_flat(Color(0.28, 0.82, 0.90), Color(0, 0, 0, 0), 2, 0)
+	)
+	return tick
 
 
 # â”€â”€â”€ Framed chip builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -413,7 +424,11 @@ func _make_icon_button(text: String, tooltip: String, icon_id: String = "") -> B
 
 
 func _load_topbar_icon(icon_id: String) -> Texture2D:
-	var path := DECK_ICON if icon_id == "deck" else "%s%s.png" % [TOPBAR_ICON_DIR, icon_id]
+	var path := "%s%s.png" % [TOPBAR_ICON_DIR, icon_id]
+	if icon_id == "deck":
+		path = DECK_ICON
+	elif icon_id == "settings":
+		path = SETTINGS_ICON
 	if ResourceLoader.exists(path):
 		var tex = load(path)
 		if tex is Texture2D:
@@ -454,19 +469,16 @@ func _hp_values() -> Vector2:
 
 
 func _refresh_vitals() -> void:
-	if not _hp_bar:
+	if not _hp_label or not _xp_label or not _xp_tick:
 		return
 	var hp := _hp_values()
-	var hp_max: float = maxf(1.0, hp.y)
-	_hp_bar.max_value = hp_max
-	_hp_bar.value = clampf(hp.x, 0.0, hp_max)
-	_hp_label.text = "HP %d / %d" % [int(hp.x), int(hp.y)]
+	_hp_label.text = "%d/%d" % [int(hp.x), int(hp.y)]
 
 	var lvl: int = RunManager.level
 	var need: int = RunManager.xp_to_next(lvl)
 	var have: int = RunManager.xp
-	_xp_bar.max_value = maxf(1.0, float(need))
-	_xp_bar.value = clampf(float(have), 0.0, float(need))
+	_xp_tick.max_value = maxf(1.0, float(need))
+	_xp_tick.value = clampf(float(have), 0.0, float(need))
 	_xp_label.text = tr("UI_TOPBAR_LEVEL_FMT").format({"lvl": lvl, "xp": have, "next": need})
 
 
@@ -517,10 +529,14 @@ func _make_tool_slot(index: int, tool_id: String) -> Button:
 	var desc := Settings.t("TOOL_%s_DESC" % tool_id, "")
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(40, 40)
+	b.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	b.focus_mode = Control.FOCUS_NONE
 	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	b.tooltip_text = ("%s\n%s" % [title, desc]) if not desc.is_empty() else title
+	var tip_text := (
+		("[b]%s[/b]\n%s" % [title, desc]) if not desc.is_empty() else "[b]%s[/b]" % title
+	)
+	Tooltip.bind_hover(b, tip_text)
 	var icon_path := str(data.get("icon", ""))
 	if icon_path != "" and ResourceLoader.exists(icon_path):
 		b.icon = load(icon_path)

@@ -11,12 +11,11 @@
 ## Modes:
 ##   MODE_MAP    — in-run map: RunManager.backpack, full editable (drag/drop/click)
 ##   MODE_BATTLE — in battle: the same layout, read-only (cells locked)
-##   MODE_BASE   — home base: the grid shows RunManager.pending_loadout (the gear
-##                 carried into the next run's backpack). D4 container model: the
-##                 permanent stash lives in its OWN window (stash_window.gd);
-##                 stash → backpack by drag, backpack → slot by drag
-##                 (pending_equipped). Equip slots NEVER accept a raw stash
-##                 payload — gear must pass through the backpack first.
+##   MODE_BASE   — home base: the grid shows the player-owned base backpack
+##                 (RunManager.pending_loadout), persisted separately from the
+##                 permanent stash. Stash ↔ backpack drags transfer ownership;
+##                 backpack → slot moves into pending_equipped. Equip slots NEVER
+##                 accept a raw stash payload — gear must pass through the bag.
 ## Listens to RunManager / MetaProgress state signals for live refresh; the
 ## window is freed on close, which drops the connections.
 extends "res://run_system/ui/window/draggable_window.gd"
@@ -210,8 +209,8 @@ func _on_meta_currency_changed(_v: int) -> void:
 func _refresh_base() -> void:
 	if not is_instance_valid(_base_box):
 		return
-	# The stash can shrink under us (forge dismantle/curse, another screen):
-	# drop pending references that no longer resolve to a stash entry.
+	# Tolerantly discard malformed legacy/profile entries. Owned carry items no
+	# longer need to resolve against MetaProgress.stash.
 	_sanitize_pending()
 	for child in _base_box.get_children():
 		_base_box.remove_child(child)
@@ -993,6 +992,7 @@ func _make_lock_glyph() -> Control:
 		icon.custom_minimum_size = Vector2(18, 18)
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		return icon
 	var holder := Control.new()
@@ -1039,18 +1039,16 @@ func _drop_into_backpack(data: Dictionary) -> void:
 			_unassign_slot_to_carry(str(data.get("slot", "")))
 
 
-## Stash → backpack: append the entry to pending_loadout (capped at the usable
-## backpack size). Guards against stale drags: the entry must still be available
-## (in the stash and not already carried / assigned).
+## Stash → backpack: atomically move ownership into pending_loadout (capped at
+## the usable backpack size). Stale drags and a full bag leave both sides intact.
 func _carry_from_stash(entry: Variant) -> void:
 	if entry == null or RunManager.as_equip_instance(entry).is_empty():
 		return
 	if RunManager.pending_loadout.size() >= RunManager.effective_backpack_size():
 		_flash_status(tr("UI_LOOT_BACKPACK_FULL"))
 		return
-	if _unassigned_stash_pool().find(entry) < 0:
-		return  # no longer in the stash / already taken
-	RunManager.pending_loadout.append(entry)
+	if not MetaProgress.move_stash_to_base_backpack(entry):
+		return
 	AudioManager.play_sfx("ui_click")
 	_refresh_base()
 	_refresh_sibling_stash()
@@ -1078,6 +1076,7 @@ func _equip_from_carry(slot: String, entry: Variant) -> void:
 	if displaced != null:
 		# Room is guaranteed: we just freed the dragged entry's spot.
 		RunManager.pending_loadout.append(displaced)
+	MetaProgress.save_progress()
 	AudioManager.play_sfx("ui_click")
 	_refresh_base()
 	_refresh_sibling_stash()
@@ -1094,47 +1093,32 @@ func _unassign_slot_to_carry(slot: String) -> void:
 		return
 	RunManager.pending_equipped.erase(slot)
 	RunManager.pending_loadout.append(queued)
+	MetaProgress.save_progress()
 	AudioManager.play_sfx("ui_back")
 	_refresh_base()
 	_refresh_sibling_stash()
 
 
-## MetaProgress.stash entries NOT consumed by a pending assignment (slot or
-## carry), value-matched one assignment per entry so duplicate gear is handled.
-## The StashWindow mirrors this consumption for its grid.
-func _unassigned_stash_pool() -> Array:
-	var pool: Array = MetaProgress.stash.duplicate()
-	for v in RunManager.pending_equipped.values():
-		var i: int = pool.find(v)
-		if i >= 0:
-			pool.remove_at(i)
-	for e in RunManager.pending_loadout:
-		var j: int = pool.find(e)
-		if j >= 0:
-			pool.remove_at(j)
-	return pool
-
-
-## Drop pending references that no longer resolve to a stash entry (the forge
-## can dismantle / reroll items under us). Value-matched, consuming one stash
-## occurrence per reference.
+## Tolerantly remove malformed base-owned entries loaded from an old/corrupt
+## profile. Valid gear never depends on membership in MetaProgress.stash.
 func _sanitize_pending() -> void:
-	var pool: Array = MetaProgress.stash.duplicate()
+	var changed := false
 	for slot in RunManager.pending_equipped.keys():  # keys() is a copy — safe to erase
-		var i: int = pool.find(RunManager.pending_equipped[slot])
-		if i < 0:
+		var inst := RunManager.as_equip_instance(RunManager.pending_equipped[slot])
+		var data := RunManager.get_equipment_data(RunManager.equip_base(inst))
+		if inst.is_empty() or str(data.get("slot", "")) != str(slot):
 			RunManager.pending_equipped.erase(slot)
-		else:
-			pool.remove_at(i)
+			changed = true
 	var kept: Array = []
 	for e in RunManager.pending_loadout:
-		var j: int = pool.find(e)
-		if j >= 0:
-			pool.remove_at(j)
+		if not RunManager.as_equip_instance(e).is_empty():
 			kept.append(e)
 	if kept.size() != RunManager.pending_loadout.size():
 		RunManager.pending_loadout.clear()
 		RunManager.pending_loadout.append_array(kept)
+		changed = true
+	if changed:
+		MetaProgress.save_progress()
 
 
 ## Toggle the StashWindow beside this one (base context only).
@@ -1580,6 +1564,7 @@ func _make_tool_cell(tool_id: String, index: int) -> Control:
 		icon.offset_bottom = -6
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		panel.add_child(icon)
 	else:
@@ -1653,6 +1638,7 @@ func _make_equipped_tool_cell(index: int, tool_id: String) -> Control:
 		icon.offset_bottom = -5
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		frame.add_child(icon)
 	else:

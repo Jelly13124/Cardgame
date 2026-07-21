@@ -5,6 +5,9 @@ extends Control
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const CARD_FACTORY_SCENE = preload("res://battle_scene/my_card_factory.tscn")
 const CARD_UPGRADE = preload("res://run_system/core/card_upgrade.gd")
+const RUN_TOP_BAR = preload("res://run_system/ui/run_top_bar.gd")
+
+const TOP_BAR_CLEARANCE := RUN_TOP_BAR.BAR_HEIGHT
 
 var _card_factory: Node
 
@@ -32,13 +35,17 @@ func _build() -> void:
 	# Opaque full-screen page (pseudo-scene). Map _input is gated separately so
 	# clicks can't fall through; in battle the STOP overlay blocks card input.
 	var bg := ColorRect.new()
+	bg.name = "RunDeckBackground"
 	bg.color = Color(0.07, 0.05, 0.035, 1.0)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.offset_top = RUN_TOP_BAR.PAGE_ART_TOP
 	bg.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(bg)
 
 	var margin := MarginContainer.new()
+	margin.name = "RunDeckContent"
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.offset_top = TOP_BAR_CLEARANCE
 	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		margin.add_theme_constant_override(s, 48)
 	add_child(margin)
@@ -83,8 +90,8 @@ func _add_close_x() -> void:
 	x.anchor_right = 1.0
 	x.offset_left = -64.0
 	x.offset_right = -16.0
-	x.offset_top = 16.0
-	x.offset_bottom = 64.0
+	x.offset_top = TOP_BAR_CLEARANCE + 16.0
+	x.offset_bottom = TOP_BAR_CLEARANCE + 64.0
 	x.pressed.connect(queue_free)
 	add_child(x)
 

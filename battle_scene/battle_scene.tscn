@@ -18,11 +18,11 @@
 [ext_resource type="Script" path="res://battle_scene/battle_ui_manager.gd" id="19_ui"]
 [ext_resource type="Script" path="res://battle_scene/card_play_zone.gd" id="20_playzone"]
 [ext_resource type="Script" path="res://battle_scene/ui/battle_top_bar.gd" id="21_topbar"]
-[ext_resource type="Texture2D" path="res://battle_scene/assets/images/backgrounds/wasteland_battlefield_sts2.png" id="22_bg"]
+[ext_resource type="Texture2D" path="res://battle_scene/assets/images/backgrounds/wasteland_battlefield_stage_cool_v5.png" id="22_bg"]
 
 [sub_resource type="Curve" id="Curve_lsli3"]
-_limits = [-15.0, 15.0, 0.0, 1.0]
-_data = [Vector2(0, -15), 0.0, 30.0, 0, 1, Vector2(1, 15), 30.0, 0.0, 1, 0]
+_limits = [-10.0, 10.0, 0.0, 1.0]
+_data = [Vector2(0, -10), 0.0, 20.0, 0, 1, Vector2(1, 10), 20.0, 0.0, 1, 0]
 point_count = 2
 
 [sub_resource type="Curve" id="Curve_8dbo5"]
@@ -34,6 +34,7 @@ point_count = 3
 script = ExtResource("1_2r7vq")
 
 [node name="BattleBackground" type="TextureRect" parent="."]
+self_modulate = Color(1.42, 1.39, 1.32, 1)
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -177,7 +178,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="TopBarLayer" type="CanvasLayer" parent="."]
-layer = 30
+layer = 150
 
 [node name="TopBar" type="Control" parent="TopBarLayer"]
 layout_mode = 3

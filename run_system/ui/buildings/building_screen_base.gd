@@ -1,239 +1,234 @@
-## Reusable full-rect overlay screen for ONE base building. Configured with a
-## `building_id` (one of MetaProgress.BUILDING_DEFS). Renders a layered detail page:
-## an icon + name + flavour header, a prominent ACTION CARD (unlock/upgrade with its
-## effect, cost, and — when locked — a preview of what the building does so a locked
-## page still sells its value), and a scrollable `content` VBox that subclasses fill
-## via `_build_content()`.
+## Shared full-screen shell for Clinic, Market and Outpost.
 ##
-## NO class_name (ADR-0006: preload these instead). Instantiate with `.new()`,
-## set `building_id`, then add as a child — `_ready()` builds the UI.
+## The approved hierarchy lives entirely in the top bar: Upgrade + Caps on the
+## left, the simple building badge and name in the exact centre, and close on the
+## right. Building-specific service content starts immediately below it.
 extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
+const BUILDING_UPGRADE_POPOVER = preload(
+	"res://run_system/ui/buildings/building_upgrade_popover.gd"
+)
 
-## Which building this screen represents. Set before adding the node to the tree.
-var building_id: String = ""
-
-## Callback the host (home base) sets so the back button can close the overlay.
-## When unset, the screen frees itself.
+var building_id := ""
 var on_close: Callable = Callable()
+var accent := Color(0.86, 0.78, 0.52)
 
-## Per-building accent color (header tint), mirrors the selector tile accent.
-var accent: Color = Color(0.86, 0.78, 0.52)
-
-var _tier_badge: Label
 var _content_box: VBoxContainer
-## Amount+icon currency chip (T.currency_row) in the header's right column. Shows
-## the currency the building's NEXT action spends (Scrap while locked → unlock,
-## Caps once unlocked → tier-up), via MetaProgress.building_cost_currency.
-var _cost_row: HBoxContainer
-## The row's amount Label — cached for cheap live updates.
-var _cost_amount_lbl: Label
-## The header's right VBox — kept so the cost chip can be rebuilt when the cost
-## CURRENCY flips (locked→unlocked changes scrap→caps, so the icon must change).
-var _header_right_box: VBoxContainer
+var _services_scroll: ScrollContainer
+var _upgrade_button: Button
+var _caps_host: HBoxContainer
+var _upgrade_popover: Control
 
-## Per-building header art (the same home-base runtime sprites).
-const _ICON_DIR := "res://run_system/assets/images/home/buildings_runtime/"
-## Placeholder per-building background path (Codex art swaps these in later).
+const _BADGE_DIR := "res://run_system/assets/images/home/base_hud/"
 const _BG_DIR := "res://run_system/assets/images/buildings/"
+const _MARKET_INTERIOR_BG := "res://run_system/assets/images/ui/market/market_interior_bg.png"
+const _TOPBAR_SIDE_WIDTH := 330.0
+const _POPOVER_SIZE := Vector2(384, 288)
+const _POPOVER_POINTER_X := 88.0
 
-# ─── Phase B: shared visual tokens ──────────────────────────────────────────
-# One set of colors/sizes so all 5 building screens (forge/outpost/clinic/
-# market/warehouse) read as ONE UI instead of five hand-tuned ones. Screens
-# should pull from these + the `_section_header` / `_styled_panel` / `_row_panel`
-# helpers below rather than inventing their own Color(...)/font-size literals.
-# Reuses `wasteland_theme` colors where they already exist (T.TEXT_MAIN etc.);
-# these tokens are the subset that shows up over and over in building content.
-
-## Panel fills (dark → panel, matches T.PANEL_BG_DARK / T.PANEL_BG).
+# Shared building-content tokens retained for the concrete screen subclasses.
 const TOK_PANEL_BG := Color(0.11, 0.08, 0.06, 0.92)
 const TOK_PANEL_BG_DARK := Color(0.075, 0.055, 0.040, 0.94)
-## Hairline separators / faint dividers between rows.
 const TOK_LINE := Color(0.34, 0.28, 0.20, 0.85)
-## The warm gold accent used for section headers + emphasis (matches the header
-## title's default `accent`-adjacent look across screens).
 const TOK_GOLD := Color(1.0, 0.86, 0.40)
-## Body / dim text.
 const TOK_TEXT := Color(0.92, 0.88, 0.76)
 const TOK_TEXT_DIM := Color(0.74, 0.68, 0.56)
-
-## Font sizes: title (building name, handled by header) / section / body / dim.
 const TOK_FONT_SECTION := 21
 const TOK_FONT_BODY := 17
 const TOK_FONT_DIM := 14
-
-## Shared corner radius + margins so every panel/row matches.
 const TOK_RADIUS := 6
 const TOK_MARGIN_OUTER := 14
 const TOK_MARGIN_INNER := 10
-## Standard vertical gap between rows inside a section list.
 const TOK_ROW_SEP := 10
 
 
 func _ready() -> void:
-	# STOP so this full-rect overlay blocks the home base behind it.
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	_build()
-	T.fade_in(self)  # soft entrance instead of a hard pop-in
+	T.fade_in(self)
 	MetaProgress.buildings_changed.connect(_refresh)
-	MetaProgress.caps_changed.connect(func(_v): _refresh())
-	MetaProgress.scrap_changed.connect(func(_v): _refresh())
+	MetaProgress.caps_changed.connect(_on_caps_changed)
+	_refresh()
 
 
-## ESC backs out of this building detail page first (same effect as the ✕ close
-## button — reuses `_close()`, so the existing X-button behavior is untouched).
-## Consumes the event so the base overview's own ESC→Settings handler doesn't
-## also fire this same frame.
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel"):
-		get_viewport().set_input_as_handled()
-		AudioManager.play_sfx("ui_back")
+	if not event.is_action_pressed("ui_cancel"):
+		return
+	get_viewport().set_input_as_handled()
+	AudioManager.play_sfx("ui_back")
+	if is_instance_valid(_upgrade_popover):
+		_dismiss_upgrade_popover()
+	else:
 		_close()
 
 
 func _build() -> void:
-	# Full-screen, merchant-style framing: a per-building (or fallback) background,
-	# a dark readability shade, then a large centered framed panel.
 	_add_scene_background()
 
-	# Near-fullscreen framed board: fill the viewport (minus a small frame margin) so
-	# big grids — a 40-slot stash, the market shelf — have real room instead of being
-	# crammed into a small centered card.
 	var outer := MarginContainer.new()
 	outer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		outer.add_theme_constant_override(side, 40)
+	# The accepted Market mockup uses the service stack down to y≈1044 at
+	# 1920x1080. Keep the shared top/side geometry, but give that one screen its
+	# measured 36px bottom breathing room (20 outer + 16 board margin).
+	if building_id == "market":
+		outer.add_theme_constant_override("margin_bottom", 20)
 	add_child(outer)
 
-	# The big framed board — the lightline window frame (concept parity), same
-	# olive-metal chrome on all four buildings. The accent survives on the header
-	# title/icon, not the frame.
 	var board := PanelContainer.new()
+	board.name = "BuildingBoard"
 	board.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	board.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	board.add_theme_stylebox_override("panel", T.ll_panel())
+	# The accepted building concepts use independently floating top/service
+	# panels over a visible room, not one opaque full-screen slab. Keep the stable
+	# BuildingBoard hook as a pure layout container.
+	board.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	outer.add_child(board)
 
 	var margin := MarginContainer.new()
-	for side in ["margin_left", "margin_right"]:
-		margin.add_theme_constant_override(side, 34)
-	for side in ["margin_top", "margin_bottom"]:
-		margin.add_theme_constant_override(side, 24)
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_bottom", 16)
 	board.add_child(margin)
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 14)
+	vbox.add_theme_constant_override("separation", 0 if building_id == "market" else 12)
 	margin.add_child(vbox)
+	vbox.add_child(_build_top_bar())
 
-	# --- Header band: building icon + name/flavour, then tier + cost chip + close ---
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 18)
-	vbox.add_child(header)
+	_services_scroll = ScrollContainer.new()
+	_services_scroll.name = "BuildingServicesScroll"
+	_services_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_services_scroll.custom_minimum_size = Vector2(0, 420)
+	_services_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	vbox.add_child(_services_scroll)
 
-	var icon_frame := PanelContainer.new()
-	icon_frame.add_theme_stylebox_override("panel", T.panel_textured("dark"))
-	icon_frame.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	header.add_child(icon_frame)
-	var icon := TextureRect.new()
-	icon.custom_minimum_size = Vector2(104, 104)
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var icon_path := "%s%s.png" % [_ICON_DIR, building_id]
-	if ResourceLoader.exists(icon_path):
-		icon.texture = load(icon_path)
-	icon_frame.add_child(icon)
-
-	var title_box := VBoxContainer.new()
-	title_box.add_theme_constant_override("separation", 3)
-	title_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	header.add_child(title_box)
-	var name_lbl := Label.new()
-	name_lbl.text = tr("UI_BUILD_%s_NAME" % building_id.to_upper())
-	_style_label(name_lbl, 40, accent, 3)
-	title_box.add_child(name_lbl)
-	var flavour_lbl := Label.new()
-	flavour_lbl.text = _flavour_text()
-	flavour_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	flavour_lbl.custom_minimum_size = Vector2(560, 0)
-	_style_label(flavour_lbl, 17, Color(0.82, 0.76, 0.62), 1)
-	title_box.add_child(flavour_lbl)
-
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(spacer)
-
-	var right_box := VBoxContainer.new()
-	right_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	right_box.add_theme_constant_override("separation", 6)
-	header.add_child(right_box)
-	_header_right_box = right_box
-	_tier_badge = Label.new()
-	_tier_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_style_label(_tier_badge, 24, Color(0.90, 0.90, 0.86), 2)
-	right_box.add_child(_tier_badge)
-	_rebuild_cost_row()
-
-	# Square lightline ✕ at its native aspect (owner: no stretched close buttons).
-	var close_btn := T.ll_close_button(48.0)
-	close_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	close_btn.pressed.connect(_close)
-	header.add_child(close_btn)
-
-	vbox.add_child(HSeparator.new())
-
-	# Note: the unlock/upgrade action card moved to the base overview (a button under
-	# each building's floating label). The detail page is services-only now.
-
-	# --- Scrollable content area: subclasses populate this; base shows placeholder.
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.custom_minimum_size = Vector2(0, 384)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	vbox.add_child(scroll)
-
-	# Inner margin so content doesn't crowd the frame edge / scrollbar.
 	var content_margin := MarginContainer.new()
-	content_margin.add_theme_constant_override("margin_left", 6)
-	content_margin.add_theme_constant_override("margin_right", 16)
-	content_margin.add_theme_constant_override("margin_top", 4)
-	content_margin.add_theme_constant_override("margin_bottom", 4)
+	content_margin.add_theme_constant_override("margin_left", 8)
+	# The accepted Market stack reaches x≈1849 at 1920px; its generated frame
+	# has its own right inset, so reserve only 7px here. Other buildings keep the
+	# shared 16px service gutter.
+	content_margin.add_theme_constant_override("margin_right", 7 if building_id == "market" else 16)
+	content_margin.add_theme_constant_override("margin_top", 0 if building_id == "market" else 8)
+	content_margin.add_theme_constant_override("margin_bottom", 0 if building_id == "market" else 8)
 	content_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(content_margin)
+	_services_scroll.add_child(content_margin)
 
 	_content_box = VBoxContainer.new()
+	_content_box.name = "BuildingServicesContent"
 	_content_box.add_theme_constant_override("separation", 10)
 	_content_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content_margin.add_child(_content_box)
 
-	# --- Bottom bar: prominent LEAVE / back button (bottom-right).
-	vbox.add_child(HSeparator.new())
-	var footer := HBoxContainer.new()
-	footer.add_theme_constant_override("separation", 12)
-	vbox.add_child(footer)
-	var foot_spacer := Control.new()
-	foot_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	footer.add_child(foot_spacer)
-	var leave_btn := Button.new()
-	leave_btn.text = tr("UI_BUILD_LEAVE")
-	leave_btn.custom_minimum_size = Vector2(200, 48)
-	leave_btn.add_theme_font_size_override("font_size", 20)
-	T.apply_button_theme(leave_btn)
-	leave_btn.pressed.connect(func() -> void: AudioManager.play_sfx("ui_back"))
-	leave_btn.pressed.connect(_close)
-	footer.add_child(leave_btn)
-
 	_build_content(_content_box)
-	_refresh()
 
 
-## Full-rect background: a per-building placeholder image if Codex has delivered
-## one, else a dark ColorRect tinted toward `accent`. Always topped with a dark
-## shade for label readability (mirrors home_base / shop framing).
+func _build_top_bar() -> Control:
+	var bar := PanelContainer.new()
+	bar.name = "BuildingTopBar"
+	bar.custom_minimum_size = Vector2(0, 86)
+	bar.add_theme_stylebox_override("panel", T.ll_titlebar())
+
+	var pad := MarginContainer.new()
+	pad.add_theme_constant_override("margin_left", 18)
+	pad.add_theme_constant_override("margin_right", 14)
+	pad.add_theme_constant_override("margin_top", 10)
+	pad.add_theme_constant_override("margin_bottom", 10)
+	bar.add_child(pad)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	pad.add_child(row)
+
+	var left := HBoxContainer.new()
+	left.name = "BuildingTopBarLeft"
+	left.custom_minimum_size = Vector2(_TOPBAR_SIDE_WIDTH, 0)
+	left.add_theme_constant_override("separation", 14)
+	left.alignment = BoxContainer.ALIGNMENT_BEGIN
+	row.add_child(left)
+
+	_upgrade_button = Button.new()
+	_upgrade_button.name = "BuildingUpgradeButton"
+	_upgrade_button.text = _local_text("升级", "UPGRADE")
+	_upgrade_button.custom_minimum_size = Vector2(132, 54)
+	_upgrade_button.focus_mode = Control.FOCUS_NONE
+	_upgrade_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_upgrade_button.add_theme_font_override("font", T.display_font(700))
+	_upgrade_button.add_theme_font_size_override("font_size", 19)
+	_upgrade_button.add_theme_constant_override("icon_max_width", 24)
+	_upgrade_button.add_theme_color_override("font_color", Color(1.0, 0.91, 0.72))
+	_upgrade_button.add_theme_color_override("font_hover_color", Color(1.0, 0.97, 0.84))
+	_upgrade_button.icon = T.lightline_tex("icon_uparrow")
+	_upgrade_button.expand_icon = true
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		_upgrade_button.add_theme_stylebox_override(state, T.ll_button(state))
+	_upgrade_button.pressed.connect(_toggle_upgrade_popover)
+	left.add_child(_upgrade_button)
+
+	_caps_host = HBoxContainer.new()
+	_caps_host.name = "BuildingCapsBalance"
+	_caps_host.alignment = BoxContainer.ALIGNMENT_CENTER
+	_caps_host.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	left.add_child(_caps_host)
+	_rebuild_caps_row()
+
+	var centre := CenterContainer.new()
+	centre.name = "BuildingTopBarCentre"
+	centre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(centre)
+
+	var identity := HBoxContainer.new()
+	identity.add_theme_constant_override("separation", 12)
+	identity.alignment = BoxContainer.ALIGNMENT_CENTER
+	centre.add_child(identity)
+
+	var badge := TextureRect.new()
+	badge.name = "BuildingTopBarBadge"
+	badge.custom_minimum_size = Vector2(54, 54)
+	badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var badge_path := "%sbadge_%s.png" % [_BADGE_DIR, building_id]
+	if ResourceLoader.exists(badge_path):
+		badge.texture = load(badge_path)
+	identity.add_child(badge)
+
+	var name_label := Label.new()
+	name_label.name = "BuildingTopBarTitle"
+	name_label.text = tr("UI_BUILD_%s_NAME" % building_id.to_upper())
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	name_label.add_theme_font_override("font", T.display_font(700))
+	name_label.add_theme_font_size_override("font_size", 34)
+	name_label.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
+	name_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.85))
+	name_label.add_theme_constant_override("outline_size", 2)
+	identity.add_child(name_label)
+
+	var right := HBoxContainer.new()
+	right.name = "BuildingTopBarRight"
+	right.custom_minimum_size = Vector2(_TOPBAR_SIDE_WIDTH, 0)
+	right.alignment = BoxContainer.ALIGNMENT_END
+	row.add_child(right)
+
+	var close_btn := T.ll_close_button(52.0)
+	close_btn.name = "BuildingCloseButton"
+	close_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	close_btn.pressed.connect(_on_close_pressed)
+	right.add_child(close_btn)
+	return bar
+
+
 func _add_scene_background() -> void:
 	var bg_path := "%s%s_bg.png" % [_BG_DIR, building_id]
+	# The accepted Market composition is an indoor mutant bazaar. Preserve the
+	# legacy outdoor building background on disk for compatibility, but prefer the
+	# purpose-built clean interior whenever the new asset is available.
+	if building_id == "market" and ResourceLoader.exists(_MARKET_INTERIOR_BG):
+		bg_path = _MARKET_INTERIOR_BG
 	if ResourceLoader.exists(bg_path):
 		var bg := TextureRect.new()
 		bg.texture = load(bg_path)
@@ -244,23 +239,27 @@ func _add_scene_background() -> void:
 		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 		add_child(bg)
 	else:
-		# Dark base tinted a touch toward the building accent so the 5 screens
-		# feel distinct even without final art.
 		var tint := accent
 		var bg := ColorRect.new()
-		bg.color = Color(tint.r * 0.10 + 0.02, tint.g * 0.10 + 0.02, tint.b * 0.10 + 0.02, 1.0)
+		bg.color = Color(
+			tint.r * 0.10 + 0.02,
+			tint.g * 0.10 + 0.02,
+			tint.b * 0.10 + 0.02,
+			1.0,
+		)
 		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 		add_child(bg)
 
 	var shade := ColorRect.new()
-	shade.color = Color(0.0, 0.0, 0.0, 0.72)
+	# The regenerated interiors already reserve a quiet centre for the service UI.
+	# Keep only a light veil on Clinic/Outpost; the former 50% shade erased the
+	# flat cel colors and made the rooms look like gritty dark-fantasy scenes.
+	shade.color = Color(0.0, 0.0, 0.0, 0.0 if building_id == "market" else 0.16)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(shade)
 
 
-## Extension point. Subclasses override to fill the content VBox with their
-## tier-gated functions. The base implementation shows a placeholder label.
 func _build_content(container: VBoxContainer) -> void:
 	var placeholder := Label.new()
 	placeholder.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -269,50 +268,103 @@ func _build_content(container: VBoxContainer) -> void:
 	container.add_child(placeholder)
 
 
-# --- Per-building copy (translation-driven; subclasses may override) ---------
-
-
-## One-line tagline shown under the building name. CSV: UI_BUILD_<ID>_FLAVOUR.
 func _flavour_text() -> String:
 	return tr("UI_BUILD_%s_FLAVOUR" % building_id.to_upper())
 
 
-# --- State refresh ----------------------------------------------------------
-
-
-## (Re)build the header cost chip: the currency the building's next action spends
-## (Scrap while locked, Caps once unlocked) with the matching live balance. Called
-## on build + whenever a currency/building signal fires (the currency can flip when
-## the building unlocks, so the whole row — icon included — is rebuilt).
-func _rebuild_cost_row() -> void:
-	if not is_instance_valid(_header_right_box):
+func _toggle_upgrade_popover() -> void:
+	if is_instance_valid(_upgrade_popover):
+		_dismiss_upgrade_popover()
 		return
-	if is_instance_valid(_cost_row):
-		_cost_row.queue_free()
-	var currency := MetaProgress.building_cost_currency(building_id)
-	var balance: int = MetaProgress.scrap if currency == "scrap" else MetaProgress.caps
-	_cost_row = T.currency_row(balance, currency, 22, 24)
-	_cost_row.alignment = BoxContainer.ALIGNMENT_END
-	_header_right_box.add_child(_cost_row)
-	_cost_amount_lbl = _cost_row.get_meta("amount_label") as Label
-	if is_instance_valid(_cost_amount_lbl):
-		_cost_amount_lbl.add_theme_color_override("font_color", Color(0.90, 0.86, 0.64))
+	AudioManager.play_sfx("ui_click")
+	_upgrade_popover = BUILDING_UPGRADE_POPOVER.new()
+	_upgrade_popover.setup(building_id)
+	_upgrade_popover.state_changed.connect(_on_upgrade_state_changed)
+	_upgrade_popover.dismissed.connect(_dismiss_upgrade_popover)
+	add_child(_upgrade_popover)
+	call_deferred("_position_upgrade_popover")
 
 
-## Update the tier badge, cost chip, and action card to the current building state.
-## Safe to call repeatedly (wired to buildings/currency change signals).
+func _position_upgrade_popover() -> void:
+	if not is_instance_valid(_upgrade_popover) or not is_instance_valid(_upgrade_button):
+		return
+	var button_anchor_global := _upgrade_button.global_position + Vector2(
+		_upgrade_button.size.x * 0.5,
+		_upgrade_button.size.y - 3.0,
+	)
+	var local_anchor := button_anchor_global - global_position
+	var x := local_anchor.x - _POPOVER_POINTER_X
+	x = clampf(x, 8.0, maxf(8.0, size.x - _POPOVER_SIZE.x - 8.0))
+	var y := minf(local_anchor.y, size.y - _POPOVER_SIZE.y - 8.0)
+	_upgrade_popover.position = Vector2(x, y)
+
+
+func _dismiss_upgrade_popover() -> void:
+	if not is_instance_valid(_upgrade_popover):
+		_upgrade_popover = null
+		return
+	var popover := _upgrade_popover
+	_upgrade_popover = null
+	popover.queue_free()
+
+
+func _on_upgrade_state_changed(_id: String, _tier: int) -> void:
+	_refresh()
+
+
+func _on_caps_changed(_value: int) -> void:
+	_rebuild_caps_row()
+
+
+func _rebuild_caps_row() -> void:
+	if not is_instance_valid(_caps_host):
+		return
+	for child in _caps_host.get_children():
+		_caps_host.remove_child(child)
+		child.queue_free()
+	var row := T.currency_row(MetaProgress.caps, "caps", 23, 27)
+	_move_currency_icon_first(row)
+	var amount_label := row.get_meta("amount_label") as Label
+	if is_instance_valid(amount_label):
+		amount_label.add_theme_font_override("font", T.display_font(700))
+		amount_label.add_theme_color_override("font_color", Color(0.94, 0.86, 0.68))
+	_caps_host.add_child(row)
+
+
+func _move_currency_icon_first(row: HBoxContainer) -> void:
+	for child in row.get_children():
+		if child is TextureRect:
+			row.move_child(child, 0)
+			return
+
+
 func _refresh() -> void:
-	_rebuild_cost_row()
+	_rebuild_caps_row()
 	var tier := MetaProgress.get_building_tier(building_id)
-	if is_instance_valid(_tier_badge):
-		_tier_badge.text = tr("UI_BUILD_LOCKED") if tier <= 0 else "T%d" % tier
+	if is_instance_valid(_services_scroll):
+		_services_scroll.visible = tier > 0
+	if is_instance_valid(_upgrade_button):
+		var maxed := tier >= MetaProgress.MAX_BUILDING_TIER
+		_upgrade_button.disabled = maxed
+		_upgrade_button.modulate = Color.WHITE if not maxed else Color(0.58, 0.58, 0.58, 0.88)
+		_upgrade_button.tooltip_text = tr("UI_BUILD_MAX") if maxed else ""
+
+
+func _on_close_pressed() -> void:
+	AudioManager.play_sfx("ui_back")
+	_close()
 
 
 func _close() -> void:
+	_dismiss_upgrade_popover()
 	if on_close.is_valid():
 		on_close.call()
 	else:
 		queue_free()
+
+
+func _local_text(zh: String, en: String) -> String:
+	return zh if Settings.language == "zh" else en
 
 
 func _style_label(label: Label, font_size: int, color: Color, outline_size: int) -> void:
@@ -322,31 +374,68 @@ func _style_label(label: Label, font_size: int, color: Color, outline_size: int)
 	label.add_theme_constant_override("outline_size", outline_size)
 
 
-# ─── Phase B: shared building-content helpers ───────────────────────────────
-# Subclasses call these instead of hand-rolling PanelContainer/Label boilerplate
-# so the 5 screens share one visual language. Keep DRY: if a screen needs a
-# variant, extend the helper rather than forking a parallel styling path.
+## Frameless character-art stage shared by the three full-screen buildings.
+## The approved concepts place the NPC directly over the darkened building
+## dressing; adding a second portrait card would create the unwanted nested-box
+## look.  The transparent asset therefore owns the silhouette and floor shadow,
+## while this node only reserves composition space.  A quiet building glyph is
+## kept as a warn-free fallback until Godot has imported a newly delivered PNG.
+func _build_npc_art_stage(
+	texture_path: String,
+	node_name: String,
+	minimum_size: Vector2,
+	fallback_icon: String,
+) -> Control:
+	var stage := Control.new()
+	stage.name = node_name
+	stage.custom_minimum_size = minimum_size
+	stage.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stage.clip_contents = true
+	stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var tex: Texture2D = null
+	if ResourceLoader.exists(texture_path):
+		tex = load(texture_path) as Texture2D
+	if tex != null:
+		var art := TextureRect.new()
+		art.name = "%sArt" % node_name
+		art.texture = tex
+		art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		stage.add_child(art)
+		return stage
+
+	var fallback := CenterContainer.new()
+	fallback.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	fallback.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stage.add_child(fallback)
+	var fallback_tex := T.lightline_tex(fallback_icon)
+	if fallback_tex != null:
+		var icon := TextureRect.new()
+		icon.texture = fallback_tex
+		icon.custom_minimum_size = Vector2(128, 128)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.modulate = Color(1.0, 1.0, 1.0, 0.42)
+		fallback.add_child(icon)
+	return stage
 
 
-## A section header for a block of content: a hairline rule, then a gold,
-## uppercased title. Use to open every logical group (a workbench, a shop
-## shelf, an upgrade category) so the 5 screens share one section rhythm.
 func _section_header(text: String) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 6)
 	box.add_child(HSeparator.new())
-	var lbl := Label.new()
-	lbl.text = text.to_upper()
-	_style_label(lbl, TOK_FONT_SECTION, TOK_GOLD, 2)
-	box.add_child(lbl)
+	var label := Label.new()
+	label.text = text.to_upper()
+	_style_label(label, TOK_FONT_SECTION, TOK_GOLD, 2)
+	box.add_child(label)
 	return box
 
 
-## A consistent StyleBox'd panel for a content block (a card, a shop shelf, a
-## workbench column). `dark` picks the darker recessed fill (nested panels /
-## drop targets); otherwise the standard panel fill. Wrap the returned
-## PanelContainer's single child in a MarginContainer for inner padding, or use
-## `_row_panel()` below when the content is a simple list row.
 func _styled_panel(dark: bool = false) -> PanelContainer:
 	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
@@ -362,11 +451,6 @@ func _styled_panel(dark: bool = false) -> PanelContainer:
 	return panel
 
 
-## A single list row (an upgrade row, a stash line, a shop entry): a styled
-## panel pre-wired with an inner MarginContainer + HBoxContainer so callers
-## just `row.add_child(...)` their label/price/button in a horizontal line.
-## Returns the HBoxContainer — the caller adds THAT row's content, then adds
-## the owning panel (`row.get_meta("_panel")`) to its own parent container.
 func _row_panel() -> HBoxContainer:
 	var panel := _styled_panel(false)
 	var margin := MarginContainer.new()
@@ -376,19 +460,19 @@ func _row_panel() -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# Stash the owning panel so a caller that needs the panel itself (e.g. to set
-	# custom_minimum_size or swap the stylebox) can fetch it back.
 	row.set_meta("_panel", panel)
 	margin.add_child(row)
 	return row
 
 
-## Apply the shared body/dim text styling in one call — thin wrapper over
-## `_style_label` with the Phase-B body-text token, so callers don't need to
-## remember the exact color/size for "ordinary paragraph text".
 func _body_label(text: String, dim: bool = false) -> Label:
-	var lbl := Label.new()
-	lbl.text = text
-	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(lbl, TOK_FONT_DIM if dim else TOK_FONT_BODY, TOK_TEXT_DIM if dim else TOK_TEXT, 1)
-	return lbl
+	var label := Label.new()
+	label.text = text
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(
+		label,
+		TOK_FONT_DIM if dim else TOK_FONT_BODY,
+		TOK_TEXT_DIM if dim else TOK_TEXT,
+		1,
+	)
+	return label

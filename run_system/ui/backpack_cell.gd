@@ -87,7 +87,7 @@ func _make_preview() -> Control:
 	if preview_tex:
 		var texture_rect := TextureRect.new()
 		texture_rect.texture = preview_tex
-		texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		texture_rect.set_anchors_preset(Control.PRESET_FULL_RECT)

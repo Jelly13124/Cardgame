@@ -1,0 +1,31 @@
+Built-in ImageGen edit prompt, 2026-07-19
+
+Asset: production Strike player-card illustration; final runtime crop 512x320.
+
+Image 1: existing strike.png edit target.
+Image 2: approved card UI concept, used only for the larger and cleaner illustration
+composition inside its art window. Its card frame, ribbon, badge, labels, and text
+must not enter the illustration.
+Image 3: Cowboy Bill identity anchor.
+Image 4: project wasteland palette/environment anchor.
+
+Redraw the same single action: Cowboy Bill stands on the left and fires one
+salvaged revolver rightward at one original junk-tech robot. Make both subjects
+larger and more readable inside the 8:5 landscape crop. Preserve Bill's exactly
+one orange camera eye, cylindrical head, oversized brown hat with gold star,
+single antenna, red scarf, patched duster, skull belt badge, chunky boots, and
+right-facing pose. The enemy faces left and recoils from one hit.
+
+Use original simple flat 2D American-comic sci-fi western TV-cartoon game art:
+confident slightly wobbly dark outlines, rubbery off-kilter anatomy, large flat
+shape blocks, controlled interior lines, broad two-to-three-value cel shading,
+and controlled medium-low detail. Use a quiet pale desert assembled from a few
+broad sky, mesa, and ground shapes. Keep only one compact muzzle flash and one
+compact impact star.
+
+No text, letters, numbers, title, labels, speech bubbles, logo, watermark, card
+frame, UI border, cost badge, rarity decoration, ribbon, type tab, description
+box, or black card body. No second eye, duplicate weapon, extra character,
+extra projectile, dense rocks, debris clouds, scratches, hatching, texture noise,
+rivet fields, dense panel lines, realistic mechanics, cinematic lighting,
+photorealism, painterly rendering, or copied franchise designs.

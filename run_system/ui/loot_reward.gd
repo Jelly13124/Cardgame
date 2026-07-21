@@ -158,12 +158,20 @@ func _generate_loot() -> void:
 		equip_rarity = "uncommon"
 	elif node_type != "boss":
 		equip_rarity = "common"
-	if equip_rarity != "" and randf() < RunManager.luck_equip_chance():
-		var einst := RunManager.roll_shell_drop(equip_rarity)
+	var demo_set_due := equip_rarity != "" and RunManager.should_offer_demo_set_piece()
+	if equip_rarity != "" and (demo_set_due or randf() < RunManager.luck_equip_chance()):
+		var einst := RunManager.roll_demo_set_piece() if demo_set_due else {}
+		if einst.is_empty():
+			einst = RunManager.roll_shell_drop(equip_rarity)
 		var equip_id := str(einst.get("base", ""))
 		if equip_id != "":
 			var edata := RunManager.get_equipment_data(equip_id)
 			var einst_rarity := str(einst.get("rarity", equip_rarity))
+			var subtitle := ""
+			if demo_set_due:
+				var set_id := str(edata.get("set_id", ""))
+				var set_name := Settings.t("SET_%s_NAME" % set_id, set_id.replace("_", " ").capitalize())
+				subtitle = tr("UI_LOOT_DEMO_SET_SUBTITLE").format({"set": set_name})
 			var spr := str(edata.get("sprite", ""))
 			var icon_path := (
 				"res://battle_scene/assets/images/%s" % spr
@@ -180,9 +188,10 @@ func _generate_loot() -> void:
 					"item_id": equip_id,
 					"rarity": einst_rarity,
 					"instance": einst,
+					"demo_set_piece": demo_set_due,
 					"title":
 					Settings.t("EQUIP_%s_NAME" % equip_id, str(edata.get("name", equip_id))),
-					"subtitle": "",
+					"subtitle": subtitle,
 					"icon": icon_path,
 					"action": tr("UI_LOOT_ACTION_TAKE")
 				}
@@ -241,15 +250,6 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	title.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	copy.add_child(title)
-
-	var subtitle_text := str(loot.get("subtitle", ""))
-	if subtitle_text != "":
-		var subtitle = Label.new()
-		subtitle.text = subtitle_text
-		subtitle.add_theme_color_override("font_color", T.TEXT_SECONDARY)
-		subtitle.add_theme_font_size_override("font_size", 18)
-		subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		copy.add_child(subtitle)
 
 	row.add_child(_make_claim_plate(str(loot.get("action", tr("UI_LOOT_ACTION_CLAIM")))))
 	return button
@@ -344,7 +344,9 @@ func _on_loot_selected(loot_id: String, button: Button) -> void:
 		_open_card_draft()
 		button.queue_free()
 	elif loot["type"] == "equipment":
-		_claim_equipment_drop(loot.get("instance", {}), button)
+		_claim_equipment_drop(
+			loot.get("instance", {}), button, bool(loot.get("demo_set_piece", false))
+		)
 	elif loot["type"] == "tool":
 		_claim_tool_drop(str(loot.get("tool_id", "")), button)
 
@@ -671,12 +673,16 @@ func _claim_tool_drop(tool_id: String, button: Button) -> void:
 	_show_backpack_full_toast(tr("UI_LOOT_TOOL_SLOTS_FULL"))
 
 
-func _claim_equipment_drop(instance: Dictionary, button: Button) -> void:
+func _claim_equipment_drop(
+	instance: Dictionary, button: Button, is_demo_set_piece: bool = false
+) -> void:
 	if instance.is_empty():
 		return
 	# The instance (with its rolled affixes) was already created when the loot was
 	# built, so what the player saw is exactly what they get.
 	if RunManager.add_to_inventory(instance):
+		if is_demo_set_piece:
+			RunManager.mark_demo_set_piece_claimed(instance)
 		button.queue_free()
 		return
 	# Backpack full → warn, then open the discard-one-to-take modal.
@@ -684,7 +690,12 @@ func _claim_equipment_drop(instance: Dictionary, button: Button) -> void:
 	button.disabled = true
 	var modal = INVENTORY_FULL_MODAL.new()
 	modal.setup(instance)
-	modal.resolved.connect(func(_took_item: bool): button.queue_free())
+	modal.resolved.connect(
+		func(took_item: bool):
+			if took_item and is_demo_set_piece:
+				RunManager.mark_demo_set_piece_claimed(instance)
+			button.queue_free()
+	)
 	add_child(modal)
 
 

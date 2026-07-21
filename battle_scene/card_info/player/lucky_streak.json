@@ -6,7 +6,7 @@
 	"cost": 1,
 	"polarity": "neutral",
 	"description": "Gain 2 Luck (raises crit chance and loot rarity).",
-	"front_image": "player/adrenaline.png",
+	"front_image": "player/lucky_streak.png",
 	"side": "player",
 	"effects": [
 		{

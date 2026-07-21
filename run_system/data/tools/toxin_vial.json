@@ -1,12 +1,12 @@
 {
   "id": "toxin_vial",
-  "title": "Rusty Blade",
+  "title": "Capacitor Spike",
   "target": "enemy",
   "effects": [
     {
       "type": "apply_status",
-      "status": "bleed",
-      "stacks": 4
+      "status": "short_circuit",
+      "stacks": 10
     }
   ],
   "icon": "res://run_system/assets/images/ui/tools/toxin_vial.png"

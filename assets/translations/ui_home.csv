@@ -38,7 +38,7 @@ UI_BUILD_CLINIC_NAME,Clinic,义体诊所
 UI_BUILD_MARKET_NAME,Market,黑市
 UI_BUILD_OUTPOST_NAME,Outpost,前哨站
 UI_BUILD_UNLOCK,Unlock — {n} Scrap,解锁 —— {n} 废料
-UI_BUILD_UPGRADE,Upgrade T{n} — {c} Caps,升级 T{n} —— {c} 瓶盖
+UI_BUILD_UPGRADE,Upgrade T{n} — {c} Scrap,升级 T{n} —— {c} 废料
 UI_BUILD_MAX,Max tier,已满级
 UI_BUILD_LOCKED,Locked,未解锁
 UI_BUILD_COMING,Functions coming soon,功能即将到来

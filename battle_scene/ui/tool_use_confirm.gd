@@ -72,6 +72,7 @@ func _ready() -> void:
 	icon.custom_minimum_size = Vector2(72, 72)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var icon_path := str(_tool_data.get("icon", ""))
 	if icon_path != "" and ResourceLoader.exists(icon_path):

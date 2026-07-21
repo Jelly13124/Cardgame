@@ -1,0 +1,2 @@
+# Archived generation output. Runtime uses res://run_system/assets/images/ui_kit_lightline/.
+# Excluding this tree prevents copied import UIDs from colliding with production assets.

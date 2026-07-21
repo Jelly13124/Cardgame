@@ -60,7 +60,7 @@ static func text(data: Dictionary, slot: String, instance: Dictionary = {}) -> S
 				lines.append("[color=#5fd06a]%s[/color]" % label)
 
 	if set_id != "":
-		var set_name := Settings.t("EQUIP_SET_%s_NAME" % set_id, set_id.replace("_", " "))
+		var set_name := Settings.t("SET_%s_NAME" % set_id, set_id.replace("_", " "))
 		var prefix := Settings.t("UI_EQUIP_SET_PREFIX", "Set: {name}")
 		lines.append("[i]%s[/i]" % prefix.format({"name": set_name}))
 	var desc := Settings.t("EQUIP_%s_DESC" % item_id, str(data.get("description", "")))

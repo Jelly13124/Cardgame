@@ -8,8 +8,8 @@ poster_frame_blank ✓、悬赏海报插画×10 ✓、npc_blacksmith ✓、anvil
 
 ## 风格锚点(必读)
 
-- `docs/project-rules.md` §1 — Rick and Morty 风格 Sci-Fi Cartoon Wasteland:
-  粗黑描边、大色块、平涂 cel、废土工业。
+- `docs/project-rules.md` §1 — 原创 2D 美漫科幻西部风格:
+  清晰深色描边、大色块、平涂 cel、轻量 UI07 废土工业语言。
 - **UI 风格参考 = 概念图**:`docs/art/previews/base_building_*_20260707.png`
   (forge×4 / clinic / market / outpost)。新素材必须和这批概念图 + 已切好的
   `run_system/assets/images/ui_kit_lightline/` 组件(橄榄绿金属框 + 橙色主按钮)

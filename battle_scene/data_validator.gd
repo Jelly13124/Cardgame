@@ -72,27 +72,30 @@ const ALLOWED_EFFECT_TYPES = [
 	"apply_status",
 	"apply_status_self",
 	"apply_status_all",
-	"apply_bleed_scaled",
+	"apply_short_circuit_scaled",
 	"apply_stun",
 	"apply_stun_all",
 	"exhaust_self",
 	"flip_polarity",
 	"lose_hp",
 	"double_strength",
-	"double_target_bleed",
+	"double_target_short_circuit",
+	"detonate_short_circuit",
+	"detonate_short_circuit_all",
 	"deal_damage_block_mult",
 	"gain_gold",
 	"heal",
 	"gain_attack_allowance",
 	"restore_attack_allowance",
-	"gain_block_from_bleed",
+	"consume_short_circuit_for_block",
 	"add_card_to_hand",
 	"lose_gold",
 	"add_curse_to_deck",
 	"discover",
 ]
 const ALLOWED_STATUS_NAMES = [
-	"bleed",
+	"short_circuit",
+	"burn",
 	"weak",
 	"vulnerable",
 	"stun",
@@ -104,7 +107,7 @@ const ALLOWED_STATUS_NAMES = [
 	"feel_no_pain",
 	"hot_streak",
 	"all_in",
-	"hemorrhage",
+	"detonation_protocol",
 	"covering_reload",
 	"bullet",
 ]
@@ -120,6 +123,7 @@ const KNOWN_OPTIONAL_CARD_KEYS = [
 	"front_image",
 	"side",
 	"rarity",
+	"ui_skin",
 	"retain",
 	"polarity",
 	"matched_bonus",
@@ -136,10 +140,10 @@ const ALLOWED_CARD_POLARITIES = ["yin", "yang", "neutral"]
 # `relic_effect_system` at its trigger point (the two-place rule).
 const ALLOWED_RELIC_EFFECT_TYPES = [
 	"add_damage",
-	"add_bleed",
+	"add_short_circuit",
 	"attack_replay",
 	"attack_limit",
-	"thorns_bleed",
+	"thorns_short_circuit",
 	"add_card",
 	"add_card_to_hand",
 	"apply_self_status",
@@ -174,9 +178,12 @@ const ENCOUNTER_BUDGETS := {
 }
 const ALLOWED_ENEMY_ACTION_TYPES = [
 	"attack",
+	"attack_ramp",
 	"attack_status",
 	"attack_all",
 	"block",
+	"breakable_block",
+	"reflective_plating",
 	"heal",
 	"telegraph",
 	"summon",
@@ -184,7 +191,7 @@ const ALLOWED_ENEMY_ACTION_TYPES = [
 	"add_curse",
 ]
 # Action types that require a `status` field
-const STATUS_BEARING_ACTIONS = ["attack_status"]
+const STATUS_BEARING_ACTIONS = ["attack_status", "breakable_block"]
 
 # ─── Equipment schema ────────────────────────────────────────────────────────
 const REQUIRED_EQUIPMENT_KEYS = ["id", "name", "slot", "rarity", "bonuses", "description", "sprite"]
@@ -229,11 +236,7 @@ const STATUS_BEARING_SET_EFFECTS = ["attack_apply_status"]
 const REQUIRED_BASE_UPGRADE_KEYS = ["id", "name", "description", "effect_key", "tiers"]
 const REQUIRED_BASE_UPGRADE_TIER_KEYS = ["level", "cost", "effect_value", "effect_text"]
 const ALLOWED_BASE_UPGRADE_EFFECT_KEYS = [
-	"max_hp_bonus",
-	"shop_discount",
 	"starting_gold",
-	"unlock_hero",
-	"starter_attributes",
 	"reroll_tokens",
 	"tool_slots",
 	"safe_cells_bonus",
@@ -352,7 +355,6 @@ static func validate_encounter_pools() -> int:
 					failures += 1
 
 	failures += _validate_tier_roster("ELITE_ROSTER", RunManager.ELITE_ROSTER, "elite", enemies)
-	failures += _validate_tier_roster("BOSS_ROSTER", RunManager.BOSS_ROSTER, "boss", enemies)
 	failures += _validate_tier_roster("ACT_BOSSES", RunManager.ACT_BOSSES, "boss", enemies)
 	return failures
 
@@ -719,6 +721,23 @@ static func _validate_enemy_actions(actions: Array, prefix: String, label: Strin
 						% [prefix, label, i, action["status"], ALLOWED_STATUS_NAMES]
 					)
 				)
+				ok = false
+		if atype == "attack_ramp":
+			if int(action.get("amount", 0)) <= 0:
+				push_error("%s: %s[%d] (attack_ramp) needs a positive 'amount'" % [prefix, label, i])
+				ok = false
+			if int(action.get("multiplier", 0)) <= 1:
+				push_error("%s: %s[%d] (attack_ramp) 'multiplier' must be greater than 1" % [prefix, label, i])
+				ok = false
+		if atype == "breakable_block" and int(action.get("amount", 0)) <= 0:
+			push_error("%s: %s[%d] (breakable_block) needs a positive 'amount'" % [prefix, label, i])
+			ok = false
+		if atype == "reflective_plating":
+			if int(action.get("amount", 0)) <= 0:
+				push_error("%s: %s[%d] (reflective_plating) needs positive Block 'amount'" % [prefix, label, i])
+				ok = false
+			if int(action.get("thorns", 0)) <= 0:
+				push_error("%s: %s[%d] (reflective_plating) needs positive 'thorns'" % [prefix, label, i])
 				ok = false
 		# `buff_self` applies a status to the acting enemy → needs a valid status.
 		if atype == "buff_self":

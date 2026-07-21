@@ -1,0 +1,21 @@
+Built-in ImageGen prompt, 2026-07-19
+
+Asset: strike player-card illustration, final runtime crop 512x320.
+Image 1: the simpler strike draft, used as the composition target.
+Image 2: cowboy_bill_identity_offbeat_v2.png, used for Bill's identity only.
+
+Preserve Cowboy Bill on the left firing once at one junk robot on the right.
+Preserve Bill's one orange camera eye, cylindrical head, oversized brown hat with
+gold star, red scarf, patched brown duster, chunky boots, and salvaged revolver.
+
+Restyle into a Rick-and-Morty-style adult sci-fi TV-cartoon visual language while
+keeping every design original: wobbly confident black outlines, rubbery bent
+limbs, off-kilter proportions, funny-gross sci-fi shapes, expressive recoil, flat
+cel colors, and controlled medium-low detail. Add a few purposeful dents and
+panel seams, one dangling cable, crooked joints, cloth patches, warped alien mesas,
+and one small distant odd planet.
+
+No text, UI, card frame, title, badge, speech bubble, watermark, copied franchise
+character/prop/location, corporate vector smoothness, preschool illustration,
+dense mechanical rendering, rivet fields, scratch fields, hatching, gritty
+texture, realistic lighting, painterly rendering, 3D, or detailed debris clouds.

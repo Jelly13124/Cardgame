@@ -34,14 +34,21 @@ static func _matches(data: Dictionary, pool: String) -> bool:
 	if typeof(tags) == TYPE_ARRAY and pool in tags:
 		return true
 	# Built-in theme detection so a themed pool works without tagging every card.
-	# "bleed": the card applies Bleed (apply_status bleed / apply_bleed_scaled).
-	if pool == "bleed":
+	# Short Circuit includes builders, detonators and alternate charge payoffs.
+	if pool == "short_circuit":
 		for e in data.get("effects", []):
 			if typeof(e) != TYPE_DICTIONARY:
 				continue
 			if (
-				str(e.get("status", "")) == "bleed"
-				or str(e.get("type", "")) == "apply_bleed_scaled"
+				str(e.get("status", "")) == "short_circuit"
+				or str(e.get("type", ""))
+				in [
+					"apply_short_circuit_scaled",
+					"double_target_short_circuit",
+					"detonate_short_circuit",
+					"detonate_short_circuit_all",
+					"consume_short_circuit_for_block",
+				]
 			):
 				return true
 	return false

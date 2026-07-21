@@ -1,10 +1,10 @@
 {
   "id": "sharpened_scrap",
-  "title": "Sharpened Scrap",
-  "description": "Your attack cards apply 1 Bleed to the target.",
+  "title": "Conductive Scrap",
+  "description": "Your attack cards apply 2 Short Circuit to the target.",
   "icon": "res://run_system/assets/images/relics/sharpened_scrap.png",
   "rarity": "common",
   "effects": [
-    { "trigger": "player_attack", "type": "apply_status", "status": "bleed", "amount": 1 }
+    { "trigger": "player_attack", "type": "apply_status", "status": "short_circuit", "amount": 2 }
   ]
 }

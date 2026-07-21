@@ -15,15 +15,16 @@
 ##                 刷新代币 / 工具槽), each icon + name + dots + orange Caps buy
 ##                 via the existing MetaProgress.purchase_upgrade backend.
 ##
-## REMOVED in this redesign: the starter-deck editor (deck_editor), the merchant
-## discount row (scrap_workshop — old saves keep their levels passively), and
-## the difficulty selector (difficulty lives on the home START cluster now).
+## REMOVED in this redesign: the starter-deck editor, the merchant-discount
+## track, and the difficulty selector (difficulty lives on the home START
+## cluster now). Profile migration refunds retired upgrade levels.
 ##
 ## Every lightline PNG lookup falls back to a programmatic StyleBox / spacer so
 ## a missing Codex asset never crashes (warn-free placeholder rule). Reads ONLY
 ## the shared MetaProgress upgrade/bounty API; edits no shared file.
 ## NO class_name (ADR-0006) — instantiate via the base preload below.
 extends "res://run_system/ui/buildings/building_screen_base.gd"
+
 
 const UPGRADE_DIR := "res://run_system/data/base_upgrades/"
 ## Outpost permanent-upgrade ids → the base-upgrade JSON that drives each row (Caps).
@@ -35,18 +36,19 @@ const TOOL_SLOTS_UPGRADE_ID := "tool_slots"
 
 ## The T3 permanent-upgrade rows in concept order: upgrade id → lightline icon.
 const PERMANENT_UPGRADE_ROWS := [
-	{"id": GOLD_UPGRADE_ID, "icon": "icon_coin_gold"},
-	{"id": BACKPACK_UPGRADE_ID, "icon": "icon_backpack"},
-	{"id": REROLL_UPGRADE_ID, "icon": "icon_refresh"},
-	{"id": TOOL_SLOTS_UPGRADE_ID, "icon": "icon_wrench"},
+	{"id": GOLD_UPGRADE_ID, "icon": "icon_coin_gold", "zh": "起始瓶盖", "en": "STARTING CAPS"},
+	{"id": BACKPACK_UPGRADE_ID, "icon": "icon_backpack", "zh": "背包格数", "en": "BACKPACK SLOTS"},
+	{"id": REROLL_UPGRADE_ID, "icon": "icon_refresh", "zh": "奖励刷新", "en": "REWARD REROLLS"},
+	{"id": TOOL_SLOTS_UPGRADE_ID, "icon": "icon_wrench", "zh": "工具槽", "en": "TOOL SLOTS"},
 ]
 
 ## Poster-card fixed width (concept: 4 upright parchment cards in a row).
-const POSTER_CARD_WIDTH := 190.0
+const POSTER_CARD_WIDTH := 220.0
 ## Poster art placeholder height inside the card.
 const POSTER_ART_HEIGHT := 150.0
 ## Progress-dot size (cyan filled / grey empty).
 const DOT_SIZE := 18.0
+const CONTENT_MIN_HEIGHT := 710.0
 
 
 ## Fill the content area. Called once by the base `_build()`; rebuilt wholesale
@@ -88,43 +90,62 @@ func _populate(container: VBoxContainer) -> void:
 		container.add_child(locked)
 		return
 
-	# Concept layout: LEFT wide bounty column + RIGHT column (safe cells over
-	# permanent upgrades).
+	# Accepted concept layout: LEFT permanent upgrades; RIGHT bounties above safe
+	# cells. The Outpost deliberately has no NPC, keeping its dense service layout
+	# readable. This reverses the legacy functional columns but
+	# preserves every existing backend and tier gate.
 	var columns := HBoxContainer.new()
+	columns.name = "OutpostColumns"
 	columns.add_theme_constant_override("separation", 14)
 	columns.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	columns.custom_minimum_size = Vector2(0, CONTENT_MIN_HEIGHT)
 	container.add_child(columns)
 
-	# --- LEFT: 可接悬赏 (T1). ---
-	var left := _lightline_section(tr("UI_OUTPOST_SECT_BOUNTIES"), "icon_poster")
+	# --- LEFT: 永久升级 (T3). ---
+	var left := _lightline_section(tr("UI_OUTPOST_SECT_UPGRADES"), "icon_uparrow")
+	left.name = "OutpostPermanentPanel"
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	left.size_flags_stretch_ratio = 1.55
+	left.size_flags_stretch_ratio = 0.95
 	left.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	columns.add_child(left)
-	_fill_bounty_section(left.get_meta("body") as VBoxContainer)
-
-	# --- RIGHT: 安全格 (T2) + 永久升级 (T3). ---
+	var left_body := left.get_meta("body") as VBoxContainer
+	if MetaProgress.building_can(building_id, "permanent_upgrades"):
+		for row_def in PERMANENT_UPGRADE_ROWS:
+			_add_upgrade_row(
+				left_body,
+				str(row_def["id"]),
+				str(row_def["icon"]),
+				_local_text(str(row_def["zh"]), str(row_def["en"])),
+			)
+	else:
+		_add_lock_note(left_body, tr("UI_OUTPOST_LOCK_UPGRADES"))
+	# --- RIGHT: 可接悬赏 (T1) over 安全格 (T2). ---
 	var right := VBoxContainer.new()
 	right.add_theme_constant_override("separation", 14)
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	right.size_flags_stretch_ratio = 1.0
+	right.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right.size_flags_stretch_ratio = 1.55
 	columns.add_child(right)
 
+	var bounties := _lightline_section(tr("UI_OUTPOST_SECT_BOUNTIES"), "icon_poster")
+	bounties.name = "OutpostBountyPanel"
+	bounties.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bounties.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	bounties.size_flags_stretch_ratio = 1.35
+	right.add_child(bounties)
+	_fill_bounty_section(bounties.get_meta("body") as VBoxContainer)
+
 	var safe := _lightline_section(tr("UI_OUTPOST_SECT_SAFE_CELLS"), "icon_lock")
+	safe.name = "OutpostSafePanel"
+	safe.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	safe.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	safe.size_flags_stretch_ratio = 1.0
 	right.add_child(safe)
 	if MetaProgress.building_can(building_id, "safe_cells"):
 		_fill_safe_cells(safe.get_meta("body") as VBoxContainer)
 	else:
 		_add_lock_note(safe.get_meta("body") as VBoxContainer, tr("UI_OUTPOST_LOCK_SAFE_CELLS"))
-
-	var perm := _lightline_section(tr("UI_OUTPOST_SECT_UPGRADES"), "icon_uparrow")
-	right.add_child(perm)
-	if MetaProgress.building_can(building_id, "permanent_upgrades"):
-		var body := perm.get_meta("body") as VBoxContainer
-		for row_def in PERMANENT_UPGRADE_ROWS:
-			_add_upgrade_row(body, str(row_def["id"]), str(row_def["icon"]))
-	else:
-		_add_lock_note(perm.get_meta("body") as VBoxContainer, tr("UI_OUTPOST_LOCK_UPGRADES"))
 
 
 # --- 可接悬赏 (T1, free take) -------------------------------------------------
@@ -139,9 +160,9 @@ func _fill_bounty_section(body: VBoxContainer) -> void:
 		body.add_child(_body_label(tr("UI_OUTPOST_BOUNTY_EMPTY"), true))
 		return
 
-	var shelf := HFlowContainer.new()
+	var shelf := HBoxContainer.new()
+	shelf.name = "OutpostBountyShelf"
 	shelf.add_theme_constant_override("h_separation", 12)
-	shelf.add_theme_constant_override("v_separation", 12)
 	shelf.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_child(shelf)
 	for id in MetaProgress.bounty_shelf:
@@ -160,7 +181,9 @@ func _build_poster_card(bounty_id: String) -> Control:
 	var reward: Dictionary = reward_v if typeof(reward_v) == TYPE_DICTIONARY else {}
 
 	var card := PanelContainer.new()
+	card.name = "OutpostBountyPoster_%s" % bounty_id
 	card.custom_minimum_size = Vector2(POSTER_CARD_WIDTH, 0)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# poster_frame_blank = the CLEAN 9-slice parchment frame (2026-07-08 Codex
 	# delivery). Its predecessor card_poster was a pre-composed poster whose
 	# baked art frame + button plate ghosted behind the real children — never
@@ -268,6 +291,15 @@ func _build_reward_row(reward: Dictionary) -> Control:
 ##   otherwise             → live orange 免费承接 → MetaProgress.take_bounty.
 func _build_take_button(bounty_id: String) -> Button:
 	var btn := _orange_button(tr("UI_OUTPOST_BOUNTY_TAKE"))
+	T.apply_concept_price_button(btn, "orange")
+	btn.custom_minimum_size = Vector2(199, 65)
+	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	btn.add_theme_font_size_override("font_size", 20)
+	btn.add_theme_color_override("font_color", Color(0.98, 0.91, 0.72))
+	btn.add_theme_color_override("font_hover_color", Color(1.0, 0.97, 0.84))
+	btn.add_theme_color_override("font_pressed_color", Color(0.90, 0.82, 0.64))
+	btn.add_theme_color_override("font_outline_color", Color(0.08, 0.05, 0.02, 0.9))
+	btn.add_theme_constant_override("outline_size", 1)
 	if MetaProgress.is_bounty_active(bounty_id):
 		btn.text = tr("UI_OUTPOST_BOUNTY_TAKEN")
 		btn.disabled = true
@@ -315,9 +347,18 @@ func _fill_safe_cells(body: VBoxContainer) -> void:
 		return
 	var tiers: Array = def.get("tiers", [])
 	var lvl := MetaProgress.get_upgrade_level(SAFE_CELLS_UPGRADE_ID)
+	var content := HBoxContainer.new()
+	content.name = "OutpostSafeCellContent"
+	content.custom_minimum_size = Vector2(0, 180)
+	content.add_theme_constant_override("separation", 18)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(content)
 
-	# Crate illustration (concept: armored safe crate, cyan-lit).
+	# LEFT: armored safe crate illustration.
 	var art_row := CenterContainer.new()
+	art_row.custom_minimum_size = Vector2(190, 0)
+	art_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var crate := T.lightline_tex("card_device")
 	if crate != null:
 		var rect := TextureRect.new()
@@ -328,35 +369,48 @@ func _fill_safe_cells(body: VBoxContainer) -> void:
 		art_row.add_child(rect)
 	else:
 		art_row.add_child(_ll_icon("icon_device", 96))
-	body.add_child(art_row)
+	content.add_child(art_row)
+
+	# CENTRE: current count, level dots and the next effect.
+	var info := VBoxContainer.new()
+	info.add_theme_constant_override("separation", 10)
+	info.alignment = BoxContainer.ALIGNMENT_CENTER
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content.add_child(info)
 
 	# Current effective safe cells (base + upgrade level).
 	var now_lbl := Label.new()
-	now_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	now_lbl.text = tr("UI_OUTPOST_SAFE_CELLS_NOW").format({"n": MetaProgress.SAFE_CELLS_BASE + lvl})
 	_style_label(now_lbl, 16, Color(0.62, 0.90, 0.94), 1)
-	body.add_child(now_lbl)
+	info.add_child(now_lbl)
 
 	# Cyan progress dots.
 	var dots_row := _dots_row(lvl, tiers.size())
-	var dots_center := CenterContainer.new()
-	dots_center.add_child(dots_row)
-	body.add_child(dots_center)
+	info.add_child(dots_row)
 
 	# Next effect + buy (or maxed).
 	var effect_lbl := Label.new()
-	effect_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	effect_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_style_label(effect_lbl, 15, Color(0.94, 0.90, 0.78), 1)
-	body.add_child(effect_lbl)
+	info.add_child(effect_lbl)
+
+	# RIGHT: one decisive purchase/max state; the horizontal composition keeps
+	# the right-bottom panel short exactly like the accepted concept.
+	var action := CenterContainer.new()
+	action.custom_minimum_size = Vector2(170, 0)
+	action.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content.add_child(action)
 
 	if lvl >= tiers.size():
 		# Maxed: the effect line already says it — a dead disabled button on top
 		# of "已强化至满级" + full dots was three ways of saying the same thing.
 		effect_lbl.text = tr("UI_HOME_UPGRADE_FULLY_UPGRADED")
+		action.add_child(_maxed_chip(Vector2(157, 63)))
 		return
 
 	var buy := _orange_button("")
+	T.apply_concept_price_button(buy, "orange")
 	var next_tier: Dictionary = tiers[lvl]
 	effect_lbl.text = tr("UI_HOME_UPGRADE_NEXT").format(
 		{
@@ -367,13 +421,15 @@ func _fill_safe_cells(body: VBoxContainer) -> void:
 			)
 		}
 	)
-	buy.text = tr("UI_HOME_UPGRADE_BUY")
-	buy.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	buy.add_child(T.overlay_cost_badge(int(next_tier.get("cost", 0)), "caps", 15, 16, -10, -70))
+	buy.custom_minimum_size = Vector2(157, 63)
+	buy.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	T.centered_currency_button_content(
+		buy, int(next_tier.get("cost", 0)), "caps", 23, 28, true, 8
+	)
 	buy.disabled = not MetaProgress.can_purchase(SAFE_CELLS_UPGRADE_ID, def)
 	# purchase_upgrade emits caps_changed + upgrades_changed → _rebuild_content.
 	buy.pressed.connect(func(): MetaProgress.purchase_upgrade(SAFE_CELLS_UPGRADE_ID, def))
-	body.add_child(buy)
+	action.add_child(buy)
 
 
 # --- 永久升级 (T3, Caps rows) --------------------------------------------------
@@ -381,7 +437,9 @@ func _fill_safe_cells(body: VBoxContainer) -> void:
 
 ## One concept upgrade row: lightline icon + name + cyan/grey level dots + the
 ## orange buy button with a Caps cost badge. Backend: MetaProgress.purchase_upgrade.
-func _add_upgrade_row(container: VBoxContainer, upgrade_id: String, icon_name: String) -> void:
+func _add_upgrade_row(
+	container: VBoxContainer, upgrade_id: String, icon_name: String, display_name: String = ""
+) -> void:
 	var def := _load_upgrade_def(upgrade_id)
 	if def.is_empty():
 		container.add_child(
@@ -414,17 +472,24 @@ func _add_upgrade_row(container: VBoxContainer, upgrade_id: String, icon_name: S
 	mid.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_child(mid)
 	var name_lbl := Label.new()
-	name_lbl.text = Settings.t("UPGRADE_%s_NAME" % upgrade_id, str(def.get("name", upgrade_id)))
+	name_lbl.text = (
+		display_name
+		if display_name != ""
+		else Settings.t("UPGRADE_%s_NAME" % upgrade_id, str(def.get("name", upgrade_id)))
+	)
 	_style_label(name_lbl, 16, TOK_TEXT, 1)
 	mid.add_child(name_lbl)
 	mid.add_child(_dots_row(lvl, tiers.size()))
 
 	if lvl >= tiers.size():
-		var chip := _maxed_chip()
+		var chip := _maxed_chip(Vector2(134, 57))
 		chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(chip)
 		return
 	var buy := _orange_button("")
+	T.apply_concept_price_button(buy, "orange")
+	buy.custom_minimum_size = Vector2(134, 57)
+	buy.size_flags_horizontal = Control.SIZE_SHRINK_END
 	buy.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(buy)
 	var next_tier: Dictionary = tiers[lvl]
@@ -435,9 +500,9 @@ func _add_upgrade_row(container: VBoxContainer, upgrade_id: String, icon_name: S
 		str(next_tier.get("effect_text", ""))
 	)
 	panel.tooltip_text = tr("UI_HOME_UPGRADE_NEXT").format({"text": effect_text})
-	buy.text = tr("UI_HOME_UPGRADE_BUY")
-	buy.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	buy.add_child(T.overlay_cost_badge(int(next_tier.get("cost", 0)), "caps", 14, 15, -8, -62))
+	T.centered_currency_button_content(
+		buy, int(next_tier.get("cost", 0)), "caps", 21, 27, true, 7
+	)
 	buy.disabled = not MetaProgress.can_purchase(upgrade_id, def)
 	# purchase_upgrade emits caps_changed + upgrades_changed → _rebuild_content.
 	buy.pressed.connect(func(): MetaProgress.purchase_upgrade(upgrade_id, def))
@@ -460,6 +525,7 @@ func _lightline_section(title: String, icon_name: String) -> PanelContainer:
 
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", TOK_ROW_SEP)
 	margin.add_child(body)
 
@@ -530,10 +596,11 @@ func _orange_button(text: String) -> Button:
 
 ## Quiet non-interactive MAX chip — replaces the disabled buy button at cap
 ## (a dead orange button reads as broken; this stays calm and readable).
-func _maxed_chip() -> Control:
+func _maxed_chip(plaque_size: Vector2 = Vector2(134, 57)) -> Control:
 	var chip := PanelContainer.new()
 	chip.add_theme_stylebox_override("panel", T.ll_slot("locked"))
-	chip.custom_minimum_size = Vector2(92, 40)
+	chip.custom_minimum_size = plaque_size
+	chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	var center := CenterContainer.new()
 	chip.add_child(center)
 	var lbl := Label.new()

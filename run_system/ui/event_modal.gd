@@ -13,6 +13,9 @@
 extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
+const RUN_TOP_BAR = preload("res://run_system/ui/run_top_bar.gd")
+
+const TOP_BAR_CLEARANCE := RUN_TOP_BAR.BAR_HEIGHT
 
 signal resolved
 
@@ -58,45 +61,49 @@ func _build() -> void:
 	_eid = str(event_data.get("id", "")).to_upper()
 	_add_event_background()
 
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(center)
-
-	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", _panel_style())
-	panel.custom_minimum_size = Vector2(720, 0)
-	center.add_child(panel)
-
+	# Accepted concept: the illustration owns the left two-thirds of the page;
+	# event copy and choices float directly over the quieter right side. No modal
+	# window or ornamental frame.
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 32)
-	margin.add_theme_constant_override("margin_right", 32)
-	margin.add_theme_constant_override("margin_top", 28)
-	margin.add_theme_constant_override("margin_bottom", 28)
-	panel.add_child(margin)
+	margin.name = "EventContent"
+	margin.anchor_left = 0.57
+	margin.anchor_top = 0.0
+	margin.anchor_right = 0.96
+	margin.anchor_bottom = 0.93
+	margin.offset_top = TOP_BAR_CLEARANCE + 16.0
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	add_child(margin)
 
 	_vbox = VBoxContainer.new()
-	_vbox.add_theme_constant_override("separation", 16)
+	_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	_vbox.add_theme_constant_override("separation", 18)
 	margin.add_child(_vbox)
 
 	var title := Label.new()
 	title.text = Settings.t("EVENT_%s_TITLE" % _eid, str(event_data.get("title", "Event")))
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 32)
-	title.add_theme_color_override("font_color", Color(1, 0.92, 0.55))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	title.add_theme_font_override("font", T.display_font(700))
+	title.add_theme_font_size_override("font_size", 42)
+	title.add_theme_color_override("font_color", Color(0.96, 0.79, 0.51))
 	title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
-	title.add_theme_constant_override("outline_size", 5)
+	title.add_theme_constant_override("outline_size", 3)
 	_vbox.add_child(title)
 
 	var desc := Label.new()
 	desc.text = Settings.t("EVENT_%s_DESC" % _eid, str(event_data.get("description", "")))
-	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc.add_theme_font_size_override("font_size", 19)
-	desc.add_theme_color_override("font_color", Color(0.92, 0.9, 0.78))
+	desc.add_theme_font_override("font", T.display_font(500))
+	desc.add_theme_font_size_override("font_size", 22)
+	desc.add_theme_color_override("font_color", Color(0.94, 0.78, 0.52))
 	_vbox.add_child(desc)
 
 	var spacer := Control.new()
-	spacer.custom_minimum_size = Vector2(0, 8)
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	spacer.custom_minimum_size = Vector2(0, 36)
 	_vbox.add_child(spacer)
 
 	var options: Variant = event_data.get("options", [])
@@ -116,33 +123,69 @@ func _add_event_background() -> void:
 	var path := "res://run_system/assets/images/events/%s.png" % eid_lower
 	if eid_lower != "" and ResourceLoader.exists(path):
 		var bg := TextureRect.new()
+		bg.name = "EventBackground"
 		bg.texture = load(path)
 		bg.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg.anchor_right = 1.0
+		bg.anchor_bottom = 1.0
+		bg.offset_top = RUN_TOP_BAR.PAGE_ART_TOP
 		bg.mouse_filter = Control.MOUSE_FILTER_STOP
 		add_child(bg)
 	else:
 		var tint := ColorRect.new()
+		tint.name = "EventBackground"
 		tint.color = Color(0.06, 0.05, 0.04, 1.0)  # OPAQUE — fully covers the map
-		tint.set_anchors_preset(Control.PRESET_FULL_RECT)
+		tint.anchor_right = 1.0
+		tint.anchor_bottom = 1.0
+		tint.offset_top = RUN_TOP_BAR.PAGE_ART_TOP
 		tint.mouse_filter = Control.MOUSE_FILTER_STOP
 		add_child(tint)
-	# Readability scrim over the art so the title/desc/options stay legible.
+	# A light global grade preserves the illustration. The copy gets a soft STS2-
+	# style edge vignette rather than a rectangular panel behind the whole column.
 	var scrim := ColorRect.new()
-	scrim.color = Color(0.0, 0.0, 0.0, 0.5)
-	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scrim.name = "EventGlobalScrim"
+	scrim.color = Color(0.0, 0.025, 0.055, 0.34)
+	scrim.anchor_right = 1.0
+	scrim.anchor_bottom = 1.0
+	scrim.offset_top = RUN_TOP_BAR.PAGE_ART_TOP
 	scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(scrim)
+
+	var text_vignette := TextureRect.new()
+	text_vignette.name = "EventTextVignette"
+	var fade := Gradient.new()
+	fade.offsets = PackedFloat32Array([0.0, 0.48, 1.0])
+	fade.colors = PackedColorArray([
+		Color(0.012, 0.025, 0.040, 0.0),
+		Color(0.012, 0.025, 0.040, 0.12),
+		Color(0.012, 0.025, 0.040, 0.76),
+	])
+	var fade_texture := GradientTexture2D.new()
+	fade_texture.gradient = fade
+	fade_texture.width = 1024
+	fade_texture.height = 1
+	fade_texture.fill_from = Vector2(0.0, 0.5)
+	fade_texture.fill_to = Vector2(1.0, 0.5)
+	text_vignette.texture = fade_texture
+	text_vignette.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	text_vignette.stretch_mode = TextureRect.STRETCH_SCALE
+	text_vignette.anchor_right = 1.0
+	text_vignette.anchor_bottom = 1.0
+	text_vignette.offset_top = RUN_TOP_BAR.PAGE_ART_TOP
+	text_vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(text_vignette)
 
 
 func _make_option_button(opt: Dictionary, index: int) -> Button:
 	var unlocked: bool = RunManager.option_unlocked(opt)
 	var button := Button.new()
 	button.text = Settings.t("EVENT_%s_OPT%d_TEXT" % [_eid, index], str(opt.get("text", "...")))
-	button.custom_minimum_size = Vector2(620, 0)
-	button.add_theme_font_size_override("font_size", 19)
+	button.custom_minimum_size = Vector2(0, 64)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.add_theme_font_override("font", T.display_font(600))
+	button.add_theme_font_size_override("font_size", 21)
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.focus_mode = Control.FOCUS_NONE
@@ -170,36 +213,21 @@ func _make_option_button(opt: Dictionary, index: int) -> Button:
 func _option_style(hover: bool, locked: bool) -> StyleBoxFlat:
 	var st := StyleBoxFlat.new()
 	if locked:
-		st.bg_color = Color(0.10, 0.09, 0.08, 0.80)
-		st.border_color = Color(0.34, 0.31, 0.27, 0.85)
+		st.bg_color = Color(0.055, 0.068, 0.072, 0.90)
+		st.border_color = Color(0.30, 0.31, 0.29, 0.78)
 	elif hover:
-		st.bg_color = Color(0.26, 0.20, 0.12, 0.96)
-		st.border_color = Color(1.0, 0.82, 0.40)
+		st.bg_color = Color(0.09, 0.11, 0.115, 0.98)
+		st.border_color = Color(1.0, 0.48, 0.08)
 	else:
-		st.bg_color = Color(0.14, 0.12, 0.10, 0.90)
-		st.border_color = Color(0.56, 0.46, 0.31, 0.90)
-	st.set_border_width_all(2)
-	st.set_corner_radius_all(8)
+		st.bg_color = Color(0.045, 0.060, 0.066, 0.96)
+		st.border_color = Color(0.62, 0.52, 0.32, 0.88)
+	st.set_border_width_all(1)
+	st.border_width_left = 3 if not locked else 1
+	st.set_corner_radius_all(4)
 	st.content_margin_left = 22
 	st.content_margin_right = 22
-	st.content_margin_top = 13
-	st.content_margin_bottom = 13
-	return st
-
-
-## Frosted-dark event panel — rounded, thin gold edge, soft drop shadow.
-func _panel_style() -> StyleBoxFlat:
-	var st := StyleBoxFlat.new()
-	st.bg_color = Color(0.09, 0.08, 0.07, 0.93)
-	st.border_color = Color(0.85, 0.68, 0.35, 0.85)
-	st.set_border_width_all(2)
-	st.set_corner_radius_all(14)
-	st.shadow_color = Color(0.0, 0.0, 0.0, 0.5)
-	st.shadow_size = 18
-	st.content_margin_left = 8
-	st.content_margin_right = 8
-	st.content_margin_top = 8
-	st.content_margin_bottom = 8
+	st.content_margin_top = 14
+	st.content_margin_bottom = 14
 	return st
 
 
@@ -260,7 +288,7 @@ func _show_result(text: String) -> void:
 
 	_result_label = Label.new()
 	_result_label.text = text
-	_result_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_result_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_result_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_result_label.add_theme_font_size_override("font_size", 21)
 	_result_label.add_theme_color_override("font_color", Color(1, 0.95, 0.7))
@@ -268,7 +296,8 @@ func _show_result(text: String) -> void:
 
 	var continue_btn := Button.new()
 	continue_btn.text = Settings.t("UI_EVENT_CONTINUE", "Continue")
-	continue_btn.custom_minimum_size = Vector2(620, 0)
+	continue_btn.custom_minimum_size = Vector2(0, 64)
+	continue_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	continue_btn.add_theme_font_size_override("font_size", 20)
 	continue_btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	continue_btn.focus_mode = Control.FOCUS_NONE

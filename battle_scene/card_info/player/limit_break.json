@@ -1,16 +1,19 @@
 {
 	"name": "limit_break",
-	"title": "Limit Break",
+	"title": "Overload",
 	"rarity": "rare",
 	"type": "skill",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Double the target's Bleed. Exhaust.",
+	"description": "Double the target's Short Circuit, then detonate it. Exhaust.",
 	"front_image": "player/limit_break.png",
 	"side": "player",
 	"effects": [
 		{
-			"type": "double_target_bleed"
+			"type": "double_target_short_circuit"
+		},
+		{
+			"type": "detonate_short_circuit"
 		},
 		{
 			"type": "exhaust_self"
@@ -19,7 +22,8 @@
 	"upgrade": {
 		"cost": 0,
 		"effects": [
-			{ "type": "double_target_bleed" },
+			{ "type": "double_target_short_circuit" },
+			{ "type": "detonate_short_circuit" },
 			{ "type": "exhaust_self" }
 		]
 	}

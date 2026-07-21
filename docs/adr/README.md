@@ -37,5 +37,6 @@ When you (or a collaborator, or Codex) look at e.g. `RunManager` being an autolo
 | [0014](0014-cowboy-bill-character-sheet-reference.md) | Cowboy Bill character sheet is the primary Bill reference | Superseded by ADR-0015 |
 | [0015](0015-single-cowboy-bill-reference.md) | Single art reference: Cowboy Bill character sheet | Superseded by ADR-0016 |
 | [0016](0016-art-pivot-to-offbeat-adult-sci-fi-cartoon.md) | Art direction pivot to Offbeat Adult Sci-Fi Cartoon Wasteland | Superseded by ADR-0017 |
-| [0017](0017-formal-art-style-lock-offbeat-adult-sci-fi-cartoon.md) | Formal art style lock: Offbeat Adult Sci-Fi Cartoon Wasteland | Accepted |
+| [0017](0017-formal-art-style-lock-offbeat-adult-sci-fi-cartoon.md) | Formal art style lock: Offbeat Adult Sci-Fi Cartoon Wasteland | Superseded by ADR-0019 |
 | [0018](0018-player-card-art-lock-offbeat-adult-sci-fi-cartoon.md) | Player card art lock: Offbeat Adult Sci-Fi Cartoon Wasteland | Accepted |
+| [0019](0019-art-style-original-american-comic-ui07.md) | Original American-comic art and lightweight UI07 | Accepted |

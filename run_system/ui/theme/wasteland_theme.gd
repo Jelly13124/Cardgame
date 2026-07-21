@@ -208,6 +208,7 @@ static func style_slider(slider: HSlider, accent: Color = Color(0.82, 0.58, 0.25
 ## English/numbers get the condensed HUD look, 中文 still renders via Noto.
 const DISPLAY_FONT_SRC = preload("res://assets/fonts/Oswald.ttf")
 const CJK_FALLBACK = preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
+const COMBAT_FONT_SRC = preload("res://assets/fonts/Kreon-VariableFont_wght.ttf")
 
 
 ## A condensed Oswald FontVariation at the given weight (100–700). Apply with
@@ -216,6 +217,17 @@ const CJK_FALLBACK = preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 static func display_font(weight: int = 600) -> FontVariation:
 	var fv := FontVariation.new()
 	fv.base_font = DISPLAY_FONT_SRC
+	fv.variation_opentype = {"wght": weight}
+	fv.fallbacks = [CJK_FALLBACK]
+	return fv
+
+
+## Serif combat readout inspired by Slay the Spire 2's compact numeric HUD.
+## Kreon is bundled under the SIL Open Font License; Chinese still falls back
+## to Noto so this can be safely used by mixed-language combat labels.
+static func combat_font(weight: int = 700) -> FontVariation:
+	var fv := FontVariation.new()
+	fv.base_font = COMBAT_FONT_SRC
 	fv.variation_opentype = {"wght": weight}
 	fv.fallbacks = [CJK_FALLBACK]
 	return fv
@@ -337,6 +349,39 @@ static func currency_row(
 	return row
 
 
+## Put a currency row in the visual centre of a Button.  This is the shared
+## implementation for the compact price plaques in the accepted building
+## concepts: no redundant "Buy" verb and no absolute right-edge badge.  Some
+## concepts use icon -> amount (Clinic / Outpost), while the Market keeps the
+## amount -> icon ordering shown on its merchandise cards.
+static func centered_currency_button_content(
+	button: Button,
+	amount: int,
+	currency: String,
+	font_size: int = 18,
+	icon_size: int = 20,
+	icon_first: bool = true,
+	separation: int = 4
+) -> Control:
+	var holder := CenterContainer.new()
+	holder.name = "CenteredCurrencyContent"
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	var row := currency_row(amount, currency, font_size, icon_size)
+	row.add_theme_constant_override("separation", separation)
+	if icon_first:
+		for child in row.get_children():
+			if child is TextureRect:
+				row.move_child(child, 0)
+				break
+	holder.add_child(row)
+	button.add_child(holder)
+	button.set_meta("concept_price_button", true)
+	button.set_meta("currency_order", "icon_first" if icon_first else "amount_first")
+	return holder
+
+
 ## A currency_row anchored as a right-edge overlay badge on a parent Control (a
 ## Button that already has left-aligned verb text, typically) — e.g. "Reforge"
 ## text on the left, a Scrap amount+icon badge overlaid on the right. Anchors to
@@ -385,7 +430,7 @@ static func close_x_button() -> Button:
 ##       all three texture kits in favor of main_menu's minimal dark glass.
 ##   "res://run_system/assets/images/ui_kit/"            — Codex wasteland kit
 ## (The rejected Kenney comparison kits were deleted in the 2026-07-08 art audit
-## — style rule §1 is Rick and Morty-style flat comic with LIGHTWEIGHT UI, and
+## — style rule §1 is original 2D American-comic art with LIGHTWEIGHT UI, and
 ## off-style kits on disk kept misleading art passes. Missing files always hit
 ## the flat fallbacks.)
 const UI_KIT_DIR := "res://run_system/assets/images/ui_kit/"
@@ -764,6 +809,58 @@ static func ll_button(state: String = "normal") -> StyleBox:
 ## Secondary (olive) button — same single-base + modulate-state scheme.
 static func ll_button_olive(state: String = "normal") -> StyleBox:
 	return _ll_button_from(INK_SET + "_btn_olive", state)
+
+
+## Quiet charcoal action used by secondary decisions in the accepted building
+## concepts (notably the Cancel side of the upgrade popover).  The component is
+## already part of UI07; keeping it here prevents local ad-hoc dark buttons.
+static func ll_button_dark(state: String = "normal") -> StyleBox:
+	return _ll_button_from("btn_dark", state)
+
+
+## Dedicated compact price/action plaques recreated from the accepted building
+## concepts. They intentionally do not reuse lw_btn_*: those older assets retain
+## a long pointed/notched silhouette even when resized to the concept geometry.
+static func concept_price_button(variant: String, state: String = "normal") -> StyleBox:
+	var base_name := (
+		"price_plaque_olive_concept"
+		if variant == "olive"
+		else "price_plaque_orange_concept"
+	)
+	var fallback := ll_button_olive(state) if variant == "olive" else ll_button(state)
+	var box := lightline_box(base_name, fallback, 20, 16)
+	var texture_box := box as StyleBoxTexture
+	if texture_box == null:
+		return box
+	# Match the accepted concept palette rather than the brighter source render:
+	# olive centre ≈ #503e1e; orange centre ≈ #ac610b.
+	var base_tint := (
+		Color(1.10, 0.97, 0.74) if variant == "olive" else Color(0.81, 0.84, 0.60)
+	)
+	texture_box.modulate_color = base_tint
+	match state:
+		"hover":
+			texture_box.modulate_color = Color(
+				base_tint.r * 1.08, base_tint.g * 1.08, base_tint.b * 1.08, 1.0
+			)
+		"pressed":
+			texture_box.modulate_color = Color(
+				base_tint.r * 0.84, base_tint.g * 0.84, base_tint.b * 0.84, 1.0
+			)
+		"disabled":
+			texture_box.modulate_color = Color(
+				base_tint.r * 0.52, base_tint.g * 0.52, base_tint.b * 0.52, 1.0
+			)
+	texture_box.content_margin_left = 14
+	texture_box.content_margin_right = 14
+	texture_box.content_margin_top = 8
+	texture_box.content_margin_bottom = 9
+	return texture_box
+
+
+static func apply_concept_price_button(button: Button, variant: String) -> void:
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		button.add_theme_stylebox_override(state, concept_price_button(variant, state))
 
 
 ## Shared body for ll_button / ll_button_olive: 9-slice the base PNG (fallback to

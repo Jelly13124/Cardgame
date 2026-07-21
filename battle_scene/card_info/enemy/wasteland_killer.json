@@ -5,9 +5,6 @@
 	"tier": "normal",
 	"max_health": 20,
 	"action_pattern": [
-		{ "type": "block",     "amount": 8,                          "label": "🛡 8" },
-		{ "type": "telegraph",                                       "label": "💢 TAKING AIM" },
-		{ "type": "attack",    "amount": 17, "interruptible": true,  "label": "💥 SNIPE 17" },
-		{ "type": "attack",    "amount": 6,                          "label": "⚔ 6" }
+		{ "type": "attack_ramp", "amount": 2, "multiplier": 2, "counter": "kill_shot", "label": "⚔ ESCALATING SHOT" }
 	]
 }

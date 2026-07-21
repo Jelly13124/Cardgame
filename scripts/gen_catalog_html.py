@@ -205,9 +205,16 @@ def fmt_effect(e):
     status = e.get("status", "")
     mult = e.get("mult", e.get("multiplier"))
     # Effects whose wording depends on several fields — handle before the table.
-    if t == "apply_bleed_scaled":
-        base = f"Apply {amt} Bleed (+{cap(e.get('attr', 'intelligence'))[:3].upper()})"
-        return base + (" — x2 if target already bleeding" if e.get("double_if_bleeding") else "")
+    if t == "apply_short_circuit_scaled":
+        attr = cap(e.get("attr", "intelligence"))[:3].upper()
+        attr_mult = int(e.get("attr_mult", 1))
+        attr_term = attr if attr_mult == 1 else f"{attr_mult}×{attr}"
+        base = f"Apply {amt} Short Circuit (+{attr_term})"
+        return base + (
+            " — x2 if target already has Short Circuit"
+            if e.get("double_if_short_circuited")
+            else ""
+        )
     if t == "discover":
         free = " (free this combat)" if e.get("free") else ""
         return f"Discover: pick 1 of {e.get('count', 3)} {cap(e.get('pool', 'any'))} cards{free}"
@@ -221,15 +228,23 @@ def fmt_effect(e):
         return f"Gain +{amt or 1} {cap(e.get('attr', e.get('attribute', 'attribute')))}"
     m = {
         "lose_gold": f"Lose {amt} gold",
-        "gain_core": f"Gain {amt} Core",
+        "gain_scrap": f"Gain {amt} Scrap",
         "gain_relic": "Gain a relic",
         "gain_equipment": "Gain equipment",
-        "double_target_bleed": "Double target's Bleed",
+        "double_target_short_circuit": "Double target's Short Circuit",
+        "detonate_short_circuit": "Detonate target's Short Circuit",
+        "detonate_short_circuit_all": "Detonate Short Circuit on ALL enemies",
         "gain_attack_allowance": f"Gain {amt} attack(s) this turn",
         "restore_attack_allowance": "Restore attack allowance",
-        "gain_block_from_bleed": "Gain Block = target's Bleed",
-        "deal_damage": f"Deal {amt} damage (+STR)",
-        "deal_damage_all": f"Deal {amt} to ALL enemies (+STR)",
+        "consume_short_circuit_for_block": "Remove all enemy Short Circuit; gain equal Block",
+        "deal_damage": (
+            f"Deal {amt} fixed damage" if e.get("no_str") else f"Deal {amt} damage (+STR)"
+        ),
+        "deal_damage_all": (
+            f"Deal {amt} fixed damage to ALL enemies"
+            if e.get("no_str")
+            else f"Deal {amt} to ALL enemies (+STR)"
+        ),
         "deal_damage_str_mult": f"Deal STR×{mult} damage",
         "gain_block": f"Gain {amt} Block (+CON)",
         "gain_energy": f"Gain {amt} Energy",
@@ -382,8 +397,8 @@ def fmt_relic_eff(e):
         label = "Apply " + cap(e.get("status", ""))
     elif ty == "grant_card_keyword":
         label = "Grant Card Keyword (" + cap(e.get("keyword", "")) + ")"
-    elif ty == "add_bleed":
-        label = "Add %d Bleed" % int(e.get("amount", 1))
+    elif ty == "add_short_circuit":
+        label = "Add %d Short Circuit" % int(e.get("amount", 1))
     else:
         label = cap(ty)
     return "%s → %s" % (cap(e.get("trigger", "")), label)
@@ -678,17 +693,18 @@ def build_enemies():
 
 # ── Keyword glossary ────────────────────────────────────────────────────────
 STATUS_COLORS = {
-    "bleed": "#ff4d5e", "weak": "#b380e6", "vulnerable": "#f27333",
+    "short_circuit": "#33e8ff", "burn": "#ff7a2e",
+    "weak": "#b380e6", "vulnerable": "#f27333",
     "stun": "#f2f24d",
     "regen": "#4dffa6", "thorns": "#b3bfcc", "frail": "#9980b3", "dodge": "#99f2ff",
     "metallicize": "#b8ccdb", "feel_no_pain": "#8cccf2",
-    "hot_streak": "#ff9640", "all_in": "#ff5470", "hemorrhage": "#c21f3a",
+    "hot_streak": "#ff9640", "all_in": "#ff5470", "detonation_protocol": "#33e8ff",
     "covering_reload": "#6fb3e0", "bullet": "#e8c860",
 }
-STATUSES = ["bleed", "weak", "vulnerable", "stun",
+STATUSES = ["short_circuit", "burn", "weak", "vulnerable", "stun",
             "regen", "thorns", "frail", "dodge",
             "metallicize", "feel_no_pain",
-            "hot_streak", "all_in", "hemorrhage", "covering_reload", "bullet"]
+            "hot_streak", "all_in", "detonation_protocol", "covering_reload", "bullet"]
 
 
 def kw_card(name_en, name_zh, desc_en, desc_zh, color, ident=""):

@@ -1,22 +1,28 @@
 {
 	"name": "recoil_shot",
-	"title": "Slash",
+	"title": "Short-Circuit Round",
 	"rarity": "common",
 	"type": "attack",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Deal 1 (+STR) damage. Apply 1 (+INT) Bleed.",
+	"description": "Deal [b]2[/b] (+STR) damage. Apply [b]6 (+INT)[/b] Short Circuit.",
 	"front_image": "player/recoil_shot.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "deal_damage",
-			"amount": 1
+			"amount": 2
 		},
 		{
-			"type": "apply_bleed_scaled",
-			"amount": 1,
+			"type": "apply_short_circuit_scaled",
+			"amount": 6,
 			"attr": "intelligence"
 		}
-	]
+	],
+	"upgrade": {
+		"effects": [
+			{ "type": "deal_damage", "amount": 3 },
+			{ "type": "apply_short_circuit_scaled", "amount": 8, "attr": "intelligence" }
+		]
+	}
 }

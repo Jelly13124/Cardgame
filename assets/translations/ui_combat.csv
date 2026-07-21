@@ -16,7 +16,8 @@ UI_COMBAT_STUN_X,STUN x{n},眩晕 x{n}
 UI_COMBAT_ALL_STUN_X,ALL: STUN x{n},全体：眩晕 x{n}
 UI_COMBAT_APPLIED_STATUS,APPLIED {status} x{n},施加 {status} x{n}
 UI_COMBAT_ALL_STATUS,ALL: {status} x{n},全体：{status} x{n}
-UI_COMBAT_STATUS_BLEED,Bleed,流血
+UI_COMBAT_STATUS_SHORT_CIRCUIT,Short Circuit,短路
+UI_COMBAT_STATUS_BURN,Burn,灼烧
 UI_COMBAT_STATUS_WEAK,Weak,虚弱
 UI_COMBAT_STATUS_VULNERABLE,Vulnerable,易伤
 UI_COMBAT_STATUS_STUN,Stun,眩晕
@@ -24,7 +25,8 @@ UI_COMBAT_STATUS_REGEN,Regen,再生
 UI_COMBAT_STATUS_THORNS,Thorns,荆棘
 UI_COMBAT_STATUS_FRAIL,Frail,脆弱
 UI_COMBAT_STATUS_DODGE,Dodge,闪避
-UI_COMBAT_STATUS_BLEED_DESC,Take damage equal to stacks at the start of your turn. Then stacks are halved (rounded down).,每回合开始时受到等同层数的伤害。然后层数减半（向下取整）。
+UI_COMBAT_STATUS_SHORT_CIRCUIT_DESC,"Stored charge. It does not deal damage or decay until a card detonates or removes it.","储存在目标身上的电荷。不会自动造成伤害或衰减，直到被卡牌引爆或移除。"
+UI_COMBAT_STATUS_BURN_DESC,Take damage equal to stacks at the start of your turn. Then stacks are halved (rounded down).,每回合开始时受到等同层数的伤害。然后层数减半（向下取整）。
 UI_COMBAT_STATUS_WEAK_DESC,Outgoing attack damage reduced 25% per stack. Decays 1 per turn.,每层使造成的攻击伤害降低 25%。每回合衰减 1 层。
 UI_COMBAT_STATUS_VULNERABLE_DESC,Incoming attack damage increased 50% per stack. Decays 1 per turn.,每层使受到的攻击伤害提高 50%。每回合衰减 1 层。
 UI_COMBAT_STATUS_STUN_DESC,Enemy skips its next turn for each stack (enemy-only).,每层使敌人跳过其下一回合（仅敌人）。
@@ -34,8 +36,8 @@ UI_COMBAT_STATUS_HOT_STREAK,Hot Streak,走运
 UI_COMBAT_STATUS_HOT_STREAK_DESC,"Whenever you Crit, gain 2 Caps.",每次暴击时获得 2 瓶盖。
 UI_COMBAT_STATUS_ALL_IN,All In,梭哈
 UI_COMBAT_STATUS_ALL_IN_DESC,"Crits deal double damage, but non-Crit attacks deal 0.",暴击造成双倍伤害，但非暴击攻击造成 0 点伤害。
-UI_COMBAT_STATUS_HEMORRHAGE,Hemorrhage,致命失血
-UI_COMBAT_STATUS_HEMORRHAGE_DESC,Your Bleed damage can Crit.,你的流血伤害也能暴击。
+UI_COMBAT_STATUS_DETONATION_PROTOCOL,Critical Discharge,暴击放电
+UI_COMBAT_STATUS_DETONATION_PROTOCOL_DESC,Your Short Circuit detonations can Crit.,你的短路引爆可以暴击。
 UI_COMBAT_STATUS_COVERING_RELOAD,Covering Reload,换弹掩护
 UI_COMBAT_STATUS_COVERING_RELOAD_DESC,"Whenever you Reload, gain 3 Block.",每次装弹时获得 3 点格挡。
 UI_COMBAT_STATUS_BULLET,Ammo,弹药
@@ -50,7 +52,11 @@ UI_COMBAT_INTENT_BUFF,BUFF,增益
 UI_COMBAT_INTENT_CHARGE,CHARGE,蓄力
 UI_COMBAT_INTENT_TIP_ATTACK,Attack — deals {n} damage,攻击 — 造成 {n} 点伤害
 UI_COMBAT_INTENT_TIP_ATTACK_STATUS,Attack — deals {n} damage and applies {status} {k},攻击 — 造成 {n} 点伤害并施加 {status} {k}
+UI_COMBAT_INTENT_TIP_RAMP,Damage doubles after every turn.,伤害每回合翻倍。
+UI_COMBAT_INTENT_TIP_INTERRUPTIBLE,Can be interrupted by Stun.,可用眩晕打断。
 UI_COMBAT_INTENT_TIP_DEFEND,Defend — gains {n} Block,防御 — 获得 {n} 点格挡
+UI_COMBAT_INTENT_TIP_BREAKABLE_ARMOR,Breakable Armor — gains {n} Block; breaking it applies {status} {k} to this enemy,可破装甲 — 获得 {n} 点格挡；击破后该敌人获得 {status} {k}
+UI_COMBAT_INTENT_TIP_REFLECTIVE_PLATING,Reflective Plating — gains {n} Block and {k} Thorns,反射镀层 — 获得 {n} 点格挡与 {k} 层荆棘
 UI_COMBAT_INTENT_TIP_HEAL,Heal — restores {n} HP,治疗 — 回复 {n} 点生命
 UI_COMBAT_INTENT_TIP_BUFF,Buff — strengthening itself,增益 — 正在强化自身
 UI_COMBAT_INTENT_TIP_BUFF_STATUS,Buff — gains {status} {k},增益 — 获得 {status} {k}
@@ -59,7 +65,8 @@ UI_COMBAT_INTENT_TIP_SUMMON,Summon — calls reinforcements,召唤 — 呼叫增
 UI_COMBAT_INTENT_TIP_UNKNOWN,Preparing an action,正在准备行动
 UI_COMBAT_SHORT_WEAK,Weak,虚弱
 UI_COMBAT_SHORT_VULNERABLE,Vuln,易伤
-UI_COMBAT_SHORT_BLEED,Bleed,流血
+UI_COMBAT_SHORT_SHORT_CIRCUIT,Short,短路
+UI_COMBAT_SHORT_BURN,Burn,灼烧
 UI_COMBAT_SHORT_STUN,Stun,眩晕
 UI_COMBAT_SHORT_DODGE,Dodge,闪避
 UI_COMBAT_SHORT_REGEN,Regen,再生
@@ -73,8 +80,11 @@ UI_COMBAT_INTERRUPTED,{label} — INTERRUPTED!,{label} —— 被打断！
 UI_COMBAT_INTERRUPT_DEFAULT_LABEL,ATTACK,攻击
 UI_COMBAT_ENEMY_ATTACKS,ENEMY ATTACKS {n}!,敌人攻击 {n}！
 UI_COMBAT_ENEMY_HITS_STATUS,ENEMY HITS {n} + {status},敌人命中 {n} + {status}
+UI_COMBAT_NO_SHORT_CIRCUIT,NO SHORT CIRCUIT,没有可引爆的短路
 UI_COMBAT_BIG_HIT,BIG HIT: {n}!,重击：{n}！
 UI_COMBAT_ENEMY_DEFENDS,ENEMY DEFENDS +{n},敌人防御 +{n}
+UI_COMBAT_ENEMY_BREAKABLE_ARMOR,BREAKABLE ARMOR +{n},可破装甲 +{n}
+UI_COMBAT_ENEMY_REFLECTIVE_PLATING,REFLECTIVE PLATING: +{block} Block / +{thorns} Thorns,反射镀层：+{block} 格挡 / +{thorns} 荆棘
 UI_COMBAT_ENEMY_HEALS,ENEMY HEALS {n},敌人治疗 {n}
 UI_COMBAT_ENEMY_CHARGING,{name} CHARGING...,{name} 蓄力中……
 UI_COMBAT_ENEMY_SUMMONS,{name} SUMMONS REINFORCEMENTS!,{name} 召唤了援军！

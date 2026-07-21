@@ -1,28 +1,28 @@
 # Project Rules
 
 **Project:** Unnamed Sci-Fi Roguelite Card Game  
-**Last Updated:** 2026-07-01
+**Last Updated:** 2026-07-19
 
 ---
 
 ## 0. Documentation Source of Truth
 
-All first-party project documentation lives in `docs/`.
+All first-party project documentation lives in `docs/`. The root `AGENTS.md` is
+the concise agent entry point requested by the project owner; it must point back
+to these canonical documents rather than inventing a separate style contract.
 
 - `docs/PRD.md` defines product scope, gameplay systems, roadmap, and known tech debt.
 - `docs/PROJECT_STRUCTURE.md` maps the codebase, scenes, data files, and assets.
 - `docs/project-rules.md` defines non-negotiable art, asset, naming, and architecture rules.
 - `docs/art-style-reference.md` defines the approved style contract, in-game visual exemplars, and prompt anchor.
 
-Do not reintroduce root-level local workflow docs such as `skills/`; shared project process belongs in this folder.
+Do not reintroduce root-level local workflow docs such as `skills/`; shared project process belongs in this folder. `AGENTS.md` is the only root-level instruction exception.
 
 ---
 
-## 1. Art Style - Rick and Morty-Style Sci-Fi Cartoon Wasteland (Non-Negotiable)
+## 1. Art Style - Original 2D American-Comic Sci-Fi Western (Non-Negotiable)
 
-All visual assets in this project **must** follow the approved **Rick and Morty-style Sci-Fi Cartoon Wasteland** direction in `docs/art-style-reference.md`. The tonal touchstone is the flat 2D **Rick and Morty** TV-animation look: clean thick black outlines, large simple shapes, sparse interior linework, absurd salvage-tech silhouettes, bright toxic accents, and broad cel shading — an original wasteland world rendered in that cartoon language.
-
-> **Rick and Morty is a style touchstone, not a copy target.** Match the flat, thick-outline TV-cartoon *look*. Never copy the show's actual characters, named cast, logos, props, or scene layouts — all designs stay original (see Prohibited below).
+All visual assets in this project **must** follow the approved **original 2D American-comic sci-fi western** direction in `docs/art-style-reference.md`: clean dark outlines, large readable shapes, sparse interior linework, offbeat salvage-tech silhouettes, restrained bright accents, and broad cel shading. Persistent UI follows the lightweight UI07 language rather than rendered-metal or dark-fantasy chrome.
 
 Do not use old project reference images as global style references. `docs/art/cowboy-bill-character-sheet-reference.png` may be used only to preserve Cowboy Bill's identity markers. Designs must stay original and must not copy named show characters, logos, exact scene layouts, franchise-specific props, embedded text, labels, speech bubbles, or UI framing.
 
@@ -33,7 +33,7 @@ The approved production exemplars are:
 - `battle_scene/assets/images/heroes/cowboy_bill/attack/`
 - `battle_scene/assets/images/backgrounds/wasteland_battlefield.png`
 - `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`
-- `battle_scene/assets/images/cards/player/*.png`
+- `battle_scene/assets/images/cards/player/strike.png` as the first approved controlled-detail card-art sample. Other existing player card illustrations are legacy production assets pending the same style pass and must not be used as style references.
 - `docs/art/previews/base_building_forge_ui_dismantle_simple_comic_20260707.png` for persistent UI screen style
 
 ### Visual Rules
@@ -43,12 +43,13 @@ The approved production exemplars are:
 - **Materials:** Simplified dusty leather, red cloth scarf, brass cuffs, dented grey-green metal, patched fabric, rubber hoses, glass lenses, exposed springs, toxic sludge, glowing canisters, and flat alien terrain.
 - **Color palette:** Dusty tan and warm brown base colors, muted red cloth, grey-green metal, pale desert sand, sickly toxic green, cyan plasma, and warm orange glows.
 - **Accent color:** Use one or two small high-contrast glowing accents per character, item, or UI icon. Toxic green, cyan, and warm orange are the main glow colors.
-- **Outlines:** Thick black or very dark hand-drawn cartoon outlines. Do not use thin realistic hairlines, sketchy concept-art hatching, or dense interior scratches.
-- **Shading:** Simple two-to-three value cel shading with broad shadow shapes. Avoid painterly rendering, photorealism, gritty texture, noisy grunge, dithering, and dense material detail.
+- **Detail target:** Use the visual language of a Rick-and-Morty-style adult sci-fi TV cartoon: confident wobbly 2D linework, rubbery anatomy, off-kilter proportions, strange comedy silhouettes, flat cel colors, and controlled medium-low detail. Include a few purposeful dents, seams, patches, crooked joints, cables, or alien background marks so the world feels weird and lived-in. Do not flatten the work into clean corporate vector art, preschool illustration, or generic children's-book minimalism. Never copy franchise characters, props, locations, or exact designs.
+- **Outlines:** Thick black or very dark hand-drawn cartoon outlines. Keep interior contour lines to the minimum required to explain the form. Do not use thin realistic hairlines, sketchy concept-art hatching, dense panel seams, or interior scratches.
+- **Shading:** Simple two-to-three value cel shading with broad shadow shapes. Flat fill plus one broad shadow is preferred. Avoid painterly rendering, photorealism, gritty texture, noisy grunge, gradients as material rendering, dithering, and dense material detail.
 - **Background:** Character, card, UI, and FX sprites use transparent backgrounds; full-scene map and battle backgrounds are scene-ready PNGs with no UI, text, labels, or characters baked in. Background centers must stay low-detail and readable behind gameplay.
-- **Card illustrations:** Player card art must be `512x320` landscape PNGs. They are illustrations only and must not bake in card borders, cost badges, titles, rarity labels, type labels, description boxes, speech bubbles, UI, or text.
+- **Card illustrations:** Player card art must be `512x320` landscape PNGs. Use one primary action, one clear subject and at most one target; build the scene from three-to-seven large flat background shapes plus sparse ground/alien marks. Small paired action accents such as one muzzle flash and one impact star are allowed. Add only purposeful character detail—several dents, seams, patches, crooked joints, cables, or odd facial/eye marks—not texture noise. No dense rocks, debris clouds, scratch fields, rivet fields, material texture, hatching, cinematic concept-art lighting, or realistic mechanical panel detail. They are illustrations only and must not bake in card borders, cost badges, titles, rarity labels, type labels, description boxes, speech bubbles, UI, or text.
 - **UI icons:** Small UI components and combat intent icons must prioritize simple readability over themed detail. Attack is a simple red sword, block is a simple blue shield, buff is a simple green arrow/glow, and charge is a simple orange warning mark. Avoid skulls, character faces, clutter, and tiny salvage decoration in these icons.
-- **UI screens:** Base, shop, forge, clinic, market, outpost, inventory, and modal screens use the simple line-art 2D American comic / TV-animation UI direction anchored by `docs/art/previews/base_building_forge_ui_dismantle_simple_comic_20260707.png`: lightweight borders, flat color blocks, sparse panel lines, clear button hierarchy, and minimal material rendering. Avoid thick metal frames, bulky corner plates, rivet fields, dense scratches, heavy bevels, dark fantasy ornament, and Diablo-like rendered-metal UI.
+- **UI screens:** Base, shop, forge, clinic, market, outpost, inventory, and modal screens use the simple line-art 2D American comic / TV-animation UI direction anchored by `docs/art/previews/base_building_forge_ui_dismantle_simple_comic_20260707.png`: lightweight borders, flat color blocks, sparse panel lines, clear button hierarchy, and minimal material rendering. The shared `run_system/ui/run_top_bar.gd` remains visible and unchanged on every in-run screen (map, battle, event, rest, card upgrade, deck, reward, and shop). Interactive page content starts below the component's full `BAR_HEIGHT`; scene art may continue behind the transparent relic shelf from `PAGE_ART_TOP`. Pages must never hide, duplicate, or paint over the run top bar. Card previews show only the card in their normal state. Their surrounding outline is an interaction highlight that appears on hover/focus and disappears immediately afterward; it must never be a permanent decorative frame or large empty container. Avoid thick metal frames, bulky corner plates, rivet fields, dense scratches, heavy bevels, dark fantasy ornament, and Diablo-like rendered-metal UI.
 
 ### Character Anchors
 
@@ -61,13 +62,13 @@ The approved production exemplars are:
 Every generated asset prompt must preserve this wording unless the asset type makes a clause impossible:
 
 ```text
-original Rick and Morty-style Sci-Fi Cartoon Wasteland game art,
+original simple flat 2D American-comic sci-fi western TV-cartoon game art,
 matching the approved in-game exemplars in battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png, battle_scene/assets/images/backgrounds/wasteland_battlefield.png, and run_system/assets/images/map/wasteland_route_map_pixel_bg.png,
-flat 2D Rick and Morty-style sci-fi TV-animation look, thick clean dark cartoon outlines, large simple shape blocks, sparse interior lines, broad two-to-three value cel shading,
+Rick-and-Morty-style adult sci-fi TV-animation visual language without copied designs, confident wobbly dark cartoon outlines, rubbery anatomy, off-kilter proportions, large flat shape blocks, controlled purposeful interior lines, broad two-to-three-value cel shading,
 weird sci-fi western wasteland, rubbery alien desert shapes, absurd salvage-tech silhouettes, dusty leather, brass, dented grey-green robot metal, patched red cloth, hoses, antennas, odd gadgets,
 bright toxic green, cyan, and warm orange glow accents used sparingly,
-clean game-ready edges, readable silhouettes, low texture noise,
-no text, no labels, no UI frame, no logo, no named show characters, no franchise-specific props, no exact scene copies
+clean game-ready edges, immediately readable silhouettes, controlled medium-low detail with a few purposeful dents, seams, patches, crooked joints or cables, no corporate vector smoothness, no preschool minimalism, no texture noise, no hatching, no scratch fields, no dense mechanical panel lines,
+no text, no labels, no UI frame, no logo, no copied franchise characters or props, no exact scene copies
 ```
 
 For combat unit sheets, also include:
@@ -89,15 +90,15 @@ contained inside each frame with safe margins
 - No clean, shiny, futuristic-clean, realistic military, or glossy hard-surface concept-art aesthetics.
 - No realistic shading, photorealistic lighting, dense hatching, noisy grunge, or painterly over-rendering.
 - No previous art-reference family, pixel-art anchor, painterly rendered anchor, or generic cartoon reference.
-- No prompt language that treats file dimensions as the art style. Use the active Rick and Morty-style Sci-Fi Cartoon Wasteland anchor instead of earlier anchors unless the owner explicitly asks for a one-off different style.
+- No prompt language that treats file dimensions as the art style. Use the active original 2D American-comic anchor instead of earlier anchors unless the owner explicitly asks for a one-off different style.
 - No dense noise, tiny repeated debris, cluttered map centers, or over-rendering that hides the cartoon silhouette.
-- No assets that do not visually fit the same Rick and Morty-style Sci-Fi Cartoon Wasteland world.
+- No assets that do not visually fit the same original 2D American-comic sci-fi western world.
 
 ---
 
 ## 2. Asset Generation - Production Pipeline
 
-All final in-project visual assets must be PNG art that follows the Rick and Morty-style Sci-Fi Cartoon Wasteland rules above. Source generation can use the available image-generation pipeline, but generated sheets must be post-processed into transparent or scene-ready PNGs before being referenced by Godot.
+All final in-project visual assets must be PNG art that follows the original 2D American-comic rules above. Source generation can use the available image-generation pipeline, but generated sheets must be post-processed into transparent or scene-ready PNGs before being referenced by Godot.
 
 ### Required Outputs
 
@@ -110,7 +111,7 @@ All final in-project visual assets must be PNG art that follows the Rick and Mor
 
 ### Prompt Requirements
 
-- Preserve the exact Rick and Morty-style Sci-Fi Cartoon Wasteland language from section 1 and `docs/art-style-reference.md`.
+- Preserve the exact original 2D American-comic language from section 1 and `docs/art-style-reference.md`.
 - Match the approved in-game exemplars before matching any written description.
 - Prefer side-view full-body sprites for combat units.
 - Final enemy frames must face left toward the player. Do not rely on a global runtime flip to correct mixed source orientations.

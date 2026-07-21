@@ -4,10 +4,9 @@
 ## base-mode CharacterWindow's backpack (→ RunManager.pending_loadout); to store
 ## an item they drag a backpack cell (or a queued slot item) back onto this
 ## window.
-##   GRID   5 columns / 25 cells of the stash entries NOT currently assigned to the next
-##          run (pending_equipped / pending_loadout consume entries by VALUE —
-##          the same match start_new_run's remove_from_stash uses), padded with
-##          empty frames up to the full capacity.
+##   GRID   5 columns / 25 cells containing only explicitly stored gear, padded
+##          with empty frames up to the full capacity. Base-carried/worn gear is
+##          physically absent from MetaProgress.stash.
 ##   DRAG   cells drag OUT as {"src": "stash", "slot", "entry"} — the same
 ##          payload the old base-mode stash grid used, so the ForgeWindow bench
 ##          (and the CharacterWindow backpack area) accept it unchanged.
@@ -436,8 +435,8 @@ func _make_hint_slot(icon_name: String, frame_tint: Color) -> Control:
 	return holder
 
 
-## Number of gear entries actually stored (header counter). Counts the WHOLE
-## stash — entries queued for the next run still occupy storage capacity.
+## Number of gear entries actually stored (header counter). Base-carried gear is
+## owned separately and therefore does not consume stash capacity.
 func _stored_count() -> int:
 	var n := 0
 	for entry in MetaProgress.stash:
@@ -567,27 +566,23 @@ func _handle_drop(data: Dictionary) -> void:
 			_unassign_slot(str(data.get("slot", "")))
 
 
-## Backpack → stash: remove one value-matched entry from pending_loadout. The
-## entry never left MetaProgress.stash (pending_* only reference it), so
-## dropping the reference alone puts it back in this grid.
+## Backpack → stash: atomically transfer the exact base-owned entry. A full stash
+## or stale payload leaves the backpack untouched.
 func _store_from_carry(entry: Variant) -> void:
 	if entry == null:
 		return
-	var idx: int = RunManager.pending_loadout.find(entry)
-	if idx < 0:
-		return  # stale drag — already gone
-	RunManager.pending_loadout.remove_at(idx)
+	if not MetaProgress.move_base_backpack_to_stash(entry):
+		return
 	AudioManager.play_sfx("ui_back")
 	refresh()
 	_refresh_sibling_character()
 
 
-## Queued slot → stash: clear the pending_equipped reference; the entry
-## reappears in this grid.
+## Base slot → stash: atomically move the owned item into storage. A full stash
+## leaves the slot filled.
 func _unassign_slot(slot: String) -> void:
-	if not RunManager.pending_equipped.has(slot):
+	if not MetaProgress.move_base_slot_to_stash(slot):
 		return
-	RunManager.pending_equipped.erase(slot)
 	AudioManager.play_sfx("ui_back")
 	refresh()
 	_refresh_sibling_character()
@@ -603,29 +598,15 @@ func _refresh_sibling_character() -> void:
 		cw.refresh()
 
 
-## Indices into MetaProgress.stash of entries NOT currently assigned to the next
-## run — an entry referenced by pending_equipped (worn at start) or
-## pending_loadout (carried in the backpack) is hidden here so it cannot be
-## taken twice. Matches by VALUE, consuming one assignment per stash entry
-## (handles duplicate gear). Mirrors character_window._unassigned_stash_pool.
+## Indices into the actual storage array. Carry and slot collections have
+## separate ownership, so no value-matching/hiding layer is needed.
 func _available_stash_indices() -> Array[int]:
-	var assigned: Array = RunManager.pending_equipped.values() + RunManager.pending_loadout
-	var taken: Array[int] = []  # assignment indices already consumed by a stash entry
 	var out: Array[int] = []
 	for i in range(MetaProgress.stash.size()):
 		var entry: Variant = MetaProgress.stash[i]
 		if RunManager.as_equip_instance(entry).is_empty():
 			continue
-		var matched := false
-		for a in range(assigned.size()):
-			if a in taken:
-				continue
-			if assigned[a] == entry:
-				taken.append(a)
-				matched = true
-				break
-		if not matched:
-			out.append(i)
+		out.append(i)
 	_apply_view_sort(out)
 	return out
 

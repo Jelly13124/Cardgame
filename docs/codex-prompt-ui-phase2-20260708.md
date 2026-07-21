@@ -8,7 +8,7 @@
 
 ## 全局风格前缀(每条开头带上)
 
-> Rick and Morty-style sci-fi cartoon wasteland game UI art. Flat dark charcoal
+> Original 2D American-comic sci-fi western game UI art. Flat dark charcoal
 > fills with ONE thin warm-brass hairline outline per shape (the sheet-07
 > language) — lightweight, clean, no rivets, no corner plates, no heavy bevels,
 > no rendered metal. Thick black outlines only on illustrations/icons, flat cel

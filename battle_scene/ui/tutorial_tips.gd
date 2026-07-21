@@ -4,6 +4,8 @@
 ## Owner instances it on a CanvasLayer; it frees itself after the last tip.
 extends Control
 
+signal completed
+
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 
 ## Localized tip keys, shown in order.
@@ -76,6 +78,7 @@ func _show_tip() -> void:
 func _advance() -> void:
 	_index += 1
 	if _index >= TIPS.size():
+		completed.emit()
 		queue_free()
 		return
 	_show_tip()

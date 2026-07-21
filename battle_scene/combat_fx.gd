@@ -53,6 +53,39 @@ static func spawn_damage_number(
 	tween.chain().tween_callback(layer.queue_free)
 
 
+## Spawn a compact local feedback label near a combatant. This is intentionally
+## not the old center-screen yellow notification: equipment/status triggers stay
+## attached to the character they belong to and fade without blocking play.
+static func spawn_feedback_text(
+	scene_root: Node, world_pos: Vector2, text: String, color: Color
+) -> void:
+	if not is_instance_valid(scene_root) or scene_root.get_tree() == null or text == "":
+		return
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+	label.add_theme_constant_override("shadow_offset_x", 2)
+	label.add_theme_constant_override("shadow_offset_y", 2)
+	var layer := CanvasLayer.new()
+	layer.layer = 51
+	scene_root.add_child(layer)
+	layer.add_child(label)
+	label.size = label.get_minimum_size()
+	label.position = world_pos - Vector2(label.size.x * 0.5, 0)
+	var tween := scene_root.create_tween()
+	tween.set_parallel(true)
+	(
+		tween
+		. tween_property(label, "position:y", world_pos.y - 38.0, 0.75)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	tween.tween_property(label, "modulate:a", 0.0, 0.75).set_delay(0.18)
+	tween.chain().tween_callback(layer.queue_free)
+
+
 ## Briefly translate `target` (Node2D) on a decaying sine to simulate impact.
 ## Overlapping shakes (e.g. double_tap multi-hit) used to sample origin from
 ## a mid-shake offset and "restore" to the wrong position, accumulating drift.

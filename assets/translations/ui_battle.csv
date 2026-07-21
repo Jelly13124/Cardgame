@@ -22,11 +22,11 @@ UI_BATTLE_CARD_TYPE_CURSE,CURSE,诅咒
 UI_BATTLE_CURSE_UNPLAYABLE,Curse cards can't be played,诅咒牌无法打出
 UI_BATTLE_ENEMY_CURSE,{name} curses your draw pile!,{name} 往你的抽牌堆塞了诅咒！
 UI_BATTLE_DESC_DEAL,Deal {val} dmg,造成 {val} 伤害
-UI_BATTLE_DESC_DEAL_SCALING,Deal {val} ([i]{base}+[color=#8b0000]{stat}[/color][/i]) dmg,造成 {val} ([i]{base}+[color=#8b0000]{stat}[/color][/i]) 伤害
+UI_BATTLE_DESC_DEAL_SCALING,Deal {val} ({base}+[color=#8b0000]{stat}[/color]) dmg,造成 {val} ({base}+[color=#8b0000]{stat}[/color]) 伤害
 UI_BATTLE_DESC_DEAL_ALL,Deal {val} dmg to all enemies,对所有敌人造成 {val} 伤害
-UI_BATTLE_DESC_DEAL_ALL_SCALING,Deal {val} ([i]{base}+[color=#8b0000]{stat}[/color][/i]) to ALL enemies,对所有敌人造成 {val} ([i]{base}+[color=#8b0000]{stat}[/color][/i]) 伤害
+UI_BATTLE_DESC_DEAL_ALL_SCALING,Deal {val} ({base}+[color=#8b0000]{stat}[/color]) to ALL enemies,对所有敌人造成 {val} ({base}+[color=#8b0000]{stat}[/color]) 伤害
 UI_BATTLE_DESC_BLOCK,Gain {val} block,获得 {val} 格挡
-UI_BATTLE_DESC_BLOCK_SCALING,Gain {val} ([i]{base}+[color=#4444ff]{stat}[/color][/i]) block,获得 {val} ([i]{base}+[color=#4444ff]{stat}[/color][/i]) 格挡
+UI_BATTLE_DESC_BLOCK_SCALING,Gain {val} ({base}+[color=#4444ff]{stat}[/color]) block,获得 {val} ({base}+[color=#4444ff]{stat}[/color]) 格挡
 UI_BATTLE_DESC_STRENGTH,Gain {n} Strength,获得 {n} 力量
 UI_BATTLE_DESC_STRENGTH_MULT,Gain {n} ({mult}×{stat}) Strength,获得 {n} ({mult}×{stat}) 力量
 UI_BATTLE_DESC_STRENGTH_SCALING,Gain {n} ({base}+[color=#8b0000]{stat}[/color]) Strength,获得 {n} ({base}+[color=#8b0000]{stat}[/color]) 力量
@@ -36,10 +36,13 @@ UI_BATTLE_DESC_APPLY_STATUS,Apply {status} x{n},施加 {status} x{n}
 UI_BATTLE_DESC_APPLY_STATUS_ALL,Apply {status} x{n} to all enemies,对所有敌人施加 {status} x{n}
 UI_BATTLE_DESC_APPLY_STATUS_SELF,Apply {status} x{n} to self,对自身施加 {status} x{n}
 UI_BATTLE_DESC_ADD_CARD,Add {n} {card} to your hand,将 {n} 张「{card}」置入手牌
-UI_BATTLE_DESC_BLEED_SCALED,Apply {base} (+{attr}) Bleed,施加 {base}（+{attr}）流血
+UI_BATTLE_DESC_SHORT_CIRCUIT_SCALED,Apply {base} (+{attr}) Short Circuit,施加 {base}（+{attr}）层短路
+UI_BATTLE_DESC_DOUBLE_IF_SHORT_CIRCUITED,Double this application if the target already has Short Circuit,若目标已有短路，则本次施加双倍
 UI_BATTLE_DESC_DMG_BLOCK_MULT,Deal damage equal to Block ×{mult},造成等同于格挡 ×{mult} 的伤害
-UI_BATTLE_DESC_DOUBLE_BLEED,Double the target's Bleed,使目标当前流血层数翻倍
-UI_BATTLE_DESC_BLOCK_FROM_BLEED,Gain Block equal to enemy Bleed,获得等同于敌方流血层数的格挡
+UI_BATTLE_DESC_DOUBLE_SHORT_CIRCUIT,Double the target's Short Circuit,使目标当前短路层数翻倍
+UI_BATTLE_DESC_DETONATE_SHORT_CIRCUIT,Detonate the target's Short Circuit,引爆目标的短路
+UI_BATTLE_DESC_DETONATE_SHORT_CIRCUIT_ALL,Detonate Short Circuit on ALL enemies,引爆所有敌人的短路
+UI_BATTLE_DESC_SHORT_CIRCUIT_TO_BLOCK,Remove all enemy Short Circuit; gain equal Block,移除所有敌人的短路；获得等量格挡
 UI_BATTLE_DESC_LOSE_HP,Lose {n} HP,失去 {n} 点生命
 UI_BATTLE_DESC_RESTORE_ATTACK,Restore an attack this turn,刷新本回合的攻击次数
 UI_BATTLE_DESC_APPLY_STUN,Apply [color=#f0e040]Stun[/color] x{n},施加 [color=#f0e040]眩晕[/color] x{n}
@@ -66,7 +69,7 @@ UI_BATTLE_ATTR_ENERGY,Energy,能量
 UI_DISCOVER_TITLE,Discover,发现
 UI_DISCOVER_TITLE_SKILL,Discover · Skill,发现 · 技能
 UI_DISCOVER_TITLE_ATTACK,Discover · Attack,发现 · 攻击
-UI_DISCOVER_TITLE_BLEED,Discover · Bleed,发现 · 流血
+UI_DISCOVER_TITLE_SHORT_CIRCUIT,Discover · Short Circuit,发现 · 短路
 UI_DISCOVER_EMPTY,Nothing to discover.,没有可发现的牌。
 UI_BATTLE_TOOL_CONFIRM_TITLE,USE TOOL?,确认使用工具？
 UI_BATTLE_TOOL_USE,USE,使用

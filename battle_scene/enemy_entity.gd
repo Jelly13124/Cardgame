@@ -7,7 +7,7 @@ class_name EnemyEntity
 const HUD_SCRIPT = preload("res://battle_scene/ui/character_hud.gd")
 const ENEMY_DATA_DIR = "res://battle_scene/card_info/enemy/"
 const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
-const COMBAT_FX = preload("res://battle_scene/combat_fx.gd")
+const COMBAT_FEEDBACK_CONTROLLER = preload("res://battle_scene/combat_feedback_controller.gd")
 
 # Intent badge icon textures — preloaded once instead of `load()`-ing on every
 # intent refresh (which can fire frequently as enemy / player status changes).
@@ -15,12 +15,20 @@ const INTENT_ICON_ATTACK = preload("res://battle_scene/assets/images/ui/intent_a
 const INTENT_ICON_BLOCK = preload("res://battle_scene/assets/images/ui/intent_block.png")
 const INTENT_ICON_BUFF = preload("res://battle_scene/assets/images/ui/intent_buff.png")
 const INTENT_ICON_CHARGE = preload("res://battle_scene/assets/images/ui/intent_charge.png")
+const INTENT_ICON_DEBUFF = preload("res://battle_scene/assets/images/ui/intent_debuff.png")
 const NORMAL_DISPLAY_HEIGHT := 256.0
 const ELITE_DISPLAY_HEIGHT := 320.0
 const BOSS_DISPLAY_HEIGHT := 384.0
+const NORMAL_HUD_SIZE := Vector2i(200, 10)
+const ELITE_HUD_SIZE := Vector2i(200, 10)
+const BOSS_HUD_SIZE := Vector2i(200, 10)
 const MAX_ANIMATION_FRAMES := 16
 const INTENT_BADGE_WIDTH := 104.0
 const INTENT_BADGE_HEIGHT := 36.0
+const INTENT_CELL_ICON_SIZE := Vector2(34.0, 34.0)
+## Ramp attacks are effectively unbounded in real fights. The ceiling only
+## prevents a deliberately stalled debug combat from overflowing a signed int.
+const MAX_SAFE_RAMP_DAMAGE := 1 << 60
 
 # ─── Stats ────────────────────────────────────────────────────────────────────
 var enemy_id: String = ""
@@ -34,6 +42,8 @@ var is_boss: bool = false
 var max_health: int = 30
 var health: int = 30
 var block: int = 0
+var _death_resolving: bool = false
+var _death_settled: bool = false
 ## ID used to locate sprite frames: e.g. "trash_robot" -> trash_robot_attack_0.png
 var sprite_id: String = ""
 
@@ -44,7 +54,8 @@ var status_system = STATUS_SYS.new()
 const _STATUS_SHORT_NAMES = {
 	"weak": "Weak",
 	"vulnerable": "Vuln",
-	"bleed": "Bleed",
+	"short_circuit": "Short Circuit",
+	"burn": "Burn",
 	"stun": "Stun",
 }
 
@@ -52,6 +63,15 @@ const _STATUS_SHORT_NAMES = {
 ## Array of { type, amount, label } dicts that cycle each turn.
 var action_pattern: Array = []
 var _action_index: int = 0
+## Number of times each named ramp counter has advanced. Kept outside the
+## pattern cursor so an attack continues to grow after the pattern loops.
+var _ramp_action_uses: Dictionary = {}
+
+## A breakable guard exposes the enemy when player damage removes all of the
+## armed Block. It expires if the Block survives until the enemy's next turn.
+var _breakable_armor_active := false
+var _breakable_armor_status := "vulnerable"
+var _breakable_armor_stacks := 1
 
 # ─── HP-threshold phases (spec A2) ──────────────────────────────────────────────
 ## Optional phase definitions parsed from JSON, e.g.
@@ -75,8 +95,7 @@ signal attack_animation_finished
 var _hud: Node
 ## Reference to the animated sprite (replaces old ColorRect body)
 var _sprite: AnimatedSprite2D
-var _intent_label: Label
-var _intent_icon: TextureRect
+var _intent_cells: HBoxContainer
 var _intent_bg: Control
 var _intent_tween: Tween
 var _intent_tooltip: String = ""
@@ -276,7 +295,7 @@ func get_hit_global_position() -> Vector2:
 	if not tex:
 		return global_position + Vector2(-60, -100)
 	var native_origin := Vector2(tex.get_width(), tex.get_height()) * 0.5
-	var native_hit := Vector2(tex.get_width() * 0.34, tex.get_height() * 0.48)
+	var native_hit := Vector2(tex.get_width() * 0.34, tex.get_height() * 0.54)
 	return _sprite.to_global(native_hit - native_origin)
 
 
@@ -303,7 +322,7 @@ func _build_placeholder_visual() -> void:
 	_build_health_bar(Vector2(-112.5, 28))
 
 
-## Builds a compact icon + text intent readout above the sprite.
+## Builds a compact STS2-style category-intent group above the sprite.
 ## intent_pos is the top-left position in entity-local space.
 func _build_intent_badge(intent_pos: Vector2) -> void:
 	_intent_bg = Control.new()
@@ -328,39 +347,36 @@ func _build_intent_badge(intent_pos: Vector2) -> void:
 	_intent_bg.mouse_exited.connect(Tooltip.hide_if_owner.bind(bg_id))
 	_intent_bg.tree_exited.connect(Tooltip.hide_if_owner.bind(bg_id))
 
-	_intent_icon = TextureRect.new()
-	_intent_icon.size = Vector2(34, 34)
-	_intent_icon.position = Vector2(0, 1)
-	_intent_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_intent_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_intent_icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	_intent_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_intent_bg.add_child(_intent_icon)
-
-	_intent_label = Label.new()
-	_intent_label.add_theme_font_size_override("font_size", 22)
-	_intent_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.64))
-	_intent_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.95))
-	_intent_label.add_theme_constant_override("shadow_offset_x", 2)
-	_intent_label.add_theme_constant_override("shadow_offset_y", 2)
-	_intent_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	_intent_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_intent_label.size = Vector2(70, INTENT_BADGE_HEIGHT)
-	_intent_label.position = Vector2(38, -1)
-	_intent_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_intent_bg.add_child(_intent_label)
+	_intent_cells = HBoxContainer.new()
+	_intent_cells.name = "IntentCells"
+	_intent_cells.alignment = BoxContainer.ALIGNMENT_CENTER
+	_intent_cells.add_theme_constant_override("separation", 7)
+	_intent_cells.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_intent_cells.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_intent_bg.add_child(_intent_cells)
 
 
-## Builds the health bar (CharacterHUD) positioned below the sprite.
-## hud_pos: top-left of the HUD in entity-local space.
+## Builds the health bar (CharacterHUD) below the sprite. Every enemy uses the
+## same lightweight 200x10 footprint as the player; encounter weight stays in
+## sprite scale and intent presentation rather than HUD chrome.
 func _build_health_bar(hud_pos: Vector2) -> void:
+	var hud_size := _health_bar_size()
 	_hud = HUD_SCRIPT.new()
 	_hud.max_health = max_health
 	_hud.current_health = health
 	_hud.current_block = block
-	_hud.bar_width = 225
-	_hud.position = hud_pos
+	_hud.bar_width = hud_size.x
+	_hud.bar_height = hud_size.y
+	_hud.position = Vector2(-float(hud_size.x) * 0.5, hud_pos.y)
 	add_child(_hud)
+
+
+func _health_bar_size() -> Vector2i:
+	if is_boss:
+		return BOSS_HUD_SIZE
+	if is_elite:
+		return ELITE_HUD_SIZE
+	return NORMAL_HUD_SIZE
 
 
 # ─── Action Pattern ───────────────────────────────────────────────────────────
@@ -370,12 +386,29 @@ func _build_health_bar(hud_pos: Vector2) -> void:
 func peek_next_action() -> Dictionary:
 	if action_pattern.is_empty():
 		return {"type": "attack", "amount": 6, "label": "⚔ 6"}
-	return action_pattern[_action_index % action_pattern.size()]
+	var pattern_index := _action_index % action_pattern.size()
+	var action: Dictionary = action_pattern[pattern_index].duplicate(true)
+	if str(action.get("type", "")) == "attack_ramp":
+		var counter_id := str(action.get("counter", "pattern_%d" % pattern_index))
+		var uses := int(_ramp_action_uses.get(counter_id, 0))
+		var value := int(action.get("amount", 1))
+		var multiplier := maxi(2, int(action.get("multiplier", 2)))
+		for _i in range(uses):
+			if value > MAX_SAFE_RAMP_DAMAGE / multiplier:
+				value = MAX_SAFE_RAMP_DAMAGE
+				break
+			value *= multiplier
+		action["amount"] = value
+	return action
 
 
 ## Returns the current action AND advances to the next one.
 func consume_next_action() -> Dictionary:
+	var pattern_index: int = _action_index % maxi(1, action_pattern.size())
 	var a = peek_next_action()
+	if str(a.get("type", "")) == "attack_ramp":
+		var counter_id := str(a.get("counter", "pattern_%d" % pattern_index))
+		_ramp_action_uses[counter_id] = int(_ramp_action_uses.get(counter_id, 0)) + 1
 	_action_index = (_action_index + 1) % max(1, action_pattern.size())
 	_update_intent_display()
 	return a
@@ -413,67 +446,99 @@ func _localized_status_short(status: String) -> String:
 	return _STATUS_SHORT_NAMES.get(status, status.capitalize())
 
 
+func _add_intent_cell(
+	kind: String, texture: Texture2D, value: String, color: Color
+) -> Control:
+	var cell := HBoxContainer.new()
+	cell.name = "Intent%s" % kind
+	cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cell.add_theme_constant_override("separation", 2)
+
+	var icon := TextureRect.new()
+	icon.name = "Icon"
+	icon.custom_minimum_size = INTENT_CELL_ICON_SIZE
+	icon.texture = texture
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cell.add_child(icon)
+
+	if value != "":
+		var label := Label.new()
+		label.name = "IntentValue"
+		label.text = value
+		label.add_theme_font_size_override("font_size", 22)
+		label.add_theme_color_override("font_color", color)
+		label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.95))
+		label.add_theme_constant_override("shadow_offset_x", 2)
+		label.add_theme_constant_override("shadow_offset_y", 2)
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cell.add_child(label)
+
+	_intent_cells.add_child(cell)
+	return cell
+
+
 func _update_intent_display() -> void:
-	if not _intent_label:
+	if not _intent_cells:
 		return
-	var next = peek_next_action()
-	var action_type = str(next.get("type", ""))
+	for child in _intent_cells.get_children():
+		_intent_cells.remove_child(child)
+		child.queue_free()
 
-	# For attack-like actions, rebuild the label using the *actual* damage
-	# after weak / vulnerable — so the intent badge stays accurate as the
-	# player applies debuffs. JSON `label` is only honored for non-attack
-	# actions (block / heal / telegraph).
-	var label_text: String
-	if action_type in ["attack", "attack_status", "attack_all"]:
-		var base = int(next.get("amount", 0))
-		var display_dmg = _compute_display_attack(base)
-		label_text = str(display_dmg)
-		if action_type == "attack_status":
-			var status = str(next.get("status", ""))
-			var stacks = int(next.get("stacks", 1))
-			var status_short = _localized_status_short(status)
-			if stacks > 1:
-				label_text += " %s%d" % [status_short, stacks]
-			else:
-				label_text += " %s" % status_short
-	elif action_type == "block":
-		label_text = str(int(next.get("amount", 0)))
-	elif action_type in ["heal", "buff"]:
-		var amount = int(next.get("amount", 0))
-		label_text = str(amount) if amount > 0 else tr("UI_COMBAT_INTENT_BUFF")
-	elif action_type == "telegraph":
-		label_text = tr("UI_COMBAT_INTENT_CHARGE")
-	else:
-		label_text = str(next.get("label", "?"))
-
-	# Hint the player they can interrupt this attack with a stun card
-	if bool(next.get("interruptible", false)):
-		label_text += " !"
-	_intent_label.text = label_text
-
-	if not _intent_bg:
-		return
-	var type = next.get("type", "")
-	var label_color := Color(1.0, 0.9, 0.64)
-	match type:
-		"attack", "attack_status", "attack_all":
-			_intent_icon.texture = INTENT_ICON_ATTACK
-			label_color = Color(1.0, 0.78, 0.62)
-		"block":
-			_intent_icon.texture = INTENT_ICON_BLOCK
-			label_color = Color(0.65, 0.86, 1.0)
-		"heal", "buff":
-			_intent_icon.texture = INTENT_ICON_BUFF
-			label_color = Color(0.72, 1.0, 0.62)
-		"telegraph":
-			_intent_icon.texture = INTENT_ICON_CHARGE
-			label_color = Color(1.0, 0.86, 0.42)
+	var next := peek_next_action()
+	var action_type := str(next.get("type", ""))
+	match action_type:
+		"attack", "attack_ramp", "attack_all":
+			_add_intent_cell(
+				"Attack",
+				INTENT_ICON_ATTACK,
+				str(_compute_display_attack(int(next.get("amount", 0)))),
+				Color("#ffc69e")
+			)
+		"attack_status":
+			_add_intent_cell(
+				"Attack",
+				INTENT_ICON_ATTACK,
+				str(_compute_display_attack(int(next.get("amount", 0)))),
+				Color("#ffc69e")
+			)
+			_add_intent_cell("Debuff", INTENT_ICON_DEBUFF, "", Color.WHITE)
+		"block", "breakable_block":
+			_add_intent_cell(
+				"Block",
+				INTENT_ICON_BLOCK,
+				str(int(next.get("amount", 0))),
+				Color("#a6dbff")
+			)
+		"reflective_plating":
+			_add_intent_cell(
+				"Block",
+				INTENT_ICON_BLOCK,
+				str(int(next.get("amount", 0))),
+				Color("#a6dbff")
+			)
+			_add_intent_cell(
+				"Buff",
+				INTENT_ICON_BUFF,
+				str(int(next.get("thorns", 0))),
+				Color("#b8ff9e")
+			)
+		"heal", "buff", "buff_self":
+			var amount := int(next.get("amount", next.get("stacks", 0)))
+			_add_intent_cell(
+				"Buff",
+				INTENT_ICON_BUFF,
+				str(amount) if amount > 0 else "",
+				Color("#b8ff9e")
+			)
+		"add_curse":
+			_add_intent_cell("Debuff", INTENT_ICON_DEBUFF, "", Color.WHITE)
+		"telegraph", "summon":
+			_add_intent_cell("Charge", INTENT_ICON_CHARGE, "", Color("#ffdb6b"))
 		_:
-			_intent_icon.texture = INTENT_ICON_BUFF
-	if bool(next.get("interruptible", false)):
-		label_color = Color(1.0, 0.94, 0.28)
-	_intent_label.add_theme_color_override("font_color", label_color)
-
+			_add_intent_cell("Buff", INTENT_ICON_BUFF, "", Color("#b8ff9e"))
 	_intent_tooltip = _build_intent_tooltip(next)
 
 
@@ -481,18 +546,36 @@ func _update_intent_display() -> void:
 func _build_intent_tooltip(next: Dictionary) -> String:
 	var action_type := str(next.get("type", ""))
 	match action_type:
-		"attack", "attack_all":
+		"attack", "attack_all", "attack_ramp":
 			var dmg := _compute_display_attack(int(next.get("amount", 0)))
-			return tr("UI_COMBAT_INTENT_TIP_ATTACK").format({"n": dmg})
+			var tip := tr("UI_COMBAT_INTENT_TIP_ATTACK").format({"n": dmg})
+			if action_type == "attack_ramp":
+				tip += "\n" + tr("UI_COMBAT_INTENT_TIP_RAMP")
+			return _append_interrupt_tip(tip, next)
 		"attack_status":
 			var dmg := _compute_display_attack(int(next.get("amount", 0)))
 			var status := _localized_status_short(str(next.get("status", "")))
 			var k := int(next.get("stacks", 1))
-			return tr("UI_COMBAT_INTENT_TIP_ATTACK_STATUS").format(
-				{"n": dmg, "status": status, "k": k}
+			return _append_interrupt_tip(
+				tr("UI_COMBAT_INTENT_TIP_ATTACK_STATUS").format(
+					{"n": dmg, "status": status, "k": k}
+				),
+				next
 			)
 		"block":
 			return tr("UI_COMBAT_INTENT_TIP_DEFEND").format({"n": int(next.get("amount", 0))})
+		"breakable_block":
+			return tr("UI_COMBAT_INTENT_TIP_BREAKABLE_ARMOR").format(
+				{
+					"n": int(next.get("amount", 0)),
+					"status": _localized_status_short(str(next.get("status", "vulnerable"))),
+					"k": int(next.get("stacks", 1)),
+				}
+			)
+		"reflective_plating":
+			return tr("UI_COMBAT_INTENT_TIP_REFLECTIVE_PLATING").format(
+				{"n": int(next.get("amount", 0)), "k": int(next.get("thorns", 0))}
+			)
 		"heal":
 			return tr("UI_COMBAT_INTENT_TIP_HEAL").format({"n": int(next.get("amount", 0))})
 		"buff_self", "buff":
@@ -508,6 +591,12 @@ func _build_intent_tooltip(next: Dictionary) -> String:
 			return tr("UI_COMBAT_INTENT_TIP_SUMMON")
 		_:
 			return tr("UI_COMBAT_INTENT_TIP_UNKNOWN")
+
+
+func _append_interrupt_tip(tip: String, action: Dictionary) -> String:
+	if bool(action.get("interruptible", false)):
+		return tip + "\n" + tr("UI_COMBAT_INTENT_TIP_INTERRUPTIBLE")
+	return tip
 
 
 func _start_intent_float_anim() -> void:
@@ -528,40 +617,74 @@ func notify_status_changed() -> void:
 	status_changed.emit()
 
 
-func take_damage(amount: int, silent: bool = false) -> void:
-	var dmg_after_block = max(0, amount - block)
-	var blocked_amount = min(block, amount)
-	block = max(0, block - amount)
-	health -= dmg_after_block
-	health = max(0, health)
-	_refresh_hud()
-	# Hit reaction: a red flash, ONLY when HP damage actually lands. A hit fully
-	# absorbed by block (dmg_after_block == 0) does NOT flash. Hurt-frame
-	# animations were dropped by design — the flash is the universal feedback.
-	if dmg_after_block > 0:
-		_hit_flash()
+func take_damage(
+	amount: int, silent: bool = false, feedback_tags: Dictionary = {}
+) -> void:
+	if _death_resolving or amount <= 0:
+		return
 
-	# Floating damage number + shake. Caller can suppress with silent=true
-	# (e.g. status_effect_system's bleed/burn ticks already show a
-	# "BLEED N" notification, so the floating number would double up).
-	if not silent:
-		var scene := get_tree().current_scene
-		if scene:
-			var spawn_pos: Vector2 = global_position + Vector2(0, -_content_height * 0.5)
-			COMBAT_FX.spawn_damage_number(scene, spawn_pos, dmg_after_block, blocked_amount)
-			# Shake the sprite only (not `self`) so the HUD / status badges
-			# that are children of this entity don't wobble with it.
-			# All hits nudge the sprite now (small → subtle, big → strong), scaled by damage.
-			if dmg_after_block > 0 and _sprite and is_instance_valid(_sprite):
-				COMBAT_FX.shake(
-					_sprite, clampf(3.0 + float(dmg_after_block) * 0.5, 3.0, 14.0), 0.18
+	var dmg_after_block := maxi(0, amount - block)
+	var blocked_amount := mini(block, amount)
+	var remaining_block := maxi(0, block - amount)
+	var remaining_health := maxi(0, health - dmg_after_block)
+	var will_kill := remaining_health <= 0 and health > 0
+	var breaks_armed_armor := (
+		_breakable_armor_active
+		and block > 0
+		and remaining_block == 0
+		and str(feedback_tags.get("source", "")) == "player"
+	)
+	var apply_health_change := func() -> void:
+		self.block = remaining_block
+		self.health = remaining_health
+		if self.health <= 0:
+			self._death_resolving = true
+		self._refresh_hud()
+
+	# Status ticks stay quiet because their status banner is already the readable
+	# result. Direct attacks all use the shared four-tier feedback controller.
+	if silent:
+		apply_health_change.call()
+	else:
+		var scene := COMBAT_FEEDBACK_CONTROLLER.scene_root_for(self)
+		var controller: Node = COMBAT_FEEDBACK_CONTROLLER.ensure(scene)
+		if controller:
+			var profile := str(
+				controller.call(
+					"profile_for_hit",
+					dmg_after_block,
+					blocked_amount,
+					will_kill,
+					bool(feedback_tags.get("heavy", false)),
+					bool(feedback_tags.get("critical", false))
 				)
+			)
+			_play_hit_audio(profile, feedback_tags)
+			var reaction_target: Node2D = _sprite if is_instance_valid(_sprite) else self
+			var play_args := [
+				scene,
+				reaction_target,
+				get_hit_global_position(),
+				dmg_after_block,
+				blocked_amount,
+				profile,
+				apply_health_change,
+			]
+			if _uses_detached_feedback(feedback_tags):
+				controller.callv("play_hit", play_args)
+			else:
+				await controller.callv("play_hit", play_args)
+		else:
+			apply_health_change.call()
 
-	if health <= 0:
+	if will_kill:
+		if _death_settled:
+			return
+		_death_settled = true
 		AudioManager.play_sfx("enemy_death")
 		# Per-kill gold drop, scaled by toughness (elites pay double). Keeps the purse
 		# flowing between the flat per-fight loot gold so the shop stays affordable
-		# across a 2-act run. max_health is already act/ascension-scaled, so deeper
+		# across the run. max_health is already act/ascension-scaled, so deeper
 		# fights naturally pay more.
 		var kill_gold := clampi(2 + max_health / 30, 1, 9)
 		if is_elite:
@@ -571,16 +694,52 @@ func take_damage(amount: int, silent: bool = false) -> void:
 		# it pays kill gold + emits `died` exactly once; _live_target guards
 		# upstream keep dead enemies from re-entering take_damage).
 		RunManager.bounty_event("kill_enemies")
-		# A small screen jolt punctuates the kill.
-		COMBAT_FX.shake_screen(get_tree().current_scene, 4.0, 0.18)
 		died.emit()
 		queue_free()
 		return
+
+	if breaks_armed_armor:
+		_breakable_armor_active = false
+		add_status(_breakable_armor_status, _breakable_armor_stacks)
+		_play_armor_break_reaction()
 
 	# Phase transitions only matter while alive (spec A2: never fire during death
 	# / HP<=0). Checked here on the damage path so the swap happens the moment HP
 	# first crosses a threshold.
 	_check_phase_transitions()
+
+
+## Arms a block layer whose destruction by player damage exposes this enemy.
+## Re-arming replaces the previous exposure payload rather than stacking traps.
+func add_breakable_armor(amount: int, status: String, stacks: int) -> void:
+	add_block(amount)
+	_breakable_armor_active = true
+	_breakable_armor_status = status
+	_breakable_armor_stacks = maxi(1, stacks)
+
+
+func _play_armor_break_reaction() -> void:
+	if not _sprite or not is_instance_valid(_sprite):
+		return
+	var tw := create_tween()
+	tw.tween_property(_sprite, "modulate", Color(1.5, 0.62, 0.38), 0.08)
+	tw.tween_property(_sprite, "modulate", Color.WHITE, 0.18)
+
+
+func _play_hit_audio(profile: String, feedback_tags: Dictionary) -> void:
+	if str(feedback_tags.get("source", "")) == "status":
+		return
+	if profile == "blocked":
+		AudioManager.play_sfx("block_gain", -3.0, 1.18, 0.03)
+		return
+	var pitch := 0.84 if profile in ["heavy", "kill"] else 1.0
+	AudioManager.play_sfx("attack_hit", 0.0, pitch, 0.04)
+	if bool(feedback_tags.get("critical", false)):
+		AudioManager.play_sfx("crit", -1.5, 1.0, 0.0)
+
+
+func _uses_detached_feedback(feedback_tags: Dictionary) -> bool:
+	return str(feedback_tags.get("source", "")) in ["status", "relic", "thorns", "debug"]
 
 
 ## After taking damage, if current HP has first dropped below `hp_below*max_health`
@@ -620,6 +779,7 @@ func _check_phase_transitions() -> void:
 	if typeof(new_pattern) == TYPE_ARRAY and not new_pattern.is_empty():
 		action_pattern = new_pattern
 		_action_index = 0
+		_ramp_action_uses.clear()
 		_update_intent_display()
 
 
@@ -647,6 +807,8 @@ func start_turn() -> void:
 	status_system.on_turn_start(self)
 	if health <= 0:
 		return
+	# Surviving breakable armor expires with the Block it was attached to.
+	_breakable_armor_active = false
 	block = 0
 	_refresh_hud()
 
@@ -712,15 +874,6 @@ func play_attack() -> void:
 func _on_attack_finished() -> void:
 	_show_rest_pose()
 	emit_signal("attack_animation_finished")
-
-
-## Quick red flash hit-reaction, the universal "took damage" feedback.
-func _hit_flash() -> void:
-	if not _sprite or not is_instance_valid(_sprite):
-		return
-	_sprite.modulate = Color(1.7, 0.55, 0.5)
-	var tw := create_tween()
-	tw.tween_property(_sprite, "modulate", Color(1, 1, 1, 1), 0.22).set_trans(Tween.TRANS_QUAD)
 
 
 func _show_rest_pose() -> void:
