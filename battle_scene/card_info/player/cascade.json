@@ -1,19 +1,19 @@
 {
 	"name": "cascade",
-	"title": "Cascade",
+	"title": "Final Salvo",
 	"rarity": "uncommon",
 	"type": "attack",
 	"cost": 1,
-	"description": "Deal 2 damage for each Attack you've played this combat. Retain.",
+	"description": "Deal 5 damage plus 1 for each Attack played this combat. Retain.",
 	"front_image": "player/cascade.png",
 	"side": "player",
 	"retain": true,
 	"effects": [
-		{ "type": "scale_damage_by_attacks", "base": 0, "per": 2, "scope": "combat" }
+		{ "type": "scale_damage_by_attacks", "base": 5, "per": 1, "scope": "combat" }
 	],
 	"upgrade": {
 		"effects": [
-			{ "type": "scale_damage_by_attacks", "base": 0, "per": 3, "scope": "combat" }
+			{ "type": "scale_damage_by_attacks", "base": 7, "per": 1, "scope": "combat" }
 		]
 	}
 }

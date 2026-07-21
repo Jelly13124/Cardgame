@@ -34,7 +34,7 @@ static func _matches(data: Dictionary, pool: String) -> bool:
 	if typeof(tags) == TYPE_ARRAY and pool in tags:
 		return true
 	# Built-in theme detection so a themed pool works without tagging every card.
-	# Short Circuit includes builders, detonators and alternate charge payoffs.
+	# Short Circuit includes builders, Overload outlets and alternate charge payoffs.
 	if pool == "short_circuit":
 		for e in data.get("effects", []):
 			if typeof(e) != TYPE_DICTIONARY:
@@ -45,10 +45,20 @@ static func _matches(data: Dictionary, pool: String) -> bool:
 				in [
 					"apply_short_circuit_scaled",
 					"double_target_short_circuit",
-					"detonate_short_circuit",
-					"detonate_short_circuit_all",
+					"overload_short_circuit",
+					"overload_short_circuit_all",
 					"consume_short_circuit_for_block",
 				]
+			):
+				return true
+	if pool == "redline":
+		for e in data.get("effects", []):
+			if typeof(e) != TYPE_DICTIONARY:
+				continue
+			if (
+				str(e.get("status", "")) in ["heat", "redline_protocol"]
+				or str(e.get("type", ""))
+				in ["vent_heat_for_damage", "vent_heat_for_block", "lose_hp"]
 			):
 				return true
 	return false

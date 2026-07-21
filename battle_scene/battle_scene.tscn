@@ -18,7 +18,7 @@
 [ext_resource type="Script" path="res://battle_scene/battle_ui_manager.gd" id="19_ui"]
 [ext_resource type="Script" path="res://battle_scene/card_play_zone.gd" id="20_playzone"]
 [ext_resource type="Script" path="res://battle_scene/ui/battle_top_bar.gd" id="21_topbar"]
-[ext_resource type="Texture2D" path="res://battle_scene/assets/images/backgrounds/wasteland_battlefield_stage_cool_v5.png" id="22_bg"]
+[ext_resource type="Texture2D" path="res://battle_scene/assets/images/backgrounds/wasteland_battlefield_quiet_v6.png" id="22_bg"]
 
 [sub_resource type="Curve" id="Curve_lsli3"]
 _limits = [-10.0, 10.0, 0.0, 1.0]
@@ -77,9 +77,9 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -380.0
-offset_top = -290.0
+offset_top = -310.0
 offset_right = 380.0
-offset_bottom = -40.0
+offset_bottom = -60.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 1

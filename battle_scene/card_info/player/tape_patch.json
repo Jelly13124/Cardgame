@@ -1,17 +1,17 @@
 {
 	"name": "tape_patch",
-	"title": "Tape Patch",
+	"title": "Quick Patch",
 	"rarity": "common",
 	"type": "skill",
-	"cost": 1,
+	"cost": 0,
 	"polarity": "neutral",
-	"description": "Gain 7 Block. Exhaust.",
+	"description": "Gain 4 Block. Exhaust.",
 	"front_image": "player/tape_patch.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "gain_block",
-			"amount": 7
+			"amount": 4
 		},
 		{
 			"type": "exhaust_self"

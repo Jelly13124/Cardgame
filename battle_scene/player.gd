@@ -118,6 +118,15 @@ func _hero_tint() -> Color:
 	return Color.html(hex) if Color.html_is_valid(hex) else Color.WHITE
 
 
+## Hero definitions can opt out of a looping rest animation. Cowboy Bill is
+## intentionally static while waiting so the combat board stays visually calm;
+## future heroes keep animation enabled unless their data says otherwise.
+func _should_animate_idle() -> bool:
+	if RunManager.current_hero_data.has("animate_idle"):
+		return bool(RunManager.current_hero_data["animate_idle"])
+	return _hero_sprite_id() != DEFAULT_HERO_SPRITE_ID
+
+
 func _ready() -> void:
 	# Tag the player so per-entity combat systems can distinguish the hero from enemies.
 	add_to_group("player_entity")
@@ -158,7 +167,7 @@ func _build_animated_visual() -> void:
 
 	var frames = SpriteFrames.new()
 	_sprite.sprite_frames = frames
-	_add_animation_frames(frames, "idle", true, 6.0)
+	_add_animation_frames(frames, "idle", _should_animate_idle(), 6.0)
 	_add_animation_frames(frames, "attack", false, 18.0)
 	_apply_display_scale(frames)
 	_sprite.modulate = _hero_tint()
@@ -268,6 +277,8 @@ func _show_rest_pose() -> void:
 	if frames and frames.has_animation("idle") and frames.get_frame_count("idle") > 0:
 		_sprite.play("idle")
 		_sprite.frame = 0
+		if not _should_animate_idle():
+			_sprite.pause()
 		return
 	if frames and frames.has_animation("attack") and frames.get_frame_count("attack") > 0:
 		_sprite.play("attack")

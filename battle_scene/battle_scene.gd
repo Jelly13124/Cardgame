@@ -310,6 +310,9 @@ func _card_preview_damage(card: Control, target: Node) -> int:
 		return -1
 	var effects: Array = card.card_info.get("effects", [])
 	var str_val := int(player.get("strength")) if player else 0
+	var loaded_bonus := 0
+	if player and str(card.card_info.get("type", "")).to_lower() == "attack":
+		loaded_bonus = int(player.get_status_stacks("loaded"))
 	var base_total := 0
 	var has_damage := false
 	for effect in effects:
@@ -323,14 +326,34 @@ func _card_preview_damage(card: Control, target: Node) -> int:
 				base_total += amt + str_val
 				has_damage = true
 			"deal_damage_str_mult":
-				base_total += int(str_val * float(effect.get("mult", 1)))
+				base_total += (
+					int(effect.get("base", 0))
+					+ int(str_val * float(effect.get("mult", 1)))
+				)
 				has_damage = true
 			"scale_damage_by_attacks":
-				var count := int(turn_manager.attacks_played_this_turn) if turn_manager else 0
+				var count := 0
+				if turn_manager:
+					count = (
+						int(turn_manager.attacks_played_this_combat)
+						if str(effect.get("scope", "turn")) == "combat"
+						else int(turn_manager.attacks_played_this_turn)
+					)
 				base_total += int(effect.get("base", 0)) + int(effect.get("per", 0)) * count
+				has_damage = true
+			"deal_damage_block_mult":
+				base_total += int(player.get("block")) * int(effect.get("mult", 1))
+				has_damage = true
+			"vent_heat_for_damage":
+				var heat := int(player.get_status_stacks("heat")) if player else 0
+				base_total += (
+					int(effect.get("base", 0)) + heat * int(effect.get("mult", 1))
+				)
 				has_damage = true
 	if not has_damage:
 		return -1
+	# Loaded applies once to the next damage effect, not once per listed effect.
+	base_total += loaded_bonus
 	# preview=true: predicted number only — must not consume Deadeye's guaranteed
 	# crit or fire crit side effects (this runs every frame while aiming).
 	return combat_engine.calculate_attack_damage(base_total, player, target, true)
@@ -1215,7 +1238,7 @@ func _update_attack_allowance_ui() -> void:
 # ─── Card Play ────────────────────────────────────────────────────────────────
 
 
-## Play a card. target_node is the enemy to hit (null for skill/ability).
+## Play a card. target_node is set for any card whose data requires an enemy target.
 ## Multiple cards can be in flight simultaneously — animations overlap. A
 ## per-card `_in_play` meta lock prevents the same card from being resolved
 ## twice (e.g. double-click, double drop).
@@ -1242,13 +1265,18 @@ func play_spell(card: Control, target_node: Node):
 		card.remove_meta("_in_play")
 		return
 
-	if type == "attack":
+	var needs_enemy_target: bool = (
+		card.has_method("requires_enemy_target") and card.requires_enemy_target()
+	)
+	if needs_enemy_target:
 		if not target_node or not is_instance_valid(target_node):
 			AudioManager.play_sfx("error")
 			show_notification(tr("UI_BATTLE_MUST_TARGET_ENEMY"), Color(0.8, 0.4, 0.4))
 			hand.add_card(card)
 			card.remove_meta("_in_play")
 			return
+
+	if type == "attack":
 		# Attack-allowance gate (double-fire clip): no attacks left this turn → the
 		# attack is unplayable. Return it to hand and explain via a notification.
 		if _attack_limit_per_turn > 0 and _attacks_left_this_turn <= 0:
@@ -1349,6 +1377,9 @@ func _trigger_exhaust_powers() -> void:
 		player.add_block(fnp)
 		if player.has_method("play_block_pulse"):
 			player.play_block_pulse()
+	var redline: int = player.status_system.get_stacks("redline_protocol")
+	if redline > 0:
+		player.add_status("heat", redline * 2)
 
 
 ## Returns true if the card has an `exhaust_self` effect entry.

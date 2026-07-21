@@ -187,7 +187,7 @@ func _test_battle_energy_and_end_turn() -> void:
 	var background := battle.get_node_or_null("BattleBackground")
 	var background_path := _texture_path(background)
 	_expect(
-		background_path.ends_with("/wasteland_battlefield_stage_cool_v5.png"),
+		background_path.ends_with("/wasteland_battlefield_quiet_v6.png"),
 		"battle uses the cool layered comic combat-stage background (got %s)" % background_path
 	)
 	_expect(
@@ -202,13 +202,14 @@ func _test_battle_energy_and_end_turn() -> void:
 	_expect(
 		player_sprite != null
 		and String(player_sprite.animation) == "idle"
-		and player_sprite.is_playing(),
-		"Cowboy Bill continuously plays the approved idle loop instead of freezing frame zero"
+		and player_sprite.frame == 0
+		and not player_sprite.is_playing(),
+		"Cowboy Bill holds a quiet static rest pose instead of looping an idle animation"
 	)
 	if player_sprite:
 		_expect(
-			is_equal_approx(player_sprite.sprite_frames.get_animation_speed("idle"), 6.0),
-			"Cowboy Bill idle uses restrained six-frame-per-second limited animation"
+			not player_sprite.sprite_frames.get_animation_loop("idle"),
+			"Cowboy Bill's idle track is non-looping"
 		)
 	var player_hud: Node = player.get("_hud") if player else null
 	_expect(player_hud != null, "player builds its CharacterHUD")

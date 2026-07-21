@@ -2,23 +2,24 @@
 	"name": "arc_flash",
 	"title": "Arc Flash",
 	"rarity": "common",
-	"type": "attack",
+	"type": "skill",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Deal [b]2[/b] (+STR) damage to ALL enemies. Detonate Short Circuit on ALL enemies.",
+	"description": "Deal [b]2[/b] fixed damage to ALL enemies. Overload ALL enemies.",
 	"front_image": "player/arc_flash.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "deal_damage_all",
-			"amount": 2
+			"amount": 2,
+			"no_str": true
 		},
-		{ "type": "detonate_short_circuit_all" }
+		{ "type": "overload_short_circuit_all" }
 	],
 	"upgrade": {
 		"effects": [
-			{ "type": "deal_damage_all", "amount": 4 },
-			{ "type": "detonate_short_circuit_all" }
+			{ "type": "deal_damage_all", "amount": 4, "no_str": true },
+			{ "type": "overload_short_circuit_all" }
 		]
 	}
 }

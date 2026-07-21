@@ -1,17 +1,24 @@
 {
 	"name": "lucky_streak",
-	"title": "Lucky Streak",
+	"title": "Deadeye",
 	"rarity": "uncommon",
 	"type": "skill",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Gain 2 Luck (raises crit chance and loot rarity).",
+	"description": "Gain 1 Luck. Gain 1 Deadeye.",
 	"front_image": "player/lucky_streak.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "gain_luck",
-			"amount": 2
-		}
-	]
+			"amount": 1
+		},
+		{ "type": "apply_status_self", "status": "deadeye", "stacks": 1 }
+	],
+	"upgrade": {
+		"effects": [
+			{ "type": "gain_luck", "amount": 2 },
+			{ "type": "apply_status_self", "status": "deadeye", "stacks": 1 }
+		]
+	}
 }

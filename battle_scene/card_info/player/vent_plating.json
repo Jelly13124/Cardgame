@@ -1,21 +1,27 @@
 {
 	"name": "vent_plating",
 	"title": "Vent Plating",
-	"rarity": "common",
+  "rarity": "uncommon",
 	"type": "skill",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Gain 6 Block. Draw 1 card.",
+  "description": "Gain 5 Block. Draw 1 card.",
 	"front_image": "player/vent_plating.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "gain_block",
-			"amount": 6
+      "amount": 5
 		},
 		{
 			"type": "draw_cards",
 			"amount": 1
 		}
-	]
+  ],
+  "upgrade": {
+    "effects": [
+      { "type": "gain_block", "amount": 7 },
+      { "type": "draw_cards", "amount": 1 }
+    ]
+  }
 }

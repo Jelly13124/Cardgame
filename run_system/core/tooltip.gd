@@ -144,7 +144,10 @@ func show(text: String, anchor_global_pos: Vector2 = Vector2.ZERO, owner_id: int
 	if _follow_mouse:
 		_position_panel(_layer.get_viewport().get_mouse_position())
 	else:
-		_position_panel(anchor_global_pos)
+		# The rich label needs one layout pass before the panel reports its real
+		# height. Positioning immediately used the previous/zero size and could
+		# place a card glossary directly over the hovered card.
+		call_deferred("_position_panel", anchor_global_pos)
 
 
 func hide() -> void:

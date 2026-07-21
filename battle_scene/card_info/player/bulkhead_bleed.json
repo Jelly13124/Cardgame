@@ -5,7 +5,7 @@
 	"type": "skill",
 	"cost": 2,
 	"polarity": "neutral",
-	"description": "Lose 2 HP. Gain 12 Block.",
+	"description": "Lose 2 HP. Gain 4 Heat and 12 Block.",
 	"front_image": "player/bulkhead_bleed.png",
 	"side": "player",
 	"effects": [
@@ -13,9 +13,17 @@
 			"type": "lose_hp",
 			"amount": 2
 		},
+		{ "type": "apply_status_self", "status": "heat", "stacks": 4 },
 		{
 			"type": "gain_block",
 			"amount": 12
 		}
-	]
+	],
+	"upgrade": {
+		"effects": [
+			{ "type": "lose_hp", "amount": 2 },
+			{ "type": "apply_status_self", "status": "heat", "stacks": 5 },
+			{ "type": "gain_block", "amount": 16 }
+		]
+	}
 }

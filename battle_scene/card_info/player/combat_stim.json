@@ -1,17 +1,17 @@
 {
 	"name": "combat_stim",
-	"title": "Combat Stim",
+	"title": "Redline Protocol",
 	"rarity": "uncommon",
 	"type": "ability",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Gain 2 Strength.",
+	"description": "This combat, whenever a card is Exhausted, gain 2 Heat.",
 	"front_image": "player/combat_stim.png",
 	"side": "player",
 	"effects": [
-		{
-			"type": "gain_strength",
-			"amount": 2
-		}
-	]
+		{ "type": "apply_status_self", "status": "redline_protocol", "stacks": 1 }
+	],
+	"upgrade": {
+		"cost": 0
+	}
 }

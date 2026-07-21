@@ -5,7 +5,7 @@
   "type": "ability",
   "cost": 1,
   "polarity": "neutral",
-  "description": "This combat, your Crits deal DOUBLE damage, but your non-Crit attacks deal 0.",
+  "description": "This combat, Crits deal double damage. Non-Crit attacks deal normal damage and grant 2 Loaded.",
   "front_image": "player/all_in.png",
   "side": "player",
   "effects": [

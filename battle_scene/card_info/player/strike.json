@@ -1,13 +1,13 @@
 {
 	"name": "strike",
-	"title": "Strike",
+	"title": "Shoot",
 	"rarity": "common",
 	"type": "attack",
 	"cost": 1,
-	"description": "Deal 3 damage.",
+	"description": "Deal 5 damage.",
 	"front_image": "player/strike.png",
 	"side": "player",
 	"effects": [
-		{ "type": "deal_damage", "amount": 3 }
+		{ "type": "deal_damage", "amount": 5 }
 	]
 }

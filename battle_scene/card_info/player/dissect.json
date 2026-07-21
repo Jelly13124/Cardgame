@@ -2,7 +2,7 @@
   "name": "dissect",
   "title": "Circuit Diagnosis",
   "rarity": "uncommon",
-  "type": "attack",
+  "type": "skill",
   "cost": 1,
   "polarity": "neutral",
   "description": "Apply [b]8 + 2×INT[/b] Short Circuit.",

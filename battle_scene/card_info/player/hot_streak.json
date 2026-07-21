@@ -5,7 +5,7 @@
   "type": "ability",
   "cost": 1,
   "polarity": "neutral",
-  "description": "This combat, whenever you Crit, gain 2 gold.",
+  "description": "This combat, whenever you Crit, gain 2 Loaded.",
   "front_image": "player/hot_streak.png",
   "side": "player",
   "effects": [

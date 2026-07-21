@@ -1,11 +1,11 @@
 {
 	"name": "breach_charge",
-	"title": "Breach Charge",
+	"title": "Reactor Burst",
 	"rarity": "common",
 	"type": "attack",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Lose 1 HP. Deal 6 fixed damage to ALL enemies (ignores Strength).",
+	"description": "Lose 1 HP. Gain 2 Heat. Deal 6 fixed damage to ALL enemies.",
 	"front_image": "player/breach_charge.png",
 	"side": "player",
 	"effects": [
@@ -13,10 +13,18 @@
 			"type": "lose_hp",
 			"amount": 1
 		},
+		{ "type": "apply_status_self", "status": "heat", "stacks": 2 },
 		{
 			"type": "deal_damage_all",
 			"amount": 6,
 			"no_str": true
 		}
-	]
+	],
+	"upgrade": {
+		"effects": [
+			{ "type": "lose_hp", "amount": 1 },
+			{ "type": "apply_status_self", "status": "heat", "stacks": 3 },
+			{ "type": "deal_damage_all", "amount": 8, "no_str": true }
+		]
+	}
 }

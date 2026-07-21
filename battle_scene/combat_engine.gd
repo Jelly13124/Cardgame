@@ -70,15 +70,20 @@ func _apply_player_crit(
 	# Deadeye Crit Clip: the first attack each turn is a guaranteed Crit. The
 	# guarantee is spent on the first REAL damage instance — the per-frame targeting
 	# preview (preview=true) shows the crit number but must not consume it.
-	var forced := false
-	if (
+	var relic_forced: bool = (
 		not _first_attack_crit_used
 		and main.relic_effect_system
 		and main.relic_effect_system.first_attack_auto_crit()
-	):
-		forced = true
-		if not preview:
+	)
+	var deadeye_forced: bool = (
+		not relic_forced and has_power and int(p.get_status_stacks("deadeye")) > 0
+	)
+	var forced := relic_forced or deadeye_forced
+	if forced and not preview:
+		if relic_forced:
 			_first_attack_crit_used = true
+		elif deadeye_forced and p.status_system:
+			p.status_system.spend_stacks("deadeye", 1, p)
 	if forced or randf() < RunManager.crit_chance():
 		# Base 1.5x, or a relic override (Volatile Crit Clip → 1.75x). All In trumps
 		# both at 2x.
@@ -90,12 +95,14 @@ func _apply_player_crit(
 		if not preview:
 			feedback_tags["critical"] = true
 			if has_power and p.get_status_stacks("hot_streak") > 0:
-				RunManager.add_gold(2)
+				p.add_status("loaded", 2)
 			if main.relic_effect_system:
 				main.relic_effect_system.on_player_crit(p)
 		return int(round(damage * mult))
 	# Non-crit. All In zeroes non-crit attacks (all-or-nothing).
-	return 0 if all_in else damage
+	if all_in and not preview:
+		p.add_status("loaded", 2)
+	return damage
 
 
 ## Reset the per-turn guaranteed-Crit flag (Deadeye Crit Clip). Called by
@@ -253,19 +260,62 @@ func _consume_short_circuit(target: Node) -> int:
 	return stacks
 
 
-func _short_circuit_detonation(stacks: int, player: Node) -> Dictionary:
+## Loaded is Bill's prepared-shot resource. The first damage effect of the next
+## Attack consumes every stack and adds that much base damage. Keeping the spend
+## here means utility Attacks do not waste a loaded chamber, while Dodge still
+## consumes the fired shot.
+func _consume_loaded_bonus(player: Node, source_card: Control = null) -> int:
+	if (
+		player == null
+		or not is_instance_valid(player)
+		or not player.has_method("get_status_stacks")
+	):
+		return 0
+	if source_card:
+		if not "card_info" in source_card:
+			return 0
+		if str(source_card.card_info.get("type", "")).to_lower() != "attack":
+			return 0
+	var stacks := int(player.get_status_stacks("loaded"))
+	if stacks <= 0:
+		return 0
+	var status_system = player.get("status_system")
+	if status_system:
+		status_system.spend_stacks("loaded", stacks, player)
+	return stacks
+
+
+## Heat is Bill's stored reactor pressure. Vent effects consume the whole pool in
+## one atomic spend so a replayed card cannot reuse the same Heat.
+func _consume_heat(player: Node) -> int:
+	if (
+		player == null
+		or not is_instance_valid(player)
+		or not player.has_method("get_status_stacks")
+	):
+		return 0
+	var stacks := int(player.get_status_stacks("heat"))
+	if stacks <= 0:
+		return 0
+	var status_system = player.get("status_system")
+	if status_system:
+		status_system.spend_stacks("heat", stacks, player)
+	return stacks
+
+
+func _short_circuit_overload(stacks: int, player: Node) -> Dictionary:
 	var damage := stacks
 	var critical := false
 	var protocol_active: bool = (
 		player
 		and player.has_method("get_status_stacks")
-		and player.get_status_stacks("detonation_protocol") > 0
+		and player.get_status_stacks("overload_protocol") > 0
 	)
 	if protocol_active and randf() < RunManager.crit_chance():
 		damage = int(round(float(damage) * RunManager.CRIT_MULT))
 		critical = true
 		if player.get_status_stacks("hot_streak") > 0:
-			RunManager.add_gold(2)
+			player.add_status("loaded", 2)
 		if main.relic_effect_system:
 			main.relic_effect_system.on_player_crit(player)
 	return {"damage": damage, "critical": critical}
@@ -318,6 +368,7 @@ func _apply_effect(
 
 	match effect_type:
 		"deal_damage":
+			amount += _consume_loaded_bonus(player, source_card)
 			if target and is_instance_valid(target) and target.has_method("take_damage"):
 				if _check_dodge(target):
 					pass  # attack negated by Dodge
@@ -352,6 +403,12 @@ func _apply_effect(
 			if main.relic_effect_system:
 				amount = main.relic_effect_system.on_player_gain_block(player, amount)
 			player.add_block(amount)
+			# Reactive Plating turns card-granted Block into a small retaliatory
+			# charge. Multiple copies stack through the power's own stack count.
+			if player.has_method("get_status_stacks"):
+				var reactive := int(player.get_status_stacks("reactive_plating"))
+				if reactive > 0:
+					player.add_status("thorns", reactive)
 			if player.has_method("play_block_pulse"):
 				player.play_block_pulse()  # grow-and-shrink, like the enemy's block
 			AudioManager.play_sfx("block_gain")
@@ -425,7 +482,7 @@ func _apply_effect(
 				main.restore_attack_allowance()
 
 		"deal_damage_all":
-			var per_target_amount = amount
+			var per_target_amount = amount + _consume_loaded_bonus(player, source_card)
 			if main.equipment_set_system and source_card:
 				per_target_amount = main.equipment_set_system.modify_card_damage(
 					source_card, per_target_amount
@@ -468,7 +525,7 @@ func _apply_effect(
 					count = int(main.turn_manager.attacks_played_this_combat)
 				else:
 					count = int(main.turn_manager.attacks_played_this_turn)
-			var dynamic = base_dmg + per * count
+			var dynamic = base_dmg + per * count + _consume_loaded_bonus(player, source_card)
 			if target and is_instance_valid(target) and target.has_method("take_damage"):
 				if _check_dodge(target):
 					pass  # attack negated by Dodge
@@ -489,7 +546,10 @@ func _apply_effect(
 			# Does NOT receive the global +STR — it already scales off STR.
 			# JSON: {"type":"deal_damage_str_mult", "mult":2}
 			var mult: float = float(effect.get("mult", 1))
-			var str_dmg: int = int(player.get("strength") * mult) if player else 0
+			var str_dmg: int = int(effect.get("base", 0))
+			if player:
+				str_dmg += int(player.get("strength") * mult)
+			str_dmg += _consume_loaded_bonus(player, source_card)
 			if target and is_instance_valid(target) and target.has_method("take_damage"):
 				if _check_dodge(target):
 					pass  # attack negated by Dodge
@@ -671,7 +731,7 @@ func _apply_effect(
 			await get_tree().create_timer(0.2).timeout
 
 		"double_target_short_circuit":
-			# Overload doubles stored charge before the following detonation effect.
+			# Overload doubles stored charge before the following overload effect.
 			if (
 				target
 				and is_instance_valid(target)
@@ -696,7 +756,7 @@ func _apply_effect(
 				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
 			await get_tree().create_timer(0.2).timeout
 
-		"detonate_short_circuit":
+		"overload_short_circuit":
 			var consumed := _consume_short_circuit(target)
 			if (
 				consumed > 0
@@ -704,10 +764,10 @@ func _apply_effect(
 				and is_instance_valid(target)
 				and target.has_method("take_damage")
 			):
-				var detonation := _short_circuit_detonation(consumed, player)
-				var critical := bool(detonation.get("critical", false))
+				var overload := _short_circuit_overload(consumed, player)
+				var critical := bool(overload.get("critical", false))
 				await target.take_damage(
-					int(detonation.get("damage", consumed)),
+					int(overload.get("damage", consumed)),
 					false,
 					{
 						"source": "status",
@@ -726,8 +786,8 @@ func _apply_effect(
 				main.show_notification(tr("UI_COMBAT_NO_SHORT_CIRCUIT"), Color(0.4, 0.85, 1.0))
 			await get_tree().create_timer(0.2).timeout
 
-		"detonate_short_circuit_all":
-			var detonated_any := false
+		"overload_short_circuit_all":
+			var overloaded_any := false
 			var critical_any := false
 			for enemy in main.enemy_container.get_children():
 				if not is_instance_valid(enemy) or enemy.is_queued_for_deletion():
@@ -735,12 +795,12 @@ func _apply_effect(
 				var consumed := _consume_short_circuit(enemy)
 				if consumed <= 0 or not enemy.has_method("take_damage"):
 					continue
-				detonated_any = true
-				var detonation := _short_circuit_detonation(consumed, player)
-				var critical := bool(detonation.get("critical", false))
+				overloaded_any = true
+				var overload := _short_circuit_overload(consumed, player)
+				var critical := bool(overload.get("critical", false))
 				critical_any = critical_any or critical
 				await enemy.take_damage(
-					int(detonation.get("damage", consumed)),
+					int(overload.get("damage", consumed)),
 					false,
 					{
 						"source": "status",
@@ -751,7 +811,7 @@ func _apply_effect(
 				)
 				if main.is_game_over:
 					break
-			if detonated_any:
+			if overloaded_any:
 				AudioManager.play_sfx(
 					"crit" if critical_any else "attack_hit",
 					-1.5 if critical_any else -2.0,
@@ -767,6 +827,7 @@ func _apply_effect(
 			# CON-driven block pool, so it does NOT receive the global +STR.
 			var bmult: float = float(effect.get("mult", 1))
 			var block_dmg: int = int(player.get("block") * bmult) if player else 0
+			block_dmg += _consume_loaded_bonus(player, source_card)
 			if target and is_instance_valid(target) and target.has_method("take_damage"):
 				if _check_dodge(target):
 					pass  # attack negated by Dodge
@@ -786,6 +847,65 @@ func _apply_effect(
 					apply_thorns_reflection(player, target)
 			else:
 				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
+			await get_tree().create_timer(0.2).timeout
+
+		"vent_heat_for_damage":
+			var spent_heat := _consume_heat(player)
+			var heat_damage := (
+				int(effect.get("base", 0))
+				+ spent_heat * int(effect.get("mult", 1))
+			)
+			heat_damage += _consume_loaded_bonus(player, source_card)
+			if target and is_instance_valid(target) and target.has_method("take_damage"):
+				if _check_dodge(target):
+					pass
+				else:
+					if main.equipment_set_system and source_card:
+						heat_damage = main.equipment_set_system.modify_card_damage(
+							source_card, heat_damage
+						)
+					if card_mult != 1.0:
+						heat_damage = int(heat_damage * card_mult)
+					var feedback_tags := _feedback_tags_for(effect)
+					var outgoing = calculate_attack_damage(
+						heat_damage, player, target, false, feedback_tags
+					)
+					await target.take_damage(outgoing, false, feedback_tags)
+					_register_player_attack()
+					if main.equipment_set_system and source_card:
+						main.equipment_set_system.on_card_damage_resolved(
+							source_card, target
+						)
+					apply_thorns_reflection(player, target)
+			else:
+				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
+			await get_tree().create_timer(0.2).timeout
+
+		"vent_heat_for_block":
+			var spent_heat := _consume_heat(player)
+			var heat_block := (
+				int(effect.get("base", 0))
+				+ spent_heat * int(effect.get("mult", 1))
+			)
+			if main.equipment_set_system and source_card:
+				heat_block = main.equipment_set_system.modify_card_block(
+					source_card, heat_block
+				)
+			if player and "status_system" in player and player.status_system:
+				heat_block = int(heat_block * player.status_system.get_block_multiplier())
+			if main.relic_effect_system:
+				heat_block = main.relic_effect_system.on_player_gain_block(player, heat_block)
+			if player and player.has_method("add_block"):
+				player.add_block(heat_block)
+				var reactive := int(player.get_status_stacks("reactive_plating"))
+				if reactive > 0:
+					player.add_status("thorns", reactive)
+				if player.has_method("play_block_pulse"):
+					player.play_block_pulse()
+			AudioManager.play_sfx("block_gain")
+			main.show_notification(
+				tr("UI_COMBAT_GAIN_BLOCK").format({"n": heat_block}), Color(0.4, 0.6, 1.0)
+			)
 			await get_tree().create_timer(0.2).timeout
 
 		"gain_gold":

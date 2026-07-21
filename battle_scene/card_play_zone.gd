@@ -45,13 +45,15 @@ func move_cards(cards: Array, _index: int = -1, _with_history: bool = true) -> b
 	var main = get_tree().current_scene
 	for card in cards:
 		if main and main.has_method("play_spell"):
-			# Skill/ability → null target. Attack-with-sole-enemy → that enemy.
-			# Attack-with-multiple-enemies shouldn't reach the play zone (it
+			# Untargeted card → null target. Targeted card with one enemy → that enemy.
+			# A targeted card with multiple enemies shouldn't reach the play zone (it
 			# uses the arrow flow), but if it somehow does, fall back to null
 			# which play_spell handles gracefully for AoE-style effects.
 			var target: Node = null
-			var c_type := str(card.card_info.get("type", "skill")).to_lower()
-			if c_type == "attack" and main.has_method("sole_alive_enemy"):
+			var needs_target: bool = (
+				card.has_method("requires_enemy_target") and card.requires_enemy_target()
+			)
+			if needs_target and main.has_method("sole_alive_enemy"):
 				target = main.sole_alive_enemy()
 			main.play_spell(card, target)
 	# Return true so the framework removes the card from the hand

@@ -39,8 +39,13 @@ const STATUS_COLORS = {
 	"feel_no_pain": Color(0.55, 0.80, 0.95),
 	"hot_streak": Color(1.0, 0.82, 0.3),
 	"all_in": Color(1.0, 0.45, 0.25),
-	"detonation_protocol": Color(0.20, 0.92, 1.0),
+	"deadeye": Color(1.0, 0.90, 0.34),
+	"overload_protocol": Color(0.20, 0.92, 1.0),
 	"covering_reload": Color(0.55, 0.78, 0.95),
+	"reactive_plating": Color(0.46, 0.82, 0.94),
+	"heat": Color(1.0, 0.46, 0.16),
+	"redline_protocol": Color(1.0, 0.34, 0.12),
+	"loaded": Color(1.0, 0.70, 0.24),
 	"bullet": Color(1.0, 0.78, 0.35),
 }
 
@@ -58,8 +63,13 @@ const STATUS_LABELS = {
 	"feel_no_pain": "¤",
 	"hot_streak": "HS",
 	"all_in": "AI",
-	"detonation_protocol": "DP",
+	"deadeye": "D",
+	"overload_protocol": "OP",
 	"covering_reload": "CR",
+	"reactive_plating": "RP",
+	"heat": "H",
+	"redline_protocol": "RL",
+	"loaded": "L",
 	"bullet": "●",
 }
 
@@ -68,7 +78,7 @@ const STATUS_ICON_SIZE := 30.0
 
 const STATUS_DESCRIPTIONS = {
 	"short_circuit":
-	"Stored charge. It does not deal damage or decay until a card detonates or removes it.",
+	"Stored charge. It does not deal damage or decay until a card Overloads or removes it.",
 	"burn":
 	"Take damage equal to stacks at the start of your turn, then stacks are halved (rounded down).",
 	"weak": "Outgoing attack damage reduced 25% per stack. Decays 1 per turn.",
@@ -81,10 +91,15 @@ const STATUS_DESCRIPTIONS = {
 	"dodge": "Completely negates incoming attacks, one stack consumed per attack.",
 	"metallicize": "At the start of your turn, gain stacks Block. Persistent.",
 	"feel_no_pain": "Whenever a card is Exhausted, gain stacks Block. Persistent.",
-	"hot_streak": "Whenever you Crit, gain 2 gold. Persistent.",
-	"all_in": "Your Crits deal double damage, but non-Crit attacks deal 0. Persistent.",
-	"detonation_protocol": "Your Short Circuit detonations can Crit. Persistent.",
+	"hot_streak": "Whenever you Crit, gain 2 Loaded. Persistent.",
+	"all_in": "Crits deal double damage. Non-Crit attacks deal normal damage and grant 2 Loaded. Persistent.",
+	"deadeye": "Your next Attack is guaranteed to Crit, then remove 1 stack.",
+	"overload_protocol": "Your Overloads can Crit. Persistent.",
 	"covering_reload": "Whenever you Reload, gain 3 Block. Persistent.",
+	"reactive_plating": "Whenever a card grants Block, gain Thorns equal to stacks. Persistent.",
+	"heat": "Stored reactor pressure. It persists until a card Vents it.",
+	"redline_protocol": "Whenever a card is Exhausted, gain 2 Heat per stack. Persistent.",
+	"loaded": "The next Attack that deals damage gains stacks additional damage, then remove all stacks.",
 	"bullet":
 	"Ammo for attacks (double-fire clip). 1 at the start of each turn, max 1; spent by attacking, restored by Reload.",
 }

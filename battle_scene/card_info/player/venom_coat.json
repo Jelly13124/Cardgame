@@ -1,14 +1,16 @@
 {
 	"name": "venom_coat",
-	"title": "Venom Coat",
-	"rarity": "common",
-	"type": "skill",
+	"title": "Reactive Plating",
+	"rarity": "uncommon",
+	"type": "ability",
 	"cost": 1,
-	"description": "Gain 4 Block. Gain [b]2 Thorns[/b].",
+	"description": "This combat, whenever a card grants Block, gain 1 Thorns.",
 	"front_image": "player/venom_coat.png",
 	"side": "player",
 	"effects": [
-		{ "type": "gain_block", "amount": 4 },
-		{ "type": "apply_status_self", "status": "thorns", "stacks": 2 }
-	]
+		{ "type": "apply_status_self", "status": "reactive_plating", "stacks": 1 }
+	],
+	"upgrade": {
+		"cost": 0
+	}
 }

@@ -80,9 +80,11 @@ const ALLOWED_EFFECT_TYPES = [
 	"lose_hp",
 	"double_strength",
 	"double_target_short_circuit",
-	"detonate_short_circuit",
-	"detonate_short_circuit_all",
+	"overload_short_circuit",
+	"overload_short_circuit_all",
 	"deal_damage_block_mult",
+	"vent_heat_for_damage",
+	"vent_heat_for_block",
 	"gain_gold",
 	"heal",
 	"gain_attack_allowance",
@@ -107,8 +109,13 @@ const ALLOWED_STATUS_NAMES = [
 	"feel_no_pain",
 	"hot_streak",
 	"all_in",
-	"detonation_protocol",
+	"deadeye",
+	"overload_protocol",
 	"covering_reload",
+	"reactive_plating",
+	"heat",
+	"redline_protocol",
+	"loaded",
 	"bullet",
 ]
 # Effect types that require a `status` field
@@ -592,10 +599,13 @@ static func _validate_card_effect(effect: Variant, prefix: String, label: String
 		if not effect.has("stacks") and not effect.has("amount"):
 			push_error("%s: %s[%d] (%s) needs 'stacks' (or 'amount')" % [prefix, label, i, etype])
 			ok = false
-	# `deal_damage_str_mult` requires a numeric `mult` (damage = strength * mult).
+	# `deal_damage_str_mult` requires base + numeric mult (damage = base + strength * mult).
 	# Godot's JSON parser yields every number as a float, so accept TYPE_INT or
 	# a whole-valued TYPE_FLOAT and reject only non-numeric / fractional values.
 	if etype == "deal_damage_str_mult":
+		if not effect.has("base"):
+			push_error("%s: %s[%d] (deal_damage_str_mult) is missing 'base'" % [prefix, label, i])
+			ok = false
 		if not effect.has("mult"):
 			push_error("%s: %s[%d] (deal_damage_str_mult) is missing 'mult'" % [prefix, label, i])
 			ok = false
@@ -611,6 +621,16 @@ static func _validate_card_effect(effect: Variant, prefix: String, label: String
 						"%s: %s[%d] (deal_damage_str_mult) 'mult' must be a whole number, got %s"
 						% [prefix, label, i, mult_val]
 					)
+				)
+				ok = false
+	# Heat Vent effects require whole-number base/mult fields so their preview and
+	# resolution agree exactly.
+	if etype in ["vent_heat_for_damage", "vent_heat_for_block"]:
+		for required_key in ["base", "mult"]:
+			if not effect.has(required_key):
+				push_error(
+					"%s: %s[%d] (%s) is missing '%s'"
+					% [prefix, label, i, etype, required_key]
 				)
 				ok = false
 	return ok
@@ -1120,6 +1140,9 @@ static func validate_hero(data: Dictionary, path: String) -> bool:
 	if typeof(data["starting_attributes"]) != TYPE_DICTIONARY:
 		push_error("%s: starting_attributes must be a Dictionary" % prefix)
 		return false
+	if data.has("animate_idle") and typeof(data["animate_idle"]) != TYPE_BOOL:
+		push_error("%s: animate_idle must be a bool" % prefix)
+		ok = false
 	for attr in HERO_ATTRIBUTE_KEYS:
 		if not data["starting_attributes"].has(attr):
 			push_error("%s: starting_attributes missing '%s'" % [prefix, attr])

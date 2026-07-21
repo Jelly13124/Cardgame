@@ -1,23 +1,27 @@
 {
 	"name": "last_breath",
-	"title": "Last Breath",
+	"title": "Emergency Vent",
 	"rarity": "rare",
 	"type": "skill",
 	"cost": 0,
-	"description": "Gain [b]10[/b] block. Draw 2 cards. Exhaust.",
+	"description": "Vent. Gain 2 Block per Heat removed. Draw 1 card. Exhaust.",
 	"front_image": "player/last_breath.png",
 	"side": "player",
 	"effects": [
-		{
-			"type": "gain_block",
-			"amount": 10
-		},
+		{ "type": "vent_heat_for_block", "base": 0, "mult": 2 },
 		{
 			"type": "draw_cards",
-			"amount": 2
+			"amount": 1
 		},
 		{
 			"type": "exhaust_self"
 		}
-	]
+	],
+	"upgrade": {
+		"effects": [
+			{ "type": "vent_heat_for_block", "base": 0, "mult": 3 },
+			{ "type": "draw_cards", "amount": 1 },
+			{ "type": "exhaust_self" }
+		]
+	}
 }

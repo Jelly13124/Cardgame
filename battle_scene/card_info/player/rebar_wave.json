@@ -1,23 +1,27 @@
 {
 	"name": "rebar_wave",
-	"title": "Defensive Strike",
-	"rarity": "common",
+	"title": "Kinetic Rebound",
+	"rarity": "rare",
 	"type": "attack",
-	"cost": 1,
+	"cost": 2,
 	"polarity": "neutral",
-	"description": "Gain 5 fixed Block and deal 5 fixed damage (ignores Constitution and Strength).",
+	"description": "Gain 6 Block, then deal damage equal to your Block.",
 	"front_image": "player/rebar_wave.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "gain_block",
-			"amount": 5,
-			"no_con": true
+			"amount": 6
 		},
 		{
-			"type": "deal_damage",
-			"amount": 5,
-			"no_str": true
+			"type": "deal_damage_block_mult",
+			"mult": 1
 		}
-	]
+	],
+	"upgrade": {
+		"effects": [
+			{ "type": "gain_block", "amount": 8 },
+			{ "type": "deal_damage_block_mult", "mult": 1 }
+		]
+	}
 }

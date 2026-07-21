@@ -1,11 +1,11 @@
 {
 	"name": "siphon_valve",
-	"title": "Siphon Valve",
+	"title": "Fuel Siphon",
 	"rarity": "uncommon",
 	"type": "skill",
 	"cost": 0,
 	"polarity": "neutral",
-	"description": "Lose 3 HP. Gain 2 Energy. Exhaust.",
+	"description": "Lose 3 HP. Gain 5 Heat and 2 Energy. Exhaust.",
 	"front_image": "player/siphon_valve.png",
 	"side": "player",
 	"effects": [
@@ -13,6 +13,7 @@
 			"type": "lose_hp",
 			"amount": 3
 		},
+		{ "type": "apply_status_self", "status": "heat", "stacks": 5 },
 		{
 			"type": "gain_energy",
 			"amount": 2
@@ -20,5 +21,13 @@
 		{
 			"type": "exhaust_self"
 		}
-	]
+	],
+	"upgrade": {
+		"effects": [
+			{ "type": "lose_hp", "amount": 2 },
+			{ "type": "apply_status_self", "status": "heat", "stacks": 5 },
+			{ "type": "gain_energy", "amount": 2 },
+			{ "type": "exhaust_self" }
+		]
+	}
 }

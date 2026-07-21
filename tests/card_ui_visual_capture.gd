@@ -16,7 +16,7 @@ func _capture() -> void:
 	var background := TextureRect.new()
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	background.texture = load(
-		"res://battle_scene/assets/images/backgrounds/wasteland_battlefield_stage_cool_v5.png"
+		"res://battle_scene/assets/images/backgrounds/wasteland_battlefield_quiet_v6.png"
 	)
 	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
@@ -48,6 +48,7 @@ func _capture() -> void:
 
 	for _i in range(10):
 		await get_tree().process_frame
+	RenderingServer.force_draw(false)
 	var image := get_viewport().get_texture().get_image()
 	var error := image.save_png(ProjectSettings.globalize_path(OUTPUT_PATH))
 	if error != OK:

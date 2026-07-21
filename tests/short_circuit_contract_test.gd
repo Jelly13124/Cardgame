@@ -2,6 +2,7 @@ extends Node
 
 const STATUS_SYSTEM = preload("res://battle_scene/status_effect_system.gd")
 const COMBAT_ENGINE = preload("res://battle_scene/combat_engine.gd")
+const PLAY_CARD = preload("res://battle_scene/play_card.gd")
 
 const CARD_DIR := "res://battle_scene/card_info/player/"
 
@@ -36,8 +37,9 @@ func _expect(condition: bool, message: String) -> void:
 
 func _run() -> void:
 	_test_status_timing()
-	_test_detonation_consumes_charge()
+	_test_overload_consumes_charge()
 	_test_card_package_numbers()
+	_test_data_driven_targeting()
 	_test_active_data_has_no_bleed_mechanic()
 	if failures.is_empty():
 		print("[OK] Short Circuit contract passed")
@@ -61,30 +63,31 @@ func _test_status_timing() -> void:
 	entity.free()
 
 
-func _test_detonation_consumes_charge() -> void:
+func _test_overload_consumes_charge() -> void:
 	var entity := FakeEntity.new()
 	add_child(entity)
 	entity.add_status("short_circuit", 9)
 	var engine = COMBAT_ENGINE.new()
 	add_child(engine)
 	var consumed := int(engine._consume_short_circuit(entity))
-	_expect(consumed == 9, "Detonation reads every stored Short Circuit stack")
-	_expect(entity.get_status_stacks("short_circuit") == 0, "Detonation removes stored charge")
-	var result: Dictionary = engine._short_circuit_detonation(consumed, null)
-	_expect(int(result.get("damage", 0)) == 9, "Base detonation damage equals stacks consumed")
-	_expect(not bool(result.get("critical", true)), "Detonation cannot Crit without the power")
+	_expect(consumed == 9, "Overload reads every stored Short Circuit stack")
+	_expect(entity.get_status_stacks("short_circuit") == 0, "Overload removes stored charge")
+	var result: Dictionary = engine._short_circuit_overload(consumed, null)
+	_expect(int(result.get("damage", 0)) == 9, "Base Overload damage equals stacks consumed")
+	_expect(not bool(result.get("critical", true)), "Overload cannot Crit without the power")
 	engine.free()
 	entity.free()
 
 
 func _test_card_package_numbers() -> void:
 	var round_card := _load_card("recoil_shot")
-	_expect(_effect_amount(round_card, "deal_damage") == 2, "Short-Circuit Round keeps some immediate damage")
+	_expect(_effect_amount(round_card, "deal_damage") == 3, "Short-Circuit Round keeps useful immediate damage")
 	_expect(
 		_effect_amount(round_card, "apply_short_circuit_scaled") == 6,
 		"common hybrid applies 6 delayed stacks"
 	)
 	var diagnosis := _load_card("dissect")
+	_expect(str(diagnosis.get("type", "")) == "skill", "Circuit Diagnosis is a targeted Skill")
 	_expect(
 		_effect_amount(diagnosis, "apply_short_circuit_scaled") == 8,
 		"uncommon pure builder starts at 8 delayed stacks"
@@ -96,9 +99,29 @@ func _test_card_package_numbers() -> void:
 	)
 	var overload := _load_card("limit_break")
 	_expect(_has_effect(overload, "double_target_short_circuit"), "Overload doubles stored charge")
-	_expect(_has_effect(overload, "detonate_short_circuit"), "Overload detonates after doubling")
+	_expect(_has_effect(overload, "overload_short_circuit"), "Overload resolves after doubling")
 	var arc_flash := _load_card("arc_flash")
-	_expect(_has_effect(arc_flash, "detonate_short_circuit_all"), "Arc Flash is the common detonation outlet")
+	_expect(_has_effect(arc_flash, "overload_short_circuit_all"), "Arc Flash is the common Overload outlet")
+	_expect(str(arc_flash.get("type", "")) == "skill", "Arc Flash is a technical Skill, not another Attack")
+
+
+func _test_data_driven_targeting() -> void:
+	_expect(
+		PLAY_CARD.data_requires_enemy_target(_load_card("limit_break")),
+		"targeted Overload Skill requests an enemy target"
+	)
+	_expect(
+		not PLAY_CARD.data_requires_enemy_target(_load_card("arc_flash")),
+		"all-enemy Overload Attack does not request a single target"
+	)
+	_expect(
+		PLAY_CARD.data_requires_enemy_target(_load_card("corrode")),
+		"enemy-debuff Skill requests an enemy target"
+	)
+	_expect(
+		not PLAY_CARD.data_requires_enemy_target(_load_card("defend")),
+		"self-only Block Skill remains untargeted"
+	)
 
 
 func _test_active_data_has_no_bleed_mechanic() -> void:
@@ -120,6 +143,10 @@ func _test_active_data_has_no_bleed_mechanic() -> void:
 			_expect(
 				not source.contains('"type": "apply_bleed_scaled"'),
 				"active data does not use the old Bleed scaler: %s" % file_name
+			)
+			_expect(
+				not source.contains('"type": "detonate_short_circuit"'),
+				"active data uses Overload rather than the old detonation effect: %s" % file_name
 			)
 
 

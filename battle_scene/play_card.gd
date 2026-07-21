@@ -1,6 +1,19 @@
 extends Card
 class_name PlayCard
 
+const ENEMY_TARGET_EFFECTS := [
+	"deal_damage",
+	"deal_damage_str_mult",
+	"scale_damage_by_attacks",
+	"deal_damage_block_mult",
+	"vent_heat_for_damage",
+	"apply_status",
+	"apply_short_circuit_scaled",
+	"apply_stun",
+	"double_target_short_circuit",
+	"overload_short_circuit",
+]
+
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
 const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
@@ -25,23 +38,29 @@ const GENERATED_UI_PATH = UI_ASSET_PATH + "generated/"
 const COST_BADGE_PATH = UI_ASSET_PATH + "card_cost_badge.png"
 const DESC_BOX_PATH = UI_ASSET_PATH + "card_description_box.png"
 const TYPE_BADGE_PATH = UI_ASSET_PATH + "card_type_badge.png"
-const GENERATED_COST_POSITION := Vector2(3, 1)
-const GENERATED_COST_SIZE := Vector2(37, 37)
+const GENERATED_COST_POSITION := Vector2(5, 3)
+const GENERATED_COST_SIZE := Vector2(35, 35)
 const GENERATED_COST_FONT_SIZE := 25
-const GENERATED_COST_FONT_EMBOLDEN := 0.8
+const GENERATED_COST_FONT_EMBOLDEN := 0.9
+const HAND_HOVER_LIFT := 80.0
 
-var _hover_tween: Tween
 ## Discover candidates aren't hand cards — suppress the "can I afford it" glow.
 var suppress_playable_glow: bool = false
 var _rarity_frames: Dictionary = {}
 
-# Legacy fallback colors. The combat card face deliberately does not display
-# rarity; these remain only for the old fallback skin used outside a hero run.
+# Legacy fallback-frame colors. The unified generated battle face intentionally
+# omits rarity decoration so profession color and card content remain dominant.
 const RARITY_COLORS: Dictionary = {
 	"common": Color(0.95, 0.96, 0.98),
 	"uncommon": Color(0.31, 0.69, 1.0),
 	"rare": Color(1.0, 0.81, 0.27),
 	"curse": Color(0.62, 0.36, 0.78),
+}
+const GENERATED_TYPE_TEXT_COLORS: Dictionary = {
+	"attack": Color("#ffd0a1"),
+	"skill": Color("#8ff4f2"),
+	"ability": Color("#f1e190"),
+	"curse": Color("#d7a8e9"),
 }
 
 
@@ -118,15 +137,11 @@ func _configure_generated_skin(data: Dictionary) -> bool:
 	var skin_id := _resolve_skin_id(data)
 	if skin_id == "":
 		return false
-	var shell_path := GENERATED_UI_PATH + "card_shell_%s.png" % skin_id
-	var cost_path := GENERATED_UI_PATH + "card_cost_%s.png" % skin_id
+	var shell_path := GENERATED_UI_PATH + "card_shell_%s_unified.png" % skin_id
 	var card_type := str(data.get("type", "skill")).to_lower()
-	var type_path := GENERATED_UI_PATH + "card_type_%s_%s.png" % [skin_id, card_type]
 	var shell_tex := _load_texture_fallback(shell_path)
-	var generated_cost_tex := _load_texture_fallback(cost_path)
-	var generated_type_tex := _load_texture_fallback(type_path)
-	if shell_tex == null or generated_cost_tex == null:
-		push_warning("Generated card UI skin is incomplete: %s / %s" % [shell_path, cost_path])
+	if shell_tex == null:
+		push_warning("Generated unified card UI skin is missing: %s" % shell_path)
 		return false
 
 	generated_shell.texture = shell_tex
@@ -137,32 +152,29 @@ func _configure_generated_skin(data: Dictionary) -> bool:
 	generated_shell.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	generated_shell.stretch_mode = TextureRect.STRETCH_SCALE
 	card_bg_texture.visible = false
-	cost_badge.texture = generated_cost_tex
-	cost_badge.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	# Cost, title, type landing, and description surface are authored into the
+	# single shell. These nodes remain only as layout containers for runtime text.
+	cost_badge.texture = null
 	desc_box_texture.texture = null
-	type_badge_texture.texture = generated_type_tex
-	type_badge_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	type_badge_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	type_badge_texture.stretch_mode = TextureRect.STRETCH_SCALE
+	type_badge_texture.texture = null
 	art_frame_texture.visible = false
 	art_bg.visible = false
 
-	# Pixel layout measured from the approved V3 concept and normalized to the
+	# Pixel layout measured from the unified 832x1144 shell and normalized to the
 	# factory's canonical 208x286 card size.
-	art_container.position = Vector2(15, 37)
-	art_container.size = Vector2(178, 133)
-	name_label.position = Vector2(32, 10)
-	name_label.size = Vector2(150, 28)
-	desc_box_texture.position = Vector2(15, 174)
-	desc_box_texture.size = Vector2(178, 95)
-	desc_label.position = Vector2(7, 6)
-	desc_label.size = Vector2(164, 83)
-	# The profession shell intentionally has no baked type plaque. This is the
-	# single type marker, so attack / skill / ability never read as stacked tabs.
-	type_badge_texture.position = Vector2(58, 160)
-	type_badge_texture.size = Vector2(92, 24)
-	# Match the approved concept hierarchy: the cost medallion overlaps the
-	# title plate and remains the first readable datum at hand-card scale.
+	# Overscan the illustration beneath the opaque rail. The unified shell draws
+	# above it and becomes the visual crop, so curved aperture edges never expose
+	# an empty strip when 512x320 art is aspect-covered.
+	art_container.position = Vector2(15, 38)
+	art_container.size = Vector2(180, 123)
+	name_label.position = Vector2(42, 10)
+	name_label.size = Vector2(152, 31)
+	desc_box_texture.position = Vector2(16, 166)
+	desc_box_texture.size = Vector2(181, 108)
+	desc_label.position = Vector2(8, 8)
+	desc_label.size = Vector2(165, 92)
+	type_badge_texture.position = Vector2(62, 156)
+	type_badge_texture.size = Vector2(84, 20)
 	cost_badge.position = GENERATED_COST_POSITION
 	cost_badge.size = GENERATED_COST_SIZE
 	cost_label.position = Vector2.ZERO
@@ -172,20 +184,23 @@ func _configure_generated_skin(data: Dictionary) -> bool:
 	# small glyph embolden here so card text keeps the intended hierarchy instead
 	# of becoming thin and soft after hand rotation.
 	var generated_title_font := T.display_font(700)
-	generated_title_font.variation_embolden = 0.45
+	generated_title_font.variation_embolden = 0.58
 	var generated_type_font := T.display_font(700)
-	generated_type_font.variation_embolden = 0.4
+	generated_type_font.variation_embolden = 0.55
 	var generated_description_font := T.display_font(600)
 	generated_description_font.variation_embolden = 0.22
 	name_label.add_theme_font_override("font", generated_title_font)
-	name_label.add_theme_font_size_override("font_size", 16)
+	name_label.add_theme_font_size_override("font_size", 17)
 	name_label.add_theme_color_override("font_color", Color("#171613"))
 	name_label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
 	type_label.add_theme_font_override("font", generated_type_font)
 	type_label.add_theme_font_size_override("font_size", 13)
-	type_label.add_theme_color_override("font_color", Color("#17130e"))
+	type_label.add_theme_color_override("font_color", Color.WHITE)
 	type_label.add_theme_color_override("font_outline_color", Color.TRANSPARENT)
 	type_label.add_theme_constant_override("outline_size", 0)
+	type_label.modulate = GENERATED_TYPE_TEXT_COLORS.get(
+		card_type, GENERATED_TYPE_TEXT_COLORS["skill"]
+	)
 	desc_label.add_theme_font_override("normal_font", generated_description_font)
 	desc_label.add_theme_font_size_override("normal_font_size", 14)
 	desc_label.add_theme_color_override("default_color", Color("#f0d4a1"))
@@ -196,13 +211,13 @@ func _configure_generated_skin(data: Dictionary) -> bool:
 	# actual glyph so the cost stays dominant after cards shrink into the hand.
 	# Kreon's useful weight range tops out below the former 800 request, which
 	# made the rendered numeral look thinner than intended.
-	var generated_cost_font := T.combat_font(700)
+	var generated_cost_font := T.display_font(700)
 	generated_cost_font.variation_embolden = GENERATED_COST_FONT_EMBOLDEN
 	cost_label.add_theme_font_override("font", generated_cost_font)
 	cost_label.add_theme_font_size_override("font_size", GENERATED_COST_FONT_SIZE)
-	cost_label.add_theme_color_override("font_color", Color("#fff2cf"))
-	cost_label.add_theme_color_override("font_outline_color", Color("#17130e"))
-	cost_label.add_theme_constant_override("outline_size", 2)
+	cost_label.add_theme_color_override("font_color", Color("#241711"))
+	cost_label.add_theme_color_override("font_outline_color", Color("#f7dfaa"))
+	cost_label.add_theme_constant_override("outline_size", 1)
 	return true
 
 
@@ -247,29 +262,27 @@ func _load_texture_fallback(path: String) -> Texture2D:
 ## Called when the player PRESSES the left mouse button on this card.
 func _handle_mouse_pressed() -> void:
 	var main = get_tree().current_scene
-	var c_type = card_info.get("type", "skill").to_lower()
 
-	if c_type == "attack" and not _attack_should_drag(main):
+	if requires_enemy_target() and not _targeted_card_should_drag(main):
 		# Start targeting mode — arrow follows mouse while button is held.
 		# Do NOT call super so the card does not enter HOLDING/drag state.
 		if main and main.has_method("start_spell_targeting"):
 			main.start_spell_targeting(self)
 	else:
-		# Skill / Ability — OR attack with only one valid enemy — uses the
+		# Untargeted card — OR targeted card with only one valid enemy — uses the
 		# drag-up-into-CardPlayZone flow. card_play_zone.move_cards picks the
-		# sole enemy automatically when the dropped card is an attack.
+		# sole enemy automatically when the dropped card needs a target.
 		super._handle_mouse_pressed()
 
 
 ## Called when the player RELEASES the left mouse button.
-## For attack cards in targeting mode, release confirms/cancels the attack.
+## For targeted cards in targeting mode, release confirms/cancels the play.
 func _handle_mouse_released() -> void:
 	var main = get_tree().current_scene
-	var c_type = card_info.get("type", "skill").to_lower()
 
 	if (
-		c_type == "attack"
-		and not _attack_should_drag(main)
+		requires_enemy_target()
+		and not _targeted_card_should_drag(main)
 		and main
 		and main.has_method("confirm_spell_targeting")
 	):
@@ -280,13 +293,33 @@ func _handle_mouse_released() -> void:
 	super._handle_mouse_released()
 
 
-## Attack uses drag-into-play-zone (rather than aim-arrow) when there's only
+## A targeted card uses drag-into-play-zone (rather than aim-arrow) when there's only
 ## one valid enemy — no choice to make, so the play-zone gesture matches the
 ## skill flow and saves the arrow ceremony.
-func _attack_should_drag(main) -> bool:
+func _targeted_card_should_drag(main) -> bool:
 	if not main or not main.has_method("sole_alive_enemy"):
 		return false
 	return main.sole_alive_enemy() != null
+
+
+## Targeting is data-driven rather than coupled to the card's visual type.
+## `target` may explicitly override inference for future content.
+static func data_requires_enemy_target(data: Dictionary) -> bool:
+	var explicit_target := str(data.get("target", "")).to_lower()
+	if explicit_target == "enemy":
+		return true
+	if explicit_target in ["none", "self", "all_enemies"]:
+		return false
+	for effect in data.get("effects", []):
+		if typeof(effect) != TYPE_DICTIONARY:
+			continue
+		if str(effect.get("type", "")) in ENEMY_TARGET_EFFECTS:
+			return true
+	return false
+
+
+func requires_enemy_target() -> bool:
+	return data_requires_enemy_target(card_info)
 
 
 func set_card_data(data: Dictionary) -> void:
@@ -326,7 +359,8 @@ func set_card_data(data: Dictionary) -> void:
 			"[center][font_size=13]" + _colorize_keywords(desc) + "[/font_size][/center]"
 		)
 
-	# Legacy rarity frame. Generated skins encode rarity only in their title-panel PNG.
+	# Only legacy cards keep the previous rarity frame. The unified generated
+	# battle face omits a rarity marker to preserve the single-frame hierarchy.
 	if not uses_generated_skin:
 		var rarity = data.get("rarity", "common").to_lower()
 		if rarity in _rarity_frames:
@@ -361,25 +395,32 @@ func set_card_data(data: Dictionary) -> void:
 	else:
 		type_label.text = c_type.to_upper()
 	if uses_generated_skin:
-		type_label.modulate = Color.WHITE
+		type_label.modulate = GENERATED_TYPE_TEXT_COLORS.get(
+			c_type, GENERATED_TYPE_TEXT_COLORS["skill"]
+		)
 
 
-## Keep short copy at the approved 13px size; only long cards step down until
-## they fit. The label is then vertically centered inside the authored panel.
+## Keep short copy at the approved size; only long cards step down until they
+## fit. The tiny integrated type notch occupies the top seam, so center copy in
+## the uninterrupted recessed field beneath it.
 func _fit_and_center_description() -> void:
 	if not is_instance_valid(desc_label) or not is_instance_valid(desc_box_texture):
 		return
-	var available_width := 164.0
-	var available_height := 83.0
-	desc_label.position = Vector2(7, 6)
+	var available_width: float = 165.0
+	var top_clearance: float = 8.0
+	var bottom_clearance: float = 8.0
+	var available_height: float = (
+		desc_box_texture.size.y - top_clearance - bottom_clearance
+	)
+	desc_label.position = Vector2(8, top_clearance)
 	desc_label.size = Vector2(available_width, available_height)
-	for font_size in range(14, 9, -1):
+	for font_size in range(14, 11, -1):
 		desc_label.add_theme_font_size_override("normal_font_size", font_size)
 		desc_label.size = Vector2(available_width, available_height)
 		if desc_label.get_content_height() <= available_height:
 			break
 	var content_height := clampf(desc_label.get_content_height(), 18.0, available_height)
-	desc_label.position.y = (desc_box_texture.size.y - content_height) * 0.5
+	desc_label.position.y = top_clearance + (available_height - content_height) * 0.5
 	desc_label.size.y = content_height
 
 
@@ -519,19 +560,28 @@ func _build_description(data: Dictionary) -> String:
 				)
 
 			"apply_status_self":
-				lines.append(
-					tr("UI_BATTLE_DESC_APPLY_STATUS_SELF").format(
-						{
-							"status": STATUS_SYS.format_name_localized(effect.get("status", "")),
-							"n": stacks
-						}
+				var self_status := str(effect.get("status", ""))
+				var power_key := "UI_BATTLE_DESC_POWER_%s" % self_status.to_upper()
+				var power_desc := tr(power_key)
+				if str(data.get("type", "")).to_lower() == "ability" and power_desc != power_key:
+					lines.append(power_desc)
+				else:
+					lines.append(
+						tr("UI_BATTLE_DESC_APPLY_STATUS_SELF").format(
+							{
+								"status": STATUS_SYS.format_name_localized(self_status),
+								"n": stacks
+							}
+						)
 					)
-				)
 
 			"deal_damage_str_mult":
 				lines.append(
 					tr("UI_BATTLE_DESC_DAMAGE_STR_MULT").format(
-						{"mult": int(effect.get("mult", 1))}
+						{
+							"base": int(effect.get("base", 0)),
+							"mult": int(effect.get("mult", 1)),
+						}
 					)
 				)
 
@@ -576,18 +626,42 @@ func _build_description(data: Dictionary) -> String:
 					lines.append(tr("UI_BATTLE_DESC_DOUBLE_IF_SHORT_CIRCUITED"))
 
 			"deal_damage_block_mult":
+				var block_mult := int(effect.get("mult", 1))
+				if block_mult == 1:
+					lines.append(tr("UI_BATTLE_DESC_DMG_EQUAL_BLOCK"))
+				else:
+					lines.append(
+						tr("UI_BATTLE_DESC_DMG_BLOCK_MULT").format({"mult": block_mult})
+					)
+
+			"vent_heat_for_damage":
 				lines.append(
-					tr("UI_BATTLE_DESC_DMG_BLOCK_MULT").format({"mult": int(effect.get("mult", 1))})
+					tr("UI_BATTLE_DESC_VENT_HEAT_DAMAGE").format(
+						{
+							"base": int(effect.get("base", 0)),
+							"mult": int(effect.get("mult", 1)),
+						}
+					)
+				)
+
+			"vent_heat_for_block":
+				lines.append(
+					tr("UI_BATTLE_DESC_VENT_HEAT_BLOCK").format(
+						{
+							"base": int(effect.get("base", 0)),
+							"mult": int(effect.get("mult", 1)),
+						}
+					)
 				)
 
 			"double_target_short_circuit":
 				lines.append(tr("UI_BATTLE_DESC_DOUBLE_SHORT_CIRCUIT"))
 
-			"detonate_short_circuit":
-				lines.append(tr("UI_BATTLE_DESC_DETONATE_SHORT_CIRCUIT"))
+			"overload_short_circuit":
+				lines.append(tr("UI_BATTLE_DESC_OVERLOAD_SHORT_CIRCUIT"))
 
-			"detonate_short_circuit_all":
-				lines.append(tr("UI_BATTLE_DESC_DETONATE_SHORT_CIRCUIT_ALL"))
+			"overload_short_circuit_all":
+				lines.append(tr("UI_BATTLE_DESC_OVERLOAD_SHORT_CIRCUIT_ALL"))
 
 			"consume_short_circuit_for_block":
 				lines.append(tr("UI_BATTLE_DESC_SHORT_CIRCUIT_TO_BLOCK"))
@@ -650,13 +724,16 @@ func _color_num(val: int, base_plus_stat: int) -> String:
 
 ## StS-style keyword tinting: colour status / keyword terms in a card's description
 ## so the player sees at a glance what it touches (definitions show in the hover
-## glossary). Terms resolve in the current locale, so 短路/Short Circuit and 虚弱/Weak match.
+## glossary). Terms resolve in the current locale, so 短路/Short Circuit and 过载/Overload match.
 func _colorize_keywords(text: String) -> String:
 	var terms: Array = []  # [[term, hex], ...]
 	for status in STATUS_SYS.STATUS_COLORS:
 		var nm: String = STATUS_SYS.format_name_localized(status)
 		if nm.strip_edges() != "":
 			terms.append([nm, STATUS_SYS.STATUS_COLORS[status].to_html(false)])
+	var overload_name := tr("UI_BATTLE_KEYWORD_OVERLOAD_NAME")
+	if overload_name != "UI_BATTLE_KEYWORD_OVERLOAD_NAME":
+		terms.append([overload_name, Color(0.20, 0.92, 1.0).to_html(false)])
 	# (Exhaust / Retain already arrive pre-coloured from their UI_BATTLE_KEYWORD_*
 	# translation rows, so they are NOT re-tinted here.)
 	# Longest term first so a short term can't pre-empt a longer one.
@@ -691,29 +768,35 @@ func _get_player_stats() -> Dictionary:
 
 
 func _on_mouse_entered() -> void:
-	if _hover_tween:
-		_hover_tween.kill()
-	_hover_tween = create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	_hover_tween.tween_property(self, "scale", Vector2(1.12, 1.12), 0.15)
-	z_index = 10  # bring to front
 	if is_instance_valid(playable_glow):
 		playable_glow.visible = true
 
 	# Keyword glossary tooltip: explain any statuses / attributes this card uses.
 	var glossary := _build_keyword_glossary()
 	if glossary != "":
-		Tooltip.show(glossary, global_position + Vector2(size.x * 0.5, 0), get_instance_id())
+		var tooltip_lift := HAND_HOVER_LIFT if card_container is Hand else 12.0
+		Tooltip.show(
+			glossary,
+			global_position + Vector2(size.x * 0.5, -tooltip_lift),
+			get_instance_id()
+		)
 
 
 func _on_mouse_exited() -> void:
-	if _hover_tween:
-		_hover_tween.kill()
-	_hover_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_hover_tween.tween_property(self, "scale", Vector2(1.0, 1.0), 0.15)
-	z_index = 1
 	if is_instance_valid(playable_glow):
 		playable_glow.visible = false
 	Tooltip.hide_if_owner(get_instance_id())
+
+
+## Hand cards remain fully visible at rest; focus adds only a clear StS-style
+## lift and straightens the card. Non-hand previews keep a restrained hover so
+## deck/reward layouts do not jump.
+func _start_hover_animation() -> void:
+	var is_hand_card := card_container is Hand
+	hover_distance = int(HAND_HOVER_LIFT) if is_hand_card else 12
+	hover_scale = 1.12 if is_hand_card else 1.06
+	hover_rotation = 0.0
+	super._start_hover_animation()
 
 
 ## Builds a "[b]Keyword[/b]: definition" glossary for the statuses and global
@@ -763,7 +846,7 @@ func _build_keyword_glossary() -> String:
 		if desc != "":
 			lines.append("[b]%s[/b]: %s" % [kw_name, desc])
 
-	# Short Circuit's specialized apply/detonate effects do not carry a `status`
+	# Short Circuit's specialized apply/overload effects do not carry a `status`
 	# field, but the card still needs the same keyword explanation on hover.
 	for effect in effects:
 		var effect_type := str(effect.get("type", ""))
@@ -772,8 +855,8 @@ func _build_keyword_glossary() -> String:
 			in [
 				"apply_short_circuit_scaled",
 				"double_target_short_circuit",
-				"detonate_short_circuit",
-				"detonate_short_circuit_all",
+				"overload_short_circuit",
+				"overload_short_circuit_all",
 				"consume_short_circuit_for_block",
 			]
 			and not seen.has("short_circuit")
@@ -785,6 +868,39 @@ func _build_keyword_glossary() -> String:
 					tr("UI_COMBAT_STATUS_SHORT_CIRCUIT"),
 					tr("UI_COMBAT_STATUS_SHORT_CIRCUIT_DESC"),
 				]
+			)
+			break
+
+	# Overload is an action keyword rather than a status, so it gets its own entry.
+	for effect in effects:
+		var overload_type := str(effect.get("type", ""))
+		if overload_type in ["overload_short_circuit", "overload_short_circuit_all"]:
+			lines.append(
+				"[b]%s[/b]: %s"
+				% [
+					tr("UI_BATTLE_KEYWORD_OVERLOAD_NAME"),
+					tr("UI_BATTLE_KEYWORD_OVERLOAD_DESC"),
+				]
+			)
+			break
+
+	# Heat builders and Vent payoffs use specialized effects without always
+	# carrying a status field, so surface both glossary entries explicitly.
+	for effect in effects:
+		var heat_type := str(effect.get("type", ""))
+		if (
+			heat_type in ["vent_heat_for_damage", "vent_heat_for_block"]
+			and not seen.has("heat")
+		):
+			seen["heat"] = true
+			lines.append(
+				"[b]%s[/b]: %s"
+				% [tr("UI_COMBAT_STATUS_HEAT"), tr("UI_COMBAT_STATUS_HEAT_DESC")]
+			)
+		if heat_type in ["vent_heat_for_damage", "vent_heat_for_block"]:
+			lines.append(
+				"[b]%s[/b]: %s"
+				% [tr("UI_BATTLE_KEYWORD_VENT_NAME"), tr("UI_BATTLE_KEYWORD_VENT_DESC")]
 			)
 			break
 

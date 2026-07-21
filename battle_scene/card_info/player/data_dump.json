@@ -1,6 +1,6 @@
 {
 	"name": "data_dump",
-	"title": "Data Dump",
+	"title": "Memory Dump",
 	"rarity": "uncommon",
 	"type": "skill",
 	"cost": 0,
@@ -16,5 +16,11 @@
 		{
 			"type": "exhaust_self"
 		}
-	]
+	],
+	"upgrade": {
+		"effects": [
+			{ "type": "draw_cards", "amount": 4 },
+			{ "type": "exhaust_self" }
+		]
+	}
 }

@@ -5,13 +5,13 @@
 	"type": "attack",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Deal [b]2[/b] (+STR) damage. Apply [b]6 (+INT)[/b] Short Circuit.",
+	"description": "Deal [b]3[/b] (+STR) damage. Apply [b]6 (+INT)[/b] Short Circuit.",
 	"front_image": "player/recoil_shot.png",
 	"side": "player",
 	"effects": [
 		{
 			"type": "deal_damage",
-			"amount": 2
+			"amount": 3
 		},
 		{
 			"type": "apply_short_circuit_scaled",
@@ -21,7 +21,7 @@
 	],
 	"upgrade": {
 		"effects": [
-			{ "type": "deal_damage", "amount": 3 },
+			{ "type": "deal_damage", "amount": 4 },
 			{ "type": "apply_short_circuit_scaled", "amount": 8, "attr": "intelligence" }
 		]
 	}

@@ -4,16 +4,16 @@
 	"rarity": "uncommon",
 	"type": "attack",
 	"cost": 1,
-	"description": "Deal damage equal to 2× your Strength. Exhaust.",
+	"description": "Deal 6 damage plus 2× your Strength. Exhaust.",
 	"front_image": "player/charged_shot.png",
 	"side": "player",
 	"effects": [
-		{ "type": "deal_damage_str_mult", "mult": 2 },
+		{ "type": "deal_damage_str_mult", "base": 6, "mult": 2 },
 		{ "type": "exhaust_self" }
 	],
 	"upgrade": {
 		"effects": [
-			{ "type": "deal_damage_str_mult", "mult": 3 },
+			{ "type": "deal_damage_str_mult", "base": 8, "mult": 3 },
 			{ "type": "exhaust_self" }
 		]
 	}
