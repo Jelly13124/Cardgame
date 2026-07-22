@@ -8,7 +8,7 @@ const CARD_IDS: Array[String] = [
 	"siphon",
 	"tape_patch",
 	"deflector",
-	"vent_plating",
+	"kinetic_baffle",
 	"spiked_guard",
 	"venom_coat",
 	"rebar_wave",

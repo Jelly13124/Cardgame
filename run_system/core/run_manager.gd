@@ -55,6 +55,22 @@ var current_floor: int = 0
 ## advance beyond act 1.
 var current_act: int = 1
 var player_deck: Array = []  # Array of Dictionaries (uid, card_id, bonus_attack, bonus_health)
+## Cards removed from the live design. Old run saves may still contain these IDs;
+## load_run strips them before any card factory tries to instantiate missing data.
+const RETIRED_CARD_IDS := [
+	"crowbar_smash",
+	"pipe_swing",
+	"breach_charge",
+	"bulkhead_bleed",
+	"combat_stim",
+	"focusing_blow",
+	"hemo_drive",
+	"last_breath",
+	"siphon_valve",
+]
+const CARD_ID_MIGRATIONS := {
+	"vent_plating": "kinetic_baffle",
+}
 
 ## Equipped gear, one slot per body part. Each value is an equipment INSTANCE
 ## dict (see as_equip_instance) or {} when the slot is empty. Legacy saves may
@@ -2260,6 +2276,23 @@ func load_run() -> bool:
 	current_floor = int(data.get("current_floor", 0))
 	current_act = int(data.get("current_act", 1))
 	player_deck = data.get("player_deck", [])
+	for i in range(player_deck.size()):
+		var entry: Variant = player_deck[i]
+		var old_card_id := str(entry.get("card_id", "")) if entry is Dictionary else str(entry)
+		if not CARD_ID_MIGRATIONS.has(old_card_id):
+			continue
+		var current_card_id: String = str(CARD_ID_MIGRATIONS[old_card_id])
+		if entry is Dictionary:
+			entry["card_id"] = current_card_id
+		else:
+			player_deck[i] = current_card_id
+	# Removed cards are intentionally not replaced: keeping a stale ID would make
+	# the card factory skip an invisible deck entry on every resumed battle.
+	player_deck = player_deck.filter(
+		func(entry: Variant) -> bool:
+			var card_id := str(entry.get("card_id", "")) if entry is Dictionary else str(entry)
+			return card_id not in RETIRED_CARD_IDS
+	)
 	# Migrate legacy gem saves: gems were removed, so strip any leftover `gems`
 	# field from deck entries (fault-tolerant — old saves must load, not crash).
 	for e in player_deck:

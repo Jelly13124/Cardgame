@@ -67,10 +67,23 @@ func _test_focused_card_pool() -> void:
 	RunManager.current_hero_id = "cowboy_bill"
 	var pool := MetaProgress.get_unlocked_card_pool()
 	RunManager.current_hero_id = original_hero
-	_expect(pool.size() == 36, "Bill's demo reward pool stays focused at 36 cards")
+	_expect(pool.size() == 28, "Bill's demo reward pool stays focused at 28 cards")
 	for signature in ["piston_jab", "covering_reload", "hemorrhage", "limit_break"]:
 		_expect(signature in pool, "focused pool contains Bill card %s" % signature)
-	for diluted in ["strike", "defend", "radiation_dust"]:
+	for diluted in [
+		"strike",
+		"defend",
+		"radiation_dust",
+		"crowbar_smash",
+		"pipe_swing",
+		"breach_charge",
+		"bulkhead_bleed",
+		"combat_stim",
+		"focusing_blow",
+		"hemo_drive",
+		"last_breath",
+		"siphon_valve",
+	]:
 		_expect(diluted not in pool, "focused pool excludes %s" % diluted)
 	var unique := {}
 	for card_id in pool:
@@ -183,6 +196,18 @@ func _test_removed_mechanics() -> void:
 		)
 	var run_source := FileAccess.get_file_as_string(RUN_MANAGER_PATH)
 	var meta_source := FileAccess.get_file_as_string(META_PROGRESS_PATH)
+	for retired_card in RunManager.RETIRED_CARD_IDS:
+		_expect(
+			not FileAccess.file_exists(
+				"res://battle_scene/card_info/player/%s.json" % retired_card
+			),
+			"retired card data is removed: %s" % retired_card
+		)
+	_expect(run_source.contains("RETIRED_CARD_IDS"), "old run saves strip retired card IDs")
+	_expect(
+		RunManager.CARD_ID_MIGRATIONS.get("vent_plating", "") == "kinetic_baffle",
+		"old Kinetic Baffle card IDs migrate without deleting the card"
+	)
 	_expect(not run_source.contains('_get_meta_effect_value("med_bay")'), "retired Med Bay effect is not applied")
 	_expect(not run_source.contains('_get_meta_effect_value("starter_boost")'), "retired starter boost is not applied")
 	_expect(meta_source.contains("_migrate_removed_profile_state"), "old profiles receive the retired-upgrade migration")

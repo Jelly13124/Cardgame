@@ -1,0 +1,27 @@
+{
+	"name": "kinetic_baffle",
+	"title": "Kinetic Baffle",
+  "rarity": "uncommon",
+	"type": "skill",
+	"cost": 1,
+	"polarity": "neutral",
+  "description": "Gain 5 Block. Draw 1 card.",
+	"front_image": "player/kinetic_baffle.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "gain_block",
+      "amount": 5
+		},
+		{
+			"type": "draw_cards",
+			"amount": 1
+		}
+  ],
+  "upgrade": {
+    "effects": [
+      { "type": "gain_block", "amount": 7 },
+      { "type": "draw_cards", "amount": 1 }
+    ]
+  }
+}

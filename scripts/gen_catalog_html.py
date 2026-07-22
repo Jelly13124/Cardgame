@@ -215,6 +215,14 @@ def fmt_effect(e):
             if e.get("double_if_short_circuited")
             else ""
         )
+    if t == "overload":
+        parts = ["Overload ALL enemies"]
+        charge_mult = int(e.get("charge_multiplier", 1))
+        if charge_mult > 1:
+            parts.append(f"×{charge_mult} damage")
+        if e.get("gain_block_equal_damage"):
+            parts.append("gain Block equal to damage dealt")
+        return "; ".join(parts)
     if t == "discover":
         free = " (free this combat)" if e.get("free") else ""
         return f"Discover: pick 1 of {e.get('count', 3)} {cap(e.get('pool', 'any'))} cards{free}"
@@ -231,14 +239,8 @@ def fmt_effect(e):
         "gain_scrap": f"Gain {amt} Scrap",
         "gain_relic": "Gain a relic",
         "gain_equipment": "Gain equipment",
-        "double_target_short_circuit": "Double target's Short Circuit",
-        "overload_short_circuit": "Overload target (consume all Short Circuit for equal damage)",
-        "overload_short_circuit_all": "Overload ALL enemies",
         "gain_attack_allowance": f"Gain {amt} attack(s) this turn",
         "restore_attack_allowance": "Restore attack allowance",
-        "consume_short_circuit_for_block": "Remove all enemy Short Circuit; gain equal Block",
-        "vent_heat_for_damage": f"Vent Heat: deal {e.get('base', 0)} + Heat×{e.get('mult', 1)} damage",
-        "vent_heat_for_block": f"Vent Heat: gain {e.get('base', 0)} + Heat×{e.get('mult', 1)} Block",
         "deal_damage": (
             f"Deal {amt} fixed damage" if e.get("no_str") else f"Deal {amt} damage (+STR)"
         ),
@@ -566,9 +568,16 @@ def build_events():
          "", body, len(items))
 
 
-# ── Equipment (grouped by slot) + sets ──────────────────────────────────────
+# ── Unique set equipment (grouped by slot) + set bonuses ───────────────────
 def build_equipment():
-    items = load_json_dir("run_system/data/equipment")
+    # The catalog is the design surface for authored gear. Generic rarity/slot
+    # templates still exist in game data for loot generation, but they are not
+    # distinct equipment designs and would only drown out the set pieces here.
+    items = [
+        (eid, data)
+        for eid, data in load_json_dir("run_system/data/equipment")
+        if data.get("set_id", data.get("set", ""))
+    ]
     by = {}
     for eid, d in items:
         en = equip_tr.get(f"EQUIP_{eid}_NAME", {}).get("en", d.get("name", eid))
@@ -622,7 +631,14 @@ def build_equipment():
     body += section("Set Bonuses 套装效果", len(set_cards), "".join(set_cards))
     controls = "".join(f'<span class="tag" data-k="rarity" data-f="{r}">{r}</span>'
                        for r in ("common", "uncommon", "rare"))
-    page("equipment.html", "Equipment · 装备", "Gear by slot + set bonuses", controls, body, len(items))
+    page(
+        "equipment.html",
+        "Equipment · 装备",
+        "Unique set gear by slot + set bonuses · 仅展示独特套装装备",
+        controls,
+        body,
+        len(items),
+    )
 
 
 # ── Enemies (grouped by required JSON tier) ─────────────────────────────────
@@ -702,13 +718,12 @@ STATUS_COLORS = {
     "metallicize": "#b8ccdb", "feel_no_pain": "#8cccf2",
     "hot_streak": "#ff9640", "all_in": "#ff5470", "deadeye": "#ffe657", "overload_protocol": "#33e8ff",
     "covering_reload": "#6fb3e0", "reactive_plating": "#75d1f0", "loaded": "#ffb33d", "bullet": "#e8c860",
-    "heat": "#ff7629", "redline_protocol": "#ff571f",
 }
 STATUSES = ["short_circuit", "burn", "weak", "vulnerable", "stun",
             "regen", "thorns", "frail", "dodge",
             "metallicize", "feel_no_pain",
             "hot_streak", "all_in", "deadeye", "overload_protocol", "covering_reload", "reactive_plating",
-            "heat", "redline_protocol", "loaded", "bullet"]
+            "loaded", "bullet"]
 
 
 def kw_card(name_en, name_zh, desc_en, desc_zh, color, ident=""):
@@ -742,11 +757,9 @@ def build_keywords():
                       "回合结束时不弃掉,保留在手牌中。", "#9ec1ff", "retain"))
     kw.append(kw_card("Replay", "重放", "When you play this card, its effects trigger 1 extra time per Replay stack (Replay 1 = it fires twice). Granted by Double-Fire Clip.",
                       "打出这张牌时，其效果按「重放」层数额外触发一次（重放 1 = 触发两次）。来源：双发弹夹。", "#3bc7eb", "replay"))
-    kw.append(kw_card("Overload", "过载", "Remove all Short Circuit from the target and deal 1 damage per stack removed.",
-                      "移除目标的全部短路，每移除 1 层便造成 1 点伤害。", "#33e8ff", "overload"))
-    kw.append(kw_card("Vent", "泄压", "Remove all Heat to power this effect.",
-                      "移除全部热量，为本次效果提供数值。", "#ff7629", "vent"))
-    body.append('<div class="section"><h2>Card Keywords 卡牌关键词 <span class="cnt">(5)</span></h2></div>'
+    kw.append(kw_card("Overload", "过载", "Remove all Short Circuit from every enemy and deal each enemy 1 damage per stack removed.",
+                      "移除场上所有敌人的全部短路，并对每个敌人造成等同于其移除层数的伤害。", "#33e8ff", "overload"))
+    body.append(f'<div class="section"><h2>Card Keywords 卡牌关键词 <span class="cnt">({len(kw)})</span></h2></div>'
                 f'<div class="kw">{"".join(kw)}</div>')
     # Attributes
     attrs = [
@@ -759,7 +772,7 @@ def build_keywords():
     ac = [kw_card(e, z, de, dz, c, e.lower()) for e, z, de, dz, c in attrs]
     body.append('<div class="section"><h2>Attributes 属性 <span class="cnt">(5)</span></h2></div>'
                 f'<div class="kw">{"".join(ac)}</div>')
-    total = len(STATUSES) + 5 + 5  # statuses + card keywords(5) + attributes(5)
+    total = len(STATUSES) + len(kw) + len(attrs)
     page("keywords.html", "Keywords · 关键词", "Statuses, card keywords & attributes",
          "", "".join(body), total)
 

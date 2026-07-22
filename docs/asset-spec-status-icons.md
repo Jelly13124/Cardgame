@@ -1,46 +1,34 @@
-# Asset Spec — Status Effect Icons (Codex)
+# Status Icon Runtime Contract
 
-> **For Codex (ADR-0005).** 13 combat statuses. Today each badge renders as a
-> shared `status_badge_bg.png` (24×24 NinePatch) with a single letter/glyph + stack
-> count drawn on top (`battle_scene/status_effect_system.gd` `_refresh_badges`).
-> This spec is for **per-status icon art** to replace the letter glyph.
+**Last audited:** 2026-07-22
 
-## Deliverable
+The status badge system is already wired. `battle_scene/status_effect_system.gd`
+loads `battle_scene/assets/images/ui/status/<status_id>.png` and falls back to a
+short glyph when a PNG is absent. Stack counts are rendered by code; never bake
+numbers or text into an icon.
 
-One PNG per status id below.
+## Asset contract
 
-- **Target path:** `battle_scene/assets/images/ui/status/<id>.png`
-- **Source size:** 64×64, transparent background (displayed at 24×24, so the
-  silhouette must read at tiny size — bold, single shape, high contrast).
-- **Palette:** lead with each status's theme colour (hex below); keep a dark/!
-  outline so it stays legible on the light badge bg and on any character sprite.
-- The stack-count number is drawn by code on top — leave the lower-right corner
-  relatively clear.
+- PNG with transparent background; source may be 64×64 and is displayed at 30×30.
+- One bold silhouette, one main color, dark outline, clear lower-right area.
+- Follow the UI07 icon rules in `docs/project-rules.md`: flat fill, sparse lines,
+  no character faces, texture, rivet fields, or ornamental frames.
+- `DataValidator.ALLOWED_STATUS_NAMES` is authoritative for status ids.
 
-## Wiring note (Claude will do after art lands)
+## Current coverage
 
-Per-status icons need a small code change: `_refresh_badges` currently draws
-`STATUS_LABELS[status]` text. Once these PNGs exist, Claude will swap the letter
-Label for a TextureRect that loads `ui/status/<id>.png`, falling back to the
-letter if the PNG is missing. No data/JSON change required.
+Runtime PNGs exist for:
 
-## Statuses
+`short_circuit`, `burn`, `weak`, `vulnerable`, `stun`, `regen`, `thorns`,
+`frail`, `dodge`, `metallicize`, `feel_no_pain`, `hot_streak`, `all_in`,
+`covering_reload`, and `bullet`.
 
-| id | name (en / zh) | effect | theme hex | icon direction |
-|----|----------------|--------|-----------|----------------|
-| `bleed` | Bleed / 流血 | Start of turn: take damage = stacks, then stacks halve (round down) | `#ff4d5e` | blood drop / wound |
-| `burn` | Burn / 燃烧 | Start of turn: take damage = stacks, then cleared | `#FF6619` | flame |
-| `weak` | Weak / 虚弱 | Outgoing attack damage −25% | `#B380E6` | drooping / cracked fist |
-| `vulnerable` | Vulnerable / 易伤 | Incoming attack damage +50% | `#F27333` | cracked shield / broken armor |
-| `double_damage` | Double Damage / 双倍伤害 | Next N attacks deal double | `#33CCFF` | twin blades / ×2 bolt |
-| `stun` | Stun / 眩晕 | Enemy skips a turn per stack (enemy-only) | `#F2F24D` | dizzy stars / lightning |
-| `regen` | Regen / 再生 | Start of turn: heal = stacks; decays 1/turn | `#4DFF99` | medical cross / heart-leaf |
-| `thorns` | Thorns / 荆棘 | When hit, attacker takes stacks damage | `#B3BFCC` | ring of spikes |
-| `frail` | Frail / 脆弱 | Block gained −25% | `#9980B3` | shattering shield |
-| `dodge` | Dodge / 闪避 | Fully negates one attack; one stack per attack | `#99F2FF` | afterimage / wind swish |
-| `metallicize` | Plating / 镀装 | Start of turn: gain stacks Block (persistent) | `#B8CCDB` | layered metal plates |
-| `feel_no_pain` | Numb / 镇痛 | On card Exhaust: gain stacks Block (persistent) | `#8CCCF2` | syringe + shield |
-| `dark_embrace` | Salvage / 回收 | On card Exhaust: draw stacks cards (persistent) | `#B86BDB` | recycle arrows + card |
+The following active statuses intentionally use the glyph fallback until new
+icons are generated and visually approved:
 
-(Display names live in `assets/translations/ui_combat.csv` as
-`UI_COMBAT_STATUS_<ID>` / `_DESC`. The last three are the StS2-port powers.)
+`deadeye`, `overload_protocol`, `reactive_plating`, and `loaded`.
+
+Removed statuses such as Bleed, Double Damage, Dark Embrace, and the old
+Hemorrhage status must not regain runtime icons. The card file id
+`hemorrhage.json` is a save-compatible legacy id whose displayed card is
+**Critical Discharge**; it is not a status id.

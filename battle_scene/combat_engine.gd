@@ -285,24 +285,6 @@ func _consume_loaded_bonus(player: Node, source_card: Control = null) -> int:
 	return stacks
 
 
-## Heat is Bill's stored reactor pressure. Vent effects consume the whole pool in
-## one atomic spend so a replayed card cannot reuse the same Heat.
-func _consume_heat(player: Node) -> int:
-	if (
-		player == null
-		or not is_instance_valid(player)
-		or not player.has_method("get_status_stacks")
-	):
-		return 0
-	var stacks := int(player.get_status_stacks("heat"))
-	if stacks <= 0:
-		return 0
-	var status_system = player.get("status_system")
-	if status_system:
-		status_system.spend_stacks("heat", stacks, player)
-	return stacks
-
-
 func _short_circuit_overload(stacks: int, player: Node) -> Dictionary:
 	var damage := stacks
 	var critical := false
@@ -319,6 +301,32 @@ func _short_circuit_overload(stacks: int, player: Node) -> Dictionary:
 		if main.relic_effect_system:
 			main.relic_effect_system.on_player_crit(player)
 	return {"damage": damage, "critical": critical}
+
+
+## Applies the shared card-Block modifiers and feedback. Specialized card effects
+## such as Charge Sink use this path so Frail, Block relics and Reactive Plating
+## behave exactly like a normal gain_block effect.
+func _grant_card_block(player: Node, amount: int) -> int:
+	if player == null or not is_instance_valid(player) or amount <= 0:
+		return 0
+	if "status_system" in player and player.status_system:
+		amount = int(amount * player.status_system.get_block_multiplier())
+	if main.relic_effect_system:
+		amount = main.relic_effect_system.on_player_gain_block(player, amount)
+	if amount <= 0 or not player.has_method("add_block"):
+		return 0
+	player.add_block(amount)
+	if player.has_method("get_status_stacks"):
+		var reactive := int(player.get_status_stacks("reactive_plating"))
+		if reactive > 0:
+			player.add_status("thorns", reactive)
+	if player.has_method("play_block_pulse"):
+		player.play_block_pulse()
+	AudioManager.play_sfx("block_gain")
+	main.show_notification(
+		tr("UI_COMBAT_GAIN_BLOCK").format({"n": amount}), Color(0.4, 0.6, 1.0)
+	)
+	return amount
 
 
 func _apply_effect(
@@ -396,48 +404,7 @@ func _apply_effect(
 				amount = main.equipment_set_system.modify_card_block(
 					source_card, amount
 				)
-			if player and "status_system" in player and player.status_system:
-				amount = int(amount * player.status_system.get_block_multiplier())
-			# Relic on-gain-block trigger: may crit-multiply the block (crit_plating)
-			# and/or chip a random enemy (scavenger_lens). Use the returned amount.
-			if main.relic_effect_system:
-				amount = main.relic_effect_system.on_player_gain_block(player, amount)
-			player.add_block(amount)
-			# Reactive Plating turns card-granted Block into a small retaliatory
-			# charge. Multiple copies stack through the power's own stack count.
-			if player.has_method("get_status_stacks"):
-				var reactive := int(player.get_status_stacks("reactive_plating"))
-				if reactive > 0:
-					player.add_status("thorns", reactive)
-			if player.has_method("play_block_pulse"):
-				player.play_block_pulse()  # grow-and-shrink, like the enemy's block
-			AudioManager.play_sfx("block_gain")
-			main.show_notification(
-				tr("UI_COMBAT_GAIN_BLOCK").format({"n": amount}), Color(0.4, 0.6, 1.0)
-			)
-			await get_tree().create_timer(0.2).timeout
-
-		"consume_short_circuit_for_block":
-			# Charge Sink: consume every enemy's stored charge and turn it into Block.
-			var total_charge := 0
-			for enemy in main.enemy_container.get_children():
-				if is_instance_valid(enemy) and enemy.has_method("get_status_stacks"):
-					total_charge += _consume_short_circuit(enemy)
-			if total_charge <= 0:
-				main.show_notification(tr("UI_COMBAT_NO_SHORT_CIRCUIT"), Color(0.4, 0.85, 1.0))
-			else:
-				var block_amount := total_charge
-				if player and "status_system" in player and player.status_system:
-					block_amount = int(block_amount * player.status_system.get_block_multiplier())
-				if main.relic_effect_system:
-					block_amount = main.relic_effect_system.on_player_gain_block(player, block_amount)
-				if player and player.has_method("add_block"):
-					player.add_block(block_amount)
-					if player.has_method("play_block_pulse"):
-						player.play_block_pulse()
-				main.show_notification(
-					tr("UI_COMBAT_GAIN_BLOCK").format({"n": block_amount}), Color(0.4, 0.6, 1.0)
-				)
+			_grant_card_block(player, amount)
 			await get_tree().create_timer(0.2).timeout
 
 		"add_card_to_hand":
@@ -697,7 +664,7 @@ func _apply_effect(
 			await get_tree().create_timer(0.2).timeout
 
 		"lose_hp":
-			# Self HP cost (blood mechanic) — bypasses Block, can't be dodged.
+			# Direct HP loss bypasses Block and cannot be dodged.
 			if player and player.has_method("lose_hp"):
 				player.lose_hp(amount)
 				main.show_notification(
@@ -730,65 +697,14 @@ func _apply_effect(
 				)
 			await get_tree().create_timer(0.2).timeout
 
-		"double_target_short_circuit":
-			# Overload doubles stored charge before the following overload effect.
-			if (
-				target
-				and is_instance_valid(target)
-				and target.has_method("get_status_stacks")
-				and target.has_method("add_status")
-			):
-				var current_charge := int(target.get_status_stacks("short_circuit"))
-				if current_charge > 0:
-					target.add_status("short_circuit", current_charge)
-					main.show_notification(
-						tr("UI_COMBAT_APPLIED_STATUS").format(
-							{
-								"status": STATUS_SYS.format_name_localized("short_circuit"),
-								"n": current_charge,
-							}
-						),
-						Color(0.2, 0.92, 1.0)
-					)
-				else:
-					main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
-			else:
-				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
-			await get_tree().create_timer(0.2).timeout
-
-		"overload_short_circuit":
-			var consumed := _consume_short_circuit(target)
-			if (
-				consumed > 0
-				and target
-				and is_instance_valid(target)
-				and target.has_method("take_damage")
-			):
-				var overload := _short_circuit_overload(consumed, player)
-				var critical := bool(overload.get("critical", false))
-				await target.take_damage(
-					int(overload.get("damage", consumed)),
-					false,
-					{
-						"source": "status",
-						"status": "short_circuit",
-						"critical": critical,
-						"heavy": consumed >= 12,
-					}
-				)
-				AudioManager.play_sfx(
-					"crit" if critical else "attack_hit",
-					-1.5 if critical else -3.0,
-					1.08,
-					0.03
-				)
-			else:
-				main.show_notification(tr("UI_COMBAT_NO_SHORT_CIRCUIT"), Color(0.4, 0.85, 1.0))
-			await get_tree().create_timer(0.2).timeout
-
-		"overload_short_circuit_all":
+		"overload":
+			# One global rule: every live enemy discharges all stored Short Circuit.
+			# Cards may amplify that discharge or convert its actual HP damage into
+			# Block without introducing another Overload effect type.
 			var overloaded_any := false
 			var critical_any := false
+			var total_damage_dealt := 0
+			var charge_multiplier := maxi(1, int(effect.get("charge_multiplier", 1)))
 			for enemy in main.enemy_container.get_children():
 				if not is_instance_valid(enemy) or enemy.is_queued_for_deletion():
 					continue
@@ -796,17 +712,24 @@ func _apply_effect(
 				if consumed <= 0 or not enemy.has_method("take_damage"):
 					continue
 				overloaded_any = true
-				var overload := _short_circuit_overload(consumed, player)
+				var discharged := consumed * charge_multiplier
+				var overload := _short_circuit_overload(discharged, player)
 				var critical := bool(overload.get("critical", false))
 				critical_any = critical_any or critical
+				var overload_damage := int(overload.get("damage", discharged))
+				# Status feedback is detached, so calculate the resolved HP damage
+				# from the pre-hit health/block values before take_damage returns.
+				var hp_before := int(enemy.get("health"))
+				var block_before := int(enemy.get("block"))
+				total_damage_dealt += mini(hp_before, maxi(0, overload_damage - block_before))
 				await enemy.take_damage(
-					int(overload.get("damage", consumed)),
+					overload_damage,
 					false,
 					{
 						"source": "status",
 						"status": "short_circuit",
 						"critical": critical,
-						"heavy": consumed >= 12,
+						"heavy": discharged >= 12,
 					}
 				)
 				if main.is_game_over:
@@ -820,6 +743,8 @@ func _apply_effect(
 				)
 			else:
 				main.show_notification(tr("UI_COMBAT_NO_SHORT_CIRCUIT"), Color(0.4, 0.85, 1.0))
+			if bool(effect.get("gain_block_equal_damage", false)) and total_damage_dealt > 0:
+				_grant_card_block(player, total_damage_dealt)
 			await get_tree().create_timer(0.2).timeout
 
 		"deal_damage_block_mult":
@@ -847,65 +772,6 @@ func _apply_effect(
 					apply_thorns_reflection(player, target)
 			else:
 				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
-			await get_tree().create_timer(0.2).timeout
-
-		"vent_heat_for_damage":
-			var spent_heat := _consume_heat(player)
-			var heat_damage := (
-				int(effect.get("base", 0))
-				+ spent_heat * int(effect.get("mult", 1))
-			)
-			heat_damage += _consume_loaded_bonus(player, source_card)
-			if target and is_instance_valid(target) and target.has_method("take_damage"):
-				if _check_dodge(target):
-					pass
-				else:
-					if main.equipment_set_system and source_card:
-						heat_damage = main.equipment_set_system.modify_card_damage(
-							source_card, heat_damage
-						)
-					if card_mult != 1.0:
-						heat_damage = int(heat_damage * card_mult)
-					var feedback_tags := _feedback_tags_for(effect)
-					var outgoing = calculate_attack_damage(
-						heat_damage, player, target, false, feedback_tags
-					)
-					await target.take_damage(outgoing, false, feedback_tags)
-					_register_player_attack()
-					if main.equipment_set_system and source_card:
-						main.equipment_set_system.on_card_damage_resolved(
-							source_card, target
-						)
-					apply_thorns_reflection(player, target)
-			else:
-				main.show_notification(tr("UI_COMBAT_NO_TARGET"), Color(1, 0.5, 0.5))
-			await get_tree().create_timer(0.2).timeout
-
-		"vent_heat_for_block":
-			var spent_heat := _consume_heat(player)
-			var heat_block := (
-				int(effect.get("base", 0))
-				+ spent_heat * int(effect.get("mult", 1))
-			)
-			if main.equipment_set_system and source_card:
-				heat_block = main.equipment_set_system.modify_card_block(
-					source_card, heat_block
-				)
-			if player and "status_system" in player and player.status_system:
-				heat_block = int(heat_block * player.status_system.get_block_multiplier())
-			if main.relic_effect_system:
-				heat_block = main.relic_effect_system.on_player_gain_block(player, heat_block)
-			if player and player.has_method("add_block"):
-				player.add_block(heat_block)
-				var reactive := int(player.get_status_stacks("reactive_plating"))
-				if reactive > 0:
-					player.add_status("thorns", reactive)
-				if player.has_method("play_block_pulse"):
-					player.play_block_pulse()
-			AudioManager.play_sfx("block_gain")
-			main.show_notification(
-				tr("UI_COMBAT_GAIN_BLOCK").format({"n": heat_block}), Color(0.4, 0.6, 1.0)
-			)
 			await get_tree().create_timer(0.2).timeout
 
 		"gain_gold":

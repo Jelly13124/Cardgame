@@ -80,7 +80,7 @@ defend 1c=3. Files: `battle_scene/card_info/player/*.json`, `run_system/data/too
 | `hemo_drive` | 1 / uncommon | `deal_damage 15 → 9` | 1-cost out-damaged every 2-cost attack; worst offender |
 | `breach_charge` | 1 / common | `deal_damage_all 9 → 6` | a common beating the uncommon AoE (sweep_arc 8) |
 | `bulkhead_bleed` | 2 / uncommon | `gain_block 16 → 12` | one card negated a telegraphed boss slam |
-| `vent_plating` | 1 / common | `gain_block 8 → 6` | strictly-better defend that cantrips (draw 1), no Exhaust |
+| `kinetic_baffle` | 1 / uncommon | `gain_block 5` | compact Block cantrip, no Exhaust |
 | `pipe_swing` | 2 / common | `deal_damage 12 → 9` | common out-damaging uncommon attacks, +Weak rider |
 | `siphon_valve` | 0 / uncommon | add `exhaust_self` | repeatable +2 energy battery = rare effect with no gate |
 

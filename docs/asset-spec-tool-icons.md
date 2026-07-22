@@ -28,7 +28,7 @@ unique semantic icon.
 | id | visual identity | runtime effect |
 |---|---|---|
 | `adrenaline_shot` | chunky brass auto-injector, amber chamber | draw 2 cards |
-| `blood_kit` | red-brown collection roll, blood-drop patch and tube | discover 1 of 3 Bleed cards; free |
+| `blood_kit` | legacy file id; player-facing Circuit Kit | discover 1 of 3 Short Circuit cards; free |
 | `combat_stim` | squat brass stim cylinder, orange up-arrow | gain 2 Strength |
 | `energy_cell` | salvaged battery canister, cyan bolt window | gain 2 Energy this turn |
 | `field_kit` | sand canvas tool roll, wrench and wire spool | discover 1 of 3 Skill cards; free |
@@ -37,9 +37,10 @@ unique semantic icon.
 | `munitions_crate` | dented ammunition box with visible cartridges | discover 1 of 3 Attack cards; free |
 | `shock_charge` | flat EMP puck with two cyan electrodes | apply 2 Vulnerable and 1 Weak |
 | `smoke_bomb` | crooked vented canister and one simple smoke puff | gain 10 Block |
-| `toxin_vial` | historical id; icon is the localized Rusty Blade | apply 4 Bleed to one enemy |
+| `toxin_vial` | legacy file id; player-facing Capacitor Spike | apply 10 Short Circuit to one enemy |
 
 Display names and descriptions live in `assets/translations/content_cards.csv`
 under `TOOL_<ID>_TITLE` and `TOOL_<ID>_DESC`. Keep the historical
-`toxin_vial` id for save compatibility even though its current player-facing
-identity is Rusty Blade.
+`blood_kit` and `toxin_vial` ids for save compatibility even though their current
+player-facing identities are Circuit Kit and Capacitor Spike. Their existing
+icons predate those renames and need a future visual audit before final release.

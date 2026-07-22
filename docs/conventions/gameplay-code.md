@@ -87,14 +87,17 @@ Same pattern for enemy action types (`ALLOWED_ENEMY_ACTION_TYPES`) and status na
 
 **Reconsider when:** we add unit tests as a first-class practice; or net play; or `run_manager.gd` exceeds 600 lines.
 
-### C. No unit tests
+### C. Contract tests instead of a unit-test framework
 **Rule (from Donchitos):** "Write unit tests for all gameplay logic — separate logic from presentation."
 
-**Our state:** zero unit tests. Only the headless Godot startup check + DataValidator + manual playtest.
+**Our state:** there is no third-party unit-test framework, but `tests/*.tscn` now
+contains headless Godot contract tests for card systems, demo pools, encounters,
+inventory, shops, transitions, UI layout, and combat feedback. DataValidator and
+the clean headless boot remain the broad startup gates; manual/windowed playtests
+are still required for feel and final visuals.
 
-**Why we ignore the rule:** test setup overhead for solo dev hasn't paid back yet. Most "bugs" are content / balance, not logic. The validator + headless boot catches the bulk of mechanical breakage.
-
-**Reconsider when:** core systems are stable enough that regression-prevention beats green-field-velocity; or a contributor joins; or before Steam launch.
+**Reconsider when:** contract-test setup becomes repetitive enough to justify a
+shared test runner/plugin, or before Steam launch.
 
 ---
 
@@ -104,8 +107,9 @@ Same pattern for enemy action types (`ALLOWED_ENEMY_ACTION_TYPES`) and status na
 2. Implement the handler in `combat_engine.gd` / `enemy_ai.gd` / etc.
 3. Add JSON content files.
 4. Headless validate: `godot --headless --path . --quit-after 5` — should print `DataValidator: all card/enemy/relic JSON files passed schema check.`
-5. Playtest the new content in editor.
-6. Update the relevant catalog doc (`docs/catalog-cards.md` etc).
+5. Run the relevant `tests/*_contract_test.tscn` scene headlessly.
+6. Playtest the new content in editor when behavior or visuals changed.
+7. Regenerate `docs/catalog_html/` with `python scripts/gen_catalog_html.py`.
 
 ## When in doubt
 

@@ -68,12 +68,14 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 - `apply_status` — Apply a status effect to a target enemy
 - `apply_status_self` — Apply a status effect to the player
 - `apply_status_all` — Apply a status effect to all enemies
-- `discover` — Hearthstone-style 3-choose-1: pops a candidate popup (filtered by `pool` — a card type, or a theme tag like `bleed`); the picked card is created into the **current hand for this combat only** (never the permanent deck). Optional `free` makes it cost 0 this combat (a `cost_override` meta on the card).
+- `apply_short_circuit_scaled` — Apply Intelligence-scaled Short Circuit stacks to one enemy
+- `overload` — Consume all Short Circuit on all enemies and deal the stored delayed damage
+- `discover` — 3-choose-1 popup filtered by `pool` (a card type or theme tag such as `short_circuit`); the picked card enters the **current hand for this combat only**. Optional `free` makes it cost 0 this combat.
 - Economy / curse: `gain_gold`, `lose_gold`, `heal`, `lose_hp`, `add_card_to_hand`, `add_curse_to_deck` — gold / HP swings and shuffling a card (or a permanent curse) into the deck.
 
 > The list above is a selection. The **authoritative** set is `DataValidator.ALLOWED_EFFECT_TYPES` (33 types) — see `docs/conventions/data-files.md` for the full categorized list.
 
-**New cards never require GDScript changes** — only a JSON file.
+Cards built from existing effects require only JSON. A genuinely new shared effect must add a handler to `combat_engine.gd` and be registered in `DataValidator.ALLOWED_EFFECT_TYPES`.
 
 ### Player Attributes (五维属性)
 
@@ -81,7 +83,7 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 |---|---|---|
 | **Strength** | 力量 | Added GLOBALLY to ALL attack damage (`combat_engine._apply_effect()`, default +3); per-card `scaling` is deprecated |
 | **Constitution** | 体质 | Added GLOBALLY to ALL block (default +3); replaces old "Defense" |
-| **Intelligence** | 智力 | Adds +1 stack to EVERY status the player applies (`apply_status` / `apply_status_all`, incl. Bleed) + boosts tool effects (+8%/pt); no longer affects XP |
+| **Intelligence** | 智力 | Adds +1 stack to every target status the player applies (`apply_status` / `apply_status_all`) + powers `apply_short_circuit_scaled` + boosts tool effects (+8%/pt); no longer affects XP |
 | **Luck** | 幸运 | Crit chance (+2%/pt, +4% with Crit Clip, uncapped; 1.5× crit) + 1.5%/pt loot rarity + tool/equipment find chance |
 | **Charm** | 魅力 | Lowers shop prices (−2%/pt, floor 0.6×) + lowers per-level XP wall (−4%/pt, floor 0.6×) + gates high-Charm event options (the old enemy-flee mechanic was deleted) |
 
@@ -91,7 +93,8 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 
 | Status | Effect |
 |---|---|
-| **Bleed** | Start of turn: take damage = stacks, then stacks halve (round down) |
+| **Short Circuit** | Stored delayed damage on an enemy; it neither ticks nor decays until an `overload` effect consumes all enemies' stacks |
+| **Burn** | Deals damage when it ticks, then halves its stacks |
 | **Weak** | Direct attack damage dealt is reduced by 50%; stacks decrement at end of affected character turn |
 | **Vulnerable** | Direct attack damage taken is increased by 50%; stacks decrement at end of affected character turn |
 | **Stun** ⚡ | Enemy skips its next turn per stack; manual-consume, no decay; enemy-only; can interrupt a telegraphed attack |
@@ -530,14 +533,14 @@ Spec: `docs/superpowers/specs/2026-07-07-remove-core-currency-design.md`.
 - Enemy intent system with action patterns
 - Player HP / block / energy UI (CharacterHUD)
 - Draw pile / discard pile viewer (Q/E shortcuts)
-- Status effect system (bleed, weak, vulnerable, stun, regen, thorns, frail, dodge, + StS2 powers)
+- Status effect system (Short Circuit, Burn, Weak, Vulnerable, Stun, Regen, Thorns, Frail, Dodge, and persistent Bill powers)
 - Combat sprites with static rest poses and attack animations
 
 ### ✅ Phase 2 — Run System & Content (prototype complete; superseded by current demo contract)
 - Selectable encounter map evolved into the current authored 12-floor demo act.
 - Public demo ends at the fixed Rust Titan boss; the three-act/extraction architecture is retained
   only for the later full-game build.
-- Bill uses a fixed starter deck and a curated 36-card reward pool.
+- Bill uses a fixed 9-card starter deck (4 Shoot, 1 Weakening Shot, 4 Defend) and a curated 28-card demo reward pool.
 - Normal/elite/boss rewards now include the current card, tool, relic and equipment economy;
   three planned set pieces are surfaced before the boss so the equipment differentiator is playable.
 
@@ -562,11 +565,11 @@ Spec: `docs/superpowers/specs/2026-07-07-remove-core-currency-design.md`.
 - ✅ Run history panel: home base shows last 5 runs (outcome icon + hero + floor + core)
 - ✅ Ascension difficulty: 5 levels, each adds a negative modifier (enemy HP+10%, player -5 max HP, -1 first-turn energy, +10% shop prices, elite-heavy maps)
 - ✅ Starter Boost upgrade: 3 tiers, +N random attribute points at run start
-- ✅ Card Research upgrade: 3 tiers unlocking cards (flash_bang, bone_breaker, last_breath, junk_bomb)
+- ⛔ Historical Card Research upgrade removed; all eligible cards are draftable by data/pool rules.
 
 ### 🟡 Phase 5 — Content Expansion (in progress)
-- ✅ Cowboy Bill kit: luck/crit (`crit_clip`) + the StS2 Ironclad bruiser pool. (A second "Feng Shui Master" yin/yang hero was prototyped then **cut** 2026-06-18 — the demo ships Bill-only. Vestigial polarity plumbing remains inert.)
-- ✅ ~65 player cards (in-run upgrades via `card_upgrade.gd`, not `_plus` variants), incl. a re-skinned StS2 Ironclad port; per-hero pools + colourless pool
+- ✅ Cowboy Bill kit: Shoot/Defend basics plus Short Circuit, global Overload, Loaded, reload, and critical-hit packages. (A second "Feng Shui Master" yin/yang hero was prototyped then **cut** 2026-06-18 — the demo ships Bill-only. Vestigial polarity plumbing remains inert for save compatibility.)
+- ✅ 45 player card JSON files (including 5 curses and 2 starter basics); Bill's demo rewards use the focused 28-card pool in `MetaProgress.DEMO_REWARD_POOLS`.
 - ✅ 13 enemy types (+2 summon-only adds); art migrating to the new style (ADR-0012)
 - ✅ 3 boss encounters (one per act) with multi-phase patterns + bespoke mechanics (enrage / summon / AoE)
 - ⬜ More heroes, more enemies, deeper boss gimmicks
@@ -586,12 +589,12 @@ See `docs/superpowers/specs/2026-06-09-gems-leveling-rewards-design.md` for the 
 - ✅ **In-run XP / level**: kill enemies → XP; each level-up grants a **pick-1-of-3 random attribute (+1)**. (Intelligence no longer scales XP — **Charm** lowers the per-level XP wall instead, −4%/pt.) `RunManager.xp / level / gain_xp / xp_to_next / pending_attr_points`.
 - ✅ **Starting attributes = 0** (heroes grow via level-ups / gear).
 - ✅ **Rewards by node type** (updated 2026-07-02): normal = gold + 3-choose-1 card draft + Luck-scaled tool + Luck-scaled common equipment; elite = card + Luck-scaled uncommon equipment; boss = guaranteed rare equipment. (Equipment drops from normal/elite too, not boss-only. The interim gem draft slots were removed with the gem system.)
-- ✅ **StS2 Ironclad port** (`docs/sts2-port-audit.md`): re-skinned cards + 7 relics + 6 new combat mechanics; `bleed` replaced `poison`; `burn` retimed; `strength_up` removed.
+- ⛔ The direct StS2 Ironclad-port model is superseded. Current cards use original Cowboy Bill mechanics and visuals; see the current card redesign spec and generated catalog.
 
 ### ✅ Phase 8 — Tools · Equipment Economy · A0 Balance (shipped 2026-06-21..22)
 Specs: `docs/superpowers/specs/2026-06-21-tools-attrs-loading-base-ui-design.md`, `…/2026-06-22-balance-equipment-economy-design.md`.
 - ✅ **Tool system** (StS2-style one-time consumables): `run_system/data/tools/*.json` (11: 8 original + 3 discover tools added 2026-06-30), a top-bar **tool shelf** (`run_top_bar.gd`), confirmation before use, and explicit arrow/click target selection for enemy tools. Cancellation never consumes the item; effects reuse `combat_engine._apply_effect`, scaled ×(1+0.08·INT). _Tool slots reworked in Phase 9 → **1 base slot**, tools held in the backpack + equipped from the character panel; see below._
-- ✅ **Attribute rework**: the Charm enemy-**flee** mechanic was **deleted**; INT off XP → boosts tools + Bleed; Charm lowers the per-level XP wall.
+- ✅ **Attribute rework**: the Charm enemy-**flee** mechanic was **deleted**; INT off XP → boosts tools and player-applied statuses, especially Short Circuit; Charm lowers the per-level XP wall.
 - ⛔ ~~**Gems → backpack** (1 gem = 1 cell; socketing frees the cell), replacing the unlimited `gem_inventory` side-list.~~ Moot — the gem system was removed 2026-07-02.
 - ✅ **Drop / shop restructure**: shop sells tools (not equipment); Luck-scaled tool + equipment drops (see Rewards by node type).
 - ✅ **Loading**: session card-info cache (`MetaProgress.get_card_info_cache` + `cached_card_factory.gd`) skips the per-battle JSON re-parse.
@@ -620,8 +623,8 @@ Spec: `docs/superpowers/specs/2026-06-25-base-shop-forge-tools-overhaul.md`.
 Spec: `docs/superpowers/specs/2026-06-25-curse-cards-design.md`; plan: `…/plans/2026-06-25-curse-cards.md`.
 - ✅ New **`curse`** card type (+ rarity): **unplayable** (returns to hand on play) with an
   optional `end_turn_in_hand` penalty. 5 curses: 辐射尘 (pure), 漏财 (−5 gold), 铁锈 (−2 HP),
-  怯懦 (Weak), 恐慌 (Frail). Purple frame + 诅咒 label; placeholder art (Codex TODO). Excluded
-  from every normal card pool.
+  怯懦 (Weak), 恐慌 (Frail). They are excluded from every normal card pool and use a dedicated
+  no-cost dark-purple shell plus production illustrations.
 - ✅ **3 sources** (source = permanence): **enemy** `add_curse` action → shuffles a curse into
   the combat **draw pile** (temporary); **event** `add_curse` → permanent run-deck curse
   (clearable at the shop's 75g removal); **card** `add_card_to_hand` (temp) / `add_curse_to_deck`
@@ -636,9 +639,9 @@ Spec: `docs/superpowers/specs/2026-06-25-curse-cards-design.md`; plan: `…/plan
 Spec: `docs/superpowers/specs/2026-06-30-discover-mechanic-design.md`; plan: `…/plans/2026-06-30-discover-mechanic.md`.
 - ✅ New **`discover` effect** + `DiscoverModal` (`battle_scene/discover_modal.gd`, a brand-new
   full-screen 3-choose-1 popup) + `discover_pool.gd` (filters candidates by card type or by a
-  theme tag like `bleed`). The picked card enters the **current hand for this combat only**;
+  theme tag like `short_circuit`). The picked card enters the **current hand for this combat only**;
   optional `free` makes it cost 0 this combat (a `cost_override` card meta).
-- ✅ **3 discover tools** (`blood_kit` bleed-free / `munitions_crate` attack / `field_kit` skill)
+- ✅ **3 discover tools** (`blood_kit`, displayed as Circuit Kit, uses the `short_circuit` pool / `munitions_crate` attack / `field_kit` skill)
   trigger discover; they route through the same `combat_engine._apply_effect` as any card. (Demo
   discover *cards* were prototyped then **removed 2026-07-01** — discover is **tool-only** now, to
   drop the card/tool redundancy and not tax the single tool slot.)
@@ -648,7 +651,7 @@ Spec: `docs/superpowers/specs/2026-06-30-discover-mechanic-design.md`; plan: `�
   `buy_card_caps` and the `unlocked_cards` / `purchased_cards` save fields. Every non-curse,
   non-basic (`strike`/`defend`) card is now draftable by default — `get_unlocked_card_pool()`
   directory-scans `battle_scene/card_info/player/*.json` instead of reading an unlock list in
-  the full-game path. The public Bill demo uses a curated 36-card reward pool so its combat
+  the full-game path. The public Bill demo uses a curated 28-card reward pool so its combat
   identity is not diluted (hero-exclusive cards still gate through `HERO_EXCLUSIVE_CARDS`).
 - ✅ **Market (黑市) retiered**: T1 **tool shop** (3 random tools from the whole pool, flat 40
   Caps each, added straight to the backpack); T2 **equipment shop** (unchanged rarity-priced
@@ -677,7 +680,7 @@ Spec: `docs/superpowers/specs/2026-06-24-demo-polish-overnight-design.md`. Drive
 - ✅ **Wishlist CTA**: result screens expose an `OS.shell_open` button only when `application/config/store_url` is a real Steam `/app/…` URL. Development builds no longer send players to the generic Steam homepage.
 - ✅ **Onboarding**: rules teach Tools / Relics / Equipment sets / Crit / Base and fully define Luck & Charm; the first-battle sequence is persisted only after its final page is completed.
 - ✅ **Combat juice**: damage-scaled screen shake + per-hit sprite feedback (removed the ≥10 gate) + enemy-death thud + energy-orb pop.
-- ✅ **Content**: 3 elites (was 1; now picks one at random per node) — `chrome_warden` + `siege_breaker` reuse existing sprites with distinct movesets; Bill-pool card `lucky_streak` (crit-rate source); event-node frequency bumped. _(The `wildfire` AoE-Burn card was removed 2026-07-01 along with the Burn status.)_
+- ✅ **Content**: 3 elites (was 1; now picks one at random per node) — `chrome_warden` + `siege_breaker` reuse existing sprites with distinct movesets; Bill-pool card `lucky_streak` (crit-rate source); event-node frequency bumped. `wildfire` was removed, but Burn remains an enemy/status mechanic.
 - ✅ **Settings/QoL**: Battle Speed toggle (1×/1.5×/2×); one-shot legacy-save migration (`user://meta.json` → slot 1).
 
 ---

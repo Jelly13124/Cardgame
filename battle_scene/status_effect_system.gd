@@ -43,8 +43,6 @@ const STATUS_COLORS = {
 	"overload_protocol": Color(0.20, 0.92, 1.0),
 	"covering_reload": Color(0.55, 0.78, 0.95),
 	"reactive_plating": Color(0.46, 0.82, 0.94),
-	"heat": Color(1.0, 0.46, 0.16),
-	"redline_protocol": Color(1.0, 0.34, 0.12),
 	"loaded": Color(1.0, 0.70, 0.24),
 	"bullet": Color(1.0, 0.78, 0.35),
 }
@@ -67,8 +65,6 @@ const STATUS_LABELS = {
 	"overload_protocol": "OP",
 	"covering_reload": "CR",
 	"reactive_plating": "RP",
-	"heat": "H",
-	"redline_protocol": "RL",
 	"loaded": "L",
 	"bullet": "●",
 }
@@ -81,7 +77,7 @@ const STATUS_DESCRIPTIONS = {
 	"Stored charge. It does not deal damage or decay until a card Overloads or removes it.",
 	"burn":
 	"Take damage equal to stacks at the start of your turn, then stacks are halved (rounded down).",
-	"weak": "Outgoing attack damage reduced 25% per stack. Decays 1 per turn.",
+	"weak": "Outgoing attack damage reduced 50%. Additional stacks extend duration. Decays 1 per turn.",
 	"vulnerable": "Incoming attack damage increased 50% per stack. Decays 1 per turn.",
 	"stun": "Enemy skips its next turn for each stack (enemy-only).",
 	"regen": "Heal stacks HP at the start of your turn. Stacks decay by 1 each turn.",
@@ -97,8 +93,6 @@ const STATUS_DESCRIPTIONS = {
 	"overload_protocol": "Your Overloads can Crit. Persistent.",
 	"covering_reload": "Whenever you Reload, gain 3 Block. Persistent.",
 	"reactive_plating": "Whenever a card grants Block, gain Thorns equal to stacks. Persistent.",
-	"heat": "Stored reactor pressure. It persists until a card Vents it.",
-	"redline_protocol": "Whenever a card is Exhausted, gain 2 Heat per stack. Persistent.",
 	"loaded": "The next Attack that deals damage gains stacks additional damage, then remove all stacks.",
 	"bullet":
 	"Ammo for attacks (double-fire clip). 1 at the start of each turn, max 1; spent by attacking, restored by Reload.",
@@ -215,7 +209,8 @@ func get_incoming_attack_multiplier() -> float:
 	return 1.0
 
 
-## Block gained is reduced while Frail. Flat 25% (mirrors weak's flat model).
+## Block gained is reduced while Frail. Like Weak, stacks extend duration rather
+## than increasing the magnitude; Frail's own flat reduction remains 25%.
 func get_block_multiplier() -> float:
 	if has_status("frail"):
 		return 0.75

@@ -79,17 +79,12 @@ const ALLOWED_EFFECT_TYPES = [
 	"flip_polarity",
 	"lose_hp",
 	"double_strength",
-	"double_target_short_circuit",
-	"overload_short_circuit",
-	"overload_short_circuit_all",
+	"overload",
 	"deal_damage_block_mult",
-	"vent_heat_for_damage",
-	"vent_heat_for_block",
 	"gain_gold",
 	"heal",
 	"gain_attack_allowance",
 	"restore_attack_allowance",
-	"consume_short_circuit_for_block",
 	"add_card_to_hand",
 	"lose_gold",
 	"add_curse_to_deck",
@@ -113,8 +108,6 @@ const ALLOWED_STATUS_NAMES = [
 	"overload_protocol",
 	"covering_reload",
 	"reactive_plating",
-	"heat",
-	"redline_protocol",
 	"loaded",
 	"bullet",
 ]
@@ -623,16 +616,23 @@ static func _validate_card_effect(effect: Variant, prefix: String, label: String
 					)
 				)
 				ok = false
-	# Heat Vent effects require whole-number base/mult fields so their preview and
-	# resolution agree exactly.
-	if etype in ["vent_heat_for_damage", "vent_heat_for_block"]:
-		for required_key in ["base", "mult"]:
-			if not effect.has(required_key):
-				push_error(
-					"%s: %s[%d] (%s) is missing '%s'"
-					% [prefix, label, i, etype, required_key]
-				)
-				ok = false
+	# Overload is always global. A card may amplify every discharge, but the
+	# multiplier must stay a positive whole number so preview and runtime agree.
+	if etype == "overload" and effect.has("charge_multiplier"):
+		var charge_multiplier = effect["charge_multiplier"]
+		var multiplier_ok: bool = (
+			typeof(charge_multiplier) == TYPE_INT
+			or (
+				typeof(charge_multiplier) == TYPE_FLOAT
+				and charge_multiplier == floor(charge_multiplier)
+			)
+		)
+		if not multiplier_ok or int(charge_multiplier) < 1:
+			push_error(
+				"%s: %s[%d] overload 'charge_multiplier' must be a positive whole number"
+				% [prefix, label, i]
+			)
+			ok = false
 	return ok
 
 

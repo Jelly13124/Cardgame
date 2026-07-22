@@ -288,13 +288,11 @@ const BOUNTY_SHELF_SIZE := 3
 ## Hero-exclusive draft cards: only offered (loot/shop) when that hero is active, so
 ## a hero's signature cards never roll in another hero's rewards.
 const HERO_EXCLUSIVE_CARDS := {
-	# Cowboy Bill — malfunctioning gunslinger: reload, critical hits, Short Circuit and
-	# risky self-damage. Keep this identity separate from future heroes.
+	# Cowboy Bill — malfunctioning gunslinger: reload, critical hits and Short Circuit.
+	# Keep this identity separate from future heroes.
 	"cowboy_bill":
 	[
 		"piston_jab",
-		"pipe_swing",
-		"combat_stim",
 		"load_up",
 		"coagulate",
 		"dissect",
@@ -302,24 +300,16 @@ const HERO_EXCLUSIVE_CARDS := {
 		"all_in",
 		"hemorrhage",
 		"covering_reload",
-		"focusing_blow",
-		"siphon_valve",
-		"bulkhead_bleed",
-		"hemo_drive",
-		"breach_charge",
 		"limit_break",
 	],
 }
 
-## The public demo deliberately uses a focused reward pool. All card JSON remains
-## available to old saves and the full game; this only controls newly rolled
-## reward/shop choices while DEMO_BUILD is active.
+## The public demo deliberately uses a focused reward pool. This controls newly
+## rolled reward/shop choices while DEMO_BUILD is active.
 const DEMO_REWARD_POOLS := {
 	"cowboy_bill": [
-		# Bill signature package (16)
+		# Bill signature package (9)
 		"piston_jab",
-		"pipe_swing",
-		"combat_stim",
 		"load_up",
 		"coagulate",
 		"dissect",
@@ -327,23 +317,17 @@ const DEMO_REWARD_POOLS := {
 		"all_in",
 		"hemorrhage",
 		"covering_reload",
-		"focusing_blow",
-		"siphon_valve",
-		"bulkhead_bleed",
-		"hemo_drive",
-		"breach_charge",
 		"limit_break",
-		# Curated shared support (20)
+		# Curated shared support (19)
 		"arc_flash",
 		"brace",
-		"crowbar_smash",
 		"hot_swap",
 		"rebar_wave",
 		"recoil_shot",
 		"reload",
 		"siphon",
 		"tape_patch",
-		"vent_plating",
+		"kinetic_baffle",
 		"cascade",
 		"chain_link",
 		"charged_shot",

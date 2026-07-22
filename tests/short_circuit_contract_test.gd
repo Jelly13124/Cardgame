@@ -13,6 +13,8 @@ class FakeEntity:
 	extends Node
 	var status_system = STATUS_SYSTEM.new()
 	var damage_taken := 0
+	var health := 30
+	var block := 0
 
 	func add_status(status: String, stacks: int) -> void:
 		status_system.add_status(status, stacks, self)
@@ -21,11 +23,41 @@ class FakeEntity:
 		return status_system.get_stacks(status)
 
 	func take_damage(amount: int, _silent: bool = false, _tags: Dictionary = {}) -> void:
-		damage_taken += amount
+		var hp_damage := maxi(0, amount - block)
+		block = maxi(0, block - amount)
+		hp_damage = mini(health, hp_damage)
+		health -= hp_damage
+		damage_taken += hp_damage
+
+
+class FakePlayer:
+	extends Node
+	var status_system = STATUS_SYSTEM.new()
+	var block := 0
+
+	func add_status(status: String, stacks: int) -> void:
+		status_system.add_status(status, stacks, self)
+
+	func get_status_stacks(status: String) -> int:
+		return status_system.get_stacks(status)
+
+	func add_block(amount: int) -> void:
+		block += amount
+
+
+var enemy_container := Node.new()
+var relic_effect_system = null
+var equipment_set_system = null
+var is_game_over := false
 
 
 func _ready() -> void:
+	add_child(enemy_container)
 	call_deferred("_run")
+
+
+func show_notification(_message: String, _color: Color) -> void:
+	pass
 
 
 func _expect(condition: bool, message: String) -> void:
@@ -38,6 +70,7 @@ func _expect(condition: bool, message: String) -> void:
 func _run() -> void:
 	_test_status_timing()
 	_test_overload_consumes_charge()
+	await _test_global_overload_and_charge_sink()
 	_test_card_package_numbers()
 	_test_data_driven_targeting()
 	_test_active_data_has_no_bleed_mechanic()
@@ -61,6 +94,34 @@ func _test_status_timing() -> void:
 	_expect(entity.damage_taken == 6, "Burn preserves the enemy damage-over-time role")
 	_expect(entity.get_status_stacks("burn") == 3, "Burn halves after triggering")
 	entity.free()
+
+
+func _test_global_overload_and_charge_sink() -> void:
+	var first := FakeEntity.new()
+	first.health = 20
+	first.block = 2
+	first.add_status("short_circuit", 5)
+	enemy_container.add_child(first)
+	var second := FakeEntity.new()
+	second.health = 4
+	second.add_status("short_circuit", 7)
+	enemy_container.add_child(second)
+	var player := FakePlayer.new()
+	add_child(player)
+	var engine = COMBAT_ENGINE.new()
+	add_child(engine)
+	await engine._apply_effect(
+		{"type": "overload", "gain_block_equal_damage": true}, null, player
+	)
+	_expect(first.get_status_stacks("short_circuit") == 0, "Overload clears the first enemy")
+	_expect(second.get_status_stacks("short_circuit") == 0, "Overload clears every enemy")
+	_expect(first.damage_taken == 3, "Overload damage respects enemy Block")
+	_expect(second.damage_taken == 4, "Overload damage cannot exceed remaining HP")
+	_expect(player.block == 7, "Charge Sink gains Block equal to actual Overload damage")
+	engine.free()
+	player.free()
+	first.free()
+	second.free()
 
 
 func _test_overload_consumes_charge() -> void:
@@ -98,17 +159,20 @@ func _test_card_package_numbers() -> void:
 		"rare two-cost builder starts at 10 delayed stacks"
 	)
 	var overload := _load_card("limit_break")
-	_expect(_has_effect(overload, "double_target_short_circuit"), "Overload doubles stored charge")
-	_expect(_has_effect(overload, "overload_short_circuit"), "Overload resolves after doubling")
+	var overload_effect := _find_effect(overload, "overload")
+	_expect(not overload_effect.is_empty(), "Overload card uses the one shared Overload effect")
+	_expect(int(overload_effect.get("charge_multiplier", 1)) == 2, "rare Overload doubles discharge damage")
 	var arc_flash := _load_card("arc_flash")
-	_expect(_has_effect(arc_flash, "overload_short_circuit_all"), "Arc Flash is the common Overload outlet")
+	_expect(_has_effect(arc_flash, "overload"), "Arc Flash uses the shared global Overload effect")
 	_expect(str(arc_flash.get("type", "")) == "skill", "Arc Flash is a technical Skill, not another Attack")
+	var charge_sink_effect := _find_effect(_load_card("coagulate"), "overload")
+	_expect(bool(charge_sink_effect.get("gain_block_equal_damage", false)), "Charge Sink converts Overload damage into Block")
 
 
 func _test_data_driven_targeting() -> void:
 	_expect(
-		PLAY_CARD.data_requires_enemy_target(_load_card("limit_break")),
-		"targeted Overload Skill requests an enemy target"
+		not PLAY_CARD.data_requires_enemy_target(_load_card("limit_break")),
+		"global Overload never requests a single enemy target"
 	)
 	_expect(
 		not PLAY_CARD.data_requires_enemy_target(_load_card("arc_flash")),
@@ -164,7 +228,11 @@ func _effect_amount(card: Dictionary, effect_type: String) -> int:
 
 
 func _has_effect(card: Dictionary, effect_type: String) -> bool:
+	return not _find_effect(card, effect_type).is_empty()
+
+
+func _find_effect(card: Dictionary, effect_type: String) -> Dictionary:
 	for effect in card.get("effects", []):
 		if str(effect.get("type", "")) == effect_type:
-			return true
-	return false
+			return effect
+	return {}

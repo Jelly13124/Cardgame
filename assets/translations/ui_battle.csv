@@ -40,18 +40,14 @@ UI_BATTLE_DESC_POWER_ALL_IN,"Crits deal double damage. Non-Crit attacks deal nor
 UI_BATTLE_DESC_POWER_OVERLOAD_PROTOCOL,Your Overloads can Crit.,你的过载可以暴击。
 UI_BATTLE_DESC_POWER_COVERING_RELOAD,"Whenever you Reload, gain 3 Block.",每当你装弹，获得 3 点格挡。
 UI_BATTLE_DESC_POWER_REACTIVE_PLATING,"Whenever a card grants Block, gain 1 Thorns.",每当一张牌给予你格挡，获得 1 层荆棘。
-UI_BATTLE_DESC_POWER_REDLINE_PROTOCOL,"Whenever a card is Exhausted, gain 2 Heat.",每当一张牌被消耗，获得 2 层热量。
 UI_BATTLE_DESC_ADD_CARD,Add {n} {card} to your hand,将 {n} 张「{card}」置入手牌
 UI_BATTLE_DESC_SHORT_CIRCUIT_SCALED,Apply {base} (+{attr}) Short Circuit,施加 {base}（+{attr}）层短路
 UI_BATTLE_DESC_DOUBLE_IF_SHORT_CIRCUITED,Double this application if the target already has Short Circuit,若目标已有短路，则本次施加双倍
 UI_BATTLE_DESC_DMG_BLOCK_MULT,Deal damage equal to Block ×{mult},造成等同于格挡 ×{mult} 的伤害
 UI_BATTLE_DESC_DMG_EQUAL_BLOCK,Deal damage equal to Block,造成等同于格挡的伤害
-UI_BATTLE_DESC_VENT_HEAT_DAMAGE,Vent: {base}+Heat×{mult} damage,泄压：造成{base}+热量×{mult}伤害
-UI_BATTLE_DESC_VENT_HEAT_BLOCK,Vent: Gain {mult} Block per Heat,泄压：每层热量获得 {mult} 点格挡
-UI_BATTLE_DESC_DOUBLE_SHORT_CIRCUIT,Double the target's Short Circuit,使目标当前短路层数翻倍
-UI_BATTLE_DESC_OVERLOAD_SHORT_CIRCUIT,Overload the target,对目标触发过载
-UI_BATTLE_DESC_OVERLOAD_SHORT_CIRCUIT_ALL,Overload ALL enemies,对所有敌人触发过载
-UI_BATTLE_DESC_SHORT_CIRCUIT_TO_BLOCK,Remove all enemy Short Circuit; gain equal Block,移除所有敌人的短路；获得等量格挡
+UI_BATTLE_DESC_OVERLOAD,Overload,触发过载
+UI_BATTLE_DESC_OVERLOAD_MULTIPLIER,This Overload deals ×{n} damage,本次过载造成 ×{n} 伤害
+UI_BATTLE_DESC_OVERLOAD_BLOCK,Gain Block equal to damage dealt by this Overload,获得等同于本次过载所造成伤害的格挡
 UI_BATTLE_DESC_LOSE_HP,Lose {n} HP,失去 {n} 点生命
 UI_BATTLE_DESC_RESTORE_ATTACK,Restore an attack this turn,刷新本回合的攻击次数
 UI_BATTLE_DESC_APPLY_STUN,Apply [color=#f0e040]Stun[/color] x{n},施加 [color=#f0e040]眩晕[/color] x{n}
@@ -64,9 +60,7 @@ UI_BATTLE_KEYWORD_REPLAY,[color=#3bc7eb]Replay {n}[/color],[color=#3bc7eb]重放
 UI_BATTLE_KEYWORD_REPLAY_NAME,Replay,重放
 UI_BATTLE_KEYWORD_REPLAY_DESC,"After it resolves, this attack fires again at a random enemy, N extra time(s).",打出后，这张攻击牌会自动对随机敌人再额外打出 N 次。
 UI_BATTLE_KEYWORD_OVERLOAD_NAME,Overload,过载
-UI_BATTLE_KEYWORD_OVERLOAD_DESC,"Remove all Short Circuit from the target and deal 1 damage per stack removed.","移除目标的全部短路，每移除 1 层便造成 1 点伤害。"
-UI_BATTLE_KEYWORD_VENT_NAME,Vent,泄压
-UI_BATTLE_KEYWORD_VENT_DESC,Remove all Heat to power this effect.,移除全部热量，为本次效果提供数值。
+UI_BATTLE_KEYWORD_OVERLOAD_DESC,"Remove all Short Circuit from every enemy and deal each enemy 1 damage per stack removed.","移除场上所有敌人的全部短路，并对每个敌人造成等同于其移除层数的伤害。"
 UI_BATTLE_KEYWORD_RETAIN_DESC,The card is not discarded at end of turn — it stays in your hand.,回合结束时不弃掉，保留在手牌中。
 UI_BATTLE_KEYWORD_EXHAUST_DESC,Removed from your deck for the rest of this combat once played.,打出后，本场战斗中被移除（不再回到牌库）。
 UI_BATTLE_KEYWORD_STRENGTH_DESC,Each point of Strength adds 1 to attack damage.,每点力量使攻击伤害增加 1。
@@ -83,7 +77,6 @@ UI_DISCOVER_TITLE,Discover,发现
 UI_DISCOVER_TITLE_SKILL,Discover · Skill,发现 · 技能
 UI_DISCOVER_TITLE_ATTACK,Discover · Attack,发现 · 攻击
 UI_DISCOVER_TITLE_SHORT_CIRCUIT,Discover · Short Circuit,发现 · 短路
-UI_DISCOVER_TITLE_REDLINE,Discover · Redline,发现 · 红线
 UI_DISCOVER_EMPTY,Nothing to discover.,没有可发现的牌。
 UI_BATTLE_TOOL_CONFIRM_TITLE,USE TOOL?,确认使用工具？
 UI_BATTLE_TOOL_USE,USE,使用

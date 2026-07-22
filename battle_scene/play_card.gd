@@ -6,12 +6,9 @@ const ENEMY_TARGET_EFFECTS := [
 	"deal_damage_str_mult",
 	"scale_damage_by_attacks",
 	"deal_damage_block_mult",
-	"vent_heat_for_damage",
 	"apply_status",
 	"apply_short_circuit_scaled",
 	"apply_stun",
-	"double_target_short_circuit",
-	"overload_short_circuit",
 ]
 
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
@@ -38,6 +35,8 @@ const GENERATED_UI_PATH = UI_ASSET_PATH + "generated/"
 const COST_BADGE_PATH = UI_ASSET_PATH + "card_cost_badge.png"
 const DESC_BOX_PATH = UI_ASSET_PATH + "card_description_box.png"
 const TYPE_BADGE_PATH = UI_ASSET_PATH + "card_type_badge.png"
+const GENERATED_TYPE_TINT_PATH = GENERATED_UI_PATH + "card_type_tint_fill.png"
+const GENERATED_CURSE_SHELL_PATH = GENERATED_UI_PATH + "card_shell_curse_unified.png"
 const GENERATED_COST_POSITION := Vector2(5, 3)
 const GENERATED_COST_SIZE := Vector2(35, 35)
 const GENERATED_COST_FONT_SIZE := 25
@@ -61,6 +60,12 @@ const GENERATED_TYPE_TEXT_COLORS: Dictionary = {
 	"skill": Color("#8ff4f2"),
 	"ability": Color("#f1e190"),
 	"curse": Color("#d7a8e9"),
+}
+const GENERATED_TYPE_TINT_COLORS: Dictionary = {
+	"attack": Color(0.78, 0.23, 0.10, 0.24),
+	"skill": Color(0.06, 0.55, 0.58, 0.24),
+	"ability": Color(0.58, 0.48, 0.10, 0.24),
+	"curse": Color(0.45, 0.24, 0.58, 0.24),
 }
 
 
@@ -134,12 +139,18 @@ func _style_cost_label() -> void:
 
 
 func _configure_generated_skin(data: Dictionary) -> bool:
-	var skin_id := _resolve_skin_id(data)
-	if skin_id == "":
-		return false
-	var shell_path := GENERATED_UI_PATH + "card_shell_%s_unified.png" % skin_id
 	var card_type := str(data.get("type", "skill")).to_lower()
+	var is_curse := card_type == "curse"
+	var skin_id := _resolve_skin_id(data)
+	if skin_id == "" and not is_curse:
+		return false
+	var shell_path := (
+		GENERATED_CURSE_SHELL_PATH
+		if is_curse
+		else GENERATED_UI_PATH + "card_shell_%s_unified.png" % skin_id
+	)
 	var shell_tex := _load_texture_fallback(shell_path)
+	var type_tint_tex := _load_texture_fallback(GENERATED_TYPE_TINT_PATH)
 	if shell_tex == null:
 		push_warning("Generated unified card UI skin is missing: %s" % shell_path)
 		return false
@@ -155,8 +166,16 @@ func _configure_generated_skin(data: Dictionary) -> bool:
 	# Cost, title, type landing, and description surface are authored into the
 	# single shell. These nodes remain only as layout containers for runtime text.
 	cost_badge.texture = null
+	cost_badge.visible = not is_curse
+	cost_label.visible = not is_curse
 	desc_box_texture.texture = null
-	type_badge_texture.texture = null
+	type_badge_texture.texture = type_tint_tex
+	type_badge_texture.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	type_badge_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	type_badge_texture.stretch_mode = TextureRect.STRETCH_SCALE
+	type_badge_texture.self_modulate = GENERATED_TYPE_TINT_COLORS.get(
+		card_type, GENERATED_TYPE_TINT_COLORS["skill"]
+	)
 	art_frame_texture.visible = false
 	art_bg.visible = false
 
@@ -167,8 +186,13 @@ func _configure_generated_skin(data: Dictionary) -> bool:
 	# an empty strip when 512x320 art is aspect-covered.
 	art_container.position = Vector2(15, 38)
 	art_container.size = Vector2(180, 123)
-	name_label.position = Vector2(42, 10)
-	name_label.size = Vector2(152, 31)
+	# The display font's CJK fallback sits visually low inside a centered Label.
+	# Lift the shared title baseline by two pixels so both profession and curse
+	# titles land on the optical center of their authored banner.
+	name_label.position = Vector2(15, 8) if is_curse else Vector2(42, 8)
+	name_label.size = Vector2(180, 31) if is_curse else Vector2(152, 31)
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	desc_box_texture.position = Vector2(16, 166)
 	desc_box_texture.size = Vector2(181, 108)
 	desc_label.position = Vector2(8, 8)
@@ -185,25 +209,33 @@ func _configure_generated_skin(data: Dictionary) -> bool:
 	# of becoming thin and soft after hand rotation.
 	var generated_title_font := T.display_font(700)
 	generated_title_font.variation_embolden = 0.58
-	var generated_type_font := T.display_font(700)
-	generated_type_font.variation_embolden = 0.55
+	# Use Noto directly for the compact CJK type tag. Going through the Latin
+	# display font's fallback gives the two-character label awkward line metrics.
+	var generated_type_font := FontVariation.new()
+	generated_type_font.base_font = T.CJK_FALLBACK
+	generated_type_font.variation_embolden = 0.72
 	var generated_description_font := T.display_font(600)
 	generated_description_font.variation_embolden = 0.22
 	name_label.add_theme_font_override("font", generated_title_font)
 	name_label.add_theme_font_size_override("font_size", 17)
-	name_label.add_theme_color_override("font_color", Color("#171613"))
+	name_label.add_theme_color_override(
+		"font_color", Color("#e9e0ef") if is_curse else Color("#171613")
+	)
 	name_label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
 	type_label.add_theme_font_override("font", generated_type_font)
 	type_label.add_theme_font_size_override("font_size", 13)
 	type_label.add_theme_color_override("font_color", Color.WHITE)
 	type_label.add_theme_color_override("font_outline_color", Color.TRANSPARENT)
 	type_label.add_theme_constant_override("outline_size", 0)
+	type_label.add_theme_constant_override("font_spacing_glyph", -1)
 	type_label.modulate = GENERATED_TYPE_TEXT_COLORS.get(
 		card_type, GENERATED_TYPE_TEXT_COLORS["skill"]
 	)
 	desc_label.add_theme_font_override("normal_font", generated_description_font)
 	desc_label.add_theme_font_size_override("normal_font_size", 14)
-	desc_label.add_theme_color_override("default_color", Color("#f0d4a1"))
+	desc_label.add_theme_color_override(
+		"default_color", Color("#d8ccdf") if is_curse else Color("#f0d4a1")
+	)
 	desc_label.add_theme_color_override("font_outline_color", Color.TRANSPARENT)
 	desc_label.add_theme_constant_override("outline_size", 0)
 	desc_label.add_theme_constant_override("line_separation", 1)
@@ -397,6 +429,9 @@ func set_card_data(data: Dictionary) -> void:
 	if uses_generated_skin:
 		type_label.modulate = GENERATED_TYPE_TEXT_COLORS.get(
 			c_type, GENERATED_TYPE_TEXT_COLORS["skill"]
+		)
+		type_badge_texture.self_modulate = GENERATED_TYPE_TINT_COLORS.get(
+			c_type, GENERATED_TYPE_TINT_COLORS["skill"]
 		)
 
 
@@ -634,37 +669,17 @@ func _build_description(data: Dictionary) -> String:
 						tr("UI_BATTLE_DESC_DMG_BLOCK_MULT").format({"mult": block_mult})
 					)
 
-			"vent_heat_for_damage":
-				lines.append(
-					tr("UI_BATTLE_DESC_VENT_HEAT_DAMAGE").format(
-						{
-							"base": int(effect.get("base", 0)),
-							"mult": int(effect.get("mult", 1)),
-						}
+			"overload":
+				lines.append(tr("UI_BATTLE_DESC_OVERLOAD"))
+				var charge_multiplier := int(effect.get("charge_multiplier", 1))
+				if charge_multiplier > 1:
+					lines.append(
+						tr("UI_BATTLE_DESC_OVERLOAD_MULTIPLIER").format(
+							{"n": charge_multiplier}
+						)
 					)
-				)
-
-			"vent_heat_for_block":
-				lines.append(
-					tr("UI_BATTLE_DESC_VENT_HEAT_BLOCK").format(
-						{
-							"base": int(effect.get("base", 0)),
-							"mult": int(effect.get("mult", 1)),
-						}
-					)
-				)
-
-			"double_target_short_circuit":
-				lines.append(tr("UI_BATTLE_DESC_DOUBLE_SHORT_CIRCUIT"))
-
-			"overload_short_circuit":
-				lines.append(tr("UI_BATTLE_DESC_OVERLOAD_SHORT_CIRCUIT"))
-
-			"overload_short_circuit_all":
-				lines.append(tr("UI_BATTLE_DESC_OVERLOAD_SHORT_CIRCUIT_ALL"))
-
-			"consume_short_circuit_for_block":
-				lines.append(tr("UI_BATTLE_DESC_SHORT_CIRCUIT_TO_BLOCK"))
+				if bool(effect.get("gain_block_equal_damage", false)):
+					lines.append(tr("UI_BATTLE_DESC_OVERLOAD_BLOCK"))
 
 			"lose_hp":
 				lines.append(
@@ -846,7 +861,7 @@ func _build_keyword_glossary() -> String:
 		if desc != "":
 			lines.append("[b]%s[/b]: %s" % [kw_name, desc])
 
-	# Short Circuit's specialized apply/overload effects do not carry a `status`
+	# Short Circuit's specialized apply/Overload effects do not carry a `status`
 	# field, but the card still needs the same keyword explanation on hover.
 	for effect in effects:
 		var effect_type := str(effect.get("type", ""))
@@ -854,10 +869,7 @@ func _build_keyword_glossary() -> String:
 			effect_type
 			in [
 				"apply_short_circuit_scaled",
-				"double_target_short_circuit",
-				"overload_short_circuit",
-				"overload_short_circuit_all",
-				"consume_short_circuit_for_block",
+				"overload",
 			]
 			and not seen.has("short_circuit")
 		):
@@ -874,33 +886,13 @@ func _build_keyword_glossary() -> String:
 	# Overload is an action keyword rather than a status, so it gets its own entry.
 	for effect in effects:
 		var overload_type := str(effect.get("type", ""))
-		if overload_type in ["overload_short_circuit", "overload_short_circuit_all"]:
+		if overload_type == "overload":
 			lines.append(
 				"[b]%s[/b]: %s"
 				% [
 					tr("UI_BATTLE_KEYWORD_OVERLOAD_NAME"),
 					tr("UI_BATTLE_KEYWORD_OVERLOAD_DESC"),
 				]
-			)
-			break
-
-	# Heat builders and Vent payoffs use specialized effects without always
-	# carrying a status field, so surface both glossary entries explicitly.
-	for effect in effects:
-		var heat_type := str(effect.get("type", ""))
-		if (
-			heat_type in ["vent_heat_for_damage", "vent_heat_for_block"]
-			and not seen.has("heat")
-		):
-			seen["heat"] = true
-			lines.append(
-				"[b]%s[/b]: %s"
-				% [tr("UI_COMBAT_STATUS_HEAT"), tr("UI_COMBAT_STATUS_HEAT_DESC")]
-			)
-		if heat_type in ["vent_heat_for_damage", "vent_heat_for_block"]:
-			lines.append(
-				"[b]%s[/b]: %s"
-				% [tr("UI_BATTLE_KEYWORD_VENT_NAME"), tr("UI_BATTLE_KEYWORD_VENT_DESC")]
 			)
 			break
 

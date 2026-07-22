@@ -44,21 +44,8 @@ static func _matches(data: Dictionary, pool: String) -> bool:
 				or str(e.get("type", ""))
 				in [
 					"apply_short_circuit_scaled",
-					"double_target_short_circuit",
-					"overload_short_circuit",
-					"overload_short_circuit_all",
-					"consume_short_circuit_for_block",
+					"overload",
 				]
-			):
-				return true
-	if pool == "redline":
-		for e in data.get("effects", []):
-			if typeof(e) != TYPE_DICTIONARY:
-				continue
-			if (
-				str(e.get("status", "")) in ["heat", "redline_protocol"]
-				or str(e.get("type", ""))
-				in ["vent_heat_for_damage", "vent_heat_for_block", "lose_hp"]
 			):
 				return true
 	return false

@@ -111,17 +111,18 @@ Optional `phases` (array) — HP-threshold phase transitions. Each phase has `hp
 Authoritative list in `DataValidator.ALLOWED_EFFECT_TYPES`. As of this writing:
 
 - Damage: `deal_damage`, `deal_damage_all`, `deal_damage_str_mult` (damage = `mult` × Strength; needs `mult`), `scale_damage_by_attacks`, `deal_damage_block_mult`
-- Defense: `gain_block`, `gain_block_from_bleed`
+- Defense: `gain_block`
 - Resources: `gain_energy`, `draw_cards`, `gain_gold`, `lose_gold`, `heal`, `lose_hp`
 - Attributes: `gain_strength`, `gain_constitution`, `gain_intelligence`, `gain_luck`, `gain_charm`, `double_strength`
-- Status: `apply_status`, `apply_status_self`, `apply_status_all`, `apply_bleed_scaled`, `apply_stun`, `apply_stun_all`, `double_target_bleed`
-- Cards / curses: `add_card_to_hand`, `add_curse_to_deck`, `discover` (3-choose-1 into the hand; `pool` = a card type or a theme tag like `bleed`, `count`, optional `free` = costs 0 this combat)
-- Bill / ammo: `gain_attack_allowance`, `restore_attack_allowance`, `flip_polarity`
+- Status: `apply_status`, `apply_status_self`, `apply_status_all`, `apply_short_circuit_scaled`, `apply_stun`, `apply_stun_all`, `overload`
+- Cards / curses: `add_card_to_hand`, `add_curse_to_deck`, `discover` (3-choose-1 into the hand; `pool` = a card type or a theme tag such as `short_circuit`, `count`, optional `free` = costs 0 this combat)
+- Bill / attack allowance: `gain_attack_allowance`, `restore_attack_allowance`
+- Legacy compatibility: `flip_polarity` remains accepted for old data/save compatibility but is inert in the current Bill-only kit.
 - Marker: `exhaust_self`
 
 **Global attributes:** STR is auto-added to all attack damage and CON to all block (`combat_engine._apply_effect()`, default +3 each). The per-card `scaling` field is **deprecated** — combat_engine no longer reads it. Card JSON carries the BASE number only. (`deal_damage_str_mult` and `scale_damage_by_attacks` compute their own damage and do NOT receive the global +STR.)
 
-**Bleed scaling (Intelligence):** an `apply_status` effect that applies `bleed` reads an optional `attr` (default `intelligence`); the applied bleed stacks are increased by that attribute's value (`combat_engine._apply_effect()`). This is how Intelligence boosts Bleed — e.g. `{"type": "apply_status", "status": "bleed", "stacks": 2}` applies `2 + INT` stacks. Other statuses ignore `attr`.
+**Status scaling (Intelligence):** `apply_status` and `apply_status_all` add the player's Intelligence to the base stacks. `apply_short_circuit_scaled` is the dedicated Short Circuit formula and may additionally use `attr`, `mult`, `flat`, and `double_if_short_circuited`. `overload` consumes every enemy's stored Short Circuit and deals that much delayed damage; it is global and does not target a single enemy.
 
 **Tools:** `run_system/data/tools/{tool_id}.json` are one-time battle consumables — shape `{id, title, target ("enemy"|"self"|"none"), rarity, effects[], icon}`. Their `effects[]` reuse this same effect vocabulary (resolved through `combat_engine._apply_effect`, scaled ×(1+0.08·INT)); validated by `DataValidator.validate_tool` (`REQUIRED_TOOL_KEYS` / `ALLOWED_TOOL_TARGETS`).
 
@@ -148,16 +149,17 @@ Authoritative list in `DataValidator.ALLOWED_ENEMY_ACTION_TYPES`:
 
 Authoritative list in `DataValidator.ALLOWED_STATUS_NAMES`:
 
-`bleed`, `weak`, `vulnerable`, `stun`, `regen`, `thorns`, `frail`, `dodge`,
-`metallicize`, `feel_no_pain`, `hot_streak`, `all_in`, `hemorrhage`,
-`covering_reload`, `bullet`
+`short_circuit`, `burn`, `weak`, `vulnerable`, `stun`, `regen`, `thorns`, `frail`,
+`dodge`, `metallicize`, `feel_no_pain`, `hot_streak`, `all_in`, `deadeye`,
+`overload_protocol`, `covering_reload`, `reactive_plating`, `loaded`, `bullet`
 
-(`bleed` replaced the old `poison`; `strength_up` was removed; `burn`,
-`double_damage`, and `dark_embrace` were removed 2026-07-01. `bleed` ticks then
-halves stacks; `thorns` reflects then loses 1 stack per trigger. `metallicize` /
-`feel_no_pain` are persistent StS2 powers; the last five are the Cowboy Bill
-crit / ammo / reload kit. Intelligence adds +1 stack to every status the player
-applies via `apply_status` / `apply_status_all`.)
+`short_circuit` stores delayed damage on enemies and does not tick or decay by
+itself; the `overload` effect consumes all stored stacks on all enemies and deals
+the corresponding damage. `burn` deals damage and then halves its stacks.
+`thorns` reflects damage and loses 1 stack per trigger. `metallicize`,
+`feel_no_pain`, and the named Bill powers are persistent combat statuses.
+Intelligence is added to player-applied `apply_status` / `apply_status_all`
+stacks. The removed Bleed and Heat systems must not be reintroduced by data.
 
 **Stun is enemy-only** (see `docs/adr/0004-shock-enemy-only.md`). Enemy skips its next turn per stack.
 
@@ -165,7 +167,7 @@ applies via `apply_status` / `apply_status_all`.)
 
 ## Validation lifecycle
 
-`DataValidator.validate_all_data_at_startup()` runs in `RunManager._ready()`. It scans all four data sources and reports failures via `push_error`. In debug builds it `assert(false)` to crash loud; in release builds it logs and continues.
+`DataValidator.validate_all_data_at_startup()` runs in `RunManager._ready()`. It scans the registered gameplay data sources and reports failures via `push_error`. In debug builds it `assert(false)` to crash loud; in release builds it logs and continues.
 
 To verify locally:
 ```bash

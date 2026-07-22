@@ -5,16 +5,11 @@
 	"type": "skill",
 	"cost": 1,
 	"polarity": "neutral",
-	"description": "Double the target's Short Circuit, then Overload it. Exhaust.",
+	"description": "Overload for double damage. Exhaust.",
 	"front_image": "player/limit_break.png",
 	"side": "player",
 	"effects": [
-		{
-			"type": "double_target_short_circuit"
-		},
-		{
-			"type": "overload_short_circuit"
-		},
+		{ "type": "overload", "charge_multiplier": 2 },
 		{
 			"type": "exhaust_self"
 		}
@@ -22,8 +17,7 @@
 	"upgrade": {
 		"cost": 0,
 		"effects": [
-			{ "type": "double_target_short_circuit" },
-			{ "type": "overload_short_circuit" },
+			{ "type": "overload", "charge_multiplier": 2 },
 			{ "type": "exhaust_self" }
 		]
 	}

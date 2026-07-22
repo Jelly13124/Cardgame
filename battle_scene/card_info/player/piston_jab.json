@@ -3,7 +3,7 @@
 	"title": "Piston Jab",
 	"rarity": "common",
 	"type": "attack",
-	"cost": 1,
+	"cost": 0,
 	"polarity": "neutral",
 	"description": "Deal 4 fixed damage (ignores Strength).",
 	"front_image": "player/piston_jab.png",
@@ -14,5 +14,14 @@
 			"amount": 4,
 			"no_str": true
 		}
-	]
+	],
+	"upgrade": {
+		"effects": [
+			{
+				"type": "deal_damage",
+				"amount": 6,
+				"no_str": true
+			}
+		]
+	}
 }

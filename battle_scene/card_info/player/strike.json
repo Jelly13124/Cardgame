@@ -4,10 +4,10 @@
 	"rarity": "common",
 	"type": "attack",
 	"cost": 1,
-	"description": "Deal 5 damage.",
+	"description": "Deal 3 damage.",
 	"front_image": "player/strike.png",
 	"side": "player",
 	"effects": [
-		{ "type": "deal_damage", "amount": 5 }
+		{ "type": "deal_damage", "amount": 3 }
 	]
 }

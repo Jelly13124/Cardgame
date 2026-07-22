@@ -27,7 +27,7 @@ UI_COMBAT_STATUS_FRAIL,Frail,脆弱
 UI_COMBAT_STATUS_DODGE,Dodge,闪避
 UI_COMBAT_STATUS_SHORT_CIRCUIT_DESC,"Stored charge. It does not deal damage or decay until a card Overloads or removes it.","储存在目标身上的电荷。不会自动造成伤害或衰减，直到卡牌触发过载或将其移除。"
 UI_COMBAT_STATUS_BURN_DESC,Take damage equal to stacks at the start of your turn. Then stacks are halved (rounded down).,每回合开始时受到等同层数的伤害。然后层数减半（向下取整）。
-UI_COMBAT_STATUS_WEAK_DESC,Outgoing attack damage reduced 25% per stack. Decays 1 per turn.,每层使造成的攻击伤害降低 25%。每回合衰减 1 层。
+UI_COMBAT_STATUS_WEAK_DESC,Outgoing attack damage reduced 50%. Additional stacks extend duration. Decays 1 per turn.,造成的攻击伤害降低 50%。额外层数只延长持续时间。每回合衰减 1 层。
 UI_COMBAT_STATUS_VULNERABLE_DESC,Incoming attack damage increased 50% per stack. Decays 1 per turn.,每层使受到的攻击伤害提高 50%。每回合衰减 1 层。
 UI_COMBAT_STATUS_STUN_DESC,Enemy skips its next turn for each stack (enemy-only).,每层使敌人跳过其下一回合（仅敌人）。
 UI_COMBAT_STATUS_REGEN_DESC,Heal stacks HP at the start of your turn. Stacks decay by 1 each turn.,每回合开始时回复等同层数的生命值。每回合衰减 1 层。
@@ -44,10 +44,6 @@ UI_COMBAT_STATUS_COVERING_RELOAD,Covering Reload,换弹掩护
 UI_COMBAT_STATUS_COVERING_RELOAD_DESC,"Whenever you Reload, gain 3 Block.",每次装弹时获得 3 点格挡。
 UI_COMBAT_STATUS_REACTIVE_PLATING,Reactive Plating,反应装甲
 UI_COMBAT_STATUS_REACTIVE_PLATING_DESC,"Whenever a card grants Block, gain Thorns equal to stacks.",每当一张牌给予你格挡，获得等同于层数的荆棘。
-UI_COMBAT_STATUS_HEAT,Heat,热量
-UI_COMBAT_STATUS_HEAT_DESC,"Stored reactor pressure. It persists until a card Vents it.",储存的反应堆压力。不会自动衰减，直到卡牌将其泄压。
-UI_COMBAT_STATUS_REDLINE_PROTOCOL,Redline Protocol,红线协议
-UI_COMBAT_STATUS_REDLINE_PROTOCOL_DESC,"Whenever a card is Exhausted, gain 2 Heat per stack.",每当一张牌被消耗，每层红线协议使你获得 2 层热量。
 UI_COMBAT_STATUS_LOADED,Loaded,上膛
 UI_COMBAT_STATUS_LOADED_DESC,"The next Attack that deals damage gains stacks additional damage, then remove all stacks.",下一次造成伤害的攻击获得等同于层数的额外伤害，然后移除全部层数。
 UI_COMBAT_STATUS_BULLET,Ammo,弹药

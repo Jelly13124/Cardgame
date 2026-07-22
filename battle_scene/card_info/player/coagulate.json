@@ -5,11 +5,11 @@
   "type": "skill",
   "cost": 1,
   "polarity": "neutral",
-  "description": "Remove all Short Circuit from ALL enemies. Gain Block equal to the stacks removed.",
+  "description": "Overload. Gain Block equal to the damage dealt by this Overload.",
   "front_image": "player/coagulate.png",
   "side": "player",
   "effects": [
-    { "type": "consume_short_circuit_for_block" }
+    { "type": "overload", "gain_block_equal_damage": true }
   ],
   "upgrade": {
     "cost": 0

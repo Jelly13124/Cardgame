@@ -33,6 +33,7 @@ func _expect(condition: bool, message: String) -> void:
 func _run() -> void:
 	_test_loaded_resource()
 	_test_starter_curve()
+	_test_weak_rule()
 	_test_reload_package()
 	_test_strength_finishers()
 	_test_crit_loop_data()
@@ -63,16 +64,44 @@ func _test_loaded_resource() -> void:
 func _test_starter_curve() -> void:
 	var shoot := _load_card("strike")
 	_expect(str(shoot.get("title", "")) == "Shoot", "starter Strike is now Shoot")
-	_expect(_effect_value(shoot, "deal_damage", "amount") == 5, "Shoot deals 5 base damage")
+	_expect(_effect_value(shoot, "deal_damage", "amount") == 3, "Shoot deals 3 base damage")
 	var weak_shot := _load_card("weak_strike")
 	_expect(
 		_effect_value(weak_shot, "deal_damage", "amount") == 4,
-		"Weakening Shot trades one damage for Weak"
+		"Weakening Shot deals 4 base damage"
 	)
 	_expect(
 		_effect_value(weak_shot, "apply_status", "stacks") == 1,
 		"Weakening Shot applies one Weak"
 	)
+	var piston_jab := _load_card("piston_jab")
+	_expect(int(piston_jab.get("cost", -1)) == 0, "Piston Jab is the free fixed-damage jab")
+	_expect(_effect_value(piston_jab, "deal_damage", "amount") == 4, "Piston Jab deals 4 fixed damage")
+	_expect(
+		_effect_value(piston_jab.get("upgrade", {}), "deal_damage", "amount") == 6,
+		"Upgraded Piston Jab deals 6 fixed damage"
+	)
+
+
+func _test_weak_rule() -> void:
+	var entity := FakePlayer.new()
+	add_child(entity)
+	entity.add_status("weak", 2)
+	_expect(
+		is_equal_approx(entity.status_system.get_outgoing_multiplier(), 0.5),
+		"Weak reduces outgoing attack damage by 50%"
+	)
+	entity.status_system.on_turn_end(entity)
+	_expect(
+		is_equal_approx(entity.status_system.get_outgoing_multiplier(), 0.5),
+		"additional Weak stacks extend duration instead of compounding the penalty"
+	)
+	entity.status_system.on_turn_end(entity)
+	_expect(
+		is_equal_approx(entity.status_system.get_outgoing_multiplier(), 1.0),
+		"Weak ends after its final duration stack decays"
+	)
+	entity.free()
 
 
 func _test_reload_package() -> void:

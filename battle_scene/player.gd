@@ -450,8 +450,8 @@ func heal(amount: int) -> void:
 	_refresh_hud()
 
 
-## Direct HP loss that bypasses Block (blood-cost cards: Siphon Valve, Hemo Drive,
-## …). Shows a floating damage number like take_damage but ignores Block/Dodge.
+## Direct HP loss used by cards, events, and curses. Shows a floating damage
+## number like take_damage but ignores Block and Dodge.
 func lose_hp(amount: int) -> void:
 	if amount <= 0 or _death_resolving:
 		return

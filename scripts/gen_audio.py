@@ -136,10 +136,6 @@ def sfx_heal():
     s = np.sin(2 * np.pi * np.cumsum(f) / SR) * adsr(n, 0.05, 0.1, 0.6, 0.2)
     return norm(s, 0.55)
 
-def sfx_bleed():
-    s = padd(env_perc(lowpass(noise(0.14), 900), 16) * 0.7, env_perc(sine(120, 0.12), 24) * 0.3)
-    return norm(s, 0.55)
-
 def sfx_gold():
     s = silence(0)
     for i, f in enumerate([1568, 2093, 2637]):
@@ -205,7 +201,7 @@ def sfx_gem():
 SFX = {
     "ui_click": sfx_ui_click, "ui_back": sfx_ui_back, "card_play": sfx_card_play,
     "card_draw": sfx_card_draw, "attack_hit": sfx_attack_hit, "attack_slash": sfx_attack_slash,
-    "crit": sfx_crit, "block_gain": sfx_block_gain, "heal": sfx_heal, "bleed": sfx_bleed,
+    "crit": sfx_crit, "block_gain": sfx_block_gain, "heal": sfx_heal,
     "gold": sfx_gold, "reward": sfx_reward_chime, "level_up": sfx_level_up,
     "turn_start": sfx_turn_start, "enemy_attack": sfx_enemy_attack, "defeat": sfx_defeat,
     "victory": sfx_victory, "reload": sfx_reload, "error": sfx_error, "gem": sfx_gem,

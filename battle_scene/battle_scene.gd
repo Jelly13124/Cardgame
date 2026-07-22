@@ -344,12 +344,6 @@ func _card_preview_damage(card: Control, target: Node) -> int:
 			"deal_damage_block_mult":
 				base_total += int(player.get("block")) * int(effect.get("mult", 1))
 				has_damage = true
-			"vent_heat_for_damage":
-				var heat := int(player.get_status_stacks("heat")) if player else 0
-				base_total += (
-					int(effect.get("base", 0)) + heat * int(effect.get("mult", 1))
-				)
-				has_damage = true
 	if not has_damage:
 		return -1
 	# Loaded applies once to the next damage effect, not once per listed effect.
@@ -1367,8 +1361,8 @@ func try_gain_gold(amount: int, cap: int) -> void:
 	show_notification(tr("UI_COMBAT_WEALTHY").format({"n": amount}), Color(1.0, 0.82, 0.29))
 
 
-## Fire the player's on-exhaust power triggers when a card routes to Exhaust:
-## feel_no_pain → gain Block. Called once per exhausted card.
+## Fire the player's on-exhaust power triggers when a card routes to Exhaust.
+## Called once per exhausted card.
 func _trigger_exhaust_powers() -> void:
 	if not is_instance_valid(player) or not player.status_system:
 		return
@@ -1377,9 +1371,6 @@ func _trigger_exhaust_powers() -> void:
 		player.add_block(fnp)
 		if player.has_method("play_block_pulse"):
 			player.play_block_pulse()
-	var redline: int = player.status_system.get_stacks("redline_protocol")
-	if redline > 0:
-		player.add_status("heat", redline * 2)
 
 
 ## Returns true if the card has an `exhaust_self` effect entry.

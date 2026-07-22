@@ -20,5 +20,5 @@ procedural ones — no code change).
 ## Stems
 `ui_click` · `ui_back` · `ui_hover` · `error` · `turn_start` · `card_draw` · `card_play` ·
 `card_play_attack` · `card_play_skill` · `card_play_power` · `attack_hit` · `attack_slash` ·
-`enemy_attack` · `enemy_death` · `crit` · `block_gain` · `bleed` · `heal` · `gold` · `gem` ·
+`enemy_attack` · `enemy_death` · `crit` · `block_gain` · `heal` · `gold` · `gem` ·
 `reward` · `level_up` · `reload` · `victory` · `defeat`
