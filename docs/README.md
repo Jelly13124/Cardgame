@@ -13,6 +13,9 @@ Start here after cloning the repository.
 7. `docs/PROJECT_STRUCTURE.md` — scene, script, data, and asset map.
 8. `docs/conventions/` — implementation contracts and coding conventions.
 
+9. `docs/handoffs/2026-07-24-workstation-transfer.md` is the active transfer
+   checkpoint for cloning this branch onto the replacement computer.
+
 ## Generated references
 
 `docs/catalog_html/` is generated from game JSON and translations by
@@ -21,4 +24,6 @@ enemy, relic, equipment, tool, event, affix, or keyword changes.
 
 The documentation tree intentionally contains current contracts only. Historical
 plans, delivery reports, superseded ADRs, and tombstone documents are not retained.
-There is no active handoff document at present.
+The workstation-transfer handoff above is the only active handoff and may be
+deleted after the replacement computer has cloned, verified, and resumed the
+project.

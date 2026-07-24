@@ -1,10 +1,10 @@
 {
 	"id": "wasteland_killer",
-	"name": "Wasteland Killer",
+	"name": "Wasteland Raider",
 	"sprite_id": "wasteland_killer",
 	"tier": "normal",
 	"max_health": 20,
 	"action_pattern": [
-		{ "type": "attack_ramp", "amount": 2, "multiplier": 2, "counter": "kill_shot", "label": "⚔ ESCALATING SHOT" }
+		{ "type": "attack_ramp", "amount": 2, "multiplier": 2, "counter": "kill_shot", "label": "⚔ ESCALATING BASH" }
 	]
 }

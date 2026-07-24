@@ -38,16 +38,26 @@ coherent and their nuclear-wasteland survival story is obvious.
   name. The name is an asset-routing label, not an image prompt.
 - Start from a stable, recognizable body category. Add at most one strong
   mutation, malfunction, prosthetic, or salvage-tech idea.
+- Every humanoid enemy needs one immediately visible identity break from an
+  ordinary present-day human. Prefer one controlled mutation (uneven eyes,
+  abnormal skin color, one enlarged or elongated limb, crooked proportions)
+  or conceal the face with one crude survival mask, bucket helmet, hood, or
+  respirator. A plain uncovered human in generic workwear is not enough.
 - Give each identity one readable silhouette, one dominant color family, and
   one small high-contrast accent.
-- Show one or two large wasteland cues: patched workwear, cloth wraps, goggles,
-  respirator, worn shoulder pad, improvised tool or weapon, radiation burn,
-  faded hazard color, damaged utility pack, or shelter salvage.
+- Show three or four large wasteland cues: a broad torn garment, crude mask or
+  bucket helmet, tire rubber, car-body scrap, cloth wraps, respirator,
+  improvised tool or weapon, radiation burn, faded hazard color, damaged
+  utility pack, or shelter salvage. These cues must read as large silhouette or
+  color-block decisions rather than a collection of small accessories.
 - Comedy comes from expression, posture, proportions, social role, or a
   malfunction. It does not come from arbitrary extra limbs or grotesque body
   horror.
 - Keep detail at medium-low density: broad flat fills, sparse seams, one broad
-  shadow, and only the lines needed to explain the form.
+  shadow, and only the lines needed to explain the form. Do not simulate
+  wasteland wear with rust speckles, scratch fields, rivet rows, layered
+  straps, pouch clusters, or surface grime; the world identity must survive
+  after all of that noise is removed.
 - Enemies face left in combat and remain readable over the active battle
   background at gameplay scale.
 
