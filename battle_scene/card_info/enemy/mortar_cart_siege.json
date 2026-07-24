@@ -1,7 +1,7 @@
 {
 	"id": "mortar_cart_siege",
 	"name": "Siege Mortar",
-	"sprite_id": "mortar_cart",
+	"sprite_id": "mortar_cart_siege",
 	"tier": "normal",
 	"max_health": 32,
 	"action_pattern": [

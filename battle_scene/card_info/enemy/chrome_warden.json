@@ -1,7 +1,7 @@
 {
 	"id": "chrome_warden",
 	"name": "Chrome Warden",
-	"sprite_id": "chrome_hound",
+	"sprite_id": "chrome_warden",
 	"tier": "elite",
 	"max_health": 60,
 	"action_pattern": [
