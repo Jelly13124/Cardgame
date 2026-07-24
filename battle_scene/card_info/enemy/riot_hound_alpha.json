@@ -1,7 +1,7 @@
 {
 	"id": "riot_hound_alpha",
 	"name": "Riot Hound Alpha",
-	"sprite_id": "riot_hound",
+	"sprite_id": "riot_hound_alpha",
 	"tier": "normal",
 	"max_health": 34,
 	"action_pattern": [
