@@ -1,7 +1,7 @@
 {
 	"id": "siege_breaker",
 	"name": "Siege Breaker",
-	"sprite_id": "mortar_cart",
+	"sprite_id": "siege_breaker",
 	"tier": "elite",
 	"max_health": 50,
 	"action_pattern": [
