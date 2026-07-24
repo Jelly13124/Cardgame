@@ -3,7 +3,7 @@
 
 Read-only. Cross-references card/relic/equipment/enemy/status JSON against the
 PNGs on disk and reports: MISSING (referenced, no file) and PLACEHOLDER (card art
-byte-identical to strike.png / defend.png). Codex owns the fixes (ADR-0005).
+byte-identical to strike.png / defend.png). Art fixes follow the project rules.
 """
 import hashlib
 import json

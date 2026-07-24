@@ -1,4 +1,4 @@
-## Stateless helper that rolls Discover candidates. No class_name (ADR-0006) — preload.
+## Stateless helper that rolls Discover candidates. No class_name (project convention) — preload.
 ## A candidate pool is a list of unlocked card ids filtered by `pool` (a card TYPE like
 ## "attack"/"skill"/"ability", OR a theme tag found in the card's `tags` array).
 extends RefCounted

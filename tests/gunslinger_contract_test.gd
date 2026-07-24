@@ -2,6 +2,7 @@ extends Node
 
 const STATUS_SYSTEM = preload("res://battle_scene/status_effect_system.gd")
 const COMBAT_ENGINE = preload("res://battle_scene/combat_engine.gd")
+const CARD_UPGRADE = preload("res://run_system/core/card_upgrade.gd")
 
 const CARD_DIR := "res://battle_scene/card_info/player/"
 
@@ -37,6 +38,7 @@ func _run() -> void:
 	_test_reload_package()
 	_test_strength_finishers()
 	_test_crit_loop_data()
+	_test_upgrade_power_bounds()
 	if failures.is_empty():
 		print("[OK] Gunslinger contract passed")
 		get_tree().quit(0)
@@ -146,6 +148,28 @@ func _test_crit_loop_data() -> void:
 		str(all_in.get("description", "")).contains("2 Loaded"),
 		"All In turns non-Crits into setup"
 	)
+
+
+func _test_upgrade_power_bounds() -> void:
+	var hot_swap := _load_card("hot_swap")
+	var hot_swap_upgraded: Dictionary = CARD_UPGRADE.resolve(hot_swap)
+	_expect(int(hot_swap_upgraded.get("cost", -1)) == 1, "Hot Swap+ keeps an energy cost")
+	_expect(
+		_effect_value(hot_swap_upgraded, "draw_cards", "amount") == 3,
+		"Hot Swap+ draws three without creating a zero-cost loop"
+	)
+
+	var afterburner := _load_card("adrenaline")
+	var afterburner_upgraded: Dictionary = CARD_UPGRADE.resolve(afterburner)
+	_expect(
+		_effect_value(afterburner_upgraded, "gain_energy", "amount") == 2,
+		"Afterburner+ stays at two free Energy"
+	)
+	_expect(
+		_effect_value(afterburner_upgraded, "draw_cards", "amount") == 2,
+		"Afterburner+ spends its upgrade on one additional draw"
+	)
+	_expect(_has_effect(afterburner_upgraded, "exhaust_self"), "Afterburner+ still Exhausts")
 
 
 func _load_card(card_id: String) -> Dictionary:

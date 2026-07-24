@@ -21,7 +21,7 @@
 ## Labels track MetaProgress.caps/scrap_changed; the bar is freed with its
 ## host scene, which drops the connections.
 ##
-## NO class_name (ADR-0006). Usage:
+## NO class_name (project convention). Usage:
 ##   var bar = preload("res://run_system/ui/window/currency_top_bar.gd").new()
 ##   host_scene.add_child(bar)
 ##   bar.center_box.add_child(start_button)  # host fills the exposed boxes

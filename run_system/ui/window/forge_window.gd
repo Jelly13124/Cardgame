@@ -20,7 +20,7 @@
 ## entry in place. The separate StashWindow remains pure storage.
 ##
 ## Rebuilds on scrap_changed / buildings_changed; frees on close. NO class_name
-## (ADR-0006) — loaded by path. Every lightline PNG lookup falls back to a
+## (project convention) — loaded by path. Every lightline PNG lookup falls back to a
 ## programmatic StyleBox (T.ll_*) so a missing Codex asset never crashes.
 extends "res://run_system/ui/window/draggable_window.gd"
 

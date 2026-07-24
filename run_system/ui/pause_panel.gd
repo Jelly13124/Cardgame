@@ -4,7 +4,7 @@
 ## (red) each ask for confirmation first. Abandon discards the run and returns to the
 ## home base; Quit exits the application.
 ##
-## No class_name (ADR-0006): owner instances with `.new()`, optionally sets `on_resume`
+## No class_name (project convention): owner instances with `.new()`, optionally sets `on_resume`
 ## and `show_abandon`, then add_childs it (ideally on a high CanvasLayer).
 extends Control
 

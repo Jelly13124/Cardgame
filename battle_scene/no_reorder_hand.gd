@@ -6,7 +6,7 @@
 ## accidental, confusing side effect. We keep every other Hand behaviour and just
 ## neutralise the single-card in-hand "move" — the card snaps back to its slot.
 ##
-## No class_name (ADR-0006); extends the addon Hand via path.
+## No class_name (project convention); extends the addon Hand via path.
 extends "res://addons/card-framework/hand.gd"
 
 

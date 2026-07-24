@@ -11,7 +11,7 @@
 ##   click_handler  : func(button_index:int) -> void
 ##   hover_tip      : String      — "" disables hover tooltip
 ##   preview_text   : String / preview_color : Color — drag-preview glyph
-## NOTE: no `class_name` — referenced via preload (ADR-0006: cold editor scans
+## NOTE: no `class_name` — referenced via preload (project convention: cold editor scans
 ## fail on class_name for custom types).
 extends Control
 

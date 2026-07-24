@@ -2,7 +2,7 @@
 ## Volume). Shared by the in-battle settings overlay (battle_top_bar) and the
 ## home-base settings overlay so the two stay in sync.
 ##
-## Preloaded, not class_name (project rule ADR-0006). Labels are resolved via
+## Preloaded, not class_name (project convention). Labels are resolved via
 ## TranslationServer.translate (tr() needs an instance; these builders are
 ## static) at build time — the app reloads the current scene on language change,
 ## so a rebuilt overlay always shows the new locale.

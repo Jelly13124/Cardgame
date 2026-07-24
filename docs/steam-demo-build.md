@@ -93,8 +93,7 @@ When the demo gets a real Steam App ID and you want overlay / achievements /
 cloud saves:
 
 1. Add the **GodotSteam** GDExtension (`addons/godotsteam/`) — the prebuilt 4.6
-   Windows binary, per its install guide. (Per ADR-0005 / project rules, vendored
-   addons are not hand-edited.)
+   Windows binary, per its install guide. Keep the vendored addon unmodified.
 2. Replace `480` in `steam_appid.txt` with the real App ID.
 3. Add the real store page to `project.godot` so the result-screen CTA becomes
    visible (it stays hidden while this is absent):

@@ -18,7 +18,6 @@
 ##
 ## Naming note: this file is intentionally `wasteland_theme.gd` (no style-era
 ## suffix) because the project's art direction has pivoted multiple times.
-## See ADR-0010 for the naming + palette decision history.
 extends RefCounted
 class_name WastelandTheme
 
@@ -417,10 +416,8 @@ static func close_x_button() -> Button:
 
 
 # ─── Windowed-UI v2 builders (character / stash / forge window chrome) ───────
-# Every shape routes through the Codex ui_kit texture hooks below
-# (docs/asset-spec-ui-kit.md). The kit is CONTRACTED but not delivered — a
-# missing PNG is NORMAL today and falls back to the programmatic StyleBoxFlat
-# silently (no warning); delivery is drop-in with zero code change.
+# Every shape routes through the checked-in ui_kit texture hooks below. A
+# missing PNG falls back to the programmatic StyleBoxFlat silently.
 
 ## ACTIVE skin directory — every kit lookup (ui_kit_tex / _ui_kit_box) resolves
 ## through this one const, so flipping it swaps the ENTIRE windowed-UI skin:

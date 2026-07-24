@@ -48,7 +48,7 @@ func _load_texture(path: String) -> Texture2D:
     return null
 ```
 
-- **Why:** assets may be regenerating (Codex pipeline); UI shouldn't crash. Fall back to `null` and let the UI handle missing visuals gracefully.
+- **Why:** assets may be regenerated independently from code; UI should not crash. Fall back to `null` and let the UI handle missing visuals gracefully.
 
 ### 3. `@onready` for nodes that exist in `.tscn`
 Don't `get_node()` at use time. Cache via `@onready var foo = $Path`.
@@ -111,5 +111,6 @@ When a file approaches 400 lines, the responsibilities are usually entangled. Co
 
 ## When in doubt
 
-- The most-recent ADRs in `docs/adr/` cover style / structure decisions.
+- Read `docs/project-rules.md`, `docs/art-style-reference.md`, and
+  `docs/PROJECT_STRUCTURE.md` for current style and structure rules.
 - The shared theme palette lives in `run_system/ui/theme/wasteland_theme.gd` - read its constants before defining new colors locally, and keep new colors aligned with the original 2D American-comic/UI07 direction.

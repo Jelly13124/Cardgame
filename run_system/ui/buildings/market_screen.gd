@@ -23,7 +23,7 @@
 ##
 ## Every generated market PNG lookup falls back to a programmatic StyleBox /
 ## spacer / text so a missing asset never crashes (warn-free placeholder rule).
-## NO class_name (ADR-0006: subclass via path string, instantiate with `.new()`).
+## NO class_name (project convention: subclass via path string, instantiate with `.new()`).
 ## Reads only the shared MetaProgress / RunManager API; edits no shared file.
 extends "res://run_system/ui/buildings/building_screen_base.gd"
 

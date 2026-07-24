@@ -22,40 +22,44 @@ const PROFILE_KILL := "kill"
 ## to PROFILE_HEAVY.
 const PROFILES := {
 	PROFILE_NORMAL: {
-		"hitstop_seconds": 0.024,
-		"shake_intensity": 1.8,
+		"hitstop_seconds": 0.014,
+		"shake_intensity": 0.0,
 		"damage_number_scale": 1.0,
-		"reaction_strength": 4.5,
-		"reaction_seconds": 0.14,
-		"impact_size": 150.0,
-		"impact_fps": 25.0,
+		"reaction_strength": 2.4,
+		"reaction_seconds": 0.095,
+		"flash_seconds": 0.075,
+		"impact_size": 96.0,
+		"impact_fps": 28.0,
 	},
 	PROFILE_BLOCKED: {
-		"hitstop_seconds": 0.018,
-		"shake_intensity": 1.0,
-		"damage_number_scale": 0.92,
-		"reaction_strength": 2.5,
-		"reaction_seconds": 0.11,
-		"impact_size": 150.0,
-		"impact_fps": 24.0,
+		"hitstop_seconds": 0.010,
+		"shake_intensity": 0.0,
+		"damage_number_scale": 0.9,
+		"reaction_strength": 1.2,
+		"reaction_seconds": 0.08,
+		"flash_seconds": 0.065,
+		"impact_size": 100.0,
+		"impact_fps": 28.0,
 	},
 	PROFILE_HEAVY: {
-		"hitstop_seconds": 0.062,
-		"shake_intensity": 7.5,
-		"damage_number_scale": 1.38,
-		"reaction_strength": 11.0,
-		"reaction_seconds": 0.21,
-		"impact_size": 216.0,
-		"impact_fps": 22.0,
+		"hitstop_seconds": 0.034,
+		"shake_intensity": 0.0,
+		"damage_number_scale": 1.22,
+		"reaction_strength": 5.2,
+		"reaction_seconds": 0.14,
+		"flash_seconds": 0.10,
+		"impact_size": 118.0,
+		"impact_fps": 24.0,
 	},
 	PROFILE_KILL: {
-		"hitstop_seconds": 0.082,
-		"shake_intensity": 10.0,
-		"damage_number_scale": 1.62,
-		"reaction_strength": 14.0,
-		"reaction_seconds": 0.26,
-		"impact_size": 252.0,
-		"impact_fps": 20.0,
+		"hitstop_seconds": 0.048,
+		"shake_intensity": 2.6,
+		"damage_number_scale": 1.36,
+		"reaction_strength": 6.8,
+		"reaction_seconds": 0.17,
+		"flash_seconds": 0.12,
+		"impact_size": 126.0,
+		"impact_fps": 24.0,
 	},
 }
 
@@ -67,7 +71,7 @@ const _FLASH_REST_META := "_combat_feedback_flash_rest"
 const _FLASH_TWEEN_META := "_combat_feedback_flash_tween"
 const _LAST_SCREEN_SHAKE_META := "_combat_feedback_last_screen_shake_msec"
 const _SCREEN_SHAKE_THROTTLE_MSEC := 58
-const _HITSTOP_TIME_SCALE := 0.035
+const _HITSTOP_TIME_SCALE := 0.10
 
 static var _active_hitstops: int = 0
 static var _time_scale_before_hitstop: float = 1.0
@@ -192,13 +196,14 @@ func _play_hitstop(
 		Engine.time_scale = _time_scale_before_hitstop
 
 
-## Target-local reaction: a decaying position jolt plus a one-beat comic flash.
+## Target-local reaction: one short outward recoil plus a one-beat comic flash.
+## The old random six-step shake made ordinary hits read as continuous wobbling.
 func _play_target_reaction(target: Node2D, profile: String, settings: Dictionary) -> void:
 	if not is_instance_valid(target):
 		return
 	var strength := float(settings.get("reaction_strength", 4.0))
 	var duration := float(settings.get("reaction_seconds", 0.14))
-	COMBAT_FX.shake(target, strength, duration)
+	COMBAT_FX.recoil(target, strength, duration)
 
 	var rest_color: Color
 	if target.has_meta(_FLASH_REST_META):
@@ -215,7 +220,8 @@ func _play_target_reaction(target: Node2D, profile: String, settings: Dictionary
 	target.modulate = flash_color
 	var tween := target.create_tween()
 	target.set_meta(_FLASH_TWEEN_META, tween)
-	tween.tween_property(target, "modulate", rest_color, duration).set_trans(Tween.TRANS_QUAD)
+	var flash_seconds := float(settings.get("flash_seconds", duration))
+	tween.tween_property(target, "modulate", rest_color, flash_seconds).set_trans(Tween.TRANS_QUAD)
 
 
 ## Whole-battlefield response, throttled so multi-hit cards read as a rhythmic burst
@@ -266,7 +272,8 @@ func _spawn_damage_number(
 
 	var label := Label.new()
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.text = str(amount) if profile != PROFILE_BLOCKED else str(blocked)
+	# A fully absorbed hit must not display the absorbed amount as HP damage.
+	label.text = "0" if profile == PROFILE_BLOCKED else str(amount)
 	var emphasis := float(settings.get("damage_number_scale", 1.0))
 	label.add_theme_font_size_override("font_size", roundi(30.0 * emphasis))
 	label.add_theme_color_override("font_color", _number_color(profile))
@@ -276,11 +283,11 @@ func _spawn_damage_number(
 
 	label.size = label.get_minimum_size()
 	label.pivot_offset = label.size * 0.5
-	label.position = world_pos - Vector2(label.size.x * 0.5, label.size.y * 0.45)
-	label.scale = Vector2.ONE * (1.22 if profile in [PROFILE_HEAVY, PROFILE_KILL] else 1.08)
+	label.position = world_pos - Vector2(label.size.x * 0.5, label.size.y * 0.62)
+	label.scale = Vector2.ONE * (1.16 if profile in [PROFILE_HEAVY, PROFILE_KILL] else 1.06)
 
-	var rise := 72.0 if profile in [PROFILE_HEAVY, PROFILE_KILL] else 54.0
-	var life := 0.78 if profile == PROFILE_KILL else 0.64
+	var rise := 46.0 if profile in [PROFILE_HEAVY, PROFILE_KILL] else 34.0
+	var life := 0.62 if profile == PROFILE_KILL else 0.52
 	var tween := scene_root.create_tween().set_parallel(true)
 	(
 		tween
@@ -288,8 +295,8 @@ func _spawn_damage_number(
 		. set_trans(Tween.TRANS_QUAD)
 		. set_ease(Tween.EASE_OUT)
 	)
-	tween.tween_property(label, "scale", Vector2.ONE, 0.12).set_trans(Tween.TRANS_BACK)
-	tween.tween_property(label, "modulate:a", 0.0, life * 0.6).set_delay(life * 0.4)
+	tween.tween_property(label, "scale", Vector2.ONE, 0.09).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(label, "modulate:a", 0.0, life * 0.55).set_delay(life * 0.45)
 	tween.chain().tween_callback(layer.queue_free)
 
 
@@ -363,11 +370,11 @@ func _flash_color(profile: String) -> Color:
 		PROFILE_BLOCKED:
 			return Color(0.62, 0.88, 1.0, 1.0)
 		PROFILE_HEAVY:
-			return Color(1.0, 0.76, 0.34, 1.0)
+			return Color(1.0, 0.86, 0.62, 1.0)
 		PROFILE_KILL:
-			return Color(1.0, 0.96, 0.84, 1.0)
+			return Color(1.0, 0.98, 0.88, 1.0)
 		_:
-			return Color(1.0, 0.83, 0.72, 1.0)
+			return Color(1.0, 0.91, 0.82, 1.0)
 
 
 func _number_color(profile: String) -> Color:
@@ -379,4 +386,4 @@ func _number_color(profile: String) -> Color:
 		PROFILE_KILL:
 			return Color(1.0, 0.28, 0.16, 1.0)
 		_:
-			return Color(1.0, 0.64, 0.48, 1.0)
+			return Color(0.96, 0.84, 0.62, 1.0)

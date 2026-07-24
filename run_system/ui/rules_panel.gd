@@ -1,6 +1,6 @@
 ## "How to Play" rules panel — a scrollable full-screen overlay of the core
 ## rules. Opened from the title menu and the map pause panel. Closes on the
-## Close button or ESC. No class_name per ADR-0006; owner instances + add_child.
+## Close button or ESC. No class_name per project convention; owner instances + add_child.
 extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")

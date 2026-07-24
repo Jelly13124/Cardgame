@@ -1,1 +1,1 @@
-Project-native 2D American-comic normal impact, 2x2, four phases, solid #FF00FF background.
+Project-native compact normal-hit impact FX, exactly four phases in a 2x2 sheet on solid #FF00FF: two tiny contact strokes, a compact off-white wedge with one warm-orange nick, one restrained peak slash with at most three rust-red chips, then two fading flecks. Small local accent only; no explosion badge, radial starburst, anime speed lines, smoke, text, UI, or scenery.

@@ -11,6 +11,8 @@
 		{ "type": "draw_cards", "amount": 2 }
 	],
 	"upgrade": {
-		"cost": 0
+		"effects": [
+			{ "type": "draw_cards", "amount": 3 }
+		]
 	}
 }

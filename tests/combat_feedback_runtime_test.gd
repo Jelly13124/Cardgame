@@ -20,6 +20,13 @@ func _expect(condition: bool, message: String) -> void:
 
 
 func _run() -> void:
+	# This test instantiates the battle scene directly instead of entering through
+	# RunManager.start_new_run(). Seed the active profession so visual captures use
+	# Cowboy Bill's production card skin rather than the legacy compatibility face.
+	RunManager.is_run_active = false
+	RunManager.current_hero_id = "cowboy_bill"
+	RunManager.current_hero_data = {"card_ui_skin": "cowboy_bill"}
+
 	var battle := BATTLE_SCENE.instantiate()
 	add_child(battle)
 	for _frame in range(14):
@@ -44,6 +51,9 @@ func _run() -> void:
 	enemy.take_damage(5, false, {"source": "test"})
 	_expect(enemy.health == 25, "normal hit mutates HP synchronously")
 	await _real_seconds(0.08)
+	await _capture_if_rendered(
+		"res://tmp/combat-feedback-normal-runtime.png", "normal feedback"
+	)
 
 	enemy.block = 5
 	var hp_before_block: int = enemy.health

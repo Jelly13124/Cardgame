@@ -1,6 +1,6 @@
 ## First-battle tutorial tips — a short sequence of dismissible center-screen
 ## cards shown once on the player's first-ever battle. Center overlay only (no
-## anchored arrows) so it's robust to layout. No class_name per ADR-0006.
+## anchored arrows) so it's robust to layout. No class_name per project convention.
 ## Owner instances it on a CanvasLayer; it frees itself after the last tip.
 extends Control
 

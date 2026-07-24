@@ -4,7 +4,7 @@
 ## card opens a large base -> upgraded comparison above the grid; the upgrade is
 ## only committed by the right-edge check button. This keeps the existing deck
 ## mutation contract while matching the accepted UI07 concept hierarchy.
-## No `class_name` (ADR-0006).
+## No `class_name` by project convention.
 extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")

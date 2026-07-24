@@ -78,7 +78,7 @@ const STATUS_DESCRIPTIONS = {
 	"burn":
 	"Take damage equal to stacks at the start of your turn, then stacks are halved (rounded down).",
 	"weak": "Outgoing attack damage reduced 50%. Additional stacks extend duration. Decays 1 per turn.",
-	"vulnerable": "Incoming attack damage increased 50% per stack. Decays 1 per turn.",
+	"vulnerable": "Incoming attack damage increased 50%. Additional stacks extend duration. Decays 1 per turn.",
 	"stun": "Enemy skips its next turn for each stack (enemy-only).",
 	"regen": "Heal stacks HP at the start of your turn. Stacks decay by 1 each turn.",
 	"thorns":

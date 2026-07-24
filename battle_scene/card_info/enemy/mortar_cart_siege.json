@@ -6,7 +6,7 @@
 	"max_health": 32,
 	"action_pattern": [
 		{ "type": "block",         "amount": 4,                                        "label": "🛡 4" },
-		{ "type": "attack_status", "amount": 6, "status": "vulnerable", "stacks": 1,   "label": "⚔ 6 +Vuln" },
+		{ "type": "attack_status", "amount": 6, "status": "vulnerable", "stacks": 3,   "label": "⚔ 6 +Vuln 3" },
 		{ "type": "telegraph",                                                         "label": "💢 LOADING SHELL" },
 		{ "type": "attack_all",    "amount": 16, "interruptible": true,                "label": "💥 BARRAGE 16" },
 		{ "type": "block",         "amount": 4,                                        "label": "🛡 4" }

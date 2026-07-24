@@ -567,11 +567,11 @@ static func _validate_card_effect(effect: Variant, prefix: String, label: String
 				)
 			)
 			ok = false
-	# ADR-0004: stun is enemy-only. Reject applying it to the player.
+	# Stun is enemy-only. Reject applying it to the player.
 	if etype == "apply_status_self" and str(effect.get("status", "")) == "stun":
 		push_error(
 			(
-				"%s: %s[%d] tries to apply 'stun' to self — stun is enemy-only (see docs/adr/0004-shock-enemy-only.md)"
+				"%s: %s[%d] tries to apply 'stun' to self — stun is enemy-only"
 				% [prefix, label, i]
 			)
 		)

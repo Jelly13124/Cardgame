@@ -186,6 +186,42 @@ func _test_enemy_identities(enemies: Dictionary) -> void:
 			payoff_index = i
 	_expect(telegraph_index >= 0, "Siege Breaker visibly telegraphs its siege round")
 	_expect(payoff_index == telegraph_index + 1, "Siege Breaker's interruptible heavy hit immediately follows its telegraph")
+	_expect_vulnerable_duration(enemies, "slag_walker", 2)
+	_expect_vulnerable_duration(enemies, "mortar_cart_siege", 3)
+	_expect_vulnerable_duration(enemies, "rust_titan", 3)
+	_expect_vulnerable_duration(enemies, "ash_warden", 3)
+	var ash_phases: Array = enemies.get("ash_warden", {}).get("phases", [])
+	_expect(not ash_phases.is_empty(), "Ash Warden keeps its second phase")
+	if not ash_phases.is_empty():
+		_expect_status_duration(
+			ash_phases[0].get("action_pattern", []),
+			"vulnerable",
+			4,
+			"Ash Warden phase-two Vulnerable survives its block and summon setup"
+		)
+
+
+func _expect_vulnerable_duration(enemies: Dictionary, enemy_id: String, expected: int) -> void:
+	var pattern: Array = enemies.get(enemy_id, {}).get("action_pattern", [])
+	_expect_status_duration(
+		pattern,
+		"vulnerable",
+		expected,
+		"%s Vulnerable lasts until its intended payoff attack" % enemy_id
+	)
+
+
+func _expect_status_duration(
+	pattern: Array, status_id: String, expected: int, message: String
+) -> void:
+	for action in pattern:
+		if (
+			str(action.get("type", "")) == "attack_status"
+			and str(action.get("status", "")) == status_id
+		):
+			_expect(int(action.get("stacks", 0)) == expected, message)
+			return
+	_expect(false, "%s (status action missing)" % message)
 
 
 func _test_selection_bands() -> void:

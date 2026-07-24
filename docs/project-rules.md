@@ -1,7 +1,7 @@
 # Project Rules
 
 **Project:** Unnamed Sci-Fi Roguelite Card Game  
-**Last Updated:** 2026-07-19
+**Last Updated:** 2026-07-24
 
 ---
 
@@ -26,27 +26,34 @@ All visual assets in this project **must** follow the approved **original 2D Ame
 
 Do not use old project reference images as global style references. `docs/art/cowboy-bill-character-sheet-reference.png` may be used only to preserve Cowboy Bill's identity markers. Designs must stay original and must not copy named show characters, logos, exact scene layouts, franchise-specific props, embedded text, labels, speech bubbles, or UI framing.
 
+For non-boss enemies, `docs/enemy-art-direction.md` is the identity and
+animation source of truth. Its approved external study set is
+`docs/art/external-references/rick-morty-s3e2-wasteland/`. Use those screenshots
+only to study grounded nuclear-wasteland population design, recognizable body
+plans, line treatment, flat color separation, and sparse staging. Never copy a
+visible character, costume, mask, prop, vehicle, location, crop, or composition.
+
 The approved production exemplars are:
 
 - `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`
 - `battle_scene/assets/images/heroes/cowboy_bill/idle/`
 - `battle_scene/assets/images/heroes/cowboy_bill/attack/`
-- `battle_scene/assets/images/backgrounds/wasteland_battlefield.png`
-- `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`
-- `battle_scene/assets/images/cards/player/strike.png` as the first approved controlled-detail card-art sample. Other existing player card illustrations are legacy production assets pending the same style pass and must not be used as style references.
+- `battle_scene/assets/images/backgrounds/wasteland_battlefield_quiet_v6.png`
+- `run_system/assets/images/map/wasteland_route_map_sts2_bg.png`
+- `battle_scene/assets/images/cards/player/` as the approved collective card-art reference set. Compare multiple current cards to preserve composition and palette variety; follow the recurring majority look rather than treating one outlier or a card queued for rework as the universal template.
 - `docs/art/previews/base_building_forge_ui_dismantle_simple_comic_20260707.png` for persistent UI screen style
 
 ### Visual Rules
 
 - **Resolution policy:** Frame sizes are technical output requirements only. A 128x128, 192x192, 256x256, 512x320, or 1920x1080 target is a file-size contract, not a style constraint.
-- **Silhouettes:** Exaggerated and immediately readable. Oversized hats, cylindrical robot heads, chunky boots, lanky mechanical limbs, patched capes, bulbous lenses, crooked antennas, rubbery alien shapes, bulky salvaged weapons, hoses, and improvised gadgets are encouraged.
+- **Silhouettes:** Exaggerated and immediately readable, but built on a stable recognizable body plan. Oversized hats, chunky boots, patched capes, crooked antennas, bulky salvaged tools, hoses, and improvised gadgets are encouraged. Random blobs, object-with-legs bodies, abstract capsules, half-human/half-animal bodies, and arbitrary extra anatomy are not.
 - **Materials:** Simplified dusty leather, red cloth scarf, brass cuffs, dented grey-green metal, patched fabric, rubber hoses, glass lenses, exposed springs, toxic sludge, glowing canisters, and flat alien terrain.
 - **Color palette:** Dusty tan and warm brown base colors, muted red cloth, grey-green metal, pale desert sand, sickly toxic green, cyan plasma, and warm orange glows.
 - **Accent color:** Use one or two small high-contrast glowing accents per character, item, or UI icon. Toxic green, cyan, and warm orange are the main glow colors.
-- **Detail target:** Use the visual language of a Rick-and-Morty-style adult sci-fi TV cartoon: confident wobbly 2D linework, rubbery anatomy, off-kilter proportions, strange comedy silhouettes, flat cel colors, and controlled medium-low detail. Include a few purposeful dents, seams, patches, crooked joints, cables, or alien background marks so the world feels weird and lived-in. Do not flatten the work into clean corporate vector art, preschool illustration, or generic children's-book minimalism. Never copy franchise characters, props, locations, or exact designs.
+- **Detail target:** Use the visual language of a Rick-and-Morty-style adult sci-fi TV cartoon: confident wobbly 2D linework, rubbery but recognizable anatomy, off-kilter proportions, expressive comedy faces, flat cel colors, and controlled medium-low detail. Include a few purposeful dents, seams, patches, crooked joints, cables, or nuclear-wasteland survival cues so the world feels lived-in. Do not flatten the work into clean corporate vector art, preschool illustration, or generic children's-book minimalism. Never copy franchise characters, props, locations, or exact designs.
 - **Outlines:** Thick black or very dark hand-drawn cartoon outlines. Keep interior contour lines to the minimum required to explain the form. Do not use thin realistic hairlines, sketchy concept-art hatching, dense panel seams, or interior scratches.
 - **Shading:** Simple two-to-three value cel shading with broad shadow shapes. Flat fill plus one broad shadow is preferred. Avoid painterly rendering, photorealism, gritty texture, noisy grunge, gradients as material rendering, dithering, and dense material detail.
-- **Background:** Character, card, UI, and FX sprites use transparent backgrounds; full-scene map and battle backgrounds are scene-ready PNGs with no UI, text, labels, or characters baked in. Background centers must stay low-detail and readable behind gameplay.
+- **Background:** Character sprites, standalone props, UI icons, and FX use transparent backgrounds. Card illustrations and full-scene map/battle backgrounds are scene-ready rectangular PNGs with no baked UI, text, or labels. Background centers must stay low-detail and readable behind gameplay.
 - **Card illustrations:** Player card art must be `512x320` landscape PNGs. Use one primary action, one clear subject and at most one target; build the scene from three-to-seven large flat background shapes plus sparse ground/alien marks. Small paired action accents such as one muzzle flash and one impact star are allowed. Add only purposeful character detail—several dents, seams, patches, crooked joints, cables, or odd facial/eye marks—not texture noise. No dense rocks, debris clouds, scratch fields, rivet fields, material texture, hatching, cinematic concept-art lighting, or realistic mechanical panel detail. They are illustrations only and must not bake in card borders, cost badges, titles, rarity labels, type labels, description boxes, speech bubbles, UI, or text.
 - **UI icons:** Small UI components and combat intent icons must prioritize simple readability over themed detail. Attack is a simple red sword, block is a simple blue shield, buff is a simple green arrow/glow, and charge is a simple orange warning mark. Avoid skulls, character faces, clutter, and tiny salvage decoration in these icons.
 - **UI screens:** Base, shop, forge, clinic, market, outpost, inventory, and modal screens use the simple line-art 2D American comic / TV-animation UI direction anchored by `docs/art/previews/base_building_forge_ui_dismantle_simple_comic_20260707.png`: lightweight borders, flat color blocks, sparse panel lines, clear button hierarchy, and minimal material rendering. The shared `run_system/ui/run_top_bar.gd` remains visible and unchanged on every in-run screen (map, battle, event, rest, card upgrade, deck, reward, and shop). Interactive page content starts below the component's full `BAR_HEIGHT`; scene art may continue behind the transparent relic shelf from `PAGE_ART_TOP`. Pages must never hide, duplicate, or paint over the run top bar. Card previews show only the card in their normal state. Their surrounding outline is an interaction highlight that appears on hover/focus and disappears immediately afterward; it must never be a permanent decorative frame or large empty container. Avoid thick metal frames, bulky corner plates, rivet fields, dense scratches, heavy bevels, dark fantasy ornament, and Diablo-like rendered-metal UI.
@@ -55,33 +62,13 @@ The approved production exemplars are:
 
 - **Style standard:** `docs/art-style-reference.md` is the active global style contract. The approved in-game exemplars listed above are the practical visual yardstick. Old reference images are not global style anchors.
 - **Cowboy Bill:** robot cowboy hero, exactly one large orange camera eye, cylindrical robot head, oversized hat with star badge, red scarf, patched duster/poncho, chunky boots, salvaged revolver, faces right. Preserve identity from the Bill sheet, but render him with the active flatter sci-fi cartoon language.
-- **Enemies:** original junk-tech western robots, mutants, drones, creatures, or wasteland devices; enemies face left and must share the active flat sci-fi cartoon silhouette language.
+- **Enemies:** original grounded nuclear-wasteland humanoids, recognizable complete mutated animals, and simple functional salvage machines; enemies face left and follow `docs/enemy-art-direction.md`. Design from combat role and survival occupation rather than literally illustrating the current enemy name.
 
-### Mandatory Prompt Anchor
+### Canonical Prompt Source
 
-Every generated asset prompt must preserve this wording unless the asset type makes a clause impossible:
-
-```text
-original simple flat 2D American-comic sci-fi western TV-cartoon game art,
-matching the approved in-game exemplars in battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png, battle_scene/assets/images/backgrounds/wasteland_battlefield.png, and run_system/assets/images/map/wasteland_route_map_pixel_bg.png,
-Rick-and-Morty-style adult sci-fi TV-animation visual language without copied designs, confident wobbly dark cartoon outlines, rubbery anatomy, off-kilter proportions, large flat shape blocks, controlled purposeful interior lines, broad two-to-three-value cel shading,
-weird sci-fi western wasteland, rubbery alien desert shapes, absurd salvage-tech silhouettes, dusty leather, brass, dented grey-green robot metal, patched red cloth, hoses, antennas, odd gadgets,
-bright toxic green, cyan, and warm orange glow accents used sparingly,
-clean game-ready edges, immediately readable silhouettes, controlled medium-low detail with a few purposeful dents, seams, patches, crooked joints or cables, no corporate vector smoothness, no preschool minimalism, no texture noise, no hatching, no scratch fields, no dense mechanical panel lines,
-no text, no labels, no UI frame, no logo, no copied franchise characters or props, no exact scene copies
-```
-
-For combat unit sheets, also include:
-
-```text
-side view full body, shared baseline, consistent scale, hero faces right or enemy faces left,
-for Cowboy Bill and hero combat sprites use 8 idle frames plus 8 attack frames when generated,
-for standard enemies use 4 attack frames by default,
-enemy 4-frame attack structure: rest or wind-up -> one hit -> recoil -> return/rest,
-the attack must hit exactly once; no repeated strikes, no repeated hit poses, no multi-swing loops,
-idle is a seamless subtle loop, attack is a one-shot readable wind-up / fire / recoil / recovery sequence,
-contained inside each frame with safe margins
-```
+Use the single prompt anchor and asset-specific additions in
+`docs/art-style-reference.md`. Do not copy a second prompt into this file or an
+asset spec; linking to the canonical section prevents future wording drift.
 
 ### Prohibited
 
@@ -137,7 +124,7 @@ Follow this pipeline for every new character or enemy:
 
 ## 4. Asset Folder Structure (Expandable - Must Follow Exactly)
 
-Every entity type gets its **own named subfolder**, and within that, each animation lives in its own per-animation subfolder (`idle/`, `attack/`, optional `charge/`). No loose animation PNGs at the entity root. Heroes may define looping `idle/` animation assets; enemies may still use `attack_0` as their static rest pose when no separate idle exists.
+Every entity type gets its **own named subfolder**, and within that, each animation lives in its own per-animation subfolder (`idle/`, `attack/`, optional `charge/`). No loose animation PNGs at the entity root. Hero data decides whether `idle/` frames loop or supply only a static rest pose; enemies may still use `attack_0` as their static rest pose when no separate idle exists.
 
 ```text
 battle_scene/assets/images/
@@ -155,7 +142,7 @@ battle_scene/assets/images/
 |       `-- ...
 |-- heroes/
 |   `-- {hero_id}/                <- one subfolder per hero
-|       |-- idle/                 (8 frames for Cowboy Bill)
+|       |-- idle/                 (Bill currently holds idle_0; no loop)
 |       |-- attack/               (8 frames for Cowboy Bill)
 |       `-- {hero_id}_portrait.png
 |-- cards/
@@ -168,7 +155,7 @@ battle_scene/assets/images/
 - **One subfolder per entity** - never put two enemies' frames in the same folder.
 - **Subfolder name = `sprite_id`** - must match exactly what is in the enemy JSON.
 - **Animation frames go in per-animation subfolders** - `idle/` and `attack/`; add optional future animation folders only when runtime actually plays them.
-- **Hero idle assets are allowed** - Cowboy Bill uses `idle/` as the static and looping rest animation. Enemies may still use `attack_0` as the static rest pose unless they are explicitly regenerated with idle frames.
+- **Hero idle behavior is data-driven** - Cowboy Bill currently has `animate_idle: false`, so runtime holds `idle_0` as a static rest pose. Do not enable or generate a looping idle unless the hero data intentionally opts in. Enemies may still use `attack_0` as the static rest pose unless they are explicitly wired for idle frames.
 - **One-off images stay at the entity root** - portraits and single static images do not need animation subfolders.
 - **No loose animation PNGs at the parent `/enemies/` folder or entity root** - always use a named animation subfolder.
 - **Generation script lives inside the entity subfolder** it generates art for when the script is entity-specific; shared scripts may live at the asset category root.
@@ -220,7 +207,7 @@ battle_scene/assets/images/
 ### Content Catalog — Design-First Workflow (Non-Negotiable)
 
 The browsable tables under `docs/catalog_html/` (cards / relics / equipment / enemies /
-gems / tools / events / affixes / keywords) are the reference for *what content exists*.
+tools / events / bounties / affixes / keywords) are the reference for *what content exists*.
 They are **generated** from the JSON data + translation CSVs + `affix_pool.gd` by
 `scripts/gen_catalog_html.py`. Treat the catalog as the design surface, and work in this
 order for ANY content add / remove / retune:

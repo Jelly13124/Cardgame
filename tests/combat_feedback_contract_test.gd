@@ -78,6 +78,25 @@ func _test_reusable_feedback_controller() -> void:
 			profile.has("reaction_strength"),
 			"%s profile configures target reaction" % profile_name
 		)
+		_expect(
+			profile.has("impact_size"),
+			"%s profile configures local impact size" % profile_name
+		)
+	_expect(
+		float(profiles["normal"]["shake_intensity"]) == 0.0
+		and float(profiles["blocked"]["shake_intensity"]) == 0.0
+		and float(profiles["heavy"]["shake_intensity"]) == 0.0,
+		"ordinary, blocked, and heavy hits do not shake the whole battlefield"
+	)
+	_expect(
+		float(profiles["kill"]["shake_intensity"]) > 0.0,
+		"lethal feedback alone retains a restrained battlefield jolt"
+	)
+	_expect(
+		float(profiles["normal"]["impact_size"]) < float(profiles["heavy"]["impact_size"])
+		and float(profiles["heavy"]["impact_size"]) <= float(profiles["kill"]["impact_size"]),
+		"impact size increases without introducing another feedback tier"
+	)
 
 	var controller = controller_script.new()
 	_expect(controller is Node, "combat feedback controller is a reusable Node")

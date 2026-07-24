@@ -1,7 +1,7 @@
 ## Affix pool — stateless helper for rolling per-instance equipment affixes.
 ##
 ## Used via `const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")`
-## and its static funcs (no class_name per ADR-0006). This module owns only the
+## and its static funcs (no class_name per project convention). This module owns only the
 ## affix DATA + roll/reroll/summary logic. Storage, save migration, and the
 ## recompute consumer live elsewhere (Phase 2 E_B). No UI here.
 ##

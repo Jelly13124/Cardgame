@@ -22,7 +22,7 @@
 ## Every lightline PNG lookup falls back to a programmatic StyleBox / spacer so
 ## a missing Codex asset never crashes (warn-free placeholder rule). Reads ONLY
 ## the shared MetaProgress upgrade/bounty API; edits no shared file.
-## NO class_name (ADR-0006) — instantiate via the base preload below.
+## NO class_name (project convention) — instantiate via the base preload below.
 extends "res://run_system/ui/buildings/building_screen_base.gd"
 
 

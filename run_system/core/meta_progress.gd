@@ -1323,7 +1323,7 @@ func _migrate_removed_profile_state(raw_profile: Dictionary) -> bool:
 # The vendored json_card_factory re-parses every card JSON each time a battle (or
 # the shop) builds a factory — ~50 file reads + JSON parses per battle. This
 # session-level cache parses each card's JSON ONCE; cached_card_factory.gd reads
-# from it instead of re-scanning. (Addon untouched per ADR-0005.)
+# from it instead of re-scanning. The vendored addon remains untouched.
 
 const _CARD_INFO_ROOT := "res://battle_scene/card_info"
 var _card_info_cache: Dictionary = {}  # card_name -> parsed info Dictionary

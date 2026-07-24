@@ -11,5 +11,12 @@
 		{ "type": "gain_energy", "amount": 2 },
 		{ "type": "draw_cards", "amount": 1 },
 		{ "type": "exhaust_self" }
-	]
+	],
+	"upgrade": {
+		"effects": [
+			{ "type": "gain_energy", "amount": 2 },
+			{ "type": "draw_cards", "amount": 2 },
+			{ "type": "exhaust_self" }
+		]
+	}
 }

@@ -1,8 +1,6 @@
-# Asset Spec — Generic equipment shells
+# Generic Equipment Shell Runtime Contract
 
-**Owner:** Codex (ADR-0005 — Codex generates PNGs under `**/assets/images/**`).
-**Status:** Delivered 2026-07-15.
-**Art direction:** `docs/art-style-reference.md` and ADR-0019.
+**Art direction:** `docs/art-style-reference.md`.
 
 ## Runtime model
 
@@ -16,7 +14,7 @@ Set pieces are a separate class of asset. Their JSON files contain `set_id` and
 an explicit `sprite`, so the 15 set-piece images are not part of this delivery
 and must not be overwritten by generic-shell work.
 
-## Delivered generic shells
+## Shell matrix
 
 Five slots × three production rarities = 15 PNGs:
 
@@ -58,14 +56,6 @@ Slot subjects remain readable across all three series:
 - Equipment textures use **linear filtering** in inventory, drag preview,
   forge and market presentations.
 
-## Production method
-
-The 2026-07-15 delivery was generated one object per built-in image-generation
-call on a flat `#FF00FF` chroma-key background, using the current tool icons as
-style-only references. Chroma removal used the installed imagegen helper with
-soft matte and despill. The generate2dsprite processor then centered each
-object on a 256×256 canvas with `fit_scale 0.82` and transparent edge checks.
-
 ## Set-piece boundary
 
 The following three five-piece sets retain their existing bespoke images:
@@ -80,7 +70,7 @@ set piece.
 ## Cursed-state note
 
 `cursed` is an instance rarity/state, not one of the 15 base shell definitions.
-Dedicated `*_cursed.png` art is outside this delivery. Any future cursed-art
+Dedicated `*_cursed.png` art is outside this contract. Any future cursed-art
 decision must preserve the 15 base identities and must not modify set pieces.
 
 ## Validation

@@ -2,7 +2,7 @@
 ##
 ## Owner sets `mode` ("defeat" | "demo_complete") BEFORE add_child, then adds it
 ## on a CanvasLayer. Reads the (already torn-down) run summary off RunManager,
-## shows it, and routes the player back to the home base. No class_name per ADR-0006.
+## shows it, and routes the player back to the home base. No class_name per project convention.
 extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")

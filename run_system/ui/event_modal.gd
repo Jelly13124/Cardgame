@@ -8,7 +8,7 @@
 ## (opt.effects). A result popup is shown, then `resolved` fires and the modal
 ## frees itself. Listen to `resolved` to release the map's click guard.
 ##
-## class_name is intentionally omitted (banned project-wide, ADR-0006) — owner
+## class_name is intentionally omitted by project convention — owner
 ## reaches the script via preload.
 extends Control
 

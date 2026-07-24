@@ -28,7 +28,7 @@ UI_COMBAT_STATUS_DODGE,Dodge,闪避
 UI_COMBAT_STATUS_SHORT_CIRCUIT_DESC,"Stored charge. It does not deal damage or decay until a card Overloads or removes it.","储存在目标身上的电荷。不会自动造成伤害或衰减，直到卡牌触发过载或将其移除。"
 UI_COMBAT_STATUS_BURN_DESC,Take damage equal to stacks at the start of your turn. Then stacks are halved (rounded down).,每回合开始时受到等同层数的伤害。然后层数减半（向下取整）。
 UI_COMBAT_STATUS_WEAK_DESC,Outgoing attack damage reduced 50%. Additional stacks extend duration. Decays 1 per turn.,造成的攻击伤害降低 50%。额外层数只延长持续时间。每回合衰减 1 层。
-UI_COMBAT_STATUS_VULNERABLE_DESC,Incoming attack damage increased 50% per stack. Decays 1 per turn.,每层使受到的攻击伤害提高 50%。每回合衰减 1 层。
+UI_COMBAT_STATUS_VULNERABLE_DESC,Incoming attack damage increased 50%. Additional stacks extend duration. Decays 1 per turn.,受到的攻击伤害提高 50%。额外层数只延长持续时间。每回合衰减 1 层。
 UI_COMBAT_STATUS_STUN_DESC,Enemy skips its next turn for each stack (enemy-only).,每层使敌人跳过其下一回合（仅敌人）。
 UI_COMBAT_STATUS_REGEN_DESC,Heal stacks HP at the start of your turn. Stacks decay by 1 each turn.,每回合开始时回复等同层数的生命值。每回合衰减 1 层。
 UI_COMBAT_STATUS_THORNS_DESC,"When hit by an attack, the attacker takes stacks damage. Loses 1 stack each time it triggers.",被攻击命中时，攻击者受到等同层数的伤害。每次触发时减少 1 层。

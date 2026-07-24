@@ -8,17 +8,34 @@ the short operational gate for agents.
 
 - Use original, simple flat 2D American-comic sci-fi-western TV-cartoon art.
 - Use a Rick-and-Morty-style adult sci-fi TV-cartoon visual language: confident
-  wobbly outlines, rubbery anatomy, off-kilter proportions, funny-gross shapes,
-  flat cel colors, and controlled medium-low detail.
+  wobbly outlines, rubbery but recognizable anatomy, off-kilter proportions,
+  expressive comedy faces, flat cel colors, and controlled medium-low detail.
 - Never copy franchise characters, props, locations, logos, or exact designs.
 - Add a few purposeful dents, seams, patches, crooked joints, cables, expressive
   eye marks, and sparse alien background lines. Do not simplify into clean
   corporate vector art, preschool illustration, or generic children's-book art.
 - Reject painterly concept art, realistic lighting, dense metal panels, rivets,
   scratches, hatching, grunge, tiny debris, material texture, and over-rendering.
-- Current player card art is not a blanket style reference. Only
-  `battle_scene/assets/images/cards/player/strike.png` is the approved first
-  controlled-detail card sample until the remaining legacy cards are replaced.
+- The current illustrations under `battle_scene/assets/images/cards/player/`
+  are the approved collective card-art reference set. Compare several cards for
+  line weight, color, composition variety, and detail level; do not turn one card
+  into a template for every illustration. Follow the recurring majority look,
+  not an isolated outlier or a card explicitly queued for rework.
+
+## Enemy-art gate
+
+- Read `docs/enemy-art-direction.md` before changing any non-boss enemy.
+- Use `docs/art/external-references/rick-morty-s3e2-wasteland/reference-board.png`
+  only as a study board for grounded nuclear-wasteland population design,
+  silhouette variety, line treatment, and color separation. Never copy a
+  character, costume, mask, prop, vehicle, location, or composition from it.
+- Start from a recognizable humanoid, complete animal, or functional salvage
+  machine. Reject random blobs, object-with-legs bodies, abstract capsules,
+  half-human/half-animal designs, and arbitrary extra anatomy.
+- Standard enemy attacks use four frames: frame 0 rest/wind-up, frame 1 prepare,
+  frame 2 exactly one small local hit, frame 3 recoil/return. Do not generate a
+  separate enemy idle loop by default. Keep the base planted and let runtime
+  feedback provide impact weight.
 
 ## Card-art gate
 

@@ -12,8 +12,8 @@ This:
 
   python scripts/defringe_buildings.py
 
-NOTE: this is image *processing* of existing assets, not authored art — a stopgap until
-Codex can redeliver clean cutouts (ADR-0005). Reversible via git.
+NOTE: this is image *processing* of existing assets rather than authored art.
+Reversible via git.
 """
 import sys
 import numpy as np

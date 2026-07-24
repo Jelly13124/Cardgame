@@ -1,24 +1,24 @@
 {
   "target": "asset",
   "mode": "impact",
-  "prompt": "Project-native 2D American-comic mechanical kill burst: radial rusty steel plates, bolts, black ink and ivory sparks; no blood or ground plane; 2x2 four phases on solid #FF00FF.",
+  "prompt": "",
   "role": "",
-  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019f4960-1b38-7902-9185-24c2c07cfcfa\\exec-e6637a66-9964-44d2-bfad-f0300d4c92ac.png",
+  "input": "tmp\\imagegen\\combat_feedback_v2\\kill\\raw-source.png",
   "threshold": 100,
   "edge_threshold": 150,
-  "duration": 70,
+  "duration": 75,
   "rows": 2,
   "cols": 2,
   "cell_size": 128,
-  "fit_scale": 0.82,
+  "fit_scale": 0.68,
   "trim_border": 4,
-  "edge_clean_depth": 3,
+  "edge_clean_depth": 2,
   "align": "center",
   "shared_scale": true,
   "component_mode": "all",
   "component_padding": 8,
   "min_component_area": 8,
-  "edge_touch_margin": 0,
+  "edge_touch_margin": 2,
   "frame_labels": [
     "impact_kill-1",
     "impact_kill-2",
@@ -38,23 +38,23 @@
         627
       ],
       "component_mode": "all",
-      "component_count": 11,
+      "component_count": 2,
       "selected_component_area": null,
       "selected_component_bbox": null,
       "crop_bbox": [
-        261,
-        237,
-        410,
-        396
+        281,
+        283,
+        406,
+        395
       ],
       "edge_touch": false,
       "output_size": [
-        36,
-        38
+        55,
+        49
       ],
       "paste_position": [
-        46,
-        45
+        36,
+        39
       ]
     },
     {
@@ -69,23 +69,23 @@
         627
       ],
       "component_mode": "all",
-      "component_count": 28,
+      "component_count": 1,
       "selected_component_area": null,
       "selected_component_bbox": null,
       "crop_bbox": [
-        130,
-        173,
-        410,
-        446
+        191,
+        262,
+        327,
+        428
       ],
       "edge_touch": false,
       "output_size": [
-        67,
-        66
+        60,
+        74
       ],
       "paste_position": [
-        30,
-        31
+        34,
+        27
       ]
     },
     {
@@ -100,23 +100,23 @@
         1254
       ],
       "component_mode": "all",
-      "component_count": 73,
+      "component_count": 5,
       "selected_component_area": null,
       "selected_component_bbox": null,
       "crop_bbox": [
-        116,
-        51,
-        546,
-        484
+        238,
+        194,
+        431,
+        389
       ],
       "edge_touch": false,
       "output_size": [
-        104,
-        104
+        86,
+        87
       ],
       "paste_position": [
-        12,
-        12
+        21,
+        20
       ]
     },
     {
@@ -131,23 +131,23 @@
         1254
       ],
       "component_mode": "all",
-      "component_count": 34,
+      "component_count": 2,
       "selected_component_area": null,
       "selected_component_bbox": null,
       "crop_bbox": [
-        141,
-        129,
-        409,
-        409
+        192,
+        252,
+        280,
+        344
       ],
       "edge_touch": false,
       "output_size": [
-        64,
-        67
+        39,
+        41
       ],
       "paste_position": [
-        32,
-        30
+        44,
+        43
       ]
     }
   ],

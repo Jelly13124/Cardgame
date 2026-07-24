@@ -2,6 +2,9 @@
 
 This guide provides a precise map of the codebase for adjusting the UI, logic, and assets.
 
+**Last audited:** 2026-07-24. Runtime code and JSON remain authoritative when
+this map falls behind implementation.
+
 ## Documentation
 
 All first-party project documentation lives in `docs/`.
@@ -14,8 +17,13 @@ All first-party project documentation lives in `docs/`.
     *   *Non-negotiable art direction, asset pipeline, naming, and architecture rules.*
 *   **Art Style Reference**: `docs/art-style-reference.md`
     *   *Approved original 2D American-comic / lightweight UI07 style contract for all future assets.*
+*   **Enemy Art Direction**: `docs/enemy-art-direction.md`
+    *   *Current non-boss enemy silhouettes, palette separation, and restrained attack-motion rules.*
+*   **External Wasteland Study Board**: `docs/art/external-references/rick-morty-s3e2-wasteland/`
+    *   *Documentation-only visual study material and its non-copying usage rules.*
 
-The old root-level `skills/` workflow docs have been removed. Project conventions should be documented here or in `docs/project-rules.md`.
+Project conventions belong here, in `docs/project-rules.md`, or under
+`docs/conventions/`.
 
 ---
 
@@ -71,7 +79,7 @@ The old root-level `skills/` workflow docs have been removed. Project convention
     *   *HEAL 25% HP or UPGRADE A CARD (opens `card_upgrade_modal.gd`).*
 
 ### ⬆️ Card Upgrade System
-*   **Upgrade logic**: `run_system/core/card_upgrade.gd` (upgrade resolver) — `resolve(card_info)` returns the upgraded `card_info` (bumped cost/description/effects). **Hybrid**: a bespoke top-level `upgrade` block overrides cost/title/description/effects (effects = full replacement), else `formula()` bumps beneficial numeric fields (damage +2 / block +3 / attr+energy +1 / status stacks +1 / draw +1); `is_upgradeable()` returns false for curses. Removed the gem-socket system; the gems data dir (`run_system/data/gems/`) is gone. In-run card upgrades are the growth axis.
+*   **Upgrade logic**: `run_system/core/card_upgrade.gd` (upgrade resolver) — `resolve(card_info)` returns the upgraded `card_info` (bumped cost/description/effects). **Hybrid**: a bespoke top-level `upgrade` block overrides cost/title/description/effects (effects = full replacement), else `formula()` bumps beneficial numeric fields (damage +2 / block +3 / attr+energy +1 / status stacks +1 / draw +1); `is_upgradeable()` returns false for curses. In-run card upgrades are the growth axis.
 *   **Upgrade picker**: `run_system/ui/card_upgrade_modal.gd` — opened from the rest campfire; the player flips ONE deck entry's `upgraded` flag to true (locked for the run). Already-upgraded / non-upgradeable cards are dimmed.
 *   **Mechanic**: `player_deck` entries carry an `upgraded: bool`; `deck_manager.gd` re-applies `CARD_UPGRADE.resolve(card_info)` at battle start when set. `run_deck_viewer_modal.gd` renders the deck (upgraded cards show their upgraded stats).
 
@@ -92,10 +100,10 @@ The old root-level `skills/` workflow docs have been removed. Project convention
     *   *Gold, deck, equipped items, inventory, base_attributes, player_attributes (computed), relics, tools (**equipped** in `tool_inventory`, **held** in backpack `{"kind":"tool"}` cells), XP/level, map state. Public API: `add_card_to_deck`, `remove_card_from_deck_by_uid`, `gain_xp` / `xp_to_next`, `equip_to_slot`, `unequip_slot`, `add_to_inventory`, `discard_from_inventory`, `add_tool_to_backpack` / `equip_tool_from_backpack` / `unequip_tool` / `unequip_tool_to_backpack` / `tool_slots` (1 base + Outpost + relic), `purchase_*` (shop-gated wrappers), `recompute_attributes`, `get_active_set_tiers`. Normal encounter constants are explicit four-band rosters: `ENCOUNTER_POOLS_OPENING` (combined floor 0–1), EARLY (2–3), MID (4–7), LATE (8+), validated against role and base-HP budgets at startup. `start_new_run` applies Ascension, Clinic HP perks, Command Center Caps, reroll tokens, and backpack capacity from MetaProgress.*
 
 ### 🏠 Base Building (Meta-Progression)
-*   **Persistent State**: `run_system/core/meta_progress.gd` (autoload, owns `user://slot_<n>/meta.json` — 3 save slots; imports the old global `user://meta.json` into slot 1 once) — **two currencies** (**Caps / Scrap**; Core removed 2026-07-07) + `buildings{}` + `BUILDING_DEFS` + pure-storage `stash` + the owned base backpack/slots serialized as `base_loadout` / `base_equipped`. Storage transfers use `move_stash_to_base_backpack`, `move_base_backpack_to_stash`, and `move_base_slot_to_stash` atomically. Building unlocks/tier-ups spend Scrap. Load migration refunds and removes retired upgrade tracks.
+*   **Persistent State**: `run_system/core/meta_progress.gd` (autoload, owns `user://slot_<n>/meta.json` — 3 save slots; imports the pre-slot global `user://meta.json` into slot 1 once) — **two currencies** (**Caps / Scrap**) + `buildings{}` + `BUILDING_DEFS` + pure-storage `stash` + the owned base backpack/slots serialized as `base_loadout` / `base_equipped`. Storage transfers use `move_stash_to_base_backpack`, `move_base_backpack_to_stash`, and `move_base_slot_to_stash` atomically. Building unlocks/tier-ups spend Scrap.
 *   **Bounty State (in MetaProgress)**: save fields `active_bounties` (held contracts `[{id, progress}]`, max 3) / `bounty_shelf` + `bounty_shelf_date` (today's **outpost** shelf) / `cards_seen`. `bounty_progress_add` settles instantly: Caps/Scrap pay directly, while equipment rolls into the active run backpack (owned base backpack fallback when out of run), never the stash. Signals: `bounties_changed`, `bounty_completed`.
 *   **In-run bounty hooks**: `RunManager.bounty_event(kind, amount)` — no-op unless a run is active; 6 emit sites: attack card play + elite/boss kill (`battle_scene.gd`), any kill (`enemy_entity.gd`), gold entering the backpack (`run_manager.add_gold` — starting gold / save-restores don't route through it), extraction (`run_manager.gd`), campfire upgrade (`card_upgrade_modal.gd`). Objective kinds live in `ALLOWED_BOUNTY_OBJECTIVES` (`data_validator.gd`).
-*   **Boot Scene**: `run_system/ui/home_base_scene.{gd,tscn}` — 4 buildings use **icon-only circular entry markers** floating over the scene (no name/level plaques) + a unified **bottom HUD bar** (`window/currency_top_bar.gd`, anchored full-width bottom, exposes left/center/right boxes): currency chips left, giant START + difficulty button (A0-A5 picker popup) center, Warehouse / Character / Gallery nav buttons bottom-right (Warehouse opens StashWindow + CharacterWindow side by side; Character toggles CharacterWindow; Gallery opens the card codex overlay). Bottom-left hosts the compact **bounty board** (`_add_bounty_board_panel`): held contracts from `MetaProgress.active_bounties`, full-width progress rails, and the Outpost pickup hint; reward seals and the visible refresh countdown are intentionally omitted. Rows rebuild on `bounties_changed`, and completion toasts listen to `bounty_completed`. The **card gallery** (`_open_card_gallery`, CanvasLayer overlay) shows every player card with a collected counter — locked (never-played) cards render the battle card back. Theme hooks in `wasteland_theme.gd` (`ui_bottom_bar` / `ui_button_brass` / `ui_button_accent` + window/slot styles) auto-skin from `run_system/assets/images/ui_kit/` when the Codex kit lands (spec: `docs/asset-spec-ui-kit.md`, rev2 pending). Forge opens draggable windows; Clinic/Market/Outpost open fullscreen screens. Press **i** for the CharacterWindow.
+*   **Boot Scene**: `run_system/ui/home_base_scene.{gd,tscn}` — 4 buildings use **icon-only circular entry markers** floating over the scene (no name/level plaques) + a unified **bottom HUD bar** (`window/currency_top_bar.gd`, anchored full-width bottom, exposes left/center/right boxes): currency chips left, giant START + difficulty button (A0-A5 picker popup) center, Warehouse / Character / Gallery nav buttons bottom-right (Warehouse opens StashWindow + CharacterWindow side by side; Character toggles CharacterWindow; Gallery opens the card codex overlay). Bottom-left hosts the compact **bounty board** (`_add_bounty_board_panel`): held contracts from `MetaProgress.active_bounties`, full-width progress rails, and the Outpost pickup hint; reward seals and the visible refresh countdown are intentionally omitted. Rows rebuild on `bounties_changed`, and completion toasts listen to `bounty_completed`. The **card gallery** (`_open_card_gallery`, CanvasLayer overlay) shows every player card with a collected counter — locked (never-played) cards render the battle card back. Theme hooks in `wasteland_theme.gd` (`ui_bottom_bar` / `ui_button_brass` / `ui_button_accent` + window/slot styles) use the checked-in `ui_kit/` and `ui_kit_lightline/` assets with programmatic fallbacks. Forge opens draggable windows; Clinic/Market/Outpost open fullscreen screens. Press **i** for the CharacterWindow.
 *   **Building Screens**: `run_system/ui/buildings/{clinic,market,outpost}_screen.gd` are fullscreen **lightline** service pages. Per-building: **market** = tool shelf + refresh (T1) / equipment shelf into the owned base backpack (T2) / **Caps↔Scrap** conversion (T3); **outpost** = free daily bounty shelf (T1) / safe cells (T2) / Caps permanent-upgrade rows (T3). **Forge is a draggable window** (`window/forge_window.gd`) opened beside CharacterWindow: its workbench accepts only `src=carry` base-backpack drags, bulk dismantle is a vertical all/common/uncommon/rare list, and craft/dismantle/reforge/curse never read or mutate the stash.
 *   **Battle hook**: `battle_scene/battle_scene.gd` `_victory()` drops Scrap into the backpack + awards Caps by node type and opens the demo result; `_game_over()` opens defeat settlement, whose action returns to base.
 *   **Effect consumers**: Outpost Caps permanent upgrades (starting gold / backpack / rerolls / tool slots + T2 safe cells); Clinic/Market spend Caps; Forge spends Scrap; building unlocks/tiers spend Scrap. Retired hidden effects are migrated out rather than remaining passive.
@@ -105,14 +113,14 @@ The old root-level `skills/` workflow docs have been removed. Project convention
 ## 🖼️ Asset Locations
 
 *   **Card Illustrations (PNG)**: `battle_scene/assets/images/cards/player/` (`512x320` landscape art-only PNGs)
-*   **Equipment Icons (PNG)**: `battle_scene/assets/images/equipment/` (codex generates; falls back to placeholder if missing)
-*   **Shop Scene Art (PNG, optional)**: `run_system/assets/images/shop/` (background + shopkeeper; codex generates)
+*   **Equipment Icons (PNG)**: `battle_scene/assets/images/equipment/` (falls back to placeholder if missing)
+*   **Shop Scene Art (PNG, optional)**: `run_system/assets/images/shop/` (background + shopkeeper)
 *   **Hero Sprites (PNG/Animated)**: `battle_scene/assets/images/heroes/{sprite_id}/` (e.g. `cowboy_bill/`; the active hero's `sprite_id` comes from its `run_system/data/heroes/` JSON)
 *   **Enemy Sprites (PNG/Animated)**: `battle_scene/assets/images/enemies/`
-*   **Battle Backgrounds**: `battle_scene/assets/images/backgrounds/`
-*   **Map Art and Node Icons**: `run_system/assets/images/map/`
+*   **Battle Backgrounds**: `battle_scene/assets/images/backgrounds/` (active: `wasteland_battlefield_quiet_v6.png`)
+*   **Map Art and Node Icons**: `run_system/assets/images/map/` (active background: `wasteland_route_map_sts2_bg.png`)
 *   **Relic Icons**: `run_system/assets/images/relics/`
-*   **Lightline UI Kit (PNG)**: `run_system/assets/images/ui_kit_lightline/` — the base-building UI component library sliced from Codex imagegen sheets: **89 named pieces** (`icon_*` / `panel_*` / `btn_*` / `bar_*` / `card_*` / `slot_*` / `row_*` …) + `manifest.json` (per-piece 9-slice margins). Consumed through `wasteland_theme.gd`'s `ll_*` StyleBox hooks (`ll_panel` / `ll_titlebar` / `ll_section` / `ll_inset` / `ll_button` / `ll_button_olive` / `ll_slot`) — every lookup falls back to a programmatic StyleBox so a missing piece never crashes. Raw uncut sheets: `run_system/assets/images/ui_kit_imagegen_v2_lightline/`.
+*   **Lightline UI Kit (PNG)**: `run_system/assets/images/ui_kit_lightline/` — the base-building UI component library sliced from source sheets: **89 named pieces** (`icon_*` / `panel_*` / `btn_*` / `bar_*` / `card_*` / `slot_*` / `row_*` …) + `manifest.json` (per-piece 9-slice margins). Consumed through `wasteland_theme.gd`'s `ll_*` StyleBox hooks (`ll_panel` / `ll_titlebar` / `ll_section` / `ll_inset` / `ll_button` / `ll_button_olive` / `ll_slot`) — every lookup falls back to a programmatic StyleBox so a missing piece never crashes. Raw uncut sheets: `run_system/assets/images/ui_kit_imagegen_v2_lightline/`.
 
 ---
 
@@ -130,3 +138,17 @@ All gameplay content is data-driven. Add GDScript only when introducing a new sh
 *   **Random Events**: `run_system/data/random_events/{event_id}.json` (12 events) — content (choices, outcomes) for the "?" map node, surfaced by `run_system/ui/event_modal.gd`. Three are "greed-trap" curse-injection events (`torn_coin_pouch` / `deserter_charm` / `adrenaline_shot`): a boon + an `add_curse` effect. Events are dir-scanned into the pool; localized via `EVENT_<ID>_*` keys in `assets/translations/ui_events.csv`.
 
 All schemas validated at startup by `battle_scene/data_validator.gd`.
+
+---
+
+## Agent and Repository Surfaces
+
+*   **Agent entry point**: `AGENTS.md`
+*   **Project-local agent skills**: `.agents/skills/` (reserved; currently empty)
+*   **Project-local Codex configuration**: `.codex/` (reserved; currently empty)
+*   **Documentation**: `docs/`
+*   **Maintenance and generation scripts**: `scripts/`
+*   **Automated checks**: `tests/`
+
+Ignored `.godot/`, `tmp/`, `.planning/`, `.mcp/`, and `.superpowers/` content is
+local cache or intermediate workflow state, not a source of truth.

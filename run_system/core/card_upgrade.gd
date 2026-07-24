@@ -4,7 +4,7 @@
 ## block ({cost?, title?, description?, effects?}) that overrides those fields
 ## (effects = full replacement). Formula path (no `upgrade` block): bump known
 ## numeric fields per effect type. Cost is only ever changed by the bespoke block.
-## No `class_name` (ADR-0006) — used via preload.
+## No `class_name` (project convention) — used via preload.
 extends RefCounted
 
 

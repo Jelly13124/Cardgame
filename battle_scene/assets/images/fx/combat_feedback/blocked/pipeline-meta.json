@@ -1,18 +1,18 @@
 {
   "target": "asset",
   "mode": "impact",
-  "prompt": "Project-native 2D American-comic fully blocked shield impact, 2x2, four phases, solid #FF00FF background.",
+  "prompt": "",
   "role": "",
-  "input": "C:\\Users\\Jerry\\.codex\\generated_images\\019f4960-1b38-7902-9185-24c2c07cfcfa\\exec-10b53255-ccb6-4858-bf77-4dc2e55da361.png",
+  "input": "tmp\\imagegen\\combat_feedback_v2\\blocked\\raw-source.png",
   "threshold": 100,
   "edge_threshold": 150,
-  "duration": 100,
+  "duration": 70,
   "rows": 2,
   "cols": 2,
   "cell_size": 128,
-  "fit_scale": 0.8,
+  "fit_scale": 0.58,
   "trim_border": 4,
-  "edge_clean_depth": 3,
+  "edge_clean_depth": 2,
   "align": "center",
   "shared_scale": true,
   "component_mode": "all",
@@ -38,23 +38,23 @@
         627
       ],
       "component_mode": "all",
-      "component_count": 8,
+      "component_count": 3,
       "selected_component_area": null,
       "selected_component_bbox": null,
       "crop_bbox": [
-        254,
-        218,
-        416,
-        452
+        315,
+        316,
+        375,
+        437
       ],
       "edge_touch": false,
       "output_size": [
-        38,
-        55
+        21,
+        42
       ],
       "paste_position": [
-        45,
-        36
+        53,
+        43
       ]
     },
     {
@@ -69,23 +69,23 @@
         627
       ],
       "component_mode": "all",
-      "component_count": 14,
+      "component_count": 3,
       "selected_component_area": null,
       "selected_component_bbox": null,
       "crop_bbox": [
-        111,
-        117,
-        401,
-        547
+        169,
+        276,
+        326,
+        464
       ],
       "edge_touch": false,
       "output_size": [
-        69,
-        102
+        55,
+        66
       ],
       "paste_position": [
-        29,
-        13
+        36,
+        31
       ]
     },
     {
@@ -100,23 +100,23 @@
         1254
       ],
       "component_mode": "all",
-      "component_count": 20,
+      "component_count": 4,
       "selected_component_area": null,
       "selected_component_bbox": null,
       "crop_bbox": [
-        118,
-        63,
-        535,
-        471
+        277,
+        171,
+        448,
+        380
       ],
       "edge_touch": false,
       "output_size": [
-        99,
-        97
+        60,
+        74
       ],
       "paste_position": [
-        14,
-        15
+        34,
+        27
       ]
     },
     {
@@ -131,23 +131,23 @@
         1254
       ],
       "component_mode": "all",
-      "component_count": 41,
+      "component_count": 4,
       "selected_component_area": null,
       "selected_component_bbox": null,
       "crop_bbox": [
-        90,
-        73,
-        445,
-        464
+        200,
+        234,
+        273,
+        320
       ],
       "edge_touch": false,
       "output_size": [
-        84,
-        93
+        25,
+        30
       ],
       "paste_position": [
-        22,
-        17
+        51,
+        49
       ]
     }
   ],

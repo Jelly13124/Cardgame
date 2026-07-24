@@ -1,1 +1,1 @@
-Project-native 2D American-comic fully blocked shield impact, 2x2, four phases, solid #FF00FF background.
+Project-native compact blocked-hit FX, exactly four phases in a 2x2 sheet on solid #FF00FF: tiny pale-cyan contact bracket, short curved guard arc, restrained peak crescent with two pale chips, then one fading cyan fragment. No bubble, shield object, radial burst, lightning web, smoke, text, UI, or scenery.

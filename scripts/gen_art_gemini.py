@@ -3,8 +3,8 @@
 
 The API key is read from `.gemini_key` (gitignored — NEVER commit it). This is the
 art pipeline used for backgrounds (events / shop / base) — opaque full-bleed images
-that Godot cover-fits behind UI. (Codex / ADR-0005 still applies for transparent
-icons + frames; Imagen does not do alpha.)
+that Godot cover-fits behind UI. Imagen does not produce transparent icons or
+animation frames.
 
 Usage:
   python scripts/gen_art_gemini.py <out.png> <aspect:1:1|16:9|9:16|4:3|3:4> "<prompt>"

@@ -1,7 +1,7 @@
 ## One rebindable key row: "<action label> …… [current key]". Clicking the key
 ## button listens for the next key press and saves it via Settings.set_key.
 ## Instanced (not static) because it needs _input to capture the key press.
-## No class_name per ADR-0006.
+## No class_name per project convention.
 extends HBoxContainer
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")

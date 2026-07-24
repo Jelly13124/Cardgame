@@ -2,7 +2,7 @@
 ## Title-bar drag (clamped to viewport), ✕ close, click-to-front, optional
 ## title-bar icon buttons (add_title_button). Subclass via
 ## `extends "res://run_system/ui/window/draggable_window.gd"` (no class_name,
-## ADR-0006), call `init_window(title, size)` in _ready, then add content into
+## the project preload convention), call `init_window(title, size)` in _ready, then add content into
 ## `content_root`. Windows that build their OWN header (show_title_bar=false)
 ## put it into `header_root` — the fixed strip ABOVE the content scroll — and
 ## mark it draggable with bind_drag_area(). Hosted by window_layer.gd (which

@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Generate the requested windowed UI kit PNG assets.
+"""Generate the legacy windowed UI kit PNG assets.
 
-The spec in docs/asset-spec-ui-kit.md asks for exact bitmap contracts with
-transparent backgrounds and 9-slice-safe mid sections. This generator keeps the
-assets deterministic and reproducible.
+The output uses transparent backgrounds and 9-slice-safe mid sections. This
+generator keeps those checked-in assets deterministic and reproducible.
 """
 
 from __future__ import annotations

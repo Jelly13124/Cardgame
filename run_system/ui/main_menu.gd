@@ -3,7 +3,7 @@
 ## Three primary actions: New Game (pops a slot picker), Continue (resumes the
 ## most-recently-played slot), and Saves (a 3-slot manager: continue or delete any
 ## slot). Reuses settings_panel.gd for the Settings overlay. Built in code following
-## the project's modal pattern; no class_name per ADR-0006.
+## the project's modal pattern; no class_name per project convention.
 extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")

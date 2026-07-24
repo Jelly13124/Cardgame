@@ -1,6 +1,6 @@
 ## In-combat Discover popup — frosted scrim over the battle + N enlarged PlayCard
 ## candidates centered, a bare gold title, pick one. NOT the loot/reward frame skin.
-## No class_name (ADR-0006) — owner reaches it via preload.
+## No class_name (project convention) — owner reaches it via preload.
 extends Control
 
 const PLAY_CARD := preload("res://battle_scene/play_card.tscn")

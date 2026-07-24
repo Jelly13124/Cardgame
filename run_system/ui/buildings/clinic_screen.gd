@@ -20,7 +20,7 @@
 ## legacy attribute PNG so a missing Codex asset never crashes (warn-free
 ## placeholder rule).
 ##
-## NO class_name (ADR-0006): subclasses the base screen via its resource path.
+## NO class_name (project convention): subclasses the base screen via its resource path.
 ## Reads ONLY the shared MetaProgress building/caps-perk API; edits no shared file.
 extends "res://run_system/ui/buildings/building_screen_base.gd"
 

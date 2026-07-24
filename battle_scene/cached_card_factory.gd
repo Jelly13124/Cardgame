@@ -1,11 +1,11 @@
 ## Project card factory: behaves exactly like the vendored JsonCardFactory but
 ## reads parsed card-info from the MetaProgress session cache instead of
 ## re-scanning + re-parsing every card JSON on each battle/shop factory build
-## (~50 file reads + JSON parses per battle). ADR-0005: the vendored addon is left
-## untouched — this override lives in the project. Falls back to the stock
+## (~50 file reads + JSON parses per battle). The vendored addon is left untouched;
+## this override lives in the project. Falls back to the stock
 ## per-file scan if the cache is somehow unavailable, so cards always load.
 ##
-## No `class_name` (ADR-0006) — referenced via the my_card_factory.tscn script slot.
+## No `class_name` (project convention) — referenced via the my_card_factory.tscn script slot.
 extends "res://addons/card-framework/json_card_factory.gd"
 
 

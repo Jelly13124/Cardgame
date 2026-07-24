@@ -86,57 +86,82 @@ static func spawn_feedback_text(
 	tween.chain().tween_callback(layer.queue_free)
 
 
-## Briefly translate `target` (Node2D) on a decaying sine to simulate impact.
-## Overlapping shakes (e.g. double_tap multi-hit) used to sample origin from
-## a mid-shake offset and "restore" to the wrong position, accumulating drift.
-## Now: cache the true rest position in target.meta on first call, kill any
-## prior tween, and always restore to the cached origin.
+## One readable outward recoil for a hit. The previous six-step random shake made
+## ordinary attacks look like continuous idle wobble, so all paths now share this
+## contact -> tiny over-correction -> rest motion.
 const _SHAKE_ORIGIN_META := "_combatfx_shake_origin"
 const _SHAKE_TWEEN_META := "_combatfx_shake_tween"
 
 
-static func shake(target: Node2D, intensity: float = 8.0, duration: float = 0.18) -> void:
+static func recoil(target: Node2D, intensity: float = 4.0, duration: float = 0.12) -> void:
 	if not is_instance_valid(target):
 		return
 
-	# Capture origin ONCE per target — never re-sample mid-shake.
-	var origin: Vector2
-	if target.has_meta(_SHAKE_ORIGIN_META):
-		origin = target.get_meta(_SHAKE_ORIGIN_META)
-	else:
-		origin = target.position
-		target.set_meta(_SHAKE_ORIGIN_META, origin)
-
-	# Kill any in-flight shake on the same target so we don't stack tweens.
-	if target.has_meta(_SHAKE_TWEEN_META):
-		var prior = target.get_meta(_SHAKE_TWEEN_META)
-		if prior is Tween and prior.is_valid():
-			prior.kill()
-
+	var origin := _prepare_position_tween(target)
+	var viewport_center_x := target.get_viewport_rect().size.x * 0.5
+	var outward_sign := -1.0 if target.global_position.x < viewport_center_x else 1.0
+	var contact_offset := Vector2(outward_sign * intensity, -intensity * 0.12)
 	var tween := target.create_tween()
 	target.set_meta(_SHAKE_TWEEN_META, tween)
-	var steps := 6
-	for i in range(steps):
-		var t := float(i + 1) / float(steps)
-		var falloff := 1.0 - t
-		var offset := Vector2(
-			randf_range(-intensity, intensity) * falloff,
-			randf_range(-intensity, intensity) * falloff,
-		)
-		tween.tween_property(target, "position", origin + offset, duration / float(steps))
-	tween.tween_property(target, "position", origin, duration / float(steps))
+	(
+		tween
+		. tween_property(target, "position", origin + contact_offset, duration * 0.34)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	tween.tween_property(
+		target, "position", origin - contact_offset * 0.16, duration * 0.20
+	)
+	(
+		tween
+		. tween_property(target, "position", origin, duration * 0.46)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 
 
-## Whole-battlefield "screen shake": jolt the player + enemy container together so a
-## big hit or crit reads as a screen impact. Reuses the origin-cached shake() above, so
-## there's no positional drift. A brief HUD wobble during the ~0.2s jolt is intentional.
+static func shake(target: Node2D, intensity: float = 4.0, duration: float = 0.12) -> void:
+	recoil(target, intensity, duration)
+
+
+## Lethal-only battlefield jolt. Both sides receive one identical offset and return,
+## which preserves spacing and avoids prolonged vibration.
 static func shake_screen(scene: Node, intensity: float = 6.0, duration: float = 0.22) -> void:
 	if scene == null or not is_instance_valid(scene):
 		return
 	for prop in ["player", "enemy_container"]:
 		var n = scene.get(prop)
 		if n is Node2D and is_instance_valid(n):
-			shake(n, intensity, duration)
+			_jolt(n, Vector2(-intensity, intensity * 0.10), duration)
+
+
+static func _jolt(target: Node2D, offset: Vector2, duration: float) -> void:
+	var origin := _prepare_position_tween(target)
+	var tween := target.create_tween()
+	target.set_meta(_SHAKE_TWEEN_META, tween)
+	(
+		tween
+		. tween_property(target, "position", origin + offset, duration * 0.32)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	tween.tween_property(target, "position", origin - offset * 0.12, duration * 0.20)
+	tween.tween_property(target, "position", origin, duration * 0.48)
+
+
+static func _prepare_position_tween(target: Node2D) -> Vector2:
+	var origin: Vector2
+	if target.has_meta(_SHAKE_ORIGIN_META):
+		origin = target.get_meta(_SHAKE_ORIGIN_META)
+	else:
+		origin = target.position
+		target.set_meta(_SHAKE_ORIGIN_META, origin)
+	if target.has_meta(_SHAKE_TWEEN_META):
+		var prior = target.get_meta(_SHAKE_TWEEN_META)
+		if prior is Tween and prior.is_valid():
+			prior.kill()
+	target.position = origin
+	return origin
 
 
 static func _color_for_hit(amount: int, blocked: int) -> Color:

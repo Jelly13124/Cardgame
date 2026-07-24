@@ -14,7 +14,7 @@
 ##          {"src": "slot"} (queued slot → unassign, back to storage).
 ## Cross-window sync: after a drop, both this window and the sibling
 ## CharacterWindow rebuild via their public refresh(). Base-context only (no
-## map/battle callers). NO class_name (ADR-0006) — loaded by path.
+## map/battle callers). NO class_name (project convention) — loaded by path.
 ##
 ## VISUALS (2026-07-08): charcoal lightline window per
 ## docs/art/previews/stash_page_ui_simple_comic_concept_20260708.png — riveted

@@ -161,7 +161,7 @@ the corresponding damage. `burn` deals damage and then halves its stacks.
 Intelligence is added to player-applied `apply_status` / `apply_status_all`
 stacks. The removed Bleed and Heat systems must not be reintroduced by data.
 
-**Stun is enemy-only** (see `docs/adr/0004-shock-enemy-only.md`). Enemy skips its next turn per stack.
+**Stun is enemy-only.** Enemy skips its next turn per stack.
 
 ---
 
@@ -191,5 +191,5 @@ If you see `X validation failure(s)`, the error log above explains what's wrong 
 
 - ❌ Typo'd key like `"retian": true` — validator catches as warning ("unknown top-level key 'retian'").
 - ❌ Effect type spelled `deal_dmg` instead of `deal_damage` — validator catches as error.
-- ❌ Enemy `sprite_id` doesn't match a folder under `enemies/` — game runs with `ColorRect` placeholder, **no error** because frames are warn-only (Codex may be generating them). If you intended to use an existing sprite, double-check spelling.
+- ❌ Enemy `sprite_id` doesn't match a folder under `enemies/` — game runs with a `ColorRect` placeholder and emits only a warning. If you intended to use an existing sprite, double-check the spelling.
 - ❌ Adding new effect type to JSON but forgetting `combat_engine` handler — validator catches via `ALLOWED_EFFECT_TYPES`, but only if you also updated that list. If you updated `combat_engine` but not the validator, JSON will validate OK at startup, then `combat_engine` will `push_error` + assert at runtime on first use.

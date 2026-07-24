@@ -5,7 +5,7 @@
 ## still matters). Affix lines follow: curses red, positives green. The base
 ## JSON `bonuses` summary is the legacy fallback when no rolled instance exists.
 ##
-## Static-only helper (no class_name, ADR-0006):
+## Static-only helper (no class_name by project convention):
 ##   const EQUIP_TOOLTIP = preload("res://run_system/ui/equip_tooltip.gd")
 ##   cell.hover_tip = EQUIP_TOOLTIP.text(data, slot, inst)
 extends RefCounted
