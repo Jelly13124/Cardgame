@@ -5,8 +5,10 @@ Usage (from the project root):
     python tools/check_layers.py --skip-refs
 
 Rules:
-  L1  core/ must not reference UI paths (ui/, run_system/ui/, battle_scene/ui/).
-  L2  core/ must not use the scene tree (get_tree(), current_scene, get_node().
+  L1  core/ must not reference UI paths (ui/, run_system/ui/, battle_scene/ui/),
+      whether written as res:// or as a uid:// that resolves to one.
+  L2  core/ must not use the scene tree (get_tree(), current_scene, get_node(,
+      get_node_or_null(, $Node).
   L3  content/ holds data only: no .gd files.
   L4  scripts and scenes are referenced by uid:// (delegates to godot_refs.py check).
 Comments are ignored. Prints `layers: ok` or one line per violation; exit 1 on
@@ -26,7 +28,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import godot_refs  # noqa: E402
 
 UI_PATH = re.compile(r'res://(?:ui|run_system/ui|battle_scene/ui)/')
-SCENE_TREE = re.compile(r'\bget_tree\(\)|\bcurrent_scene\b|\bget_node\(')
+UID_LITERAL = re.compile(r'uid://[a-z0-9]+')
+SCENE_TREE = re.compile(
+    r'\bget_tree\(\)|\bcurrent_scene\b|\bget_node(?:_or_null)?\(|(?<![\w"\'])\$[A-Za-z_"%]'
+)
 
 
 def _code_lines(path: Path):
@@ -39,10 +44,15 @@ def check(root: Path, include_refs: bool) -> list[str]:
     violations: list[str] = []
     core = root / "core"
     if core.is_dir():
+        # References are written as uid://, so resolve them back to paths for L1.
+        path_by_uid = {uid: path for path, uid in godot_refs.build_uid_map(root).items()}
         for script in sorted(core.rglob("*.gd")):
             rel = script.relative_to(root).as_posix()
             for number, code in _code_lines(script):
-                if UI_PATH.search(code):
+                targets = code + " " + " ".join(
+                    path_by_uid.get(uid, "") for uid in UID_LITERAL.findall(code)
+                )
+                if UI_PATH.search(targets):
                     violations.append(f"{rel}:{number} L1 core references a UI path")
                 if SCENE_TREE.search(code):
                     violations.append(f"{rel}:{number} L2 core uses the scene tree")

@@ -43,6 +43,21 @@ class CheckLayersTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("core/run/rewards.gd:1 L1", out)
 
+    def test_core_ui_reference_by_uid_flagged(self):
+        self.write("run_system/ui/loot_reward.gd", "extends Node\n")
+        self.write("run_system/ui/loot_reward.gd.uid", "uid://cloot\n")
+        self.write("core/run/rewards.gd", 'const V = preload("uid://cloot")  # res://run_system/ui/loot_reward.gd\n')
+        code, out = self.run_check()
+        self.assertEqual(code, 1)
+        self.assertIn("core/run/rewards.gd:1 L1", out)
+
+    def test_core_node_lookups_flagged(self):
+        self.write("core/combat/hud.gd", "func f():\n\tget_node_or_null(\"Hud\")\n\t$Hud.show()\n")
+        code, out = self.run_check()
+        self.assertEqual(code, 1)
+        self.assertIn("core/combat/hud.gd:2 L2", out)
+        self.assertIn("core/combat/hud.gd:3 L2", out)
+
     def test_core_scene_tree_flagged(self):
         self.write("core/combat/turns.gd", "func f():\n\tget_tree().current_scene.queue_free()\n")
         code, out = self.run_check()

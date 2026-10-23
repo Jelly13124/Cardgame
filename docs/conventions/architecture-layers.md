@@ -39,7 +39,7 @@ the target directories whenever its layer is clear.
 | Layer | May depend on | Must not depend on |
 |---|---|---|
 | `content/` | nothing (data only) | any code — no `.gd` files (**L3**) |
-| `core/*` | other `core/` modules; `content/` through the registry; non-UI autoloads | UI paths (**L1**); the scene tree: `get_tree()`, `current_scene`, `get_node(` (**L2**) |
+| `core/*` | other `core/` modules; `content/` through the registry; non-UI autoloads | UI scripts or scenes, by path or uid (**L1**); the scene tree: `get_tree()`, `current_scene`, `get_node(`, `get_node_or_null(`, `$Node` (**L2**) |
 | `ui/*` | public `core/` services and signals; `assets/` | writing fields of `core` state objects directly |
 | `autoload/` | `core/` (to wire services) | concrete UI screens |
 
