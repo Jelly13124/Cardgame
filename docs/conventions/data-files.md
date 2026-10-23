@@ -74,7 +74,7 @@ A card may carry an optional top-level `"upgrade"` dict that **overrides** the b
 
 - **Curses are never upgradeable** — cards with `"type": "curse"` are skipped entirely (`is_upgradeable()` returns `false`; the modal dims them and the catalog renders no upgrade line). Do NOT add an `upgrade` block to a curse.
 - `cost` is **only ever** changed by a bespoke `upgrade.cost`; the formula never touches cost.
-- The browsable catalog (`scripts/gen_catalog_html.py`) mirrors this resolver in Python and renders an "Upgraded" panel under each non-curse card — keep the two in sync when the rules change.
+- The browsable catalog (`tools/gen_catalog_html.py`) mirrors this resolver in Python and renders an "Upgraded" panel under each non-curse card — keep the two in sync when the rules change.
 
 ### Enemies
 ```json

@@ -209,7 +209,7 @@ battle_scene/assets/images/
 The browsable tables under `docs/catalog_html/` (cards / relics / equipment / enemies /
 tools / events / bounties / affixes / keywords) are the reference for *what content exists*.
 They are **generated** from the JSON data + translation CSVs + `affix_pool.gd` by
-`scripts/gen_catalog_html.py`. Treat the catalog as the design surface, and work in this
+`tools/gen_catalog_html.py`. Treat the catalog as the design surface, and work in this
 order for ANY content add / remove / retune:
 
 1. **Design in the catalog first.** Before writing data, open the relevant catalog page
@@ -217,7 +217,7 @@ order for ANY content add / remove / retune:
    power curve, and consistency with sibling content.
 2. **Then implement in the game data** — the JSON (+ translation CSVs + any wiring per the
    checklist above).
-3. **Regenerate and verify.** Run `python scripts/gen_catalog_html.py` and confirm the new
+3. **Regenerate and verify.** Run `python tools/gen_catalog_html.py` and confirm the new
    content appears as intended. **A content change is not "done" until the catalog matches
    the game data** and the smoke gate passes.
 

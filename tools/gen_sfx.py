@@ -6,7 +6,7 @@ Synthesizes ORIGINAL 8-bit-style sound effects (no samples, no external audio
 assets) straight to assets/audio/sfx/<name>.wav. Each cue is a hand-tuned
 waveform + envelope — unique per action, matching the game's pixel/cartoon feel.
 
-Run:  python scripts/gen_sfx.py [name ...]
+Run:  python tools/gen_sfx.py [name ...]
       (no args = generate all cues)
 
 After running, re-import in Godot so the new .wav files are picked up:

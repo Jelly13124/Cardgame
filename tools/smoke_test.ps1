@@ -3,13 +3,13 @@
 # Exits 0 on clean, 1 on any of those signals.
 #
 # Usage:
-#   pwsh scripts/smoke_test.ps1
+#   pwsh tools/smoke_test.ps1
 #
 # Or shorter (if pwsh is your default):
-#   ./scripts/smoke_test.ps1
+#   ./tools/smoke_test.ps1
 #
 # Optional override of the godot binary:
-#   $env:GODOT_BIN = "C:\path\to\godot.exe"; pwsh scripts/smoke_test.ps1
+#   $env:GODOT_BIN = "C:\path\to\godot.exe"; pwsh tools/smoke_test.ps1
 
 $ErrorActionPreference = "Stop"
 

@@ -100,6 +100,8 @@ Project conventions belong here, in `docs/project-rules.md`, or under
     *   *Gold, deck, equipped items, inventory, base_attributes, player_attributes (computed), relics, tools (**equipped** in `tool_inventory`, **held** in backpack `{"kind":"tool"}` cells), XP/level, map state. Public API: `add_card_to_deck`, `remove_card_from_deck_by_uid`, `gain_xp` / `xp_to_next`, `equip_to_slot`, `unequip_slot`, `add_to_inventory`, `discard_from_inventory`, `add_tool_to_backpack` / `equip_tool_from_backpack` / `unequip_tool` / `unequip_tool_to_backpack` / `tool_slots` (1 base + Outpost + relic), `purchase_*` (shop-gated wrappers), `recompute_attributes`, `get_active_set_tiers`. Normal encounter constants are explicit four-band rosters: `ENCOUNTER_POOLS_OPENING` (combined floor 0–1), EARLY (2–3), MID (4–7), LATE (8+), validated against role and base-HP budgets at startup. `start_new_run` applies Ascension, Clinic HP perks, Command Center Caps, reroll tokens, and backpack capacity from MetaProgress.*
 
 ### 🏠 Base Building (Meta-Progression)
+*   **Save files**: `core/save/save_io.gd` — every save (profile, in-run, settings) is written atomically through `SaveIO` with two rotating backups (`.bak1`/`.bak2`); an unreadable file is kept as `.corrupt-<time>` and the newest readable backup is used.
+*   **UI-independent autoloads**: `autoload/` — `Settings`, `AudioManager`, `Tooltip`, `SceneTransition`.
 *   **Persistent State**: `run_system/core/meta_progress.gd` (autoload, owns `user://slot_<n>/meta.json` — 3 save slots; imports the pre-slot global `user://meta.json` into slot 1 once) — **two currencies** (**Caps / Scrap**) + `buildings{}` + `BUILDING_DEFS` + pure-storage `stash` + the owned base backpack/slots serialized as `base_loadout` / `base_equipped`. Storage transfers use `move_stash_to_base_backpack`, `move_base_backpack_to_stash`, and `move_base_slot_to_stash` atomically. Building unlocks/tier-ups spend Scrap.
 *   **Bounty State (in MetaProgress)**: save fields `active_bounties` (held contracts `[{id, progress}]`, max 3) / `bounty_shelf` + `bounty_shelf_date` (today's **outpost** shelf) / `cards_seen`. `bounty_progress_add` settles instantly: Caps/Scrap pay directly, while equipment rolls into the active run backpack (owned base backpack fallback when out of run), never the stash. Signals: `bounties_changed`, `bounty_completed`.
 *   **In-run bounty hooks**: `RunManager.bounty_event(kind, amount)` — no-op unless a run is active; 6 emit sites: attack card play + elite/boss kill (`battle_scene.gd`), any kill (`enemy_entity.gd`), gold entering the backpack (`run_manager.add_gold` — starting gold / save-restores don't route through it), extraction (`run_manager.gd`), campfire upgrade (`card_upgrade_modal.gd`). Objective kinds live in `ALLOWED_BOUNTY_OBJECTIVES` (`data_validator.gd`).
@@ -147,8 +149,8 @@ All schemas validated at startup by `battle_scene/data_validator.gd`.
 *   **Project-local agent skills**: `.agents/skills/` (reserved; currently empty)
 *   **Project-local Codex configuration**: `.codex/` (reserved; currently empty)
 *   **Documentation**: `docs/`
-*   **Maintenance and generation scripts**: `scripts/`
-*   **Automated checks**: `tests/`
+*   **Maintenance and generation scripts**: `tools/`
+*   **Automated checks**: `tests/` — run everything with `tools/run_tests.ps1` (or `tools/run_tests.sh`); known bugs are listed in `tests/expected_failures.txt`
 
 Ignored `.godot/`, `tmp/`, `.planning/`, `.mcp/`, and `.superpowers/` content is
 local cache or intermediate workflow state, not a source of truth.

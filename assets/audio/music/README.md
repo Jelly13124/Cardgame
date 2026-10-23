@@ -31,7 +31,7 @@ that permits commercial game use (credit as required), or your own. Note the sou
 
 | Track | Source | License |
 |---|---|---|
-| `battle` / `boss` / `map` / `home` / `shop` / `event` .ogg | Procedural synth — `scripts/gen_audio.py` (project-owned) | Original to this project; regenerate with `python scripts/gen_audio.py` |
+| `battle` / `boss` / `map` / `home` / `shop` / `event` .ogg | Procedural synth — `tools/gen_audio.py` (project-owned) | Original to this project; regenerate with `python tools/gen_audio.py` |
 
 > The title screen is **intentionally silent** — the old licensed `menu.ogg`
 > (*Wild West - Desert Wind*) was removed on 2026-06-25; `main_menu.gd` calls

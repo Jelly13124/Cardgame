@@ -21,7 +21,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[1] / "battle_scene"
 UI_DIR = ROOT / "assets" / "images" / "ui"
 CARD_UI_DIR = ROOT / "assets" / "images" / "cards" / "ui"
 

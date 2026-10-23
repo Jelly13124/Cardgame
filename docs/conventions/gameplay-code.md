@@ -109,7 +109,7 @@ shared test runner/plugin, or before Steam launch.
 4. Headless validate: `godot --headless --path . --quit-after 5` — should print `DataValidator: all card/enemy/relic JSON files passed schema check.`
 5. Run the relevant `tests/*_contract_test.tscn` scene headlessly.
 6. Playtest the new content in editor when behavior or visuals changed.
-7. Regenerate `docs/catalog_html/` with `python scripts/gen_catalog_html.py`.
+7. Regenerate `docs/catalog_html/` with `python tools/gen_catalog_html.py`.
 
 ## When in doubt
 

@@ -11,7 +11,7 @@ morning review can see what's done:
 
 Exit code is always 0 — this reports, it does not gate.
 
-Usage: python scripts/i18n_audit.py
+Usage: python tools/i18n_audit.py
 """
 
 from __future__ import annotations

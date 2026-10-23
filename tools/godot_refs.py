@@ -19,6 +19,10 @@ Never converted: `extends "res://..."` (Godot 4.6 has no uid support there),
 comments, concatenated or formatted paths, and lines marked `# path-ok: <why>`
 (e.g. tests that read a script's source text, resource_path comparisons).
 
+`sync-comments` rewrites the trailing `# res://...` comment after each
+"uid://..." literal to the file's current path, so comments stay truthful
+after files move.
+
 `convert` is all-or-nothing: if any reference has no uid it reports them and
 writes nothing (exit 1). `check` lists remaining path references (exit 1).
 """
@@ -237,10 +241,35 @@ def check(root: Path, dirs: list[str]) -> int:
     print("refs: ok")
     return 0
 
+UID_WITH_COMMENT = re.compile(r'"(uid://[a-z0-9]+)"(.*?)#\s*(res://\S+?\.(?:gd|tscn))(?![\w/.])')
+
+
+def sync_comments(root: Path, dirs: list[str]) -> int:
+    paths_by_uid = {uid: path for path, uid in build_uid_map(root).items()}
+    updated = 0
+    for script in iter_scripts(root, dirs):
+        text = script.read_text(encoding="utf-8")
+        lines = text.splitlines(keepends=True)
+        changed = False
+        for i, line in enumerate(lines):
+            def fix(m: re.Match) -> str:
+                nonlocal updated, changed
+                current = paths_by_uid.get(m.group(1))
+                if current is None or current == m.group(3):
+                    return m.group(0)
+                updated += 1
+                changed = True
+                return m.group(0).replace(m.group(3), current)
+            lines[i] = UID_WITH_COMMENT.sub(fix, line)
+        if changed:
+            script.write_text("".join(lines), encoding="utf-8", newline="")
+    print(f"updated {updated} comments")
+    return 0
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("command", choices=["convert", "check"])
+    parser.add_argument("command", choices=["convert", "check", "sync-comments"])
     parser.add_argument("--root", default=".", help="project root (default: current directory)")
     parser.add_argument("--dry-run", action="store_true", help="convert: report without writing")
     parser.add_argument("--dirs", default=",".join(DEFAULT_DIRS), help="comma-separated directories to scan")
@@ -249,6 +278,8 @@ def main(argv: list[str] | None = None) -> int:
     dirs = [d for d in args.dirs.split(",") if d]
     if args.command == "convert":
         return convert(root, dirs, args.dry_run)
+    if args.command == "sync-comments":
+        return sync_comments(root, dirs)
     return check(root, dirs)
 
 

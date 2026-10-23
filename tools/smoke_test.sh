@@ -4,10 +4,10 @@
 # Exits 0 on clean, 1 on any of those signals.
 #
 # Usage:
-#   bash scripts/smoke_test.sh
+#   bash tools/smoke_test.sh
 #
 # Optional override of the godot binary:
-#   GODOT_BIN=/path/to/godot bash scripts/smoke_test.sh
+#   GODOT_BIN=/path/to/godot bash tools/smoke_test.sh
 
 set -uo pipefail
 

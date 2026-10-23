@@ -4,8 +4,8 @@
 Music -> assets/audio/music/*.ogg (this script ffmpeg-converts WAV->OGG itself).
 Tracks are ~50-60s with a seamless crossfade loop point so the loop is not obvious.
 
-  python scripts/gen_audio.py          # (re)generate BGM oggs (battle/boss/map/home/shop/event)
-  python scripts/gen_audio.py --sfx    # ALSO write the legacy procedural SFX (fallback only)
+  python tools/gen_audio.py          # (re)generate BGM oggs (battle/boss/map/home/shop/event)
+  python tools/gen_audio.py --sfx    # ALSO write the legacy procedural SFX (fallback only)
 
 SFX now ship from the Kenney CC0 audio packs (see assets/audio/sfx/README.md); the
 procedural SFX synth below is kept as an opt-in fallback. `menu.ogg` is the real

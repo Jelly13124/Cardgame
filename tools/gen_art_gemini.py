@@ -7,7 +7,7 @@ that Godot cover-fits behind UI. Imagen does not produce transparent icons or
 animation frames.
 
 Usage:
-  python scripts/gen_art_gemini.py <out.png> <aspect:1:1|16:9|9:16|4:3|3:4> "<prompt>"
+  python tools/gen_art_gemini.py <out.png> <aspect:1:1|16:9|9:16|4:3|3:4> "<prompt>"
 
 Exit 0 on success. Retries on 429/503 with backoff so a batch survives rate limits.
 """

@@ -10,7 +10,7 @@ This:
   3. Rebuilds <id>_hover.png (brighter) and <id>_pressed.png (darker) from the cleaned
      base, inheriting its clean alpha.
 
-  python scripts/defringe_buildings.py
+  python tools/defringe_buildings.py
 
 NOTE: this is image *processing* of existing assets rather than authored art.
 Reversible via git.

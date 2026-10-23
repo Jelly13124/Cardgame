@@ -120,6 +120,21 @@ class GodotRefsTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("rewritten 0 references", out)
 
+    def test_sync_comments_refreshes_moved_paths(self):
+        path = self.p.script(
+            "b/use.gd",
+            'const A = preload("uid://bxscript")  # res://old/place/x.gd\n'
+            'const B = preload("uid://bxscript")  # res://a/x.gd\n',
+        )
+        code, out = self.p.run("sync-comments")
+        self.assertEqual(code, 0)
+        self.assertIn("updated 1 comments", out)
+        self.assertEqual(
+            path.read_text(encoding="utf-8"),
+            'const A = preload("uid://bxscript")  # res://a/x.gd\n'
+            'const B = preload("uid://bxscript")  # res://a/x.gd\n',
+        )
+
     def test_check_lists_leftovers(self):
         self.p.script("b/use.gd", 'const SRC := "res://a/x.gd"\nfunc t():\n\tFileAccess.get_file_as_string(SRC)\n')
         code, out = self.p.run("check")

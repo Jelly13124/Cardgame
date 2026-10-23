@@ -8,7 +8,7 @@ hand-authored prose (flavor, design notes) that must be preserved, so the
 caller (the /regen-catalogs skill) merges the fresh tables in by hand.
 
 Usage:
-    python scripts/gen_catalogs.py [cards|enemies|relics|equipment|all]
+    python tools/gen_catalogs.py [cards|enemies|relics|equipment|all]
 
 Default target is "all". Output is plain Markdown.
 """

@@ -1,7 +1,7 @@
 extends Node
 
-const TRANSITION_SCRIPT = preload("uid://b4o2356u56aue")  # res://run_system/core/scene_transition.gd
-const TRANSITION_SCRIPT_PATH := "res://run_system/core/scene_transition.gd"  # path-ok: reads source text
+const TRANSITION_SCRIPT = preload("uid://b4o2356u56aue")  # res://autoload/scene_transition.gd
+const TRANSITION_SCRIPT_PATH := "res://autoload/scene_transition.gd"  # path-ok: reads source text
 const THREAD_LOAD_FIXTURE := "uid://b2vblvd6j1uoy"  # res://tests/ui_sts2_hud_contract_test.tscn
 
 var failures: PackedStringArray = []

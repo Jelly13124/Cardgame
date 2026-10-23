@@ -3,7 +3,7 @@
 """Generate browsable, CATEGORIZED HTML catalogs (cards / relics / equipment /
 enemies) + a keyword glossary, from the project's JSON data + content/UI
 translation CSVs. One-off reference tooling — output lands in docs/catalog_html/.
-Re-run any time data changes:  python scripts/gen_catalog_html.py"""
+Re-run any time data changes:  python tools/gen_catalog_html.py"""
 import csv
 import glob
 import html

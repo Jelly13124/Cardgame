@@ -19,7 +19,7 @@ Start here after cloning the repository.
 ## Generated references
 
 `docs/catalog_html/` is generated from game JSON and translations by
-`scripts/gen_catalog_html.py`. Never hand-edit its HTML. Regenerate it after card,
+`tools/gen_catalog_html.py`. Never hand-edit its HTML. Regenerate it after card,
 enemy, relic, equipment, tool, event, affix, or keyword changes.
 
 The documentation tree intentionally contains current contracts only. Historical

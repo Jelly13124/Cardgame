@@ -12,7 +12,7 @@ Produces:
 from PIL import Image, ImageDraw
 import os
 
-OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "assets", "images", "ui")
+OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "battle_scene", "assets", "images", "ui")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # ─── Palette ──────────────────────────────────────────────────────────────────

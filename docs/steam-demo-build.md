@@ -27,7 +27,7 @@ name="Windows Desktop"
 platform="Windows Desktop"
 runnable=true
 export_filter="all_resources"
-exclude_filter="*.csv,*.md,docs/*,scripts/*,**/generated_sheet/*"
+exclude_filter="*.csv,*.md,docs/*,tools/*,**/generated_sheet/*"
 export_path="build/windows/WastelandSalvageDemo.exe"
 script_export_mode=2
 
