@@ -177,16 +177,28 @@ try {
     }
     $rows | Format-Table -AutoSize | Out-String | Write-Host
 
-    # 4. Layering check (full runs only; exists from Task 7 on).
+    # 4. Tool unit tests and layering check (full runs only). Native commands
+    #    write progress to stderr, which "Stop" would turn into a terminating
+    #    error in Windows PowerShell 5.1, so relax it around them.
     if ($fullRun) {
+        $ErrorActionPreference = "Continue"
+        $unitOut = & python -m unittest discover -s (Join-Path $ProjectRoot "tools/tests") 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            $unitOut | ForEach-Object { Write-Host $_ }
+            Write-Host "tools unit tests: FAIL" -ForegroundColor Red
+            $exitCode = 1
+        } else {
+            Write-Host "tools unit tests: ok"
+        }
         $checker = Join-Path $ProjectRoot "tools/check_layers.py"
         if (Test-Path -LiteralPath $checker) {
-            $out = & python $checker 2>&1
+            $out = & python $checker --root $ProjectRoot 2>&1
             $out | ForEach-Object { Write-Host $_ }
             if ($LASTEXITCODE -ne 0) { $exitCode = 1 }
         } else {
             Write-Host "layers: skipped"
         }
+        $ErrorActionPreference = "Stop"
     }
 
     $summary = "passed=$($counts.PASS) failed=$($counts.FAIL) xfail=$($counts.XFAIL) xpass=$($counts.XPASS)"

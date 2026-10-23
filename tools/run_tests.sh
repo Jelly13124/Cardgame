@@ -102,8 +102,13 @@ done
 if [ "$found" -eq 0 ]; then echo "No tests match '$ONLY'."; EXIT_CODE=2; exit 2; fi
 
 if [ "$FULL_RUN" -eq 1 ]; then
+  if python -m unittest discover -s "$ROOT/tools/tests" >"$LOG_DIR/tools_unit.log" 2>&1; then
+    echo "tools unit tests: ok"
+  else
+    cat "$LOG_DIR/tools_unit.log"; echo "tools unit tests: FAIL"; EXIT_CODE=1
+  fi
   if [ -f "$ROOT/tools/check_layers.py" ]; then
-    python "$ROOT/tools/check_layers.py" || EXIT_CODE=1
+    python "$ROOT/tools/check_layers.py" --root "$ROOT" || EXIT_CODE=1
   else
     echo "layers: skipped"
   fi

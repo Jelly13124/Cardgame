@@ -24,6 +24,8 @@ All first-party project documentation lives in `docs/`.
 
 Project conventions belong here, in `docs/project-rules.md`, or under
 `docs/conventions/`.
+Code layering, the target directory structure and the uid reference rule are in
+`docs/conventions/architecture-layers.md` (checked by `tools/check_layers.py`).
 
 ---
 

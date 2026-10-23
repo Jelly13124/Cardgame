@@ -4,6 +4,18 @@ Before changing art or UI, read `docs/project-rules.md` and
 `docs/art-style-reference.md`. Those files are the source of truth; this file is
 the short operational gate for agents.
 
+## Code structure
+
+- Follow `docs/conventions/architecture-layers.md`: `core/` holds rules only (no
+  UI paths, no scene tree), `content/` holds data only, UI goes in `ui/`.
+- Reference scripts and scenes with `preload("uid://…")  # res://path`; after
+  moving files run `python tools/godot_refs.py sync-comments`.
+- Every save goes through `core/save/save_io.gd`; tests that save use
+  `tests/support/test_save_root.gd`.
+- Before finishing a change run `tools/run_tests.ps1` (or `tools/run_tests.sh`)
+  with `GODOT_BIN` set; it must exit 0. Known bugs live in
+  `tests/expected_failures.txt` — remove a line when its bug is fixed.
+
 ## Non-negotiable visual direction
 
 - Use original, simple flat 2D American-comic sci-fi-western TV-cartoon art.

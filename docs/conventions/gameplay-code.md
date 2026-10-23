@@ -23,7 +23,7 @@ Anything that should feel the same at 60 fps and 144 fps must use `delta` from `
 ### 3. Reference custom classes via `preload`, not global `class_name`
 ```gdscript
 # ✅ Correct
-const ENEMY_ENTITY_SCRIPT = preload("res://battle_scene/enemy_entity.gd")
+const ENEMY_ENTITY_SCRIPT = preload("uid://qtp7jvjqfbou")  # res://battle_scene/enemy_entity.gd
 var enemy = ENEMY_ENTITY_SCRIPT.create(id)
 
 # ❌ Wrong — fails on cold editor scan
@@ -32,6 +32,7 @@ var enemy: EnemyEntity = EnemyEntity.create(id)
 
 - **Why:** Godot's `class_name` global registry is parse-order-dependent. Cold scans fail.
 - **Exception:** autoloads (e.g. `RunManager`) are safe to reference globally — Godot guarantees their registration before user script parsing.
+- **Reference by uid:** preload scripts and scenes by `uid://` with the path as a trailing comment, so files can move without breaking references. See `docs/conventions/architecture-layers.md`.
 
 ### 4. Access `RunManager` directly, never via `get_node_or_null`
 ```gdscript
