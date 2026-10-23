@@ -101,7 +101,8 @@
 ## 6. 命令与钩子
 
 **命令**（`battle_scene/combat/combat_commands.gd`，负责表现）：
-- `damage(ctx, targets, base_fn, props)`：对每个目标 → 管线（实际模式）→ 提交副作用 → `take_damage` → 钩子 `after_damage_given` / `after_damage_received` → 荆棘反应；全部目标后发 `after_attack`（攻击类伤害）。
+- `damage(source, targets, base, props)`：对每个目标 → 管线（实际模式）→ 提交副作用 → `take_damage` → 钩子 `after_damage_given` / `after_damage_received`（荆棘反应挂在后者）。
+- `after_attack` 由出牌结算在每个结算轮次结束后发出（攻击牌、目标存活），敌人攻击招式结算后也发出。
 - `gain_block(ctx, creature, base, props)`、`apply_status(ctx, target, status, stacks)`、`lose_hp(ctx, creature, amount)`。
 - 受击方 `take_damage(amount, silent, tags)` 只负责“扣格挡、扣血、表现”，不再计算任何修正。
 
