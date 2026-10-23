@@ -11,13 +11,14 @@ Usage (from the project root):
 What is converted:
   * preload("res://...gd|tscn") / load(...) literals, including a preload( whose
     argument sits on the next line;
-  * every other "res://....tscn" literal (scene constants, change_to(...)),
-    unless the line reads the file as text (FileAccess / get_file_as_string);
-  * `const NAME := "res://....gd"` when NAME is only used by load(), preload()
-    or ResourceLoader.exists().
+  * a literal passed directly to change_to(), change_scene_to_file(),
+    load_threaded_request() or ResourceLoader.exists();
+  * `const NAME := "res://....gd|tscn"` when NAME is only used by those calls
+    or by load()/preload().
 Never converted: `extends "res://..."` (Godot 4.6 has no uid support there),
-comments, concatenated or formatted paths, and lines marked `# path-ok: <why>`
-(e.g. tests that read a script's source text, resource_path comparisons).
+comments, comparisons (`scene_file_path == "res://..."`), concatenated,
+formatted or array-held paths, constants that are also read as text, and lines
+marked `# path-ok: <why>` (e.g. tests that read a script's source text).
 
 `sync-comments` rewrites the trailing `# res://...` comment after each
 "uid://..." literal to the file's current path, so comments stay truthful
@@ -38,7 +39,12 @@ DEFAULT_DIRS = ["autoload", "battle_scene", "core", "run_system", "tests"]
 PATH_TEXT = re.compile(r'res://[^"%+]+\.(?:gd|tscn)')
 SCENE_UID = re.compile(r'^\[gd_scene[^\]]*\buid="(uid://[a-z0-9]+)"')
 LOAD_CALL = re.compile(r'(?:pre)?load\(\s*$')
-TEXT_READ = re.compile(r'FileAccess|get_file_as_string')
+# Calls that accept a uid:// scene/script reference as their argument.
+RESOURCE_CALLS = (
+    r'(?:(?:pre)?load|ResourceLoader\.exists|change_to|change_scene_to_file'
+    r'|load_threaded_request|load_threaded_get_status|load_threaded_get)'
+)
+RESOURCE_CALL_ARG = re.compile(RESOURCE_CALLS + r'\(\s*$')
 CONST_DECL = re.compile(r'^\s*const\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?::\s*\w+)?\s*:?=\s*"res://')
 
 
@@ -126,7 +132,7 @@ def _is_skipped(code: str, comment: str) -> bool:
 
 def _const_only_loaded(name: str, lines: list[str], decl_index: int) -> bool:
     use = re.compile(r'\b' + re.escape(name) + r'\b')
-    allowed = re.compile(r'(?:(?:pre)?load|ResourceLoader\.exists)\(\s*' + re.escape(name) + r'\s*[,)]')
+    allowed = re.compile(RESOURCE_CALLS + r'\(\s*' + re.escape(name) + r'\s*[,)]')
     used = False
     for i, line in enumerate(lines):
         if i == decl_index:
@@ -149,8 +155,9 @@ def _convertible(lines: list[str], index: int, code: str, match: PathLiteral) ->
             prev_code, _ = split_comment(lines[j])
             if prev_code.strip():
                 return bool(LOAD_CALL.search(prev_code.rstrip()))
-    if path.endswith(".tscn"):
-        return not TEXT_READ.search(code)
+    after = code[match.start() + len(path) + 2:].lstrip()
+    if RESOURCE_CALL_ARG.search(before) and after.startswith((")", ",")):
+        return True
     decl = CONST_DECL.match(code)
     if decl and decl.end() - len('"res://') == match.start():
         return _const_only_loaded(decl.group(1), lines, index)

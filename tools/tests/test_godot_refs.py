@@ -69,10 +69,37 @@ class GodotRefsTest(unittest.TestCase):
         self.assertEqual(text, 'const A = preload(\n\t"uid://bxscript"  # res://a/x.gd\n)\n')
 
     def test_scene_const_and_change_to_rewritten(self):
-        src = 'const P := "res://ui/m.tscn"\nfunc go():\n\tSceneTransition.change_to("res://ui/m.tscn")\n'
+        src = 'const P := "res://ui/m.tscn"\nfunc go():\n\tSceneTransition.change_to(P)\n\tSceneTransition.change_to("res://ui/m.tscn")\n'
         _, _, text = self.convert("b/use.gd", src)
         self.assertIn('const P := "uid://cmenu"  # res://ui/m.tscn', text)
         self.assertIn('change_to("uid://cmenu")  # res://ui/m.tscn', text)
+
+    def test_scene_path_comparison_and_concatenation_untouched(self):
+        src = (
+            'func f(node):\n'
+            '\tif node.scene_file_path == "res://ui/m.tscn":\n'
+            '\t\tpass\n'
+            '\tvar p := "res://ui/m.tscn" + suffix\n'
+            '\tvar many := ["res://ui/m.tscn"]\n'
+        )
+        _, _, text = self.convert("b/use.gd", src)
+        self.assertEqual(text, src)
+
+    def test_scene_const_read_as_text_elsewhere_untouched(self):
+        src = 'const SCENE := "res://ui/m.tscn"\nfunc t():\n\tFileAccess.get_file_as_string(SCENE)\n'
+        _, _, text = self.convert("b/use.gd", src)
+        self.assertEqual(text, src)
+
+    def test_scene_const_used_by_transitions_rewritten(self):
+        src = (
+            'const MAP := "res://ui/m.tscn"\n'
+            'func go():\n'
+            '\tSceneTransition.change_to(MAP)\n'
+            '\tget_tree().change_scene_to_file(MAP)\n'
+            '\tResourceLoader.load_threaded_request(MAP)\n'
+        )
+        _, _, text = self.convert("b/use.gd", src)
+        self.assertIn('const MAP := "uid://cmenu"  # res://ui/m.tscn', text)
 
     def test_script_const_used_only_by_load_rewritten(self):
         src = (
