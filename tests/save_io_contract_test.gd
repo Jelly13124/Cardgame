@@ -32,7 +32,7 @@ func _run() -> void:
 		"test_legacy_file_without_backups",
 		"test_missing",
 		"test_delete_keeps_corrupt_copies",
-		"test_unserializable_write_keeps_original",
+		"test_non_json_value_is_saved_as_text_and_rest_kept",
 	]:
 		_clear_dir(TEST_ROOT)
 		call(test)
@@ -176,9 +176,19 @@ func test_delete_keeps_corrupt_copies() -> void:
 	_expect(_files_starting_with("", "x.json.corrupt-").size() == 1, "delete: corrupt copy kept")
 
 
-func test_unserializable_write_keeps_original() -> void:
-	SAVE_IO.write_json("x.json", {"v": 1})
-	var err: Error = SAVE_IO.write_json("x.json", {"bad": Callable(self, "_run")})
-	_expect(err != OK, "unserializable: write returns an error")
-	_expect(int(_parsed("x.json").get("v", 0)) == 1, "unserializable: main file unchanged")
-	_expect(not FileAccess.file_exists(_abs("x.json.tmp")), "unserializable: no .tmp left behind")
+func test_non_json_value_is_saved_as_text_and_rest_kept() -> void:
+	SAVE_IO.report_errors = false  # the push_error is expected here; keep the run log clean
+	var err: Error = SAVE_IO.write_json(
+		"x.json", {"v": 2, "items": [{"pos": Vector2(1, 2)}], "nested": {"ok": "yes"}}
+	)
+	SAVE_IO.report_errors = true
+	_expect(err == OK, "non-json: write still succeeds")
+	var saved: Variant = _parsed("x.json")
+	_expect(typeof(saved) == TYPE_DICTIONARY, "non-json: file is valid JSON")
+	if typeof(saved) != TYPE_DICTIONARY:
+		return
+	_expect(int(saved.get("v", 0)) == 2, "non-json: other fields kept")
+	_expect(saved.get("nested", {}).get("ok") == "yes", "non-json: nested fields kept")
+	var pos: Variant = saved.get("items", [{}])[0].get("pos")
+	_expect(typeof(pos) == TYPE_STRING, "non-json: offending value stored as text")
+	_expect(SAVE_IO.last_non_json_paths == PackedStringArray(["items[0].pos"]), "non-json: offending path reported")

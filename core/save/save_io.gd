@@ -22,6 +22,12 @@ const _BACKUP_SUFFIXES := [".bak1", ".bak2"]
 ## Base directory for every relative save path.
 static var root: String = "user://"
 
+## When a save contains values JSON cannot represent (Vector2, Resource, ...)
+## they are stored as text and the rest of the save is kept; their paths are
+## listed here and reported with push_error unless `report_errors` is false.
+static var last_non_json_paths: PackedStringArray = []
+static var report_errors := true
+
 
 static func path(relative: String) -> String:
 	return root.path_join(relative)
@@ -40,13 +46,16 @@ static func exists(relative: String) -> bool:
 
 ## Writes `data` as JSON. Returns OK, or an error with the live file untouched.
 static func write_json(relative: String, data: Variant) -> Error:
-	if not _is_json_safe(data):
-		return ERR_INVALID_DATA
+	var non_json: PackedStringArray = []
+	var safe: Variant = _to_json_safe(data, "", non_json)
+	last_non_json_paths = non_json
+	if not non_json.is_empty() and report_errors:
+		push_error("SaveIO: %s has non-JSON values, saved as text: %s" % [relative, ", ".join(non_json)])
 	var base := path(relative)
 	var dir_err := DirAccess.make_dir_recursive_absolute(base.get_base_dir())
 	if dir_err != OK and not DirAccess.dir_exists_absolute(base.get_base_dir()):
 		return dir_err
-	var text := JSON.stringify(data, "  ")
+	var text := JSON.stringify(safe, "  ")
 	var tmp := base + ".tmp"
 	var f := FileAccess.open(tmp, FileAccess.WRITE)
 	if f == null:
@@ -142,21 +151,25 @@ static func _preserve_corrupt(base: String) -> void:
 	DirAccess.rename_absolute(base, target)
 
 
-static func _is_json_safe(value: Variant) -> bool:
+## Returns a copy JSON can represent. Values it cannot (Vector2, Resource,
+## Callable, ...) become their text form, as JSON.stringify used to produce,
+## and their paths ("items[0].pos") are appended to `non_json`.
+static func _to_json_safe(value: Variant, at: String, non_json: PackedStringArray) -> Variant:
 	match typeof(value):
-		TYPE_NIL, TYPE_BOOL, TYPE_INT, TYPE_FLOAT, TYPE_STRING, TYPE_STRING_NAME:
-			return true
-		TYPE_ARRAY:
-			for item in value:
-				if not _is_json_safe(item):
-					return false
-			return true
-		TYPE_DICTIONARY:
-			for key in value:
-				if not (key is String or key is StringName or key is int) or not _is_json_safe(value[key]):
-					return false
-			return true
+		TYPE_NIL, TYPE_BOOL, TYPE_INT, TYPE_FLOAT, TYPE_STRING, TYPE_STRING_NAME, \
 		TYPE_PACKED_STRING_ARRAY, TYPE_PACKED_INT32_ARRAY, TYPE_PACKED_INT64_ARRAY, \
 		TYPE_PACKED_FLOAT32_ARRAY, TYPE_PACKED_FLOAT64_ARRAY:
-			return true
-	return false
+			return value
+		TYPE_ARRAY:
+			var items: Array = []
+			for i in value.size():
+				items.append(_to_json_safe(value[i], "%s[%d]" % [at, i], non_json))
+			return items
+		TYPE_DICTIONARY:
+			var fields := {}
+			for key in value:
+				var name := str(key)
+				fields[name] = _to_json_safe(value[key], name if at == "" else at + "." + name, non_json)
+			return fields
+	non_json.append(at if at != "" else "<root>")
+	return str(value)

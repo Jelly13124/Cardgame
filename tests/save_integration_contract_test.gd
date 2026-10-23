@@ -29,6 +29,7 @@ func _run() -> void:
 	test_run_save_roundtrip()
 	test_delete_slot_removes_backups()
 	test_settings_roundtrip()
+	test_late_run_saves_are_plain_json()
 	RunManager.clear_run_save()
 	RunManager.is_run_active = false
 	_clear_dir(TEST_ROOT)
@@ -130,3 +131,28 @@ func test_settings_roundtrip() -> void:
 	Settings.music_volume = 0.9
 	Settings.load_settings()
 	_expect(is_equal_approx(Settings.music_volume, 0.2), "settings: music volume restored (got %s)" % Settings.music_volume)
+
+
+func test_late_run_saves_are_plain_json() -> void:
+	MetaProgress.set_active_slot(1)
+	RunManager.start_new_run("cowboy_bill")
+	for tier in ["common", "uncommon", "rare"]:
+		RunManager.add_equip_to_backpack(RunManager.roll_shell_drop(tier))
+	RunManager.add_relic("barbed_plating")
+	RunManager.add_tool("blood_kit")
+	MetaProgress.add_to_stash(RunManager.roll_shell_drop("rare"))
+	MetaProgress.refresh_bounty_shelf_if_stale()
+	if not MetaProgress.bounty_shelf.is_empty():
+		MetaProgress.take_bounty(str(MetaProgress.bounty_shelf[0]))
+	RunManager.save_run()
+	_expect(
+		SAVE_IO.last_non_json_paths.is_empty(),
+		"late run save: only JSON values (got %s)" % ", ".join(SAVE_IO.last_non_json_paths)
+	)
+	MetaProgress.save_progress()
+	_expect(
+		SAVE_IO.last_non_json_paths.is_empty(),
+		"late profile save: only JSON values (got %s)" % ", ".join(SAVE_IO.last_non_json_paths)
+	)
+	_expect(RunManager.load_run(), "late run save: loads back")
+	_expect(RunManager.relics.has("barbed_plating"), "late run save: relic restored")
