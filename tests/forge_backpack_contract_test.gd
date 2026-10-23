@@ -1,5 +1,7 @@
 extends Node
 
+const TEST_SAVE_ROOT = preload("res://tests/support/test_save_root.gd")
+
 const FORGE_WINDOW = preload("res://run_system/ui/window/forge_window.gd")
 const FORGE_SOURCE := "res://run_system/ui/window/forge_window.gd"
 
@@ -11,7 +13,12 @@ var _original_buildings: Dictionary = {}
 
 
 func _ready() -> void:
+	TEST_SAVE_ROOT.use("forge_backpack_contract_test")
 	call_deferred("_run")
+
+
+func _exit_tree() -> void:
+	TEST_SAVE_ROOT.release()
 
 
 func _expect(condition: bool, message: String) -> void:

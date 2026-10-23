@@ -401,6 +401,7 @@ var visited_node_ids: Array[String] = []
 var _node_index: Dictionary = {}
 
 const DATA_VALIDATOR = preload("res://battle_scene/data_validator.gd")
+const SAVE_IO = preload("res://core/save/save_io.gd")
 const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
 
 
@@ -2182,12 +2183,12 @@ func _run_save_path() -> String:
 	var s: int = Settings.active_slot
 	if s < 1:
 		s = 1
-	return "user://slot_%d/run_save.json" % s
+	return "slot_%d/run_save.json" % s
 
 
 ## True when a resumable in-run save exists on disk (for the active slot).
 func has_run_save() -> bool:
-	return FileAccess.file_exists(_run_save_path())
+	return SAVE_IO.exists(_run_save_path())
 
 
 ## Serialize the full run state to disk. Cheap to call repeatedly. Mirrors the
@@ -2236,31 +2237,25 @@ func save_run() -> void:
 		"current_node_id": current_node_id,
 		"visited_node_ids": visited_node_ids,
 	}
-	var path := _run_save_path()
-	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
-	var f := FileAccess.open(path, FileAccess.WRITE)
-	if f == null:
-		push_warning("RunManager: could not write %s" % path)
-		return
-	f.store_string(JSON.stringify(payload, "  "))
-	f.close()
+	var err := SAVE_IO.write_json(_run_save_path(), payload)
+	if err != OK:
+		push_warning("RunManager: could not write run save (%s)" % error_string(err))
 
 
 ## Load a saved run from disk into RunManager state. Returns false if no valid
 ## save exists (state left untouched). Rebuilds derived caches (node index +
 ## attributes). On a corrupt/partial save, returns false rather than half-loading.
 func load_run() -> bool:
-	var path := _run_save_path()
-	if not FileAccess.file_exists(path):
+	var result: Dictionary = SAVE_IO.read_json(_run_save_path())
+	var status: int = int(result.get("status", SAVE_IO.MISSING))
+	if status == SAVE_IO.MISSING:
 		return false
-	var f := FileAccess.open(path, FileAccess.READ)
-	if f == null:
-		return false
-	var data = JSON.parse_string(f.get_as_text())
-	f.close()
-	if typeof(data) != TYPE_DICTIONARY:
+	var data: Variant = result.get("data", {})
+	if status == SAVE_IO.CORRUPT or typeof(data) != TYPE_DICTIONARY:
 		push_warning("RunManager: run save corrupt — ignoring")
 		return false
+	if status == SAVE_IO.RECOVERED:
+		push_warning("RunManager: run save was corrupt, resumed from %s" % result.get("source", ""))
 	if not bool(data.get("is_run_active", false)):
 		return false
 
@@ -2341,9 +2336,7 @@ func load_run() -> bool:
 
 ## Delete any in-run save (on run end, or when a fresh run starts).
 func clear_run_save() -> void:
-	var path := _run_save_path()
-	if FileAccess.file_exists(path):
-		DirAccess.remove_absolute(path)
+	SAVE_IO.delete(_run_save_path())
 
 
 func _reindex_map() -> void:

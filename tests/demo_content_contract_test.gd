@@ -1,5 +1,7 @@
 extends Node
 
+const TEST_SAVE_ROOT = preload("res://tests/support/test_save_root.gd")
+
 const META_PROGRESS_PATH := "res://run_system/core/meta_progress.gd"
 const RUN_MANAGER_PATH := "res://run_system/core/run_manager.gd"
 const TUTORIAL_PATH := "res://battle_scene/ui/tutorial_tips.gd"
@@ -24,7 +26,12 @@ var failures: PackedStringArray = []
 
 
 func _ready() -> void:
+	TEST_SAVE_ROOT.use("demo_content_contract_test")
 	call_deferred("_run")
+
+
+func _exit_tree() -> void:
+	TEST_SAVE_ROOT.release()
 
 
 func _expect(condition: bool, message: String) -> void:

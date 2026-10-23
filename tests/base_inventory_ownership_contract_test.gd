@@ -1,5 +1,7 @@
 extends Node
 
+const TEST_SAVE_ROOT = preload("res://tests/support/test_save_root.gd")
+
 const MARKET_SCREEN = preload("res://run_system/ui/buildings/market_screen.gd")
 
 var failures: PackedStringArray = []
@@ -9,7 +11,12 @@ var _run_snapshot: Dictionary = {}
 
 
 func _ready() -> void:
+	TEST_SAVE_ROOT.use("base_inventory_ownership_contract_test")
 	call_deferred("_run")
+
+
+func _exit_tree() -> void:
+	TEST_SAVE_ROOT.release()
 
 
 func _expect(condition: bool, message: String) -> void:

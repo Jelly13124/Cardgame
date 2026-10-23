@@ -1,5 +1,7 @@
 extends Node
 
+const TEST_SAVE_ROOT = preload("res://tests/support/test_save_root.gd")
+
 const HOME_BASE = preload("res://run_system/ui/home_base_scene.tscn")
 
 var failures: PackedStringArray = []
@@ -11,7 +13,12 @@ var _original_bounty_shelf_date: String
 
 
 func _ready() -> void:
+	TEST_SAVE_ROOT.use("building_upgrade_runtime_test")
 	call_deferred("_run")
+
+
+func _exit_tree() -> void:
+	TEST_SAVE_ROOT.release()
 
 
 func _expect(condition: bool, message: String) -> void:

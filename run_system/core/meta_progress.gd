@@ -15,23 +15,19 @@ extends Node
 ## active slot lives in Settings.active_slot (set by the slot-select screen).
 ## Legacy global user://meta.json is no longer read (the slot system supersedes it).
 const SLOT_COUNT := 3
-const LEGACY_SAVE_PATH := "user://meta.json"
+## Pre-slots profile, relative to SaveIO.root.
+const LEGACY_SAVE_PATH := "meta.json"
+const SAVE_IO = preload("res://core/save/save_io.gd")
 
 
-## meta.json path for a slot (defaults to the active slot). Slot 0 (none chosen)
-## falls back to slot 1 so direct save/load never writes to a slotless root.
+## meta.json path for a slot (defaults to the active slot), relative to
+## SaveIO.root. Slot 0 (none chosen) falls back to slot 1 so direct save/load
+## never writes to a slotless root.
 func _meta_path(slot: int = -1) -> String:
 	var s: int = Settings.active_slot if slot < 0 else slot
 	if s < 1:
 		s = 1
-	return "user://slot_%d/meta.json" % s
-
-
-func _ensure_slot_dir(slot: int = -1) -> void:
-	var s: int = Settings.active_slot if slot < 0 else slot
-	if s < 1:
-		s = 1
-	DirAccess.make_dir_recursive_absolute("user://slot_%d" % s)
+	return "slot_%d/meta.json" % s
 
 
 ## Activate a slot: set it globally (persisted via Settings) and load that slot's
@@ -44,7 +40,7 @@ func set_active_slot(slot: int) -> void:
 
 ## True if slot N has a saved profile on disk.
 func slot_exists(slot: int) -> bool:
-	return FileAccess.file_exists(_meta_path(slot))
+	return SAVE_IO.exists(_meta_path(slot))
 
 
 ## First slot (1..N) with no save, or 0 if all slots are full.
@@ -68,25 +64,19 @@ func most_recent_slot() -> int:
 
 ## Permanently delete slot N's files (meta + in-run save).
 func delete_slot(slot: int) -> void:
-	var dir := "user://slot_%d" % slot
-	for f in ["meta.json", "meta.json.bak", "run_save.json"]:
-		var path: String = dir + "/" + str(f)
-		if FileAccess.file_exists(path):
-			DirAccess.remove_absolute(path)
+	SAVE_IO.delete(_meta_path(slot))
+	SAVE_IO.delete("slot_%d/run_save.json" % slot)
+	# Pre-SaveIO builds renamed a corrupt profile to meta.json.bak.
+	var legacy_bak := SAVE_IO.path("slot_%d/meta.json.bak" % slot)
+	if FileAccess.file_exists(legacy_bak):
+		DirAccess.remove_absolute(legacy_bak)
 
 
 ## Lightweight read of a slot's profile for the menu summary, WITHOUT changing the
 ## active slot or MetaProgress state. Returns {} for an empty slot.
 func peek_slot(slot: int) -> Dictionary:
-	var path := _meta_path(slot)
-	if not FileAccess.file_exists(path):
-		return {}
-	var f := FileAccess.open(path, FileAccess.READ)
-	if not f:
-		return {}
-	var parsed = JSON.parse_string(f.get_as_text())
-	f.close()
-	if typeof(parsed) != TYPE_DICTIONARY:
+	var parsed: Variant = SAVE_IO.read_json(_meta_path(slot)).get("data", {})
+	if typeof(parsed) != TYPE_DICTIONARY or parsed.is_empty():
 		return {}
 	return {
 		"caps": int(parsed.get("caps", 0)),
@@ -100,10 +90,7 @@ func peek_slot(slot: int) -> Dictionary:
 ## and write a fresh meta.json. Also clears that slot's in-run save.
 func reset_for_new_game(slot: int) -> void:
 	Settings.set_active_slot(slot)
-	_ensure_slot_dir(slot)
-	var meta := _meta_path(slot)
-	if FileAccess.file_exists(meta):
-		DirAccess.remove_absolute(meta)
+	SAVE_IO.delete(_meta_path(slot))
 	_reset_to_defaults()
 	if RunManager.has_method("clear_run_save"):
 		RunManager.clear_run_save()
@@ -355,22 +342,13 @@ const REMOVED_UPGRADE_REFUND_COSTS := {
 ## slot 1 has no save yet, import it into slot 1 so a returning tester keeps their banked
 ## caps / scrap / stash / unlocks instead of booting an empty profile after the slots update.
 func _migrate_legacy_save() -> void:
-	if slot_exists(1) or not FileAccess.file_exists(LEGACY_SAVE_PATH):
+	if slot_exists(1) or not FileAccess.file_exists(SAVE_IO.path(LEGACY_SAVE_PATH)):
 		return
-	var src := FileAccess.open(LEGACY_SAVE_PATH, FileAccess.READ)
-	if src == null:
+	var legacy: Variant = SAVE_IO.read_json(LEGACY_SAVE_PATH).get("data", {})
+	if typeof(legacy) != TYPE_DICTIONARY or legacy.is_empty():
 		return
-	var text := src.get_as_text()
-	src.close()
-	if text.strip_edges() == "":
-		return
-	_ensure_slot_dir(1)
-	var dst := FileAccess.open(_meta_path(1), FileAccess.WRITE)
-	if dst == null:
-		return
-	dst.store_string(text)
-	dst.close()
-	push_warning("MetaProgress: migrated legacy user://meta.json -> slot 1")
+	if SAVE_IO.write_json(_meta_path(1), legacy) == OK:
+		push_warning("MetaProgress: migrated legacy meta.json -> slot 1")
 
 
 func _ready() -> void:
@@ -1158,11 +1136,6 @@ func mark_card_seen(card_id: String) -> void:
 
 
 func save_progress() -> void:
-	_ensure_slot_dir()
-	var f := FileAccess.open(_meta_path(), FileAccess.WRITE)
-	if not f:
-		push_warning("MetaProgress: failed to open save file for write")
-		return
 	var payload := {
 		"caps": caps,
 		"scrap": scrap,
@@ -1184,24 +1157,26 @@ func save_progress() -> void:
 		"bounty_free_claimed": bounty_free_claimed,
 		"cards_seen": cards_seen,
 	}
-	f.store_string(JSON.stringify(payload, "  "))
-	f.close()
+	var err := SAVE_IO.write_json(_meta_path(), payload)
+	if err != OK:
+		push_warning("MetaProgress: failed to save profile (%s)" % error_string(err))
 
 
 func load_progress() -> void:
 	var path := _meta_path()
-	if not FileAccess.file_exists(path):
+	var result: Dictionary = SAVE_IO.read_json(path)
+	var status: int = int(result.get("status", SAVE_IO.MISSING))
+	if status == SAVE_IO.MISSING:
 		return
-	var f := FileAccess.open(path, FileAccess.READ)
-	if not f:
+	var parsed: Variant = result.get("data", {})
+	if status == SAVE_IO.CORRUPT or typeof(parsed) != TYPE_DICTIONARY:
+		# SaveIO kept the unreadable file as <path>.corrupt-<time>; continue with
+		# defaults rather than refusing to start.
+		push_warning("MetaProgress: profile %s and its backups are unreadable" % path)
 		return
-	var raw := f.get_as_text()
-	f.close()
-	var parsed = JSON.parse_string(raw)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		push_warning("MetaProgress: corrupt save file at %s, renaming to .bak" % path)
-		DirAccess.rename_absolute(path, path + ".bak")
-		return
+	var recovered := status == SAVE_IO.RECOVERED
+	if recovered:
+		push_warning("MetaProgress: profile %s was corrupt, restored from %s" % [path, result.get("source", "")])
 	# Core was removed 2026-07-07: an old save's "core" key is simply ignored here
 	# (balance discarded, not migrated — owner decision). Missing/extra keys are
 	# fault-tolerant (JSON.get with defaults), so old and new saves both load clean.
@@ -1296,6 +1271,8 @@ func load_progress() -> void:
 		save_progress()
 		emit_signal("caps_changed", caps)
 		emit_signal("upgrades_changed")
+	elif recovered:
+		save_progress()
 
 
 ## Refund and erase profile fields whose gameplay/UI no longer exists. The raw

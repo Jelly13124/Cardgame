@@ -8,6 +8,7 @@ extends Control
 
 const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
 const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
+const SAVE_IO = preload("res://core/save/save_io.gd")
 
 const HOME_BASE_PATH := "res://run_system/ui/home_base_scene.tscn"
 const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
@@ -516,7 +517,7 @@ func _slot_summary_text(n: int, info: Dictionary) -> String:
 			}
 		)
 	)
-	if FileAccess.file_exists("user://slot_%d/run_save.json" % n):
+	if SAVE_IO.exists("slot_%d/run_save.json" % n):
 		line += " · " + tr("SLOT_IN_PROGRESS")
 	return line
 

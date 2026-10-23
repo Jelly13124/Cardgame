@@ -6,7 +6,9 @@
 ## (never via get_node_or_null). See docs/conventions/gameplay-code.md.
 extends Node
 
-const SAVE_PATH := "user://settings.json"
+## Relative to SaveIO.root.
+const SAVE_PATH := "settings.json"
+const SAVE_IO = preload("res://core/save/save_io.gd")
 const DEFAULT_LANGUAGE := "en"
 
 var language: String = DEFAULT_LANGUAGE
@@ -59,13 +61,8 @@ func _load_translations() -> void:
 
 
 func load_settings() -> void:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return
-	var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
-	if f == null:
-		return
-	var data = JSON.parse_string(f.get_as_text())
-	if typeof(data) != TYPE_DICTIONARY:
+	var data: Variant = SAVE_IO.read_json(SAVE_PATH).get("data", {})
+	if typeof(data) != TYPE_DICTIONARY or data.is_empty():
 		return
 	language = str(data.get("language", DEFAULT_LANGUAGE))
 	fullscreen = bool(data.get("fullscreen", false))
@@ -82,30 +79,21 @@ func load_settings() -> void:
 
 
 func save_settings() -> void:
-	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if f == null:
-		push_warning("Settings: could not write %s" % SAVE_PATH)
-		return
-	(
-		f
-		. store_string(
-			(
-				JSON
-				. stringify(
-					{
-						"language": language,
-						"fullscreen": fullscreen,
-						"master_volume": master_volume,
-						"music_volume": music_volume,
-						"sfx_volume": sfx_volume,
-						"game_speed": game_speed,
-						"active_slot": active_slot,
-						"key_bindings": key_bindings,
-					}
-				)
-			)
-		)
+	var err := SAVE_IO.write_json(
+		SAVE_PATH,
+		{
+			"language": language,
+			"fullscreen": fullscreen,
+			"master_volume": master_volume,
+			"music_volume": music_volume,
+			"sfx_volume": sfx_volume,
+			"game_speed": game_speed,
+			"active_slot": active_slot,
+			"key_bindings": key_bindings,
+		}
 	)
+	if err != OK:
+		push_warning("Settings: could not write %s (%s)" % [SAVE_PATH, error_string(err)])
 
 
 func _apply_all() -> void:
