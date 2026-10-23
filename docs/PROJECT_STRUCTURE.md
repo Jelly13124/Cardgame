@@ -58,11 +58,11 @@ Code layering, the target directory structure and the uid reference rule are in
     *   *Logic for the "Zap" arrow when playing Attack cards.*
 
 ### ⚙️ Combat Logic
-*   **Core Engine**: `battle_scene/combat_engine.gd`
+*   **Core Engine**: `battle_scene/combat_engine.gd` (card-play orchestration) + `core/combat/` (value pipeline, hooks, rule listeners, action queue) + `core/effects/` (effect registry, run-context effects) + `battle_scene/combat/` (commands, combat effect handlers, service wiring)
     *   *The brain of the game. It resolves all card effects (damage, block, buffs) triggered by JSON data.*
 *   **Status Effects**: `battle_scene/status_effect_system.gd`
     *   *System for managing Short Circuit, Burn, Weak, Vulnerable, Stun, and persistent player powers.*
-*   **Discover**: `battle_scene/discover_modal.gd` (full-screen 3-choose-1 popup) + `run_system/core/discover_pool.gd` (rolls candidates by card type / theme tag). Driven by the `discover` effect in `combat_engine._apply_effect`; the picked card enters the hand for this combat only (optional `free` = 0-cost via a `cost_override` meta). Triggered by the 3 discover **tools** (`blood_kit`, displayed as Circuit Kit; `munitions_crate`; `field_kit`) — the demo discover *cards* were removed 2026-07-01, so discover is tool-only. Candidates suppress the "playable" glow and drive their keyword tooltip from the overlay button.
+*   **Discover**: `battle_scene/discover_modal.gd` (full-screen 3-choose-1 popup) + `run_system/core/discover_pool.gd` (rolls candidates by card type / theme tag). Driven by the `discover` effect (`battle_scene/combat/combat_effects.gd`); the picked card enters the hand for this combat only (optional `free` = 0-cost via a `cost_override` meta). Triggered by the 3 discover **tools** (`blood_kit`, displayed as Circuit Kit; `munitions_crate`; `field_kit`) — the demo discover *cards* were removed 2026-07-01, so discover is tool-only. Candidates suppress the "playable" glow and drive their keyword tooltip from the overlay button.
 
 ---
 

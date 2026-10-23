@@ -56,11 +56,22 @@ For data that ships with the game (cards, enemies, encounter pools):
 For generated sprite assets: warn-only with a `ColorRect` fallback is OK because regeneration may be in flight.
 
 ### 6. New effect / action / status types must be registered in 2 places
-Adding a new effect type to combat:
-1. Add handler in `combat_engine._apply_effect()`.
-2. Add the type string to `DataValidator.ALLOWED_EFFECT_TYPES`.
+Adding a new effect type:
+1. Register its handler in the effect registry — combat and enemy handlers in
+   `battle_scene/combat/combat_effects.gd` (`register_into`), event options in
+   `core/effects/run_effects.gd`.
+2. Add the type string to the matching `DataValidator` list
+   (`ALLOWED_EFFECT_TYPES`, `ALLOWED_ENEMY_ACTION_TYPES`, `ALLOWED_EVENT_EFFECT_TYPES`).
 
-Same pattern for enemy action types (`ALLOWED_ENEMY_ACTION_TYPES`) and status names (`ALLOWED_STATUS_NAMES`).
+Status names go in `ALLOWED_STATUS_NAMES`; what a status does to damage, Block
+or stacks goes in a listener (`core/combat/rules/status_rules.gd` today).
+
+### 7. Values go through the pipeline; state changes go through commands
+Never compute damage, Block or status stacks by hand: build a value with
+`core/combat/value_calc.gd` and run it through `combat_hooks.compute_*`
+(previews pass `preview = true` and must not commit). Change HP, Block and
+statuses only through `battle_scene/combat/combat_commands.gd`, so modifiers,
+Intangible and reactions (on-hit, Thorns, relics) apply everywhere.
 
 - **Why:** the validator IS the schema. If validator doesn't know a type, it'll be silently allowed by JSON but the game might handle it inconsistently.
 
@@ -71,7 +82,7 @@ Same pattern for enemy action types (`ALLOWED_ENEMY_ACTION_TYPES`) and status na
 ### A. UI/data layer coupling
 **Rule (from Donchitos):** "NO direct references to UI code — use events/signals for cross-system communication."
 
-**Our state:** `battle_scene.gd` directly calls `ui_manager.show_notification(...)`, `_update_ui_labels()`, etc. `combat_engine.gd` reaches up to `main.show_notification(...)`. Tight coupling between gameplay and UI.
+**Our state:** `battle_scene.gd` directly calls `ui_manager.show_notification(...)`, `_update_ui_labels()`, etc. Combat effect handlers reach up to `services.show_notification(...)`. Tight coupling between gameplay and UI.
 
 **Why we ignore the rule:** decoupling via signals would require a project-wide event bus refactor (see the "M5" item in the audit). Cost is high; current pain is low. Tracked as deferred maintainability work.
 
@@ -105,7 +116,7 @@ shared test runner/plugin, or before Steam launch.
 ## Suggested workflow when adding gameplay
 
 1. Define the JSON schema first (in `DataValidator` if new field types).
-2. Implement the handler in `combat_engine.gd` / `enemy_ai.gd` / etc.
+2. Register the handler in `battle_scene/combat/combat_effects.gd` (cards, tools, relics, sets, enemy moves) or `core/effects/run_effects.gd` (event options).
 3. Add JSON content files.
 4. Headless validate: `godot --headless --path . --quit-after 5` — should print `DataValidator: all card/enemy/relic JSON files passed schema check.`
 5. Run the relevant `tests/*_contract_test.tscn` scene headlessly.

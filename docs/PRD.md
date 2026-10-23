@@ -57,7 +57,7 @@ full-game ruleset behind `RunManager.DEMO_BUILD = false`.
 | **Curse** | **Unplayable** — returns to hand if played; punishes you each turn it sits in hand (`end_turn_in_hand`) | — |
 
 ### Card Effects System (Data-Driven)
-All effects are defined in card JSON via the `effects[]` array. The `CombatEngine` resolves them generically. Supported effect types:
+All effects are defined in card JSON via the `effects[]` array. One effect registry (`core/effects/effect_registry.gd`, combat handlers in `battle_scene/combat/combat_effects.gd`) runs them for cards, tools, relics, equipment sets, curses, enemy moves and event options alike. Supported effect types:
 
 - `deal_damage` — Single-target damage (scales with `strength`)
 - `deal_damage_all` — All-enemy damage
@@ -75,15 +75,26 @@ All effects are defined in card JSON via the `effects[]` array. The `CombatEngin
 
 > The list above is a selection. The **authoritative** set is `DataValidator.ALLOWED_EFFECT_TYPES` (33 types) — see `docs/conventions/data-files.md` for the full categorized list.
 
-Cards built from existing effects require only JSON. A genuinely new shared effect must add a handler to `combat_engine.gd` and be registered in `DataValidator.ALLOWED_EFFECT_TYPES`.
+Cards built from existing effects require only JSON. A genuinely new shared effect registers a handler in `battle_scene/combat/combat_effects.gd` (`register_into`) and is added to `DataValidator.ALLOWED_EFFECT_TYPES`.
+
+### Combat Value Pipeline
+
+Every damage hit, Block gain and status application runs through one pipeline (`core/combat/combat_hooks.gd`); the targeting preview, the enemy intent badge, the card text numbers and the actual hit all call it, so they cannot disagree.
+
+- **Order**: base value → additive (Strength, Loaded, equipment-set and relic flat bonuses) → multiplicative (crit, Weak, Vulnerable; Frail for Block) → round down once → flat reductions (damage-reduction relics) → cap (Intangible: at most 1) → Block → HP.
+- **Powered vs fixed** (STS2 rule): card damage effects and enemy attacks are *powered* — they take Strength, Weak, Vulnerable, crits and trigger Thorns; card Block takes Constitution and Frail. Relic, equipment-set, tool, Thorns and Burn values are *fixed*: they resolve at their printed number (Intangible still caps them).
+- **On-hit effects** (e.g. a set's "Attack cards apply Weak") trigger only on card-dealt damage, including Overload discharged by a card.
+- **Crits** roll on powered player damage only (Overload under Overload Protocol); the preview shows guaranteed crits (Deadeye, Deadeye Crit Clip) but never a random one.
+- **Attacks played** counts Attack cards played, once per card regardless of Replay or hits.
+- **Action queue**: card plays, tool uses and End Turn resolve one at a time in input order (`core/combat/action_queue.gd`).
 
 ### Player Attributes (五维属性)
 
 | Attribute | 属性 | Effect |
 |---|---|---|
-| **Strength** | 力量 | Added GLOBALLY to ALL attack damage (`combat_engine._apply_effect()`, default +3); per-card `scaling` is deprecated |
-| **Constitution** | 体质 | Added GLOBALLY to ALL block (default +3); replaces old "Defense" |
-| **Intelligence** | 智力 | Adds +1 stack to every target status the player applies (`apply_status` / `apply_status_all`) + powers `apply_short_circuit_scaled` + boosts tool effects (+8%/pt); no longer affects XP |
+| **Strength** | 力量 | Added to every powered card damage hit (`core/combat/rules/attribute_rules.gd`, default +3) unless the effect opts out (`no_str`, or its base already uses Strength); per-card `scaling` is deprecated |
+| **Constitution** | 体质 | Added to every card Block gain (default +3) unless `no_con`; relic/set/tool Block is fixed; replaces old "Defense" |
+| **Intelligence** | 智力 | Adds +1 stack per point to statuses a card or tool applies to enemies (`apply_status` / `apply_status_all`, not Stun) + powers `apply_short_circuit_scaled` + boosts tool effects (+8%/pt); no longer affects XP |
 | **Luck** | 幸运 | Crit chance (+2%/pt, +4% with Crit Clip, uncapped; 1.5× crit) + 1.5%/pt loot rarity + tool/equipment find chance |
 | **Charm** | 魅力 | Lowers shop prices (−2%/pt, floor 0.6×) + lowers per-level XP wall (−4%/pt, floor 0.6×) + gates high-Charm event options (the old enemy-flee mechanic was deleted) |
 
@@ -95,10 +106,11 @@ Cards built from existing effects require only JSON. A genuinely new shared effe
 |---|---|
 | **Short Circuit** | Stored delayed damage on an enemy; it neither ticks nor decays until an `overload` effect consumes all enemies' stacks |
 | **Burn** | Deals damage when it ticks, then halves its stacks |
-| **Weak** | Direct attack damage dealt is reduced by 50%; stacks decrement at end of affected character turn |
-| **Vulnerable** | Direct attack damage taken is increased by 50%; stacks decrement at end of affected character turn |
+| **Weak** | Powered damage dealt is reduced by 50%; stacks decrement at end of affected character turn |
+| **Vulnerable** | Powered damage taken is increased by 50% (rounded down); stacks decrement at end of affected character turn |
 | **Stun** ⚡ | Enemy skips its next turn per stack; manual-consume, no decay; enemy-only; can interrupt a telegraphed attack |
-| **Regen / Thorns / Frail / Dodge** | heal-over-time / reflect-on-hit (loses 1 stack each time it triggers) / −25% block / negate one attack |
+| **Regen / Thorns / Frail** | heal-over-time / reflect a powered hit (loses 1 stack each time it triggers) / −25% card or enemy-move Block |
+| **Intangible** | Each hit (and direct HP loss) deals at most 1; lasts until the end of the opponent's turn, losing 1 stack then (replaced Dodge) |
 | **Metallicize / Feel No Pain** | persistent powers (StS2 port): +Block per turn / +Block on Exhaust |
 
 ### Enemy System
@@ -377,9 +389,11 @@ BattleScene (Node)
 | Script | Responsibility |
 |---|---|
 | `battle_scene.gd` | Central orchestrator: wires all subsystems, targeting state |
-| `combat_engine.gd` | Data-driven effect resolver; reads `effects[]` from card JSON; applies weak/vulnerable attack multipliers |
+| `combat_engine.gd` | Card-play orchestration (gunshot animation, Replay passes, matched bonus, after-attack); effects run through the registry, values through `core/combat` |
+| `combat/combat_commands.gd` | The only way combat changes HP, Block and statuses: pipeline → apply → hooks |
+| `combat/combat_effects.gd` | Effect handlers for cards, tools, relics, sets, curses and enemy moves; preview helpers |
 | `enemy_entity.gd` | Loads from JSON; manages sprite via `sprite_id`; action pattern cycling |
-| `enemy_ai.gd` | Spawns enemies; executes turn; applies enemy attack multipliers and relic modifiers |
+| `enemy_ai.gd` | Spawns enemies; runs the enemy turn; dispatches moves through the effect registry |
 | `deck_manager.gd` | Draw/discard/reshuffle logic |
 | `play_card.gd` | Routes attack vs skill via mouse events |
 | `run_manager.gd` | Autoload: all persistent run state including equipment and relics |
@@ -522,7 +536,7 @@ Function reference: `docs/building-screens-functions.md`.
 - Enemy intent system with action patterns
 - Player HP / block / energy UI (CharacterHUD)
 - Draw pile / discard pile viewer (Q/E shortcuts)
-- Status effect system (Short Circuit, Burn, Weak, Vulnerable, Stun, Regen, Thorns, Frail, Dodge, and persistent Bill powers)
+- Status effect system (Short Circuit, Burn, Weak, Vulnerable, Stun, Regen, Thorns, Frail, Intangible, and persistent Bill powers)
 - Combat sprites with static rest poses and attack animations
 
 ### ✅ Phase 2 — Run System & Demo Content
@@ -575,7 +589,7 @@ Function reference: `docs/building-screens-functions.md`.
 - ✅ Current cards use original Cowboy Bill mechanics and visuals; the generated catalog is the content reference.
 
 ### ✅ Phase 8 — Tools · Equipment Economy · A0 Balance
-- ✅ **Tool system** (StS2-style one-time consumables): `run_system/data/tools/*.json` (11: 8 original + 3 discover tools added 2026-06-30), a top-bar **tool shelf** (`run_top_bar.gd`), confirmation before use, and explicit arrow/click target selection for enemy tools. Cancellation never consumes the item; effects reuse `combat_engine._apply_effect`, scaled ×(1+0.08·INT). _Tool slots reworked in Phase 9 → **1 base slot**, tools held in the backpack + equipped from the character panel; see below._
+- ✅ **Tool system** (StS2-style one-time consumables): `run_system/data/tools/*.json` (11: 8 original + 3 discover tools added 2026-06-30), a top-bar **tool shelf** (`run_top_bar.gd`), confirmation before use, and explicit arrow/click target selection for enemy tools. Cancellation never consumes the item; effects run through the shared effect registry as fixed tool values, scaled ×(1+0.08·INT). _Tool slots reworked in Phase 9 → **1 base slot**, tools held in the backpack + equipped from the character panel; see below._
 - ✅ **Attribute rework**: the Charm enemy-**flee** mechanic was **deleted**; INT off XP → boosts tools and player-applied statuses, especially Short Circuit; Charm lowers the per-level XP wall.
 - ✅ **Drop / shop restructure**: shop sells tools (not equipment); Luck-scaled tool + equipment drops (see Rewards by node type).
 - ✅ **Loading**: session card-info cache (`MetaProgress.get_card_info_cache` + `cached_card_factory.gd`) skips the per-battle JSON re-parse.
@@ -618,7 +632,7 @@ Function reference: `docs/building-screens-functions.md`.
   theme tag like `short_circuit`). The picked card enters the **current hand for this combat only**;
   optional `free` makes it cost 0 this combat (a `cost_override` card meta).
 - ✅ **3 discover tools** (`blood_kit`, displayed as Circuit Kit, uses the `short_circuit` pool / `munitions_crate` attack / `field_kit` skill)
-  trigger discover; they route through the same `combat_engine._apply_effect` as any card.
+  trigger discover; they route through the same effect registry as any card.
   Discover is tool-only.
 
 ### ✅ Phase 12 — Market tiers + card draft pool

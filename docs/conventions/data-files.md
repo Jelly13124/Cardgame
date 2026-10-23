@@ -120,13 +120,13 @@ Authoritative list in `DataValidator.ALLOWED_EFFECT_TYPES`. As of this writing:
 - Legacy compatibility: `flip_polarity` remains accepted for old data/save compatibility but is inert in the current Bill-only kit.
 - Marker: `exhaust_self`
 
-**Global attributes:** STR is auto-added to all attack damage and CON to all block (`combat_engine._apply_effect()`, default +3 each). The per-card `scaling` field is **deprecated** — combat_engine no longer reads it. Card JSON carries the BASE number only. (`deal_damage_str_mult` and `scale_damage_by_attacks` compute their own damage and do NOT receive the global +STR.)
+**Global attributes:** STR is auto-added to every powered card damage hit and CON to every card Block gain (`core/combat/rules/attribute_rules.gd`, default +3 each); relic, equipment-set and tool values are fixed. The per-card `scaling` field is **deprecated** — nothing reads it. Card JSON carries the BASE number only. (`deal_damage_str_mult`, `deal_damage_block_mult` and `scale_damage_by_attacks` compute their own base and do NOT receive the global +STR.) See the PRD "Combat Value Pipeline" section for the full order.
 
 **Status scaling (Intelligence):** `apply_status` and `apply_status_all` add the player's Intelligence to the base stacks. `apply_short_circuit_scaled` is the dedicated Short Circuit formula and may additionally use `attr`, `mult`, `flat`, and `double_if_short_circuited`. `overload` consumes every enemy's stored Short Circuit and deals that much delayed damage; it is global and does not target a single enemy.
 
-**Tools:** `run_system/data/tools/{tool_id}.json` are one-time battle consumables — shape `{id, title, target ("enemy"|"self"|"none"), rarity, effects[], icon}`. Their `effects[]` reuse this same effect vocabulary (resolved through `combat_engine._apply_effect`, scaled ×(1+0.08·INT)); validated by `DataValidator.validate_tool` (`REQUIRED_TOOL_KEYS` / `ALLOWED_TOOL_TARGETS`).
+**Tools:** `run_system/data/tools/{tool_id}.json` are one-time battle consumables — shape `{id, title, target ("enemy"|"self"|"none"), rarity, effects[], icon}`. Their `effects[]` reuse this same effect vocabulary (resolved through the shared effect registry as tool sources: fixed values — no STR/CON, Weak/Vulnerable or crits — after their own ×(1+0.08·INT) scaling); validated by `DataValidator.validate_tool` (`REQUIRED_TOOL_KEYS` / `ALLOWED_TOOL_TARGETS`).
 
-When adding a new effect type, update **both** `combat_engine._apply_effect()` and `DataValidator.ALLOWED_EFFECT_TYPES`.
+When adding a new effect type, update **both** the effect registry (`battle_scene/combat/combat_effects.gd` `register_into`) and `DataValidator.ALLOWED_EFFECT_TYPES`.
 
 ---
 
@@ -150,7 +150,7 @@ Authoritative list in `DataValidator.ALLOWED_ENEMY_ACTION_TYPES`:
 Authoritative list in `DataValidator.ALLOWED_STATUS_NAMES`:
 
 `short_circuit`, `burn`, `weak`, `vulnerable`, `stun`, `regen`, `thorns`, `frail`,
-`dodge`, `metallicize`, `feel_no_pain`, `hot_streak`, `all_in`, `deadeye`,
+`intangible`, `metallicize`, `feel_no_pain`, `hot_streak`, `all_in`, `deadeye`,
 `overload_protocol`, `covering_reload`, `reactive_plating`, `loaded`, `bullet`
 
 `short_circuit` stores delayed damage on enemies and does not tick or decay by
@@ -192,4 +192,4 @@ If you see `X validation failure(s)`, the error log above explains what's wrong 
 - ❌ Typo'd key like `"retian": true` — validator catches as warning ("unknown top-level key 'retian'").
 - ❌ Effect type spelled `deal_dmg` instead of `deal_damage` — validator catches as error.
 - ❌ Enemy `sprite_id` doesn't match a folder under `enemies/` — game runs with a `ColorRect` placeholder and emits only a warning. If you intended to use an existing sprite, double-check the spelling.
-- ❌ Adding new effect type to JSON but forgetting `combat_engine` handler — validator catches via `ALLOWED_EFFECT_TYPES`, but only if you also updated that list. If you updated `combat_engine` but not the validator, JSON will validate OK at startup, then `combat_engine` will `push_error` + assert at runtime on first use.
+- ❌ Adding new effect type to JSON but forgetting its registry handler — validator catches via `ALLOWED_EFFECT_TYPES`, but only if you also updated that list. If the validator knows the type but no handler is registered, the effect registry will `push_error` + assert at runtime on first use.
