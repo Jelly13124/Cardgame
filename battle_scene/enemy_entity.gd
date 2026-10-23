@@ -7,6 +7,7 @@ class_name EnemyEntity
 const HUD_SCRIPT = preload("uid://dqn0nfitycf2d")  # res://battle_scene/ui/character_hud.gd
 const ENEMY_DATA_DIR = "res://battle_scene/card_info/enemy/"
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
+const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
 const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://battle_scene/combat_feedback_controller.gd
 
 # Intent badge icon textures — preloaded once instead of `load()`-ing on every
@@ -49,6 +50,8 @@ var sprite_id: String = ""
 
 ## Composed status effect system
 var status_system = STATUS_SYS.new()
+## Battle this enemy fights in; set by combat_commands.attach().
+var battle: Node = null
 
 ## Short labels used inside the intent badge ("⚔ 5 +Weak" etc.).
 const _STATUS_SHORT_NAMES = {
@@ -81,7 +84,7 @@ var phases: Array = []
 ## Indices (into `phases`) of phases already entered — each fires at most once.
 var _entered_phases: Dictionary = {}
 ## on_enter actions queued by a phase transition, drained by enemy_ai at turn
-## start and run through _execute_action (so summon/buff visuals + notifications
+## start and run through execute_action (so summon/buff visuals + notifications
 ## reuse the existing action handlers). Entity-side we only swap the pattern and
 ## reset the pointer synchronously in take_damage; scene-routed effects wait for
 ## the next enemy turn (no scene access needed mid-damage). See ADR notes in spec.
@@ -421,19 +424,13 @@ func update_intent_display() -> void:
 	_update_intent_display()
 
 
-## Computes the actual damage that will be displayed in the intent badge for
-## this enemy's next attack, taking enemy's own weak and player's vulnerable
-## into account. Mirrors combat_engine.calculate_attack_damage() but without
-## side effects.
-func _compute_display_attack(base_amount: int) -> int:
-	var outgoing := status_system.get_outgoing_multiplier()
-	var incoming := 1.0
-	var battle = get_tree().current_scene if get_tree() else null
-	if battle and "player" in battle and is_instance_valid(battle.player):
-		var p = battle.player
-		if p.has_method("get_incoming_attack_multiplier"):
-			incoming = p.get_incoming_attack_multiplier()
-	return int(round(float(base_amount) * outgoing * incoming))
+## Damage the player would take from `action` right now, computed by the
+## shared pipeline in preview mode (the same calculation the attack uses).
+## Before the battle attaches this enemy, the move's printed amount.
+func intent_attack_damage(action: Dictionary) -> int:
+	if battle and is_instance_valid(battle) and battle.get("combat_commands"):
+		return COMBAT_EFFECTS.preview_enemy_attack(battle, self, action)
+	return int(action.get("amount", 0))
 
 
 ## Localized short status label for the intent badge. Falls back to the English
@@ -494,14 +491,14 @@ func _update_intent_display() -> void:
 			_add_intent_cell(
 				"Attack",
 				INTENT_ICON_ATTACK,
-				str(_compute_display_attack(int(next.get("amount", 0)))),
+				str(intent_attack_damage(next)),
 				Color("#ffc69e")
 			)
 		"attack_status":
 			_add_intent_cell(
 				"Attack",
 				INTENT_ICON_ATTACK,
-				str(_compute_display_attack(int(next.get("amount", 0)))),
+				str(intent_attack_damage(next)),
 				Color("#ffc69e")
 			)
 			_add_intent_cell("Debuff", INTENT_ICON_DEBUFF, "", Color.WHITE)
@@ -547,13 +544,13 @@ func _build_intent_tooltip(next: Dictionary) -> String:
 	var action_type := str(next.get("type", ""))
 	match action_type:
 		"attack", "attack_all", "attack_ramp":
-			var dmg := _compute_display_attack(int(next.get("amount", 0)))
+			var dmg := intent_attack_damage(next)
 			var tip := tr("UI_COMBAT_INTENT_TIP_ATTACK").format({"n": dmg})
 			if action_type == "attack_ramp":
 				tip += "\n" + tr("UI_COMBAT_INTENT_TIP_RAMP")
 			return _append_interrupt_tip(tip, next)
 		"attack_status":
-			var dmg := _compute_display_attack(int(next.get("amount", 0)))
+			var dmg := intent_attack_damage(next)
 			var status := _localized_status_short(str(next.get("status", "")))
 			var k := int(next.get("stacks", 1))
 			return _append_interrupt_tip(
@@ -713,6 +710,11 @@ func take_damage(
 ## Re-arming replaces the previous exposure payload rather than stacking traps.
 func add_breakable_armor(amount: int, status: String, stacks: int) -> void:
 	add_block(amount)
+	arm_breakable_armor(status, stacks)
+
+
+## Arms the exposure payload on the Block already gained this move.
+func arm_breakable_armor(status: String, stacks: int) -> void:
 	_breakable_armor_active = true
 	_breakable_armor_status = status
 	_breakable_armor_stacks = maxi(1, stacks)
@@ -784,7 +786,7 @@ func _check_phase_transitions() -> void:
 
 
 ## Drains queued on_enter actions from a just-entered phase. Called by enemy_ai
-## at the start of this enemy's turn so the actions run through _execute_action
+## at the start of this enemy's turn so the actions run through execute_action
 ## (reusing summon/buff_self visuals + notifications). Returns the queued actions
 ## and clears the queue.
 func consume_pending_on_enter() -> Array:
@@ -835,14 +837,6 @@ func get_status_stacks(status_name: String) -> int:
 ## Returns true if a stun stack was consumed (action should be skipped/cancelled).
 func consume_stun_if_present() -> bool:
 	return status_system.consume_stun(self)
-
-
-func get_outgoing_multiplier() -> float:
-	return status_system.get_outgoing_multiplier()
-
-
-func get_incoming_attack_multiplier() -> float:
-	return status_system.get_incoming_attack_multiplier()
 
 
 # ─── Animation Helpers ────────────────────────────────────────────────────────

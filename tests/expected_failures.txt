@@ -3,4 +3,3 @@
 # and the run fails, so remove its line once the bug is fixed.
 # A listed test counts as XFAIL only if it finishes without script/parse errors
 # and prints lines starting with MISMATCH; a crash or timeout is still a FAIL.
-enemy_intent_parity_test    S4-01  Enemy intent differs from resolved damage; fixed in phase 1

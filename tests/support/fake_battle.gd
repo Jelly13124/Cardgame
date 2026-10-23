@@ -28,6 +28,7 @@ var combat_commands = null
 var effect_registry = null
 var crit_rules = null
 var combat_engine: Node
+var enemy_ai: Node = null
 var is_game_over := false
 var notifications: PackedStringArray = []
 

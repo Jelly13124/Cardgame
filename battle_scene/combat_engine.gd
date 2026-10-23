@@ -111,37 +111,6 @@ func _replay_count(card: Control, type: String) -> int:
 	return n
 
 
-## Enemy attacks still resolve here until they move to the shared pipeline:
-## Weak on the enemy and Vulnerable on the defender.
-func calculate_attack_damage(base_damage: int, attacker: Node, defender: Node) -> int:
-	var outgoing_mult := 1.0
-	var incoming_mult := 1.0
-	if attacker and attacker.has_method("get_outgoing_multiplier"):
-		outgoing_mult = attacker.get_outgoing_multiplier()
-	if defender and defender.has_method("get_incoming_attack_multiplier"):
-		incoming_mult = defender.get_incoming_attack_multiplier()
-	return int(base_damage * outgoing_mult * incoming_mult)
-
-
-## Thorns on the player reflecting an enemy hit (enemy path only, see above).
-func apply_thorns_reflection(attacker: Node, defender: Node) -> void:
-	if not (defender and is_instance_valid(defender) and defender.has_method("get_status_stacks")):
-		return
-	var thorns: int = defender.get_status_stacks("thorns")
-	if thorns > 0 and attacker and is_instance_valid(attacker) and attacker.has_method("take_damage"):
-		attacker.take_damage(thorns, false, {"source": "thorns", "heavy": false, "critical": false})
-		if (
-			defender == main.player
-			and main.relic_effect_system
-			and main.relic_effect_system.thorns_apply_short_circuit()
-			and attacker.has_method("add_status")
-		):
-			attacker.add_status("short_circuit", thorns)
-		var ss = defender.get("status_system")
-		if ss:
-			ss.spend_stacks("thorns", 1, defender)
-
-
 func _animate_player_gunshot(player: Node, target: Node) -> void:
 	if player and player.has_method("play_attack"):
 		player.play_attack()

@@ -26,11 +26,16 @@ var battle: Object = null  # battle scene (is_game_over)
 var hooks = null  # combat_hooks.gd
 
 
-## Routes `creature`'s status damage (Burn) through this command layer.
+## Joins `creature` to this battle: its status damage (Burn) runs through this
+## command layer and its intent badge reads the shared pipeline.
 func attach(creature: Object) -> void:
 	var status_system = creature.get("status_system") if creature else null
 	if status_system:
 		status_system.damage_router = _status_damage
+	if "battle" in creature:
+		creature.battle = battle
+	if creature.has_method("update_intent_display"):
+		creature.update_intent_display()
 
 
 func _status_damage(entity: Object, amount: int, status: String) -> void:

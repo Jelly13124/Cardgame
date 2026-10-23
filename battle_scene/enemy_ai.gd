@@ -4,7 +4,8 @@ extends Node
 
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
 const ENEMY_ENTITY_SCRIPT = preload("uid://qtp7jvjqfbou")  # res://battle_scene/enemy_entity.gd
-const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
+const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
+const EFFECT_CONTEXT = preload("uid://bx2g3askncfr6")  # res://core/effects/effect_context.gd
 
 @onready var main = get_parent()
 
@@ -103,13 +104,13 @@ func execute_enemy_turn() -> void:
 
 		# Phase-transition on_enter (spec A2): if this enemy crossed an HP
 		# threshold on the player's turn, the entity queued the phase's on_enter
-		# actions. Run them here (start of its turn) through _execute_action so
+		# actions. Run them here (start of its turn) through execute_action so
 		# summon/buff_self reuse the existing visuals + notifications.
 		if enemy.has_method("consume_pending_on_enter"):
 			for on_enter_action in enemy.consume_pending_on_enter():
 				if main.is_game_over or not is_instance_valid(enemy) or enemy.health <= 0:
 					break
-				await _execute_action(enemy, on_enter_action)
+				await execute_action(enemy, on_enter_action)
 			if main.is_game_over:
 				return
 			if not is_instance_valid(enemy) or enemy.health <= 0:
@@ -130,7 +131,7 @@ func execute_enemy_turn() -> void:
 			continue
 
 		var action: Dictionary = enemy.consume_next_action()
-		await _execute_action(enemy, action)
+		await execute_action(enemy, action)
 		if is_instance_valid(enemy):
 			enemy.end_turn()
 		await get_tree().create_timer(0.25).timeout
@@ -146,39 +147,12 @@ func execute_enemy_turn() -> void:
 # ─── Action Execution ──────────────────────────────────────────────────────────
 
 
-## `enemy` is typed as Node2D (its parent class) instead of EnemyEntity to
-## avoid class_name parse-ordering issues.
-## Resolve an enemy attack landing on the player: Intangible caps it at 1, the
-## player takes `outgoing` and Thorns reflects back at the attacker.
-func _resolve_enemy_hit(enemy: Node, outgoing: int, is_heavy: bool = false) -> bool:
-	if not (main.player and is_instance_valid(main.player)):
-		return false
-	if main.player.get_status_stacks("intangible") > 0:
-		outgoing = mini(outgoing, 1)
-	var hp_before: int = int(main.player.health)
-	AudioManager.play_sfx("enemy_attack")
-	var feedback_tags := {
-		"source": "enemy",
-		"heavy": is_heavy,
-		"critical": false,
-	}
-	await main.player.take_damage(outgoing, false, feedback_tags)
-	# Relic: medkit_drone heals only when the player ACTUALLY lost HP — a hit fully
-	# absorbed by Block does not trigger it.
-	if main.relic_effect_system and int(main.player.health) < hp_before:
-		main.relic_effect_system.on_player_take_damage(main.player)
-	if main.combat_engine:
-		main.combat_engine.apply_thorns_reflection(enemy, main.player)
-	return true
-
-
-func _execute_action(enemy: Node2D, action: Dictionary) -> void:
+## Run one enemy move. Interruptible attacks (e.g. boss Crushing Blow after a
+## telegraph) are cancelled by spending 1 stun stack on the enemy; every other
+## move runs through the shared effect registry ("enemy" context), so attacks
+## use the same damage pipeline as the intent badge.
+func execute_action(enemy: Node2D, action: Dictionary) -> void:
 	var action_type: String = action.get("type", "attack")
-	var amount: int = int(action.get("amount", 6))
-
-	# Interruptible attacks (e.g. boss Crushing Blow after a telegraph) can be
-	# cancelled by spending 1 stun stack on the enemy. This is the shared
-	# cancel logic for mortar_cart and the Junkyard Tyrant Boss.
 	var is_attack_like = action_type in ["attack", "attack_ramp", "attack_status", "attack_all"]
 	if is_attack_like and bool(action.get("interruptible", false)):
 		if enemy.has_method("consume_stun_if_present") and enemy.consume_stun_if_present():
@@ -193,203 +167,31 @@ func _execute_action(enemy: Node2D, action: Dictionary) -> void:
 			pulse.tween_property(enemy, "scale", Vector2(1.0, 1.0), 0.1)
 			await pulse.finished
 			return
-
-	match action_type:
-		"attack", "attack_ramp":
-			await _play_enemy_attack_once(enemy)
-			if main.player and is_instance_valid(main.player):
-				var outgoing = main.combat_engine.calculate_attack_damage(
-					amount, enemy, main.player
-				)
-				if main.has_method("modify_enemy_attack_damage"):
-					outgoing = main.modify_enemy_attack_damage(outgoing, enemy, main.player)
-				await _resolve_enemy_hit(enemy, outgoing, bool(action.get("heavy", false)))
-		"attack_status":
-			# Damage + apply a status to the player.
-			# JSON: {"type":"attack_status", "amount":5, "status":"weak", "stacks":1, "label":"⚔ 5 +Weak"}
-			await _play_enemy_attack_once(enemy)
-			if main.player and is_instance_valid(main.player):
-				var outgoing = main.combat_engine.calculate_attack_damage(
-					amount, enemy, main.player
-				)
-				if main.has_method("modify_enemy_attack_damage"):
-					outgoing = main.modify_enemy_attack_damage(outgoing, enemy, main.player)
-				if await _resolve_enemy_hit(enemy, outgoing, bool(action.get("heavy", false))):
-					var status: String = str(action.get("status", ""))
-					var stacks: int = int(action.get("stacks", 1))
-					if status != "" and main.player.has_method("add_status"):
-						main.player.add_status(status, stacks)
-					main.show_notification(
-						tr("UI_COMBAT_ENEMY_HITS_STATUS").format(
-							{"n": outgoing, "status": STATUS_SYS.format_name_localized(status)}
-						),
-						Color(1, 0.3, 0.3)
-					)
-		"attack_all":
-			# AoE attack hitting only the player (we have a single player).
-			# Same flow as attack but with louder messaging.
-			await _play_enemy_attack_once(enemy)
-			if main.player and is_instance_valid(main.player):
-				var outgoing = main.combat_engine.calculate_attack_damage(
-					amount, enemy, main.player
-				)
-				if main.has_method("modify_enemy_attack_damage"):
-					outgoing = main.modify_enemy_attack_damage(outgoing, enemy, main.player)
-				await _resolve_enemy_hit(enemy, outgoing, true)
-		"block":
-			if "status_system" in enemy and enemy.status_system:
-				amount = int(amount * enemy.status_system.get_block_multiplier())
-			enemy.add_block(amount)
-			main.show_notification(
-				tr("UI_COMBAT_ENEMY_DEFENDS").format({"n": amount}), Color(0.4, 0.6, 1.0)
-			)
-			# Small visual pulse
-			var t = create_tween()
-			t.tween_property(enemy, "scale", Vector2(1.2, 1.2), 0.1)
-			t.tween_property(enemy, "scale", Vector2(1.0, 1.0), 0.1)
-			await t.finished
-
-		"breakable_block":
-			if "status_system" in enemy and enemy.status_system:
-				amount = int(amount * enemy.status_system.get_block_multiplier())
-			var break_status := str(action.get("status", "vulnerable"))
-			var break_stacks := int(action.get("stacks", 1))
-			if enemy.has_method("add_breakable_armor"):
-				enemy.add_breakable_armor(amount, break_status, break_stacks)
-			else:
-				enemy.add_block(amount)
-			main.show_notification(
-				tr("UI_COMBAT_ENEMY_BREAKABLE_ARMOR").format({"n": amount}),
-				Color(0.45, 0.72, 1.0)
-			)
-			var armor_tween = create_tween()
-			armor_tween.tween_property(enemy, "scale", Vector2(1.16, 1.16), 0.1)
-			armor_tween.tween_property(enemy, "scale", Vector2.ONE, 0.1)
-			await armor_tween.finished
-
-		"reflective_plating":
-			if "status_system" in enemy and enemy.status_system:
-				amount = int(amount * enemy.status_system.get_block_multiplier())
-			enemy.add_block(amount)
-			var thorns := int(action.get("thorns", 1))
-			if enemy.has_method("add_status"):
-				enemy.add_status("thorns", thorns)
-			main.show_notification(
-				tr("UI_COMBAT_ENEMY_REFLECTIVE_PLATING").format(
-					{"block": amount, "thorns": thorns}
-				),
-				Color(0.62, 0.86, 1.0)
-			)
-			var plating_tween = create_tween()
-			plating_tween.tween_property(enemy, "modulate", Color(1.25, 1.35, 1.5), 0.16)
-			plating_tween.tween_property(enemy, "modulate", Color.WHITE, 0.16)
-			await plating_tween.finished
-
-		"heal":
-			if enemy.has_method("heal"):
-				enemy.heal(amount)
-			main.show_notification(
-				tr("UI_COMBAT_ENEMY_HEALS").format({"n": amount}), Color(0.2, 1.0, 0.4)
-			)
-
-		"telegraph":
-			# Flavor-only action: enemy charges up for a follow-up attack.
-			# No damage, no block. The intent badge already shows "CHARGING".
-			# The next action (typically marked interruptible:true) is the payoff.
-			main.show_notification(
-				tr("UI_COMBAT_ENEMY_CHARGING").format({"name": enemy.enemy_name}),
-				Color(1.0, 0.7, 0.2)
-			)
-			var charge_tween = create_tween()
-			charge_tween.tween_property(enemy, "modulate", Color(1.4, 1.1, 0.4), 0.25)
-			charge_tween.tween_property(enemy, "modulate", Color.WHITE, 0.25)
-			await charge_tween.finished
-
-		"summon":
-			# Spawn `count` adds, cycling through `enemy_ids`. Skips spawns that
-			# would push the field past MAX_ENEMIES_ON_FIELD.
-			# JSON: {"type":"summon","enemy_ids":["scrap_shard"],"count":2,"label":"☠ SUMMON"}
-			var enemy_ids: Array = action.get("enemy_ids", [])
-			var count: int = int(action.get("count", 1))
-			if enemy_ids.is_empty():
-				return
-			var summoned := 0
-			for n in range(count):
-				if main.enemy_container.get_child_count() >= MAX_ENEMIES_ON_FIELD:
-					break
-				var add_id := str(enemy_ids[_summon_cursor % enemy_ids.size()])
-				_summon_cursor += 1
-				spawn_summon(add_id)
-				summoned += 1
-			if summoned > 0:
-				main.show_notification(
-					tr("UI_COMBAT_ENEMY_SUMMONS").format({"name": enemy.enemy_name}),
-					Color(0.8, 0.4, 1.0)
-				)
-				var pulse = create_tween()
-				pulse.tween_property(enemy, "scale", Vector2(1.15, 1.15), 0.12)
-				pulse.tween_property(enemy, "scale", Vector2(1.0, 1.0), 0.12)
-				await pulse.finished
-
-		"buff_self":
-			# Apply a status to the acting enemy itself (e.g. thorns to ramp).
-			# JSON: {"type":"buff_self","status":"thorns","stacks":3,"label":"💪 ENRAGE"}
-			var status: String = str(action.get("status", ""))
-			var stacks: int = int(action.get("stacks", 1))
-			if status != "" and enemy.has_method("add_status"):
-				enemy.add_status(status, stacks)
-			main.show_notification(
-				tr("UI_COMBAT_ENEMY_BUFFS_SELF").format(
-					{"name": enemy.enemy_name, "status": STATUS_SYS.format_name_localized(status)}
-				),
-				Color(1.0, 0.6, 0.2)
-			)
-			var buff_tween = create_tween()
-			buff_tween.tween_property(enemy, "modulate", Color(1.5, 0.7, 0.7), 0.2)
-			buff_tween.tween_property(enemy, "modulate", Color.WHITE, 0.2)
-			await buff_tween.finished
-
-		"add_curse":
-			# Shuffle a curse into the player's DRAW pile — combat-scoped (gone next fight).
-			# JSON: {"type":"add_curse","curse":"radiation_dust","amount":1,"label":"✦ 诅咒"}
-			var curse_id: String = str(action.get("curse", "radiation_dust"))
-			var curse_n: int = int(action.get("amount", 1))
-			for _i in range(maxi(1, curse_n)):
-				main.deck_manager.add_card_to_draw(curse_id)
-			main.show_notification(
-				tr("UI_BATTLE_ENEMY_CURSE").format({"name": enemy.enemy_name}),
-				Color(0.72, 0.5, 0.85)
-			)
-			var hex_tween = create_tween()
-			hex_tween.tween_property(enemy, "modulate", Color(0.85, 0.6, 1.2), 0.15)
-			hex_tween.tween_property(enemy, "modulate", Color.WHITE, 0.15)
-			await hex_tween.finished
-
-		_:
-			push_error(
-				(
-					"EnemyAI: unknown action type '%s' (enemy '%s'). Check enemy JSON or add the action to enemy_ai._execute_action()."
-					% [action_type, enemy.enemy_name]
-				)
-			)
-			assert(false, "EnemyAI: unknown action type '%s'" % action_type)
+	var source = COMBAT_SOURCE.make("enemy", "enemy", enemy)
+	var ctx = EFFECT_CONTEXT.make("enemy", source, enemy, main.player, main)
+	await main.effect_registry.execute(ctx, action)
 
 
-# ─── Animations ───────────────────────────────────────────────────────────────
-
-
-func _play_enemy_attack_once(enemy: Node) -> void:
-	if not is_instance_valid(enemy):
-		return
-	if (
-		enemy.has_method("play_attack")
-		and (not enemy.has_method("has_attack_animation") or enemy.has_attack_animation())
-	):
-		enemy.play_attack()
-		if enemy.has_signal("attack_animation_finished"):
-			await enemy.attack_animation_finished
-			return
-	await get_tree().create_timer(0.35).timeout
+## `summon` move: spawn `count` adds cycling through `enemy_ids`, skipping any
+## that would exceed MAX_ENEMIES_ON_FIELD. Returns how many spawned.
+## JSON: {"type":"summon","enemy_ids":["scrap_shard"],"count":2,"label":"☠ SUMMON"}
+func summon_adds(enemy: Node, action: Dictionary) -> int:
+	var enemy_ids: Array = action.get("enemy_ids", [])
+	if enemy_ids.is_empty():
+		return 0
+	var summoned := 0
+	for _n in range(int(action.get("count", 1))):
+		if main.enemy_container.get_child_count() >= MAX_ENEMIES_ON_FIELD:
+			break
+		var add_id := str(enemy_ids[_summon_cursor % enemy_ids.size()])
+		_summon_cursor += 1
+		spawn_summon(add_id)
+		summoned += 1
+	if summoned > 0:
+		main.show_notification(
+			tr("UI_COMBAT_ENEMY_SUMMONS").format({"name": enemy.enemy_name}), Color(0.8, 0.4, 1.0)
+		)
+	return summoned
 
 
 # ─── Victory Check ────────────────────────────────────────────────────────────

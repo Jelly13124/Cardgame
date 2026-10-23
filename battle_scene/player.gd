@@ -563,10 +563,3 @@ func add_status(status_name: String, stacks: int) -> void:
 func get_status_stacks(status_name: String) -> int:
 	return status_system.get_stacks(status_name)
 
-
-func get_outgoing_multiplier() -> float:
-	return status_system.get_outgoing_multiplier()
-
-
-func get_incoming_attack_multiplier() -> float:
-	return status_system.get_incoming_attack_multiplier()

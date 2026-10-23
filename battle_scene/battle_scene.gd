@@ -1088,17 +1088,6 @@ func _write_hp_to_run_manager(triggering_defeat: bool = false) -> void:
 		RunManager.emit_signal("health_changed", target_hp, RunManager.max_health)
 
 
-func modify_enemy_attack_damage(amount: int, attacker: Node, defender: Node) -> int:
-	var result := amount
-	if relic_effect_system:
-		result = relic_effect_system.modify_enemy_attack_damage(result, attacker, defender)
-	# Per-act enemy damage scaling (bosses exempt). Applied after relic
-	# modifiers so relic flat-reductions read against the pre-act number.
-	if attacker and "enemy_id" in attacker:
-		result = RunManager.scale_enemy_damage(result, str(attacker.enemy_id))
-	return result
-
-
 # ─── Energy ───────────────────────────────────────────────────────────────────
 
 

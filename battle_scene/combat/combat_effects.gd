@@ -17,6 +17,8 @@ const EFFECT_CONTEXT = preload("uid://bx2g3askncfr6")  # res://core/effects/effe
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
 
 const COMBAT := ["combat"]
+const ENEMY := ["enemy"]
+const ENEMY_ATTACK_TYPES := ["attack", "attack_ramp", "attack_all", "attack_status"]
 const DAMAGE_TYPES := [
 	"deal_damage",
 	"deal_damage_all",
@@ -64,6 +66,16 @@ static func register_into(registry) -> void:
 	registry.register("gain_gold", _gain_gold, COMBAT)
 	registry.register("heal", _heal, COMBAT)
 	registry.register("gain_temp_strength", _gain_temp_strength, COMBAT)
+	for type in ENEMY_ATTACK_TYPES:
+		registry.register(type, _enemy_attack, ENEMY)
+	registry.register("block", _enemy_block, ENEMY)
+	registry.register("breakable_block", _enemy_block, ENEMY)
+	registry.register("reflective_plating", _enemy_block, ENEMY)
+	registry.register("heal", _enemy_heal, ENEMY)
+	registry.register("telegraph", _enemy_telegraph, ENEMY)
+	registry.register("summon", _enemy_summon, ENEMY)
+	registry.register("buff_self", _enemy_buff_self, ENEMY)
+	registry.register("add_curse", _enemy_add_curse, ENEMY)
 
 
 # ─── Damage: base values and preview ─────────────────────────────────────────
@@ -445,6 +457,152 @@ static func consume_short_circuit(target: Object) -> int:
 	if stacks > 0 and status_system:
 		status_system.spend_stacks("short_circuit", stacks, target)
 	return stacks
+
+
+# ─── Enemy moves ("enemy" context) ────────────────────────────────────────────
+
+
+## Base damage of an enemy attack move: its amount × the act multiplier
+## (non-boss, rounded — part of the enemy's strength, like its HP).
+static func enemy_attack_base(enemy: Object, action: Dictionary) -> int:
+	return RunManager.scale_enemy_damage(int(action.get("amount", 0)), str(enemy.get("enemy_id")))
+
+
+## Damage the player would take from `action` right now (intent badge).
+static func preview_enemy_attack(services: Object, enemy: Object, action: Dictionary) -> int:
+	var player: Object = services.get("player")
+	var source = COMBAT_SOURCE.make("enemy", "enemy", enemy)
+	return services.combat_commands.preview_damage(
+		source, player, enemy_attack_base(enemy, action), VALUE_PROPS.POWERED
+	)
+
+
+static func _enemy_attack(ctx, action: Dictionary) -> void:
+	var services: Object = ctx.services
+	var enemy: Object = ctx.actor
+	await _play_enemy_attack_once(services, enemy)
+	var player: Object = ctx.target
+	if not services.combat_commands.is_alive(player):
+		return
+	var type := str(action.get("type", "attack"))
+	AudioManager.play_sfx("enemy_attack")
+	var heavy := type == "attack_all" or bool(action.get("heavy", false))
+	var results: Array = await services.combat_commands.damage(
+		ctx.source, [player], enemy_attack_base(enemy, action), VALUE_PROPS.POWERED, null, 0,
+		{"heavy": heavy}
+	)
+	if type == "attack_status" and not results.is_empty():
+		var status := str(action.get("status", ""))
+		await services.combat_commands.apply_status(
+			ctx.source, player, status, int(action.get("stacks", 1)), "attack_status"
+		)
+		services.show_notification(
+			_t("UI_COMBAT_ENEMY_HITS_STATUS").format(
+				{"n": results[0].amount, "status": STATUS_SYS.format_name_localized(status)}
+			),
+			Color(1, 0.3, 0.3)
+		)
+	await services.combat_hooks.after_attack({"source": ctx.source, "dealer": enemy, "target": player})
+
+
+## block / breakable_block / reflective_plating: powered enemy Block (its own
+## Frail applies), plus the armed exposure or Thorns rider.
+static func _enemy_block(ctx, action: Dictionary) -> void:
+	var services: Object = ctx.services
+	var enemy: Object = ctx.actor
+	var type := str(action.get("type", "block"))
+	var gained: int = await services.combat_commands.gain_block(
+		ctx.source, enemy, int(action.get("amount", 0)), VALUE_PROPS.POWERED
+	)
+	match type:
+		"breakable_block":
+			if enemy.has_method("arm_breakable_armor"):
+				enemy.arm_breakable_armor(str(action.get("status", "vulnerable")), int(action.get("stacks", 1)))
+			services.show_notification(
+				_t("UI_COMBAT_ENEMY_BREAKABLE_ARMOR").format({"n": gained}), Color(0.45, 0.72, 1.0)
+			)
+			await _pulse(enemy, "scale", Vector2(1.16, 1.16), Vector2.ONE, 0.1)
+		"reflective_plating":
+			var thorns := int(action.get("thorns", 1))
+			await services.combat_commands.apply_status(ctx.source, enemy, "thorns", thorns, "reflective_plating")
+			services.show_notification(
+				_t("UI_COMBAT_ENEMY_REFLECTIVE_PLATING").format({"block": gained, "thorns": thorns}),
+				Color(0.62, 0.86, 1.0)
+			)
+			await _pulse(enemy, "modulate", Color(1.25, 1.35, 1.5), Color.WHITE, 0.16)
+		_:
+			services.show_notification(_t("UI_COMBAT_ENEMY_DEFENDS").format({"n": gained}), Color(0.4, 0.6, 1.0))
+			await _pulse(enemy, "scale", Vector2(1.2, 1.2), Vector2.ONE, 0.1)
+
+
+static func _enemy_heal(ctx, action: Dictionary) -> void:
+	var amount := int(action.get("amount", 0))
+	if ctx.actor.has_method("heal"):
+		ctx.actor.heal(amount)
+	ctx.services.show_notification(_t("UI_COMBAT_ENEMY_HEALS").format({"n": amount}), Color(0.2, 1.0, 0.4))
+
+
+## Flavor-only wind-up; the next (usually interruptible) move is the payoff.
+static func _enemy_telegraph(ctx, _action: Dictionary) -> void:
+	ctx.services.show_notification(
+		_t("UI_COMBAT_ENEMY_CHARGING").format({"name": ctx.actor.get("enemy_name")}), Color(1.0, 0.7, 0.2)
+	)
+	await _pulse(ctx.actor, "modulate", Color(1.4, 1.1, 0.4), Color.WHITE, 0.25)
+
+
+static func _enemy_summon(ctx, action: Dictionary) -> void:
+	var enemy_ai = ctx.services.get("enemy_ai")
+	if enemy_ai and await enemy_ai.summon_adds(ctx.actor, action) > 0:
+		await _pulse(ctx.actor, "scale", Vector2(1.15, 1.15), Vector2.ONE, 0.12)
+
+
+static func _enemy_buff_self(ctx, action: Dictionary) -> void:
+	var status := str(action.get("status", ""))
+	await ctx.services.combat_commands.apply_status(
+		ctx.source, ctx.actor, status, int(action.get("stacks", 1)), "buff_self"
+	)
+	ctx.services.show_notification(
+		_t("UI_COMBAT_ENEMY_BUFFS_SELF").format(
+			{"name": ctx.actor.get("enemy_name"), "status": STATUS_SYS.format_name_localized(status)}
+		),
+		Color(1.0, 0.6, 0.2)
+	)
+	await _pulse(ctx.actor, "modulate", Color(1.5, 0.7, 0.7), Color.WHITE, 0.2)
+
+
+## Shuffle a curse into the player's draw pile (this combat only).
+static func _enemy_add_curse(ctx, action: Dictionary) -> void:
+	var curse_id := str(action.get("curse", "radiation_dust"))
+	for _i in range(maxi(1, int(action.get("amount", 1)))):
+		ctx.services.deck_manager.add_card_to_draw(curse_id)
+	ctx.services.show_notification(
+		_t("UI_BATTLE_ENEMY_CURSE").format({"name": ctx.actor.get("enemy_name")}), Color(0.72, 0.5, 0.85)
+	)
+	await _pulse(ctx.actor, "modulate", Color(0.85, 0.6, 1.2), Color.WHITE, 0.15)
+
+
+static func _play_enemy_attack_once(services: Object, enemy: Object) -> void:
+	if not is_instance_valid(enemy):
+		return
+	if enemy.has_method("play_attack") and (
+		not enemy.has_method("has_attack_animation") or enemy.has_attack_animation()
+	):
+		enemy.play_attack()
+		if enemy.has_signal("attack_animation_finished"):
+			await enemy.attack_animation_finished
+			return
+	if services is Node and (services as Node).is_inside_tree():
+		await (services as Node).get_tree().create_timer(0.35).timeout
+
+
+## Out-and-back tween on `property` of an enemy node.
+static func _pulse(node: Object, property: String, peak: Variant, rest: Variant, seconds: float) -> void:
+	if not (node is Node) or not is_instance_valid(node) or not (node as Node).is_inside_tree():
+		return
+	var tween := (node as Node).create_tween()
+	tween.tween_property(node, property, peak, seconds)
+	tween.tween_property(node, property, rest, seconds)
+	await tween.finished
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────

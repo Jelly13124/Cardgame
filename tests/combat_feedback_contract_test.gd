@@ -3,6 +3,7 @@ extends Node
 const CONTROLLER_PATH := "uid://po237gnjpbo0"  # res://battle_scene/combat_feedback_controller.gd
 const BATTLE_SCENE_PATH := "res://battle_scene/battle_scene.gd"  # path-ok: reads source text
 const COMBAT_ENGINE_PATH := "res://battle_scene/combat_engine.gd"  # path-ok: reads source text
+const COMBAT_EFFECTS_PATH := "res://battle_scene/combat/combat_effects.gd"  # path-ok: reads source text
 const COMBAT_COMMANDS_PATH := "res://battle_scene/combat/combat_commands.gd"  # path-ok: reads source text
 const ENEMY_ENTITY_PATH := "res://battle_scene/enemy_entity.gd"  # path-ok: reads source text
 const PLAYER_PATH := "res://battle_scene/player.gd"  # path-ok: reads source text
@@ -163,6 +164,7 @@ func _test_damage_path_integration() -> void:
 	var battle_source := FileAccess.get_file_as_string(BATTLE_SCENE_PATH)
 	var engine_source := FileAccess.get_file_as_string(COMBAT_ENGINE_PATH)
 	var commands_source := FileAccess.get_file_as_string(COMBAT_COMMANDS_PATH)
+	var effects_source := FileAccess.get_file_as_string(COMBAT_EFFECTS_PATH)
 	var enemy_source := FileAccess.get_file_as_string(ENEMY_ENTITY_PATH)
 	var player_source := FileAccess.get_file_as_string(PLAYER_PATH)
 	var enemy_ai_source := FileAccess.get_file_as_string(ENEMY_AI_PATH)
@@ -202,10 +204,11 @@ func _test_damage_path_integration() -> void:
 		)
 
 	_expect(
-		enemy_ai_source.contains("await main.player.take_damage"),
+		enemy_ai_source.contains("await main.effect_registry.execute")
+		and effects_source.contains("await services.combat_commands.damage("),
 		"enemy attacks wait for player hit feedback before continuing"
 	)
 	_expect(
-		enemy_ai_source.contains('"source": "enemy"'),
+		commands_source.contains('"enemy": "enemy"'),
 		"enemy attacks mark their feedback source explicitly"
 	)

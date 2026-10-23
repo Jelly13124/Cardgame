@@ -156,21 +156,6 @@ func after_damage_received(result) -> void:
 			result.target.heal(int(effect.get("amount", 0)))
 
 
-func modify_enemy_attack_damage(amount: int, _attacker: Node, _defender: Node) -> int:
-	var result = amount
-	for entry in _get_effect_entries("enemy_attack_damage"):
-		var effect: Dictionary = entry["effect"]
-		if not _can_use_once(entry):
-			continue
-		match str(effect.get("type", "")):
-			"reduce_damage":
-				var reduction = int(effect.get("amount", 0))
-				result = max(0, result - reduction)
-				_notify("%s: -%d Damage" % [str(entry["title"]), reduction], Color(0.35, 0.9, 1.0))
-				_mark_used_once(entry)
-	return result
-
-
 func on_combat_victory(_player: Node) -> void:
 	for entry in _get_effect_entries("combat_victory"):
 		var effect: Dictionary = entry["effect"]
@@ -205,21 +190,6 @@ func on_battle_started(player: Node) -> void:
 					if player.has_signal("stats_changed"):
 						player.stats_changed.emit()
 					_notify("%s: Strength %d" % [str(entry["title"]), target], Color(1.0, 0.5, 0.3))
-
-
-## Fired from enemy_ai when the player takes attack damage. medkit_drone heals.
-func on_player_take_damage(player: Node) -> void:
-	if player == null or not is_instance_valid(player):
-		return
-	for entry in _get_effect_entries("player_take_damage"):
-		var effect: Dictionary = entry["effect"]
-		if not _can_use_once(entry):
-			continue
-		match str(effect.get("type", "")):
-			"heal":
-				if player.has_method("heal"):
-					player.heal(int(effect.get("amount", 0)))
-					_mark_used_once(entry)
 
 
 ## Total bonus Short Circuit added whenever the player applies it (Surge Servo).
