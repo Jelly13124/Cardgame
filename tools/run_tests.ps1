@@ -10,7 +10,7 @@
 # expected failure unexpectedly passed (XPASS), 2 = environment problem.
 param(
     [string]$Only = "*",
-    [int]$TimeoutSeconds = 300
+    [int]$TimeoutSeconds = 120
 )
 
 $ErrorActionPreference = "Stop"
@@ -44,16 +44,30 @@ function Invoke-Godot([string[]]$GodotArgs, [string]$LogPath, [int]$Timeout) {
     $null = $proc.Handle  # keep the handle so ExitCode is available after exit
     $timedOut = -not $proc.WaitForExit($Timeout * 1000)
     if ($timedOut) {
-        try { $proc.Kill() } catch {}
-        $proc.WaitForExit()
+        # The *_console.exe wrapper starts the real Godot as a child process:
+        # kill the whole tree, otherwise the child keeps the log files open.
+        & taskkill.exe /PID $proc.Id /T /F 2>&1 | Out-Null
+        $proc.WaitForExit(10000) | Out-Null
     }
-    $text = ""
-    if (Test-Path -LiteralPath $LogPath) { $text += [IO.File]::ReadAllText($LogPath) }
-    if (Test-Path -LiteralPath $errPath) { $text += "`n" + [IO.File]::ReadAllText($errPath) }
+    $text = (Read-Shared $LogPath) + "`n" + (Read-Shared $errPath)
     [IO.File]::WriteAllText($LogPath, $text)
     Remove-Item -LiteralPath $errPath -ErrorAction SilentlyContinue
     $code = if ($timedOut) { -1 } else { $proc.ExitCode }
     return @{ ExitCode = $code; Log = $text; TimedOut = $timedOut }
+}
+
+# Reads a file even if another process still has it open for writing.
+function Read-Shared([string]$Path) {
+    if (-not (Test-Path -LiteralPath $Path)) { return "" }
+    for ($i = 0; $i -lt 20; $i++) {
+        try {
+            $stream = [IO.File]::Open($Path, 'Open', 'Read', 'ReadWrite, Delete')
+            try { return (New-Object IO.StreamReader($stream)).ReadToEnd() } finally { $stream.Dispose() }
+        } catch [IO.IOException] {
+            Start-Sleep -Milliseconds 250
+        }
+    }
+    return "<log unreadable: $Path>"
 }
 
 function Test-LogHasErrors([string]$Text) {
@@ -181,6 +195,10 @@ try {
     if ($counts.XPASS -gt 0) {
         Write-Host "XPASS: remove the fixed tests from tests/expected_failures.txt" -ForegroundColor Red
     }
+}
+catch {
+    Write-Host "runner error: $_" -ForegroundColor Red
+    $exitCode = 2
 }
 finally {
     $env:APPDATA = $savedAppData

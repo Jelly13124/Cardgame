@@ -11,7 +11,7 @@
 set -u
 
 ONLY="${1:-*}"
-TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-300}"
+TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-120}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ERROR_PATTERN='SCRIPT ERROR|Failed to load script|Compile Error|Parse Error|DataValidator: [0-9]+ JSON schema failure'
 
