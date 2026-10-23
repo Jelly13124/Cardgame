@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bqbeg1jjlkjsl"]
+
+[ext_resource type="Script" path="res://tests/combat_hooks_contract_test.gd" id="1"]
+
+[node name="CombatHooksContractTest" type="Node"]
+script = ExtResource("1")

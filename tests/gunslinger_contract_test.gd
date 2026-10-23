@@ -1,7 +1,10 @@
 extends Node
 
 const STATUS_SYSTEM = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
-const COMBAT_ENGINE = preload("uid://c444jgeenijlu")  # res://battle_scene/combat_engine.gd
+const CARD_PLAY = preload("uid://bxaw24a7fumhm")  # res://core/combat/card_play.gd
+const FAKE_BATTLE = preload("uid://j25pi73kmisn")  # res://tests/support/fake_battle.gd
+const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
+const VALUE_PROPS = preload("uid://cccfcqt180t4x")  # res://core/combat/value_props.gd
 const CARD_UPGRADE = preload("uid://d2e2bfj6oa3yp")  # res://run_system/core/card_upgrade.gd
 
 const CARD_DIR := "res://battle_scene/card_info/player/"
@@ -54,12 +57,10 @@ func _test_loaded_resource() -> void:
 	player.status_system.on_turn_start(player)
 	player.status_system.on_turn_end(player)
 	_expect(player.get_status_stacks("loaded") == 4, "Loaded persists until Bill fires")
-	var engine = COMBAT_ENGINE.new()
-	add_child(engine)
-	_expect(engine._consume_loaded_bonus(player) == 4, "next damage effect receives all Loaded")
+	var play = CARD_PLAY.new()
+	_expect(play.take_loaded(player) == 4, "next damage effect receives all Loaded")
 	_expect(player.get_status_stacks("loaded") == 0, "firing removes all Loaded")
-	_expect(engine._consume_loaded_bonus(player) == 0, "Replay cannot spend the same Loaded twice")
-	engine.free()
+	_expect(play.take_loaded(player) == 0, "Replay cannot spend the same Loaded twice")
 	player.free()
 
 
@@ -86,24 +87,21 @@ func _test_starter_curve() -> void:
 
 
 func _test_weak_rule() -> void:
-	var entity := FakePlayer.new()
-	add_child(entity)
+	var battle = FAKE_BATTLE.new()
+	add_child(battle)
+	battle.setup()
+	var entity = battle.player
+	var enemy = battle.add_enemy()
+	var shot = COMBAT_SOURCE.make("card", "player", entity)
+	var hit := func() -> int:
+		return battle.combat_commands.preview_damage(shot, enemy, 10, VALUE_PROPS.POWERED)
 	entity.add_status("weak", 2)
-	_expect(
-		is_equal_approx(entity.status_system.get_outgoing_multiplier(), 0.5),
-		"Weak reduces outgoing attack damage by 50%"
-	)
+	_expect(hit.call() == 5, "Weak reduces outgoing attack damage by 50%")
 	entity.status_system.on_turn_end(entity)
-	_expect(
-		is_equal_approx(entity.status_system.get_outgoing_multiplier(), 0.5),
-		"additional Weak stacks extend duration instead of compounding the penalty"
-	)
+	_expect(hit.call() == 5, "additional Weak stacks extend duration instead of compounding the penalty")
 	entity.status_system.on_turn_end(entity)
-	_expect(
-		is_equal_approx(entity.status_system.get_outgoing_multiplier(), 1.0),
-		"Weak ends after its final duration stack decays"
-	)
-	entity.free()
+	_expect(hit.call() == 10, "Weak ends after its final duration stack decays")
+	battle.free()
 
 
 func _test_reload_package() -> void:

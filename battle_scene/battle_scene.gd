@@ -19,6 +19,11 @@ const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://run_system/ui/pause_
 var deck_manager: Node  # DeckManager (deck_manager.gd) instance
 var relic_effect_system: RefCounted  # RelicEffectSystem (relic_effect_system.gd) instance
 var equipment_set_system: RefCounted  # EquipmentSetSystem (equipment_set_system.gd) instance
+# Combat pipeline services, filled by COMBAT_SERVICES.install() each battle.
+var combat_hooks: RefCounted  # core/combat/combat_hooks.gd
+var combat_commands: RefCounted  # battle_scene/combat/combat_commands.gd
+var effect_registry: RefCounted  # core/effects/effect_registry.gd
+var crit_rules: RefCounted  # core/combat/rules/crit_rules.gd
 # Typed via the preloaded CARD_ANIMATOR_SCRIPT below — kept as Node so this
 # file parses even before Godot has scanned the class_name registry.
 var card_animator: Node  # CardAnimator (card_animator.gd) instance
@@ -48,6 +53,9 @@ const RELIC_EFFECT_SYSTEM = preload("uid://b4d2o08tofxey")  # res://battle_scene
 const EQUIPMENT_SET_SYSTEM = preload("uid://b3s8io84xovx7")  # res://battle_scene/equipment_set_system.gd
 const CARD_ANIMATOR_SCRIPT = preload("uid://co0n3ou8saknv")  # res://battle_scene/card_animator.gd
 const DECK_MANAGER_SCRIPT = preload("uid://bi8d6vtu6xop6")  # res://battle_scene/deck_manager.gd
+const COMBAT_SERVICES = preload("uid://bcjfi8umolkqg")  # res://battle_scene/combat/combat_services.gd
+const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
+const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const DISCOVER_MODAL = preload("uid://keeeggdto42o")  # res://battle_scene/discover_modal.gd
 const DISCOVER_POOL = preload("uid://c76axesxo6wit")  # res://run_system/core/discover_pool.gd
 const TOOL_USE_CONFIRM = preload("uid://dihe3sjaxh16")  # res://battle_scene/ui/tool_use_confirm.gd
@@ -294,7 +302,7 @@ func _process(_delta: float) -> void:
 	if preview_target == null:
 		preview_target = _sole_alive_enemy()
 	if preview_target and is_instance_valid(preview_target):
-		var dmg := _card_preview_damage(targeting_card, preview_target)
+		var dmg := preview_card_damage(targeting_card, preview_target)
 		if dmg >= 0:
 			_show_damage_preview(preview_target, dmg)
 		else:
@@ -303,54 +311,10 @@ func _process(_delta: float) -> void:
 		_hide_damage_preview()
 
 
-## Predicted post-mitigation damage `card` would deal to `target` (incl. global
-## STR, weak/vulnerable, relics via calculate_attack_damage). -1 if not a damage card.
-func _card_preview_damage(card: Control, target: Node) -> int:
-	if not (card and is_instance_valid(card) and "card_info" in card):
-		return -1
-	var effects: Array = card.card_info.get("effects", [])
-	var str_val := int(player.get("strength")) if player else 0
-	var loaded_bonus := 0
-	if player and str(card.card_info.get("type", "")).to_lower() == "attack":
-		loaded_bonus = int(player.get_status_stacks("loaded"))
-	var base_total := 0
-	var has_damage := false
-	for effect in effects:
-		var etype := str(effect.get("type", ""))
-		match etype:
-			"deal_damage", "deal_damage_all":
-				var amt := int(effect.get("amount", 0))
-				var mult := float(effect.get("multiplier", 1))
-				if mult != 1:
-					amt = int(amt * mult)
-				base_total += amt + str_val
-				has_damage = true
-			"deal_damage_str_mult":
-				base_total += (
-					int(effect.get("base", 0))
-					+ int(str_val * float(effect.get("mult", 1)))
-				)
-				has_damage = true
-			"scale_damage_by_attacks":
-				var count := 0
-				if turn_manager:
-					count = (
-						int(turn_manager.attacks_played_this_combat)
-						if str(effect.get("scope", "turn")) == "combat"
-						else int(turn_manager.attacks_played_this_turn)
-					)
-				base_total += int(effect.get("base", 0)) + int(effect.get("per", 0)) * count
-				has_damage = true
-			"deal_damage_block_mult":
-				base_total += int(player.get("block")) * int(effect.get("mult", 1))
-				has_damage = true
-	if not has_damage:
-		return -1
-	# Loaded applies once to the next damage effect, not once per listed effect.
-	base_total += loaded_bonus
-	# preview=true: predicted number only — must not consume Deadeye's guaranteed
-	# crit or fire crit side effects (this runs every frame while aiming).
-	return combat_engine.calculate_attack_damage(base_total, player, target, true)
+## Damage `card` would deal to `target` in one resolution pass, computed by the
+## shared pipeline in preview mode (no state changes). -1 if not a damage card.
+func preview_card_damage(card: Control, target: Node) -> int:
+	return COMBAT_EFFECTS.preview_card_damage(self, card, target)
 
 
 func _show_damage_preview(target: Node, dmg: int) -> void:
@@ -619,8 +583,8 @@ func _resolve_tool(index: int, tdata: Dictionary, target: Node) -> void:
 		var e: Dictionary = (eff as Dictionary).duplicate(true)
 		if e.has("amount"):
 			e["amount"] = int(round(float(e["amount"]) * int_mult))
-		await combat_engine._apply_effect(
-			e, target if is_instance_valid(target) else null, player, 1.0
+		await combat_engine.execute_effect(
+			e, target, COMBAT_SOURCE.make("tool", "player", player, null, str(tdata.get("id", "")))
 		)
 	RunManager.consume_tool(index)
 
@@ -870,6 +834,7 @@ func _start_new_game():
 	relic_effect_system.setup(self)
 	equipment_set_system = EQUIPMENT_SET_SYSTEM.new()
 	equipment_set_system.setup(self)
+	COMBAT_SERVICES.install(self)
 
 	# ── Player HP & Attributes ──────────────────────────────────────────────
 	if RunManager.is_run_active:
@@ -918,9 +883,10 @@ func _on_end_round_button_pressed():
 				break  # a curse killed the player — stop applying further penalties
 			if not is_instance_valid(c):
 				continue
+			var curse_source = COMBAT_SOURCE.make("card", "player", player, c)
 			for eff in c.card_info.get("end_turn_in_hand", []):
 				if typeof(eff) == TYPE_DICTIONARY:
-					await combat_engine._apply_effect(eff, player, player)
+					await combat_engine.execute_effect(eff, player, curse_source)
 		var remaining = hand.get_cards().duplicate()
 		var to_discard: Array = []
 		for c in remaining:
@@ -1112,12 +1078,6 @@ func _write_hp_to_run_manager(triggering_defeat: bool = false) -> void:
 		RunManager.emit_signal("health_changed", target_hp, RunManager.max_health)
 
 
-func modify_player_attack_damage(amount: int, attacker: Node, defender: Node) -> int:
-	if relic_effect_system:
-		return relic_effect_system.modify_player_attack_damage(amount, attacker, defender)
-	return amount
-
-
 func modify_enemy_attack_damage(amount: int, attacker: Node, defender: Node) -> int:
 	var result := amount
 	if relic_effect_system:
@@ -1207,11 +1167,8 @@ func restore_attack_allowance() -> void:
 		player
 		and player.has_method("get_status_stacks")
 		and player.get_status_stacks("covering_reload") > 0
-		and player.has_method("add_block")
 	):
-		player.add_block(3)
-		if player.has_method("play_block_pulse"):
-			player.play_block_pulse()
+		_power_block("covering_reload", 3)
 	if _attack_limit_per_turn <= 0:
 		return
 	_attacks_left_this_turn = max(_attacks_left_this_turn, _attack_limit_per_turn)
@@ -1368,9 +1325,15 @@ func _trigger_exhaust_powers() -> void:
 		return
 	var fnp: int = player.status_system.get_stacks("feel_no_pain")
 	if fnp > 0:
-		player.add_block(fnp)
-		if player.has_method("play_block_pulse"):
-			player.play_block_pulse()
+		_power_block("feel_no_pain", fnp)
+
+
+## Block from a player power (Covering Reload, Feel No Pain): a fixed value
+## through the command layer so its hooks and caps apply.
+func _power_block(power_id: String, amount: int) -> void:
+	var source = COMBAT_SOURCE.make("status", "player", player, null, power_id)
+	if await combat_commands.gain_block(source, player, amount, 0) > 0:
+		player.play_block_pulse()
 
 
 ## Returns true if the card has an `exhaust_self` effect entry.

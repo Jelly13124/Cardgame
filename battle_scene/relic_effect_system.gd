@@ -1,6 +1,9 @@
 extends RefCounted
 class_name RelicEffectSystem
 
+const VALUE_PROPS = preload("uid://cccfcqt180t4x")  # res://core/combat/value_props.gd
+const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
+
 # RunManager is a registered autoload — accessed directly, no instance plumbing.
 var _battle_scene: Node
 var _used_once: Dictionary = {}
@@ -23,8 +26,8 @@ func on_player_turn_started(player: Node, round_number: int) -> void:
 		var amount = int(effect.get("amount", 0))
 		match str(effect.get("type", "")):
 			"gain_energy":
-				if player and player.has_method("pay_energy"):
-					player.pay_energy(-amount)
+				if player and player.has_method("gain_energy"):
+					player.gain_energy(amount)
 					_notify(
 						"%s: +%d Energy" % [str(entry["title"]), amount], Color(0.95, 0.9, 0.25)
 					)
@@ -66,22 +69,112 @@ func on_player_turn_started(player: Node, round_number: int) -> void:
 					_mark_used_once(entry)
 
 
-func modify_player_attack_damage(amount: int, _attacker: Node, _defender: Node) -> int:
-	var result = amount
+# ─── Combat hook listener (core/combat/combat_hooks.gd) ──────────────────────
+
+
+## Relic flat damage bonus on powered player hits (player_attack_damage/add_damage).
+func modify_damage_additive(calc) -> void:
+	if not calc.is_powered() or not calc.from_player():
+		return
 	for entry in _get_effect_entries("player_attack_damage"):
-		var effect: Dictionary = entry["effect"]
-		if not _can_use_once(entry):
+		if str(entry["effect"].get("type", "")) != "add_damage" or not _can_use_once(entry):
 			continue
-		match str(effect.get("type", "")):
-			"add_damage":
-				result += int(effect.get("amount", 0))
-				_mark_used_once(entry)
-			"crit_chance":
-				# Crit is now a base mechanic rolled in combat_engine
-				# (_apply_player_crit); the Crit Clip just boosts crit_chance().
-				# Kept as a no-op marker for back-compat.
-				_mark_used_once(entry)
-	return max(0, result)
+		calc.value += int(entry["effect"].get("amount", 0))
+		_mark_on_commit(calc, entry)
+
+
+## Flat reduction of powered enemy hits on the player (reduce_damage); a
+## once-per-combat relic is spent by the real hit only.
+func modify_damage_reduction(calc) -> void:
+	if not calc.is_powered() or calc.source == null or calc.source.side != "enemy":
+		return
+	if _battle_scene == null or calc.target != _battle_scene.get("player"):
+		return
+	for entry in _get_effect_entries("enemy_attack_damage"):
+		if str(entry["effect"].get("type", "")) != "reduce_damage" or not _can_use_once(entry):
+			continue
+		calc.value -= int(entry["effect"].get("amount", 0))
+		_mark_on_commit(calc, entry)
+
+
+## Flat bonus Block on powered player Block (inertial_dampener).
+func modify_block_additive(calc) -> void:
+	if not calc.is_powered() or not calc.from_player():
+		return
+	for entry in _get_effect_entries("player_gain_block"):
+		if str(entry["effect"].get("type", "")) != "gain_block" or not _can_use_once(entry):
+			continue
+		calc.value += int(entry["effect"].get("amount", 0))
+		_mark_on_commit(calc, entry)
+
+
+## Luck-scaled 1.5x Block (crit_plating). Never rolled in preview.
+func modify_block_multiplicative(calc) -> void:
+	if calc.preview or not calc.is_powered() or not calc.from_player():
+		return
+	for entry in _get_effect_entries("player_gain_block"):
+		if str(entry["effect"].get("type", "")) != "gain_block_crit" or not _can_use_once(entry):
+			continue
+		if randf() < RunManager.crit_chance():
+			calc.value *= 1.5
+			if _battle_scene and _battle_scene.has_method("show_notification"):
+				_battle_scene.show_notification("BLOCK CRIT!", Color(0.45, 0.7, 1.0))
+		_mark_on_commit(calc, entry)
+
+
+## Brutal Servo: every Short Circuit the player side applies gets bonus stacks.
+func modify_status_stacks(calc) -> void:
+	if calc.status == "short_circuit" and calc.source and calc.source.side == "player":
+		calc.value += short_circuit_bonus_stacks()
+
+
+## Scavenger Lens: powered player Block deals damage to a random enemy.
+func after_block_gained(result: Dictionary) -> void:
+	var source = result.get("source")
+	if source == null or source.side != "player" or not (int(result.get("props", 0)) & VALUE_PROPS.POWERED):
+		return
+	for entry in _get_effect_entries("player_gain_block"):
+		if str(entry["effect"].get("type", "")) != "block_gain_damage" or not _can_use_once(entry):
+			continue
+		_mark_used_once(entry)
+		var target := _random_alive_enemy()
+		if target:
+			await _commands().damage(
+				_relic_source(entry), [target], int(entry["effect"].get("amount", 0)), 0
+			)
+
+
+## After an attack card resolves on a live target: player_attack relics apply
+## their status to it (Brutal Servo's bonus comes through modify_status_stacks).
+func after_attack(attack: Dictionary) -> void:
+	var source = attack.get("source")
+	var target: Object = attack.get("target")
+	if source == null or source.side != "player" or not _is_live(target):
+		return
+	for entry in _get_effect_entries("player_attack"):
+		var effect: Dictionary = entry["effect"]
+		if str(effect.get("type", "")) != "apply_status" or not _can_use_once(entry):
+			continue
+		_mark_used_once(entry)
+		await _commands().apply_status(
+			_relic_source(entry), target, str(effect.get("status", "")),
+			int(effect.get("amount", effect.get("stacks", 1))), "relic_apply_status"
+		)
+
+
+## Medkit Drone: heal when an enemy hit actually costs the player HP.
+func after_damage_received(result) -> void:
+	if _battle_scene == null or result.target != _battle_scene.get("player") or result.hp_lost <= 0:
+		return
+	if result.source == null or result.source.side != "enemy":
+		return
+	for entry in _get_effect_entries("player_take_damage"):
+		var effect: Dictionary = entry["effect"]
+		if str(effect.get("type", "")) != "heal" or not _can_use_once(entry):
+			continue
+		_mark_used_once(entry)
+		if result.target.has_method("heal"):
+			result.target.heal(int(effect.get("amount", 0)))
 
 
 func modify_enemy_attack_damage(amount: int, _attacker: Node, _defender: Node) -> int:
@@ -148,56 +241,6 @@ func on_battle_started(player: Node) -> void:
 					if player.has_signal("stats_changed"):
 						player.stats_changed.emit()
 					_notify("%s: Strength %d" % [str(entry["title"]), target], Color(1.0, 0.5, 0.3))
-
-
-## Fired from combat_engine's gain_block case with the post-multiplier block
-## amount. Returns the (possibly modified) block to actually apply, so a relic
-## like crit_plating can multiply it. Side-effects (scavenger_lens chip) leave
-## the amount unchanged.
-func on_player_gain_block(_player: Node, amount: int) -> int:
-	var result := amount
-	for entry in _get_effect_entries("player_gain_block"):
-		var effect: Dictionary = entry["effect"]
-		if not _can_use_once(entry):
-			continue
-		match str(effect.get("type", "")):
-			"gain_block_crit":
-				if randf() < RunManager.crit_chance():
-					result = int(round(result * 1.5))
-					if _battle_scene and _battle_scene.has_method("show_notification"):
-						_battle_scene.show_notification("BLOCK CRIT!", Color(0.45, 0.7, 1.0))
-				_mark_used_once(entry)
-			"block_gain_damage":
-				_deal_to_random_enemy(
-					int(effect.get("amount", 0)),
-					str(entry["relic_id"]),
-					"block_gain_damage"
-				)
-				_mark_used_once(entry)
-			"gain_block":
-				# Flat bonus Block whenever the player gains Block (inertial_dampener).
-				result += int(effect.get("amount", 0))
-				_mark_used_once(entry)
-	return result
-
-
-## Fired from combat_engine after a player ATTACK card resolves on `target`.
-## conductive_scrap applies Short Circuit to the struck enemy (with Surge Servo's bonus).
-func on_player_attack(target: Node) -> void:
-	if target == null or not is_instance_valid(target) or not target.has_method("add_status"):
-		return
-	for entry in _get_effect_entries("player_attack"):
-		var effect: Dictionary = entry["effect"]
-		if not _can_use_once(entry):
-			continue
-		match str(effect.get("type", "")):
-			"apply_status":
-				var status := str(effect.get("status", ""))
-				var n := int(effect.get("amount", effect.get("stacks", 1)))
-				if status == "short_circuit":
-					n += short_circuit_bonus_stacks()
-				target.add_status(status, n)
-				_mark_used_once(entry)
 
 
 ## Fired from enemy_ai when the player takes attack damage. medkit_drone heals.
@@ -326,28 +369,41 @@ func _deal_to_all_enemies(amount: int, relic_id: String, effect_type: String) ->
 	return hit
 
 
-## Deal `amount` to one random alive enemy (scavenger_lens). No-op when no
-## enemies remain. The chosen enemy may die; we touch it only once.
-func _deal_to_random_enemy(amount: int, relic_id: String, effect_type: String) -> void:
-	if amount <= 0 or _battle_scene == null:
-		return
+func _random_alive_enemy() -> Node:
+	if _battle_scene == null:
+		return null
 	var container = _battle_scene.get("enemy_container")
 	if container == null or not is_instance_valid(container):
-		return
+		return null
 	var alive: Array = []
 	for enemy in container.get_children():
-		if (
-			is_instance_valid(enemy)
-			and not enemy.is_queued_for_deletion()
-			and int(enemy.get("health")) > 0
-			and enemy.has_method("take_damage")
-		):
+		if _is_live(enemy) and enemy.has_method("take_damage"):
 			alive.append(enemy)
-	if alive.is_empty():
+	return alive[randi() % alive.size()] if not alive.is_empty() else null
+
+
+func _is_live(creature: Object) -> bool:
+	if creature == null or not is_instance_valid(creature):
+		return false
+	if creature is Node and (creature as Node).is_queued_for_deletion():
+		return false
+	return int(creature.get("health")) > 0
+
+
+func _commands():
+	return _battle_scene.get("combat_commands") if _battle_scene else null
+
+
+func _relic_source(entry: Dictionary):
+	var player = _battle_scene.get("player") if _battle_scene else null
+	return COMBAT_SOURCE.make("relic", "player", player, null, str(entry["relic_id"]))
+
+
+## Once-per-combat relics are spent by the real calculation only.
+func _mark_on_commit(calc, entry: Dictionary) -> void:
+	if calc.preview or not bool(entry["effect"].get("once_per_combat", false)):
 		return
-	var target: Node = alive[randi() % alive.size()]
-	if is_instance_valid(target):
-		target.take_damage(amount, false, _relic_feedback_tags(relic_id, effect_type))
+	calc.on_commit(_mark_used_once.bind(entry))
 
 
 func _relic_feedback_tags(relic_id: String, effect_type: String) -> Dictionary:

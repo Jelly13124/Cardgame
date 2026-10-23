@@ -1,33 +1,16 @@
 extends Node
 
 ## Parity: the targeting damage preview must equal the damage the card actually
-## deals. Known to fail today (finding S1-01: the preview re-implements the
-## damage formula and ignores `no_str`, card multipliers and more). Listed in
-## tests/expected_failures.txt until phase 1 unifies the calculation.
-##
-## This node stands in for battle_scene: CombatEngine reads `main` (its parent)
-## for player / relic systems / turn counters; the damage-modifier hooks are
-## delegated to a real battle_scene.gd instance so no production logic is
-## copied here.
+## deals (finding S1-01). Both now run the shared pipeline; this test keeps it
+## that way across Strength, Weak, Vulnerable, Loaded, Intangible and Deadeye.
+## The preview runs twice before the real play to prove it changes nothing.
 
-const BATTLE_SCENE_SCRIPT = preload("uid://cf56ce8uvkmha")  # res://battle_scene/battle_scene.gd
-const COMBAT_ENGINE_SCRIPT = preload("uid://c444jgeenijlu")  # res://battle_scene/combat_engine.gd
+const FAKE_BATTLE = preload("uid://j25pi73kmisn")  # res://tests/support/fake_battle.gd
 const PLAY_CARD = preload("uid://d4f71g73780ld")  # res://battle_scene/play_card.gd
-const STATUS_SYSTEM = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
+const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
+const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
+const CARD_PLAY = preload("uid://bxaw24a7fumhm")  # res://core/combat/card_play.gd
 const CARD_DIR := "res://battle_scene/card_info/player/"
-const DAMAGE_EFFECTS := [
-	"deal_damage",
-	"deal_damage_str_mult",
-	"scale_damage_by_attacks",
-	"deal_damage_block_mult",
-]
-
-
-class FakeTurnManager:
-	extends RefCounted
-	var attacks_played_this_turn := 0
-	var attacks_played_this_combat := 0
-	var current_round := 1
 
 
 class FakeCard:
@@ -35,92 +18,46 @@ class FakeCard:
 	var card_info: Dictionary = {}
 
 
-class FakeCombatant:
-	extends Node2D
-	var status_system = STATUS_SYSTEM.new()
-	var health := 999
-	var max_health := 999
-	var block := 0
-	var strength := 0
-	var constitution := 0
-	var intelligence := 0
-	var luck := 0
-	var damage_received := 0
-
-	func add_status(status: String, stacks: int) -> void:
-		status_system.add_status(status, stacks, self)
-
-	func get_status_stacks(status: String) -> int:
-		return status_system.get_stacks(status)
-
-	func get_outgoing_multiplier() -> float:
-		return status_system.get_outgoing_multiplier()
-
-	func get_incoming_attack_multiplier() -> float:
-		return status_system.get_incoming_attack_multiplier()
-
-	func add_block(amount: int) -> void:
-		block += amount
-
-	func take_damage(amount: int, _silent: bool = false, _tags: Dictionary = {}) -> void:
-		damage_received += amount
-
-
-# battle_scene stand-in surface read by CombatEngine.
-var player: FakeCombatant
-var enemy_container := Node2D.new()
-var turn_manager := FakeTurnManager.new()
-var relic_effect_system = null
-var equipment_set_system = null
-var is_game_over := false
-var combat_engine: Node
-var _battle_logic: Node
-
 var failures: PackedStringArray = []
+var battle
 
 
 func _ready() -> void:
 	call_deferred("_run")
 
 
-func show_notification(_text: String, _color: Color = Color.WHITE) -> void:
-	pass
-
-
-func modify_player_attack_damage(amount: int, attacker: Node, defender: Node) -> int:
-	return _battle_logic.modify_player_attack_damage(amount, attacker, defender)
-
-
 func _run() -> void:
 	Engine.time_scale = 20.0
 	RunManager.is_run_active = false
 	RunManager.relics = []
-	add_child(enemy_container)
-	combat_engine = COMBAT_ENGINE_SCRIPT.new()
-	add_child(combat_engine)
-	_battle_logic = BATTLE_SCENE_SCRIPT.new()  # never enters the tree: no _ready
-	_battle_logic.combat_engine = combat_engine
-	_battle_logic.turn_manager = turn_manager
-	_battle_logic.relic_effect_system = null
 	if RunManager.crit_chance() != 0.0:
 		failures.append("precondition: crit chance must be 0 outside a run")
+	battle = FAKE_BATTLE.new()
+	add_child(battle)
+	battle.setup()
 
 	var mismatches := 0
+	var compared := 0
 	for card_data in _target_damage_cards():
 		for strength in [0, 3]:
 			for weak in [false, true]:
 				for vulnerable in [false, true]:
 					for loaded in [0, 2]:
-						var preview := _preview(card_data, strength, weak, vulnerable, loaded)
-						var actual := await _actual(card_data, strength, weak, vulnerable, loaded)
-						if preview != actual:
-							mismatches += 1
-							print(
-								"MISMATCH %s STR=%d weak=%s vulnerable=%s loaded=%d preview=%d actual=%d"
-								% [card_data["name"], strength, weak, vulnerable, loaded, preview, actual]
-							)
+						for intangible in [false, true]:
+							for deadeye in [0, 1]:
+								var state := [strength, weak, vulnerable, loaded, intangible, deadeye]
+								var result := await _compare(card_data, state)
+								compared += 1
+								if result[0] != result[1]:
+									mismatches += 1
+									print(
+										"MISMATCH %s STR=%d weak=%s vulnerable=%s loaded=%d intangible=%s deadeye=%d preview=%d actual=%d"
+										% ([card_data["name"]] + state + result)
+									)
 	Engine.time_scale = 1.0
-	_battle_logic.free()
+	print("compared %d preview/actual pairs" % compared)
+	if compared < 64 * 4:
+		failures.append("expected at least 4 target damage cards x 64 states (got %d pairs)" % compared)
 	if mismatches > 0:
 		failures.append("%d preview/actual mismatches" % mismatches)
 	if failures.is_empty():
@@ -140,54 +77,49 @@ func _target_damage_cards() -> Array:
 		if typeof(data) != TYPE_DICTIONARY or not PLAY_CARD.data_requires_enemy_target(data):
 			continue
 		for effect in data.get("effects", []):
-			if typeof(effect) == TYPE_DICTIONARY and str(effect.get("type", "")) in DAMAGE_EFFECTS:
+			if typeof(effect) == TYPE_DICTIONARY and str(effect.get("type", "")) in COMBAT_EFFECTS.DAMAGE_TYPES:
 				cards.append(data)
 				break
 	cards.sort_custom(func(a, b): return str(a["name"]) < str(b["name"]))
 	return cards
 
 
-func _setup(card_data: Dictionary, strength: int, weak: bool, vulnerable: bool, loaded: int) -> Array:
-	if player and is_instance_valid(player):
-		player.free()
-	player = FakeCombatant.new()
-	player.strength = strength
+## Returns [preview, actual] for one card under one state.
+func _compare(card_data: Dictionary, state: Array) -> Array:
+	var player = battle.player
+	player.status_system = player.STATUS_SYSTEM.new()
+	player.strength = state[0]
 	player.block = 5
-	add_child(player)
-	_battle_logic.player = player
-	if weak:
+	if state[1]:
 		player.add_status("weak", 1)
-	if loaded > 0:
-		player.add_status("loaded", loaded)
-	var target := FakeCombatant.new()
-	enemy_container.add_child(target)
-	if vulnerable:
+	if state[3] > 0:
+		player.add_status("loaded", state[3])
+	if state[5] > 0:
+		player.add_status("deadeye", state[5])
+	battle.clear_enemies()
+	var target = battle.add_enemy()
+	if state[2]:
 		target.add_status("vulnerable", 1)
+	if state[4]:
+		target.add_status("intangible", 1)
+	battle.turn_manager.attacks_played_this_turn = 1
+	battle.turn_manager.attacks_played_this_combat = 2
+	battle.combat_engine.reset_turn_crit()
 	var card := FakeCard.new()
 	card.card_info = card_data.duplicate(true)
 	add_child(card)
-	turn_manager.attacks_played_this_turn = 0
-	turn_manager.attacks_played_this_combat = 0
-	combat_engine.reset_turn_crit()
-	return [card, target]
 
+	COMBAT_EFFECTS.preview_card_damage(battle, card, target)
+	var preview: int = COMBAT_EFFECTS.preview_card_damage(battle, card, target)
 
-func _preview(card_data: Dictionary, strength: int, weak: bool, vulnerable: bool, loaded: int) -> int:
-	var parts := _setup(card_data, strength, weak, vulnerable, loaded)
-	var value: int = _battle_logic._card_preview_damage(parts[0], parts[1])
-	parts[0].free()
-	parts[1].free()
-	return value
-
-
-func _actual(card_data: Dictionary, strength: int, weak: bool, vulnerable: bool, loaded: int) -> int:
-	var parts := _setup(card_data, strength, weak, vulnerable, loaded)
-	var card: FakeCard = parts[0]
-	var target: FakeCombatant = parts[1]
+	var play = CARD_PLAY.new()
+	play.card = card
+	play.target = target
+	play.dealer = player
+	var source = COMBAT_SOURCE.make("card", "player", player, card)
 	for effect in card_data.get("effects", []):
-		if typeof(effect) == TYPE_DICTIONARY and str(effect.get("type", "")) in DAMAGE_EFFECTS:
-			await combat_engine._apply_effect(effect, target, player, 1.0, card)
-	var dealt := target.damage_received
+		if typeof(effect) == TYPE_DICTIONARY and str(effect.get("type", "")) in COMBAT_EFFECTS.DAMAGE_TYPES:
+			await battle.combat_engine.execute_effect(effect, target, source, play)
+	var actual: int = target.damage_received
 	card.free()
-	target.free()
-	return dealt
+	return [preview, actual]

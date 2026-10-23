@@ -10,17 +10,14 @@ const RESULT_PATH := "res://run_system/ui/result_screen.gd"  # path-ok: reads so
 const HERO_PATH := "res://run_system/data/heroes/cowboy_bill.json"
 const BASE_UPGRADE_DIR := "res://run_system/data/base_upgrades/"
 const EQUIPMENT_SET_SCRIPT = preload("uid://b3s8io84xovx7")  # res://battle_scene/equipment_set_system.gd
+const FAKE_BATTLE = preload("uid://j25pi73kmisn")  # res://tests/support/fake_battle.gd
+const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
+const VALUE_CALC = preload("uid://tynklfj3vjf5")  # res://core/combat/value_calc.gd
+const VALUE_PROPS = preload("uid://cccfcqt180t4x")  # res://core/combat/value_props.gd
 
 class FakeCard:
 	extends Control
 	var card_info: Dictionary = {}
-
-class FakeTarget:
-	extends Node
-	var statuses: Dictionary = {}
-
-	func add_status(status: String, stacks: int) -> void:
-		statuses[status] = int(statuses.get(status, 0)) + stacks
 
 var failures: PackedStringArray = []
 
@@ -47,7 +44,7 @@ func _run() -> void:
 	_test_event_deck()
 	_test_set_onboarding_track()
 	_test_set_instance_integrity()
-	_test_equipment_set_effects()
+	await _test_equipment_set_effects()
 	_test_removed_mechanics()
 	_test_tutorial_completion()
 	_test_result_cta_guard()
@@ -172,27 +169,41 @@ func _test_set_instance_integrity() -> void:
 
 
 func _test_equipment_set_effects() -> void:
+	var battle = FAKE_BATTLE.new()
+	add_child(battle)
 	var system = EQUIPMENT_SET_SCRIPT.new()
-	var effects: Array[Dictionary] = [
-		{"type": "skill_block_bonus", "amount": 2, "set_id": "contract"},
-		{"type": "attack_damage_bonus", "amount": 3, "set_id": "contract"},
-		{"type": "attack_apply_status", "status": "weak", "stacks": 1, "set_id": "contract"},
-	]
-	system._active_effects = effects
+	system.setup(battle)
+	system._active_effects.append({"type": "skill_block_bonus", "amount": 2, "set_id": "contract"})
+	system._active_effects.append({"type": "attack_damage_bonus", "amount": 3, "set_id": "contract"})
+	system._active_effects.append(
+		{"type": "attack_apply_status", "status": "weak", "stacks": 1, "set_id": "contract"}
+	)
+	battle.equipment_set_system = system
+	battle.setup()
 	var attack := FakeCard.new()
 	attack.card_info = {"type": "attack"}
 	var skill := FakeCard.new()
 	skill.card_info = {"type": "skill"}
-	var target := FakeTarget.new()
-	_expect(system.modify_card_damage(attack, 5) == 8, "set attack bonus modifies attack cards")
-	_expect(system.modify_card_damage(skill, 5) == 5, "set attack bonus ignores skill cards")
-	_expect(system.modify_card_block(skill, 5) == 7, "set block bonus modifies skill cards")
-	_expect(system.modify_card_block(attack, 5) == 5, "set block bonus ignores attack cards")
-	system.on_card_damage_resolved(attack, target)
-	_expect(target.statuses.get("weak", 0) == 1, "set attack status applies after resolved damage")
+	var target = battle.add_enemy()
+	var attack_source = COMBAT_SOURCE.make("card", "player", battle.player, attack)
+	var skill_source = COMBAT_SOURCE.make("card", "player", battle.player, skill)
+	var powered: int = VALUE_PROPS.POWERED
+	var commands = battle.combat_commands
+	_expect(commands.preview_damage(attack_source, target, 5, powered) == 8, "set attack bonus modifies attack cards")
+	_expect(commands.preview_damage(skill_source, target, 5, powered) == 5, "set attack bonus ignores skill cards")
+	_expect(_preview_block(battle, skill_source, 5) == 7, "set block bonus modifies skill cards")
+	_expect(_preview_block(battle, attack_source, 5) == 5, "set block bonus ignores attack cards")
+	await commands.damage(attack_source, [target], 5, powered)
+	_expect(target.get_status_stacks("weak") == 1, "set attack status applies after resolved damage")
 	attack.free()
 	skill.free()
-	target.free()
+	battle.free()
+
+
+func _preview_block(battle, source, base: int) -> int:
+	return battle.combat_hooks.compute_block(
+		VALUE_CALC.for_block(source, battle.player, base, VALUE_PROPS.POWERED, true)
+	)
 
 
 func _test_removed_mechanics() -> void:

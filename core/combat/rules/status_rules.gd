@@ -2,9 +2,9 @@ extends RefCounted
 
 ## Status modifiers and reactions: Weak (dealer, powered ×0.5), Vulnerable
 ## (target, powered ×1.5), Frail (powered block ×0.75), Intangible (every hit
-## at most 1) and Thorns (a powered hit makes the dealer take Thorns damage;
-## the defender loses 1 Thorns). Serrated Barbs adds equal Short Circuit when
-## the player's Thorns trigger.
+## at most 1), Thorns (a powered hit makes the dealer take Thorns damage; the
+## defender loses 1 Thorns; Serrated Barbs adds equal Short Circuit when the
+## player's Thorns trigger) and Reactive Plating.
 
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const VALUE_PROPS = preload("uid://cccfcqt180t4x")  # res://core/combat/value_props.gd
@@ -52,6 +52,17 @@ func after_damage_received(result) -> void:
 	await hooks.commands.damage(source, [attacker], thorns, 0)
 	if side == "player" and relics and relics.thorns_apply_short_circuit() and _alive(attacker):
 		await hooks.commands.apply_status(source, attacker, "short_circuit", thorns)
+
+
+## Reactive Plating: whenever a card grants Block, gain Thorns equal to stacks.
+func after_block_gained(result: Dictionary) -> void:
+	var source = result.get("source")
+	var creature: Object = result.get("creature")
+	if source == null or not source.is_card() or hooks == null or hooks.commands == null:
+		return
+	var reactive := _stacks(creature, "reactive_plating")
+	if reactive > 0:
+		await hooks.commands.apply_status(source, creature, "thorns", reactive, "reactive_plating")
 
 
 func _stacks(creature: Object, status: String) -> int:

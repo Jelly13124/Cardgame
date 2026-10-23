@@ -536,6 +536,13 @@ func gain_temp_strength(n: int) -> void:
 	notify_stats_changed()
 
 
+func gain_energy(amount: int) -> void:
+	if amount <= 0:
+		return
+	energy += amount
+	energy_changed.emit(energy)
+
+
 func pay_energy(cost: int) -> bool:
 	if energy >= cost:
 		energy -= cost

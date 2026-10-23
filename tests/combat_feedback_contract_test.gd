@@ -3,6 +3,7 @@ extends Node
 const CONTROLLER_PATH := "uid://po237gnjpbo0"  # res://battle_scene/combat_feedback_controller.gd
 const BATTLE_SCENE_PATH := "res://battle_scene/battle_scene.gd"  # path-ok: reads source text
 const COMBAT_ENGINE_PATH := "res://battle_scene/combat_engine.gd"  # path-ok: reads source text
+const COMBAT_COMMANDS_PATH := "res://battle_scene/combat/combat_commands.gd"  # path-ok: reads source text
 const ENEMY_ENTITY_PATH := "res://battle_scene/enemy_entity.gd"  # path-ok: reads source text
 const PLAYER_PATH := "res://battle_scene/player.gd"  # path-ok: reads source text
 const ENEMY_AI_PATH := "res://battle_scene/enemy_ai.gd"  # path-ok: reads source text
@@ -161,24 +162,25 @@ func _test_reusable_feedback_controller() -> void:
 func _test_damage_path_integration() -> void:
 	var battle_source := FileAccess.get_file_as_string(BATTLE_SCENE_PATH)
 	var engine_source := FileAccess.get_file_as_string(COMBAT_ENGINE_PATH)
+	var commands_source := FileAccess.get_file_as_string(COMBAT_COMMANDS_PATH)
 	var enemy_source := FileAccess.get_file_as_string(ENEMY_ENTITY_PATH)
 	var player_source := FileAccess.get_file_as_string(PLAYER_PATH)
 	var enemy_ai_source := FileAccess.get_file_as_string(ENEMY_AI_PATH)
 
 	_expect(
-		engine_source.contains("feedback_tags"),
+		commands_source.contains("func _feedback("),
 		"player-card damage builds explicit feedback tags"
 	)
 	_expect(
-		engine_source.contains('"critical"') and engine_source.contains('"heavy"'),
+		commands_source.contains('"critical"') and commands_source.contains('"heavy"'),
 		"player-card damage forwards both critical and explicit-heavy context"
 	)
 	_expect(
-		engine_source.contains("await target.take_damage"),
+		commands_source.contains("await target.take_damage"),
 		"player-card resolution waits for the ordered target feedback"
 	)
 	_expect(
-		engine_source.contains("source_card")
+		engine_source.contains("CARD_PLAY.new()")
 		and not engine_source.contains("main.current_resolving_card")
 		and not battle_source.contains("current_resolving_card"),
 		"parallel cards carry their own equipment context through awaits"

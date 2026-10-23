@@ -43,6 +43,12 @@ func compute_damage(calc) -> int:
 	return int(maxf(0.0, calc.value))
 
 
+## Direct HP loss is not damage: only the cap stage (Intangible) applies.
+func compute_hp_loss(calc) -> int:
+	_modify("modify_damage_cap", calc)
+	return int(maxf(0.0, calc.value))
+
+
 func compute_block(calc) -> int:
 	_modify("modify_block_additive", calc)
 	_modify("modify_block_multiplicative", calc)

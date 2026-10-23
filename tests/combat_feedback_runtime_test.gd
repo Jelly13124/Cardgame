@@ -1,5 +1,6 @@
 extends Node
 
+const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
 const FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://battle_scene/combat_feedback_controller.gd
 const ENEMY_ENTITY = preload("uid://qtp7jvjqfbou")  # res://battle_scene/enemy_entity.gd
@@ -141,12 +142,10 @@ func _run() -> void:
 	battle.enemy_container.add_child(boss)
 	battle.enemy_container.add_child(add)
 	var add_hp_before: int = add.health
-	await battle.combat_engine._apply_effect(
+	await battle.combat_engine.execute_effect(
 		{"type": "deal_damage_all", "amount": 999, "no_str": true},
 		null,
-		battle.player,
-		1.0,
-		null
+		COMBAT_SOURCE.make("card", "player", battle.player)
 	)
 	_expect(add.health == add_hp_before, "AoE stops after a lethal boss hit")
 	if is_instance_valid(add):

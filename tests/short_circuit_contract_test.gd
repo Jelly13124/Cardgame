@@ -1,7 +1,9 @@
 extends Node
 
 const STATUS_SYSTEM = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
-const COMBAT_ENGINE = preload("uid://c444jgeenijlu")  # res://battle_scene/combat_engine.gd
+const FAKE_BATTLE = preload("uid://j25pi73kmisn")  # res://tests/support/fake_battle.gd
+const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
+const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const PLAY_CARD = preload("uid://d4f71g73780ld")  # res://battle_scene/play_card.gd
 
 const CARD_DIR := "res://battle_scene/card_info/player/"
@@ -30,34 +32,8 @@ class FakeEntity:
 		damage_taken += hp_damage
 
 
-class FakePlayer:
-	extends Node
-	var status_system = STATUS_SYSTEM.new()
-	var block := 0
-
-	func add_status(status: String, stacks: int) -> void:
-		status_system.add_status(status, stacks, self)
-
-	func get_status_stacks(status: String) -> int:
-		return status_system.get_stacks(status)
-
-	func add_block(amount: int) -> void:
-		block += amount
-
-
-var enemy_container := Node.new()
-var relic_effect_system = null
-var equipment_set_system = null
-var is_game_over := false
-
-
 func _ready() -> void:
-	add_child(enemy_container)
 	call_deferred("_run")
-
-
-func show_notification(_message: String, _color: Color) -> void:
-	pass
 
 
 func _expect(condition: bool, message: String) -> void:
@@ -69,7 +45,7 @@ func _expect(condition: bool, message: String) -> void:
 
 func _run() -> void:
 	_test_status_timing()
-	_test_overload_consumes_charge()
+	await _test_overload_consumes_charge()
 	await _test_global_overload_and_charge_sink()
 	_test_card_package_numbers()
 	_test_data_driven_targeting()
@@ -97,47 +73,41 @@ func _test_status_timing() -> void:
 
 
 func _test_global_overload_and_charge_sink() -> void:
-	var first := FakeEntity.new()
-	first.health = 20
+	var battle = FAKE_BATTLE.new()
+	add_child(battle)
+	battle.setup()
+	battle.player.block = 0
+	var first = battle.add_enemy(20)
 	first.block = 2
 	first.add_status("short_circuit", 5)
-	enemy_container.add_child(first)
-	var second := FakeEntity.new()
-	second.health = 4
+	var second = battle.add_enemy(4)
 	second.add_status("short_circuit", 7)
-	enemy_container.add_child(second)
-	var player := FakePlayer.new()
-	add_child(player)
-	var engine = COMBAT_ENGINE.new()
-	add_child(engine)
-	await engine._apply_effect(
-		{"type": "overload", "gain_block_equal_damage": true}, null, player
+	var source = COMBAT_SOURCE.make("card", "player", battle.player)
+	await battle.combat_engine.execute_effect(
+		{"type": "overload", "gain_block_equal_damage": true}, null, source
 	)
 	_expect(first.get_status_stacks("short_circuit") == 0, "Overload clears the first enemy")
 	_expect(second.get_status_stacks("short_circuit") == 0, "Overload clears every enemy")
-	_expect(first.damage_taken == 3, "Overload damage respects enemy Block")
-	_expect(second.damage_taken == 4, "Overload damage cannot exceed remaining HP")
-	_expect(player.block == 7, "Charge Sink gains Block equal to actual Overload damage")
-	engine.free()
-	player.free()
-	first.free()
-	second.free()
+	_expect(first.hp_lost == 3, "Overload damage respects enemy Block")
+	_expect(second.hp_lost == 4, "Overload damage cannot exceed remaining HP")
+	_expect(battle.player.block == 7, "Charge Sink gains Block equal to actual Overload damage")
+	battle.free()
 
 
 func _test_overload_consumes_charge() -> void:
-	var entity := FakeEntity.new()
-	add_child(entity)
+	var battle = FAKE_BATTLE.new()
+	add_child(battle)
+	battle.setup()
+	var entity = battle.add_enemy()
 	entity.add_status("short_circuit", 9)
-	var engine = COMBAT_ENGINE.new()
-	add_child(engine)
-	var consumed := int(engine._consume_short_circuit(entity))
+	var consumed := COMBAT_EFFECTS.consume_short_circuit(entity)
 	_expect(consumed == 9, "Overload reads every stored Short Circuit stack")
 	_expect(entity.get_status_stacks("short_circuit") == 0, "Overload removes stored charge")
-	var result: Dictionary = engine._short_circuit_overload(consumed, null)
-	_expect(int(result.get("damage", 0)) == 9, "Base Overload damage equals stacks consumed")
-	_expect(not bool(result.get("critical", true)), "Overload cannot Crit without the power")
-	engine.free()
-	entity.free()
+	var source = COMBAT_SOURCE.make("card", "player", battle.player)
+	var results: Array = await battle.combat_commands.damage(source, [entity], consumed, 0, null, 0, {"overload": true})
+	_expect(results.size() == 1 and results[0].amount == 9, "Base Overload damage equals stacks consumed")
+	_expect(results.size() == 1 and not results[0].critical, "Overload cannot Crit without the power")
+	battle.free()
 
 
 func _test_card_package_numbers() -> void:

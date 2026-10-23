@@ -2,6 +2,7 @@ extends RefCounted
 class_name EquipmentSetSystem
 
 const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://battle_scene/combat_fx.gd
+const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 
 var _battle_scene: Node
 var _active_effects: Array[Dictionary] = []
@@ -56,49 +57,57 @@ func on_player_turn_started(player: Node, _round_number: int) -> void:
 					player.play_block_pulse()
 				_notify(str(effect.get("set_id", "")), Color(0.45, 0.75, 1.0))
 			"start_turn_energy":
-				player.pay_energy(-amount)
+				player.gain_energy(amount)
 				_notify(str(effect.get("set_id", "")), Color(0.98, 0.88, 0.28))
 
 
-func modify_card_block(source_card: Node, amount: int) -> int:
-	if not _is_card_type(source_card, "skill"):
-		return amount
-	var result := amount
-	for effect in _active_effects:
-		if str(effect.get("type", "")) == "skill_block_bonus":
-			result += int(effect.get("amount", 0))
-	return max(0, result)
+# ─── Combat hook listener (core/combat/combat_hooks.gd) ──────────────────────
 
 
-func modify_card_damage(source_card: Node, amount: int) -> int:
-	if not _is_card_type(source_card, "attack"):
-		return amount
-	var result := amount
-	for effect in _active_effects:
-		if str(effect.get("type", "")) == "attack_damage_bonus":
-			result += int(effect.get("amount", 0))
-	return max(0, result)
+## attack_damage_bonus: powered damage from Attack cards.
+func modify_damage_additive(calc) -> void:
+	if calc.is_powered() and calc.source and calc.source.card_type() == "attack":
+		calc.value += _sum("attack_damage_bonus")
 
 
-func on_card_damage_resolved(source_card: Node, target: Node) -> void:
-	if target == null or not is_instance_valid(target) or not _is_card_type(source_card, "attack"):
+## skill_block_bonus: powered Block from Skill cards.
+func modify_block_additive(calc) -> void:
+	if calc.is_powered() and calc.source and calc.source.card_type() == "skill":
+		calc.value += _sum("skill_block_bonus")
+
+
+## attack_apply_status: every hit an Attack card deals (Final Salvo and Kinetic
+## Rebound included) applies the set's status to the struck enemy if it lives.
+func after_damage_given(result) -> void:
+	if result.source == null or result.source.card_type() != "attack" or not _is_live(result.target):
 		return
 	for effect in _active_effects:
 		if str(effect.get("type", "")) != "attack_apply_status":
 			continue
-		var status := str(effect.get("status", ""))
 		var stacks := int(effect.get("stacks", effect.get("amount", 1)))
-		if status == "" or stacks <= 0 or not target.has_method("add_status"):
-			continue
-		target.add_status(status, stacks)
-		_notify(str(effect.get("set_id", "")), Color(0.95, 0.55, 0.28))
+		var set_id := str(effect.get("set_id", ""))
+		var source = COMBAT_SOURCE.make("set", "player", _battle_scene.get("player"), null, set_id)
+		var applied: int = await _battle_scene.combat_commands.apply_status(
+			source, result.target, str(effect.get("status", "")), stacks, "set_apply_status"
+		)
+		if applied > 0:
+			_notify(set_id, Color(0.95, 0.55, 0.28))
 
 
-func _is_card_type(source_card: Node, expected: String) -> bool:
-	if source_card == null or not is_instance_valid(source_card):
+func _sum(effect_type: String) -> int:
+	var total := 0
+	for effect in _active_effects:
+		if str(effect.get("type", "")) == effect_type:
+			total += int(effect.get("amount", 0))
+	return total
+
+
+func _is_live(creature: Object) -> bool:
+	if creature == null or not is_instance_valid(creature):
 		return false
-	var data: Variant = source_card.get("card_info")
-	return typeof(data) == TYPE_DICTIONARY and str(data.get("type", "")).to_lower() == expected
+	if creature is Node and (creature as Node).is_queued_for_deletion():
+		return false
+	return int(creature.get("health")) > 0
 
 
 func _notify(set_id: String, color: Color) -> void:
