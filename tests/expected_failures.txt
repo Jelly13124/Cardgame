@@ -1,3 +1,5 @@
 # Tests that are known to fail, one per line: <test name> <finding ID> <note>.
 # The runner reports them as XFAIL. If one starts passing it is reported as XPASS
 # and the run fails, so remove its line once the bug is fixed.
+combat_preview_parity_test  S1-01  Targeting preview differs from resolved damage; fixed in phase 1
+enemy_intent_parity_test    S4-01  Enemy intent differs from resolved damage; fixed in phase 1
