@@ -282,3 +282,31 @@
 - [ ] **Step 2**：对比运行前后真实用户目录 `%APPDATA%/Godot/app_userdata/CardFramework` 的文件清单与修改时间，确认无变化。
 - [ ] **Step 3**：`git log --oneline main..HEAD` 列出本阶段提交（应为 Task 1–7 的 8 个提交 + spec/plan 提交）；`git diff --stat main..HEAD` 中没有 `addons/`、素材或内容 JSON 的改动（除 31 个场景首行）。
 - [ ] **Step 4**：写 `docs/superpowers/plans/2026-10-22-phase0-safety-net.md` 末尾的“执行记录”：每个任务的结果、做出的裁定、未完成项与手动试玩清单（spec 成功标准 5）。
+
+---
+
+## 执行记录（2026-10-22，Native 执行）
+
+环境：Godot 4.6.3-stable 官方 win64（`C:\Users\Jerry\Tools\Godot_v4.6.3\`，SHA512 已校验）；Windows PowerShell 5.1（无 pwsh）；Python 3.13。
+
+| 任务 | 结果 | 提交 |
+|---|---|---|
+| 1 测试入口 | 完成；自检 FAIL/XFAIL/XPASS、含空格与中文路径均通过；执行中发现并修复超时只杀外壳进程的问题 | `50c1398`、`31ac148` |
+| 2 SaveIO | 完成；10 项契约测试 | `a2aa86a` |
+| 3 接入存档 | 完成；5 项集成测试；4 个写存档的测试改用独立存档根目录 | `769acd4` |
+| 4 一致性测试 | 完成；预期失败：瞄准预览 8 处不一致（均为 `piston_jab` STR=3，如 预览 7 / 实际 4）；敌人意图 605 处不一致（取整、减伤遗物、幕倍率） | `9dca783` |
+| 5 uid 转换 | 完成；36 个场景补 uid（仅首行）；209 处引用转为 `uid://`；`extends`、读取源码与 `resource_path` 比较保留路径并标注 `# path-ok` | `3d34e38`、`430f4fb` |
+| 6 目录整理 | 完成；`scripts/`、`battle_scene/scripts/` → `tools/`（生成脚本输出目录前后一致）；4 个 autoload → `autoload/`；新增 `godot_refs.py sync-comments` | `5f5964a` |
+| 7 分层规则 | 完成；`docs/conventions/architecture-layers.md`、`tools/check_layers.py`（L1–L4）；完整运行同时跑工具单元测试 | `f6eb87c` |
+| 8 收尾 | 完整运行：冒烟 ok、19 PASS、2 XFAIL、工具单元测试 ok、`layers: ok`、退出码 0；真实用户目录 73 个文件修改时间与大小全部不变；分支未改动 `addons/`、素材、内容 JSON；32 个现有场景仅首行变化 | 本提交 |
+
+与计划的偏差（均有裁定，详见各提交说明）：
+- 计划中的 `pwsh` 改为 `powershell -NoProfile -ExecutionPolicy Bypass -File`（本机无 pwsh，脚本兼容 PS 5.1）。
+- Godot 4.6.3 不支持 `extends "uid://…"`，成功标准 4 解释为“除 `extends`、注释与 `# path-ok` 标注外 0 处路径引用”。
+- 测试入口默认超时由 300 秒改为 120 秒；新增 `tests/support/test_save_root.gd`、`godot_refs.py --dirs` 与 `sync-comments`。
+- 工具 `i18n_audit.py` 在 Windows 重定向输出时因 cp1252 编码失败（主目录原脚本同样失败，非本分支引入）；设置 `PYTHONIOENCODING=utf-8` 后输出与主目录一致。未修复。
+
+未完成 / 需要人工完成：
+- **手动试玩**（spec 成功标准 5）：主菜单 → 选槽 → 开局 → 一场战斗 → 地图 → 退出并“继续” → 修改设置后重启仍保留。自动化无法覆盖界面交互。
+- 本机导出预设（`export_presets.cfg` 不在仓库）中的排除规则需手动把 `scripts/*` 改为 `tools/*`。
+- 全量导入偶发崩溃（Godot 内部 `Index p_index = -1`）未定位根因，入口脚本以重试兜底。
