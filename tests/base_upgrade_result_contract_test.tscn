@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://bex8nh0tefpr"]
 
 [ext_resource type="Script" path="res://tests/base_upgrade_result_contract_test.gd" id="1_test"]
 

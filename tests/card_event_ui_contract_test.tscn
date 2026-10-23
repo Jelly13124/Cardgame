@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://cbyva8ih4tbur"]
 
 [ext_resource path="res://tests/card_event_ui_contract_test.gd" type="Script" id="1"]
 

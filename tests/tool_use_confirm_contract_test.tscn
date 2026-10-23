@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://cq10t1dxdvrym"]
 
 [ext_resource type="Script" path="res://tests/tool_use_confirm_contract_test.gd" id="1_test"]
 

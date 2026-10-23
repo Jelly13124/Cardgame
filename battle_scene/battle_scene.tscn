@@ -1,4 +1,4 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://dnhj5pp3c1v2l"]
 
 [ext_resource type="Script" path="res://battle_scene/battle_scene.gd" id="1_2r7vq"]
 [ext_resource type="PackedScene" path="res://addons/card-framework/card_manager.tscn" id="1_rurpr"]

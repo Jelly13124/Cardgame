@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://disje2tfymrpe"]
 
 [ext_resource type="Script" path="res://tests/enemy_encounter_balance_contract_test.gd" id="1_test"]
 
