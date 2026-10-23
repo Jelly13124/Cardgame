@@ -24,6 +24,8 @@ var combat_hooks: RefCounted  # core/combat/combat_hooks.gd
 var combat_commands: RefCounted  # battle_scene/combat/combat_commands.gd
 var effect_registry: RefCounted  # core/effects/effect_registry.gd
 var crit_rules: RefCounted  # core/combat/rules/crit_rules.gd
+## Card plays, tools and End Turn run one at a time in input order.
+var action_queue: RefCounted = ACTION_QUEUE.new()
 # Typed via the preloaded CARD_ANIMATOR_SCRIPT below — kept as Node so this
 # file parses even before Godot has scanned the class_name registry.
 var card_animator: Node  # CardAnimator (card_animator.gd) instance
@@ -56,6 +58,7 @@ const DECK_MANAGER_SCRIPT = preload("uid://bi8d6vtu6xop6")  # res://battle_scene
 const COMBAT_SERVICES = preload("uid://bcjfi8umolkqg")  # res://battle_scene/combat/combat_services.gd
 const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
+const ACTION_QUEUE = preload("uid://bseuowesln3j7")  # res://core/combat/action_queue.gd
 const DISCOVER_MODAL = preload("uid://keeeggdto42o")  # res://battle_scene/discover_modal.gd
 const DISCOVER_POOL = preload("uid://c76axesxo6wit")  # res://run_system/core/discover_pool.gd
 const TOOL_USE_CONFIRM = preload("uid://dihe3sjaxh16")  # res://battle_scene/ui/tool_use_confirm.gd
@@ -461,9 +464,7 @@ func _on_tool_use_confirmed(index: int, expected_tool_id: String) -> void:
 			return
 		_begin_tool_targeting(index, expected_tool_id, tdata)
 		return
-	_tool_resolving = true
-	await _resolve_tool(index, tdata, null)
-	_tool_resolving = false
+	_enqueue_tool(index, tdata, null)
 
 
 func _on_tool_use_cancelled() -> void:
@@ -552,9 +553,19 @@ func _confirm_tool_targeting(target: Node) -> void:
 		return
 
 	_cancel_tool_targeting()
+	_enqueue_tool(index, tdata, target)
+
+
+## Tool use joins the action queue behind any card still resolving.
+func _enqueue_tool(index: int, tdata: Dictionary, target: Node) -> void:
 	_tool_resolving = true
-	await _resolve_tool(index, tdata, target)
-	_tool_resolving = false
+	action_queue.enqueue(
+		"use_tool",
+		func() -> void:
+			if not is_game_over:
+				await _resolve_tool(index, tdata, target)
+			_tool_resolving = false
+	)
 
 
 func _cancel_tool_targeting() -> void:
@@ -880,6 +891,14 @@ func _on_end_round_button_pressed():
 	if _ending_turn or not turn_manager.is_player_turn or is_targeting:
 		return
 	_ending_turn = true
+	action_queue.enqueue("end_turn", _end_turn_action)
+
+
+## End Turn as a queued action: runs after every card already played, then
+## holds the queue through the enemy turn until the player's next turn starts.
+func _end_turn_action() -> void:
+	if is_game_over:
+		return
 	if turn_manager.is_player_turn:
 		# Discard hand BEFORE switching turns. turn_manager.end_turn() emits
 		# turn_ended synchronously and immediately switches sides; awaiting an
@@ -906,11 +925,14 @@ func _on_end_round_button_pressed():
 		if to_discard.size() > 0:
 			await _animate_hand_discard(to_discard)
 		turn_manager.end_turn()
+		while not turn_manager.is_player_turn and not is_game_over and is_inside_tree():
+			await get_tree().process_frame
 
 
 func _victory():
 	if is_game_over:
 		return
+	action_queue.clear_pending()
 	if is_targeting:
 		_cancel_active_targeting()
 	is_game_over = true
@@ -1044,6 +1066,7 @@ func _on_loot_closed(canvas: CanvasLayer) -> void:
 func _game_over():
 	if is_game_over:
 		return
+	action_queue.clear_pending()
 	if is_targeting:
 		_cancel_active_targeting()
 	is_game_over = true
@@ -1189,8 +1212,9 @@ func _update_attack_allowance_ui() -> void:
 
 
 ## Play a card. target_node is set for any card whose data requires an enemy target.
-## Multiple cards can be in flight simultaneously — animations overlap. A
-## per-card `_in_play` meta lock prevents the same card from being resolved
+## Checks and costs happen now; the card flies to the play area at once and its
+## effects resolve through the action queue, after every card played before it.
+## A per-card `_in_play` meta lock prevents the same card from being played
 ## twice (e.g. double-click, double drop).
 func play_spell(card: Control, target_node: Node):
 	if is_game_over:
@@ -1198,13 +1222,19 @@ func play_spell(card: Control, target_node: Node):
 	if not is_instance_valid(card):
 		return
 
-	# Per-card lock — different cards can play in parallel, but the SAME
-	# card can't be played twice before its first resolution finishes.
 	if card.has_meta("_in_play"):
 		return
 	card.set_meta("_in_play", true)
 
 	var type = card.card_info.get("type", "skill").to_lower()
+
+	# Cards are played on the player's own turn only, and not after End Turn
+	# was pressed (the end-turn action is already queued).
+	if not turn_manager.is_player_turn or _ending_turn:
+		AudioManager.play_sfx("error")
+		hand.add_card(card)
+		card.remove_meta("_in_play")
+		return
 
 	# Curses (and any card flagged unplayable) can't be played — return it to hand with
 	# a notification (mirrors the out-of-ammo path).
@@ -1256,26 +1286,35 @@ func play_spell(card: Control, target_node: Node):
 		card.card_container.remove_card(card)
 
 	card_animator.prepare_for_play(card)
-	await card_animator.fly_to_play_area(card, target_node)
+	var flight := {"done": false}
+	_fly_to_play_area(card, target_node, flight)
+	action_queue.enqueue("play_card", _resolve_played_card.bind(card, target_node, flight))
 
-	# Resolve combat effects (may await animations). The resolver carries this card
-	# explicitly through every effect so parallel cards cannot overwrite context.
-	# target_node can be freed DURING the fly_to_play_area await above — the
-	# targeted enemy may have died from a parallel in-flight card or a DOT tick.
-	# A previously-freed Object fails resolve_card_effect's typed `target: Node`
-	# parameter check BEFORE its body's is_instance_valid guards can run, so
-	# sanitise to null here. The resolver already treats a null target as
-	# "no target" (skill/ability cards pass null routinely).
+
+func _fly_to_play_area(card: Control, target_node: Node, flight: Dictionary) -> void:
+	await card_animator.fly_to_play_area(card, target_node)
+	flight["done"] = true
+
+
+## Queued half of a card play: wait for the card to reach the play area,
+## resolve it, then send it to discard / exhaust without holding the queue.
+func _resolve_played_card(card, target_node, flight: Dictionary) -> void:
+	while not flight["done"] and is_inside_tree():
+		await get_tree().process_frame
+	if is_game_over or not is_instance_valid(card):
+		return
+	# The target can die while this card waits or flies; null = "no target".
 	var safe_target: Node = target_node if is_instance_valid(target_node) else null
 	await combat_engine.resolve_card_effect(card, safe_target, player)
 
-	# Release the per-card play lock NOW. The play is logically complete —
-	# what's left below is pure animation/routing. If we don't release here,
-	# the meta survives the trip through discard → reshuffle → deck → hand,
-	# and the card silently refuses to play on its next draw.
+	# Release the per-card play lock now: what's left is animation/routing, and the
+	# meta must not survive the trip discard → reshuffle → deck → hand.
 	if is_instance_valid(card):
 		card.remove_meta("_in_play")
+	_route_played_card(card)
 
+
+func _route_played_card(card) -> void:
 	# Route to discard, OR remove from circulation if exhaust_self is among
 	# the card's effects.
 	var should_exhaust := _card_has_exhaust(card)
