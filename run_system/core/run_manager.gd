@@ -401,6 +401,11 @@ var visited_node_ids: Array[String] = []
 var _node_index: Dictionary = {}
 
 const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://battle_scene/data_validator.gd
+const EFFECT_REGISTRY = preload("uid://7gab4te60cto")  # res://core/effects/effect_registry.gd
+const EFFECT_CONTEXT = preload("uid://bx2g3askncfr6")  # res://core/effects/effect_context.gd
+const RUN_EFFECTS = preload("uid://divb5pd0mx4cc")  # res://core/effects/run_effects.gd
+## Run-context effect registry, built on first use.
+var _run_effects = null
 const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
 
@@ -1527,33 +1532,18 @@ func luck_check_chance() -> float:
 	)
 
 
-## Apply each effect in an event option's effects array to the matching
-## RunManager mutation. Unknown effect types are ignored (validator gates them).
+## Apply an event option's effects through the shared effect registry ("run"
+## context; see core/effects/run_effects.gd). Run handlers are synchronous, so
+## every effect has been applied when this returns.
 func apply_event_effects(effects: Array) -> void:
+	if _run_effects == null:
+		_run_effects = EFFECT_REGISTRY.new()
+		RUN_EFFECTS.register_into(_run_effects)
+	var ctx = EFFECT_CONTEXT.new()
+	ctx.kind = "run"
 	for effect in effects:
-		if typeof(effect) != TYPE_DICTIONARY:
-			continue
-		var etype := str(effect.get("type", ""))
-		match etype:
-			"gain_gold":
-				add_gold(int(effect.get("amount", 0)))
-			"lose_hp":
-				modify_health(-int(effect.get("amount", 0)))
-			"heal":
-				modify_health(int(effect.get("amount", 0)))
-			"gain_scrap":
-				add_scrap_to_backpack(int(effect.get("amount", 0)))
-			"gain_relic":
-				add_relic(str(effect.get("id", "")))
-			"gain_equipment":
-				var rarity := str(effect.get("rarity", ""))
-				if rarity != "":
-					add_equip_to_backpack(roll_shell_drop(rarity))
-			"gain_attribute":
-				grant_attribute(str(effect.get("attr", "")), int(effect.get("amount", 0)))
-			"add_curse":
-				# Permanent curse onto the run deck (clearable at the shop's card removal).
-				add_card_to_deck(str(effect.get("curse", "radiation_dust")))
+		if typeof(effect) == TYPE_DICTIONARY:
+			_run_effects.execute(ctx, effect)
 
 
 ## Equip item_id into slot. If slot is occupied, the previous occupant moves

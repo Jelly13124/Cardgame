@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bwkmq052u6riv"]
+
+[ext_resource type="Script" path="res://tests/effect_registry_contract_test.gd" id="1"]
+
+[node name="EffectRegistryContractTest" type="Node"]
+script = ExtResource("1")
