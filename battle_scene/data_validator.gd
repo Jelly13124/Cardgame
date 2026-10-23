@@ -99,7 +99,7 @@ const ALLOWED_STATUS_NAMES = [
 	"regen",
 	"thorns",
 	"frail",
-	"dodge",
+	"intangible",
 	"metallicize",
 	"feel_no_pain",
 	"hot_streak",

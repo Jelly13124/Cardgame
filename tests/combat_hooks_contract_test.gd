@@ -8,6 +8,7 @@ extends Node
 const FAKE_BATTLE = preload("uid://j25pi73kmisn")  # res://tests/support/fake_battle.gd
 const EQUIPMENT_SET_SYSTEM = preload("uid://b3s8io84xovx7")  # res://battle_scene/equipment_set_system.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
+const RELIC_EFFECT_SYSTEM = preload("uid://b4d2o08tofxey")  # res://battle_scene/relic_effect_system.gd
 const CARD_DIR := "res://battle_scene/card_info/player/"
 
 
@@ -45,6 +46,10 @@ func _run() -> void:
 	await test_replayed_attack_counts_once()
 	_fresh()
 	await test_overload_from_attack_card_triggers_on_hit()
+	_fresh()
+	await test_burn_goes_through_the_pipeline()
+	_fresh()
+	await test_relic_turn_block_is_fixed()
 	Engine.time_scale = 1.0
 	if failures.is_empty():
 		print("[OK] combat hooks contract passed")
@@ -136,3 +141,32 @@ func test_overload_from_attack_card_triggers_on_hit() -> void:
 	await _play(card, null)
 	_expect(first.damage_received == 4 and second.damage_received == 3, "Overload discharges stored charge unmodified")
 	_expect(first.get_status_stacks("weak") == 1 and second.get_status_stacks("weak") == 1, "card-sourced Overload hits trigger on-hit effects")
+
+
+func test_burn_goes_through_the_pipeline() -> void:
+	var enemy = battle.add_enemy()
+	enemy.add_status("intangible", 1)
+	enemy.add_status("burn", 6)
+	enemy.status_system.on_turn_start(enemy)
+	await get_tree().process_frame
+	_expect(enemy.damage_received == 1, "Burn on an Intangible enemy deals 1 (got %d)" % enemy.damage_received)
+	_expect(enemy.get_status_stacks("burn") == 3, "Burn still halves after ticking")
+
+
+func test_relic_turn_block_is_fixed() -> void:
+	var saved_active: bool = RunManager.is_run_active
+	var saved_relics: Array[String] = RunManager.relics.duplicate()
+	RunManager.is_run_active = true
+	RunManager.relics.clear()
+	RunManager.relics.append("steel_plating")
+	var relics = RELIC_EFFECT_SYSTEM.new()
+	relics.setup(battle)
+	battle.relic_effect_system = relics
+	battle.setup()
+	battle.player.constitution = 3
+	battle.player.add_status("frail", 1)
+	await relics.on_player_turn_started(battle.player, 1)
+	_expect(battle.player.block == 6, "relic Block ignores CON and Frail (got %d)" % battle.player.block)
+	RunManager.is_run_active = saved_active
+	RunManager.relics.clear()
+	RunManager.relics.append_array(saved_relics)

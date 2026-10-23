@@ -451,7 +451,7 @@ func heal(amount: int) -> void:
 
 
 ## Direct HP loss used by cards, events, and curses. Shows a floating damage
-## number like take_damage but ignores Block and Dodge.
+## number like take_damage but ignores Block (Intangible caps it upstream).
 func lose_hp(amount: int) -> void:
 	if amount <= 0 or _death_resolving:
 		return

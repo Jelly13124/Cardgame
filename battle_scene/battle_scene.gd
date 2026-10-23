@@ -619,9 +619,11 @@ func _on_turn_started(side: String) -> void:
 	if RunManager.ascension >= 3 and turn_manager.current_round == 1:
 		player.pay_energy(1)
 	if relic_effect_system:
-		relic_effect_system.on_player_turn_started(player, turn_manager.current_round)
+		await relic_effect_system.on_player_turn_started(player, turn_manager.current_round)
 	if equipment_set_system:
-		equipment_set_system.on_player_turn_started(player, turn_manager.current_round)
+		await equipment_set_system.on_player_turn_started(player, turn_manager.current_round)
+	if is_game_over:
+		return
 	_update_ui_labels()
 	update_polarity_hud()  # H5: reflect opening polarity state on the HUD badge
 	enemy_ai.spawn_enemy_units()
@@ -639,6 +641,13 @@ func _on_turn_started(side: String) -> void:
 func _on_turn_ended(side: String) -> void:
 	if is_game_over:
 		return  # a curse (e.g. Rust) can kill the player mid-end-turn — don't tick a corpse
+	# Intangible lasts until the end of the opponent's turn.
+	if side == "player":
+		for enemy in enemy_container.get_children():
+			if is_instance_valid(enemy) and "status_system" in enemy:
+				enemy.status_system.decay_intangible(enemy)
+	elif is_instance_valid(player):
+		player.status_system.decay_intangible(player)
 	if side == "player":
 		player.end_turn()
 		_update_ui_labels()
@@ -835,6 +844,7 @@ func _start_new_game():
 	equipment_set_system = EQUIPMENT_SET_SYSTEM.new()
 	equipment_set_system.setup(self)
 	COMBAT_SERVICES.install(self)
+	combat_commands.attach(player)
 
 	# ── Player HP & Attributes ──────────────────────────────────────────────
 	if RunManager.is_run_active:

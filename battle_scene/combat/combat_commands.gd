@@ -8,6 +8,7 @@ extends RefCounted
 
 const VALUE_CALC = preload("uid://tynklfj3vjf5")  # res://core/combat/value_calc.gd
 const VALUE_PROPS = preload("uid://cccfcqt180t4x")  # res://core/combat/value_props.gd
+const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const DAMAGE_RESULT = preload("uid://g7g4k5jk1gvd")  # res://core/combat/damage_result.gd
 
 const FEEDBACK_SOURCE := {
@@ -23,6 +24,19 @@ const FEEDBACK_SOURCE := {
 
 var battle: Object = null  # battle scene (is_game_over)
 var hooks = null  # combat_hooks.gd
+
+
+## Routes `creature`'s status damage (Burn) through this command layer.
+func attach(creature: Object) -> void:
+	var status_system = creature.get("status_system") if creature else null
+	if status_system:
+		status_system.damage_router = _status_damage
+
+
+func _status_damage(entity: Object, amount: int, status: String) -> void:
+	var side := "player" if entity == battle.get("player") else "enemy"
+	var source = COMBAT_SOURCE.make("status", side, null, null, status)
+	await damage(source, [entity], amount, 0)
 
 
 ## Damage `target` would take from this hit, after every stage (Intangible

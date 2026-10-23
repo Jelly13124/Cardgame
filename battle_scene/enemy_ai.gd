@@ -48,6 +48,7 @@ func spawn_enemy_units() -> void:
 		var idx = main.enemy_container.get_child_count()
 		enemy.position = Vector2(idx * 260, 0)
 		main.enemy_container.add_child(enemy)
+		main.combat_commands.attach(enemy)
 
 		if enemy.is_boss:
 			_encounter_has_boss = true
@@ -67,6 +68,7 @@ func spawn_summon(enemy_id: String) -> Node2D:
 	var idx = main.enemy_container.get_child_count()
 	enemy.position = Vector2(idx * 260, 0)
 	main.enemy_container.add_child(enemy)
+	main.combat_commands.attach(enemy)
 	enemy.died.connect(_on_enemy_died)
 	main.show_notification(
 		tr("UI_COMBAT_ENEMY_APPEARED").format({"name": enemy.enemy_name}), Color(1, 0.3, 0.3)
@@ -146,16 +148,13 @@ func execute_enemy_turn() -> void:
 
 ## `enemy` is typed as Node2D (its parent class) instead of EnemyEntity to
 ## avoid class_name parse-ordering issues.
-## Resolve an enemy attack landing on the player: Dodge negates it (consuming a
-## stack), otherwise the player takes `outgoing` and Thorns reflects back at the
-## attacker. Returns true if the hit landed, false if it was dodged.
+## Resolve an enemy attack landing on the player: Intangible caps it at 1, the
+## player takes `outgoing` and Thorns reflects back at the attacker.
 func _resolve_enemy_hit(enemy: Node, outgoing: int, is_heavy: bool = false) -> bool:
 	if not (main.player and is_instance_valid(main.player)):
 		return false
-	if "status_system" in main.player and main.player.status_system:
-		if main.player.status_system.try_consume_dodge(main.player):
-			main.show_notification(tr("UI_COMBAT_DODGE"), Color(0.6, 0.95, 1.0))
-			return false
+	if main.player.get_status_stacks("intangible") > 0:
+		outgoing = mini(outgoing, 1)
 	var hp_before: int = int(main.player.health)
 	AudioManager.play_sfx("enemy_attack")
 	var feedback_tags := {

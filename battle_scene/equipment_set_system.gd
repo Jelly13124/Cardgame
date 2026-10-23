@@ -2,6 +2,7 @@ extends RefCounted
 class_name EquipmentSetSystem
 
 const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://battle_scene/combat_fx.gd
+const EFFECT_CONTEXT = preload("uid://bx2g3askncfr6")  # res://core/effects/effect_context.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 
 var _battle_scene: Node
@@ -42,9 +43,11 @@ func on_battle_started(player: Node) -> void:
 
 	for effect in _active_effects:
 		if str(effect.get("type", "")) == "start_battle_block" and player:
-			player.add_block(int(effect.get("amount", 0)))
+			await _run_effect(effect, {"type": "gain_block", "amount": int(effect.get("amount", 0))})
 
 
+## Turn-start set actions run through the shared effect registry as set
+## sources: fixed values (no Constitution or Frail).
 func on_player_turn_started(player: Node, _round_number: int) -> void:
 	if player == null:
 		return
@@ -52,13 +55,22 @@ func on_player_turn_started(player: Node, _round_number: int) -> void:
 		var amount := int(effect.get("amount", 0))
 		match str(effect.get("type", "")):
 			"start_turn_block":
-				player.add_block(amount)
+				await _run_effect(effect, {"type": "gain_block", "amount": amount})
 				if player.has_method("play_block_pulse"):
 					player.play_block_pulse()
 				_notify(str(effect.get("set_id", "")), Color(0.45, 0.75, 1.0))
 			"start_turn_energy":
-				player.gain_energy(amount)
+				await _run_effect(effect, {"type": "gain_energy", "amount": amount})
 				_notify(str(effect.get("set_id", "")), Color(0.98, 0.88, 0.28))
+
+
+func _run_effect(set_effect: Dictionary, effect: Dictionary) -> void:
+	if _battle_scene == null or _battle_scene.get("effect_registry") == null:
+		return
+	var player = _battle_scene.get("player")
+	var source = COMBAT_SOURCE.make("set", "player", player, null, str(set_effect.get("set_id", "")))
+	var ctx = EFFECT_CONTEXT.make("combat", source, player, null, _battle_scene)
+	await _battle_scene.effect_registry.execute(ctx, effect)
 
 
 # ─── Combat hook listener (core/combat/combat_hooks.gd) ──────────────────────

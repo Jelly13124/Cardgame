@@ -2,6 +2,7 @@ extends RefCounted
 class_name RelicEffectSystem
 
 const VALUE_PROPS = preload("uid://cccfcqt180t4x")  # res://core/combat/value_props.gd
+const EFFECT_CONTEXT = preload("uid://bx2g3askncfr6")  # res://core/effects/effect_context.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 
 # RunManager is a registered autoload — accessed directly, no instance plumbing.
@@ -14,6 +15,8 @@ func setup(battle_scene: Node) -> void:
 	_used_once.clear()
 
 
+## Turn-start relic actions run through the shared effect registry as relic
+## sources: fixed values (no Constitution, Frail or Strength).
 func on_player_turn_started(player: Node, round_number: int) -> void:
 	for entry in _get_effect_entries("player_turn_start"):
 		var effect: Dictionary = entry["effect"]
@@ -22,21 +25,19 @@ func on_player_turn_started(player: Node, round_number: int) -> void:
 			continue
 		if not _can_use_once(entry):
 			continue
-
 		var amount = int(effect.get("amount", 0))
 		match str(effect.get("type", "")):
-			"gain_energy":
-				if player and player.has_method("gain_energy"):
-					player.gain_energy(amount)
-					_notify(
-						"%s: +%d Energy" % [str(entry["title"]), amount], Color(0.95, 0.9, 0.25)
-					)
-					_mark_used_once(entry)
-			"gain_block":
-				if player and player.has_method("add_block"):
-					player.add_block(amount)
-					_notify("%s: +%d Block" % [str(entry["title"]), amount], Color(0.45, 0.7, 1.0))
-					_mark_used_once(entry)
+			"gain_energy", "gain_block", "deal_damage_all", "gain_temp_strength":
+				_mark_used_once(entry)
+				await _run_effect(entry, {"type": str(effect.get("type", "")), "amount": amount})
+			"apply_self_status":
+				# Self-buff status (e.g. thorns) every turn unless once_per_combat.
+				_mark_used_once(entry)
+				var stacks := int(effect.get("amount", effect.get("stacks", 1)))
+				await _run_effect(
+					entry,
+					{"type": "apply_status_self", "status": str(effect.get("status", "")), "stacks": stacks}
+				)
 			"set_polarity_alternating":
 				# Alternates the active polarity each player turn (round 1=Yin,
 				# 2=Yang, 3=Yin…). Fires every turn — not once_per_combat.
@@ -45,28 +46,6 @@ func on_player_turn_started(player: Node, round_number: int) -> void:
 					player.reset_polarity_turn(polarity)
 				if _battle_scene and _battle_scene.has_method("update_polarity_hud"):
 					_battle_scene.update_polarity_hud()
-			"apply_self_status":
-				# Applies a self-buff status (e.g. thorns) at turn start.
-				# Fires every turn unless the relic marks once_per_combat.
-				var status := str(effect.get("status", ""))
-				var n := int(effect.get("amount", effect.get("stacks", 1)))
-				if player and player.has_method("add_status"):
-					player.add_status(status, n)
-					_notify("%s: +%d %s" % [str(entry["title"]), n, status], Color(0.85, 0.4, 0.4))
-					_mark_used_once(entry)
-			"deal_damage_all":
-				# Chip every alive enemy at turn start (e.g. cracked_battery).
-				if _deal_to_all_enemies(amount, str(entry["relic_id"]), "deal_damage_all"):
-					_notify("%s: %d to all" % [str(entry["title"]), amount], Color(1.0, 0.4, 0.3))
-					_mark_used_once(entry)
-			"gain_temp_strength":
-				# Temporary Strength that fades at end of turn (kinetic_hammer).
-				if player and player.has_method("gain_temp_strength"):
-					player.gain_temp_strength(amount)
-					_notify(
-						"%s: +%d Strength" % [str(entry["title"]), amount], Color(1.0, 0.5, 0.3)
-					)
-					_mark_used_once(entry)
 
 
 # ─── Combat hook listener (core/combat/combat_hooks.gd) ──────────────────────
@@ -192,28 +171,13 @@ func modify_enemy_attack_damage(amount: int, _attacker: Node, _defender: Node) -
 	return result
 
 
-func on_combat_victory(player: Node) -> void:
+func on_combat_victory(_player: Node) -> void:
 	for entry in _get_effect_entries("combat_victory"):
 		var effect: Dictionary = entry["effect"]
-		if not _can_use_once(entry):
+		if not _can_use_once(entry) or not str(effect.get("type", "")) in ["heal", "gain_gold"]:
 			continue
-
-		var amount = int(effect.get("amount", 0))
-		match str(effect.get("type", "")):
-			"heal":
-				if player and player.has_method("heal"):
-					player.heal(amount)
-					_notify(
-						"%s: healed %d HP" % [str(entry["title"]), amount], Color(0.3, 1.0, 0.45)
-					)
-					_mark_used_once(entry)
-			"gain_gold":
-				RunManager.add_resources(amount, 0)
-				_notify(
-					"%s: +%d %s" % [str(entry["title"]), amount, tr("UI_EQUIP_CELL_GOLD")],
-					Color(1.0, 0.85, 0.24)
-				)
-				_mark_used_once(entry)
+		_mark_used_once(entry)
+		await _run_effect(entry, {"type": str(effect.get("type", "")), "amount": int(effect.get("amount", 0))})
 
 
 ## Passive stat grants fired once at battle start (war_horn +1 STR,
@@ -346,29 +310,6 @@ func on_player_crit(_player: Node) -> void:
 					dm.add_card_to_hand(cid)
 
 
-## Deal `amount` to every alive enemy. Returns true if at least one enemy was hit
-## (so the caller can gate its notification / once_per_combat marking).
-func _deal_to_all_enemies(amount: int, relic_id: String, effect_type: String) -> bool:
-	if amount <= 0 or _battle_scene == null:
-		return false
-	var container = _battle_scene.get("enemy_container")
-	if container == null or not is_instance_valid(container):
-		return false
-	var hit := false
-	for enemy in container.get_children():
-		if (
-			is_instance_valid(enemy)
-			and not enemy.is_queued_for_deletion()
-			and int(enemy.get("health")) > 0
-			and enemy.has_method("take_damage")
-		):
-			# play_hit applies HP before its first await, so synchronous relic hooks can
-			# still launch the normal impact profile without delaying their game logic.
-			enemy.take_damage(amount, false, _relic_feedback_tags(relic_id, effect_type))
-			hit = true
-	return hit
-
-
 func _random_alive_enemy() -> Node:
 	if _battle_scene == null:
 		return null
@@ -399,19 +340,21 @@ func _relic_source(entry: Dictionary):
 	return COMBAT_SOURCE.make("relic", "player", player, null, str(entry["relic_id"]))
 
 
+## Runs one relic action through the shared effect registry.
+func _run_effect(entry: Dictionary, effect: Dictionary) -> void:
+	if _battle_scene == null or _battle_scene.get("effect_registry") == null:
+		return
+	var ctx = EFFECT_CONTEXT.make(
+		"combat", _relic_source(entry), _battle_scene.get("player"), null, _battle_scene
+	)
+	await _battle_scene.effect_registry.execute(ctx, effect)
+
+
 ## Once-per-combat relics are spent by the real calculation only.
 func _mark_on_commit(calc, entry: Dictionary) -> void:
 	if calc.preview or not bool(entry["effect"].get("once_per_combat", false)):
 		return
 	calc.on_commit(_mark_used_once.bind(entry))
-
-
-func _relic_feedback_tags(relic_id: String, effect_type: String) -> Dictionary:
-	return {
-		"source": "relic",
-		"relic": relic_id,
-		"effect": effect_type,
-	}
 
 
 func _get_effect_entries(trigger: String) -> Array:

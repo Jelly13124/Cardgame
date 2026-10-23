@@ -146,7 +146,8 @@ static func _damage_effect(ctx, effect: Dictionary) -> void:
 		_loaded_bonus(ctx), tags
 	)
 	if type == "deal_damage_all":
-		AudioManager.play_sfx("attack_slash")
+		if ctx.pace:
+			AudioManager.play_sfx("attack_slash")
 		await _pace(ctx, 0.3)
 	elif type != "deal_damage":
 		await _pace(ctx, 0.2)

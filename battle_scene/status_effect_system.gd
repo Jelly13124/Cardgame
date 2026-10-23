@@ -6,6 +6,10 @@ extends RefCounted
 class_name StatusEffectSystem
 
 var _statuses: Dictionary = {}
+## Deals status damage (Burn) through the combat pipeline:
+## func(entity, amount: int, status: String). Unset in tests that use a bare
+## entity; then the entity takes the damage directly.
+var damage_router: Callable
 
 const TURN_END_DECAY = ["weak", "vulnerable", "frail"]
 
@@ -34,7 +38,7 @@ const STATUS_COLORS = {
 	"regen": Color(0.3, 1.0, 0.6),
 	"thorns": Color(0.7, 0.75, 0.8),
 	"frail": Color(0.6, 0.5, 0.7),
-	"dodge": Color(0.6, 0.95, 1.0),
+	"intangible": Color(0.6, 0.95, 1.0),
 	"metallicize": Color(0.72, 0.80, 0.86),
 	"feel_no_pain": Color(0.55, 0.80, 0.95),
 	"hot_streak": Color(1.0, 0.82, 0.3),
@@ -56,7 +60,7 @@ const STATUS_LABELS = {
 	"regen": "R",
 	"thorns": "T",
 	"frail": "F",
-	"dodge": "E",
+	"intangible": "I",
 	"metallicize": "M",
 	"feel_no_pain": "¤",
 	"hot_streak": "HS",
@@ -84,7 +88,7 @@ const STATUS_DESCRIPTIONS = {
 	"thorns":
 	"When hit by an attack, the attacker takes stacks damage. Loses 1 stack each time it triggers.",
 	"frail": "Block gained is reduced 25%. Decays 1 per turn.",
-	"dodge": "Completely negates incoming attacks, one stack consumed per attack.",
+	"intangible": "Each hit deals at most 1 damage. Lasts until the end of the opponent's turn; loses 1 stack then.",
 	"metallicize": "At the start of your turn, gain stacks Block. Persistent.",
 	"feel_no_pain": "Whenever a card is Exhausted, gain stacks Block. Persistent.",
 	"hot_streak": "Whenever you Crit, gain 2 Loaded. Persistent.",
@@ -129,7 +133,10 @@ func on_turn_start(entity: Node) -> void:
 	var changed := false
 	if has_status("burn"):
 		var dmg: int = _statuses["burn"]
-		if entity.has_method("take_damage"):
+		if damage_router.is_valid():
+			damage_router.call(entity, dmg, "burn")
+			AudioManager.play_sfx("attack_hit", -4.0, 1.18, 0.03)
+		elif entity.has_method("take_damage"):
 			# DoT uses the same ordered feedback/readout, while source="status" keeps
 			# it detached from attack-only triggers such as Thorns.
 			entity.take_damage(
@@ -217,16 +224,10 @@ func get_block_multiplier() -> float:
 	return 1.0
 
 
-## Dodge negates an incoming attack and consumes one stack. Returns true if a
-## stack was consumed (caller should treat the attack as fully negated).
-func try_consume_dodge(entity: Node) -> bool:
-	if not has_status("dodge"):
-		return false
-	_statuses["dodge"] -= 1
-	if _statuses["dodge"] <= 0:
-		_statuses.erase("dodge")
-	_on_statuses_changed(entity)
-	return true
+## Intangible lasts until the end of the opponent's turn: the battle calls
+## this for each creature whose opponent just ended its turn.
+func decay_intangible(entity: Node) -> void:
+	spend_stacks("intangible", 1, entity)
 
 
 ## Spend N stacks of a status (min 0). Used by triggers that decay on use,

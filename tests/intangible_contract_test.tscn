@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cn3lmtvur5e4m"]
+
+[ext_resource type="Script" path="res://tests/intangible_contract_test.gd" id="1"]
+
+[node name="IntangibleContractTest" type="Node"]
+script = ExtResource("1")

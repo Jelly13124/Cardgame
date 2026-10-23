@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d2por0gvxjnvs"
-path="res://.godot/imported/dodge.png-08236361e222d93570eccd0f1d66b3c7.ctex"
+path="res://.godot/imported/intangible.png-372bc4283f4b4905adeaf7809680e887.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/ui/status/dodge.png"
-dest_files=["res://.godot/imported/dodge.png-08236361e222d93570eccd0f1d66b3c7.ctex"]
+source_file="res://battle_scene/assets/images/ui/status/intangible.png"
+dest_files=["res://.godot/imported/intangible.png-372bc4283f4b4905adeaf7809680e887.ctex"]
 
 [params]
 

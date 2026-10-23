@@ -42,6 +42,9 @@ func setup() -> void:
 		combat_engine = COMBAT_ENGINE.new()
 		add_child(combat_engine)
 	COMBAT_SERVICES.install(self)
+	combat_commands.attach(player)
+	for enemy in enemy_container.get_children():
+		combat_commands.attach(enemy)
 
 
 func add_enemy(health := 999) -> Node2D:
@@ -49,6 +52,8 @@ func add_enemy(health := 999) -> Node2D:
 	enemy.health = health
 	enemy.max_health = health
 	enemy_container.add_child(enemy)
+	if combat_commands:
+		combat_commands.attach(enemy)
 	return enemy
 
 

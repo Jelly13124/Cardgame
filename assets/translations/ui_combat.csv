@@ -11,7 +11,6 @@ UI_COMBAT_GAIN_BLOCK,+{n} BLOCK,+{n} 格挡
 UI_COMBAT_GAIN_ENERGY,+{n} ENERGY,+{n} 能量
 UI_COMBAT_DRAW,DRAW {n},抽 {n} 张
 UI_COMBAT_ALL_ENEMIES_HIT,ALL ENEMIES HIT,命中全体敌人
-UI_COMBAT_DODGE,DODGED!,闪避！
 UI_COMBAT_STUN_X,STUN x{n},眩晕 x{n}
 UI_COMBAT_ALL_STUN_X,ALL: STUN x{n},全体：眩晕 x{n}
 UI_COMBAT_APPLIED_STATUS,APPLIED {status} x{n},施加 {status} x{n}
@@ -24,7 +23,7 @@ UI_COMBAT_STATUS_STUN,Stun,眩晕
 UI_COMBAT_STATUS_REGEN,Regen,再生
 UI_COMBAT_STATUS_THORNS,Thorns,荆棘
 UI_COMBAT_STATUS_FRAIL,Frail,脆弱
-UI_COMBAT_STATUS_DODGE,Dodge,闪避
+UI_COMBAT_STATUS_INTANGIBLE,Intangible,无实体
 UI_COMBAT_STATUS_SHORT_CIRCUIT_DESC,"Stored charge. It does not deal damage or decay until a card Overloads or removes it.","储存在目标身上的电荷。不会自动造成伤害或衰减，直到卡牌触发过载或将其移除。"
 UI_COMBAT_STATUS_BURN_DESC,Take damage equal to stacks at the start of your turn. Then stacks are halved (rounded down).,每回合开始时受到等同层数的伤害。然后层数减半（向下取整）。
 UI_COMBAT_STATUS_WEAK_DESC,Outgoing attack damage reduced 50%. Additional stacks extend duration. Decays 1 per turn.,造成的攻击伤害降低 50%。额外层数只延长持续时间。每回合衰减 1 层。
@@ -49,7 +48,7 @@ UI_COMBAT_STATUS_LOADED_DESC,"The next Attack that deals damage gains stacks add
 UI_COMBAT_STATUS_BULLET,Ammo,弹药
 UI_COMBAT_STATUS_BULLET_DESC,"Attack ammo. 1 at the start of each turn; spent by attacking, restored by Reload.",攻击弹药。每回合开始 1 发；攻击消耗，装弹恢复。
 UI_COMBAT_STATUS_FRAIL_DESC,Block gained is reduced 25%. Decays 1 per turn.,获得的格挡降低 25%。每回合衰减 1 层。
-UI_COMBAT_STATUS_DODGE_DESC,"Completely negates incoming attacks, one stack consumed per attack.",完全抵消受到的攻击，每次攻击消耗一层。
+UI_COMBAT_STATUS_INTANGIBLE_DESC,"Each hit deals at most 1 damage. Lasts until the end of the opponent's turn; loses 1 stack then.",每段伤害最多 1 点。持续到对手回合结束，届时减 1 层。
 UI_COMBAT_STATUS_TIP,"[b]{name} ×{n}[/b]
 {desc}","[b]{name} ×{n}[/b]
 {desc}"
@@ -74,7 +73,7 @@ UI_COMBAT_SHORT_VULNERABLE,Vuln,易伤
 UI_COMBAT_SHORT_SHORT_CIRCUIT,Short,短路
 UI_COMBAT_SHORT_BURN,Burn,灼烧
 UI_COMBAT_SHORT_STUN,Stun,眩晕
-UI_COMBAT_SHORT_DODGE,Dodge,闪避
+UI_COMBAT_SHORT_INTANGIBLE,Intangible,无实体
 UI_COMBAT_SHORT_REGEN,Regen,再生
 UI_COMBAT_SHORT_THORNS,Thorns,荆棘
 UI_COMBAT_SHORT_FRAIL,Frail,脆弱
