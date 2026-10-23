@@ -108,9 +108,11 @@ try {
     Write-Host "Project:  $ProjectRoot"
     Write-Host "UserData: $userDir (isolated)"
 
-    # 1. Import when the project has no import cache. The first full import of a
-    #    fresh checkout can crash intermittently inside Godot; retry it.
-    if (-not (Test-Path -LiteralPath (Join-Path $ProjectRoot ".godot"))) {
+    # 1. Always import: it is quick when nothing changed, and it refreshes a
+    #    stale .godot cache (new uids after a pull/merge, or a partial cache left
+    #    by a crashed import). The first full import of a fresh checkout can
+    #    crash intermittently inside Godot; retry it.
+    if ($true) {
         $imported = $false
         for ($attempt = 1; $attempt -le 3; $attempt++) {
             $r = Invoke-Godot @("--headless", "--path", $ProjectRoot, "--import") (Join-Path $logDir "import_$attempt.log") 1200

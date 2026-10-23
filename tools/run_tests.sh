@@ -48,7 +48,9 @@ echo "Godot:    $GODOT"
 echo "Project:  $ROOT"
 echo "UserData: $USER_DIR (isolated)"
 
-if [ ! -d "$ROOT/.godot" ]; then
+# Always import: quick when nothing changed, and it refreshes a stale .godot
+# cache (new uids after a pull/merge, or a partial cache from a crashed import).
+if true; then
   imported=0
   for attempt in 1 2 3; do
     if run_godot "$LOG_DIR/import_$attempt.log" 1200 --headless --path "$ROOT" --import \
