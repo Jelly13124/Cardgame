@@ -8,7 +8,7 @@
 extends Node
 class_name CombatFeedbackController
 
-const COMBAT_FX = preload("res://battle_scene/combat_fx.gd")
+const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://battle_scene/combat_fx.gd
 const IMPACT_ROOT := "res://battle_scene/assets/images/fx/combat_feedback/"
 const CONTROLLER_NODE_NAME := "CombatFeedbackController"
 
@@ -110,7 +110,7 @@ static func scene_root_for(origin: Node) -> Node:
 	var cursor := origin
 	while is_instance_valid(cursor):
 		var script := cursor.get_script() as Script
-		if script and script.resource_path == "res://battle_scene/battle_scene.gd":
+		if script and script.resource_path == "res://battle_scene/battle_scene.gd":  # path-ok: compared with Script.resource_path
 			return cursor
 		cursor = cursor.get_parent()
 	if is_instance_valid(origin) and origin.get_tree():

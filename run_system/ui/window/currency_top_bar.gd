@@ -27,7 +27,7 @@
 ##   bar.center_box.add_child(start_button)  # host fills the exposed boxes
 extends CanvasLayer
 
-const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
+const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 
 ## Above WindowLayer's 60 so the bar stays readable over floating windows.
 const BAR_LAYER := 70

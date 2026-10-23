@@ -1,8 +1,8 @@
 extends Node
 
-const TEST_SAVE_ROOT = preload("res://tests/support/test_save_root.gd")
+const TEST_SAVE_ROOT = preload("uid://c5pfll7nw68un")  # res://tests/support/test_save_root.gd
 
-const MARKET_SCREEN = preload("res://run_system/ui/buildings/market_screen.gd")
+const MARKET_SCREEN = preload("uid://5n0ylol4ybmn")  # res://run_system/ui/buildings/market_screen.gd
 
 var failures: PackedStringArray = []
 var _original_slot := 0
@@ -122,9 +122,9 @@ func _test_atomic_stash_transfers() -> void:
 
 func _test_window_transfer_wiring() -> void:
 	var character_source := FileAccess.get_file_as_string(
-		"res://run_system/ui/window/character_window.gd"
+		"res://run_system/ui/window/character_window.gd"  # path-ok: reads source text
 	)
-	var stash_source := FileAccess.get_file_as_string("res://run_system/ui/window/stash_window.gd")
+	var stash_source := FileAccess.get_file_as_string("res://run_system/ui/window/stash_window.gd")  # path-ok: reads source text
 	_expect(
 		character_source.contains("MetaProgress.move_stash_to_base_backpack(entry)"),
 		"character backpack uses the atomic stash-to-carry API"

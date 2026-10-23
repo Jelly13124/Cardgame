@@ -11,7 +11,7 @@
 ## lands).
 extends PanelContainer
 
-const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
+const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 
 signal closed
 

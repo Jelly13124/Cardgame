@@ -101,6 +101,11 @@ class GodotRefsTest(unittest.TestCase):
         _, _, text = self.convert("b/use.gd", src)
         self.assertEqual(text, src)
 
+    def test_literal_nested_in_single_quoted_string_untouched(self):
+        src = "\tassert(source.contains('const P := \"res://ui/m.tscn\"'))\n"
+        _, _, text = self.convert("b/use.gd", src)
+        self.assertEqual(text, src)
+
     def test_missing_uid_reports_and_writes_nothing(self):
         self.p.script("a/no_uid.gd", "extends Node\n")
         src = 'const A = preload("res://a/no_uid.gd")\nconst B = preload("res://a/x.gd")\n'

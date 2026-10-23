@@ -2,8 +2,8 @@ extends Node
 
 ## BattleUIManager handles notifications, inspection, and pile viewing.
 
-const CHARACTER_WINDOW = preload("res://run_system/ui/window/character_window.gd")
-const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
+const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://run_system/ui/window/character_window.gd
+const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 
 @export_group("UI Nodes")
 @export var energy_label: Label

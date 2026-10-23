@@ -28,8 +28,8 @@
 extends "res://run_system/ui/buildings/building_screen_base.gd"
 
 const EQUIPMENT_DIR := "res://run_system/data/equipment/"
-const EQUIPMENT_ICON := preload("res://run_system/ui/equipment_icon.gd")
-const EQUIP_TOOLTIP := preload("res://run_system/ui/equip_tooltip.gd")
+const EQUIPMENT_ICON := preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
+const EQUIP_TOOLTIP := preload("uid://c6r8gr4gvx8ts")  # res://run_system/ui/equip_tooltip.gd
 const MARKET_UI_DIR := "res://run_system/assets/images/ui/market/"
 const MARKET_SHELF_FRAME_PATH := MARKET_UI_DIR + "market_shelf_panel_frame.png"
 const MARKET_TOOL_CARD_PATH := MARKET_UI_DIR + "market_tool_card_frame.png"

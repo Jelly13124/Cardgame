@@ -1,6 +1,6 @@
 extends Node
 
-const HOME_BASE = preload("res://run_system/ui/home_base_scene.tscn")
+const HOME_BASE = preload("uid://c6bvuu6kbx0pq")  # res://run_system/ui/home_base_scene.tscn
 
 var _capture_failed := false
 

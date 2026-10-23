@@ -1,6 +1,6 @@
 extends Node
 
-const CHARACTER_WINDOW = preload("res://run_system/ui/window/character_window.gd")
+const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://run_system/ui/window/character_window.gd
 const GENERIC_EQUIPMENT := [
 	["gear_head_common", "common"],
 	["gear_chest_common", "common"],

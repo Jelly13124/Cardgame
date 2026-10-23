@@ -1,6 +1,6 @@
 extends Control
 
-const CARD_FACTORY = preload("res://battle_scene/my_card_factory.tscn")
+const CARD_FACTORY = preload("uid://diap3gdfbqvjv")  # res://battle_scene/my_card_factory.tscn
 const OUTPUT_PATH = "res://tmp/gunslinger-card-ui-runtime.png"
 const CARD_IDS: Array[String] = [
 	"strike",

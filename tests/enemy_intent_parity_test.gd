@@ -9,12 +9,12 @@ extends Node
 ## `main.player`, `main.combat_engine`, `get_tree().current_scene.player`);
 ## modify_enemy_attack_damage is delegated to a real battle_scene.gd instance.
 
-const BATTLE_SCENE_SCRIPT = preload("res://battle_scene/battle_scene.gd")
-const COMBAT_ENGINE_SCRIPT = preload("res://battle_scene/combat_engine.gd")
-const ENEMY_AI_SCRIPT = preload("res://battle_scene/enemy_ai.gd")
-const ENEMY_ENTITY_SCRIPT = preload("res://battle_scene/enemy_entity.gd")
-const RELIC_EFFECT_SYSTEM = preload("res://battle_scene/relic_effect_system.gd")
-const STATUS_SYSTEM = preload("res://battle_scene/status_effect_system.gd")
+const BATTLE_SCENE_SCRIPT = preload("uid://cf56ce8uvkmha")  # res://battle_scene/battle_scene.gd
+const COMBAT_ENGINE_SCRIPT = preload("uid://c444jgeenijlu")  # res://battle_scene/combat_engine.gd
+const ENEMY_AI_SCRIPT = preload("uid://4dtggr10j47s")  # res://battle_scene/enemy_ai.gd
+const ENEMY_ENTITY_SCRIPT = preload("uid://qtp7jvjqfbou")  # res://battle_scene/enemy_entity.gd
+const RELIC_EFFECT_SYSTEM = preload("uid://b4d2o08tofxey")  # res://battle_scene/relic_effect_system.gd
+const STATUS_SYSTEM = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
 const ENEMY_DIR := "res://battle_scene/card_info/enemy/"
 const ATTACK_TYPES := ["attack", "attack_status", "attack_all"]
 const REDUCTION_RELIC := "bulwark_plating"

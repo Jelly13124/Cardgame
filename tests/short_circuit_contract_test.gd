@@ -1,8 +1,8 @@
 extends Node
 
-const STATUS_SYSTEM = preload("res://battle_scene/status_effect_system.gd")
-const COMBAT_ENGINE = preload("res://battle_scene/combat_engine.gd")
-const PLAY_CARD = preload("res://battle_scene/play_card.gd")
+const STATUS_SYSTEM = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
+const COMBAT_ENGINE = preload("uid://c444jgeenijlu")  # res://battle_scene/combat_engine.gd
+const PLAY_CARD = preload("uid://d4f71g73780ld")  # res://battle_scene/play_card.gd
 
 const CARD_DIR := "res://battle_scene/card_info/player/"
 

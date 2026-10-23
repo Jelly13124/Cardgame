@@ -2,8 +2,8 @@ extends Control
 ## Host for the battle scene's top bar. Mounts the shared run_top_bar component;
 ## the ⚙ gear opens the unified pause panel (settings / how-to / abandon / quit).
 
-const PAUSE_PANEL = preload("res://run_system/ui/pause_panel.gd")
-const RUN_TOP_BAR = preload("res://run_system/ui/run_top_bar.gd")
+const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://run_system/ui/pause_panel.gd
+const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://run_system/ui/run_top_bar.gd
 
 var main: Node
 

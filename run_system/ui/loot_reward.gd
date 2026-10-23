@@ -12,10 +12,10 @@ const CARD_REWARD_ICON_PATH := "res://run_system/assets/images/ui_kit_lightline/
 
 # Shared palette lives in run_system/ui/theme/wasteland_theme.gd as
 # `T.PANEL_BG` etc. — see wasteland_theme.gd for all colors / builders.
-const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
-const INVENTORY_FULL_MODAL = preload("res://run_system/ui/inventory_full_modal.gd")
+const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const INVENTORY_FULL_MODAL = preload("uid://deiqqoalu4lpl")  # res://run_system/ui/inventory_full_modal.gd
 # Lazy-loaded at call site to avoid map→battle→loot cyclic preload.
-const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
+const MAP_SCENE_PATH := "uid://d3x5b8wvg2q"  # res://run_system/ui/map_scene.tscn
 
 # Card IDs available for drafting - must match filenames in card_info/player/
 ## The card pool from which draft choices are rolled. Populated at _ready
@@ -47,7 +47,7 @@ func _ready() -> void:
 	draft_overlay.visible = false
 	T.fade_in(self)  # soft entrance instead of a hard pop-in
 
-	_card_factory = preload("res://battle_scene/my_card_factory.tscn").instantiate()
+	_card_factory = preload("uid://diap3gdfbqvjv").instantiate()  # res://battle_scene/my_card_factory.tscn
 	add_child(_card_factory)
 	# play_card.tscn is intrinsically 208x286; match it so the bg lines up with the
 	# (208-laid-out) frame/art/labels. Draft cards are scaled back down below to

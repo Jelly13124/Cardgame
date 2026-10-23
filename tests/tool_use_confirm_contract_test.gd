@@ -1,7 +1,7 @@
 extends Node
 
-const TOOL_CONFIRM = preload("res://battle_scene/ui/tool_use_confirm.gd")
-const BATTLE_SCENE = preload("res://battle_scene/battle_scene.tscn")
+const TOOL_CONFIRM = preload("uid://dihe3sjaxh16")  # res://battle_scene/ui/tool_use_confirm.gd
+const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
 
 var failures: PackedStringArray = []
 

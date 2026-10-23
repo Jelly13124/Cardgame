@@ -7,10 +7,10 @@
 ## No `class_name` by project convention.
 extends Control
 
-const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
-const CARD_FACTORY_SCENE = preload("res://battle_scene/my_card_factory.tscn")
-const CARD_UPGRADE = preload("res://run_system/core/card_upgrade.gd")
-const RUN_TOP_BAR = preload("res://run_system/ui/run_top_bar.gd")
+const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const CARD_FACTORY_SCENE = preload("uid://diap3gdfbqvjv")  # res://battle_scene/my_card_factory.tscn
+const CARD_UPGRADE = preload("uid://d2e2bfj6oa3yp")  # res://run_system/core/card_upgrade.gd
+const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://run_system/ui/run_top_bar.gd
 
 signal upgraded
 signal cancelled

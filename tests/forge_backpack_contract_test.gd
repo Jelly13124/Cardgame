@@ -1,9 +1,9 @@
 extends Node
 
-const TEST_SAVE_ROOT = preload("res://tests/support/test_save_root.gd")
+const TEST_SAVE_ROOT = preload("uid://c5pfll7nw68un")  # res://tests/support/test_save_root.gd
 
-const FORGE_WINDOW = preload("res://run_system/ui/window/forge_window.gd")
-const FORGE_SOURCE := "res://run_system/ui/window/forge_window.gd"
+const FORGE_WINDOW = preload("uid://bdye5reaoadyn")  # res://run_system/ui/window/forge_window.gd
+const FORGE_SOURCE := "res://run_system/ui/window/forge_window.gd"  # path-ok: reads source text
 
 var failures: PackedStringArray = []
 var _original_pending: Array = []

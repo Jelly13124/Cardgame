@@ -3,7 +3,7 @@ extends Node
 ## Contract for core/save/save_io.gd: atomic writes, rotating backups, recovery
 ## from corrupt files without ever destroying them, and legacy-file reads.
 
-const SAVE_IO = preload("res://core/save/save_io.gd")
+const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 const TEST_ROOT := "user://__test__/save_io/"
 
 var failures: PackedStringArray = []

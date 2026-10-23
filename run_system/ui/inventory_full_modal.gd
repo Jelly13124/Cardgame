@@ -3,8 +3,8 @@
 extends Control
 class_name InventoryFullModal
 
-const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
-const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
+const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
 
 signal resolved(took_item: bool)
 

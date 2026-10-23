@@ -11,7 +11,7 @@ static func ensure(host: Node) -> CanvasLayer:
 	var existing = host.get_node_or_null(LAYER_NAME)
 	if existing:
 		return existing
-	var wl = load("res://run_system/ui/window/window_layer.gd").new()
+	var wl = load("uid://brmgvym4d5nfq").new()  # res://run_system/ui/window/window_layer.gd
 	wl.name = LAYER_NAME
 	wl.layer = 130  # above the base HUD (70), below modal popups (140+)
 	host.add_child(wl)

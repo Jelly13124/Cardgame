@@ -1,6 +1,6 @@
 extends Node
 
-const CARD_UPGRADE = preload("res://run_system/core/card_upgrade.gd")
+const CARD_UPGRADE = preload("uid://d2e2bfj6oa3yp")  # res://run_system/core/card_upgrade.gd
 
 var battle_scene: Node
 var deck: Node

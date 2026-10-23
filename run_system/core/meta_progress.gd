@@ -17,7 +17,7 @@ extends Node
 const SLOT_COUNT := 3
 ## Pre-slots profile, relative to SaveIO.root.
 const LEGACY_SAVE_PATH := "meta.json"
-const SAVE_IO = preload("res://core/save/save_io.gd")
+const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 
 
 ## meta.json path for a slot (defaults to the active slot), relative to
@@ -263,7 +263,7 @@ const BULK_DISMANTLE_RARITIES := ["common", "uncommon", "rare"]
 ## Blacksmith: scrap cost to reforge (reroll one affix on) a stash item, by rarity.
 const REFORGE_COST := {"common": 15, "uncommon": 30, "rare": 50}
 ## Affix roller (per-instance equipment); used by reforge_stash_item.
-const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
+const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
 ## --- Bounty system (replaces the daily-task mock) ---
 ## Contract JSONs (schema in data_validator.validate_bounty).
 const BOUNTY_DATA_DIR := "res://run_system/data/bounties/"

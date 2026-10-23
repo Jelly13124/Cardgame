@@ -12,8 +12,8 @@ const ENEMY_TARGET_EFFECTS := [
 ]
 
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
-const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
-const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
+const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
+const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 
 @onready var cost_label = $FrontFace/CostCircle/CostLabel
 @onready var cost_badge = $FrontFace/CostCircle

@@ -5,15 +5,15 @@
 ## via the LEAVE button.
 extends Control
 
-const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
-const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
-const CARD_FACTORY_SCENE = preload("res://battle_scene/my_card_factory.tscn")
-const RUN_TOP_BAR = preload("res://run_system/ui/run_top_bar.gd")
-const CHARACTER_WINDOW = preload("res://run_system/ui/window/character_window.gd")
-const RUN_DECK_VIEWER_MODAL = preload("res://run_system/ui/run_deck_viewer_modal.gd")
-const PAUSE_PANEL = preload("res://run_system/ui/pause_panel.gd")
+const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
+const CARD_FACTORY_SCENE = preload("uid://diap3gdfbqvjv")  # res://battle_scene/my_card_factory.tscn
+const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://run_system/ui/run_top_bar.gd
+const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://run_system/ui/window/character_window.gd
+const RUN_DECK_VIEWER_MODAL = preload("uid://jvxfh15gtinx")  # res://run_system/ui/run_deck_viewer_modal.gd
+const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://run_system/ui/pause_panel.gd
 # Lazy-loaded at call site to avoid map→shop→map cyclic preload.
-const MAP_SCENE_PATH := "res://run_system/ui/map_scene.tscn"
+const MAP_SCENE_PATH := "uid://d3x5b8wvg2q"  # res://run_system/ui/map_scene.tscn
 const SHOP_BACKGROUND_PATH := "res://run_system/assets/images/shop/shop_interior_bg.png"
 const SHOPKEEPER_PATH := "res://run_system/assets/images/shop/shopkeeper.png"
 

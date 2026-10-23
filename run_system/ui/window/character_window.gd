@@ -20,10 +20,10 @@
 ## window is freed on close, which drops the connections.
 extends "res://run_system/ui/window/draggable_window.gd"
 
-const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
-const BACKPACK_CELL = preload("res://run_system/ui/backpack_cell.gd")
-const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
-const EQUIP_TOOLTIP = preload("res://run_system/ui/equip_tooltip.gd")
+const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
+const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://run_system/ui/backpack_cell.gd
+const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
+const EQUIP_TOOLTIP = preload("uid://c6r8gr4gvx8ts")  # res://run_system/ui/equip_tooltip.gd
 const HERO_SPRITE_DIR := "res://battle_scene/assets/images/heroes/"
 const HERO_DIR := "res://run_system/data/heroes/"
 
@@ -101,12 +101,12 @@ var _base_box: VBoxContainer
 ## open, close it and return null (so the `i` key toggles); otherwise create,
 ## open (centered) and return it.
 static func open_window(host: Node, p_mode: String) -> Control:
-	var wl = load("res://run_system/ui/window/window_layer.gd").ensure(host)
+	var wl = load("uid://brmgvym4d5nfq").ensure(host)  # res://run_system/ui/window/window_layer.gd
 	var existing = wl.get_node_or_null("CharacterWindow")
 	if existing and not existing.is_queued_for_deletion():
 		existing.close()
 		return null
-	var win = load("res://run_system/ui/window/character_window.gd").new()
+	var win = load("uid://ba0f3y5ua1p6o").new()  # res://run_system/ui/window/character_window.gd
 	win.name = "CharacterWindow"
 	win.mode = p_mode
 	wl.open(win)
@@ -1129,7 +1129,7 @@ func _toggle_stash_window() -> void:
 	var host := wl.get_parent()
 	if host == null:
 		return
-	load("res://run_system/ui/window/stash_window.gd").open_window(host)
+	load("uid://cgyuqu543lioh").open_window(host)  # res://run_system/ui/window/stash_window.gd
 
 
 ## Rebuild the sibling StashWindow (if open) after a cross-window move.

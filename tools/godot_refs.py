@@ -31,7 +31,7 @@ import sys
 from pathlib import Path
 
 DEFAULT_DIRS = ["autoload", "battle_scene", "core", "run_system", "tests"]
-LITERAL = re.compile(r'"(res://[^"%+]+?\.(?:gd|tscn))"')
+PATH_TEXT = re.compile(r'res://[^"%+]+\.(?:gd|tscn)')
 SCENE_UID = re.compile(r'^\[gd_scene[^\]]*\buid="(uid://[a-z0-9]+)"')
 LOAD_CALL = re.compile(r'(?:pre)?load\(\s*$')
 TEXT_READ = re.compile(r'FileAccess|get_file_as_string')
@@ -78,6 +78,43 @@ def split_comment(line: str) -> tuple[str, str]:
     return line, ""
 
 
+class PathLiteral:
+    """A top-level double-quoted string whose whole content is a script/scene path."""
+
+    def __init__(self, start: int, path: str):
+        self._start = start
+        self.path = path
+
+    def start(self) -> int:
+        return self._start
+
+    def group(self, _index: int) -> str:
+        return self.path
+
+
+def path_literals(code: str) -> list[PathLiteral]:
+    """String tokens of `code` that are exactly a res:// script or scene path.
+
+    Strings nested inside another string (e.g. a single-quoted source snippet
+    that contains "res://...") are part of the outer token and never match.
+    """
+    found = []
+    i = 0
+    while i < len(code):
+        ch = code[i]
+        if ch in "\"'":
+            j = i + 1
+            while j < len(code) and code[j] != ch:
+                j += 2 if code[j] == "\\" else 1
+            content = code[i + 1 : j]
+            if ch == '"' and PATH_TEXT.fullmatch(content):
+                found.append(PathLiteral(i, content))
+            i = j + 1
+            continue
+        i += 1
+    return found
+
+
 def _is_skipped(code: str, comment: str) -> bool:
     stripped = code.strip()
     return stripped == "" or stripped.startswith("extends") or "path-ok" in comment
@@ -98,7 +135,7 @@ def _const_only_loaded(name: str, lines: list[str], decl_index: int) -> bool:
     return used
 
 
-def _convertible(lines: list[str], index: int, code: str, match: re.Match) -> bool:
+def _convertible(lines: list[str], index: int, code: str, match: PathLiteral) -> bool:
     path = match.group(1)
     before = code[: match.start()]
     if LOAD_CALL.search(before):
@@ -156,7 +193,7 @@ def convert(root: Path, dirs: list[str], dry_run: bool) -> int:
             if _is_skipped(code, comment):
                 continue
             reps = []
-            for m in LITERAL.finditer(code):
+            for m in path_literals(code):
                 if not _convertible(lines, i, code, m):
                     continue
                 path = m.group(1)
@@ -190,7 +227,7 @@ def check(root: Path, dirs: list[str]) -> int:
             code, comment = split_comment(line)
             if _is_skipped(code, comment):
                 continue
-            for m in LITERAL.finditer(code):
+            for m in path_literals(code):
                 leftovers.append(f"{script.relative_to(root).as_posix()}:{i + 1} {m.group(1)}")
     if leftovers:
         print("Script/scene path references left (use uid:// or mark `# path-ok: <why>`):")

@@ -1,8 +1,8 @@
 extends Node
 
-const BATTLE_SCENE = preload("res://battle_scene/battle_scene.tscn")
-const FEEDBACK_CONTROLLER = preload("res://battle_scene/combat_feedback_controller.gd")
-const ENEMY_ENTITY = preload("res://battle_scene/enemy_entity.gd")
+const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
+const FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://battle_scene/combat_feedback_controller.gd
+const ENEMY_ENTITY = preload("uid://qtp7jvjqfbou")  # res://battle_scene/enemy_entity.gd
 
 var _failures: PackedStringArray = []
 var _profiles: Array[String] = []

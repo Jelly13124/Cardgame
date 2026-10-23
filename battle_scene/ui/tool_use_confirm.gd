@@ -3,7 +3,7 @@ extends Control
 signal confirmed(index: int, tool_id: String)
 signal cancelled
 
-const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
+const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 
 var _index := -1
 var _tool_id := ""

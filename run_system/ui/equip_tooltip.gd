@@ -10,7 +10,7 @@
 ##   cell.hover_tip = EQUIP_TOOLTIP.text(data, slot, inst)
 extends RefCounted
 
-const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
+const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
 
 ## Rarity → BBCode hex for the header (mirrors equipment_icon.gd RARITY_COLORS).
 const RARITY_HEX := {

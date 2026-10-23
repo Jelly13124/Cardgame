@@ -3,7 +3,7 @@ extends Node
 ## "effects" array; add new effect types in _apply_effect().
 
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
-const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
+const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
 
 signal victory_declared
 

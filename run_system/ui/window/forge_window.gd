@@ -24,11 +24,11 @@
 ## programmatic StyleBox (T.ll_*) so a missing Codex asset never crashes.
 extends "res://run_system/ui/window/draggable_window.gd"
 
-const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
-const EQUIPMENT_ICON = preload("res://run_system/ui/equipment_icon.gd")
-const BACKPACK_CELL = preload("res://run_system/ui/backpack_cell.gd")
+const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
+const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
+const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://run_system/ui/backpack_cell.gd
 const BUILDING_UPGRADE_POPOVER = preload(
-	"res://run_system/ui/buildings/building_upgrade_popover.gd"
+	"uid://c12ycj00td76a"  # res://run_system/ui/buildings/building_upgrade_popover.gd
 )
 
 const FORGE_BADGE_PATH := "res://run_system/assets/images/home/base_hud/badge_forge.png"

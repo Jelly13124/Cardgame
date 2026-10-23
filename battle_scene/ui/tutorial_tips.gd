@@ -6,7 +6,7 @@ extends Control
 
 signal completed
 
-const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
+const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 
 ## Localized tip keys, shown in order.
 const TIPS := ["TIP_1", "TIP_2", "TIP_3", "TIP_4"]

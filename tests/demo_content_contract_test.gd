@@ -1,15 +1,15 @@
 extends Node
 
-const TEST_SAVE_ROOT = preload("res://tests/support/test_save_root.gd")
+const TEST_SAVE_ROOT = preload("uid://c5pfll7nw68un")  # res://tests/support/test_save_root.gd
 
-const META_PROGRESS_PATH := "res://run_system/core/meta_progress.gd"
-const RUN_MANAGER_PATH := "res://run_system/core/run_manager.gd"
-const TUTORIAL_PATH := "res://battle_scene/ui/tutorial_tips.gd"
-const BATTLE_PATH := "res://battle_scene/battle_scene.gd"
-const RESULT_PATH := "res://run_system/ui/result_screen.gd"
+const META_PROGRESS_PATH := "res://run_system/core/meta_progress.gd"  # path-ok: reads source text
+const RUN_MANAGER_PATH := "res://run_system/core/run_manager.gd"  # path-ok: reads source text
+const TUTORIAL_PATH := "res://battle_scene/ui/tutorial_tips.gd"  # path-ok: reads source text
+const BATTLE_PATH := "res://battle_scene/battle_scene.gd"  # path-ok: reads source text
+const RESULT_PATH := "res://run_system/ui/result_screen.gd"  # path-ok: reads source text
 const HERO_PATH := "res://run_system/data/heroes/cowboy_bill.json"
 const BASE_UPGRADE_DIR := "res://run_system/data/base_upgrades/"
-const EQUIPMENT_SET_SCRIPT = preload("res://battle_scene/equipment_set_system.gd")
+const EQUIPMENT_SET_SCRIPT = preload("uid://b3s8io84xovx7")  # res://battle_scene/equipment_set_system.gd
 
 class FakeCard:
 	extends Control

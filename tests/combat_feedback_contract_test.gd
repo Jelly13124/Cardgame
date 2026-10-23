@@ -1,11 +1,11 @@
 extends Node
 
-const CONTROLLER_PATH := "res://battle_scene/combat_feedback_controller.gd"
-const BATTLE_SCENE_PATH := "res://battle_scene/battle_scene.gd"
-const COMBAT_ENGINE_PATH := "res://battle_scene/combat_engine.gd"
-const ENEMY_ENTITY_PATH := "res://battle_scene/enemy_entity.gd"
-const PLAYER_PATH := "res://battle_scene/player.gd"
-const ENEMY_AI_PATH := "res://battle_scene/enemy_ai.gd"
+const CONTROLLER_PATH := "uid://po237gnjpbo0"  # res://battle_scene/combat_feedback_controller.gd
+const BATTLE_SCENE_PATH := "res://battle_scene/battle_scene.gd"  # path-ok: reads source text
+const COMBAT_ENGINE_PATH := "res://battle_scene/combat_engine.gd"  # path-ok: reads source text
+const ENEMY_ENTITY_PATH := "res://battle_scene/enemy_entity.gd"  # path-ok: reads source text
+const PLAYER_PATH := "res://battle_scene/player.gd"  # path-ok: reads source text
+const ENEMY_AI_PATH := "res://battle_scene/enemy_ai.gd"  # path-ok: reads source text
 const EXPECTED_PROFILES := ["blocked", "heavy", "kill", "normal"]
 
 var failures: PackedStringArray = []

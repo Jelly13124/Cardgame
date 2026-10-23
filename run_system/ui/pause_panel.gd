@@ -8,10 +8,10 @@
 ## and `show_abandon`, then add_childs it (ideally on a high CanvasLayer).
 extends Control
 
-const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
-const SETTINGS_PANEL = preload("res://run_system/ui/settings_panel.gd")
-const RULES_PANEL = preload("res://run_system/ui/rules_panel.gd")
-const HOME_BASE_PATH := "res://run_system/ui/home_base_scene.tscn"
+const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const SETTINGS_PANEL = preload("uid://ledls51ku43w")  # res://run_system/ui/settings_panel.gd
+const RULES_PANEL = preload("uid://35njcmwpab3t")  # res://run_system/ui/rules_panel.gd
+const HOME_BASE_PATH := "uid://c6bvuu6kbx0pq"  # res://run_system/ui/home_base_scene.tscn
 
 ## Called when the player resumes (lets the opener unpause / clear its guard). Optional.
 var on_resume: Callable = Callable()
@@ -30,7 +30,7 @@ static func open(host: Node, abandon: bool, on_resume: Callable = Callable()) ->
 	layer.name = "PauseLayer"
 	layer.layer = 160
 	host.add_child(layer)
-	var panel = load("res://run_system/ui/pause_panel.gd").new()
+	var panel = load("uid://dggg8eoy0notq").new()  # res://run_system/ui/pause_panel.gd
 	panel.show_abandon = abandon
 	panel.on_resume = on_resume
 	panel.tree_exited.connect(layer.queue_free)

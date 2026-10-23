@@ -20,10 +20,10 @@ signal stats_changed
 signal status_changed
 signal died
 
-const HUD_SCRIPT = preload("res://battle_scene/ui/character_hud.gd")
-const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
-const COMBAT_FX = preload("res://battle_scene/combat_fx.gd")
-const COMBAT_FEEDBACK_CONTROLLER = preload("res://battle_scene/combat_feedback_controller.gd")
+const HUD_SCRIPT = preload("uid://dqn0nfitycf2d")  # res://battle_scene/ui/character_hud.gd
+const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
+const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://battle_scene/combat_fx.gd
+const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://battle_scene/combat_feedback_controller.gd
 const HERO_DIR = "res://battle_scene/assets/images/heroes/"
 const DEFAULT_HERO_SPRITE_ID = "cowboy_bill"  # fallback when no hero data loaded
 const TARGET_DISPLAY_HEIGHT := 256.0

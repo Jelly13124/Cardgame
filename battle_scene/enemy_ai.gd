@@ -3,8 +3,8 @@ extends Node
 ## To add a new enemy encounter, change `_enemy_roster` or load from RunManager.
 
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
-const ENEMY_ENTITY_SCRIPT = preload("res://battle_scene/enemy_entity.gd")
-const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
+const ENEMY_ENTITY_SCRIPT = preload("uid://qtp7jvjqfbou")  # res://battle_scene/enemy_entity.gd
+const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
 
 @onready var main = get_parent()
 

@@ -1,8 +1,8 @@
 extends Node
 
-const TEST_SAVE_ROOT = preload("res://tests/support/test_save_root.gd")
+const TEST_SAVE_ROOT = preload("uid://c5pfll7nw68un")  # res://tests/support/test_save_root.gd
 
-const HOME_BASE = preload("res://run_system/ui/home_base_scene.tscn")
+const HOME_BASE = preload("uid://c6bvuu6kbx0pq")  # res://run_system/ui/home_base_scene.tscn
 
 var failures: PackedStringArray = []
 var _original_buildings: Dictionary

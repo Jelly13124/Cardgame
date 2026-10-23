@@ -3,19 +3,19 @@ extends Control
 ## Slay-the-Spire style procedural map drawn over a wasteland map background.
 ## The route remains data-driven; only the presentation is custom-drawn here.
 
-const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
+const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
-const MAP_RENDERER_SCRIPT = preload("res://run_system/ui/map_renderer.gd")
-const CHARACTER_WINDOW = preload("res://run_system/ui/window/character_window.gd")
-const RUN_DECK_VIEWER_MODAL = preload("res://run_system/ui/run_deck_viewer_modal.gd")
-const CARD_UPGRADE_MODAL = preload("res://run_system/ui/card_upgrade_modal.gd")
-const RUN_TOP_BAR = preload("res://run_system/ui/run_top_bar.gd")
-const SETTINGS_PANEL_SCRIPT = preload("res://run_system/ui/settings_panel.gd")
-const PAUSE_PANEL = preload("res://run_system/ui/pause_panel.gd")
-const EVENT_MODAL_SCRIPT = preload("res://run_system/ui/event_modal.gd")
-const T_THEME = preload("res://run_system/ui/theme/wasteland_theme.gd")
-const BATTLE_PACKED = preload("res://battle_scene/battle_scene.tscn")
-const SHOP_PACKED = preload("res://run_system/ui/shop_scene.tscn")
+const MAP_RENDERER_SCRIPT = preload("uid://dxpxch0ouxcmv")  # res://run_system/ui/map_renderer.gd
+const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://run_system/ui/window/character_window.gd
+const RUN_DECK_VIEWER_MODAL = preload("uid://jvxfh15gtinx")  # res://run_system/ui/run_deck_viewer_modal.gd
+const CARD_UPGRADE_MODAL = preload("uid://gq5b8t1mbeti")  # res://run_system/ui/card_upgrade_modal.gd
+const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://run_system/ui/run_top_bar.gd
+const SETTINGS_PANEL_SCRIPT = preload("uid://ledls51ku43w")  # res://run_system/ui/settings_panel.gd
+const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://run_system/ui/pause_panel.gd
+const EVENT_MODAL_SCRIPT = preload("uid://0gxdrhjtltvh")  # res://run_system/ui/event_modal.gd
+const T_THEME = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const BATTLE_PACKED = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
+const SHOP_PACKED = preload("uid://dr8unxxfi0w51")  # res://run_system/ui/shop_scene.tscn
 const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_sts2_bg.png"
 const NODE_ICON_DIR = "res://run_system/assets/images/map/nodes/"
 const REST_SITE_BACKGROUND_PATH = "res://run_system/assets/images/rest/rest_site_bg.png"
@@ -750,12 +750,12 @@ func _on_save_and_quit() -> void:
 	AudioManager.play_sfx("ui_back")
 	if rm and rm.is_run_active:
 		rm.save_run()
-	SceneTransition.change_to("res://run_system/ui/main_menu.tscn")
+	SceneTransition.change_to("uid://dnjlmt1repvjw")  # res://run_system/ui/main_menu.tscn
 
 
 ## Open the How-to-Play rules panel (loaded at runtime; no-op until it exists).
 func _open_rules_panel() -> void:
-	var path := "res://run_system/ui/rules_panel.gd"
+	var path := "uid://35njcmwpab3t"  # res://run_system/ui/rules_panel.gd
 	if not ResourceLoader.exists(path):
 		return
 	var script = load(path)

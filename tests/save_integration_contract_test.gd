@@ -4,7 +4,7 @@ extends Node
 ## SaveIO.root, survive a corrupt live file, keep old-format saves readable and
 ## delete their backups together with the slot.
 
-const SAVE_IO = preload("res://core/save/save_io.gd")
+const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 const TEST_ROOT := "user://__test__/integration/"
 
 var failures: PackedStringArray = []

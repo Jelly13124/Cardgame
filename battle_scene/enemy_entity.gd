@@ -4,10 +4,10 @@
 extends Node2D
 class_name EnemyEntity
 
-const HUD_SCRIPT = preload("res://battle_scene/ui/character_hud.gd")
+const HUD_SCRIPT = preload("uid://dqn0nfitycf2d")  # res://battle_scene/ui/character_hud.gd
 const ENEMY_DATA_DIR = "res://battle_scene/card_info/enemy/"
-const STATUS_SYS = preload("res://battle_scene/status_effect_system.gd")
-const COMBAT_FEEDBACK_CONTROLLER = preload("res://battle_scene/combat_feedback_controller.gd")
+const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
+const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://battle_scene/combat_feedback_controller.gd
 
 # Intent badge icon textures — preloaded once instead of `load()`-ing on every
 # intent refresh (which can fire frequently as enemy / player status changes).

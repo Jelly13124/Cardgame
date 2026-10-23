@@ -1,7 +1,7 @@
 extends RefCounted
 class_name EquipmentSetSystem
 
-const COMBAT_FX = preload("res://battle_scene/combat_fx.gd")
+const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://battle_scene/combat_fx.gd
 
 var _battle_scene: Node
 var _active_effects: Array[Dictionary] = []

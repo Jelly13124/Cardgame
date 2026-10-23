@@ -8,7 +8,7 @@ extends RefCounted
 ##   func _exit_tree() -> void:
 ##       TEST_SAVE_ROOT.release()
 
-const SAVE_IO = preload("res://core/save/save_io.gd")
+const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 const BASE := "user://__test__/"
 
 

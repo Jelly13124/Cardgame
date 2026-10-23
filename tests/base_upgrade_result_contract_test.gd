@@ -1,18 +1,18 @@
 extends Node
 
-const RESULT_SCREEN_PATH := "res://run_system/ui/result_screen.gd"
-const META_PROGRESS_PATH := "res://run_system/core/meta_progress.gd"
-const HOME_BASE_PATH := "res://run_system/ui/home_base_scene.gd"
-const BUILDING_SCREEN_BASE_PATH := "res://run_system/ui/buildings/building_screen_base.gd"
-const CLINIC_SCREEN_PATH := "res://run_system/ui/buildings/clinic_screen.gd"
-const MARKET_SCREEN_PATH := "res://run_system/ui/buildings/market_screen.gd"
-const OUTPOST_SCREEN_PATH := "res://run_system/ui/buildings/outpost_screen.gd"
-const WASTELAND_THEME_PATH := "res://run_system/ui/theme/wasteland_theme.gd"
+const RESULT_SCREEN_PATH := "res://run_system/ui/result_screen.gd"  # path-ok: reads source text
+const META_PROGRESS_PATH := "res://run_system/core/meta_progress.gd"  # path-ok: reads source text
+const HOME_BASE_PATH := "res://run_system/ui/home_base_scene.gd"  # path-ok: reads source text
+const BUILDING_SCREEN_BASE_PATH := "res://run_system/ui/buildings/building_screen_base.gd"  # path-ok: reads source text
+const CLINIC_SCREEN_PATH := "res://run_system/ui/buildings/clinic_screen.gd"  # path-ok: reads source text
+const MARKET_SCREEN_PATH := "res://run_system/ui/buildings/market_screen.gd"  # path-ok: reads source text
+const OUTPOST_SCREEN_PATH := "res://run_system/ui/buildings/outpost_screen.gd"  # path-ok: reads source text
+const WASTELAND_THEME_PATH := "res://run_system/ui/theme/wasteland_theme.gd"  # path-ok: reads source text
 const BUILDING_UPGRADE_POPOVER_PATH := (
-	"res://run_system/ui/buildings/building_upgrade_popover.gd"
+	"res://run_system/ui/buildings/building_upgrade_popover.gd"  # path-ok: reads source text
 )
-const FORGE_WINDOW_PATH := "res://run_system/ui/window/forge_window.gd"
-const MAIN_MENU_PATH := "res://run_system/ui/main_menu.gd"
+const FORGE_WINDOW_PATH := "res://run_system/ui/window/forge_window.gd"  # path-ok: reads source text
+const MAIN_MENU_PATH := "res://run_system/ui/main_menu.gd"  # path-ok: reads source text
 const UI_COMMON_PATH := "res://assets/translations/ui_common.csv"
 const UI_HOME_PATH := "res://assets/translations/ui_home.csv"
 const NORMAL_BUTTON_PATH := "res://run_system/assets/images/ui/start_screen/button_main_normal_v2.png"
@@ -217,7 +217,7 @@ func _test_defeat_returns_to_base() -> void:
 	var source := FileAccess.get_file_as_string(RESULT_SCREEN_PATH)
 	var copy := FileAccess.get_file_as_string(UI_COMMON_PATH)
 	_expect(
-		source.contains('const HOME_BASE_PATH := "res://run_system/ui/home_base_scene.tscn"'),
+		source.contains('const HOME_BASE_PATH := "%s"' % ResourceUID.path_to_uid("res://run_system/ui/home_base_scene.tscn")),  # path-ok: derives the expected uid
 		"result screen declares the home-base destination"
 	)
 	_expect(

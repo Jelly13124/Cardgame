@@ -1,9 +1,9 @@
 extends Node
 
-const CARD_UPGRADE_MODAL = preload("res://run_system/ui/card_upgrade_modal.gd")
-const EVENT_MODAL = preload("res://run_system/ui/event_modal.gd")
-const RUN_TOP_BAR = preload("res://run_system/ui/run_top_bar.gd")
-const RUN_DECK_VIEWER_MODAL = preload("res://run_system/ui/run_deck_viewer_modal.gd")
+const CARD_UPGRADE_MODAL = preload("uid://gq5b8t1mbeti")  # res://run_system/ui/card_upgrade_modal.gd
+const EVENT_MODAL = preload("uid://0gxdrhjtltvh")  # res://run_system/ui/event_modal.gd
+const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://run_system/ui/run_top_bar.gd
+const RUN_DECK_VIEWER_MODAL = preload("uid://jvxfh15gtinx")  # res://run_system/ui/run_deck_viewer_modal.gd
 
 var failures: PackedStringArray = []
 
@@ -20,7 +20,7 @@ func _expect(condition: bool, message: String) -> void:
 
 
 func _run() -> void:
-	var map_source := FileAccess.get_file_as_string("res://run_system/ui/map_scene.gd")
+	var map_source := FileAccess.get_file_as_string("res://run_system/ui/map_scene.gd")  # path-ok: reads source text
 	_expect(
 		not map_source.contains("_hide_top_bar_for_page"),
 		"in-run pages never hide the shared top bar",
@@ -29,13 +29,13 @@ func _run() -> void:
 		map_source.contains("layer.layer = RUN_TOP_BAR.CANVAS_LAYER"),
 		"map mounts the shared top bar on the persistent HUD layer",
 	)
-	var shop_source := FileAccess.get_file_as_string("res://run_system/ui/shop_scene.gd")
+	var shop_source := FileAccess.get_file_as_string("res://run_system/ui/shop_scene.gd")  # path-ok: reads source text
 	_expect(
 		shop_source.contains("topbar_layer.layer = RUN_TOP_BAR.CANVAS_LAYER"),
 		"shop mounts the same shared top bar on the persistent HUD layer",
 	)
 
-	var battle_scene: Node = load("res://battle_scene/battle_scene.tscn").instantiate()
+	var battle_scene: Node = load("uid://dnhj5pp3c1v2l").instantiate()  # res://battle_scene/battle_scene.tscn
 	var battle_top_layer := battle_scene.get_node_or_null("TopBarLayer") as CanvasLayer
 	_expect(battle_top_layer != null, "battle exposes the persistent top-bar layer")
 	if battle_top_layer != null:

@@ -9,7 +9,7 @@ extends RefCounted
 class_name DataValidator
 
 # ─── Core resolvers ───────────────────────────────────────────────────────────
-const CARD_UPGRADE = preload("res://run_system/core/card_upgrade.gd")
+const CARD_UPGRADE = preload("uid://d2e2bfj6oa3yp")  # res://run_system/core/card_upgrade.gd
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
 const CARD_DIR = "res://battle_scene/card_info/player/"

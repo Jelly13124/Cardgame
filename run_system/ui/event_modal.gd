@@ -12,8 +12,8 @@
 ## reaches the script via preload.
 extends Control
 
-const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
-const RUN_TOP_BAR = preload("res://run_system/ui/run_top_bar.gd")
+const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://run_system/ui/run_top_bar.gd
 
 const TOP_BAR_CLEARANCE := RUN_TOP_BAR.BAR_HEIGHT
 

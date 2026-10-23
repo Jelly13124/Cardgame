@@ -375,8 +375,8 @@ func scale_enemy_damage(amount: int, enemy_id: String) -> int:
 	return int(round(amount * act_dmg_mult()))
 
 
-const BATTLE_SCENE: String = "res://battle_scene/battle_scene.tscn"
-const MAP_SCENE: String = "res://run_system/ui/map_scene.tscn"
+const BATTLE_SCENE: String = "uid://dnhj5pp3c1v2l"  # res://battle_scene/battle_scene.tscn
+const MAP_SCENE: String = "uid://d3x5b8wvg2q"  # res://run_system/ui/map_scene.tscn
 const RELIC_DATA_DIR: String = "res://run_system/data/relics/"
 const EQUIPMENT_DATA_DIR: String = "res://run_system/data/equipment/"
 const EQUIPMENT_SET_DATA_DIR: String = "res://run_system/data/equipment_sets/"
@@ -400,9 +400,9 @@ var current_node_id: String = ""  ## "" means player hasn't chosen a floor-0 nod
 var visited_node_ids: Array[String] = []
 var _node_index: Dictionary = {}
 
-const DATA_VALIDATOR = preload("res://battle_scene/data_validator.gd")
-const SAVE_IO = preload("res://core/save/save_io.gd")
-const AFFIX_POOL = preload("res://run_system/core/affix_pool.gd")
+const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://battle_scene/data_validator.gd
+const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
+const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
 
 
 func _ready() -> void:

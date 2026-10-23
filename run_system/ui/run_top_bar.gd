@@ -9,7 +9,7 @@ extends Control
 ## signals; the HOST scene wires the buttons to its own handlers. Set the
 ## config properties BEFORE add_child() so _ready() sees them.
 
-const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
+const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 const RELIC_DATA_DIR := "res://run_system/data/relics/"
 const TOPBAR_ICON_DIR := "res://run_system/assets/images/ui/topbar/"
 const HERO_IDLE_DIR := "res://battle_scene/assets/images/heroes/"

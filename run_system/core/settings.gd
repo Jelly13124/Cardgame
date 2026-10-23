@@ -8,7 +8,7 @@ extends Node
 
 ## Relative to SaveIO.root.
 const SAVE_PATH := "settings.json"
-const SAVE_IO = preload("res://core/save/save_io.gd")
+const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 const DEFAULT_LANGUAGE := "en"
 
 var language: String = DEFAULT_LANGUAGE
