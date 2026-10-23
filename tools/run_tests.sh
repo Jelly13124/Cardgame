@@ -89,11 +89,18 @@ for scene in "$ROOT"/tests/*_test.tscn; do
   found=1
   log="$LOG_DIR/$name.log"
   start=$(date +%s)
-  if run_godot "$log" "$TIMEOUT_SECONDS" --headless --path "$ROOT" "res://tests/$name.tscn" \
-    && ! grep -Eq "$ERROR_PATTERN" "$log"; then ok=1; else ok=0; fi
+  run_godot "$log" "$TIMEOUT_SECONDS" --headless --path "$ROOT" "res://tests/$name.tscn"
+  rc=$?
+  if [ "$rc" -eq 0 ] && ! grep -Eq "$ERROR_PATTERN" "$log"; then ok=1; else ok=0; fi
   secs=$(( $(date +%s) - start ))
+  # An expected failure only counts as XFAIL when it failed the known way: it
+  # finished, raised no script/parse error, and reported MISMATCH lines.
+  known=0
+  if [ "$ok" -eq 0 ] && [ "$rc" -ne 124 ] && ! grep -Eq "$ERROR_PATTERN" "$log" && grep -q '^MISMATCH' "$log"; then known=1; fi
   if is_expected "$name"; then
-    if [ "$ok" -eq 1 ]; then status=XPASS; xpass=$((xpass + 1)); EXIT_CODE=1; else status=XFAIL; xfail=$((xfail + 1)); fi
+    if [ "$ok" -eq 1 ]; then status=XPASS; xpass=$((xpass + 1)); EXIT_CODE=1
+    elif [ "$known" -eq 1 ]; then status=XFAIL; xfail=$((xfail + 1))
+    else status=FAIL; fail=$((fail + 1)); EXIT_CODE=1; fi
   else
     if [ "$ok" -eq 1 ]; then status=PASS; pass=$((pass + 1)); else status=FAIL; fail=$((fail + 1)); EXIT_CODE=1; fi
   fi

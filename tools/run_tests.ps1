@@ -163,8 +163,11 @@ try {
         $watch.Stop()
         $passed = ($r.ExitCode -eq 0) -and -not (Test-LogHasErrors $r.Log)
         $isExpected = $expected.ContainsKey($name)
-        $status = if ($passed -and $isExpected) { "XPASS" } elseif ($passed) { "PASS" } elseif ($isExpected) { "XFAIL" } else { "FAIL" }
-        if ($r.TimedOut) { $status = if ($isExpected) { "XFAIL" } else { "FAIL" } }
+        # An expected failure only counts as XFAIL when it failed the known way:
+        # it finished, raised no script/parse error, and reported MISMATCH lines.
+        # A crash, timeout or parse error is a real FAIL even for listed tests.
+        $knownFailure = (-not $r.TimedOut) -and (-not (Test-LogHasErrors $r.Log)) -and ($r.Log -match '(?m)^MISMATCH')
+        $status = if ($passed -and $isExpected) { "XPASS" } elseif ($passed) { "PASS" } elseif ($isExpected -and $knownFailure) { "XFAIL" } else { "FAIL" }
         $counts[$status]++
         $rows += [pscustomobject]@{ Test = $name; Result = $status; Seconds = [math]::Round($watch.Elapsed.TotalSeconds, 1) }
         if ($status -eq "FAIL" -or $status -eq "XPASS") {
