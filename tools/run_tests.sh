@@ -2,7 +2,7 @@
 # One-command test runner (bash version of tools/run_tests.ps1): isolated user
 # data, import, smoke boot, scene tests, expected failures, layering check.
 #
-# Usage:
+# Supported on Linux and Git Bash for Windows (not macOS). Usage:
 #   GODOT_BIN=/path/to/godot bash tools/run_tests.sh            # full run
 #   GODOT_BIN=/path/to/godot bash tools/run_tests.sh 'save_io*'  # subset, no smoke/layers
 #
@@ -14,6 +14,31 @@ ONLY="${1:-*}"
 TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-120}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ERROR_PATTERN='SCRIPT ERROR|Failed to load script|Compile Error|Parse Error|DataValidator: [0-9]+ JSON schema failure'
+
+# Supported: Linux and Git Bash on Windows. On macOS Godot keeps user data under
+# ~/Library/Application Support, which this script cannot redirect, so running
+# there would touch the real profile. RUN_TESTS_OS overrides `uname -s` (tests).
+OS_NAME="${RUN_TESTS_OS:-$(uname -s)}"
+if [ "$OS_NAME" = "Darwin" ]; then
+  echo "macOS is not supported: user data cannot be isolated. Use Linux or Windows." >&2
+  exit 2
+fi
+if ! command -v timeout >/dev/null 2>&1; then
+  echo "GNU 'timeout' is required (coreutils)." >&2
+  exit 2
+fi
+# First interpreter that actually runs (on Windows `python3` may be a Store stub).
+PYTHON=""
+for candidate in python3 python; do
+  if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c "import sys" >/dev/null 2>&1; then
+    PYTHON="$candidate"
+    break
+  fi
+done
+if [ -z "$PYTHON" ]; then
+  echo "python3 (or python) is required." >&2
+  exit 2
+fi
 
 GODOT="${GODOT_BIN:-$(command -v godot || true)}"
 if [ -z "$GODOT" ] || [ ! -e "$GODOT" ]; then
@@ -111,13 +136,13 @@ done
 if [ "$found" -eq 0 ]; then echo "No tests match '$ONLY'."; EXIT_CODE=2; exit 2; fi
 
 if [ "$FULL_RUN" -eq 1 ]; then
-  if python -m unittest discover -s "$ROOT/tools/tests" >"$LOG_DIR/tools_unit.log" 2>&1; then
+  if "$PYTHON" -m unittest discover -s "$ROOT/tools/tests" >"$LOG_DIR/tools_unit.log" 2>&1; then
     echo "tools unit tests: ok"
   else
     cat "$LOG_DIR/tools_unit.log"; echo "tools unit tests: FAIL"; EXIT_CODE=1
   fi
   if [ -f "$ROOT/tools/check_layers.py" ]; then
-    python "$ROOT/tools/check_layers.py" --root "$ROOT" || EXIT_CODE=1
+    "$PYTHON" "$ROOT/tools/check_layers.py" --root "$ROOT" || EXIT_CODE=1
   else
     echo "layers: skipped"
   fi
