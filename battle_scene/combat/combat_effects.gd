@@ -219,7 +219,7 @@ static func _gain_block(ctx, effect: Dictionary) -> void:
 	var gained: int = await ctx.services.combat_commands.gain_block(
 		ctx.source, ctx.actor, _amount(effect), props
 	)
-	if gained > 0:
+	if gained > 0 and ctx.pace:
 		block_feedback(ctx.services, ctx.actor, gained)
 	await _pace(ctx, 0.2)
 

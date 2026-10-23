@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dlxkwchk3u5nx"]
+
+[ext_resource type="Script" path="res://tests/combat_flow_regression_test.gd" id="1"]
+
+[node name="CombatFlowRegressionTest" type="Node"]
+script = ExtResource("1")

@@ -431,6 +431,9 @@ func show_notification(text: String, color: Color = Color.WHITE):
 func use_tool(index: int) -> void:
 	if is_instance_valid(_tool_confirm) or _tool_resolving or is_targeting or is_game_over:
 		return
+	if not _accepts_player_input():
+		AudioManager.play_sfx("error")
+		return
 	if index < 0 or index >= RunManager.tool_inventory.size():
 		return
 	var tool_id := str(RunManager.tool_inventory[index])
@@ -451,6 +454,8 @@ func use_tool(index: int) -> void:
 
 func _on_tool_use_confirmed(index: int, expected_tool_id: String) -> void:
 	_tool_confirm = null
+	if not _accepts_player_input():
+		return
 	if index < 0 or index >= RunManager.tool_inventory.size():
 		return
 	if str(RunManager.tool_inventory[index]) != expected_tool_id:
@@ -536,6 +541,9 @@ func _tool_targeting_origin(index: int) -> Vector2:
 func _confirm_tool_targeting(target: Node) -> void:
 	if not is_targeting or not _is_tool_targeting() or _tool_resolving:
 		return
+	if not _accepts_player_input():
+		_cancel_tool_targeting()
+		return
 	if not _is_valid_tool_target(target):
 		show_notification(tr("UI_BATTLE_NO_TARGET"), Color(1, 0.6, 0.2))
 		return
@@ -554,6 +562,12 @@ func _confirm_tool_targeting(target: Node) -> void:
 
 	_cancel_tool_targeting()
 	_enqueue_tool(index, tdata, target)
+
+
+## Cards and tools are used on the player's own turn only, and not after End
+## Turn was pressed (the end-turn action is already queued).
+func _accepts_player_input() -> bool:
+	return turn_manager.is_player_turn and not _ending_turn and not is_game_over
 
 
 ## Tool use joins the action queue behind any card still resolving.
@@ -589,6 +603,8 @@ func _resolve_tool(index: int, tdata: Dictionary, target: Node) -> void:
 	AudioManager.play_sfx("ui_click")
 	var int_mult: float = 1.0 + 0.08 * float(RunManager._attr("intelligence"))
 	for eff in tdata.get("effects", []):
+		if combat_engine.combat_over():
+			break
 		if typeof(eff) != TYPE_DICTIONARY:
 			continue
 		var e: Dictionary = (eff as Dictionary).duplicate(true)
@@ -1228,9 +1244,7 @@ func play_spell(card: Control, target_node: Node):
 
 	var type = card.card_info.get("type", "skill").to_lower()
 
-	# Cards are played on the player's own turn only, and not after End Turn
-	# was pressed (the end-turn action is already queued).
-	if not turn_manager.is_player_turn or _ending_turn:
+	if not _accepts_player_input():
 		AudioManager.play_sfx("error")
 		hand.add_card(card)
 		card.remove_meta("_in_play")

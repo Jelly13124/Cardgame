@@ -50,6 +50,8 @@ func _run() -> void:
 	await test_burn_goes_through_the_pipeline()
 	_fresh()
 	await test_relic_turn_block_is_fixed()
+	_fresh()
+	await test_relic_block_shows_no_card_feedback()
 	Engine.time_scale = 1.0
 	if failures.is_empty():
 		print("[OK] combat hooks contract passed")
@@ -170,3 +172,10 @@ func test_relic_turn_block_is_fixed() -> void:
 	RunManager.is_run_active = saved_active
 	RunManager.relics.clear()
 	RunManager.relics.append_array(saved_relics)
+
+
+func test_relic_block_shows_no_card_feedback() -> void:
+	var relic = COMBAT_SOURCE.make("relic", "player", battle.player, null, "steel_plating")
+	await battle.combat_engine.execute_effect({"type": "gain_block", "amount": 6}, null, relic)
+	_expect(battle.player.block == 6, "relic Block is gained")
+	_expect(battle.notifications.is_empty(), "relic Block shows no card-style notification (got %s)" % [battle.notifications])

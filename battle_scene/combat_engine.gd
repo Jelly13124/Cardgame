@@ -30,6 +30,8 @@ func reset_turn_crit() -> void:
 ## Run one effect for `source` (card, tool, relic, set or curse) through the
 ## shared effect registry. `target` may be null; a freed target counts as none.
 func execute_effect(effect: Dictionary, target, source, play = null) -> void:
+	if main.is_game_over:
+		return  # the fight ended mid-card: later effects do not run
 	var actor: Object = source.dealer if source and source.dealer else main.player
 	var ctx = EFFECT_CONTEXT.make("combat", source, actor, _live_target(target), main, play)
 	await main.effect_registry.execute(ctx, effect)
@@ -60,11 +62,25 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 	play.dealer = player
 	var source = COMBAT_SOURCE.make("card", "player", player, card)
 	for _i in range(1 + _replay_count(card, type)):
+		if combat_over():
+			break
 		# The target can die between passes; null = "no target" (the hit fizzles).
 		await _resolve_card_once(card, effects, type, _live_target(target), source, play)
 	if type == "attack" and main.turn_manager:
 		main.turn_manager.attacks_played_this_turn += 1
 		main.turn_manager.attacks_played_this_combat += 1
+
+
+## True once the fight is decided: game over, or no enemy is left alive. The
+## victory flag lands a frame after the last kill, so card and tool resolution
+## check the field directly between effects.
+func combat_over() -> bool:
+	if main.is_game_over:
+		return true
+	for enemy in main.enemy_container.get_children():
+		if _live_target(enemy) and int(enemy.get("health")) > 0:
+			return false
+	return true
 
 
 ## A target Node counts as "live" only if it exists AND isn't already queued for
@@ -86,6 +102,8 @@ func _resolve_card_once(
 		await _animate_player_gunshot(player, target)
 
 	for effect in effects:
+		if combat_over():
+			return  # the card won the fight: its later effects do not run
 		await execute_effect(effect, target, source, play)
 
 	# Polarity matched bonus — after the normal effects so a flip_polarity earlier
@@ -95,10 +113,10 @@ func _resolve_card_once(
 		var bonus = card.card_info.get("matched_bonus", [])
 		if bonus is Array:
 			for be in bonus:
-				if typeof(be) == TYPE_DICTIONARY:
+				if typeof(be) == TYPE_DICTIONARY and not combat_over():
 					await execute_effect(be, target, source, play)
 
-	if type == "attack" and _live_target(target):
+	if type == "attack" and _live_target(target) and not combat_over():
 		await main.combat_hooks.after_attack({"source": source, "dealer": player, "target": target})
 
 
