@@ -714,13 +714,13 @@ STATUS_COLORS = {
     "short_circuit": "#33e8ff", "burn": "#ff7a2e",
     "weak": "#b380e6", "vulnerable": "#f27333",
     "stun": "#f2f24d",
-    "regen": "#4dffa6", "thorns": "#b3bfcc", "frail": "#9980b3", "dodge": "#99f2ff",
+    "regen": "#4dffa6", "thorns": "#b3bfcc", "frail": "#9980b3", "intangible": "#99f2ff",
     "metallicize": "#b8ccdb", "feel_no_pain": "#8cccf2",
     "hot_streak": "#ff9640", "all_in": "#ff5470", "deadeye": "#ffe657", "overload_protocol": "#33e8ff",
     "covering_reload": "#6fb3e0", "reactive_plating": "#75d1f0", "loaded": "#ffb33d", "bullet": "#e8c860",
 }
 STATUSES = ["short_circuit", "burn", "weak", "vulnerable", "stun",
-            "regen", "thorns", "frail", "dodge",
+            "regen", "thorns", "frail", "intangible",
             "metallicize", "feel_no_pain",
             "hot_streak", "all_in", "deadeye", "overload_protocol", "covering_reload", "reactive_plating",
             "loaded", "bullet"]

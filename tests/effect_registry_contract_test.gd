@@ -6,6 +6,7 @@ extends Node
 const EFFECT_REGISTRY = preload("uid://7gab4te60cto")  # res://core/effects/effect_registry.gd
 const EFFECT_CONTEXT = preload("uid://bx2g3askncfr6")  # res://core/effects/effect_context.gd
 const RUN_EFFECTS = preload("uid://divb5pd0mx4cc")  # res://core/effects/run_effects.gd
+const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
 const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://battle_scene/data_validator.gd
 
 var failures: PackedStringArray = []
@@ -29,6 +30,13 @@ func _run() -> void:
 		_expect(registry.has_type(event_type, "run"), "run registry handles event effect %s" % event_type)
 	_expect(not registry.has_type("overload", "run"), "combat-only effects are not run effects")
 	_expect(registry.types("run").size() == DATA_VALIDATOR.ALLOWED_EVENT_EFFECT_TYPES.size(), "run registry has no extra types")
+
+	var battle_registry = EFFECT_REGISTRY.new()
+	COMBAT_EFFECTS.register_into(battle_registry)
+	for effect_type in DATA_VALIDATOR.ALLOWED_EFFECT_TYPES:
+		_expect(battle_registry.has_type(effect_type, "combat"), "combat registry handles card effect %s" % effect_type)
+	for action_type in DATA_VALIDATOR.ALLOWED_ENEMY_ACTION_TYPES:
+		_expect(battle_registry.has_type(action_type, "enemy"), "enemy registry handles move %s" % action_type)
 
 	var gold_before: int = RunManager.gold
 	var ctx = EFFECT_CONTEXT.new()

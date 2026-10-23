@@ -1,4 +1,7 @@
-## StatusEffectSystem is shared by PlayerEntity and EnemyEntity.
+## StatusEffectSystem is shared by PlayerEntity and EnemyEntity. It stores
+## stacks and runs turn timing; what a status does to damage, Block and stacks
+## (Weak, Vulnerable, Frail, Intangible, Thorns, …) lives in
+## core/combat/rules/status_rules.gd.
 ## Turn timing:
 ## - on_turn_start(): start-of-turn damage / upkeep
 ## - on_turn_end(): end-of-turn debuff expiration
@@ -202,26 +205,6 @@ func consume_stun(entity: Node) -> bool:
 	_on_statuses_changed(entity)
 	_notify(entity, "STUNNED", STATUS_COLORS["stun"])
 	return true
-
-
-func get_outgoing_multiplier() -> float:
-	if has_status("weak"):
-		return 0.5
-	return 1.0
-
-
-func get_incoming_attack_multiplier() -> float:
-	if has_status("vulnerable"):
-		return 1.5
-	return 1.0
-
-
-## Block gained is reduced while Frail. Like Weak, stacks extend duration rather
-## than increasing the magnitude; Frail's own flat reduction remains 25%.
-func get_block_multiplier() -> float:
-	if has_status("frail"):
-		return 0.75
-	return 1.0
 
 
 ## Intangible lasts until the end of the opponent's turn: the battle calls

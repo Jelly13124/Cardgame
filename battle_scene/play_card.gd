@@ -13,6 +13,7 @@ const ENEMY_TARGET_EFFECTS := [
 
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
+const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 
 @onready var cost_label = $FrontFace/CostCircle/CostLabel
@@ -485,17 +486,24 @@ func _build_description(data: Dictionary) -> String:
 
 	# Get current player stats for display (live values if battle is running)
 	var stats = _get_player_stats()
+	# In battle, damage / Block numbers come from the shared combat pipeline
+	# (the same calculation the targeting preview and the hit use).
+	var pipeline_values := {}
+	var battle = get_tree().current_scene if get_tree() else null
+	if battle and battle.get("combat_commands"):
+		pipeline_values = COMBAT_EFFECTS.preview_effect_values(battle, self, effects)
 
 	var lines: PackedStringArray = []
-	for effect in effects:
+	for effect_index in effects.size():
+		var effect = effects[effect_index]
 		var etype: String = effect.get("type", "")
 		var base: int = int(effect.get("amount", 0))
 		var mult: float = float(effect.get("multiplier", 1))
 		var stacks: int = int(effect.get("stacks", 1))
 
-		# Global attributes mirror combat_engine._apply_effect: the multiplier hits
-		# the BASE first, THEN STR auto-adds to attack damage / CON to block. The old
-		# per-card `scaling` field is gone, so the breakdown is driven purely by etype.
+		# The breakdown shows base + attribute; the colored total is the pipeline
+		# number in battle. The old per-card `scaling` field is gone, so the
+		# breakdown is driven purely by etype.
 		var base_after_mult: int = int(base * mult) if mult != 1 else base
 		# Whether this effect actually scales with an attribute (respects no_str /
 		# no_con). Scaling effects ALWAYS show the "(base+stat)" breakdown — even when
@@ -513,12 +521,8 @@ func _build_description(data: Dictionary) -> String:
 
 		var total: int = base_after_mult + stat_val
 
-		# Apply status effect multipliers for display
-		var final_damage: int = total
-		var final_block: int = total
-
-		if etype.contains("damage"):
-			final_damage = int(final_damage * stats.get("outgoing_mult", 1.0))
+		var final_damage: int = int(pipeline_values.get(effect_index, total))
+		var final_block: int = int(pipeline_values.get(effect_index, total))
 
 		match etype:
 			"deal_damage":
@@ -773,8 +777,6 @@ func _get_player_stats() -> Dictionary:
 			"intelligence": int(p.get("intelligence") if "intelligence" in p else 0),
 			"luck": int(p.get("luck") if "luck" in p else 0),
 			"charm": int(p.get("charm") if "charm" in p else 0),
-			"outgoing_mult":
-			p.status_system.get_outgoing_multiplier() if "status_system" in p else 1.0,
 		}
 	return defaults
 

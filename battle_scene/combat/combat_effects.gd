@@ -12,6 +12,7 @@ extends RefCounted
 
 const VALUE_PROPS = preload("uid://cccfcqt180t4x")  # res://core/combat/value_props.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
+const VALUE_CALC = preload("uid://tynklfj3vjf5")  # res://core/combat/value_calc.gd
 const CARD_PLAY = preload("uid://bxaw24a7fumhm")  # res://core/combat/card_play.gd
 const EFFECT_CONTEXT = preload("uid://bx2g3askncfr6")  # res://core/effects/effect_context.gd
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
@@ -139,6 +140,40 @@ static func preview_card_damage(services: Object, card: Object, target: Object) 
 			_loaded_bonus(ctx)
 		)
 	return total if has_damage else -1
+
+
+## Card-text numbers: the pipeline preview (no target) of each damage and
+## gain_block effect, keyed by effect index. `effects` defaults to the card's own
+## (pass an upgrade preview's list to describe that instead). Never changes state.
+static func preview_effect_values(services: Object, card: Object, effects: Array = []) -> Dictionary:
+	var values := {}
+	var player: Object = services.get("player")
+	if effects.is_empty() and card and "card_info" in card:
+		effects = card.card_info.get("effects", [])
+	var play = CARD_PLAY.new()
+	play.preview = true
+	play.card = card
+	play.dealer = player
+	var source = COMBAT_SOURCE.make("card", "player", player, card)
+	var ctx = EFFECT_CONTEXT.make("combat", source, player, null, services, play)
+	for i in effects.size():
+		var effect = effects[i]
+		if typeof(effect) != TYPE_DICTIONARY:
+			continue
+		var type := str(effect.get("type", ""))
+		if type in DAMAGE_TYPES:
+			values[i] = services.combat_commands.preview_damage(
+				source, null, damage_base(ctx, effect), damage_props(source, effect), play,
+				_loaded_bonus(ctx)
+			)
+		elif type == "gain_block":
+			var props := VALUE_PROPS.POWERED
+			if bool(effect.get("no_con", false)):
+				props |= VALUE_PROPS.NO_CONSTITUTION
+			values[i] = services.combat_hooks.compute_block(
+				VALUE_CALC.for_block(source, player, _amount(effect), props, true)
+			)
+	return values
 
 
 static func _damage_effect(ctx, effect: Dictionary) -> void:
