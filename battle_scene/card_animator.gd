@@ -10,6 +10,10 @@ class_name CardAnimator
 
 ## Scale of the card at the play position.
 const PLAY_SCALE := 0.8
+## Where a flying card lands, relative to the discard pile node.
+const DISCARD_GLYPH_OFFSET := Vector2(80, 110)
+## Positions kept in a discard flight's trail.
+const TRAIL_POINTS := 12
 
 var _scene: Node
 ## Played cards waiting for their turn in the action queue, oldest first.
@@ -108,49 +112,88 @@ func _tween_card(card: Control, at: Vector2, card_scale: float, seconds: float) 
 	return tween
 
 
-## Fly the card to the discard pile with a short spin and shrink.
+# ─── Leaving the play zone (STS2 NCardFlyVfx / NExhaustVfx) ───────────────────
+
+
+## Arc into the discard pile: a randomized quadratic arc that speeds up, the
+## card turning along its path, darkening and shrinking over the first third,
+## with a fading trail. Resets the card for reuse in the pile on arrival.
 func fly_to_discard(card: Control) -> void:
 	if not is_instance_valid(card):
 		return
-
 	var discard_pile = _scene.discard_pile
 	if not is_instance_valid(discard_pile):
 		return
-	var target_pos: Vector2 = discard_pile.global_position + Vector2(80, 110)
 	card.z_index = 90
+	var start: Vector2 = card.global_position + card.pivot_offset
+	var end: Vector2 = discard_pile.global_position + DISCARD_GLYPH_OFFSET
+	var control: Vector2 = (start + end) * 0.5
+	control.y -= 500.0 + randf_range(100.0, 400.0)
+	var duration := randf_range(1.0, 1.75)
+	var speed := randf_range(1.1, 1.25)
+	var accel := randf_range(2.0, 2.5)
+	var start_scale := card.scale.x
+	var trail := _make_trail()
+	AudioManager.play_sfx("card_draw", -4.0, 1.35)
 
-	var tween = create_tween().set_parallel(true)
-	var spin_dir = 1.0 if target_pos.x >= card.global_position.x else -1.0
-	(
-		tween
-		. tween_property(card, "global_position", target_pos, 0.34)
-		. set_trans(Tween.TRANS_CUBIC)
-		. set_ease(Tween.EASE_IN)
+	var time := 0.0
+	while time / duration <= 1.0 and is_inside_tree():
+		await get_tree().process_frame
+		if not is_instance_valid(card):
+			break
+		var delta := get_process_delta_time()
+		time += speed * delta
+		speed += accel * delta
+		var at := _quadratic(start, control, end, minf(time / duration, 1.0))
+		var ahead := _quadratic(start, control, end, minf((time + 0.05) / duration, 1.0))
+		card.global_position = at - card.pivot_offset
+		if ahead != at:
+			card.rotation = lerp_angle(card.rotation, (ahead - at).angle() + PI * 0.5, delta * 12.0)
+		var fade := clampf(time * 3.0 / duration, 0.0, 1.0)
+		var shade := lerpf(1.0, 0.0, fade)
+		card.modulate = Color(shade, shade, shade, 1.0)
+		card.scale = Vector2.ONE * lerpf(start_scale, 0.1, fade)
+		trail.add_point(at)
+		while trail.get_point_count() > TRAIL_POINTS:
+			trail.remove_point(0)
+		trail.modulate.a = 1.0 - clampf(time / duration, 0.0, 1.0) * 0.6
+	trail.queue_free()
+	_reset_for_pile(card)
+
+
+## Exhaust: the card burns where it stands in a one-shot ember burst and fades;
+## the burst frees itself after 2 s. Caller frees the card afterwards.
+func burn_exhaust(card: Control) -> void:
+	if not is_instance_valid(card):
+		return
+	var burst := _make_burn_burst()
+	burst.global_position = card.global_position + card.pivot_offset
+	burst.emitting = true
+	get_tree().create_timer(2.0).timeout.connect(
+		func() -> void:
+			if is_instance_valid(burst):
+				burst.queue_free()
 	)
-	(
-		tween
-		. tween_property(card, "rotation", card.rotation + spin_dir * TAU * 0.72, 0.34)
-		. set_trans(Tween.TRANS_QUAD)
-		. set_ease(Tween.EASE_IN)
-	)
-	(
-		tween
-		. tween_property(card, "scale", Vector2(0.32, 0.32), 0.34)
-		. set_trans(Tween.TRANS_CUBIC)
-		. set_ease(Tween.EASE_IN)
-	)
-	tween.tween_property(card, "modulate:a", 0.0, 0.28).set_trans(Tween.TRANS_QUAD).set_ease(
-		Tween.EASE_IN
-	)
+	AudioManager.play_sfx("card_play_power", -2.0, 0.7)
+	var tween := create_tween()
+	tween.tween_property(card, "modulate:a", 0.0, 0.4)
 	await tween.finished
 
-	# Reset state so the card is reusable inside the discard pile container.
-	card.scale = Vector2.ONE
-	card.rotation = 0.0
-	card.z_index = 0
-	card.mouse_filter = Control.MOUSE_FILTER_STOP
-	if "can_be_interacted_with" in card:
-		card.can_be_interacted_with = true
+
+## A card dropped from the queue (combat ended): it sinks and fades. The caller
+## parks it in the discard pile afterwards.
+func drop_card(card: Control) -> void:
+	if not is_instance_valid(card):
+		return
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(card, "global_position:y", card.global_position.y + 30.0, 0.5).set_ease(
+		Tween.EASE_OUT
+	).set_trans(Tween.TRANS_CUBIC)
+	tween.tween_property(card, "modulate:a", 0.0, 0.5).set_ease(Tween.EASE_OUT).set_trans(
+		Tween.TRANS_CUBIC
+	)
+	await tween.finished
+	_reset_for_pile(card)
 
 
 ## Reshuffle visual: fly a card from its current (discard pile) position to
@@ -202,39 +245,63 @@ func fly_to_deck(card: Control, start_pos: Vector2) -> void:
 	card.z_index = 0
 
 
-## Fly an exhausted card upward and fade it out. Caller is expected to
-## queue_free() the card after this returns.
-func fly_to_exhaust(card: Control) -> void:
+# ─── Helpers ──────────────────────────────────────────────────────────────────
+
+
+## Back to a normal, interactive card for the pile it is about to join.
+func _reset_for_pile(card: Control) -> void:
 	if not is_instance_valid(card):
 		return
+	card.scale = Vector2.ONE
+	card.rotation = 0.0
+	card.z_index = 0
+	card.modulate = Color.WHITE
+	card.mouse_filter = Control.MOUSE_FILTER_STOP
+	if "can_be_interacted_with" in card:
+		card.can_be_interacted_with = true
 
-	card.z_index = 90
-	var rise_target = card.global_position + Vector2(0, -160)
-	var tween = create_tween().set_parallel(true)
-	(
-		tween
-		. tween_property(card, "global_position", rise_target, 0.45)
-		. set_trans(Tween.TRANS_CUBIC)
-		. set_ease(Tween.EASE_OUT)
-	)
-	(
-		tween
-		. tween_property(card, "rotation", card.rotation + TAU * 0.5, 0.45)
-		. set_trans(Tween.TRANS_QUAD)
-		. set_ease(Tween.EASE_OUT)
-	)
-	(
-		tween
-		. tween_property(card, "scale", Vector2(0.5, 0.5), 0.45)
-		. set_trans(Tween.TRANS_CUBIC)
-		. set_ease(Tween.EASE_IN)
-	)
-	(
-		tween
-		. tween_property(card, "modulate", Color(1.4, 1.4, 1.7, 0.0), 0.45)
-		. set_trans(Tween.TRANS_QUAD)
-		. set_ease(Tween.EASE_IN)
-	)
-	if _scene.has_method("show_notification"):
-		_scene.show_notification("EXHAUSTED", Color(0.7, 0.7, 1.0))
-	await tween.finished
+
+func _make_trail() -> Line2D:
+	var trail := Line2D.new()
+	trail.name = "CardTrail"
+	trail.width = 18.0
+	var taper := Curve.new()
+	taper.add_point(Vector2(0.0, 0.0))
+	taper.add_point(Vector2(1.0, 1.0))
+	trail.width_curve = taper
+	var fade := Gradient.new()
+	fade.set_color(0, Color(1.0, 0.94, 0.8, 0.0))
+	fade.set_color(1, Color(1.0, 0.94, 0.8, 0.75))
+	trail.gradient = fade
+	trail.joint_mode = Line2D.LINE_JOINT_ROUND
+	trail.z_index = 85
+	_scene.add_child(trail)
+	return trail
+
+
+func _make_burn_burst() -> CPUParticles2D:
+	var burst := CPUParticles2D.new()
+	burst.name = "ExhaustBurst"
+	burst.one_shot = true
+	burst.amount = 40
+	burst.lifetime = 0.8
+	burst.explosiveness = 0.85
+	burst.direction = Vector2.UP
+	burst.spread = 70.0
+	burst.initial_velocity_min = 120.0
+	burst.initial_velocity_max = 260.0
+	burst.gravity = Vector2(0.0, -60.0)
+	burst.scale_amount_min = 3.0
+	burst.scale_amount_max = 6.0
+	var ramp := Gradient.new()
+	ramp.set_color(0, Color(1.0, 0.62, 0.2, 1.0))
+	ramp.set_color(1, Color(0.42, 0.4, 0.38, 0.0))
+	burst.color_ramp = ramp
+	burst.z_index = 95
+	_scene.add_child(burst)
+	return burst
+
+
+static func _quadratic(p0: Vector2, control: Vector2, p1: Vector2, t: float) -> Vector2:
+	var u := 1.0 - t
+	return u * u * p0 + 2.0 * u * t * control + t * t * p1

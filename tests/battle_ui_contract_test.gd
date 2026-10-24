@@ -30,6 +30,9 @@ func _run() -> void:
 	await test_freed_hover_target_resets_arrow()
 	test_waiting_layout_formula()
 	await test_three_quick_plays_line_up()
+	await test_discard_flight_lands_in_the_pile()
+	await test_exhaust_burns_in_place()
+	await test_combat_end_drops_waiting_cards()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if failures.is_empty():
 		print("[OK] battle UI contract passed")
@@ -199,3 +202,46 @@ func _wait_until(condition: Callable, seconds: float) -> bool:
 			return false
 		await get_tree().process_frame
 	return true
+
+
+func test_discard_flight_lands_in_the_pile() -> void:
+	var battle = await _battle()
+	var cards: Array = await _add_strikes(battle, 1)
+	var card: Control = cards[0]
+	battle.play_spell(card, battle.enemy_container.get_child(0))
+	var saw_trail := await _wait_until(func() -> bool: return not battle.find_children("*", "Line2D", true, false).is_empty(), 3.0)
+	_expect(saw_trail, "the discard flight draws a trail")
+	var landed := await _wait_until(func() -> bool: return battle.discard_pile.has_card(card), 6.0)
+	_expect(landed, "the played card lands in the discard pile")
+	_expect(card.scale == Vector2.ONE and is_equal_approx(card.modulate.a, 1.0), "a landed card is reset for reuse")
+	await get_tree().process_frame
+	_expect(battle.find_children("*", "Line2D", true, false).is_empty(), "the trail is gone after the flight")
+	await _free(battle)
+
+
+func test_exhaust_burns_in_place() -> void:
+	var battle = await _battle()
+	var card = battle.deck_manager.add_card_to_hand("reload")
+	await get_tree().process_frame
+	battle.play_spell(card, null)
+	var burned := await _wait_until(func() -> bool: return not battle.find_children("*", "CPUParticles2D", true, false).is_empty(), 3.0)
+	_expect(burned, "an exhausted card burns in a particle burst")
+	var freed := await _wait_until(func() -> bool: return not is_instance_valid(card), 3.0)
+	_expect(freed, "the exhausted card is freed")
+	await get_tree().create_timer(2.2).timeout
+	_expect(battle.find_children("*", "CPUParticles2D", true, false).is_empty(), "burn particles clean themselves up")
+	await _free(battle)
+
+
+func test_combat_end_drops_waiting_cards() -> void:
+	var battle = await _battle()
+	battle.player.energy = 10
+	var cards: Array = await _add_strikes(battle, 3)
+	for card in cards:
+		battle.play_spell(card, battle.enemy_container.get_child(0))
+	await get_tree().create_timer(0.1).timeout
+	battle._victory()
+	await get_tree().create_timer(0.8).timeout
+	_expect(battle.card_animator.waiting_cards().is_empty(), "no card is left waiting after combat ends")
+	_expect(battle.discard_pile.has_card(cards[1]) and battle.discard_pile.has_card(cards[2]), "dropped cards are parked in the discard pile")
+	await _free(battle)

@@ -585,6 +585,22 @@ func can_play_card(card: Control) -> bool:
 	return type != "attack" or _attack_limit_per_turn <= 0 or _attacks_left_this_turn > 0
 
 
+## Combat ended with cards still waiting in the play queue: they sink, fade and
+## are parked in the discard pile (their actions were dropped unresolved).
+func _drop_waiting_cards() -> void:
+	for card in card_animator.drop_waiting():
+		_park_dropped_card(card)
+
+
+func _park_dropped_card(card: Control) -> void:
+	await card_animator.drop_card(card)
+	if not is_instance_valid(card):
+		return
+	if card.has_meta("_in_play"):
+		card.remove_meta("_in_play")
+	discard_pile.add_card(card)
+
+
 ## Cards and tools are used on the player's own turn only, and not after End
 ## Turn was pressed (the end-turn action is already queued).
 func _accepts_player_input() -> bool:
@@ -972,6 +988,7 @@ func _victory():
 	if is_game_over:
 		return
 	action_queue.clear_pending()
+	_drop_waiting_cards()
 	if is_targeting:
 		_cancel_active_targeting()
 	is_game_over = true
@@ -1106,6 +1123,7 @@ func _game_over():
 	if is_game_over:
 		return
 	action_queue.clear_pending()
+	_drop_waiting_cards()
 	if is_targeting:
 		_cancel_active_targeting()
 	is_game_over = true
@@ -1357,10 +1375,8 @@ func _route_played_card(card) -> void:
 		if should_exhaust:
 			_trigger_exhaust_powers()
 			# Keep the card's identity for the (hidden) Exhaust pile before it's freed.
-			var ex_name: String = (
-				str(card.card_info.get("name", "")) if is_instance_valid(card) else ""
-			)
-			await card_animator.fly_to_exhaust(card)
+			var ex_name: String = str(card.card_info.get("name", ""))
+			await card_animator.burn_exhaust(card)
 			if ex_name != "":
 				_exhausted_card_names.append(ex_name)
 			if is_instance_valid(card):
@@ -1369,7 +1385,6 @@ func _route_played_card(card) -> void:
 			await card_animator.fly_to_discard(card)
 			if is_instance_valid(card):
 				discard_pile.add_card(card)
-				card.modulate.a = 1.0  # restore alpha after discard
 
 	_update_ui_labels()
 	refresh_hand_ui()
