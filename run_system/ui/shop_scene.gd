@@ -123,13 +123,13 @@ func _roll_stock() -> void:
 
 	# Tools have no rarity tiers — stock SHOP_TOOL_COUNT distinct tools at a flat price.
 	var tools_pool: Array = RunManager.tool_pool().duplicate()
-	tools_pool.shuffle()
+	RunManager.rng("shops").shuffle(tools_pool)
 	for i in range(min(SHOP_TOOL_COUNT, tools_pool.size())):
 		_stock_tools.append(_make_tool_stock_entry(str(tools_pool[i])))
 
 	var relic_pool := _list_unowned_relics()
 	while _stock_relics.size() < SHOP_RELIC_COUNT and not relic_pool.is_empty():
-		var index := randi() % relic_pool.size()
+		var index: int = RunManager.rng("shops").next_int(relic_pool.size())
 		var relic_id := str(relic_pool[index])
 		relic_pool.remove_at(index)
 		_stock_relics.append({"relic_id": relic_id, "price": _discounted_price(RELIC_PRICE)})
@@ -141,7 +141,7 @@ func _take_random_from_pool(pools: Dictionary, rarity: String) -> String:
 	var pool: Array = pools.get(rarity, [])
 	if pool.is_empty():
 		return ""
-	var index := randi() % pool.size()
+	var index: int = RunManager.rng("shops").next_int(pool.size())
 	var pick := str(pool[index])
 	pool.remove_at(index)
 	pools[rarity] = pool
@@ -157,7 +157,7 @@ func _take_random_from_any_pool(pools: Dictionary, rarity_order: Array) -> Dicti
 			available.append(candidate_rarity)
 	if available.is_empty():
 		return {}
-	var selected_rarity := str(available[randi() % available.size()])
+	var selected_rarity := str(RunManager.rng("shops").pick(available))
 	return {"id": _take_random_from_pool(pools, selected_rarity), "rarity": selected_rarity}
 
 

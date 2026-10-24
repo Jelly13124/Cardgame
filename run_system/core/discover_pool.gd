@@ -22,7 +22,7 @@ static func roll(pool: String, count: int, unlocked: Array) -> Array:
 			continue
 		if _matches(data, pool):
 			matches.append(id)
-	matches.shuffle()
+	RunManager.rng("combat_card_generation").shuffle(matches)
 	return matches.slice(0, min(count, matches.size()))
 
 

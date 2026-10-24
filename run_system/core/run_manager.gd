@@ -407,6 +407,13 @@ const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const SAVE_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/content/save_migration.gd
+const RUN_RNG_SET = preload("uid://ealvw2c6utr7")  # res://core/rng/run_rng_set.gd
+## Seeded streams of the current run (RunRngSet); null outside a run.
+var run_rng = null
+## Session-only streams for draws outside a run (home-base market, forge, menus).
+var _scratch_rng = null
+## Seed of the run that just ended, for the result screen.
+var _last_run_seed: String = ""
 
 
 func _ready() -> void:
@@ -443,7 +450,7 @@ func generate_map(num_floors: int = 12, width: int = 4) -> void:
 		if f == 0 or f == num_floors - 1 or is_boss_floor(f):
 			num_nodes = 1  # Start (relic), mid-act bosses, and end (final boss) are single nodes
 		else:
-			num_nodes = randi_range(2, 4)
+			num_nodes = rng("up_front").next_range(2, 4)
 			num_nodes = mini(num_nodes, width)  # Can't exceed +---available slots
 			# Floors directly adjacent to a single-node floor must fit within
 			# the MAX_CHILDREN_PER_NODE cap of that single node, otherwise the
@@ -463,7 +470,7 @@ func generate_map(num_floors: int = 12, width: int = 4) -> void:
 			var available: Array[int] = []
 			for s in range(width):
 				available.append(s)
-			available.shuffle()
+			rng("up_front").shuffle(available)
 			for i in range(num_nodes):
 				slots.append(available[i])
 			slots.sort()
@@ -595,7 +602,7 @@ func _pick_node_type(floor_idx: int, total: int, treasure_extras_used: int = 0) 
 	if floor_idx == GUARANTEED_TREASURE_FLOOR_INDEX:
 		return "treasure"
 
-	var roll = randf()
+	var roll = rng("up_front").next_float()
 
 	# Ascension A5+: bias mid/late rolls into the high (elite/treasure)
 	# tail by compressing the roll range. Squashes 0..1 into 0.5..1.0,
@@ -667,7 +674,7 @@ func select_encounter(node_type: String, floor_idx: int) -> Array[String]:
 		"elite":
 			# Pick ONE elite at random so elite nodes vary across a run (and across the
 			# two acts) instead of every elite being the same fight.
-			result.append(str(ELITE_ROSTER[randi() % ELITE_ROSTER.size()]))
+			result.append(str(rng("up_front").pick(ELITE_ROSTER)))
 		"enemy", "unknown":
 			var pool: Array
 			var tier_floor: int = floor_idx + (current_act - 1) * ACT_POOL_OFFSET
@@ -679,7 +686,7 @@ func select_encounter(node_type: String, floor_idx: int) -> Array[String]:
 				pool = ENCOUNTER_POOLS_MID
 			else:
 				pool = ENCOUNTER_POOLS_LATE
-			var pick = pool[randi() % pool.size()]
+			var pick = rng("up_front").pick(pool)
 			for id in pick:
 				result.append(str(id))
 		_:
@@ -705,9 +712,16 @@ func get_default_starter_deck() -> Array[String]:
 ## outpost difficulty selector). An explicit hero_id / asc from the caller (e.g.
 ## home_base_scene._on_start_pressed) always wins. Both pending_* are consumed
 ## (reset) here.
-func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int = -1) -> void:
+func start_new_run(
+	hero_id: String, starter_deck: Array[String] = [], asc: int = -1, seed_string: String = ""
+) -> void:
 	# A fresh run invalidates any prior in-run save (can't resume the old one).
 	clear_run_save()
+	# Seed first: every roll below draws from the run's streams. An empty or
+	# invalid seed (callers validate typed seeds) picks a random one.
+	run_rng = RUN_RNG_SET.new(
+		seed_string if RUN_RNG_SET.is_valid_seed(seed_string) else RUN_RNG_SET.random_seed_string()
+	)
 	# Fallback to the warehouse-screen intent only when no hero was passed.
 	if hero_id == "" and pending_hero_id != "":
 		hero_id = pending_hero_id
@@ -734,7 +748,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	_seen_random_event_ids.clear()
 	demo_set_piece_ids_claimed.clear()
 	demo_featured_set_id = (
-		DEMO_FEATURED_SET_IDS[randi() % DEMO_FEATURED_SET_IDS.size()] if DEMO_BUILD else ""
+		rng("up_front").pick(DEMO_FEATURED_SET_IDS) if DEMO_BUILD else ""
 	)
 	# Base deck = explicit `starter_deck` arg, else hero JSON's starter_deck, else
 	# DEFAULT_STARTER_DECK. The removed deck-editor override is intentionally not
@@ -854,7 +868,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 
 
 func add_card_to_deck(card_id: String) -> void:
-	var uid = str(Time.get_ticks_usec()) + "_" + str(randi_range(1000, 9999))
+	var uid = str(Time.get_ticks_usec()) + "_" + str(randi_range(1000, 9999))  # rng-ok: deck entry uid uniqueness, not gameplay
 	var card_data = {"uid": uid, "card_id": card_id}
 	player_deck.append(card_data)
 	emit_signal("deck_updated")
@@ -1489,7 +1503,7 @@ func pick_random_event() -> Dictionary:
 	if available.is_empty():
 		_seen_random_event_ids.clear()
 		available = _random_events.duplicate()
-	var picked: Dictionary = available[randi() % available.size()]
+	var picked: Dictionary = rng("up_front").pick(available)
 	var picked_id := str(picked.get("id", ""))
 	if picked_id != "":
 		_seen_random_event_ids.append(picked_id)
@@ -1881,7 +1895,7 @@ func roll_tool_drop(_node_type: String = "") -> String:
 	var pool := tool_pool()
 	if pool.is_empty():
 		return ""
-	return str(pool[randi() % pool.size()])
+	return str(rng("rewards").pick(pool))
 
 
 ## Spend gold to add a tool to the top-bar inventory. Returns false on insufficient
@@ -1920,13 +1934,13 @@ const EQUIP_SLOTS := ["head", "chest", "weapon", "hands", "accessory"]
 ## generic shell. At Ascension >= 3 a generic shell may come out cursed (set pieces
 ## are never cursed). This is the single entry point for all random equipment drops.
 func roll_shell_drop(tier: String) -> Dictionary:
-	if randf() < SET_PIECE_DROP_CHANCE:
+	if rng("rewards").chance(SET_PIECE_DROP_CHANCE):
 		var piece := _random_set_piece(tier)
 		if piece != "":
 			return make_equip_instance(piece, tier)
-	var slot: String = EQUIP_SLOTS[randi() % EQUIP_SLOTS.size()]
+	var slot: String = rng("rewards").pick(EQUIP_SLOTS)
 	var base_id: String = "base:gear_%s_%s" % [slot, tier]
-	var is_cursed: bool = ascension >= 3 and randf() < CURSE_DROP_CHANCE
+	var is_cursed: bool = ascension >= 3 and rng("rewards").chance(CURSE_DROP_CHANCE)
 	return make_equip_instance(base_id, tier, is_cursed)
 
 
@@ -1939,7 +1953,7 @@ func _random_set_piece(tier: String) -> String:
 			cands.append(id)
 	if cands.is_empty():
 		return ""
-	return cands[randi() % cands.size()]
+	return rng("rewards").pick(cands)
 
 
 ## True when the next non-boss combat reward should advance the demo's featured
@@ -2007,7 +2021,7 @@ func get_unowned_relic_ids() -> Array[String]:
 
 func roll_relic_choices(count: int = 3) -> Array[String]:
 	var pool = get_unowned_relic_ids()
-	pool.shuffle()
+	rng("rewards").shuffle(pool)
 	var choices: Array[String] = []
 	for i in range(mini(count, pool.size())):
 		choices.append(pool[i])
@@ -2084,6 +2098,8 @@ func _teardown_run(victory: bool, outcome: String, scrap_earned: int) -> void:
 		bounty_event("extract_alive")
 	_settle_backpack(victory, outcome)
 	is_run_active = false
+	_last_run_seed = run_seed()
+	run_rng = null
 	# The run is over (death / extract / victory): drop any resumable save so the
 	# title screen's Continue can't reload a finished run.
 	clear_run_save()
@@ -2122,6 +2138,7 @@ func save_run() -> void:
 		return
 	var payload := {
 		"v": SAVE_MIGRATION.RUN_VERSION,
+		"rng": run_rng.to_dict() if run_rng != null else {},
 		"is_run_active": is_run_active,
 		"current_hero_id": current_hero_id,
 		"current_hero_data": current_hero_data,
@@ -2182,9 +2199,15 @@ func load_run() -> bool:
 		push_warning("RunManager: run save was corrupt, resumed from %s" % result.get("source", ""))
 	if not bool(data.get("is_run_active", false)):
 		return false
-	if SAVE_MIGRATION.run_needs_migration(data):
+	if SAVE_MIGRATION.run_needs_id_migration(data):
 		SAVE_MIGRATION.backup_once(_run_save_path(), data)
-		data = SAVE_MIGRATION.migrate_run(data)
+	data = SAVE_MIGRATION.migrate_run(data)
+	var saved_rng: Variant = data.get("rng", {})
+	if typeof(saved_rng) == TYPE_DICTIONARY and RUN_RNG_SET.is_valid_seed(str(saved_rng.get("seed_string", ""))):
+		run_rng = RUN_RNG_SET.from_dict(saved_rng)
+	else:
+		# Saves from before seeded streams: the run continues on a fresh seed.
+		run_rng = RUN_RNG_SET.new(RUN_RNG_SET.random_seed_string())
 
 	current_hero_id = str(data.get("current_hero_id", ""))
 	current_hero_data = data.get("current_hero_data", {})
@@ -2390,3 +2413,18 @@ func _input(event: InputEvent) -> void:
 			KEY_F12:
 				print("DEBUG: +test_relic")
 				add_relic("test_relic")
+
+
+## The named seeded stream of the current run (see RunRngSet.STREAMS). Outside a
+## run it returns a session-only, never-saved stream so callers need no guard.
+func rng(stream_name: String):
+	if run_rng != null:
+		return run_rng.stream(stream_name)
+	if _scratch_rng == null:
+		_scratch_rng = RUN_RNG_SET.new(RUN_RNG_SET.random_seed_string())
+	return _scratch_rng.stream(stream_name)
+
+
+## Seed string of the current run, or of the run that just ended.
+func run_seed() -> String:
+	return run_rng.seed_string if run_rng != null else _last_run_seed

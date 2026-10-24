@@ -10,13 +10,21 @@ extends RefCounted
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 
-const RUN_VERSION := 2
+## v2: namespaced content ids (phase 2a). v3: seeded RNG streams (phase 2b; a
+## missing `rng` key is handled by the loader, so 2→3 only bumps the version).
+const RUN_VERSION := 3
+const RUN_ID_VERSION := 2
 const META_CONTENT_VERSION := 2
 const BACKUP_SUFFIX := ".v1.bak"
 
 
 static func run_needs_migration(d: Dictionary) -> bool:
 	return int(d.get("v", 1)) < RUN_VERSION
+
+
+## True for saves from before namespaced ids (the ones worth a .v1.bak backup).
+static func run_needs_id_migration(d: Dictionary) -> bool:
+	return int(d.get("v", 1)) < RUN_ID_VERSION
 
 
 static func meta_needs_migration(d: Dictionary) -> bool:
@@ -27,6 +35,13 @@ static func migrate_run(d: Dictionary) -> Dictionary:
 	if not run_needs_migration(d):
 		return d
 	var out := d.duplicate(true)
+	if run_needs_id_migration(d):
+		_migrate_run_ids(out)
+	out["v"] = RUN_VERSION
+	return out
+
+
+static func _migrate_run_ids(out: Dictionary) -> void:
 	var hero := _ref("character", out.get("current_hero_id", ""))
 	out["current_hero_id"] = hero
 	var hero_data := MODEL_DB.mutable("character", hero)
@@ -55,8 +70,6 @@ static func migrate_run(d: Dictionary) -> Dictionary:
 	_migrate_list(out, "demo_set_piece_ids_offered", "equipment")
 	if out.has("demo_featured_set_id"):
 		out["demo_featured_set_id"] = _ref("equipment_set", out["demo_featured_set_id"])
-	out["v"] = RUN_VERSION
-	return out
 
 
 static func migrate_meta(d: Dictionary) -> Dictionary:

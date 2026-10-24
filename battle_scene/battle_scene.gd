@@ -1057,7 +1057,7 @@ func _victory():
 	# Elite kills drop a small amount of Scrap into the backpack (still at
 	# death risk until extraction); the normal loot flow handles the rest.
 	if RunManager.last_battle_node_type == "elite":
-		RunManager.add_scrap_to_backpack(randi_range(8, 16))
+		RunManager.add_scrap_to_backpack(RunManager.rng("rewards").next_range(8, 16))
 	_show_loot_modal()
 
 

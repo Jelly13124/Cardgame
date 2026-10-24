@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bd0a0qevuctsm"]
+
+[ext_resource type="Script" path="res://tests/run_rng_contract_test.gd" id="1"]
+
+[node name="RunRngContractTest" type="Node"]
+script = ExtResource("1")

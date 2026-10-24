@@ -46,7 +46,7 @@ func add_card_to_draw(card_id: String) -> void:
 	if card_factory and deck:
 		card_factory.create_card(card_id, deck)
 		if deck.has_method("shuffle"):
-			deck.shuffle()
+			_shuffle_pile(deck)
 		if battle_scene:
 			battle_scene._update_ui_labels()
 
@@ -113,7 +113,7 @@ func _draw_internal(count: int) -> void:
 			for c in discarded:
 				if is_instance_valid(c):
 					deck.add_card(c)
-			deck.shuffle()
+			_shuffle_pile(deck)
 			battle_scene._update_ui_labels()
 			await battle_scene._wait(0.15)
 
@@ -151,7 +151,7 @@ func reset_deck() -> void:
 				# Re-apply upgraded card_info so cost/desc/effects all refresh.
 				card.set_card_data(CARD_UPGRADE.resolve(card.card_info))
 
-	deck.shuffle()
+	_shuffle_pile(deck)
 	battle_scene._update_ui_labels()
 
 
@@ -169,5 +169,15 @@ func get_randomized_card_list() -> Array:
 		"base:defend",
 		"base:siphon"
 	]
-	list.shuffle()
+	RunManager.rng("shuffle").shuffle(list)
 	return list
+
+
+## Shuffle a card pile with the run's `shuffle` stream. The card-framework's
+## CardContainer.shuffle() rolls the global RNG and the addon stays untouched,
+## so this reorders the held cards the same way it does (child order + UI).
+func _shuffle_pile(pile) -> void:
+	RunManager.rng("shuffle").shuffle(pile._held_cards)
+	for i in range(pile._held_cards.size()):
+		pile.cards_node.move_child(pile._held_cards[i], i)
+	pile.update_card_ui()

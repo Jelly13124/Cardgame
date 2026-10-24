@@ -41,7 +41,6 @@ var _rarity_pools = {"common": [], "uncommon": [], "rare": []}
 
 
 func _ready() -> void:
-	randomize()
 	draft_pool = MetaProgress.get_unlocked_card_pool()
 	proceed_button.pressed.connect(_on_proceed_pressed)
 	draft_skip_button.pressed.connect(_on_skip_draft_pressed)
@@ -133,7 +132,7 @@ func _generate_loot() -> void:
 	# Tool drop: ONLY normal combats roll a tool (Luck-scaled). Elites give an
 	# equipment chance instead; boss loot is handled in battle_scene.
 	if node_type != "elite" and node_type != "boss":
-		if randf() < RunManager.luck_tool_chance():
+		if RunManager.rng("rewards").chance(RunManager.luck_tool_chance()):
 			var tool_id := RunManager.roll_tool_drop(node_type)
 			if tool_id != "":
 				var tdata := RunManager.get_tool_data(tool_id)
@@ -160,7 +159,7 @@ func _generate_loot() -> void:
 	elif node_type != "boss":
 		equip_rarity = "common"
 	var demo_set_due := equip_rarity != "" and RunManager.should_offer_demo_set_piece()
-	if equip_rarity != "" and (demo_set_due or randf() < RunManager.luck_equip_chance()):
+	if equip_rarity != "" and (demo_set_due or RunManager.rng("rewards").chance(RunManager.luck_equip_chance())):
 		var einst := RunManager.roll_demo_set_piece() if demo_set_due else {}
 		if einst.is_empty():
 			einst = RunManager.roll_shell_drop(equip_rarity)
@@ -396,7 +395,7 @@ func _generate_attr_options() -> void:
 	for child in draft_card_container.get_children():
 		child.queue_free()
 	var keys := _ATTR_KEYS.duplicate()
-	keys.shuffle()
+	RunManager.rng("rewards").shuffle(keys)
 	for i in range(min(3, keys.size())):
 		draft_card_container.add_child(_make_attr_slot(str(keys[i])))
 
@@ -547,13 +546,13 @@ func _generate_draft_options() -> void:
 
 ## Roll a single card id for a draft slot (rarity weighted, Luck-boosted).
 func _roll_draft_card_id() -> String:
-	var roll = randf()
+	var roll = RunManager.rng("rewards").next_float()
 	var picked_rarity = "common"
 	if roll < 0.05:
 		picked_rarity = "rare"
 	elif roll < 0.30:
 		picked_rarity = "uncommon"
-	if picked_rarity != "rare" and randf() < RunManager.luck_rarity_bonus():
+	if picked_rarity != "rare" and RunManager.rng("rewards").chance(RunManager.luck_rarity_bonus()):
 		picked_rarity = "rare" if picked_rarity == "uncommon" else "uncommon"
 	if _rarity_pools[picked_rarity].is_empty():
 		if picked_rarity == "rare":
@@ -561,7 +560,7 @@ func _roll_draft_card_id() -> String:
 		if _rarity_pools[picked_rarity].is_empty():
 			picked_rarity = "common"
 	var pool = _rarity_pools[picked_rarity]
-	return str(pool[randi() % pool.size()]) if not pool.is_empty() else ""
+	return str(RunManager.rng("rewards").pick(pool)) if not pool.is_empty() else ""
 
 
 ## Like _roll_draft_card_id but skips ids already used this draft, so the 3 slots

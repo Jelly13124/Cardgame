@@ -94,7 +94,7 @@ func modify_block_multiplicative(calc) -> void:
 	for entry in _get_effect_entries("player_gain_block"):
 		if str(entry["effect"].get("type", "")) != "gain_block_crit" or not _can_use_once(entry):
 			continue
-		if randf() < RunManager.crit_chance():
+		if RunManager.rng("combat_crits").chance(RunManager.crit_chance()):
 			calc.value *= 1.5
 			if _battle_scene and _battle_scene.has_method("show_notification"):
 				_battle_scene.show_notification("BLOCK CRIT!", Color(0.45, 0.7, 1.0))
@@ -290,7 +290,7 @@ func _random_alive_enemy() -> Node:
 	for enemy in container.get_children():
 		if _is_live(enemy) and enemy.has_method("take_damage"):
 			alive.append(enemy)
-	return alive[randi() % alive.size()] if not alive.is_empty() else null
+	return RunManager.rng("combat_targets").pick(alive)
 
 
 func _is_live(creature: Object) -> bool:

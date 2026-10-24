@@ -267,7 +267,7 @@ func _on_option_pressed(index: int) -> void:
 	var suffix := "RESULT"
 	var fallback := str(opt.get("result", opt.get("result_text", "")))
 	if bool(opt.get("luck_check", false)):
-		if randf() < RunManager.luck_check_chance():
+		if RunManager.rng("events").chance(RunManager.luck_check_chance()):
 			effects_key = "effects_success"
 			suffix = "RESULT_OK"
 			fallback = str(opt.get("result_success", opt.get("result", "")))

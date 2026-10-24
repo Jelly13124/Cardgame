@@ -26,7 +26,7 @@ func modify_damage_multiplicative(calc) -> void:
 	var p: Object = calc.dealer
 	var all_in := _stacks(p, "all_in") > 0
 	var forced: bool = _take_forced_crit(calc)
-	var crit: bool = forced or (not calc.preview and randf() < RunManager.crit_chance())
+	var crit: bool = forced or (not calc.preview and RunManager.rng("combat_crits").chance(RunManager.crit_chance()))
 	if not crit:
 		if all_in and not calc.preview:
 			calc.on_commit(func() -> void: p.add_status("loaded", 2))
@@ -44,7 +44,7 @@ func _overload_crit(calc) -> void:
 	var p: Object = calc.dealer
 	if calc.preview or _stacks(p, "overload_protocol") <= 0:
 		return
-	if randf() < RunManager.crit_chance():
+	if RunManager.rng("combat_crits").chance(RunManager.crit_chance()):
 		calc.value *= float(RunManager.CRIT_MULT)
 		calc.critical = true
 		calc.on_commit(_crit_side_effects.bind(p))

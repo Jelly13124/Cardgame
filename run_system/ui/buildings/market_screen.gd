@@ -836,7 +836,7 @@ func _ll_icon(icon_name: String, px: float) -> Control:
 ## Roll a small, session-stable tool stock from the whole tool pool.
 func _roll_tool_stock() -> Array:
 	var pool: Array = RunManager.tool_pool().duplicate()
-	pool.shuffle()
+	RunManager.rng("shops").shuffle(pool)
 	var stock: Array = []
 	for i in range(min(MARKET_TOOL_COUNT, pool.size())):
 		stock.append(str(pool[i]))
@@ -858,10 +858,10 @@ func _roll_equip_stock() -> Array:
 		var pool: Array = entries.filter(func(e): return str(e.get("rarity", "")) == rarity)
 		var picked: Dictionary
 		if pool.is_empty():
-			picked = entries[randi() % entries.size()]
+			picked = RunManager.rng("shops").pick(entries)
 			rarity = str(picked.get("rarity", "common"))
 		else:
-			picked = pool[randi() % pool.size()]
+			picked = RunManager.rng("shops").pick(pool)
 		(
 			stock
 			. append(
@@ -880,7 +880,7 @@ func _roll_rarity() -> String:
 	var total := 0
 	for r in EQUIP_RARITY_WEIGHTS:
 		total += int(EQUIP_RARITY_WEIGHTS[r])
-	var roll := randi() % maxi(total, 1)
+	var roll: int = RunManager.rng("shops").next_int(maxi(total, 1))
 	for r in RARITY_ORDER:
 		roll -= int(EQUIP_RARITY_WEIGHTS.get(r, 0))
 		if roll < 0:

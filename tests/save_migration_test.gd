@@ -42,7 +42,7 @@ func _run() -> void:
 
 func _test_run_migration() -> void:
 	var run := SAVE_MIGRATION.migrate_run(_fixture(RUN_V1))
-	_expect(int(run["v"]) == SAVE_MIGRATION.RUN_VERSION and SAVE_MIGRATION.RUN_VERSION == 2, "run save version is 2")
+	_expect(int(run["v"]) == SAVE_MIGRATION.RUN_VERSION and SAVE_MIGRATION.RUN_VERSION == 3, "run save version is 3")
 	_expect(run["current_hero_id"] == "base:cowboy_bill", "hero id migrated")
 	_expect(str(run["current_hero_data"].get("id", "")) == "base:cowboy_bill", "hero data re-read from ModelDb")
 	_expect(run["current_hero_data"].has("card_pool"), "hero data comes from current content")
@@ -68,7 +68,7 @@ func _test_run_migration() -> void:
 	_expect(run["seen_random_event_ids"] == ["base:adrenaline_shot"], "seen events migrated as events")
 	_expect(run["demo_featured_set_id"] == "base:weak_hunter", "featured set migrated")
 	_expect(run["demo_set_piece_ids_claimed"] == ["base:weak_hunter_helm"], "claimed pieces migrated")
-	_expect(SAVE_MIGRATION.migrate_run(run) == run, "migrating a v2 save is the identity")
+	_expect(SAVE_MIGRATION.migrate_run(run) == run, "migrating a current save is the identity")
 
 
 func _test_meta_migration() -> void:

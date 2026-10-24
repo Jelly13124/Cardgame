@@ -61,7 +61,7 @@ static func roll(rarity: String, cursed: bool = false) -> Array:
 	for picked in _pick_distinct_positives(positives_wanted - 1, used_types):
 		result.append(picked)
 	if is_cursed:
-		var curse: Dictionary = CURSE[randi() % CURSE.size()].duplicate(true)
+		var curse: Dictionary = RunManager.rng("rewards").pick(CURSE).duplicate(true)
 		result.append(curse)
 	return result
 
@@ -72,7 +72,7 @@ static func _pick_attribute() -> Dictionary:
 	for entry in POSITIVE:
 		if ATTRIBUTE_TYPES.has(entry["type"]):
 			attrs.append(entry)
-	return attrs[randi() % attrs.size()].duplicate(true)
+	return RunManager.rng("rewards").pick(attrs).duplicate(true)
 
 
 ## Return a deep copy of `affixes` with ONE random non-curse affix replaced by a
@@ -89,7 +89,7 @@ static func reroll_one(affixes: Array) -> Array:
 			non_curse_indices.append(i)
 	if non_curse_indices.is_empty():
 		return result
-	var target_index: int = non_curse_indices[randi() % non_curse_indices.size()]
+	var target_index: int = RunManager.rng("rewards").pick(non_curse_indices)
 	# Avoid reproducing a type already present on the OTHER affixes.
 	var used_types: Array = []
 	for i in result.size():
@@ -98,7 +98,7 @@ static func reroll_one(affixes: Array) -> Array:
 	var fresh: Array = _pick_distinct_positives(1, used_types)
 	if fresh.is_empty():
 		# Every positive type is already taken — fall back to any positive.
-		fresh = [POSITIVE[randi() % POSITIVE.size()].duplicate(true)]
+		fresh = [RunManager.rng("rewards").pick(POSITIVE).duplicate(true)]
 	result[target_index] = fresh[0]
 	return result
 
@@ -120,7 +120,7 @@ static func reroll_at(affixes: Array, target_index: int) -> Array:
 			used_types.append(result[i].get("type", ""))
 	var fresh: Array = _pick_distinct_positives(1, used_types)
 	if fresh.is_empty():
-		fresh = [POSITIVE[randi() % POSITIVE.size()].duplicate(true)]
+		fresh = [RunManager.rng("rewards").pick(POSITIVE).duplicate(true)]
 	result[target_index] = fresh[0]
 	return result
 
@@ -210,7 +210,7 @@ static func _pick_distinct_positives(count: int, used_types: Array) -> Array:
 			available.append(entry)
 	var to_pick: int = min(count, available.size())
 	for _i in to_pick:
-		var idx: int = randi() % available.size()
+		var idx: int = RunManager.rng("rewards").next_int(available.size())
 		var chosen: Dictionary = available[idx]
 		picked.append(chosen.duplicate(true))
 		used_types.append(chosen["type"])

@@ -400,7 +400,7 @@ func _open_event_node(floor_idx: int) -> void:
 ##    7% free equipment     — uses the treasure-style grant path
 ##    8% suspicious cache    — lose 6 HP, gain a relic (skipped if no relics left)
 func _resolve_unknown_node(floor_idx: int) -> void:
-	var roll: float = randf()
+	var roll: float = RunManager.rng("unknown_map_point").next_float()
 
 	if roll < 0.40:
 		rm.current_encounter = rm.select_encounter("enemy", floor_idx)
@@ -410,7 +410,7 @@ func _resolve_unknown_node(floor_idx: int) -> void:
 		return
 
 	if roll < 0.58:
-		var gold: int = randi_range(5, 20)
+		var gold: int = RunManager.rng("unknown_map_point").next_range(5, 20)
 		RunManager.add_gold(gold)
 		_show_popup(tr("UI_MAP_SCAVENGED_GOLD").format({"n": gold}))
 		_node_click_pending = false
@@ -418,14 +418,14 @@ func _resolve_unknown_node(floor_idx: int) -> void:
 
 	if roll < 0.73:
 		# Scrap stays in the backpack and only counts on a successful extraction.
-		var amt: int = randi_range(10, 30)
+		var amt: int = RunManager.rng("unknown_map_point").next_range(10, 30)
 		RunManager.add_scrap_to_backpack(amt)
 		_show_popup(tr("UI_MAP_SCRAP_DROP").format({"n": amt}))
 		_node_click_pending = false
 		return
 
 	if roll < 0.85:
-		var heal_amt: int = randi_range(6, 12)
+		var heal_amt: int = RunManager.rng("unknown_map_point").next_range(6, 12)
 		var before: int = rm.current_health
 		rm.modify_health(heal_amt)
 		var actual: int = rm.current_health - before
@@ -533,7 +533,7 @@ func _open_relic_choice(
 	)
 	if choices.is_empty():
 		if source_type == "treasure":
-			var gold = randi_range(20, 45)
+			var gold = RunManager.rng("rewards").next_range(20, 45)
 			RunManager.add_gold(gold)
 			_show_popup(tr("UI_MAP_NO_RELICS_FOUND_GOLD").format({"n": gold}))
 		else:
@@ -791,7 +791,7 @@ func _open_run_deck_viewer() -> void:
 ## Treasure equipment drop: 70% uncommon / 30% rare. Drops straight into the
 ## backpack; if every cell is taken the item is left behind with a notice.
 func _grant_treasure_equipment() -> void:
-	var rarity := "uncommon" if randf() < 0.7 else "rare"
+	var rarity := "uncommon" if RunManager.rng("rewards").chance(0.7) else "rare"
 	var einst = RunManager.roll_shell_drop(rarity)
 	var item_id = str(einst.get("base", ""))
 	if item_id == "":
