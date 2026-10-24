@@ -33,6 +33,7 @@ func _run() -> void:
 	await test_discard_flight_lands_in_the_pile()
 	await test_exhaust_burns_in_place()
 	await test_combat_end_drops_waiting_cards()
+	await test_played_card_loses_its_outline()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if failures.is_empty():
 		print("[OK] battle UI contract passed")
@@ -244,4 +245,17 @@ func test_combat_end_drops_waiting_cards() -> void:
 	await get_tree().create_timer(0.8).timeout
 	_expect(battle.card_animator.waiting_cards().is_empty(), "no card is left waiting after combat ends")
 	_expect(battle.discard_pile.has_card(cards[1]) and battle.discard_pile.has_card(cards[2]), "dropped cards are parked in the discard pile")
+	await _free(battle)
+
+
+func test_played_card_loses_its_outline() -> void:
+	var battle = await _battle()
+	var cards: Array = await _add_strikes(battle, 1)
+	var card: Control = cards[0]
+	battle.player.energy = 3
+	battle.refresh_hand_ui()
+	_expect(card.highlight.is_shown(), "precondition: the card is lit in hand")
+	battle.play_spell(card, battle.enemy_container.get_child(0))
+	await get_tree().process_frame
+	_expect(not card.highlight.is_shown(), "a played card is no longer outlined")
 	await _free(battle)

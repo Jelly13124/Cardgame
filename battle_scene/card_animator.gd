@@ -34,6 +34,10 @@ func prepare_for_play(card: Control) -> void:
 	card.pivot_offset = card.size / 2.0
 	if "can_be_interacted_with" in card:
 		card.can_be_interacted_with = false
+	# Out of the hand it is no longer "playable": drop the outline at once.
+	var highlight = card.get("highlight")
+	if highlight:
+		highlight.anim_hide_instantly()
 
 
 # ─── Play-queue zone (STS2 NCardPlayQueue) ────────────────────────────────────
