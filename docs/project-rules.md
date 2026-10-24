@@ -201,7 +201,7 @@ battle_scene/assets/images/
 | **New enemy** | 1. Create `enemies/{sprite_id}/` with frames. 2. Add `content/monsters/{id}.json` with `sprite_id`. |
 | **New card** | 1. Add `content/cards/{id}.json` with `effects[]`. 2. Add card art under `assets/images/cards/player/`. |
 | **New equipment** | 1. Add `content/equipment/{id}.json` with `bonuses`. |
-| **New relic** | 1. Add `content/relics/{id}.json`. 2. Add a shared trigger in `battle_scene/relic_effect_system.gd` only if existing triggers are insufficient. |
+| **New relic** | 1. Add `content/relics/{id}.json` and list it in a relic pool. 2. Use existing triggers; for new behaviour add a `script` extending `core/listeners/data_relic.gd`. |
 | **New hero** | 1. Add hero JSON. 2. Add hero sprite under `heroes/{hero_id}/`. |
 
 ### Content Catalog — Design-First Workflow (Non-Negotiable)

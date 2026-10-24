@@ -5,6 +5,7 @@ extends Node2D
 class_name EnemyEntity
 
 const HUD_SCRIPT = preload("uid://dqn0nfitycf2d")  # res://battle_scene/ui/character_hud.gd
+const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
@@ -761,7 +762,7 @@ func _play_hit_audio(profile: String, feedback_tags: Dictionary) -> void:
 
 
 func _uses_detached_feedback(feedback_tags: Dictionary) -> bool:
-	return str(feedback_tags.get("source", "")) in ["status", "relic", "thorns", "debug"]
+	return str(feedback_tags.get("source", "")) in COMBAT_SOURCE.DETACHED_FEEDBACK_KINDS
 
 
 ## After taking damage, if current HP has first dropped below `hp_below*max_health`

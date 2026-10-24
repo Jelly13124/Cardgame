@@ -21,6 +21,7 @@ signal status_changed
 signal died
 
 const HUD_SCRIPT = preload("uid://dqn0nfitycf2d")  # res://battle_scene/ui/character_hud.gd
+const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
 const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://battle_scene/combat_fx.gd
 const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://battle_scene/combat_feedback_controller.gd
@@ -427,7 +428,7 @@ func _play_hit_audio(profile: String, feedback_tags: Dictionary) -> void:
 
 
 func _uses_detached_feedback(feedback_tags: Dictionary) -> bool:
-	return str(feedback_tags.get("source", "")) in ["status", "relic", "thorns", "debug"]
+	return str(feedback_tags.get("source", "")) in COMBAT_SOURCE.DETACHED_FEEDBACK_KINDS
 
 
 ## Red flash on the rendered sprite when hit — mirrors EnemyEntity._hit_flash. Tweens

@@ -5,6 +5,10 @@ extends RefCounted
 ## "neutral"); `dealer` is the creature acting (may be null for relics); `card`
 ## is the card node for card sources; `id` names a relic, set or status.
 
+## Source kinds whose hits play detached feedback (no attacker lunge / card
+## readout): statuses, relics, Thorns reflections and debug damage.
+const DETACHED_FEEDBACK_KINDS := ["status", "relic", "thorns", "debug"]
+
 var kind: String = ""
 var side: String = "neutral"
 var dealer: Object = null

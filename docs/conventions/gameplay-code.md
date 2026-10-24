@@ -63,8 +63,10 @@ Adding a new effect type:
 2. Add the type string to the matching `DataValidator` list
    (`ALLOWED_EFFECT_TYPES`, `ALLOWED_ENEMY_ACTION_TYPES`, `ALLOWED_EVENT_EFFECT_TYPES`).
 
-Status names go in `ALLOWED_STATUS_NAMES`; what a status does to damage, Block
-or stacks goes in a listener (`core/combat/rules/status_rules.gd` today).
+A new status is a definition in `content/statuses/<key>.json` (kind, decay,
+colour, label, description, optional `vars` and `script`); the validator's
+status list is derived from those files. What it does goes in its listener
+script (`core/listeners/statuses/<key>.gd`, see rule 8).
 
 ### 7. Values go through the pipeline; state changes go through commands
 Never compute damage, Block or status stacks by hand: build a value with
@@ -72,6 +74,28 @@ Never compute damage, Block or status stacks by hand: build a value with
 (previews pass `preview = true` and must not commit). Change HP, Block and
 statuses only through `battle_scene/combat/combat_commands.gd`, so modifiers,
 Intangible and reactions (on-hit, Thorns, relics) apply everywhere.
+
+### 8. Content behaviour is a listener; the core only broadcasts
+Statuses, relics, equipment sets, ascension rules and the bounty tracker are
+listeners (`core/listeners/listener.gd`): they define the hooks they care about
+and the broadcaster (`core/combat/combat_hooks.gd`) calls them in a fixed order
+— attributes, statuses (player, then enemies), crits, relics, equipment sets,
+ascension. Never name a status or relic in `battle_scene.gd`,
+`combat_engine.gd` or `player.gd` (`tests/core_names_no_content_test.gd`).
+
+- A status listener is created per creature when the status gains stacks and
+  dropped at 0; it reads its stacks with `amount()` and its numbers from
+  `vars`.
+- A relic is a per-battle `core/listeners/data_relic.gd` instance mapping its
+  JSON `trigger`s to hooks; for behaviour the triggers cannot express, give the
+  relic a `script` extending `data_relic.gd` (it may keep `counters`).
+- Value hooks take a `core/combat/hook_value.gd` (`compute`), query hooks return
+  bool (`query_any` stops at the first true), reactions may be coroutines
+  (`react`). Run-level events (`RunManager.enemy_killed`, `card_played`, …) go to
+  `RunManager.run_listeners`.
+- Ascension rules are `content/ascension/*.json`; ask
+  `RunManager.has_ascension(id)` / `ascension_param(id, key)`, never compare
+  the level number.
 
 - **Why:** the validator IS the schema. If validator doesn't know a type, it'll be silently allowed by JSON but the game might handle it inconsistently.
 
