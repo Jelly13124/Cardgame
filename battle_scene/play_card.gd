@@ -1,19 +1,11 @@
 extends Card
 class_name PlayCard
 
-const ENEMY_TARGET_EFFECTS := [
-	"deal_damage",
-	"deal_damage_str_mult",
-	"scale_damage_by_attacks",
-	"deal_damage_block_mult",
-	"apply_status",
-	"apply_short_circuit_scaled",
-	"apply_stun",
-]
 
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
 const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
+const EFFECT_CATALOG = preload("uid://880atc7mnnie")  # res://battle_scene/combat/effect_catalog.gd
 const HOOK_VALUE = preload("uid://npewr2krgrm6")  # res://core/combat/hook_value.gd
 const CARD_HIGHLIGHT = preload("uid://wd07lb83d87x")  # res://battle_scene/ui/card_highlight.gd
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
@@ -350,7 +342,7 @@ static func data_requires_enemy_target(data: Dictionary) -> bool:
 	for effect in data.get("effects", []):
 		if typeof(effect) != TYPE_DICTIONARY:
 			continue
-		if str(effect.get("type", "")) in ENEMY_TARGET_EFFECTS:
+		if EFFECT_CATALOG.registry().targets_enemy(str(effect.get("type", ""))):
 			return true
 	return false
 

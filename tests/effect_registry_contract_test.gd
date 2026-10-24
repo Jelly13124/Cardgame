@@ -33,7 +33,7 @@ func _run() -> void:
 
 	var battle_registry = EFFECT_REGISTRY.new()
 	COMBAT_EFFECTS.register_into(battle_registry)
-	for effect_type in DATA_VALIDATOR.ALLOWED_EFFECT_TYPES:
+	for effect_type in DATA_VALIDATOR.allowed_card_effect_types():
 		_expect(battle_registry.has_type(effect_type, "combat"), "combat registry handles card effect %s" % effect_type)
 	for action_type in DATA_VALIDATOR.ALLOWED_ENEMY_ACTION_TYPES:
 		_expect(battle_registry.has_type(action_type, "enemy"), "enemy registry handles move %s" % action_type)

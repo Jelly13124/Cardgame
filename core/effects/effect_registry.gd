@@ -9,13 +9,30 @@ extends RefCounted
 ## keeps them and the registry in step.
 
 var _handlers: Dictionary = {}  # context -> {type -> Callable}
+var _defs: Dictionary = {}  # context -> {type -> definition Dictionary}
 
 
-func register(type: String, handler: Callable, contexts: Array) -> void:
+## `def` is the type's definition (phase 4: one place per effect type):
+##   target: "enemy" | "self" | "all" | "none"  — whether a card needs an enemy target
+##   params: required effect keys (validator)
+##   upgrade: default upgrade deltas {field: delta} for cards without a bespoke upgrade
+##   card: false to keep the type off cards (relic/set-only effects)
+##   describe: func(effect, view) -> PackedStringArray (card-face lines)
+func register(type: String, handler: Callable, contexts: Array, def: Dictionary = {}) -> void:
 	for context in contexts:
 		if not _handlers.has(context):
 			_handlers[context] = {}
+			_defs[context] = {}
 		_handlers[context][type] = handler
+		_defs[context][type] = def
+
+
+func definition(type: String, context: String = "combat") -> Dictionary:
+	return _defs.get(context, {}).get(type, {})
+
+
+func targets_enemy(type: String, context: String = "combat") -> bool:
+	return str(definition(type, context).get("target", "none")) == "enemy"
 
 
 func has_type(type: String, context: String) -> bool:

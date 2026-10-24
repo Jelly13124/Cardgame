@@ -73,7 +73,7 @@ All effects are defined in card JSON via the `effects[]` array. One effect regis
 - `discover` — 3-choose-1 popup filtered by `pool` (a card type or theme tag such as `short_circuit`); the picked card enters the **current hand for this combat only**. Optional `free` makes it cost 0 this combat.
 - Economy / curse: `gain_gold`, `lose_gold`, `heal`, `lose_hp`, `add_card_to_hand`, `add_curse_to_deck` — gold / HP swings and shuffling a card (or a permanent curse) into the deck.
 
-> The list above is a selection. The **authoritative** set is `DataValidator.ALLOWED_EFFECT_TYPES` (33 types) — see `docs/conventions/data-files.md` for the full categorized list.
+> The list above is a selection. The **authoritative** set is the effect definitions in `combat_effects.gd` (`DataValidator.allowed_card_effect_types()`) (33 types) — see `docs/conventions/data-files.md` for the full categorized list.
 
 Cards built from existing effects require only JSON. A genuinely new shared effect registers a handler in `battle_scene/combat/combat_effects.gd` (`register_into`) and is added to `DataValidator.ALLOWED_EFFECT_TYPES`.
 

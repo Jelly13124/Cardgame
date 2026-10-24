@@ -55,13 +55,13 @@ For data that ships with the game (cards, enemies, encounter pools):
 
 For generated sprite assets: warn-only with a `ColorRect` fallback is OK because regeneration may be in flight.
 
-### 6. New effect / action / status types must be registered in 2 places
-Adding a new effect type:
-1. Register its handler in the effect registry — combat and enemy handlers in
-   `battle_scene/combat/combat_effects.gd` (`register_into`), event options in
-   `core/effects/run_effects.gd`.
-2. Add the type string to the matching `DataValidator` list
-   (`ALLOWED_EFFECT_TYPES`, `ALLOWED_ENEMY_ACTION_TYPES`, `ALLOWED_EVENT_EFFECT_TYPES`).
+### 6. A new card effect type is one registration
+Register the type in `battle_scene/combat/combat_effects.gd` (`register_into`)
+with its handler and its definition (`target`, `params`, `upgrade` defaults,
+`describe`; see `core/effects/effect_registry.gd`). The validator, enemy
+targeting, the upgrade default and the card text all read the definition.
+Enemy actions and event options still also need their `DataValidator` list
+(`ALLOWED_ENEMY_ACTION_TYPES`, `ALLOWED_EVENT_EFFECT_TYPES`).
 
 A new status is a definition in `content/statuses/<key>.json` (kind, decay,
 colour, label, description, optional `vars` and `script`); the validator's

@@ -153,7 +153,7 @@ Optional `phases` (array) — HP-threshold phase transitions. Each phase has `hp
 
 ## Effect types (cards)
 
-Authoritative list in `DataValidator.ALLOWED_EFFECT_TYPES`. As of this writing:
+Authoritative list: the combat effect definitions registered in `battle_scene/combat/combat_effects.gd` (`DataValidator.allowed_card_effect_types()`). As of this writing:
 
 - Damage: `deal_damage`, `deal_damage_all`, `deal_damage_str_mult` (damage = `mult` × Strength; needs `mult`), `scale_damage_by_attacks`, `deal_damage_block_mult`
 - Defense: `gain_block`
@@ -171,7 +171,7 @@ Authoritative list in `DataValidator.ALLOWED_EFFECT_TYPES`. As of this writing:
 
 **Tools:** `content/tools/{tool_id}.json` are one-time battle consumables — shape `{id, title, target ("enemy"|"self"|"none"), rarity, effects[], icon}`. Their `effects[]` reuse this same effect vocabulary (resolved through the shared effect registry as tool sources: fixed values — no STR/CON, Weak/Vulnerable or crits — after their own ×(1+0.08·INT) scaling); validated by `DataValidator.validate_tool` (`REQUIRED_TOOL_KEYS` / `ALLOWED_TOOL_TARGETS`).
 
-When adding a new effect type, update **both** the effect registry (`battle_scene/combat/combat_effects.gd` `register_into`) and `DataValidator.ALLOWED_EFFECT_TYPES`.
+When adding a new effect type, register it once in `battle_scene/combat/combat_effects.gd` (`register_into`) with its handler and definition.
 
 ---
 

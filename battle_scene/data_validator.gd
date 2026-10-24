@@ -45,40 +45,16 @@ const ALLOWED_CARD_TYPES = ["attack", "skill", "ability", "curse"]
 # common/uncommon/rare and must never surface a unique relic (see
 # get_unowned_relic_ids / shop_scene._list_unowned_relics, which exclude it).
 const ALLOWED_RARITIES = ["common", "uncommon", "rare", "unique", "curse"]
-const ALLOWED_EFFECT_TYPES = [
-	"deal_damage",
-	"deal_damage_all",
-	"deal_damage_str_mult",
-	"scale_damage_by_attacks",
-	"gain_block",
-	"gain_energy",
-	"draw_cards",
-	"gain_strength",
-	"gain_constitution",
-	"gain_intelligence",
-	"gain_luck",
-	"gain_charm",
-	"apply_status",
-	"apply_status_self",
-	"apply_status_all",
-	"apply_short_circuit_scaled",
-	"apply_stun",
-	"apply_stun_all",
-	"exhaust_self",
-	"flip_polarity",
-	"lose_hp",
-	"double_strength",
-	"overload",
-	"deal_damage_block_mult",
-	"gain_gold",
-	"heal",
-	"gain_attack_allowance",
-	"restore_attack_allowance",
-	"add_card_to_hand",
-	"lose_gold",
-	"add_curse_to_deck",
-	"discover",
-]
+const EFFECT_CATALOG = preload("uid://880atc7mnnie")  # res://battle_scene/combat/effect_catalog.gd
+
+
+## Card effect types: every combat type whose definition does not say `card: false`.
+static func allowed_card_effect_types() -> PackedStringArray:
+	var out := PackedStringArray()
+	for type in EFFECT_CATALOG.registry().types("combat"):
+		if bool(EFFECT_CATALOG.registry().definition(type).get("card", true)):
+			out.append(type)
+	return out
 ## Runtime status keys of every status definition (content/statuses).
 static func allowed_status_names() -> Array:
 	return MODEL_DB.ids("status").map(func(i): return MODEL_ID.key_entry(i))
@@ -498,16 +474,18 @@ static func _validate_card_effect(effect: Variant, prefix: String, label: String
 		push_error("%s: %s[%d] is missing 'type'" % [prefix, label, i])
 		return false
 	var etype = str(effect["type"])
-	if not etype in ALLOWED_EFFECT_TYPES:
+	if not etype in allowed_card_effect_types():
 		push_error(
-			"%s: %s[%d] type '%s' not in %s" % [prefix, label, i, etype, ALLOWED_EFFECT_TYPES]
+			"%s: %s[%d] type '%s' not in %s" % [prefix, label, i, etype, allowed_card_effect_types()]
 		)
 		ok = false
-	# Discover: needs a non-empty `pool`; `count` (if present) must be a positive int.
-	if etype == "discover":
-		if str(effect.get("pool", "")).strip_edges() == "":
-			push_error("%s: %s[%d] discover is missing a non-empty 'pool'" % [prefix, label, i])
+	# Required params from the type's definition must be present and non-empty.
+	for param in EFFECT_CATALOG.registry().definition(etype).get("params", []):
+		if str(effect.get(param, "")).strip_edges() == "":
+			push_error("%s: %s[%d] %s is missing a non-empty '%s'" % [prefix, label, i, etype, param])
 			ok = false
+	# Discover: `count` (if present) must be a positive int.
+	if etype == "discover":
 		if effect.has("count") and int(effect.get("count", 0)) <= 0:
 			push_error("%s: %s[%d] discover 'count' must be a positive int" % [prefix, label, i])
 			ok = false

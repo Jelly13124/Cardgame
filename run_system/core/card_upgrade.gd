@@ -7,6 +7,8 @@
 ## No `class_name` (project convention) — used via preload.
 extends RefCounted
 
+const EFFECT_CATALOG = preload("uid://880atc7mnnie")  # res://battle_scene/combat/effect_catalog.gd
+
 
 ## Return a deep-copied, upgraded version of `base`. `base` is un-mutated.
 static func resolve(base: Dictionary) -> Dictionary:
@@ -37,19 +39,9 @@ static func formula(effects: Array) -> Array:
 	for eff in out:
 		if typeof(eff) != TYPE_DICTIONARY:
 			continue
-		match str(eff.get("type", "")):
-			"deal_damage", "deal_damage_all":
-				eff["amount"] = int(eff.get("amount", 0)) + 2
-			"gain_block":
-				eff["amount"] = int(eff.get("amount", 0)) + 3
-			"gain_strength", "gain_dexterity", "gain_luck", "gain_intelligence", "gain_energy":
-				eff["amount"] = int(eff.get("amount", 0)) + 1
-			"apply_status", "apply_status_all":
-				eff["stacks"] = int(eff.get("stacks", 0)) + 1
-			"draw_cards":
-				eff["amount"] = int(eff.get("amount", 0)) + 1
-			_:
-				pass
+		var deltas: Dictionary = EFFECT_CATALOG.registry().definition(str(eff.get("type", ""))).get("upgrade", {})
+		for field in deltas:
+			eff[field] = int(eff.get(field, 0)) + int(deltas[field])
 	return out
 
 
