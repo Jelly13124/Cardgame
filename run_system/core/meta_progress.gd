@@ -1025,7 +1025,7 @@ func claim_free_bounty(bounty_id: String) -> bool:
 	return take_bounty(bounty_id)
 
 
-## Progress entry point (called via RunManager.bounty_event). Adds `amount` to
+## Progress entry point (the bounty tracker run listener calls it). Adds `amount` to
 ## every held contract whose objective type matches `kind`; contracts that reach
 ## their count are settled immediately (reward + removal + bounty_completed).
 func bounty_progress_add(kind: String, amount: int) -> void:

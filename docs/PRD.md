@@ -297,7 +297,7 @@ page: `docs/catalog_html/bounties.html`.
 ### Holding & settling
 - **Max 3 held** contracts (board full ⇒ the outpost's take buttons grey out). Held contracts **never
   expire** — they stay on the board until completed (the daily reroll never touches them).
-- Progress ticks **only while a run is active** (`RunManager.bounty_event` gates on
+- Progress ticks **only while a run is active** (RunManager's typed run events gate on
   `is_run_active`); base/menu activity never counts.
 - **Instant settle**: the moment a contract's count is reached mid-run, the reward pays out
   immediately (a toast announces it at base) — no manual turn-in step.
@@ -308,8 +308,8 @@ page: `docs/catalog_html/bounties.html`.
 ### Objective types (7)
 `play_attack_cards` · `earn_gold` · `kill_enemies` · `kill_elites` · `kill_boss` ·
 `extract_alive` · `upgrade_cards` (campfire upgrades). Two-place rule: each type is
-emitted somewhere via `RunManager.bounty_event` AND listed in
-`ALLOWED_BOUNTY_OBJECTIVES` (`data_validator.gd`).
+counted by the bounty tracker run listener (`core/listeners/bounty_tracker.gd`),
+whose `OBJECTIVES` the validator uses.
 
 > **`earn_gold` 口径**: counts all gold **entering the backpack** during an active run
 > (kill drops, reward payouts, extraction bonus). Starting gold and save-resume restores
@@ -648,7 +648,7 @@ Function reference: `docs/building-screens-functions.md`.
 ### ✅ Phase 13 — Bounty system + card gallery
 - ✅ **Bounty contracts** (see "Bounty System" section): 10 JSON contracts in
   `content/bounties/` + `validate_bounty` schema; daily date-seeded free Outpost
-  shelf; max-3 bounty board on the home base; 6 in-run `bounty_event` hooks (attack plays, gold
+  shelf; max-3 bounty board on the home base; 6 in-run bounty events (attack plays, gold
   into backpack, kills, elites/boss, extraction, campfire upgrades); instant settle with
   Caps, Scrap, or equipment rewards.
 - ✅ **Card gallery**: Gallery nav button at base opens the codex — all player cards,

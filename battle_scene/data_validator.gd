@@ -19,22 +19,19 @@ const REQUIRED_TOOL_KEYS = ["id", "title", "effects"]
 const ALLOWED_TOOL_TARGETS = ["enemy", "self", "none"]
 
 # ─── Bounty schema ───────────────────────────────────────────────────────────
-# Objective `type`s trackable by the in-run hooks (two-place rule: each kind is
-# emitted somewhere via RunManager.bounty_event AND listed here).
+# Objective `type`s come from the bounty tracker (core/listeners/bounty_tracker.gd),
+# which maps typed run events onto them.
 const REQUIRED_BOUNTY_KEYS = ["id", "title", "objective", "reward", "tier"]
 # `price` is a legacy field from the market's paid-bounty model — bounty taking
 # is free since 2026-07-07, so the field is OPTIONAL and ignored at runtime
 # (still type-checked when present so a typo'd contract fails loud).
 const OPTIONAL_BOUNTY_KEYS = ["price"]
-const ALLOWED_BOUNTY_OBJECTIVES := [
-	"play_attack_cards",
-	"earn_gold",
-	"kill_elites",
-	"kill_boss",
-	"extract_alive",
-	"upgrade_cards",
-	"kill_enemies",
-]
+const BOUNTY_TRACKER = preload("uid://dufyeowl6elem")  # res://core/listeners/bounty_tracker.gd
+
+
+## Objective types the bounty tracker counts (core/listeners/bounty_tracker.gd).
+static func allowed_bounty_objectives() -> Array:
+	return BOUNTY_TRACKER.OBJECTIVES
 const ALLOWED_BOUNTY_TIERS = ["standard", "hard"]
 # Reward keys a bounty may grant. caps/scrap are currency ints; `equipment`
 # names a drop tier fed to RunManager.roll_shell_drop. (Core removed 2026-07-07.)
@@ -820,17 +817,17 @@ static func validate_bounty(data: Dictionary, source_path: String) -> bool:
 		push_error("%s: 'title' must be a non-empty String" % prefix)
 		ok = false
 
-	# objective: { type: ALLOWED_BOUNTY_OBJECTIVES, count: int >= 1 }
+	# objective: { type: allowed_bounty_objectives(), count: int >= 1 }
 	var objective = data["objective"]
 	if typeof(objective) != TYPE_DICTIONARY:
 		push_error("%s: 'objective' must be a Dictionary" % prefix)
 		ok = false
 	else:
-		if not str(objective.get("type", "")) in ALLOWED_BOUNTY_OBJECTIVES:
+		if not str(objective.get("type", "")) in allowed_bounty_objectives():
 			push_error(
 				(
 					"%s: objective type '%s' not in %s"
-					% [prefix, objective.get("type", ""), ALLOWED_BOUNTY_OBJECTIVES]
+					% [prefix, objective.get("type", ""), allowed_bounty_objectives()]
 				)
 			)
 			ok = false

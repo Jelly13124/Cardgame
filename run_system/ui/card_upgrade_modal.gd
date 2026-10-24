@@ -388,8 +388,7 @@ func _on_view_upgrades_toggled(enabled: bool) -> void:
 func _confirm_upgrade() -> void:
 	if _selected_entry.is_empty() or _selected_info.is_empty():
 		return
-	_selected_entry["upgraded"] = true
-	RunManager.bounty_event("upgrade_cards")
+	RunManager.upgrade_card(_selected_entry)
 	AudioManager.play_sfx("ui_click")
 	upgraded.emit()
 	queue_free()

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b7qokfyx8pw65"]
+
+[ext_resource type="Script" path="res://tests/bounty_events_test.gd" id="1"]
+
+[node name="BountyEventsTest" type="Node"]
+script = ExtResource("1")

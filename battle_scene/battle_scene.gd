@@ -1025,10 +1025,7 @@ func _victory():
 
 	# Bounty: elite/boss victory. Single-fire (is_game_over guard above); must run
 	# BEFORE the boss branch's end_run_victory() flips is_run_active false.
-	if RunManager.last_battle_node_type == "elite":
-		RunManager.bounty_event("kill_elites")
-	elif RunManager.last_battle_node_type == "boss":
-		RunManager.bounty_event("kill_boss")
+	RunManager.combat_won(RunManager.last_battle_node_type)
 
 	# Boss victory routing:
 	#   - non-final act boss → extract choice modal (rewards by current_act)
@@ -1337,8 +1334,7 @@ func play_spell(card: Control, target_node: Node):
 	spend_energy([card])
 	# Bounty + card-codex tracking: the play is committed at this point (all
 	# gates passed, energy spent). Fires once per PLAY, not per Replay pass.
-	if type == "attack":
-		RunManager.bounty_event("play_attack_cards")
+	RunManager.card_played(card.card_info)
 	combat_hooks.react("after_card_played", card.card_info)
 	MetaProgress.mark_card_seen(str(card.card_info.get("id", "")))
 	if card.card_container and card.card_container.has_card(card):

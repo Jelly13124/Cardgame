@@ -715,7 +715,7 @@ func take_damage(
 		# Bounty: one kill event per death (this branch is the single death gate —
 		# it pays kill gold + emits `died` exactly once; _live_target guards
 		# upstream keep dead enemies from re-entering take_damage).
-		RunManager.bounty_event("kill_enemies")
+		RunManager.enemy_killed(self)
 		died.emit()
 		queue_free()
 		return

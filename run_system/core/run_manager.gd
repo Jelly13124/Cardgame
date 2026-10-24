@@ -407,6 +407,9 @@ const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const SAVE_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/content/save_migration.gd
+const BOUNTY_TRACKER = preload("uid://dufyeowl6elem")  # res://core/listeners/bounty_tracker.gd
+## Run listeners (STS2-style hooks at run level): the bounty tracker.
+var run_listeners: Array = [_make_bounty_tracker()]
 const RUN_RNG_SET = preload("uid://ealvw2c6utr7")  # res://core/rng/run_rng_set.gd
 ## Seeded streams of the current run (RunRngSet); null outside a run.
 var run_rng = null
@@ -937,17 +940,50 @@ func purchase_card_removal(uid: String, cost: int) -> bool:
 	return true
 
 
-# --- Bounty tracking (悬赏) ---
+# --- Run events (run listeners: bounty tracker) ----------------------------
+# Typed events owned by the code that changes run state; every run listener
+# defining `after_<event>` hears them while a run is active.
+
+func enemy_killed(enemy) -> void:
+	_emit_run_event("after_enemy_killed", enemy)
 
 
-## Single in-run entry point for bounty progress. Battle / reward paths call
-## this with an event kind (must be in data_validator.ALLOWED_BOUNTY_OBJECTIVES,
-## e.g. "kill_elites", "earn_gold") and an amount; forwarded to MetaProgress
-## only while a run is active — base-screen / menu activity never ticks bounties.
-func bounty_event(kind: String, amount: int = 1) -> void:
+func combat_won(node_type: String) -> void:
+	_emit_run_event("after_combat_won", node_type)
+
+
+func card_played(card_info: Dictionary) -> void:
+	_emit_run_event("after_card_played", card_info)
+
+
+func gold_earned(amount: int) -> void:
+	_emit_run_event("after_gold_earned", amount)
+
+
+func card_upgraded(entry: Dictionary) -> void:
+	_emit_run_event("after_card_upgraded", entry)
+
+
+func run_extracted() -> void:
+	_emit_run_event("after_run_extracted", null)
+
+
+## Mark a run-deck entry upgraded and report it (the one owner of upgrades).
+func upgrade_card(entry: Dictionary) -> void:
+	entry["upgraded"] = true
+	card_upgraded(entry)
+
+
+func _emit_run_event(method: String, arg) -> void:
 	if not is_run_active:
 		return
-	MetaProgress.bounty_progress_add(kind, amount)
+	for listener in run_listeners:
+		if not listener.has_method(method):
+			continue
+		if listener.get_method_argument_count(method) == 0:
+			listener.call(method)
+		else:
+			listener.call(method, arg)
 
 
 # --- Health & Damage ---
@@ -1081,7 +1117,7 @@ func add_gold(n: int) -> int:
 	# Bounty: earn_gold counts only gold that actually entered the backpack
 	# (positive deltas; spend_gold is a separate path and never counts).
 	if stored > 0:
-		bounty_event("earn_gold", stored)
+		gold_earned(stored)
 	return stored
 
 
@@ -2100,10 +2136,10 @@ func _teardown_run(victory: bool, outcome: String, scrap_earned: int) -> void:
 		return
 	# Bounty: successful extraction settles HERE, not at the UI call site —
 	# every extract path funnels into this teardown. Must fire BEFORE the
-	# is_run_active=false flip below or the gated bounty_event() would no-op.
+	# is_run_active=false flip below or the gated run event would no-op.
 	# The idempotency guard above makes it exactly-once.
 	if outcome == "extracted":
-		bounty_event("extract_alive")
+		run_extracted()
 	_settle_backpack(victory, outcome)
 	is_run_active = false
 	_last_run_seed = run_seed()
@@ -2455,3 +2491,9 @@ func has_ascension(rule_id: String) -> bool:
 ## A numeric parameter of an ascension rule (its `params`), or `default`.
 func ascension_param(rule_id: String, key: String, default: Variant) -> Variant:
 	return MODEL_DB.data("ascension", rule_id).get("params", {}).get(key, default)
+
+
+static func _make_bounty_tracker():
+	var tracker = load("uid://dufyeowl6elem").new()  # res://core/listeners/bounty_tracker.gd
+	tracker.progress = func(kind: String, amount: int) -> void: MetaProgress.bounty_progress_add(kind, amount)
+	return tracker
