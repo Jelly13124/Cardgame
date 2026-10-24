@@ -1248,7 +1248,7 @@ func add_attack_allowance(n: int) -> void:
 ## NOT stack past the cap — so you can fire again, but can't bank extra attacks.
 ## Also fires the Covering Reload power (Block on every Reload).
 func restore_attack_allowance() -> void:
-	AudioManager.play_sfx("reload")
+	AudioManager.play_sfx("reload")  # bare-ok: sfx key
 	# Covering Reload power: gain 3 Block whenever a Reload is played (independent
 	# of whether the attack cap is armed).
 	if (
@@ -1345,7 +1345,7 @@ func play_spell(card: Control, target_node: Node):
 	# gates passed, energy spent). Fires once per PLAY, not per Replay pass.
 	if type == "attack":
 		RunManager.bounty_event("play_attack_cards")
-	MetaProgress.mark_card_seen(str(card.card_info.get("name", "")))
+	MetaProgress.mark_card_seen(str(card.card_info.get("id", "")))
 	if card.card_container and card.card_container.has_card(card):
 		card.card_container.remove_card(card)
 
@@ -1388,7 +1388,7 @@ func _route_played_card(card) -> void:
 		if should_exhaust:
 			_trigger_exhaust_powers()
 			# Keep the card's identity for the (hidden) Exhaust pile before it's freed.
-			var ex_name: String = str(card.card_info.get("name", ""))
+			var ex_name: String = str(card.card_info.get("id", ""))
 			await card_animator.burn_exhaust(card)
 			if ex_name != "":
 				_exhausted_card_names.append(ex_name)

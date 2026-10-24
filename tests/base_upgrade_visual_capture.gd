@@ -29,11 +29,11 @@ func _run() -> void:
 	MetaProgress.caps = 4440
 	MetaProgress.scrap = 620
 	MetaProgress.upgrades = {
-		"command_center": 3,
-		"backpack": 2,
-		"reroll_tokens": 2,
-		"tool_slots": 1,
-		"blacksmith": 2,
+		"base:command_center": 3,
+		"base:backpack": 2,
+		"base:reroll_tokens": 2,
+		"base:tool_slots": 1,
+		"base:blacksmith": 2,
 	}
 	MetaProgress.caps_perk_levels = {
 		"cyber_str": 3,
@@ -45,9 +45,9 @@ func _run() -> void:
 	}
 	MetaProgress.active_bounties = []
 	MetaProgress.bounty_shelf = [
-		"war_profiteer",
-		"elite_purge",
-		"scavenger_haul",
+		"base:war_profiteer",
+		"base:elite_purge",
+		"base:scavenger_haul",
 	]
 	# Prevent HomeBase's stale-daily refresh from writing capture fixtures into
 	# the user's active save slot.

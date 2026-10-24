@@ -104,7 +104,7 @@ func test_profile_survives_corrupt_main() -> void:
 
 func test_run_save_roundtrip() -> void:
 	MetaProgress.set_active_slot(1)
-	RunManager.start_new_run("cowboy_bill")
+	RunManager.start_new_run("base:cowboy_bill")
 	RunManager.current_floor = 3
 	RunManager.save_run()
 	_expect(FileAccess.file_exists(_abs("slot_1/run_save.json")), "run save: written under SaveIO.root")
@@ -135,11 +135,11 @@ func test_settings_roundtrip() -> void:
 
 func test_late_run_saves_are_plain_json() -> void:
 	MetaProgress.set_active_slot(1)
-	RunManager.start_new_run("cowboy_bill")
+	RunManager.start_new_run("base:cowboy_bill")
 	for tier in ["common", "uncommon", "rare"]:
 		RunManager.add_equip_to_backpack(RunManager.roll_shell_drop(tier))
-	RunManager.add_relic("barbed_plating")
-	RunManager.add_tool("blood_kit")
+	RunManager.add_relic("base:barbed_plating")
+	RunManager.add_tool("base:blood_kit")
 	MetaProgress.add_to_stash(RunManager.roll_shell_drop("rare"))
 	MetaProgress.refresh_bounty_shelf_if_stale()
 	if not MetaProgress.bounty_shelf.is_empty():
@@ -155,4 +155,4 @@ func test_late_run_saves_are_plain_json() -> void:
 		"late profile save: only JSON values (got %s)" % ", ".join(SAVE_IO.last_non_json_paths)
 	)
 	_expect(RunManager.load_run(), "late run save: loads back")
-	_expect(RunManager.relics.has("barbed_plating"), "late run save: relic restored")
+	_expect(RunManager.relics.has("base:barbed_plating"), "late run save: relic restored")

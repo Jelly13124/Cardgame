@@ -47,12 +47,12 @@ func resolve_card_effect(card: Control, target: Node, player: Node) -> void:
 		push_error(
 			(
 				"CombatEngine: card '%s' has no effects. Card JSON must define an `effects` array."
-				% card.card_info.get("name", "<unknown>")
+				% card.card_info.get("id", "<unknown>")
 			)
 		)
 		assert(
 			false,
-			"CombatEngine: card '%s' has no effects." % card.card_info.get("name", "<unknown>")
+			"CombatEngine: card '%s' has no effects." % card.card_info.get("id", "<unknown>")
 		)
 		return
 

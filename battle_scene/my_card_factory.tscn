@@ -8,5 +8,5 @@
 script = ExtResource("1_kvcvr")
 default_card_scene = ExtResource("2_play_card")
 card_asset_dir = "res://battle_scene/assets/images/cards"
-card_info_dir = "res://battle_scene/card_info"
+card_info_dir = ""
 back_image = ExtResource("3_b44du")

@@ -11,8 +11,8 @@ func _ready() -> void:
 
 func _capture() -> void:
 	RunManager.is_run_active = false
-	RunManager.current_hero_id = "cowboy_bill"
-	RunManager.current_hero_data = {"card_ui_skin": "cowboy_bill"}
+	RunManager.current_hero_id = "base:cowboy_bill"
+	RunManager.current_hero_data = {"card_ui_skin": "base:cowboy_bill"}
 	var battle := BATTLE_SCENE.instantiate()
 	add_child(battle)
 	for _i in range(45):

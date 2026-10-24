@@ -4,6 +4,7 @@
 extends Control
 
 const PLAY_CARD := preload("uid://d7orfw8kd2tc")  # res://battle_scene/play_card.tscn
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 
 signal discovered(card_id: String)
 
@@ -104,13 +105,8 @@ func _show_keywords(card: Control) -> void:
 
 
 func _card_info(card_id: String) -> Dictionary:
-	var path := "res://battle_scene/card_info/player/%s.json" % card_id
-	var f := FileAccess.open(path, FileAccess.READ)
-	if f == null:
-		return {"name": card_id, "cost": 0, "type": "skill"}
-	var parsed: Variant = JSON.parse_string(f.get_as_text())
-	f.close()
-	return parsed if typeof(parsed) == TYPE_DICTIONARY else {"name": card_id}
+	var info := MODEL_DB.mutable("card", card_id)
+	return info if not info.is_empty() else {"id": card_id, "cost": 0, "type": "skill"}
 
 
 func _pick(card_id: String) -> void:

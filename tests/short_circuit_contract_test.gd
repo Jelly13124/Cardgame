@@ -6,7 +6,7 @@ const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/comb
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const PLAY_CARD = preload("uid://d4f71g73780ld")  # res://battle_scene/play_card.gd
 
-const CARD_DIR := "res://battle_scene/card_info/player/"
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 
 var failures: PackedStringArray = []
 
@@ -111,65 +111,58 @@ func _test_overload_consumes_charge() -> void:
 
 
 func _test_card_package_numbers() -> void:
-	var round_card := _load_card("recoil_shot")
+	var round_card := _load_card("base:recoil_shot")
 	_expect(_effect_amount(round_card, "deal_damage") == 3, "Short-Circuit Round keeps useful immediate damage")
 	_expect(
 		_effect_amount(round_card, "apply_short_circuit_scaled") == 6,
 		"common hybrid applies 6 delayed stacks"
 	)
-	var diagnosis := _load_card("dissect")
+	var diagnosis := _load_card("base:dissect")
 	_expect(str(diagnosis.get("type", "")) == "skill", "Circuit Diagnosis is a targeted Skill")
 	_expect(
 		_effect_amount(diagnosis, "apply_short_circuit_scaled") == 8,
 		"uncommon pure builder starts at 8 delayed stacks"
 	)
-	var tear := _load_card("bone_breaker")
+	var tear := _load_card("base:bone_breaker")
 	_expect(
 		_effect_amount(tear, "apply_short_circuit_scaled") == 10,
 		"rare two-cost builder starts at 10 delayed stacks"
 	)
-	var overload := _load_card("limit_break")
+	var overload := _load_card("base:limit_break")
 	var overload_effect := _find_effect(overload, "overload")
 	_expect(not overload_effect.is_empty(), "Overload card uses the one shared Overload effect")
 	_expect(int(overload_effect.get("charge_multiplier", 1)) == 2, "rare Overload doubles discharge damage")
-	var arc_flash := _load_card("arc_flash")
+	var arc_flash := _load_card("base:arc_flash")
 	_expect(_has_effect(arc_flash, "overload"), "Arc Flash uses the shared global Overload effect")
 	_expect(str(arc_flash.get("type", "")) == "skill", "Arc Flash is a technical Skill, not another Attack")
-	var charge_sink_effect := _find_effect(_load_card("coagulate"), "overload")
+	var charge_sink_effect := _find_effect(_load_card("base:coagulate"), "overload")
 	_expect(bool(charge_sink_effect.get("gain_block_equal_damage", false)), "Charge Sink converts Overload damage into Block")
 
 
 func _test_data_driven_targeting() -> void:
 	_expect(
-		not PLAY_CARD.data_requires_enemy_target(_load_card("limit_break")),
+		not PLAY_CARD.data_requires_enemy_target(_load_card("base:limit_break")),
 		"global Overload never requests a single enemy target"
 	)
 	_expect(
-		not PLAY_CARD.data_requires_enemy_target(_load_card("arc_flash")),
+		not PLAY_CARD.data_requires_enemy_target(_load_card("base:arc_flash")),
 		"all-enemy Overload Attack does not request a single target"
 	)
 	_expect(
-		PLAY_CARD.data_requires_enemy_target(_load_card("corrode")),
+		PLAY_CARD.data_requires_enemy_target(_load_card("base:corrode")),
 		"enemy-debuff Skill requests an enemy target"
 	)
 	_expect(
-		not PLAY_CARD.data_requires_enemy_target(_load_card("defend")),
+		not PLAY_CARD.data_requires_enemy_target(_load_card("base:defend")),
 		"self-only Block Skill remains untargeted"
 	)
 
 
 func _test_active_data_has_no_bleed_mechanic() -> void:
-	for folder in [
-		"res://battle_scene/card_info/player/",
-		"res://battle_scene/card_info/enemy/",
-		"res://run_system/data/relics/",
-		"res://run_system/data/tools/",
-		"res://run_system/data/equipment_sets/",
-	]:
-		for file_name in DirAccess.get_files_at(folder):
-			if not file_name.ends_with(".json"):
-				continue
-			var source := FileAccess.get_file_as_string(folder + file_name)
+	for category in ["card", "monster", "relic", "tool", "equipment_set"]:
+		for model in MODEL_DB.models(category):
+			var file_name: String = model.id
+			var source := JSON.stringify(model.data, "", false).replace('":"', '": "')
 			_expect(
 				not source.contains('"status": "bleed"'),
 				"active data does not apply Bleed: %s" % file_name
@@ -185,9 +178,9 @@ func _test_active_data_has_no_bleed_mechanic() -> void:
 
 
 func _load_card(card_id: String) -> Dictionary:
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string(CARD_DIR + card_id + ".json"))
-	_expect(typeof(parsed) == TYPE_DICTIONARY, "card JSON parses: %s" % card_id)
-	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
+	var data := MODEL_DB.mutable("card", card_id)
+	_expect(not data.is_empty(), "card is registered: %s" % card_id)
+	return data
 
 
 func _effect_amount(card: Dictionary, effect_type: String) -> int:

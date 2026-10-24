@@ -57,7 +57,7 @@ func _test_atomic_stash_transfers() -> void:
 	MetaProgress.stash.clear()
 	RunManager.pending_loadout.clear()
 	RunManager.pending_equipped.clear()
-	var stored := _equip("gear_head_common", "common")
+	var stored := _equip("base:gear_head_common", "common")
 	MetaProgress.stash.append(stored)
 
 	_expect(
@@ -73,7 +73,7 @@ func _test_atomic_stash_transfers() -> void:
 	# A full stash must reject the reverse transfer without deleting the carried item.
 	MetaProgress.stash.clear()
 	for _i in range(MetaProgress.effective_stash_cap()):
-		MetaProgress.stash.append(_equip("gear_chest_common", "common"))
+		MetaProgress.stash.append(_equip("base:gear_chest_common", "common"))
 	var carry_before: Array = RunManager.pending_loadout.duplicate(true)
 	_expect(
 		not MetaProgress.move_base_backpack_to_stash(stored),
@@ -99,7 +99,7 @@ func _test_atomic_stash_transfers() -> void:
 		"successful storage adds exactly one stash entry"
 	)
 
-	var worn := _equip("gear_weapon_uncommon", "uncommon")
+	var worn := _equip("base:gear_weapon_uncommon", "uncommon")
 	RunManager.pending_equipped["weapon"] = worn
 	_expect(
 		not MetaProgress.move_base_slot_to_stash("weapon"),
@@ -140,9 +140,9 @@ func _test_window_transfer_wiring() -> void:
 
 
 func _test_base_reward_destination() -> void:
-	MetaProgress.stash = [_equip("gear_head_common", "common")]
+	MetaProgress.stash = [_equip("base:gear_head_common", "common")]
 	RunManager.pending_loadout.clear()
-	var reward := _equip("gear_accessory_uncommon", "uncommon")
+	var reward := _equip("base:gear_accessory_uncommon", "uncommon")
 	var stash_before: Array = MetaProgress.stash.duplicate(true)
 	_expect(
 		MetaProgress.add_to_base_backpack(reward),
@@ -150,7 +150,7 @@ func _test_base_reward_destination() -> void:
 	)
 	_expect(MetaProgress.stash == stash_before, "base reward never changes stash")
 	_expect(
-		_base_ids(RunManager.pending_loadout) == ["gear_accessory_uncommon"],
+		_base_ids(RunManager.pending_loadout) == ["base:gear_accessory_uncommon"],
 		"base reward is owned by the base backpack"
 	)
 
@@ -158,23 +158,23 @@ func _test_base_reward_destination() -> void:
 func _test_market_purchase_destination() -> void:
 	var market := MARKET_SCREEN.new()
 	MetaProgress.caps = 1000
-	MetaProgress.stash = [_equip("gear_weapon_common", "common")]
+	MetaProgress.stash = [_equip("base:gear_weapon_common", "common")]
 	RunManager.pending_loadout.clear()
 	var stash_before: Array = MetaProgress.stash.duplicate(true)
-	market.call("_on_buy_equipment", "gear_head_common", "common", 60, null)
+	market.call("_on_buy_equipment", "base:gear_head_common", "common", 60, null)
 	_expect(MetaProgress.caps == 940, "market equipment purchase spends Caps")
 	_expect(MetaProgress.stash == stash_before, "market purchase never auto-stores equipment")
 	_expect(
-		_base_ids(RunManager.pending_loadout) == ["gear_head_common"],
+		_base_ids(RunManager.pending_loadout) == ["base:gear_head_common"],
 		"market purchase enters the owned base backpack"
 	)
 
 	RunManager.pending_loadout.clear()
 	for _i in range(RunManager.effective_backpack_size()):
-		RunManager.pending_loadout.append(_equip("gear_chest_common", "common"))
+		RunManager.pending_loadout.append(_equip("base:gear_chest_common", "common"))
 	var carry_before: Array = RunManager.pending_loadout.duplicate(true)
 	var caps_before := MetaProgress.caps
-	market.call("_on_buy_equipment", "gear_head_common", "common", 60, null)
+	market.call("_on_buy_equipment", "base:gear_head_common", "common", 60, null)
 	_expect(MetaProgress.caps == caps_before, "full backpack refunds market purchase Caps")
 	_expect(RunManager.pending_loadout == carry_before, "full backpack keeps existing carry intact")
 	_expect(MetaProgress.stash == stash_before, "failed market purchase still leaves stash untouched")
@@ -184,12 +184,12 @@ func _test_market_purchase_destination() -> void:
 func _test_success_settlement() -> void:
 	MetaProgress.caps = 0
 	MetaProgress.scrap = 0
-	MetaProgress.stash = [_equip("gear_head_common", "common")]
+	MetaProgress.stash = [_equip("base:gear_head_common", "common")]
 	RunManager.pending_loadout.clear()
 	RunManager.pending_equipped.clear()
 	_reset_run_gear()
-	var carried := _equip("gear_chest_uncommon", "uncommon")
-	var worn := _equip("gear_weapon_rare", "rare")
+	var carried := _equip("base:gear_chest_uncommon", "uncommon")
+	var worn := _equip("base:gear_weapon_rare", "rare")
 	RunManager.backpack[0] = {"kind": "gold", "amount": 25}
 	RunManager.backpack[1] = {"kind": "scrap", "amount": 12}
 	RunManager.backpack[2] = {"kind": "equip", "item": carried}
@@ -203,29 +203,29 @@ func _test_success_settlement() -> void:
 	_expect(MetaProgress.scrap == 12, "successful return banks carried Scrap")
 	_expect(MetaProgress.caps == 8, "successful return banks run Caps plus converted Gold")
 	_expect(
-		_base_ids(RunManager.pending_loadout) == ["gear_chest_uncommon"],
+		_base_ids(RunManager.pending_loadout) == ["base:gear_chest_uncommon"],
 		"successful return moves backpack gear into owned base backpack"
 	)
 	_expect(
 		RunManager.equip_base(RunManager.pending_equipped.get("weapon", {}))
-		== "gear_weapon_rare",
+		== "base:gear_weapon_rare",
 		"successful return preserves worn gear in the owned base slot"
 	)
 
 
 func _test_defeat_settlement() -> void:
 	MetaProgress.scrap = 0
-	MetaProgress.stash = [_equip("gear_accessory_common", "common")]
+	MetaProgress.stash = [_equip("base:gear_accessory_common", "common")]
 	MetaProgress.upgrades.clear()  # base safe-cell count = 2
 	RunManager.pending_loadout.clear()
 	RunManager.pending_equipped.clear()
 	_reset_run_gear()
 	RunManager.backpack[0] = {
-		"kind": "equip", "item": _equip("gear_hands_uncommon", "uncommon")
+		"kind": "equip", "item": _equip("base:gear_hands_uncommon", "uncommon")
 	}
 	RunManager.backpack[1] = {"kind": "scrap", "amount": 7}
-	RunManager.backpack[2] = {"kind": "equip", "item": _equip("gear_head_rare", "rare")}
-	RunManager.equipped_items["weapon"] = _equip("gear_weapon_common", "common")
+	RunManager.backpack[2] = {"kind": "equip", "item": _equip("base:gear_head_rare", "rare")}
+	RunManager.equipped_items["weapon"] = _equip("base:gear_weapon_common", "common")
 	var stash_before: Array = MetaProgress.stash.duplicate(true)
 
 	RunManager.call("_settle_backpack", false, "defeat")
@@ -233,7 +233,7 @@ func _test_defeat_settlement() -> void:
 	_expect(MetaProgress.stash == stash_before, "defeat settlement never changes stash")
 	_expect(MetaProgress.scrap == 7, "defeat banks Scrap from safe cells")
 	_expect(
-		_base_ids(RunManager.pending_loadout) == ["gear_hands_uncommon"],
+		_base_ids(RunManager.pending_loadout) == ["base:gear_hands_uncommon"],
 		"defeat preserves only safe-cell equipment in the base backpack"
 	)
 	_expect(
@@ -243,8 +243,8 @@ func _test_defeat_settlement() -> void:
 
 
 func _test_profile_round_trip() -> void:
-	var carried := _equip("gear_chest_rare", "rare")
-	var worn := _equip("gear_head_uncommon", "uncommon")
+	var carried := _equip("base:gear_chest_rare", "rare")
+	var worn := _equip("base:gear_head_uncommon", "uncommon")
 	RunManager.pending_loadout.assign([carried])
 	RunManager.pending_equipped = {"head": worn}
 	MetaProgress.save_progress()
@@ -252,30 +252,30 @@ func _test_profile_round_trip() -> void:
 	RunManager.pending_equipped.clear()
 	MetaProgress.load_progress()
 	_expect(
-		_base_ids(RunManager.pending_loadout) == ["gear_chest_rare"],
+		_base_ids(RunManager.pending_loadout) == ["base:gear_chest_rare"],
 		"profile reload restores owned base backpack"
 	)
 	_expect(
 		RunManager.equip_base(RunManager.pending_equipped.get("head", {}))
-		== "gear_head_uncommon",
+		== "base:gear_head_uncommon",
 		"profile reload restores owned base equipment slots"
 	)
 
 
 func _test_start_run_consumes_owned_carry() -> void:
-	MetaProgress.stash = [_equip("gear_accessory_rare", "rare")]
+	MetaProgress.stash = [_equip("base:gear_accessory_rare", "rare")]
 	var stash_before: Array = MetaProgress.stash.duplicate(true)
-	RunManager.pending_loadout.assign([_equip("gear_hands_common", "common")])
-	RunManager.pending_equipped = {"head": _equip("gear_head_common", "common")}
+	RunManager.pending_loadout.assign([_equip("base:gear_hands_common", "common")])
+	RunManager.pending_equipped = {"head": _equip("base:gear_head_common", "common")}
 
-	RunManager.start_new_run("cowboy_bill", [], 0)
+	RunManager.start_new_run("base:cowboy_bill", [], 0)
 
 	_expect(
-		"gear_hands_common" in RunManager.backpack_equip_ids(),
+		"base:gear_hands_common" in RunManager.backpack_equip_ids(),
 		"start_new_run consumes base backpack gear into run backpack"
 	)
 	_expect(
-		RunManager.equip_base(RunManager.equipped_items.get("head", {})) == "gear_head_common",
+		RunManager.equip_base(RunManager.equipped_items.get("head", {})) == "base:gear_head_common",
 		"start_new_run consumes base worn gear into the matching run slot"
 	)
 	_expect(RunManager.pending_loadout.is_empty(), "consumed base backpack is empty")
@@ -311,7 +311,7 @@ func _snapshot_state() -> void:
 		"run_history": MetaProgress.run_history.duplicate(true),
 	}
 	_run_snapshot = {
-		"backpack": RunManager.backpack.duplicate(true),
+		"backpack": RunManager.backpack.duplicate(true),  # bare-ok: snapshot key
 		"equipped": RunManager.equipped_items.duplicate(true),
 		"pending_loadout": RunManager.pending_loadout.duplicate(true),
 		"pending_equipped": RunManager.pending_equipped.duplicate(true),

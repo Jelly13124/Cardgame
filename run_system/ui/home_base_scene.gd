@@ -12,7 +12,7 @@ const SETTINGS_PANEL = preload("uid://ledls51ku43w")  # res://run_system/ui/sett
 const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://run_system/ui/pause_panel.gd
 ## Fallback hero when no character-window selection has been made — the base hero,
 ## always available. Keeps START NEW RUN robust (a run never begins with an empty hero).
-const DEFAULT_HERO_ID := "cowboy_bill"
+const DEFAULT_HERO_ID := "base:cowboy_bill"
 const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://run_system/ui/window/character_window.gd
 const STASH_WINDOW = preload("uid://cgyuqu543lioh")  # res://run_system/ui/window/stash_window.gd
 const BUILDING_SCREEN_BASE = preload("uid://wpvlhqpgylk7")  # res://run_system/ui/buildings/building_screen_base.gd
@@ -50,7 +50,8 @@ const BASE_HUD_ICON_DIR := "res://run_system/assets/images/home/base_hud/"
 const BOUNTY_BOARD_FRAME := "res://run_system/assets/images/home/base_hud/bounty_board_frame_exact.png"
 const BOUNTY_HEADER_CLIPBOARD := "res://run_system/assets/images/home/base_hud/bounty_header_clipboard.png"
 const CURRENCY_ICON_DIR := "res://run_system/assets/images/home/currency/"
-const CARD_DATA_DIR := "res://battle_scene/card_info/player/"
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 ## Locked-gallery slot art: the same card back battle uses (play_card.gd).
 const GALLERY_CARD_BACK := "res://battle_scene/assets/images/cards/ui/card_back.png"
 const TOP_HUD_LAYER := 70
@@ -556,7 +557,7 @@ func _fill_bounty_rows() -> void:
 		var objective_v = data.get("objective", {})
 		var objective: Dictionary = objective_v if typeof(objective_v) == TYPE_DICTIONARY else {}
 
-		var title := Settings.t("BOUNTY_%s_TITLE" % id, str(data.get("title", id)))
+		var title := Settings.t("BOUNTY_%s_TITLE" % MODEL_ID.key_entry(id), str(data.get("title", id)))
 		var current := int(entry.get("progress", 0))
 		var target := int(objective.get("count", 1))
 		_bounty_rows_box.add_child(
@@ -584,7 +585,7 @@ func _fill_bounty_rows() -> void:
 func _on_bounty_completed(bounty_id: String) -> void:
 	_rebuild_bounty_rows()
 	var data: Dictionary = MetaProgress.get_bounty_data(bounty_id)
-	var title := Settings.t("BOUNTY_%s_TITLE" % bounty_id, str(data.get("title", bounty_id)))
+	var title := Settings.t("BOUNTY_%s_TITLE" % MODEL_ID.key_entry(bounty_id), str(data.get("title", bounty_id)))
 	_show_home_toast(_home_text("悬赏完成:%s", "Bounty complete: %s") % title)
 
 
@@ -1368,7 +1369,7 @@ func _add_building_icon(building_id: String, rect: Rect2) -> void:
 	)
 	_set_map_rect(icon_button, icon_rect)
 	var empty_style := StyleBoxEmpty.new()
-	for state in ["normal", "hover", "pressed", "focus"]:
+	for state in ["normal", "hover", "pressed", "focus"]:  # bare-ok: theme state
 		icon_button.add_theme_stylebox_override(state, empty_style)
 	_buildings_root.add_child(icon_button)
 
@@ -1739,24 +1740,16 @@ func _open_card_gallery() -> void:
 		grid.add_child(_make_gallery_card_slot(str(card_id)))
 
 
-## Every player card on disk — basics (strike/defend), curses, and ALL heroes'
+## Every card in ModelDb — basics (strike/defend), curses, and ALL heroes'
 ## exclusives included; the codex shows the full set whether seen or not.
 ## Sort: type attack → skill → ability → curse, then rarity common → uncommon
 ## → rare → curse/special, then alphabetical by id.
 func _gallery_card_ids() -> Array:
 	var type_order := {"attack": 0, "skill": 1, "ability": 2, "curse": 3}
 	var rarity_order := {"common": 0, "uncommon": 1, "rare": 2, "curse": 3, "special": 4}
-	var cache: Dictionary = MetaProgress.get_card_info_cache()
 	var entries: Array = []
-	var dir := DirAccess.open(CARD_DATA_DIR)
-	if dir == null:
-		push_warning("CardGallery: cannot open card dir %s" % CARD_DATA_DIR)
-		return []
-	for file_name in dir.get_files():
-		if not file_name.ends_with(".json"):
-			continue
-		var card_id := file_name.get_basename()
-		var data: Dictionary = cache.get(card_id, {})
+	for card_id in MODEL_DB.ids("card"):
+		var data: Dictionary = MODEL_DB.data("card", card_id)
 		(
 			entries
 			. append(
@@ -1791,7 +1784,7 @@ func _make_gallery_card_slot(card_id: String) -> Control:
 		_home_flat_style(Color(0.045, 0.036, 0.026, 0.88), Color(0.26, 0.20, 0.12, 1.0), 6, 1)
 	)
 
-	var data: Dictionary = MetaProgress.get_card_info_cache().get(card_id, {})
+	var data: Dictionary = MODEL_DB.data("card", card_id)
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 14)
 	margin.add_theme_constant_override("margin_right", 14)
@@ -1804,7 +1797,7 @@ func _make_gallery_card_slot(card_id: String) -> Control:
 	margin.add_child(box)
 
 	var title := Label.new()
-	title.text = Settings.t("CARD_%s_TITLE" % card_id, str(data.get("title", card_id))).to_upper()
+	title.text = Settings.t("CARD_%s_TITLE" % MODEL_ID.key_entry(card_id), str(data.get("title", card_id))).to_upper()
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title.add_theme_font_override("font", T.display_font(700))
@@ -1846,7 +1839,7 @@ func _make_gallery_card_slot(card_id: String) -> Control:
 
 	var desc := Label.new()
 	desc.text = _strip_bbcode(
-		Settings.t("CARD_%s_DESC" % card_id, str(data.get("description", "")))
+		Settings.t("CARD_%s_DESC" % MODEL_ID.key_entry(card_id), str(data.get("description", "")))
 	)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.add_theme_font_size_override("font_size", 16)
@@ -2125,7 +2118,7 @@ func _humanize_hero_id(hero_id: String) -> String:
 	# run-history nicknames (not the canonical hero name), so they are local UI
 	# labels owned by ui_home, not the HERO_<id>_NAME content key.
 	var names := {
-		"cowboy_bill": tr("UI_HOME_HERO_BILL"),
+		"base:cowboy_bill": tr("UI_HOME_HERO_BILL"),
 	}
 	if names.has(hero_id):
 		return names[hero_id]

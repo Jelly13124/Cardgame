@@ -1,0 +1,18 @@
+{
+	"id": "brace_protocol",
+	"title": "Brace Protocol",
+	"rarity": "common",
+	"type": "skill",
+	"cost": 1,
+	"polarity": "neutral",
+	"description": "Gain 10 Block (ignores Constitution).",
+	"front_image": "player/brace_protocol.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "gain_block",
+			"amount": 10,
+			"no_con": true
+		}
+	]
+}

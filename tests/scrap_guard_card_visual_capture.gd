@@ -3,16 +3,16 @@ extends Control
 const CARD_FACTORY = preload("uid://diap3gdfbqvjv")  # res://battle_scene/my_card_factory.tscn
 const OUTPUT_PATH = "res://tmp/scrap-guard-card-ui-runtime.png"
 const CARD_IDS: Array[String] = [
-	"defend",
-	"brace",
-	"siphon",
-	"tape_patch",
-	"deflector",
-	"kinetic_baffle",
-	"spiked_guard",
-	"venom_coat",
-	"rebar_wave",
-	"coagulate",
+	"base:defend",
+	"base:brace",
+	"base:siphon",
+	"base:tape_patch",
+	"base:deflector",
+	"base:kinetic_baffle",
+	"base:spiked_guard",
+	"base:venom_coat",
+	"base:rebar_wave",
+	"base:coagulate",
 ]
 
 
@@ -21,8 +21,8 @@ func _ready() -> void:
 
 
 func _capture() -> void:
-	RunManager.current_hero_id = "cowboy_bill"
-	RunManager.current_hero_data = {"card_ui_skin": "cowboy_bill"}
+	RunManager.current_hero_id = "base:cowboy_bill"
+	RunManager.current_hero_data = {"card_ui_skin": "base:cowboy_bill"}
 
 	var background := TextureRect.new()
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)

@@ -158,16 +158,16 @@ func reset_deck() -> void:
 # Returns the master list of all available cards in the deck
 func get_randomized_card_list() -> Array:
 	var list = [
-		"strike",
-		"strike",
-		"strike",
-		"strike",
-		"weak_strike",
-		"defend",
-		"defend",
-		"defend",
-		"defend",
-		"siphon"
+		"base:strike",
+		"base:strike",
+		"base:strike",
+		"base:strike",
+		"base:weak_strike",
+		"base:defend",
+		"base:defend",
+		"base:defend",
+		"base:defend",
+		"base:siphon"
 	]
 	list.shuffle()
 	return list

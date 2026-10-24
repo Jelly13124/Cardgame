@@ -55,21 +55,22 @@ var current_floor: int = 0
 ## advance beyond act 1.
 var current_act: int = 1
 var player_deck: Array = []  # Array of Dictionaries (uid, card_id, bonus_attack, bonus_health)
-## Cards removed from the live design. Old run saves may still contain these IDs;
+## Cards removed from the live design. Old run saves may still contain these bare
+## pre-namespace IDs (save migration keeps unresolvable refs verbatim);
 ## load_run strips them before any card factory tries to instantiate missing data.
 const RETIRED_CARD_IDS := [
 	"crowbar_smash",
 	"pipe_swing",
 	"breach_charge",
 	"bulkhead_bleed",
-	"combat_stim",
+	"combat_stim",  # bare-ok: retired card id from v1 saves (a tool shares the name)
 	"focusing_blow",
 	"hemo_drive",
 	"last_breath",
 	"siphon_valve",
 ]
 const CARD_ID_MIGRATIONS := {
-	"vent_plating": "kinetic_baffle",
+	"vent_plating": "base:kinetic_baffle",
 }
 
 ## Equipped gear, one slot per body part. Each value is an equipment INSTANCE
@@ -135,7 +136,6 @@ var inventory_items: Array[String]:
 var relics: Array[String] = []
 ## Run-scoped one-time tools (StS2-style top-bar consumables). NOT in the backpack.
 var tool_inventory: Array[String] = []
-var _tool_cache: Dictionary = {}
 
 ## In-run XP/level. Killing enemies grants XP; each level-up queues an attribute
 ## point (consumed by the loot screen via pending_attr_points). Reset in start_new_run.
@@ -187,15 +187,15 @@ const MAX_INVENTORY: int = 20
 const BASE_BACKPACK: int = 10
 const EQUIPMENT_SLOTS: Array[String] = ["head", "chest", "weapon", "hands", "accessory"]
 const DEFAULT_STARTER_DECK = [
-	"strike",
-	"strike",
-	"strike",
-	"strike",
-	"weak_strike",
-	"defend",
-	"defend",
-	"defend",
-	"defend",
+	"base:strike",
+	"base:strike",
+	"base:strike",
+	"base:strike",
+	"base:weak_strike",
+	"base:defend",
+	"base:defend",
+	"base:defend",
+	"base:defend",
 ]
 
 ## Five-dimension RPG attributes. base_attributes is the unchanging baseline
@@ -222,8 +222,8 @@ var player_attributes: Dictionary = {
 var _equipment_max_hp_bonus: int = 0
 var _equipment_crit_pct_bonus: int = 0
 
-## Cached random-event definitions (loaded from RANDOM_EVENT_DATA_DIR). Each entry
-## is the parsed JSON Dictionary. Populated by load_random_events().
+## Random-event definitions (read-only ModelDb data). Populated by
+## load_random_events().
 var _random_events: Array = []
 ## Events already dealt during this run. The one-act demo uses a no-replacement
 ## event deck so a route cannot repeat the same vignette.
@@ -233,17 +233,17 @@ var _seen_random_event_ids: Array[String] = []
 ## pieces from one featured set, ensuring the equipment differentiator becomes
 ## playable before the boss instead of existing only as a rare random drop.
 const DEMO_SET_TRACK_FLOORS: Array[int] = [2, 5, 8]
-const DEMO_FEATURED_SET_IDS: Array[String] = ["weak_hunter", "tank_engineer", "warden"]
+const DEMO_FEATURED_SET_IDS: Array[String] = ["base:weak_hunter", "base:tank_engineer", "base:warden"]
 var demo_featured_set_id: String = ""
 var demo_set_piece_ids_claimed: Array[String] = []
 
-## Memoized relic JSON by id. Relic data is immutable at runtime, so get_relic_data
-## parses each file at most once — the relic effect system reads this per attack hit.
+## Memoized relic view by id (ModelDb data with defaults filled in). Relic data is
+## immutable at runtime; the relic effect system reads this per attack hit.
 var _relic_data_cache: Dictionary = {}
 
 ## Enemy IDs to encounter in the next battle (set by MapScene before loading battle).
 ## Example: ["trash_robot", "wasteland_killer"]
-var current_encounter: Array[String] = ["trash_robot"]
+var current_encounter: Array[String] = ["base:trash_robot"]
 
 ## Set by map_scene before launching a battle. Used by loot_reward to decide
 ## drop rules. Values: "enemy" | "elite" | "boss".
@@ -253,42 +253,42 @@ var last_battle_node_type: String = "enemy"
 ## MapScene calls `select_encounter(type, floor)` before loading the battle scene
 ## to populate `current_encounter`.
 const ENCOUNTER_POOLS_OPENING = [
-	["scrap_rat"],
-	["hex_drone"],
-	["acid_spitter"],
+	["base:scrap_rat"],
+	["base:hex_drone"],
+	["base:acid_spitter"],
 ]
 const ENCOUNTER_POOLS_EARLY = [
-	["wasteland_killer"],
-	["scrap_rat", "scrap_rat"],
-	["riot_hound"],
-	["mortar_cart"],
-	["trash_robot"],
+	["base:wasteland_killer"],
+	["base:scrap_rat", "base:scrap_rat"],
+	["base:riot_hound"],
+	["base:mortar_cart"],
+	["base:trash_robot"],
 ]
 const ENCOUNTER_POOLS_MID = [
-	["riot_hound"],
-	["mortar_cart"],
-	["slag_walker"],
-	["acid_spitter", "scrap_rat"],
-	["wasteland_killer", "scrap_rat"],
-	["chrome_hound"],
-	["riot_hound_alpha"],
+	["base:riot_hound"],
+	["base:mortar_cart"],
+	["base:slag_walker"],
+	["base:acid_spitter", "base:scrap_rat"],
+	["base:wasteland_killer", "base:scrap_rat"],
+	["base:chrome_hound"],
+	["base:riot_hound_alpha"],
 ]
 const ENCOUNTER_POOLS_LATE = [
-	["riot_hound_alpha"],
-	["rust_brute"],
-	["mortar_cart", "scrap_rat"],
-	["chrome_hound", "scrap_rat"],
-	["mortar_cart_siege", "scrap_rat"],
-	["slag_walker", "acid_spitter"],
-	["riot_hound", "riot_hound"],
+	["base:riot_hound_alpha"],
+	["base:rust_brute"],
+	["base:mortar_cart", "base:scrap_rat"],
+	["base:chrome_hound", "base:scrap_rat"],
+	["base:mortar_cart_siege", "base:scrap_rat"],
+	["base:slag_walker", "base:acid_spitter"],
+	["base:riot_hound", "base:riot_hound"],
 ]
-const ELITE_ROSTER: Array = ["armored_patrol", "chrome_warden", "siege_breaker"]
+const ELITE_ROSTER: Array = ["base:armored_patrol", "base:chrome_warden", "base:siege_breaker"]
 ## Acts (大层). Each act is its OWN FLOORS_PER_ACT-tall map ending in a single
 ## boss at the top floor — there are no mid-map bosses. Clearing a non-final
 ## act's boss offers an extract choice; clearing the final act's boss wins the
 ## run. ACT_BOSSES[i] is the boss enemy id for act i+1. To retune, edit here.
 const ACTS_TOTAL: int = 3
-const ACT_BOSSES: Array[String] = ["rust_titan", "ash_warden", "junkyard_tyrant"]
+const ACT_BOSSES: Array[String] = ["base:rust_titan", "base:ash_warden", "base:junkyard_tyrant"]
 ## Floors per act map (indices 0..FLOORS_PER_ACT-1); the top floor is the boss.
 const FLOORS_PER_ACT: int = 12
 
@@ -299,8 +299,8 @@ const FLOORS_PER_ACT: int = 12
 ## DEMO_ALLOWED_HEROES filters the Warehouse hero picker.
 const DEMO_BUILD: bool = true
 const DEMO_MAX_ACTS: int = 1
-const DEMO_BOSS: String = "rust_titan"
-const DEMO_ALLOWED_HEROES: Array[String] = ["cowboy_bill"]
+const DEMO_BOSS: String = "base:rust_titan"
+const DEMO_ALLOWED_HEROES: Array[String] = ["base:cowboy_bill"]
 
 
 ## Demo-aware act count. The full game has ACTS_TOTAL acts; the demo caps at one
@@ -377,10 +377,6 @@ func scale_enemy_damage(amount: int, enemy_id: String) -> int:
 
 const BATTLE_SCENE: String = "uid://dnhj5pp3c1v2l"  # res://battle_scene/battle_scene.tscn
 const MAP_SCENE: String = "uid://d3x5b8wvg2q"  # res://run_system/ui/map_scene.tscn
-const RELIC_DATA_DIR: String = "res://run_system/data/relics/"
-const EQUIPMENT_DATA_DIR: String = "res://run_system/data/equipment/"
-const EQUIPMENT_SET_DATA_DIR: String = "res://run_system/data/equipment_sets/"
-const RANDOM_EVENT_DATA_DIR: String = "res://run_system/data/random_events/"
 const FIRST_MERCHANT_FLOOR_INDEX: int = 5  # Human-facing layer 6.
 const GUARANTEED_TREASURE_FLOOR_INDEX: int = 6  # Human-facing layer 7.
 ## Floors 1..EARLY_FLOOR_LAST roll combat-only (no rest / treasure / merchant).
@@ -408,6 +404,8 @@ const RUN_EFFECTS = preload("uid://divb5pd0mx4cc")  # res://core/effects/run_eff
 var _run_effects = null
 const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 
 
 func _ready() -> void:
@@ -684,9 +682,9 @@ func select_encounter(node_type: String, floor_idx: int) -> Array[String]:
 			for id in pick:
 				result.append(str(id))
 		_:
-			result.append("trash_robot")
+			result.append("base:trash_robot")
 	if result.is_empty():
-		result.append("trash_robot")
+		result.append("base:trash_robot")
 	return result
 
 
@@ -819,7 +817,7 @@ func start_new_run(hero_id: String, starter_deck: Array[String] = [], asc: int =
 	var starting_relic: String = str(current_hero_data.get("starting_relic", ""))
 	if starting_relic != "":
 		add_relic(starting_relic)
-	current_encounter = ["trash_robot"]
+	current_encounter = ["base:trash_robot"]
 	last_battle_node_type = "enemy"
 	generate_map(FLOORS_PER_ACT, 4)
 
@@ -982,7 +980,7 @@ func _ensure_backpack() -> void:
 ## upgrade between runs takes effect immediately. Old saves without the upgrade
 ## return BASE_BACKPACK.
 func effective_backpack_size() -> int:
-	var bonus := int(_get_meta_effect_value("backpack").get("cells", 0))
+	var bonus := int(_get_meta_effect_value("base:backpack").get("cells", 0))
 	return clampi(BASE_BACKPACK + bonus, BASE_BACKPACK, MAX_INVENTORY)
 
 
@@ -1468,27 +1466,11 @@ const EVENT_LUCK_CHECK_PER_LUCK := 0.04
 const EVENT_LUCK_CHECK_CAP := 0.90
 
 
-## Load (and cache) every random-event JSON from RANDOM_EVENT_DATA_DIR.
-## Gracefully no-ops if the directory is missing or empty.
+## Collect every random-event definition from ModelDb (read-only data).
 func load_random_events() -> void:
 	_random_events = []
-	if not DirAccess.dir_exists_absolute(RANDOM_EVENT_DATA_DIR):
-		return
-	var dir = DirAccess.open(RANDOM_EVENT_DATA_DIR)
-	if dir == null:
-		return
-	for file_name in dir.get_files():
-		if not file_name.ends_with(".json"):
-			continue
-		var path: String = RANDOM_EVENT_DATA_DIR + file_name
-		var f := FileAccess.open(path, FileAccess.READ)
-		if f == null:
-			continue
-		var raw := f.get_as_text()
-		f.close()
-		var parsed = JSON.parse_string(raw)
-		if typeof(parsed) == TYPE_DICTIONARY:
-			_random_events.append(parsed)
+	for model in MODEL_DB.models("event"):
+		_random_events.append(model.data)
 
 
 ## Deal a random event without replacement for the current run. Once every event
@@ -1694,39 +1676,36 @@ func remove_relic(relic_id: String) -> bool:
 	return true
 
 
-## Private helper: open dir_path+id+".json", parse and return the Dictionary.
-## Returns {} if id is empty, file is missing, or JSON is not a Dictionary.
-## Load a hero definition JSON. Returns {} if missing/invalid.
+## A writable copy of a character definition. Returns {} if missing.
 func _load_hero_def(id: String) -> Dictionary:
-	var path := "res://run_system/data/heroes/" + id + ".json"
-	if not FileAccess.file_exists(path):
-		push_warning("RunManager: hero JSON not found at %s" % path)
-		return {}
-	var f := FileAccess.open(path, FileAccess.READ)
-	if not f:
-		return {}
-	var raw := f.get_as_text()
-	f.close()
-	var parsed = JSON.parse_string(raw)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return {}
-	return parsed
+	var data := MODEL_DB.mutable("character", id)
+	if data.is_empty():
+		push_warning("RunManager: unknown character %s" % id)
+	return data
 
 
-## Load a base-upgrade definition JSON. Returns {} if missing/invalid.
+## Read-only base-upgrade definition. Returns {} if missing.
 func _load_upgrade_def(id: String) -> Dictionary:
-	var path := "res://run_system/data/base_upgrades/" + id + ".json"
-	if not FileAccess.file_exists(path):
-		return {}
-	var f := FileAccess.open(path, FileAccess.READ)
-	if not f:
-		return {}
-	var raw := f.get_as_text()
-	f.close()
-	var parsed = JSON.parse_string(raw)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return {}
-	return parsed
+	return MODEL_DB.data("base_upgrade", id)
+
+
+## Full card ids offered to the current character (STS2 CharacterModel.CardPool).
+func current_card_pool() -> Array[String]:
+	return _pool_ids("card_pool", "cards")
+
+
+## Full relic ids offered to the current character (CharacterModel.RelicPool).
+func current_relic_pool() -> Array[String]:
+	return _pool_ids("relic_pool", "relics")
+
+
+func _pool_ids(pool_category: String, key: String) -> Array[String]:
+	var hero := MODEL_DB.data("character", current_hero_id)
+	var pool := MODEL_DB.data(pool_category, str(hero.get(pool_category, "")))
+	var out: Array[String] = []
+	for id in pool.get(key, []):
+		out.append(str(id))
+	return out
 
 
 ## Resolve an upgrade's current-tier effect_value dictionary, or {} if not owned.
@@ -1744,66 +1723,39 @@ func _get_meta_effect_value(upgrade_id: String) -> Dictionary:
 	return tier.get("effect_value", {})
 
 
-func _load_json_by_id(dir_path: String, id: String) -> Dictionary:
-	if id == "":
-		return {}
-	var file = FileAccess.open(dir_path + id + ".json", FileAccess.READ)
-	if file == null:
-		return {}
-	var text: String = file.get_as_text()
-	file.close()
-	var parsed = JSON.parse_string(text)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return {}
-	return parsed
-
-
 ## Returns a default-populated dict for relic_id, with any JSON fields merged in.
 func get_relic_data(relic_id: String) -> Dictionary:
 	if _relic_data_cache.has(relic_id):
 		return _relic_data_cache[relic_id]
 	var data: Dictionary = {
 		"id": relic_id,
-		"title": _humanize_id(relic_id),
+		"title": _humanize_id(MODEL_ID.entry_of(relic_id)),
 		"description": "",
 		"icon": "",
 		"rarity": "common",
 		"effects": [],
 	}
-	var parsed: Dictionary = _load_json_by_id(RELIC_DATA_DIR, relic_id)
+	var parsed: Dictionary = MODEL_DB.data("relic", relic_id)
 	for key in parsed.keys():
 		data[key] = parsed[key]
 	_relic_data_cache[relic_id] = data
 	return data
 
 
-const TOOL_DATA_DIR := "res://run_system/data/tools/"
-
-
-## Load a tool JSON by id (cached). Returns {} on miss.
+## Read-only tool definition. Returns {} on miss.
 func get_tool_data(tool_id: String) -> Dictionary:
-	if _tool_cache.has(tool_id):
-		return _tool_cache[tool_id]
-	var data := _load_json_by_id(TOOL_DATA_DIR, tool_id)
-	_tool_cache[tool_id] = data
-	return data
+	return MODEL_DB.data("tool", tool_id)
 
 
-## All tool ids that have a JSON file (the shop / drop pool).
+## Every tool id (the shop / drop pool).
 func tool_pool() -> Array[String]:
-	var ids: Array[String] = []
-	var dir := DirAccess.open(TOOL_DATA_DIR)
-	if dir:
-		for f in dir.get_files():
-			if f.ends_with(".json"):
-				ids.append(f.trim_suffix(".json"))
-	return ids
+	return MODEL_DB.ids("tool")
 
 
 ## Equipped tool slots (top-bar usable): 1 base + the Outpost "Tool Rack" upgrade +
 ## any +1-tool-slot relic. Tools are HELD in the backpack and equipped into a slot.
 func tool_slots() -> int:
-	return 1 + int(_get_meta_effect_value("tool_slots").get("slots", 0)) + relic_tool_slot_bonus()
+	return 1 + int(_get_meta_effect_value("base:tool_slots").get("slots", 0)) + relic_tool_slot_bonus()
 
 
 ## Total +tool-slot bonus from held relics (passive effect type "tool_slots").
@@ -1814,7 +1766,7 @@ func relic_tool_slot_bonus() -> int:
 		if typeof(effects) != TYPE_ARRAY:
 			continue
 		for e in effects:
-			if typeof(e) == TYPE_DICTIONARY and str(e.get("type", "")) == "tool_slots":
+			if typeof(e) == TYPE_DICTIONARY and str(e.get("type", "")) == "tool_slots":  # bare-ok: effect type
 				bonus += int(e.get("amount", 0))
 	return bonus
 
@@ -1943,14 +1895,14 @@ func purchase_tool(tool_id: String, cost: int) -> bool:
 	return true
 
 
-## Load equipment JSON by id. Returns empty dict on miss.
+## Read-only equipment definition. Returns {} on miss.
 func get_equipment_data(item_id: String) -> Dictionary:
-	return _load_json_by_id(EQUIPMENT_DATA_DIR, item_id)
+	return MODEL_DB.data("equipment", item_id)
 
 
-## Load equipment set JSON by id. Returns empty dict on miss.
+## Read-only equipment set definition. Returns {} on miss.
 func get_equipment_set_data(set_id: String) -> Dictionary:
-	return _load_json_by_id(EQUIPMENT_SET_DATA_DIR, set_id)
+	return MODEL_DB.data("equipment_set", set_id)
 
 
 ## Ascension >= 3: a dropped GENERIC shell has this chance to roll as a cursed
@@ -1972,21 +1924,15 @@ func roll_shell_drop(tier: String) -> Dictionary:
 		if piece != "":
 			return make_equip_instance(piece, tier)
 	var slot: String = EQUIP_SLOTS[randi() % EQUIP_SLOTS.size()]
-	var base_id: String = "gear_%s_%s" % [slot, tier]
+	var base_id: String = "base:gear_%s_%s" % [slot, tier]
 	var is_cursed: bool = ascension >= 3 and randf() < CURSE_DROP_CHANCE
 	return make_equip_instance(base_id, tier, is_cursed)
 
 
 ## Random set-piece base id whose rarity matches `tier` (set_id != ""). "" if none.
 func _random_set_piece(tier: String) -> String:
-	var dir := DirAccess.open(EQUIPMENT_DATA_DIR)
-	if dir == null:
-		return ""
 	var cands: Array[String] = []
-	for f in dir.get_files():
-		if not f.ends_with(".json"):
-			continue
-		var id := f.get_basename()
+	for id in MODEL_DB.ids("equipment"):
 		var d := get_equipment_data(id)
 		if str(d.get("set_id", "")) != "" and str(d.get("rarity", "")) == tier:
 			cands.append(id)
@@ -2013,15 +1959,9 @@ func roll_demo_set_piece() -> Dictionary:
 	if not should_offer_demo_set_piece():
 		return {}
 	var candidates: Array[String] = []
-	var dir := DirAccess.open(EQUIPMENT_DATA_DIR)
-	if dir == null:
-		return {}
 	for rarity in ["common", "uncommon", "rare"]:
 		var rarity_candidates: Array[String] = []
-		for file_name in dir.get_files():
-			if not file_name.ends_with(".json"):
-				continue
-			var item_id := file_name.get_basename()
+		for item_id in MODEL_DB.ids("equipment"):
 			if item_id in demo_set_piece_ids_claimed:
 				continue
 			var data := get_equipment_data(item_id)
@@ -2052,14 +1992,7 @@ func mark_demo_set_piece_claimed(instance: Dictionary) -> void:
 
 func get_unowned_relic_ids() -> Array[String]:
 	var ids: Array[String] = []
-	var dir = DirAccess.open(RELIC_DATA_DIR)
-	if not dir:
-		return ids
-
-	for file_name in dir.get_files():
-		if not file_name.ends_with(".json"):
-			continue
-		var relic_id = file_name.get_basename()
+	for relic_id in current_relic_pool():
 		if has_relic(relic_id):
 			continue
 		# "unique" relics are hero-starting only and must never roll as loot/
@@ -2098,7 +2031,7 @@ func _apply_meta_upgrades() -> void:
 		current_health = max_health
 
 	# Reroll Tokens → N reward-screen card rerolls this run.
-	reward_rerolls = int(_get_meta_effect_value("reroll_tokens").get("rerolls", 0))
+	reward_rerolls = int(_get_meta_effect_value("base:reroll_tokens").get("rerolls", 0))
 
 	# Clinic Max-HP caps perk (cyber_hp) → +CYBER_HP_PER_LEVEL max HP per level.
 	# Applied here so it is consumed
@@ -2109,7 +2042,7 @@ func _apply_meta_upgrades() -> void:
 		current_health = max_health
 
 	# Command Center → +starting gold
-	var bonus_gold := int(_get_meta_effect_value("command_center").get("gold", 0))
+	var bonus_gold := int(_get_meta_effect_value("base:command_center").get("gold", 0))
 	if bonus_gold > 0:
 		add_gold(bonus_gold)
 
@@ -2200,7 +2133,7 @@ func save_run() -> void:
 		"current_act": current_act,
 		"player_deck": player_deck,
 		"equipped_items": equipped_items,
-		"backpack": backpack,
+		"backpack": backpack,  # bare-ok: save key
 		"relics": relics,
 		"tool_inventory": tool_inventory,
 		"xp": xp,
@@ -2284,7 +2217,7 @@ func load_run() -> bool:
 		if e is Dictionary:
 			e.erase("gems")
 	equipped_items = data.get("equipped_items", {})
-	backpack = data.get("backpack", [])
+	backpack = data.get("backpack", [])  # bare-ok: save key
 	# Legacy gem backpack cells no longer exist — null them out so the bag is clean.
 	for i in range(backpack.size()):
 		var c = backpack[i]

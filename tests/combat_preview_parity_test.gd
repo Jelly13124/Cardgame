@@ -10,7 +10,7 @@ const PLAY_CARD = preload("uid://d4f71g73780ld")  # res://battle_scene/play_card
 const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const CARD_PLAY = preload("uid://bxaw24a7fumhm")  # res://core/combat/card_play.gd
-const CARD_DIR := "res://battle_scene/card_info/player/"
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 
 
 class FakeCard:
@@ -70,17 +70,15 @@ func _run() -> void:
 
 func _target_damage_cards() -> Array:
 	var cards: Array = []
-	for file_name in DirAccess.get_files_at(CARD_DIR):
-		if not file_name.ends_with(".json"):
-			continue
-		var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(CARD_DIR + file_name))
+	for card_id in MODEL_DB.ids("card"):
+		var data: Variant = MODEL_DB.mutable("card", card_id)
 		if typeof(data) != TYPE_DICTIONARY or not PLAY_CARD.data_requires_enemy_target(data):
 			continue
 		for effect in data.get("effects", []):
 			if typeof(effect) == TYPE_DICTIONARY and str(effect.get("type", "")) in COMBAT_EFFECTS.DAMAGE_TYPES:
 				cards.append(data)
 				break
-	cards.sort_custom(func(a, b): return str(a["name"]) < str(b["name"]))
+	cards.sort_custom(func(a, b): return str(a["id"]) < str(b["id"]))
 	return cards
 
 

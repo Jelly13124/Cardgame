@@ -28,6 +28,7 @@ const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equ
 const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://run_system/ui/backpack_cell.gd
 const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
 const EQUIP_TOOLTIP = preload("uid://c6r8gr4gvx8ts")  # res://run_system/ui/equip_tooltip.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 
 const WIN_SIZE := Vector2(860, 1000)
 const GRID_COLUMNS := 5
@@ -640,7 +641,7 @@ func _entry_sort_key(entry: Variant, mode: int) -> Array:
 	var data: Dictionary = RunManager.get_equipment_data(base_id)
 	var slot := str(data.get("slot", ""))
 	var rarity := str(inst.get("rarity", data.get("rarity", "common")))
-	var name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id))).to_lower()
+	var name := Settings.t("EQUIP_%s_NAME" % MODEL_ID.key_entry(base_id), str(data.get("name", base_id))).to_lower()
 	match mode:
 		SORT_RARITY:
 			return [
@@ -671,7 +672,7 @@ func _make_stash_cell(stash_index: int) -> Control:
 	var base_id: String = RunManager.equip_base(inst)
 	var data: Dictionary = RunManager.get_equipment_data(base_id)
 	var slot := str(data.get("slot", "head"))
-	var item_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
+	var item_name := Settings.t("EQUIP_%s_NAME" % MODEL_ID.key_entry(base_id), str(data.get("name", base_id)))
 
 	var cell = BACKPACK_CELL.new()
 	cell.custom_minimum_size = GRID_CELL_SIZE

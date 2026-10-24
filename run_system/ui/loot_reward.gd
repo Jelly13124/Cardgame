@@ -13,11 +13,12 @@ const CARD_REWARD_ICON_PATH := "res://run_system/assets/images/ui_kit_lightline/
 # Shared palette lives in run_system/ui/theme/wasteland_theme.gd as
 # `T.PANEL_BG` etc. — see wasteland_theme.gd for all colors / builders.
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const INVENTORY_FULL_MODAL = preload("uid://deiqqoalu4lpl")  # res://run_system/ui/inventory_full_modal.gd
 # Lazy-loaded at call site to avoid map→battle→loot cyclic preload.
 const MAP_SCENE_PATH := "uid://d3x5b8wvg2q"  # res://run_system/ui/map_scene.tscn
 
-# Card IDs available for drafting - must match filenames in card_info/player/
 ## The card pool from which draft choices are rolled. Populated at _ready
 ## from MetaProgress.get_unlocked_card_pool() — every non-curse, non-basic card
 ## on disk, minus other heroes' exclusive cards (all cards are draftable by
@@ -143,8 +144,8 @@ func _generate_loot() -> void:
 						"tool_id": tool_id,
 						"rarity": str(tdata.get("rarity", "common")),
 						"title":
-						Settings.t("TOOL_%s_TITLE" % tool_id, str(tdata.get("title", tool_id))),
-						"subtitle": Settings.t("TOOL_%s_DESC" % tool_id, ""),
+						Settings.t("TOOL_%s_TITLE" % MODEL_ID.key_entry(tool_id), str(tdata.get("title", tool_id))),
+						"subtitle": Settings.t("TOOL_%s_DESC" % MODEL_ID.key_entry(tool_id), ""),
 						"icon": str(tdata.get("icon", "")),
 						"action": tr("UI_LOOT_ACTION_TAKE")
 					}
@@ -170,7 +171,7 @@ func _generate_loot() -> void:
 			var subtitle := ""
 			if demo_set_due:
 				var set_id := str(edata.get("set_id", ""))
-				var set_name := Settings.t("SET_%s_NAME" % set_id, set_id.replace("_", " ").capitalize())
+				var set_name := Settings.t("SET_%s_NAME" % MODEL_ID.key_entry(set_id), set_id.replace("_", " ").capitalize())
 				subtitle = tr("UI_LOOT_DEMO_SET_SUBTITLE").format({"set": set_name})
 			var spr := str(edata.get("sprite", ""))
 			var icon_path := (
@@ -190,7 +191,7 @@ func _generate_loot() -> void:
 					"instance": einst,
 					"demo_set_piece": demo_set_due,
 					"title":
-					Settings.t("EQUIP_%s_NAME" % equip_id, str(edata.get("name", equip_id))),
+					Settings.t("EQUIP_%s_NAME" % MODEL_ID.key_entry(equip_id), str(edata.get("name", equip_id))),
 					"subtitle": subtitle,
 					"icon": icon_path,
 					"action": tr("UI_LOOT_ACTION_TAKE")
@@ -524,8 +525,8 @@ func _categorize_cards() -> void:
 		pool.clear()
 
 	for card_id in draft_pool:
-		var info = _card_factory._load_card_info(card_id)
-		if info:
+		var info := MODEL_DB.data("card", card_id)
+		if not info.is_empty():
 			var rarity = info.get("rarity", "common").to_lower()
 			if rarity in _rarity_pools:
 				_rarity_pools[rarity].append(card_id)

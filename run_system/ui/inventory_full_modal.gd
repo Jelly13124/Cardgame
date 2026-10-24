@@ -5,6 +5,7 @@ class_name InventoryFullModal
 
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 
 signal resolved(took_item: bool)
 
@@ -88,7 +89,7 @@ func _build() -> void:
 	incoming_box.add_child(inc_label_l)
 	var inc_data = RunManager.get_equipment_data(_incoming_item_id)
 	var inc_name := Settings.t(
-		"EQUIP_%s_NAME" % _incoming_item_id, str(inc_data.get("name", _incoming_item_id))
+		"EQUIP_%s_NAME" % MODEL_ID.key_entry(_incoming_item_id), str(inc_data.get("name", _incoming_item_id))
 	)
 	var inc_icon = EQUIPMENT_ICON.new()
 	inc_icon.set_equipment(
@@ -103,7 +104,7 @@ func _build() -> void:
 	var set_tag := ""
 	var inc_set_id := str(inc_data.get("set_id", ""))
 	if inc_set_id != "":
-		set_tag = "  [%s]" % Settings.t("SET_%s_NAME" % inc_set_id, inc_set_id)
+		set_tag = "  [%s]" % Settings.t("SET_%s_NAME" % MODEL_ID.key_entry(inc_set_id), inc_set_id)
 	inc_label.text = "%s%s" % [inc_name, set_tag]
 	incoming_box.add_child(inc_label)
 
@@ -139,7 +140,7 @@ func _rebuild_bag_grid() -> void:
 		var bag_id: String = RunManager.equip_base(cell.get("item", cell.get("id", "")))
 		var data = RunManager.get_equipment_data(bag_id)
 		var btn := Button.new()
-		btn.text = Settings.t("EQUIP_%s_NAME" % bag_id, str(data.get("name", bag_id)))
+		btn.text = Settings.t("EQUIP_%s_NAME" % MODEL_ID.key_entry(bag_id), str(data.get("name", bag_id)))
 		btn.toggle_mode = true
 		if cell_idx == _selected_bag_index:
 			btn.set_pressed_no_signal(true)

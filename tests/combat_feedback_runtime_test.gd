@@ -25,8 +25,8 @@ func _run() -> void:
 	# RunManager.start_new_run(). Seed the active profession so visual captures use
 	# Cowboy Bill's production card skin rather than the legacy compatibility face.
 	RunManager.is_run_active = false
-	RunManager.current_hero_id = "cowboy_bill"
-	RunManager.current_hero_data = {"card_ui_skin": "cowboy_bill"}
+	RunManager.current_hero_id = "base:cowboy_bill"
+	RunManager.current_hero_data = {"card_ui_skin": "base:cowboy_bill"}
 
 	var battle := BATTLE_SCENE.instantiate()
 	add_child(battle)
@@ -110,7 +110,7 @@ func _run() -> void:
 	_expect(not is_instance_valid(enemy), "kill feedback completes before enemy frees")
 	_expect(clean_death_count[0] == 1, "lethal hit settles death once")
 
-	var parallel_enemy = ENEMY_ENTITY.create("trash_robot")
+	var parallel_enemy = ENEMY_ENTITY.create("base:trash_robot")
 	battle.enemy_container.add_child(parallel_enemy)
 	var parallel_death_count := [0]
 	parallel_enemy.died.connect(func() -> void: parallel_death_count[0] += 1)
@@ -137,8 +137,8 @@ func _run() -> void:
 
 	# A boss death ends the encounter and may free its summons on the next frame.
 	# AoE must stop at the boss instead of awaiting a soon-to-be-freed add.
-	var boss = ENEMY_ENTITY.create("junkyard_tyrant")
-	var add = ENEMY_ENTITY.create("scrap_rat")
+	var boss = ENEMY_ENTITY.create("base:junkyard_tyrant")
+	var add = ENEMY_ENTITY.create("base:scrap_rat")
 	battle.enemy_container.add_child(boss)
 	battle.enemy_container.add_child(add)
 	var add_hp_before: int = add.health
@@ -151,7 +151,7 @@ func _run() -> void:
 	if is_instance_valid(add):
 		add.queue_free()
 
-	var status_enemy = ENEMY_ENTITY.create("scrap_rat")
+	var status_enemy = ENEMY_ENTITY.create("base:scrap_rat")
 	battle.enemy_container.add_child(status_enemy)
 	status_enemy.health = 3
 	var status_death_count := [0]

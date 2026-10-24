@@ -30,6 +30,7 @@ const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://run_system/ui/back
 const BUILDING_UPGRADE_POPOVER = preload(
 	"uid://c12ycj00td76a"  # res://run_system/ui/buildings/building_upgrade_popover.gd
 )
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 
 const FORGE_BADGE_PATH := "res://run_system/assets/images/home/base_hud/badge_forge.png"
 const FORGE_WORKBENCH_PATH := (
@@ -50,11 +51,11 @@ const CRAFT_COST := {"common": 40, "uncommon": 80, "rare": 140}
 const CURSE_COST := 100
 ## Slot → a representative base equipment item_id used when crafting that slot.
 const CRAFT_BASE_BY_SLOT := {
-	"head": "gear_head_common",
-	"chest": "gear_chest_common",
-	"weapon": "gear_weapon_common",
-	"hands": "gear_hands_common",
-	"accessory": "gear_accessory_common",
+	"head": "base:gear_head_common",
+	"chest": "base:gear_chest_common",
+	"weapon": "base:gear_weapon_common",
+	"hands": "base:gear_hands_common",
+	"accessory": "base:gear_accessory_common",
 }
 const CRAFT_SLOTS := ["head", "chest", "weapon", "hands", "accessory"]
 const CRAFT_RARITIES := ["common", "uncommon", "rare"]
@@ -1044,7 +1045,7 @@ func _build_drop_slot(dismantle_on_drop: bool) -> Control:
 			)
 			slot_icon.set_equipment(
 				str(d.get("slot", "head")),
-				Settings.t("EQUIP_%s_NAME" % b, str(d.get("name", b))),
+				Settings.t("EQUIP_%s_NAME" % MODEL_ID.key_entry(b), str(d.get("name", b))),
 				str(d.get("sprite", "")),
 				str(sel.get("rarity", "common"))
 			)
@@ -1152,7 +1153,7 @@ func _selected_name_label(sel: Dictionary) -> Label:
 	var base_id := str(sel.get("base", ""))
 	var rarity := str(sel.get("rarity", "common"))
 	var data: Dictionary = RunManager.get_equipment_data(base_id)
-	var item_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
+	var item_name := Settings.t("EQUIP_%s_NAME" % MODEL_ID.key_entry(base_id), str(data.get("name", base_id)))
 	var l := Label.new()
 	l.text = "%s [%s]" % [item_name, tr("UI_FORGE_RARITY_%s" % rarity.to_upper())]
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

@@ -31,7 +31,7 @@ func _run() -> void:
 	battle.player.strength = 3
 	battle.player.add_status("weak", 1)
 	battle.player.add_status("loaded", 2)
-	var card = battle.deck_manager.add_card_to_hand("strike")
+	var card = battle.deck_manager.add_card_to_hand("base:strike")
 	await get_tree().process_frame
 	_expect(card != null, "a Shoot card joins the hand")
 	if card:

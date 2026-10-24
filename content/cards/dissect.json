@@ -1,0 +1,19 @@
+{
+  "id": "dissect",
+  "title": "Circuit Diagnosis",
+  "rarity": "uncommon",
+  "type": "skill",
+  "cost": 1,
+  "polarity": "neutral",
+  "description": "Apply [b]8 + 2×INT[/b] Short Circuit.",
+  "front_image": "player/dissect.png",
+  "side": "player",
+  "effects": [
+    { "type": "apply_short_circuit_scaled", "amount": 8, "attr": "intelligence", "attr_mult": 2 }
+  ],
+  "upgrade": {
+    "effects": [
+      { "type": "apply_short_circuit_scaled", "amount": 10, "attr": "intelligence", "attr_mult": 3 }
+    ]
+  }
+}

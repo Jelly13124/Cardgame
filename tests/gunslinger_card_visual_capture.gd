@@ -3,17 +3,17 @@ extends Control
 const CARD_FACTORY = preload("uid://diap3gdfbqvjv")  # res://battle_scene/my_card_factory.tscn
 const OUTPUT_PATH = "res://tmp/gunslinger-card-ui-runtime.png"
 const CARD_IDS: Array[String] = [
-	"strike",
-	"weak_strike",
-	"reload",
-	"load_up",
-	"chain_link",
-	"charged_shot",
-	"cascade",
-	"lucky_streak",
-	"hot_streak",
-	"all_in",
-	"covering_reload",
+	"base:strike",
+	"base:weak_strike",
+	"base:reload",
+	"base:load_up",
+	"base:chain_link",
+	"base:charged_shot",
+	"base:cascade",
+	"base:lucky_streak",
+	"base:hot_streak",
+	"base:all_in",
+	"base:covering_reload",
 ]
 
 
@@ -22,8 +22,8 @@ func _ready() -> void:
 
 
 func _capture() -> void:
-	RunManager.current_hero_id = "cowboy_bill"
-	RunManager.current_hero_data = {"card_ui_skin": "cowboy_bill"}
+	RunManager.current_hero_id = "base:cowboy_bill"
+	RunManager.current_hero_data = {"card_ui_skin": "base:cowboy_bill"}
 
 	var background := TextureRect.new()
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)

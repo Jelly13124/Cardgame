@@ -1,0 +1,17 @@
+{
+  "id": "hemorrhage",
+  "title": "Critical Discharge",
+  "rarity": "rare",
+  "type": "ability",
+  "cost": 2,
+  "polarity": "neutral",
+  "description": "This combat, your Overloads can Crit.",
+  "front_image": "player/hemorrhage.png",
+  "side": "player",
+  "effects": [
+    { "type": "apply_status_self", "status": "overload_protocol", "stacks": 1 }
+  ],
+  "upgrade": {
+    "cost": 1
+  }
+}

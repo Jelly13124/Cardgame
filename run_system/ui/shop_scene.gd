@@ -6,6 +6,8 @@
 extends Control
 
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
 const CARD_FACTORY_SCENE = preload("uid://diap3gdfbqvjv")  # res://battle_scene/my_card_factory.tscn
 const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://run_system/ui/run_top_bar.gd
@@ -173,18 +175,10 @@ func _list_cards_by_rarity() -> Dictionary:
 		if h != hero_id:
 			for cid in MetaProgress.HERO_EXCLUSIVE_CARDS[h]:
 				blocked[str(cid)] = true
-	var dir = DirAccess.open("res://battle_scene/card_info/player/")
-	if dir == null:
-		return result
-	for file_name in dir.get_files():
-		if not file_name.ends_with(".json"):
-			continue
-		var card_id := file_name.get_basename()
-		if card_id.ends_with("_plus"):
-			continue
+	for card_id in RunManager.current_card_pool():
 		if blocked.has(card_id):
 			continue
-		var data := _load_json("res://battle_scene/card_info/player/" + file_name)
+		var data := MODEL_DB.data("card", card_id)
 		var rarity := str(data.get("rarity", "common"))
 		if rarity in result:
 			result[rarity].append(card_id)
@@ -192,14 +186,8 @@ func _list_cards_by_rarity() -> Dictionary:
 
 
 func _list_unowned_relics() -> Array:
-	var dir = DirAccess.open("res://run_system/data/relics/")
-	if dir == null:
-		return []
 	var candidates: Array = []
-	for file_name in dir.get_files():
-		if not file_name.ends_with(".json"):
-			continue
-		var relic_id := file_name.get_basename()
+	for relic_id in RunManager.current_relic_pool():
 		if relic_id in RunManager.relics:
 			continue
 		# "unique" relics are hero-starting only — never stock them in the shop.
@@ -207,18 +195,6 @@ func _list_unowned_relics() -> Array:
 			continue
 		candidates.append(relic_id)
 	return candidates
-
-
-func _load_json(path: String) -> Dictionary:
-	var file = FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {}
-	var text = file.get_as_text()
-	file.close()
-	var parsed = JSON.parse_string(text)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return {}
-	return parsed
 
 
 # --- UI build --------------------------------------------------------------
@@ -549,12 +525,12 @@ func _build_relic_offer(entry: Dictionary) -> Control:
 	icon_button.custom_minimum_size = Vector2(104, 104)
 	icon_button.focus_mode = Control.FOCUS_NONE
 	icon_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	icon_button.tooltip_text = Settings.t("RELIC_%s_TITLE" % relic_id, str(data.get("title", relic_id)))
+	icon_button.tooltip_text = Settings.t("RELIC_%s_TITLE" % MODEL_ID.key_entry(relic_id), str(data.get("title", relic_id)))
 	var icon_path := str(data.get("icon", ""))
 	if icon_path != "" and ResourceLoader.exists(icon_path):
 		icon_button.icon = load(icon_path)
 		icon_button.expand_icon = true
-	for state in ["normal", "hover", "pressed", "focus"]:
+	for state in ["normal", "hover", "pressed", "focus"]:  # bare-ok: theme state
 		icon_button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
 	wrapper.add_child(icon_button)
 
@@ -582,7 +558,7 @@ func _build_tool_offer(entry: Dictionary) -> Control:
 	buy.custom_minimum_size = Vector2(82, 90)
 	buy.focus_mode = Control.FOCUS_NONE
 	buy.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	buy.tooltip_text = Settings.t("TOOL_%s_TITLE" % tool_id, str(data.get("title", tool_id)))
+	buy.tooltip_text = Settings.t("TOOL_%s_TITLE" % MODEL_ID.key_entry(tool_id), str(data.get("title", tool_id)))
 	var icon_path := str(data.get("icon", ""))
 	if icon_path != "" and ResourceLoader.exists(icon_path):
 		buy.icon = load(icon_path)
@@ -817,7 +793,7 @@ func _build_tool_stall(entry: Dictionary) -> Control:
 
 	var tool_id: String = str(entry["tool_id"])
 	var data := RunManager.get_tool_data(tool_id)
-	var tool_name := Settings.t("TOOL_%s_TITLE" % tool_id, str(data.get("title", tool_id)))
+	var tool_name := Settings.t("TOOL_%s_TITLE" % MODEL_ID.key_entry(tool_id), str(data.get("title", tool_id)))
 
 	var icon_holder := HBoxContainer.new()
 	icon_holder.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -856,7 +832,7 @@ func _build_tool_stall(entry: Dictionary) -> Control:
 	wrapper.add_child(name_lbl)
 
 	var desc_lbl := Label.new()
-	desc_lbl.text = Settings.t("TOOL_%s_DESC" % tool_id, "")
+	desc_lbl.text = Settings.t("TOOL_%s_DESC" % MODEL_ID.key_entry(tool_id), "")
 	desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc_lbl.custom_minimum_size = Vector2(150, 0)
@@ -917,7 +893,7 @@ func _build_relic_stall(entry: Dictionary) -> Control:
 		icon_holder.add_child(tex)
 
 	var title := Label.new()
-	title.text = Settings.t("RELIC_%s_TITLE" % relic_id, str(data.get("title", relic_id)))
+	title.text = Settings.t("RELIC_%s_TITLE" % MODEL_ID.key_entry(relic_id), str(data.get("title", relic_id)))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	title.custom_minimum_size = Vector2(150, 0)
@@ -926,7 +902,7 @@ func _build_relic_stall(entry: Dictionary) -> Control:
 	wrapper.add_child(title)
 
 	var desc := Label.new()
-	desc.text = Settings.t("RELIC_%s_DESC" % relic_id, str(data.get("description", "")))
+	desc.text = Settings.t("RELIC_%s_DESC" % MODEL_ID.key_entry(relic_id), str(data.get("description", "")))
 	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.clip_text = true

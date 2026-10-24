@@ -11,6 +11,7 @@
 extends RefCounted
 
 const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 
 ## Rarity → BBCode hex for the header (mirrors equipment_icon.gd RARITY_COLORS).
 const RARITY_HEX := {
@@ -34,7 +35,7 @@ static func text(data: Dictionary, slot: String, instance: Dictionary = {}) -> S
 	# Set pieces keep their bespoke name (that IS the set identity); everything
 	# else leads with rarity · slot only.
 	if set_id != "":
-		var name_str := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
+		var name_str := Settings.t("EQUIP_%s_NAME" % MODEL_ID.key_entry(item_id), str(data.get("name", item_id)))
 		lines.append("[b]%s[/b]" % name_str)
 	var rarity_str := Settings.t("UI_FORGE_RARITY_%s" % rarity.to_upper(), rarity)
 	var slot_str := Settings.t("UI_EQUIP_SLOT_%s" % slot.to_upper(), slot)
@@ -60,10 +61,10 @@ static func text(data: Dictionary, slot: String, instance: Dictionary = {}) -> S
 				lines.append("[color=#5fd06a]%s[/color]" % label)
 
 	if set_id != "":
-		var set_name := Settings.t("SET_%s_NAME" % set_id, set_id.replace("_", " "))
+		var set_name := Settings.t("SET_%s_NAME" % MODEL_ID.key_entry(set_id), set_id.replace("_", " "))
 		var prefix := Settings.t("UI_EQUIP_SET_PREFIX", "Set: {name}")
 		lines.append("[i]%s[/i]" % prefix.format({"name": set_name}))
-	var desc := Settings.t("EQUIP_%s_DESC" % item_id, str(data.get("description", "")))
+	var desc := Settings.t("EQUIP_%s_DESC" % MODEL_ID.key_entry(item_id), str(data.get("description", "")))
 	if desc != "":
 		lines.append("")
 		lines.append(desc)

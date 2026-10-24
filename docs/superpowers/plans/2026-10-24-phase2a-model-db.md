@@ -21,7 +21,7 @@
 
 ## Review Focus
 
-- A bare literal left in code (`relics.has("lucky_coin")`) compares unequal to a full ID and silently disables a rule — content_integrity_test's bare-literal scan must catch it.
+- A bare literal left in code (`relics.has("crit_clip")`) compares unequal to a full ID and silently disables a rule — content_integrity_test's bare-literal scan must catch it.
 - An old v1 save with a deck, backpack instances and relics loads, keeps every item, and the backup file is written once.
 - Translation keys built from IDs (`"RELIC_%s_NAME" % id.to_upper()`) still find base text — any `:` in a key is a bug.
 - Card nodes from the factory carry the full ID in both `card_name` and `card_info.id`; upgrade/exhaust/viewer paths that read `card_info.name` are gone.
@@ -93,7 +93,7 @@
 **Interfaces:**
 - Produces: `SAVE_MIGRATION.migrate_run(d: Dictionary) -> Dictionary`, `SAVE_MIGRATION.migrate_meta(d: Dictionary) -> Dictionary`, `SAVE_MIGRATION.RUN_VERSION := 2`, `SAVE_MIGRATION.META_CONTENT_VERSION := 2`, `SAVE_MIGRATION.backup_once(path: String) -> bool`.
 
-- [ ] **Step 1: Write failing tests:** v1 run fixture (deck `[{uid:1,card_id:"reload"}]`, relics `["lucky_coin"]`, backpack instance `{base:"warden_axe", set_id:"warden", affixes:[...]}`, tools, encounter, seen events, hero id) migrates every field listed in the spec to `base:`; an unknown `"ghost_card"` stays `"ghost_card"`; affixes unchanged; result `v == 2`. Meta fixture: upgrades keys, stash, loadout, bounties, cards_seen keys, run_history migrated. `migrate_run` on a v2 dict is identity. `backup_once` writes `<path>.v1.bak` and a second call does not overwrite it (user:// in the isolated test dir). End-to-end: write the v1 fixture to the run save path, call `RunManager.load_run()`, check `RunManager.relics == ["base:lucky_coin"]` and backup exists.
+- [ ] **Step 1: Write failing tests:** v1 run fixture (deck `[{uid:1,card_id:"reload"}]`, relics `["bounty_tags"]`, backpack instance `{base:"warden_axe", set_id:"warden", affixes:[...]}`, tools, encounter, seen events, hero id) migrates every field listed in the spec to `base:`; an unknown `"ghost_card"` stays `"ghost_card"`; affixes unchanged; result `v == 2`. Meta fixture: upgrades keys, stash, loadout, bounties, cards_seen keys, run_history migrated. `migrate_run` on a v2 dict is identity. `backup_once` writes `<path>.v1.bak` and a second call does not overwrite it (user:// in the isolated test dir). End-to-end: write the v1 fixture to the run save path, call `RunManager.load_run()`, check `RunManager.relics` starts with `"base:bounty_tags"` and backup exists.
 - [ ] **Step 2: Run** — Expected: FAIL.
 - [ ] **Step 3: Implement** migration (each field via `MODEL_DB.resolve(category, ref)`, keep verbatim when `""`); hook into load before parsing; `current_hero_data` re-read from ModelDb.
 - [ ] **Step 4: Run** test and full suite — Expected: PASS.

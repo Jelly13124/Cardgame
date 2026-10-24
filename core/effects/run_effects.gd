@@ -49,4 +49,4 @@ static func _gain_attribute(_ctx, effect: Dictionary) -> void:
 
 ## Permanent curse onto the run deck (clearable at the shop's card removal).
 static func _add_curse(_ctx, effect: Dictionary) -> void:
-	RunManager.add_card_to_deck(str(effect.get("curse", "radiation_dust")))
+	RunManager.add_card_to_deck(str(effect.get("curse", "base:radiation_dust")))

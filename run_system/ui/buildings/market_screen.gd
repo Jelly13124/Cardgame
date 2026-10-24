@@ -27,7 +27,8 @@
 ## Reads only the shared MetaProgress / RunManager API; edits no shared file.
 extends "res://run_system/ui/buildings/building_screen_base.gd"
 
-const EQUIPMENT_DIR := "res://run_system/data/equipment/"
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const EQUIPMENT_ICON := preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
 const EQUIP_TOOLTIP := preload("uid://c6r8gr4gvx8ts")  # res://run_system/ui/equip_tooltip.gd
 const MARKET_UI_DIR := "res://run_system/assets/images/ui/market/"
@@ -223,13 +224,13 @@ func _build_tool_section() -> Control:
 ## on full backpack).
 func _build_tool_tile(tool_id: String) -> Control:
 	var data := RunManager.get_tool_data(tool_id)
-	var tool_name := Settings.t("TOOL_%s_TITLE" % tool_id, str(data.get("title", tool_id)))
+	var tool_name := Settings.t("TOOL_%s_TITLE" % MODEL_ID.key_entry(tool_id), str(data.get("title", tool_id)))
 
 	var card := PanelContainer.new()
-	card.name = "MarketToolTile_%s" % tool_id
+	card.name = "MarketToolTile_%s" % MODEL_ID.key_entry(tool_id)
 	card.custom_minimum_size = Vector2(0, TOOL_CARD_HEIGHT)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var tool_desc := Settings.t("TOOL_%s_DESC" % tool_id, "")
+	var tool_desc := Settings.t("TOOL_%s_DESC" % MODEL_ID.key_entry(tool_id), "")
 	var tool_tip := "[b]%s[/b]" % tool_name
 	if not tool_desc.is_empty():
 		tool_tip += "\n%s" % tool_desc
@@ -351,10 +352,10 @@ func _build_equip_tile(entry: Dictionary) -> Control:
 	var price: int = int(entry.get("price", 0))
 	var data := RunManager.get_equipment_data(base_id)
 	var slot := str(data.get("slot", "head"))
-	var equip_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
+	var equip_name := Settings.t("EQUIP_%s_NAME" % MODEL_ID.key_entry(base_id), str(data.get("name", base_id)))
 
 	var card := PanelContainer.new()
-	card.name = "MarketEquipmentTile_%s" % base_id
+	card.name = "MarketEquipmentTile_%s" % MODEL_ID.key_entry(base_id)
 	card.custom_minimum_size = Vector2(0, EQUIP_CARD_HEIGHT)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	Tooltip.bind_hover(card, EQUIP_TOOLTIP.text(data, slot, {"rarity": rarity}))
@@ -891,13 +892,8 @@ func _roll_rarity() -> String:
 ## shop rarities go on the shelf (set/cursed exotics drop elsewhere).
 func _list_equipment_by_slot() -> Dictionary:
 	var result := {}
-	var dir = DirAccess.open(EQUIPMENT_DIR)
-	if dir == null:
-		return result
-	for file_name in dir.get_files():
-		if not file_name.ends_with(".json"):
-			continue
-		var data := _load_json(EQUIPMENT_DIR + file_name)
+	for item_id in MODEL_DB.ids("equipment"):
+		var data := MODEL_DB.data("equipment", item_id)
 		var slot := str(data.get("slot", ""))
 		var rarity := str(data.get("rarity", "common"))
 		# Set pieces are exotic drops. Their base JSON keeps a compatibility rarity,
@@ -908,17 +904,5 @@ func _list_equipment_by_slot() -> Dictionary:
 			continue
 		if not result.has(slot):
 			result[slot] = []
-		(result[slot] as Array).append({"id": file_name.get_basename(), "rarity": rarity})
+		(result[slot] as Array).append({"id": item_id, "rarity": rarity})
 	return result
-
-
-func _load_json(path: String) -> Dictionary:
-	var file = FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {}
-	var text = file.get_as_text()
-	file.close()
-	var parsed = JSON.parse_string(text)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return {}
-	return parsed

@@ -4,6 +4,7 @@ class_name EquipmentSetSystem
 const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://battle_scene/combat_fx.gd
 const EFFECT_CONTEXT = preload("uid://bx2g3askncfr6")  # res://core/effects/effect_context.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 
 var _battle_scene: Node
 var _active_effects: Array[Dictionary] = []
@@ -128,7 +129,7 @@ func _notify(set_id: String, color: Color) -> void:
 	var player: Node = _battle_scene.get("player")
 	if player == null or not is_instance_valid(player) or not player is Node2D:
 		return
-	var name_key := "SET_%s_NAME" % set_id.to_upper()
+	var name_key := "SET_%s_NAME" % MODEL_ID.key_entry(set_id).to_upper()
 	var set_name := tr(name_key)
 	if set_name == name_key:
 		set_name = set_id.replace("_", " ").capitalize()

@@ -14,6 +14,7 @@ extends Control
 
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://run_system/ui/run_top_bar.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 
 const TOP_BAR_CLEARANCE := RUN_TOP_BAR.BAR_HEIGHT
 
@@ -58,7 +59,7 @@ func _fit_to_viewport() -> void:
 
 
 func _build() -> void:
-	_eid = str(event_data.get("id", "")).to_upper()
+	_eid = MODEL_ID.key_entry(str(event_data.get("id", ""))).to_upper()
 	_add_event_background()
 
 	# Accepted concept: the illustration owns the left two-thirds of the page;
@@ -119,7 +120,7 @@ func _build() -> void:
 ## fully hidden (not just dimmed). Per-event art at events/<id>.png, cover-fit; a dark
 ## scrim keeps the panel legible; falls back to an opaque tint if the art is missing.
 func _add_event_background() -> void:
-	var eid_lower := str(event_data.get("id", "")).to_lower()
+	var eid_lower := MODEL_ID.key_entry(str(event_data.get("id", ""))).to_lower()
 	var path := "res://run_system/assets/images/events/%s.png" % eid_lower
 	if eid_lower != "" and ResourceLoader.exists(path):
 		var bg := TextureRect.new()

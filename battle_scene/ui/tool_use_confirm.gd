@@ -4,6 +4,7 @@ signal confirmed(index: int, tool_id: String)
 signal cancelled
 
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 
 var _index := -1
 var _tool_id := ""
@@ -87,7 +88,7 @@ func _ready() -> void:
 	var title := Label.new()
 	title.name = "ToolName"
 	title.text = Settings.t(
-		"TOOL_%s_TITLE" % _tool_id, str(_tool_data.get("title", _tool_id))
+		"TOOL_%s_TITLE" % MODEL_ID.key_entry(_tool_id), str(_tool_data.get("title", _tool_id))
 	)
 	title.add_theme_font_size_override("font_size", 20)
 	title.add_theme_color_override("font_color", T.TEXT_MAIN)
@@ -95,7 +96,7 @@ func _ready() -> void:
 
 	var description := Label.new()
 	description.name = "ToolDescription"
-	description.text = Settings.t("TOOL_%s_DESC" % _tool_id, "")
+	description.text = Settings.t("TOOL_%s_DESC" % MODEL_ID.key_entry(_tool_id), "")
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	description.add_theme_color_override("font_color", T.TEXT_SECONDARY)
 	copy.add_child(description)

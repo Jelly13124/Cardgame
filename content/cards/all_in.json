@@ -1,0 +1,17 @@
+{
+  "id": "all_in",
+  "title": "All In",
+  "rarity": "rare",
+  "type": "ability",
+  "cost": 1,
+  "polarity": "neutral",
+  "description": "This combat, Crits deal double damage. Non-Crit attacks deal normal damage and grant 2 Loaded.",
+  "front_image": "player/all_in.png",
+  "side": "player",
+  "effects": [
+    { "type": "apply_status_self", "status": "all_in", "stacks": 1 }
+  ],
+  "upgrade": {
+    "cost": 0
+  }
+}

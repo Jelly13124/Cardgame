@@ -3,14 +3,14 @@ extends Control
 const CARD_FACTORY = preload("uid://diap3gdfbqvjv")  # res://battle_scene/my_card_factory.tscn
 const OUTPUT_PATH = "res://tmp/circuit-breaker-card-ui-runtime.png"
 const CARD_IDS: Array[String] = [
-	"recoil_shot",
-	"arc_flash",
-	"acid_splash",
-	"dissect",
-	"bone_breaker",
-	"coagulate",
-	"limit_break",
-	"hemorrhage",
+	"base:recoil_shot",
+	"base:arc_flash",
+	"base:acid_splash",
+	"base:dissect",
+	"base:bone_breaker",
+	"base:coagulate",
+	"base:limit_break",
+	"base:hemorrhage",
 ]
 
 
@@ -19,8 +19,8 @@ func _ready() -> void:
 
 
 func _capture() -> void:
-	RunManager.current_hero_id = "cowboy_bill"
-	RunManager.current_hero_data = {"card_ui_skin": "cowboy_bill"}
+	RunManager.current_hero_id = "base:cowboy_bill"
+	RunManager.current_hero_data = {"card_ui_skin": "base:cowboy_bill"}
 
 	var background := TextureRect.new()
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)

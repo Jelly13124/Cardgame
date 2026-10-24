@@ -1,5 +1,6 @@
 extends Node
 
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
 const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://run_system/ui/backpack_cell.gd
 const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://run_system/ui/window/character_window.gd
@@ -12,35 +13,35 @@ const GENERIC_EQUIPMENT_SLOTS := ["head", "chest", "weapon", "hands", "accessory
 const GENERIC_EQUIPMENT_RARITIES := ["common", "uncommon", "rare"]
 
 const EXPECTED_EQUIPMENT_NAMES := {
-	"gear_head_common": "Scavenger Cowboy Hat",
-	"gear_chest_common": "Scavenger Leather Vest",
-	"gear_weapon_common": "Scavenger Revolver",
-	"gear_hands_common": "Scavenger Gauntlet",
-	"gear_accessory_common": "Scavenger Fang Necklace",
-	"gear_head_uncommon": "Ranger Scout Hat",
-	"gear_chest_uncommon": "Ranger Tactical Vest",
-	"gear_weapon_uncommon": "Ranger Revolver",
-	"gear_hands_uncommon": "Ranger Gauntlet",
-	"gear_accessory_uncommon": "Ranger Dog Tags",
-	"gear_head_rare": "Officer's Battle Cap",
-	"gear_chest_rare": "Officer's Heavy Armor",
-	"gear_weapon_rare": "Officer's Charged Revolver",
-	"gear_hands_rare": "Officer's Power Gauntlet",
-	"gear_accessory_rare": "Officer's Core Medal",
+	"base:gear_head_common": "Scavenger Cowboy Hat",
+	"base:gear_chest_common": "Scavenger Leather Vest",
+	"base:gear_weapon_common": "Scavenger Revolver",
+	"base:gear_hands_common": "Scavenger Gauntlet",
+	"base:gear_accessory_common": "Scavenger Fang Necklace",
+	"base:gear_head_uncommon": "Ranger Scout Hat",
+	"base:gear_chest_uncommon": "Ranger Tactical Vest",
+	"base:gear_weapon_uncommon": "Ranger Revolver",
+	"base:gear_hands_uncommon": "Ranger Gauntlet",
+	"base:gear_accessory_uncommon": "Ranger Dog Tags",
+	"base:gear_head_rare": "Officer's Battle Cap",
+	"base:gear_chest_rare": "Officer's Heavy Armor",
+	"base:gear_weapon_rare": "Officer's Charged Revolver",
+	"base:gear_hands_rare": "Officer's Power Gauntlet",
+	"base:gear_accessory_rare": "Officer's Core Medal",
 }
 
 const EXPECTED_TOOL_IDS := [
-	"adrenaline_shot",
-	"blood_kit",
-	"combat_stim",
-	"energy_cell",
-	"field_kit",
-	"frag_grenade",
-	"med_kit",
-	"munitions_crate",
-	"shock_charge",
-	"smoke_bomb",
-	"toxin_vial",
+	"base:adrenaline_shot",
+	"base:blood_kit",
+	"base:combat_stim",
+	"base:energy_cell",
+	"base:field_kit",
+	"base:frag_grenade",
+	"base:med_kit",
+	"base:munitions_crate",
+	"base:shock_charge",
+	"base:smoke_bomb",
+	"base:toxin_vial",
 ]
 
 var failures: PackedStringArray = []
@@ -95,8 +96,7 @@ func _test_equipment_resolution_and_names() -> void:
 		)
 
 	for item_id in EXPECTED_EQUIPMENT_NAMES:
-		var path := "res://run_system/data/equipment/%s.json" % item_id
-		var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
+		var parsed = MODEL_DB.data("equipment", item_id)
 		_expect(typeof(parsed) == TYPE_DICTIONARY, "%s parses as equipment JSON" % item_id)
 		if typeof(parsed) == TYPE_DICTIONARY:
 			_expect(
@@ -105,7 +105,7 @@ func _test_equipment_resolution_and_names() -> void:
 			)
 
 	_reset_run_inventory()
-	RunManager.backpack[0] = {"kind": "equip", "id": "gear_hands_common"}
+	RunManager.backpack[0] = {"kind": "equip", "id": "base:gear_hands_common"}
 	var window := CHARACTER_WINDOW.new()
 	window.mode = "map"
 	add_child(window)
@@ -203,7 +203,7 @@ func _test_generic_equipment_asset_contract() -> void:
 	var market := MARKET_SCREEN.new()
 	var market_card := market.call(
 		"_build_equip_tile",
-		{"base": "gear_weapon_rare", "rarity": "rare", "price": 280}
+		{"base": "base:gear_weapon_rare", "rarity": "rare", "price": 280}
 	) as Control
 	var market_rect := _find_texture_rect(
 		market_card, GENERIC_EQUIPMENT_DIR + "weapon_rare.png"
@@ -246,7 +246,7 @@ func _test_tool_icon_assets() -> void:
 
 func _test_equipment_cell_sizing() -> void:
 	_reset_run_inventory()
-	RunManager.backpack[0] = {"kind": "equip", "id": "gear_hands_common"}
+	RunManager.backpack[0] = {"kind": "equip", "id": "base:gear_hands_common"}
 	var window := CHARACTER_WINDOW.new()
 	window.mode = "map"
 	add_child(window)
@@ -287,27 +287,27 @@ func _test_equipment_cell_sizing() -> void:
 
 func _test_tool_destination_and_slot_dragging() -> void:
 	_reset_run_inventory()
-	RunManager.tool_inventory.assign(["med_kit"])
+	RunManager.tool_inventory.assign(["base:med_kit"])
 	var exact_method := RunManager.has_method("unequip_tool_to_backpack")
 	_expect(exact_method, "RunManager exposes unequip_tool_to_backpack")
 	if exact_method:
 		var moved := bool(RunManager.call("unequip_tool_to_backpack", 0, 3))
 		_expect(moved, "equipped tool can move to an exact empty backpack cell")
 		_expect(
-			RunManager.backpack[3] == {"kind": "tool", "id": "med_kit"},
+			RunManager.backpack[3] == {"kind": "tool", "id": "base:med_kit"},
 			"exact backpack target receives the equipped tool"
 		)
-		RunManager.tool_inventory.assign(["smoke_bomb"])
+		RunManager.tool_inventory.assign(["base:smoke_bomb"])
 		RunManager.backpack[4] = {"kind": "gold", "amount": 1}
 		var rejected := not bool(RunManager.call("unequip_tool_to_backpack", 0, 4))
 		_expect(rejected, "occupied exact target rejects equipped tool")
 		_expect(
-			RunManager.tool_inventory == ["smoke_bomb"],
+			RunManager.tool_inventory == ["base:smoke_bomb"],
 			"rejected exact drop keeps the tool equipped"
 		)
 
 	_reset_run_inventory()
-	RunManager.backpack[0] = {"kind": "tool", "id": "med_kit"}
+	RunManager.backpack[0] = {"kind": "tool", "id": "base:med_kit"}
 	var empty_window := CHARACTER_WINDOW.new()
 	empty_window.mode = "map"
 	add_child(empty_window)
@@ -316,11 +316,11 @@ func _test_tool_destination_and_slot_dragging() -> void:
 	_expect(empty_slot != null, "empty tool slot is exposed as ToolSlot0")
 	if empty_slot != null:
 		_expect(
-			bool(empty_slot.call("_can_drop_data", Vector2.ZERO, {"src": "backpack", "kind": "tool", "index": 0})),
+			bool(empty_slot.call("_can_drop_data", Vector2.ZERO, {"src": "backpack", "kind": "tool", "index": 0})),  # bare-ok: drag source
 			"empty tool slot accepts a backpack tool"
 		)
 		_expect(
-			not bool(empty_slot.call("_can_drop_data", Vector2.ZERO, {"src": "backpack", "kind": "equip", "index": 0})),
+			not bool(empty_slot.call("_can_drop_data", Vector2.ZERO, {"src": "backpack", "kind": "equip", "index": 0})),  # bare-ok: drag source
 			"empty tool slot rejects equipment"
 		)
 		_expect(
@@ -333,9 +333,9 @@ func _test_tool_destination_and_slot_dragging() -> void:
 	_reset_run_inventory()
 	var full_tools: Array[String] = []
 	for _i in range(RunManager.tool_slots()):
-		full_tools.append("med_kit")
+		full_tools.append("base:med_kit")
 	RunManager.tool_inventory.assign(full_tools)
-	RunManager.backpack[0] = {"kind": "tool", "id": "smoke_bomb"}
+	RunManager.backpack[0] = {"kind": "tool", "id": "base:smoke_bomb"}
 	var filled_window := CHARACTER_WINDOW.new()
 	filled_window.mode = "map"
 	add_child(filled_window)
@@ -348,22 +348,22 @@ func _test_tool_destination_and_slot_dragging() -> void:
 		_expect(payload.get("index") == 0, "filled tool slot drag data preserves slot index")
 		var texture_paths := _texture_paths(filled_slot)
 		_expect(
-			texture_paths.has(str(RunManager.get_tool_data("med_kit").get("icon", ""))),
+			texture_paths.has(str(RunManager.get_tool_data("base:med_kit").get("icon", ""))),
 			"filled tool slot shows the real med-kit icon"
 		)
 		_expect(
 			not texture_paths.any(func(path): return str(path).ends_with("/ghost_tool.png")),
 			"filled tool slot hides the ghost wrench"
 		)
-		var incoming := {"src": "backpack", "kind": "tool", "index": 0, "tool_id": "smoke_bomb"}
+		var incoming := {"src": "backpack", "kind": "tool", "index": 0, "tool_id": "base:smoke_bomb"}  # bare-ok: drag source
 		var accepts_replacement := bool(filled_slot.call("_can_drop_data", Vector2.ZERO, incoming))
 		_expect(accepts_replacement, "filled tool slot accepts a backpack tool for replacement")
 		if accepts_replacement:
 			filled_slot.call("_drop_data", Vector2.ZERO, incoming)
 			await _frames(2)
-			_expect(RunManager.tool_inventory[0] == "smoke_bomb", "dropped tool replaces the target slot")
+			_expect(RunManager.tool_inventory[0] == "base:smoke_bomb", "dropped tool replaces the target slot")
 			_expect(
-				RunManager.backpack[0] == {"kind": "tool", "id": "med_kit"},
+				RunManager.backpack[0] == {"kind": "tool", "id": "base:med_kit"},
 				"replaced tool returns to the incoming tool's backpack cell"
 			)
 	filled_window.queue_free()
@@ -372,17 +372,17 @@ func _test_tool_destination_and_slot_dragging() -> void:
 	_reset_run_inventory()
 	full_tools.clear()
 	for _i in range(RunManager.tool_slots()):
-		full_tools.append("med_kit")
+		full_tools.append("base:med_kit")
 	RunManager.tool_inventory.assign(full_tools)
-	RunManager.backpack[0] = {"kind": "tool", "id": "smoke_bomb"}
+	RunManager.backpack[0] = {"kind": "tool", "id": "base:smoke_bomb"}
 	var click_window := CHARACTER_WINDOW.new()
 	click_window.mode = "map"
 	add_child(click_window)
 	await _frames(3)
 	click_window.call("_equip_tool", 0)
-	_expect(RunManager.tool_inventory[0] == "smoke_bomb", "clicking a tool replaces slot zero when full")
+	_expect(RunManager.tool_inventory[0] == "base:smoke_bomb", "clicking a tool replaces slot zero when full")
 	_expect(
-		RunManager.backpack[0] == {"kind": "tool", "id": "med_kit"},
+		RunManager.backpack[0] == {"kind": "tool", "id": "base:med_kit"},
 		"click replacement swaps the old tool back into the backpack"
 	)
 	click_window.queue_free()
@@ -391,7 +391,7 @@ func _test_tool_destination_and_slot_dragging() -> void:
 
 func _test_default_unequip_refreshes_immediately() -> void:
 	_reset_run_inventory()
-	RunManager.tool_inventory.assign(["energy_cell"])
+	RunManager.tool_inventory.assign(["base:energy_cell"])
 	var observed_states: Array[Dictionary] = []
 	var observe := func(source: String) -> void:
 		observed_states.append(
@@ -401,7 +401,7 @@ func _test_default_unequip_refreshes_immediately() -> void:
 				"backpack_tools": RunManager.backpack_tool_ids(),
 			}
 		)
-	var on_backpack := func() -> void: observe.call("backpack")
+	var on_backpack := func() -> void: observe.call("backpack")  # bare-ok: signal label
 	var on_tools := func() -> void: observe.call("tools")
 	RunManager.backpack_changed.connect(on_backpack, CONNECT_ONE_SHOT)
 	RunManager.tools_changed.connect(on_tools, CONNECT_ONE_SHOT)
@@ -417,7 +417,7 @@ func _test_default_unequip_refreshes_immediately() -> void:
 	for state in observed_states:
 		_expect(state.tools.is_empty(), "%s observer sees no equipped tool" % state.source)
 		_expect(
-			state.backpack_tools == ["energy_cell"],
+			state.backpack_tools == ["base:energy_cell"],
 			"%s observer sees the backpacked tool" % state.source
 		)
 	var tool_row := window.get("_tool_row") as HBoxContainer
@@ -428,7 +428,7 @@ func _test_default_unequip_refreshes_immediately() -> void:
 	if slot != null:
 		_expect(
 			not _texture_paths(slot).has(
-				str(RunManager.get_tool_data("energy_cell").get("icon", ""))
+				str(RunManager.get_tool_data("base:energy_cell").get("icon", ""))
 			),
 			"tool slot clears immediately after unequip"
 		)
@@ -439,11 +439,11 @@ func _test_default_unequip_refreshes_immediately() -> void:
 	_reset_run_inventory()
 	for i in range(RunManager.effective_backpack_size()):
 		RunManager.backpack[i] = {"kind": "gold", "amount": 1}
-	RunManager.tool_inventory.assign(["energy_cell"])
+	RunManager.tool_inventory.assign(["base:energy_cell"])
 	var full_snapshot := RunManager.backpack.duplicate(true)
 	_expect(not RunManager.unequip_tool(0), "full backpack rejects default unequip")
 	_expect(
-		RunManager.tool_inventory == ["energy_cell"],
+		RunManager.tool_inventory == ["base:energy_cell"],
 		"failed unequip keeps the tool equipped"
 	)
 	_expect(RunManager.backpack == full_snapshot, "failed unequip leaves the backpack unchanged")
@@ -451,7 +451,7 @@ func _test_default_unequip_refreshes_immediately() -> void:
 
 func _test_shop_tool_stall() -> void:
 	var shop := SHOP_SCENE.new()
-	var stall = shop.call("_build_tool_stall", {"tool_id": "med_kit", "price": 40})
+	var stall = shop.call("_build_tool_stall", {"tool_id": "base:med_kit", "price": 40})
 	_expect(stall is Control, "tool shop stall builds without a rarity field")
 	if stall is Control:
 		stall.queue_free()

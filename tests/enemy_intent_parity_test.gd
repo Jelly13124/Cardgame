@@ -10,9 +10,9 @@ const FAKE_BATTLE = preload("uid://j25pi73kmisn")  # res://tests/support/fake_ba
 const ENEMY_AI_SCRIPT = preload("uid://4dtggr10j47s")  # res://battle_scene/enemy_ai.gd
 const ENEMY_ENTITY_SCRIPT = preload("uid://qtp7jvjqfbou")  # res://battle_scene/enemy_entity.gd
 const RELIC_EFFECT_SYSTEM = preload("uid://b4d2o08tofxey")  # res://battle_scene/relic_effect_system.gd
-const ENEMY_DIR := "res://battle_scene/card_info/enemy/"
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const ATTACK_TYPES := ["attack", "attack_status", "attack_all", "attack_ramp"]
-const REDUCTION_RELICS := ["bulwark_plating", "signal_jammer"]
+const REDUCTION_RELICS := ["base:bulwark_plating", "base:signal_jammer"]
 
 var failures: PackedStringArray = []
 var battle
@@ -66,16 +66,11 @@ func _run() -> void:
 
 
 func _enemy_ids() -> Array:
-	var ids: Array = []
-	for file_name in DirAccess.get_files_at(ENEMY_DIR):
-		if file_name.ends_with(".json"):
-			ids.append(file_name.get_basename())
-	ids.sort()
-	return ids
+	return Array(MODEL_DB.ids("monster"))
 
 
 func _attack_actions(enemy_id: String) -> Array:
-	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(ENEMY_DIR + enemy_id + ".json"))
+	var data: Variant = MODEL_DB.mutable("monster", enemy_id)
 	var actions: Array = []
 	if typeof(data) != TYPE_DICTIONARY:
 		return actions

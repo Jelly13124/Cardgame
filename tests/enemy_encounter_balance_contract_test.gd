@@ -2,56 +2,56 @@ extends Node
 
 const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://battle_scene/data_validator.gd
 const ENEMY_ENTITY_SCRIPT = preload("uid://qtp7jvjqfbou")  # res://battle_scene/enemy_entity.gd
-const ENEMY_DIR := "res://battle_scene/card_info/enemy/"
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const ALLOWED_TIERS := ["minion", "normal", "heavy", "elite", "boss"]
 const EXPECTED_TIERS := {
-	"ember_wisp": "minion",
-	"scrap_shard": "minion",
-	"scrap_rat": "minion",
-	"acid_spitter": "normal",
-	"chrome_hound": "normal",
-	"hex_drone": "normal",
-	"mortar_cart": "normal",
-	"mortar_cart_siege": "normal",
-	"riot_hound": "normal",
-	"riot_hound_alpha": "normal",
-	"slag_walker": "normal",
-	"trash_robot": "normal",
-	"wasteland_killer": "normal",
-	"rust_brute": "heavy",
-	"armored_patrol": "elite",
-	"chrome_warden": "elite",
-	"siege_breaker": "elite",
-	"ash_warden": "boss",
-	"junkyard_tyrant": "boss",
-	"rust_titan": "boss",
+	"base:ember_wisp": "minion",
+	"base:scrap_shard": "minion",
+	"base:scrap_rat": "minion",
+	"base:acid_spitter": "normal",
+	"base:chrome_hound": "normal",
+	"base:hex_drone": "normal",
+	"base:mortar_cart": "normal",
+	"base:mortar_cart_siege": "normal",
+	"base:riot_hound": "normal",
+	"base:riot_hound_alpha": "normal",
+	"base:slag_walker": "normal",
+	"base:trash_robot": "normal",
+	"base:wasteland_killer": "normal",
+	"base:rust_brute": "heavy",
+	"base:armored_patrol": "elite",
+	"base:chrome_warden": "elite",
+	"base:siege_breaker": "elite",
+	"base:ash_warden": "boss",
+	"base:junkyard_tyrant": "boss",
+	"base:rust_titan": "boss",
 }
 const EXPECTED_POOLS := {
-	"ENCOUNTER_POOLS_OPENING": [["scrap_rat"], ["hex_drone"], ["acid_spitter"]],
+	"ENCOUNTER_POOLS_OPENING": [["base:scrap_rat"], ["base:hex_drone"], ["base:acid_spitter"]],
 	"ENCOUNTER_POOLS_EARLY": [
-		["wasteland_killer"],
-		["scrap_rat", "scrap_rat"],
-		["riot_hound"],
-		["mortar_cart"],
-		["trash_robot"],
+		["base:wasteland_killer"],
+		["base:scrap_rat", "base:scrap_rat"],
+		["base:riot_hound"],
+		["base:mortar_cart"],
+		["base:trash_robot"],
 	],
 	"ENCOUNTER_POOLS_MID": [
-		["riot_hound"],
-		["mortar_cart"],
-		["slag_walker"],
-		["acid_spitter", "scrap_rat"],
-		["wasteland_killer", "scrap_rat"],
-		["chrome_hound"],
-		["riot_hound_alpha"],
+		["base:riot_hound"],
+		["base:mortar_cart"],
+		["base:slag_walker"],
+		["base:acid_spitter", "base:scrap_rat"],
+		["base:wasteland_killer", "base:scrap_rat"],
+		["base:chrome_hound"],
+		["base:riot_hound_alpha"],
 	],
 	"ENCOUNTER_POOLS_LATE": [
-		["riot_hound_alpha"],
-		["rust_brute"],
-		["mortar_cart", "scrap_rat"],
-		["chrome_hound", "scrap_rat"],
-		["mortar_cart_siege", "scrap_rat"],
-		["slag_walker", "acid_spitter"],
-		["riot_hound", "riot_hound"],
+		["base:riot_hound_alpha"],
+		["base:rust_brute"],
+		["base:mortar_cart", "base:scrap_rat"],
+		["base:chrome_hound", "base:scrap_rat"],
+		["base:mortar_cart_siege", "base:scrap_rat"],
+		["base:slag_walker", "base:acid_spitter"],
+		["base:riot_hound", "base:riot_hound"],
 	],
 }
 const BUDGETS := {
@@ -118,15 +118,8 @@ func _run() -> void:
 
 func _load_enemies() -> Dictionary:
 	var out := {}
-	var dir := DirAccess.open(ENEMY_DIR)
-	if dir == null:
-		return out
-	for file_name in dir.get_files():
-		if not file_name.ends_with(".json"):
-			continue
-		var parsed = JSON.parse_string(FileAccess.get_file_as_string(ENEMY_DIR + file_name))
-		if typeof(parsed) == TYPE_DICTIONARY:
-			out[file_name.get_basename()] = parsed
+	for model in MODEL_DB.models("monster"):
+		out[model.id] = model.data
 	return out
 
 
@@ -149,7 +142,7 @@ func _validate_pool(pool_name: String, pools: Array, enemies: Dictionary) -> voi
 
 
 func _test_enemy_identities(enemies: Dictionary) -> void:
-	var killer := ENEMY_ENTITY_SCRIPT.create("wasteland_killer")
+	var killer := ENEMY_ENTITY_SCRIPT.create("base:wasteland_killer")
 	for expected_damage in [2, 4, 8, 16, 32]:
 		var preview: Dictionary = killer.peek_next_action()
 		_expect(str(preview.get("type", "")) == "attack_ramp", "Wasteland Killer uses its ramp attack")
@@ -158,7 +151,7 @@ func _test_enemy_identities(enemies: Dictionary) -> void:
 		_expect(int(consumed.get("amount", 0)) == expected_damage, "Wasteland Killer executes the displayed %d damage" % expected_damage)
 	killer.free()
 
-	var armored := ENEMY_ENTITY_SCRIPT.create("armored_patrol")
+	var armored := ENEMY_ENTITY_SCRIPT.create("base:armored_patrol")
 	armored.add_block(14)
 	armored.arm_breakable_armor("vulnerable", 2)
 	armored.take_damage(14, true, {"source": "player"})
@@ -166,17 +159,17 @@ func _test_enemy_identities(enemies: Dictionary) -> void:
 	_expect(armored.get_status_stacks("vulnerable") == 2, "breaking armor exposes Armored Patrol for two turns")
 	armored.free()
 
-	var armored_pattern: Array = enemies.get("armored_patrol", {}).get("action_pattern", [])
+	var armored_pattern: Array = enemies.get("base:armored_patrol", {}).get("action_pattern", [])
 	_expect(
 		armored_pattern.any(func(action): return str(action.get("type", "")) == "breakable_block"),
 		"Armored Patrol exposes a breakable armor window"
 	)
-	var chrome_pattern: Array = enemies.get("chrome_warden", {}).get("action_pattern", [])
+	var chrome_pattern: Array = enemies.get("base:chrome_warden", {}).get("action_pattern", [])
 	_expect(
 		chrome_pattern.any(func(action): return str(action.get("type", "")) == "reflective_plating"),
 		"Chrome Warden uses reflective plating"
 	)
-	var siege_pattern: Array = enemies.get("siege_breaker", {}).get("action_pattern", [])
+	var siege_pattern: Array = enemies.get("base:siege_breaker", {}).get("action_pattern", [])
 	var telegraph_index := -1
 	var payoff_index := -1
 	for i in range(siege_pattern.size()):
@@ -187,11 +180,11 @@ func _test_enemy_identities(enemies: Dictionary) -> void:
 			payoff_index = i
 	_expect(telegraph_index >= 0, "Siege Breaker visibly telegraphs its siege round")
 	_expect(payoff_index == telegraph_index + 1, "Siege Breaker's interruptible heavy hit immediately follows its telegraph")
-	_expect_vulnerable_duration(enemies, "slag_walker", 2)
-	_expect_vulnerable_duration(enemies, "mortar_cart_siege", 3)
-	_expect_vulnerable_duration(enemies, "rust_titan", 3)
-	_expect_vulnerable_duration(enemies, "ash_warden", 3)
-	var ash_phases: Array = enemies.get("ash_warden", {}).get("phases", [])
+	_expect_vulnerable_duration(enemies, "base:slag_walker", 2)
+	_expect_vulnerable_duration(enemies, "base:mortar_cart_siege", 3)
+	_expect_vulnerable_duration(enemies, "base:rust_titan", 3)
+	_expect_vulnerable_duration(enemies, "base:ash_warden", 3)
+	var ash_phases: Array = enemies.get("base:ash_warden", {}).get("phases", [])
 	_expect(not ash_phases.is_empty(), "Ash Warden keeps its second phase")
 	if not ash_phases.is_empty():
 		_expect_status_duration(

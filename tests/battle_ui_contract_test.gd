@@ -68,7 +68,7 @@ func _free(battle: Node) -> void:
 func _add_strikes(battle: Node, count: int) -> Array:
 	var cards: Array = []
 	for _i in range(count):
-		cards.append(battle.deck_manager.add_card_to_hand("strike"))
+		cards.append(battle.deck_manager.add_card_to_hand("base:strike"))
 	await get_tree().process_frame
 	return cards
 
@@ -226,7 +226,7 @@ func test_discard_flight_lands_in_the_pile() -> void:
 
 func test_exhaust_burns_in_place() -> void:
 	var battle = await _battle()
-	var card = battle.deck_manager.add_card_to_hand("reload")
+	var card = battle.deck_manager.add_card_to_hand("base:reload")
 	await get_tree().process_frame
 	battle.play_spell(card, null)
 	var burned := await _wait_until(func() -> bool: return not battle.find_children("*", "CPUParticles2D", true, false).is_empty(), 3.0)
@@ -310,7 +310,7 @@ func test_flying_card_stays_readable() -> void:
 
 func test_exhaust_embers_are_visible() -> void:
 	var battle = await _battle()
-	var card = battle.deck_manager.add_card_to_hand("reload")
+	var card = battle.deck_manager.add_card_to_hand("base:reload")
 	await get_tree().process_frame
 	battle.card_animator.burn_exhaust(card)
 	var bursts: Array = battle.find_children("*", "CPUParticles2D", true, false)

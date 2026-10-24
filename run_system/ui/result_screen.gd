@@ -6,6 +6,7 @@
 extends Control
 
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const HOME_BASE_PATH := "uid://c6bvuu6kbx0pq"  # res://run_system/ui/home_base_scene.tscn
 const MAIN_MENU_PATH := "uid://dnjlmt1repvjw"  # res://run_system/ui/main_menu.tscn
 ## Set this project setting to the real app page before shipping. An empty or
@@ -122,7 +123,7 @@ func _summary_text() -> String:
 	var hero_name: String = hero_id
 	if typeof(RunManager.current_hero_data) == TYPE_DICTIONARY:
 		hero_name = str(RunManager.current_hero_data.get("name", hero_id))
-	hero_name = Settings.t("HERO_%s_NAME" % hero_id, hero_name)
+	hero_name = Settings.t("HERO_%s_NAME" % MODEL_ID.key_entry(hero_id), hero_name)
 	return (
 		tr("RESULT_SUMMARY")
 		. format(

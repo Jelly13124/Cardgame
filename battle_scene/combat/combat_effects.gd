@@ -305,7 +305,7 @@ static func _lose_gold(ctx, effect: Dictionary) -> void:
 
 ## Permanent curse onto the run deck.
 static func _add_curse_to_deck(_ctx, effect: Dictionary) -> void:
-	var curse_id := str(effect.get("card", effect.get("curse", "radiation_dust")))
+	var curse_id := str(effect.get("card", effect.get("curse", "base:radiation_dust")))
 	for _i in range(maxi(1, _amount(effect))):
 		RunManager.add_card_to_deck(curse_id)
 
@@ -607,7 +607,7 @@ static func _enemy_buff_self(ctx, action: Dictionary) -> void:
 
 ## Shuffle a curse into the player's draw pile (this combat only).
 static func _enemy_add_curse(ctx, action: Dictionary) -> void:
-	var curse_id := str(action.get("curse", "radiation_dust"))
+	var curse_id := str(action.get("curse", "base:radiation_dust"))
 	for _i in range(maxi(1, int(action.get("amount", 1)))):
 		ctx.services.deck_manager.add_card_to_draw(curse_id)
 	ctx.services.show_notification(

@@ -3,7 +3,7 @@ extends Node
 const STATUS_SYSTEM = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
 const PLAY_CARD = preload("uid://d4f71g73780ld")  # res://battle_scene/play_card.gd
 
-const CARD_DIR := "res://battle_scene/card_info/player/"
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 
 var failures: PackedStringArray = []
 
@@ -43,20 +43,20 @@ func _run() -> void:
 
 
 func _test_guard_curve() -> void:
-	var defend := _load_card("defend")
+	var defend := _load_card("base:defend")
 	_expect(_effect_value(defend, "gain_block", "amount") == 5, "starter Defend gains 5 Block")
-	var counter := _load_card("siphon")
+	var counter := _load_card("base:siphon")
 	_expect(_effect_value(counter, "deal_damage", "amount") == 3, "Scrap Counter deals 3")
 	_expect(_effect_value(counter, "gain_block", "amount") == 3, "Scrap Counter blocks 3")
-	var baffle := _load_card("kinetic_baffle")
+	var baffle := _load_card("base:kinetic_baffle")
 	_expect(str(baffle.get("rarity", "")) == "uncommon", "Block plus draw is not common filler")
-	var patch := _load_card("tape_patch")
+	var patch := _load_card("base:tape_patch")
 	_expect(int(patch.get("cost", -1)) == 0, "Quick Patch is a zero-cost emergency tool")
 	_expect(_has_effect(patch, "exhaust_self"), "Quick Patch does not loop forever")
 
 
 func _test_reactive_plating() -> void:
-	var plating := _load_card("venom_coat")
+	var plating := _load_card("base:venom_coat")
 	_expect(str(plating.get("type", "")) == "ability", "Reactive Plating is an Ability")
 	_expect(str(plating.get("rarity", "")) == "uncommon", "Reactive Plating is uncommon")
 	_expect(
@@ -73,7 +73,7 @@ func _test_reactive_plating() -> void:
 
 
 func _test_kinetic_rebound() -> void:
-	var rebound := _load_card("rebar_wave")
+	var rebound := _load_card("base:rebar_wave")
 	_expect(str(rebound.get("rarity", "")) == "rare", "Block payoff occupies the rare slot")
 	_expect(int(rebound.get("cost", -1)) == 2, "Kinetic Rebound costs 2")
 	var effects: Array = rebound.get("effects", [])
@@ -88,9 +88,9 @@ func _test_kinetic_rebound() -> void:
 
 
 func _load_card(card_id: String) -> Dictionary:
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string(CARD_DIR + card_id + ".json"))
-	_expect(typeof(parsed) == TYPE_DICTIONARY, "card JSON parses: %s" % card_id)
-	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
+	var data := MODEL_DB.mutable("card", card_id)
+	_expect(not data.is_empty(), "card is registered: %s" % card_id)
+	return data
 
 
 func _effect_value(card: Dictionary, effect_type: String, field: String) -> int:

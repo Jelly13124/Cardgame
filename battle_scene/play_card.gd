@@ -16,6 +16,8 @@ const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_e
 const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
 const CARD_HIGHLIGHT = preload("uid://wd07lb83d87x")  # res://battle_scene/ui/card_highlight.gd
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 
 @onready var cost_label = $FrontFace/CostCircle/CostLabel
 @onready var cost_badge = $FrontFace/CostCircle
@@ -273,13 +275,7 @@ func _resolve_skin_id(data: Dictionary) -> String:
 	var hero_id := str(RunManager.current_hero_id).strip_edges() if RunManager else ""
 	if hero_id == "":
 		return ""
-	var path := "res://run_system/data/heroes/%s.json" % hero_id
-	if not FileAccess.file_exists(path):
-		return ""
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return ""
-	return str(parsed.get("card_ui_skin", "")).strip_edges()
+	return str(MODEL_DB.data("character", hero_id).get("card_ui_skin", "")).strip_edges()
 
 
 func set_faces(front: Texture2D, back: Texture2D) -> void:
@@ -367,7 +363,7 @@ func set_card_data(data: Dictionary) -> void:
 		return
 
 	card_info = data
-	card_name = data.get("name", "Unknown")
+	card_name = str(data.get("id", "Unknown"))
 
 	# ── Cost: always integer ──────────────────────────────────────────────────
 	# cost_override (this-combat discover) wins over the card's base cost.
@@ -380,9 +376,9 @@ func set_card_data(data: Dictionary) -> void:
 	# ── Name (CONTENT) ───────────────────────────────────────────────────────
 	# Title comes from card data — route through Settings.t with the card's
 	# deterministic content key (CARD_<id>_TITLE), English fallback.
-	var card_id: String = str(data.get("name", card_name))
+	var card_id: String = str(data.get("id", card_name))
 	name_label.text = (
-		Settings.t("CARD_%s_TITLE" % card_id, str(data.get("title", card_name))).to_upper()
+		Settings.t("CARD_%s_TITLE" % MODEL_ID.key_entry(card_id), str(data.get("title", card_name))).to_upper()
 	)
 
 	# Generated skins are authored PNG components. Legacy cards keep the previous
@@ -478,16 +474,16 @@ func _fit_and_center_description() -> void:
 ## Shows calculated totals e.g. "Deal 6 (3+Strength) dmg" when player has 3 STR.
 ## Falls back to the raw "description" field if no effects array exists.
 func _build_description(data: Dictionary) -> String:
-	var card_id: String = str(data.get("name", ""))
+	var card_key: String = MODEL_ID.key_entry(str(data.get("id", "")))
 	var effects: Array = data.get("effects", [])
 	# Discover cards read better from their authored description than an effect breakdown.
 	for e in effects:
 		if typeof(e) == TYPE_DICTIONARY and str(e.get("type", "")) == "discover":
-			return Settings.t("CARD_%s_DESC" % card_id, str(data.get("description", "")))
+			return Settings.t("CARD_%s_DESC" % card_key, str(data.get("description", "")))
 	if effects.is_empty():
 		# Raw description is CONTENT — route through Settings.t (CARD_<id>_DESC)
 		# with the English source as fallback, THEN strip BBCode for plain display.
-		var raw: String = Settings.t("CARD_%s_DESC" % card_id, str(data.get("description", "")))
+		var raw: String = Settings.t("CARD_%s_DESC" % card_key, str(data.get("description", "")))
 		return (
 			raw
 			. replace("[b]", "")
@@ -658,7 +654,7 @@ func _build_description(data: Dictionary) -> String:
 			"add_card_to_hand":
 				var ac_n: int = int(effect.get("amount", 1))
 				var ac_id: String = str(effect.get("card", ""))
-				var ac_name: String = Settings.t("CARD_%s_TITLE" % ac_id, ac_id)
+				var ac_name: String = Settings.t("CARD_%s_TITLE" % MODEL_ID.key_entry(ac_id), ac_id)
 				lines.append(tr("UI_BATTLE_DESC_ADD_CARD").format({"n": ac_n, "card": ac_name}))
 
 			"apply_short_circuit_scaled":

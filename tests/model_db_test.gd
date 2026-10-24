@@ -22,24 +22,24 @@ func _expect(condition: bool, message: String) -> void:
 
 
 func _run() -> void:
-	_expect(MODEL_ID.key_entry("base:reload") == "reload", "base key entry is the bare entry")
+	_expect(MODEL_ID.key_entry("base:reload") == "reload", "base key entry is the bare entry")  # bare-ok: id format fixture
 	_expect(MODEL_ID.key_entry("mymod:zap") == "mymod_zap", "mod key entry carries the namespace")
-	_expect(MODEL_ID.entry_of("base:reload") == "reload", "entry_of strips the namespace")
+	_expect(MODEL_ID.entry_of("base:reload") == "reload", "entry_of strips the namespace")  # bare-ok: id format fixture
 	_expect(MODEL_ID.namespace_of("mymod:zap") == "mymod", "namespace_of")
-	_expect(not MODEL_ID.is_full("reload") and MODEL_ID.is_full("base:reload"), "is_full")
-	_expect(MODEL_ID.make("base", "reload") == "base:reload", "make")
+	_expect(not MODEL_ID.is_full("reload") and MODEL_ID.is_full("base:reload"), "is_full")  # bare-ok: id format fixture
+	_expect(MODEL_ID.make("base", "reload") == "base:reload", "make")  # bare-ok: id format fixture
 
 	MODEL_DB.reset()
 	if not MODEL_DB.has("card", "base:reload"):
-		MODEL_DB.inject("card", "base", "reload", {"id": "reload", "title": "Reload", "effects": []})
+		MODEL_DB.inject("card", "base", "reload", {"id": "reload", "title": "Reload", "effects": []})  # bare-ok: id format fixture
 	MODEL_DB.inject_dir(MOD_DIR, "mymod")
 
 	_expect(MODEL_DB.has("card", "mymod:zap"), "mod card registered")
 	_expect(MODEL_DB.has("relic", "mymod:reload"), "mod relic registered")
-	_expect(MODEL_DB.resolve("card", "reload") == "base:reload", "same entry in another category does not collide")
-	_expect(MODEL_DB.resolve("card", "zap", "mymod") == "mymod:zap", "bare ref resolves in its own namespace")
-	_expect(MODEL_DB.resolve("card", "reload", "mymod") == "base:reload", "bare ref falls back to base")
-	_expect(MODEL_DB.resolve("card", "zap") == "", "base context does not see mod content")
+	_expect(MODEL_DB.resolve("card", "reload") == "base:reload", "same entry in another category does not collide")  # bare-ok: id format fixture
+	_expect(MODEL_DB.resolve("card", "zap", "mymod") == "mymod:zap", "bare ref resolves in its own namespace")  # bare-ok: id format fixture
+	_expect(MODEL_DB.resolve("card", "reload", "mymod") == "base:reload", "bare ref falls back to base")  # bare-ok: id format fixture
+	_expect(MODEL_DB.resolve("card", "zap") == "", "base context does not see mod content")  # bare-ok: id format fixture
 	_expect(MODEL_DB.resolve("card", "nope") == "", "unknown ref resolves to empty")
 	_expect(MODEL_DB.resolve("card", "mymod:zap") == "mymod:zap", "full ref returned as is")
 
@@ -53,7 +53,7 @@ func _run() -> void:
 	copy["effects"][0]["card"] = "changed"
 	_expect(str(MODEL_DB.data("card", "mymod:zap")["effects"][0]["card"]) == "base:reload", "mutating a copy leaves canonical data")
 	var model = MODEL_DB.get_model("card", "mymod:zap")
-	_expect(model != null and model.ns == "mymod" and model.entry == "zap" and model.category == "card", "model fields")
+	_expect(model != null and model.ns == "mymod" and model.entry == "zap" and model.category == "card", "model fields")  # bare-ok: id format fixture
 	_expect(MODEL_DB.get_model("card", "mymod:nope") == null, "missing model is null")
 	_expect(MODEL_DB.data("card", "mymod:nope").is_empty(), "missing data is empty")
 	_expect(MODEL_DB.ids("card").has("mymod:zap"), "ids lists injected content")

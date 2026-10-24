@@ -26,13 +26,14 @@
 extends "res://run_system/ui/buildings/building_screen_base.gd"
 
 
-const UPGRADE_DIR := "res://run_system/data/base_upgrades/"
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 ## Outpost permanent-upgrade ids → the base-upgrade JSON that drives each row (Caps).
-const GOLD_UPGRADE_ID := "command_center"
-const BACKPACK_UPGRADE_ID := "backpack"
-const SAFE_CELLS_UPGRADE_ID := "blacksmith"
-const REROLL_UPGRADE_ID := "reroll_tokens"
-const TOOL_SLOTS_UPGRADE_ID := "tool_slots"
+const GOLD_UPGRADE_ID := "base:command_center"
+const BACKPACK_UPGRADE_ID := "base:backpack"
+const SAFE_CELLS_UPGRADE_ID := "base:blacksmith"
+const REROLL_UPGRADE_ID := "base:reroll_tokens"
+const TOOL_SLOTS_UPGRADE_ID := "base:tool_slots"
 
 ## The T3 permanent-upgrade rows in concept order: upgrade id → lightline icon.
 const PERMANENT_UPGRADE_ROWS := [
@@ -174,14 +175,14 @@ func _fill_bounty_section(body: VBoxContainer) -> void:
 ## objective line, REAL reward icon row, and the orange 免费承接 button.
 func _build_poster_card(bounty_id: String) -> Control:
 	var data: Dictionary = MetaProgress.get_bounty_data(bounty_id)
-	var title := Settings.t("BOUNTY_%s_TITLE" % bounty_id, str(data.get("title", bounty_id)))
+	var title := Settings.t("BOUNTY_%s_TITLE" % MODEL_ID.key_entry(bounty_id), str(data.get("title", bounty_id)))
 	var objective_v = data.get("objective", {})
 	var objective: Dictionary = objective_v if typeof(objective_v) == TYPE_DICTIONARY else {}
 	var reward_v = data.get("reward", {})
 	var reward: Dictionary = reward_v if typeof(reward_v) == TYPE_DICTIONARY else {}
 
 	var card := PanelContainer.new()
-	card.name = "OutpostBountyPoster_%s" % bounty_id
+	card.name = "OutpostBountyPoster_%s" % MODEL_ID.key_entry(bounty_id)
 	card.custom_minimum_size = Vector2(POSTER_CARD_WIDTH, 0)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# poster_frame_blank = the CLEAN 9-slice parchment frame (2026-07-08 Codex
@@ -202,9 +203,9 @@ func _build_poster_card(bounty_id: String) -> Control:
 	# Poster art — the per-contract Codex illustration (2026-07-08 delivery);
 	# a named node with the inset+icon placeholder while an id's art is absent.
 	var art := PanelContainer.new()
-	art.name = "PosterArt_%s" % bounty_id
+	art.name = "PosterArt_%s" % MODEL_ID.key_entry(bounty_id)
 	art.custom_minimum_size = Vector2(0, POSTER_ART_HEIGHT)
-	var art_path := "res://run_system/assets/images/ui/bounty_posters/poster_art_%s.png" % bounty_id
+	var art_path := "res://run_system/assets/images/ui/bounty_posters/poster_art_%s.png" % MODEL_ID.key_entry(bounty_id)
 	var art_tex: Texture2D = null
 	if ResourceLoader.exists(art_path):
 		art_tex = load(art_path) as Texture2D
@@ -416,7 +417,7 @@ func _fill_safe_cells(body: VBoxContainer) -> void:
 		{
 			"text":
 			Settings.t(
-				"UPGRADE_%s_TIER%d" % [SAFE_CELLS_UPGRADE_ID, int(next_tier.get("level", lvl + 1))],
+				"UPGRADE_%s_TIER%d" % [MODEL_ID.key_entry(SAFE_CELLS_UPGRADE_ID), int(next_tier.get("level", lvl + 1))],
 				str(next_tier.get("effect_text", ""))
 			)
 		}
@@ -475,7 +476,7 @@ func _add_upgrade_row(
 	name_lbl.text = (
 		display_name
 		if display_name != ""
-		else Settings.t("UPGRADE_%s_NAME" % upgrade_id, str(def.get("name", upgrade_id)))
+		else Settings.t("UPGRADE_%s_NAME" % MODEL_ID.key_entry(upgrade_id), str(def.get("name", upgrade_id)))
 	)
 	_style_label(name_lbl, 16, TOK_TEXT, 1)
 	mid.add_child(name_lbl)
@@ -496,7 +497,7 @@ func _add_upgrade_row(
 	# Surface the next tier's effect as the row tooltip (the concept row has no
 	# room for an effect line; hover reveals it).
 	var effect_text := Settings.t(
-		"UPGRADE_%s_TIER%d" % [upgrade_id, int(next_tier.get("level", lvl + 1))],
+		"UPGRADE_%s_TIER%d" % [MODEL_ID.key_entry(upgrade_id), int(next_tier.get("level", lvl + 1))],
 		str(next_tier.get("effect_text", ""))
 	)
 	panel.tooltip_text = tr("UI_HOME_UPGRADE_NEXT").format({"text": effect_text})
@@ -651,16 +652,4 @@ func _add_lock_note(container: VBoxContainer, text: String) -> void:
 
 
 func _load_upgrade_def(id: String) -> Dictionary:
-	return _load_json(UPGRADE_DIR + id + ".json")
-
-
-func _load_json(path: String) -> Dictionary:
-	if not FileAccess.file_exists(path):
-		return {}
-	var f := FileAccess.open(path, FileAccess.READ)
-	if f == null:
-		return {}
-	var raw := f.get_as_text()
-	f.close()
-	var parsed: Variant = JSON.parse_string(raw)
-	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
+	return MODEL_DB.data("base_upgrade", id)

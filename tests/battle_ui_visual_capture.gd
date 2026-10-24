@@ -19,8 +19,8 @@ func _ready() -> void:
 
 func _capture() -> void:
 	RunManager.is_run_active = false
-	RunManager.current_hero_id = "cowboy_bill"
-	RunManager.current_hero_data = {"card_ui_skin": "cowboy_bill"}
+	RunManager.current_hero_id = "base:cowboy_bill"
+	RunManager.current_hero_data = {"card_ui_skin": "base:cowboy_bill"}
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://tmp"))
 	var battle := BATTLE_SCENE.instantiate()
 	get_tree().root.add_child.call_deferred(battle)
@@ -30,8 +30,8 @@ func _capture() -> void:
 		await get_tree().process_frame
 	await get_tree().create_timer(0.8).timeout
 	battle.player.energy = 10
-	var strike = battle.deck_manager.add_card_to_hand("strike")
-	var reload = battle.deck_manager.add_card_to_hand("reload")
+	var strike = battle.deck_manager.add_card_to_hand("base:strike")
+	var reload = battle.deck_manager.add_card_to_hand("base:reload")
 	await get_tree().create_timer(0.5).timeout
 
 	var enemy: Node2D = battle.enemy_container.get_child(0)

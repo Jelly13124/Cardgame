@@ -265,8 +265,7 @@ const REFORGE_COST := {"common": 15, "uncommon": 30, "rare": 50}
 ## Affix roller (per-instance equipment); used by reforge_stash_item.
 const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
 ## --- Bounty system (replaces the daily-task mock) ---
-## Contract JSONs (schema in data_validator.validate_bounty).
-const BOUNTY_DATA_DIR := "res://run_system/data/bounties/"
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 ## Max held contracts; the outpost shelf refuses takes beyond this.
 const MAX_ACTIVE_BOUNTIES := 3
 ## Contracts on the outpost shelf per day (all free to take).
@@ -277,54 +276,54 @@ const BOUNTY_SHELF_SIZE := 3
 const HERO_EXCLUSIVE_CARDS := {
 	# Cowboy Bill — malfunctioning gunslinger: reload, critical hits and Short Circuit.
 	# Keep this identity separate from future heroes.
-	"cowboy_bill":
+	"base:cowboy_bill":
 	[
-		"piston_jab",
-		"load_up",
-		"coagulate",
-		"dissect",
-		"hot_streak",
-		"all_in",
-		"hemorrhage",
-		"covering_reload",
-		"limit_break",
+		"base:piston_jab",
+		"base:load_up",
+		"base:coagulate",
+		"base:dissect",
+		"base:hot_streak",
+		"base:all_in",
+		"base:hemorrhage",
+		"base:covering_reload",
+		"base:limit_break",
 	],
 }
 
 ## The public demo deliberately uses a focused reward pool. This controls newly
 ## rolled reward/shop choices while DEMO_BUILD is active.
 const DEMO_REWARD_POOLS := {
-	"cowboy_bill": [
+	"base:cowboy_bill": [
 		# Bill signature package (9)
-		"piston_jab",
-		"load_up",
-		"coagulate",
-		"dissect",
-		"hot_streak",
-		"all_in",
-		"hemorrhage",
-		"covering_reload",
-		"limit_break",
+		"base:piston_jab",
+		"base:load_up",
+		"base:coagulate",
+		"base:dissect",
+		"base:hot_streak",
+		"base:all_in",
+		"base:hemorrhage",
+		"base:covering_reload",
+		"base:limit_break",
 		# Curated shared support (19)
-		"arc_flash",
-		"brace",
-		"hot_swap",
-		"rebar_wave",
-		"recoil_shot",
-		"reload",
-		"siphon",
-		"tape_patch",
-		"kinetic_baffle",
-		"cascade",
-		"chain_link",
-		"charged_shot",
-		"data_dump",
-		"deflector",
-		"lucky_streak",
-		"spiked_guard",
-		"sweep_arc",
-		"bone_breaker",
-		"stun_baton",
+		"base:arc_flash",
+		"base:brace",
+		"base:hot_swap",
+		"base:rebar_wave",
+		"base:recoil_shot",
+		"base:reload",
+		"base:siphon",
+		"base:tape_patch",
+		"base:kinetic_baffle",
+		"base:cascade",
+		"base:chain_link",
+		"base:charged_shot",
+		"base:data_dump",
+		"base:deflector",
+		"base:lucky_streak",
+		"base:spiked_guard",
+		"base:sweep_arc",
+		"base:bone_breaker",
+		"base:stun_baton",
 	]
 }
 
@@ -380,25 +379,22 @@ func append_run_history(entry: Dictionary) -> void:
 	save_progress()
 
 
-## Card directory scanned for the draftable pool (Phase A: all cards draftable
-## by default — no more per-card Market unlock).
-const CARD_DATA_DIR := "res://battle_scene/card_info/player/"
 ## Basic starter cards (in hero starter decks) are deliberately excluded from
 ## the reward/draft/shop pool — getting more of them as rewards is pointless
 ## and dilutes the pool.
-const BASIC_CARD_IDS := ["strike", "defend"]
+const BASIC_CARD_IDS := ["base:strike", "base:defend"]
 
 
-## Every card on disk EXCEPT curses, the basics (strike/defend), and any OTHER
-## hero's exclusive cards (the active hero's own exclusives ARE included).
-## Directory-scanned so newly added card JSON is draftable with no unlock step.
+## Every card in the current character's card pool EXCEPT curses, the basics
+## (strike/defend), and any OTHER hero's exclusive cards (the active hero's own
+## exclusives ARE included). No unlock step: pool membership is enough.
 func get_unlocked_card_pool() -> Array[String]:
 	var hero_id: String = str(RunManager.current_hero_id) if RunManager else ""
 	if RunManager and RunManager.DEMO_BUILD and DEMO_REWARD_POOLS.has(hero_id):
 		var focused: Array[String] = []
 		for card_id in DEMO_REWARD_POOLS[hero_id]:
 			var id := str(card_id)
-			var data := _load_card_json(CARD_DATA_DIR + id + ".json")
+			var data := MODEL_DB.data("card", id)
 			if not data.is_empty() and str(data.get("type", "")) != "curse":
 				focused.append(id)
 		return focused
@@ -410,34 +406,16 @@ func get_unlocked_card_pool() -> Array[String]:
 			for cid in HERO_EXCLUSIVE_CARDS[h]:
 				blocked[str(cid)] = true
 
-	var dir := DirAccess.open(CARD_DATA_DIR)
-	if dir == null:
-		return pool
-	for file_name in dir.get_files():
-		if not file_name.ends_with(".json"):
-			continue
-		var card_id := file_name.get_basename()
+	for card_id in RunManager.current_card_pool():
 		if card_id in BASIC_CARD_IDS:
 			continue
 		if blocked.has(card_id):
 			continue
-		var data := _load_card_json(CARD_DATA_DIR + file_name)
+		var data := MODEL_DB.data("card", card_id)
 		if str(data.get("type", "")) == "curse":
 			continue
 		pool.append(card_id)
 	return pool
-
-
-func _load_card_json(path: String) -> Dictionary:
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {}
-	var text := file.get_as_text()
-	file.close()
-	var parsed = JSON.parse_string(text)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return {}
-	return parsed
 
 
 func add_caps(amount: int) -> void:
@@ -551,7 +529,7 @@ func buy_caps_perk(perk_id: String) -> bool:
 ## Number of safe backpack cells (index 0..N-1) whose contents survive death.
 ## Derived from the blacksmith upgrade level (persisted in `upgrades`).
 func effective_safe_cells() -> int:
-	return SAFE_CELLS_BASE + get_upgrade_level("blacksmith")
+	return SAFE_CELLS_BASE + get_upgrade_level("base:blacksmith")
 
 
 ## --- Buildings refactor: tiered buildings (unlock + tier-up = Scrap) ---
@@ -646,7 +624,7 @@ func _normalize_buildings() -> void:
 		buildings["clinic"] = maxi(get_building_tier("clinic"), 1)
 	# Blacksmith safe-cell upgrade owned → Outpost at least tier 2 (safe_cells is
 	# an Outpost T2 function).
-	if get_upgrade_level("blacksmith") > 0:
+	if get_upgrade_level("base:blacksmith") > 0:
 		buildings["outpost"] = maxi(get_building_tier("outpost"), 2)
 
 
@@ -957,31 +935,15 @@ func mark_tutorial_seen() -> void:
 
 ## --- Bounty system: shelf refresh, claim/buy, progress + settle ---
 
-var _bounty_data_cache: Dictionary = {}
-
-
-## Load a bounty contract JSON by id (cached — contract data is immutable at
-## runtime). Returns {} on miss.
+## Read-only bounty contract definition. Returns {} on miss.
 func get_bounty_data(bounty_id: String) -> Dictionary:
-	if _bounty_data_cache.has(bounty_id):
-		return _bounty_data_cache[bounty_id]
-	var data := _load_card_json(BOUNTY_DATA_DIR + bounty_id + ".json")
-	_bounty_data_cache[bounty_id] = data
-	return data
+	return MODEL_DB.data("bounty", bounty_id)
 
 
-## All bounty ids that have a JSON file (the shelf roll pool). DirAccess returns
-## files alphabetically, so the pool order is stable across runs (keeps the
-## date-seeded shelf roll deterministic).
+## Every bounty id (the shelf roll pool). ModelDb ids are sorted, so the pool
+## order is stable across runs (keeps the date-seeded shelf roll deterministic).
 func _bounty_pool_ids() -> Array:
-	var ids: Array = []
-	var dir := DirAccess.open(BOUNTY_DATA_DIR)
-	if dir == null:
-		return ids
-	for f in dir.get_files():
-		if f.ends_with(".json"):
-			ids.append(f.get_basename())
-	return ids
+	return Array(MODEL_DB.ids("bounty"))
 
 
 ## Reroll the outpost shelf when the LOCAL date differs from the stored one
@@ -1293,54 +1255,3 @@ func _migrate_removed_profile_state(raw_profile: Dictionary) -> bool:
 	if refund > 0:
 		caps += refund
 	return changed
-
-
-# --- Card-info cache (loading optimization, Phase 5) -----------------------
-#
-# The vendored json_card_factory re-parses every card JSON each time a battle (or
-# the shop) builds a factory — ~50 file reads + JSON parses per battle. This
-# session-level cache parses each card's JSON ONCE; cached_card_factory.gd reads
-# from it instead of re-scanning. The vendored addon remains untouched.
-
-const _CARD_INFO_ROOT := "res://battle_scene/card_info"
-var _card_info_cache: Dictionary = {}  # card_name -> parsed info Dictionary
-
-
-## Parsed card-info for every card JSON under card_info/, built once and reused
-## for the rest of the session. Returns {card_name: info_dict}. Callers must NOT
-## mutate the returned dicts — the factory deep-copies per card when it builds a
-## battle's cards.
-func get_card_info_cache() -> Dictionary:
-	if _card_info_cache.is_empty():
-		_build_card_info_cache(_CARD_INFO_ROOT)
-		print("CardInfoCache: parsed %d card JSONs once." % _card_info_cache.size())
-	return _card_info_cache
-
-
-func _build_card_info_cache(path: String) -> void:
-	var dir := DirAccess.open(path)
-	if dir == null:
-		return
-	dir.list_dir_begin()
-	var file_name := dir.get_next()
-	while file_name != "":
-		if dir.current_is_dir():
-			if file_name != "." and file_name != "..":
-				_build_card_info_cache(path + "/" + file_name)
-		elif file_name.ends_with(".json"):
-			var info := _parse_card_json(path + "/" + file_name)
-			if not info.is_empty():
-				_card_info_cache[file_name.get_basename()] = info
-		file_name = dir.get_next()
-
-
-func _parse_card_json(full_path: String) -> Dictionary:
-	if not FileAccess.file_exists(full_path):
-		return {}
-	var f := FileAccess.open(full_path, FileAccess.READ)
-	if f == null:
-		return {}
-	var text := f.get_as_text()
-	f.close()
-	var parsed = JSON.parse_string(text)
-	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}

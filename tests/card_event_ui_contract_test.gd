@@ -46,7 +46,7 @@ func _run() -> void:
 	battle_scene.free()
 
 	var original_deck := RunManager.player_deck.duplicate(true)
-	RunManager.player_deck = [{"card_id": "strike", "upgraded": false}]
+	RunManager.player_deck = [{"card_id": "base:strike", "upgraded": false}]
 
 	var upgrade := CARD_UPGRADE_MODAL.new()
 	add_child(upgrade)

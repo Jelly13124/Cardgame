@@ -59,7 +59,7 @@ func _free(battle: Node) -> void:
 
 func test_queued_tool_with_dead_target_releases_input() -> void:
 	var battle = await _battle()
-	RunManager.tool_inventory.assign(["frag_grenade"])
+	RunManager.tool_inventory.assign(["base:frag_grenade"])
 	var enemy: Node = battle.enemy_container.get_child(0)
 	# A card still resolving holds the queue; it kills the tool's target.
 	battle.action_queue.enqueue(
@@ -69,17 +69,17 @@ func test_queued_tool_with_dead_target_releases_input() -> void:
 			enemy.queue_free()
 			await get_tree().create_timer(0.05).timeout
 	)
-	battle.call("_begin_tool_targeting", 0, "frag_grenade", RunManager.get_tool_data("frag_grenade"))
+	battle.call("_begin_tool_targeting", 0, "base:frag_grenade", RunManager.get_tool_data("base:frag_grenade"))
 	battle.call("_confirm_tool_targeting", enemy)
 	await battle.action_queue.drained
 	_expect(not battle.get("_tool_resolving"), "tool input is released after its target died in the queue")
-	_expect(RunManager.tool_inventory == ["frag_grenade"], "a tool whose target died is not consumed")
+	_expect(RunManager.tool_inventory == ["base:frag_grenade"], "a tool whose target died is not consumed")
 	await _free(battle)
 
 
 func test_tools_refused_outside_player_turn() -> void:
 	var battle = await _battle()
-	RunManager.tool_inventory.assign(["energy_cell"])
+	RunManager.tool_inventory.assign(["base:energy_cell"])
 	battle.use_tool(0)
 	await get_tree().process_frame
 	var opened: Node = battle.find_child("ToolUseConfirm", true, false)
@@ -145,7 +145,7 @@ func test_two_full_rounds_on_the_real_battle() -> void:
 	battle.player.max_health = 999
 	for round_number in [2, 3]:
 		var target: Node = battle.enemy_container.get_child(0)
-		var shot = battle.deck_manager.add_card_to_hand("strike")
+		var shot = battle.deck_manager.add_card_to_hand("base:strike")
 		await get_tree().process_frame
 		battle.play_spell(shot, target)
 		battle._on_end_round_button_pressed()

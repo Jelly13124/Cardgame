@@ -44,7 +44,7 @@ func _run() -> void:
 
 
 func _test_vertical_layout_and_backpack_only_drop() -> void:
-	var carried := _equip("gear_head_common", "common")
+	var carried := _equip("base:gear_head_common", "common")
 	_set_pending([carried])
 	var forge := FORGE_WINDOW.new()
 	add_child(forge)
@@ -164,16 +164,16 @@ func _test_vertical_layout_and_backpack_only_drop() -> void:
 func _test_pending_backpack_mutations() -> void:
 	var forge := FORGE_WINDOW.new()
 	# Backend helpers are intentionally callable without mounting the visual tree.
-	var stash_sentinel := [_equip("gear_weapon_rare", "rare")]
+	var stash_sentinel := [_equip("base:gear_weapon_rare", "rare")]
 	MetaProgress.stash = stash_sentinel.duplicate(true)
 	MetaProgress.scrap = 1000
 
-	var common := _equip("gear_head_common", "common")
-	var uncommon := _equip("gear_chest_uncommon", "uncommon")
-	var rare := _equip("gear_weapon_rare", "rare")
-	var cursed := _equip("gear_hands_common", "cursed")
+	var common := _equip("base:gear_head_common", "common")
+	var uncommon := _equip("base:gear_chest_uncommon", "uncommon")
+	var rare := _equip("base:gear_weapon_rare", "rare")
+	var cursed := _equip("base:gear_hands_common", "cursed")
 	cursed["cursed"] = true
-	var set_piece := _equip("gear_accessory_rare", "rare")
+	var set_piece := _equip("base:gear_accessory_rare", "rare")
 	set_piece["set_id"] = "demo_set"
 	_set_pending([common, uncommon, rare, cursed, set_piece])
 
@@ -194,7 +194,7 @@ func _test_pending_backpack_mutations() -> void:
 	_expect(MetaProgress.scrap == scrap_before + 5, "single common dismantle grants 5 Scrap")
 	_expect(MetaProgress.stash == stash_sentinel, "single dismantle leaves warehouse storage untouched")
 
-	var reforge_item := RunManager.make_equip_instance("gear_head_common", "common")
+	var reforge_item := RunManager.make_equip_instance("base:gear_head_common", "common")
 	_set_pending([reforge_item])
 	scrap_before = MetaProgress.scrap
 	var reforge_cost := MetaProgress.reforge_cost_for(reforge_item)
@@ -205,7 +205,7 @@ func _test_pending_backpack_mutations() -> void:
 	_expect(MetaProgress.scrap == scrap_before - reforge_cost, "reforge spends its escalating Scrap cost")
 	_expect(MetaProgress.stash == stash_sentinel, "reforge leaves warehouse storage untouched")
 
-	var curse_item := RunManager.make_equip_instance("gear_chest_common", "common")
+	var curse_item := RunManager.make_equip_instance("base:gear_chest_common", "common")
 	_set_pending([curse_item])
 	scrap_before = MetaProgress.scrap
 	_expect(bool(forge.call("_curse_pending_item", 0)), "curse mutates a backpack entry")
@@ -224,7 +224,7 @@ func _test_pending_backpack_mutations() -> void:
 	var crafted := RunManager.as_equip_instance(RunManager.pending_loadout[0])
 	_expect(str(crafted.get("rarity", "")) == "common", "common craft stays common rarity")
 	_expect(str(crafted.get("set_id", "")) == "", "craft never mints a normal set item")
-	_expect(str(crafted.get("base", "")) == "gear_head_common", "craft uses the non-set shell base")
+	_expect(str(crafted.get("base", "")) == "base:gear_head_common", "craft uses the non-set shell base")
 	_expect(MetaProgress.scrap == scrap_before - 40, "common craft spends 40 Scrap")
 	_expect(MetaProgress.stash == stash_sentinel, "craft does not auto-store equipment")
 

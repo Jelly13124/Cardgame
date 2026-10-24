@@ -176,7 +176,7 @@ func show_pile_viewer(title: String, pile_container: CardContainer) -> void:
 
 	# Populate with cards from the pile
 	for card_data in pile_container.get_cards():
-		var card_name = card_data.card_info.get("name", "")
+		var card_name = card_data.card_info.get("id", "")
 		if card_name.is_empty():
 			continue
 		_add_card_to_viewer(card_name)
@@ -215,7 +215,7 @@ func show_run_deck_viewer(title: String = "", deck_entries: Array = []) -> void:
 				if pile and pile.has_method("get_cards"):
 					for card in pile.get_cards():
 						if is_instance_valid(card):
-							deck_entries.append(card.card_info.get("name", ""))
+							deck_entries.append(card.card_info.get("id", ""))
 
 	pile_viewer_title.text = title
 	_clear_pile_viewer_grid()
@@ -264,7 +264,7 @@ func _card_id_from_deck_entry(entry) -> String:
 	if typeof(entry) == TYPE_DICTIONARY:
 		return str(entry.get("card_id", entry.get("name", "")))
 	if entry is Control and "card_info" in entry:
-		return str(entry.card_info.get("name", ""))
+		return str(entry.card_info.get("id", ""))
 	return ""
 
 

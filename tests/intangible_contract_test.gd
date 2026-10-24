@@ -6,7 +6,7 @@ extends Node
 
 const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
 const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://battle_scene/data_validator.gd
-const CARD_DIR := "res://battle_scene/card_info/"
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 
 var failures: PackedStringArray = []
 
@@ -25,9 +25,9 @@ func _expect(condition: bool, message: String) -> void:
 func _run() -> void:
 	_expect(DATA_VALIDATOR.ALLOWED_STATUS_NAMES.has("intangible"), "Intangible is a known status")
 	_expect(not DATA_VALIDATOR.ALLOWED_STATUS_NAMES.has("dodge"), "Dodge is retired")
-	var smoke_step: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(CARD_DIR + "player/smoke_step.json"))
+	var smoke_step: Dictionary = MODEL_DB.data("card", "base:smoke_step")
 	_expect(str(smoke_step["effects"][0].get("status", "")) == "intangible", "Smoke Step grants Intangible")
-	var hound: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(CARD_DIR + "enemy/chrome_hound.json"))
+	var hound: Dictionary = MODEL_DB.data("monster", "base:chrome_hound")
 	var hound_statuses: Array = []
 	for action in hound.get("action_pattern", []):
 		hound_statuses.append(str(action.get("status", "")))

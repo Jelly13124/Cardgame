@@ -3,9 +3,9 @@
 ## "attack"/"skill"/"ability", OR a theme tag found in the card's `tags` array).
 extends RefCounted
 
-const CARD_DIR := "res://battle_scene/card_info/player/"
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 ## Basic starter cards are excluded — discovering Strike/Defend is boring.
-const EXCLUDE := ["strike", "defend", "weak_strike"]
+const EXCLUDE := ["base:strike", "base:defend", "base:weak_strike"]
 const CARD_TYPES := ["attack", "skill", "ability"]
 
 
@@ -52,12 +52,4 @@ static func _matches(data: Dictionary, pool: String) -> bool:
 
 
 static func _load_card(id: String) -> Dictionary:
-	var path := CARD_DIR + id + ".json"
-	if not FileAccess.file_exists(path):
-		return {}
-	var f := FileAccess.open(path, FileAccess.READ)
-	if f == null:
-		return {}
-	var parsed: Variant = JSON.parse_string(f.get_as_text())
-	f.close()
-	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
+	return MODEL_DB.data("card", id)

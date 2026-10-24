@@ -11,17 +11,8 @@ class_name DataValidator
 # ─── Core resolvers ───────────────────────────────────────────────────────────
 const CARD_UPGRADE = preload("uid://d2e2bfj6oa3yp")  # res://run_system/core/card_upgrade.gd
 
-# ─── Paths ────────────────────────────────────────────────────────────────────
-const CARD_DIR = "res://battle_scene/card_info/player/"
-const ENEMY_DIR = "res://battle_scene/card_info/enemy/"
-const RELIC_DIR = "res://run_system/data/relics/"
-const EQUIPMENT_DIR = "res://run_system/data/equipment/"
-const SET_DIR = "res://run_system/data/equipment_sets/"
-const BASE_UPGRADE_DIR = "res://run_system/data/base_upgrades/"
-const HERO_DIR = "res://run_system/data/heroes/"
-const RANDOM_EVENT_DIR = "res://run_system/data/random_events/"
-const TOOL_DIR = "res://run_system/data/tools/"
-const BOUNTY_DATA_DIR = "res://run_system/data/bounties/"
+# ─── Content ──────────────────────────────────────────────────────────────────
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 
 const REQUIRED_TOOL_KEYS = ["id", "title", "effects"]
 const ALLOWED_TOOL_TARGETS = ["enemy", "self", "none"]
@@ -50,7 +41,7 @@ const ALLOWED_BOUNTY_REWARD_CURRENCIES = ["caps", "scrap"]
 const ALLOWED_BOUNTY_EQUIPMENT_TIERS = ["common", "uncommon", "rare"]
 
 # ─── Card schema ──────────────────────────────────────────────────────────────
-const REQUIRED_CARD_KEYS = ["name", "title", "type", "cost", "effects"]
+const REQUIRED_CARD_KEYS = ["id", "title", "type", "cost", "effects"]
 const ALLOWED_CARD_TYPES = ["attack", "skill", "ability", "curse"]
 # "unique" = hero-starting relics (e.g. crit_clip). Drop/shop pools bucket by
 # common/uncommon/rare and must never surface a unique relic (see
@@ -164,7 +155,7 @@ const ALLOWED_RELIC_EFFECT_TYPES = [
 	"crit_mult",
 	"auto_crit",
 	"bonus_allowance",
-	"tool_slots",
+	"tool_slots",  # bare-ok: effect key
 ]
 
 # ─── Enemy schema ─────────────────────────────────────────────────────────────
@@ -237,8 +228,8 @@ const REQUIRED_BASE_UPGRADE_KEYS = ["id", "name", "description", "effect_key", "
 const REQUIRED_BASE_UPGRADE_TIER_KEYS = ["level", "cost", "effect_value", "effect_text"]
 const ALLOWED_BASE_UPGRADE_EFFECT_KEYS = [
 	"starting_gold",
-	"reroll_tokens",
-	"tool_slots",
+	"reroll_tokens",  # bare-ok: effect key
+	"tool_slots",  # bare-ok: effect key
 	"safe_cells_bonus",
 	"backpack_cells",
 ]
@@ -263,30 +254,25 @@ const ALLOWED_EVENT_EFFECT_TYPES = [
 ]
 
 
-## Scan all card / enemy / relic directories and validate every JSON file,
-## plus cross-check that every enemy ID referenced by RunManager's encounter
-## pools / elite / boss rosters has a JSON file backing it.
-## Returns the number of validation failures.
+## Validate every ModelDb entry with its category's schema, report ModelDb load
+## errors (bad JSON, id/file mismatch, unresolved references), and cross-check
+## that every enemy ID referenced by RunManager's encounter pools / elite / boss
+## rosters exists. Returns the number of validation failures.
 static func validate_all_data_at_startup() -> int:
 	var failures = 0
-	failures += _validate_dir(CARD_DIR, Callable(DataValidator, "validate_card"))
-	failures += _validate_dir(ENEMY_DIR, Callable(DataValidator, "validate_enemy"))
-	# Relic files are very small and well-tested; only validate their existence.
-	failures += _validate_dir(RELIC_DIR, Callable(DataValidator, "validate_relic"))
-	failures += _validate_dir(EQUIPMENT_DIR, Callable(DataValidator, "validate_equipment"))
-	failures += _validate_dir(SET_DIR, Callable(DataValidator, "validate_equipment_set"))
-	failures += _validate_dir(BASE_UPGRADE_DIR, Callable(DataValidator, "validate_base_upgrade"))
-	failures += _validate_dir(HERO_DIR, Callable(DataValidator, "validate_hero"))
-	# Random events are optional content (the "?" node falls back gracefully when
-	# none exist); only validate the dir when it is present so a missing/empty dir
-	# does not fail boot. _validate_dir reports a missing dir as a failure.
-	if DirAccess.dir_exists_absolute(RANDOM_EVENT_DIR):
-		failures += _validate_dir(RANDOM_EVENT_DIR, Callable(DataValidator, "validate_event"))
-	if DirAccess.dir_exists_absolute(TOOL_DIR):
-		failures += _validate_dir(TOOL_DIR, Callable(DataValidator, "validate_tool"))
-	# Bounty contracts are shipped data — validate unconditionally (fail loud on a
-	# missing dir, per the shipped-data rule).
-	failures += _validate_dir(BOUNTY_DATA_DIR, Callable(DataValidator, "validate_bounty"))
+	for error in MODEL_DB.load_errors():
+		push_error("DataValidator: %s" % error)
+		failures += 1
+	failures += _validate_category("card", Callable(DataValidator, "validate_card"))
+	failures += _validate_category("monster", Callable(DataValidator, "validate_enemy"))
+	failures += _validate_category("relic", Callable(DataValidator, "validate_relic"))
+	failures += _validate_category("equipment", Callable(DataValidator, "validate_equipment"))
+	failures += _validate_category("equipment_set", Callable(DataValidator, "validate_equipment_set"))
+	failures += _validate_category("base_upgrade", Callable(DataValidator, "validate_base_upgrade"))
+	failures += _validate_category("character", Callable(DataValidator, "validate_hero"))
+	failures += _validate_category("event", Callable(DataValidator, "validate_event"))
+	failures += _validate_category("tool", Callable(DataValidator, "validate_tool"))
+	failures += _validate_category("bounty", Callable(DataValidator, "validate_bounty"))
 	# Cross-check encounter pools so a typo in RunManager constants fails at
 	# startup instead of crashing the player mid-combat in enemy_entity.create().
 	failures += validate_encounter_pools()
@@ -320,8 +306,8 @@ static func validate_encounter_pools() -> int:
 				if not enemies.has(id):
 					push_error(
 						(
-							"DataValidator: %s references unknown enemy id '%s' — add %s%s.json or fix the constant."
-							% [source_name, id, ENEMY_DIR, id]
+							"DataValidator: %s references unknown enemy id '%s' — add content/monsters or fix the constant."
+							% [source_name, id]
 						)
 					)
 					failures += 1
@@ -382,20 +368,11 @@ static func _validate_tier_roster(
 
 static func _load_enemy_summaries() -> Dictionary:
 	var result: Dictionary = {}
-	var dir = DirAccess.open(ENEMY_DIR)
-	if dir == null:
-		return result
-	dir.list_dir_begin()
-	var file_name = dir.get_next()
-	while file_name != "":
-		if file_name.ends_with(".json") and not dir.current_is_dir():
-			var parsed = JSON.parse_string(FileAccess.get_file_as_string(ENEMY_DIR + file_name))
-			if typeof(parsed) == TYPE_DICTIONARY:
-				result[file_name.get_basename()] = {
-					"tier": str(parsed.get("tier", "")),
-					"max_health": int(parsed.get("max_health", 0)),
-				}
-		file_name = dir.get_next()
+	for model in MODEL_DB.models("monster"):
+		result[model.id] = {
+			"tier": str(model.data.get("tier", "")),
+			"max_health": int(model.data.get("max_health", 0)),
+		}
 	return result
 
 
@@ -513,7 +490,7 @@ static func validate_card(data: Dictionary, source_path: String) -> bool:
 		push_warning(
 			(
 				"Card '%s' has no bespoke upgrade and no formula-bumpable effect — upgrade is a no-op"
-				% str(data.get("name", source_path))
+				% str(data.get("id", source_path))
 			)
 		)
 
@@ -1051,37 +1028,17 @@ static func validate_equipment_set(data: Dictionary, source_path: String) -> boo
 # ─── Internal ─────────────────────────────────────────────────────────────────
 
 
-static func _validate_dir(dir_path: String, validator: Callable) -> int:
-	var failures = 0
-	var dir = DirAccess.open(dir_path)
-	if dir == null:
-		push_error("DataValidator: cannot open directory '%s'" % dir_path)
+## Shipped categories must not be empty (fail loud, per the shipped-data rule).
+static func _validate_category(category: String, validator: Callable) -> int:
+	var models: Array = MODEL_DB.models(category)
+	if models.is_empty():
+		push_error("DataValidator: no %s content loaded" % category)
 		return 1
-	dir.list_dir_begin()
-	var file_name = dir.get_next()
-	while file_name != "":
-		if file_name.ends_with(".json") and not dir.current_is_dir():
-			var full_path = dir_path + file_name
-			var data = _read_json(full_path)
-			if data.is_empty():
-				push_error("DataValidator: failed to parse '%s'" % full_path)
-				failures += 1
-			elif not validator.call(data, full_path):
-				failures += 1
-		file_name = dir.get_next()
+	var failures = 0
+	for model in models:
+		if not validator.call(model.data, model.id):
+			failures += 1
 	return failures
-
-
-static func _read_json(path: String) -> Dictionary:
-	var file = FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {}
-	var text = file.get_as_text()
-	file.close()
-	var parsed = JSON.parse_string(text)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return {}
-	return parsed
 
 
 static func validate_base_upgrade(data: Dictionary, path: String) -> bool:

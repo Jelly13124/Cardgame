@@ -18,9 +18,9 @@ func _expect(condition: bool, message: String) -> void:
 
 
 func _run() -> void:
-	var data := RunManager.get_tool_data("energy_cell")
+	var data := RunManager.get_tool_data("base:energy_cell")
 	var overlay := TOOL_CONFIRM.new()
-	overlay.setup(0, "energy_cell", data)
+	overlay.setup(0, "base:energy_cell", data)
 	add_child(overlay)
 	await _frames(2)
 
@@ -53,7 +53,7 @@ func _run() -> void:
 	_expect(cancel_events.size() == 1, "cancel emits once")
 
 	var second := TOOL_CONFIRM.new()
-	second.setup(2, "med_kit", RunManager.get_tool_data("med_kit"))
+	second.setup(2, "base:med_kit", RunManager.get_tool_data("base:med_kit"))
 	add_child(second)
 	await get_tree().process_frame
 	var confirmations: Array = []
@@ -63,10 +63,10 @@ func _run() -> void:
 	second.confirm()
 	second.confirm()
 	await get_tree().process_frame
-	_expect(confirmations == [[2, "med_kit"]], "confirm emits the captured index and id once")
+	_expect(confirmations == [[2, "base:med_kit"]], "confirm emits the captured index and id once")
 
 	var click_overlay := TOOL_CONFIRM.new()
-	click_overlay.setup(0, "energy_cell", data)
+	click_overlay.setup(0, "base:energy_cell", data)
 	add_child(click_overlay)
 	await get_tree().process_frame
 	var click_events: Array[bool] = []
@@ -79,7 +79,7 @@ func _run() -> void:
 	_expect(click_events.size() == 1, "clicking the scrim cancels")
 
 	var escape_overlay := TOOL_CONFIRM.new()
-	escape_overlay.setup(0, "energy_cell", data)
+	escape_overlay.setup(0, "base:energy_cell", data)
 	add_child(escape_overlay)
 	await get_tree().process_frame
 	var escape_events: Array[bool] = []
@@ -103,22 +103,22 @@ func _run() -> void:
 
 func _test_battle_confirmation_flow() -> void:
 	var original_tools: Array[String] = RunManager.tool_inventory.duplicate()
-	RunManager.tool_inventory.assign(["energy_cell"])
+	RunManager.tool_inventory.assign(["base:energy_cell"])
 	var battle := BATTLE_SCENE.instantiate()
 	add_child(battle)
 	await _frames(4)
 
 	battle.use_tool(0)
 	await get_tree().process_frame
-	_expect(RunManager.tool_inventory == ["energy_cell"], "opening confirmation does not consume")
+	_expect(RunManager.tool_inventory == ["base:energy_cell"], "opening confirmation does not consume")
 	var first := battle.find_child("ToolUseConfirm", true, false)
 	_expect(first != null, "battle opens the custom tool confirmation")
 	if first != null:
 		first.cancel()
 	await get_tree().process_frame
-	_expect(RunManager.tool_inventory == ["energy_cell"], "cancel leaves tool inventory unchanged")
+	_expect(RunManager.tool_inventory == ["base:energy_cell"], "cancel leaves tool inventory unchanged")
 
-	RunManager.tool_inventory.assign(["energy_cell"])
+	RunManager.tool_inventory.assign(["base:energy_cell"])
 	battle.use_tool(0)
 	battle.use_tool(0)
 	await get_tree().process_frame
@@ -132,23 +132,23 @@ func _test_battle_confirmation_flow() -> void:
 	var resolved := await _wait_until(func() -> bool: return RunManager.tool_inventory.is_empty())
 	_expect(resolved, "confirm resolves and consumes exactly one tool")
 
-	RunManager.tool_inventory.assign(["med_kit"])
+	RunManager.tool_inventory.assign(["base:med_kit"])
 	battle.use_tool(0)
 	await get_tree().process_frame
 	var stale := battle.find_child("ToolUseConfirm", true, false)
-	RunManager.tool_inventory.assign(["smoke_bomb"])
+	RunManager.tool_inventory.assign(["base:smoke_bomb"])
 	if stale != null:
 		stale.confirm()
 	await _frames(2)
 	_expect(
-		RunManager.tool_inventory == ["smoke_bomb"],
+		RunManager.tool_inventory == ["base:smoke_bomb"],
 		"stale confirmation cannot consume a replacement tool"
 	)
 
 	# Enemy-targeted tools have a two-step contract: confirmation only arms the
 	# target arrow; the inventory changes after a valid enemy click. Invalid
 	# clicks and explicit cancellation leave the tool untouched.
-	RunManager.tool_inventory.assign(["toxin_vial"])
+	RunManager.tool_inventory.assign(["base:toxin_vial"])
 	battle.use_tool(0)
 	await get_tree().process_frame
 	var enemy_confirmation := battle.find_child("ToolUseConfirm", true, false)
@@ -159,7 +159,7 @@ func _test_battle_confirmation_flow() -> void:
 	_expect(battle.is_targeting, "confirming an enemy tool enters target selection")
 	_expect(battle.call("_is_tool_targeting"), "target selection tracks a pending tool")
 	_expect(
-		RunManager.tool_inventory == ["toxin_vial"],
+		RunManager.tool_inventory == ["base:toxin_vial"],
 		"confirming an enemy tool does not consume before target selection"
 	)
 	battle.use_tool(0)
@@ -172,7 +172,7 @@ func _test_battle_confirmation_flow() -> void:
 	await get_tree().process_frame
 	_expect(battle.is_targeting, "an invalid target keeps selection active")
 	_expect(
-		RunManager.tool_inventory == ["toxin_vial"],
+		RunManager.tool_inventory == ["base:toxin_vial"],
 		"an invalid target does not consume the pending tool"
 	)
 
@@ -183,7 +183,7 @@ func _test_battle_confirmation_flow() -> void:
 	await get_tree().process_frame
 	_expect(not battle.is_targeting, "Escape cancels enemy tool target selection")
 	_expect(
-		RunManager.tool_inventory == ["toxin_vial"],
+		RunManager.tool_inventory == ["base:toxin_vial"],
 		"cancelling target selection leaves the tool inventory unchanged"
 	)
 
@@ -195,7 +195,7 @@ func _test_battle_confirmation_flow() -> void:
 	if enemy_confirmation != null:
 		enemy_confirmation.confirm()
 	await _frames(2)
-	var chosen_enemy: Node = battle.call("_find_tool_target", RunManager.get_tool_data("toxin_vial"))
+	var chosen_enemy: Node = battle.call("_find_tool_target", RunManager.get_tool_data("base:toxin_vial"))
 	_expect(chosen_enemy != null, "enemy tool selection has a living candidate")
 	if chosen_enemy != null:
 		battle.call("_confirm_tool_targeting", chosen_enemy)
@@ -209,7 +209,7 @@ func _test_battle_confirmation_flow() -> void:
 	for enemy in battle.enemy_container.get_children():
 		enemy.queue_free()
 	await get_tree().process_frame
-	RunManager.tool_inventory.assign(["frag_grenade"])
+	RunManager.tool_inventory.assign(["base:frag_grenade"])
 	battle.use_tool(0)
 	await get_tree().process_frame
 	_expect(
@@ -217,7 +217,7 @@ func _test_battle_confirmation_flow() -> void:
 		"enemy tool with no target opens no confirmation"
 	)
 	_expect(
-		RunManager.tool_inventory == ["frag_grenade"],
+		RunManager.tool_inventory == ["base:frag_grenade"],
 		"missing target does not consume the tool"
 	)
 

@@ -1,0 +1,20 @@
+{
+	"id": "siphon",
+	"title": "Scrap Counter",
+	"rarity": "common",
+	"type": "attack",
+	"cost": 1,
+	"description": "Deal [b]3[/b] damage and gain [b]3[/b] Block.",
+	"front_image": "player/siphon.png",
+	"side": "player",
+	"effects": [
+		{
+			"type": "deal_damage",
+			"amount": 3
+		},
+		{
+			"type": "gain_block",
+			"amount": 3
+		}
+	]
+}

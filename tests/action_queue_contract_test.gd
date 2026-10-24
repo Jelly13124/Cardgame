@@ -91,8 +91,8 @@ func test_battle_serializes_cards_and_end_turn() -> void:
 	enemy.max_health = 999
 	battle.player.energy = 10
 	var attacks: Array = [
-		battle.deck_manager.add_card_to_hand("strike"),
-		battle.deck_manager.add_card_to_hand("strike"),
+		battle.deck_manager.add_card_to_hand("base:strike"),
+		battle.deck_manager.add_card_to_hand("base:strike"),
 	]
 	await get_tree().process_frame
 	_expect(attacks[0] != null and attacks[1] != null, "two Shoot cards join the hand")

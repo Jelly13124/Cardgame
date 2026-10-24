@@ -16,6 +16,7 @@ const EVENT_MODAL_SCRIPT = preload("uid://0gxdrhjtltvh")  # res://run_system/ui/
 const T_THEME = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 const BATTLE_PACKED = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
 const SHOP_PACKED = preload("uid://dr8unxxfi0w51")  # res://run_system/ui/shop_scene.tscn
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_sts2_bg.png"
 const NODE_ICON_DIR = "res://run_system/assets/images/map/nodes/"
 const REST_SITE_BACKGROUND_PATH = "res://run_system/assets/images/rest/rest_site_bg.png"
@@ -331,7 +332,7 @@ func _on_node_clicked(node: Dictionary) -> void:
 			# unique relics, so neither rolls anywhere else — the unpicked one is gone
 			# for the run. Other heroes keep the random starting-relic roll.
 			# From Act 2 on, this floor-0 node opens Bill's clip-UPGRADE pick instead.
-			if str(rm.current_hero_id) == "cowboy_bill" and int(rm.current_act) >= 2:
+			if str(rm.current_hero_id) == "base:cowboy_bill" and int(rm.current_act) >= 2:
 				var base_clip := _held_base_clip()
 				if base_clip != "":
 					_open_clip_upgrade_choice(base_clip)
@@ -339,8 +340,8 @@ func _on_node_clicked(node: Dictionary) -> void:
 					# Already upgraded (3-act runs) — give a normal relic pick rather
 					# than re-offering the starting clips.
 					_open_relic_choice(tr("UI_MAP_CHOOSE_A_RELIC"), "treasure")
-			elif str(rm.current_hero_id) == "cowboy_bill":
-				var clips: Array[String] = ["crit_clip", "double_fire_clip"]
+			elif str(rm.current_hero_id) == "base:cowboy_bill":
+				var clips: Array[String] = ["base:crit_clip", "base:double_fire_clip"]
 				_open_relic_choice(tr("UI_MAP_CHOOSE_STARTING_RELIC"), "starting", clips)
 			else:
 				_open_relic_choice(tr("UI_MAP_CHOOSE_STARTING_RELIC"), "starting")
@@ -572,10 +573,10 @@ func _open_relic_choice(
 ## The base clip Bill currently holds ("crit_clip" / "double_fire_clip"), or "" if
 ## he holds none or only an already-upgraded variant. Drives the Act 2+ upgrade node.
 func _held_base_clip() -> String:
-	if rm.has_relic("crit_clip"):
-		return "crit_clip"
-	if rm.has_relic("double_fire_clip"):
-		return "double_fire_clip"
+	if rm.has_relic("base:crit_clip"):
+		return "base:crit_clip"
+	if rm.has_relic("base:double_fire_clip"):
+		return "base:double_fire_clip"
 	return ""
 
 
@@ -588,13 +589,13 @@ func _open_clip_upgrade_choice(base_clip: String) -> void:
 		return
 	var choices: Array[String] = []
 	_upgrade_replaces = {}
-	if base_clip == "crit_clip":
-		choices = ["crit_clip_volatile", "crit_clip_deadeye", "double_fire_clip"]
-		_upgrade_replaces["crit_clip_volatile"] = "crit_clip"
-		_upgrade_replaces["crit_clip_deadeye"] = "crit_clip"
+	if base_clip == "base:crit_clip":
+		choices = ["base:crit_clip_volatile", "base:crit_clip_deadeye", "base:double_fire_clip"]
+		_upgrade_replaces["base:crit_clip_volatile"] = "base:crit_clip"
+		_upgrade_replaces["base:crit_clip_deadeye"] = "base:crit_clip"
 	else:
-		choices = ["double_fire_clip_burst", "crit_clip"]
-		_upgrade_replaces["double_fire_clip_burst"] = "double_fire_clip"
+		choices = ["base:double_fire_clip_burst", "base:crit_clip"]
+		_upgrade_replaces["base:double_fire_clip_burst"] = "base:double_fire_clip"
 
 	for child in _relic_choice_box.get_children():
 		child.queue_free()
@@ -627,9 +628,9 @@ func _open_clip_upgrade_choice(base_clip: String) -> void:
 func _make_relic_choice_button(relic_id: String, source_type: String) -> Button:
 	var data = rm.get_relic_data(relic_id)
 	var title = Settings.t(
-		"RELIC_%s_TITLE" % relic_id, str(data.get("title", _humanize_id(relic_id)))
+		"RELIC_%s_TITLE" % MODEL_ID.key_entry(relic_id), str(data.get("title", _humanize_id(relic_id)))
 	)
-	var description = Settings.t("RELIC_%s_DESC" % relic_id, str(data.get("description", "")))
+	var description = Settings.t("RELIC_%s_DESC" % MODEL_ID.key_entry(relic_id), str(data.get("description", "")))
 
 	var button = Button.new()
 	button.custom_minimum_size = Vector2(300, 200)
@@ -709,7 +710,7 @@ func _on_relic_choice_selected(relic_id: String, source_type: String) -> void:
 	if rm.add_relic(relic_id):
 		var data = rm.get_relic_data(relic_id)
 		var relic_title = Settings.t(
-			"RELIC_%s_TITLE" % relic_id, str(data.get("title", _humanize_id(relic_id)))
+			"RELIC_%s_TITLE" % MODEL_ID.key_entry(relic_id), str(data.get("title", _humanize_id(relic_id)))
 		)
 		_show_popup(tr("UI_MAP_GAINED_RELIC").format({"n": relic_title}))
 	else:
@@ -798,7 +799,7 @@ func _grant_treasure_equipment() -> void:
 		_node_click_pending = false
 		return
 	var data = RunManager.get_equipment_data(item_id)
-	var item_name = Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
+	var item_name = Settings.t("EQUIP_%s_NAME" % MODEL_ID.key_entry(item_id), str(data.get("name", item_id)))
 	if RunManager.add_equip_to_backpack(einst):
 		_show_popup(tr("UI_MAP_FOUND_EQUIPMENT").format({"n": item_name}))
 	else:

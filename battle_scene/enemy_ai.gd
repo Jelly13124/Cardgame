@@ -30,7 +30,7 @@ var _summon_cursor: int = 0
 
 ## List of enemy IDs to spawn for this encounter.
 ## In the future this will be set by RunManager/MapScene before the battle starts.
-var enemy_roster: Array[String] = ["trash_robot"]
+var enemy_roster: Array[String] = ["base:trash_robot"]
 
 # ─── Spawning ─────────────────────────────────────────────────────────────────
 

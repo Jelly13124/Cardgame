@@ -2,21 +2,21 @@ extends Node
 
 const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://run_system/ui/window/character_window.gd
 const GENERIC_EQUIPMENT := [
-	["gear_head_common", "common"],
-	["gear_chest_common", "common"],
-	["gear_weapon_common", "common"],
-	["gear_hands_common", "common"],
-	["gear_accessory_common", "common"],
-	["gear_head_uncommon", "uncommon"],
-	["gear_chest_uncommon", "uncommon"],
-	["gear_weapon_uncommon", "uncommon"],
-	["gear_hands_uncommon", "uncommon"],
-	["gear_accessory_uncommon", "uncommon"],
-	["gear_head_rare", "rare"],
-	["gear_chest_rare", "rare"],
-	["gear_weapon_rare", "rare"],
-	["gear_hands_rare", "rare"],
-	["gear_accessory_rare", "rare"],
+	["base:gear_head_common", "common"],
+	["base:gear_chest_common", "common"],
+	["base:gear_weapon_common", "common"],
+	["base:gear_hands_common", "common"],
+	["base:gear_accessory_common", "common"],
+	["base:gear_head_uncommon", "uncommon"],
+	["base:gear_chest_uncommon", "uncommon"],
+	["base:gear_weapon_uncommon", "uncommon"],
+	["base:gear_hands_uncommon", "uncommon"],
+	["base:gear_accessory_uncommon", "uncommon"],
+	["base:gear_head_rare", "rare"],
+	["base:gear_chest_rare", "rare"],
+	["base:gear_weapon_rare", "rare"],
+	["base:gear_hands_rare", "rare"],
+	["base:gear_accessory_rare", "rare"],
 ]
 
 
@@ -51,7 +51,7 @@ func _run() -> void:
 	window.queue_free()
 	for _i in range(3):
 		await get_tree().process_frame
-	RunManager.tool_inventory.assign(["med_kit"])
+	RunManager.tool_inventory.assign(["base:med_kit"])
 	var filled_window := CHARACTER_WINDOW.new()
 	filled_window.mode = "map"
 	add_child(filled_window)
@@ -69,7 +69,7 @@ func _run() -> void:
 		await get_tree().process_frame
 	RunManager.pending_loadout.clear()
 	RunManager.pending_equipped.clear()
-	MetaProgress.upgrades["backpack"] = 3
+	MetaProgress.upgrades["base:backpack"] = 3
 	for spec in GENERIC_EQUIPMENT:
 		RunManager.pending_loadout.append(
 			RunManager.make_equip_instance(str(spec[0]), str(spec[1]))

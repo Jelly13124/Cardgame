@@ -5,7 +5,8 @@ extends Node2D
 class_name EnemyEntity
 
 const HUD_SCRIPT = preload("uid://dqn0nfitycf2d")  # res://battle_scene/ui/character_hud.gd
-const ENEMY_DATA_DIR = "res://battle_scene/card_info/enemy/"
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
 const SELECTION_RETICLE = preload("uid://c6dicaops28n6")  # res://battle_scene/ui/selection_reticle.gd
 const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
@@ -118,48 +119,44 @@ static func create(id: String) -> EnemyEntity:
 	entity.enemy_id = id
 	entity.is_elite = id in RunManager.ELITE_ROSTER
 	entity.is_boss = id in RunManager.ACT_BOSSES
-	var path = ENEMY_DATA_DIR + id + ".json"
-	if ResourceLoader.exists(path):
-		var file = FileAccess.open(path, FileAccess.READ)
-		if file:
-			var data: Dictionary = JSON.parse_string(file.get_as_text())
-			file.close()
-			if data:
-				# Display name routes through the content-translation table; the
-				# English JSON `name` is the source/fallback (content agents own
-				# the ENEMY_<id>_NAME rows in content_enemies.csv).
-				entity.enemy_name = Settings.t(
-					"ENEMY_%s_NAME" % id, str(data.get("name", id.to_upper()))
-				)
-				entity.max_health = int(data.get("max_health", 30))
-				# Ascension A1+: enemy HP scales +10% per level.
-				if RunManager.ascension > 0:
-					entity.max_health = int(
-						round(entity.max_health * (1.0 + 0.1 * RunManager.ascension))
-					)
-				# Per-act scaling (bosses exempt — see RunManager.scale_enemy_hp).
-				entity.max_health = RunManager.scale_enemy_hp(entity.max_health, id)
-				entity.health = entity.max_health
-				entity.action_pattern = data.get("action_pattern", [])
-				entity.sprite_id = data.get("sprite_id", "")
-				# Optional HP-threshold phases (spec A2). Copy + sort by
-				# descending hp_below so the deepest crossed phase wins.
-				var raw_phases = data.get("phases", [])
-				if typeof(raw_phases) == TYPE_ARRAY and not raw_phases.is_empty():
-					var sorted_phases: Array = raw_phases.duplicate()
-					sorted_phases.sort_custom(
-						func(a, b):
-							return float(a.get("hp_below", 0.0)) > float(b.get("hp_below", 0.0))
-					)
-					entity.phases = sorted_phases
+	# Writable copy: action patterns and phases are per-instance runtime state.
+	var data: Dictionary = MODEL_DB.mutable("monster", id)
+	if not data.is_empty():
+		# Display name routes through the content-translation table; the
+		# English JSON `name` is the source/fallback (content agents own
+		# the ENEMY_<id>_NAME rows in content_enemies.csv).
+		entity.enemy_name = Settings.t(
+			"ENEMY_%s_NAME" % MODEL_ID.key_entry(id), str(data.get("name", MODEL_ID.key_entry(id).to_upper()))
+		)
+		entity.max_health = int(data.get("max_health", 30))
+		# Ascension A1+: enemy HP scales +10% per level.
+		if RunManager.ascension > 0:
+			entity.max_health = int(
+				round(entity.max_health * (1.0 + 0.1 * RunManager.ascension))
+			)
+		# Per-act scaling (bosses exempt — see RunManager.scale_enemy_hp).
+		entity.max_health = RunManager.scale_enemy_hp(entity.max_health, id)
+		entity.health = entity.max_health
+		entity.action_pattern = data.get("action_pattern", [])
+		entity.sprite_id = data.get("sprite_id", "")
+		# Optional HP-threshold phases (spec A2). Copy + sort by
+		# descending hp_below so the deepest crossed phase wins.
+		var raw_phases = data.get("phases", [])
+		if typeof(raw_phases) == TYPE_ARRAY and not raw_phases.is_empty():
+			var sorted_phases: Array = raw_phases.duplicate()
+			sorted_phases.sort_custom(
+				func(a, b):
+					return float(a.get("hp_below", 0.0)) > float(b.get("hp_below", 0.0))
+			)
+			entity.phases = sorted_phases
 	else:
 		push_error(
 			(
-				"EnemyEntity: JSON not found for id '%s' at '%s'. Encounter will spawn a placeholder enemy."
-				% [id, path]
+				"EnemyEntity: unknown monster '%s'. Encounter will spawn a placeholder enemy."
+				% id
 			)
 		)
-		assert(false, "EnemyEntity: JSON not found for id '%s'" % id)
+		assert(false, "EnemyEntity: unknown monster '%s'" % id)
 	return entity
 
 

@@ -48,7 +48,7 @@ func _run() -> void:
 		+ 100
 	)
 	MetaProgress.caps = 4440
-	MetaProgress.bounty_shelf = ["war_profiteer", "elite_purge", "scavenger_haul"]
+	MetaProgress.bounty_shelf = ["base:war_profiteer", "base:elite_purge", "base:scavenger_haul"]
 	# HomeBase refreshes a stale daily shelf and saves it. Pin the in-memory date
 	# for this test so instantiation cannot write to the user's active slot.
 	MetaProgress.bounty_shelf_date = Time.get_date_string_from_system()

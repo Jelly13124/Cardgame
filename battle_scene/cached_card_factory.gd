@@ -1,26 +1,38 @@
-## Project card factory: behaves exactly like the vendored JsonCardFactory but
-## reads parsed card-info from the MetaProgress session cache instead of
-## re-scanning + re-parsing every card JSON on each battle/shop factory build
-## (~50 file reads + JSON parses per battle). The vendored addon is left untouched;
-## this override lives in the project. Falls back to the stock
-## per-file scan if the cache is somehow unavailable, so cards always load.
+## Project card factory: behaves like the vendored JsonCardFactory but takes card
+## info from ModelDb instead of scanning card JSON on each battle/shop factory
+## build. Cards are keyed by full content id ("base:reload"), which becomes the
+## card node's `card_name`. The vendored addon is left untouched; this override
+## lives in the project.
 ##
 ## No `class_name` (project convention) — referenced via the my_card_factory.tscn script slot.
 extends "res://addons/card-framework/json_card_factory.gd"
 
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+
 
 func preload_card_data() -> void:
-	var cache: Dictionary = MetaProgress.get_card_info_cache()
-	if cache.is_empty():
-		# Cache unavailable — fall back to the stock per-file scan (never break cards).
-		super.preload_card_data()
-		return
-	for card_name in cache:
-		var info: Dictionary = cache[card_name]
-		var tex: Texture2D = null
-		if info.has("front_image"):
-			# load() is resource-cached by Godot, so this is cheap on the 2nd+ build.
-			tex = _load_image(card_asset_dir + "/" + str(info["front_image"]))
-		# Deep-copy the cached info so per-battle card mutation can't corrupt the
-		# shared cache (each battle still gets an independent info dict).
-		preloaded_cards[card_name] = {"info": info.duplicate(true), "texture": tex}
+	for card_id in MODEL_DB.ids("card"):
+		_preload_from_db(card_id)
+
+
+## The addon names the node from `card_info.name`; content cards carry `id`.
+## Ids injected after this factory preloaded (tests, mods) load on demand.
+func create_card(card_name: String, target: CardContainer) -> Card:
+	if not preloaded_cards.has(card_name):
+		if not MODEL_DB.has("card", card_name):
+			push_error("Card info not found for card: %s" % card_name)
+			return null
+		_preload_from_db(card_name)
+	var entry: Dictionary = preloaded_cards[card_name]
+	return _create_card_node(card_name, entry["texture"], target, entry["info"])
+
+
+func _preload_from_db(card_id: String) -> void:
+	# Each factory gets its own writable copy so per-battle card mutation can't
+	# reach the canonical data.
+	var info: Dictionary = MODEL_DB.mutable("card", card_id)
+	var tex: Texture2D = null
+	if info.has("front_image"):
+		# load() is resource-cached by Godot, so this is cheap on the 2nd+ build.
+		tex = _load_image(card_asset_dir + "/" + str(info["front_image"]))
+	preloaded_cards[card_id] = {"info": info, "texture": tex}

@@ -1,0 +1,12 @@
+{
+	"id": "radiation_dust",
+	"title": "Radiation Dust",
+	"rarity": "curse",
+	"type": "curse",
+	"cost": 0,
+	"description": "Unplayable.",
+	"front_image": "player/radiation_dust.png",
+	"side": "player",
+	"unplayable": true,
+	"effects": []
+}

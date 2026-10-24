@@ -2,7 +2,7 @@ extends Control
 
 const CARD_FACTORY = preload("uid://diap3gdfbqvjv")  # res://battle_scene/my_card_factory.tscn
 const OUTPUT_PATH = "res://tmp/card-ui-runtime-imagegen-v3.png"
-const CARD_IDS: Array[String] = ["weak_strike", "strike", "defend", "focus"]
+const CARD_IDS: Array[String] = ["base:weak_strike", "base:strike", "base:defend", "base:focus"]
 
 
 func _ready() -> void:
@@ -10,8 +10,8 @@ func _ready() -> void:
 
 
 func _capture() -> void:
-	RunManager.current_hero_id = "cowboy_bill"
-	RunManager.current_hero_data = {"card_ui_skin": "cowboy_bill"}
+	RunManager.current_hero_id = "base:cowboy_bill"
+	RunManager.current_hero_data = {"card_ui_skin": "base:cowboy_bill"}
 
 	var background := TextureRect.new()
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)

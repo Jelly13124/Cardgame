@@ -43,10 +43,10 @@ func _test_shared_top_bar() -> void:
 	var original_tools: Array[String] = rm.tool_inventory.duplicate()
 	var original_relics: Array[String] = rm.relics.duplicate()
 	rm.tool_inventory.clear()
-	rm.tool_inventory.append("med_kit")
-	rm.tool_inventory.append("smoke_bomb")
+	rm.tool_inventory.append("base:med_kit")
+	rm.tool_inventory.append("base:smoke_bomb")
 	rm.relics.clear()
-	rm.relics.append("tool_belt")
+	rm.relics.append("base:tool_belt")
 
 	var host := Control.new()
 	add_child(host)
@@ -276,9 +276,9 @@ func _test_battle_energy_and_end_turn() -> void:
 			and simple_bar.get("fill_shadow_color") == Color("#5f100c"),
 			"real layered red HP returns with zero Block"
 		)
-	var normal_enemy := ENEMY_ENTITY.create("trash_robot")
-	var elite_enemy := ENEMY_ENTITY.create("armored_patrol")
-	var boss_enemy := ENEMY_ENTITY.create("rust_titan")
+	var normal_enemy := ENEMY_ENTITY.create("base:trash_robot")
+	var elite_enemy := ENEMY_ENTITY.create("base:armored_patrol")
+	var boss_enemy := ENEMY_ENTITY.create("base:rust_titan")
 	_expect(not normal_enemy.is_elite and not normal_enemy.is_boss, "normal factory classification")
 	_expect(elite_enemy.is_elite and not elite_enemy.is_boss, "elite factory classification")
 	_expect(boss_enemy.is_boss and not boss_enemy.is_elite, "boss factory classification")
@@ -349,7 +349,7 @@ func _test_battle_energy_and_end_turn() -> void:
 
 
 func _test_category_intents() -> void:
-	var enemy := ENEMY_ENTITY.create("acid_spitter")
+	var enemy := ENEMY_ENTITY.create("base:acid_spitter")
 	add_child(enemy)
 	await get_tree().process_frame
 	var cells := enemy.find_child("IntentCells", true, false) as HBoxContainer

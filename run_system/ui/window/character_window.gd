@@ -25,7 +25,8 @@ const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://run_system/ui/back
 const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
 const EQUIP_TOOLTIP = preload("uid://c6r8gr4gvx8ts")  # res://run_system/ui/equip_tooltip.gd
 const HERO_SPRITE_DIR := "res://battle_scene/assets/images/heroes/"
-const HERO_DIR := "res://run_system/data/heroes/"
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 
 const MODE_BASE := "base"
 const MODE_MAP := "map"
@@ -327,7 +328,7 @@ func _build_hero_switcher(hero_id: String, hero_data: Dictionary) -> Control:
 	plate.add_theme_stylebox_override("panel", T.ui_nameplate_box())
 	var name_lbl := Label.new()
 	name_lbl.text = Settings.t(
-		"HERO_%s_NAME" % hero_id, str(hero_data.get("name", hero_data.get("title", hero_id)))
+		"HERO_%s_NAME" % MODEL_ID.key_entry(hero_id), str(hero_data.get("name", hero_data.get("title", hero_id)))
 	)
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.add_theme_font_size_override("font_size", 13)
@@ -361,7 +362,7 @@ func _make_hero_arrow(glyph: String, kit_icon: String, step: int) -> Button:
 	return b
 
 
-## The selectable roster: hero JSONs under HERO_DIR, demo-filtered (the same
+## The selectable roster: every character in ModelDb, demo-filtered (the same
 ## rule the old picker strip applied). The full roster returns when
 ## RunManager.DEMO_BUILD is flipped off.
 func _hero_roster() -> Array[String]:
@@ -612,28 +613,11 @@ func _make_base_back_button() -> Button:
 
 
 func _list_hero_ids() -> Array[String]:
-	var ids: Array[String] = []
-	var dir := DirAccess.open(HERO_DIR)
-	if dir == null:
-		return ids
-	for file_name in dir.get_files():
-		if file_name.ends_with(".json"):
-			ids.append(file_name.get_basename())
-	ids.sort()
-	return ids
+	return MODEL_DB.ids("character")
 
 
 func _load_hero(hero_id: String) -> Dictionary:
-	var path := HERO_DIR + hero_id + ".json"
-	if not FileAccess.file_exists(path):
-		return {}
-	var f := FileAccess.open(path, FileAccess.READ)
-	if not f:
-		return {}
-	var raw := f.get_as_text()
-	f.close()
-	var parsed = JSON.parse_string(raw)
-	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
+	return MODEL_DB.data("character", hero_id)
 
 
 # --- shared: v2 equip-slot cell (layers + stylers) ---------------------------
@@ -812,7 +796,7 @@ func _make_base_slot_column(slot: String) -> Control:
 	else:
 		var base_id: String = RunManager.equip_base(inst)
 		var data: Dictionary = RunManager.get_equipment_data(base_id)
-		var item_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
+		var item_name := Settings.t("EQUIP_%s_NAME" % MODEL_ID.key_entry(base_id), str(data.get("name", base_id)))
 		_style_slot_filled(
 			slot,
 			item_name,
@@ -875,7 +859,7 @@ func _make_carry_cell(entry: Variant) -> Control:
 	var base_id: String = RunManager.equip_base(inst)
 	var data: Dictionary = RunManager.get_equipment_data(base_id)
 	var slot := str(data.get("slot", "head"))
-	var item_name := Settings.t("EQUIP_%s_NAME" % base_id, str(data.get("name", base_id)))
+	var item_name := Settings.t("EQUIP_%s_NAME" % MODEL_ID.key_entry(base_id), str(data.get("name", base_id)))
 
 	var cell = _new_cell(BASE_GRID_CELL_SIZE)
 	cell.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -1260,7 +1244,7 @@ func _make_run_slot_column(slot: String) -> Control:
 	var s := slot
 	cell.can_accept = func(data):
 		return (
-			data.get("src") == "backpack" and data.get("kind") == "equip" and data.get("slot") == s
+			data.get("src") == "backpack" and data.get("kind") == "equip" and data.get("slot") == s  # bare-ok: drag source
 		)
 	cell.perform_drop = func(data): _on_equip_pressed(str(data.get("item_id", "")), s, -1)
 	if not _read_only:
@@ -1342,7 +1326,7 @@ func _refresh() -> void:
 
 	# Character portrait + attributes
 	if _portrait_rect:
-		var sprite_id := str(RunManager.current_hero_data.get("sprite_id", "cowboy_bill"))
+		var sprite_id := str(RunManager.current_hero_data.get("sprite_id", "cowboy_bill"))  # bare-ok: sprite id
 		var tex := _load_portrait(sprite_id)
 		if tex:
 			_portrait_rect.texture = tex
@@ -1369,7 +1353,7 @@ func _refresh() -> void:
 			cell.hover_tip = "[b]%s[/b]\n%s" % [_slot_label(slot), tr("UI_EQUIP_EMPTY_SLOT")]
 		else:
 			var data = RunManager.get_equipment_data(item_id)
-			var item_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
+			var item_name := Settings.t("EQUIP_%s_NAME" % MODEL_ID.key_entry(item_id), str(data.get("name", item_id)))
 			_style_slot_filled(
 				slot,
 				item_name,
@@ -1480,7 +1464,7 @@ func _add_safe_border(cell: Control) -> void:
 func _wire_backpack_drop(cell, index: int) -> void:
 	cell.can_accept = func(data):
 		return (
-			(data.get("src") == "backpack" and int(data.get("index", -1)) != index)
+			(data.get("src") == "backpack" and int(data.get("index", -1)) != index)  # bare-ok: drag source
 			or data.get("src") == "slot"
 			or (
 				data.get("src") == "tool_slot"
@@ -1489,7 +1473,7 @@ func _wire_backpack_drop(cell, index: int) -> void:
 			)
 		)
 	cell.perform_drop = func(data):
-		if data.get("src") == "backpack":
+		if data.get("src") == "backpack":  # bare-ok: drag source
 			RunManager.move_cell(int(data.get("index", 0)), index)
 		elif data.get("src") == "slot":
 			_on_unequip_pressed(str(data.get("slot", "")))
@@ -1506,7 +1490,7 @@ func _wire_backpack_drop(cell, index: int) -> void:
 func _make_equip_cell(item_id: String, index: int, instance: Dictionary = {}) -> Control:
 	var data = RunManager.get_equipment_data(item_id)
 	var slot := str(data.get("slot", "head"))
-	var item_name := Settings.t("EQUIP_%s_NAME" % item_id, str(data.get("name", item_id)))
+	var item_name := Settings.t("EQUIP_%s_NAME" % MODEL_ID.key_entry(item_id), str(data.get("name", item_id)))
 	var cell = _new_cell(GRID_CELL_SIZE)
 	cell.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var icon = EQUIPMENT_ICON.new()
@@ -1518,7 +1502,7 @@ func _make_equip_cell(item_id: String, index: int, instance: Dictionary = {}) ->
 	cell.add_child(icon)
 	cell.hover_tip = _build_equipment_tooltip(data, slot, instance)
 	cell.drag_payload = {
-		"src": "backpack", "index": index, "kind": "equip", "item_id": item_id, "slot": slot
+		"src": "backpack", "index": index, "kind": "equip", "item_id": item_id, "slot": slot  # bare-ok: drag source
 	}
 	cell.preview_text = str(SLOT_LETTERS.get(slot, "?"))
 	cell.preview_color = Color(1.0, 0.86, 0.4)
@@ -1541,7 +1525,7 @@ func _make_equip_cell(item_id: String, index: int, instance: Dictionary = {}) ->
 ## free tool slot; middle-click toggles the safe zone; draggable to reorder/swap.
 func _make_tool_cell(tool_id: String, index: int) -> Control:
 	var data: Dictionary = RunManager.get_tool_data(tool_id)
-	var tool_name := Settings.t("TOOL_%s_TITLE" % tool_id, str(data.get("title", tool_id)))
+	var tool_name := Settings.t("TOOL_%s_TITLE" % MODEL_ID.key_entry(tool_id), str(data.get("title", tool_id)))
 	var cell = _new_cell(GRID_CELL_SIZE)
 	cell.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var panel := Panel.new()
@@ -1578,7 +1562,7 @@ func _make_tool_cell(tool_id: String, index: int) -> Control:
 		glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		panel.add_child(glyph)
 
-	var desc := Settings.t("TOOL_%s_DESC" % tool_id, "")
+	var desc := Settings.t("TOOL_%s_DESC" % MODEL_ID.key_entry(tool_id), "")
 	# The "click to equip" hint only applies when the window is editable.
 	var equip_hint := "" if _read_only else tr("UI_EQUIP_TOOL_EQUIP_HINT")
 	var tip := "[b]%s[/b]" % tool_name
@@ -1587,7 +1571,7 @@ func _make_tool_cell(tool_id: String, index: int) -> Control:
 	if equip_hint != "":
 		tip += "\n[color=#9fd0ff]%s[/color]" % equip_hint
 	cell.hover_tip = tip
-	cell.drag_payload = {"src": "backpack", "index": index, "kind": "tool", "tool_id": tool_id}
+	cell.drag_payload = {"src": "backpack", "index": index, "kind": "tool", "tool_id": tool_id}  # bare-ok: drag source
 	cell.preview_text = "⚙"
 	cell.preview_color = Color(0.6, 0.8, 1.0)
 	cell.preview_tex = tex
@@ -1605,8 +1589,8 @@ func _make_tool_cell(tool_id: String, index: int) -> Control:
 ## owns drag/click so it can move to an exact empty backpack target in map mode.
 func _make_equipped_tool_cell(index: int, tool_id: String) -> Control:
 	var data: Dictionary = RunManager.get_tool_data(tool_id)
-	var title := Settings.t("TOOL_%s_TITLE" % tool_id, str(data.get("title", tool_id)))
-	var desc := Settings.t("TOOL_%s_DESC" % tool_id, "")
+	var title := Settings.t("TOOL_%s_TITLE" % MODEL_ID.key_entry(tool_id), str(data.get("title", tool_id)))
+	var desc := Settings.t("TOOL_%s_DESC" % MODEL_ID.key_entry(tool_id), "")
 	var cell = _new_cell(SLOT_CELL_SIZE)
 	cell.name = "ToolSlot%d" % index
 	cell.mouse_default_cursor_shape = (
@@ -1664,7 +1648,7 @@ func _make_equipped_tool_cell(index: int, tool_id: String) -> Control:
 	cell.preview_tex = tex
 	var target_slot := index
 	cell.can_accept = func(data):
-		return data.get("src") == "backpack" and data.get("kind") == "tool"
+		return data.get("src") == "backpack" and data.get("kind") == "tool"  # bare-ok: drag source
 	cell.perform_drop = func(data): _equip_tool(int(data.get("index", -1)), target_slot)
 	if not _read_only:
 		cell.click_handler = func(btn):
@@ -1679,7 +1663,7 @@ func _make_empty_tool_cell(index: int) -> Control:
 	cell.name = "ToolSlot%d" % index
 	cell.hover_tip = tr("UI_EQUIP_TOOL_SLOT_EMPTY")
 	cell.can_accept = func(data):
-		return data.get("src") == "backpack" and data.get("kind") == "tool"
+		return data.get("src") == "backpack" and data.get("kind") == "tool"  # bare-ok: drag source
 	var target_slot := index
 	cell.perform_drop = func(data): _equip_tool(int(data.get("index", -1)), target_slot)
 	cell.add_child(_make_tool_board(SLOT_CELL_SIZE))
@@ -1748,7 +1732,7 @@ func _unequip_tool(index: int) -> void:
 
 ## Right-click discard asks first — affixed gear is permanently lost otherwise.
 func _confirm_discard(index: int, item_id: String) -> void:
-	var item_name := Settings.t("EQUIP_%s_NAME" % item_id, item_id)
+	var item_name := Settings.t("EQUIP_%s_NAME" % MODEL_ID.key_entry(item_id), item_id)
 	var dlg := ConfirmationDialog.new()
 	dlg.title = tr("UI_EQUIP_DISCARD_TITLE")
 	dlg.dialog_text = tr("UI_EQUIP_DISCARD_CONFIRM").format({"item": item_name})
@@ -1795,7 +1779,7 @@ func _make_resource_cell(
 	amount_lbl.add_theme_color_override("font_color", Color(0.98, 0.96, 0.9))
 	box.add_child(amount_lbl)
 
-	cell.drag_payload = {"src": "backpack", "index": index, "kind": kind}
+	cell.drag_payload = {"src": "backpack", "index": index, "kind": kind}  # bare-ok: drag source
 	cell.preview_text = "x%d" % amount
 	cell.preview_color = tint
 	_wire_backpack_drop(cell, index)

@@ -7,8 +7,7 @@ const RUN_MANAGER_PATH := "res://run_system/core/run_manager.gd"  # path-ok: rea
 const TUTORIAL_PATH := "res://battle_scene/ui/tutorial_tips.gd"  # path-ok: reads source text
 const BATTLE_PATH := "res://battle_scene/battle_scene.gd"  # path-ok: reads source text
 const RESULT_PATH := "res://run_system/ui/result_screen.gd"  # path-ok: reads source text
-const HERO_PATH := "res://run_system/data/heroes/cowboy_bill.json"
-const BASE_UPGRADE_DIR := "res://run_system/data/base_upgrades/"
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const EQUIPMENT_SET_SCRIPT = preload("uid://b3s8io84xovx7")  # res://battle_scene/equipment_set_system.gd
 const FAKE_BATTLE = preload("uid://j25pi73kmisn")  # res://tests/support/fake_battle.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
@@ -62,27 +61,27 @@ func _test_demo_shape() -> void:
 	_expect(RunManager.DEMO_BUILD, "public build keeps demo gating enabled")
 	_expect(RunManager.DEMO_MAX_ACTS == 1, "demo contains one authored act")
 	_expect(RunManager.acts_total() == 1, "demo-aware act count is one")
-	_expect(RunManager.DEMO_BOSS == "rust_titan", "Rust Titan is the fixed demo boss")
-	_expect(RunManager.current_act_boss() == "rust_titan", "runtime boss selection is fixed")
+	_expect(RunManager.DEMO_BOSS == "base:rust_titan", "Rust Titan is the fixed demo boss")
+	_expect(RunManager.current_act_boss() == "base:rust_titan", "runtime boss selection is fixed")
 
 
 func _test_focused_card_pool() -> void:
 	var original_hero := RunManager.current_hero_id
-	RunManager.current_hero_id = "cowboy_bill"
+	RunManager.current_hero_id = "base:cowboy_bill"
 	var pool := MetaProgress.get_unlocked_card_pool()
 	RunManager.current_hero_id = original_hero
 	_expect(pool.size() == 28, "Bill's demo reward pool stays focused at 28 cards")
-	for signature in ["piston_jab", "covering_reload", "hemorrhage", "limit_break"]:
+	for signature in ["base:piston_jab", "base:covering_reload", "base:hemorrhage", "base:limit_break"]:
 		_expect(signature in pool, "focused pool contains Bill card %s" % signature)
 	for diluted in [
-		"strike",
-		"defend",
-		"radiation_dust",
+		"base:strike",
+		"base:defend",
+		"base:radiation_dust",
 		"crowbar_smash",
 		"pipe_swing",
 		"breach_charge",
 		"bulkhead_bleed",
-		"combat_stim",
+		"base:combat_stim",
 		"focusing_blow",
 		"hemo_drive",
 		"last_breath",
@@ -118,7 +117,7 @@ func _test_set_onboarding_track() -> void:
 	var original_set := RunManager.demo_featured_set_id
 	var original_claimed: Array[String] = RunManager.demo_set_piece_ids_claimed.duplicate()
 	RunManager.current_act = 1
-	RunManager.demo_featured_set_id = "weak_hunter"
+	RunManager.demo_featured_set_id = "base:weak_hunter"
 	RunManager.demo_set_piece_ids_claimed.clear()
 	var claimed_ids: Array[String] = []
 	for floor_idx in RunManager.DEMO_SET_TRACK_FLOORS:
@@ -146,19 +145,19 @@ func _test_set_onboarding_track() -> void:
 func _test_set_instance_integrity() -> void:
 	# Old profiles may still store a bare equipment id. Reading one of those ids
 	# must not recreate the retired "common set" display state.
-	var legacy_set := RunManager.as_equip_instance("weak_hunter_helm")
-	_expect(str(legacy_set.get("set_id", "")) == "weak_hunter", "legacy set id is preserved")
+	var legacy_set := RunManager.as_equip_instance("base:weak_hunter_helm")
+	_expect(str(legacy_set.get("set_id", "")) == "base:weak_hunter", "legacy set id is preserved")
 	_expect(str(legacy_set.get("rarity", "")) == "set", "legacy set strings normalize to set rarity")
 	_expect(
 		RunManager.equip_affixes(legacy_set).size() == 3,
 		"legacy set strings normalize to exactly three affixes"
 	)
 	var legacy_dict := {
-		"base": "weak_hunter_helm",
+		"base": "base:weak_hunter_helm",
 		"rarity": "common",
 		"affixes": [{"type": "attr_luck", "value": 1}],
 		"cursed": false,
-		"set_id": "weak_hunter",
+		"set_id": "base:weak_hunter",
 	}
 	var normalized_dict := RunManager.as_equip_instance(legacy_dict)
 	_expect(str(normalized_dict.get("rarity", "")) == "set", "legacy set dictionaries normalize")
@@ -209,21 +208,19 @@ func _preview_block(battle, source, base: int) -> int:
 func _test_removed_mechanics() -> void:
 	for removed in ["med_bay", "starter_boost", "scrap_workshop"]:
 		_expect(
-			not FileAccess.file_exists(BASE_UPGRADE_DIR + removed + ".json"),
+			MODEL_DB.resolve("base_upgrade", removed) == "",
 			"retired upgrade data is removed: %s" % removed
 		)
 	var run_source := FileAccess.get_file_as_string(RUN_MANAGER_PATH)
 	var meta_source := FileAccess.get_file_as_string(META_PROGRESS_PATH)
 	for retired_card in RunManager.RETIRED_CARD_IDS:
 		_expect(
-			not FileAccess.file_exists(
-				"res://battle_scene/card_info/player/%s.json" % retired_card
-			),
+			MODEL_DB.resolve("card", retired_card) == "",
 			"retired card data is removed: %s" % retired_card
 		)
 	_expect(run_source.contains("RETIRED_CARD_IDS"), "old run saves strip retired card IDs")
 	_expect(
-		RunManager.CARD_ID_MIGRATIONS.get("vent_plating", "") == "kinetic_baffle",
+		RunManager.CARD_ID_MIGRATIONS.get("vent_plating", "") == "base:kinetic_baffle",
 		"old Kinetic Baffle card IDs migrate without deleting the card"
 	)
 	_expect(not run_source.contains('_get_meta_effect_value("med_bay")'), "retired Med Bay effect is not applied")
@@ -232,13 +229,13 @@ func _test_removed_mechanics() -> void:
 	var original_caps := MetaProgress.caps
 	var original_upgrades: Dictionary = MetaProgress.upgrades.duplicate(true)
 	MetaProgress.caps = 10
-	MetaProgress.upgrades = {"med_bay": 2, "scrap_workshop": 1, "command_center": 1}
+	MetaProgress.upgrades = {"med_bay": 2, "scrap_workshop": 1, "base:command_center": 1}
 	var migrated := bool(MetaProgress._migrate_removed_profile_state({"starter_deck_override": []}))
 	_expect(migrated, "retired profile fields trigger migration")
 	_expect(MetaProgress.caps == 220, "retired levels refund their exact 210 Caps")
 	_expect(not MetaProgress.upgrades.has("med_bay"), "migration erases retired Med Bay levels")
 	_expect(not MetaProgress.upgrades.has("scrap_workshop"), "migration erases retired discount levels")
-	_expect(MetaProgress.upgrades.get("command_center", 0) == 1, "migration preserves active upgrades")
+	_expect(MetaProgress.upgrades.get("base:command_center", 0) == 1, "migration preserves active upgrades")
 	MetaProgress.caps = original_caps
 	MetaProgress.upgrades = original_upgrades
 
@@ -276,7 +273,7 @@ func _test_run_timer_resume_contract() -> void:
 
 
 func _test_bill_identity() -> void:
-	var hero = JSON.parse_string(FileAccess.get_file_as_string(HERO_PATH))
+	var hero = MODEL_DB.data("character", "base:cowboy_bill")
 	_expect(typeof(hero) == TYPE_DICTIONARY, "Bill hero definition parses")
 	if typeof(hero) == TYPE_DICTIONARY:
 		var description := str(hero.get("description", "")).to_lower()

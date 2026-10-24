@@ -10,7 +10,7 @@ extends Control
 ## config properties BEFORE add_child() so _ready() sees them.
 
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
-const RELIC_DATA_DIR := "res://run_system/data/relics/"
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const TOPBAR_ICON_DIR := "res://run_system/assets/images/ui/topbar/"
 const HERO_IDLE_DIR := "res://battle_scene/assets/images/heroes/"
 const TOPBAR_BACKGROUND := "res://run_system/assets/images/ui_kit_lightline/hud_topbar_sts2.png"
@@ -524,9 +524,9 @@ func _make_empty_tool_slot() -> Control:
 func _make_tool_slot(index: int, tool_id: String) -> Button:
 	var data := RunManager.get_tool_data(tool_id)
 	var title := Settings.t(
-		"TOOL_%s_TITLE" % tool_id, str(data.get("title", _humanize_id(tool_id)))
+		"TOOL_%s_TITLE" % MODEL_ID.key_entry(tool_id), str(data.get("title", _humanize_id(tool_id)))
 	)
-	var desc := Settings.t("TOOL_%s_DESC" % tool_id, "")
+	var desc := Settings.t("TOOL_%s_DESC" % MODEL_ID.key_entry(tool_id), "")
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(40, 40)
 	b.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
@@ -575,9 +575,9 @@ func _refresh_relics() -> void:
 func _make_relic_medallion(relic_id: String) -> Button:
 	var data := _load_relic_data(relic_id)
 	var title := Settings.t(
-		"RELIC_%s_TITLE" % relic_id, str(data.get("title", _humanize_id(relic_id)))
+		"RELIC_%s_TITLE" % MODEL_ID.key_entry(relic_id), str(data.get("title", _humanize_id(relic_id)))
 	)
-	var desc := Settings.t("RELIC_%s_DESC" % relic_id, str(data.get("description", "")))
+	var desc := Settings.t("RELIC_%s_DESC" % MODEL_ID.key_entry(relic_id), str(data.get("description", "")))
 
 	var chip := Button.new()
 	chip.text = _short_label(title)
@@ -649,21 +649,12 @@ func _on_player_health(_current: int) -> void:
 
 
 func _load_relic_data(relic_id: String) -> Dictionary:
-	var data := {"id": relic_id, "title": _humanize_id(relic_id), "description": "", "icon": ""}
-	var file := FileAccess.open(RELIC_DATA_DIR + relic_id + ".json", FileAccess.READ)
-	if not file:
-		return data
-	var parsed = JSON.parse_string(file.get_as_text())
-	if typeof(parsed) == TYPE_DICTIONARY:
-		for key in parsed.keys():
-			data[key] = parsed[key]
-	return data
+	return RunManager.get_relic_data(relic_id)
 
 
+## Relic icons are authored as res:// paths (DataValidator checks them).
 func _resolve_relic_icon_path(icon_path: String) -> String:
-	if icon_path.begins_with("res://"):
-		return icon_path
-	return RELIC_DATA_DIR + icon_path
+	return icon_path
 
 
 func _load_icon_texture(path: String) -> Texture2D:
