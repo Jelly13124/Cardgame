@@ -159,7 +159,8 @@ func _test_enemy_identities(enemies: Dictionary) -> void:
 	killer.free()
 
 	var armored := ENEMY_ENTITY_SCRIPT.create("armored_patrol")
-	armored.add_breakable_armor(14, "vulnerable", 2)
+	armored.add_block(14)
+	armored.arm_breakable_armor("vulnerable", 2)
 	armored.take_damage(14, true, {"source": "player"})
 	_expect(armored.block == 0, "Armored Patrol's armor can be fully broken")
 	_expect(armored.get_status_stacks("vulnerable") == 2, "breaking armor exposes Armored Patrol for two turns")

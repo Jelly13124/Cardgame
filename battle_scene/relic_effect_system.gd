@@ -225,7 +225,7 @@ func attack_limit_per_turn() -> int:
 
 ## Player Crit damage multiplier override from held relics (Volatile Crit Clip →
 ## 1.75x). Returns `default_mult` when no relic overrides it; the highest override
-## wins. `amount` is a percentage (175 → 1.75x). Read by combat_engine._apply_player_crit.
+## wins. `amount` is a percentage (175 → 1.75x). Read by core/combat/rules/crit_rules.gd.
 func crit_mult(default_mult: float) -> float:
 	var result := default_mult
 	for entry in _get_effect_entries("player_crit_mult"):
@@ -235,7 +235,7 @@ func crit_mult(default_mult: float) -> float:
 
 
 ## True if a held relic makes the FIRST player attack each turn a guaranteed Crit
-## (Deadeye Crit Clip). combat_engine._apply_player_crit tracks the per-turn "first
+## (Deadeye Crit Clip). core/combat/rules/crit_rules.gd tracks the per-turn "first
 ## attack" itself and consults this.
 func first_attack_auto_crit() -> bool:
 	for entry in _get_effect_entries("first_attack_crit"):
@@ -264,7 +264,7 @@ func thorns_apply_short_circuit() -> bool:
 
 
 ## Held relics that react to a player Crit. Ricochet Loader adds a Reload card to
-## the hand on each crit. Called from combat_engine._apply_player_crit.
+## the hand on each crit. Called by core/combat/rules/crit_rules.gd when a crit commits.
 func on_player_crit(_player: Node) -> void:
 	if _battle_scene == null:
 		return

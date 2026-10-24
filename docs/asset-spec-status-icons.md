@@ -20,7 +20,7 @@ numbers or text into an icon.
 Runtime PNGs exist for:
 
 `short_circuit`, `burn`, `weak`, `vulnerable`, `stun`, `regen`, `thorns`,
-`frail`, `dodge`, `metallicize`, `feel_no_pain`, `hot_streak`, `all_in`,
+`frail`, `intangible`, `metallicize`, `feel_no_pain`, `hot_streak`, `all_in`,
 `covering_reload`, and `bullet`.
 
 The following active statuses intentionally use the glyph fallback until new

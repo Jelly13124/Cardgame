@@ -706,14 +706,9 @@ func take_damage(
 	_check_phase_transitions()
 
 
-## Arms a block layer whose destruction by player damage exposes this enemy.
-## Re-arming replaces the previous exposure payload rather than stacking traps.
-func add_breakable_armor(amount: int, status: String, stacks: int) -> void:
-	add_block(amount)
-	arm_breakable_armor(status, stacks)
-
-
-## Arms the exposure payload on the Block already gained this move.
+## Arms the Block gained this move as breakable armor: player damage that
+## removes all of it exposes this enemy. Re-arming replaces the previous
+## exposure payload rather than stacking traps.
 func arm_breakable_armor(status: String, stacks: int) -> void:
 	_breakable_armor_active = true
 	_breakable_armor_status = status
