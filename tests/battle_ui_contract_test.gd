@@ -36,6 +36,8 @@ func _run() -> void:
 	await test_played_card_loses_its_outline()
 	await test_end_turn_discard_lands_whole()
 	await test_combat_end_hides_outlines()
+	await test_flying_card_stays_readable()
+	await test_exhaust_embers_are_visible()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if failures.is_empty():
 		print("[OK] battle UI contract passed")
@@ -282,4 +284,39 @@ func test_combat_end_hides_outlines() -> void:
 	battle.refresh_hand_ui()
 	battle._victory()
 	_expect(not cards.any(func(c) -> bool: return c.highlight.is_shown()), "outlines go out when combat ends")
+	await _free(battle)
+
+
+func test_flying_card_stays_readable() -> void:
+	var battle = await _battle()
+	var cards: Array = await _add_strikes(battle, 1)
+	var card: Control = cards[0]
+	var darkest := [1.0]
+	var smallest := [1.0]
+	var sampling := [true]
+	var sample := func() -> void:
+		while sampling[0] and is_instance_valid(card):
+			if not battle.discard_pile.has_card(card):
+				darkest[0] = minf(darkest[0], card.modulate.r)
+				smallest[0] = minf(smallest[0], card.scale.x)
+			await get_tree().process_frame
+	sample.call()
+	await battle.card_animator.fly_to_discard(card)
+	sampling[0] = false
+	_expect(darkest[0] >= 0.6, "a flying card darkens only slightly (darkest %.2f)" % darkest[0])
+	_expect(smallest[0] >= 0.2, "a flying card stays big enough to read (smallest %.2f)" % smallest[0])
+	await _free(battle)
+
+
+func test_exhaust_embers_are_visible() -> void:
+	var battle = await _battle()
+	var card = battle.deck_manager.add_card_to_hand("reload")
+	await get_tree().process_frame
+	battle.card_animator.burn_exhaust(card)
+	var bursts: Array = battle.find_children("*", "CPUParticles2D", true, false)
+	_expect(bursts.size() == 1, "one ember burst per exhausted card")
+	if bursts.size() == 1:
+		var burst: CPUParticles2D = bursts[0]
+		_expect(burst.amount >= 60, "the burst has at least 60 embers (got %d)" % burst.amount)
+		_expect(burst.scale_amount_min >= 8.0, "embers are at least 8 px (got %.1f)" % burst.scale_amount_min)
 	await _free(battle)

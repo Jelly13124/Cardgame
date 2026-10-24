@@ -14,6 +14,10 @@ const PLAY_SCALE := 0.8
 const DISCARD_GLYPH_OFFSET := Vector2(80, 110)
 ## Positions kept in a discard flight's trail.
 const TRAIL_POINTS := 12
+## A flying card dims to this brightness and shrinks to this scale (it stays
+## readable rather than turning into a black speck).
+const FLIGHT_MIN_SHADE := 0.65
+const FLIGHT_END_SCALE := 0.25
 
 var _scene: Node
 ## Played cards waiting for their turn in the action queue, oldest first.
@@ -120,8 +124,8 @@ func _tween_card(card: Control, at: Vector2, card_scale: float, seconds: float) 
 
 
 ## Arc into the discard pile: a randomized quadratic arc that speeds up, the
-## card turning along its path, darkening and shrinking over the first third,
-## with a fading trail. Resets the card for reuse in the pile on arrival.
+## card turning along its path, dimming slightly and shrinking over the first
+## third, with a fading trail. Resets the card for reuse in the pile on arrival.
 func fly_to_discard(card: Control) -> void:
 	if not is_instance_valid(card):
 		return
@@ -154,9 +158,9 @@ func fly_to_discard(card: Control) -> void:
 		if ahead != at:
 			card.rotation = lerp_angle(card.rotation, (ahead - at).angle() + PI * 0.5, delta * 12.0)
 		var fade := clampf(time * 3.0 / duration, 0.0, 1.0)
-		var shade := lerpf(1.0, 0.0, fade)
+		var shade := lerpf(1.0, FLIGHT_MIN_SHADE, fade)
 		card.modulate = Color(shade, shade, shade, 1.0)
-		card.scale = Vector2.ONE * lerpf(start_scale, 0.1, fade)
+		card.scale = Vector2.ONE * lerpf(start_scale, FLIGHT_END_SCALE, fade)
 		trail.add_point(at)
 		while trail.get_point_count() > TRAIL_POINTS:
 			trail.remove_point(0)
@@ -287,19 +291,22 @@ func _make_burn_burst() -> CPUParticles2D:
 	var burst := CPUParticles2D.new()
 	burst.name = "ExhaustBurst"
 	burst.one_shot = true
-	burst.amount = 40
-	burst.lifetime = 0.8
+	burst.amount = 70
+	burst.lifetime = 1.0
 	burst.explosiveness = 0.85
+	burst.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	burst.emission_rect_extents = Vector2(70.0, 90.0)
 	burst.direction = Vector2.UP
-	burst.spread = 70.0
-	burst.initial_velocity_min = 120.0
-	burst.initial_velocity_max = 260.0
-	burst.gravity = Vector2(0.0, -60.0)
-	burst.scale_amount_min = 3.0
-	burst.scale_amount_max = 6.0
+	burst.spread = 80.0
+	burst.initial_velocity_min = 160.0
+	burst.initial_velocity_max = 340.0
+	burst.gravity = Vector2(0.0, -40.0)
+	burst.scale_amount_min = 8.0
+	burst.scale_amount_max = 14.0
 	var ramp := Gradient.new()
-	ramp.set_color(0, Color(1.0, 0.62, 0.2, 1.0))
-	ramp.set_color(1, Color(0.42, 0.4, 0.38, 0.0))
+	ramp.set_color(0, Color(1.0, 0.86, 0.38, 1.0))
+	ramp.add_point(0.45, Color(1.0, 0.5, 0.15, 0.95))
+	ramp.set_color(ramp.get_point_count() - 1, Color(0.42, 0.4, 0.38, 0.0))
 	burst.color_ramp = ramp
 	burst.z_index = 95
 	_scene.add_child(burst)
