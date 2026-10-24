@@ -1,0 +1,14 @@
+{
+  "caps": 120,
+  "scrap": 30,
+  "upgrades": {"backpack": 2, "blacksmith": 1, "med_bay": 1},
+  "stash": [{"base": "gear_weapon_rare", "rarity": "rare", "affixes": []}, "gear_head_uncommon"],
+  "base_loadout": [{"base": "gear_chest_uncommon", "rarity": "uncommon", "affixes": []}],
+  "base_equipped": {"head": {"base": "gear_head_rare", "rarity": "rare", "affixes": []}},
+  "active_bounties": [{"id": "elite_purge", "progress": 1}],
+  "bounty_shelf": ["scavenger_haul", "war_profiteer"],
+  "cards_seen": {"reload": true, "hemorrhage": true},
+  "run_history": [{"hero_id": "cowboy_bill", "floor": 5, "act": 1, "outcome": "dead"}],
+  "buildings": {"blacksmith": 1},
+  "facilities": {}
+}

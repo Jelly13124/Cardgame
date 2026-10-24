@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c3cymwixfcafp"]
+
+[ext_resource type="Script" path="res://tests/save_migration_test.gd" id="1"]
+
+[node name="SaveMigrationTest" type="Node"]
+script = ExtResource("1")

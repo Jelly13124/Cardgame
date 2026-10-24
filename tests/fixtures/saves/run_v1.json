@@ -1,0 +1,40 @@
+{
+  "v": 1,
+  "is_run_active": true,
+  "current_hero_id": "cowboy_bill",
+  "current_hero_data": {"id": "cowboy_bill", "name": "Cowboy Bill", "max_health": 50},
+  "ascension": 0,
+  "max_health": 50,
+  "current_health": 41,
+  "current_floor": 3,
+  "current_act": 1,
+  "player_deck": [
+    {"uid": 1, "card_id": "reload"},
+    {"uid": 2, "card_id": "strike"},
+    {"uid": 3, "card_id": "ghost_card"},
+    {"uid": 4, "card_id": "combat_stim"}
+  ],
+  "equipped_items": {
+    "head": {"base": "gear_head_common", "rarity": "common", "affixes": [{"type": "attr_luck", "value": 1}]},
+    "chest": "gear_chest_common",
+    "weapon": {},
+    "hands": {},
+    "accessory": {}
+  },
+  "backpack": [
+    {"kind": "equip", "item": {"base": "warden_axe", "rarity": "set", "set_id": "warden", "affixes": [{"type": "max_hp", "value": 10}]}},
+    {"kind": "equip", "id": "gear_hands_rare"},
+    {"kind": "tool", "id": "med_kit"},
+    {"kind": "gold", "amount": 40},
+    null
+  ],
+  "relics": ["bounty_tags", "crit_clip"],
+  "tool_inventory": ["smoke_bomb", ""],
+  "current_encounter": ["scrap_rat", "hex_drone"],
+  "seen_random_event_ids": ["adrenaline_shot"],
+  "demo_featured_set_id": "weak_hunter",
+  "demo_set_piece_ids_claimed": ["weak_hunter_helm"],
+  "map_data": [],
+  "current_node_id": "",
+  "visited_node_ids": []
+}

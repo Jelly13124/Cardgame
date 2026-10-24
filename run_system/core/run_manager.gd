@@ -406,6 +406,7 @@ const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
+const SAVE_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/content/save_migration.gd
 
 
 func _ready() -> void:
@@ -2120,7 +2121,7 @@ func save_run() -> void:
 	if not is_run_active:
 		return
 	var payload := {
-		"v": 1,
+		"v": SAVE_MIGRATION.RUN_VERSION,
 		"is_run_active": is_run_active,
 		"current_hero_id": current_hero_id,
 		"current_hero_data": current_hero_data,
@@ -2181,6 +2182,9 @@ func load_run() -> bool:
 		push_warning("RunManager: run save was corrupt, resumed from %s" % result.get("source", ""))
 	if not bool(data.get("is_run_active", false)):
 		return false
+	if SAVE_MIGRATION.run_needs_migration(data):
+		SAVE_MIGRATION.backup_once(_run_save_path())
+		data = SAVE_MIGRATION.migrate_run(data)
 
 	current_hero_id = str(data.get("current_hero_id", ""))
 	current_hero_data = data.get("current_hero_data", {})

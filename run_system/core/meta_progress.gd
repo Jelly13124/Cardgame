@@ -266,6 +266,7 @@ const REFORGE_COST := {"common": 15, "uncommon": 30, "rare": 50}
 const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
 ## --- Bounty system (replaces the daily-task mock) ---
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const SAVE_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/content/save_migration.gd
 ## Max held contracts; the outpost shelf refuses takes beyond this.
 const MAX_ACTIVE_BOUNTIES := 3
 ## Contracts on the outpost shelf per day (all free to take).
@@ -1118,6 +1119,7 @@ func save_progress() -> void:
 		"bounty_shelf_date": bounty_shelf_date,
 		"bounty_free_claimed": bounty_free_claimed,
 		"cards_seen": cards_seen,
+		"content_v": SAVE_MIGRATION.META_CONTENT_VERSION,
 	}
 	var err := SAVE_IO.write_json(_meta_path(), payload)
 	if err != OK:
@@ -1139,6 +1141,10 @@ func load_progress() -> void:
 	var recovered := status == SAVE_IO.RECOVERED
 	if recovered:
 		push_warning("MetaProgress: profile %s was corrupt, restored from %s" % [path, result.get("source", "")])
+	var migrated := SAVE_MIGRATION.meta_needs_migration(parsed)
+	if migrated:
+		SAVE_MIGRATION.backup_once(path)
+		parsed = SAVE_MIGRATION.migrate_meta(parsed)
 	# Core was removed 2026-07-07: an old save's "core" key is simply ignored here
 	# (balance discarded, not migrated — owner decision). Missing/extra keys are
 	# fault-tolerant (JSON.get with defaults), so old and new saves both load clean.
@@ -1233,7 +1239,7 @@ func load_progress() -> void:
 		save_progress()
 		emit_signal("caps_changed", caps)
 		emit_signal("upgrades_changed")
-	elif recovered:
+	elif recovered or migrated:
 		save_progress()
 
 
