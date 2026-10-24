@@ -724,7 +724,8 @@ func _on_turn_ended(side: String) -> void:
 ## they're added, with no visual cue that they were discarded.
 func _animate_hand_discard(cards: Array) -> void:
 	const STAGGER := 0.07
-	const FLIGHT_DURATION := 0.36  # matches fly_to_discard tween length + buffer
+	var landed := [0]
+	var flying := 0
 	for i in range(cards.size()):
 		var card = cards[i]
 		if not is_instance_valid(card):
@@ -732,16 +733,22 @@ func _animate_hand_discard(cards: Array) -> void:
 		# Detach from hand first so the surviving cards re-fan around the gap.
 		if card.card_container and card.card_container.has_card(card):
 			card.card_container.remove_card(card)
-		# Fire-and-forget: each fly_to_discard runs in parallel via its own tween.
-		card_animator.fly_to_discard(card)
+		flying += 1
+		_discard_after_flight(card, landed)
 		if i < cards.size() - 1:
 			await _wait(STAGGER)
-	# Wait for the LAST card's flight before parking everything in discard.
-	await _wait(FLIGHT_DURATION)
-	for card in cards:
-		if is_instance_valid(card):
-			discard_pile.add_card(card)
-			card.modulate.a = 1.0  # restore alpha after fly_to_discard faded it
+	# The turn switches only after every card has landed in the pile.
+	while landed[0] < flying and is_inside_tree():
+		await get_tree().process_frame
+
+
+## One rule for joining the discard pile: the card lands first, then the pile
+## takes it (and hides it). `landed[0]` counts finished flights.
+func _discard_after_flight(card: Control, landed: Array) -> void:
+	await card_animator.fly_to_discard(card)
+	if is_instance_valid(card):
+		discard_pile.add_card(card)
+	landed[0] += 1
 
 
 func _on_round_changed(_round: int) -> void:
@@ -992,6 +999,7 @@ func _victory():
 	if is_targeting:
 		_cancel_active_targeting()
 	is_game_over = true
+	refresh_hand_ui()  # nothing is playable once combat is over
 	AudioManager.play_sfx("victory")
 	# Combat is over — neutralise any in-flight card drag NOW, before the 3s gap +
 	# loot modal (MOUSE_FILTER_STOP) can swallow the mouse-release and leave a card
@@ -1127,6 +1135,7 @@ func _game_over():
 	if is_targeting:
 		_cancel_active_targeting()
 	is_game_over = true
+	refresh_hand_ui()  # nothing is playable once combat is over
 	AudioManager.play_sfx("defeat")
 	# Defeat path: route through the death gate so _handle_run_loss fires
 	# and run_ended(false) is emitted.
@@ -1352,7 +1361,11 @@ func _resolve_played_card(card, target_node) -> void:
 	if is_game_over or not is_instance_valid(card):
 		return
 	await card_animator.begin_resolving(card)
-	if is_game_over or not is_instance_valid(card):
+	if not is_instance_valid(card):
+		return
+	if is_game_over:
+		# Combat ended while the card slid into the play position: drop it too.
+		await _park_dropped_card(card)
 		return
 	# The target can die while this card waits or flies; null = "no target".
 	var safe_target: Node = target_node if is_instance_valid(target_node) else null

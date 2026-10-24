@@ -34,6 +34,8 @@ func _run() -> void:
 	await test_exhaust_burns_in_place()
 	await test_combat_end_drops_waiting_cards()
 	await test_played_card_loses_its_outline()
+	await test_end_turn_discard_lands_whole()
+	await test_combat_end_hides_outlines()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if failures.is_empty():
 		print("[OK] battle UI contract passed")
@@ -245,6 +247,7 @@ func test_combat_end_drops_waiting_cards() -> void:
 	await get_tree().create_timer(0.8).timeout
 	_expect(battle.card_animator.waiting_cards().is_empty(), "no card is left waiting after combat ends")
 	_expect(battle.discard_pile.has_card(cards[1]) and battle.discard_pile.has_card(cards[2]), "dropped cards are parked in the discard pile")
+	_expect(battle.discard_pile.has_card(cards[0]), "the card sliding into the play position is parked too")
 	await _free(battle)
 
 
@@ -258,4 +261,25 @@ func test_played_card_loses_its_outline() -> void:
 	battle.play_spell(card, battle.enemy_container.get_child(0))
 	await get_tree().process_frame
 	_expect(not card.highlight.is_shown(), "a played card is no longer outlined")
+	await _free(battle)
+
+
+func test_end_turn_discard_lands_whole() -> void:
+	var battle = await _battle()
+	var cards: Array = await _add_strikes(battle, 3)
+	await battle._animate_hand_discard(cards)
+	_expect(cards.all(func(c) -> bool: return battle.discard_pile.has_card(c)), "every discarded hand card is in the pile")
+	_expect(cards.all(func(c) -> bool: return c.scale == Vector2.ONE), "hand cards join the pile only after their flight ends")
+	await get_tree().process_frame  # finished trails are freed at the end of the frame
+	_expect(battle.find_children("*", "Line2D", true, false).is_empty(), "no trail is left flying without its card")
+	await _free(battle)
+
+
+func test_combat_end_hides_outlines() -> void:
+	var battle = await _battle()
+	var cards: Array = await _add_strikes(battle, 2)
+	battle.player.energy = 3
+	battle.refresh_hand_ui()
+	battle._victory()
+	_expect(not cards.any(func(c) -> bool: return c.highlight.is_shown()), "outlines go out when combat ends")
 	await _free(battle)
