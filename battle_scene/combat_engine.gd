@@ -7,6 +7,7 @@ extends Node
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const CARD_PLAY = preload("uid://bxaw24a7fumhm")  # res://core/combat/card_play.gd
 const EFFECT_CONTEXT = preload("uid://bx2g3askncfr6")  # res://core/effects/effect_context.gd
+const HOOK_VALUE = preload("uid://npewr2krgrm6")  # res://core/combat/hook_value.gd
 
 signal victory_declared
 
@@ -23,8 +24,8 @@ func declare_victory() -> void:
 
 ## Reset the per-turn guaranteed-first-attack Crit (Deadeye Crit Clip).
 func reset_turn_crit() -> void:
-	if main.crit_rules:
-		main.crit_rules.reset_turn()
+	if main.combat_hooks:
+		main.combat_hooks.notify("reset_turn_state", null)
 
 
 ## Run one effect for `source` (card, tool, relic, set or curse) through the
@@ -124,8 +125,8 @@ func _resolve_card_once(
 ## relic-granted replay (double-fire clip → +1 for attack cards).
 func _replay_count(card: Control, type: String) -> int:
 	var n: int = int(card.card_info.get("replay", 0))
-	if type == "attack" and main.relic_effect_system:
-		n += main.relic_effect_system.attack_replay_bonus()
+	if type == "attack" and main.combat_hooks:
+		n += int(main.combat_hooks.compute("modify_attack_replays", HOOK_VALUE.make(0)))
 	return n
 
 

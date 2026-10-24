@@ -167,7 +167,7 @@ func test_relic_turn_block_is_fixed() -> void:
 	battle.setup()
 	battle.player.constitution = 3
 	battle.player.add_status("frail", 1)
-	await relics.on_player_turn_started(battle.player, 1)
+	await battle.combat_hooks.react("after_turn_start", "player", 1)
 	_expect(battle.player.block == 6, "relic Block ignores CON and Frail (got %d)" % battle.player.block)
 	RunManager.is_run_active = saved_active
 	RunManager.relics.clear()

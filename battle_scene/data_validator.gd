@@ -754,6 +754,10 @@ static func validate_relic(data: Dictionary, source_path: String) -> bool:
 		if not data.has(key):
 			push_error("%s: missing required key '%s'" % [prefix, key])
 			ok = false
+	# Escape hatch: a relic may name its own listener script.
+	if data.has("script") and not ResourceLoader.exists(str(data["script"])):
+		push_error("%s: script '%s' does not exist" % [prefix, data["script"]])
+		ok = false
 	if not ok or typeof(data.get("effects", null)) != TYPE_ARRAY:
 		return ok
 	for i in range(data["effects"].size()):

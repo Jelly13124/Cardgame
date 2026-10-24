@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://brc2uog4wpe2m"]
+
+[ext_resource type="Script" path="res://tests/relic_listener_test.gd" id="1"]
+
+[node name="RelicListenerTest" type="Node"]
+script = ExtResource("1")

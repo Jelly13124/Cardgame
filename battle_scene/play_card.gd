@@ -14,6 +14,7 @@ const ENEMY_TARGET_EFFECTS := [
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
 const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
+const HOOK_VALUE = preload("uid://npewr2krgrm6")  # res://core/combat/hook_value.gd
 const CARD_HIGHLIGHT = preload("uid://wd07lb83d87x")  # res://battle_scene/ui/card_highlight.gd
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
@@ -713,8 +714,8 @@ func _build_description(data: Dictionary) -> String:
 	var replay_n: int = int(data.get("replay", 0))
 	if str(data.get("type", "")).to_lower() == "attack":
 		var rscene = get_tree().current_scene if get_tree() else null
-		if rscene and "relic_effect_system" in rscene and rscene.relic_effect_system:
-			replay_n += int(rscene.relic_effect_system.attack_replay_bonus())
+		if rscene and "combat_hooks" in rscene and rscene.combat_hooks:
+			replay_n += int(rscene.combat_hooks.compute("modify_attack_replays", HOOK_VALUE.make(0)))
 	if replay_n > 0:
 		keywords.append(tr("UI_BATTLE_KEYWORD_REPLAY").format({"n": replay_n}))
 	if bool(data.get("retain", false)):

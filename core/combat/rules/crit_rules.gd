@@ -2,22 +2,17 @@ extends RefCounted
 
 ## Player crits (multiplicative stage). Every powered player hit rolls
 ## RunManager.crit_chance(); Overload discharge rolls only when a listener
-## answers `can_crit_overload` (Overload Protocol). Forced crits — the relic's
-## first attack each turn, then listeners answering `should_force_crit`
-## (Deadeye) — are spent by real hits only; a preview shows a forced crit once
-## per preview play and never shows a random one. The multiplier starts at
-## RunManager.CRIT_MULT and goes through `modify_crit_multiplier` (All In,
-## relics). Commits notify `after_crit` / `after_non_crit`.
+## answers `can_crit_overload` (Overload Protocol). Forced crits are asked in
+## order — `should_force_first_attack_crit` (relic, first attack each turn),
+## then `should_force_crit` (Deadeye) — and are spent by real hits only; a
+## preview shows a forced crit once per preview play and never a random one.
+## The multiplier starts at RunManager.CRIT_MULT and goes through
+## `modify_crit_multiplier` (All In, relics). Commits notify `after_crit` /
+## `after_non_crit`.
 
 const HOOK_VALUE = preload("uid://npewr2krgrm6")  # res://core/combat/hook_value.gd
 
-var relics = null  # RelicEffectSystem or null
 var hooks = null  # combat_hooks.gd
-var first_attack_crit_used := false
-
-
-func reset_turn() -> void:
-	first_attack_crit_used = false
 
 
 func modify_damage_multiplicative(calc) -> void:
@@ -51,11 +46,7 @@ func _overload_crit(calc) -> void:
 
 ## Whether this hit is a forced crit; real hits queue the spend.
 func _take_forced_crit(calc) -> bool:
-	var play = calc.play
-	if not first_attack_crit_used and relics and relics.first_attack_auto_crit():
-		if not calc.preview:
-			calc.on_commit(func() -> void: first_attack_crit_used = true)
-			return true
-		if play == null or play.simulate_spend("first_attack_crit"):
-			return true
-	return hooks.query_any("should_force_crit", calc)
+	return (
+		hooks.query_any("should_force_first_attack_crit", calc)
+		or hooks.query_any("should_force_crit", calc)
+	)

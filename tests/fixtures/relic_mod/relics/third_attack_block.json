@@ -1,0 +1,8 @@
+{
+  "id": "third_attack_block",
+  "title": "Rhythm Plate",
+  "rarity": "common",
+  "description": "Every third Attack you play grants 3 Block.",
+  "effects": [],
+  "script": "res://tests/fixtures/relic_mod/third_attack_block.gd"
+}

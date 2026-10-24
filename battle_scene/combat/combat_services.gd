@@ -28,7 +28,6 @@ static func install(battle: Object) -> void:
 	hooks.commands = commands
 
 	var crit_rules = CRIT_RULES.new()
-	crit_rules.relics = relics
 	crit_rules.hooks = hooks
 	var attributes = ATTRIBUTE_RULES.new()
 	hooks.provider = func() -> Array:
@@ -36,7 +35,7 @@ static func install(battle: Object) -> void:
 		out.append_array(status_listeners(battle, hooks))
 		out.append(crit_rules)
 		if relics:
-			out.append(relics)
+			out.append_array(relics.current_listeners(hooks))
 		if sets:
 			out.append(sets)
 		out.append_array(hooks.listeners)

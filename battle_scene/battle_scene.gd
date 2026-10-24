@@ -52,6 +52,7 @@ var _pending_tool_data: Dictionary = {}
 
 const TARGETING_ARROW_SCRIPT = preload("uid://dq6nkaqdhlsp4")  # res://battle_scene/targeting_arrow.gd
 const RELIC_EFFECT_SYSTEM = preload("uid://b4d2o08tofxey")  # res://battle_scene/relic_effect_system.gd
+const HOOK_VALUE = preload("uid://npewr2krgrm6")  # res://core/combat/hook_value.gd
 const EQUIPMENT_SET_SYSTEM = preload("uid://b3s8io84xovx7")  # res://battle_scene/equipment_set_system.gd
 const CARD_ANIMATOR_SCRIPT = preload("uid://co0n3ou8saknv")  # res://battle_scene/card_animator.gd
 const DECK_MANAGER_SCRIPT = preload("uid://bi8d6vtu6xop6")  # res://battle_scene/deck_manager.gd
@@ -671,19 +672,21 @@ func _on_turn_started(side: String) -> void:
 	# Reset the per-turn guaranteed-first-attack Crit (Deadeye Crit Clip).
 	combat_engine.reset_turn_crit()
 	# Reset the attack allowance for the new turn (double-fire clip arms this).
-	_attack_limit_per_turn = (
-		relic_effect_system.attack_limit_per_turn() if relic_effect_system else 0
+	var round_number: int = turn_manager.current_round
+	_attack_limit_per_turn = int(
+		combat_hooks.compute("modify_attack_limit", HOOK_VALUE.make(0, {"round": round_number}))
 	)
-	# Burst-Fire Clip: +1 allowance on the first turn only (2 attacks on turn 1).
-	if _attack_limit_per_turn > 0 and relic_effect_system and turn_manager.current_round == 1:
-		_attack_limit_per_turn += relic_effect_system.first_turn_bonus_allowance()
+	# First-turn bonus on an armed cap (Burst-Fire Clip: 2 attacks on turn 1).
+	if _attack_limit_per_turn > 0 and round_number == 1:
+		_attack_limit_per_turn = int(
+			combat_hooks.compute("modify_attack_limit_first_turn", HOOK_VALUE.make(_attack_limit_per_turn))
+		)
 	_attacks_left_this_turn = _attack_limit_per_turn
 	_update_attack_allowance_ui()
 	# Ascension A3+: first turn of each combat starts with -1 energy.
 	if RunManager.ascension >= 3 and turn_manager.current_round == 1:
 		player.pay_energy(1)
-	if relic_effect_system:
-		await relic_effect_system.on_player_turn_started(player, turn_manager.current_round)
+	await combat_hooks.react("after_turn_start", "player", turn_manager.current_round)
 	if equipment_set_system:
 		await equipment_set_system.on_player_turn_started(player, turn_manager.current_round)
 	if is_game_over:
@@ -934,8 +937,7 @@ func _start_new_game():
 
 	# Passive relic stat grants at battle start (war_horn +STR, bulk_actuator).
 	# Runs after player attributes are seeded above so it stacks on the base.
-	if relic_effect_system:
-		relic_effect_system.on_battle_started(player)
+	combat_hooks.react("before_combat_start")
 
 	# Snapshot active equipment set tiers (and apply start_battle_block)
 	if equipment_set_system:
@@ -1005,8 +1007,7 @@ func _victory():
 	# loot modal (MOUSE_FILTER_STOP) can swallow the mouse-release and leave a card
 	# stuck in HOLDING, which permanently locks all future drags. (Bug fix.)
 	_reset_hand_drag_state()
-	if relic_effect_system:
-		relic_effect_system.on_combat_victory(player)
+	combat_hooks.react("after_combat_victory")
 	# Victory path: persist HP without firing the death gate, even if the
 	# player ended the fight at 0 HP (chip damage / mutual kill). Otherwise
 	# modify_health(negative) would trigger _handle_run_loss → run_ended(false),
@@ -1340,6 +1341,7 @@ func play_spell(card: Control, target_node: Node):
 	# gates passed, energy spent). Fires once per PLAY, not per Replay pass.
 	if type == "attack":
 		RunManager.bounty_event("play_attack_cards")
+	combat_hooks.react("after_card_played", card.card_info)
 	MetaProgress.mark_card_seen(str(card.card_info.get("id", "")))
 	if card.card_container and card.card_container.has_card(card):
 		card.card_container.remove_card(card)
