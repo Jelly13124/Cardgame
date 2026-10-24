@@ -6,20 +6,65 @@ The game's content lives in JSON: cards, enemies, relics, and encounter pools. T
 
 ## Locations
 
-| File type | Location | Validator |
+All content JSON lives under `content/<type>/`, one file per entry. ModelDb
+(`core/content/model_db.gd`) loads it once; nothing outside `core/content/`
+reads these files by path.
+
+| Category | Location | Validator |
 |---|---|---|
-| Player cards | `battle_scene/card_info/player/{id}.json` | `DataValidator.validate_card()` |
-| Enemies (incl. elites + boss) | `battle_scene/card_info/enemy/{id}.json` | `DataValidator.validate_enemy()` |
-| Relics | `run_system/data/relics/{id}.json` | `DataValidator.validate_relic()` |
+| card | `content/cards/{id}.json` | `DataValidator.validate_card()` |
+| monster (incl. elites + boss) | `content/monsters/{id}.json` | `DataValidator.validate_enemy()` |
+| relic | `content/relics/{id}.json` | `DataValidator.validate_relic()` |
+| equipment / equipment_set | `content/equipment/`, `content/equipment_sets/` | `validate_equipment()` / `validate_equipment_set()` |
+| event | `content/events/{id}.json` | `validate_event()` |
+| tool | `content/tools/{id}.json` | `validate_tool()` |
+| bounty | `content/bounties/{id}.json` | `validate_bounty()` |
+| character | `content/characters/{id}.json` | `validate_hero()` |
+| base_upgrade | `content/base_upgrades/{id}.json` | `validate_base_upgrade()` |
+| card_pool / relic_pool | `content/card_pools/`, `content/relic_pools/` | ModelDb reference check |
 | Encounter pools | constants in `run_system/core/run_manager.gd` | `DataValidator.validate_encounter_pools()` |
+
+Art stays in `battle_scene/assets/` and `run_system/assets/`.
+
+---
+
+## IDs
+
+- A content ID is `"<namespace>:<entry>"`. Shipped content is `base`, so
+  `content/cards/strike.json` is `base:strike`. The category is not part of the
+  ID: the same entry may exist in two categories (`adrenaline_shot` is both an
+  event and a tool).
+- Runtime state, saves and code literals hold **full** IDs
+  (`relics.has("base:crit_clip")`). A bare literal in code compares unequal to
+  run state; `tests/content_integrity_test.gd` fails on one. Mark a genuine
+  non-ID string that shares an entry name with `# bare-ok: <reason>`.
+- References inside JSON may be bare (`"set_id": "warden"`). The loader
+  resolves them in the file's own namespace, then `base`, and stores full IDs,
+  so consumers never resolve refs. Unresolved refs are load errors.
+- Translation keys, asset file names and node names use
+  `MODEL_ID.key_entry(id)`: the bare entry for `base` (keys stay
+  `CARD_strike_TITLE`, `RELIC_CRIT_CLIP_NAME`), `<ns>_<entry>` for others.
+
+## Pools
+
+A character names its `card_pool` and `relic_pool`. Run offers (draft,
+discover, shop, relic rewards) read `RunManager.current_card_pool()` /
+`current_relic_pool()`; every card and relic must belong to some pool.
+
+## Tests and mods
+
+`MODEL_DB.inject_dir(path, ns)` loads a directory laid out like `content/`;
+`inject(category, ns, entry, data)` adds one entry; `remove` and `reset`
+undo them. Rule tests that need special content inject it instead of relying
+on shipped data (see `tests/fixtures/content_mod/`).
 
 ---
 
 ## Naming
 
-- Filename = the `id` / `name` field inside, no extension. `strike.json` → `name: "strike"`.
-- `id` / `name` is **lower-snake-case**: `stun_baton`, `junkyard_tyrant`. No spaces, no caps, no dots.
-- Display title is the human-readable `title` field — separate from `id`. `Stun Baton` is the title; `stun_baton` is the id.
+- Filename = the local `id` field inside, no extension. `strike.json` → `id: "strike"`.
+- The local `id` is **lower-snake-case**: `stun_baton`, `junkyard_tyrant`. No spaces, no caps, no dots.
+- Display title is the human-readable `title` (cards, relics, tools, events) or `name` (monsters, equipment, sets, characters) field — separate from `id`. `Stun Baton` is the title; `stun_baton` is the id.
 
 ---
 
@@ -28,7 +73,7 @@ The game's content lives in JSON: cards, enemies, relics, and encounter pools. T
 ### Cards
 ```json
 {
-  "name": "card_id",          // matches filename
+  "id": "card_id",            // matches filename
   "title": "Display Name",
   "type": "attack|skill|ability|curse",
   "cost": 1,
@@ -47,7 +92,7 @@ A card may carry an optional top-level `"upgrade"` dict that **overrides** the b
 
 ```json
 {
-  "name": "charged_shot", "type": "attack", "cost": 1,
+  "id": "charged_shot", "type": "attack", "cost": 1,
   "effects": [ { "type": "deal_damage_str_mult", "mult": 2 }, { "type": "exhaust_self" } ],
   "upgrade": {
     "cost": 0,                                  // optional — overrides cost
@@ -124,7 +169,7 @@ Authoritative list in `DataValidator.ALLOWED_EFFECT_TYPES`. As of this writing:
 
 **Status scaling (Intelligence):** `apply_status` and `apply_status_all` add the player's Intelligence to the base stacks. `apply_short_circuit_scaled` is the dedicated Short Circuit formula and may additionally use `attr`, `mult`, `flat`, and `double_if_short_circuited`. `overload` consumes every enemy's stored Short Circuit and deals that much delayed damage; it is global and does not target a single enemy.
 
-**Tools:** `run_system/data/tools/{tool_id}.json` are one-time battle consumables — shape `{id, title, target ("enemy"|"self"|"none"), rarity, effects[], icon}`. Their `effects[]` reuse this same effect vocabulary (resolved through the shared effect registry as tool sources: fixed values — no STR/CON, Weak/Vulnerable or crits — after their own ×(1+0.08·INT) scaling); validated by `DataValidator.validate_tool` (`REQUIRED_TOOL_KEYS` / `ALLOWED_TOOL_TARGETS`).
+**Tools:** `content/tools/{tool_id}.json` are one-time battle consumables — shape `{id, title, target ("enemy"|"self"|"none"), rarity, effects[], icon}`. Their `effects[]` reuse this same effect vocabulary (resolved through the shared effect registry as tool sources: fixed values — no STR/CON, Weak/Vulnerable or crits — after their own ×(1+0.08·INT) scaling); validated by `DataValidator.validate_tool` (`REQUIRED_TOOL_KEYS` / `ALLOWED_TOOL_TARGETS`).
 
 When adding a new effect type, update **both** the effect registry (`battle_scene/combat/combat_effects.gd` `register_into`) and `DataValidator.ALLOWED_EFFECT_TYPES`.
 

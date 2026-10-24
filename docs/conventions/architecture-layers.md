@@ -65,8 +65,10 @@ the target directories whenever its layer is clear.
     automatically);
   - reading a script's source text with `FileAccess` (contract tests);
   - comparing against `Script.resource_path`.
-- Data directories and art paths (`card_info/…`, `.png`) are not converted yet;
-  phase 2 replaces them with registry lookups and id-derived asset paths.
+- Content JSON is never read by path outside `core/content/`: consumers ask
+  ModelDb (`core/content/model_db.gd`) by category and full ID. Art paths
+  (`.png`) stay path-based and derive their file token from
+  `MODEL_ID.key_entry(id)`.
 
 ## `class_name`
 

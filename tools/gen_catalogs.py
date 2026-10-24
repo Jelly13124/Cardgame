@@ -23,10 +23,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-CARDS_DIR = ROOT / "battle_scene" / "card_info" / "player"
-ENEMIES_DIR = ROOT / "battle_scene" / "card_info" / "enemy"
-RELICS_DIR = ROOT / "run_system" / "data" / "relics"
-EQUIPMENT_DIR = ROOT / "run_system" / "data" / "equipment"
+CARDS_DIR = ROOT / "content" / "cards"
+ENEMIES_DIR = ROOT / "content" / "monsters"
+RELICS_DIR = ROOT / "content" / "relics"
+EQUIPMENT_DIR = ROOT / "content" / "equipment"
 
 CARD_ART_BASE = ROOT / "battle_scene" / "assets" / "images" / "cards"
 ENEMY_ART_BASE = ROOT / "battle_scene" / "assets" / "images" / "enemies"
@@ -189,7 +189,7 @@ def _enemy_tiers() -> dict[str, str]:
         eid = path.stem
         best = None
         for start, end, tier in regions:
-            if re.search(rf'"{re.escape(eid)}"', text[start:end]):
+            if re.search(rf'"(?:base:)?{re.escape(eid)}"', text[start:end]):
                 if best is None or precedence[tier] > precedence[best]:
                     best = tier
         tiers[eid] = best or "UNLISTED"

@@ -114,7 +114,7 @@ Every damage hit, Block gain and status application runs through one pipeline (`
 | **Metallicize / Feel No Pain** | persistent powers (StS2 port): +Block per turn / +Block on Exhaust |
 
 ### Enemy System
-- Each enemy loads from `card_info/enemy/{id}.json` — includes a `sprite_id` for the art and a required encounter identity `tier` (`minion | normal | heavy | elite | boss`)
+- Each enemy loads from `content/monsters/{id}.json` — includes a `sprite_id` for the art and a required encounter identity `tier` (`minion | normal | heavy | elite | boss`)
 - Action types include `attack`, `attack_ramp`, `attack_status`, `attack_all`, `block`, `breakable_block`, `reflective_plating`, `heal`, `telegraph`, `summon`, `buff_self`, and `add_curse`; `DataValidator.ALLOWED_ENEMY_ACTION_TYPES` is authoritative.
 - **Bosses have bespoke mechanics** via an optional `phases` field: at an HP threshold the boss runs one-time `on_enter` actions and swaps to a tougher `action_pattern`. The three act bosses: **rust_titan** (tougher phase-2 loop at 50%), **ash_warden** (debuff + summons `ember_wisp`), **junkyard_tyrant** (summons `scrap_shard` + AoE + self-heal). Killing the boss ends the fight even if summoned adds are still alive.
 - **Per-act difficulty scaling**: non-boss enemy HP ×[1.0, 1.25, 1.5] and damage ×[1.0, 1.15, 1.3] by act; the enemy pool also shifts tougher each act. Bosses are exempt (tuned per-boss).
@@ -192,7 +192,7 @@ Relics are **passive effects that persist for the entire run**. Unlike equipment
 - Relics are collected from elite encounters, shops, and boss rewards
 - Relics are **not** equippable in slots — they auto-activate
 - Stored in `RunManager.relics: Array[String]`
-- Each relic is defined in a JSON file in `run_system/data/relics/{id}.json`
+- Each relic is defined in a JSON file in `content/relics/{id}.json`
 
 ---
 
@@ -283,7 +283,7 @@ Forge uses the same popover but keeps its distinct workbench header composition.
 
 Contracts are taken for free at the **Outpost**. Held contracts show on the
 home-base **bounty board** (bottom-left) with live progress. Contract data:
-`run_system/data/bounties/{bounty_id}.json` (validated by `validate_bounty` in
+`content/bounties/{bounty_id}.json` (validated by `validate_bounty` in
 `data_validator.gd` — the schema is `id / title / objective{type,count} / reward /
 tier [, price]`; `price` is a legacy optional field, **ignored at runtime**). Catalog
 page: `docs/catalog_html/bounties.html`.
@@ -400,7 +400,7 @@ BattleScene (Node)
 
 ### Card JSON Schema
 
-**Player card (`card_info/player/{name}.json`):**
+**Player card (`content/cards/{name}.json`):**
 ```json
 {
     "name": "card_id",
@@ -416,7 +416,7 @@ BattleScene (Node)
 }
 ```
 
-**Enemy JSON (`card_info/enemy/{id}.json`):**
+**Enemy JSON (`content/monsters/{id}.json`):**
 ```json
 {
     "id": "enemy_id",
@@ -589,10 +589,10 @@ Function reference: `docs/building-screens-functions.md`.
 - ✅ Current cards use original Cowboy Bill mechanics and visuals; the generated catalog is the content reference.
 
 ### ✅ Phase 8 — Tools · Equipment Economy · A0 Balance
-- ✅ **Tool system** (StS2-style one-time consumables): `run_system/data/tools/*.json` (11: 8 original + 3 discover tools added 2026-06-30), a top-bar **tool shelf** (`run_top_bar.gd`), confirmation before use, and explicit arrow/click target selection for enemy tools. Cancellation never consumes the item; effects run through the shared effect registry as fixed tool values, scaled ×(1+0.08·INT). _Tool slots reworked in Phase 9 → **1 base slot**, tools held in the backpack + equipped from the character panel; see below._
+- ✅ **Tool system** (StS2-style one-time consumables): `content/tools/*.json` (11: 8 original + 3 discover tools added 2026-06-30), a top-bar **tool shelf** (`run_top_bar.gd`), confirmation before use, and explicit arrow/click target selection for enemy tools. Cancellation never consumes the item; effects run through the shared effect registry as fixed tool values, scaled ×(1+0.08·INT). _Tool slots reworked in Phase 9 → **1 base slot**, tools held in the backpack + equipped from the character panel; see below._
 - ✅ **Attribute rework**: the Charm enemy-**flee** mechanic was **deleted**; INT off XP → boosts tools and player-applied statuses, especially Short Circuit; Charm lowers the per-level XP wall.
 - ✅ **Drop / shop restructure**: shop sells tools (not equipment); Luck-scaled tool + equipment drops (see Rewards by node type).
-- ✅ **Loading**: session card-info cache (`MetaProgress.get_card_info_cache` + `cached_card_factory.gd`) skips the per-battle JSON re-parse.
+- ✅ **Loading**: content loads once into ModelDb (`core/content/model_db.gd`); `cached_card_factory.gd` builds cards from it instead of re-parsing JSON per battle.
 - ✅ **Building detail pages** redesigned for four buildings. The current UI integrates identity/actions into the top bar and opens a shared compact `building_upgrade_popover.gd`; Forge retains its distinct workbench header.
 - ✅ **A0 balance pass**: deflated the over-statted 1-cost cards, raised enemy aggression (block→attack), retuned the Act-1 boss `rust_titan` into a 2-3-try skill gate (geared+leveled clears comfortably).
 
@@ -638,7 +638,7 @@ Function reference: `docs/building-screens-functions.md`.
 ### ✅ Phase 12 — Market tiers + card draft pool
 - ✅ Every non-curse,
   non-basic (`strike`/`defend`) card is now draftable by default — `get_unlocked_card_pool()`
-  directory-scans `battle_scene/card_info/player/*.json` instead of reading an unlock list in
+  reads the current character's card pool (`content/card_pools/`) instead of an unlock list in
   the full-game path. The public Bill demo uses a curated 28-card reward pool so its combat
   identity is not diluted (hero-exclusive cards still gate through `HERO_EXCLUSIVE_CARDS`).
 - ✅ **Market (黑市)**: T1 **tool shop**, T2 **equipment shop**, T3
@@ -647,7 +647,7 @@ Function reference: `docs/building-screens-functions.md`.
 
 ### ✅ Phase 13 — Bounty system + card gallery
 - ✅ **Bounty contracts** (see "Bounty System" section): 10 JSON contracts in
-  `run_system/data/bounties/` + `validate_bounty` schema; daily date-seeded free Outpost
+  `content/bounties/` + `validate_bounty` schema; daily date-seeded free Outpost
   shelf; max-3 bounty board on the home base; 6 in-run `bounty_event` hooks (attack plays, gold
   into backpack, kills, elites/boss, extraction, campfire upgrades); instant settle with
   Caps, Scrap, or equipment rewards.

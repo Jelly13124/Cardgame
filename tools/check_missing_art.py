@@ -12,12 +12,12 @@ import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
-CARD_DIR = ROOT / "battle_scene/card_info/player"
+CARD_DIR = ROOT / "content/cards"
 CARD_ART_BASE = ROOT / "battle_scene/assets/images/cards"
-RELIC_DIR = ROOT / "run_system/data/relics"
-EQUIP_DIR = ROOT / "run_system/data/equipment"
+RELIC_DIR = ROOT / "content/relics"
+EQUIP_DIR = ROOT / "content/equipment"
 EQUIP_ART_BASE = ROOT / "battle_scene/assets/images"
-ENEMY_DIR = ROOT / "battle_scene/card_info/enemy"
+ENEMY_DIR = ROOT / "content/monsters"
 ENEMY_ART_BASE = ROOT / "battle_scene/assets/images/enemies"
 
 

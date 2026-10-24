@@ -170,11 +170,11 @@ battle_scene/assets/images/
 |---|---|---|---|
 | Animation frame | `{sprite_id}_{anim}_{n}.png` | `enemies/{sprite_id}/{anim}/` | `enemies/trash_robot/attack/trash_robot_attack_0.png` |
 | Generation script | `generate_enemy.ps1` | `enemies/` or entity folder | `enemies/generate_enemy.ps1` |
-| Enemy JSON | `{enemy_id}.json` | `card_info/enemy/` | `robot_grunt.json` |
-| Hero JSON | `{hero_id}.json` | `card_info/hero/` | `warrior.json` |
-| Card JSON | `{card_id}.json` | `card_info/player/` | `strike.json` |
-| Equipment JSON | `{item_id}.json` | `card_info/equipment/` | `scrap_gauntlet.json` |
-| Relic JSON | `{relic_id}.json` | `run_system/data/relics/` | `cracked_battery.json` |
+| Enemy JSON | `{enemy_id}.json` | `content/monsters/` | `robot_grunt.json` |
+| Hero JSON | `{hero_id}.json` | `content/characters/` | `warrior.json` |
+| Card JSON | `{card_id}.json` | `content/cards/` | `strike.json` |
+| Equipment JSON | `{item_id}.json` | `content/equipment/` | `scrap_gauntlet.json` |
+| Relic JSON | `{relic_id}.json` | `content/relics/` | `cracked_battery.json` |
 
 ---
 
@@ -198,10 +198,10 @@ battle_scene/assets/images/
 
 | Content | Steps |
 |---|---|
-| **New enemy** | 1. Create `enemies/{sprite_id}/` with frames. 2. Add `card_info/enemy/{id}.json` with `sprite_id`. |
-| **New card** | 1. Add `card_info/player/{id}.json` with `effects[]`. 2. Add card art under `assets/images/cards/player/`. |
-| **New equipment** | 1. Add `card_info/equipment/{id}.json` with `bonuses`. |
-| **New relic** | 1. Add `run_system/data/relics/{id}.json`. 2. Add a shared trigger in `battle_scene/relic_effect_system.gd` only if existing triggers are insufficient. |
+| **New enemy** | 1. Create `enemies/{sprite_id}/` with frames. 2. Add `content/monsters/{id}.json` with `sprite_id`. |
+| **New card** | 1. Add `content/cards/{id}.json` with `effects[]`. 2. Add card art under `assets/images/cards/player/`. |
+| **New equipment** | 1. Add `content/equipment/{id}.json` with `bonuses`. |
+| **New relic** | 1. Add `content/relics/{id}.json`. 2. Add a shared trigger in `battle_scene/relic_effect_system.gd` only if existing triggers are insufficient. |
 | **New hero** | 1. Add hero JSON. 2. Add hero sprite under `heroes/{hero_id}/`. |
 
 ### Content Catalog — Design-First Workflow (Non-Negotiable)

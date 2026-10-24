@@ -9,7 +9,7 @@ These are conventions the project **tries** to follow. Where we currently violat
 ## ✅ Active rules
 
 ### 1. All gameplay values come from external config / data files
-Card costs, damage amounts, enemy HP, status durations — defined in JSON under `card_info/` and `data/`, never hardcoded in GDScript.
+Card costs, damage amounts, enemy HP, status durations — defined in JSON under `content/`, never hardcoded in GDScript.
 
 - **Why:** content authors can change balance without touching code; `DataValidator` validates the data shape at startup.
 - **Enforced by:** `DataValidator` schema check on every project startup. Hardcoded numbers in GDScript bypass this — flag in review.

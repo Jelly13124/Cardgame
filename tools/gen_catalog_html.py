@@ -378,7 +378,7 @@ def card_block(cid, d):
 
 
 def build_cards():
-    items = load_json_dir("battle_scene/card_info/player")
+    items = load_json_dir("content/cards")
     items.sort(key=lambda kv: kv[0])
     groups = {"attack": [], "skill": [], "ability": [], "curse": []}
     for cid, d in items:
@@ -423,7 +423,7 @@ def relic_block(rid, d):
 
 
 def build_relics():
-    items = load_json_dir("run_system/data/relics")
+    items = load_json_dir("content/relics")
     by = {"common": [], "uncommon": [], "rare": [], "unique": []}
     for rid, d in items:
         by.setdefault(str(d.get("rarity", "common")).lower(), []).append(relic_block(rid, d))
@@ -439,7 +439,7 @@ def build_relics():
 
 # ── Tools (one-time battle consumables) ─────────────────────────────────────
 def build_tools():
-    items = load_json_dir("run_system/data/tools")
+    items = load_json_dir("content/tools")
     # Tool titles/descs are spread across a few content CSVs — merge them.
     tool_tr = dict(cards_tr)
     for extra in ("ui_loot.csv", "ui_equipment.csv", "ui_build_outpost.csv"):
@@ -491,7 +491,7 @@ def fmt_bounty_reward(reward):
 
 
 def build_bounties():
-    items = load_json_dir("run_system/data/bounties")
+    items = load_json_dir("content/bounties")
     by_tier = {"standard": [], "hard": []}
     for bid, d in items:
         by_tier.setdefault(str(d.get("tier", "standard")), []).append((bid, d))
@@ -536,7 +536,7 @@ def build_bounties():
 
 # ── Random events (the "?" map node) ────────────────────────────────────────
 def build_events():
-    items = load_json_dir("run_system/data/random_events")
+    items = load_json_dir("content/events")
     ev_tr = load_tr("ui_events.csv")
     cards = []
     for eid, d in items:
@@ -575,7 +575,7 @@ def build_equipment():
     # distinct equipment designs and would only drown out the set pieces here.
     items = [
         (eid, data)
-        for eid, data in load_json_dir("run_system/data/equipment")
+        for eid, data in load_json_dir("content/equipment")
         if data.get("set_id", data.get("set", ""))
     ]
     by = {}
@@ -619,7 +619,7 @@ def build_equipment():
         if slot not in ["head", "chest", "weapon", "hands", "accessory"]:
             body += section(f"{cap(slot)} 装备", len(by[slot]), "".join(by[slot]))
     # set bonuses
-    sets = load_json_dir("run_system/data/equipment_sets")
+    sets = load_json_dir("content/equipment_sets")
     set_cards = []
     for sid, d in sets:
         tiers = "".join(f"<li><b>{t.get('count')}-piece:</b> {esc(t.get('label',''))}</li>"
@@ -697,7 +697,7 @@ def enemy_block(eid, d, tier):
 
 
 def build_enemies():
-    items = load_json_dir("battle_scene/card_info/enemy")
+    items = load_json_dir("content/monsters")
     by_tier = {tier: [] for tier, _label in ENEMY_TIERS}
     for eid, d in items:
         by_tier.setdefault(str(d.get("tier", "normal")), []).append((eid, d))

@@ -40,9 +40,9 @@ Code layering, the target directory structure and the uid reference rule are in
     *   *The shader that handles the "Angled Bottom" shape for Attack cards.*
 
 ### 📄 Card Data (JSON)
-*   **Player Cards**: `battle_scene/card_info/player/`
+*   **Player Cards**: `content/cards/`
     *   *Where individual cards (Strike, Defend, etc.) are defined with their stats, rarity, and effects.*
-*   **Enemy Cards**: `battle_scene/card_info/enemy/`
+*   **Enemy Cards**: `content/monsters/`
     *   *Definitions for enemy moves, behavior patterns, and required encounter identity `tier` (`minion|normal|heavy|elite|boss`).*
 
 ---
@@ -72,7 +72,7 @@ Code layering, the target directory structure and the uid reference rule are in
 *   **Reward Screen**: `run_system/ui/loot_reward.gd`
     *   *Loot by node type: normal = gold + 3-choose-1 card draft + Luck-scaled tool + Luck-scaled common equipment; elite = card draft + Luck-scaled uncommon equipment; boss reward handled in `battle_scene._victory` (guaranteed rare equipment). After PROCEED it spends queued level-up attribute picks (`pending_attr_points`, pick 1 of 3 attributes).*
 *   **Card Factory**: `addons/card-framework/json_card_factory.gd`
-    *   *Loads `card_info/player/{card_id}.json` and returns Card nodes.*
+    *   *Loads `content/cards/{card_id}.json` and returns Card nodes.*
 
 ### 🛒 Shop & Rest
 *   **Shop Scene**: `run_system/ui/shop_scene.tscn` + `.gd`
@@ -86,7 +86,7 @@ Code layering, the target directory structure and the uid reference rule are in
 *   **Mechanic**: `player_deck` entries carry an `upgraded: bool`; `deck_manager.gd` re-applies `CARD_UPGRADE.resolve(card_info)` at battle start when set. `run_deck_viewer_modal.gd` renders the deck (upgraded cards show their upgraded stats).
 
 ### 🎒 Equipment System
-*   **Data**: `run_system/data/equipment/{item_id}.json` (**15 generic shells** `gear_{slot}_{tier}` sharing art by slot×rarity + **15 set pieces**, 3 sets × 5) + `run_system/data/equipment_sets/{set_id}.json` (3 sets). Rarity is **5-tier** (`run_system/core/affix_pool.gd`): common/uncommon/rare/set/cursed roll 1/2/3/3/3 affixes, **each guaranteeing 1 attribute affix** — `set` = a piece carrying a `set_id` (green, grants set bonuses), `cursed` = 3 positives + 1 curse affix (red). Drops route through `RunManager.roll_shell_drop(tier)` (~15% a set piece, else a shell; cursed at Ascension ≥ 3 or via the forge). Instances roll affixes at drop time (`make_equip_instance`).
+*   **Data**: `content/equipment/{item_id}.json` (**15 generic shells** `gear_{slot}_{tier}` sharing art by slot×rarity + **15 set pieces**, 3 sets × 5) + `content/equipment_sets/{set_id}.json` (3 sets). Rarity is **5-tier** (`run_system/core/affix_pool.gd`): common/uncommon/rare/set/cursed roll 1/2/3/3/3 affixes, **each guaranteeing 1 attribute affix** — `set` = a piece carrying a `set_id` (green, grants set bonuses), `cursed` = 3 positives + 1 curse affix (red). Drops route through `RunManager.roll_shell_drop(tier)` (~15% a set piece, else a shell; cursed at Ascension ≥ 3 or via the forge). Instances roll affixes at drop time (`make_equip_instance`).
 *   **Set Effect System**: `battle_scene/equipment_set_system.gd` — snapshots active tier effects at battle start and emits compact local trigger callouts. The demo reward track in `RunManager` offers three claim-gated pieces from one featured set at floors 3/6/9.
 *   **Equipment Icon Component**: `run_system/ui/equipment_icon.gd` — tile colored by **rarity** (common/uncommon/rare/set/cursed → graphite / steel-blue / gold / green / red) with a slot PNG icon (slot-letter fallback when the PNG is missing).
 *   **Character Window**: `run_system/ui/window/character_window.gd` — draggable window (press **i** anywhere, or the right-edge Character image button at base), **Diablo-4 layout**: paper-doll center, equip slots flanking (head/chest/hands left; weapon/accessory + tools right), backpack grid below + sets/relics/stats. Modes: `base` (backpack = next-run carry list `pending_loadout`; slots = `pending_equipped`), `map` (editable), `battle` (read-only). **Stash Window**: `run_system/ui/window/stash_window.gd` — separate 25-slot storage window (D4 model): drag stash→backpack to carry, backpack/slot→stash to store; equip slots reject direct stash drags. Window infra: `window/draggable_window.gd` + `window/window_layer.gd` (z-order, ESC closes topmost).
@@ -94,7 +94,7 @@ Code layering, the target directory structure and the uid reference rule are in
 
 ### ❓ Random Events
 *   **Event Modal**: `run_system/ui/event_modal.gd`
-    *   *The "?" map-node event scene. Loads an event from `run_system/data/random_events/*.json`, presents the choices, and applies the chosen outcome.*
+    *   *The "?" map-node event scene. Loads an event from `content/events/*.json`, presents the choices, and applies the chosen outcome.*
 
 ### 🏃 Run Management
 *   **Run Shape**: the current public demo is **one 12-floor act** with a fixed `rust_titan` boss (`DEMO_BUILD = true`, `DEMO_MAX_ACTS = 1`); defeating it is a final victory with no extract-vs-push screen. The same manager retains the planned 3-act architecture behind `DEMO_BUILD = false`. Loot lives in a **20-cell backpack** where Gold / Scrap / equipment compete for space. On success only currencies bank automatically; gear returns to the independently persisted base backpack/slots (`pending_loadout` / `pending_equipped`). On death only safe-cell gear survives. `MetaProgress.stash` is permanent storage changed only by explicit player transfers.
@@ -119,7 +119,7 @@ Code layering, the target directory structure and the uid reference rule are in
 *   **Card Illustrations (PNG)**: `battle_scene/assets/images/cards/player/` (`512x320` landscape art-only PNGs)
 *   **Equipment Icons (PNG)**: `battle_scene/assets/images/equipment/` (falls back to placeholder if missing)
 *   **Shop Scene Art (PNG, optional)**: `run_system/assets/images/shop/` (background + shopkeeper)
-*   **Hero Sprites (PNG/Animated)**: `battle_scene/assets/images/heroes/{sprite_id}/` (e.g. `cowboy_bill/`; the active hero's `sprite_id` comes from its `run_system/data/heroes/` JSON)
+*   **Hero Sprites (PNG/Animated)**: `battle_scene/assets/images/heroes/{sprite_id}/` (e.g. `cowboy_bill/`; the active hero's `sprite_id` comes from its `content/characters/` JSON)
 *   **Enemy Sprites (PNG/Animated)**: `battle_scene/assets/images/enemies/`
 *   **Battle Backgrounds**: `battle_scene/assets/images/backgrounds/` (active: `wasteland_battlefield_quiet_v6.png`)
 *   **Map Art and Node Icons**: `run_system/assets/images/map/` (active background: `wasteland_route_map_sts2_bg.png`)
@@ -131,15 +131,15 @@ Code layering, the target directory structure and the uid reference rule are in
 ## Data Files
 All gameplay content is data-driven. Add GDScript only when introducing a new shared effect, trigger, or UI surface.
 
-*   **Player Cards**: `battle_scene/card_info/player/{card_id}.json` (one JSON per card; in-run upgrades are resolved by `card_upgrade.gd`, not stored as `_plus` variants)
-*   **Enemies**: `battle_scene/card_info/enemy/{enemy_id}.json` — every file requires `tier` (`minion|normal|heavy|elite|boss`); the generated enemy catalog groups by this field and `DataValidator` cross-checks every normal/elite/boss roster.
-*   **Relics**: `run_system/data/relics/{relic_id}.json`
-*   **Equipment**: `run_system/data/equipment/{item_id}.json` — **15 generic shells** (`gear_{slot}_{tier}`, empty `bonuses`/`sprite`; art shared by slot×rarity) + **15 set pieces** (bespoke `set_id`/`sprite`). Real stats are **rolled affixes** at drop time (5-tier = 1/2/3/3/3+curse, **each guaranteeing 1 attribute affix**) via `run_system/core/affix_pool.gd`; `bonuses` is a dead back-compat baseline (ignored on new drops).
-*   **Equipment Sets**: `run_system/data/equipment_sets/{set_id}.json` (each set has 2 tiers: 3-piece + 5-piece)
-*   **Tools**: `run_system/data/tools/{tool_id}.json` — StS2-style one-time battle consumables; `effects[]` reuse the card effect vocabulary (`validate_tool`).
-*   **Base Upgrades**: `run_system/data/base_upgrades/{upgrade_id}.json` (5 active definitions: command_center, blacksmith, backpack, reroll_tokens, tool_slots). `ALLOWED_BASE_UPGRADE_EFFECT_KEYS` in `data_validator.gd` is the authoritative schema.
-*   **Heroes**: `run_system/data/heroes/{hero_id}.json` (`cowboy_bill.json`) — `player.gd` reads `sprite_id` / `tint` / starting stats dynamically from the selected hero's JSON (`RunManager.current_hero_data`), falling back to `cowboy_bill` when none is loaded.
-*   **Random Events**: `run_system/data/random_events/{event_id}.json` (12 events) — content (choices, outcomes) for the "?" map node, surfaced by `run_system/ui/event_modal.gd`. Three are "greed-trap" curse-injection events (`torn_coin_pouch` / `deserter_charm` / `adrenaline_shot`): a boon + an `add_curse` effect. Events are dir-scanned into the pool; localized via `EVENT_<ID>_*` keys in `assets/translations/ui_events.csv`.
+*   **Player Cards**: `content/cards/{card_id}.json` (one JSON per card; in-run upgrades are resolved by `card_upgrade.gd`, not stored as `_plus` variants)
+*   **Enemies**: `content/monsters/{enemy_id}.json` — every file requires `tier` (`minion|normal|heavy|elite|boss`); the generated enemy catalog groups by this field and `DataValidator` cross-checks every normal/elite/boss roster.
+*   **Relics**: `content/relics/{relic_id}.json`
+*   **Equipment**: `content/equipment/{item_id}.json` — **15 generic shells** (`gear_{slot}_{tier}`, empty `bonuses`/`sprite`; art shared by slot×rarity) + **15 set pieces** (bespoke `set_id`/`sprite`). Real stats are **rolled affixes** at drop time (5-tier = 1/2/3/3/3+curse, **each guaranteeing 1 attribute affix**) via `run_system/core/affix_pool.gd`; `bonuses` is a dead back-compat baseline (ignored on new drops).
+*   **Equipment Sets**: `content/equipment_sets/{set_id}.json` (each set has 2 tiers: 3-piece + 5-piece)
+*   **Tools**: `content/tools/{tool_id}.json` — StS2-style one-time battle consumables; `effects[]` reuse the card effect vocabulary (`validate_tool`).
+*   **Base Upgrades**: `content/base_upgrades/{upgrade_id}.json` (5 active definitions: command_center, blacksmith, backpack, reroll_tokens, tool_slots). `ALLOWED_BASE_UPGRADE_EFFECT_KEYS` in `data_validator.gd` is the authoritative schema.
+*   **Heroes**: `content/characters/{hero_id}.json` (`cowboy_bill.json`) — `player.gd` reads `sprite_id` / `tint` / starting stats dynamically from the selected hero's JSON (`RunManager.current_hero_data`), falling back to `cowboy_bill` when none is loaded.
+*   **Random Events**: `content/events/{event_id}.json` (12 events) — content (choices, outcomes) for the "?" map node, surfaced by `run_system/ui/event_modal.gd`. Three are "greed-trap" curse-injection events (`torn_coin_pouch` / `deserter_charm` / `adrenaline_shot`): a boon + an `add_curse` effect. Events are dir-scanned into the pool; localized via `EVENT_<ID>_*` keys in `assets/translations/ui_events.csv`.
 
 All schemas validated at startup by `battle_scene/data_validator.gd`.
 
