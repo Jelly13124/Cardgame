@@ -42,6 +42,8 @@ func _run() -> void:
 	home.queue_free()
 
 	RunManager.start_new_run("base:cowboy_bill", [], 0, "SEEDTEST42")
+	RunManager.is_run_active = true
+	RunManager.abandon_run()  # production order: teardown first, then the result screen
 	var screen = RESULT_SCREEN.new()
 	screen.mode = "defeat"
 	add_child(screen)

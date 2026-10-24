@@ -410,6 +410,8 @@ const SAVE_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/content/save_
 const RUN_RNG_SET = preload("uid://ealvw2c6utr7")  # res://core/rng/run_rng_set.gd
 ## Seeded streams of the current run (RunRngSet); null outside a run.
 var run_rng = null
+## Stream of the act map being generated (derived from the seed per act).
+var _map_rng = null
 ## Session-only streams for draws outside a run (home-base market, forge, menus).
 var _scratch_rng = null
 ## Seed of the run that just ended, for the result screen.
@@ -439,6 +441,10 @@ func _ready() -> void:
 ##   Floor 6       -> all nodes are "treasure" (human-facing layer 7)
 ##   Merchants     -> only appear from floor 4 onward (human-facing layer 5+)
 func generate_map(num_floors: int = 12, width: int = 4) -> void:
+	# Each act's map comes from its own stream derived from the seed, so it does
+	# not depend on how many rolls the previous act used (STS2 builds act maps
+	# up front).
+	_map_rng = rng_for_act_map(current_act)
 	map_data.clear()
 	_node_index.clear()
 	current_node_id = ""
@@ -450,7 +456,7 @@ func generate_map(num_floors: int = 12, width: int = 4) -> void:
 		if f == 0 or f == num_floors - 1 or is_boss_floor(f):
 			num_nodes = 1  # Start (relic), mid-act bosses, and end (final boss) are single nodes
 		else:
-			num_nodes = rng("up_front").next_range(2, 4)
+			num_nodes = _map_rng.next_range(2, 4)
 			num_nodes = mini(num_nodes, width)  # Can't exceed +---available slots
 			# Floors directly adjacent to a single-node floor must fit within
 			# the MAX_CHILDREN_PER_NODE cap of that single node, otherwise the
@@ -470,7 +476,7 @@ func generate_map(num_floors: int = 12, width: int = 4) -> void:
 			var available: Array[int] = []
 			for s in range(width):
 				available.append(s)
-			rng("up_front").shuffle(available)
+			_map_rng.shuffle(available)
 			for i in range(num_nodes):
 				slots.append(available[i])
 			slots.sort()
@@ -602,7 +608,7 @@ func _pick_node_type(floor_idx: int, total: int, treasure_extras_used: int = 0) 
 	if floor_idx == GUARANTEED_TREASURE_FLOOR_INDEX:
 		return "treasure"
 
-	var roll = rng("up_front").next_float()
+	var roll = _map_rng.next_float()
 
 	# Ascension A5+: bias mid/late rolls into the high (elite/treasure)
 	# tail by compressing the roll range. Squashes 0..1 into 0.5..1.0,
@@ -674,7 +680,7 @@ func select_encounter(node_type: String, floor_idx: int) -> Array[String]:
 		"elite":
 			# Pick ONE elite at random so elite nodes vary across a run (and across the
 			# two acts) instead of every elite being the same fight.
-			result.append(str(rng("up_front").pick(ELITE_ROSTER)))
+			result.append(str(rng("elites").pick(ELITE_ROSTER)))
 		"enemy", "unknown":
 			var pool: Array
 			var tier_floor: int = floor_idx + (current_act - 1) * ACT_POOL_OFFSET
@@ -686,7 +692,7 @@ func select_encounter(node_type: String, floor_idx: int) -> Array[String]:
 				pool = ENCOUNTER_POOLS_MID
 			else:
 				pool = ENCOUNTER_POOLS_LATE
-			var pick = rng("up_front").pick(pool)
+			var pick = rng("encounters").pick(pool)
 			for id in pick:
 				result.append(str(id))
 		_:
@@ -2428,3 +2434,10 @@ func rng(stream_name: String):
 ## Seed string of the current run, or of the run that just ended.
 func run_seed() -> String:
 	return run_rng.seed_string if run_rng != null else _last_run_seed
+
+
+## Fresh, unsaved stream for `act`'s map; same seed and act give the same map.
+func rng_for_act_map(act: int):
+	if run_rng == null:
+		return rng("niche")
+	return run_rng.derived("map_act_%d" % act)

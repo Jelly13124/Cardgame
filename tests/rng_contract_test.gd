@@ -62,7 +62,7 @@ func _run() -> void:
 	var s1 = RUN_RNG_SET.new("abc")
 	var s2 = RUN_RNG_SET.new("ABC")
 	_expect(s1.seed == s2.seed and s1.seed_string == "ABC", "seed string is canonicalized")
-	_expect(RUN_RNG_SET.STREAMS.size() == 11, "eleven named streams")
+	_expect(RUN_RNG_SET.STREAMS.size() == 13, "thirteen named streams")
 	var noisy = RUN_RNG_SET.new("SEEDX")
 	var quiet = RUN_RNG_SET.new("SEEDX")
 	for i in 50:

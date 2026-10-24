@@ -47,7 +47,9 @@ cosmetic randomness.
 
 | Stream | Uses |
 |---|---|
-| `up_front` | map generation, encounter / elite / boss picks, event deal order, demo featured set |
+| `up_front` | event deal order, demo featured set |
+| `encounters` | normal fights, in visit order |
+| `elites` | elite fights, in visit order |
 | `shuffle` | draw-pile shuffles (combat start, reshuffle) |
 | `unknown_map_point` | "?" node outcome rolls and their amounts |
 | `combat_card_generation` | discover candidates, added curses picked at random |
@@ -59,6 +61,10 @@ cosmetic randomness.
 | `events` | event luck checks |
 | `niche` | anything else gameplay-relevant |
 
+  Act maps use `derived("map_act_<n>")`: a fresh, unsaved stream per act, so an
+  act's map depends only on the seed (STS2 generates act maps up front). With
+  separate `encounters` / `elites` streams, the k-th fight of each kind is fixed
+  by the seed whatever path the player takes.
   `combat_crits` has no STS2 counterpart (STS2 has no crit); it is separate so
   previews and crit-dependent cards never shift reward rolls.
 - `stream(name) -> Rng`; unknown names are an error.

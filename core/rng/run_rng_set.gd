@@ -8,7 +8,9 @@ extends RefCounted
 const RNG = preload("uid://ds3dd0kmgq0ib")  # res://core/rng/rng.gd
 
 const STREAMS: Array[String] = [
-	"up_front",  # map, encounters, event order, demo featured set
+	"up_front",  # event order, demo featured set
+	"encounters",  # normal fights, in visit order
+	"elites",  # elite fights, in visit order
 	"shuffle",  # draw-pile shuffles
 	"unknown_map_point",  # "?" node outcomes
 	"combat_card_generation",  # discover candidates
@@ -40,6 +42,12 @@ func stream(name: String):
 		push_error("RunRngSet: unknown stream '%s'" % name)
 		return RNG.new(0)
 	return _streams[name]
+
+
+## A fresh stream for one-off generation keyed by `name` (e.g. an act map).
+## Not saved: the same seed and name always give the same stream.
+func derived(name: String):
+	return RNG.new((seed + fnv1a32(name)) & 0xFFFFFFFF)
 
 
 func to_dict() -> Dictionary:

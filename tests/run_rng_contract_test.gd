@@ -51,6 +51,7 @@ func _run() -> void:
 	_expect(RUN_RNG_SET.is_valid_seed(RunManager.run_seed()) and RunManager.run_seed().length() == 10,
 		"empty seed picks a random seed")
 
+	_test_path_independence()
 	_test_save_round_trip()
 	_test_v2_save()
 	_test_outside_run()
@@ -64,6 +65,34 @@ func _run() -> void:
 		return
 	push_error("run rng contract failed: %s" % "; ".join(failures))
 	get_tree().quit(1)
+
+
+## Act maps, the k-th normal fight and the k-th elite depend only on the seed,
+## not on how many "?" nodes, events, shops or rewards came before (STS2 builds
+## act maps and encounter lists up front).
+func _path(detour: bool) -> Dictionary:
+	RunManager.start_new_run("base:cowboy_bill", [], 0, "PATHSEED01")
+	if detour:
+		for i in 3:
+			RunManager.pick_random_event()
+			RunManager.rng("unknown_map_point").next_float()
+			RunManager.roll_shell_drop("common")
+		RunManager.select_encounter("elite", 5)
+	var fights: Array = []
+	for i in 4:
+		fights.append(RunManager.select_encounter("enemy", 2))
+	var elites: Array = [RunManager.select_encounter("elite", 6)]
+	RunManager.advance_act()
+	return {"fights": fights, "elites": elites, "act2_map": JSON.stringify(RunManager.map_data)}
+
+
+func _test_path_independence() -> void:
+	var straight := _path(false)
+	var detour := _path(true)
+	_expect(straight["fights"] == detour["fights"], "normal fights do not depend on the path")
+	_expect(straight["act2_map"] == detour["act2_map"], "act 2 map does not depend on the path")
+	var elite_only := _path(false)
+	_expect(elite_only["elites"] == straight["elites"], "elite order is stable")
 
 
 func _test_save_round_trip() -> void:
