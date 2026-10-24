@@ -740,7 +740,8 @@ func _add_start_run_button(root: Control) -> void:
 	_add_seed_field(root)
 
 
-## Optional run seed, right of DEPART. Empty = random seed (STS2 seed entry).
+## Optional run seed, right of the difficulty pill above DEPART (clear of the
+## bottom-right nav). Empty = random seed (STS2 seed entry).
 func _add_seed_field(root: Control) -> void:
 	var field := LineEdit.new()
 	field.name = "SeedField"
@@ -751,10 +752,10 @@ func _add_seed_field(root: Control) -> void:
 	field.anchor_top = 1.0
 	field.anchor_right = 0.5
 	field.anchor_bottom = 1.0
-	field.offset_left = 350.0
-	field.offset_top = -142.0
-	field.offset_right = 590.0
-	field.offset_bottom = -94.0
+	field.offset_left = 151.0
+	field.offset_top = -240.0
+	field.offset_right = 391.0
+	field.offset_bottom = -184.0
 	field.add_theme_font_override("font", T.display_font(600))
 	field.add_theme_font_size_override("font_size", 22)
 	field.add_theme_color_override("font_color", Color(1.0, 0.9, 0.72, 1.0))
