@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://chbqsux665ab3"]
+
+[ext_resource type="Script" path="res://tests/card_text_golden_test.gd" id="1"]
+
+[node name="CardTextGoldenTest" type="Node"]
+script = ExtResource("1")

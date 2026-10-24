@@ -1,0 +1,1262 @@
+{
+  "en|plain|base:acid_splash": {
+    "effects": "[{\"amount\":2.0,\"no_str\":true,\"type\":\"deal_damage_all\"},{\"stacks\":5.0,\"status\":\"short_circuit\",\"type\":\"apply_status_all\"}]",
+    "text": "Deal 2 dmg to all enemies\nApply Short Circuit x5 to all enemies\n--bbcode--\nDeal 2 dmg to all enemies\nApply [color=#33ebff]Short Circuit[/color] x5 to all enemies",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":3.0,\"no_str\":true,\"type\":\"deal_damage_all\"},{\"stacks\":7.0,\"status\":\"short_circuit\",\"type\":\"apply_status_all\"}]",
+    "up_text": "Deal 3 dmg to all enemies\nApply Short Circuit x7 to all enemies\n--bbcode--\nDeal 3 dmg to all enemies\nApply [color=#33ebff]Short Circuit[/color] x7 to all enemies"
+  },
+  "en|plain|base:adrenaline": {
+    "effects": "[{\"amount\":2.0,\"type\":\"gain_energy\"},{\"amount\":1.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Gain 2 Energy\nDraw 1 cards\nExhaust\n--bbcode--\nGain 2 Energy\nDraw 1 cards\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":2.0,\"type\":\"gain_energy\"},{\"amount\":2.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Gain 2 Energy\nDraw 2 cards\nExhaust\n--bbcode--\nGain 2 Energy\nDraw 2 cards\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|plain|base:all_in": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"all_in\",\"type\":\"apply_status_self\"}]",
+    "text": "Crits deal double damage. Non-Crit attacks deal normal damage and grant 2 Loaded.\n--bbcode--\nCrits deal double damage. Non-Crit attacks deal normal damage and grant 2 [color=#ffb23d]Loaded[/color].",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"all_in\",\"type\":\"apply_status_self\"}]",
+    "up_text": "Crits deal double damage. Non-Crit attacks deal normal damage and grant 2 Loaded.\n--bbcode--\nCrits deal double damage. Non-Crit attacks deal normal damage and grant 2 [color=#ffb23d]Loaded[/color]."
+  },
+  "en|plain|base:arc_flash": {
+    "effects": "[{\"amount\":2.0,\"no_str\":true,\"type\":\"deal_damage_all\"},{\"type\":\"overload\"}]",
+    "text": "Deal 2 dmg to all enemies\nOverload\n--bbcode--\nDeal 2 dmg to all enemies\n[color=#33ebff]Overload[/color]",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":4.0,\"no_str\":true,\"type\":\"deal_damage_all\"},{\"type\":\"overload\"}]",
+    "up_text": "Deal 4 dmg to all enemies\nOverload\n--bbcode--\nDeal 4 dmg to all enemies\n[color=#33ebff]Overload[/color]"
+  },
+  "en|plain|base:bone_breaker": {
+    "effects": "[{\"amount\":10.0,\"attr\":\"intelligence\",\"double_if_short_circuited\":true,\"type\":\"apply_short_circuit_scaled\"}]",
+    "text": "Apply 10 (+INTELLIGENCE) Short Circuit\nDouble this application if the target already has Short Circuit\n--bbcode--\nApply 10 (+INTELLIGENCE) [color=#33ebff]Short Circuit[/color]\nDouble this application if the target already has [color=#33ebff]Short Circuit[/color]",
+    "up_cost": "2",
+    "up_effects": "[{\"amount\":13.0,\"attr\":\"intelligence\",\"double_if_short_circuited\":true,\"type\":\"apply_short_circuit_scaled\"}]",
+    "up_text": "Apply 13 (+INTELLIGENCE) Short Circuit\nDouble this application if the target already has Short Circuit\n--bbcode--\nApply 13 (+INTELLIGENCE) [color=#33ebff]Short Circuit[/color]\nDouble this application if the target already has [color=#33ebff]Short Circuit[/color]"
+  },
+  "en|plain|base:brace": {
+    "effects": "[{\"amount\":3.0,\"type\":\"gain_block\"}]",
+    "text": "Gain 3 (3+0) block\nRetain\n--bbcode--\nGain 3 (3+[color=#8fb8ff]0[/color]) block\n[i][color=#9ec1ff]Retain[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":6,\"type\":\"gain_block\"}]",
+    "up_text": "Gain 6 (6+0) block\nRetain\n--bbcode--\nGain 6 (6+[color=#8fb8ff]0[/color]) block\n[i][color=#9ec1ff]Retain[/color][/i]"
+  },
+  "en|plain|base:brace_protocol": {
+    "effects": "[{\"amount\":10.0,\"no_con\":true,\"type\":\"gain_block\"}]",
+    "text": "Gain 10 block\n--bbcode--\nGain 10 block",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":13,\"no_con\":true,\"type\":\"gain_block\"}]",
+    "up_text": "Gain 13 block\n--bbcode--\nGain 13 block"
+  },
+  "en|plain|base:cascade": {
+    "effects": "[{\"base\":5.0,\"per\":1.0,\"scope\":\"combat\",\"type\":\"scale_damage_by_attacks\"}]",
+    "text": "Deal 5 + 1 per Attack played\nRetain\n--bbcode--\nDeal 5 + 1 per Attack played\n[i][color=#9ec1ff]Retain[/color][/i]",
+    "up_cost": "1",
+    "up_effects": "[{\"base\":7.0,\"per\":1.0,\"scope\":\"combat\",\"type\":\"scale_damage_by_attacks\"}]",
+    "up_text": "Deal 7 + 1 per Attack played\nRetain\n--bbcode--\nDeal 7 + 1 per Attack played\n[i][color=#9ec1ff]Retain[/color][/i]"
+  },
+  "en|plain|base:chain_link": {
+    "effects": "[{\"amount\":4.0,\"type\":\"deal_damage\"},{\"amount\":1.0,\"type\":\"draw_cards\"}]",
+    "text": "Deal 4 (4+0) dmg\nDraw 1 cards\n--bbcode--\nDeal 4 (4+[color=#ff7a5c]0[/color]) dmg\nDraw 1 cards",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":6,\"type\":\"deal_damage\"},{\"amount\":2,\"type\":\"draw_cards\"}]",
+    "up_text": "Deal 6 (6+0) dmg\nDraw 2 cards\n--bbcode--\nDeal 6 (6+[color=#ff7a5c]0[/color]) dmg\nDraw 2 cards"
+  },
+  "en|plain|base:charged_shot": {
+    "effects": "[{\"base\":6.0,\"mult\":2.0,\"type\":\"deal_damage_str_mult\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Deal 6 + 2× Strength damage.\nExhaust\n--bbcode--\nDeal 6 + 2× Strength damage.\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "1",
+    "up_effects": "[{\"base\":8.0,\"mult\":3.0,\"type\":\"deal_damage_str_mult\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Deal 8 + 3× Strength damage.\nExhaust\n--bbcode--\nDeal 8 + 3× Strength damage.\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|plain|base:coagulate": {
+    "effects": "[{\"gain_block_equal_damage\":true,\"type\":\"overload\"}]",
+    "text": "Overload\nGain Block equal to damage dealt by this Overload\n--bbcode--\n[color=#33ebff]Overload[/color]\nGain Block equal to damage dealt by this [color=#33ebff]Overload[/color]",
+    "up_cost": "0",
+    "up_effects": "[{\"gain_block_equal_damage\":true,\"type\":\"overload\"}]",
+    "up_text": "Overload\nGain Block equal to damage dealt by this Overload\n--bbcode--\n[color=#33ebff]Overload[/color]\nGain Block equal to damage dealt by this [color=#33ebff]Overload[/color]"
+  },
+  "en|plain|base:corrode": {
+    "effects": "[{\"stacks\":2.0,\"status\":\"vulnerable\",\"type\":\"apply_status\"}]",
+    "text": "Apply Vulnerable x2\n--bbcode--\nApply [color=#f27333]Vulnerable[/color] x2",
+    "up_cost": "1",
+    "up_effects": "[{\"stacks\":3,\"status\":\"vulnerable\",\"type\":\"apply_status\"}]",
+    "up_text": "Apply Vulnerable x3\n--bbcode--\nApply [color=#f27333]Vulnerable[/color] x3"
+  },
+  "en|plain|base:covering_reload": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"covering_reload\",\"type\":\"apply_status_self\"}]",
+    "text": "Whenever you Reload, gain 3 Block.\n--bbcode--\nWhenever you Reload, gain 3 Block.",
+    "up_cost": "1",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"covering_reload\",\"type\":\"apply_status_self\"},{\"amount\":6.0,\"type\":\"gain_block\"}]",
+    "up_text": "Whenever you Reload, gain 3 Block.\nGain 6 (6+0) block\n--bbcode--\nWhenever you Reload, gain 3 Block.\nGain 6 (6+[color=#8fb8ff]0[/color]) block"
+  },
+  "en|plain|base:cowardice": {
+    "effects": "[]",
+    "text": "Unplayable. At the end of your turn while in hand, gain 1 Weak.\n--bbcode--\nUnplayable. At the end of your turn while in hand, gain 1 [color=#b280e6]Weak[/color].",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "Unplayable. At the end of your turn while in hand, gain 1 Weak.\n--bbcode--\nUnplayable. At the end of your turn while in hand, gain 1 [color=#b280e6]Weak[/color]."
+  },
+  "en|plain|base:data_dump": {
+    "effects": "[{\"amount\":3.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Draw 3 cards\nExhaust\n--bbcode--\nDraw 3 cards\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":4.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Draw 4 cards\nExhaust\n--bbcode--\nDraw 4 cards\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|plain|base:defend": {
+    "effects": "[{\"amount\":5.0,\"type\":\"gain_block\"}]",
+    "text": "Gain 5 (5+0) block\n--bbcode--\nGain 5 (5+[color=#8fb8ff]0[/color]) block",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":8,\"type\":\"gain_block\"}]",
+    "up_text": "Gain 8 (8+0) block\n--bbcode--\nGain 8 (8+[color=#8fb8ff]0[/color]) block"
+  },
+  "en|plain|base:deflector": {
+    "effects": "[{\"amount\":5.0,\"type\":\"gain_block\"},{\"stacks\":1.0,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "text": "Gain 5 (5+0) block\nApply Weak x1\n--bbcode--\nGain 5 (5+[color=#8fb8ff]0[/color]) block\nApply [color=#b280e6]Weak[/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":8,\"type\":\"gain_block\"},{\"stacks\":2,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "up_text": "Gain 8 (8+0) block\nApply Weak x2\n--bbcode--\nGain 8 (8+[color=#8fb8ff]0[/color]) block\nApply [color=#b280e6]Weak[/color] x2"
+  },
+  "en|plain|base:dissect": {
+    "effects": "[{\"amount\":8.0,\"attr\":\"intelligence\",\"attr_mult\":2.0,\"type\":\"apply_short_circuit_scaled\"}]",
+    "text": "Apply 8 (+2×INTELLIGENCE) Short Circuit\n--bbcode--\nApply 8 (+2×INTELLIGENCE) [color=#33ebff]Short Circuit[/color]",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":10.0,\"attr\":\"intelligence\",\"attr_mult\":3.0,\"type\":\"apply_short_circuit_scaled\"}]",
+    "up_text": "Apply 10 (+3×INTELLIGENCE) Short Circuit\n--bbcode--\nApply 10 (+3×INTELLIGENCE) [color=#33ebff]Short Circuit[/color]"
+  },
+  "en|plain|base:focus": {
+    "effects": "[{\"amount\":1.0,\"type\":\"gain_intelligence\"},{\"amount\":1.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Gain 1 Intelligence\nDraw 1 cards\nExhaust\n--bbcode--\nGain 1 Intelligence\nDraw 1 cards\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":2,\"type\":\"gain_intelligence\"},{\"amount\":2,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Gain 2 Intelligence\nDraw 2 cards\nExhaust\n--bbcode--\nGain 2 Intelligence\nDraw 2 cards\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|plain|base:hemorrhage": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"overload_protocol\",\"type\":\"apply_status_self\"}]",
+    "text": "Your Overloads can Crit.\n--bbcode--\nYour [color=#33ebff]Overload[/color]s can Crit.",
+    "up_cost": "1",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"overload_protocol\",\"type\":\"apply_status_self\"}]",
+    "up_text": "Your Overloads can Crit.\n--bbcode--\nYour [color=#33ebff]Overload[/color]s can Crit."
+  },
+  "en|plain|base:hot_streak": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"hot_streak\",\"type\":\"apply_status_self\"}]",
+    "text": "Whenever you Crit, gain 2 Loaded.\n--bbcode--\nWhenever you Crit, gain 2 [color=#ffb23d]Loaded[/color].",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"hot_streak\",\"type\":\"apply_status_self\"}]",
+    "up_text": "Whenever you Crit, gain 2 Loaded.\n--bbcode--\nWhenever you Crit, gain 2 [color=#ffb23d]Loaded[/color]."
+  },
+  "en|plain|base:hot_swap": {
+    "effects": "[{\"amount\":2.0,\"type\":\"draw_cards\"}]",
+    "text": "Draw 2 cards\n--bbcode--\nDraw 2 cards",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":3.0,\"type\":\"draw_cards\"}]",
+    "up_text": "Draw 3 cards\n--bbcode--\nDraw 3 cards"
+  },
+  "en|plain|base:kinetic_baffle": {
+    "effects": "[{\"amount\":5.0,\"type\":\"gain_block\"},{\"amount\":1.0,\"type\":\"draw_cards\"}]",
+    "text": "Gain 5 (5+0) block\nDraw 1 cards\n--bbcode--\nGain 5 (5+[color=#8fb8ff]0[/color]) block\nDraw 1 cards",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":7.0,\"type\":\"gain_block\"},{\"amount\":1.0,\"type\":\"draw_cards\"}]",
+    "up_text": "Gain 7 (7+0) block\nDraw 1 cards\n--bbcode--\nGain 7 (7+[color=#8fb8ff]0[/color]) block\nDraw 1 cards"
+  },
+  "en|plain|base:leaking_wealth": {
+    "effects": "[]",
+    "text": "Unplayable. At the end of your turn while in hand, lose 5 Caps.\n--bbcode--\nUnplayable. At the end of your turn while in hand, lose 5 Caps.",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "Unplayable. At the end of your turn while in hand, lose 5 Caps.\n--bbcode--\nUnplayable. At the end of your turn while in hand, lose 5 Caps."
+  },
+  "en|plain|base:limit_break": {
+    "effects": "[{\"charge_multiplier\":2.0,\"type\":\"overload\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Overload\nThis Overload deals ×2 damage\nExhaust\n--bbcode--\n[color=#33ebff]Overload[/color]\nThis [color=#33ebff]Overload[/color] deals ×2 damage\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"charge_multiplier\":2.0,\"type\":\"overload\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Overload\nThis Overload deals ×2 damage\nExhaust\n--bbcode--\n[color=#33ebff]Overload[/color]\nThis [color=#33ebff]Overload[/color] deals ×2 damage\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|plain|base:load_up": {
+    "effects": "[{\"amount\":2.0,\"card\":\"base:reload\",\"type\":\"add_card_to_hand\"}]",
+    "text": "Add 2 Reload to your hand\n--bbcode--\nAdd 2 Reload to your hand",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":3.0,\"card\":\"base:reload\",\"type\":\"add_card_to_hand\"}]",
+    "up_text": "Add 3 Reload to your hand\n--bbcode--\nAdd 3 Reload to your hand"
+  },
+  "en|plain|base:lucky_streak": {
+    "effects": "[{\"amount\":1.0,\"type\":\"gain_luck\"},{\"stacks\":1.0,\"status\":\"deadeye\",\"type\":\"apply_status_self\"}]",
+    "text": "Gain 1 Luck\nGain Deadeye x1\n--bbcode--\nGain 1 Luck\nGain [color=#ffe657]Deadeye[/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":2.0,\"type\":\"gain_luck\"},{\"stacks\":1.0,\"status\":\"deadeye\",\"type\":\"apply_status_self\"}]",
+    "up_text": "Gain 2 Luck\nGain Deadeye x1\n--bbcode--\nGain 2 Luck\nGain [color=#ffe657]Deadeye[/color] x1"
+  },
+  "en|plain|base:panic": {
+    "effects": "[]",
+    "text": "Unplayable. At the end of your turn while in hand, gain 1 Frail.\n--bbcode--\nUnplayable. At the end of your turn while in hand, gain 1 [color=#9980b2]Frail[/color].",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "Unplayable. At the end of your turn while in hand, gain 1 Frail.\n--bbcode--\nUnplayable. At the end of your turn while in hand, gain 1 [color=#9980b2]Frail[/color]."
+  },
+  "en|plain|base:piston_jab": {
+    "effects": "[{\"amount\":4.0,\"no_str\":true,\"type\":\"deal_damage\"}]",
+    "text": "Deal 4 dmg\n--bbcode--\nDeal 4 dmg",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":6.0,\"no_str\":true,\"type\":\"deal_damage\"}]",
+    "up_text": "Deal 6 dmg\n--bbcode--\nDeal 6 dmg"
+  },
+  "en|plain|base:purge": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"vulnerable\",\"type\":\"apply_status\"},{\"stacks\":1.0,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "text": "Apply Vulnerable x1\nApply Weak x1\n--bbcode--\nApply [color=#f27333]Vulnerable[/color] x1\nApply [color=#b280e6]Weak[/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"stacks\":2,\"status\":\"vulnerable\",\"type\":\"apply_status\"},{\"stacks\":2,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "up_text": "Apply Vulnerable x2\nApply Weak x2\n--bbcode--\nApply [color=#f27333]Vulnerable[/color] x2\nApply [color=#b280e6]Weak[/color] x2"
+  },
+  "en|plain|base:radiation_dust": {
+    "effects": "[]",
+    "text": "Unplayable.\n--bbcode--\nUnplayable.",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "Unplayable.\n--bbcode--\nUnplayable."
+  },
+  "en|plain|base:rebar_wave": {
+    "effects": "[{\"amount\":6.0,\"type\":\"gain_block\"},{\"mult\":1.0,\"type\":\"deal_damage_block_mult\"}]",
+    "text": "Gain 6 (6+0) block\nDeal damage equal to Block\n--bbcode--\nGain 6 (6+[color=#8fb8ff]0[/color]) block\nDeal damage equal to Block",
+    "up_cost": "2",
+    "up_effects": "[{\"amount\":8.0,\"type\":\"gain_block\"},{\"mult\":1.0,\"type\":\"deal_damage_block_mult\"}]",
+    "up_text": "Gain 8 (8+0) block\nDeal damage equal to Block\n--bbcode--\nGain 8 (8+[color=#8fb8ff]0[/color]) block\nDeal damage equal to Block"
+  },
+  "en|plain|base:recoil_shot": {
+    "effects": "[{\"amount\":3.0,\"type\":\"deal_damage\"},{\"amount\":6.0,\"attr\":\"intelligence\",\"type\":\"apply_short_circuit_scaled\"}]",
+    "text": "Deal 3 (3+0) dmg\nApply 6 (+INTELLIGENCE) Short Circuit\n--bbcode--\nDeal 3 (3+[color=#ff7a5c]0[/color]) dmg\nApply 6 (+INTELLIGENCE) [color=#33ebff]Short Circuit[/color]",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":4.0,\"type\":\"deal_damage\"},{\"amount\":8.0,\"attr\":\"intelligence\",\"type\":\"apply_short_circuit_scaled\"}]",
+    "up_text": "Deal 4 (4+0) dmg\nApply 8 (+INTELLIGENCE) Short Circuit\n--bbcode--\nDeal 4 (4+[color=#ff7a5c]0[/color]) dmg\nApply 8 (+INTELLIGENCE) [color=#33ebff]Short Circuit[/color]"
+  },
+  "en|plain|base:reload": {
+    "effects": "[{\"stacks\":2.0,\"status\":\"loaded\",\"type\":\"apply_status_self\"},{\"amount\":1.0,\"type\":\"draw_cards\"},{\"type\":\"restore_attack_allowance\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Gain Loaded x2\nDraw 1 cards\nRestore an attack this turn\nExhaust\n--bbcode--\nGain [color=#ffb23d]Loaded[/color] x2\nDraw 1 cards\nRestore an attack this turn\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":3.0,\"status\":\"loaded\",\"type\":\"apply_status_self\"},{\"amount\":1.0,\"type\":\"draw_cards\"},{\"type\":\"restore_attack_allowance\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Gain Loaded x3\nDraw 1 cards\nRestore an attack this turn\nExhaust\n--bbcode--\nGain [color=#ffb23d]Loaded[/color] x3\nDraw 1 cards\nRestore an attack this turn\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|plain|base:rust": {
+    "effects": "[]",
+    "text": "Unplayable. At the end of your turn while in hand, lose 2 HP.\n--bbcode--\nUnplayable. At the end of your turn while in hand, lose 2 HP.",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "Unplayable. At the end of your turn while in hand, lose 2 HP.\n--bbcode--\nUnplayable. At the end of your turn while in hand, lose 2 HP."
+  },
+  "en|plain|base:siphon": {
+    "effects": "[{\"amount\":3.0,\"type\":\"deal_damage\"},{\"amount\":3.0,\"type\":\"gain_block\"}]",
+    "text": "Deal 3 (3+0) dmg\nGain 3 (3+0) block\n--bbcode--\nDeal 3 (3+[color=#ff7a5c]0[/color]) dmg\nGain 3 (3+[color=#8fb8ff]0[/color]) block",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":5,\"type\":\"deal_damage\"},{\"amount\":6,\"type\":\"gain_block\"}]",
+    "up_text": "Deal 5 (5+0) dmg\nGain 6 (6+0) block\n--bbcode--\nDeal 5 (5+[color=#ff7a5c]0[/color]) dmg\nGain 6 (6+[color=#8fb8ff]0[/color]) block"
+  },
+  "en|plain|base:smoke_step": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"intangible\",\"type\":\"apply_status_self\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Gain Intangible x1\nExhaust\n--bbcode--\nGain [color=#99f2ff]Intangible[/color] x1\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"intangible\",\"type\":\"apply_status_self\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Gain Intangible x1\nExhaust\n--bbcode--\nGain [color=#99f2ff]Intangible[/color] x1\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|plain|base:spiked_guard": {
+    "effects": "[{\"amount\":5.0,\"type\":\"gain_block\"},{\"stacks\":2.0,\"status\":\"thorns\",\"type\":\"apply_status_self\"}]",
+    "text": "Gain 5 (5+0) block\nGain Thorns x2\n--bbcode--\nGain 5 (5+[color=#8fb8ff]0[/color]) block\nGain [color=#b2bfcc]Thorns[/color] x2",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":8,\"type\":\"gain_block\"},{\"stacks\":2.0,\"status\":\"thorns\",\"type\":\"apply_status_self\"}]",
+    "up_text": "Gain 8 (8+0) block\nGain Thorns x2\n--bbcode--\nGain 8 (8+[color=#8fb8ff]0[/color]) block\nGain [color=#b2bfcc]Thorns[/color] x2"
+  },
+  "en|plain|base:static_shout": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"weak\",\"type\":\"apply_status_all\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Apply Weak x1 to all enemies\nExhaust\n--bbcode--\nApply [color=#b280e6]Weak[/color] x1 to all enemies\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":2,\"status\":\"weak\",\"type\":\"apply_status_all\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Apply Weak x2 to all enemies\nExhaust\n--bbcode--\nApply [color=#b280e6]Weak[/color] x2 to all enemies\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|plain|base:strike": {
+    "effects": "[{\"amount\":3.0,\"type\":\"deal_damage\"}]",
+    "text": "Deal 3 (3+0) dmg\n--bbcode--\nDeal 3 (3+[color=#ff7a5c]0[/color]) dmg",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":5,\"type\":\"deal_damage\"}]",
+    "up_text": "Deal 5 (5+0) dmg\n--bbcode--\nDeal 5 (5+[color=#ff7a5c]0[/color]) dmg"
+  },
+  "en|plain|base:stun_baton": {
+    "effects": "[{\"amount\":1.0,\"type\":\"deal_damage\"},{\"stacks\":1.0,\"type\":\"apply_stun\"}]",
+    "text": "Deal 1 (1+0) dmg\nApply Stun x1\n--bbcode--\nDeal 1 (1+[color=#ff7a5c]0[/color]) dmg\nApply [color=#f0e040][color=#f2f24c]Stun[/color][/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":3,\"type\":\"deal_damage\"},{\"stacks\":1.0,\"type\":\"apply_stun\"}]",
+    "up_text": "Deal 3 (3+0) dmg\nApply Stun x1\n--bbcode--\nDeal 3 (3+[color=#ff7a5c]0[/color]) dmg\nApply [color=#f0e040][color=#f2f24c]Stun[/color][/color] x1"
+  },
+  "en|plain|base:sweep_arc": {
+    "effects": "[{\"amount\":8.0,\"no_str\":true,\"type\":\"deal_damage_all\"}]",
+    "text": "Deal 8 dmg to all enemies\n--bbcode--\nDeal 8 dmg to all enemies",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":10,\"no_str\":true,\"type\":\"deal_damage_all\"}]",
+    "up_text": "Deal 10 dmg to all enemies\n--bbcode--\nDeal 10 dmg to all enemies"
+  },
+  "en|plain|base:tape_patch": {
+    "effects": "[{\"amount\":4.0,\"type\":\"gain_block\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Gain 4 (4+0) block\nExhaust\n--bbcode--\nGain 4 (4+[color=#8fb8ff]0[/color]) block\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":7,\"type\":\"gain_block\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Gain 7 (7+0) block\nExhaust\n--bbcode--\nGain 7 (7+[color=#8fb8ff]0[/color]) block\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|plain|base:venom_coat": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"reactive_plating\",\"type\":\"apply_status_self\"}]",
+    "text": "Whenever a card grants Block, gain 1 Thorns.\n--bbcode--\nWhenever a card grants Block, gain 1 [color=#b2bfcc]Thorns[/color].",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"reactive_plating\",\"type\":\"apply_status_self\"}]",
+    "up_text": "Whenever a card grants Block, gain 1 Thorns.\n--bbcode--\nWhenever a card grants Block, gain 1 [color=#b2bfcc]Thorns[/color]."
+  },
+  "en|plain|base:weak_strike": {
+    "effects": "[{\"amount\":4.0,\"type\":\"deal_damage\"},{\"stacks\":1.0,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "text": "Deal 4 (4+0) dmg\nApply Weak x1\n--bbcode--\nDeal 4 (4+[color=#ff7a5c]0[/color]) dmg\nApply [color=#b280e6]Weak[/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":6,\"type\":\"deal_damage\"},{\"stacks\":2,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "up_text": "Deal 6 (6+0) dmg\nApply Weak x2\n--bbcode--\nDeal 6 (6+[color=#ff7a5c]0[/color]) dmg\nApply [color=#b280e6]Weak[/color] x2"
+  },
+  "en|stats|base:acid_splash": {
+    "effects": "[{\"amount\":2.0,\"no_str\":true,\"type\":\"deal_damage_all\"},{\"stacks\":5.0,\"status\":\"short_circuit\",\"type\":\"apply_status_all\"}]",
+    "text": "Deal 2 dmg to all enemies\nApply Short Circuit x5 to all enemies\n--bbcode--\nDeal 2 dmg to all enemies\nApply [color=#33ebff]Short Circuit[/color] x5 to all enemies",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":3.0,\"no_str\":true,\"type\":\"deal_damage_all\"},{\"stacks\":7.0,\"status\":\"short_circuit\",\"type\":\"apply_status_all\"}]",
+    "up_text": "Deal 3 dmg to all enemies\nApply Short Circuit x7 to all enemies\n--bbcode--\nDeal 3 dmg to all enemies\nApply [color=#33ebff]Short Circuit[/color] x7 to all enemies"
+  },
+  "en|stats|base:adrenaline": {
+    "effects": "[{\"amount\":2.0,\"type\":\"gain_energy\"},{\"amount\":1.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Gain 2 Energy\nDraw 1 cards\nExhaust\n--bbcode--\nGain 2 Energy\nDraw 1 cards\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":2.0,\"type\":\"gain_energy\"},{\"amount\":2.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Gain 2 Energy\nDraw 2 cards\nExhaust\n--bbcode--\nGain 2 Energy\nDraw 2 cards\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|stats|base:all_in": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"all_in\",\"type\":\"apply_status_self\"}]",
+    "text": "Crits deal double damage. Non-Crit attacks deal normal damage and grant 2 Loaded.\n--bbcode--\nCrits deal double damage. Non-Crit attacks deal normal damage and grant 2 [color=#ffb23d]Loaded[/color].",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"all_in\",\"type\":\"apply_status_self\"}]",
+    "up_text": "Crits deal double damage. Non-Crit attacks deal normal damage and grant 2 Loaded.\n--bbcode--\nCrits deal double damage. Non-Crit attacks deal normal damage and grant 2 [color=#ffb23d]Loaded[/color]."
+  },
+  "en|stats|base:arc_flash": {
+    "effects": "[{\"amount\":2.0,\"no_str\":true,\"type\":\"deal_damage_all\"},{\"type\":\"overload\"}]",
+    "text": "Deal 2 dmg to all enemies\nOverload\n--bbcode--\nDeal 2 dmg to all enemies\n[color=#33ebff]Overload[/color]",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":4.0,\"no_str\":true,\"type\":\"deal_damage_all\"},{\"type\":\"overload\"}]",
+    "up_text": "Deal 4 dmg to all enemies\nOverload\n--bbcode--\nDeal 4 dmg to all enemies\n[color=#33ebff]Overload[/color]"
+  },
+  "en|stats|base:bone_breaker": {
+    "effects": "[{\"amount\":10.0,\"attr\":\"intelligence\",\"double_if_short_circuited\":true,\"type\":\"apply_short_circuit_scaled\"}]",
+    "text": "Apply 10 (+INTELLIGENCE) Short Circuit\nDouble this application if the target already has Short Circuit\n--bbcode--\nApply 10 (+INTELLIGENCE) [color=#33ebff]Short Circuit[/color]\nDouble this application if the target already has [color=#33ebff]Short Circuit[/color]",
+    "up_cost": "2",
+    "up_effects": "[{\"amount\":13.0,\"attr\":\"intelligence\",\"double_if_short_circuited\":true,\"type\":\"apply_short_circuit_scaled\"}]",
+    "up_text": "Apply 13 (+INTELLIGENCE) Short Circuit\nDouble this application if the target already has Short Circuit\n--bbcode--\nApply 13 (+INTELLIGENCE) [color=#33ebff]Short Circuit[/color]\nDouble this application if the target already has [color=#33ebff]Short Circuit[/color]"
+  },
+  "en|stats|base:brace": {
+    "effects": "[{\"amount\":3.0,\"type\":\"gain_block\"}]",
+    "text": "Gain 6 (3+3) block\nRetain\n--bbcode--\nGain 6 (3+[color=#8fb8ff]3[/color]) block\n[i][color=#9ec1ff]Retain[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":6,\"type\":\"gain_block\"}]",
+    "up_text": "Gain 9 (6+3) block\nRetain\n--bbcode--\nGain 9 (6+[color=#8fb8ff]3[/color]) block\n[i][color=#9ec1ff]Retain[/color][/i]"
+  },
+  "en|stats|base:brace_protocol": {
+    "effects": "[{\"amount\":10.0,\"no_con\":true,\"type\":\"gain_block\"}]",
+    "text": "Gain 10 block\n--bbcode--\nGain 10 block",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":13,\"no_con\":true,\"type\":\"gain_block\"}]",
+    "up_text": "Gain 13 block\n--bbcode--\nGain 13 block"
+  },
+  "en|stats|base:cascade": {
+    "effects": "[{\"base\":5.0,\"per\":1.0,\"scope\":\"combat\",\"type\":\"scale_damage_by_attacks\"}]",
+    "text": "Deal 5 + 1 per Attack played\nRetain\n--bbcode--\nDeal 5 + 1 per Attack played\n[i][color=#9ec1ff]Retain[/color][/i]",
+    "up_cost": "1",
+    "up_effects": "[{\"base\":7.0,\"per\":1.0,\"scope\":\"combat\",\"type\":\"scale_damage_by_attacks\"}]",
+    "up_text": "Deal 7 + 1 per Attack played\nRetain\n--bbcode--\nDeal 7 + 1 per Attack played\n[i][color=#9ec1ff]Retain[/color][/i]"
+  },
+  "en|stats|base:chain_link": {
+    "effects": "[{\"amount\":4.0,\"type\":\"deal_damage\"},{\"amount\":1.0,\"type\":\"draw_cards\"}]",
+    "text": "Deal 6 (4+2) dmg\nDraw 1 cards\n--bbcode--\nDeal 6 (4+[color=#ff7a5c]2[/color]) dmg\nDraw 1 cards",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":6,\"type\":\"deal_damage\"},{\"amount\":2,\"type\":\"draw_cards\"}]",
+    "up_text": "Deal 8 (6+2) dmg\nDraw 2 cards\n--bbcode--\nDeal 8 (6+[color=#ff7a5c]2[/color]) dmg\nDraw 2 cards"
+  },
+  "en|stats|base:charged_shot": {
+    "effects": "[{\"base\":6.0,\"mult\":2.0,\"type\":\"deal_damage_str_mult\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Deal 6 + 2× Strength damage.\nExhaust\n--bbcode--\nDeal 6 + 2× Strength damage.\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "1",
+    "up_effects": "[{\"base\":8.0,\"mult\":3.0,\"type\":\"deal_damage_str_mult\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Deal 8 + 3× Strength damage.\nExhaust\n--bbcode--\nDeal 8 + 3× Strength damage.\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|stats|base:coagulate": {
+    "effects": "[{\"gain_block_equal_damage\":true,\"type\":\"overload\"}]",
+    "text": "Overload\nGain Block equal to damage dealt by this Overload\n--bbcode--\n[color=#33ebff]Overload[/color]\nGain Block equal to damage dealt by this [color=#33ebff]Overload[/color]",
+    "up_cost": "0",
+    "up_effects": "[{\"gain_block_equal_damage\":true,\"type\":\"overload\"}]",
+    "up_text": "Overload\nGain Block equal to damage dealt by this Overload\n--bbcode--\n[color=#33ebff]Overload[/color]\nGain Block equal to damage dealt by this [color=#33ebff]Overload[/color]"
+  },
+  "en|stats|base:corrode": {
+    "effects": "[{\"stacks\":2.0,\"status\":\"vulnerable\",\"type\":\"apply_status\"}]",
+    "text": "Apply Vulnerable x2\n--bbcode--\nApply [color=#f27333]Vulnerable[/color] x2",
+    "up_cost": "1",
+    "up_effects": "[{\"stacks\":3,\"status\":\"vulnerable\",\"type\":\"apply_status\"}]",
+    "up_text": "Apply Vulnerable x3\n--bbcode--\nApply [color=#f27333]Vulnerable[/color] x3"
+  },
+  "en|stats|base:covering_reload": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"covering_reload\",\"type\":\"apply_status_self\"}]",
+    "text": "Whenever you Reload, gain 3 Block.\n--bbcode--\nWhenever you Reload, gain 3 Block.",
+    "up_cost": "1",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"covering_reload\",\"type\":\"apply_status_self\"},{\"amount\":6.0,\"type\":\"gain_block\"}]",
+    "up_text": "Whenever you Reload, gain 3 Block.\nGain 9 (6+3) block\n--bbcode--\nWhenever you Reload, gain 3 Block.\nGain 9 (6+[color=#8fb8ff]3[/color]) block"
+  },
+  "en|stats|base:cowardice": {
+    "effects": "[]",
+    "text": "Unplayable. At the end of your turn while in hand, gain 1 Weak.\n--bbcode--\nUnplayable. At the end of your turn while in hand, gain 1 [color=#b280e6]Weak[/color].",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "Unplayable. At the end of your turn while in hand, gain 1 Weak.\n--bbcode--\nUnplayable. At the end of your turn while in hand, gain 1 [color=#b280e6]Weak[/color]."
+  },
+  "en|stats|base:data_dump": {
+    "effects": "[{\"amount\":3.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Draw 3 cards\nExhaust\n--bbcode--\nDraw 3 cards\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":4.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Draw 4 cards\nExhaust\n--bbcode--\nDraw 4 cards\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|stats|base:defend": {
+    "effects": "[{\"amount\":5.0,\"type\":\"gain_block\"}]",
+    "text": "Gain 8 (5+3) block\n--bbcode--\nGain 8 (5+[color=#8fb8ff]3[/color]) block",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":8,\"type\":\"gain_block\"}]",
+    "up_text": "Gain 11 (8+3) block\n--bbcode--\nGain 11 (8+[color=#8fb8ff]3[/color]) block"
+  },
+  "en|stats|base:deflector": {
+    "effects": "[{\"amount\":5.0,\"type\":\"gain_block\"},{\"stacks\":1.0,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "text": "Gain 8 (5+3) block\nApply Weak x1\n--bbcode--\nGain 8 (5+[color=#8fb8ff]3[/color]) block\nApply [color=#b280e6]Weak[/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":8,\"type\":\"gain_block\"},{\"stacks\":2,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "up_text": "Gain 11 (8+3) block\nApply Weak x2\n--bbcode--\nGain 11 (8+[color=#8fb8ff]3[/color]) block\nApply [color=#b280e6]Weak[/color] x2"
+  },
+  "en|stats|base:dissect": {
+    "effects": "[{\"amount\":8.0,\"attr\":\"intelligence\",\"attr_mult\":2.0,\"type\":\"apply_short_circuit_scaled\"}]",
+    "text": "Apply 8 (+2×INTELLIGENCE) Short Circuit\n--bbcode--\nApply 8 (+2×INTELLIGENCE) [color=#33ebff]Short Circuit[/color]",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":10.0,\"attr\":\"intelligence\",\"attr_mult\":3.0,\"type\":\"apply_short_circuit_scaled\"}]",
+    "up_text": "Apply 10 (+3×INTELLIGENCE) Short Circuit\n--bbcode--\nApply 10 (+3×INTELLIGENCE) [color=#33ebff]Short Circuit[/color]"
+  },
+  "en|stats|base:focus": {
+    "effects": "[{\"amount\":1.0,\"type\":\"gain_intelligence\"},{\"amount\":1.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Gain 1 Intelligence\nDraw 1 cards\nExhaust\n--bbcode--\nGain 1 Intelligence\nDraw 1 cards\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":2,\"type\":\"gain_intelligence\"},{\"amount\":2,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Gain 2 Intelligence\nDraw 2 cards\nExhaust\n--bbcode--\nGain 2 Intelligence\nDraw 2 cards\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|stats|base:hemorrhage": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"overload_protocol\",\"type\":\"apply_status_self\"}]",
+    "text": "Your Overloads can Crit.\n--bbcode--\nYour [color=#33ebff]Overload[/color]s can Crit.",
+    "up_cost": "1",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"overload_protocol\",\"type\":\"apply_status_self\"}]",
+    "up_text": "Your Overloads can Crit.\n--bbcode--\nYour [color=#33ebff]Overload[/color]s can Crit."
+  },
+  "en|stats|base:hot_streak": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"hot_streak\",\"type\":\"apply_status_self\"}]",
+    "text": "Whenever you Crit, gain 2 Loaded.\n--bbcode--\nWhenever you Crit, gain 2 [color=#ffb23d]Loaded[/color].",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"hot_streak\",\"type\":\"apply_status_self\"}]",
+    "up_text": "Whenever you Crit, gain 2 Loaded.\n--bbcode--\nWhenever you Crit, gain 2 [color=#ffb23d]Loaded[/color]."
+  },
+  "en|stats|base:hot_swap": {
+    "effects": "[{\"amount\":2.0,\"type\":\"draw_cards\"}]",
+    "text": "Draw 2 cards\n--bbcode--\nDraw 2 cards",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":3.0,\"type\":\"draw_cards\"}]",
+    "up_text": "Draw 3 cards\n--bbcode--\nDraw 3 cards"
+  },
+  "en|stats|base:kinetic_baffle": {
+    "effects": "[{\"amount\":5.0,\"type\":\"gain_block\"},{\"amount\":1.0,\"type\":\"draw_cards\"}]",
+    "text": "Gain 8 (5+3) block\nDraw 1 cards\n--bbcode--\nGain 8 (5+[color=#8fb8ff]3[/color]) block\nDraw 1 cards",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":7.0,\"type\":\"gain_block\"},{\"amount\":1.0,\"type\":\"draw_cards\"}]",
+    "up_text": "Gain 10 (7+3) block\nDraw 1 cards\n--bbcode--\nGain 10 (7+[color=#8fb8ff]3[/color]) block\nDraw 1 cards"
+  },
+  "en|stats|base:leaking_wealth": {
+    "effects": "[]",
+    "text": "Unplayable. At the end of your turn while in hand, lose 5 Caps.\n--bbcode--\nUnplayable. At the end of your turn while in hand, lose 5 Caps.",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "Unplayable. At the end of your turn while in hand, lose 5 Caps.\n--bbcode--\nUnplayable. At the end of your turn while in hand, lose 5 Caps."
+  },
+  "en|stats|base:limit_break": {
+    "effects": "[{\"charge_multiplier\":2.0,\"type\":\"overload\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Overload\nThis Overload deals ×2 damage\nExhaust\n--bbcode--\n[color=#33ebff]Overload[/color]\nThis [color=#33ebff]Overload[/color] deals ×2 damage\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"charge_multiplier\":2.0,\"type\":\"overload\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Overload\nThis Overload deals ×2 damage\nExhaust\n--bbcode--\n[color=#33ebff]Overload[/color]\nThis [color=#33ebff]Overload[/color] deals ×2 damage\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|stats|base:load_up": {
+    "effects": "[{\"amount\":2.0,\"card\":\"base:reload\",\"type\":\"add_card_to_hand\"}]",
+    "text": "Add 2 Reload to your hand\n--bbcode--\nAdd 2 Reload to your hand",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":3.0,\"card\":\"base:reload\",\"type\":\"add_card_to_hand\"}]",
+    "up_text": "Add 3 Reload to your hand\n--bbcode--\nAdd 3 Reload to your hand"
+  },
+  "en|stats|base:lucky_streak": {
+    "effects": "[{\"amount\":1.0,\"type\":\"gain_luck\"},{\"stacks\":1.0,\"status\":\"deadeye\",\"type\":\"apply_status_self\"}]",
+    "text": "Gain 1 Luck\nGain Deadeye x1\n--bbcode--\nGain 1 Luck\nGain [color=#ffe657]Deadeye[/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":2.0,\"type\":\"gain_luck\"},{\"stacks\":1.0,\"status\":\"deadeye\",\"type\":\"apply_status_self\"}]",
+    "up_text": "Gain 2 Luck\nGain Deadeye x1\n--bbcode--\nGain 2 Luck\nGain [color=#ffe657]Deadeye[/color] x1"
+  },
+  "en|stats|base:panic": {
+    "effects": "[]",
+    "text": "Unplayable. At the end of your turn while in hand, gain 1 Frail.\n--bbcode--\nUnplayable. At the end of your turn while in hand, gain 1 [color=#9980b2]Frail[/color].",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "Unplayable. At the end of your turn while in hand, gain 1 Frail.\n--bbcode--\nUnplayable. At the end of your turn while in hand, gain 1 [color=#9980b2]Frail[/color]."
+  },
+  "en|stats|base:piston_jab": {
+    "effects": "[{\"amount\":4.0,\"no_str\":true,\"type\":\"deal_damage\"}]",
+    "text": "Deal 4 dmg\n--bbcode--\nDeal 4 dmg",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":6.0,\"no_str\":true,\"type\":\"deal_damage\"}]",
+    "up_text": "Deal 6 dmg\n--bbcode--\nDeal 6 dmg"
+  },
+  "en|stats|base:purge": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"vulnerable\",\"type\":\"apply_status\"},{\"stacks\":1.0,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "text": "Apply Vulnerable x1\nApply Weak x1\n--bbcode--\nApply [color=#f27333]Vulnerable[/color] x1\nApply [color=#b280e6]Weak[/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"stacks\":2,\"status\":\"vulnerable\",\"type\":\"apply_status\"},{\"stacks\":2,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "up_text": "Apply Vulnerable x2\nApply Weak x2\n--bbcode--\nApply [color=#f27333]Vulnerable[/color] x2\nApply [color=#b280e6]Weak[/color] x2"
+  },
+  "en|stats|base:radiation_dust": {
+    "effects": "[]",
+    "text": "Unplayable.\n--bbcode--\nUnplayable.",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "Unplayable.\n--bbcode--\nUnplayable."
+  },
+  "en|stats|base:rebar_wave": {
+    "effects": "[{\"amount\":6.0,\"type\":\"gain_block\"},{\"mult\":1.0,\"type\":\"deal_damage_block_mult\"}]",
+    "text": "Gain 9 (6+3) block\nDeal damage equal to Block\n--bbcode--\nGain 9 (6+[color=#8fb8ff]3[/color]) block\nDeal damage equal to Block",
+    "up_cost": "2",
+    "up_effects": "[{\"amount\":8.0,\"type\":\"gain_block\"},{\"mult\":1.0,\"type\":\"deal_damage_block_mult\"}]",
+    "up_text": "Gain 11 (8+3) block\nDeal damage equal to Block\n--bbcode--\nGain 11 (8+[color=#8fb8ff]3[/color]) block\nDeal damage equal to Block"
+  },
+  "en|stats|base:recoil_shot": {
+    "effects": "[{\"amount\":3.0,\"type\":\"deal_damage\"},{\"amount\":6.0,\"attr\":\"intelligence\",\"type\":\"apply_short_circuit_scaled\"}]",
+    "text": "Deal 5 (3+2) dmg\nApply 6 (+INTELLIGENCE) Short Circuit\n--bbcode--\nDeal 5 (3+[color=#ff7a5c]2[/color]) dmg\nApply 6 (+INTELLIGENCE) [color=#33ebff]Short Circuit[/color]",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":4.0,\"type\":\"deal_damage\"},{\"amount\":8.0,\"attr\":\"intelligence\",\"type\":\"apply_short_circuit_scaled\"}]",
+    "up_text": "Deal 6 (4+2) dmg\nApply 8 (+INTELLIGENCE) Short Circuit\n--bbcode--\nDeal 6 (4+[color=#ff7a5c]2[/color]) dmg\nApply 8 (+INTELLIGENCE) [color=#33ebff]Short Circuit[/color]"
+  },
+  "en|stats|base:reload": {
+    "effects": "[{\"stacks\":2.0,\"status\":\"loaded\",\"type\":\"apply_status_self\"},{\"amount\":1.0,\"type\":\"draw_cards\"},{\"type\":\"restore_attack_allowance\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Gain Loaded x2\nDraw 1 cards\nRestore an attack this turn\nExhaust\n--bbcode--\nGain [color=#ffb23d]Loaded[/color] x2\nDraw 1 cards\nRestore an attack this turn\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":3.0,\"status\":\"loaded\",\"type\":\"apply_status_self\"},{\"amount\":1.0,\"type\":\"draw_cards\"},{\"type\":\"restore_attack_allowance\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Gain Loaded x3\nDraw 1 cards\nRestore an attack this turn\nExhaust\n--bbcode--\nGain [color=#ffb23d]Loaded[/color] x3\nDraw 1 cards\nRestore an attack this turn\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|stats|base:rust": {
+    "effects": "[]",
+    "text": "Unplayable. At the end of your turn while in hand, lose 2 HP.\n--bbcode--\nUnplayable. At the end of your turn while in hand, lose 2 HP.",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "Unplayable. At the end of your turn while in hand, lose 2 HP.\n--bbcode--\nUnplayable. At the end of your turn while in hand, lose 2 HP."
+  },
+  "en|stats|base:siphon": {
+    "effects": "[{\"amount\":3.0,\"type\":\"deal_damage\"},{\"amount\":3.0,\"type\":\"gain_block\"}]",
+    "text": "Deal 5 (3+2) dmg\nGain 6 (3+3) block\n--bbcode--\nDeal 5 (3+[color=#ff7a5c]2[/color]) dmg\nGain 6 (3+[color=#8fb8ff]3[/color]) block",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":5,\"type\":\"deal_damage\"},{\"amount\":6,\"type\":\"gain_block\"}]",
+    "up_text": "Deal 7 (5+2) dmg\nGain 9 (6+3) block\n--bbcode--\nDeal 7 (5+[color=#ff7a5c]2[/color]) dmg\nGain 9 (6+[color=#8fb8ff]3[/color]) block"
+  },
+  "en|stats|base:smoke_step": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"intangible\",\"type\":\"apply_status_self\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Gain Intangible x1\nExhaust\n--bbcode--\nGain [color=#99f2ff]Intangible[/color] x1\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"intangible\",\"type\":\"apply_status_self\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Gain Intangible x1\nExhaust\n--bbcode--\nGain [color=#99f2ff]Intangible[/color] x1\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|stats|base:spiked_guard": {
+    "effects": "[{\"amount\":5.0,\"type\":\"gain_block\"},{\"stacks\":2.0,\"status\":\"thorns\",\"type\":\"apply_status_self\"}]",
+    "text": "Gain 8 (5+3) block\nGain Thorns x2\n--bbcode--\nGain 8 (5+[color=#8fb8ff]3[/color]) block\nGain [color=#b2bfcc]Thorns[/color] x2",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":8,\"type\":\"gain_block\"},{\"stacks\":2.0,\"status\":\"thorns\",\"type\":\"apply_status_self\"}]",
+    "up_text": "Gain 11 (8+3) block\nGain Thorns x2\n--bbcode--\nGain 11 (8+[color=#8fb8ff]3[/color]) block\nGain [color=#b2bfcc]Thorns[/color] x2"
+  },
+  "en|stats|base:static_shout": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"weak\",\"type\":\"apply_status_all\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Apply Weak x1 to all enemies\nExhaust\n--bbcode--\nApply [color=#b280e6]Weak[/color] x1 to all enemies\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":2,\"status\":\"weak\",\"type\":\"apply_status_all\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Apply Weak x2 to all enemies\nExhaust\n--bbcode--\nApply [color=#b280e6]Weak[/color] x2 to all enemies\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|stats|base:strike": {
+    "effects": "[{\"amount\":3.0,\"type\":\"deal_damage\"}]",
+    "text": "Deal 5 (3+2) dmg\n--bbcode--\nDeal 5 (3+[color=#ff7a5c]2[/color]) dmg",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":5,\"type\":\"deal_damage\"}]",
+    "up_text": "Deal 7 (5+2) dmg\n--bbcode--\nDeal 7 (5+[color=#ff7a5c]2[/color]) dmg"
+  },
+  "en|stats|base:stun_baton": {
+    "effects": "[{\"amount\":1.0,\"type\":\"deal_damage\"},{\"stacks\":1.0,\"type\":\"apply_stun\"}]",
+    "text": "Deal 3 (1+2) dmg\nApply Stun x1\n--bbcode--\nDeal 3 (1+[color=#ff7a5c]2[/color]) dmg\nApply [color=#f0e040][color=#f2f24c]Stun[/color][/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":3,\"type\":\"deal_damage\"},{\"stacks\":1.0,\"type\":\"apply_stun\"}]",
+    "up_text": "Deal 5 (3+2) dmg\nApply Stun x1\n--bbcode--\nDeal 5 (3+[color=#ff7a5c]2[/color]) dmg\nApply [color=#f0e040][color=#f2f24c]Stun[/color][/color] x1"
+  },
+  "en|stats|base:sweep_arc": {
+    "effects": "[{\"amount\":8.0,\"no_str\":true,\"type\":\"deal_damage_all\"}]",
+    "text": "Deal 8 dmg to all enemies\n--bbcode--\nDeal 8 dmg to all enemies",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":10,\"no_str\":true,\"type\":\"deal_damage_all\"}]",
+    "up_text": "Deal 10 dmg to all enemies\n--bbcode--\nDeal 10 dmg to all enemies"
+  },
+  "en|stats|base:tape_patch": {
+    "effects": "[{\"amount\":4.0,\"type\":\"gain_block\"},{\"type\":\"exhaust_self\"}]",
+    "text": "Gain 7 (4+3) block\nExhaust\n--bbcode--\nGain 7 (4+[color=#8fb8ff]3[/color]) block\n[i][color=#cfa9ff]Exhaust[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":7,\"type\":\"gain_block\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "Gain 10 (7+3) block\nExhaust\n--bbcode--\nGain 10 (7+[color=#8fb8ff]3[/color]) block\n[i][color=#cfa9ff]Exhaust[/color][/i]"
+  },
+  "en|stats|base:venom_coat": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"reactive_plating\",\"type\":\"apply_status_self\"}]",
+    "text": "Whenever a card grants Block, gain 1 Thorns.\n--bbcode--\nWhenever a card grants Block, gain 1 [color=#b2bfcc]Thorns[/color].",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"reactive_plating\",\"type\":\"apply_status_self\"}]",
+    "up_text": "Whenever a card grants Block, gain 1 Thorns.\n--bbcode--\nWhenever a card grants Block, gain 1 [color=#b2bfcc]Thorns[/color]."
+  },
+  "en|stats|base:weak_strike": {
+    "effects": "[{\"amount\":4.0,\"type\":\"deal_damage\"},{\"stacks\":1.0,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "text": "Deal 6 (4+2) dmg\nApply Weak x1\n--bbcode--\nDeal 6 (4+[color=#ff7a5c]2[/color]) dmg\nApply [color=#b280e6]Weak[/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":6,\"type\":\"deal_damage\"},{\"stacks\":2,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "up_text": "Deal 8 (6+2) dmg\nApply Weak x2\n--bbcode--\nDeal 8 (6+[color=#ff7a5c]2[/color]) dmg\nApply [color=#b280e6]Weak[/color] x2"
+  },
+  "zh|plain|base:acid_splash": {
+    "effects": "[{\"amount\":2.0,\"no_str\":true,\"type\":\"deal_damage_all\"},{\"stacks\":5.0,\"status\":\"short_circuit\",\"type\":\"apply_status_all\"}]",
+    "text": "对所有敌人造成 2 伤害\n对所有敌人施加 短路 x5\n--bbcode--\n对所有敌人造成 2 伤害\n对所有敌人施加 [color=#33ebff]短路[/color] x5",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":3.0,\"no_str\":true,\"type\":\"deal_damage_all\"},{\"stacks\":7.0,\"status\":\"short_circuit\",\"type\":\"apply_status_all\"}]",
+    "up_text": "对所有敌人造成 3 伤害\n对所有敌人施加 短路 x7\n--bbcode--\n对所有敌人造成 3 伤害\n对所有敌人施加 [color=#33ebff]短路[/color] x7"
+  },
+  "zh|plain|base:adrenaline": {
+    "effects": "[{\"amount\":2.0,\"type\":\"gain_energy\"},{\"amount\":1.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "text": "获得 2 能量\n抽 1 张牌\n消耗\n--bbcode--\n获得 2 能量\n抽 1 张牌\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":2.0,\"type\":\"gain_energy\"},{\"amount\":2.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "获得 2 能量\n抽 2 张牌\n消耗\n--bbcode--\n获得 2 能量\n抽 2 张牌\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|plain|base:all_in": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"all_in\",\"type\":\"apply_status_self\"}]",
+    "text": "暴击造成双倍伤害；未暴击时正常造成伤害，并获得 2 层上膛。\n--bbcode--\n暴击造成双倍伤害；未暴击时正常造成伤害，并获得 2 层[color=#ffb23d]上膛[/color]。",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"all_in\",\"type\":\"apply_status_self\"}]",
+    "up_text": "暴击造成双倍伤害；未暴击时正常造成伤害，并获得 2 层上膛。\n--bbcode--\n暴击造成双倍伤害；未暴击时正常造成伤害，并获得 2 层[color=#ffb23d]上膛[/color]。"
+  },
+  "zh|plain|base:arc_flash": {
+    "effects": "[{\"amount\":2.0,\"no_str\":true,\"type\":\"deal_damage_all\"},{\"type\":\"overload\"}]",
+    "text": "对所有敌人造成 2 伤害\n触发过载\n--bbcode--\n对所有敌人造成 2 伤害\n触发[color=#33ebff]过载[/color]",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":4.0,\"no_str\":true,\"type\":\"deal_damage_all\"},{\"type\":\"overload\"}]",
+    "up_text": "对所有敌人造成 4 伤害\n触发过载\n--bbcode--\n对所有敌人造成 4 伤害\n触发[color=#33ebff]过载[/color]"
+  },
+  "zh|plain|base:bone_breaker": {
+    "effects": "[{\"amount\":10.0,\"attr\":\"intelligence\",\"double_if_short_circuited\":true,\"type\":\"apply_short_circuit_scaled\"}]",
+    "text": "施加 10（+智力）层短路\n若目标已有短路，则本次施加双倍\n--bbcode--\n施加 10（+智力）层[color=#33ebff]短路[/color]\n若目标已有[color=#33ebff]短路[/color]，则本次施加双倍",
+    "up_cost": "2",
+    "up_effects": "[{\"amount\":13.0,\"attr\":\"intelligence\",\"double_if_short_circuited\":true,\"type\":\"apply_short_circuit_scaled\"}]",
+    "up_text": "施加 13（+智力）层短路\n若目标已有短路，则本次施加双倍\n--bbcode--\n施加 13（+智力）层[color=#33ebff]短路[/color]\n若目标已有[color=#33ebff]短路[/color]，则本次施加双倍"
+  },
+  "zh|plain|base:brace": {
+    "effects": "[{\"amount\":3.0,\"type\":\"gain_block\"}]",
+    "text": "获得 3 (3+0) 格挡\n保留\n--bbcode--\n获得 3 (3+[color=#8fb8ff]0[/color]) 格挡\n[i][color=#9ec1ff]保留[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":6,\"type\":\"gain_block\"}]",
+    "up_text": "获得 6 (6+0) 格挡\n保留\n--bbcode--\n获得 6 (6+[color=#8fb8ff]0[/color]) 格挡\n[i][color=#9ec1ff]保留[/color][/i]"
+  },
+  "zh|plain|base:brace_protocol": {
+    "effects": "[{\"amount\":10.0,\"no_con\":true,\"type\":\"gain_block\"}]",
+    "text": "获得 10 格挡\n--bbcode--\n获得 10 格挡",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":13,\"no_con\":true,\"type\":\"gain_block\"}]",
+    "up_text": "获得 13 格挡\n--bbcode--\n获得 13 格挡"
+  },
+  "zh|plain|base:cascade": {
+    "effects": "[{\"base\":5.0,\"per\":1.0,\"scope\":\"combat\",\"type\":\"scale_damage_by_attacks\"}]",
+    "text": "造成 5 点伤害；每打出一张攻击牌，伤害 +1\n保留\n--bbcode--\n造成 5 点伤害；每打出一张攻击牌，伤害 +1\n[i][color=#9ec1ff]保留[/color][/i]",
+    "up_cost": "1",
+    "up_effects": "[{\"base\":7.0,\"per\":1.0,\"scope\":\"combat\",\"type\":\"scale_damage_by_attacks\"}]",
+    "up_text": "造成 7 点伤害；每打出一张攻击牌，伤害 +1\n保留\n--bbcode--\n造成 7 点伤害；每打出一张攻击牌，伤害 +1\n[i][color=#9ec1ff]保留[/color][/i]"
+  },
+  "zh|plain|base:chain_link": {
+    "effects": "[{\"amount\":4.0,\"type\":\"deal_damage\"},{\"amount\":1.0,\"type\":\"draw_cards\"}]",
+    "text": "造成 4 (4+0) 伤害\n抽 1 张牌\n--bbcode--\n造成 4 (4+[color=#ff7a5c]0[/color]) 伤害\n抽 1 张牌",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":6,\"type\":\"deal_damage\"},{\"amount\":2,\"type\":\"draw_cards\"}]",
+    "up_text": "造成 6 (6+0) 伤害\n抽 2 张牌\n--bbcode--\n造成 6 (6+[color=#ff7a5c]0[/color]) 伤害\n抽 2 张牌"
+  },
+  "zh|plain|base:charged_shot": {
+    "effects": "[{\"base\":6.0,\"mult\":2.0,\"type\":\"deal_damage_str_mult\"},{\"type\":\"exhaust_self\"}]",
+    "text": "造成 6 + 2 倍力量的伤害。\n消耗\n--bbcode--\n造成 6 + 2 倍力量的伤害。\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "1",
+    "up_effects": "[{\"base\":8.0,\"mult\":3.0,\"type\":\"deal_damage_str_mult\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "造成 8 + 3 倍力量的伤害。\n消耗\n--bbcode--\n造成 8 + 3 倍力量的伤害。\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|plain|base:coagulate": {
+    "effects": "[{\"gain_block_equal_damage\":true,\"type\":\"overload\"}]",
+    "text": "触发过载\n获得等同于本次过载所造成伤害的格挡\n--bbcode--\n触发[color=#33ebff]过载[/color]\n获得等同于本次[color=#33ebff]过载[/color]所造成伤害的格挡",
+    "up_cost": "0",
+    "up_effects": "[{\"gain_block_equal_damage\":true,\"type\":\"overload\"}]",
+    "up_text": "触发过载\n获得等同于本次过载所造成伤害的格挡\n--bbcode--\n触发[color=#33ebff]过载[/color]\n获得等同于本次[color=#33ebff]过载[/color]所造成伤害的格挡"
+  },
+  "zh|plain|base:corrode": {
+    "effects": "[{\"stacks\":2.0,\"status\":\"vulnerable\",\"type\":\"apply_status\"}]",
+    "text": "施加 易伤 x2\n--bbcode--\n施加 [color=#f27333]易伤[/color] x2",
+    "up_cost": "1",
+    "up_effects": "[{\"stacks\":3,\"status\":\"vulnerable\",\"type\":\"apply_status\"}]",
+    "up_text": "施加 易伤 x3\n--bbcode--\n施加 [color=#f27333]易伤[/color] x3"
+  },
+  "zh|plain|base:covering_reload": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"covering_reload\",\"type\":\"apply_status_self\"}]",
+    "text": "每当你装弹，获得 3 点格挡。\n--bbcode--\n每当你装弹，获得 3 点格挡。",
+    "up_cost": "1",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"covering_reload\",\"type\":\"apply_status_self\"},{\"amount\":6.0,\"type\":\"gain_block\"}]",
+    "up_text": "每当你装弹，获得 3 点格挡。\n获得 6 (6+0) 格挡\n--bbcode--\n每当你装弹，获得 3 点格挡。\n获得 6 (6+[color=#8fb8ff]0[/color]) 格挡"
+  },
+  "zh|plain|base:cowardice": {
+    "effects": "[]",
+    "text": "无法打出。回合结束时若在手牌中，获得 1 层虚弱。\n--bbcode--\n无法打出。回合结束时若在手牌中，获得 1 层[color=#b280e6]虚弱[/color]。",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "无法打出。回合结束时若在手牌中，获得 1 层虚弱。\n--bbcode--\n无法打出。回合结束时若在手牌中，获得 1 层[color=#b280e6]虚弱[/color]。"
+  },
+  "zh|plain|base:data_dump": {
+    "effects": "[{\"amount\":3.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "text": "抽 3 张牌\n消耗\n--bbcode--\n抽 3 张牌\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":4.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "抽 4 张牌\n消耗\n--bbcode--\n抽 4 张牌\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|plain|base:defend": {
+    "effects": "[{\"amount\":5.0,\"type\":\"gain_block\"}]",
+    "text": "获得 5 (5+0) 格挡\n--bbcode--\n获得 5 (5+[color=#8fb8ff]0[/color]) 格挡",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":8,\"type\":\"gain_block\"}]",
+    "up_text": "获得 8 (8+0) 格挡\n--bbcode--\n获得 8 (8+[color=#8fb8ff]0[/color]) 格挡"
+  },
+  "zh|plain|base:deflector": {
+    "effects": "[{\"amount\":5.0,\"type\":\"gain_block\"},{\"stacks\":1.0,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "text": "获得 5 (5+0) 格挡\n施加 虚弱 x1\n--bbcode--\n获得 5 (5+[color=#8fb8ff]0[/color]) 格挡\n施加 [color=#b280e6]虚弱[/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":8,\"type\":\"gain_block\"},{\"stacks\":2,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "up_text": "获得 8 (8+0) 格挡\n施加 虚弱 x2\n--bbcode--\n获得 8 (8+[color=#8fb8ff]0[/color]) 格挡\n施加 [color=#b280e6]虚弱[/color] x2"
+  },
+  "zh|plain|base:dissect": {
+    "effects": "[{\"amount\":8.0,\"attr\":\"intelligence\",\"attr_mult\":2.0,\"type\":\"apply_short_circuit_scaled\"}]",
+    "text": "施加 8（+2×智力）层短路\n--bbcode--\n施加 8（+2×智力）层[color=#33ebff]短路[/color]",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":10.0,\"attr\":\"intelligence\",\"attr_mult\":3.0,\"type\":\"apply_short_circuit_scaled\"}]",
+    "up_text": "施加 10（+3×智力）层短路\n--bbcode--\n施加 10（+3×智力）层[color=#33ebff]短路[/color]"
+  },
+  "zh|plain|base:focus": {
+    "effects": "[{\"amount\":1.0,\"type\":\"gain_intelligence\"},{\"amount\":1.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "text": "获得 1 智力\n抽 1 张牌\n消耗\n--bbcode--\n获得 1 智力\n抽 1 张牌\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":2,\"type\":\"gain_intelligence\"},{\"amount\":2,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "获得 2 智力\n抽 2 张牌\n消耗\n--bbcode--\n获得 2 智力\n抽 2 张牌\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|plain|base:hemorrhage": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"overload_protocol\",\"type\":\"apply_status_self\"}]",
+    "text": "你的过载可以暴击。\n--bbcode--\n你的[color=#33ebff]过载[/color]可以暴击。",
+    "up_cost": "1",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"overload_protocol\",\"type\":\"apply_status_self\"}]",
+    "up_text": "你的过载可以暴击。\n--bbcode--\n你的[color=#33ebff]过载[/color]可以暴击。"
+  },
+  "zh|plain|base:hot_streak": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"hot_streak\",\"type\":\"apply_status_self\"}]",
+    "text": "每当你暴击，获得 2 层上膛。\n--bbcode--\n每当你暴击，获得 2 层[color=#ffb23d]上膛[/color]。",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"hot_streak\",\"type\":\"apply_status_self\"}]",
+    "up_text": "每当你暴击，获得 2 层上膛。\n--bbcode--\n每当你暴击，获得 2 层[color=#ffb23d]上膛[/color]。"
+  },
+  "zh|plain|base:hot_swap": {
+    "effects": "[{\"amount\":2.0,\"type\":\"draw_cards\"}]",
+    "text": "抽 2 张牌\n--bbcode--\n抽 2 张牌",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":3.0,\"type\":\"draw_cards\"}]",
+    "up_text": "抽 3 张牌\n--bbcode--\n抽 3 张牌"
+  },
+  "zh|plain|base:kinetic_baffle": {
+    "effects": "[{\"amount\":5.0,\"type\":\"gain_block\"},{\"amount\":1.0,\"type\":\"draw_cards\"}]",
+    "text": "获得 5 (5+0) 格挡\n抽 1 张牌\n--bbcode--\n获得 5 (5+[color=#8fb8ff]0[/color]) 格挡\n抽 1 张牌",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":7.0,\"type\":\"gain_block\"},{\"amount\":1.0,\"type\":\"draw_cards\"}]",
+    "up_text": "获得 7 (7+0) 格挡\n抽 1 张牌\n--bbcode--\n获得 7 (7+[color=#8fb8ff]0[/color]) 格挡\n抽 1 张牌"
+  },
+  "zh|plain|base:leaking_wealth": {
+    "effects": "[]",
+    "text": "无法打出。回合结束时若在手牌中，失去 5 瓶盖。\n--bbcode--\n无法打出。回合结束时若在手牌中，失去 5 瓶盖。",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "无法打出。回合结束时若在手牌中，失去 5 瓶盖。\n--bbcode--\n无法打出。回合结束时若在手牌中，失去 5 瓶盖。"
+  },
+  "zh|plain|base:limit_break": {
+    "effects": "[{\"charge_multiplier\":2.0,\"type\":\"overload\"},{\"type\":\"exhaust_self\"}]",
+    "text": "触发过载\n本次过载造成 ×2 伤害\n消耗\n--bbcode--\n触发[color=#33ebff]过载[/color]\n本次[color=#33ebff]过载[/color]造成 ×2 伤害\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"charge_multiplier\":2.0,\"type\":\"overload\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "触发过载\n本次过载造成 ×2 伤害\n消耗\n--bbcode--\n触发[color=#33ebff]过载[/color]\n本次[color=#33ebff]过载[/color]造成 ×2 伤害\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|plain|base:load_up": {
+    "effects": "[{\"amount\":2.0,\"card\":\"base:reload\",\"type\":\"add_card_to_hand\"}]",
+    "text": "将 2 张「装弹」置入手牌\n--bbcode--\n将 2 张「装弹」置入手牌",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":3.0,\"card\":\"base:reload\",\"type\":\"add_card_to_hand\"}]",
+    "up_text": "将 3 张「装弹」置入手牌\n--bbcode--\n将 3 张「装弹」置入手牌"
+  },
+  "zh|plain|base:lucky_streak": {
+    "effects": "[{\"amount\":1.0,\"type\":\"gain_luck\"},{\"stacks\":1.0,\"status\":\"deadeye\",\"type\":\"apply_status_self\"}]",
+    "text": "获得 1 幸运\n获得 鹰眼 x1\n--bbcode--\n获得 1 幸运\n获得 [color=#ffe657]鹰眼[/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":2.0,\"type\":\"gain_luck\"},{\"stacks\":1.0,\"status\":\"deadeye\",\"type\":\"apply_status_self\"}]",
+    "up_text": "获得 2 幸运\n获得 鹰眼 x1\n--bbcode--\n获得 2 幸运\n获得 [color=#ffe657]鹰眼[/color] x1"
+  },
+  "zh|plain|base:panic": {
+    "effects": "[]",
+    "text": "无法打出。回合结束时若在手牌中，获得 1 层脆弱。\n--bbcode--\n无法打出。回合结束时若在手牌中，获得 1 层[color=#9980b2]脆弱[/color]。",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "无法打出。回合结束时若在手牌中，获得 1 层脆弱。\n--bbcode--\n无法打出。回合结束时若在手牌中，获得 1 层[color=#9980b2]脆弱[/color]。"
+  },
+  "zh|plain|base:piston_jab": {
+    "effects": "[{\"amount\":4.0,\"no_str\":true,\"type\":\"deal_damage\"}]",
+    "text": "造成 4 伤害\n--bbcode--\n造成 4 伤害",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":6.0,\"no_str\":true,\"type\":\"deal_damage\"}]",
+    "up_text": "造成 6 伤害\n--bbcode--\n造成 6 伤害"
+  },
+  "zh|plain|base:purge": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"vulnerable\",\"type\":\"apply_status\"},{\"stacks\":1.0,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "text": "施加 易伤 x1\n施加 虚弱 x1\n--bbcode--\n施加 [color=#f27333]易伤[/color] x1\n施加 [color=#b280e6]虚弱[/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"stacks\":2,\"status\":\"vulnerable\",\"type\":\"apply_status\"},{\"stacks\":2,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "up_text": "施加 易伤 x2\n施加 虚弱 x2\n--bbcode--\n施加 [color=#f27333]易伤[/color] x2\n施加 [color=#b280e6]虚弱[/color] x2"
+  },
+  "zh|plain|base:radiation_dust": {
+    "effects": "[]",
+    "text": "无法打出。\n--bbcode--\n无法打出。",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "无法打出。\n--bbcode--\n无法打出。"
+  },
+  "zh|plain|base:rebar_wave": {
+    "effects": "[{\"amount\":6.0,\"type\":\"gain_block\"},{\"mult\":1.0,\"type\":\"deal_damage_block_mult\"}]",
+    "text": "获得 6 (6+0) 格挡\n造成等同于格挡的伤害\n--bbcode--\n获得 6 (6+[color=#8fb8ff]0[/color]) 格挡\n造成等同于格挡的伤害",
+    "up_cost": "2",
+    "up_effects": "[{\"amount\":8.0,\"type\":\"gain_block\"},{\"mult\":1.0,\"type\":\"deal_damage_block_mult\"}]",
+    "up_text": "获得 8 (8+0) 格挡\n造成等同于格挡的伤害\n--bbcode--\n获得 8 (8+[color=#8fb8ff]0[/color]) 格挡\n造成等同于格挡的伤害"
+  },
+  "zh|plain|base:recoil_shot": {
+    "effects": "[{\"amount\":3.0,\"type\":\"deal_damage\"},{\"amount\":6.0,\"attr\":\"intelligence\",\"type\":\"apply_short_circuit_scaled\"}]",
+    "text": "造成 3 (3+0) 伤害\n施加 6（+智力）层短路\n--bbcode--\n造成 3 (3+[color=#ff7a5c]0[/color]) 伤害\n施加 6（+智力）层[color=#33ebff]短路[/color]",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":4.0,\"type\":\"deal_damage\"},{\"amount\":8.0,\"attr\":\"intelligence\",\"type\":\"apply_short_circuit_scaled\"}]",
+    "up_text": "造成 4 (4+0) 伤害\n施加 8（+智力）层短路\n--bbcode--\n造成 4 (4+[color=#ff7a5c]0[/color]) 伤害\n施加 8（+智力）层[color=#33ebff]短路[/color]"
+  },
+  "zh|plain|base:reload": {
+    "effects": "[{\"stacks\":2.0,\"status\":\"loaded\",\"type\":\"apply_status_self\"},{\"amount\":1.0,\"type\":\"draw_cards\"},{\"type\":\"restore_attack_allowance\"},{\"type\":\"exhaust_self\"}]",
+    "text": "获得 上膛 x2\n抽 1 张牌\n刷新本回合的攻击次数\n消耗\n--bbcode--\n获得 [color=#ffb23d]上膛[/color] x2\n抽 1 张牌\n刷新本回合的攻击次数\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":3.0,\"status\":\"loaded\",\"type\":\"apply_status_self\"},{\"amount\":1.0,\"type\":\"draw_cards\"},{\"type\":\"restore_attack_allowance\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "获得 上膛 x3\n抽 1 张牌\n刷新本回合的攻击次数\n消耗\n--bbcode--\n获得 [color=#ffb23d]上膛[/color] x3\n抽 1 张牌\n刷新本回合的攻击次数\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|plain|base:rust": {
+    "effects": "[]",
+    "text": "无法打出。回合结束时若在手牌中，失去 2 点生命。\n--bbcode--\n无法打出。回合结束时若在手牌中，失去 2 点生命。",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "无法打出。回合结束时若在手牌中，失去 2 点生命。\n--bbcode--\n无法打出。回合结束时若在手牌中，失去 2 点生命。"
+  },
+  "zh|plain|base:siphon": {
+    "effects": "[{\"amount\":3.0,\"type\":\"deal_damage\"},{\"amount\":3.0,\"type\":\"gain_block\"}]",
+    "text": "造成 3 (3+0) 伤害\n获得 3 (3+0) 格挡\n--bbcode--\n造成 3 (3+[color=#ff7a5c]0[/color]) 伤害\n获得 3 (3+[color=#8fb8ff]0[/color]) 格挡",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":5,\"type\":\"deal_damage\"},{\"amount\":6,\"type\":\"gain_block\"}]",
+    "up_text": "造成 5 (5+0) 伤害\n获得 6 (6+0) 格挡\n--bbcode--\n造成 5 (5+[color=#ff7a5c]0[/color]) 伤害\n获得 6 (6+[color=#8fb8ff]0[/color]) 格挡"
+  },
+  "zh|plain|base:smoke_step": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"intangible\",\"type\":\"apply_status_self\"},{\"type\":\"exhaust_self\"}]",
+    "text": "获得 无实体 x1\n消耗\n--bbcode--\n获得 [color=#99f2ff]无实体[/color] x1\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"intangible\",\"type\":\"apply_status_self\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "获得 无实体 x1\n消耗\n--bbcode--\n获得 [color=#99f2ff]无实体[/color] x1\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|plain|base:spiked_guard": {
+    "effects": "[{\"amount\":5.0,\"type\":\"gain_block\"},{\"stacks\":2.0,\"status\":\"thorns\",\"type\":\"apply_status_self\"}]",
+    "text": "获得 5 (5+0) 格挡\n获得 荆棘 x2\n--bbcode--\n获得 5 (5+[color=#8fb8ff]0[/color]) 格挡\n获得 [color=#b2bfcc]荆棘[/color] x2",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":8,\"type\":\"gain_block\"},{\"stacks\":2.0,\"status\":\"thorns\",\"type\":\"apply_status_self\"}]",
+    "up_text": "获得 8 (8+0) 格挡\n获得 荆棘 x2\n--bbcode--\n获得 8 (8+[color=#8fb8ff]0[/color]) 格挡\n获得 [color=#b2bfcc]荆棘[/color] x2"
+  },
+  "zh|plain|base:static_shout": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"weak\",\"type\":\"apply_status_all\"},{\"type\":\"exhaust_self\"}]",
+    "text": "对所有敌人施加 虚弱 x1\n消耗\n--bbcode--\n对所有敌人施加 [color=#b280e6]虚弱[/color] x1\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":2,\"status\":\"weak\",\"type\":\"apply_status_all\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "对所有敌人施加 虚弱 x2\n消耗\n--bbcode--\n对所有敌人施加 [color=#b280e6]虚弱[/color] x2\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|plain|base:strike": {
+    "effects": "[{\"amount\":3.0,\"type\":\"deal_damage\"}]",
+    "text": "造成 3 (3+0) 伤害\n--bbcode--\n造成 3 (3+[color=#ff7a5c]0[/color]) 伤害",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":5,\"type\":\"deal_damage\"}]",
+    "up_text": "造成 5 (5+0) 伤害\n--bbcode--\n造成 5 (5+[color=#ff7a5c]0[/color]) 伤害"
+  },
+  "zh|plain|base:stun_baton": {
+    "effects": "[{\"amount\":1.0,\"type\":\"deal_damage\"},{\"stacks\":1.0,\"type\":\"apply_stun\"}]",
+    "text": "造成 1 (1+0) 伤害\n施加 眩晕 x1\n--bbcode--\n造成 1 (1+[color=#ff7a5c]0[/color]) 伤害\n施加 [color=#f0e040][color=#f2f24c]眩晕[/color][/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":3,\"type\":\"deal_damage\"},{\"stacks\":1.0,\"type\":\"apply_stun\"}]",
+    "up_text": "造成 3 (3+0) 伤害\n施加 眩晕 x1\n--bbcode--\n造成 3 (3+[color=#ff7a5c]0[/color]) 伤害\n施加 [color=#f0e040][color=#f2f24c]眩晕[/color][/color] x1"
+  },
+  "zh|plain|base:sweep_arc": {
+    "effects": "[{\"amount\":8.0,\"no_str\":true,\"type\":\"deal_damage_all\"}]",
+    "text": "对所有敌人造成 8 伤害\n--bbcode--\n对所有敌人造成 8 伤害",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":10,\"no_str\":true,\"type\":\"deal_damage_all\"}]",
+    "up_text": "对所有敌人造成 10 伤害\n--bbcode--\n对所有敌人造成 10 伤害"
+  },
+  "zh|plain|base:tape_patch": {
+    "effects": "[{\"amount\":4.0,\"type\":\"gain_block\"},{\"type\":\"exhaust_self\"}]",
+    "text": "获得 4 (4+0) 格挡\n消耗\n--bbcode--\n获得 4 (4+[color=#8fb8ff]0[/color]) 格挡\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":7,\"type\":\"gain_block\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "获得 7 (7+0) 格挡\n消耗\n--bbcode--\n获得 7 (7+[color=#8fb8ff]0[/color]) 格挡\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|plain|base:venom_coat": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"reactive_plating\",\"type\":\"apply_status_self\"}]",
+    "text": "每当一张牌给予你格挡，获得 1 层荆棘。\n--bbcode--\n每当一张牌给予你格挡，获得 1 层[color=#b2bfcc]荆棘[/color]。",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"reactive_plating\",\"type\":\"apply_status_self\"}]",
+    "up_text": "每当一张牌给予你格挡，获得 1 层荆棘。\n--bbcode--\n每当一张牌给予你格挡，获得 1 层[color=#b2bfcc]荆棘[/color]。"
+  },
+  "zh|plain|base:weak_strike": {
+    "effects": "[{\"amount\":4.0,\"type\":\"deal_damage\"},{\"stacks\":1.0,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "text": "造成 4 (4+0) 伤害\n施加 虚弱 x1\n--bbcode--\n造成 4 (4+[color=#ff7a5c]0[/color]) 伤害\n施加 [color=#b280e6]虚弱[/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":6,\"type\":\"deal_damage\"},{\"stacks\":2,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "up_text": "造成 6 (6+0) 伤害\n施加 虚弱 x2\n--bbcode--\n造成 6 (6+[color=#ff7a5c]0[/color]) 伤害\n施加 [color=#b280e6]虚弱[/color] x2"
+  },
+  "zh|stats|base:acid_splash": {
+    "effects": "[{\"amount\":2.0,\"no_str\":true,\"type\":\"deal_damage_all\"},{\"stacks\":5.0,\"status\":\"short_circuit\",\"type\":\"apply_status_all\"}]",
+    "text": "对所有敌人造成 2 伤害\n对所有敌人施加 短路 x5\n--bbcode--\n对所有敌人造成 2 伤害\n对所有敌人施加 [color=#33ebff]短路[/color] x5",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":3.0,\"no_str\":true,\"type\":\"deal_damage_all\"},{\"stacks\":7.0,\"status\":\"short_circuit\",\"type\":\"apply_status_all\"}]",
+    "up_text": "对所有敌人造成 3 伤害\n对所有敌人施加 短路 x7\n--bbcode--\n对所有敌人造成 3 伤害\n对所有敌人施加 [color=#33ebff]短路[/color] x7"
+  },
+  "zh|stats|base:adrenaline": {
+    "effects": "[{\"amount\":2.0,\"type\":\"gain_energy\"},{\"amount\":1.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "text": "获得 2 能量\n抽 1 张牌\n消耗\n--bbcode--\n获得 2 能量\n抽 1 张牌\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":2.0,\"type\":\"gain_energy\"},{\"amount\":2.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "获得 2 能量\n抽 2 张牌\n消耗\n--bbcode--\n获得 2 能量\n抽 2 张牌\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|stats|base:all_in": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"all_in\",\"type\":\"apply_status_self\"}]",
+    "text": "暴击造成双倍伤害；未暴击时正常造成伤害，并获得 2 层上膛。\n--bbcode--\n暴击造成双倍伤害；未暴击时正常造成伤害，并获得 2 层[color=#ffb23d]上膛[/color]。",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"all_in\",\"type\":\"apply_status_self\"}]",
+    "up_text": "暴击造成双倍伤害；未暴击时正常造成伤害，并获得 2 层上膛。\n--bbcode--\n暴击造成双倍伤害；未暴击时正常造成伤害，并获得 2 层[color=#ffb23d]上膛[/color]。"
+  },
+  "zh|stats|base:arc_flash": {
+    "effects": "[{\"amount\":2.0,\"no_str\":true,\"type\":\"deal_damage_all\"},{\"type\":\"overload\"}]",
+    "text": "对所有敌人造成 2 伤害\n触发过载\n--bbcode--\n对所有敌人造成 2 伤害\n触发[color=#33ebff]过载[/color]",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":4.0,\"no_str\":true,\"type\":\"deal_damage_all\"},{\"type\":\"overload\"}]",
+    "up_text": "对所有敌人造成 4 伤害\n触发过载\n--bbcode--\n对所有敌人造成 4 伤害\n触发[color=#33ebff]过载[/color]"
+  },
+  "zh|stats|base:bone_breaker": {
+    "effects": "[{\"amount\":10.0,\"attr\":\"intelligence\",\"double_if_short_circuited\":true,\"type\":\"apply_short_circuit_scaled\"}]",
+    "text": "施加 10（+智力）层短路\n若目标已有短路，则本次施加双倍\n--bbcode--\n施加 10（+智力）层[color=#33ebff]短路[/color]\n若目标已有[color=#33ebff]短路[/color]，则本次施加双倍",
+    "up_cost": "2",
+    "up_effects": "[{\"amount\":13.0,\"attr\":\"intelligence\",\"double_if_short_circuited\":true,\"type\":\"apply_short_circuit_scaled\"}]",
+    "up_text": "施加 13（+智力）层短路\n若目标已有短路，则本次施加双倍\n--bbcode--\n施加 13（+智力）层[color=#33ebff]短路[/color]\n若目标已有[color=#33ebff]短路[/color]，则本次施加双倍"
+  },
+  "zh|stats|base:brace": {
+    "effects": "[{\"amount\":3.0,\"type\":\"gain_block\"}]",
+    "text": "获得 6 (3+3) 格挡\n保留\n--bbcode--\n获得 6 (3+[color=#8fb8ff]3[/color]) 格挡\n[i][color=#9ec1ff]保留[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":6,\"type\":\"gain_block\"}]",
+    "up_text": "获得 9 (6+3) 格挡\n保留\n--bbcode--\n获得 9 (6+[color=#8fb8ff]3[/color]) 格挡\n[i][color=#9ec1ff]保留[/color][/i]"
+  },
+  "zh|stats|base:brace_protocol": {
+    "effects": "[{\"amount\":10.0,\"no_con\":true,\"type\":\"gain_block\"}]",
+    "text": "获得 10 格挡\n--bbcode--\n获得 10 格挡",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":13,\"no_con\":true,\"type\":\"gain_block\"}]",
+    "up_text": "获得 13 格挡\n--bbcode--\n获得 13 格挡"
+  },
+  "zh|stats|base:cascade": {
+    "effects": "[{\"base\":5.0,\"per\":1.0,\"scope\":\"combat\",\"type\":\"scale_damage_by_attacks\"}]",
+    "text": "造成 5 点伤害；每打出一张攻击牌，伤害 +1\n保留\n--bbcode--\n造成 5 点伤害；每打出一张攻击牌，伤害 +1\n[i][color=#9ec1ff]保留[/color][/i]",
+    "up_cost": "1",
+    "up_effects": "[{\"base\":7.0,\"per\":1.0,\"scope\":\"combat\",\"type\":\"scale_damage_by_attacks\"}]",
+    "up_text": "造成 7 点伤害；每打出一张攻击牌，伤害 +1\n保留\n--bbcode--\n造成 7 点伤害；每打出一张攻击牌，伤害 +1\n[i][color=#9ec1ff]保留[/color][/i]"
+  },
+  "zh|stats|base:chain_link": {
+    "effects": "[{\"amount\":4.0,\"type\":\"deal_damage\"},{\"amount\":1.0,\"type\":\"draw_cards\"}]",
+    "text": "造成 6 (4+2) 伤害\n抽 1 张牌\n--bbcode--\n造成 6 (4+[color=#ff7a5c]2[/color]) 伤害\n抽 1 张牌",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":6,\"type\":\"deal_damage\"},{\"amount\":2,\"type\":\"draw_cards\"}]",
+    "up_text": "造成 8 (6+2) 伤害\n抽 2 张牌\n--bbcode--\n造成 8 (6+[color=#ff7a5c]2[/color]) 伤害\n抽 2 张牌"
+  },
+  "zh|stats|base:charged_shot": {
+    "effects": "[{\"base\":6.0,\"mult\":2.0,\"type\":\"deal_damage_str_mult\"},{\"type\":\"exhaust_self\"}]",
+    "text": "造成 6 + 2 倍力量的伤害。\n消耗\n--bbcode--\n造成 6 + 2 倍力量的伤害。\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "1",
+    "up_effects": "[{\"base\":8.0,\"mult\":3.0,\"type\":\"deal_damage_str_mult\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "造成 8 + 3 倍力量的伤害。\n消耗\n--bbcode--\n造成 8 + 3 倍力量的伤害。\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|stats|base:coagulate": {
+    "effects": "[{\"gain_block_equal_damage\":true,\"type\":\"overload\"}]",
+    "text": "触发过载\n获得等同于本次过载所造成伤害的格挡\n--bbcode--\n触发[color=#33ebff]过载[/color]\n获得等同于本次[color=#33ebff]过载[/color]所造成伤害的格挡",
+    "up_cost": "0",
+    "up_effects": "[{\"gain_block_equal_damage\":true,\"type\":\"overload\"}]",
+    "up_text": "触发过载\n获得等同于本次过载所造成伤害的格挡\n--bbcode--\n触发[color=#33ebff]过载[/color]\n获得等同于本次[color=#33ebff]过载[/color]所造成伤害的格挡"
+  },
+  "zh|stats|base:corrode": {
+    "effects": "[{\"stacks\":2.0,\"status\":\"vulnerable\",\"type\":\"apply_status\"}]",
+    "text": "施加 易伤 x2\n--bbcode--\n施加 [color=#f27333]易伤[/color] x2",
+    "up_cost": "1",
+    "up_effects": "[{\"stacks\":3,\"status\":\"vulnerable\",\"type\":\"apply_status\"}]",
+    "up_text": "施加 易伤 x3\n--bbcode--\n施加 [color=#f27333]易伤[/color] x3"
+  },
+  "zh|stats|base:covering_reload": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"covering_reload\",\"type\":\"apply_status_self\"}]",
+    "text": "每当你装弹，获得 3 点格挡。\n--bbcode--\n每当你装弹，获得 3 点格挡。",
+    "up_cost": "1",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"covering_reload\",\"type\":\"apply_status_self\"},{\"amount\":6.0,\"type\":\"gain_block\"}]",
+    "up_text": "每当你装弹，获得 3 点格挡。\n获得 9 (6+3) 格挡\n--bbcode--\n每当你装弹，获得 3 点格挡。\n获得 9 (6+[color=#8fb8ff]3[/color]) 格挡"
+  },
+  "zh|stats|base:cowardice": {
+    "effects": "[]",
+    "text": "无法打出。回合结束时若在手牌中，获得 1 层虚弱。\n--bbcode--\n无法打出。回合结束时若在手牌中，获得 1 层[color=#b280e6]虚弱[/color]。",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "无法打出。回合结束时若在手牌中，获得 1 层虚弱。\n--bbcode--\n无法打出。回合结束时若在手牌中，获得 1 层[color=#b280e6]虚弱[/color]。"
+  },
+  "zh|stats|base:data_dump": {
+    "effects": "[{\"amount\":3.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "text": "抽 3 张牌\n消耗\n--bbcode--\n抽 3 张牌\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":4.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "抽 4 张牌\n消耗\n--bbcode--\n抽 4 张牌\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|stats|base:defend": {
+    "effects": "[{\"amount\":5.0,\"type\":\"gain_block\"}]",
+    "text": "获得 8 (5+3) 格挡\n--bbcode--\n获得 8 (5+[color=#8fb8ff]3[/color]) 格挡",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":8,\"type\":\"gain_block\"}]",
+    "up_text": "获得 11 (8+3) 格挡\n--bbcode--\n获得 11 (8+[color=#8fb8ff]3[/color]) 格挡"
+  },
+  "zh|stats|base:deflector": {
+    "effects": "[{\"amount\":5.0,\"type\":\"gain_block\"},{\"stacks\":1.0,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "text": "获得 8 (5+3) 格挡\n施加 虚弱 x1\n--bbcode--\n获得 8 (5+[color=#8fb8ff]3[/color]) 格挡\n施加 [color=#b280e6]虚弱[/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":8,\"type\":\"gain_block\"},{\"stacks\":2,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "up_text": "获得 11 (8+3) 格挡\n施加 虚弱 x2\n--bbcode--\n获得 11 (8+[color=#8fb8ff]3[/color]) 格挡\n施加 [color=#b280e6]虚弱[/color] x2"
+  },
+  "zh|stats|base:dissect": {
+    "effects": "[{\"amount\":8.0,\"attr\":\"intelligence\",\"attr_mult\":2.0,\"type\":\"apply_short_circuit_scaled\"}]",
+    "text": "施加 8（+2×智力）层短路\n--bbcode--\n施加 8（+2×智力）层[color=#33ebff]短路[/color]",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":10.0,\"attr\":\"intelligence\",\"attr_mult\":3.0,\"type\":\"apply_short_circuit_scaled\"}]",
+    "up_text": "施加 10（+3×智力）层短路\n--bbcode--\n施加 10（+3×智力）层[color=#33ebff]短路[/color]"
+  },
+  "zh|stats|base:focus": {
+    "effects": "[{\"amount\":1.0,\"type\":\"gain_intelligence\"},{\"amount\":1.0,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "text": "获得 1 智力\n抽 1 张牌\n消耗\n--bbcode--\n获得 1 智力\n抽 1 张牌\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":2,\"type\":\"gain_intelligence\"},{\"amount\":2,\"type\":\"draw_cards\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "获得 2 智力\n抽 2 张牌\n消耗\n--bbcode--\n获得 2 智力\n抽 2 张牌\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|stats|base:hemorrhage": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"overload_protocol\",\"type\":\"apply_status_self\"}]",
+    "text": "你的过载可以暴击。\n--bbcode--\n你的[color=#33ebff]过载[/color]可以暴击。",
+    "up_cost": "1",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"overload_protocol\",\"type\":\"apply_status_self\"}]",
+    "up_text": "你的过载可以暴击。\n--bbcode--\n你的[color=#33ebff]过载[/color]可以暴击。"
+  },
+  "zh|stats|base:hot_streak": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"hot_streak\",\"type\":\"apply_status_self\"}]",
+    "text": "每当你暴击，获得 2 层上膛。\n--bbcode--\n每当你暴击，获得 2 层[color=#ffb23d]上膛[/color]。",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"hot_streak\",\"type\":\"apply_status_self\"}]",
+    "up_text": "每当你暴击，获得 2 层上膛。\n--bbcode--\n每当你暴击，获得 2 层[color=#ffb23d]上膛[/color]。"
+  },
+  "zh|stats|base:hot_swap": {
+    "effects": "[{\"amount\":2.0,\"type\":\"draw_cards\"}]",
+    "text": "抽 2 张牌\n--bbcode--\n抽 2 张牌",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":3.0,\"type\":\"draw_cards\"}]",
+    "up_text": "抽 3 张牌\n--bbcode--\n抽 3 张牌"
+  },
+  "zh|stats|base:kinetic_baffle": {
+    "effects": "[{\"amount\":5.0,\"type\":\"gain_block\"},{\"amount\":1.0,\"type\":\"draw_cards\"}]",
+    "text": "获得 8 (5+3) 格挡\n抽 1 张牌\n--bbcode--\n获得 8 (5+[color=#8fb8ff]3[/color]) 格挡\n抽 1 张牌",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":7.0,\"type\":\"gain_block\"},{\"amount\":1.0,\"type\":\"draw_cards\"}]",
+    "up_text": "获得 10 (7+3) 格挡\n抽 1 张牌\n--bbcode--\n获得 10 (7+[color=#8fb8ff]3[/color]) 格挡\n抽 1 张牌"
+  },
+  "zh|stats|base:leaking_wealth": {
+    "effects": "[]",
+    "text": "无法打出。回合结束时若在手牌中，失去 5 瓶盖。\n--bbcode--\n无法打出。回合结束时若在手牌中，失去 5 瓶盖。",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "无法打出。回合结束时若在手牌中，失去 5 瓶盖。\n--bbcode--\n无法打出。回合结束时若在手牌中，失去 5 瓶盖。"
+  },
+  "zh|stats|base:limit_break": {
+    "effects": "[{\"charge_multiplier\":2.0,\"type\":\"overload\"},{\"type\":\"exhaust_self\"}]",
+    "text": "触发过载\n本次过载造成 ×2 伤害\n消耗\n--bbcode--\n触发[color=#33ebff]过载[/color]\n本次[color=#33ebff]过载[/color]造成 ×2 伤害\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"charge_multiplier\":2.0,\"type\":\"overload\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "触发过载\n本次过载造成 ×2 伤害\n消耗\n--bbcode--\n触发[color=#33ebff]过载[/color]\n本次[color=#33ebff]过载[/color]造成 ×2 伤害\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|stats|base:load_up": {
+    "effects": "[{\"amount\":2.0,\"card\":\"base:reload\",\"type\":\"add_card_to_hand\"}]",
+    "text": "将 2 张「装弹」置入手牌\n--bbcode--\n将 2 张「装弹」置入手牌",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":3.0,\"card\":\"base:reload\",\"type\":\"add_card_to_hand\"}]",
+    "up_text": "将 3 张「装弹」置入手牌\n--bbcode--\n将 3 张「装弹」置入手牌"
+  },
+  "zh|stats|base:lucky_streak": {
+    "effects": "[{\"amount\":1.0,\"type\":\"gain_luck\"},{\"stacks\":1.0,\"status\":\"deadeye\",\"type\":\"apply_status_self\"}]",
+    "text": "获得 1 幸运\n获得 鹰眼 x1\n--bbcode--\n获得 1 幸运\n获得 [color=#ffe657]鹰眼[/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":2.0,\"type\":\"gain_luck\"},{\"stacks\":1.0,\"status\":\"deadeye\",\"type\":\"apply_status_self\"}]",
+    "up_text": "获得 2 幸运\n获得 鹰眼 x1\n--bbcode--\n获得 2 幸运\n获得 [color=#ffe657]鹰眼[/color] x1"
+  },
+  "zh|stats|base:panic": {
+    "effects": "[]",
+    "text": "无法打出。回合结束时若在手牌中，获得 1 层脆弱。\n--bbcode--\n无法打出。回合结束时若在手牌中，获得 1 层[color=#9980b2]脆弱[/color]。",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "无法打出。回合结束时若在手牌中，获得 1 层脆弱。\n--bbcode--\n无法打出。回合结束时若在手牌中，获得 1 层[color=#9980b2]脆弱[/color]。"
+  },
+  "zh|stats|base:piston_jab": {
+    "effects": "[{\"amount\":4.0,\"no_str\":true,\"type\":\"deal_damage\"}]",
+    "text": "造成 4 伤害\n--bbcode--\n造成 4 伤害",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":6.0,\"no_str\":true,\"type\":\"deal_damage\"}]",
+    "up_text": "造成 6 伤害\n--bbcode--\n造成 6 伤害"
+  },
+  "zh|stats|base:purge": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"vulnerable\",\"type\":\"apply_status\"},{\"stacks\":1.0,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "text": "施加 易伤 x1\n施加 虚弱 x1\n--bbcode--\n施加 [color=#f27333]易伤[/color] x1\n施加 [color=#b280e6]虚弱[/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"stacks\":2,\"status\":\"vulnerable\",\"type\":\"apply_status\"},{\"stacks\":2,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "up_text": "施加 易伤 x2\n施加 虚弱 x2\n--bbcode--\n施加 [color=#f27333]易伤[/color] x2\n施加 [color=#b280e6]虚弱[/color] x2"
+  },
+  "zh|stats|base:radiation_dust": {
+    "effects": "[]",
+    "text": "无法打出。\n--bbcode--\n无法打出。",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "无法打出。\n--bbcode--\n无法打出。"
+  },
+  "zh|stats|base:rebar_wave": {
+    "effects": "[{\"amount\":6.0,\"type\":\"gain_block\"},{\"mult\":1.0,\"type\":\"deal_damage_block_mult\"}]",
+    "text": "获得 9 (6+3) 格挡\n造成等同于格挡的伤害\n--bbcode--\n获得 9 (6+[color=#8fb8ff]3[/color]) 格挡\n造成等同于格挡的伤害",
+    "up_cost": "2",
+    "up_effects": "[{\"amount\":8.0,\"type\":\"gain_block\"},{\"mult\":1.0,\"type\":\"deal_damage_block_mult\"}]",
+    "up_text": "获得 11 (8+3) 格挡\n造成等同于格挡的伤害\n--bbcode--\n获得 11 (8+[color=#8fb8ff]3[/color]) 格挡\n造成等同于格挡的伤害"
+  },
+  "zh|stats|base:recoil_shot": {
+    "effects": "[{\"amount\":3.0,\"type\":\"deal_damage\"},{\"amount\":6.0,\"attr\":\"intelligence\",\"type\":\"apply_short_circuit_scaled\"}]",
+    "text": "造成 5 (3+2) 伤害\n施加 6（+智力）层短路\n--bbcode--\n造成 5 (3+[color=#ff7a5c]2[/color]) 伤害\n施加 6（+智力）层[color=#33ebff]短路[/color]",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":4.0,\"type\":\"deal_damage\"},{\"amount\":8.0,\"attr\":\"intelligence\",\"type\":\"apply_short_circuit_scaled\"}]",
+    "up_text": "造成 6 (4+2) 伤害\n施加 8（+智力）层短路\n--bbcode--\n造成 6 (4+[color=#ff7a5c]2[/color]) 伤害\n施加 8（+智力）层[color=#33ebff]短路[/color]"
+  },
+  "zh|stats|base:reload": {
+    "effects": "[{\"stacks\":2.0,\"status\":\"loaded\",\"type\":\"apply_status_self\"},{\"amount\":1.0,\"type\":\"draw_cards\"},{\"type\":\"restore_attack_allowance\"},{\"type\":\"exhaust_self\"}]",
+    "text": "获得 上膛 x2\n抽 1 张牌\n刷新本回合的攻击次数\n消耗\n--bbcode--\n获得 [color=#ffb23d]上膛[/color] x2\n抽 1 张牌\n刷新本回合的攻击次数\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":3.0,\"status\":\"loaded\",\"type\":\"apply_status_self\"},{\"amount\":1.0,\"type\":\"draw_cards\"},{\"type\":\"restore_attack_allowance\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "获得 上膛 x3\n抽 1 张牌\n刷新本回合的攻击次数\n消耗\n--bbcode--\n获得 [color=#ffb23d]上膛[/color] x3\n抽 1 张牌\n刷新本回合的攻击次数\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|stats|base:rust": {
+    "effects": "[]",
+    "text": "无法打出。回合结束时若在手牌中，失去 2 点生命。\n--bbcode--\n无法打出。回合结束时若在手牌中，失去 2 点生命。",
+    "up_cost": "0",
+    "up_effects": "[]",
+    "up_text": "无法打出。回合结束时若在手牌中，失去 2 点生命。\n--bbcode--\n无法打出。回合结束时若在手牌中，失去 2 点生命。"
+  },
+  "zh|stats|base:siphon": {
+    "effects": "[{\"amount\":3.0,\"type\":\"deal_damage\"},{\"amount\":3.0,\"type\":\"gain_block\"}]",
+    "text": "造成 5 (3+2) 伤害\n获得 6 (3+3) 格挡\n--bbcode--\n造成 5 (3+[color=#ff7a5c]2[/color]) 伤害\n获得 6 (3+[color=#8fb8ff]3[/color]) 格挡",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":5,\"type\":\"deal_damage\"},{\"amount\":6,\"type\":\"gain_block\"}]",
+    "up_text": "造成 7 (5+2) 伤害\n获得 9 (6+3) 格挡\n--bbcode--\n造成 7 (5+[color=#ff7a5c]2[/color]) 伤害\n获得 9 (6+[color=#8fb8ff]3[/color]) 格挡"
+  },
+  "zh|stats|base:smoke_step": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"intangible\",\"type\":\"apply_status_self\"},{\"type\":\"exhaust_self\"}]",
+    "text": "获得 无实体 x1\n消耗\n--bbcode--\n获得 [color=#99f2ff]无实体[/color] x1\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"intangible\",\"type\":\"apply_status_self\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "获得 无实体 x1\n消耗\n--bbcode--\n获得 [color=#99f2ff]无实体[/color] x1\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|stats|base:spiked_guard": {
+    "effects": "[{\"amount\":5.0,\"type\":\"gain_block\"},{\"stacks\":2.0,\"status\":\"thorns\",\"type\":\"apply_status_self\"}]",
+    "text": "获得 8 (5+3) 格挡\n获得 荆棘 x2\n--bbcode--\n获得 8 (5+[color=#8fb8ff]3[/color]) 格挡\n获得 [color=#b2bfcc]荆棘[/color] x2",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":8,\"type\":\"gain_block\"},{\"stacks\":2.0,\"status\":\"thorns\",\"type\":\"apply_status_self\"}]",
+    "up_text": "获得 11 (8+3) 格挡\n获得 荆棘 x2\n--bbcode--\n获得 11 (8+[color=#8fb8ff]3[/color]) 格挡\n获得 [color=#b2bfcc]荆棘[/color] x2"
+  },
+  "zh|stats|base:static_shout": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"weak\",\"type\":\"apply_status_all\"},{\"type\":\"exhaust_self\"}]",
+    "text": "对所有敌人施加 虚弱 x1\n消耗\n--bbcode--\n对所有敌人施加 [color=#b280e6]虚弱[/color] x1\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":2,\"status\":\"weak\",\"type\":\"apply_status_all\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "对所有敌人施加 虚弱 x2\n消耗\n--bbcode--\n对所有敌人施加 [color=#b280e6]虚弱[/color] x2\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|stats|base:strike": {
+    "effects": "[{\"amount\":3.0,\"type\":\"deal_damage\"}]",
+    "text": "造成 5 (3+2) 伤害\n--bbcode--\n造成 5 (3+[color=#ff7a5c]2[/color]) 伤害",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":5,\"type\":\"deal_damage\"}]",
+    "up_text": "造成 7 (5+2) 伤害\n--bbcode--\n造成 7 (5+[color=#ff7a5c]2[/color]) 伤害"
+  },
+  "zh|stats|base:stun_baton": {
+    "effects": "[{\"amount\":1.0,\"type\":\"deal_damage\"},{\"stacks\":1.0,\"type\":\"apply_stun\"}]",
+    "text": "造成 3 (1+2) 伤害\n施加 眩晕 x1\n--bbcode--\n造成 3 (1+[color=#ff7a5c]2[/color]) 伤害\n施加 [color=#f0e040][color=#f2f24c]眩晕[/color][/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":3,\"type\":\"deal_damage\"},{\"stacks\":1.0,\"type\":\"apply_stun\"}]",
+    "up_text": "造成 5 (3+2) 伤害\n施加 眩晕 x1\n--bbcode--\n造成 5 (3+[color=#ff7a5c]2[/color]) 伤害\n施加 [color=#f0e040][color=#f2f24c]眩晕[/color][/color] x1"
+  },
+  "zh|stats|base:sweep_arc": {
+    "effects": "[{\"amount\":8.0,\"no_str\":true,\"type\":\"deal_damage_all\"}]",
+    "text": "对所有敌人造成 8 伤害\n--bbcode--\n对所有敌人造成 8 伤害",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":10,\"no_str\":true,\"type\":\"deal_damage_all\"}]",
+    "up_text": "对所有敌人造成 10 伤害\n--bbcode--\n对所有敌人造成 10 伤害"
+  },
+  "zh|stats|base:tape_patch": {
+    "effects": "[{\"amount\":4.0,\"type\":\"gain_block\"},{\"type\":\"exhaust_self\"}]",
+    "text": "获得 7 (4+3) 格挡\n消耗\n--bbcode--\n获得 7 (4+[color=#8fb8ff]3[/color]) 格挡\n[i][color=#cfa9ff]消耗[/color][/i]",
+    "up_cost": "0",
+    "up_effects": "[{\"amount\":7,\"type\":\"gain_block\"},{\"type\":\"exhaust_self\"}]",
+    "up_text": "获得 10 (7+3) 格挡\n消耗\n--bbcode--\n获得 10 (7+[color=#8fb8ff]3[/color]) 格挡\n[i][color=#cfa9ff]消耗[/color][/i]"
+  },
+  "zh|stats|base:venom_coat": {
+    "effects": "[{\"stacks\":1.0,\"status\":\"reactive_plating\",\"type\":\"apply_status_self\"}]",
+    "text": "每当一张牌给予你格挡，获得 1 层荆棘。\n--bbcode--\n每当一张牌给予你格挡，获得 1 层[color=#b2bfcc]荆棘[/color]。",
+    "up_cost": "0",
+    "up_effects": "[{\"stacks\":1.0,\"status\":\"reactive_plating\",\"type\":\"apply_status_self\"}]",
+    "up_text": "每当一张牌给予你格挡，获得 1 层荆棘。\n--bbcode--\n每当一张牌给予你格挡，获得 1 层[color=#b2bfcc]荆棘[/color]。"
+  },
+  "zh|stats|base:weak_strike": {
+    "effects": "[{\"amount\":4.0,\"type\":\"deal_damage\"},{\"stacks\":1.0,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "text": "造成 6 (4+2) 伤害\n施加 虚弱 x1\n--bbcode--\n造成 6 (4+[color=#ff7a5c]2[/color]) 伤害\n施加 [color=#b280e6]虚弱[/color] x1",
+    "up_cost": "1",
+    "up_effects": "[{\"amount\":6,\"type\":\"deal_damage\"},{\"stacks\":2,\"status\":\"weak\",\"type\":\"apply_status\"}]",
+    "up_text": "造成 8 (6+2) 伤害\n施加 虚弱 x2\n--bbcode--\n造成 8 (6+[color=#ff7a5c]2[/color]) 伤害\n施加 [color=#b280e6]虚弱[/color] x2"
+  }
+}
