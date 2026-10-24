@@ -25,6 +25,8 @@ func _run() -> void:
 	await test_outline_is_not_a_hover_toggle()
 	await test_arrow_is_segmented_and_hides_the_cursor()
 	await test_cursor_returns_when_combat_ends_mid_aim()
+	await test_hover_shows_reticle_without_changing_the_enemy()
+	await test_freed_hover_target_resets_arrow()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if failures.is_empty():
 		print("[OK] battle UI contract passed")
@@ -120,4 +122,39 @@ func test_cursor_returns_when_combat_ends_mid_aim() -> void:
 	battle._victory()
 	_expect(arrow == null or not is_instance_valid(arrow) or not arrow.cursor_hidden, "the arrow releases the cursor when combat ends")
 	_expect(Input.mouse_mode == Input.MOUSE_MODE_VISIBLE, "the cursor returns when combat ends mid-aim")
+	await _free(battle)
+
+
+func test_hover_shows_reticle_without_changing_the_enemy() -> void:
+	var battle = await _battle()
+	var cards: Array = await _add_strikes(battle, 1)
+	var enemy: Node = battle.enemy_container.get_child(0)
+	battle.start_spell_targeting(cards[0])
+	await get_tree().process_frame
+	battle._set_hover_effect(enemy, true)
+	await get_tree().create_timer(0.3).timeout
+	_expect(enemy.reticle_shown(), "hovering a target shows its reticle")
+	_expect(enemy.scale == Vector2.ONE, "the enemy is not scaled on hover (got %s)" % enemy.scale)
+	_expect(enemy.modulate == Color.WHITE, "the enemy is not tinted on hover (got %s)" % enemy.modulate)
+	battle._set_hover_effect(enemy, false)
+	_expect(not enemy.reticle_shown(), "leaving the target hides its reticle")
+	battle._cancel_spell_targeting()
+	await _free(battle)
+
+
+func test_freed_hover_target_resets_arrow() -> void:
+	var battle = await _battle()
+	var cards: Array = await _add_strikes(battle, 1)
+	var enemy: Node = battle.enemy_container.get_child(0)
+	battle.start_spell_targeting(cards[0])
+	await get_tree().process_frame
+	battle.hovered_unit = enemy
+	battle._set_hover_effect(enemy, true)
+	battle.targeting_arrow.set_target_valid(true)
+	enemy.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_expect(battle.hovered_unit == null, "a freed hover target is dropped")
+	_expect(battle.targeting_arrow.current_color() == Color.WHITE, "the arrow returns to white when its target is gone")
+	battle._cancel_spell_targeting()
 	await _free(battle)

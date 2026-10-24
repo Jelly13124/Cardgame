@@ -7,6 +7,7 @@ class_name EnemyEntity
 const HUD_SCRIPT = preload("uid://dqn0nfitycf2d")  # res://battle_scene/ui/character_hud.gd
 const ENEMY_DATA_DIR = "res://battle_scene/card_info/enemy/"
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
+const SELECTION_RETICLE = preload("uid://c6dicaops28n6")  # res://battle_scene/ui/selection_reticle.gd
 const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
 const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://battle_scene/combat_feedback_controller.gd
 
@@ -300,6 +301,32 @@ func get_hit_global_position() -> Vector2:
 	var native_origin := Vector2(tex.get_width(), tex.get_height()) * 0.5
 	var native_hit := Vector2(tex.get_width() * 0.34, tex.get_height() * 0.54)
 	return _sprite.to_global(native_hit - native_origin)
+
+
+## Target reticle (STS2 NSelectionReticle) around the targeting rect; created
+## on first use so its rect matches the built sprite.
+var _reticle: Node2D
+
+
+func show_reticle() -> void:
+	if _reticle == null:
+		_reticle = SELECTION_RETICLE.new()
+		add_child(_reticle)
+	var rect := get_targeting_rect()
+	var local_rect := Rect2(rect.position - global_position, rect.size)
+	if global_scale != Vector2.ZERO:
+		local_rect = Rect2(local_rect.position / global_scale, local_rect.size / global_scale)
+	_reticle.set_rect(local_rect)
+	_reticle.show_reticle()
+
+
+func hide_reticle() -> void:
+	if _reticle:
+		_reticle.hide_reticle()
+
+
+func reticle_shown() -> bool:
+	return _reticle != null and _reticle.is_shown()
 
 
 func get_targeting_rect() -> Rect2:

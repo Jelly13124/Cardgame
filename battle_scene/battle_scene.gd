@@ -285,6 +285,11 @@ func _process(_delta: float) -> void:
 		_hide_damage_preview()
 		return
 
+	# A target that died while hovered is dropped before anything touches it.
+	if hovered_unit != null and (
+		not is_instance_valid(hovered_unit) or hovered_unit.is_queued_for_deletion()
+	):
+		hovered_unit = null
 	var mouse_pos = get_viewport().get_mouse_position()
 	var unit_under_mouse = _get_unit_at_position(mouse_pos)
 
@@ -391,14 +396,15 @@ func update_polarity_hud() -> void:
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 
+## Target feedback while aiming (STS2): the hovered enemy shows its reticle;
+## the enemy itself is never scaled or tinted.
 func _set_hover_effect(unit: Node, active: bool) -> void:
-	if not is_instance_valid(unit):
+	if not is_instance_valid(unit) or unit.is_queued_for_deletion():
 		return
-	var scale_target = Vector2(1.2, 1.2) if active else Vector2(1.0, 1.0)
-	var modulate_target = Color(1.5, 1.2, 1.2) if active else Color.WHITE
-	var tween = create_tween().set_parallel(true)
-	tween.tween_property(unit, "scale", scale_target, 0.1)
-	tween.tween_property(unit, "modulate", modulate_target, 0.1)
+	if active and unit.has_method("show_reticle"):
+		unit.show_reticle()
+	elif not active and unit.has_method("hide_reticle"):
+		unit.hide_reticle()
 
 
 ## Returns the enemy node under a screen position (viewport coords).
