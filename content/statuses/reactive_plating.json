@@ -1,0 +1,9 @@
+{
+  "id": "reactive_plating",
+  "kind": "buff",
+  "decay": "none",
+  "color": "#75d1f0",
+  "label": "RP",
+  "description": "Whenever a card grants Block, gain Thorns equal to stacks. Persistent.",
+  "script": "res://core/listeners/statuses/reactive_plating.gd"
+}

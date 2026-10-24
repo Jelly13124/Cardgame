@@ -1,0 +1,9 @@
+{
+  "id": "overload_protocol",
+  "kind": "buff",
+  "decay": "none",
+  "color": "#33ebff",
+  "label": "OP",
+  "description": "Your Overloads can Crit. Persistent.",
+  "script": "res://core/listeners/statuses/overload_protocol.gd"
+}

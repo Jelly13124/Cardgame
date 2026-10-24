@@ -1,0 +1,9 @@
+{
+  "id": "thorns",
+  "kind": "buff",
+  "decay": "none",
+  "color": "#b2bfcc",
+  "label": "T",
+  "description": "When hit by an attack, the attacker takes stacks damage. Loses 1 stack each time it triggers.",
+  "script": "res://core/listeners/statuses/thorns.gd"
+}

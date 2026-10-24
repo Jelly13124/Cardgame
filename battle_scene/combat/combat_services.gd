@@ -4,13 +4,13 @@ extends RefCounted
 ## content listeners, the command layer and the effect registry. The battle
 ## (or a test stand-in) declares `combat_hooks`, `combat_commands`,
 ## `effect_registry`, `crit_rules`, `relic_effect_system` and
-## `equipment_set_system`; install() fills the first four and registers the
-## relic / set systems as listeners. Listener order is fixed: attributes,
-## statuses, crits, relics, equipment sets.
+## `equipment_set_system`; install() fills the first four and gives the hook
+## broadcaster a provider that lists, on every dispatch: attributes, the status
+## listeners of every creature (player first, then enemies), crits, relics,
+## equipment sets, then any extra listeners added with add_listener (tests).
 
 const COMBAT_HOOKS = preload("uid://cjb2wdqhw4j2x")  # res://core/combat/combat_hooks.gd
 const ATTRIBUTE_RULES = preload("uid://ctdg0fm8xx4bv")  # res://core/combat/rules/attribute_rules.gd
-const STATUS_RULES = preload("uid://b8rsme8h88mxo")  # res://core/combat/rules/status_rules.gd
 const CRIT_RULES = preload("uid://bjfqp2irnmi37")  # res://core/combat/rules/crit_rules.gd
 const EFFECT_REGISTRY = preload("uid://7gab4te60cto")  # res://core/effects/effect_registry.gd
 const COMBAT_COMMANDS = preload("uid://drt6iikiv1eri")  # res://battle_scene/combat/combat_commands.gd
@@ -27,19 +27,20 @@ static func install(battle: Object) -> void:
 	commands.hooks = hooks
 	hooks.commands = commands
 
-	var status_rules = STATUS_RULES.new()
-	status_rules.hooks = hooks
-	status_rules.relics = relics
 	var crit_rules = CRIT_RULES.new()
 	crit_rules.relics = relics
-
-	hooks.add_listener(ATTRIBUTE_RULES.new())
-	hooks.add_listener(status_rules)
-	hooks.add_listener(crit_rules)
-	if relics:
-		hooks.add_listener(relics)
-	if sets:
-		hooks.add_listener(sets)
+	crit_rules.hooks = hooks
+	var attributes = ATTRIBUTE_RULES.new()
+	hooks.provider = func() -> Array:
+		var out: Array = [attributes]
+		out.append_array(status_listeners(battle, hooks))
+		out.append(crit_rules)
+		if relics:
+			out.append(relics)
+		if sets:
+			out.append(sets)
+		out.append_array(hooks.listeners)
+		return out
 
 	var registry = EFFECT_REGISTRY.new()
 	COMBAT_EFFECTS.register_into(registry)
@@ -48,3 +49,22 @@ static func install(battle: Object) -> void:
 	battle.set("combat_commands", commands)
 	battle.set("effect_registry", registry)
 	battle.set("crit_rules", crit_rules)
+
+
+## Status listeners of the player, then each enemy in container order.
+static func status_listeners(battle: Object, hooks) -> Array:
+	var creatures: Array = []
+	var player = battle.get("player")
+	if player != null:
+		creatures.append(player)
+	var container = battle.get("enemy_container")
+	if container != null and is_instance_valid(container):
+		creatures.append_array(container.get_children())
+	var out: Array = []
+	for creature in creatures:
+		if not is_instance_valid(creature) or not "status_system" in creature or creature.status_system == null:
+			continue
+		for listener in creature.status_system.listeners():
+			listener.hooks = hooks
+			out.append(listener)
+	return out

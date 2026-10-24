@@ -12,6 +12,7 @@ class_name DataValidator
 const CARD_UPGRADE = preload("uid://d2e2bfj6oa3yp")  # res://run_system/core/card_upgrade.gd
 
 # ─── Content ──────────────────────────────────────────────────────────────────
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 
 const REQUIRED_TOOL_KEYS = ["id", "title", "effects"]
@@ -81,27 +82,9 @@ const ALLOWED_EFFECT_TYPES = [
 	"add_curse_to_deck",
 	"discover",
 ]
-const ALLOWED_STATUS_NAMES = [
-	"short_circuit",
-	"burn",
-	"weak",
-	"vulnerable",
-	"stun",
-	"regen",
-	"thorns",
-	"frail",
-	"intangible",
-	"metallicize",
-	"feel_no_pain",
-	"hot_streak",
-	"all_in",
-	"deadeye",
-	"overload_protocol",
-	"covering_reload",
-	"reactive_plating",
-	"loaded",
-	"bullet",
-]
+## Runtime status keys of every status definition (content/statuses).
+static func allowed_status_names() -> Array:
+	return MODEL_DB.ids("status").map(func(i): return MODEL_ID.key_entry(i))
 # Effect types that require a `status` field
 const STATUS_BEARING_EFFECTS = [
 	"apply_status",
@@ -536,11 +519,11 @@ static func _validate_card_effect(effect: Variant, prefix: String, label: String
 		if not effect.has("status"):
 			push_error("%s: %s[%d] (%s) is missing 'status'" % [prefix, label, i, etype])
 			ok = false
-		elif not str(effect["status"]) in ALLOWED_STATUS_NAMES:
+		elif not str(effect["status"]) in allowed_status_names():
 			push_error(
 				(
 					"%s: %s[%d] status '%s' not in %s"
-					% [prefix, label, i, effect["status"], ALLOWED_STATUS_NAMES]
+					% [prefix, label, i, effect["status"], allowed_status_names()]
 				)
 			)
 			ok = false
@@ -711,11 +694,11 @@ static func _validate_enemy_actions(actions: Array, prefix: String, label: Strin
 			if not action.has("status"):
 				push_error("%s: %s[%d] (%s) is missing 'status'" % [prefix, label, i, atype])
 				ok = false
-			elif not str(action["status"]) in ALLOWED_STATUS_NAMES:
+			elif not str(action["status"]) in allowed_status_names():
 				push_error(
 					(
 						"%s: %s[%d] status '%s' not in %s"
-						% [prefix, label, i, action["status"], ALLOWED_STATUS_NAMES]
+						% [prefix, label, i, action["status"], allowed_status_names()]
 					)
 				)
 				ok = false
@@ -741,11 +724,11 @@ static func _validate_enemy_actions(actions: Array, prefix: String, label: Strin
 			if not action.has("status"):
 				push_error("%s: %s[%d] (buff_self) is missing 'status'" % [prefix, label, i])
 				ok = false
-			elif not str(action["status"]) in ALLOWED_STATUS_NAMES:
+			elif not str(action["status"]) in allowed_status_names():
 				push_error(
 					(
 						"%s: %s[%d] (buff_self) status '%s' not in %s"
-						% [prefix, label, i, action["status"], ALLOWED_STATUS_NAMES]
+						% [prefix, label, i, action["status"], allowed_status_names()]
 					)
 				)
 				ok = false
@@ -1008,11 +991,11 @@ static func validate_equipment_set(data: Dictionary, source_path: String) -> boo
 			if not effect.has("status"):
 				push_error("%s: tier[%d] effect (%s) missing 'status'" % [prefix, i, etype])
 				ok = false
-			elif not str(effect["status"]) in ALLOWED_STATUS_NAMES:
+			elif not str(effect["status"]) in allowed_status_names():
 				push_error(
 					(
 						"%s: tier[%d] status '%s' not in %s"
-						% [prefix, i, effect["status"], ALLOWED_STATUS_NAMES]
+						% [prefix, i, effect["status"], allowed_status_names()]
 					)
 				)
 				ok = false

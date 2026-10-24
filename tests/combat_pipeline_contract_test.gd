@@ -10,7 +10,6 @@ const VALUE_CALC = preload("uid://tynklfj3vjf5")  # res://core/combat/value_calc
 const CARD_PLAY = preload("uid://bxaw24a7fumhm")  # res://core/combat/card_play.gd
 const COMBAT_HOOKS = preload("uid://cjb2wdqhw4j2x")  # res://core/combat/combat_hooks.gd
 const ATTRIBUTE_RULES = preload("uid://ctdg0fm8xx4bv")  # res://core/combat/rules/attribute_rules.gd
-const STATUS_RULES = preload("uid://b8rsme8h88mxo")  # res://core/combat/rules/status_rules.gd
 const CRIT_RULES = preload("uid://bjfqp2irnmi37")  # res://core/combat/rules/crit_rules.gd
 const STATUS_SYSTEM = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
 
@@ -90,9 +89,21 @@ func _fresh() -> void:
 	add_child(player)
 	add_child(enemy)
 	hooks = COMBAT_HOOKS.new()
-	hooks.add_listener(ATTRIBUTE_RULES.new())
-	hooks.add_listener(STATUS_RULES.new())
-	hooks.add_listener(CRIT_RULES.new())
+	var attributes = ATTRIBUTE_RULES.new()
+	var crit = CRIT_RULES.new()
+	crit.hooks = hooks
+	var h = hooks
+	var creatures := [player, enemy]
+	# Same order as combat_services: attributes, statuses, crits, extras.
+	hooks.provider = func() -> Array:
+		var out: Array = [attributes]
+		for c in creatures:
+			for l in c.status_system.listeners():
+				l.hooks = h
+				out.append(l)
+		out.append(crit)
+		out.append_array(h.listeners)
+		return out
 
 
 func _card(dealer: Node) -> Object:

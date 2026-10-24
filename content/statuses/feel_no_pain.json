@@ -1,0 +1,9 @@
+{
+  "id": "feel_no_pain",
+  "kind": "buff",
+  "decay": "none",
+  "color": "#8cccf2",
+  "label": "¤",
+  "description": "Whenever a card is Exhausted, gain stacks Block. Persistent.",
+  "script": "res://core/listeners/statuses/feel_no_pain.gd"
+}

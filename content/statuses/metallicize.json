@@ -1,0 +1,9 @@
+{
+  "id": "metallicize",
+  "kind": "buff",
+  "decay": "none",
+  "color": "#b8ccdb",
+  "label": "M",
+  "description": "At the start of your turn, gain stacks Block. Persistent.",
+  "script": "res://core/listeners/statuses/metallicize.gd"
+}

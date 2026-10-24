@@ -1,0 +1,9 @@
+{
+  "id": "intangible",
+  "kind": "buff",
+  "decay": "opponent_turn_end",
+  "color": "#99f2ff",
+  "label": "I",
+  "description": "Each hit deals at most 1 damage. Lasts until the end of the opponent's turn; loses 1 stack then.",
+  "script": "res://core/listeners/statuses/intangible.gd"
+}

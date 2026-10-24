@@ -1,0 +1,12 @@
+{
+  "id": "frail",
+  "kind": "debuff",
+  "decay": "turn_end",
+  "color": "#9980b2",
+  "label": "F",
+  "description": "Block gained is reduced 25%. Decays 1 per turn.",
+  "vars": {
+    "mult": 0.75
+  },
+  "script": "res://core/listeners/statuses/frail.gd"
+}

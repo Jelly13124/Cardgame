@@ -1,0 +1,9 @@
+{
+  "id": "regen",
+  "kind": "buff",
+  "decay": "none",
+  "color": "#4cff99",
+  "label": "R",
+  "description": "Heal stacks HP at the start of your turn. Stacks decay by 1 each turn.",
+  "script": "res://core/listeners/statuses/regen.gd"
+}

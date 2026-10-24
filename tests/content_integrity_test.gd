@@ -14,7 +14,7 @@ const CARD_FACTORY_SCENE = preload("uid://diap3gdfbqvjv")  # res://battle_scene/
 
 const ID_CATEGORIES := [
 	"card", "monster", "relic", "equipment", "equipment_set", "event", "tool",
-	"bounty", "character", "base_upgrade",
+	"bounty", "character", "base_upgrade", "status",
 ]
 const SKIP_DIRS := ["res://addons", "res://.godot", "res://tests/fixtures", "res://.superpowers"]
 
@@ -89,7 +89,7 @@ func _scan_sources() -> void:
 	for category in ID_CATEGORIES:
 		for id in MODEL_DB.ids(category):
 			entries[str(id).trim_prefix("base:")] = true
-	for status in DATA_VALIDATOR.ALLOWED_STATUS_NAMES:
+	for status in DATA_VALIDATOR.allowed_status_names():
 		entries.erase(str(status))
 	var retired_dirs := ["card" + "_info/", "run_system/" + "data/"]
 	var content_root := "res://" + "content/"

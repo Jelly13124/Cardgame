@@ -1,0 +1,9 @@
+{
+  "id": "burn",
+  "kind": "debuff",
+  "decay": "none",
+  "color": "#ff7a2e",
+  "label": "B",
+  "description": "Take damage equal to stacks at the start of your turn, then stacks are halved (rounded down).",
+  "script": "res://core/listeners/statuses/burn.gd"
+}

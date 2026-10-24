@@ -1,0 +1,8 @@
+{
+  "id": "short_circuit",
+  "kind": "debuff",
+  "decay": "none",
+  "color": "#33ebff",
+  "label": "SC",
+  "description": "Stored charge. It does not deal damage or decay until a card Overloads or removes it."
+}

@@ -753,10 +753,10 @@ func _color_num(val: int, base_plus_stat: int) -> String:
 ## glossary). Terms resolve in the current locale, so 短路/Short Circuit and 过载/Overload match.
 func _colorize_keywords(text: String) -> String:
 	var terms: Array = []  # [[term, hex], ...]
-	for status in STATUS_SYS.STATUS_COLORS:
+	for status in STATUS_SYS.status_keys():
 		var nm: String = STATUS_SYS.format_name_localized(status)
 		if nm.strip_edges() != "":
-			terms.append([nm, STATUS_SYS.STATUS_COLORS[status].to_html(false)])
+			terms.append([nm, STATUS_SYS.status_color(status).to_html(false)])
 	var overload_name := tr("UI_BATTLE_KEYWORD_OVERLOAD_NAME")
 	if overload_name != "UI_BATTLE_KEYWORD_OVERLOAD_NAME":
 		terms.append([overload_name, Color(0.20, 0.92, 1.0).to_html(false)])
@@ -820,7 +820,7 @@ func _start_hover_animation() -> void:
 
 ## Builds a "[b]Keyword[/b]: definition" glossary for the statuses and global
 ## attributes this card's effects touch, sourced from the localized status rows
-## (falling back to StatusEffectSystem.STATUS_DESCRIPTIONS). Empty if none apply.
+## (falling back to the status definition's description). Empty if none apply.
 func _build_keyword_glossary() -> String:
 	var effects: Array = card_info.get("effects", [])
 	var seen: Dictionary = {}
@@ -861,7 +861,7 @@ func _build_keyword_glossary() -> String:
 			kw_name = STATUS_SYS.format_name_localized(status)
 		var desc := tr("UI_COMBAT_STATUS_%s_DESC" % up)
 		if desc == "UI_COMBAT_STATUS_%s_DESC" % up:
-			desc = str(STATUS_SYS.STATUS_DESCRIPTIONS.get(status, ""))
+			desc = STATUS_SYS.status_description(status)
 		if desc != "":
 			lines.append("[b]%s[/b]: %s" % [kw_name, desc])
 

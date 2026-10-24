@@ -710,9 +710,9 @@ func _on_turn_ended(side: String) -> void:
 	if side == "player":
 		for enemy in enemy_container.get_children():
 			if is_instance_valid(enemy) and "status_system" in enemy:
-				enemy.status_system.decay_intangible(enemy)
+				enemy.status_system.on_opponent_turn_end(enemy)
 	elif is_instance_valid(player):
-		player.status_system.decay_intangible(player)
+		player.status_system.on_opponent_turn_end(player)
 	if side == "player":
 		player.end_turn()
 		_update_ui_labels()
@@ -1249,14 +1249,9 @@ func add_attack_allowance(n: int) -> void:
 ## Also fires the Covering Reload power (Block on every Reload).
 func restore_attack_allowance() -> void:
 	AudioManager.play_sfx("reload")  # bare-ok: sfx key
-	# Covering Reload power: gain 3 Block whenever a Reload is played (independent
-	# of whether the attack cap is armed).
-	if (
-		player
-		and player.has_method("get_status_stacks")
-		and player.get_status_stacks("covering_reload") > 0
-	):
-		_power_block("covering_reload", 3)
+	# Reload listeners (Covering Reload) fire whether or not the attack cap is armed.
+	if combat_hooks:
+		combat_hooks.react("after_reload", null)
 	if _attack_limit_per_turn <= 0:
 		return
 	_attacks_left_this_turn = max(_attacks_left_this_turn, _attack_limit_per_turn)
@@ -1417,22 +1412,11 @@ func try_gain_gold(amount: int, cap: int) -> void:
 	show_notification(tr("UI_COMBAT_WEALTHY").format({"n": amount}), Color(1.0, 0.82, 0.29))
 
 
-## Fire the player's on-exhaust power triggers when a card routes to Exhaust.
-## Called once per exhausted card.
+## Broadcast an Exhaust to the listeners (Feel No Pain). Called once per
+## exhausted card.
 func _trigger_exhaust_powers() -> void:
-	if not is_instance_valid(player) or not player.status_system:
-		return
-	var fnp: int = player.status_system.get_stacks("feel_no_pain")
-	if fnp > 0:
-		_power_block("feel_no_pain", fnp)
-
-
-## Block from a player power (Covering Reload, Feel No Pain): a fixed value
-## through the command layer so its hooks and caps apply.
-func _power_block(power_id: String, amount: int) -> void:
-	var source = COMBAT_SOURCE.make("status", "player", player, null, power_id)
-	if await combat_commands.gain_block(source, player, amount, 0) > 0:
-		player.play_block_pulse()
+	if combat_hooks:
+		combat_hooks.react("after_card_exhausted", null)
 
 
 ## Returns true if the card has an `exhaust_self` effect entry.

@@ -1,20 +1,22 @@
 ## StatusEffectSystem is shared by PlayerEntity and EnemyEntity. It stores
-## stacks and runs turn timing; what a status does to damage, Block and stacks
-## (Weak, Vulnerable, Frail, Intangible, Thorns, …) lives in
-## core/combat/rules/status_rules.gd.
-## Turn timing:
-## - on_turn_start(): start-of-turn damage / upkeep
-## - on_turn_end(): end-of-turn debuff expiration
+## stacks, applies each status's decay rule from its definition
+## (content/statuses, ModelDb category "status") and owns one listener instance
+## per active status whose definition names a `script`
+## (core/listeners/statuses/<key>.gd). Behaviour lives in those listeners; this
+## class keeps storage, owner-scoped turn phases and the badge UI.
+## Runtime keys are MODEL_ID.key_entry(status id): base statuses use bare names.
 extends RefCounted
 class_name StatusEffectSystem
 
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
+
 var _statuses: Dictionary = {}
+var _listeners: Dictionary = {}  # key -> listener instance, in application order
 ## Deals status damage (Burn) through the combat pipeline:
 ## func(entity, amount: int, status: String). Unset in tests that use a bare
 ## entity; then the entity takes the damage directly.
 var damage_router: Callable
-
-const TURN_END_DECAY = ["weak", "vulnerable", "frail"]
 
 
 static func format_name(status_name: String) -> String:
@@ -32,78 +34,35 @@ static func format_name_localized(status_name: String) -> String:
 	return localized
 
 
-const STATUS_COLORS = {
-	"short_circuit": Color(0.20, 0.92, 1.0),
-	"burn": Color(1.0, 0.48, 0.18),
-	"weak": Color(0.7, 0.5, 0.9),
-	"vulnerable": Color(0.95, 0.45, 0.2),
-	"stun": Color(0.95, 0.95, 0.3),
-	"regen": Color(0.3, 1.0, 0.6),
-	"thorns": Color(0.7, 0.75, 0.8),
-	"frail": Color(0.6, 0.5, 0.7),
-	"intangible": Color(0.6, 0.95, 1.0),
-	"metallicize": Color(0.72, 0.80, 0.86),
-	"feel_no_pain": Color(0.55, 0.80, 0.95),
-	"hot_streak": Color(1.0, 0.82, 0.3),
-	"all_in": Color(1.0, 0.45, 0.25),
-	"deadeye": Color(1.0, 0.90, 0.34),
-	"overload_protocol": Color(0.20, 0.92, 1.0),
-	"covering_reload": Color(0.55, 0.78, 0.95),
-	"reactive_plating": Color(0.46, 0.82, 0.94),
-	"loaded": Color(1.0, 0.70, 0.24),
-	"bullet": Color(1.0, 0.78, 0.35),
-}
+## Definition of a runtime status key, or {}.
+static func status_def(key: String) -> Dictionary:
+	for model in MODEL_DB.models("status"):
+		if MODEL_ID.key_entry(model.id) == key:
+			return model.data
+	return {}
 
-const STATUS_LABELS = {
-	"short_circuit": "SC",
-	"burn": "B",
-	"weak": "W",
-	"vulnerable": "V",
-	"stun": "⚡",
-	"regen": "R",
-	"thorns": "T",
-	"frail": "F",
-	"intangible": "I",
-	"metallicize": "M",
-	"feel_no_pain": "¤",
-	"hot_streak": "HS",
-	"all_in": "AI",
-	"deadeye": "D",
-	"overload_protocol": "OP",
-	"covering_reload": "CR",
-	"reactive_plating": "RP",
-	"loaded": "L",
-	"bullet": "●",
-}
+
+## Runtime keys of every defined status.
+static func status_keys() -> Array:
+	return MODEL_DB.ids("status").map(func(i): return MODEL_ID.key_entry(i))
+
+
+static func status_color(key: String) -> Color:
+	var hex := str(status_def(key).get("color", ""))
+	return Color.html(hex) if hex != "" else Color.WHITE
+
+
+static func status_label(key: String) -> String:
+	return str(status_def(key).get("label", key))
+
+
+## English fallback for UI_COMBAT_STATUS_<KEY>_DESC.
+static func status_description(key: String) -> String:
+	return str(status_def(key).get("description", ""))
+
 
 const STATUS_ICON_DIR := "res://battle_scene/assets/images/ui/status/"
 const STATUS_ICON_SIZE := 30.0
-
-const STATUS_DESCRIPTIONS = {
-	"short_circuit":
-	"Stored charge. It does not deal damage or decay until a card Overloads or removes it.",
-	"burn":
-	"Take damage equal to stacks at the start of your turn, then stacks are halved (rounded down).",
-	"weak": "Outgoing attack damage reduced 50%. Additional stacks extend duration. Decays 1 per turn.",
-	"vulnerable": "Incoming attack damage increased 50%. Additional stacks extend duration. Decays 1 per turn.",
-	"stun": "Enemy skips its next turn for each stack (enemy-only).",
-	"regen": "Heal stacks HP at the start of your turn. Stacks decay by 1 each turn.",
-	"thorns":
-	"When hit by an attack, the attacker takes stacks damage. Loses 1 stack each time it triggers.",
-	"frail": "Block gained is reduced 25%. Decays 1 per turn.",
-	"intangible": "Each hit deals at most 1 damage. Lasts until the end of the opponent's turn; loses 1 stack then.",
-	"metallicize": "At the start of your turn, gain stacks Block. Persistent.",
-	"feel_no_pain": "Whenever a card is Exhausted, gain stacks Block. Persistent.",
-	"hot_streak": "Whenever you Crit, gain 2 Loaded. Persistent.",
-	"all_in": "Crits deal double damage. Non-Crit attacks deal normal damage and grant 2 Loaded. Persistent.",
-	"deadeye": "Your next Attack is guaranteed to Crit, then remove 1 stack.",
-	"overload_protocol": "Your Overloads can Crit. Persistent.",
-	"covering_reload": "Whenever you Reload, gain 3 Block. Persistent.",
-	"reactive_plating": "Whenever a card grants Block, gain Thorns equal to stacks. Persistent.",
-	"loaded": "The next Attack that deals damage gains stacks additional damage, then remove all stacks.",
-	"bullet":
-	"Ammo for attacks (double-fire clip). 1 at the start of each turn, max 1; spent by attacking, restored by Reload.",
-}
 
 
 func add_status(status_name: String, stacks: int, entity: Node) -> void:
@@ -111,6 +70,7 @@ func add_status(status_name: String, stacks: int, entity: Node) -> void:
 		return
 	status_name = _canonicalize_status_name(status_name)
 	_statuses[status_name] = _statuses.get(status_name, 0) + stacks
+	_ensure_listener(status_name, entity)
 	_on_statuses_changed(entity)
 
 
@@ -118,7 +78,7 @@ func remove_status(status_name: String, entity: Node) -> void:
 	status_name = _canonicalize_status_name(status_name)
 	if not _statuses.has(status_name):
 		return
-	_statuses.erase(status_name)
+	_clear(status_name)
 	_on_statuses_changed(entity)
 
 
@@ -132,65 +92,37 @@ func has_status(status_name: String) -> bool:
 	return _statuses.get(status_name, 0) > 0
 
 
+## Listener instances of this creature's active statuses, in key order (stable
+## and independent of application order, so turn-start effects keep a fixed
+## sequence: Burn before Regen).
+func listeners() -> Array:
+	var keys := _listeners.keys()
+	keys.sort()
+	return keys.map(func(k): return _listeners[k])
+
+
+## Owner's turn start (before its energy/Block reset): Burn, Regen.
 func on_turn_start(entity: Node) -> void:
-	var changed := false
-	if has_status("burn"):
-		var dmg: int = _statuses["burn"]
-		if damage_router.is_valid():
-			damage_router.call(entity, dmg, "burn")
-			AudioManager.play_sfx("attack_hit", -4.0, 1.18, 0.03)
-		elif entity.has_method("take_damage"):
-			# DoT uses the same ordered feedback/readout, while source="status" keeps
-			# it detached from attack-only triggers such as Thorns.
-			entity.take_damage(
-				dmg,
-				false,
-				{
-					"source": "status",
-					"status": "burn",
-					"critical": false,
-				}
-			)
-			AudioManager.play_sfx("attack_hit", -4.0, 1.18, 0.03)
-		# Halve remaining stacks, rounded down (int division floors for positives).
-		_statuses["burn"] = _statuses["burn"] / 2
-		if _statuses["burn"] <= 0:
-			_statuses.erase("burn")
-		changed = true
-
-	if has_status("regen"):
-		var amt: int = _statuses["regen"]
-		if entity.has_method("heal"):
-			entity.heal(amt)
-		_statuses["regen"] -= 1
-		if _statuses["regen"] <= 0:
-			_statuses.erase("regen")
-		changed = true
-
-	if changed:
-		_on_statuses_changed(entity)
+	for listener in listeners():
+		if listener.has_method("at_owner_turn_start"):
+			listener.at_owner_turn_start(entity)
 
 
+## Owner's turn start, after Block was reset (Metallicize).
+func after_owner_block_reset(entity: Node) -> void:
+	for listener in listeners():
+		if listener.has_method("after_owner_block_reset"):
+			listener.after_owner_block_reset(entity)
+
+
+## Owner's turn end: statuses whose definition decays at turn end lose 1.
 func on_turn_end(entity: Node) -> void:
-	var changed := false
-	for status_name in TURN_END_DECAY:
-		if not has_status(status_name):
-			continue
+	_decay("turn_end", entity)
 
-		_statuses[status_name] -= 1
-		changed = true
-		if _statuses[status_name] > 0:
-			continue
 
-		_statuses.erase(status_name)
-		match status_name:
-			"weak":
-				_notify(entity, "WEAK FADED", STATUS_COLORS["weak"])
-			"vulnerable":
-				_notify(entity, "VULNERABLE FADED", STATUS_COLORS["vulnerable"])
-
-	if changed:
-		_on_statuses_changed(entity)
+## The owner's opponent ended its turn (Intangible).
+func on_opponent_turn_end(entity: Node) -> void:
+	_decay("opponent_turn_end", entity)
 
 
 ## Consume one stack of stun. Returns true if a stack was consumed
@@ -199,18 +131,9 @@ func on_turn_end(entity: Node) -> void:
 func consume_stun(entity: Node) -> bool:
 	if not has_status("stun"):
 		return false
-	_statuses["stun"] -= 1
-	if _statuses["stun"] <= 0:
-		_statuses.erase("stun")
-	_on_statuses_changed(entity)
-	_notify(entity, "STUNNED", STATUS_COLORS["stun"])
+	spend_stacks("stun", 1, entity)
+	_notify(entity, "STUNNED", status_color("stun"))
 	return true
-
-
-## Intangible lasts until the end of the opponent's turn: the battle calls
-## this for each creature whose opponent just ended its turn.
-func decay_intangible(entity: Node) -> void:
-	spend_stacks("intangible", 1, entity)
 
 
 ## Spend N stacks of a status (min 0). Used by triggers that decay on use,
@@ -221,8 +144,66 @@ func spend_stacks(status_name: String, n: int, entity: Node) -> void:
 		return
 	_statuses[status_name] -= n
 	if _statuses[status_name] <= 0:
-		_statuses.erase(status_name)
+		_clear(status_name)
 	_on_statuses_changed(entity)
+
+
+## Set a status to exactly `n` stacks (0 removes it).
+func set_stacks(status_name: String, n: int, entity: Node) -> void:
+	status_name = _canonicalize_status_name(status_name)
+	if n <= 0:
+		remove_status(status_name, entity)
+		return
+	_statuses[status_name] = n
+	_ensure_listener(status_name, entity)
+	_on_statuses_changed(entity)
+
+
+## Status damage-over-time (Burn) through the combat pipeline when a router is
+## set; a bare entity (tests) takes it directly. Kept here because the hit sound
+## is presentation.
+func deal_status_damage(entity: Node, dmg: int, status: String) -> void:
+	if damage_router.is_valid():
+		damage_router.call(entity, dmg, status)
+		AudioManager.play_sfx("attack_hit", -4.0, 1.18, 0.03)
+	elif entity.has_method("take_damage"):
+		# DoT uses the same ordered feedback/readout, while source="status" keeps
+		# it detached from attack-only triggers such as Thorns.
+		entity.take_damage(dmg, false, {"source": "status", "status": status, "critical": false})
+		AudioManager.play_sfx("attack_hit", -4.0, 1.18, 0.03)
+
+
+func _decay(rule: String, entity: Node) -> void:
+	var changed := false
+	for key in _statuses.keys():
+		if str(status_def(key).get("decay", "none")) != rule:
+			continue
+		_statuses[key] -= 1
+		changed = true
+		if _statuses[key] <= 0:
+			_clear(key)
+			_notify(entity, "%s FADED" % format_name(key).to_upper(), status_color(key))
+	if changed:
+		_on_statuses_changed(entity)
+
+
+func _ensure_listener(key: String, entity: Node) -> void:
+	if _listeners.has(key):
+		return
+	var script_path := str(status_def(key).get("script", ""))
+	if script_path == "":
+		return
+	var listener = load(script_path).new()
+	listener.owner = entity
+	listener.id = key
+	listener.def = status_def(key)
+	listener.system = self
+	_listeners[key] = listener
+
+
+func _clear(key: String) -> void:
+	_statuses.erase(key)
+	_listeners.erase(key)
 
 
 func _canonicalize_status_name(status_name: String) -> String:
@@ -262,7 +243,7 @@ func _refresh_badges(entity: Node) -> void:
 		var desc_key := "UI_COMBAT_STATUS_%s_DESC" % str(status_name).to_upper()
 		var desc: String = TranslationServer.translate(desc_key)
 		if desc == desc_key:
-			desc = str(STATUS_DESCRIPTIONS.get(status_name, ""))
+			desc = status_description(status_name)
 		var tip: String = (
 			tr("UI_COMBAT_STATUS_TIP").format({"name": human_name, "n": stacks, "desc": desc})
 			if desc != ""
@@ -301,9 +282,9 @@ func _make_status_badge(status_name: String, stacks: int) -> Control:
 		badge.add_child(icon)
 	else:
 		var fallback = Label.new()
-		fallback.text = str(STATUS_LABELS.get(status_name, status_name))
+		fallback.text = status_label(status_name)
 		fallback.add_theme_font_size_override("font_size", 18)
-		fallback.add_theme_color_override("font_color", STATUS_COLORS.get(status_name, Color.WHITE))
+		fallback.add_theme_color_override("font_color", status_color(status_name))
 		fallback.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		fallback.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		fallback.mouse_filter = Control.MOUSE_FILTER_IGNORE

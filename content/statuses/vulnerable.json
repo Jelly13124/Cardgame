@@ -1,0 +1,12 @@
+{
+  "id": "vulnerable",
+  "kind": "debuff",
+  "decay": "turn_end",
+  "color": "#f27333",
+  "label": "V",
+  "description": "Incoming attack damage increased 50%. Additional stacks extend duration. Decays 1 per turn.",
+  "vars": {
+    "mult": 1.5
+  },
+  "script": "res://core/listeners/statuses/vulnerable.gd"
+}

@@ -23,8 +23,8 @@ func _expect(condition: bool, message: String) -> void:
 
 
 func _run() -> void:
-	_expect(DATA_VALIDATOR.ALLOWED_STATUS_NAMES.has("intangible"), "Intangible is a known status")
-	_expect(not DATA_VALIDATOR.ALLOWED_STATUS_NAMES.has("dodge"), "Dodge is retired")
+	_expect(DATA_VALIDATOR.allowed_status_names().has("intangible"), "Intangible is a known status")
+	_expect(not DATA_VALIDATOR.allowed_status_names().has("dodge"), "Dodge is retired")
 	var smoke_step: Dictionary = MODEL_DB.data("card", "base:smoke_step")
 	_expect(str(smoke_step["effects"][0].get("status", "")) == "intangible", "Smoke Step grants Intangible")
 	var hound: Dictionary = MODEL_DB.data("monster", "base:chrome_hound")

@@ -1,0 +1,12 @@
+{
+  "id": "covering_reload",
+  "kind": "buff",
+  "decay": "none",
+  "color": "#8cc7f2",
+  "label": "CR",
+  "description": "Whenever you Reload, gain 3 Block. Persistent.",
+  "vars": {
+    "block": 3
+  },
+  "script": "res://core/listeners/statuses/covering_reload.gd"
+}

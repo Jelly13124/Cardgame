@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cc1n48n335phu"]
+
+[ext_resource type="Script" path="res://tests/status_definitions_test.gd" id="1"]
+
+[node name="StatusDefinitionsTest" type="Node"]
+script = ExtResource("1")

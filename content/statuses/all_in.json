@@ -1,0 +1,13 @@
+{
+  "id": "all_in",
+  "kind": "buff",
+  "decay": "none",
+  "color": "#ff7340",
+  "label": "AI",
+  "description": "Crits deal double damage. Non-Crit attacks deal normal damage and grant 2 Loaded. Persistent.",
+  "vars": {
+    "crit_mult": 2.0,
+    "loaded": 2
+  },
+  "script": "res://core/listeners/statuses/all_in.gd"
+}

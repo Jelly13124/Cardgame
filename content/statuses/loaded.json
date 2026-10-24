@@ -1,0 +1,8 @@
+{
+  "id": "loaded",
+  "kind": "buff",
+  "decay": "none",
+  "color": "#ffb23d",
+  "label": "L",
+  "description": "The next Attack that deals damage gains stacks additional damage, then remove all stacks."
+}

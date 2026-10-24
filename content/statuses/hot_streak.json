@@ -1,0 +1,12 @@
+{
+  "id": "hot_streak",
+  "kind": "buff",
+  "decay": "none",
+  "color": "#ffd14c",
+  "label": "HS",
+  "description": "Whenever you Crit, gain 2 Loaded. Persistent.",
+  "vars": {
+    "loaded": 2
+  },
+  "script": "res://core/listeners/statuses/hot_streak.gd"
+}

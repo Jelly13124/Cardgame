@@ -1,0 +1,8 @@
+{
+  "id": "stun",
+  "kind": "debuff",
+  "decay": "none",
+  "color": "#f2f24c",
+  "label": "⚡",
+  "description": "Enemy skips its next turn for each stack (enemy-only)."
+}

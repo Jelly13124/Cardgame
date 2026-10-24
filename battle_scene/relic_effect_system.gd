@@ -256,11 +256,23 @@ func first_turn_bonus_allowance() -> int:
 
 ## True if a held relic makes the player's Thorns reflection also apply equal
 ## Short Circuit to the attacker (Arc Spines). Read by combat_engine.
-func thorns_apply_short_circuit() -> bool:
+func thorns_apply_short_circuit(_arg = null) -> bool:
 	for entry in _get_effect_entries("on_thorns_damage"):
 		if str(entry["effect"].get("type", "")) == "thorns_short_circuit":
 			return true
 	return false
+
+
+## Crit multiplier hook: relic overrides (highest wins) unless a status locked
+## the multiplier (All In).
+func modify_crit_multiplier(m) -> void:
+	if not bool(m.fields.get("locked", false)):
+		m.value = crit_mult(float(m.value))
+
+
+## Crit commit hook (player crits only).
+func after_crit(calc) -> void:
+	on_player_crit(calc.dealer)
 
 
 ## Held relics that react to a player Crit. Ricochet Loader adds a Reload card to

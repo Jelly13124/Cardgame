@@ -95,6 +95,13 @@ func query_any(method: String, arg) -> bool:
 	return false
 
 
+## Synchronous notification (no coroutines): crit commit callbacks.
+func notify(method: String, arg) -> void:
+	for listener in current_listeners():
+		if listener.has_method(method):
+			listener.call(method, arg)
+
+
 ## Reaction hook with up to two arguments; listeners may be coroutines.
 func react(method: String, a: Variant = null, b: Variant = null) -> void:
 	if _depth >= MAX_DEPTH:

@@ -1,0 +1,12 @@
+{
+  "id": "weak",
+  "kind": "debuff",
+  "decay": "turn_end",
+  "color": "#b280e6",
+  "label": "W",
+  "description": "Outgoing attack damage reduced 50%. Additional stacks extend duration. Decays 1 per turn.",
+  "vars": {
+    "mult": 0.5
+  },
+  "script": "res://core/listeners/statuses/weak.gd"
+}

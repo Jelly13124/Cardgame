@@ -504,11 +504,9 @@ func start_turn() -> void:
 	block = 0
 	energy_changed.emit(energy)
 	block_changed.emit(block)
-	# Power upkeep that must run AFTER the block reset, else it gets wiped:
-	#  - metallicize: gain Block each turn (Plating Loop)
-	var mtl: int = status_system.get_stacks("metallicize")
-	if mtl > 0:
-		add_block(mtl)
+	# Power upkeep that must run AFTER the block reset, else it gets wiped
+	# (Metallicize).
+	status_system.after_owner_block_reset(self)
 	_refresh_hud()
 
 

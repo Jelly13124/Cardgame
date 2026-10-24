@@ -1,0 +1,9 @@
+{
+  "id": "deadeye",
+  "kind": "buff",
+  "decay": "none",
+  "color": "#ffe657",
+  "label": "D",
+  "description": "Your next Attack is guaranteed to Crit, then remove 1 stack.",
+  "script": "res://core/listeners/statuses/deadeye.gd"
+}
