@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cg8g2rcx1nxrh"]
+
+[ext_resource type="Script" path="res://tests/battle_ui_contract_test.gd" id="1"]
+
+[node name="BattleUiContractTest" type="Node"]
+script = ExtResource("1")

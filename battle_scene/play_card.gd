@@ -14,6 +14,7 @@ const ENEMY_TARGET_EFFECTS := [
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
 const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
+const CARD_HIGHLIGHT = preload("uid://wd07lb83d87x")  # res://battle_scene/ui/card_highlight.gd
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 
 @onready var cost_label = $FrontFace/CostCircle/CostLabel
@@ -25,7 +26,6 @@ const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_
 @onready var generated_shell = $FrontFace/GeneratedShell
 @onready var desc_box_texture = $FrontFace/DescriptionBox
 @onready var type_badge_texture = $FrontFace/RaceBox
-@onready var playable_glow = $FrontFace/PlayableGlow
 @onready var art_frame_texture = $FrontFace/ArtFrameTexture
 @onready var art_bg = $FrontFace/ArtBackground
 @onready var art_container = $FrontFace/ArtContainer
@@ -46,6 +46,8 @@ const HAND_HOVER_LIFT := 80.0
 
 ## Discover candidates aren't hand cards — suppress the "can I afford it" glow.
 var suppress_playable_glow: bool = false
+## Playable outline (battle_scene/ui/card_highlight.gd), behind the card face.
+var highlight: ColorRect
 var _rarity_frames: Dictionary = {}
 
 # Legacy fallback-frame colors. The unified generated battle face intentionally
@@ -72,6 +74,9 @@ const GENERATED_TYPE_TINT_COLORS: Dictionary = {
 
 func _ready() -> void:
 	super._ready()
+	highlight = CARD_HIGHLIGHT.new()
+	$FrontFace.add_child(highlight)
+	$FrontFace.move_child(highlight, 0)
 	var bg = load(UI_ASSET_PATH + "card_bg.png")
 	if bg and is_instance_valid(card_bg_texture):
 		card_bg_texture.texture = bg
@@ -296,6 +301,8 @@ func _load_texture_fallback(path: String) -> Texture2D:
 func _handle_mouse_pressed() -> void:
 	var main = get_tree().current_scene
 
+	if highlight and highlight.is_shown():
+		highlight.anim_flash()
 	if requires_enemy_target() and not _targeted_card_should_drag(main):
 		# Start targeting mode — arrow follows mouse while button is held.
 		# Do NOT call super so the card does not enter HOLDING/drag state.
@@ -381,6 +388,13 @@ func set_card_data(data: Dictionary) -> void:
 	# Generated skins are authored PNG components. Legacy cards keep the previous
 	# texture stack until their own rarity/profession assets are delivered.
 	var uses_generated_skin := _configure_generated_skin(data)
+	if highlight:
+		var silhouette: Texture2D = (
+			generated_shell.texture
+			if uses_generated_skin and generated_shell.texture
+			else card_bg_texture.texture
+		)
+		highlight.set_source(silhouette, size)
 
 	# ── Description: build from effects[] showing real calculated numbers ────
 	var desc = _build_description(data)
@@ -726,10 +740,7 @@ func update_display() -> void:
 	if not card_info.is_empty():
 		set_card_data(card_info)
 
-	# Handle playable glow update if we can find the player
-	var scene = get_tree().current_scene
-	if scene and "player" in scene and is_instance_valid(scene.player):
-		update_playable(scene.player.energy)
+	update_playable()
 
 
 func _color_num(val: int, base_plus_stat: int) -> String:
@@ -785,9 +796,6 @@ func _get_player_stats() -> Dictionary:
 
 
 func _on_mouse_entered() -> void:
-	if is_instance_valid(playable_glow):
-		playable_glow.visible = true
-
 	# Keyword glossary tooltip: explain any statuses / attributes this card uses.
 	var glossary := _build_keyword_glossary()
 	if glossary != "":
@@ -800,8 +808,6 @@ func _on_mouse_entered() -> void:
 
 
 func _on_mouse_exited() -> void:
-	if is_instance_valid(playable_glow):
-		playable_glow.visible = false
 	Tooltip.hide_if_owner(get_instance_id())
 
 
@@ -932,10 +938,19 @@ func _build_keyword_glossary() -> String:
 	return "\n".join(lines)
 
 
-## Affordability is deliberately quiet: only the cost disc dims. The outline is
-## interaction feedback and appears on hover, never as permanent decoration.
-func update_playable(current_energy: int) -> void:
-	var cost := int(cost_label.text) if is_instance_valid(cost_label) else int(card_info.get("cost", 0))
-	var can_afford = current_energy >= cost
+## Playability cue (STS2): in battle, a hand card that can be played right now
+## keeps a shape-hugging outline; the cost disc dims when energy is short.
+## Outside battle, and for discover candidates, there is no outline.
+func update_playable() -> void:
+	var scene = get_tree().current_scene if is_inside_tree() else null
+	var in_battle: bool = scene != null and scene.has_method("can_play_card")
 	if is_instance_valid(cost_badge):
-		cost_badge.modulate = Color.WHITE if can_afford else Color(0.58, 0.58, 0.54, 0.82)
+		var cost := int(cost_label.text) if is_instance_valid(cost_label) else int(card_info.get("cost", 0))
+		var energy: int = int(scene.player.energy) if in_battle and is_instance_valid(scene.player) else cost
+		cost_badge.modulate = Color.WHITE if energy >= cost else Color(0.58, 0.58, 0.54, 0.82)
+	if not highlight:
+		return
+	if in_battle and not suppress_playable_glow and scene.can_play_card(self):
+		highlight.anim_show()
+	else:
+		highlight.anim_hide()

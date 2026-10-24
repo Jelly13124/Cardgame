@@ -564,6 +564,21 @@ func _confirm_tool_targeting(target: Node) -> void:
 	_enqueue_tool(index, tdata, target)
 
 
+## Whether `card` can be played right now (drives the playable outline):
+## in hand, the player's turn, affordable, not a curse / unplayable, and for
+## attacks an attack left under the double-fire clip.
+func can_play_card(card: Control) -> bool:
+	if card == null or not is_instance_valid(card) or not hand.has_card(card):
+		return false
+	if not _accepts_player_input() or not can_afford([card]):
+		return false
+	var info: Dictionary = card.card_info
+	var type := str(info.get("type", "skill")).to_lower()
+	if type == "curse" or bool(info.get("unplayable", false)):
+		return false
+	return type != "attack" or _attack_limit_per_turn <= 0 or _attacks_left_this_turn > 0
+
+
 ## Cards and tools are used on the player's own turn only, and not after End
 ## Turn was pressed (the end-turn action is already queued).
 func _accepts_player_input() -> bool:
@@ -656,6 +671,7 @@ func _on_turn_started(side: String) -> void:
 	enemy_ai.spawn_enemy_units()
 
 	_ending_turn = false  # re-arm the end-turn guard
+	refresh_hand_ui()  # retained cards become playable again
 	if turn_manager.current_round == 1:
 		deck_manager.first_round_draw()
 	else:
@@ -907,6 +923,7 @@ func _on_end_round_button_pressed():
 	if _ending_turn or not turn_manager.is_player_turn or is_targeting:
 		return
 	_ending_turn = true
+	refresh_hand_ui()  # nothing is playable once End Turn is pressed
 	action_queue.enqueue("end_turn", _end_turn_action)
 
 
