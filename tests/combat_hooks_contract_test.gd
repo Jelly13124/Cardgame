@@ -6,7 +6,7 @@ extends Node
 ## "attacks played" however many Replay passes it has.
 
 const FAKE_BATTLE = preload("uid://j25pi73kmisn")  # res://tests/support/fake_battle.gd
-const EQUIPMENT_SET_SYSTEM = preload("uid://b3s8io84xovx7")  # res://battle_scene/equipment_set_system.gd
+const EQUIPMENT_SET_SYSTEM = preload("uid://b3s8io84xovx7")  # res://core/listeners/equipment_set.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const RELIC_EFFECT_SYSTEM = preload("uid://b4d2o08tofxey")  # res://battle_scene/relic_effect_system.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd

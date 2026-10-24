@@ -18,7 +18,7 @@ const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://run_system/ui/pause_
 
 var deck_manager: Node  # DeckManager (deck_manager.gd) instance
 var relic_effect_system: RefCounted  # RelicEffectSystem (relic_effect_system.gd) instance
-var equipment_set_system: RefCounted  # EquipmentSetSystem (equipment_set_system.gd) instance
+var equipment_set_system: RefCounted  # core/listeners/equipment_set.gd instance
 # Combat pipeline services, filled by COMBAT_SERVICES.install() each battle.
 var combat_hooks: RefCounted  # core/combat/combat_hooks.gd
 var combat_commands: RefCounted  # battle_scene/combat/combat_commands.gd
@@ -53,7 +53,7 @@ var _pending_tool_data: Dictionary = {}
 const TARGETING_ARROW_SCRIPT = preload("uid://dq6nkaqdhlsp4")  # res://battle_scene/targeting_arrow.gd
 const RELIC_EFFECT_SYSTEM = preload("uid://b4d2o08tofxey")  # res://battle_scene/relic_effect_system.gd
 const HOOK_VALUE = preload("uid://npewr2krgrm6")  # res://core/combat/hook_value.gd
-const EQUIPMENT_SET_SYSTEM = preload("uid://b3s8io84xovx7")  # res://battle_scene/equipment_set_system.gd
+const EQUIPMENT_SET_SYSTEM = preload("uid://b3s8io84xovx7")  # res://core/listeners/equipment_set.gd
 const CARD_ANIMATOR_SCRIPT = preload("uid://co0n3ou8saknv")  # res://battle_scene/card_animator.gd
 const DECK_MANAGER_SCRIPT = preload("uid://bi8d6vtu6xop6")  # res://battle_scene/deck_manager.gd
 const COMBAT_SERVICES = preload("uid://bcjfi8umolkqg")  # res://battle_scene/combat/combat_services.gd
@@ -687,8 +687,6 @@ func _on_turn_started(side: String) -> void:
 	if RunManager.ascension >= 3 and turn_manager.current_round == 1:
 		player.pay_energy(1)
 	await combat_hooks.react("after_turn_start", "player", turn_manager.current_round)
-	if equipment_set_system:
-		await equipment_set_system.on_player_turn_started(player, turn_manager.current_round)
 	if is_game_over:
 		return
 	_update_ui_labels()
@@ -937,11 +935,10 @@ func _start_new_game():
 
 	# Passive relic stat grants at battle start (war_horn +STR, bulk_actuator).
 	# Runs after player attributes are seeded above so it stacks on the base.
+	# Battle-start listeners: relic stat grants, then equipment sets (snapshot
+	# active tiers and apply start_battle_block).
 	combat_hooks.react("before_combat_start")
 
-	# Snapshot active equipment set tiers (and apply start_battle_block)
-	if equipment_set_system:
-		equipment_set_system.on_battle_started(player)
 
 	# ── Deck & Turn ──────────────────────────────────────────────────────────
 	deck_manager.reset_deck()

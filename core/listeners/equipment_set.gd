@@ -1,5 +1,8 @@
-extends RefCounted
-class_name EquipmentSetSystem
+extends "res://core/listeners/listener.gd"
+
+## Equipped set tiers as one combat listener: snapshots the active tier effects
+## at battle start, then grants turn-start Block / energy and modifies card
+## damage, Block and on-hit statuses.
 
 const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://battle_scene/combat_fx.gd
 const EFFECT_CONTEXT = preload("uid://bx2g3askncfr6")  # res://core/effects/effect_context.gd
@@ -17,7 +20,8 @@ func setup(battle_scene: Node) -> void:
 
 ## Snapshot the equipped set tiers once at combat start. Equipment cannot change
 ## during combat, so keeping the active effects here avoids repeated disk reads.
-func on_battle_started(player: Node) -> void:
+func before_combat_start() -> void:
+	var player = _battle_scene.get("player") if _battle_scene else null
 	_active_effects.clear()
 	var counts: Dictionary = RunManager.get_active_set_tiers()
 	for set_id_variant in counts.keys():
@@ -49,8 +53,9 @@ func on_battle_started(player: Node) -> void:
 
 ## Turn-start set actions run through the shared effect registry as set
 ## sources: fixed values (no Constitution or Frail).
-func on_player_turn_started(player: Node, _round_number: int) -> void:
-	if player == null:
+func after_turn_start(side: String, _round_number: int) -> void:
+	var player = _battle_scene.get("player") if _battle_scene else null
+	if side != "player" or player == null:
 		return
 	for effect in _active_effects:
 		var amount := int(effect.get("amount", 0))
