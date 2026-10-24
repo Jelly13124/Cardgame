@@ -16,6 +16,9 @@ extends RefCounted
 const MAX_DEPTH := 16
 
 var listeners: Array = []
+## Optional `func() -> Array` read on every dispatch (STS2 IterateHookListeners):
+## lets status listeners appear and vanish mid-combat. Unset → `listeners`.
+var provider: Callable
 ## Battle-side command layer (combat_commands.gd); listeners reach it as
 ## `hooks.commands` to deal reaction damage or apply statuses.
 var commands = null
@@ -76,18 +79,53 @@ func after_block_gained(result: Dictionary) -> void:
 	await _dispatch("after_block_gained", result)
 
 
+## Value hook: every listener defining `method` adjusts `calc.value` in order;
+## returns the final value (calc is a hook_value.gd or a value calc).
+func compute(method: String, calc) -> Variant:
+	_modify(method, calc)
+	return calc.value
+
+
+## Query hook: true at the first listener whose `method(arg)` returns true;
+## later listeners are not asked (so a forced-crit source spends only once).
+func query_any(method: String, arg) -> bool:
+	for listener in current_listeners():
+		if listener.has_method(method) and bool(listener.call(method, arg)):
+			return true
+	return false
+
+
+## Reaction hook with up to two arguments; listeners may be coroutines.
+func react(method: String, a: Variant = null, b: Variant = null) -> void:
+	if _depth >= MAX_DEPTH:
+		push_error("CombatHooks: %s re-entered %d levels deep; reaction skipped" % [method, _depth])
+		return
+	_depth += 1
+	for listener in current_listeners():
+		if not listener.has_method(method):
+			continue
+		match listener.get_method_argument_count(method):
+			0:
+				await listener.call(method)
+			1:
+				await listener.call(method, a)
+			_:
+				await listener.call(method, a, b)
+	_depth -= 1
+
+
+## Snapshot of the listeners for one dispatch.
+func current_listeners() -> Array:
+	if provider.is_valid():
+		return provider.call()
+	return listeners.duplicate()
+
+
 func _modify(method: String, calc) -> void:
-	for listener in listeners:
+	for listener in current_listeners():
 		if listener.has_method(method):
 			listener.call(method, calc)
 
 
 func _dispatch(method: String, arg) -> void:
-	if _depth >= MAX_DEPTH:
-		push_error("CombatHooks: %s re-entered %d levels deep; reaction skipped" % [method, _depth])
-		return
-	_depth += 1
-	for listener in listeners.duplicate():
-		if listener.has_method(method):
-			await listener.call(method, arg)
-	_depth -= 1
+	await react(method, arg)

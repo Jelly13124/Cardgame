@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8qeudcp0mnvc"]
+
+[ext_resource type="Script" path="res://tests/listener_hooks_contract_test.gd" id="1"]
+
+[node name="ListenerHooksContractTest" type="Node"]
+script = ExtResource("1")
