@@ -6,8 +6,10 @@ extends RefCounted
 ## (combat_services). No class_name — preload.
 
 const EFFECT_REGISTRY = preload("uid://7gab4te60cto")  # res://core/effects/effect_registry.gd
-const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
-const RUN_EFFECTS = preload("uid://divb5pd0mx4cc")  # res://core/effects/run_effects.gd
+## Loaded on first use, not preloaded: combat_effects reaches the card UI
+## (discover modal → play_card → card_description), which reads this catalog.
+const COMBAT_EFFECTS_PATH := "uid://do16of5onpg33"  # res://battle_scene/combat/combat_effects.gd
+const RUN_EFFECTS_PATH := "uid://divb5pd0mx4cc"  # res://core/effects/run_effects.gd
 
 static var _registry = null
 
@@ -15,8 +17,8 @@ static var _registry = null
 static func registry():
 	if _registry == null:
 		_registry = EFFECT_REGISTRY.new()
-		COMBAT_EFFECTS.register_into(_registry)
-		RUN_EFFECTS.register_into(_registry)
+		load(COMBAT_EFFECTS_PATH).register_into(_registry)
+		load(RUN_EFFECTS_PATH).register_into(_registry)
 	return _registry
 
 

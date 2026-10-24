@@ -15,6 +15,7 @@ const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_
 const VALUE_CALC = preload("uid://tynklfj3vjf5")  # res://core/combat/value_calc.gd
 const CARD_PLAY = preload("uid://bxaw24a7fumhm")  # res://core/combat/card_play.gd
 const EFFECT_CONTEXT = preload("uid://bx2g3askncfr6")  # res://core/effects/effect_context.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
 
 const COMBAT := ["combat"]
@@ -42,36 +43,36 @@ const NO_TARGET_COLOR := Color(1, 0.5, 0.5)
 ## Each combat type registers its handler and its definition together
 ## (core/effects/effect_registry.gd documents the definition keys).
 static func register_into(registry) -> void:
-	registry.register("deal_damage", _damage_effect, COMBAT, {"target": "enemy", "upgrade": {"amount": 2}})
-	registry.register("deal_damage_all", _damage_effect, COMBAT, {"target": "all", "upgrade": {"amount": 2}})
-	registry.register("deal_damage_str_mult", _damage_effect, COMBAT, {"target": "enemy"})
-	registry.register("deal_damage_block_mult", _damage_effect, COMBAT, {"target": "enemy"})
-	registry.register("scale_damage_by_attacks", _damage_effect, COMBAT, {"target": "enemy"})
-	registry.register("gain_strength", _gain_attribute, COMBAT, {"target": "self", "upgrade": {"amount": 1}})
-	registry.register("gain_constitution", _gain_attribute, COMBAT, {"target": "self"})
-	registry.register("gain_intelligence", _gain_attribute, COMBAT, {"target": "self", "upgrade": {"amount": 1}})
-	registry.register("gain_luck", _gain_attribute, COMBAT, {"target": "self", "upgrade": {"amount": 1}})
-	registry.register("gain_charm", _gain_attribute, COMBAT, {"target": "self"})
-	registry.register("gain_block", _gain_block, COMBAT, {"target": "self", "upgrade": {"amount": 3}})
-	registry.register("add_card_to_hand", _add_card_to_hand, COMBAT, {"target": "self", "params": ["card"]})
-	registry.register("discover", _discover, COMBAT, {"target": "self", "params": ["pool"]})
-	registry.register("gain_energy", _gain_energy, COMBAT, {"target": "self", "upgrade": {"amount": 1}})
-	registry.register("draw_cards", _draw_cards, COMBAT, {"target": "self", "upgrade": {"amount": 1}})
+	registry.register("deal_damage", _damage_effect, COMBAT, {"target": "enemy", "upgrade": {"amount": 2}, "scales": "strength", "glossary": ["attr:strength"], "describe": _describe_deal_damage})
+	registry.register("deal_damage_all", _damage_effect, COMBAT, {"target": "all", "upgrade": {"amount": 2}, "scales": "strength", "glossary": ["attr:strength"], "describe": _describe_deal_damage_all})
+	registry.register("deal_damage_str_mult", _damage_effect, COMBAT, {"target": "enemy", "glossary": ["attr:strength"], "describe": _describe_damage_str_mult})
+	registry.register("deal_damage_block_mult", _damage_effect, COMBAT, {"target": "enemy", "describe": _describe_damage_block_mult})
+	registry.register("scale_damage_by_attacks", _damage_effect, COMBAT, {"target": "enemy", "describe": _describe_scale_by_attacks})
+	registry.register("gain_strength", _gain_attribute, COMBAT, {"target": "self", "upgrade": {"amount": 1}, "glossary": ["attr:strength"], "describe": _describe_gain_strength})
+	registry.register("gain_constitution", _gain_attribute, COMBAT, {"target": "self", "glossary": ["attr:constitution"], "describe": _describe_gain_attr})
+	registry.register("gain_intelligence", _gain_attribute, COMBAT, {"target": "self", "upgrade": {"amount": 1}, "glossary": ["attr:intelligence"], "describe": _describe_gain_attr})
+	registry.register("gain_luck", _gain_attribute, COMBAT, {"target": "self", "upgrade": {"amount": 1}, "glossary": ["attr:luck"], "describe": _describe_gain_attr})
+	registry.register("gain_charm", _gain_attribute, COMBAT, {"target": "self", "glossary": ["attr:charm"], "describe": _describe_gain_attr})
+	registry.register("gain_block", _gain_block, COMBAT, {"target": "self", "upgrade": {"amount": 3}, "scales": "constitution", "glossary": ["attr:constitution"], "describe": _describe_gain_block})
+	registry.register("add_card_to_hand", _add_card_to_hand, COMBAT, {"target": "self", "params": ["card"], "describe": _describe_add_card})
+	registry.register("discover", _discover, COMBAT, {"target": "self", "params": ["pool"], "authored_text": true})
+	registry.register("gain_energy", _gain_energy, COMBAT, {"target": "self", "upgrade": {"amount": 1}, "describe": _describe_gain_attr})
+	registry.register("draw_cards", _draw_cards, COMBAT, {"target": "self", "upgrade": {"amount": 1}, "describe": _describe_draw})
 	registry.register("gain_attack_allowance", _gain_attack_allowance, COMBAT, {"target": "self"})
-	registry.register("restore_attack_allowance", _restore_attack_allowance, COMBAT, {"target": "self"})
-	registry.register("apply_stun", _apply_stun, COMBAT, {"target": "enemy"})
-	registry.register("apply_stun_all", _apply_stun_all, COMBAT, {"target": "all"})
+	registry.register("restore_attack_allowance", _restore_attack_allowance, COMBAT, {"target": "self", "describe": _describe_restore_attack})
+	registry.register("apply_stun", _apply_stun, COMBAT, {"target": "enemy", "glossary": ["stun"], "describe": _describe_apply_stun})
+	registry.register("apply_stun_all", _apply_stun_all, COMBAT, {"target": "all", "glossary": ["stun"], "describe": _describe_apply_stun_all})
 	registry.register("flip_polarity", _flip_polarity, COMBAT, {"target": "self"})
-	registry.register("exhaust_self", _exhaust_self, COMBAT, {"target": "none"})
-	registry.register("apply_status", _apply_status, COMBAT, {"target": "enemy", "params": ["status"], "upgrade": {"stacks": 1}})
-	registry.register("apply_short_circuit_scaled", _apply_short_circuit_scaled, COMBAT, {"target": "enemy"})
-	registry.register("apply_status_self", _apply_status_self, COMBAT, {"target": "self", "params": ["status"]})
-	registry.register("apply_status_all", _apply_status_all, COMBAT, {"target": "all", "params": ["status"], "upgrade": {"stacks": 1}})
-	registry.register("lose_hp", _lose_hp, COMBAT, {"target": "self"})
+	registry.register("exhaust_self", _exhaust_self, COMBAT, {"target": "none", "glossary": ["exhaust"], "describe": _describe_keyword_only})
+	registry.register("apply_status", _apply_status, COMBAT, {"target": "enemy", "params": ["status"], "upgrade": {"stacks": 1}, "describe": _describe_apply_status})
+	registry.register("apply_short_circuit_scaled", _apply_short_circuit_scaled, COMBAT, {"target": "enemy", "glossary": ["attr:from_effect", "short_circuit"], "describe": _describe_short_circuit_scaled})
+	registry.register("apply_status_self", _apply_status_self, COMBAT, {"target": "self", "params": ["status"], "describe": _describe_apply_status_self})
+	registry.register("apply_status_all", _apply_status_all, COMBAT, {"target": "all", "params": ["status"], "upgrade": {"stacks": 1}, "describe": _describe_apply_status_all})
+	registry.register("lose_hp", _lose_hp, COMBAT, {"target": "self", "describe": _describe_lose_hp})
 	registry.register("lose_gold", _lose_gold, COMBAT, {"target": "self"})
 	registry.register("add_curse_to_deck", _add_curse_to_deck, COMBAT, {"target": "self"})
 	registry.register("double_strength", _double_strength, COMBAT, {"target": "self"})
-	registry.register("overload", _overload, COMBAT, {"target": "all"})
+	registry.register("overload", _overload, COMBAT, {"target": "all", "glossary": ["short_circuit", "overload"], "describe": _describe_overload})
 	registry.register("gain_gold", _gain_gold, COMBAT, {"target": "self"})
 	registry.register("heal", _heal, COMBAT, {"target": "self"})
 	registry.register("gain_temp_strength", _gain_temp_strength, COMBAT, {"target": "self", "card": false})
@@ -85,6 +86,143 @@ static func register_into(registry) -> void:
 	registry.register("summon", _enemy_summon, ENEMY)
 	registry.register("buff_self", _enemy_buff_self, ENEMY)
 	registry.register("add_curse", _enemy_add_curse, ENEMY)
+
+
+# ─── Card text (each type's `describe`; card_description.gd builds the card) ─
+# `v` holds the computed numbers: base, mult, stacks, base_after_mult, scales,
+# stat_val, total, final (pipeline value in battle), data (the card).
+
+
+static func _num(v: Dictionary) -> String:
+	var val: int = int(v["final"])
+	var expected: int = int(v["total"])
+	if val > expected:
+		return "[color=#00ff00]%d[/color]" % val  # Bright Green
+	elif val < expected:
+		return "[color=#ff4444]%d[/color]" % val  # Red
+	return str(val)
+
+
+static func _describe_scaled(v: Dictionary, plain_key: String, scaling_key: String) -> PackedStringArray:
+	if bool(v["scales"]):
+		return [_t(scaling_key).format({"val": _num(v), "base": v["base_after_mult"], "stat": v["stat_val"]})]
+	return [_t(plain_key).format({"val": _num(v)})]
+
+
+static func _describe_deal_damage(_e: Dictionary, v: Dictionary) -> PackedStringArray:
+	return _describe_scaled(v, "UI_BATTLE_DESC_DEAL", "UI_BATTLE_DESC_DEAL_SCALING")
+
+
+static func _describe_deal_damage_all(_e: Dictionary, v: Dictionary) -> PackedStringArray:
+	return _describe_scaled(v, "UI_BATTLE_DESC_DEAL_ALL", "UI_BATTLE_DESC_DEAL_ALL_SCALING")
+
+
+static func _describe_gain_block(_e: Dictionary, v: Dictionary) -> PackedStringArray:
+	return _describe_scaled(v, "UI_BATTLE_DESC_BLOCK", "UI_BATTLE_DESC_BLOCK_SCALING")
+
+
+static func _describe_gain_strength(_e: Dictionary, v: Dictionary) -> PackedStringArray:
+	if float(v["mult"]) != 1:
+		return [_t("UI_BATTLE_DESC_STRENGTH_MULT").format({"n": v["total"], "mult": int(v["mult"]), "stat": ""})]
+	return [_t("UI_BATTLE_DESC_STRENGTH").format({"n": v["total"]})]
+
+
+## Constitution / Intelligence / Luck / Charm / Energy: localize the attribute
+## term itself (glossary), then frame it.
+static func _describe_gain_attr(e: Dictionary, v: Dictionary) -> PackedStringArray:
+	var attr_key := "UI_BATTLE_ATTR_" + str(e.get("type", "")).trim_prefix("gain_").to_upper()
+	return [_t("UI_BATTLE_DESC_GAIN_ATTR").format({"n": v["total"], "attr": _t(attr_key)})]
+
+
+static func _describe_draw(_e: Dictionary, v: Dictionary) -> PackedStringArray:
+	return [_t("UI_BATTLE_DESC_DRAW").format({"n": v["base"]})]
+
+
+static func _describe_apply_status(e: Dictionary, v: Dictionary) -> PackedStringArray:
+	return [_t("UI_BATTLE_DESC_APPLY_STATUS").format(
+		{"status": STATUS_SYS.format_name_localized(e.get("status", "")), "n": v["stacks"]}
+	)]
+
+
+static func _describe_apply_status_all(e: Dictionary, v: Dictionary) -> PackedStringArray:
+	return [_t("UI_BATTLE_DESC_APPLY_STATUS_ALL").format(
+		{"status": STATUS_SYS.format_name_localized(e.get("status", "")), "n": v["stacks"]}
+	)]
+
+
+## Abilities with a power description read it; otherwise "Gain <status> xN".
+static func _describe_apply_status_self(e: Dictionary, v: Dictionary) -> PackedStringArray:
+	var self_status := str(e.get("status", ""))
+	var power_key := "UI_BATTLE_DESC_POWER_%s" % self_status.to_upper()
+	var power_desc := _t(power_key)
+	if str(v["data"].get("type", "")).to_lower() == "ability" and power_desc != power_key:
+		return [power_desc]
+	return [_t("UI_BATTLE_DESC_APPLY_STATUS_SELF").format(
+		{"status": STATUS_SYS.format_name_localized(self_status), "n": v["stacks"]}
+	)]
+
+
+static func _describe_damage_str_mult(e: Dictionary, _v: Dictionary) -> PackedStringArray:
+	return [_t("UI_BATTLE_DESC_DAMAGE_STR_MULT").format({"base": int(e.get("base", 0)), "mult": int(e.get("mult", 1))})]
+
+
+static func _describe_apply_stun(_e: Dictionary, v: Dictionary) -> PackedStringArray:
+	return [_t("UI_BATTLE_DESC_APPLY_STUN").format({"n": v["stacks"]})]
+
+
+static func _describe_apply_stun_all(_e: Dictionary, v: Dictionary) -> PackedStringArray:
+	return [_t("UI_BATTLE_DESC_APPLY_STUN_ALL").format({"n": v["stacks"]})]
+
+
+static func _describe_scale_by_attacks(e: Dictionary, _v: Dictionary) -> PackedStringArray:
+	return [_t("UI_BATTLE_DESC_SCALE_BY_ATTACKS").format({"base": int(e.get("base", 0)), "per": int(e.get("per", 0))})]
+
+
+## Rendered as a keyword tag instead of an effect line.
+static func _describe_keyword_only(_e: Dictionary, _v: Dictionary) -> PackedStringArray:
+	return []
+
+
+static func _describe_add_card(e: Dictionary, _v: Dictionary) -> PackedStringArray:
+	var ac_id: String = str(e.get("card", ""))
+	var ac_name: String = Settings.t("CARD_%s_TITLE" % MODEL_ID.key_entry(ac_id), ac_id)
+	return [_t("UI_BATTLE_DESC_ADD_CARD").format({"n": int(e.get("amount", 1)), "card": ac_name})]
+
+
+static func _describe_short_circuit_scaled(e: Dictionary, _v: Dictionary) -> PackedStringArray:
+	var out: PackedStringArray = []
+	var circuit_attr: String = _t("UI_COMBAT_ATTR_%s" % str(e.get("attr", "intelligence")).to_upper())
+	var circuit_mult: int = int(e.get("attr_mult", 1))
+	var attr_term := circuit_attr if circuit_mult == 1 else "%d×%s" % [circuit_mult, circuit_attr]
+	out.append(_t("UI_BATTLE_DESC_SHORT_CIRCUIT_SCALED").format({"base": int(e.get("amount", 0)), "attr": attr_term}))
+	if bool(e.get("double_if_short_circuited", false)):
+		out.append(_t("UI_BATTLE_DESC_DOUBLE_IF_SHORT_CIRCUITED"))
+	return out
+
+
+static func _describe_damage_block_mult(e: Dictionary, _v: Dictionary) -> PackedStringArray:
+	var block_mult := int(e.get("mult", 1))
+	if block_mult == 1:
+		return [_t("UI_BATTLE_DESC_DMG_EQUAL_BLOCK")]
+	return [_t("UI_BATTLE_DESC_DMG_BLOCK_MULT").format({"mult": block_mult})]
+
+
+static func _describe_overload(e: Dictionary, _v: Dictionary) -> PackedStringArray:
+	var out: PackedStringArray = [_t("UI_BATTLE_DESC_OVERLOAD")]
+	var charge_multiplier := int(e.get("charge_multiplier", 1))
+	if charge_multiplier > 1:
+		out.append(_t("UI_BATTLE_DESC_OVERLOAD_MULTIPLIER").format({"n": charge_multiplier}))
+	if bool(e.get("gain_block_equal_damage", false)):
+		out.append(_t("UI_BATTLE_DESC_OVERLOAD_BLOCK"))
+	return out
+
+
+static func _describe_lose_hp(e: Dictionary, _v: Dictionary) -> PackedStringArray:
+	return [_t("UI_BATTLE_DESC_LOSE_HP").format({"n": int(e.get("amount", 0))})]
+
+
+static func _describe_restore_attack(_e: Dictionary, _v: Dictionary) -> PackedStringArray:
+	return [_t("UI_BATTLE_DESC_RESTORE_ATTACK")]
 
 
 # ─── Damage: base values and preview ─────────────────────────────────────────
