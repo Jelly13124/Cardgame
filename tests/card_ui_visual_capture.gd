@@ -11,7 +11,7 @@ func _ready() -> void:
 
 func _capture() -> void:
 	RunManager.current_hero_id = "base:cowboy_bill"
-	RunManager.current_hero_data = {"card_ui_skin": "base:cowboy_bill"}
+	RunManager.current_hero_data = {"card_ui_skin": "cowboy_bill"}  # bare-ok: skin asset key
 
 	var background := TextureRect.new()
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)

@@ -26,7 +26,7 @@ func _run() -> void:
 	# Cowboy Bill's production card skin rather than the legacy compatibility face.
 	RunManager.is_run_active = false
 	RunManager.current_hero_id = "base:cowboy_bill"
-	RunManager.current_hero_data = {"card_ui_skin": "base:cowboy_bill"}
+	RunManager.current_hero_data = {"card_ui_skin": "cowboy_bill"}  # bare-ok: skin asset key
 
 	var battle := BATTLE_SCENE.instantiate()
 	add_child(battle)

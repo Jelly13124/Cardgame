@@ -20,7 +20,7 @@ func _ready() -> void:
 func _capture() -> void:
 	RunManager.is_run_active = false
 	RunManager.current_hero_id = "base:cowboy_bill"
-	RunManager.current_hero_data = {"card_ui_skin": "base:cowboy_bill"}
+	RunManager.current_hero_data = {"card_ui_skin": "cowboy_bill"}  # bare-ok: skin asset key
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://tmp"))
 	var battle := BATTLE_SCENE.instantiate()
 	get_tree().root.add_child.call_deferred(battle)
