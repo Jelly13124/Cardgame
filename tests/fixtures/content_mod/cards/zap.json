@@ -1,0 +1,11 @@
+{
+  "id": "zap",
+  "title": "Zap",
+  "rarity": "common",
+  "type": "skill",
+  "cost": 1,
+  "side": "player",
+  "effects": [
+    { "type": "add_card_to_hand", "card": "reload" }
+  ]
+}

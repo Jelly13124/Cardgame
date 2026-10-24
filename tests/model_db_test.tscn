@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://d21bvq0megwji"]
+
+[ext_resource type="Script" path="res://tests/model_db_test.gd" id="1"]
+
+[node name="ModelDbTest" type="Node"]
+script = ExtResource("1")
