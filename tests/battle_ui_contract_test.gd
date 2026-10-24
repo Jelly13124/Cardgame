@@ -5,6 +5,7 @@ extends Node
 ## ways a played card leaves. Presentation only — rules are covered elsewhere.
 
 const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
+const CARD_ANIMATOR = preload("uid://co0n3ou8saknv")  # res://battle_scene/card_animator.gd
 
 var failures: PackedStringArray = []
 
@@ -27,6 +28,8 @@ func _run() -> void:
 	await test_cursor_returns_when_combat_ends_mid_aim()
 	await test_hover_shows_reticle_without_changing_the_enemy()
 	await test_freed_hover_target_resets_arrow()
+	test_waiting_layout_formula()
+	await test_three_quick_plays_line_up()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if failures.is_empty():
 		print("[OK] battle UI contract passed")
@@ -158,3 +161,41 @@ func test_freed_hover_target_resets_arrow() -> void:
 	_expect(battle.targeting_arrow.current_color() == Color.WHITE, "the arrow returns to white when its target is gone")
 	battle._cancel_spell_targeting()
 	await _free(battle)
+
+
+func test_waiting_layout_formula() -> void:
+	_expect(is_equal_approx(CARD_ANIMATOR.waiting_offset(1), 100.0), "first waiting card sits 100 px left")
+	_expect(is_equal_approx(CARD_ANIMATOR.waiting_offset(2), 150.0), "second waiting card sits 150 px left")
+	_expect(is_equal_approx(CARD_ANIMATOR.waiting_scale(1), 0.4), "first waiting card is at 0.4 scale")
+	_expect(absf(CARD_ANIMATOR.waiting_scale(2) - 0.2667) < 0.001, "second waiting card is at about 0.267 scale")
+
+
+func test_three_quick_plays_line_up() -> void:
+	var battle = await _battle()
+	battle.player.energy = 10
+	var cards: Array = await _add_strikes(battle, 3)
+	var enemy: Node = battle.enemy_container.get_child(0)
+	for card in cards:
+		battle.play_spell(card, enemy)
+	await get_tree().create_timer(0.4).timeout
+	var animator = battle.card_animator
+	var first: Control = cards[0]
+	_expect(first.global_position.distance_to(animator.play_position(first)) <= 2.0, "the resolving card sits at the play position (off by %.1f)" % first.global_position.distance_to(animator.play_position(first)))
+	_expect(absf(first.scale.x - 0.8) <= 0.02, "the resolving card is at 0.8 scale (got %.2f)" % first.scale.x)
+	for i in [1, 2]:
+		var waiting: Control = cards[i]
+		var expected: Vector2 = animator.play_position(waiting) - Vector2(CARD_ANIMATOR.waiting_offset(i), 0)
+		_expect(waiting.global_position.distance_to(expected) <= 2.0, "waiting card %d lines up left of the play position (off by %.1f)" % [i, waiting.global_position.distance_to(expected)])
+		_expect(absf(waiting.scale.x - CARD_ANIMATOR.waiting_scale(i)) <= 0.02, "waiting card %d is scaled down (got %.2f)" % [i, waiting.scale.x])
+	var drained := await _wait_until(func() -> bool: return battle.discard_pile.get_card_count() >= 3, 10.0)
+	_expect(drained, "all three cards end in the discard pile")
+	await _free(battle)
+
+
+func _wait_until(condition: Callable, seconds: float) -> bool:
+	var deadline := Time.get_ticks_msec() + int(seconds * 1000.0)
+	while not condition.call():
+		if Time.get_ticks_msec() > deadline:
+			return false
+		await get_tree().process_frame
+	return true

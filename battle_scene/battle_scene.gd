@@ -1323,21 +1323,17 @@ func play_spell(card: Control, target_node: Node):
 		card.card_container.remove_card(card)
 
 	card_animator.prepare_for_play(card)
-	var flight := {"done": false}
-	_fly_to_play_area(card, target_node, flight)
-	action_queue.enqueue("play_card", _resolve_played_card.bind(card, target_node, flight))
+	card_animator.enqueue_card(card)
+	action_queue.enqueue("play_card", _resolve_played_card.bind(card, target_node))
 
 
-func _fly_to_play_area(card: Control, target_node: Node, flight: Dictionary) -> void:
-	await card_animator.fly_to_play_area(card, target_node)
-	flight["done"] = true
-
-
-## Queued half of a card play: wait for the card to reach the play area,
-## resolve it, then send it to discard / exhaust without holding the queue.
-func _resolve_played_card(card, target_node, flight: Dictionary) -> void:
-	while not flight["done"] and is_inside_tree():
-		await get_tree().process_frame
+## Queued half of a card play: move the card from the waiting line to the play
+## position, resolve it, then send it to discard / exhaust without holding the
+## queue.
+func _resolve_played_card(card, target_node) -> void:
+	if is_game_over or not is_instance_valid(card):
+		return
+	await card_animator.begin_resolving(card)
 	if is_game_over or not is_instance_valid(card):
 		return
 	# The target can die while this card waits or flies; null = "no target".

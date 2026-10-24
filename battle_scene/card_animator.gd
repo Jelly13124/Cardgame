@@ -1,4 +1,5 @@
-## CardAnimator owns the play-area / discard / exhaust tweens for played cards.
+## CardAnimator owns the play-queue zone and the discard / exhaust tweens for
+## played cards.
 ## Lives as a child Node of BattleScene; constructed in BattleScene._ready().
 ## All tweens are created on this Node so they live with the battle scene
 ## lifecycle.
@@ -7,7 +8,13 @@
 extends Node
 class_name CardAnimator
 
+## Scale of the card at the play position.
+const PLAY_SCALE := 0.8
+
 var _scene: Node
+## Played cards waiting for their turn in the action queue, oldest first.
+var _waiting: Array = []
+var _tweens: Dictionary = {}
 
 
 func setup(scene: Node) -> void:
@@ -25,47 +32,80 @@ func prepare_for_play(card: Control) -> void:
 		card.can_be_interacted_with = false
 
 
-## Fly a card to the centre of the play area between player and target.
-func fly_to_play_area(card: Control, target_node: Node) -> void:
+# ─── Play-queue zone (STS2 NCardPlayQueue) ────────────────────────────────────
+
+
+## The card resolving now sits at the play position; cards waiting behind it
+## line up to its left, smaller the further back they are.
+func play_position(card: Control) -> Vector2:
+	var viewport_size := get_viewport().get_visible_rect().size
+	return Vector2(viewport_size.x * 0.5, viewport_size.y * 0.40) - card.size * 0.5
+
+
+## Leftward offset of the i-th waiting card (i from 1).
+static func waiting_offset(i: int) -> float:
+	return 300.0 * float(i) / float(i + 2)
+
+
+## Scale of the i-th waiting card (i from 1).
+static func waiting_scale(i: int) -> float:
+	return 0.8 * (1.0 - float(i) / float(i + 1))
+
+
+## A played card joins the waiting line (it resolves when the action queue
+## reaches it).
+func enqueue_card(card: Control) -> void:
+	if is_instance_valid(card):
+		_waiting.append(card)
+	_layout_waiting()
+
+
+## The queue reached `card`: it moves to the play position and the line closes up.
+func begin_resolving(card: Control) -> void:
+	_waiting.erase(card)
+	_layout_waiting()
 	if not is_instance_valid(card):
 		return
+	await _tween_card(card, play_position(card), PLAY_SCALE, 0.2).finished
 
-	var target_pos = _get_play_area_card_position(card, target_node)
-	var tween = create_tween().set_parallel(true)
-	(
-		tween
-		. tween_property(card, "global_position", target_pos, 0.20)
-		. set_trans(Tween.TRANS_QUAD)
-		. set_ease(Tween.EASE_OUT)
+
+func waiting_cards() -> Array:
+	return _waiting.duplicate()
+
+
+## Remove every waiting card from the line (combat ended) and return them.
+func drop_waiting() -> Array:
+	var dropped := _waiting.duplicate()
+	_waiting.clear()
+	return dropped
+
+
+func _layout_waiting() -> void:
+	_waiting = _waiting.filter(func(c) -> bool: return is_instance_valid(c))
+	for index in range(_waiting.size()):
+		var i := index + 1
+		var card: Control = _waiting[index]
+		_tween_card(card, play_position(card) - Vector2(waiting_offset(i), 0.0), waiting_scale(i), 0.35)
+
+
+func _tween_card(card: Control, at: Vector2, card_scale: float, seconds: float) -> Tween:
+	var previous: Tween = _tweens.get(card)
+	if previous and previous.is_valid():
+		previous.kill()
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(card, "global_position", at, seconds).set_ease(Tween.EASE_OUT).set_trans(
+		Tween.TRANS_CUBIC
 	)
-	tween.tween_property(card, "rotation", 0.0, 0.20).set_trans(Tween.TRANS_QUAD).set_ease(
+	tween.tween_property(card, "scale", Vector2.ONE * card_scale, seconds).set_ease(
 		Tween.EASE_OUT
+	).set_trans(Tween.TRANS_CUBIC)
+	tween.tween_property(card, "rotation", 0.0, seconds).set_ease(Tween.EASE_OUT).set_trans(
+		Tween.TRANS_CUBIC
 	)
-	(
-		tween
-		. tween_property(card, "scale", Vector2(0.92, 0.92), 0.20)
-		. set_trans(Tween.TRANS_QUAD)
-		. set_ease(Tween.EASE_OUT)
-	)
-	tween.tween_property(card, "modulate:a", 1.0, 0.12)
-	await tween.finished
-
-	if not is_instance_valid(card):
-		return
-	var settle = create_tween()
-	(
-		settle
-		. tween_property(card, "scale", Vector2(1.0, 1.0), 0.06)
-		. set_trans(Tween.TRANS_QUAD)
-		. set_ease(Tween.EASE_OUT)
-	)
-	(
-		settle
-		. tween_property(card, "scale", Vector2(0.92, 0.92), 0.08)
-		. set_trans(Tween.TRANS_QUAD)
-		. set_ease(Tween.EASE_IN)
-	)
-	await settle.finished
+	tween.tween_property(card, "modulate:a", 1.0, seconds)
+	_tweens[card] = tween
+	tween.finished.connect(func() -> void: _tweens.erase(card))
+	return tween
 
 
 ## Fly the card to the discard pile with a short spin and shrink.
@@ -198,29 +238,3 @@ func fly_to_exhaust(card: Control) -> void:
 	if _scene.has_method("show_notification"):
 		_scene.show_notification("EXHAUSTED", Color(0.7, 0.7, 1.0))
 	await tween.finished
-
-
-# ─── Internal ─────────────────────────────────────────────────────────────────
-
-
-func _get_play_area_card_position(card: Control, target_node: Node) -> Vector2:
-	var viewport_size = get_viewport().get_visible_rect().size
-	var card_half = card.size * 0.5
-	var play_center = Vector2(viewport_size.x * 0.5, viewport_size.y * 0.48)
-
-	var player_node = _scene.player
-	if (
-		target_node
-		and is_instance_valid(target_node)
-		and player_node
-		and is_instance_valid(player_node)
-	):
-		play_center = player_node.global_position.lerp(target_node.global_position, 0.48)
-		play_center.y -= card.size.y * 0.12
-
-	var pos = play_center - card_half
-	var max_x = maxf(24.0, viewport_size.x - card.size.x - 24.0)
-	var max_y = maxf(80.0, viewport_size.y - card.size.y - 150.0)
-	pos.x = clampf(pos.x, 24.0, max_x)
-	pos.y = clampf(pos.y, 80.0, max_y)
-	return pos
