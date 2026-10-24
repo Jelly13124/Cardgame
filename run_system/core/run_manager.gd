@@ -2183,7 +2183,7 @@ func load_run() -> bool:
 	if not bool(data.get("is_run_active", false)):
 		return false
 	if SAVE_MIGRATION.run_needs_migration(data):
-		SAVE_MIGRATION.backup_once(_run_save_path())
+		SAVE_MIGRATION.backup_once(_run_save_path(), data)
 		data = SAVE_MIGRATION.migrate_run(data)
 
 	current_hero_id = str(data.get("current_hero_id", ""))

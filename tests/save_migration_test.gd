@@ -90,12 +90,16 @@ func _test_meta_migration() -> void:
 
 
 func _test_backup_once() -> void:
-	SAVE_IO.write_json("migration_probe.json", {"v": 1, "first": true})
-	_expect(SAVE_MIGRATION.backup_once("migration_probe.json"), "first backup written")
-	SAVE_IO.write_json("migration_probe.json", {"v": 1, "first": false})
-	_expect(not SAVE_MIGRATION.backup_once("migration_probe.json"), "second backup skipped")
-	var backup: Variant = JSON.parse_string(FileAccess.get_file_as_string(SAVE_IO.path("migration_probe.json.v1.bak")))
-	_expect(typeof(backup) == TYPE_DICTIONARY and bool(backup.get("first", false)), "backup keeps the first original")
+	# The live file may be corrupt (SaveIO recovered from .bak1): the backup must
+	# hold the v1 data that was actually loaded, not the live bytes.
+	var probe := SAVE_IO.path("migration_probe.json")
+	var f := FileAccess.open(probe, FileAccess.WRITE)
+	f.store_string("{ truncated")
+	f.close()
+	_expect(SAVE_MIGRATION.backup_once("migration_probe.json", {"v": 1, "first": true}), "first backup written")
+	_expect(not SAVE_MIGRATION.backup_once("migration_probe.json", {"v": 1, "first": false}), "second backup skipped")
+	var backup: Variant = JSON.parse_string(FileAccess.get_file_as_string(probe + ".v1.bak"))
+	_expect(typeof(backup) == TYPE_DICTIONARY and bool(backup.get("first", false)), "backup keeps the loaded v1 data")
 
 
 func _test_load_run_end_to_end() -> void:

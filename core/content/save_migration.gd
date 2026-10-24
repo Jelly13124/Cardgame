@@ -87,14 +87,20 @@ static func migrate_meta(d: Dictionary) -> Dictionary:
 	return out
 
 
-## Copy the live save to `<file>.v1.bak` once. Returns true when written; an
-## existing backup (from an earlier migration attempt) is never overwritten.
-static func backup_once(relative: String) -> bool:
-	var live := SAVE_IO.path(relative)
-	var backup := live + BACKUP_SUFFIX
-	if FileAccess.file_exists(backup) or not FileAccess.file_exists(live):
+## Write the loaded pre-migration data to `<file>.v1.bak` once. The data, not
+## the live file, is backed up: SaveIO may have recovered it from `.bak1` while
+## the live file is corrupt. Returns true when written; an existing backup (from
+## an earlier migration attempt) is never overwritten.
+static func backup_once(relative: String, loaded: Dictionary) -> bool:
+	var backup := SAVE_IO.path(relative) + BACKUP_SUFFIX
+	if FileAccess.file_exists(backup):
 		return false
-	return DirAccess.copy_absolute(live, backup) == OK
+	var f := FileAccess.open(backup, FileAccess.WRITE)
+	if f == null:
+		return false
+	f.store_string(JSON.stringify(loaded, "  "))
+	f.close()
+	return true
 
 
 # --- helpers ------------------------------------------------------------------

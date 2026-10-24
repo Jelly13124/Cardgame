@@ -1143,7 +1143,7 @@ func load_progress() -> void:
 		push_warning("MetaProgress: profile %s was corrupt, restored from %s" % [path, result.get("source", "")])
 	var migrated := SAVE_MIGRATION.meta_needs_migration(parsed)
 	if migrated:
-		SAVE_MIGRATION.backup_once(path)
+		SAVE_MIGRATION.backup_once(path, parsed)
 		parsed = SAVE_MIGRATION.migrate_meta(parsed)
 	# Core was removed 2026-07-07: an old save's "core" key is simply ignored here
 	# (balance discarded, not migrated — owner decision). Missing/extra keys are
