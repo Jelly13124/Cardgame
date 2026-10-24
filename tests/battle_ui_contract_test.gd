@@ -23,6 +23,8 @@ func _expect(condition: bool, message: String) -> void:
 func _run() -> void:
 	await test_outline_follows_playability()
 	await test_outline_is_not_a_hover_toggle()
+	await test_arrow_is_segmented_and_hides_the_cursor()
+	await test_cursor_returns_when_combat_ends_mid_aim()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if failures.is_empty():
 		print("[OK] battle UI contract passed")
@@ -85,4 +87,37 @@ func test_outline_is_not_a_hover_toggle() -> void:
 	_expect(not cards[0].highlight.is_shown(), "hovering an unplayable card does not light the outline")
 	_expect(battle.find_child("PlayableGlow", true, false) == null, "the old rectangular PlayableGlow is gone")
 	cards[0]._on_mouse_exited()
+	await _free(battle)
+
+
+func test_arrow_is_segmented_and_hides_the_cursor() -> void:
+	var battle = await _battle()
+	var cards: Array = await _add_strikes(battle, 1)
+	battle.start_spell_targeting(cards[0])
+	await get_tree().process_frame
+	var arrow = battle.targeting_arrow
+	_expect(arrow != null, "targeting creates the arrow")
+	if arrow:
+		_expect(arrow.segment_positions().size() == 19, "arrow has 19 segments (got %d)" % arrow.segment_positions().size())
+		_expect(arrow.current_color() == Color.WHITE, "idle arrow is white")
+		# Headless Godot ignores mouse_mode, so check the arrow's own claim on it.
+		_expect(arrow.cursor_hidden, "the cursor hides while aiming")
+		arrow.set_target_valid(true)
+		_expect(arrow.current_color() == arrow.ENEMY_COLOR, "arrow turns enemy red over a target")
+	battle._cancel_spell_targeting()
+	_expect(arrow == null or not arrow.cursor_hidden, "the arrow releases the cursor on cancel")
+	_expect(Input.mouse_mode == Input.MOUSE_MODE_VISIBLE, "the cursor returns when aiming is cancelled")
+	_expect(battle.targeting_arrow == null, "cancel removes the arrow")
+	await _free(battle)
+
+
+func test_cursor_returns_when_combat_ends_mid_aim() -> void:
+	var battle = await _battle()
+	var cards: Array = await _add_strikes(battle, 1)
+	battle.start_spell_targeting(cards[0])
+	await get_tree().process_frame
+	var arrow = battle.targeting_arrow
+	battle._victory()
+	_expect(arrow == null or not is_instance_valid(arrow) or not arrow.cursor_hidden, "the arrow releases the cursor when combat ends")
+	_expect(Input.mouse_mode == Input.MOUSE_MODE_VISIBLE, "the cursor returns when combat ends mid-aim")
 	await _free(battle)

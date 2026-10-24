@@ -1,19 +1,36 @@
 extends Node2D
 
+## Targeting arrow after STS2's NTargetingArrow: 19 chevron segments along a
+## quadratic curve from the card to the cursor, growing toward the head. White
+## while aiming at nothing; enemy red with a springy head when over a target.
+## The system cursor is hidden while aiming and always restored on stop.
+## Drawn in code (flat fill + dark outline) until dedicated art exists.
+
+const SEGMENT_COUNT := 19
+const ENEMY_COLOR := Color("E61E1B")
+const IDLE_COLOR := Color.WHITE
+const OUTLINE_COLOR := Color(0.06, 0.03, 0.02, 0.85)
+## Chevron size at scale 1; segments are drawn at 0.28 → 0.42 of it.
+const SEGMENT_SIZE := Vector2(110.0, 72.0)
+const SEGMENT_SCALE_START := 0.28
+const SEGMENT_SCALE_END := 0.42
+const HEAD_SIZE := Vector2(58.0, 48.0)
+const HEAD_IDLE_SCALE := 0.95
+const HEAD_HOVER_SCALE := 1.05
+
 var origin: Vector2 = Vector2.ZERO
 var is_active: bool = false
 var target_is_valid: bool = false
+## True while this arrow has hidden the system cursor (it must restore it).
+var cursor_hidden: bool = false
 
-const COLOR_IDLE := Color(0.28, 0.95, 0.36, 0.9)
-const COLOR_VALID := Color(1.0, 0.18, 0.12, 0.96)
-const COLOR_OUTLINE := Color(0.04, 0.0, 0.0, 0.62)
-const COLOR_HIGHLIGHT := Color(1.0, 0.96, 0.78, 0.78)
-
-var line_width: float = 6.0
-var arrow_size: float = 26.0
-var segments: int = 42
-var max_bend: float = 105.0
-var _time: float = 0.0
+var _segments := PackedVector2Array()
+var _segment_angles := PackedFloat32Array()
+var _segment_scales := PackedFloat32Array()
+var _head_position := Vector2.ZERO
+var _head_angle := 0.0
+var _head_scale := HEAD_IDLE_SCALE
+var _head_tween: Tween
 
 
 func _ready() -> void:
@@ -22,11 +39,19 @@ func _ready() -> void:
 	set_process(true)
 
 
+func _exit_tree() -> void:
+	_restore_cursor()
+
+
 func start(from_position: Vector2) -> void:
 	origin = from_position
 	is_active = true
 	target_is_valid = false
+	_head_scale = HEAD_IDLE_SCALE
 	visible = true
+	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+	cursor_hidden = true
+	_update_curve(get_global_mouse_position())
 	queue_redraw()
 
 
@@ -34,6 +59,10 @@ func stop() -> void:
 	is_active = false
 	target_is_valid = false
 	visible = false
+	if _head_tween:
+		_head_tween.kill()
+	_head_scale = HEAD_IDLE_SCALE
+	_restore_cursor()
 	queue_redraw()
 
 
@@ -41,115 +70,129 @@ func set_target_valid(value: bool) -> void:
 	if target_is_valid == value:
 		return
 	target_is_valid = value
+	if _head_tween:
+		_head_tween.kill()
+	if value and is_inside_tree():
+		_head_tween = create_tween()
+		_head_tween.tween_method(_set_head_scale, _head_scale, HEAD_HOVER_SCALE, 1.0).set_ease(
+			Tween.EASE_OUT
+		).set_trans(Tween.TRANS_ELASTIC)
+	else:
+		_head_scale = HEAD_HOVER_SCALE if value else HEAD_IDLE_SCALE
 	queue_redraw()
 
 
-func _process(delta: float) -> void:
+func current_color() -> Color:
+	return ENEMY_COLOR if target_is_valid else IDLE_COLOR
+
+
+## Global positions of the 19 segments from the last update.
+func segment_positions() -> PackedVector2Array:
+	return _segments
+
+
+func head_position() -> Vector2:
+	return _head_position
+
+
+func head_scale() -> float:
+	return _head_scale
+
+
+func _process(_delta: float) -> void:
 	if is_active:
-		_time += delta
+		_update_curve(get_global_mouse_position())
 		queue_redraw()
 
 
+## STS2 UpdateArrowPosition: the control point sits behind the start, and for a
+## card low on screen it lies past the head so the arrow arcs up and over.
+func _update_curve(target: Vector2) -> void:
+	var from := origin
+	var control := Vector2.ZERO
+	control.x = from.x - (target.x - from.x) * 0.25
+	if from.y > get_viewport_rect().size.y * 0.5:
+		control.y = target.y + (target.y - from.y) * 0.5
+	else:
+		control.y = target.y * 0.75 + from.y * 0.25
+	var direction := (target - control).normalized()
+	if direction == Vector2.ZERO:
+		direction = Vector2.UP
+	_head_position = target
+	_head_angle = direction.angle()
+	var end := target - direction * HEAD_SIZE.x * 0.55
+
+	_segments.resize(SEGMENT_COUNT)
+	_segment_angles.resize(SEGMENT_COUNT)
+	_segment_scales.resize(SEGMENT_COUNT)
+	for i in range(SEGMENT_COUNT):
+		_segments[i] = _quadratic(from, control, end, float(i) / 20.0)
+		_segment_scales[i] = minf(
+			lerpf(SEGMENT_SCALE_START, SEGMENT_SCALE_END, float(i) * 2.0 / float(SEGMENT_COUNT)),
+			SEGMENT_SCALE_END
+		)
+	for i in range(SEGMENT_COUNT):
+		var ahead: Vector2 = _segments[i + 1] if i + 1 < SEGMENT_COUNT else end
+		_segment_angles[i] = (ahead - _segments[i]).angle()
+
+
 func _draw() -> void:
-	if not is_active:
+	if not is_active or _segments.is_empty():
 		return
-
-	var mouse_pos = get_global_mouse_position()
-	var start_pos = origin - global_position
-	var end_pos = mouse_pos - global_position
-	var points = _build_curve(start_pos, end_pos)
-	var main_color = _main_color()
-
-	if points.size() >= 2:
-		draw_polyline(points, COLOR_OUTLINE, line_width + 8.0, true)
-		draw_polyline(points, main_color, line_width, true)
-		_draw_flow_markers(points)
-		_draw_arrowhead(points, main_color)
-
-	_draw_target_ring(end_pos, main_color)
+	var color := current_color()
+	for i in range(SEGMENT_COUNT):
+		var chevron := _chevron(SEGMENT_SIZE * _segment_scales[i])
+		_draw_shape(chevron, _segments[i] - global_position, _segment_angles[i], color)
+	var head := _head_shape(HEAD_SIZE * _head_scale)
+	_draw_shape(head, _head_position - global_position, _head_angle, color)
 
 
-func _main_color() -> Color:
-	return COLOR_VALID if target_is_valid else COLOR_IDLE
+func _draw_shape(points: PackedVector2Array, at: Vector2, angle: float, color: Color) -> void:
+	var placed := PackedVector2Array()
+	for p in points:
+		placed.append(at + p.rotated(angle))
+	draw_colored_polygon(placed, color)
+	placed.append(placed[0])
+	draw_polyline(placed, OUTLINE_COLOR, 3.0, true)
 
 
-func _build_curve(start_pos: Vector2, end_pos: Vector2) -> PackedVector2Array:
-	var points: PackedVector2Array = PackedVector2Array()
-	var delta = end_pos - start_pos
-	var distance = start_pos.distance_to(end_pos)
-
-	if distance < 1.0:
-		points.append(start_pos)
-		points.append(end_pos)
-		return points
-
-	var curve_normal = Vector2(-delta.y, delta.x).normalized()
-	if curve_normal.y > 0.0:
-		curve_normal *= -1.0
-
-	var horizontal_factor = clampf(abs(delta.x) / 520.0, 0.0, 1.0)
-	var upward_factor = clampf((start_pos.y - end_pos.y) / 460.0, 0.0, 1.0)
-	var bend = clampf(distance * lerpf(0.08, 0.18, horizontal_factor), 12.0, max_bend)
-	bend *= lerpf(1.0, 0.42, upward_factor)
-
-	var control_a = start_pos.lerp(end_pos, 0.36) + curve_normal * bend
-	var control_b = start_pos.lerp(end_pos, 0.74) + curve_normal * bend * 0.75
-
-	for i in range(segments + 1):
-		var t = float(i) / float(segments)
-		points.append(_cubic_bezier(start_pos, control_a, control_b, end_pos, t))
-
-	return points
-
-
-func _draw_flow_markers(points: PackedVector2Array) -> void:
-	var gap = 5
-	var offset = int(_time * 18.0) % gap
-	for i in range(offset, points.size(), gap):
-		var dot_color = COLOR_HIGHLIGHT
-		dot_color.a = 0.35 + 0.35 * float(i) / float(max(points.size(), 1))
-		draw_circle(points[i], 2.2, dot_color)
-
-
-func _draw_arrowhead(points: PackedVector2Array, color: Color) -> void:
-	if points.size() < 2:
-		return
-
-	var tip = points[points.size() - 1]
-	var prev = points[points.size() - 2]
-	var arrow_dir = (tip - prev).normalized()
-	var arrow_perp = Vector2(-arrow_dir.y, arrow_dir.x)
-
-	var p1 = tip
-	var p2 = tip - arrow_dir * arrow_size + arrow_perp * arrow_size * 0.5
-	var p3 = tip - arrow_dir * arrow_size - arrow_perp * arrow_size * 0.5
-	var outline_points = PackedVector2Array(
+## A forward-pointing chevron centred on the origin (pointing along +x).
+func _chevron(s: Vector2) -> PackedVector2Array:
+	return PackedVector2Array(
 		[
-			tip + arrow_dir * 4.0,
-			tip - arrow_dir * (arrow_size + 7.0) + arrow_perp * arrow_size * 0.68,
-			tip - arrow_dir * (arrow_size + 7.0) - arrow_perp * arrow_size * 0.68,
+			Vector2(-s.x * 0.5, -s.y * 0.5),
+			Vector2(s.x * 0.05, -s.y * 0.5),
+			Vector2(s.x * 0.5, 0.0),
+			Vector2(s.x * 0.05, s.y * 0.5),
+			Vector2(-s.x * 0.5, s.y * 0.5),
+			Vector2(-s.x * 0.05, 0.0),
 		]
 	)
 
-	draw_polygon(outline_points, PackedColorArray([COLOR_OUTLINE, COLOR_OUTLINE, COLOR_OUTLINE]))
-	draw_polygon(PackedVector2Array([p1, p2, p3]), PackedColorArray([color, color, color]))
+
+## The arrow head, tip at the origin (the cursor), pointing along +x.
+func _head_shape(s: Vector2) -> PackedVector2Array:
+	return PackedVector2Array(
+		[
+			Vector2.ZERO,
+			Vector2(-s.x, -s.y * 0.5),
+			Vector2(-s.x * 0.68, 0.0),
+			Vector2(-s.x, s.y * 0.5),
+		]
+	)
 
 
-func _draw_target_ring(end_pos: Vector2, color: Color) -> void:
-	var pulse = (sin(_time * 7.0) + 1.0) * 0.5
-	var radius = lerp(8.0, 14.0, pulse)
-	var fill_color = Color(color.r, color.g, color.b, 0.22)
-
-	draw_circle(end_pos, radius + 5.0, Color(0, 0, 0, 0.28))
-	draw_circle(end_pos, radius, fill_color)
-	draw_arc(end_pos, radius, 0, TAU, 36, COLOR_OUTLINE, 4.5)
-	draw_arc(end_pos, radius, 0, TAU, 36, color, 2.8)
+func _set_head_scale(value: float) -> void:
+	_head_scale = value
+	queue_redraw()
 
 
-func _cubic_bezier(p0: Vector2, p1: Vector2, p2: Vector2, p3: Vector2, t: float) -> Vector2:
-	var q0 = p0.lerp(p1, t)
-	var q1 = p1.lerp(p2, t)
-	var q2 = p2.lerp(p3, t)
-	var r0 = q0.lerp(q1, t)
-	var r1 = q1.lerp(q2, t)
-	return r0.lerp(r1, t)
+func _restore_cursor() -> void:
+	if cursor_hidden:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		cursor_hidden = false
+
+
+static func _quadratic(p0: Vector2, control: Vector2, p1: Vector2, t: float) -> Vector2:
+	var u := 1.0 - t
+	return u * u * p0 + 2.0 * u * t * control + t * t * p1
