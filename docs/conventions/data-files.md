@@ -186,13 +186,13 @@ Authoritative list in `DataValidator.ALLOWED_ENEMY_ACTION_TYPES`:
 - `heal` — self-heal
 - `telegraph` — no-op + "CHARGING" intent badge, sets up next action as interruptible
 - `summon` — spawns add enemies mid-combat. Required: `enemy_ids` (array of enemy ids); optional `count` (default 1). Capped at `MAX_ENEMIES_ON_FIELD` (4) — spawns past the cap are skipped. e.g. `{"type":"summon","enemy_ids":["scrap_shard"],"count":2}`
-- `buff_self` — applies a status to the acting enemy itself. Required: `status` (∈ `ALLOWED_STATUS_NAMES`, e.g. `thorns`), `stacks`. e.g. `{"type":"buff_self","status":"thorns","stacks":3}`
+- `buff_self` — applies a status to the acting enemy itself. Required: `status` (∈ the status definitions (`content/statuses/`), e.g. `thorns`), `stacks`. e.g. `{"type":"buff_self","status":"thorns","stacks":3}`
 
 ---
 
 ## Status names
 
-Authoritative list in `DataValidator.ALLOWED_STATUS_NAMES`:
+Authoritative list in `the status definitions in `content/statuses/` (`DataValidator.allowed_status_names()`)`:
 
 `short_circuit`, `burn`, `weak`, `vulnerable`, `stun`, `regen`, `thorns`, `frail`,
 `intangible`, `metallicize`, `feel_no_pain`, `hot_streak`, `all_in`, `deadeye`,

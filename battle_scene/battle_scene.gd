@@ -53,6 +53,8 @@ var _pending_tool_data: Dictionary = {}
 const TARGETING_ARROW_SCRIPT = preload("uid://dq6nkaqdhlsp4")  # res://battle_scene/targeting_arrow.gd
 const RELIC_EFFECT_SYSTEM = preload("uid://b4d2o08tofxey")  # res://battle_scene/relic_effect_system.gd
 const HOOK_VALUE = preload("uid://npewr2krgrm6")  # res://core/combat/hook_value.gd
+const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://battle_scene/combat_fx.gd
+const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const EQUIPMENT_SET_SYSTEM = preload("uid://b3s8io84xovx7")  # res://core/listeners/equipment_set.gd
 const CARD_ANIMATOR_SCRIPT = preload("uid://co0n3ou8saknv")  # res://battle_scene/card_animator.gd
 const DECK_MANAGER_SCRIPT = preload("uid://bi8d6vtu6xop6")  # res://battle_scene/deck_manager.gd
@@ -426,6 +428,19 @@ func _get_unit_at_position(pos: Vector2) -> Node:
 		if ep.distance_to(pos) < 164.0:
 			return enemy
 	return null
+
+
+## Equipment-set trigger callout above the player (the set listener's feedback).
+func show_set_callout(set_id: String, color: Color) -> void:
+	if player == null or not is_instance_valid(player) or not player is Node2D:
+		return
+	var name_key := "SET_%s_NAME" % MODEL_ID.key_entry(set_id).to_upper()
+	var set_name := tr(name_key)
+	if set_name == name_key:
+		set_name = MODEL_ID.entry_of(set_id).replace("_", " ").capitalize()
+	var message := tr("UI_EQUIP_SET_TRIGGER").format({"set": set_name})
+	COMBAT_FX.spawn_feedback_text(self, (player as Node2D).global_position + Vector2(0, -138), message, color)
+	AudioManager.play_sfx("reward", -8.0, 1.08, 0.02)
 
 
 func show_notification(text: String, color: Color = Color.WHITE):

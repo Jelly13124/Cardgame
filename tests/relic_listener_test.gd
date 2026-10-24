@@ -71,6 +71,15 @@ func _run() -> void:
 		blocks.append(int(battle.player.block))
 	_expect(blocks == [0, 0, 3, 0, 0, 3], "every third attack grants 3 Block: %s" % [blocks])
 
+	# Player-only power reactions ignore an enemy bearer.
+	var foe: Node = battle.enemy_container.get_child(0)
+	foe.block = 0
+	foe.add_status("feel_no_pain", 3)
+	foe.add_status("covering_reload", 1)
+	await battle.combat_hooks.react("after_card_exhausted", null)
+	await battle.combat_hooks.react("after_reload", null)
+	_expect(int(foe.block) == 0, "enemy Feel No Pain / Covering Reload ignore the player's Exhaust and Reload (block %d)" % foe.block)
+
 	RunManager.relics = ["base:" + _once_relic()]
 	var once = battle.relic_effect_system.current_listeners(battle.combat_hooks)[0]
 	var pair: Array = []

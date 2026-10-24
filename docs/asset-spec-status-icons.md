@@ -13,7 +13,7 @@ numbers or text into an icon.
 - One bold silhouette, one main color, dark outline, clear lower-right area.
 - Follow the UI07 icon rules in `docs/project-rules.md`: flat fill, sparse lines,
   no character faces, texture, rivet fields, or ornamental frames.
-- `DataValidator.ALLOWED_STATUS_NAMES` is authoritative for status ids.
+- `the status definitions in `content/statuses/` (`DataValidator.allowed_status_names()`)` is authoritative for status ids.
 
 ## Current coverage
 
