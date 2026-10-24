@@ -15,7 +15,6 @@ var strength := 0
 var constitution := 0
 var intelligence := 0
 var luck := 0
-var is_boss := false
 var damage_received := 0
 var hp_lost := 0
 var hits: Array[int] = []

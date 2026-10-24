@@ -85,7 +85,7 @@ func damage(
 		result.hp_lost = mini(hp_before, amount - result.blocked)
 		result.killed = hp_before > 0 and result.hp_lost >= hp_before
 		result.block_broken = block_before > 0 and amount >= block_before
-		var was_boss := bool(target.get("is_boss"))
+		var was_boss: bool = "is_boss" in target and bool(target.get("is_boss"))
 		await target.take_damage(amount, false, _feedback(source, calc))
 		await hooks.after_damage_given(result)
 		await hooks.after_damage_received(result)

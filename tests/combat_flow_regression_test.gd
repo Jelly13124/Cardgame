@@ -33,6 +33,8 @@ func _run() -> void:
 	await test_queued_tool_with_dead_target_releases_input()
 	await test_tools_refused_outside_player_turn()
 	await test_winning_card_stops_its_remaining_effects()
+	await test_enemy_attack_hits_the_real_player()
+	await test_two_full_rounds_on_the_real_battle()
 	RunManager.tool_inventory.assign(_saved_tools)
 	if failures.is_empty():
 		print("[OK] combat flow regressions passed")
@@ -118,3 +120,51 @@ func test_winning_card_stops_its_remaining_effects() -> void:
 	_expect(battle.player.energy == energy_before, "the winning card's later effects do not run (energy %d → %d)" % [energy_before, battle.player.energy])
 	card.free()
 	await _free(battle)
+
+
+## The real PlayerEntity has no `is_boss`; the hit chain must not assume it.
+func test_enemy_attack_hits_the_real_player() -> void:
+	var battle = await _battle()
+	var enemy: Node = battle.enemy_container.get_child(0)
+	battle.player.block = 0
+	var hp_before: int = battle.player.health
+	await battle.enemy_ai.execute_action(enemy, {"type": "attack", "amount": 3})
+	_expect(battle.player.health < hp_before, "an enemy attack damages the real player (%d → %d)" % [hp_before, battle.player.health])
+	await _free(battle)
+
+
+## End-to-end on the real scene: play an attack, end the turn, let every enemy
+## act, twice. Any script error in the enemy turn fails the runner.
+func test_two_full_rounds_on_the_real_battle() -> void:
+	Engine.time_scale = 4.0
+	var battle = await _battle()
+	for enemy in battle.enemy_container.get_children():
+		enemy.health = 999
+		enemy.max_health = 999
+	battle.player.health = 999
+	battle.player.max_health = 999
+	for round_number in [2, 3]:
+		var target: Node = battle.enemy_container.get_child(0)
+		var shot = battle.deck_manager.add_card_to_hand("strike")
+		await get_tree().process_frame
+		battle.play_spell(shot, target)
+		battle._on_end_round_button_pressed()
+		var reached := await _wait_until(
+			func() -> bool:
+				return battle.turn_manager.is_player_turn and battle.turn_manager.current_round == round_number,
+			30.0
+		)
+		_expect(reached, "round %d starts after the enemy turn" % round_number)
+		await battle.action_queue.drained if battle.action_queue.is_busy() else get_tree().process_frame
+	_expect(battle.player.health < 999, "enemies dealt damage to the real player during their turns")
+	Engine.time_scale = 1.0
+	await _free(battle)
+
+
+func _wait_until(condition: Callable, seconds: float) -> bool:
+	var deadline := Time.get_ticks_msec() + int(seconds * 1000.0)
+	while not condition.call():
+		if Time.get_ticks_msec() > deadline:
+			return false
+		await get_tree().process_frame
+	return true
