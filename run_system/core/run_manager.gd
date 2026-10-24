@@ -610,11 +610,12 @@ func _pick_node_type(floor_idx: int, total: int, treasure_extras_used: int = 0) 
 
 	var roll = _map_rng.next_float()
 
-	# Ascension A5+: bias mid/late rolls into the high (elite/treasure)
-	# tail by compressing the roll range. Squashes 0..1 into 0.5..1.0,
-	# pushing most rolls past the elite threshold in the mid/late table.
-	if ascension >= 5:
-		roll = roll * 0.5 + 0.5
+	# Dangerous paths: bias mid/late rolls into the high (elite/treasure) tail by
+	# compressing the roll range into roll_floor..1.0, pushing most rolls past
+	# the elite threshold in the mid/late table.
+	if has_ascension("base:a5_elite_bias"):
+		var roll_floor := float(ascension_param("base:a5_elite_bias", "roll_floor", 0.5))
+		roll = roll * (1.0 - roll_floor) + roll_floor
 
 	# Early floors (1..EARLY_FLOOR_LAST): combat-only ramp — no rest, treasure,
 	# merchant, OR elite. Elites only appear from floor EARLY_FLOOR_LAST + 1 on
@@ -1946,7 +1947,7 @@ func roll_shell_drop(tier: String) -> Dictionary:
 			return make_equip_instance(piece, tier)
 	var slot: String = rng("rewards").pick(EQUIP_SLOTS)
 	var base_id: String = "base:gear_%s_%s" % [slot, tier]
-	var is_cursed: bool = ascension >= 3 and rng("rewards").chance(CURSE_DROP_CHANCE)
+	var is_cursed: bool = has_ascension("base:a3_cursed_gear") and rng("rewards").chance(CURSE_DROP_CHANCE)
 	return make_equip_instance(base_id, tier, is_cursed)
 
 
@@ -2045,10 +2046,11 @@ func _humanize_id(value: String) -> String:
 ## Called at the END of start_new_run (after defaults are set so we can add
 ## on top of them). Pure additive — never reduces a base value.
 func _apply_meta_upgrades() -> void:
-	# Ascension A2+: -5 max HP per level.
-	if ascension >= 2:
-		var penalty: int = (ascension - 1) * 5  # A2=-5, A3=-10, A4=-15, A5=-20
-		max_health = max(10, max_health - penalty)
+	# Frail start: less max HP per ascension level above 1 (A2=-5 … A5=-20).
+	if has_ascension("base:a2_frail_start"):
+		var per_level := int(ascension_param("base:a2_frail_start", "hp_penalty_per_level", 5))
+		var floor_hp := int(ascension_param("base:a2_frail_start", "min_max_hp", 10))
+		max_health = max(floor_hp, max_health - (ascension - 1) * per_level)
 		current_health = max_health
 
 	# Reroll Tokens → N reward-screen card rerolls this run.
@@ -2441,3 +2443,15 @@ func rng_for_act_map(act: int):
 	if run_rng == null:
 		return rng("niche")
 	return run_rng.derived("map_act_%d" % act)
+
+
+## True when the run's ascension level reaches the named rule's level
+## (content/ascension).
+func has_ascension(rule_id: String) -> bool:
+	var rule := MODEL_DB.data("ascension", rule_id)
+	return not rule.is_empty() and ascension >= int(rule.get("level", 999))
+
+
+## A numeric parameter of an ascension rule (its `params`), or `default`.
+func ascension_param(rule_id: String, key: String, default: Variant) -> Variant:
+	return MODEL_DB.data("ascension", rule_id).get("params", {}).get(key, default)

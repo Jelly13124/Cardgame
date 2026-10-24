@@ -1,0 +1,9 @@
+{
+  "id": "a4_merchant_surcharge",
+  "level": 4,
+  "title": "Merchant surcharge",
+  "description": "Merchant prices +10%.",
+  "params": {
+    "price_mult": 1.1
+  }
+}

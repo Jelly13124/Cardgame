@@ -11,6 +11,7 @@ extends RefCounted
 
 const COMBAT_HOOKS = preload("uid://cjb2wdqhw4j2x")  # res://core/combat/combat_hooks.gd
 const ATTRIBUTE_RULES = preload("uid://ctdg0fm8xx4bv")  # res://core/combat/rules/attribute_rules.gd
+const ASCENSION_RULES = preload("uid://c1i1myoh0ymjp")  # res://core/listeners/ascension.gd
 const CRIT_RULES = preload("uid://bjfqp2irnmi37")  # res://core/combat/rules/crit_rules.gd
 const EFFECT_REGISTRY = preload("uid://7gab4te60cto")  # res://core/effects/effect_registry.gd
 const COMBAT_COMMANDS = preload("uid://drt6iikiv1eri")  # res://battle_scene/combat/combat_commands.gd
@@ -30,6 +31,8 @@ static func install(battle: Object) -> void:
 	var crit_rules = CRIT_RULES.new()
 	crit_rules.hooks = hooks
 	var attributes = ATTRIBUTE_RULES.new()
+	var ascension = ASCENSION_RULES.new()
+	ascension.hooks = hooks
 	hooks.provider = func() -> Array:
 		var out: Array = [attributes]
 		out.append_array(status_listeners(battle, hooks))
@@ -38,6 +41,7 @@ static func install(battle: Object) -> void:
 			out.append_array(relics.current_listeners(hooks))
 		if sets:
 			out.append(sets)
+		out.append(ascension)
 		out.append_array(hooks.listeners)
 		return out
 

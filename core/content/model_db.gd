@@ -25,6 +25,7 @@ const CATEGORY_DIRS := {
 	"card_pool": "card_pools",
 	"relic_pool": "relic_pools",
 	"status": "statuses",
+	"ascension": "ascension",
 }
 
 static var _models: Dictionary = {}  # category -> {full id -> content model}

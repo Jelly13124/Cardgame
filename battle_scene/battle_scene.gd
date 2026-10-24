@@ -683,9 +683,10 @@ func _on_turn_started(side: String) -> void:
 		)
 	_attacks_left_this_turn = _attack_limit_per_turn
 	_update_attack_allowance_ui()
-	# Ascension A3+: first turn of each combat starts with -1 energy.
-	if RunManager.ascension >= 3 and turn_manager.current_round == 1:
-		player.pay_energy(1)
+	# Turn energy listeners (ascension Cold Start: -1 on the first turn).
+	var energy_delta := int(combat_hooks.compute("modify_turn_energy", HOOK_VALUE.make(0, {"round": round_number})))
+	if energy_delta < 0:
+		player.pay_energy(-energy_delta)
 	await combat_hooks.react("after_turn_start", "player", turn_manager.current_round)
 	if is_game_over:
 		return

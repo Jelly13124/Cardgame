@@ -1,0 +1,10 @@
+{
+  "id": "a2_frail_start",
+  "level": 2,
+  "title": "Frail start",
+  "description": "Start each run with 5 less max HP per ascension level above 1.",
+  "params": {
+    "hp_penalty_per_level": 5,
+    "min_max_hp": 10
+  }
+}

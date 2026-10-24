@@ -14,7 +14,7 @@ const CARD_FACTORY_SCENE = preload("uid://diap3gdfbqvjv")  # res://battle_scene/
 
 const ID_CATEGORIES := [
 	"card", "monster", "relic", "equipment", "equipment_set", "event", "tool",
-	"bounty", "character", "base_upgrade", "status",
+	"bounty", "character", "base_upgrade", "status", "ascension",
 ]
 const SKIP_DIRS := ["res://addons", "res://.godot", "res://tests/fixtures", "res://.superpowers"]
 

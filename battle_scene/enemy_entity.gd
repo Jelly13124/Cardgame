@@ -129,10 +129,11 @@ static func create(id: String) -> EnemyEntity:
 			"ENEMY_%s_NAME" % MODEL_ID.key_entry(id), str(data.get("name", MODEL_ID.key_entry(id).to_upper()))
 		)
 		entity.max_health = int(data.get("max_health", 30))
-		# Ascension A1+: enemy HP scales +10% per level.
-		if RunManager.ascension > 0:
+		# Tough enemies: HP scales by a percentage per ascension level.
+		if RunManager.has_ascension("base:a1_tough_enemies"):
+			var pct := float(RunManager.ascension_param("base:a1_tough_enemies", "hp_pct_per_level", 10))
 			entity.max_health = int(
-				round(entity.max_health * (1.0 + 0.1 * RunManager.ascension))
+				round(entity.max_health * (1.0 + pct / 100.0 * RunManager.ascension))
 			)
 		# Per-act scaling (bosses exempt — see RunManager.scale_enemy_hp).
 		entity.max_health = RunManager.scale_enemy_hp(entity.max_health, id)

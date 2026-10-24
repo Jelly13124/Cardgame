@@ -54,9 +54,9 @@ var _remove_price: int = 75
 func _discounted_price(base_cost: int) -> int:
 	# Charm lowers merchant prices (floored at 0.60x).
 	var price: float = float(base_cost) * RunManager.charm_shop_mult()
-	# Ascension A4+: +10% surcharge on top of the Charm price.
-	if RunManager.ascension >= 4:
-		price *= 1.10
+	# Merchant surcharge on top of the Charm price.
+	if RunManager.has_ascension("base:a4_merchant_surcharge"):
+		price *= float(RunManager.ascension_param("base:a4_merchant_surcharge", "price_mult", 1.1))
 	return int(ceil(price))
 
 

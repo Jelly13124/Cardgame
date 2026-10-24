@@ -1,0 +1,9 @@
+{
+  "id": "a3_cold_start",
+  "level": 3,
+  "title": "Cold start",
+  "description": "The first turn of each combat starts with 1 less energy.",
+  "params": {
+    "energy": 1
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "a1_tough_enemies",
+  "level": 1,
+  "title": "Tough enemies",
+  "description": "Non-boss enemy HP +10% per ascension level.",
+  "params": {
+    "hp_pct_per_level": 10
+  }
+}

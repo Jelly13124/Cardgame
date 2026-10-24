@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bm25lwjjrtr1j"]
+
+[ext_resource type="Script" path="res://tests/ascension_contract_test.gd" id="1"]
+
+[node name="AscensionContractTest" type="Node"]
+script = ExtResource("1")

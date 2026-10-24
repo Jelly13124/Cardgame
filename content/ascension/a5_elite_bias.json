@@ -1,0 +1,9 @@
+{
+  "id": "a5_elite_bias",
+  "level": 5,
+  "title": "Dangerous paths",
+  "description": "Mid and late map rolls lean toward elites and treasure.",
+  "params": {
+    "roll_floor": 0.5
+  }
+}
