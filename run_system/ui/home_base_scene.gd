@@ -52,6 +52,9 @@ const BOUNTY_HEADER_CLIPBOARD := "res://run_system/assets/images/home/base_hud/b
 const CURRENCY_ICON_DIR := "res://run_system/assets/images/home/currency/"
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
+const RUN_RNG_SET = preload("uid://ealvw2c6utr7")  # res://core/rng/run_rng_set.gd
+const SEED_FIELD_BORDER := Color(0.55, 0.42, 0.26, 1.0)
+const SEED_FIELD_INVALID_BORDER := Color(0.9, 0.25, 0.2, 1.0)
 ## Locked-gallery slot art: the same card back battle uses (play_card.gd).
 const GALLERY_CARD_BACK := "res://battle_scene/assets/images/cards/ui/card_back.png"
 const TOP_HUD_LAYER := 70
@@ -733,6 +736,57 @@ func _add_start_run_button(root: Control) -> void:
 	diff.offset_right = 139.0
 	diff.offset_bottom = -184.0
 	root.add_child(diff)
+
+	_add_seed_field(root)
+
+
+## Optional run seed, right of DEPART. Empty = random seed (STS2 seed entry).
+func _add_seed_field(root: Control) -> void:
+	var field := LineEdit.new()
+	field.name = "SeedField"
+	field.placeholder_text = tr("UI_HOME_SEED_PLACEHOLDER")
+	field.max_length = 16
+	field.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	field.anchor_left = 0.5
+	field.anchor_top = 1.0
+	field.anchor_right = 0.5
+	field.anchor_bottom = 1.0
+	field.offset_left = 350.0
+	field.offset_top = -142.0
+	field.offset_right = 590.0
+	field.offset_bottom = -94.0
+	field.add_theme_font_override("font", T.display_font(600))
+	field.add_theme_font_size_override("font_size", 22)
+	field.add_theme_color_override("font_color", Color(1.0, 0.9, 0.72, 1.0))
+	field.add_theme_color_override("font_placeholder_color", Color(0.75, 0.66, 0.52, 0.7))
+	_style_seed_field(field, false)
+	field.text_changed.connect(func(_text: String) -> void: _style_seed_field(field, false))
+	root.add_child(field)
+
+
+func _style_seed_field(field: LineEdit, invalid: bool) -> void:
+	field.set_meta("seed_invalid", invalid)
+	field.tooltip_text = tr("UI_HOME_SEED_INVALID") if invalid else ""
+	for state in ["normal", "focus"]:  # bare-ok: theme state
+		var box := StyleBoxFlat.new()
+		box.bg_color = Color(0.08, 0.055, 0.035, 0.88)
+		box.border_color = SEED_FIELD_INVALID_BORDER if invalid else SEED_FIELD_BORDER
+		box.set_border_width_all(2)
+		box.set_corner_radius_all(6)
+		box.content_margin_left = 10
+		box.content_margin_right = 10
+		field.add_theme_stylebox_override(state, box)
+
+
+## {"ok": bool, "seed": canonical seed or "" for random}.
+func _resolve_seed_input() -> Dictionary:
+	var field := find_child("SeedField", true, false) as LineEdit
+	var raw := field.text.strip_edges() if field != null else ""
+	if raw.is_empty():
+		return {"ok": true, "seed": ""}
+	if not RUN_RNG_SET.is_valid_seed(raw):
+		return {"ok": false, "seed": ""}
+	return {"ok": true, "seed": RUN_RNG_SET.canonicalize(raw)}
 
 
 func _add_bottom_nav(root: Control) -> void:
@@ -2053,7 +2107,13 @@ func _on_start_pressed() -> void:
 		RunManager.pending_hero_id if RunManager.pending_hero_id != "" else DEFAULT_HERO_ID
 	)
 	var asc: int = RunManager.pending_ascension if RunManager.pending_ascension >= 0 else 0
-	RunManager.start_new_run(hero, [], asc)
+	var seed_input := _resolve_seed_input()
+	if not bool(seed_input["ok"]):
+		var field := find_child("SeedField", true, false) as LineEdit
+		if field != null:
+			_style_seed_field(field, true)
+		return
+	RunManager.start_new_run(hero, [], asc, str(seed_input["seed"]))
 	SceneTransition.change_to_packed(MAP_PACKED)
 
 

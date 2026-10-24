@@ -84,6 +84,14 @@ func _build() -> void:
 	details.add_theme_color_override("font_color", T.TEXT_SECONDARY)
 	box.add_child(details)
 
+	var seed_label := Label.new()
+	seed_label.name = "SeedLabel"
+	seed_label.text = tr("UI_RESULT_SEED").format({"seed": RunManager.run_seed()})
+	seed_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	seed_label.add_theme_font_size_override("font_size", 16)
+	seed_label.add_theme_color_override("font_color", T.TEXT_SECONDARY)
+	box.add_child(seed_label)
+
 	if _store_url() != "":
 		# The conversion ask belongs on both paths once a real page is configured.
 		var teaser := Label.new()

@@ -98,3 +98,4 @@ PAUSE_ABANDON_CONFIRM,"Give up this run and return to base? You lose everything 
 PAUSE_QUIT_CONFIRM,Quit the game to desktop?,退出游戏到桌面?
 PAUSE_CONFIRM_YES,Yes,确定
 PAUSE_CONFIRM_NO,Cancel,取消
+UI_RESULT_SEED,Seed: {seed},种子：{seed}

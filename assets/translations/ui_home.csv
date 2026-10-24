@@ -86,3 +86,5 @@ UI_HOME_ACTION_CHARACTER,CHARACTER,角色
 UI_HOME_ACTION_GALLERY,GALLERY,图鉴
 UI_HOME_CARD_GALLERY_TITLE,CARD GALLERY,卡牌图鉴
 UI_HOME_CARD_GALLERY_EMPTY,No cards unlocked yet.,暂无已解锁卡牌
+UI_HOME_SEED_PLACEHOLDER,Seed (optional),种子（可选）
+UI_HOME_SEED_INVALID,"Invalid seed: use letters and digits only","种子无效：只能使用字母和数字"
