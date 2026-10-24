@@ -65,8 +65,10 @@ the short operational gate for agents.
   Map, battle, event, rest, card-upgrade, deck, reward, and shop content begins
   below its full `BAR_HEIGHT`. Scene art may continue behind the transparent relic
   shelf from `PAGE_ART_TOP`; never hide, duplicate, or paint over the run top bar.
-- Card previews show only the card normally. A close outline appears only for
-  hover/focus/selection feedback and disappears when the state ends. Never ship a
-  permanent decorative glow or a large empty holder around a card.
+- In battle, hand cards that can be played show a constant outline that hugs the
+  card shape: it is a state cue (STS2 style) and disappears as soon as the card
+  cannot be played. Every other card preview shows only the card normally; its
+  close outline appears only for hover/focus/selection feedback. Never ship a
+  decorative glow frame or a large empty holder around a card.
 - Layout rhythm may reference another game, but do not copy its rendered materials,
   assets, fonts, or ornamental chrome.

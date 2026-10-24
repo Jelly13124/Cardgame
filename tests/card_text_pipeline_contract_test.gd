@@ -40,6 +40,10 @@ func _run() -> void:
 		card.update_display()
 		var text: String = card.desc_label.get_parsed_text()
 		_expect(text.contains("Deal 4 ("), "card text shows the pipeline number 4 (text: %s)" % text)
+	var deal := tr("UI_BATTLE_DESC_DEAL_SCALING")
+	var block := tr("UI_BATTLE_DESC_BLOCK_SCALING")
+	_expect(deal.contains("#ff7a5c") and not deal.contains("#8b0000"), "Strength part of card numbers is readable red (%s)" % deal)
+	_expect(block.contains("#8fb8ff") and not block.contains("#4444ff"), "Constitution part of card numbers is readable blue (%s)" % block)
 	get_tree().current_scene = previous_scene
 	battle.queue_free()
 	await get_tree().process_frame

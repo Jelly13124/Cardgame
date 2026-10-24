@@ -22,14 +22,14 @@ UI_BATTLE_CARD_TYPE_CURSE,CURSE,诅咒
 UI_BATTLE_CURSE_UNPLAYABLE,Curse cards can't be played,诅咒牌无法打出
 UI_BATTLE_ENEMY_CURSE,{name} curses your draw pile!,{name} 往你的抽牌堆塞了诅咒！
 UI_BATTLE_DESC_DEAL,Deal {val} dmg,造成 {val} 伤害
-UI_BATTLE_DESC_DEAL_SCALING,Deal {val} ({base}+[color=#8b0000]{stat}[/color]) dmg,造成 {val} ({base}+[color=#8b0000]{stat}[/color]) 伤害
+UI_BATTLE_DESC_DEAL_SCALING,Deal {val} ({base}+[color=#ff7a5c]{stat}[/color]) dmg,造成 {val} ({base}+[color=#ff7a5c]{stat}[/color]) 伤害
 UI_BATTLE_DESC_DEAL_ALL,Deal {val} dmg to all enemies,对所有敌人造成 {val} 伤害
-UI_BATTLE_DESC_DEAL_ALL_SCALING,Deal {val} ({base}+[color=#8b0000]{stat}[/color]) to ALL enemies,对所有敌人造成 {val} ({base}+[color=#8b0000]{stat}[/color]) 伤害
+UI_BATTLE_DESC_DEAL_ALL_SCALING,Deal {val} ({base}+[color=#ff7a5c]{stat}[/color]) to ALL enemies,对所有敌人造成 {val} ({base}+[color=#ff7a5c]{stat}[/color]) 伤害
 UI_BATTLE_DESC_BLOCK,Gain {val} block,获得 {val} 格挡
-UI_BATTLE_DESC_BLOCK_SCALING,Gain {val} ({base}+[color=#4444ff]{stat}[/color]) block,获得 {val} ({base}+[color=#4444ff]{stat}[/color]) 格挡
+UI_BATTLE_DESC_BLOCK_SCALING,Gain {val} ({base}+[color=#8fb8ff]{stat}[/color]) block,获得 {val} ({base}+[color=#8fb8ff]{stat}[/color]) 格挡
 UI_BATTLE_DESC_STRENGTH,Gain {n} Strength,获得 {n} 力量
 UI_BATTLE_DESC_STRENGTH_MULT,Gain {n} ({mult}×{stat}) Strength,获得 {n} ({mult}×{stat}) 力量
-UI_BATTLE_DESC_STRENGTH_SCALING,Gain {n} ({base}+[color=#8b0000]{stat}[/color]) Strength,获得 {n} ({base}+[color=#8b0000]{stat}[/color]) 力量
+UI_BATTLE_DESC_STRENGTH_SCALING,Gain {n} ({base}+[color=#ff7a5c]{stat}[/color]) Strength,获得 {n} ({base}+[color=#ff7a5c]{stat}[/color]) 力量
 UI_BATTLE_DESC_GAIN_ATTR,Gain {n} {attr},获得 {n} {attr}
 UI_BATTLE_DESC_DRAW,Draw {n} cards,抽 {n} 张牌
 UI_BATTLE_DESC_APPLY_STATUS,Apply {status} x{n},施加 {status} x{n}
