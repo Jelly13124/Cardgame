@@ -5,10 +5,10 @@
 	"tier": "normal",
 	"max_health": 32,
 	"action_pattern": [
-		{ "type": "attack", "amount": 8,  "label": "⚔ 8" },
-		{ "type": "buff_self", "status": "intangible", "stacks": 1, "label": "💨 INTANGIBLE" },
-		{ "type": "attack", "amount": 8,  "label": "⚔ 8" },
-		{ "type": "attack_status", "amount": 5, "status": "weak", "stacks": 1, "label": "⚔ 5 + W1" },
-		{ "type": "attack", "amount": 8,  "label": "⚔ 8" }
+		{ "type": "attack", "amount": 8 },
+		{ "type": "buff_self", "status": "intangible", "stacks": 1 },
+		{ "type": "attack", "amount": 8 },
+		{ "type": "attack_status", "amount": 5, "status": "weak", "stacks": 1 },
+		{ "type": "attack", "amount": 8 }
 	]
 }

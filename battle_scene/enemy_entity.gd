@@ -414,7 +414,7 @@ func _health_bar_size() -> Vector2i:
 ## Returns the current action without advancing the index.
 func peek_next_action() -> Dictionary:
 	if action_pattern.is_empty():
-		return {"type": "attack", "amount": 6, "label": "⚔ 6"}
+		return {"type": "attack", "amount": 6}
 	var pattern_index := _action_index % action_pattern.size()
 	var action: Dictionary = action_pattern[pattern_index].duplicate(true)
 	if str(action.get("type", "")) == "attack_ramp":
@@ -562,11 +562,12 @@ func _update_intent_display() -> void:
 			_add_intent_cell("Charge", INTENT_ICON_CHARGE, "", Color("#ffdb6b"))
 		_:
 			_add_intent_cell("Buff", INTENT_ICON_BUFF, "", Color("#b8ff9e"))
-	_intent_tooltip = _build_intent_tooltip(next)
+	_intent_tooltip = intent_text(next)
 
 
-## Plain-language description of the enemy's next action, for the intent tooltip.
-func _build_intent_tooltip(next: Dictionary) -> String:
+## Plain-language description of an action (the intent tooltip, and the
+## interrupt message): generated from the action's type and computed values.
+func intent_text(next: Dictionary) -> String:
 	var action_type := str(next.get("type", ""))
 	match action_type:
 		"attack", "attack_all", "attack_ramp":

@@ -5,8 +5,8 @@
 	"tier": "elite",
 	"max_health": 50,
 	"action_pattern": [
-		{ "type": "breakable_block", "amount": 14, "status": "vulnerable", "stacks": 2, "label": "🛡 BREAKABLE ARMOR 14" },
-		{ "type": "attack",          "amount": 12,                                          "label": "⚔ 12" },
-		{ "type": "attack_status",   "amount": 8,  "status": "frail",      "stacks": 1, "label": "🔨 8 +Frail" }
+		{ "type": "breakable_block", "amount": 14, "status": "vulnerable", "stacks": 2 },
+		{ "type": "attack",          "amount": 12 },
+		{ "type": "attack_status",   "amount": 8,  "status": "frail",      "stacks": 1 }
 	]
 }

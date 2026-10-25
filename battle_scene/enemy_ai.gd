@@ -147,6 +147,14 @@ func execute_enemy_turn() -> void:
 # ─── Action Execution ──────────────────────────────────────────────────────────
 
 
+## "<move> — INTERRUPTED!" from the generated intent text of the cancelled move.
+func interrupt_message(enemy: Node, action: Dictionary) -> String:
+	var move: String = enemy.intent_text(action) if enemy.has_method("intent_text") else ""
+	if move == "":
+		move = tr("UI_COMBAT_INTERRUPT_DEFAULT_LABEL")
+	return tr("UI_COMBAT_INTERRUPTED").format({"label": move})
+
+
 ## Run one enemy move. Interruptible attacks (e.g. boss Crushing Blow after a
 ## telegraph) are cancelled by spending 1 stun stack on the enemy; every other
 ## move runs through the shared effect registry ("enemy" context), so attacks
@@ -156,11 +164,7 @@ func execute_action(enemy: Node2D, action: Dictionary) -> void:
 	var is_attack_like = action_type in ["attack", "attack_ramp", "attack_status", "attack_all"]
 	if is_attack_like and bool(action.get("interruptible", false)):
 		if enemy.has_method("consume_stun_if_present") and enemy.consume_stun_if_present():
-			var interrupt_label := str(action.get("label", tr("UI_COMBAT_INTERRUPT_DEFAULT_LABEL")))
-			main.show_notification(
-				tr("UI_COMBAT_INTERRUPTED").format({"label": interrupt_label}),
-				Color(0.95, 0.95, 0.3)
-			)
+			main.show_notification(interrupt_message(enemy, action), Color(0.95, 0.95, 0.3))
 			# Visual pulse so the player sees something happened
 			var pulse = create_tween()
 			pulse.tween_property(enemy, "scale", Vector2(0.9, 1.1), 0.1)
@@ -174,7 +178,7 @@ func execute_action(enemy: Node2D, action: Dictionary) -> void:
 
 ## `summon` move: spawn `count` adds cycling through `enemy_ids`, skipping any
 ## that would exceed MAX_ENEMIES_ON_FIELD. Returns how many spawned.
-## JSON: {"type":"summon","enemy_ids":["scrap_shard"],"count":2,"label":"☠ SUMMON"}
+## JSON: {"type":"summon","enemy_ids":["scrap_shard"],"count":2}
 func summon_adds(enemy: Node, action: Dictionary) -> int:
 	var enemy_ids: Array = action.get("enemy_ids", [])
 	if enemy_ids.is_empty():

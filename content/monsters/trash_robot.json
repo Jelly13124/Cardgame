@@ -5,9 +5,9 @@
 	"tier": "normal",
 	"max_health": 30,
 	"action_pattern": [
-		{ "type": "attack",        "amount": 6,                                "label": "⚔ 6" },
-		{ "type": "attack_status", "amount": 8, "status": "weak", "stacks": 1, "label": "⚔ 8 +Weak" },
-		{ "type": "block",         "amount": 6,                                "label": "🛡 6" },
-		{ "type": "attack",        "amount": 10,                               "label": "⚔ 10" }
+		{ "type": "attack",        "amount": 6 },
+		{ "type": "attack_status", "amount": 8, "status": "weak", "stacks": 1 },
+		{ "type": "block",         "amount": 6 },
+		{ "type": "attack",        "amount": 10 }
 	]
 }

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dyy3qya1q65ww"]
+
+[ext_resource type="Script" path="res://tests/intent_text_test.gd" id="1"]
+
+[node name="IntentTextTest" type="Node"]
+script = ExtResource("1")

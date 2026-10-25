@@ -5,8 +5,8 @@
 	"tier": "normal",
 	"max_health": 25,
 	"action_pattern": [
-		{ "type": "attack_status", "amount": 5, "status": "weak", "stacks": 1, "label": "⚔ 5 +Weak" },
-		{ "type": "attack", "amount": 5, "label": "⚔ 5" },
-		{ "type": "attack", "amount": 5, "label": "⚔ 5" }
+		{ "type": "attack_status", "amount": 5, "status": "weak", "stacks": 1 },
+		{ "type": "attack", "amount": 5 },
+		{ "type": "attack", "amount": 5 }
 	]
 }

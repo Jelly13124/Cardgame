@@ -5,25 +5,25 @@
 	"tier": "boss",
 	"max_health": 90,
 	"action_pattern": [
-		{ "type": "attack",        "amount": 8,                                       "label": "⚔ 8" },
-		{ "type": "attack_status", "amount": 10, "status": "vulnerable", "stacks": 3, "label": "⚔ 10 +Vuln 3" },
-		{ "type": "block",         "amount": 10,                                      "label": "🛡 10" },
-		{ "type": "attack_status", "amount": 12, "status": "frail", "stacks": 1,      "label": "🔨 12 +Frail" },
-		{ "type": "telegraph",                                                        "label": "💢 WIND-UP" },
-		{ "type": "attack",        "amount": 20, "interruptible": true,               "label": "💥 SLAM 20" },
-		{ "type": "attack",        "amount": 10,                                      "label": "⚔ 10" }
+		{ "type": "attack",        "amount": 8 },
+		{ "type": "attack_status", "amount": 10, "status": "vulnerable", "stacks": 3 },
+		{ "type": "block",         "amount": 10 },
+		{ "type": "attack_status", "amount": 12, "status": "frail", "stacks": 1 },
+		{ "type": "telegraph" },
+		{ "type": "attack",        "amount": 20, "interruptible": true },
+		{ "type": "attack",        "amount": 10 }
 	],
 	"phases": [
 		{
 			"hp_below": 0.5,
 			"on_enter": [
-				{ "type": "buff_self", "status": "thorns", "stacks": 6, "label": "💪 ENRAGE +Thorns" }
+				{ "type": "buff_self", "status": "thorns", "stacks": 6 }
 			],
 			"action_pattern": [
-				{ "type": "telegraph", "label": "💢 OVERLOAD" },
-				{ "type": "attack",    "amount": 22, "interruptible": true, "label": "💥 RUIN 22" },
-				{ "type": "block",     "amount": 12, "label": "🛡 12" },
-				{ "type": "attack",    "amount": 14, "label": "⚔ 14" }
+				{ "type": "telegraph" },
+				{ "type": "attack",    "amount": 22, "interruptible": true },
+				{ "type": "block",     "amount": 12 },
+				{ "type": "attack",    "amount": 14 }
 			]
 		}
 	]

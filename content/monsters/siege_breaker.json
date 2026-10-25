@@ -5,9 +5,9 @@
 	"tier": "elite",
 	"max_health": 50,
 	"action_pattern": [
-		{ "type": "telegraph",                                                            "label": "💢 LOADING SIEGE ROUND" },
-		{ "type": "attack_all",    "amount": 24, "interruptible": true, "heavy": true, "label": "💥 SIEGE ROUND 24" },
-		{ "type": "attack_status", "amount": 7, "status": "weak", "stacks": 1,        "label": "🎯 SUPPRESS 7 +Weak" },
-		{ "type": "block",         "amount": 10,                                       "label": "🛡 RELOAD 10" }
+		{ "type": "telegraph" },
+		{ "type": "attack_all",    "amount": 24, "interruptible": true, "heavy": true },
+		{ "type": "attack_status", "amount": 7, "status": "weak", "stacks": 1 },
+		{ "type": "block",         "amount": 10 }
 	]
 }

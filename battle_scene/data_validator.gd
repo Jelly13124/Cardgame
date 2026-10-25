@@ -670,6 +670,10 @@ static func _validate_enemy_actions(actions: Array, prefix: String, label: Strin
 			ok = false
 			continue
 		var atype = str(action["type"])
+		# Intent text is generated from the action; hand-written labels drift.
+		if action.has("label"):
+			push_error("%s: %s[%d] has a hand-written 'label' (intent text is generated)" % [prefix, label, i])
+			ok = false
 		if not atype in ALLOWED_ENEMY_ACTION_TYPES:
 			push_error(
 				(

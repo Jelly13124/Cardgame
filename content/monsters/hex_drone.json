@@ -5,7 +5,7 @@
 	"tier": "normal",
 	"max_health": 16,
 	"action_pattern": [
-		{ "type": "add_curse", "curse": "radiation_dust", "amount": 1, "label": "✦ 诅咒" },
-		{ "type": "attack", "amount": 4, "label": "⚔ 4" }
+		{ "type": "add_curse", "curse": "radiation_dust", "amount": 1 },
+		{ "type": "attack", "amount": 4 }
 	]
 }
