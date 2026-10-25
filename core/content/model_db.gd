@@ -182,25 +182,37 @@ static func _finalize(category: String, id: String) -> void:
 
 # --- card vars -------------------------------------------------------------------
 
-## A card's `vars` fill its "$name" fields (effects and upgrade.effects); the raw
-## lists stay as `effects_template` so upgrades can re-fill them with new values.
+## Effect lists of a card that may use "$name" vars.
+const CARD_VAR_LISTS := ["effects", "end_turn_in_hand", "matched_bonus"]
+
+
+## A card's `vars` fill its "$name" fields (every effect list and upgrade.effects);
+## the raw `effects` stay as `effects_template` so upgrades can re-fill them. A
+## "$name" with no var — including on a card with no `vars` at all — is a load
+## error, never a silent 0.
 static func _substitute_card_vars(d: Dictionary, where: String) -> void:
-	if typeof(d.get("vars")) != TYPE_DICTIONARY:
-		return
-	var vars: Dictionary = d["vars"]
-	for name in CARD_VARS.missing(d.get("effects", []), vars):
-		_errors.append("%s: effects use unknown var '%s'" % [where, name])
-	d["effects_template"] = d.get("effects", []).duplicate(true)
-	d["effects"] = CARD_VARS.substitute(d.get("effects", []), vars)
+	var has_vars := typeof(d.get("vars")) == TYPE_DICTIONARY
+	var vars: Dictionary = d["vars"] if has_vars else {}
+	for key in CARD_VAR_LISTS:
+		for name in CARD_VARS.missing(d.get(key, []), vars):
+			_errors.append("%s: %s use unknown var '%s'" % [where, key, name])
 	var up: Variant = d.get("upgrade")
 	if typeof(up) == TYPE_DICTIONARY:
 		for name in up.get("vars", {}):
 			if not vars.has(name):
 				_errors.append("%s: upgrade.vars names unknown var '%s'" % [where, name])
+		var up_vars := CARD_VARS.add(vars, up.get("vars", {}))
+		for name in CARD_VARS.missing(up.get("effects", []), up_vars):
+			_errors.append("%s: upgrade.effects use unknown var '%s'" % [where, name])
+	if not has_vars:
+		return
+	d["effects_template"] = d.get("effects", []).duplicate(true)
+	for key in CARD_VAR_LISTS:
+		if d.has(key):
+			d[key] = CARD_VARS.substitute(d[key], vars)
+	if typeof(up) == TYPE_DICTIONARY:
 		if up.has("effects"):
 			var up_vars := CARD_VARS.add(vars, up.get("vars", {}))
-			for name in CARD_VARS.missing(up["effects"], up_vars):
-				_errors.append("%s: upgrade.effects use unknown var '%s'" % [where, name])
 			up["effects_template"] = up["effects"].duplicate(true)
 			up["effects"] = CARD_VARS.substitute(up["effects"], up_vars)
 

@@ -85,6 +85,18 @@ func _run() -> void:
 	})
 	var bad_var_errors := MODEL_DB.load_errors().filter(func(e): return "missing" in str(e) and "badvar" in str(e))
 	_expect(bad_var_errors.size() == 1, "unknown var is a load error")
+	MODEL_DB.inject("card", "mymod", "novars", {
+		"id": "novars", "title": "No Vars", "type": "attack", "cost": 1,
+		"effects": [{"type": "deal_damage", "amount": "$damage"}],
+	})
+	_expect(MODEL_DB.load_errors().any(func(e): return "novars" in str(e) and "damage" in str(e)),
+		"a $ref on a card without vars is a load error")
+	MODEL_DB.inject("card", "mymod", "nestedvar", {
+		"id": "nestedvar", "title": "Nested", "type": "curse", "cost": 0, "vars": {"hp": 2},
+		"effects": [], "end_turn_in_hand": [{"type": "lose_hp", "amount": "$hp"}],
+	})
+	_expect(int(MODEL_DB.data("card", "mymod:nestedvar")["end_turn_in_hand"][0]["amount"]) == 2,
+		"nested effect lists are filled too")
 	MODEL_DB.remove("card", "mymod:zap")
 	_expect(not MODEL_DB.has("card", "mymod:zap"), "remove drops a model")
 	MODEL_DB.reset()

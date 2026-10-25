@@ -149,7 +149,7 @@ func execute_enemy_turn() -> void:
 
 ## "<move> — INTERRUPTED!" from the generated intent text of the cancelled move.
 func interrupt_message(enemy: Node, action: Dictionary) -> String:
-	var move: String = enemy.intent_text(action) if enemy.has_method("intent_text") else ""
+	var move: String = enemy.intent_text(action, false) if enemy.has_method("intent_text") else ""
 	if move == "":
 		move = tr("UI_COMBAT_INTERRUPT_DEFAULT_LABEL")
 	return tr("UI_COMBAT_INTERRUPTED").format({"label": move})

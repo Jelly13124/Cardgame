@@ -567,7 +567,14 @@ func _update_intent_display() -> void:
 
 ## Plain-language description of an action (the intent tooltip, and the
 ## interrupt message): generated from the action's type and computed values.
-func intent_text(next: Dictionary) -> String:
+func intent_text(next: Dictionary, with_tips: bool = true) -> String:
+	var text := _intent_text_with_tips(next)
+	if not with_tips:
+		text = text.trim_suffix("\n" + tr("UI_COMBAT_INTENT_TIP_INTERRUPTIBLE"))
+	return text
+
+
+func _intent_text_with_tips(next: Dictionary) -> String:
 	var action_type := str(next.get("type", ""))
 	match action_type:
 		"attack", "attack_all", "attack_ramp":

@@ -117,14 +117,14 @@ A card may carry an optional top-level `"upgrade"` dict that **overrides** the b
 }
 ```
 
-- Every `upgrade` field is optional; any subset may be present. `effects`, if present, **replaces** the whole base `effects[]` (it is not merged).
-- **No `upgrade` block → generic formula fallback.** `resolve()` bumps only the unambiguously-beneficial numeric fields; everything else is left unchanged, which is the signal that a card needs a bespoke block. Field names match the card JSON: damage/block/stat/draw use `amount`; status applies use `stacks`.
+- Every `upgrade` field is optional; any subset may be present. `vars` adds deltas to the card's vars (the usual form); `effects`, if present, **replaces** the whole base `effects[]` (a structural change; it may use `$name`).
+- **No `upgrade.vars` / `upgrade.effects` → default deltas.** Most cards now declare `upgrade.vars` explicitly; otherwise `resolve()` bumps only the unambiguously-beneficial numeric fields; everything else is left unchanged, which is the signal that a card needs a bespoke block. Field names match the card JSON: damage/block/stat/draw use `amount`; status applies use `stacks`.
 
   | Effect type | Field bumped | Δ |
   |---|---|---|
   | `deal_damage`, `deal_damage_all` | `amount` | +2 |
   | `gain_block` | `amount` | +3 |
-  | `gain_strength` / `gain_dexterity` / `gain_luck` / `gain_intelligence` / `gain_energy` | `amount` | +1 |
+  | `gain_strength` / `gain_luck` / `gain_intelligence` / `gain_energy` | `amount` | +1 |
   | `apply_status`, `apply_status_all` | `stacks` | +1 |
   | `draw_cards` | `amount` | +1 |
   | anything else (`deal_damage_str_mult`, `scale_damage_by_attacks`, `add_card_to_hand`, self-debuff, …) | — | unchanged → route to a bespoke `upgrade` block |
@@ -249,4 +249,4 @@ If you see `X validation failure(s)`, the error log above explains what's wrong 
 - ❌ Typo'd key like `"retian": true` — validator catches as warning ("unknown top-level key 'retian'").
 - ❌ Effect type spelled `deal_dmg` instead of `deal_damage` — validator catches as error.
 - ❌ Enemy `sprite_id` doesn't match a folder under `enemies/` — game runs with a `ColorRect` placeholder and emits only a warning. If you intended to use an existing sprite, double-check the spelling.
-- ❌ Adding new effect type to JSON but forgetting its registry handler — validator catches via `ALLOWED_EFFECT_TYPES`, but only if you also updated that list. If the validator knows the type but no handler is registered, the effect registry will `push_error` + assert at runtime on first use.
+- ❌ Adding a new effect type to JSON without registering it in `combat_effects.gd` — the validator rejects any card type that has no registered definition.

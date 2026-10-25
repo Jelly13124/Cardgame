@@ -36,6 +36,8 @@ func _run() -> void:
 	var action := {"type": "attack", "amount": 14, "interruptible": true}
 	var text: String = battle.enemy_ai.interrupt_message(enemy, action)
 	_expect(text.contains(str(enemy.intent_attack_damage(action))), "interrupt text shows the move's damage: %s" % text)
+	_expect(not text.contains("\n") and not text.contains(tr("UI_COMBAT_INTENT_TIP_INTERRUPTIBLE")),
+		"interrupt text is one line without the 'can be interrupted' tip: %s" % text)
 	get_tree().current_scene = null
 	battle.queue_free()
 	await get_tree().process_frame
