@@ -52,6 +52,7 @@ const BOUNTY_HEADER_CLIPBOARD := "res://run_system/assets/images/home/base_hud/b
 const CURRENCY_ICON_DIR := "res://run_system/assets/images/home/currency/"
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
+const CARD_DESCRIPTION = preload("uid://b4fkwjpel7452")  # res://battle_scene/card_description.gd
 const RUN_RNG_SET = preload("uid://ealvw2c6utr7")  # res://core/rng/run_rng_set.gd
 const SEED_FIELD_BORDER := Color(0.55, 0.42, 0.26, 1.0)
 const SEED_FIELD_INVALID_BORDER := Color(0.9, 0.25, 0.2, 1.0)
@@ -1892,13 +1893,17 @@ func _make_gallery_card_slot(card_id: String) -> Control:
 
 	box.add_child(_daily_divider())
 
-	var desc := Label.new()
-	desc.text = _strip_bbcode(
-		Settings.t("CARD_%s_DESC" % MODEL_ID.key_entry(card_id), str(data.get("description", "")))
-	)
+	# Same generated text (and keyword colours) as the card face.
+	var desc := RichTextLabel.new()
+	desc.name = "GalleryCardText"
+	desc.bbcode_enabled = true
+	desc.fit_content = true
+	desc.scroll_active = false
+	desc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	desc.text = CARD_DESCRIPTION.colorize(CARD_DESCRIPTION.build(data))
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc.add_theme_font_size_override("font_size", 16)
-	desc.add_theme_color_override("font_color", Color(0.88, 0.80, 0.66, 1.0))
+	desc.add_theme_font_size_override("normal_font_size", 16)
+	desc.add_theme_color_override("default_color", Color(0.88, 0.80, 0.66, 1.0))
 	desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_child(desc)
 	return slot
@@ -1947,10 +1952,6 @@ func _make_gallery_locked_slot() -> Control:
 	mark.add_theme_constant_override("outline_size", 3)
 	center.add_child(mark)
 	return slot
-
-
-func _strip_bbcode(text: String) -> String:
-	return text.replace("[b]", "").replace("[/b]", "").replace("[i]", "").replace("[/i]", "")
 
 
 func _open_character_window() -> void:
