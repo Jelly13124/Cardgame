@@ -1,24 +1,26 @@
 {
-	"id": "limit_break",
-	"title": "Overload",
-	"rarity": "rare",
-	"type": "skill",
-	"cost": 1,
-	"polarity": "neutral",
-	"description": "Overload for double damage. Exhaust.",
-	"front_image": "player/limit_break.png",
-	"side": "player",
-	"effects": [
-		{ "type": "overload", "charge_multiplier": 2 },
-		{
-			"type": "exhaust_self"
-		}
-	],
-	"upgrade": {
-		"cost": 0,
-		"effects": [
-			{ "type": "overload", "charge_multiplier": 2 },
-			{ "type": "exhaust_self" }
-		]
-	}
+  "id": "limit_break",
+  "title": "Overload",
+  "rarity": "rare",
+  "type": "skill",
+  "cost": 1,
+  "polarity": "neutral",
+  "description": "Overload for double damage. Exhaust.",
+  "front_image": "player/limit_break.png",
+  "side": "player",
+  "vars": {
+    "charge_multiplier": 2
+  },
+  "effects": [
+    {
+      "type": "overload",
+      "charge_multiplier": "$charge_multiplier"
+    },
+    {
+      "type": "exhaust_self"
+    }
+  ],
+  "upgrade": {
+    "cost": 0
+  }
 }

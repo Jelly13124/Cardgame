@@ -1,13 +1,24 @@
 {
-	"id": "strike",
-	"title": "Shoot",
-	"rarity": "common",
-	"type": "attack",
-	"cost": 1,
-	"description": "Deal 3 damage.",
-	"front_image": "player/strike.png",
-	"side": "player",
-	"effects": [
-		{ "type": "deal_damage", "amount": 3 }
-	]
+  "id": "strike",
+  "title": "Shoot",
+  "rarity": "common",
+  "type": "attack",
+  "cost": 1,
+  "description": "Deal 3 damage.",
+  "front_image": "player/strike.png",
+  "side": "player",
+  "vars": {
+    "damage": 3
+  },
+  "effects": [
+    {
+      "type": "deal_damage",
+      "amount": "$damage"
+    }
+  ],
+  "upgrade": {
+    "vars": {
+      "damage": 2
+    }
+  }
 }

@@ -1,17 +1,25 @@
 {
-	"id": "brace",
-	"title": "Brace",
-	"rarity": "common",
-	"type": "skill",
-	"cost": 0,
-	"description": "Gain [b]3[/b] (+CON) block. Retain.",
-	"front_image": "player/brace.png",
-	"side": "player",
-	"retain": true,
-	"effects": [
-		{
-			"type": "gain_block",
-			"amount": 3
-		}
-	]
+  "id": "brace",
+  "title": "Brace",
+  "rarity": "common",
+  "type": "skill",
+  "cost": 0,
+  "description": "Gain [b]3[/b] (+CON) block. Retain.",
+  "front_image": "player/brace.png",
+  "side": "player",
+  "retain": true,
+  "vars": {
+    "block": 3
+  },
+  "effects": [
+    {
+      "type": "gain_block",
+      "amount": "$block"
+    }
+  ],
+  "upgrade": {
+    "vars": {
+      "block": 3
+    }
+  }
 }

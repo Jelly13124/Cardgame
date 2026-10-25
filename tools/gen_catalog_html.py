@@ -4,6 +4,7 @@
 enemies) + a keyword glossary, from the project's JSON data + content/UI
 translation CSVs. One-off reference tooling — output lands in docs/catalog_html/.
 Re-run any time data changes:  python tools/gen_catalog_html.py"""
+import card_vars
 import csv
 import glob
 import html
@@ -34,7 +35,7 @@ def load_json_dir(rel):
     for path in sorted(glob.glob(os.path.join(ROOT, rel, "*.json"))):
         try:
             with open(path, encoding="utf-8") as f:
-                items.append((os.path.basename(path)[:-5], json.load(f)))
+                items.append((os.path.basename(path)[:-5], card_vars.resolved(json.load(f))))
         except Exception as e:
             print("skip", path, e)
     return items

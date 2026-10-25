@@ -1,28 +1,32 @@
 {
-	"id": "acid_splash",
-	"title": "Whirling Sawblades",
-	"rarity": "uncommon",
-	"type": "attack",
-	"cost": 1,
-	"description": "Deal [b]2[/b] fixed damage to ALL enemies (ignores Strength). Apply [b]5 Short Circuit[/b] to ALL.",
-	"front_image": "player/acid_splash.png",
-	"side": "player",
-	"effects": [
-		{
-			"type": "deal_damage_all",
-			"amount": 2,
-			"no_str": true
-		},
-		{
-			"type": "apply_status_all",
-			"status": "short_circuit",
-			"stacks": 5
-		}
-	],
-	"upgrade": {
-		"effects": [
-			{ "type": "deal_damage_all", "amount": 3, "no_str": true },
-			{ "type": "apply_status_all", "status": "short_circuit", "stacks": 7 }
-		]
-	}
+  "id": "acid_splash",
+  "title": "Whirling Sawblades",
+  "rarity": "uncommon",
+  "type": "attack",
+  "cost": 1,
+  "description": "Deal [b]2[/b] fixed damage to ALL enemies (ignores Strength). Apply [b]5 Short Circuit[/b] to ALL.",
+  "front_image": "player/acid_splash.png",
+  "side": "player",
+  "vars": {
+    "damage": 2,
+    "short_circuit": 5
+  },
+  "effects": [
+    {
+      "type": "deal_damage_all",
+      "amount": "$damage",
+      "no_str": true
+    },
+    {
+      "type": "apply_status_all",
+      "status": "short_circuit",
+      "stacks": "$short_circuit"
+    }
+  ],
+  "upgrade": {
+    "vars": {
+      "damage": 1,
+      "short_circuit": 2
+    }
+  }
 }

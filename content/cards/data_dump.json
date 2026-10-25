@@ -1,26 +1,28 @@
 {
-	"id": "data_dump",
-	"title": "Memory Dump",
-	"rarity": "uncommon",
-	"type": "skill",
-	"cost": 0,
-	"polarity": "neutral",
-	"description": "Draw 3 cards. Exhaust.",
-	"front_image": "player/data_dump.png",
-	"side": "player",
-	"effects": [
-		{
-			"type": "draw_cards",
-			"amount": 3
-		},
-		{
-			"type": "exhaust_self"
-		}
-	],
-	"upgrade": {
-		"effects": [
-			{ "type": "draw_cards", "amount": 4 },
-			{ "type": "exhaust_self" }
-		]
-	}
+  "id": "data_dump",
+  "title": "Memory Dump",
+  "rarity": "uncommon",
+  "type": "skill",
+  "cost": 0,
+  "polarity": "neutral",
+  "description": "Draw 3 cards. Exhaust.",
+  "front_image": "player/data_dump.png",
+  "side": "player",
+  "vars": {
+    "draw": 3
+  },
+  "effects": [
+    {
+      "type": "draw_cards",
+      "amount": "$draw"
+    },
+    {
+      "type": "exhaust_self"
+    }
+  ],
+  "upgrade": {
+    "vars": {
+      "draw": 1
+    }
+  }
 }

@@ -1,20 +1,30 @@
 {
-	"id": "chain_link",
-	"title": "Quickdraw",
-	"rarity": "uncommon",
-	"type": "attack",
-	"cost": 1,
-	"description": "Deal [b]4[/b] (+STR) damage. Draw 1 card.",
-	"front_image": "player/chain_link.png",
-	"side": "player",
-	"effects": [
-		{
-			"type": "deal_damage",
-			"amount": 4
-		},
-		{
-			"type": "draw_cards",
-			"amount": 1
-		}
-	]
+  "id": "chain_link",
+  "title": "Quickdraw",
+  "rarity": "uncommon",
+  "type": "attack",
+  "cost": 1,
+  "description": "Deal [b]4[/b] (+STR) damage. Draw 1 card.",
+  "front_image": "player/chain_link.png",
+  "side": "player",
+  "vars": {
+    "damage": 4,
+    "draw": 1
+  },
+  "effects": [
+    {
+      "type": "deal_damage",
+      "amount": "$damage"
+    },
+    {
+      "type": "draw_cards",
+      "amount": "$draw"
+    }
+  ],
+  "upgrade": {
+    "vars": {
+      "damage": 2,
+      "draw": 1
+    }
+  }
 }

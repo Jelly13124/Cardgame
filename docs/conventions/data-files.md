@@ -84,7 +84,19 @@ Optional: `description`, `front_image`, `side`, `rarity` (`common|uncommon|rare|
 
 **Curse cards** (`type: "curse"`, `rarity: "curse"`) are unplayable penalty cards. They MUST set `"unplayable": true`, and may carry `"end_turn_in_hand": [<effect>, …]` — effects applied **to the player** at the end of every turn the card sits in hand (the penalty; each entry reuses the card effect vocabulary). Excluded from every normal card pool; injected by enemies (temporary — shuffled into the combat draw pile) and by events (permanent — into the run deck, clearable at the shop's card-removal service).
 
+#### Card vars
+
+Write each number once: `"vars": {"damage": 6, "weak": 1}` and refer to it from
+any effect field as `"$damage"`. ModelDb fills the numbers in at load (the raw
+list stays as `effects_template`); an unknown `$name` is a load error.
+
 #### The optional `upgrade` block (in-run card upgrades)
+
+`"upgrade": {"vars": {"damage": 3}}` adds deltas to the vars (STS2
+`UpgradeValueBy`); `cost`, `title` and `description` override; an `effects` list
+there is a structural replacement (it may use `$name`, filled with the upgraded
+vars). A card with none of these uses each effect type's default deltas (the
+`upgrade` key of its definition in `combat_effects.gd`).
 
 Cards grow **in-run** via the rest-campfire upgrade picker. `run_system/core/card_upgrade.gd` (`resolve()`) is the source of truth; `deck_manager.gd` applies it at battle start when a `player_deck` entry's `upgraded` flag is set. There are **no `_plus` variant JSON files** — a card has at most one JSON, plus an optional upgrade rule inside it.
 

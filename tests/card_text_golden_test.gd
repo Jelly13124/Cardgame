@@ -74,6 +74,11 @@ func _run() -> void:
 				failures.append("%s missing now" % key)
 				continue
 			for field in golden[key]:
+				if field in ["effects", "up_effects"]:
+					# Compare values, not number formatting (6 and 6.0 are the same).
+					if not _same(JSON.parse_string(golden[key][field]), JSON.parse_string(snapshot[key][field])):
+						failures.append("%s %s:\n  was: %s\n  now: %s" % [key, field, golden[key][field], snapshot[key][field]])
+					continue
 				if str(golden[key][field]) != str(snapshot[key][field]):
 					failures.append("%s %s:\n  was: %s\n  now: %s" % [key, field, golden[key][field], snapshot[key][field]])
 		for key in snapshot:
@@ -87,6 +92,29 @@ func _run() -> void:
 		print("[FAIL] ", line)
 	push_error("card text golden failed: %d differences" % failures.size())
 	get_tree().quit(1)
+
+
+## Deep equality where numbers compare by value.
+func _same(a: Variant, b: Variant) -> bool:
+	if typeof(a) in [TYPE_INT, TYPE_FLOAT] and typeof(b) in [TYPE_INT, TYPE_FLOAT]:
+		return is_equal_approx(float(a), float(b))
+	if typeof(a) != typeof(b):
+		return false
+	if a is Dictionary:
+		if a.size() != b.size():
+			return false
+		for k in a:
+			if not b.has(k) or not _same(a[k], b[k]):
+				return false
+		return true
+	if a is Array:
+		if a.size() != b.size():
+			return false
+		for i in a.size():
+			if not _same(a[i], b[i]):
+				return false
+		return true
+	return a == b
 
 
 func _text(factory, card_id: String, info: Dictionary) -> String:

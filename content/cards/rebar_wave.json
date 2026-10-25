@@ -1,27 +1,30 @@
 {
-	"id": "rebar_wave",
-	"title": "Kinetic Rebound",
-	"rarity": "rare",
-	"type": "attack",
-	"cost": 2,
-	"polarity": "neutral",
-	"description": "Gain 6 Block, then deal damage equal to your Block.",
-	"front_image": "player/rebar_wave.png",
-	"side": "player",
-	"effects": [
-		{
-			"type": "gain_block",
-			"amount": 6
-		},
-		{
-			"type": "deal_damage_block_mult",
-			"mult": 1
-		}
-	],
-	"upgrade": {
-		"effects": [
-			{ "type": "gain_block", "amount": 8 },
-			{ "type": "deal_damage_block_mult", "mult": 1 }
-		]
-	}
+  "id": "rebar_wave",
+  "title": "Kinetic Rebound",
+  "rarity": "rare",
+  "type": "attack",
+  "cost": 2,
+  "polarity": "neutral",
+  "description": "Gain 6 Block, then deal damage equal to your Block.",
+  "front_image": "player/rebar_wave.png",
+  "side": "player",
+  "vars": {
+    "block": 6,
+    "mult": 1
+  },
+  "effects": [
+    {
+      "type": "gain_block",
+      "amount": "$block"
+    },
+    {
+      "type": "deal_damage_block_mult",
+      "mult": "$mult"
+    }
+  ],
+  "upgrade": {
+    "vars": {
+      "block": 2
+    }
+  }
 }

@@ -1,12 +1,15 @@
 ## Card-upgrade resolver (in-run). Pure functions, no side effects — safe to unit
 ## test headless. `resolve(base)` returns the UPGRADED effective card data for a
-## base card-info dict. Bespoke path: a card JSON may carry an optional `upgrade`
-## block ({cost?, title?, description?, effects?}) that overrides those fields
-## (effects = full replacement). Formula path (no `upgrade` block): bump known
-## numeric fields per effect type. Cost is only ever changed by the bespoke block.
+## base card-info dict. A card JSON may carry an optional `upgrade` block
+## ({cost?, title?, description?, vars?, effects?}): `vars` adds deltas to the
+## card's vars and re-fills its effect template (an `effects` list there is a
+## structural replacement, filled with the upgraded vars); `effects` alone is a
+## full replacement. With neither, each effect type's default deltas apply (the
+## `upgrade` key of its definition). Cost is only ever changed by the block.
 ## No `class_name` (project convention) — used via preload.
 extends RefCounted
 
+const CARD_VARS = preload("uid://dagno1w0jtl2n")  # res://core/content/card_vars.gd
 const EFFECT_CATALOG = preload("uid://880atc7mnnie")  # res://battle_scene/combat/effect_catalog.gd
 
 
@@ -22,7 +25,14 @@ static func resolve(base: Dictionary) -> Dictionary:
 		result["title"] = str(up["title"])
 	if up.has("description"):
 		result["description"] = str(up["description"])
-	if up.has("effects"):
+	if up.has("vars") and typeof(base.get("vars")) == TYPE_DICTIONARY:
+		# Var deltas (STS2 UpgradeValueBy): re-fill the card's template with the
+		# upgraded vars; a structural upgrade.effects is filled the same way.
+		var up_vars := CARD_VARS.add(base["vars"], up["vars"])
+		result["vars"] = up_vars
+		var template: Variant = up.get("effects_template", up.get("effects", base.get("effects_template", base.get("effects", []))))
+		result["effects"] = CARD_VARS.substitute((template as Array).duplicate(true), up_vars)
+	elif up.has("effects"):
 		result["effects"] = (up["effects"] as Array).duplicate(true)
 	else:
 		result["effects"] = formula(base.get("effects", []))

@@ -81,7 +81,7 @@ func _test_starter_curve() -> void:
 	_expect(int(piston_jab.get("cost", -1)) == 0, "Piston Jab is the free fixed-damage jab")
 	_expect(_effect_value(piston_jab, "deal_damage", "amount") == 4, "Piston Jab deals 4 fixed damage")
 	_expect(
-		_effect_value(piston_jab.get("upgrade", {}), "deal_damage", "amount") == 6,
+		_effect_value(CARD_UPGRADE.resolve(piston_jab), "deal_damage", "amount") == 6,
 		"Upgraded Piston Jab deals 6 fixed damage"
 	)
 

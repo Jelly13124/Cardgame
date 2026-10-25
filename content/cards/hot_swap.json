@@ -1,18 +1,24 @@
 {
-	"id": "hot_swap",
-	"title": "Hot Swap",
-	"rarity": "common",
-	"type": "skill",
-	"cost": 1,
-	"description": "Draw 2 cards.",
-	"front_image": "player/hot_swap.png",
-	"side": "player",
-	"effects": [
-		{ "type": "draw_cards", "amount": 2 }
-	],
-	"upgrade": {
-		"effects": [
-			{ "type": "draw_cards", "amount": 3 }
-		]
-	}
+  "id": "hot_swap",
+  "title": "Hot Swap",
+  "rarity": "common",
+  "type": "skill",
+  "cost": 1,
+  "description": "Draw 2 cards.",
+  "front_image": "player/hot_swap.png",
+  "side": "player",
+  "vars": {
+    "draw": 2
+  },
+  "effects": [
+    {
+      "type": "draw_cards",
+      "amount": "$draw"
+    }
+  ],
+  "upgrade": {
+    "vars": {
+      "draw": 1
+    }
+  }
 }

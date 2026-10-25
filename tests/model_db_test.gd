@@ -5,6 +5,7 @@ extends Node
 
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const CARD_UPGRADE = preload("uid://d2e2bfj6oa3yp")  # res://run_system/core/card_upgrade.gd
 const MOD_DIR := "res://tests/fixtures/content_mod/"
 
 var failures: PackedStringArray = []
@@ -66,6 +67,24 @@ func _run() -> void:
 			bad_ref_errors += 1
 	_expect(bad_ref_errors == 1, "unresolved pool ref reported once, got %d" % bad_ref_errors)
 
+	# Card vars: `$name` fields are substituted at load; the raw list is kept.
+	MODEL_DB.inject("card", "mymod", "varcard", {
+		"id": "varcard", "title": "Var Card", "type": "attack", "cost": 1,
+		"vars": {"damage": 6, "weak": 2},
+		"effects": [{"type": "deal_damage", "amount": "$damage"}, {"type": "apply_status", "status": "weak", "stacks": "$weak"}],
+		"upgrade": {"vars": {"damage": 3}},
+	})
+	var varcard := MODEL_DB.data("card", "mymod:varcard")
+	_expect(int(varcard["effects"][0]["amount"]) == 6 and int(varcard["effects"][1]["stacks"]) == 2, "vars substituted at load")
+	_expect(str(varcard["effects_template"][0]["amount"]) == "$damage", "raw effects kept as effects_template")
+	_expect(int(CARD_UPGRADE.resolve(MODEL_DB.mutable("card", "mymod:varcard"))["effects"][0]["amount"]) == 9,
+		"upgrade.vars adds to the var")
+	MODEL_DB.inject("card", "mymod", "badvar", {
+		"id": "badvar", "title": "Bad", "type": "attack", "cost": 1, "vars": {},
+		"effects": [{"type": "deal_damage", "amount": "$missing"}],
+	})
+	var bad_var_errors := MODEL_DB.load_errors().filter(func(e): return "missing" in str(e) and "badvar" in str(e))
+	_expect(bad_var_errors.size() == 1, "unknown var is a load error")
 	MODEL_DB.remove("card", "mymod:zap")
 	_expect(not MODEL_DB.has("card", "mymod:zap"), "remove drops a model")
 	MODEL_DB.reset()

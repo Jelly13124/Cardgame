@@ -8,18 +8,30 @@
   "description": "Gain 2 Loaded. Draw 1 card. Refresh your attack this turn. Exhaust.",
   "front_image": "player/reload.png",
   "side": "player",
+  "vars": {
+    "loaded": 2,
+    "draw": 1
+  },
   "effects": [
-    { "type": "apply_status_self", "status": "loaded", "stacks": 2 },
-    { "type": "draw_cards", "amount": 1 },
-    { "type": "restore_attack_allowance" },
-    { "type": "exhaust_self" }
+    {
+      "type": "apply_status_self",
+      "status": "loaded",
+      "stacks": "$loaded"
+    },
+    {
+      "type": "draw_cards",
+      "amount": "$draw"
+    },
+    {
+      "type": "restore_attack_allowance"
+    },
+    {
+      "type": "exhaust_self"
+    }
   ],
   "upgrade": {
-    "effects": [
-      { "type": "apply_status_self", "status": "loaded", "stacks": 3 },
-      { "type": "draw_cards", "amount": 1 },
-      { "type": "restore_attack_allowance" },
-      { "type": "exhaust_self" }
-    ]
+    "vars": {
+      "loaded": 1
+    }
   }
 }

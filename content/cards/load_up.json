@@ -8,12 +8,19 @@
   "description": "Put 2 Reload cards into your hand.",
   "front_image": "player/load_up.png",
   "side": "player",
+  "vars": {
+    "cards": 2
+  },
   "effects": [
-    { "type": "add_card_to_hand", "card": "reload", "amount": 2 }
+    {
+      "type": "add_card_to_hand",
+      "card": "reload",
+      "amount": "$cards"
+    }
   ],
   "upgrade": {
-    "effects": [
-      { "type": "add_card_to_hand", "card": "reload", "amount": 3 }
-    ]
+    "vars": {
+      "cards": 1
+    }
   }
 }

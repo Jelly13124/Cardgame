@@ -1,21 +1,26 @@
 {
-	"id": "smoke_step",
-	"title": "Smoke Step",
-	"rarity": "rare",
-	"type": "skill",
-	"cost": 1,
-	"description": "Gain [b]1 Intangible[/b]. Exhaust.",
-	"front_image": "player/smoke_step.png",
-	"side": "player",
-	"effects": [
-		{ "type": "apply_status_self", "status": "intangible", "stacks": 1 },
-		{ "type": "exhaust_self" }
-	],
-	"upgrade": {
-		"cost": 0,
-		"effects": [
-			{ "type": "apply_status_self", "status": "intangible", "stacks": 1 },
-			{ "type": "exhaust_self" }
-		]
-	}
+  "id": "smoke_step",
+  "title": "Smoke Step",
+  "rarity": "rare",
+  "type": "skill",
+  "cost": 1,
+  "description": "Gain [b]1 Intangible[/b]. Exhaust.",
+  "front_image": "player/smoke_step.png",
+  "side": "player",
+  "vars": {
+    "intangible": 1
+  },
+  "effects": [
+    {
+      "type": "apply_status_self",
+      "status": "intangible",
+      "stacks": "$intangible"
+    },
+    {
+      "type": "exhaust_self"
+    }
+  ],
+  "upgrade": {
+    "cost": 0
+  }
 }

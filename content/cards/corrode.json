@@ -1,13 +1,25 @@
 {
-	"id": "corrode",
-	"title": "Corrode",
-	"rarity": "common",
-	"type": "skill",
-	"cost": 1,
-	"description": "Apply [b]2 Vulnerable[/b].",
-	"front_image": "player/corrode.png",
-	"side": "player",
-	"effects": [
-		{ "type": "apply_status", "status": "vulnerable", "stacks": 2 }
-	]
+  "id": "corrode",
+  "title": "Corrode",
+  "rarity": "common",
+  "type": "skill",
+  "cost": 1,
+  "description": "Apply [b]2 Vulnerable[/b].",
+  "front_image": "player/corrode.png",
+  "side": "player",
+  "vars": {
+    "vulnerable": 2
+  },
+  "effects": [
+    {
+      "type": "apply_status",
+      "status": "vulnerable",
+      "stacks": "$vulnerable"
+    }
+  ],
+  "upgrade": {
+    "vars": {
+      "vulnerable": 1
+    }
+  }
 }

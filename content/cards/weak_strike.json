@@ -1,14 +1,31 @@
 {
-	"id": "weak_strike",
-	"title": "Weakening Shot",
-	"rarity": "common",
-	"type": "attack",
-	"cost": 1,
-	"description": "Deal 4 damage. Apply [b]1 Weak[/b].",
-	"front_image": "player/weak_strike.png",
-	"side": "player",
-	"effects": [
-		{ "type": "deal_damage", "amount": 4 },
-		{ "type": "apply_status", "status": "weak", "stacks": 1 }
-	]
+  "id": "weak_strike",
+  "title": "Weakening Shot",
+  "rarity": "common",
+  "type": "attack",
+  "cost": 1,
+  "description": "Deal 4 damage. Apply [b]1 Weak[/b].",
+  "front_image": "player/weak_strike.png",
+  "side": "player",
+  "vars": {
+    "damage": 4,
+    "weak": 1
+  },
+  "effects": [
+    {
+      "type": "deal_damage",
+      "amount": "$damage"
+    },
+    {
+      "type": "apply_status",
+      "status": "weak",
+      "stacks": "$weak"
+    }
+  ],
+  "upgrade": {
+    "vars": {
+      "damage": 2,
+      "weak": 1
+    }
+  }
 }

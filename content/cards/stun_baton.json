@@ -1,14 +1,29 @@
 {
-	"id": "stun_baton",
-	"title": "Stun Baton",
-	"rarity": "rare",
-	"type": "attack",
-	"cost": 1,
-	"description": "Deal 1 damage. Apply 1 Stun.",
-	"front_image": "player/stun_baton.png",
-	"side": "player",
-	"effects": [
-		{ "type": "deal_damage", "amount": 1 },
-		{ "type": "apply_stun", "stacks": 1 }
-	]
+  "id": "stun_baton",
+  "title": "Stun Baton",
+  "rarity": "rare",
+  "type": "attack",
+  "cost": 1,
+  "description": "Deal 1 damage. Apply 1 Stun.",
+  "front_image": "player/stun_baton.png",
+  "side": "player",
+  "vars": {
+    "damage": 1,
+    "stun": 1
+  },
+  "effects": [
+    {
+      "type": "deal_damage",
+      "amount": "$damage"
+    },
+    {
+      "type": "apply_stun",
+      "stacks": "$stun"
+    }
+  ],
+  "upgrade": {
+    "vars": {
+      "damage": 2
+    }
+  }
 }

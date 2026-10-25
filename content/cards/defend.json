@@ -1,13 +1,24 @@
 {
-	"id": "defend",
-	"title": "Defend",
-	"rarity": "common",
-	"type": "skill",
-	"cost": 1,
-	"description": "Gain 5 Block.",
-	"front_image": "player/defend.png",
-	"side": "player",
-	"effects": [
-		{ "type": "gain_block", "amount": 5 }
-	]
+  "id": "defend",
+  "title": "Defend",
+  "rarity": "common",
+  "type": "skill",
+  "cost": 1,
+  "description": "Gain 5 Block.",
+  "front_image": "player/defend.png",
+  "side": "player",
+  "vars": {
+    "block": 5
+  },
+  "effects": [
+    {
+      "type": "gain_block",
+      "amount": "$block"
+    }
+  ],
+  "upgrade": {
+    "vars": {
+      "block": 3
+    }
+  }
 }

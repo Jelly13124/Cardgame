@@ -1,23 +1,26 @@
 {
-	"id": "bone_breaker",
-	"title": "Voltage Tear",
-	"rarity": "rare",
-	"type": "attack",
-	"cost": 2,
-	"description": "Apply [b]10 (+INT)[/b] Short Circuit. If the target already has Short Circuit, apply DOUBLE.",
-	"front_image": "player/bone_breaker.png",
-	"side": "player",
-	"effects": [
-		{
-			"type": "apply_short_circuit_scaled",
-			"amount": 10,
-			"attr": "intelligence",
-			"double_if_short_circuited": true
-		}
-	],
-	"upgrade": {
-		"effects": [
-			{ "type": "apply_short_circuit_scaled", "amount": 13, "attr": "intelligence", "double_if_short_circuited": true }
-		]
-	}
+  "id": "bone_breaker",
+  "title": "Voltage Tear",
+  "rarity": "rare",
+  "type": "attack",
+  "cost": 2,
+  "description": "Apply [b]10 (+INT)[/b] Short Circuit. If the target already has Short Circuit, apply DOUBLE.",
+  "front_image": "player/bone_breaker.png",
+  "side": "player",
+  "vars": {
+    "short_circuit": 10
+  },
+  "effects": [
+    {
+      "type": "apply_short_circuit_scaled",
+      "amount": "$short_circuit",
+      "attr": "intelligence",
+      "double_if_short_circuited": true
+    }
+  ],
+  "upgrade": {
+    "vars": {
+      "short_circuit": 3
+    }
+  }
 }

@@ -67,6 +67,8 @@ const STATUS_BEARING_EFFECTS = [
 # Optional flags that are allowed at the card root level
 const KNOWN_OPTIONAL_CARD_KEYS = [
 	"description",
+	"vars",
+	"effects_template",
 	"front_image",
 	"side",
 	"rarity",
@@ -429,6 +431,17 @@ static func validate_card(data: Dictionary, source_path: String) -> bool:
 			if upgrade.has("description") and typeof(upgrade["description"]) != TYPE_STRING:
 				push_error("%s: upgrade.description must be a String" % prefix)
 				ok = false
+			# upgrade.vars: numeric deltas to the card's vars (unknown names are
+			# ModelDb load errors).
+			if upgrade.has("vars"):
+				if typeof(upgrade["vars"]) != TYPE_DICTIONARY:
+					push_error("%s: upgrade.vars must be a Dictionary" % prefix)
+					ok = false
+				else:
+					for var_name in upgrade["vars"]:
+						if not _is_whole_number(upgrade["vars"][var_name]):
+							push_error("%s: upgrade.vars.%s must be a whole number" % [prefix, var_name])
+							ok = false
 			if upgrade.has("effects"):
 				if typeof(upgrade["effects"]) != TYPE_ARRAY:
 					push_error("%s: upgrade.effects must be an Array" % prefix)

@@ -8,6 +8,7 @@ extends RefCounted
 ## No class_name — preload. No scene tree.
 
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
+const CARD_VARS = preload("uid://dagno1w0jtl2n")  # res://core/content/card_vars.gd
 const CONTENT_MODEL = preload("uid://bd6thqkfhu232")  # res://core/content/content_model.gd
 
 const CONTENT_ROOT := "res://content/"
@@ -172,8 +173,36 @@ static func _register(category: String, ns: String, entry: String, raw: Dictiona
 
 static func _finalize(category: String, id: String) -> void:
 	var model = _models[category][id]
+	# References first, so the kept effect templates carry full IDs too.
 	_normalize_refs(category, model.data, model.ns, "%s %s" % [category, id])
+	if category == "card":
+		_substitute_card_vars(model.data, "card %s" % id)
 	_make_read_only(model.data)
+
+
+# --- card vars -------------------------------------------------------------------
+
+## A card's `vars` fill its "$name" fields (effects and upgrade.effects); the raw
+## lists stay as `effects_template` so upgrades can re-fill them with new values.
+static func _substitute_card_vars(d: Dictionary, where: String) -> void:
+	if typeof(d.get("vars")) != TYPE_DICTIONARY:
+		return
+	var vars: Dictionary = d["vars"]
+	for name in CARD_VARS.missing(d.get("effects", []), vars):
+		_errors.append("%s: effects use unknown var '%s'" % [where, name])
+	d["effects_template"] = d.get("effects", []).duplicate(true)
+	d["effects"] = CARD_VARS.substitute(d.get("effects", []), vars)
+	var up: Variant = d.get("upgrade")
+	if typeof(up) == TYPE_DICTIONARY:
+		for name in up.get("vars", {}):
+			if not vars.has(name):
+				_errors.append("%s: upgrade.vars names unknown var '%s'" % [where, name])
+		if up.has("effects"):
+			var up_vars := CARD_VARS.add(vars, up.get("vars", {}))
+			for name in CARD_VARS.missing(up["effects"], up_vars):
+				_errors.append("%s: upgrade.effects use unknown var '%s'" % [where, name])
+			up["effects_template"] = up["effects"].duplicate(true)
+			up["effects"] = CARD_VARS.substitute(up["effects"], up_vars)
 
 
 # --- references (spec: "References inside JSON") ------------------------------

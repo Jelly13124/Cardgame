@@ -1,23 +1,33 @@
 {
-	"id": "focus",
-	"title": "Focus",
-	"rarity": "uncommon",
-	"type": "ability",
-	"cost": 1,
-	"description": "Gain [b]1 Intelligence[/b]. Draw 1 card. Exhaust.",
-	"front_image": "player/focus.png",
-	"side": "player",
-	"effects": [
-		{
-			"type": "gain_intelligence",
-			"amount": 1
-		},
-		{
-			"type": "draw_cards",
-			"amount": 1
-		},
-		{
-			"type": "exhaust_self"
-		}
-	]
+  "id": "focus",
+  "title": "Focus",
+  "rarity": "uncommon",
+  "type": "ability",
+  "cost": 1,
+  "description": "Gain [b]1 Intelligence[/b]. Draw 1 card. Exhaust.",
+  "front_image": "player/focus.png",
+  "side": "player",
+  "vars": {
+    "intelligence": 1,
+    "draw": 1
+  },
+  "effects": [
+    {
+      "type": "gain_intelligence",
+      "amount": "$intelligence"
+    },
+    {
+      "type": "draw_cards",
+      "amount": "$draw"
+    },
+    {
+      "type": "exhaust_self"
+    }
+  ],
+  "upgrade": {
+    "vars": {
+      "intelligence": 1,
+      "draw": 1
+    }
+  }
 }

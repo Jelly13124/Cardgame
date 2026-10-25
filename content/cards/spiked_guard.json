@@ -1,14 +1,30 @@
 {
-	"id": "spiked_guard",
-	"title": "Spiked Guard",
-	"rarity": "uncommon",
-	"type": "skill",
-	"cost": 1,
-	"description": "Gain 5 (+CON) Block. Gain [b]2 Thorns[/b].",
-	"front_image": "player/spiked_guard.png",
-	"side": "player",
-	"effects": [
-		{ "type": "gain_block", "amount": 5 },
-		{ "type": "apply_status_self", "status": "thorns", "stacks": 2 }
-	]
+  "id": "spiked_guard",
+  "title": "Spiked Guard",
+  "rarity": "uncommon",
+  "type": "skill",
+  "cost": 1,
+  "description": "Gain 5 (+CON) Block. Gain [b]2 Thorns[/b].",
+  "front_image": "player/spiked_guard.png",
+  "side": "player",
+  "vars": {
+    "block": 5,
+    "thorns": 2
+  },
+  "effects": [
+    {
+      "type": "gain_block",
+      "amount": "$block"
+    },
+    {
+      "type": "apply_status_self",
+      "status": "thorns",
+      "stacks": "$thorns"
+    }
+  ],
+  "upgrade": {
+    "vars": {
+      "block": 3
+    }
+  }
 }

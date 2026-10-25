@@ -8,12 +8,22 @@
   "description": "Apply [b]8 + 2×INT[/b] Short Circuit.",
   "front_image": "player/dissect.png",
   "side": "player",
+  "vars": {
+    "short_circuit": 8,
+    "attr_mult": 2
+  },
   "effects": [
-    { "type": "apply_short_circuit_scaled", "amount": 8, "attr": "intelligence", "attr_mult": 2 }
+    {
+      "type": "apply_short_circuit_scaled",
+      "amount": "$short_circuit",
+      "attr": "intelligence",
+      "attr_mult": "$attr_mult"
+    }
   ],
   "upgrade": {
-    "effects": [
-      { "type": "apply_short_circuit_scaled", "amount": 10, "attr": "intelligence", "attr_mult": 3 }
-    ]
+    "vars": {
+      "short_circuit": 2,
+      "attr_mult": 1
+    }
   }
 }

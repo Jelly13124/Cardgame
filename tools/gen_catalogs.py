@@ -15,6 +15,7 @@ Default target is "all". Output is plain Markdown.
 
 from __future__ import annotations
 
+import card_vars
 import json
 import re
 import sys
@@ -92,6 +93,7 @@ def gen_cards() -> str:
             continue
         data = _load_json(path)
         if data:
+            data = card_vars.resolved(data)
             data["_id"] = path.stem
             cards.append(data)
 

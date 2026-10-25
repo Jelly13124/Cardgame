@@ -1,24 +1,31 @@
 {
-	"id": "lucky_streak",
-	"title": "Deadeye",
-	"rarity": "uncommon",
-	"type": "skill",
-	"cost": 1,
-	"polarity": "neutral",
-	"description": "Gain 1 Luck. Gain 1 Deadeye.",
-	"front_image": "player/lucky_streak.png",
-	"side": "player",
-	"effects": [
-		{
-			"type": "gain_luck",
-			"amount": 1
-		},
-		{ "type": "apply_status_self", "status": "deadeye", "stacks": 1 }
-	],
-	"upgrade": {
-		"effects": [
-			{ "type": "gain_luck", "amount": 2 },
-			{ "type": "apply_status_self", "status": "deadeye", "stacks": 1 }
-		]
-	}
+  "id": "lucky_streak",
+  "title": "Deadeye",
+  "rarity": "uncommon",
+  "type": "skill",
+  "cost": 1,
+  "polarity": "neutral",
+  "description": "Gain 1 Luck. Gain 1 Deadeye.",
+  "front_image": "player/lucky_streak.png",
+  "side": "player",
+  "vars": {
+    "luck": 1,
+    "deadeye": 1
+  },
+  "effects": [
+    {
+      "type": "gain_luck",
+      "amount": "$luck"
+    },
+    {
+      "type": "apply_status_self",
+      "status": "deadeye",
+      "stacks": "$deadeye"
+    }
+  ],
+  "upgrade": {
+    "vars": {
+      "luck": 1
+    }
+  }
 }
