@@ -32,6 +32,13 @@ func _run() -> void:
 		var label := slot.find_child("GalleryCardText", true, false) as RichTextLabel
 		var found := label != null and label.text == expected
 		_expect(found, "%s gallery shows the generated text '%s'" % [card_id, expected])
+		var cost := str(int(MODEL_DB.data("card", card_id).get("cost", 0)))
+		var cost_shown := false
+		for l in slot.find_children("*", "Label", true, false):
+			if (l as Label).text == cost:
+				cost_shown = true
+			_expect(not (l as Label).text.ends_with(".0"), "%s gallery shows no float cost: %s" % [card_id, (l as Label).text])
+		_expect(cost_shown, "%s gallery shows cost %s" % [card_id, cost])
 		slot.free()
 	home.queue_free()
 	if failures.is_empty():

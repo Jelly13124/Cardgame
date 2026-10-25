@@ -1868,7 +1868,7 @@ func _make_gallery_card_slot(card_id: String) -> Control:
 	box.add_child(meta)
 
 	var cost := Label.new()
-	cost.text = str(data.get("cost", "-"))
+	cost.text = str(int(data["cost"])) if data.has("cost") else "-"
 	cost.custom_minimum_size = Vector2(34, 30)
 	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cost.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
