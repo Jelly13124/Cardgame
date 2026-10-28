@@ -8,7 +8,8 @@ const HUD_SCRIPT = preload("uid://dqn0nfitycf2d")  # res://battle_scene/ui/chara
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
-const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
+const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://core/combat/status_effects.gd
+const CREATURE = preload("uid://kab2636ev63e")  # res://core/combat/creature.gd
 const SELECTION_RETICLE = preload("uid://c6dicaops28n6")  # res://battle_scene/ui/selection_reticle.gd
 const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
 const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://battle_scene/combat_feedback_controller.gd
@@ -35,24 +36,63 @@ const INTENT_CELL_ICON_SIZE := Vector2(34.0, 34.0)
 const MAX_SAFE_RAMP_DAMAGE := 1 << 60
 
 # ─── Stats ────────────────────────────────────────────────────────────────────
-var enemy_id: String = ""
-var enemy_name: String = "ENEMY"
-var is_elite: bool = false
+## Combat state lives in the creature (core/combat/creature.gd); this node
+## shows it, its intent and its animations.
+var creature = CREATURE.new()
+
+var enemy_id: String:
+	get:
+		return creature.enemy_id
+	set(value):
+		creature.enemy_id = value
+var enemy_name: String:
+	get:
+		return creature.enemy_name
+	set(value):
+		creature.enemy_name = value
+var is_elite: bool:
+	get:
+		return creature.is_elite
+	set(value):
+		creature.is_elite = value
 ## True for act bosses (spec A3). A boss dying ends the fight even if summoned
 ## adds remain (enemy_ai._on_enemy_died frees the rest + declares victory).
 ## Bosses are always solo-spawned at the act top, so "a boss died" = "the act
 ## boss died". Summoned adds are never bosses.
-var is_boss: bool = false
-var max_health: int = 30
-var health: int = 30
-var block: int = 0
+var is_boss: bool:
+	get:
+		return creature.is_boss
+	set(value):
+		creature.is_boss = value
+var max_health: int:
+	get:
+		return creature.max_health
+	set(value):
+		creature.max_health = value
+		_refresh_hud()
+var health: int:
+	get:
+		return creature.health
+	set(value):
+		creature.health = value
+		_refresh_hud()
+var block: int:
+	get:
+		return creature.block
+	set(value):
+		creature.block = value
+		_refresh_hud()
 var _death_resolving: bool = false
 var _death_settled: bool = false
 ## ID used to locate sprite frames: e.g. "trash_robot" -> trash_robot_attack_0.png
 var sprite_id: String = ""
 
 ## Composed status effect system
-var status_system = STATUS_SYS.new()
+var status_system:
+	get:
+		return creature.status_system
+	set(value):
+		creature.status_system = value
 ## Battle this enemy fights in; set by combat_commands.attach().
 var battle: Node = null
 
@@ -75,9 +115,6 @@ var _ramp_action_uses: Dictionary = {}
 
 ## A breakable guard exposes the enemy when player damage removes all of the
 ## armed Block. It expires if the Block survives until the enemy's next turn.
-var _breakable_armor_active := false
-var _breakable_armor_status := "vulnerable"
-var _breakable_armor_stacks := 1
 
 # ─── HP-threshold phases (spec A2) ──────────────────────────────────────────────
 ## Optional phase definitions parsed from JSON, e.g.
@@ -163,6 +200,14 @@ static func create(id: String) -> EnemyEntity:
 
 
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
+
+
+func _init() -> void:
+	creature.side = "enemy"
+	creature.max_health = 30
+	creature.health = 30
+	creature.host = self
+	creature.status_changed.connect(func(): status_changed.emit())
 
 
 func _ready() -> void:
@@ -397,6 +442,7 @@ func _build_health_bar(hud_pos: Vector2) -> void:
 	_hud.bar_width = hud_size.x
 	_hud.bar_height = hud_size.y
 	_hud.position = Vector2(-float(hud_size.x) * 0.5, hud_pos.y)
+	_hud.bind(creature)
 	add_child(_hud)
 
 
@@ -645,7 +691,7 @@ func _start_intent_float_anim() -> void:
 
 
 func notify_status_changed() -> void:
-	status_changed.emit()
+	creature.notify_status_changed()
 
 
 func take_damage(
@@ -656,21 +702,14 @@ func take_damage(
 
 	var dmg_after_block := maxi(0, amount - block)
 	var blocked_amount := mini(block, amount)
-	var remaining_block := maxi(0, block - amount)
 	var remaining_health := maxi(0, health - dmg_after_block)
 	var will_kill := remaining_health <= 0 and health > 0
-	var breaks_armed_armor := (
-		_breakable_armor_active
-		and block > 0
-		and remaining_block == 0
-		and str(feedback_tags.get("source", "")) == "player"
-	)
+	var applied: Array = [{}]
+	var from_player := str(feedback_tags.get("source", "")) == "player"
 	var apply_health_change := func() -> void:
-		self.block = remaining_block
-		self.health = remaining_health
-		if self.health <= 0:
+		applied[0] = self.creature.apply_damage(amount, from_player)
+		if self.creature.health <= 0:
 			self._death_resolving = true
-		self._refresh_hud()
 
 	# Status ticks stay quiet because their status banner is already the readable
 	# result. Direct attacks all use the shared four-tier feedback controller.
@@ -729,9 +768,7 @@ func take_damage(
 		queue_free()
 		return
 
-	if breaks_armed_armor:
-		_breakable_armor_active = false
-		add_status(_breakable_armor_status, _breakable_armor_stacks)
+	if bool(applied[0].get("armor_broken", false)):
 		_play_armor_break_reaction()
 
 	# Phase transitions only matter while alive (spec A2: never fire during death
@@ -744,9 +781,7 @@ func take_damage(
 ## removes all of it exposes this enemy. Re-arming replaces the previous
 ## exposure payload rather than stacking traps.
 func arm_breakable_armor(status: String, stacks: int) -> void:
-	_breakable_armor_active = true
-	_breakable_armor_status = status
-	_breakable_armor_stacks = maxi(1, stacks)
+	creature.arm_breakable_armor(status, stacks)
 
 
 func _play_armor_break_reaction() -> void:
@@ -825,28 +860,19 @@ func consume_pending_on_enter() -> Array:
 
 
 func add_block(amount: int) -> void:
-	block += amount
-	_refresh_hud()
+	creature.add_block(amount)
 
 
 func heal(amount: int) -> void:
-	health = min(health + amount, max_health)
-	_refresh_hud()
+	creature.heal(amount)
 
 
 func start_turn() -> void:
-	status_system.on_turn_start(self)
-	if health <= 0:
-		return
-	# Surviving breakable armor expires with the Block it was attached to.
-	_breakable_armor_active = false
-	block = 0
-	_refresh_hud()
+	creature.start_turn()
 
 
 func end_turn() -> void:
-	status_system.on_turn_end(self)
-	_refresh_hud()
+	creature.end_turn()
 
 
 func _refresh_hud() -> void:
@@ -856,7 +882,7 @@ func _refresh_hud() -> void:
 
 ## Delegate to StatusEffectSystem
 func add_status(status_name: String, stacks: int) -> void:
-	status_system.add_status(status_name, stacks, self)
+	creature.add_status(status_name, stacks)
 
 
 func get_status_stacks(status_name: String) -> int:
@@ -865,7 +891,7 @@ func get_status_stacks(status_name: String) -> int:
 
 ## Returns true if a stun stack was consumed (action should be skipped/cancelled).
 func consume_stun_if_present() -> bool:
-	return status_system.consume_stun(self)
+	return creature.consume_stun_if_present()
 
 
 # ─── Animation Helpers ────────────────────────────────────────────────────────

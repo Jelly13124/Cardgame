@@ -11,7 +11,7 @@ const CARD_PLAY = preload("uid://bxaw24a7fumhm")  # res://core/combat/card_play.
 const COMBAT_HOOKS = preload("uid://cjb2wdqhw4j2x")  # res://core/combat/combat_hooks.gd
 const ATTRIBUTE_RULES = preload("uid://ctdg0fm8xx4bv")  # res://core/combat/rules/attribute_rules.gd
 const CRIT_RULES = preload("uid://bjfqp2irnmi37")  # res://core/combat/rules/crit_rules.gd
-const STATUS_SYSTEM = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
+const STATUS_SYSTEM = preload("uid://cq4eulp4ci8is")  # res://core/combat/status_effects.gd
 
 const POWERED: int = VALUE_PROPS.POWERED
 

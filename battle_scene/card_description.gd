@@ -12,7 +12,7 @@ extends RefCounted
 ##   replay_bonus: extra replays on attacks from held relics (0 outside battle)
 
 const EFFECT_CATALOG = preload("uid://880atc7mnnie")  # res://battle_scene/combat/effect_catalog.gd
-const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
+const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://core/combat/status_effects.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 
 const DEFAULT_STATS := {"strength": 0, "constitution": 0, "intelligence": 0, "luck": 0, "charm": 0}

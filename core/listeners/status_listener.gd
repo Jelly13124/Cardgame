@@ -23,6 +23,8 @@ func var_value(name: String, default: Variant) -> Variant:
 
 ## Side of the bearer, for combat sources.
 func side() -> String:
+	if owner != null and "side" in owner:
+		return str(owner.side)
 	return "enemy" if owner != null and "enemy_id" in owner else "player"
 
 

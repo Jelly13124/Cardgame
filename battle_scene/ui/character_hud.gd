@@ -4,6 +4,7 @@ class_name CharacterHUD
 
 const BLOCK_BADGE_TEXTURE = preload("res://battle_scene/assets/images/ui/block_badge.png")
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const STATUS_BADGES_VIEW = preload("uid://3i0uuprky2dc")  # res://ui/battle/status_badges_view.gd
 
 
 class SmoothHealthBar:
@@ -159,11 +160,13 @@ var _hp_label: HealthValueText
 var _block_badge: TextureRect
 var _block_label: Label
 var _status_badges: HBoxContainer
+var _creature: Object = null
 
 
 func _ready() -> void:
 	_build_ui()
 	update_stats(current_health, max_health, current_block)
+	_on_creature_status_changed()
 
 
 func _build_ui() -> void:
@@ -232,6 +235,26 @@ func _build_ui() -> void:
 	_status_badges.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_status_badges.add_theme_constant_override("separation", 6)
 	add_child(_status_badges)
+
+
+## Follow `creature` (core/combat/creature.gd): HP, Block and status badges
+## refresh when it announces a change.
+func bind(creature: Object) -> void:
+	_creature = creature
+	creature.health_changed.connect(_on_creature_changed.unbind(1))
+	creature.block_changed.connect(_on_creature_changed.unbind(1))
+	creature.status_changed.connect(_on_creature_status_changed)
+	_on_creature_status_changed()
+
+
+func _on_creature_changed() -> void:
+	if _creature != null:
+		update_stats(_creature.health, _creature.max_health, _creature.block)
+
+
+func _on_creature_status_changed() -> void:
+	if _creature != null and _status_badges != null:
+		STATUS_BADGES_VIEW.rebuild(_status_badges, _creature.status_system.snapshot())
 
 
 func update_stats(hp: int, max_hp: int, blk: int) -> void:

@@ -3,7 +3,7 @@ extends "res://core/listeners/status_listener.gd"
 ## Regen: at the bearer's turn start heal stacks HP, then lose 1 stack.
 
 
-func at_owner_turn_start(entity: Node) -> void:
+func at_owner_turn_start(entity: Object) -> void:
 	var n := amount()
 	if n <= 0:
 		return

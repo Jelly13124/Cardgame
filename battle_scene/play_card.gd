@@ -3,7 +3,7 @@ class_name PlayCard
 
 
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
-const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
+const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://core/combat/status_effects.gd
 const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
 const CARD_DESCRIPTION = preload("uid://b4fkwjpel7452")  # res://battle_scene/card_description.gd
 const EFFECT_CATALOG = preload("uid://880atc7mnnie")  # res://battle_scene/combat/effect_catalog.gd

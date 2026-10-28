@@ -3,7 +3,8 @@
 ## (content/statuses, ModelDb category "status") and owns one listener instance
 ## per active status whose definition names a `script`
 ## (core/listeners/statuses/<key>.gd). Behaviour lives in those listeners; this
-## class keeps storage, owner-scoped turn phases and the badge UI.
+## class keeps storage and owner-scoped turn phases; the badges are
+## ui/battle/status_badges_view.gd.
 ## Runtime keys are MODEL_ID.key_entry(status id): base statuses use bare names.
 extends RefCounted
 class_name StatusEffectSystem
@@ -61,11 +62,12 @@ static func status_description(key: String) -> String:
 	return str(status_def(key).get("description", ""))
 
 
-const STATUS_ICON_DIR := "res://battle_scene/assets/images/ui/status/"
-const STATUS_ICON_SIZE := 30.0
+## Stacks of every active status, by runtime key (a copy, for views).
+func snapshot() -> Dictionary:
+	return _statuses.duplicate()
 
 
-func add_status(status_name: String, stacks: int, entity: Node) -> void:
+func add_status(status_name: String, stacks: int, entity: Object) -> void:
 	if stacks <= 0:
 		return
 	status_name = _canonicalize_status_name(status_name)
@@ -74,7 +76,7 @@ func add_status(status_name: String, stacks: int, entity: Node) -> void:
 	_on_statuses_changed(entity)
 
 
-func remove_status(status_name: String, entity: Node) -> void:
+func remove_status(status_name: String, entity: Object) -> void:
 	status_name = _canonicalize_status_name(status_name)
 	if not _statuses.has(status_name):
 		return
@@ -102,33 +104,33 @@ func listeners() -> Array:
 
 
 ## Owner's turn start (before its energy/Block reset): Burn, Regen.
-func on_turn_start(entity: Node) -> void:
+func on_turn_start(entity: Object) -> void:
 	for listener in listeners():
 		if listener.has_method("at_owner_turn_start"):
 			listener.at_owner_turn_start(entity)
 
 
 ## Owner's turn start, after Block was reset (Metallicize).
-func after_owner_block_reset(entity: Node) -> void:
+func after_owner_block_reset(entity: Object) -> void:
 	for listener in listeners():
 		if listener.has_method("after_owner_block_reset"):
 			listener.after_owner_block_reset(entity)
 
 
 ## Owner's turn end: statuses whose definition decays at turn end lose 1.
-func on_turn_end(entity: Node) -> void:
+func on_turn_end(entity: Object) -> void:
 	_decay("turn_end", entity)
 
 
 ## The owner's opponent ended its turn (Intangible).
-func on_opponent_turn_end(entity: Node) -> void:
+func on_opponent_turn_end(entity: Object) -> void:
 	_decay("opponent_turn_end", entity)
 
 
 ## Consume one stack of stun. Returns true if a stack was consumed
 ## (caller should treat this as "the action is stunned, skip it").
 ## Stun is manual-consume: it does NOT decay on its own.
-func consume_stun(entity: Node) -> bool:
+func consume_stun(entity: Object) -> bool:
 	if not has_status("stun"):
 		return false
 	spend_stacks("stun", 1, entity)
@@ -138,7 +140,7 @@ func consume_stun(entity: Node) -> bool:
 
 ## Spend N stacks of a status (min 0). Used by triggers that decay on use,
 ## e.g. Thorns loses 1 stack each time it reflects an attack.
-func spend_stacks(status_name: String, n: int, entity: Node) -> void:
+func spend_stacks(status_name: String, n: int, entity: Object) -> void:
 	status_name = _canonicalize_status_name(status_name)
 	if not _statuses.has(status_name):
 		return
@@ -149,7 +151,7 @@ func spend_stacks(status_name: String, n: int, entity: Node) -> void:
 
 
 ## Set a status to exactly `n` stacks (0 removes it).
-func set_stacks(status_name: String, n: int, entity: Node) -> void:
+func set_stacks(status_name: String, n: int, entity: Object) -> void:
 	status_name = _canonicalize_status_name(status_name)
 	if n <= 0:
 		remove_status(status_name, entity)
@@ -162,7 +164,7 @@ func set_stacks(status_name: String, n: int, entity: Node) -> void:
 ## Status damage-over-time (Burn) through the combat pipeline when a router is
 ## set; a bare entity (tests) takes it directly. Kept here because the hit sound
 ## is presentation.
-func deal_status_damage(entity: Node, dmg: int, status: String) -> void:
+func deal_status_damage(entity: Object, dmg: int, status: String) -> void:
 	if damage_router.is_valid():
 		damage_router.call(entity, dmg, status)
 		AudioManager.play_sfx("attack_hit", -4.0, 1.18, 0.03)
@@ -173,7 +175,7 @@ func deal_status_damage(entity: Node, dmg: int, status: String) -> void:
 		AudioManager.play_sfx("attack_hit", -4.0, 1.18, 0.03)
 
 
-func _decay(rule: String, entity: Node) -> void:
+func _decay(rule: String, entity: Object) -> void:
 	var changed := false
 	for key in _statuses.keys():
 		if str(status_def(key).get("decay", "none")) != rule:
@@ -187,7 +189,7 @@ func _decay(rule: String, entity: Node) -> void:
 		_on_statuses_changed(entity)
 
 
-func _ensure_listener(key: String, entity: Node) -> void:
+func _ensure_listener(key: String, entity: Object) -> void:
 	if _listeners.has(key):
 		return
 	var script_path := str(status_def(key).get("script", ""))
@@ -213,110 +215,12 @@ func _canonicalize_status_name(status_name: String) -> String:
 ## Center-screen yellow status text removed per UX feedback. DoT uses the local
 ## impact, damage number, trailing HP bar, and dedicated sound instead. Kept as a
 ## no-op so existing call sites don't error.
-func _notify(_entity: Node, _text: String, _color: Color) -> void:
+func _notify(_entity: Object, _text: String, _color: Color) -> void:
 	pass
 
 
-func _on_statuses_changed(entity: Node) -> void:
-	_refresh_badges(entity)
+func _on_statuses_changed(entity: Object) -> void:
 	if entity.has_method("notify_status_changed"):
 		entity.notify_status_changed()
 	elif entity.has_signal("status_changed"):
 		entity.status_changed.emit()
-
-
-func _refresh_badges(entity: Node) -> void:
-	var container = entity.find_child("StatusBadges", true, false)
-	if not container:
-		return
-
-	for child in container.get_children():
-		child.queue_free()
-
-	for status_name in _statuses:
-		var stacks = _statuses[status_name]
-		if stacks <= 0:
-			continue
-
-		var badge = _make_status_badge(status_name, stacks)
-		var human_name: String = format_name_localized(status_name)
-		var desc_key := "UI_COMBAT_STATUS_%s_DESC" % str(status_name).to_upper()
-		var desc: String = TranslationServer.translate(desc_key)
-		if desc == desc_key:
-			desc = status_description(status_name)
-		var tip: String = (
-			tr("UI_COMBAT_STATUS_TIP").format({"name": human_name, "n": stacks, "desc": desc})
-			if desc != ""
-			else tr("UI_COMBAT_STATUS_TIP_NO_DESC").format({"name": human_name, "n": stacks})
-		)
-		var badge_ref: Control = badge
-		var badge_id: int = badge.get_instance_id()
-		badge.mouse_entered.connect(
-			func():
-				if not is_instance_valid(badge_ref):
-					return
-				Tooltip.show(
-					tip, badge_ref.global_position + Vector2(badge_ref.size.x * 0.5, 0), badge_id
-				)
-		)
-		badge.mouse_exited.connect(Tooltip.hide_if_owner.bind(badge_id))
-		badge.tree_exited.connect(Tooltip.hide_if_owner.bind(badge_id))
-		container.add_child(badge)
-
-
-func _make_status_badge(status_name: String, stacks: int) -> Control:
-	var badge = Control.new()
-	badge.custom_minimum_size = Vector2(STATUS_ICON_SIZE, STATUS_ICON_SIZE)
-	badge.size = Vector2(STATUS_ICON_SIZE, STATUS_ICON_SIZE)
-	badge.mouse_filter = Control.MOUSE_FILTER_PASS
-
-	var icon_texture := _load_status_icon(status_name)
-	if icon_texture:
-		var icon = TextureRect.new()
-		icon.texture = icon_texture
-		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
-		badge.add_child(icon)
-	else:
-		var fallback = Label.new()
-		fallback.text = status_label(status_name)
-		fallback.add_theme_font_size_override("font_size", 18)
-		fallback.add_theme_color_override("font_color", status_color(status_name))
-		fallback.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		fallback.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		fallback.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		fallback.set_anchors_preset(Control.PRESET_FULL_RECT)
-		badge.add_child(fallback)
-
-	var stack_label = Label.new()
-	stack_label.text = str(stacks)
-	stack_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	stack_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	stack_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	stack_label.add_theme_font_size_override("font_size", 13)
-	stack_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.72))
-	stack_label.add_theme_color_override("font_outline_color", Color(0.05, 0.025, 0.012, 1.0))
-	stack_label.add_theme_constant_override("outline_size", 3)
-	stack_label.anchor_left = 0.0
-	stack_label.anchor_top = 0.0
-	stack_label.anchor_right = 1.0
-	stack_label.anchor_bottom = 1.0
-	stack_label.offset_left = 0.0
-	stack_label.offset_top = 0.0
-	stack_label.offset_right = 3.0
-	stack_label.offset_bottom = 2.0
-	badge.add_child(stack_label)
-	return badge
-
-
-func _load_status_icon(status_name: String) -> Texture2D:
-	var path := "%s%s.png" % [STATUS_ICON_DIR, status_name]
-	if not ResourceLoader.exists(path):
-		return null
-	var loaded = load(path)
-	if loaded is Texture2D:
-		return loaded
-	return null

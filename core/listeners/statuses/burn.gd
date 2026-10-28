@@ -4,7 +4,7 @@ extends "res://core/listeners/status_listener.gd"
 ## are halved (rounded down).
 
 
-func at_owner_turn_start(entity: Node) -> void:
+func at_owner_turn_start(entity: Object) -> void:
 	var dmg := amount()
 	if dmg <= 0:
 		return

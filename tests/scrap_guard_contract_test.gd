@@ -1,6 +1,6 @@
 extends Node
 
-const STATUS_SYSTEM = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
+const STATUS_SYSTEM = preload("uid://cq4eulp4ci8is")  # res://core/combat/status_effects.gd
 const PLAY_CARD = preload("uid://d4f71g73780ld")  # res://battle_scene/play_card.gd
 
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd

@@ -1,17 +1,63 @@
 extends Node2D
 class_name PlayerEntity
 
-@export var max_health: int = 100
-@export var health: int = 100
-@export var max_energy: int = 3
-@export var energy: int = 3
-@export var block: int = 0
+## Combat state lives in the creature (core/combat/creature.gd); this node
+## shows it and plays the hero's animations.
+var creature = _new_creature()
 
-@export var strength: int = 3
-@export var constitution: int = 3
-@export var intelligence: int = 3
-@export var luck: int = 3
-@export var charm: int = 3
+var max_health: int:
+	get:
+		return creature.max_health
+	set(value):
+		creature.max_health = value
+		_refresh_hud()
+var health: int:
+	get:
+		return creature.health
+	set(value):
+		creature.health = value
+		_refresh_hud()
+var max_energy: int:
+	get:
+		return creature.max_energy
+	set(value):
+		creature.max_energy = value
+var energy: int:
+	get:
+		return creature.energy
+	set(value):
+		creature.energy = value
+var block: int:
+	get:
+		return creature.block
+	set(value):
+		creature.block = value
+
+var strength: int:
+	get:
+		return creature.strength
+	set(value):
+		creature.strength = value
+var constitution: int:
+	get:
+		return creature.constitution
+	set(value):
+		creature.constitution = value
+var intelligence: int:
+	get:
+		return creature.intelligence
+	set(value):
+		creature.intelligence = value
+var luck: int:
+	get:
+		return creature.luck
+	set(value):
+		creature.luck = value
+var charm: int:
+	get:
+		return creature.charm
+	set(value):
+		creature.charm = value
 
 signal health_changed(new_amount)
 signal energy_changed(new_amount)
@@ -22,7 +68,7 @@ signal died
 
 const HUD_SCRIPT = preload("uid://dqn0nfitycf2d")  # res://battle_scene/ui/character_hud.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
-const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
+const CREATURE = preload("uid://kab2636ev63e")  # res://core/combat/creature.gd (res://core/combat/creature.gd)
 const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://battle_scene/combat_fx.gd
 const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://battle_scene/combat_feedback_controller.gd
 const HERO_DIR = "res://battle_scene/assets/images/heroes/"
@@ -35,66 +81,38 @@ const MAX_ANIMATION_FRAMES := 16
 var _sprite: AnimatedSprite2D
 var _fallback_sprite: Sprite2D
 var _hud: Node
-var status_system = STATUS_SYS.new()
+var status_system:
+	get:
+		return creature.status_system
+	set(value):
+		creature.status_system = value
 var _death_resolving: bool = false
 var _death_settled: bool = false
 
 # ─── Yin/Yang polarity (Feng Shui Master hero) ────────────────────────────────
-## Per-battle polarity state. A polarity hero's deck is split into Yin (阴) and
-## Yang (阳) cards; the starting relic alternates `current_polarity` each turn.
-## A card whose polarity matches the active state resolves its `matched_bonus`.
-## `flip_polarity` cards switch the active polarity mid-turn — reaching BOTH
-## polarities in one turn triggers Yin-Yang Harmony (`harmony_active`), which
-## lasts to end of turn and makes BOTH polarities count as matched.
-##
-## `current_polarity == ""` means a non-polarity hero (e.g. Cowboy Bill); the
-## whole mechanic stays dormant for them.
-var current_polarity: String = ""  # "yin"/"yang"/"" (empty = non-polarity hero)
-var _polarities_seen: Array = []  # polarities active this turn
-var harmony_active: bool = false
+## Rules in core/combat/creature.gd; these forward to the creature.
+var current_polarity: String:
+	get:
+		return creature.current_polarity
+var harmony_active: bool:
+	get:
+		return creature.harmony_active
 
 
-## Start-of-turn reset, driven by the starting relic. `p` is the turn's polarity.
 func reset_polarity_turn(p: String) -> void:
-	current_polarity = p
-	_polarities_seen = [p]
-	harmony_active = false
+	creature.reset_polarity_turn(p)
 
 
-## Set the active polarity, tracking newly-seen polarities and (re)checking for
-## Yin-Yang Harmony.
 func set_polarity(p: String) -> void:
-	current_polarity = p
-	if not p in _polarities_seen:
-		_polarities_seen.append(p)
-	_check_harmony()
+	creature.set_polarity(p)
 
 
-## Flip yin↔yang. No-op for a non-polarity hero (current_polarity == "").
 func flip_polarity() -> void:
-	if current_polarity == "yin":
-		set_polarity("yang")
-	elif current_polarity == "yang":
-		set_polarity("yin")
+	creature.flip_polarity()
 
 
-## Returns true the first time both Yin and Yang have been active this turn
-## (so the caller can grant the Harmony entry reward exactly once).
-func _check_harmony() -> bool:
-	if not harmony_active and ("yin" in _polarities_seen) and ("yang" in _polarities_seen):
-		harmony_active = true
-		return true
-	return false
-
-
-## Does a card of the given polarity count as "matched" right now? Harmony makes
-## everything match; otherwise the card's polarity must equal the active one
-## (neutral/empty polarities never match).
 func is_card_matched(polarity: String) -> bool:
-	return (
-		harmony_active
-		or (polarity != "" and polarity != "neutral" and polarity == current_polarity)
-	)
+	return creature.is_card_matched(polarity)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -128,6 +146,27 @@ func _should_animate_idle() -> bool:
 	return _hero_sprite_id() != DEFAULT_HERO_SPRITE_ID
 
 
+static func _new_creature() -> RefCounted:
+	var c = CREATURE.player(100, 100)
+	for attr in ["strength", "constitution", "intelligence", "luck", "charm"]:
+		c.set(attr, 3)
+	return c
+
+
+func _init() -> void:
+	creature.host = self
+	creature.health_changed.connect(func(v): health_changed.emit(v))
+	creature.block_changed.connect(func(v): block_changed.emit(v))
+	creature.energy_changed.connect(func(v): energy_changed.emit(v))
+	creature.stats_changed.connect(func(): stats_changed.emit())
+	creature.status_changed.connect(func(): status_changed.emit())
+	creature.pulse_requested.connect(
+		func(kind: String):
+			if kind == "block":
+				play_block_pulse()
+	)
+
+
 func _ready() -> void:
 	# Tag the player so per-entity combat systems can distinguish the hero from enemies.
 	add_to_group("player_entity")
@@ -148,6 +187,7 @@ func _build_visual() -> void:
 	_hud.bar_width = PLAYER_HUD_SIZE.x
 	_hud.bar_height = PLAYER_HUD_SIZE.y
 	_hud.position = Vector2(-float(PLAYER_HUD_SIZE.x) * 0.5, 28)
+	_hud.bind(creature)
 	add_child(_hud)
 
 
@@ -354,7 +394,7 @@ func notify_stats_changed() -> void:
 
 
 func notify_status_changed() -> void:
-	status_changed.emit()
+	creature.notify_status_changed()
 
 
 func take_damage(
@@ -365,17 +405,12 @@ func take_damage(
 
 	var dmg_after_block := maxi(0, amount - block)
 	var blocked_amount := mini(block, amount)
-	var remaining_block := maxi(0, block - amount)
 	var remaining_health := maxi(0, health - dmg_after_block)
 	var will_kill := remaining_health <= 0 and health > 0
 	var apply_health_change := func() -> void:
-		self.block = remaining_block
-		self.health = remaining_health
-		if self.health <= 0:
+		self.creature.apply_damage(amount)
+		if self.creature.health <= 0:
 			self._death_resolving = true
-		self.block_changed.emit(self.block)
-		self.health_changed.emit(self.health)
-		self._refresh_hud()
 
 	if silent:
 		apply_health_change.call()
@@ -443,12 +478,8 @@ func _hit_flash() -> void:
 
 
 func heal(amount: int) -> void:
-	var before: int = health
-	health = min(health + amount, max_health)
-	if health > before:
+	if creature.heal(amount) > 0:
 		AudioManager.play_sfx("heal")
-	health_changed.emit(health)
-	_refresh_hud()
 
 
 ## Direct HP loss used by cards, events, and curses. Shows a floating damage
@@ -457,9 +488,7 @@ func lose_hp(amount: int) -> void:
 	if amount <= 0 or _death_resolving:
 		return
 	var will_kill := health > 0 and health - amount <= 0
-	health = max(0, health - amount)
-	health_changed.emit(health)
-	_refresh_hud()
+	creature.lose_hp(amount)
 	_hit_flash()
 	var scene := get_tree().current_scene
 	if scene:
@@ -478,9 +507,7 @@ func _settle_death_once() -> void:
 
 
 func add_block(amount: int) -> void:
-	block += amount
-	block_changed.emit(block)
-	_refresh_hud()
+	creature.add_block(amount)
 
 
 ## Quick scale pulse when gaining block — mirrors the enemy's block-action pulse
@@ -498,56 +525,24 @@ func play_block_pulse() -> void:
 
 
 func start_turn() -> void:
-	status_system.on_turn_start(self)
-	if health <= 0:
-		return
-	energy = max_energy
-	block = 0
-	energy_changed.emit(energy)
-	block_changed.emit(block)
-	# Power upkeep that must run AFTER the block reset, else it gets wiped
-	# (Metallicize).
-	status_system.after_owner_block_reset(self)
-	_refresh_hud()
+	creature.start_turn()
 
 
 func end_turn() -> void:
-	status_system.on_turn_end(self)
-	# Temporary Strength (kinetic_hammer) fades at end of turn.
-	if _temp_strength > 0:
-		strength = max(0, strength - _temp_strength)
-		_temp_strength = 0
-		notify_stats_changed()
-	_refresh_hud()
-
-
-## Temporary Strength granted this turn (relic gain_temp_strength). Removed in
-## end_turn so the buff lasts a single turn.
-var _temp_strength: int = 0
+	creature.end_turn()
 
 
 ## Grant Strength that lasts only until end of turn (kinetic_hammer).
 func gain_temp_strength(n: int) -> void:
-	if n <= 0:
-		return
-	strength += n
-	_temp_strength += n
-	notify_stats_changed()
+	creature.gain_temp_strength(n)
 
 
 func gain_energy(amount: int) -> void:
-	if amount <= 0:
-		return
-	energy += amount
-	energy_changed.emit(energy)
+	creature.gain_energy(amount)
 
 
 func pay_energy(cost: int) -> bool:
-	if energy >= cost:
-		energy -= cost
-		energy_changed.emit(energy)
-		return true
-	return false
+	return creature.pay_energy(cost)
 
 
 func _refresh_hud() -> void:
@@ -556,7 +551,7 @@ func _refresh_hud() -> void:
 
 
 func add_status(status_name: String, stacks: int) -> void:
-	status_system.add_status(status_name, stacks, self)
+	creature.add_status(status_name, stacks)
 
 
 func get_status_stacks(status_name: String) -> int:

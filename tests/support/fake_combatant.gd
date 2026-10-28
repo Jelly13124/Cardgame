@@ -4,7 +4,7 @@ extends Node2D
 ## at 0, `damage_received` sums what reached take_damage (before Block) and
 ## `hp_lost` what reached HP.
 
-const STATUS_SYSTEM = preload("uid://cq4eulp4ci8is")  # res://battle_scene/status_effect_system.gd
+const STATUS_SYSTEM = preload("uid://cq4eulp4ci8is")  # res://core/combat/status_effects.gd
 
 var status_system = STATUS_SYSTEM.new()
 var health := 999

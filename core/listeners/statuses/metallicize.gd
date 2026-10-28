@@ -4,7 +4,7 @@ extends "res://core/listeners/status_listener.gd"
 ## Block.
 
 
-func after_owner_block_reset(entity: Node) -> void:
+func after_owner_block_reset(entity: Object) -> void:
 	var n := amount()
 	if n > 0 and entity.has_method("add_block"):
 		entity.add_block(n)
