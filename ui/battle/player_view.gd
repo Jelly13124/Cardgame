@@ -60,11 +60,11 @@ var charm: int:
 		creature.charm = value
 
 
-const HUD_SCRIPT = preload("uid://dqn0nfitycf2d")  # res://battle_scene/ui/character_hud.gd
+const HUD_SCRIPT = preload("uid://dqn0nfitycf2d")  # res://ui/battle/character_hud.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const CREATURE = preload("uid://kab2636ev63e")  # res://core/combat/creature.gd
-const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://battle_scene/combat_fx.gd
-const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://battle_scene/combat_feedback_controller.gd
+const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://ui/battle/combat_fx.gd
+const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://ui/battle/combat_feedback_controller.gd
 const HERO_DIR = "res://battle_scene/assets/images/heroes/"
 const DEFAULT_HERO_SPRITE_ID = "cowboy_bill"  # fallback when no hero data loaded  # bare-ok: sprite id
 const TARGET_DISPLAY_HEIGHT := 256.0

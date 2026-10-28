@@ -1,7 +1,7 @@
 extends Node
 
 const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://run_system/ui/run_top_bar.gd
-const ENEMY_ENTITY = preload("uid://qtp7jvjqfbou")  # res://battle_scene/enemy_entity.gd
+const ENEMY_ENTITY = preload("uid://qtp7jvjqfbou")  # res://ui/battle/enemy_view.gd
 
 var failures: PackedStringArray = []
 
@@ -178,7 +178,7 @@ func _test_map_background() -> void:
 
 
 func _test_battle_energy_and_end_turn() -> void:
-	var packed := load("uid://dnhj5pp3c1v2l") as PackedScene  # res://battle_scene/battle_scene.tscn
+	var packed := load("uid://dnhj5pp3c1v2l") as PackedScene  # res://ui/battle/battle_screen.tscn
 	var battle := packed.instantiate()
 	add_child(battle)
 	await get_tree().process_frame

@@ -4,7 +4,7 @@ extends ColorRect
 ## silhouette, so the glow hugs the card shape. Shown on every hand card that
 ## can be played right now; the width eases in/out instead of popping.
 
-const SHADER = preload("res://battle_scene/ui/card_highlight.gdshader")
+const SHADER = preload("res://ui/battle/card_highlight.gdshader")
 const COLOR := Color(0.2, 0.92, 1.0, 0.98)
 ## Outline width in pixels when fully shown.
 const WIDTH := 9.0

@@ -4,8 +4,8 @@ const TEST_SAVE_ROOT = preload("uid://c5pfll7nw68un")  # res://tests/support/tes
 
 const META_PROGRESS_PATH := "res://run_system/core/meta_progress.gd"  # path-ok: reads source text
 const RUN_MANAGER_PATH := "res://run_system/core/run_manager.gd"  # path-ok: reads source text
-const TUTORIAL_PATH := "res://battle_scene/ui/tutorial_tips.gd"  # path-ok: reads source text
-const BATTLE_PATH := "res://battle_scene/battle_scene.gd"  # path-ok: reads source text
+const TUTORIAL_PATH := "res://ui/battle/tutorial_tips.gd"  # path-ok: reads source text
+const BATTLE_PATH := "res://ui/battle/battle_screen.gd"  # path-ok: reads source text
 const RESULT_PATH := "res://run_system/ui/result_screen.gd"  # path-ok: reads source text
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const EQUIPMENT_SET_SCRIPT = preload("uid://b3s8io84xovx7")  # res://core/listeners/equipment_set.gd

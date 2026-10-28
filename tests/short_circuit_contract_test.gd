@@ -4,7 +4,7 @@ const STATUS_SYSTEM = preload("uid://cq4eulp4ci8is")  # res://core/combat/status
 const FAKE_BATTLE = preload("uid://j25pi73kmisn")  # res://tests/support/fake_battle.gd
 const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://core/combat/combat_effects.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
-const PLAY_CARD = preload("uid://d4f71g73780ld")  # res://battle_scene/play_card.gd
+const PLAY_CARD = preload("uid://d4f71g73780ld")  # res://ui/battle/play_card.gd
 
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 

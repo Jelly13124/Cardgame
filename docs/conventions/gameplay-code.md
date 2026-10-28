@@ -23,7 +23,7 @@ Anything that should feel the same at 60 fps and 144 fps must use `delta` from `
 ### 3. Reference custom classes via `preload`, not global `class_name`
 ```gdscript
 # ✅ Correct
-const ENEMY_ENTITY_SCRIPT = preload("uid://qtp7jvjqfbou")  # res://battle_scene/enemy_entity.gd
+const ENEMY_ENTITY_SCRIPT = preload("uid://qtp7jvjqfbou")  # res://ui/battle/enemy_view.gd
 var enemy = ENEMY_ENTITY_SCRIPT.create(id)
 
 # ❌ Wrong — fails on cold editor scan

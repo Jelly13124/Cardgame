@@ -1,6 +1,6 @@
 extends Node
 
-const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
+const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
 const OUTPUT_PATH = "res://tmp/card-ui-battle-runtime-imagegen-v3.png"
 const HOVER_OUTPUT_PATH = "res://tmp/card-ui-battle-hover-runtime-imagegen-v3.png"
 

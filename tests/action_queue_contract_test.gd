@@ -5,7 +5,7 @@ extends Node
 ## ending the combat drops what has not started.
 
 const ACTION_QUEUE = preload("uid://bseuowesln3j7")  # res://core/combat/action_queue.gd
-const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
+const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
 
 
 class EventLog:

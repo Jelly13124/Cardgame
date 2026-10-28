@@ -3,7 +3,7 @@ extends Node
 ## Regression: killing every enemy ends the battle (victory is declared) —
 ## by played cards, and by the debug right-click kill.
 
-const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
+const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
 
 var failures: PackedStringArray = []
 

@@ -4,7 +4,7 @@ extends Node
 ## objective exactly once, and no flow code reports bounty strings any more.
 
 const BOUNTY_TRACKER = preload("uid://dufyeowl6elem")  # res://core/listeners/bounty_tracker.gd
-const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://battle_scene/data_validator.gd
+const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://core/content/data_validator.gd
 
 var failures: PackedStringArray = []
 

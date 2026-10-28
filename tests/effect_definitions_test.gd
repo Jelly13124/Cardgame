@@ -5,8 +5,8 @@ extends Node
 ## default to pick it up.
 
 const EFFECT_CATALOG = preload("uid://880atc7mnnie")  # res://core/effects/effect_catalog.gd
-const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://battle_scene/data_validator.gd
-const PLAY_CARD = preload("uid://d4f71g73780ld")  # res://battle_scene/play_card.gd
+const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://core/content/data_validator.gd
+const PLAY_CARD = preload("uid://d4f71g73780ld")  # res://ui/battle/play_card.gd
 const CARD_UPGRADE = preload("uid://d2e2bfj6oa3yp")  # res://run_system/core/card_upgrade.gd
 
 ## The card effect types the validator accepted before phase 4.

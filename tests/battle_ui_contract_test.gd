@@ -4,8 +4,8 @@ extends Node
 ## playable outline, targeting arrow, target reticle, play-queue zone and the
 ## ways a played card leaves. Presentation only — rules are covered elsewhere.
 
-const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
-const CARD_ANIMATOR = preload("uid://co0n3ou8saknv")  # res://battle_scene/card_animator.gd
+const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
+const CARD_ANIMATOR = preload("uid://co0n3ou8saknv")  # res://ui/battle/card_animator.gd
 
 var failures: PackedStringArray = []
 

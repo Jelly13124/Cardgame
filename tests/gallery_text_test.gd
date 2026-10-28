@@ -4,7 +4,7 @@ extends Node
 ## (one description generator), not the hand-written CARD_<id>_DESC rows.
 
 const HOME = preload("uid://c6bvuu6kbx0pq")  # res://run_system/ui/home_base_scene.tscn
-const CARD_DESCRIPTION = preload("uid://b4fkwjpel7452")  # res://battle_scene/card_description.gd
+const CARD_DESCRIPTION = preload("uid://b4fkwjpel7452")  # res://core/content/card_description.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 
 var failures: PackedStringArray = []

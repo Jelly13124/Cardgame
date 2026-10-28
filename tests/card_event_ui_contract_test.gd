@@ -35,7 +35,7 @@ func _run() -> void:
 		"shop mounts the same shared top bar on the persistent HUD layer",
 	)
 
-	var battle_scene: Node = load("uid://dnhj5pp3c1v2l").instantiate()  # res://battle_scene/battle_scene.tscn
+	var battle_scene: Node = load("uid://dnhj5pp3c1v2l").instantiate()  # res://ui/battle/battle_screen.tscn
 	var battle_top_layer := battle_scene.get_node_or_null("TopBarLayer") as CanvasLayer
 	_expect(battle_top_layer != null, "battle exposes the persistent top-bar layer")
 	if battle_top_layer != null:

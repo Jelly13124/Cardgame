@@ -47,7 +47,7 @@ func _ready() -> void:
 	draft_overlay.visible = false
 	T.fade_in(self)  # soft entrance instead of a hard pop-in
 
-	_card_factory = preload("uid://diap3gdfbqvjv").instantiate()  # res://battle_scene/my_card_factory.tscn
+	_card_factory = preload("uid://diap3gdfbqvjv").instantiate()  # res://ui/battle/card_framework_adapters/my_card_factory.tscn
 	add_child(_card_factory)
 	# play_card.tscn is intrinsically 208x286; match it so the bg lines up with the
 	# (208-laid-out) frame/art/labels. Draft cards are scaled back down below to

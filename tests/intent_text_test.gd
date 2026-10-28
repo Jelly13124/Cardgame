@@ -3,7 +3,7 @@ extends Node
 ## Enemy actions carry no hand-written `label`: the interrupt message uses the
 ## generated intent text (numbers from the action itself).
 
-const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
+const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const ENEMY_TURN = preload("uid://d4np8yrt1ml3v")  # res://core/combat/enemy_turn.gd
 

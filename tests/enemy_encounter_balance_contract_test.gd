@@ -1,7 +1,7 @@
 extends Node
 
-const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://battle_scene/data_validator.gd
-const ENEMY_ENTITY_SCRIPT = preload("uid://qtp7jvjqfbou")  # res://battle_scene/enemy_entity.gd
+const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://core/content/data_validator.gd
+const ENEMY_ENTITY_SCRIPT = preload("uid://qtp7jvjqfbou")  # res://ui/battle/enemy_view.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const ALLOWED_TIERS := ["minion", "normal", "heavy", "elite", "boss"]
 const EXPECTED_TIERS := {

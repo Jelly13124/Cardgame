@@ -4,7 +4,7 @@ extends Node
 ## with 3 Strength, 2 Loaded and Weak reads 4 (floor((3 + 3 + 2) × 0.5)) —
 ## the same number the targeting preview and the hit use.
 
-const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
+const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
 const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://core/combat/combat_effects.gd
 
 var failures: PackedStringArray = []

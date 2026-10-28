@@ -5,7 +5,7 @@ Usage (from the project root):
     python tools/check_layers.py --skip-refs
 
 Rules:
-  L1  core/ must not reference UI paths (ui/, run_system/ui/, battle_scene/ui/),
+  L1  core/ must not reference UI paths (ui/, run_system/ui/),
       whether written as res:// or as a uid:// that resolves to one.
   L2  core/ must not use the scene tree (get_tree(), current_scene, get_node(,
       get_node_or_null(, $Node).
@@ -27,7 +27,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import godot_refs  # noqa: E402
 
-UI_PATH = re.compile(r'res://(?:ui|run_system/ui|battle_scene/ui)/')
+UI_PATH = re.compile(r'res://(?:ui|run_system/ui)/')
 UID_LITERAL = re.compile(r'uid://[a-z0-9]+')
 SCENE_TREE = re.compile(
     r'\bget_tree\(\)|\bcurrent_scene\b|\bget_node(?:_or_null)?\(|(?<![\w"\'])\$[A-Za-z_"%]'

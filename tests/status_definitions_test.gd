@@ -4,7 +4,7 @@ extends Node
 ## in per-creature listener instances created when the status gains stacks.
 
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
-const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://battle_scene/data_validator.gd
+const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://core/content/data_validator.gd
 const STATUS_SYSTEM = preload("uid://cq4eulp4ci8is")  # res://core/combat/status_effects.gd
 
 var failures: PackedStringArray = []

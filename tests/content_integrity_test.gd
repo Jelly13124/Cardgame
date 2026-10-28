@@ -9,8 +9,8 @@ extends Node
 ## are rule/UI keys and are skipped.
 
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
-const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://battle_scene/data_validator.gd
-const CARD_FACTORY_SCENE = preload("uid://diap3gdfbqvjv")  # res://battle_scene/my_card_factory.tscn
+const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://core/content/data_validator.gd
+const CARD_FACTORY_SCENE = preload("uid://diap3gdfbqvjv")  # res://ui/battle/card_framework_adapters/my_card_factory.tscn
 
 const ID_CATEGORIES := [
 	"card", "monster", "relic", "equipment", "equipment_set", "event", "tool",

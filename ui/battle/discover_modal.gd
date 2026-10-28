@@ -3,7 +3,7 @@
 ## No class_name (project convention) — owner reaches it via preload.
 extends Control
 
-const PLAY_CARD := preload("uid://d7orfw8kd2tc")  # res://battle_scene/play_card.tscn
+const PLAY_CARD := preload("uid://d7orfw8kd2tc")  # res://ui/battle/play_card.tscn
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 
 signal discovered(card_id: String)

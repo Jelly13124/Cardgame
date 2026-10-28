@@ -1,12 +1,12 @@
 extends Node
 
-const CONTROLLER_PATH := "uid://po237gnjpbo0"  # res://battle_scene/combat_feedback_controller.gd
-const BATTLE_SCENE_PATH := "res://battle_scene/battle_scene.gd"  # path-ok: reads source text
+const CONTROLLER_PATH := "uid://po237gnjpbo0"  # res://ui/battle/combat_feedback_controller.gd
+const BATTLE_SCENE_PATH := "res://ui/battle/battle_screen.gd"  # path-ok: reads source text
 const COMBAT_ENGINE_PATH := "res://core/combat/combat_manager.gd"  # path-ok: reads source text
 const COMBAT_EFFECTS_PATH := "res://core/combat/combat_effects.gd"  # path-ok: reads source text
 const COMBAT_COMMANDS_PATH := "res://core/combat/combat_commands.gd"  # path-ok: reads source text
-const ENEMY_ENTITY_PATH := "res://battle_scene/enemy_entity.gd"  # path-ok: reads source text
-const PLAYER_PATH := "res://battle_scene/player.gd"  # path-ok: reads source text
+const ENEMY_ENTITY_PATH := "res://ui/battle/enemy_view.gd"  # path-ok: reads source text
+const PLAYER_PATH := "res://ui/battle/player_view.gd"  # path-ok: reads source text
 const ENEMY_AI_PATH := "res://core/combat/enemy_turn.gd"  # path-ok: reads source text
 const EXPECTED_PROFILES := ["blocked", "heavy", "kill", "normal"]
 

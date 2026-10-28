@@ -7,10 +7,10 @@ extends Node
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const FILES := [
-	"res://battle_scene/battle_scene.gd",  # path-ok: read as source text
+	"res://ui/battle/battle_screen.gd",  # path-ok: read as source text
 	"res://core/combat/combat_manager.gd",  # path-ok: read as source text
 	"res://core/combat/enemy_turn.gd",  # path-ok: read as source text
-	"res://battle_scene/player.gd",  # path-ok: read as source text
+	"res://ui/battle/player_view.gd",  # path-ok: read as source text
 ]
 const EXEMPT := ["bullet"]
 

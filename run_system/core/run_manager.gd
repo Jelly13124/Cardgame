@@ -375,7 +375,7 @@ func scale_enemy_damage(amount: int, enemy_id: String) -> int:
 	return int(round(amount * act_dmg_mult()))
 
 
-const BATTLE_SCENE: String = "uid://dnhj5pp3c1v2l"  # res://battle_scene/battle_scene.tscn
+const BATTLE_SCENE: String = "uid://dnhj5pp3c1v2l"  # res://ui/battle/battle_screen.tscn
 const MAP_SCENE: String = "uid://d3x5b8wvg2q"  # res://run_system/ui/map_scene.tscn
 const FIRST_MERCHANT_FLOOR_INDEX: int = 5  # Human-facing layer 6.
 const GUARANTEED_TREASURE_FLOOR_INDEX: int = 6  # Human-facing layer 7.
@@ -396,7 +396,7 @@ var current_node_id: String = ""  ## "" means player hasn't chosen a floor-0 nod
 var visited_node_ids: Array[String] = []
 var _node_index: Dictionary = {}
 
-const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://battle_scene/data_validator.gd
+const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://core/content/data_validator.gd
 const EFFECT_REGISTRY = preload("uid://7gab4te60cto")  # res://core/effects/effect_registry.gd
 const EFFECT_CONTEXT = preload("uid://bx2g3askncfr6")  # res://core/effects/effect_context.gd
 const RUN_EFFECTS = preload("uid://divb5pd0mx4cc")  # res://core/effects/run_effects.gd

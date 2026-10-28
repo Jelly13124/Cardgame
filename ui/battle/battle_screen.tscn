@@ -1,20 +1,20 @@
 [gd_scene format=3 uid="uid://dnhj5pp3c1v2l"]
 
-[ext_resource type="Script" path="res://battle_scene/battle_scene.gd" id="1_2r7vq"]
+[ext_resource type="Script" path="res://ui/battle/battle_screen.gd" id="1_2r7vq"]
 [ext_resource type="PackedScene" path="res://addons/card-framework/card_manager.tscn" id="1_rurpr"]
 
 [ext_resource type="PackedScene" path="res://addons/card-framework/pile.tscn" id="2_xkfcc"]
-[ext_resource type="PackedScene" path="res://battle_scene/my_card_factory.tscn" id="3_l4bd6"]
+[ext_resource type="PackedScene" path="res://ui/battle/card_framework_adapters/my_card_factory.tscn" id="3_l4bd6"]
 [ext_resource type="Script" path="res://addons/card-framework/card_manager.gd" id="3_urm3r"]
 [ext_resource type="PackedScene" path="res://addons/card-framework/hand.tscn" id="3_xp5g3"]
-[ext_resource type="PackedScene" path="res://battle_scene/player.tscn" id="7_player"]
+[ext_resource type="PackedScene" path="res://ui/battle/player_view.tscn" id="7_player"]
 [ext_resource type="Script" path="res://addons/card-framework/hand.gd" id="10_wrush"]
-[ext_resource type="Script" path="res://battle_scene/no_reorder_hand.gd" id="11_noreorder"]
+[ext_resource type="Script" path="res://ui/battle/card_framework_adapters/no_reorder_hand.gd" id="11_noreorder"]
 [ext_resource type="Script" path="res://addons/card-framework/pile.gd" id="12_ixui7"]
 
-[ext_resource type="Script" path="res://battle_scene/battle_ui_manager.gd" id="19_ui"]
-[ext_resource type="Script" path="res://battle_scene/card_play_zone.gd" id="20_playzone"]
-[ext_resource type="Script" path="res://battle_scene/ui/battle_top_bar.gd" id="21_topbar"]
+[ext_resource type="Script" path="res://ui/battle/battle_ui_manager.gd" id="19_ui"]
+[ext_resource type="Script" path="res://ui/battle/card_framework_adapters/card_play_zone.gd" id="20_playzone"]
+[ext_resource type="Script" path="res://ui/battle/battle_top_bar.gd" id="21_topbar"]
 [ext_resource type="Texture2D" path="res://battle_scene/assets/images/backgrounds/wasteland_battlefield_quiet_v6.png" id="22_bg"]
 
 [sub_resource type="Curve" id="Curve_lsli3"]

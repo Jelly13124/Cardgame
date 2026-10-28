@@ -48,16 +48,16 @@ var _pending_tool_index := -1
 var _pending_tool_id := ""
 var _pending_tool_data: Dictionary = {}
 
-const TARGETING_ARROW_SCRIPT = preload("uid://dq6nkaqdhlsp4")  # res://battle_scene/targeting_arrow.gd
-const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://battle_scene/combat_fx.gd
+const TARGETING_ARROW_SCRIPT = preload("uid://dq6nkaqdhlsp4")  # res://ui/battle/targeting_arrow.gd
+const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://ui/battle/combat_fx.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const COMBAT_MANAGER = preload("uid://dumevejih8ygv")  # res://core/combat/combat_manager.gd
 const BATTLE_PRESENTER = preload("uid://du6lk20qqijeu")  # res://ui/battle/battle_presenter.gd
 const HAND_VIEW = preload("uid://dselhm1i0ycf")  # res://ui/battle/hand_view.gd
-const ENEMY_ENTITY = preload("uid://qtp7jvjqfbou")  # res://battle_scene/enemy_entity.gd
-const CARD_ANIMATOR_SCRIPT = preload("uid://co0n3ou8saknv")  # res://battle_scene/card_animator.gd
-const DISCOVER_MODAL = preload("uid://keeeggdto42o")  # res://battle_scene/discover_modal.gd
-const TOOL_USE_CONFIRM = preload("uid://dihe3sjaxh16")  # res://battle_scene/ui/tool_use_confirm.gd
+const ENEMY_ENTITY = preload("uid://qtp7jvjqfbou")  # res://ui/battle/enemy_view.gd
+const CARD_ANIMATOR_SCRIPT = preload("uid://co0n3ou8saknv")  # res://ui/battle/card_animator.gd
+const DISCOVER_MODAL = preload("uid://keeeggdto42o")  # res://ui/battle/discover_modal.gd
+const TOOL_USE_CONFIRM = preload("uid://dihe3sjaxh16")  # res://ui/battle/tool_use_confirm.gd
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 # NOTE: map_scene + home_base_scene are loaded lazily at the call site
 # (not preloaded) because doing so would create a cyclic dep
@@ -67,7 +67,7 @@ const MAP_SCENE_PATH := "uid://d3x5b8wvg2q"  # res://run_system/ui/map_scene.tsc
 const LOOT_REWARD_SCENE = preload("uid://csl8exl41do23")  # res://run_system/ui/loot_reward.tscn
 const EXTRACT_CHOICE_MODAL_SCRIPT = preload("uid://dl8ofvd880xht")  # res://run_system/ui/extract_choice_modal.gd
 const RESULT_SCREEN_SCRIPT = preload("uid://bxh1x1hy6fylv")  # res://run_system/ui/result_screen.gd
-const TUTORIAL_TIPS_SCRIPT = preload("uid://cc37k40gsd5x")  # res://battle_scene/ui/tutorial_tips.gd
+const TUTORIAL_TIPS_SCRIPT = preload("uid://cc37k40gsd5x")  # res://ui/battle/tutorial_tips.gd
 const MAIN_MENU_PATH := "uid://dnjlmt1repvjw"  # res://run_system/ui/main_menu.tscn
 
 const BOSS_VICTORY_SCRAP := 130

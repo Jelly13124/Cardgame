@@ -7,7 +7,7 @@ extends Node
 ##   res://tmp/battle-ui-burn.png   — an exhausted card burning
 ## Run with APPDATA / XDG_DATA_HOME pointed at a temp directory.
 
-const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
+const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
 const AIM_PATH = "res://tmp/battle-ui-aim.png"
 const LEAVE_PATH = "res://tmp/battle-ui-leave.png"
 const BURN_PATH = "res://tmp/battle-ui-burn.png"

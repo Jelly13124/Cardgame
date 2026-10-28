@@ -1,8 +1,8 @@
 extends Node
 
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
-const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
-const FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://battle_scene/combat_feedback_controller.gd
+const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
+const FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://ui/battle/combat_feedback_controller.gd
 const MONSTERS = preload("uid://dvu3etytjqum8")  # res://core/combat/monsters.gd
 
 static var DEBUG_SOURCE = COMBAT_SOURCE.make("debug", "player", null)

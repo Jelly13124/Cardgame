@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dg8iry2fph8s"]
 
-[ext_resource type="Script" path="res://battle_scene/player.gd" id="1_playg"]
+[ext_resource type="Script" path="res://ui/battle/player_view.gd" id="1_playg"]
 
 
 [node name="Player" type="Node2D"]

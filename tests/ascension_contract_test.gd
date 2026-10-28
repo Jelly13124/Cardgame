@@ -5,8 +5,8 @@ extends Node
 ## thresholds, and the A3 first-turn energy penalty is a combat listener.
 
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
-const ENEMY_ENTITY = preload("uid://qtp7jvjqfbou")  # res://battle_scene/enemy_entity.gd
-const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
+const ENEMY_ENTITY = preload("uid://qtp7jvjqfbou")  # res://ui/battle/enemy_view.gd
+const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
 
 var failures: PackedStringArray = []
 

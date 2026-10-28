@@ -4,20 +4,20 @@
 extends Node2D
 class_name EnemyEntity
 
-const HUD_SCRIPT = preload("uid://dqn0nfitycf2d")  # res://battle_scene/ui/character_hud.gd
+const HUD_SCRIPT = preload("uid://dqn0nfitycf2d")  # res://ui/battle/character_hud.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://core/combat/status_effects.gd
 const MONSTERS = preload("uid://dvu3etytjqum8")  # res://core/combat/monsters.gd
 const ENEMY_TURN = preload("uid://d4np8yrt1ml3v")  # res://core/combat/enemy_turn.gd
-const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://battle_scene/combat_fx.gd
+const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://ui/battle/combat_fx.gd
 const MONSTER_MOVES = preload("uid://bqwa1txur3b52")  # res://core/combat/monster_moves.gd
 const INTENTS = preload("uid://crt5cmvargkpn")  # res://core/combat/intents.gd
 const CREATURE = preload("uid://kab2636ev63e")  # res://core/combat/creature.gd
-const SELECTION_RETICLE = preload("uid://c6dicaops28n6")  # res://battle_scene/ui/selection_reticle.gd
+const SELECTION_RETICLE = preload("uid://c6dicaops28n6")  # res://ui/battle/selection_reticle.gd
 const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://core/combat/combat_effects.gd
-const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://battle_scene/combat_feedback_controller.gd
+const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://ui/battle/combat_feedback_controller.gd
 
 # Intent badge icon textures — preloaded once instead of `load()`-ing on every
 # intent refresh (which can fire frequently as enemy / player status changes).

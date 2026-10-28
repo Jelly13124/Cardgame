@@ -32,9 +32,9 @@ Code layering, the target directory structure and the uid reference rule are in
 ## 🃏 Card System (UI & Data)
 
 ### 🎨 Visuals & UI Adjustment
-*   **Main Card Scene**: `battle_scene/play_card.tscn`
+*   **Main Card Scene**: `ui/battle/play_card.tscn`
     *   *Where to adjust nodes, banners, font sizes, and container positions.*
-*   **Card Logic & Colors**: `battle_scene/play_card.gd`
+*   **Card Logic & Colors**: `ui/battle/play_card.gd`
     *   *Where the live math is calculated and Rarity Colors (Silver/Blue/Golds) are defined in `RARITY_COLORS`.*
 *   **Shape & Effects**: `battle_scene/card_art_mask.gdshader`
     *   *The shader that handles the "Angled Bottom" shape for Attack cards.*
@@ -50,19 +50,19 @@ Code layering, the target directory structure and the uid reference rule are in
 ## ⚔️ Battle Scene (Combat & Layout)
 
 ### 🏗️ Battlefield UI
-*   **Main Scene**: `battle_scene/battle_scene.tscn`
+*   **Main Scene**: `ui/battle/battle_screen.tscn`
     *   *The root scene where nodes for the Player, Enemies, and Deck are positioned.*
-*   **Battle Manager**: `battle_scene/battle_scene.gd`
+*   **Battle Screen (room)**: `ui/battle/battle_screen.gd` — views, input, targeting, HUD and post-combat routing; animations through `ui/battle/battle_presenter.gd`, card nodes mirrored from the piles by `ui/battle/hand_view.gd`, creature views `ui/battle/{player_view,enemy_view}.gd`
     *   *Handles high-level battle transitions and UI refreshes when stats change.*
-*   **Targeting**: `battle_scene/targeting_arrow.gd`
+*   **Targeting**: `ui/battle/targeting_arrow.gd`
     *   *Logic for the "Zap" arrow when playing Attack cards.*
 
 ### ⚙️ Combat Logic
-*   **Core Engine**: `battle_scene/combat_engine.gd` (card-play orchestration) + `core/combat/` (value pipeline, hooks, rule listeners, action queue) + `core/effects/` (effect registry, run-context effects) + `battle_scene/combat/` (commands, combat effect handlers, service wiring)
+*   **Core Engine** (`core/combat/`, no scene tree): `combat_manager.gd` (STS2 CombatManager: setup, turns, card play queue, outcome), `combat_state.gd`, `creature.gd`, `monster_moves.gd`, `intents.gd`, `card_instance.gd`, `piles.gd`, `enemy_turn.gd`, `combat_commands.gd`, `combat_effects.gd`, `combat_presenter.gd` (null presenter: a whole fight runs headless, see `tests/combat_simulation_test.gd`), plus the value pipeline, hooks and rule listeners; `core/effects/` (effect registry and catalog, run-context effects)
     *   *The brain of the game. It resolves all card effects (damage, block, buffs) triggered by JSON data.*
-*   **Status Effects**: `battle_scene/status_effect_system.gd`
+*   **Status Effects**: `core/combat/status_effects.gd` (badges: `ui/battle/status_badges_view.gd`)
     *   *System for managing Short Circuit, Burn, Weak, Vulnerable, Stun, and persistent player powers.*
-*   **Discover**: `battle_scene/discover_modal.gd` (full-screen 3-choose-1 popup) + `run_system/core/discover_pool.gd` (rolls candidates by card type / theme tag). Driven by the `discover` effect (`battle_scene/combat/combat_effects.gd`); the picked card enters the hand for this combat only (optional `free` = 0-cost via a `cost_override` meta). Triggered by the 3 discover **tools** (`blood_kit`, displayed as Circuit Kit; `munitions_crate`; `field_kit`) — the demo discover *cards* were removed 2026-07-01, so discover is tool-only. Candidates suppress the "playable" glow and drive their keyword tooltip from the overlay button.
+*   **Discover**: `ui/battle/discover_modal.gd` (full-screen 3-choose-1 popup) + `run_system/core/discover_pool.gd` (rolls candidates by card type / theme tag). Driven by the `discover` effect (`core/combat/combat_effects.gd`); the picked card enters the hand for this combat only (optional `free` = 0-cost via the card instance's `cost_override`). Triggered by the 3 discover **tools** (`blood_kit`, displayed as Circuit Kit; `munitions_crate`; `field_kit`) — the demo discover *cards* were removed 2026-07-01, so discover is tool-only. Candidates suppress the "playable" glow and drive their keyword tooltip from the overlay button.
 
 ---
 
@@ -70,7 +70,7 @@ Code layering, the target directory structure and the uid reference rule are in
 
 ### 💰 Loot & Rewards
 *   **Reward Screen**: `run_system/ui/loot_reward.gd`
-    *   *Loot by node type: normal = gold + 3-choose-1 card draft + Luck-scaled tool + Luck-scaled common equipment; elite = card draft + Luck-scaled uncommon equipment; boss reward handled in `battle_scene._victory` (guaranteed rare equipment). After PROCEED it spends queued level-up attribute picks (`pending_attr_points`, pick 1 of 3 attributes).*
+    *   *Loot by node type: normal = gold + 3-choose-1 card draft + Luck-scaled tool + Luck-scaled common equipment; elite = card draft + Luck-scaled uncommon equipment; boss reward handled in `battle_screen._victory` (guaranteed rare equipment). After PROCEED it spends queued level-up attribute picks (`pending_attr_points`, pick 1 of 3 attributes).*
 *   **Card Factory**: `addons/card-framework/json_card_factory.gd`
     *   *Loads `content/cards/{card_id}.json` and returns Card nodes.*
 
@@ -106,10 +106,10 @@ Code layering, the target directory structure and the uid reference rule are in
 *   **UI-independent autoloads**: `autoload/` — `Settings`, `AudioManager`, `Tooltip`, `SceneTransition`.
 *   **Persistent State**: `run_system/core/meta_progress.gd` (autoload, owns `user://slot_<n>/meta.json` — 3 save slots; imports the pre-slot global `user://meta.json` into slot 1 once) — **two currencies** (**Caps / Scrap**) + `buildings{}` + `BUILDING_DEFS` + pure-storage `stash` + the owned base backpack/slots serialized as `base_loadout` / `base_equipped`. Storage transfers use `move_stash_to_base_backpack`, `move_base_backpack_to_stash`, and `move_base_slot_to_stash` atomically. Building unlocks/tier-ups spend Scrap.
 *   **Bounty State (in MetaProgress)**: save fields `active_bounties` (held contracts `[{id, progress}]`, max 3) / `bounty_shelf` + `bounty_shelf_date` (today's **outpost** shelf) / `cards_seen`. `bounty_progress_add` settles instantly: Caps/Scrap pay directly, while equipment rolls into the active run backpack (owned base backpack fallback when out of run), never the stash. Signals: `bounties_changed`, `bounty_completed`.
-*   **In-run bounty hooks**: typed run events (`RunManager.enemy_killed`, `combat_won`, `card_played`, `gold_earned`, `card_upgraded`, `run_extracted`) heard by the bounty tracker run listener (`core/listeners/bounty_tracker.gd`) — no-op unless a run is active; emit sites: every card play + elite/boss kill (`battle_scene.gd`; the tracker counts only attacks), any kill (`enemy_entity.gd`), gold entering the backpack (`run_manager.add_gold` — starting gold / save-restores don't route through it), extraction (`run_manager._teardown_run`), card upgrade (`RunManager.upgrade_card`). Objective kinds live in the tracker's `OBJECTIVES`, which the validator uses.
+*   **In-run bounty hooks**: typed run events (`RunManager.enemy_killed`, `combat_won`, `card_played`, `gold_earned`, `card_upgraded`, `run_extracted`) heard by the bounty tracker run listener (`core/listeners/bounty_tracker.gd`) — no-op unless a run is active; emit sites: every card play + elite/boss kill (`ui/battle/battle_screen.gd`; the tracker counts only attacks), any kill (`battle_screen._on_enemy_died`), gold entering the backpack (`run_manager.add_gold` — starting gold / save-restores don't route through it), extraction (`run_manager._teardown_run`), card upgrade (`RunManager.upgrade_card`). Objective kinds live in the tracker's `OBJECTIVES`, which the validator uses.
 *   **Boot Scene**: `run_system/ui/home_base_scene.{gd,tscn}` — 4 buildings use **icon-only circular entry markers** floating over the scene (no name/level plaques) + a unified **bottom HUD bar** (`window/currency_top_bar.gd`, anchored full-width bottom, exposes left/center/right boxes): currency chips left, giant START + difficulty button (A0-A5 picker popup) center, Warehouse / Character / Gallery nav buttons bottom-right (Warehouse opens StashWindow + CharacterWindow side by side; Character toggles CharacterWindow; Gallery opens the card codex overlay). Bottom-left hosts the compact **bounty board** (`_add_bounty_board_panel`): held contracts from `MetaProgress.active_bounties`, full-width progress rails, and the Outpost pickup hint; reward seals and the visible refresh countdown are intentionally omitted. Rows rebuild on `bounties_changed`, and completion toasts listen to `bounty_completed`. The **card gallery** (`_open_card_gallery`, CanvasLayer overlay) shows every player card with a collected counter — locked (never-played) cards render the battle card back. Theme hooks in `wasteland_theme.gd` (`ui_bottom_bar` / `ui_button_brass` / `ui_button_accent` + window/slot styles) use the checked-in `ui_kit/` and `ui_kit_lightline/` assets with programmatic fallbacks. Forge opens draggable windows; Clinic/Market/Outpost open fullscreen screens. Press **i** for the CharacterWindow.
 *   **Building Screens**: `run_system/ui/buildings/{clinic,market,outpost}_screen.gd` are fullscreen **lightline** service pages. Per-building: **market** = tool shelf + refresh (T1) / equipment shelf into the owned base backpack (T2) / **Caps↔Scrap** conversion (T3); **outpost** = free daily bounty shelf (T1) / safe cells (T2) / Caps permanent-upgrade rows (T3). **Forge is a draggable window** (`window/forge_window.gd`) opened beside CharacterWindow: its workbench accepts only `src=carry` base-backpack drags, bulk dismantle is a vertical all/common/uncommon/rare list, and craft/dismantle/reforge/curse never read or mutate the stash.
-*   **Battle hook**: `battle_scene/battle_scene.gd` `_victory()` drops Scrap into the backpack + awards Caps by node type and opens the demo result; `_game_over()` opens defeat settlement, whose action returns to base.
+*   **Battle hook**: `ui/battle/battle_screen.gd` `_victory()` drops Scrap into the backpack + awards Caps by node type and opens the demo result; `_game_over()` opens defeat settlement, whose action returns to base.
 *   **Effect consumers**: Outpost Caps permanent upgrades (starting gold / backpack / rerolls / tool slots + T2 safe cells); Clinic/Market spend Caps; Forge spends Scrap; building unlocks/tiers spend Scrap. Retired hidden effects are migrated out rather than remaining passive.
 
 ---
@@ -141,7 +141,7 @@ All gameplay content is data-driven. Add GDScript only when introducing a new sh
 *   **Heroes**: `content/characters/{hero_id}.json` (`cowboy_bill.json`) — `player.gd` reads `sprite_id` / `tint` / starting stats dynamically from the selected hero's JSON (`RunManager.current_hero_data`), falling back to `cowboy_bill` when none is loaded.
 *   **Random Events**: `content/events/{event_id}.json` (12 events) — content (choices, outcomes) for the "?" map node, surfaced by `run_system/ui/event_modal.gd`. Three are "greed-trap" curse-injection events (`torn_coin_pouch` / `deserter_charm` / `adrenaline_shot`): a boon + an `add_curse` effect. Events are dir-scanned into the pool; localized via `EVENT_<ID>_*` keys in `assets/translations/ui_events.csv`.
 
-All schemas validated at startup by `battle_scene/data_validator.gd`.
+All schemas validated at startup by `core/content/data_validator.gd`.
 
 ---
 

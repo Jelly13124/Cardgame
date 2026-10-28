@@ -5,7 +5,7 @@ extends Node
 ## built once per battle, and once-per-combat effects are spent by real hits
 ## only.
 
-const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
+const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const HOOK_VALUE = preload("uid://npewr2krgrm6")  # res://core/combat/hook_value.gd
 
