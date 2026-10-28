@@ -41,9 +41,8 @@ var status_system = STATUS_EFFECTS.new()
 
 ## Set once HP first reaches 0; `died` has fired.
 var dead: bool = false
-## Transitional: the node fronting this creature, which status listeners see as
-## their owner until the combat manager drives creatures directly.
-var host: Object = null
+## Taken off the field without dying (a boss's adds when the boss falls).
+var removed: bool = false
 
 # ─── Player ───────────────────────────────────────────────────────────────────
 
@@ -83,7 +82,7 @@ func is_player() -> bool:
 
 
 func is_alive() -> bool:
-	return not dead and health > 0
+	return not dead and not removed and health > 0
 
 
 ## Applies a hit of `amount` (already through the damage pipeline): Block
@@ -150,7 +149,7 @@ func set_block(value: int) -> void:
 
 
 func add_status(status_name: String, stacks: int) -> void:
-	status_system.add_status(status_name, stacks, _owner())
+	status_system.add_status(status_name, stacks, self)
 
 
 func get_status_stacks(status_name: String) -> int:
@@ -175,7 +174,7 @@ func play_block_pulse() -> void:
 ## creature then loses its Block (and the player refills energy); powers that
 ## must survive the reset run after it (Metallicize).
 func start_turn() -> void:
-	status_system.on_turn_start(_owner())
+	status_system.on_turn_start(self)
 	if not is_alive():
 		return
 	_breakable_armor_active = false
@@ -184,11 +183,11 @@ func start_turn() -> void:
 		energy_changed.emit(energy)
 	block = 0
 	block_changed.emit(block)
-	status_system.after_owner_block_reset(_owner())
+	status_system.after_owner_block_reset(self)
 
 
 func end_turn() -> void:
-	status_system.on_turn_end(_owner())
+	status_system.on_turn_end(self)
 	if _temp_strength > 0:
 		strength = maxi(0, strength - _temp_strength)
 		_temp_strength = 0
@@ -228,7 +227,7 @@ func arm_breakable_armor(status: String, stacks: int) -> void:
 
 ## Returns true if a stun stack was consumed (the move is skipped/cancelled).
 func consume_stun_if_present() -> bool:
-	return status_system.consume_stun(_owner())
+	return status_system.consume_stun(self)
 
 
 # ─── Polarity ─────────────────────────────────────────────────────────────────
@@ -271,10 +270,6 @@ func is_card_matched(polarity: String) -> bool:
 		harmony_active
 		or (polarity != "" and polarity != "neutral" and polarity == current_polarity)
 	)
-
-
-func _owner() -> Object:
-	return host if host != null and is_instance_valid(host) else self
 
 
 func _die() -> bool:

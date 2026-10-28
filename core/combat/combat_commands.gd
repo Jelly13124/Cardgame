@@ -2,14 +2,17 @@ extends RefCounted
 
 ## The only way combat changes HP, Block and statuses (STS2 *Cmd). Each command
 ## runs its value through combat_hooks (core/combat), applies the result to the
-## creature (which plays the hit feedback) and broadcasts the reactions.
-## Presentation that depends on the effect (notifications, pulses, pacing)
-## stays in the effect handlers.
+## creature (core/combat/creature.gd, synchronously), lets the presenter show it
+## and broadcasts the reactions. Presentation that depends on the effect
+## (notifications, pulses, pacing) stays in the effect handlers.
 
 const VALUE_CALC = preload("uid://tynklfj3vjf5")  # res://core/combat/value_calc.gd
 const VALUE_PROPS = preload("uid://cccfcqt180t4x")  # res://core/combat/value_props.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const DAMAGE_RESULT = preload("uid://g7g4k5jk1gvd")  # res://core/combat/damage_result.gd
+const COMBAT_PRESENTER = preload("uid://d2bnp6o5g3mb6")  # res://core/combat/combat_presenter.gd
+
+static var NULL_PRESENTER = COMBAT_PRESENTER.new()
 
 const FEEDBACK_SOURCE := {
 	"card": "player",
@@ -22,7 +25,7 @@ const FEEDBACK_SOURCE := {
 	"debug": "debug",
 }
 
-var battle: Object = null  # battle scene (is_game_over)
+var battle: Object = null  # combat_manager.gd (is_game_over, player, presenter)
 var hooks = null  # combat_hooks.gd
 
 
@@ -32,10 +35,6 @@ func attach(creature: Object) -> void:
 	var status_system = creature.get("status_system") if creature else null
 	if status_system:
 		status_system.damage_router = _status_damage
-	if "battle" in creature:
-		creature.battle = battle
-	if creature.has_method("update_intent_display"):
-		creature.update_intent_display()
 
 
 func _status_damage(entity: Object, amount: int, status: String) -> void:
@@ -79,20 +78,37 @@ func damage(
 		result.target = target
 		result.amount = amount
 		result.critical = calc.critical
-		var hp_before := int(target.get("health"))
-		var block_before := 0 if (props & VALUE_PROPS.UNBLOCKABLE) else int(target.get("block"))
-		result.blocked = mini(block_before, amount)
-		result.hp_lost = mini(hp_before, amount - result.blocked)
-		result.killed = hp_before > 0 and result.hp_lost >= hp_before
-		result.block_broken = block_before > 0 and amount >= block_before
-		var was_boss: bool = "is_boss" in target and bool(target.get("is_boss"))
-		await target.take_damage(amount, false, _feedback(source, calc))
+		var was_boss: bool = bool(target.get("is_boss"))
+		var feedback := _feedback(source, calc)
+		_apply_hit(target, result, amount, str(feedback["source"]) == "player")
+		await _presenter().hit(target, result, feedback)
 		await hooks.after_damage_given(result)
 		await hooks.after_damage_received(result)
 		results.append(result)
 		if was_boss and result.killed:
 			break
 	return results
+
+
+## A hit that skips the pipeline (debug kill): applied and shown, no reactions.
+func raw_hit(source, target: Object, amount: int, tags: Dictionary) -> void:
+	if not is_alive(target):
+		return
+	var result = DAMAGE_RESULT.new()
+	result.source = source
+	result.target = target
+	result.amount = amount
+	_apply_hit(target, result, amount, false)
+	await _presenter().hit(target, result, tags)
+
+
+func _apply_hit(target: Object, result, amount: int, from_player: bool) -> void:
+	var r: Dictionary = target.apply_damage(amount, from_player)
+	result.blocked = int(r["blocked"])
+	result.hp_lost = int(r["hp_lost"])
+	result.killed = bool(r["killed"])
+	result.block_broken = bool(r["block_broken"])
+	result.armor_broken = bool(r["armor_broken"])
 
 
 ## Block actually gained after the pipeline.
@@ -130,17 +146,22 @@ func lose_hp(source, creature: Object, amount: int) -> int:
 	if amount <= 0 or not is_alive(creature) or not creature.has_method("lose_hp"):
 		return 0
 	var calc = VALUE_CALC.for_damage(source, creature, amount, VALUE_PROPS.UNBLOCKABLE, false)
-	var lost: int = hooks.compute_hp_loss(calc)
-	creature.lose_hp(lost)
+	var lost: int = creature.lose_hp(hooks.compute_hp_loss(calc))
+	if lost > 0:
+		await _presenter().hp_lost(creature, lost)
 	return lost
 
 
 static func is_alive(creature: Object) -> bool:
 	if creature == null or not is_instance_valid(creature):
 		return false
-	if creature is Node and (creature as Node).is_queued_for_deletion():
-		return false
+	if creature.has_method("is_alive"):
+		return creature.is_alive()
 	return not "health" in creature or int(creature.get("health")) > 0
+
+
+func _presenter():
+	return battle.presenter if battle != null and battle.get("presenter") != null else NULL_PRESENTER
 
 
 func _game_over() -> bool:

@@ -240,7 +240,7 @@ static func damage_base(ctx, effect: Dictionary) -> int:
 			return int(_attr(actor, "block") * float(effect.get("mult", 1)))
 		"scale_damage_by_attacks":
 			var count := 0
-			var turns = ctx.services.get("turn_manager") if ctx.services else null
+			var turns = ctx.services.get("state") if ctx.services else null
 			if turns:
 				count = int(
 					turns.attacks_played_this_combat
@@ -340,7 +340,7 @@ static func _damage_effect(ctx, effect: Dictionary) -> void:
 	)
 	if type == "deal_damage_all":
 		if ctx.pace:
-			AudioManager.play_sfx("attack_slash")
+			ctx.services.presenter.sfx("attack_slash")
 		await _pace(ctx, 0.3)
 	elif type != "deal_damage":
 		await _pace(ctx, 0.2)
@@ -374,7 +374,7 @@ static func _gain_block(ctx, effect: Dictionary) -> void:
 static func block_feedback(services: Object, creature: Object, amount: int) -> void:
 	if creature and creature.has_method("play_block_pulse"):
 		creature.play_block_pulse()
-	AudioManager.play_sfx("block_gain")
+	services.presenter.sfx("block_gain")
 	services.show_notification(_t("UI_COMBAT_GAIN_BLOCK").format({"n": amount}), Color(0.4, 0.6, 1.0))
 
 
@@ -400,11 +400,10 @@ static func _gain_temp_strength(ctx, effect: Dictionary) -> void:
 
 static func _add_card_to_hand(ctx, effect: Dictionary) -> void:
 	var card_id := str(effect.get("card", ""))
-	var deck_manager = ctx.services.get("deck_manager")
-	if card_id == "" or deck_manager == null or not deck_manager.has_method("add_card_to_hand"):
+	if card_id == "":
 		return
 	for _i in range(maxi(1, _amount(effect))):
-		deck_manager.add_card_to_hand(card_id)
+		ctx.services.add_card_to_hand(card_id)
 
 
 ## Hearthstone-style 3-choose-1; the picked card enters the current hand.
@@ -425,8 +424,8 @@ static func _gain_energy(ctx, effect: Dictionary) -> void:
 
 static func _draw_cards(ctx, effect: Dictionary) -> void:
 	var amount := _amount(effect)
-	ctx.services.deck_manager.draw_cards(amount)
-	AudioManager.play_sfx("card_draw")
+	ctx.services.draw_cards(amount)
+	ctx.services.presenter.sfx("card_draw")
 	ctx.services.show_notification(_t("UI_COMBAT_DRAW").format({"n": amount}), Color(0.7, 1.0, 0.7))
 	await _pace(ctx, 0.2)
 
@@ -479,7 +478,8 @@ static func _gain_gold(ctx, effect: Dictionary) -> void:
 static func _heal(ctx, effect: Dictionary) -> void:
 	var amount := _amount(effect)
 	if ctx.actor and ctx.actor.has_method("heal"):
-		ctx.actor.heal(amount)
+		if ctx.actor.heal(amount) > 0:
+			ctx.services.presenter.sfx("heal")
 		if ctx.pace:
 			ctx.services.show_notification(_t("UI_COMBAT_HEAL").format({"n": amount}), Color(0.3, 1.0, 0.45))
 	await _pace(ctx, 0.15)
@@ -501,7 +501,7 @@ static func _flip_polarity(ctx, _effect: Dictionary) -> void:
 	if player.harmony_active and not was_harmony:
 		# Yin-Yang Harmony entry reward — granted once.
 		player.gain_energy(1)
-		ctx.services.deck_manager.draw_cards(1)
+		ctx.services.draw_cards(1)
 		ctx.services.show_notification(_t("UI_COMBAT_HARMONY"), Color(1, 0.85, 0.3))
 	if ctx.services.has_method("update_polarity_hud"):
 		ctx.services.update_polarity_hud()
@@ -616,7 +616,7 @@ static func _overload(ctx, effect: Dictionary) -> void:
 			total_hp_damage += result.hp_lost
 			critical_any = critical_any or result.critical
 	if overloaded_any:
-		AudioManager.play_sfx(
+		services.presenter.sfx(
 			"crit" if critical_any else "attack_hit", -1.5 if critical_any else -2.0, 1.12, 0.03
 		)
 	else:
@@ -666,7 +666,7 @@ static func _enemy_attack(ctx, action: Dictionary) -> void:
 	if not services.combat_commands.is_alive(player):
 		return
 	var type := str(action.get("type", "attack"))
-	AudioManager.play_sfx("enemy_attack")
+	services.presenter.sfx("enemy_attack")
 	var heavy := type == "attack_all" or bool(action.get("heavy", false))
 	var results: Array = await services.combat_commands.damage(
 		ctx.source, [player], enemy_attack_base(enemy, action), VALUE_PROPS.POWERED, null, 0,
@@ -702,7 +702,7 @@ static func _enemy_block(ctx, action: Dictionary) -> void:
 			services.show_notification(
 				_t("UI_COMBAT_ENEMY_BREAKABLE_ARMOR").format({"n": gained}), Color(0.45, 0.72, 1.0)
 			)
-			await _pulse(enemy, "scale", Vector2(1.16, 1.16), Vector2.ONE, 0.1)
+			await _pulse(services, enemy, "scale", Vector2(1.16, 1.16), Vector2.ONE, 0.1)
 		"reflective_plating":
 			var thorns := int(action.get("thorns", 1))
 			await services.combat_commands.apply_status(ctx.source, enemy, "thorns", thorns, "reflective_plating")
@@ -710,10 +710,10 @@ static func _enemy_block(ctx, action: Dictionary) -> void:
 				_t("UI_COMBAT_ENEMY_REFLECTIVE_PLATING").format({"block": gained, "thorns": thorns}),
 				Color(0.62, 0.86, 1.0)
 			)
-			await _pulse(enemy, "modulate", Color(1.25, 1.35, 1.5), Color.WHITE, 0.16)
+			await _pulse(services, enemy, "modulate", Color(1.25, 1.35, 1.5), Color.WHITE, 0.16)
 		_:
 			services.show_notification(_t("UI_COMBAT_ENEMY_DEFENDS").format({"n": gained}), Color(0.4, 0.6, 1.0))
-			await _pulse(enemy, "scale", Vector2(1.2, 1.2), Vector2.ONE, 0.1)
+			await _pulse(services, enemy, "scale", Vector2(1.2, 1.2), Vector2.ONE, 0.1)
 
 
 static func _enemy_heal(ctx, action: Dictionary) -> void:
@@ -728,13 +728,12 @@ static func _enemy_telegraph(ctx, _action: Dictionary) -> void:
 	ctx.services.show_notification(
 		_t("UI_COMBAT_ENEMY_CHARGING").format({"name": ctx.actor.get("enemy_name")}), Color(1.0, 0.7, 0.2)
 	)
-	await _pulse(ctx.actor, "modulate", Color(1.4, 1.1, 0.4), Color.WHITE, 0.25)
+	await _pulse(ctx.services, ctx.actor, "modulate", Color(1.4, 1.1, 0.4), Color.WHITE, 0.25)
 
 
 static func _enemy_summon(ctx, action: Dictionary) -> void:
-	var enemy_ai = ctx.services.get("enemy_ai")
-	if enemy_ai and await enemy_ai.summon_adds(ctx.actor, action) > 0:
-		await _pulse(ctx.actor, "scale", Vector2(1.15, 1.15), Vector2.ONE, 0.12)
+	if await ctx.services.summon_adds(ctx.actor, action) > 0:
+		await _pulse(ctx.services, ctx.actor, "scale", Vector2(1.15, 1.15), Vector2.ONE, 0.12)
 
 
 static func _enemy_buff_self(ctx, action: Dictionary) -> void:
@@ -748,42 +747,29 @@ static func _enemy_buff_self(ctx, action: Dictionary) -> void:
 		),
 		Color(1.0, 0.6, 0.2)
 	)
-	await _pulse(ctx.actor, "modulate", Color(1.5, 0.7, 0.7), Color.WHITE, 0.2)
+	await _pulse(ctx.services, ctx.actor, "modulate", Color(1.5, 0.7, 0.7), Color.WHITE, 0.2)
 
 
 ## Shuffle a curse into the player's draw pile (this combat only).
 static func _enemy_add_curse(ctx, action: Dictionary) -> void:
 	var curse_id := str(action.get("curse", "base:radiation_dust"))
 	for _i in range(maxi(1, int(action.get("amount", 1)))):
-		ctx.services.deck_manager.add_card_to_draw(curse_id)
+		ctx.services.add_card_to_draw(curse_id)
 	ctx.services.show_notification(
 		_t("UI_BATTLE_ENEMY_CURSE").format({"name": ctx.actor.get("enemy_name")}), Color(0.72, 0.5, 0.85)
 	)
-	await _pulse(ctx.actor, "modulate", Color(0.85, 0.6, 1.2), Color.WHITE, 0.15)
+	await _pulse(ctx.services, ctx.actor, "modulate", Color(0.85, 0.6, 1.2), Color.WHITE, 0.15)
 
 
 static func _play_enemy_attack_once(services: Object, enemy: Object) -> void:
-	if not is_instance_valid(enemy):
-		return
-	if enemy.has_method("play_attack") and (
-		not enemy.has_method("has_attack_animation") or enemy.has_attack_animation()
-	):
-		enemy.play_attack()
-		if enemy.has_signal("attack_animation_finished"):
-			await enemy.attack_animation_finished
-			return
-	if services is Node and (services as Node).is_inside_tree():
-		await (services as Node).get_tree().create_timer(0.35).timeout
+	await services.presenter.enemy_attack(enemy)
 
 
-## Out-and-back tween on `property` of an enemy node.
-static func _pulse(node: Object, property: String, peak: Variant, rest: Variant, seconds: float) -> void:
-	if not (node is Node) or not is_instance_valid(node) or not (node as Node).is_inside_tree():
-		return
-	var tween := (node as Node).create_tween()
-	tween.tween_property(node, property, peak, seconds)
-	tween.tween_property(node, property, rest, seconds)
-	await tween.finished
+## Out-and-back tween on a creature's view (presenter).
+static func _pulse(
+	services: Object, creature: Object, property: String, peak: Variant, rest: Variant, seconds: float
+) -> void:
+	await services.presenter.pulse(creature, property, peak, rest, seconds)
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -802,14 +788,7 @@ static func _attr(creature: Object, attr: String) -> int:
 
 
 static func _alive_enemies(services: Object) -> Array:
-	var out: Array = []
-	var container = services.get("enemy_container")
-	if container == null:
-		return out
-	for enemy in container.get_children():
-		if services.combat_commands.is_alive(enemy) and enemy.has_method("take_damage"):
-			out.append(enemy)
-	return out
+	return services.state.living_enemies()
 
 
 static func _status_notification(ctx, key: String, status: String, n: int, color: Color) -> void:
@@ -821,8 +800,8 @@ static func _status_notification(ctx, key: String, status: String, n: int, color
 
 
 static func _pace(ctx, seconds: float) -> void:
-	if ctx.pace and ctx.services is Node and (ctx.services as Node).is_inside_tree():
-		await (ctx.services as Node).get_tree().create_timer(seconds).timeout
+	if ctx.pace:
+		await ctx.services.presenter.wait(seconds)
 
 
 static func _t(key: String) -> String:

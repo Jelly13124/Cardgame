@@ -1,7 +1,7 @@
 extends Node
 
 ## Regression: killing every enemy ends the battle (victory is declared) —
-## by played cards, and by the debug right-click kill (take_damage directly).
+## by played cards, and by the debug right-click kill.
 
 const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
 
@@ -49,14 +49,14 @@ func _run() -> void:
 	# Played Strikes, like the player does.
 	var battle = await _start_battle()
 	var won := [false]
-	battle.combat_engine.victory_declared.connect(func() -> void: won[0] = true)
+	battle.combat.combat_ended.connect(func(outcome: String) -> void: won[0] = outcome == "victory")
 	battle.player.energy = 10
 	for enemy in battle.enemy_container.get_children():
 		enemy.health = 1
 	for enemy in battle.enemy_container.get_children():
-		var card = battle.deck_manager.add_card_to_hand("base:strike")
+		var card = battle.combat.add_card_to_hand("base:strike")
 		await get_tree().process_frame
-		battle.play_spell(card, enemy)
+		battle.play_spell(battle.hand_view.node_of(card), enemy)
 		var t := Time.get_ticks_msec() + 5000
 		while is_instance_valid(enemy) and not enemy.is_queued_for_deletion() and Time.get_ticks_msec() < t:
 			await get_tree().process_frame
@@ -64,12 +64,12 @@ func _run() -> void:
 	_expect(won[0], "card kills end the battle (enemies left: %d)" % battle.enemy_container.get_child_count())
 	await _end(battle)
 
-	# Debug right-click kill: take_damage with a debug source, one enemy at a time.
+	# Debug right-click kill, one enemy at a time.
 	battle = await _start_battle()
 	var won_debug := [false]
-	battle.combat_engine.victory_declared.connect(func() -> void: won_debug[0] = true)
+	battle.combat.combat_ended.connect(func(outcome: String) -> void: won_debug[0] = outcome == "victory")
 	for enemy in battle.enemy_container.get_children():
-		enemy.take_damage(99999, false, {"source": "debug", "heavy": true})
+		battle.combat.debug_kill(enemy.creature)
 		await get_tree().create_timer(0.3).timeout
 	await _await_victory(battle, won_debug)
 	_expect(won_debug[0], "debug kills end the battle (enemies left: %d)" % battle.enemy_container.get_child_count())

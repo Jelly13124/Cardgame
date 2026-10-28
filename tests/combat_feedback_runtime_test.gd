@@ -3,7 +3,9 @@ extends Node
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
 const FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://battle_scene/combat_feedback_controller.gd
-const ENEMY_ENTITY = preload("uid://qtp7jvjqfbou")  # res://battle_scene/enemy_entity.gd
+const MONSTERS = preload("uid://dvu3etytjqum8")  # res://core/combat/monsters.gd
+
+static var DEBUG_SOURCE = COMBAT_SOURCE.make("debug", "player", null)
 
 var _failures: PackedStringArray = []
 var _profiles: Array[String] = []
@@ -49,7 +51,7 @@ func _run() -> void:
 	# and Block mutate before their first presentation await.
 	enemy.health = 30
 	enemy.block = 0
-	enemy.take_damage(5, false, {"source": "test"})
+	battle.combat.combat_commands.raw_hit(DEBUG_SOURCE, enemy.creature, 5, {"source": "test"})
 	_expect(enemy.health == 25, "normal hit mutates HP synchronously")
 	await _real_seconds(0.08)
 	await _capture_if_rendered(
@@ -58,7 +60,7 @@ func _run() -> void:
 
 	enemy.block = 5
 	var hp_before_block: int = enemy.health
-	enemy.take_damage(5, false, {"source": "test"})
+	battle.combat.combat_commands.raw_hit(DEBUG_SOURCE, enemy.creature, 5, {"source": "test"})
 	_expect(enemy.health == hp_before_block, "fully blocked hit preserves HP")
 	_expect(enemy.block == 0, "fully blocked hit consumes Block synchronously")
 	await _real_seconds(0.08)
@@ -67,9 +69,8 @@ func _run() -> void:
 	)
 
 	enemy.health = 30
-	enemy.take_damage(
+	battle.combat.combat_commands.raw_hit(DEBUG_SOURCE, enemy.creature, 
 		12,
-		false,
 		{"source": "test", "heavy": false, "critical": true}
 	)
 	_expect(enemy.health == 18, "heavy/critical hit mutates HP synchronously")
@@ -83,9 +84,8 @@ func _run() -> void:
 
 	battle.player.health = 50
 	battle.player.block = 0
-	battle.player.take_damage(
+	battle.combat.combat_commands.raw_hit(DEBUG_SOURCE, battle.player.creature, 
 		12,
-		false,
 		{"source": "enemy", "heavy": true, "critical": false}
 	)
 	_expect(battle.player.health == 38, "enemy heavy hit mutates player HP synchronously")
@@ -95,10 +95,10 @@ func _run() -> void:
 	# itself rather than a stack of earlier test readouts.
 	await _real_seconds(0.70)
 	var clean_death_count := [0]
-	enemy.died.connect(func() -> void: clean_death_count[0] += 1)
+	enemy.creature.died.connect(func() -> void: clean_death_count[0] += 1)
 	enemy.health = 5
 	enemy.block = 0
-	enemy.take_damage(20, false, {"source": "test", "heavy": true})
+	battle.combat.combat_commands.raw_hit(DEBUG_SOURCE, enemy.creature, 20, {"source": "test", "heavy": true})
 	_expect(enemy.health == 0, "lethal hit mutates HP synchronously")
 	await _real_seconds(0.14)
 	# In headless mode `_capture_if_rendered()` returns without yielding. Give
@@ -110,19 +110,18 @@ func _run() -> void:
 	_expect(not is_instance_valid(enemy), "kill feedback completes before enemy frees")
 	_expect(clean_death_count[0] == 1, "lethal hit settles death once")
 
-	var parallel_enemy = ENEMY_ENTITY.create("base:trash_robot")
-	battle.enemy_container.add_child(parallel_enemy)
+	var parallel_enemy = battle.view_of(battle.combat.add_enemy(MONSTERS.create("base:trash_robot")))
 	var parallel_death_count := [0]
-	parallel_enemy.died.connect(func() -> void: parallel_death_count[0] += 1)
+	parallel_enemy.creature.died.connect(func() -> void: parallel_death_count[0] += 1)
 	parallel_enemy.health = 20
 	parallel_enemy.block = 0
 	# Deliberately overlap a non-lethal coroutine with the lethal one. Only the
 	# call that captured will_kill may settle rewards/signals/deletion.
-	parallel_enemy.take_damage(5, false, {"source": "test"})
-	parallel_enemy.take_damage(20, false, {"source": "test", "heavy": true})
+	battle.combat.combat_commands.raw_hit(DEBUG_SOURCE, parallel_enemy.creature, 5, {"source": "test"})
+	battle.combat.combat_commands.raw_hit(DEBUG_SOURCE, parallel_enemy.creature, 20, {"source": "test", "heavy": true})
 	_expect(parallel_enemy.health == 0, "overlapping lethal hit mutates HP synchronously")
 	await _real_seconds(0.18)
-	var parallel_kill_complete := (
+	var parallel_kill_complete: bool = (
 		not is_instance_valid(parallel_enemy) or parallel_enemy.is_queued_for_deletion()
 	)
 	_expect(parallel_kill_complete, "overlapping kill feedback completes")
@@ -137,36 +136,33 @@ func _run() -> void:
 
 	# A boss death ends the encounter and may free its summons on the next frame.
 	# AoE must stop at the boss instead of awaiting a soon-to-be-freed add.
-	var boss = ENEMY_ENTITY.create("base:junkyard_tyrant")
-	var add = ENEMY_ENTITY.create("base:scrap_rat")
-	battle.enemy_container.add_child(boss)
-	battle.enemy_container.add_child(add)
+	var boss = battle.view_of(battle.combat.add_enemy(MONSTERS.create("base:junkyard_tyrant")))
+	var add = battle.view_of(battle.combat.add_enemy(MONSTERS.create("base:scrap_rat")))
 	var add_hp_before: int = add.health
-	await battle.combat_engine.execute_effect(
+	await battle.combat.execute_effect(
 		{"type": "deal_damage_all", "amount": 999, "no_str": true},
 		null,
-		COMBAT_SOURCE.make("card", "player", battle.player)
+		COMBAT_SOURCE.make("card", "player", battle.player.creature)
 	)
 	_expect(add.health == add_hp_before, "AoE stops after a lethal boss hit")
 	if is_instance_valid(add):
 		add.queue_free()
 
-	var status_enemy = ENEMY_ENTITY.create("base:scrap_rat")
-	battle.enemy_container.add_child(status_enemy)
+	var status_enemy = battle.view_of(battle.combat.add_enemy(MONSTERS.create("base:scrap_rat")))
 	status_enemy.health = 3
 	var status_death_count := [0]
-	status_enemy.died.connect(func() -> void: status_death_count[0] += 1)
-	status_enemy.take_damage(3, false, {"source": "status", "status": "burn"})
+	status_enemy.creature.died.connect(func() -> void: status_death_count[0] += 1)
+	battle.combat.combat_commands.raw_hit(DEBUG_SOURCE, status_enemy.creature, 3, {"source": "status", "status": "burn"})
 	_expect(status_enemy.health == 0, "detached status feedback applies HP synchronously")
 	_expect(status_enemy.is_queued_for_deletion(), "lethal status damage settles immediately")
 	_expect(status_death_count[0] == 1, "lethal status damage emits death immediately")
 	await _real_seconds(0.10)
 
 	var self_cost_death_count := [0]
-	battle.player.died.connect(func() -> void: self_cost_death_count[0] += 1)
+	battle.player.creature.died.connect(func() -> void: self_cost_death_count[0] += 1)
 	battle.player.health = 3
-	battle.player.lose_hp(3)
-	battle.player.lose_hp(3)
+	battle.combat.combat_commands.lose_hp(DEBUG_SOURCE, battle.player.creature, 3)
+	battle.combat.combat_commands.lose_hp(DEBUG_SOURCE, battle.player.creature, 3)
 	_expect(self_cost_death_count[0] == 1, "parallel self-cost death emits exactly once")
 	battle.queue_free()
 	for _frame in range(3):

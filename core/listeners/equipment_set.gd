@@ -7,11 +7,11 @@ extends "res://core/listeners/listener.gd"
 const EFFECT_CONTEXT = preload("uid://bx2g3askncfr6")  # res://core/effects/effect_context.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 
-var _battle_scene: Node
+var _battle_scene: Object
 var _active_effects: Array[Dictionary] = []
 
 
-func setup(battle_scene: Node) -> void:
+func setup(battle_scene: Object) -> void:
 	_battle_scene = battle_scene
 	_active_effects.clear()
 
@@ -121,8 +121,8 @@ func _sum(effect_type: String) -> int:
 func _is_live(creature: Object) -> bool:
 	if creature == null or not is_instance_valid(creature):
 		return false
-	if creature is Node and (creature as Node).is_queued_for_deletion():
-		return false
+	if creature.has_method("is_alive"):
+		return creature.is_alive()
 	return int(creature.get("health")) > 0
 
 

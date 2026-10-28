@@ -9,12 +9,12 @@ class_name RelicEffectSystem
 
 const DATA_RELIC = preload("uid://dtkuqabpxc64u")  # res://core/listeners/data_relic.gd
 
-var _battle_scene: Node
+var _battle_scene: Object
 var _listeners: Array = []
 var _built_for: Array = []  # relic ids the listeners were built for
 
 
-func setup(battle_scene: Node) -> void:
+func setup(battle_scene: Object) -> void:
 	_battle_scene = battle_scene
 	_listeners.clear()
 	_built_for.clear()

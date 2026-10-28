@@ -7,9 +7,9 @@ extends Node
 ## damage multiplier and Intangible.
 
 const FAKE_BATTLE = preload("uid://j25pi73kmisn")  # res://tests/support/fake_battle.gd
-const ENEMY_AI_SCRIPT = preload("uid://4dtggr10j47s")  # res://battle_scene/enemy_ai.gd
-const ENEMY_ENTITY_SCRIPT = preload("uid://qtp7jvjqfbou")  # res://battle_scene/enemy_entity.gd
-const RELIC_EFFECT_SYSTEM = preload("uid://b4d2o08tofxey")  # res://battle_scene/relic_effect_system.gd
+const ENEMY_TURN = preload("uid://d4np8yrt1ml3v")  # res://core/combat/enemy_turn.gd
+const MONSTERS = preload("uid://dvu3etytjqum8")  # res://core/combat/monsters.gd
+const RELIC_EFFECT_SYSTEM = preload("uid://b4d2o08tofxey")  # res://core/combat/relic_listeners.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const ATTACK_TYPES := ["attack", "attack_status", "attack_all", "attack_ramp"]
 const REDUCTION_RELICS := ["base:bulwark_plating", "base:signal_jammer"]
@@ -104,26 +104,21 @@ func _compare(enemy_id: String, action: Dictionary, state: Array) -> Array:
 		battle.relic_effect_system = RELIC_EFFECT_SYSTEM.new()
 		battle.relic_effect_system.setup(battle)
 	battle.setup()
-	var enemy_ai = ENEMY_AI_SCRIPT.new()
-	battle.add_child(enemy_ai)
-	battle.enemy_ai = enemy_ai
 
 	var player = battle.player
 	if state[0]:
 		player.add_status("vulnerable", 2)
 	if state[4]:
 		player.add_status("intangible", 2)
-	var enemy = ENEMY_ENTITY_SCRIPT.create(enemy_id)
-	battle.enemy_container.add_child(enemy)
-	battle.combat_commands.attach(enemy)
+	var enemy = battle.combat.add_enemy(MONSTERS.create(enemy_id))
 	if state[1]:
 		enemy.add_status("weak", 2)
 
 	var pairs: Array = []
 	for _attack in range(2):
-		var intent: int = enemy.intent_attack_damage(action)
+		var intent: int = ENEMY_TURN.intent_damage(battle.combat, enemy, action)
 		var before: int = player.damage_received
-		await enemy_ai.execute_action(enemy, action)
+		await ENEMY_TURN.execute_action(battle.combat, enemy, action)
 		pairs.append([intent, player.damage_received - before])
 	# The await above resumes inside the enemy's attack_animation_finished
 	# emission; let it unwind before releasing the node.

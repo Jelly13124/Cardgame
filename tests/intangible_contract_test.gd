@@ -38,12 +38,12 @@ func _run() -> void:
 	for _i in range(4):
 		await get_tree().process_frame
 	var enemy: Node = battle.enemy_container.get_child(0)
-	battle.player.add_status("intangible", 1)
-	enemy.add_status("intangible", 1)
-	battle.turn_manager.turn_ended.emit("player")
+	battle.player.creature.add_status("intangible", 1)
+	enemy.creature.add_status("intangible", 1)
+	battle.combat._end_side_turn("player")
 	_expect(battle.player.get_status_stacks("intangible") == 1, "player Intangible lasts through the player's own turn end")
 	_expect(enemy.get_status_stacks("intangible") == 0, "enemy Intangible ends with the player's turn")
-	battle.turn_manager.turn_ended.emit("enemy")
+	battle.combat._end_side_turn("enemy")
 	_expect(battle.player.get_status_stacks("intangible") == 0, "player Intangible ends with the enemy turn")
 	battle.queue_free()
 	await get_tree().process_frame

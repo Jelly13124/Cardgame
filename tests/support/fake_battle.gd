@@ -1,68 +1,95 @@
 extends Node
 
-## Stand-in for battle_scene in combat contract tests: the services surface the
-## combat pipeline reads, wired by the production COMBAT_SERVICES.install(),
-## plus a real CombatEngine child. Relics and sets are off unless a test sets
-## `relic_effect_system` / `equipment_set_system` before calling setup().
+## Stand-in battle for combat contract tests: a real combat
+## (core/combat/combat_manager.gd) with the null presenter, fake combatants
+## (tests/support/fake_combatant.gd) and no encounter. Relics and sets are off
+## unless a test sets `relic_effect_system` / `equipment_set_system` before
+## calling setup().
 
-const COMBAT_SERVICES = preload("uid://bcjfi8umolkqg")  # res://battle_scene/combat/combat_services.gd
-const COMBAT_ENGINE = preload("uid://c444jgeenijlu")  # res://battle_scene/combat_engine.gd
+const COMBAT_MANAGER = preload("uid://dumevejih8ygv")  # res://core/combat/combat_manager.gd
+const COMBAT_PRESENTER = preload("uid://d2bnp6o5g3mb6")  # res://core/combat/combat_presenter.gd
 const FAKE_COMBATANT = preload("uid://cxg4jepx5abxn")  # res://tests/support/fake_combatant.gd
 
 
-class FakeTurnManager:
-	extends RefCounted
-	var attacks_played_this_turn := 0
-	var attacks_played_this_combat := 0
-	var current_round := 1
-	var is_player_turn := true
+## Records notifications; everything else is the null presenter.
+class RecordingPresenter:
+	extends COMBAT_PRESENTER
+	var notifications: PackedStringArray = []
+
+	func notify(text: String, _color: Color = Color.WHITE) -> void:
+		notifications.append(text)
 
 
-var player: Node2D
-var enemy_container := Node2D.new()
-var turn_manager := FakeTurnManager.new()
+var combat = COMBAT_MANAGER.new()
+var player = FAKE_COMBATANT.new()
 var relic_effect_system = null
 var equipment_set_system = null
-var combat_hooks = null
-var combat_commands = null
-var effect_registry = null
-var crit_rules = null
-var combat_engine: Node
-var enemy_ai: Node = null
-var is_game_over := false
-var notifications: PackedStringArray = []
+var _presenter = RecordingPresenter.new()
+
+var notifications: PackedStringArray:
+	get:
+		return _presenter.notifications
+var combat_hooks:
+	get:
+		return combat.combat_hooks
+var combat_commands:
+	get:
+		return combat.combat_commands
+var effect_registry:
+	get:
+		return combat.effect_registry
+var crit_rules:
+	get:
+		return combat.crit_rules
+var state:
+	get:
+		return combat.state
+## The per-turn counters (attacks played) live on the combat state.
+var turn_manager:
+	get:
+		return combat.state
+## Card resolution and effects are the combat's.
+var combat_engine:
+	get:
+		return self
+var is_game_over: bool:
+	get:
+		return combat.is_game_over
 
 
 func setup() -> void:
-	if not enemy_container.is_inside_tree():
-		add_child(enemy_container)
-	if player == null:
-		player = FAKE_COMBATANT.new()
-		add_child(player)
-	if combat_engine == null:
-		combat_engine = COMBAT_ENGINE.new()
-		add_child(combat_engine)
-	COMBAT_SERVICES.install(self)
-	combat_commands.attach(player)
-	for enemy in enemy_container.get_children():
-		combat_commands.attach(enemy)
+	combat.presenter = _presenter
+	# Systems the test built against this stand-in now serve the combat.
+	if relic_effect_system != null:
+		relic_effect_system._battle_scene = combat
+		combat.relic_effect_system = relic_effect_system
+	if equipment_set_system != null:
+		equipment_set_system._battle_scene = combat
+		combat.equipment_set_system = equipment_set_system
+	combat.setup({"player": player, "encounter": [], "relics": false})
+	combat._enemy_spawned = true
 
 
-func add_enemy(health := 999) -> Node2D:
+func add_enemy(health := 999) -> RefCounted:
 	var enemy = FAKE_COMBATANT.new()
+	enemy.side = "enemy"
+	enemy.enemy_id = "test:fake_enemy"
 	enemy.health = health
 	enemy.max_health = health
-	enemy_container.add_child(enemy)
-	if combat_commands:
-		combat_commands.attach(enemy)
-	return enemy
+	return combat.add_enemy(enemy)
 
 
 func clear_enemies() -> void:
-	for enemy in enemy_container.get_children():
-		enemy_container.remove_child(enemy)
-		enemy.free()
+	combat.state.enemies.clear()
 
 
-func show_notification(text: String, _color: Color = Color.WHITE) -> void:
-	notifications.append(text)
+func execute_effect(effect: Dictionary, target, source, play = null) -> void:
+	await combat.execute_effect(effect, target, source, play)
+
+
+func resolve_card_effect(card, target, _player = null) -> void:
+	await combat.resolve_card_effect(card, target)
+
+
+func reset_turn_crit() -> void:
+	combat.combat_hooks.notify("reset_turn_state", null)

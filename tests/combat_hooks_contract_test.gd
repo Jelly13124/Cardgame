@@ -8,13 +8,14 @@ extends Node
 const FAKE_BATTLE = preload("uid://j25pi73kmisn")  # res://tests/support/fake_battle.gd
 const EQUIPMENT_SET_SYSTEM = preload("uid://b3s8io84xovx7")  # res://core/listeners/equipment_set.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
-const RELIC_EFFECT_SYSTEM = preload("uid://b4d2o08tofxey")  # res://battle_scene/relic_effect_system.gd
+const RELIC_EFFECT_SYSTEM = preload("uid://b4d2o08tofxey")  # res://core/combat/relic_listeners.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const CARD_INSTANCE = preload("uid://c50mv4hudoncd")  # res://core/combat/card_instance.gd
 
 
+## A combat card (core/combat/card_instance.gd) built from a test dictionary.
 class FakeCard:
-	extends Control
-	var card_info: Dictionary = {}
+	extends CARD_INSTANCE
 
 
 var failures: PackedStringArray = []
@@ -78,14 +79,13 @@ func _fresh() -> void:
 
 func _card(card_id: String) -> FakeCard:
 	var card := FakeCard.new()
+	card.model_id = card_id
 	card.card_info = MODEL_DB.mutable("card", card_id)
-	add_child(card)
 	return card
 
 
-func _play(card: FakeCard, target: Node) -> void:
+func _play(card: FakeCard, target: Object) -> void:
 	await battle.combat_engine.resolve_card_effect(card, target, battle.player)
-	card.queue_free()
 
 
 func test_final_salvo_gets_set_bonus_and_on_hit() -> void:
@@ -125,7 +125,6 @@ func test_replayed_attack_counts_once() -> void:
 	var enemy = battle.add_enemy()
 	var card := FakeCard.new()
 	card.card_info = {"id": "test:shot", "type": "attack", "replay": 1, "effects": [{"type": "deal_damage", "amount": 1}]}
-	add_child(card)
 	await _play(card, enemy)
 	_expect(enemy.hits.size() == 2, "Replay 1 hits twice")
 	_expect(battle.turn_manager.attacks_played_this_turn == 1, "one Attack played this turn (got %d)" % battle.turn_manager.attacks_played_this_turn)
@@ -139,7 +138,6 @@ func test_overload_from_attack_card_triggers_on_hit() -> void:
 	second.add_status("short_circuit", 3)
 	var card := FakeCard.new()
 	card.card_info = {"id": "test:overload", "type": "attack", "effects": [{"type": "overload"}]}
-	add_child(card)
 	await _play(card, null)
 	_expect(first.damage_received == 4 and second.damage_received == 3, "Overload discharges stored charge unmodified")
 	_expect(first.get_status_stacks("weak") == 1 and second.get_status_stacks("weak") == 1, "card-sourced Overload hits trigger on-hit effects")

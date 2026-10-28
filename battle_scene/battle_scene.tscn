@@ -12,9 +12,6 @@
 [ext_resource type="Script" path="res://battle_scene/no_reorder_hand.gd" id="11_noreorder"]
 [ext_resource type="Script" path="res://addons/card-framework/pile.gd" id="12_ixui7"]
 
-[ext_resource type="Script" path="res://battle_scene/turn_manager.gd" id="16_turn"]
-[ext_resource type="Script" path="res://battle_scene/combat_engine.gd" id="17_combat"]
-[ext_resource type="Script" path="res://battle_scene/enemy_ai.gd" id="18_ai"]
 [ext_resource type="Script" path="res://battle_scene/battle_ui_manager.gd" id="19_ui"]
 [ext_resource type="Script" path="res://battle_scene/card_play_zone.gd" id="20_playzone"]
 [ext_resource type="Script" path="res://battle_scene/ui/battle_top_bar.gd" id="21_topbar"]
@@ -267,15 +264,6 @@ layout_mode = 2
 theme_override_constants/h_separation = 30
 theme_override_constants/v_separation = 30
 columns = 8
-
-[node name="TurnManager" type="Node" parent="." unique_id=2065757597]
-script = ExtResource("16_turn")
-
-[node name="CombatEngine" type="Node" parent="." unique_id=1928488502]
-script = ExtResource("17_combat")
-
-[node name="EnemyAI" type="Node" parent="." unique_id=577575101]
-script = ExtResource("18_ai")
 
 [node name="BattleUIManager" type="Node" parent="." unique_id=654921374]
 script = ExtResource("19_ui")

@@ -22,6 +22,8 @@ func commands():
 static func alive(creature: Object) -> bool:
 	if creature == null or not is_instance_valid(creature):
 		return false
+	if creature.has_method("is_alive"):
+		return creature.is_alive()
 	if creature is Node and (creature as Node).is_queued_for_deletion():
 		return false
 	return not "health" in creature or int(creature.get("health")) > 0

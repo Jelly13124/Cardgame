@@ -5,6 +5,7 @@ extends Node
 
 const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const ENEMY_TURN = preload("uid://d4np8yrt1ml3v")  # res://core/combat/enemy_turn.gd
 
 var failures: PackedStringArray = []
 
@@ -34,7 +35,7 @@ func _run() -> void:
 		await get_tree().process_frame
 	var enemy = battle.enemy_container.get_child(0)
 	var action := {"type": "attack", "amount": 14, "interruptible": true}
-	var text: String = battle.enemy_ai.interrupt_message(enemy, action)
+	var text: String = ENEMY_TURN.interrupt_message(battle.combat, enemy.creature, action)
 	_expect(text.contains(str(enemy.intent_attack_damage(action))), "interrupt text shows the move's damage: %s" % text)
 	_expect(not text.contains("\n") and not text.contains(tr("UI_COMBAT_INTENT_TIP_INTERRUPTIBLE")),
 		"interrupt text is one line without the 'can be interrupted' tip: %s" % text)

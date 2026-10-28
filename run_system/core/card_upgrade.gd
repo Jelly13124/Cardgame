@@ -10,7 +10,7 @@
 extends RefCounted
 
 const CARD_VARS = preload("uid://dagno1w0jtl2n")  # res://core/content/card_vars.gd
-const EFFECT_CATALOG = preload("uid://880atc7mnnie")  # res://battle_scene/combat/effect_catalog.gd
+const EFFECT_CATALOG = preload("uid://880atc7mnnie")  # res://core/effects/effect_catalog.gd
 
 
 ## Return a deep-copied, upgraded version of `base`. `base` is un-mutated.

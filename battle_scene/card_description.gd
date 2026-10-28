@@ -11,7 +11,7 @@ extends RefCounted
 ##   pipeline: {effect_index: final value} from the battle preview (or {})
 ##   replay_bonus: extra replays on attacks from held relics (0 outside battle)
 
-const EFFECT_CATALOG = preload("uid://880atc7mnnie")  # res://battle_scene/combat/effect_catalog.gd
+const EFFECT_CATALOG = preload("uid://880atc7mnnie")  # res://core/effects/effect_catalog.gd
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://core/combat/status_effects.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 

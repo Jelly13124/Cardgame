@@ -30,8 +30,8 @@ func _capture() -> void:
 		await get_tree().process_frame
 	await get_tree().create_timer(0.8).timeout
 	battle.player.energy = 10
-	var strike = battle.deck_manager.add_card_to_hand("base:strike")
-	var reload = battle.deck_manager.add_card_to_hand("base:reload")
+	var strike = battle.hand_view.node_of(battle.combat.add_card_to_hand("base:strike"))
+	var reload = battle.hand_view.node_of(battle.combat.add_card_to_hand("base:reload"))
 	await get_tree().create_timer(0.5).timeout
 
 	var enemy: Node2D = battle.enemy_container.get_child(0)

@@ -1,8 +1,8 @@
 extends RefCounted
 
-## Wires the combat pipeline onto a battle: hook dispatcher with its rule and
-## content listeners, the command layer and the effect registry. The battle
-## (or a test stand-in) declares `combat_hooks`, `combat_commands`,
+## Wires the combat pipeline onto a battle (core/combat/combat_manager.gd): hook
+## dispatcher with its rule and content listeners, the command layer and the
+## effect registry. The manager declares `combat_hooks`, `combat_commands`,
 ## `effect_registry`, `crit_rules`, `relic_effect_system` and
 ## `equipment_set_system`; install() fills the first four and gives the hook
 ## broadcaster a provider that lists, on every dispatch: attributes, the status
@@ -14,8 +14,8 @@ const ATTRIBUTE_RULES = preload("uid://ctdg0fm8xx4bv")  # res://core/combat/rule
 const ASCENSION_RULES = preload("uid://c1i1myoh0ymjp")  # res://core/listeners/ascension.gd
 const CRIT_RULES = preload("uid://bjfqp2irnmi37")  # res://core/combat/rules/crit_rules.gd
 const EFFECT_REGISTRY = preload("uid://7gab4te60cto")  # res://core/effects/effect_registry.gd
-const COMBAT_COMMANDS = preload("uid://drt6iikiv1eri")  # res://battle_scene/combat/combat_commands.gd
-const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
+const COMBAT_COMMANDS = preload("uid://drt6iikiv1eri")  # res://core/combat/combat_commands.gd
+const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://core/combat/combat_effects.gd
 
 
 static func install(battle: Object) -> void:
@@ -54,15 +54,15 @@ static func install(battle: Object) -> void:
 	battle.set("crit_rules", crit_rules)
 
 
-## Status listeners of the player, then each enemy in container order.
+## Status listeners of the player, then each living enemy in field order.
 static func status_listeners(battle: Object, hooks) -> Array:
 	var creatures: Array = []
 	var player = battle.get("player")
 	if player != null:
 		creatures.append(player)
-	var container = battle.get("enemy_container")
-	if container != null and is_instance_valid(container):
-		creatures.append_array(container.get_children())
+	var state = battle.get("state")
+	if state != null:
+		creatures.append_array(state.living_enemies())
 	var out: Array = []
 	for creature in creatures:
 		if not is_instance_valid(creature) or not "status_system" in creature or creature.status_system == null:

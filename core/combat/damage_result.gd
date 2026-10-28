@@ -14,6 +14,8 @@ var hp_lost: int = 0
 var killed: bool = false
 var critical: bool = false
 var block_broken: bool = false
+## Player damage removed the Block of an armed breakable guard.
+var armor_broken: bool = false
 
 
 func has(flag: int) -> bool:

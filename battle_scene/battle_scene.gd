@@ -10,40 +10,38 @@ extends Node
 @onready var enemy_container = $EnemyContainer
 
 const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://run_system/ui/pause_panel.gd
-@onready var turn_manager = $TurnManager
-@onready var combat_engine = $CombatEngine
-@onready var enemy_ai = $EnemyAI
 @onready var ui_manager = $BattleUIManager
 @onready var end_round_button = $EndRoundButton
 
-var deck_manager: Node  # DeckManager (deck_manager.gd) instance
-var relic_effect_system: RefCounted  # RelicEffectSystem (relic_effect_system.gd) instance
-var equipment_set_system: RefCounted  # core/listeners/equipment_set.gd instance
-# Combat pipeline services, filled by COMBAT_SERVICES.install() each battle.
-var combat_hooks: RefCounted  # core/combat/combat_hooks.gd
-var combat_commands: RefCounted  # battle_scene/combat/combat_commands.gd
-var effect_registry: RefCounted  # core/effects/effect_registry.gd
-var crit_rules: RefCounted  # core/combat/rules/crit_rules.gd
-## Card plays, tools and End Turn run one at a time in input order.
-var action_queue: RefCounted = ACTION_QUEUE.new()
+## The combat this screen shows (core/combat/combat_manager.gd): all rules and
+## state. This scene is its room (STS2 NCombatRoom): views, input, targeting,
+## HUD and what happens after the fight.
+var combat: RefCounted = null
+var presenter: RefCounted = null  # ui/battle/battle_presenter.gd
+var hand_view: Node  # ui/battle/hand_view.gd
+## Enemy creature -> its view (EnemyEntity).
+var _views: Dictionary = {}
+
+var combat_hooks: RefCounted:
+	get:
+		return combat.combat_hooks if combat else null
+var combat_commands: RefCounted:
+	get:
+		return combat.combat_commands if combat else null
 # Typed via the preloaded CARD_ANIMATOR_SCRIPT below — kept as Node so this
 # file parses even before Godot has scanned the class_name registry.
 var card_animator: Node  # CardAnimator (card_animator.gd) instance
 
 # --- Game State ---
-var is_game_over: bool = false
+var is_game_over: bool:
+	get:
+		return combat != null and combat.is_game_over
 var is_targeting: bool = false
 var targeting_card: Control = null
 var targeting_arrow: Node2D = null
 var hovered_unit: Node = null
 var _dmg_preview: Label = null
 var _polarity_badge: Label = null  # H5: lazily-created HUD badge for yin/yang hero polarity
-var _ending_turn: bool = false  # guards end_turn across the discard animation await
-## Attack-allowance (double-fire clip): cap on attack cards per turn. 0 = unarmed
-## (no limit — normal play). When armed, _attacks_left_this_turn is consumed by
-## playing attacks and topped up by Reload cards; at 0, attacks are unplayable.
-var _attack_limit_per_turn: int = 0
-var _attacks_left_this_turn: int = 0
 var _tool_confirm: Control = null
 var _tool_resolving := false
 var _pending_tool_index := -1
@@ -51,19 +49,14 @@ var _pending_tool_id := ""
 var _pending_tool_data: Dictionary = {}
 
 const TARGETING_ARROW_SCRIPT = preload("uid://dq6nkaqdhlsp4")  # res://battle_scene/targeting_arrow.gd
-const RELIC_EFFECT_SYSTEM = preload("uid://b4d2o08tofxey")  # res://battle_scene/relic_effect_system.gd
-const HOOK_VALUE = preload("uid://npewr2krgrm6")  # res://core/combat/hook_value.gd
 const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://battle_scene/combat_fx.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
-const EQUIPMENT_SET_SYSTEM = preload("uid://b3s8io84xovx7")  # res://core/listeners/equipment_set.gd
+const COMBAT_MANAGER = preload("uid://dumevejih8ygv")  # res://core/combat/combat_manager.gd
+const BATTLE_PRESENTER = preload("uid://du6lk20qqijeu")  # res://ui/battle/battle_presenter.gd
+const HAND_VIEW = preload("uid://dselhm1i0ycf")  # res://ui/battle/hand_view.gd
+const ENEMY_ENTITY = preload("uid://qtp7jvjqfbou")  # res://battle_scene/enemy_entity.gd
 const CARD_ANIMATOR_SCRIPT = preload("uid://co0n3ou8saknv")  # res://battle_scene/card_animator.gd
-const DECK_MANAGER_SCRIPT = preload("uid://bi8d6vtu6xop6")  # res://battle_scene/deck_manager.gd
-const COMBAT_SERVICES = preload("uid://bcjfi8umolkqg")  # res://battle_scene/combat/combat_services.gd
-const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
-const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
-const ACTION_QUEUE = preload("uid://bseuowesln3j7")  # res://core/combat/action_queue.gd
 const DISCOVER_MODAL = preload("uid://keeeggdto42o")  # res://battle_scene/discover_modal.gd
-const DISCOVER_POOL = preload("uid://c76axesxo6wit")  # res://run_system/core/discover_pool.gd
 const TOOL_USE_CONFIRM = preload("uid://dihe3sjaxh16")  # res://battle_scene/ui/tool_use_confirm.gd
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 # NOTE: map_scene + home_base_scene are loaded lazily at the call site
@@ -115,14 +108,14 @@ func _ready():
 	card_manager.debug_mode = false
 	Engine.time_scale = Settings.game_speed
 
-	# Instantiate DeckManager
-	deck_manager = DECK_MANAGER_SCRIPT.new()
-	deck_manager.battle_scene = self
-	deck_manager.deck = deck
-	deck_manager.discard_pile = discard_pile
-	deck_manager.hand = hand
-	deck_manager.card_factory = card_factory
-	add_child(deck_manager)
+	# The hand view keeps card nodes in step with the combat piles.
+	hand_view = HAND_VIEW.new()
+	hand_view.screen = self
+	hand_view.deck = deck
+	hand_view.discard_pile = discard_pile
+	hand_view.hand = hand
+	hand_view.card_factory = card_factory
+	add_child(hand_view)
 
 	# Instantiate CardAnimator — owns play / discard / exhaust tweens
 	card_animator = CARD_ANIMATOR_SCRIPT.new()
@@ -139,23 +132,6 @@ func _ready():
 	# keeping one visual language with the top-bar deck icon.
 	_setup_pile_icon(deck, "iconb_deck_stack", true)
 	_setup_pile_icon(discard_pile, "iconb_deck_stack", false)
-
-	# Connect TurnManager
-	turn_manager.round_changed.connect(_on_round_changed)
-	turn_manager.turn_started.connect(_on_turn_started)
-	turn_manager.turn_ended.connect(_on_turn_ended)
-
-	# Connect Player Signals
-	if player:
-		player.health_changed.connect(_on_player_health_changed)
-		player.energy_changed.connect(_on_player_energy_changed)
-		player.block_changed.connect(_on_player_block_changed)
-		player.stats_changed.connect(_update_ui_labels)
-		player.status_changed.connect(_update_ui_labels)
-		player.died.connect(_game_over)
-
-	# Combat Engine Signals
-	combat_engine.victory_declared.connect(_victory)
 
 	_start_new_game()
 
@@ -233,10 +209,10 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
-	# Debug-only: right-click any enemy (outside targeting) → instant-kill.
-	# Routes through the normal take_damage path so the died signal fires and
-	# combat_engine declares victory once the last enemy is gone. Guarded on
-	# OS.is_debug_build() so it's stripped from exported builds.
+	# Debug-only: right-click any enemy (outside targeting) → instant-kill. A
+	# lethal hit through the combat, so its death and the victory follow the
+	# normal rules. Guarded on OS.is_debug_build() so it's stripped from exported
+	# builds.
 	if (
 		OS.is_debug_build()
 		and not is_targeting
@@ -246,9 +222,9 @@ func _input(event: InputEvent) -> void:
 	):
 		var mouse_pos = get_viewport().get_mouse_position()
 		var enemy = _get_unit_at_position(mouse_pos)
-		if enemy and is_instance_valid(enemy) and enemy.has_method("take_damage"):
+		if enemy and is_instance_valid(enemy) and combat.combat_commands.is_alive(enemy.creature):
 			show_notification("DEBUG: killed %s" % enemy.name, Color(1, 0.4, 1))
-			enemy.take_damage(99999, false, {"source": "debug", "heavy": true})
+			combat.debug_kill(enemy.creature)
 			get_viewport().set_input_as_handled()
 			return
 
@@ -325,7 +301,9 @@ func _process(_delta: float) -> void:
 ## Damage `card` would deal to `target` in one resolution pass, computed by the
 ## shared pipeline in preview mode (no state changes). -1 if not a damage card.
 func preview_card_damage(card: Control, target: Node) -> int:
-	return COMBAT_EFFECTS.preview_card_damage(self, card, target)
+	if combat == null or not is_instance_valid(card) or not is_instance_valid(target):
+		return -1
+	return combat.preview_card_damage(card.instance if card.get("instance") else card, target.creature)
 
 
 func _show_damage_preview(target: Node, dmg: int) -> void:
@@ -354,7 +332,7 @@ func _hide_damage_preview() -> void:
 
 
 ## H5: Battle HUD badge for the Yin/Yang hero polarity. Called on turn-start /
-## flip / harmony by combat_engine + relic_effect_system (guarded by has_method),
+## flip / harmony through the combat presenter,
 ## and once at battle start. Non-polarity heroes (current_polarity == "") show
 ## nothing. Owner fine-tunes the on-screen position visually.
 func update_polarity_hud() -> void:
@@ -410,11 +388,11 @@ func _set_hover_effect(unit: Node, active: bool) -> void:
 		unit.hide_reticle()
 
 
-## Returns the enemy node under a screen position (viewport coords).
+## Returns the living enemy view under a screen position (viewport coords).
 ## EnemyEntity reports its rendered body rect so targeting matches current sprite scale.
 func _get_unit_at_position(pos: Vector2) -> Node:
 	for enemy in enemy_container.get_children():
-		if not is_instance_valid(enemy):
+		if not is_instance_valid(enemy) or not enemy.creature.is_alive():
 			continue
 		var ep = enemy.global_position
 		var body_rect := Rect2(ep.x - 128, ep.y - 256, 256, 256)
@@ -513,14 +491,13 @@ func _find_tool_target(tdata: Dictionary) -> Node:
 
 
 func _is_valid_tool_target(candidate: Node) -> bool:
-	if (
-		not is_instance_valid(candidate)
-		or candidate.is_queued_for_deletion()
-		or not candidate.has_method("take_damage")
-	):
-		return false
-	var health_value: Variant = candidate.get("health")
-	return health_value == null or int(health_value) > 0
+	return (
+		is_instance_valid(candidate)
+		and not candidate.is_queued_for_deletion()
+		and candidate.get("creature") != null
+		and candidate.creature.is_alive()
+		and not candidate.creature.is_player()
+	)
 
 
 func _is_tool_targeting() -> bool:
@@ -586,51 +563,47 @@ func _confirm_tool_targeting(target: Node) -> void:
 	_enqueue_tool(index, tdata, target)
 
 
-## Whether `card` can be played right now (drives the playable outline):
-## in hand, the player's turn, affordable, not a curse / unplayable, and for
-## attacks an attack left under the double-fire clip.
+## Whether `card` can be played right now (drives the playable outline).
 func can_play_card(card: Control) -> bool:
-	if card == null or not is_instance_valid(card) or not hand.has_card(card):
+	if combat == null or card == null or not is_instance_valid(card) or not hand.has_card(card):
 		return false
-	if not _accepts_player_input() or not can_afford([card]):
-		return false
-	var info: Dictionary = card.card_info
-	var type := str(info.get("type", "skill")).to_lower()
-	if type == "curse" or bool(info.get("unplayable", false)):
-		return false
-	return type != "attack" or _attack_limit_per_turn <= 0 or _attacks_left_this_turn > 0
+	return card.get("instance") != null and combat.can_play_card(card.instance)
 
 
-## Combat ended with cards still waiting in the play queue: they sink, fade and
-## are parked in the discard pile (their actions were dropped unresolved).
-func _drop_waiting_cards() -> void:
-	for card in card_animator.drop_waiting():
-		_park_dropped_card(card)
-
-
-func _park_dropped_card(card: Control) -> void:
+## A play dropped when the combat ended: the card sinks, fades and is parked in
+## the discard pile.
+func park_dropped_card(card: Control) -> void:
 	await card_animator.drop_card(card)
-	if not is_instance_valid(card):
-		return
-	if card.has_meta("_in_play"):
-		card.remove_meta("_in_play")
-	discard_pile.add_card(card)
+	if is_instance_valid(card):
+		discard_pile.add_card(card)
 
 
 ## Cards and tools are used on the player's own turn only, and not after End
 ## Turn was pressed (the end-turn action is already queued).
 func _accepts_player_input() -> bool:
-	return turn_manager.is_player_turn and not _ending_turn and not is_game_over
+	return combat != null and combat.accepts_player_input()
 
 
-## Tool use joins the action queue behind any card still resolving.
+## Tool use joins the action queue behind any card still resolving; the
+## inventory loses the tool only when it was used.
 func _enqueue_tool(index: int, tdata: Dictionary, target: Node) -> void:
 	_tool_resolving = true
-	action_queue.enqueue(
-		"use_tool",
-		func() -> void:
-			if not is_game_over:
-				await _resolve_tool(index, tdata, target)
+	var int_mult: float = 1.0 + 0.08 * float(RunManager._attr("intelligence"))
+	var effects: Array = []
+	for eff in tdata.get("effects", []):
+		if typeof(eff) != TYPE_DICTIONARY:
+			continue
+		var e: Dictionary = (eff as Dictionary).duplicate(true)
+		if e.has("amount"):
+			e["amount"] = int(round(float(e["amount"]) * int_mult))
+		effects.append(e)
+	var needs_target := str(tdata.get("target", "none")) == "enemy"
+	var target_creature = target.creature if needs_target and _is_valid_tool_target(target) else null
+	combat.use_tool(
+		str(tdata.get("id", "")), effects, target_creature, needs_target,
+		func(used: bool) -> void:
+			if used:
+				RunManager.consume_tool(index)
 			_tool_resolving = false
 	)
 
@@ -649,139 +622,7 @@ func _cancel_active_targeting() -> void:
 		_cancel_spell_targeting()
 
 
-func _resolve_tool(index: int, tdata: Dictionary, target: Node) -> void:
-	if str(tdata.get("target", "none")) == "enemy" and not _is_valid_tool_target(target):
-		AudioManager.play_sfx("error")
-		return
-	AudioManager.play_sfx("ui_click")
-	var int_mult: float = 1.0 + 0.08 * float(RunManager._attr("intelligence"))
-	for eff in tdata.get("effects", []):
-		if combat_engine.combat_over():
-			break
-		if typeof(eff) != TYPE_DICTIONARY:
-			continue
-		var e: Dictionary = (eff as Dictionary).duplicate(true)
-		if e.has("amount"):
-			e["amount"] = int(round(float(e["amount"]) * int_mult))
-		await combat_engine.execute_effect(
-			e, target, COMBAT_SOURCE.make("tool", "player", player, null, str(tdata.get("id", "")))
-		)
-	RunManager.consume_tool(index)
-
-
 # ─── Turn Events ──────────────────────────────────────────────────────────────
-
-
-func _on_turn_started(side: String) -> void:
-	if is_game_over:
-		return
-	if side == "enemy":
-		enemy_ai.execute_enemy_turn()
-		return
-
-	# Player turn start: reset block + energy via player.start_turn()
-	AudioManager.play_sfx("turn_start")
-	player.start_turn()
-	if is_game_over:
-		return
-	# Reset the per-turn guaranteed-first-attack Crit (Deadeye Crit Clip).
-	combat_engine.reset_turn_crit()
-	# Reset the attack allowance for the new turn (double-fire clip arms this).
-	var round_number: int = turn_manager.current_round
-	_attack_limit_per_turn = int(
-		combat_hooks.compute("modify_attack_limit", HOOK_VALUE.make(0, {"round": round_number}))
-	)
-	# First-turn bonus on an armed cap (Burst-Fire Clip: 2 attacks on turn 1).
-	if _attack_limit_per_turn > 0 and round_number == 1:
-		_attack_limit_per_turn = int(
-			combat_hooks.compute("modify_attack_limit_first_turn", HOOK_VALUE.make(_attack_limit_per_turn))
-		)
-	_attacks_left_this_turn = _attack_limit_per_turn
-	_update_attack_allowance_ui()
-	# Turn energy listeners (ascension Cold Start: -1 on the first turn).
-	var energy_delta := int(combat_hooks.compute("modify_turn_energy", HOOK_VALUE.make(0, {"round": round_number})))
-	if energy_delta < 0:
-		player.pay_energy(-energy_delta)
-	await combat_hooks.react("after_turn_start", "player", turn_manager.current_round)
-	if is_game_over:
-		return
-	_update_ui_labels()
-	update_polarity_hud()  # H5: reflect opening polarity state on the HUD badge
-	enemy_ai.spawn_enemy_units()
-
-	_ending_turn = false  # re-arm the end-turn guard
-	refresh_hand_ui()  # retained cards become playable again
-	if turn_manager.current_round == 1:
-		deck_manager.first_round_draw()
-	else:
-		deck_manager.draw_cards(3)
-
-
-## STS rule: at END of player turn, reset block/energy. Hand discard is handled
-## upstream in `_on_end_round_button_pressed` so the animation fully completes
-## before turn_manager switches sides.
-func _on_turn_ended(side: String) -> void:
-	if is_game_over:
-		return  # a curse (e.g. Rust) can kill the player mid-end-turn — don't tick a corpse
-	# Intangible lasts until the end of the opponent's turn.
-	if side == "player":
-		for enemy in enemy_container.get_children():
-			if is_instance_valid(enemy) and "status_system" in enemy:
-				enemy.status_system.on_opponent_turn_end(enemy)
-	elif is_instance_valid(player):
-		player.status_system.on_opponent_turn_end(player)
-	if side == "player":
-		player.end_turn()
-		_update_ui_labels()
-
-
-## End-of-turn discard cascade: each remaining hand card flies to the discard
-## pile with a small stagger. Without this, dropping them straight into the
-## discard pile (hide_cards=true) would make them vanish on the same frame
-## they're added, with no visual cue that they were discarded.
-func _animate_hand_discard(cards: Array) -> void:
-	const STAGGER := 0.07
-	var landed := [0]
-	var flying := 0
-	for i in range(cards.size()):
-		var card = cards[i]
-		if not is_instance_valid(card):
-			continue
-		# Detach from hand first so the surviving cards re-fan around the gap.
-		if card.card_container and card.card_container.has_card(card):
-			card.card_container.remove_card(card)
-		flying += 1
-		_discard_after_flight(card, landed)
-		if i < cards.size() - 1:
-			await _wait(STAGGER)
-	# The turn switches only after every card has landed in the pile.
-	while landed[0] < flying and is_inside_tree():
-		await get_tree().process_frame
-
-
-## One rule for joining the discard pile: the card lands first, then the pile
-## takes it (and hides it). `landed[0]` counts finished flights.
-func _discard_after_flight(card: Control, landed: Array) -> void:
-	await card_animator.fly_to_discard(card)
-	if is_instance_valid(card):
-		discard_pile.add_card(card)
-	landed[0] += 1
-
-
-func _on_round_changed(_round: int) -> void:
-	_update_ui_labels()
-
-
-func _on_player_health_changed(_hp: int) -> void:
-	_update_ui_labels()
-
-
-func _on_player_energy_changed(_energy: int) -> void:
-	_update_ui_labels()
-
-
-func _on_player_block_changed(_block: int) -> void:
-	_update_ui_labels()
 
 
 func _update_ui_labels():
@@ -891,17 +732,16 @@ func _set_pile_count(pile: Node, n: int) -> void:
 
 # ── Exhaust pile (hidden): exhausted cards collect here instead of vanishing.
 # Open it with the X key or the on-screen indicator that appears once non-empty.
-var _exhausted_card_names: PackedStringArray = []
 
 
 func view_exhaust_pile() -> void:
 	ui_manager.show_pile_viewer_from_names(
-		tr("UI_BATTLE_EXHAUST_PILE"), _exhausted_card_names, "exhaust"
+		tr("UI_BATTLE_EXHAUST_PILE"), combat.state.exhausted_ids if combat else PackedStringArray(), "exhaust"
 	)
 
 
 func _refresh_exhaust_indicator() -> void:
-	var n: int = _exhausted_card_names.size()
+	var n: int = combat.state.exhausted_ids.size() if combat else 0
 	var btn: Button = get_node_or_null("ExhaustIndicator")
 	if btn == null:
 		btn = Button.new()
@@ -923,104 +763,120 @@ func _refresh_exhaust_indicator() -> void:
 	btn.text = tr("UI_BATTLE_EXHAUST_SHORT").format({"n": n})
 
 
-## Initialise a new battle from RunManager state (or defaults if no run is active).
+## Build the combat from RunManager state (or defaults if no run is active) and
+## start it.
 func _start_new_game():
-	is_game_over = false
-	_gold_effect_triggers = 0
-
-	relic_effect_system = RELIC_EFFECT_SYSTEM.new()
-	relic_effect_system.setup(self)
-	equipment_set_system = EQUIPMENT_SET_SYSTEM.new()
-	equipment_set_system.setup(self)
-	COMBAT_SERVICES.install(self)
-	combat_commands.attach(player)
-
-	# ── Player HP & Attributes ──────────────────────────────────────────────
+	var pc = player.creature
+	var deck_list: Array = []
+	var encounter: Array = ["base:trash_robot"]
 	if RunManager.is_run_active:
-		player.max_health = RunManager.max_health
-		player.health = RunManager.current_health
+		pc.max_health = RunManager.max_health
+		pc.health = RunManager.current_health
 		var attrs = RunManager.player_attributes
-		player.strength = int(attrs.get("strength", 3))
-		player.constitution = int(attrs.get("constitution", 3))
-		player.intelligence = int(attrs.get("intelligence", 3))
-		player.luck = int(attrs.get("luck", 3))
-		player.charm = int(attrs.get("charm", 3))
-		# Enemy roster comes from the map encounter data stored in RunManager
+		for attr in ["strength", "constitution", "intelligence", "luck", "charm"]:
+			pc.set(attr, int(attrs.get(attr, 3)))
+		deck_list = RunManager.player_deck.duplicate()
 		if RunManager.current_encounter.size() > 0:
-			enemy_ai.enemy_roster = RunManager.current_encounter
+			encounter = RunManager.current_encounter
+	else:
+		deck_list = _practice_deck()
+	player._refresh_hud()
+	combat = COMBAT_MANAGER.new()
+	presenter = BATTLE_PRESENTER.new(self)
+	combat.presenter = presenter
+	combat.setup({"player": pc, "deck": deck_list, "encounter": encounter})
+	combat.combat_ended.connect(_on_combat_ended)
+	combat.card_played.connect(_on_card_played)
+	combat.enemy_died.connect(_on_enemy_died)
+	for sig in ["health_changed", "energy_changed", "block_changed"]:
+		pc.connect(sig, _update_ui_labels.unbind(1))
+	pc.stats_changed.connect(_update_ui_labels)
+	pc.status_changed.connect(_update_ui_labels)
+	combat.prepare()
+	hand_view.build(combat.state.piles)
+	combat.begin()
 
-	# Passive relic stat grants at battle start (war_horn +STR, bulk_actuator).
-	# Runs after player attributes are seeded above so it stacks on the base.
-	# Battle-start listeners: relic stat grants, then equipment sets (snapshot
-	# active tiers and apply start_battle_block).
-	combat_hooks.react("before_combat_start")
+
+## Practice deck for a battle opened without a run (editor, tests).
+func _practice_deck() -> Array:
+	var list = [
+		"base:strike",
+		"base:strike",
+		"base:strike",
+		"base:strike",
+		"base:weak_strike",
+		"base:defend",
+		"base:defend",
+		"base:defend",
+		"base:defend",
+		"base:siphon"
+	]
+	RunManager.rng("shuffle").shuffle(list)
+	return list
 
 
-	# ── Deck & Turn ──────────────────────────────────────────────────────────
-	deck_manager.reset_deck()
-	turn_manager.start_new_game()
+## The view of `creature` (the player node or an enemy view), or null once freed.
+func view_of(creature: Object) -> Node:
+	if creature == null:
+		return null
+	if combat != null and creature == combat.player:
+		return player
+	var view = _views.get(creature)
+	return view if view != null and is_instance_valid(view) and not view.is_queued_for_deletion() else null
+
+
+## An enemy joined the fight: its view takes the next field slot.
+func spawn_enemy_view(creature: Object) -> Node:
+	var view = ENEMY_ENTITY.for_creature(creature)
+	view.combat = combat
+	var idx = enemy_container.get_child_count()
+	view.position = Vector2(idx * 260, 0)
+	enemy_container.add_child(view)
+	_views[creature] = view
+	return view
+
+
+## Run bookkeeping for a committed play: bounty and card codex.
+func _on_card_played(card: RefCounted) -> void:
+	RunManager.card_played(card.card_info)
+	MetaProgress.mark_card_seen(str(card.card_info.get("id", "")))
+
+
+## Per-kill gold, scaled by toughness (elites pay double), and the bounty event.
+func _on_enemy_died(enemy: RefCounted) -> void:
+	var kill_gold := clampi(2 + enemy.max_health / 30, 1, 9)
+	if enemy.is_elite:
+		kill_gold *= 2
+	RunManager.add_gold(kill_gold)
+	RunManager.enemy_killed(enemy)
+
+
+func _on_combat_ended(outcome: String) -> void:
+	_tool_resolving = false  # a tool still queued was dropped with the fight
+	if outcome == "victory":
+		_victory()
+	else:
+		_game_over()
 
 
 func _on_end_round_button_pressed():
-	# Guard against double-fire across the discard-animation await (auto-end +
-	# manual click, or two fast clicks). Reset at the next player turn start.
-	if _ending_turn or not turn_manager.is_player_turn or is_targeting:
+	# Double-fire guard (auto-end + click, two fast clicks): the combat accepts
+	# one End Turn per turn.
+	if is_targeting:
 		return
-	_ending_turn = true
+	combat.request_end_turn()
 	refresh_hand_ui()  # nothing is playable once End Turn is pressed
-	action_queue.enqueue("end_turn", _end_turn_action)
-
-
-## End Turn as a queued action: runs after every card already played, then
-## holds the queue through the enemy turn until the player's next turn starts.
-func _end_turn_action() -> void:
-	if is_game_over:
-		return
-	if turn_manager.is_player_turn:
-		# Discard hand BEFORE switching turns. turn_manager.end_turn() emits
-		# turn_ended synchronously and immediately switches sides; awaiting an
-		# animation inside the signal handler doesn't block that switch, so the
-		# next player draw would race against the in-flight discard and see an
-		# empty discard pile (breaking reshuffle when deck < draw count).
-		# Curse penalties: apply each in-hand curse's end_turn_in_hand effects to the
-		# player before the hand discards (StS-style "punished for not clearing it").
-		for c in hand.get_cards():
-			if is_game_over:
-				break  # a curse killed the player — stop applying further penalties
-			if not is_instance_valid(c):
-				continue
-			var curse_source = COMBAT_SOURCE.make("card", "player", player, c)
-			for eff in c.card_info.get("end_turn_in_hand", []):
-				if typeof(eff) == TYPE_DICTIONARY:
-					await combat_engine.execute_effect(eff, player, curse_source)
-		var remaining = hand.get_cards().duplicate()
-		var to_discard: Array = []
-		for c in remaining:
-			if is_instance_valid(c) and bool(c.card_info.get("retain", false)):
-				continue
-			to_discard.append(c)
-		if to_discard.size() > 0:
-			await _animate_hand_discard(to_discard)
-		turn_manager.end_turn()
-		while not turn_manager.is_player_turn and not is_game_over and is_inside_tree():
-			await get_tree().process_frame
 
 
 func _victory():
-	if is_game_over:
-		return
-	action_queue.clear_pending()
-	_drop_waiting_cards()
 	if is_targeting:
 		_cancel_active_targeting()
-	is_game_over = true
 	refresh_hand_ui()  # nothing is playable once combat is over
 	AudioManager.play_sfx("victory")
 	# Combat is over — neutralise any in-flight card drag NOW, before the 3s gap +
 	# loot modal (MOUSE_FILTER_STOP) can swallow the mouse-release and leave a card
 	# stuck in HOLDING, which permanently locks all future drags. (Bug fix.)
 	_reset_hand_drag_state()
-	combat_hooks.react("after_combat_victory")
 	# Victory path: persist HP without firing the death gate, even if the
 	# player ended the fight at 0 HP (chip damage / mutual kill). Otherwise
 	# modify_health(negative) would trigger _handle_run_loss → run_ended(false),
@@ -1139,13 +995,8 @@ func _on_loot_closed(canvas: CanvasLayer) -> void:
 
 
 func _game_over():
-	if is_game_over:
-		return
-	action_queue.clear_pending()
-	_drop_waiting_cards()
 	if is_targeting:
 		_cancel_active_targeting()
-	is_game_over = true
 	refresh_hand_ui()  # nothing is playable once combat is over
 	AudioManager.play_sfx("defeat")
 	# Defeat path: route through the death gate so _handle_run_loss fires
@@ -1191,49 +1042,28 @@ func _write_hp_to_run_manager(triggering_defeat: bool = false) -> void:
 # ─── Energy ───────────────────────────────────────────────────────────────────
 
 
-## Effective energy cost of a card right now — a discover `cost_override` (this combat)
-## wins over the card's base cost.
+## Effective energy cost of a card node right now (a discovered card is free).
 func card_cost(card) -> int:
-	if card and is_instance_valid(card) and card.has_meta("cost_override"):
-		return int(card.get_meta("cost_override"))
+	if card and is_instance_valid(card) and card.get("instance") != null:
+		return card.instance.cost()
 	return int(card.card_info.get("cost", 0)) if card else 0
 
 
 func can_afford(cards: Array) -> bool:
-	if is_game_over or not player:
+	if is_game_over or combat == null:
 		return false
 	var total_cost = 0
 	for card in cards:
 		total_cost += card_cost(card)
-	return player.energy >= total_cost
+	return combat.player.energy >= total_cost
 
 
-func spend_energy(cards: Array) -> void:
-	var total_cost = 0
-	for card in cards:
-		total_cost += card_cost(card)
-	player.pay_energy(total_cost)
-
-
-## Hearthstone-style Discover: pop a 3-choose-1 for `pool`; await the pick; the chosen card
-## is created straight into the current hand (this combat only). `free` makes it cost 0 this
-## combat (cost_override meta). Returns the chosen id, or "" if nothing matched.
-func open_discover(pool: String, count: int, free: bool) -> String:
-	var unlocked: Array = MetaProgress.get_unlocked_card_pool()
-	var ids: Array = DISCOVER_POOL.roll(pool, count, unlocked)
-	if ids.is_empty():
-		show_notification(tr("UI_DISCOVER_EMPTY"), Color(0.85, 0.6, 0.4))
-		return ""
+## Discover modal: offer `ids`, return the pick (the combat adds the card).
+func open_discover_modal(ids: Array, pool: String) -> String:
 	var modal = DISCOVER_MODAL.new()
 	modal.setup(ids, _discover_title(pool))
 	add_child(modal)
 	var picked: String = await modal.discovered
-	var card = deck_manager.add_card_to_hand(picked)
-	if free and card and is_instance_valid(card):
-		card.set_meta("cost_override", 0)
-		if card.has_method("update_display"):
-			card.update_display()
-	AudioManager.play_sfx("card_draw")
 	return picked
 
 
@@ -1244,201 +1074,16 @@ func _discover_title(pool: String) -> String:
 	return localized if localized != key else tr("UI_DISCOVER_TITLE")
 
 
-# ─── Attack allowance (double-fire clip) ──────────────────────────────────────
-
-
-## Grant +n attacks this turn. No-op when the limit isn't armed.
-func add_attack_allowance(n: int) -> void:
-	if _attack_limit_per_turn <= 0:
-		return
-	_attacks_left_this_turn += n
-	_update_attack_allowance_ui()
-
-
-## Refresh the attack allowance back up to the per-turn cap (Reload card). Does
-## NOT stack past the cap — so you can fire again, but can't bank extra attacks.
-## Also fires the Covering Reload power (Block on every Reload).
-func restore_attack_allowance() -> void:
-	AudioManager.play_sfx("reload")  # bare-ok: sfx key
-	# Reload listeners (Covering Reload) fire whether or not the attack cap is armed.
-	if combat_hooks:
-		combat_hooks.react("after_reload", null)
-	if _attack_limit_per_turn <= 0:
-		return
-	_attacks_left_this_turn = max(_attacks_left_this_turn, _attack_limit_per_turn)
-	_update_attack_allowance_ui()
-
-
-## Mirror the attack allowance onto the player's "bullet" status (shown in the
-## status bar). The clip arms it: 1 bullet at turn start, max 1; spent by
-## attacking, restored by Reload. Cleared/absent when the allowance isn't armed.
-func _update_attack_allowance_ui() -> void:
-	if not (player and player.status_system):
-		return
-	player.status_system.remove_status("bullet", player)
-	if _attack_limit_per_turn > 0 and _attacks_left_this_turn > 0:
-		player.status_system.add_status("bullet", _attacks_left_this_turn, player)
-
-
 # ─── Card Play ────────────────────────────────────────────────────────────────
 
 
-## Play a card. target_node is set for any card whose data requires an enemy target.
-## Checks and costs happen now; the card flies to the play area at once and its
-## effects resolve through the action queue, after every card played before it.
-## A per-card `_in_play` meta lock prevents the same card from being played
-## twice (e.g. double-click, double drop).
+## Play a card node at an enemy view (or null). The combat checks and queues
+## it; a refused card goes back to the hand (presenter).
 func play_spell(card: Control, target_node: Node):
-	if is_game_over:
+	if combat == null or not is_instance_valid(card) or card.get("instance") == null:
 		return
-	if not is_instance_valid(card):
-		return
-
-	if card.has_meta("_in_play"):
-		return
-	card.set_meta("_in_play", true)
-
-	var type = card.card_info.get("type", "skill").to_lower()
-
-	if not _accepts_player_input():
-		AudioManager.play_sfx("error")
-		hand.add_card(card)
-		card.remove_meta("_in_play")
-		return
-
-	# Curses (and any card flagged unplayable) can't be played — return it to hand with
-	# a notification (mirrors the out-of-ammo path).
-	if type == "curse" or bool(card.card_info.get("unplayable", false)):
-		AudioManager.play_sfx("error")
-		show_notification(tr("UI_BATTLE_CURSE_UNPLAYABLE"), Color(0.72, 0.5, 0.85))
-		hand.add_card(card)
-		card.remove_meta("_in_play")
-		return
-
-	var needs_enemy_target: bool = (
-		card.has_method("requires_enemy_target") and card.requires_enemy_target()
-	)
-	if needs_enemy_target:
-		if not target_node or not is_instance_valid(target_node):
-			AudioManager.play_sfx("error")
-			show_notification(tr("UI_BATTLE_MUST_TARGET_ENEMY"), Color(0.8, 0.4, 0.4))
-			hand.add_card(card)
-			card.remove_meta("_in_play")
-			return
-
-	if type == "attack":
-		# Attack-allowance gate (double-fire clip): no attacks left this turn → the
-		# attack is unplayable. Return it to hand and explain via a notification.
-		if _attack_limit_per_turn > 0 and _attacks_left_this_turn <= 0:
-			AudioManager.play_sfx("error")
-			show_notification(tr("UI_BATTLE_NO_ATTACKS_LEFT"), Color(0.85, 0.55, 0.3))
-			hand.add_card(card)
-			card.remove_meta("_in_play")
-			return
-		if _attack_limit_per_turn > 0:
-			_attacks_left_this_turn -= 1
-			_update_attack_allowance_ui()
-
-	# Deduct cost; remove from current container if still tracked there. Per-type play
-	# sound (attack swipe / skill whoosh / power charge); other types (status, curse…)
-	# fall back to the generic card_play.
-	var play_sfx_name: String = "card_play"
-	if type in ["attack", "skill", "power"]:
-		play_sfx_name = "card_play_" + type
-	AudioManager.play_sfx(play_sfx_name)
-	spend_energy([card])
-	# Bounty + card-codex tracking: the play is committed at this point (all
-	# gates passed, energy spent). Fires once per PLAY, not per Replay pass.
-	RunManager.card_played(card.card_info)
-	combat_hooks.react("after_card_played", card.card_info)
-	MetaProgress.mark_card_seen(str(card.card_info.get("id", "")))
-	if card.card_container and card.card_container.has_card(card):
-		card.card_container.remove_card(card)
-
-	card_animator.prepare_for_play(card)
-	card_animator.enqueue_card(card)
-	action_queue.enqueue("play_card", _resolve_played_card.bind(card, target_node))
-
-
-## Queued half of a card play: move the card from the waiting line to the play
-## position, resolve it, then send it to discard / exhaust without holding the
-## queue.
-func _resolve_played_card(card, target_node) -> void:
-	if is_game_over or not is_instance_valid(card):
-		return
-	await card_animator.begin_resolving(card)
-	if not is_instance_valid(card):
-		return
-	if is_game_over:
-		# Combat ended while the card slid into the play position: drop it too.
-		await _park_dropped_card(card)
-		return
-	# The target can die while this card waits or flies; null = "no target".
-	var safe_target: Node = target_node if is_instance_valid(target_node) else null
-	await combat_engine.resolve_card_effect(card, safe_target, player)
-
-	# Release the per-card play lock now: what's left is animation/routing, and the
-	# meta must not survive the trip discard → reshuffle → deck → hand.
-	if is_instance_valid(card):
-		card.remove_meta("_in_play")
-	_route_played_card(card)
-
-
-func _route_played_card(card) -> void:
-	# Route to discard, OR remove from circulation if exhaust_self is among
-	# the card's effects.
-	var should_exhaust := _card_has_exhaust(card)
-	if is_instance_valid(card):
-		if card.card_container and card.card_container.has_card(card):
-			card.card_container.remove_card(card)
-		if should_exhaust:
-			_trigger_exhaust_powers()
-			# Keep the card's identity for the (hidden) Exhaust pile before it's freed.
-			var ex_name: String = str(card.card_info.get("id", ""))
-			await card_animator.burn_exhaust(card)
-			if ex_name != "":
-				_exhausted_card_names.append(ex_name)
-			if is_instance_valid(card):
-				card.queue_free()
-		else:
-			await card_animator.fly_to_discard(card)
-			if is_instance_valid(card):
-				discard_pile.add_card(card)
-
-	_update_ui_labels()
-	refresh_hand_ui()
-
-
-## Gold from a card `gain_gold` effect. When `cap > 0` the
-## grant is limited to `cap` triggers per combat; cap 0 = uncapped.
-var _gold_effect_triggers: int = 0
-
-
-func try_gain_gold(amount: int, cap: int) -> void:
-	if cap > 0 and _gold_effect_triggers >= cap:
-		return
-	if cap > 0:
-		_gold_effect_triggers += 1
-	RunManager.add_resources(amount, 0)
-	show_notification(tr("UI_COMBAT_WEALTHY").format({"n": amount}), Color(1.0, 0.82, 0.29))
-
-
-## Broadcast an Exhaust to the listeners (Feel No Pain). Called once per
-## exhausted card.
-func _trigger_exhaust_powers() -> void:
-	if combat_hooks:
-		combat_hooks.react("after_card_exhausted", null)
-
-
-## Returns true if the card has an `exhaust_self` effect entry.
-func _card_has_exhaust(card: Control) -> bool:
-	if not is_instance_valid(card):
-		return false
-	var effects: Array = card.card_info.get("effects", [])
-	for e in effects:
-		if typeof(e) == TYPE_DICTIONARY and str(e.get("type", "")) == "exhaust_self":
-			return true
-	return false
+	var target = target_node.creature if target_node and is_instance_valid(target_node) else null
+	combat.play_card(card.instance, target)
 
 
 # ─── Targeting ────────────────────────────────────────────────────────────────
@@ -1475,7 +1120,7 @@ func _sole_alive_enemy() -> Node:
 		return null
 	var alive: Array = []
 	for enemy in enemy_container.get_children():
-		if is_instance_valid(enemy) and enemy.has_method("take_damage"):
+		if is_instance_valid(enemy) and enemy.creature.is_alive():
 			alive.append(enemy)
 			if alive.size() > 1:
 				return null  # short-circuit, more than one

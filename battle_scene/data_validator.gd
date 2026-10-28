@@ -45,7 +45,7 @@ const ALLOWED_CARD_TYPES = ["attack", "skill", "ability", "curse"]
 # common/uncommon/rare and must never surface a unique relic (see
 # get_unowned_relic_ids / shop_scene._list_unowned_relics, which exclude it).
 const ALLOWED_RARITIES = ["common", "uncommon", "rare", "unique", "curse"]
-const EFFECT_CATALOG = preload("uid://880atc7mnnie")  # res://battle_scene/combat/effect_catalog.gd
+const EFFECT_CATALOG = preload("uid://880atc7mnnie")  # res://core/effects/effect_catalog.gd
 
 
 ## Card effect types: every combat type whose definition does not say `card: false`.

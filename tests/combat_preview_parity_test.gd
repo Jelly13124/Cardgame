@@ -7,15 +7,16 @@ extends Node
 
 const FAKE_BATTLE = preload("uid://j25pi73kmisn")  # res://tests/support/fake_battle.gd
 const PLAY_CARD = preload("uid://d4f71g73780ld")  # res://battle_scene/play_card.gd
-const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
+const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://core/combat/combat_effects.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const CARD_PLAY = preload("uid://bxaw24a7fumhm")  # res://core/combat/card_play.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const CARD_INSTANCE = preload("uid://c50mv4hudoncd")  # res://core/combat/card_instance.gd
 
 
+## A combat card (core/combat/card_instance.gd) built from a test dictionary.
 class FakeCard:
-	extends Control
-	var card_info: Dictionary = {}
+	extends CARD_INSTANCE
 
 
 var failures: PackedStringArray = []
@@ -85,7 +86,7 @@ func _target_damage_cards() -> Array:
 ## Returns [preview, actual] for one card under one state.
 func _compare(card_data: Dictionary, state: Array) -> Array:
 	var player = battle.player
-	player.status_system = player.STATUS_SYSTEM.new()
+	player.status_system = player.STATUS_EFFECTS.new()
 	player.strength = state[0]
 	player.block = 5
 	if state[1]:
@@ -105,7 +106,6 @@ func _compare(card_data: Dictionary, state: Array) -> Array:
 	battle.combat_engine.reset_turn_crit()
 	var card := FakeCard.new()
 	card.card_info = card_data.duplicate(true)
-	add_child(card)
 
 	COMBAT_EFFECTS.preview_card_damage(battle, card, target)
 	var preview: int = COMBAT_EFFECTS.preview_card_damage(battle, card, target)
@@ -119,5 +119,4 @@ func _compare(card_data: Dictionary, state: Array) -> Array:
 		if typeof(effect) == TYPE_DICTIONARY and str(effect.get("type", "")) in COMBAT_EFFECTS.DAMAGE_TYPES:
 			await battle.combat_engine.execute_effect(effect, target, source, play)
 	var actual: int = target.damage_received
-	card.free()
 	return [preview, actual]

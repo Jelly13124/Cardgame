@@ -4,9 +4,10 @@ class_name PlayCard
 
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://core/combat/status_effects.gd
-const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
+const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://core/combat/combat_effects.gd
+const CARD_INSTANCE = preload("uid://c50mv4hudoncd")  # res://core/combat/card_instance.gd
 const CARD_DESCRIPTION = preload("uid://b4fkwjpel7452")  # res://battle_scene/card_description.gd
-const EFFECT_CATALOG = preload("uid://880atc7mnnie")  # res://battle_scene/combat/effect_catalog.gd
+const EFFECT_CATALOG = preload("uid://880atc7mnnie")  # res://core/effects/effect_catalog.gd
 const HOOK_VALUE = preload("uid://npewr2krgrm6")  # res://core/combat/hook_value.gd
 const CARD_HIGHLIGHT = preload("uid://wd07lb83d87x")  # res://battle_scene/ui/card_highlight.gd
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
@@ -42,6 +43,9 @@ const HAND_HOVER_LIFT := 80.0
 
 ## Discover candidates aren't hand cards — suppress the "can I afford it" glow.
 var suppress_playable_glow: bool = false
+## The combat card this node shows (core/combat/card_instance.gd); null for
+## cards outside a combat (rewards, codex, discover offers).
+var instance: RefCounted = null
 ## Playable outline (battle_scene/ui/card_highlight.gd), behind the card face.
 var highlight: ColorRect
 var _rarity_frames: Dictionary = {}
@@ -335,17 +339,7 @@ func _targeted_card_should_drag(main) -> bool:
 ## Targeting is data-driven rather than coupled to the card's visual type.
 ## `target` may explicitly override inference for future content.
 static func data_requires_enemy_target(data: Dictionary) -> bool:
-	var explicit_target := str(data.get("target", "")).to_lower()
-	if explicit_target == "enemy":
-		return true
-	if explicit_target in ["none", "self", "all_enemies"]:
-		return false
-	for effect in data.get("effects", []):
-		if typeof(effect) != TYPE_DICTIONARY:
-			continue
-		if EFFECT_CATALOG.registry().targets_enemy(str(effect.get("type", ""))):
-			return true
-	return false
+	return CARD_INSTANCE.data_requires_enemy_target(data)
 
 
 func requires_enemy_target() -> bool:
@@ -362,8 +356,8 @@ func set_card_data(data: Dictionary) -> void:
 	# ── Cost: always integer ──────────────────────────────────────────────────
 	# cost_override (this-combat discover) wins over the card's base cost.
 	var shown_cost: int = int(data.get("cost", 0))
-	if has_meta("cost_override"):
-		shown_cost = int(get_meta("cost_override"))
+	if instance != null:
+		shown_cost = instance.cost()
 	cost_label.text = str(shown_cost)
 	_style_cost_label()
 
@@ -468,11 +462,12 @@ func _fit_and_center_description() -> void:
 ## with this card's live view: player stats, battle preview values, relic replays.
 func _build_description(data: Dictionary) -> String:
 	var view := {"stats": _get_player_stats(), "pipeline": {}, "replay_bonus": 0}
-	var battle = get_tree().current_scene if get_tree() else null
-	if battle and battle.get("combat_commands"):
-		view["pipeline"] = COMBAT_EFFECTS.preview_effect_values(battle, self, data.get("effects", []))
-	if battle and "combat_hooks" in battle and battle.combat_hooks:
-		view["replay_bonus"] = int(battle.combat_hooks.compute("modify_attack_replays", HOOK_VALUE.make(0)))
+	var scene = get_tree().current_scene if get_tree() else null
+	var combat = scene.get("combat") if scene else null
+	if combat != null and combat.combat_commands != null:
+		var subject = instance if instance != null else self
+		view["pipeline"] = COMBAT_EFFECTS.preview_effect_values(combat, subject, data.get("effects", []))
+		view["replay_bonus"] = int(combat.combat_hooks.compute("modify_attack_replays", HOOK_VALUE.make(0)))
 	return CARD_DESCRIPTION.build(data, view)
 
 

@@ -9,11 +9,14 @@ const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://core/combat/status_effects.gd
+const MONSTERS = preload("uid://dvu3etytjqum8")  # res://core/combat/monsters.gd
+const ENEMY_TURN = preload("uid://d4np8yrt1ml3v")  # res://core/combat/enemy_turn.gd
+const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://battle_scene/combat_fx.gd
 const MONSTER_MOVES = preload("uid://bqwa1txur3b52")  # res://core/combat/monster_moves.gd
 const INTENTS = preload("uid://crt5cmvargkpn")  # res://core/combat/intents.gd
 const CREATURE = preload("uid://kab2636ev63e")  # res://core/combat/creature.gd
 const SELECTION_RETICLE = preload("uid://c6dicaops28n6")  # res://battle_scene/ui/selection_reticle.gd
-const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
+const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://core/combat/combat_effects.gd
 const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://battle_scene/combat_feedback_controller.gd
 
 # Intent badge icon textures — preloaded once instead of `load()`-ing on every
@@ -81,7 +84,6 @@ var block: int:
 	set(value):
 		creature.block = value
 		_refresh_hud()
-var _death_resolving: bool = false
 var _death_settled: bool = false
 ## ID used to locate sprite frames: e.g. "trash_robot" -> trash_robot_attack_0.png
 var sprite_id: String = ""
@@ -92,8 +94,9 @@ var status_system:
 		return creature.status_system
 	set(value):
 		creature.status_system = value
-## Battle this enemy fights in; set by combat_commands.attach().
-var battle: Node = null
+## The combat this enemy fights in (core/combat/combat_manager.gd), for the
+## intent numbers; set by the battle screen.
+var combat: Object = null
 
 # ─── Moves ────────────────────────────────────────────────────────────────────
 ## The move state machine lives on the creature (core/combat/monster_moves.gd).
@@ -108,7 +111,6 @@ var phases: Array:
 	set(value):
 		creature.moves.phases = value
 
-signal died
 signal status_changed
 signal attack_animation_finished
 
@@ -129,41 +131,16 @@ const ENEMIES_DIR = "res://battle_scene/assets/images/enemies/"
 # ─── Factory ──────────────────────────────────────────────────────────────────
 
 
-## Create and return a fully initialized EnemyEntity from a JSON id.
+## A view for a new enemy creature of monster `id` (core/combat/monsters.gd).
 static func create(id: String) -> EnemyEntity:
+	return for_creature(MONSTERS.create(id))
+
+
+## A view showing `c` (an enemy creature).
+static func for_creature(c: RefCounted) -> EnemyEntity:
 	var entity = EnemyEntity.new()
-	entity.enemy_id = id
-	entity.is_elite = id in RunManager.ELITE_ROSTER
-	entity.is_boss = id in RunManager.ACT_BOSSES
-	# Writable copy: action patterns and phases are per-instance runtime state.
-	var data: Dictionary = MODEL_DB.mutable("monster", id)
-	if not data.is_empty():
-		# Display name routes through the content-translation table; the
-		# English JSON `name` is the source/fallback (content agents own
-		# the ENEMY_<id>_NAME rows in content_enemies.csv).
-		entity.enemy_name = Settings.t(
-			"ENEMY_%s_NAME" % MODEL_ID.key_entry(id), str(data.get("name", MODEL_ID.key_entry(id).to_upper()))
-		)
-		entity.max_health = int(data.get("max_health", 30))
-		# Tough enemies: HP scales by a percentage per ascension level.
-		if RunManager.has_ascension("base:a1_tough_enemies"):
-			var pct := float(RunManager.ascension_param("base:a1_tough_enemies", "hp_pct_per_level", 10))
-			entity.max_health = int(
-				round(entity.max_health * (1.0 + pct / 100.0 * RunManager.ascension))
-			)
-		# Per-act scaling (bosses exempt — see RunManager.scale_enemy_hp).
-		entity.max_health = RunManager.scale_enemy_hp(entity.max_health, id)
-		entity.health = entity.max_health
-		entity.creature.moves = MONSTER_MOVES.from_data(data)
-		entity.sprite_id = data.get("sprite_id", "")
-	else:
-		push_error(
-			(
-				"EnemyEntity: unknown monster '%s'. Encounter will spawn a placeholder enemy."
-				% id
-			)
-		)
-		assert(false, "EnemyEntity: unknown monster '%s'" % id)
+	entity.creature = c
+	entity.sprite_id = MONSTERS.sprite_id(c.enemy_id)
 	return entity
 
 
@@ -174,13 +151,12 @@ func _init() -> void:
 	creature.side = "enemy"
 	creature.max_health = 30
 	creature.health = 30
-	creature.host = self
 	creature.moves = MONSTER_MOVES.new()
-	creature.status_changed.connect(func(): status_changed.emit())
-	creature.intent_changed.connect(_update_intent_display)
 
 
 func _ready() -> void:
+	creature.status_changed.connect(func(): status_changed.emit())
+	creature.intent_changed.connect(_update_intent_display)
 	_build_visual()
 	_update_intent_display()
 	_start_intent_float_anim()
@@ -432,13 +408,6 @@ func peek_next_action() -> Dictionary:
 	return creature.moves.peek()
 
 
-## Returns the current action AND advances to the next one.
-func consume_next_action() -> Dictionary:
-	var a: Dictionary = creature.moves.consume()
-	_update_intent_display()
-	return a
-
-
 ## Refreshes the intent badge to show what this enemy will do NEXT turn.
 ## Public — called by BattleScene to broadcast player-status changes
 ## (e.g. vulnerable applied to player) to every enemy.
@@ -450,8 +419,8 @@ func update_intent_display() -> void:
 ## shared pipeline in preview mode (the same calculation the attack uses).
 ## Before the battle attaches this enemy, the move's printed amount.
 func intent_attack_damage(action: Dictionary) -> int:
-	if battle and is_instance_valid(battle) and battle.get("combat_commands"):
-		return COMBAT_EFFECTS.preview_enemy_attack(battle, self, action)
+	if combat != null:
+		return ENEMY_TURN.intent_damage(combat, creature, action)
 	return int(action.get("amount", 0))
 
 
@@ -571,94 +540,45 @@ func _start_intent_float_anim() -> void:
 # ─── Combat ───────────────────────────────────────────────────────────────────
 
 
-func notify_status_changed() -> void:
-	creature.notify_status_changed()
-
-
-func take_damage(
-	amount: int, silent: bool = false, feedback_tags: Dictionary = {}
-) -> void:
-	if _death_resolving or amount <= 0:
-		return
-
-	var dmg_after_block := maxi(0, amount - block)
-	var blocked_amount := mini(block, amount)
-	var remaining_health := maxi(0, health - dmg_after_block)
-	var will_kill := remaining_health <= 0 and health > 0
-	var applied: Array = [{}]
-	var from_player := str(feedback_tags.get("source", "")) == "player"
-	var apply_health_change := func() -> void:
-		applied[0] = self.creature.apply_damage(amount, from_player)
-		if self.creature.health <= 0:
-			self._death_resolving = true
-
-	# Status ticks stay quiet because their status banner is already the readable
-	# result. Direct attacks all use the shared four-tier feedback controller.
-	if silent:
-		apply_health_change.call()
-	else:
-		var scene := COMBAT_FEEDBACK_CONTROLLER.scene_root_for(self)
-		var controller: Node = COMBAT_FEEDBACK_CONTROLLER.ensure(scene)
-		if controller:
-			var profile := str(
-				controller.call(
-					"profile_for_hit",
-					dmg_after_block,
-					blocked_amount,
-					will_kill,
-					bool(feedback_tags.get("heavy", false)),
-					bool(feedback_tags.get("critical", false))
-				)
+## Hit feedback for a hit already applied to the creature (`result`:
+## core/combat/damage_result.gd).
+func play_hit(result: Object, feedback_tags: Dictionary = {}) -> void:
+	var scene := COMBAT_FEEDBACK_CONTROLLER.scene_root_for(self)
+	var controller: Node = COMBAT_FEEDBACK_CONTROLLER.ensure(scene)
+	if controller:
+		var profile := str(
+			controller.call(
+				"profile_for_hit",
+				result.hp_lost,
+				result.blocked,
+				result.killed,
+				bool(feedback_tags.get("heavy", false)),
+				bool(feedback_tags.get("critical", false))
 			)
-			_play_hit_audio(profile, feedback_tags)
-			var reaction_target: Node2D = _sprite if is_instance_valid(_sprite) else self
-			var play_args := [
-				scene,
-				reaction_target,
-				get_hit_global_position(),
-				dmg_after_block,
-				blocked_amount,
-				profile,
-				apply_health_change,
-			]
-			if _uses_detached_feedback(feedback_tags):
-				controller.callv("play_hit", play_args)
-			else:
-				await controller.callv("play_hit", play_args)
-		else:
-			apply_health_change.call()
-
-	if will_kill:
-		if _death_settled:
-			return
-		_death_settled = true
-		AudioManager.play_sfx("enemy_death")
-		# Per-kill gold drop, scaled by toughness (elites pay double). Keeps the purse
-		# flowing between the flat per-fight loot gold so the shop stays affordable
-		# across the run. max_health is already act/ascension-scaled, so deeper
-		# fights naturally pay more.
-		var kill_gold := clampi(2 + max_health / 30, 1, 9)
-		if is_elite:
-			kill_gold *= 2
-		RunManager.add_gold(kill_gold)
-		# Bounty: one kill event per death (this branch is the single death gate —
-		# it pays kill gold + emits `died` exactly once; _live_target guards
-		# upstream keep dead enemies from re-entering take_damage).
-		RunManager.enemy_killed(self)
-		died.emit()
-		queue_free()
-		return
-
-	if bool(applied[0].get("armor_broken", false)):
+		)
+		_play_hit_audio(profile, feedback_tags)
+		var reaction_target: Node2D = _sprite if is_instance_valid(_sprite) else self
+		await controller.call(
+			"play_hit", scene, reaction_target, get_hit_global_position(), result.hp_lost, result.blocked, profile, func(): pass
+		)
+	if result.armor_broken and not result.killed and is_instance_valid(self):
 		_play_armor_break_reaction()
 
 
+## Direct HP loss already applied: a floating damage number.
+func play_hp_loss(amount: int) -> void:
+	var scene := get_tree().current_scene if is_inside_tree() else null
+	if scene:
+		COMBAT_FX.spawn_damage_number(scene, get_hit_global_position(), amount, 0)
 
-## Arms the Block gained this move as breakable armor: player damage that
-## removes all of it exposes this enemy. Re-arming replaces the previous
-## exposure payload rather than stacking traps.
-func arm_breakable_armor(status: String, stacks: int) -> void:
-	creature.arm_breakable_armor(status, stacks)
+
+## The creature died: death sound, then the view leaves (once).
+func play_death() -> void:
+	if _death_settled:
+		return
+	_death_settled = true
+	AudioManager.play_sfx("enemy_death")
+	queue_free()
 
 
 func _play_armor_break_reaction() -> void:
@@ -681,49 +601,13 @@ func _play_hit_audio(profile: String, feedback_tags: Dictionary) -> void:
 		AudioManager.play_sfx("crit", -1.5, 1.0, 0.0)
 
 
-func _uses_detached_feedback(feedback_tags: Dictionary) -> bool:
-	return str(feedback_tags.get("source", "")) in COMBAT_SOURCE.DETACHED_FEEDBACK_KINDS
-
-
-## Drains queued on_enter actions from a just-entered phase (run by enemy_ai at
-## the start of this enemy's turn).
-func consume_pending_on_enter() -> Array:
-	return creature.moves.consume_pending_on_enter()
-
-
-func add_block(amount: int) -> void:
-	creature.add_block(amount)
-
-
-func heal(amount: int) -> void:
-	creature.heal(amount)
-
-
-func start_turn() -> void:
-	creature.start_turn()
-
-
-func end_turn() -> void:
-	creature.end_turn()
-
-
 func _refresh_hud() -> void:
 	if _hud and is_instance_valid(_hud):
 		_hud.update_stats(health, max_health, block)
 
 
-## Delegate to StatusEffectSystem
-func add_status(status_name: String, stacks: int) -> void:
-	creature.add_status(status_name, stacks)
-
-
 func get_status_stacks(status_name: String) -> int:
-	return status_system.get_stacks(status_name)
-
-
-## Returns true if a stun stack was consumed (action should be skipped/cancelled).
-func consume_stun_if_present() -> bool:
-	return creature.consume_stun_if_present()
+	return creature.get_status_stacks(status_name)
 
 
 # ─── Animation Helpers ────────────────────────────────────────────────────────

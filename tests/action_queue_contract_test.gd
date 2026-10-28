@@ -91,22 +91,22 @@ func test_battle_serializes_cards_and_end_turn() -> void:
 	enemy.max_health = 999
 	battle.player.energy = 10
 	var attacks: Array = [
-		battle.deck_manager.add_card_to_hand("base:strike"),
-		battle.deck_manager.add_card_to_hand("base:strike"),
+		battle.hand_view.node_of(battle.combat.add_card_to_hand("base:strike")),
+		battle.hand_view.node_of(battle.combat.add_card_to_hand("base:strike")),
 	]
 	await get_tree().process_frame
 	_expect(attacks[0] != null and attacks[1] != null, "two Shoot cards join the hand")
 	attacks = attacks.filter(func(c) -> bool: return c != null)
 	if attacks.size() >= 2:
 		var turn_events: Array[String] = []
-		battle.turn_manager.turn_started.connect(
+		battle.combat.turn_started.connect(
 			func(side: String) -> void: turn_events.append("%s@%d" % [side, log.events.size()])
 		)
 		battle.play_spell(attacks[0], enemy)
 		battle.play_spell(attacks[1], enemy)
 		battle._on_end_round_button_pressed()
-		var first := "%s" % attacks[0].get_instance_id()
-		var second := "%s" % attacks[1].get_instance_id()
+		var first := "%s" % attacks[0].instance.get_instance_id()
+		var second := "%s" % attacks[1].instance.get_instance_id()
 		await _wait_until(func() -> bool: return turn_events.size() > 0, 20.0)
 		_expect(
 			log.events == ["hit:" + first, "done:" + first, "hit:" + second, "done:" + second],

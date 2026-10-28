@@ -270,14 +270,14 @@ func after_damage_received(result) -> void:
 		if str(effect.get("type", "")) != "heal" or not can_use(pair):
 			continue
 		mark_used(pair)
-		if result.target.has_method("heal"):
-			result.target.heal(int(effect.get("amount", 0)))
+		if result.target.has_method("heal") and result.target.heal(int(effect.get("amount", 0))) > 0:
+			if battle and battle.get("presenter"):
+				battle.presenter.sfx("heal")
 
 
 ## Ricochet Loader: add a card to hand on each player Crit.
 func after_crit(_calc) -> void:
-	var dm = battle.get("deck_manager") if battle else null
-	if dm == null or not dm.has_method("add_card_to_hand"):
+	if battle == null or not battle.has_method("add_card_to_hand"):
 		return
 	for pair in effects_for("on_crit"):
 		var effect: Dictionary = pair[1]
@@ -285,7 +285,7 @@ func after_crit(_calc) -> void:
 			var cid := str(effect.get("card", ""))
 			if cid != "":
 				for _i in range(maxi(1, int(effect.get("amount", 1)))):
-					dm.add_card_to_hand(cid)
+					battle.add_card_to_hand(cid)
 
 
 # --- helpers -------------------------------------------------------------------
@@ -323,11 +323,7 @@ func _player():
 
 
 func _random_alive_enemy():
-	var container = battle.get("enemy_container") if battle else null
-	if container == null or not is_instance_valid(container):
+	if battle == null or battle.get("state") == null:
 		return null
-	var candidates: Array = []
-	for enemy in container.get_children():
-		if alive(enemy) and enemy.has_method("take_damage"):
-			candidates.append(enemy)
+	var candidates: Array = battle.state.living_enemies()
 	return RunManager.rng("combat_targets").pick(candidates)

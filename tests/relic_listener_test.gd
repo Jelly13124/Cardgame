@@ -51,11 +51,11 @@ func _run() -> void:
 	RunManager.relics = ["testmod:third_attack_block"]
 
 	var battle = await _battle()
-	var relic_listeners: Array = battle.relic_effect_system.current_listeners(battle.combat_hooks)
+	var relic_listeners: Array = battle.combat.relic_effect_system.current_listeners(battle.combat_hooks)
 	_expect(relic_listeners.size() == 1, "one listener per held relic")
 	var first = relic_listeners[0] if not relic_listeners.is_empty() else null
 	battle.combat_hooks.compute("modify_hand_draw", HOOK_VALUE.make(3))
-	_expect(battle.relic_effect_system.current_listeners(battle.combat_hooks)[0] == first,
+	_expect(battle.combat.relic_effect_system.current_listeners(battle.combat_hooks)[0] == first,
 		"relic listeners are not rebuilt per query")
 
 	var enemy: Node = battle.enemy_container.get_child(0)
@@ -63,7 +63,7 @@ func _run() -> void:
 	for i in 6:
 		battle.player.energy = 10
 		battle.player.block = 0
-		var card = battle.deck_manager.add_card_to_hand("base:strike")
+		var card = battle.hand_view.node_of(battle.combat.add_card_to_hand("base:strike"))
 		await get_tree().process_frame
 		battle.play_spell(card, enemy)
 		await _wait_until(func() -> bool: return battle.discard_pile.get_card_count() >= i + 1, 10.0)
@@ -74,14 +74,14 @@ func _run() -> void:
 	# Player-only power reactions ignore an enemy bearer.
 	var foe: Node = battle.enemy_container.get_child(0)
 	foe.block = 0
-	foe.add_status("feel_no_pain", 3)
-	foe.add_status("covering_reload", 1)
+	foe.creature.add_status("feel_no_pain", 3)
+	foe.creature.add_status("covering_reload", 1)
 	await battle.combat_hooks.react("after_card_exhausted", null)
 	await battle.combat_hooks.react("after_reload", null)
 	_expect(int(foe.block) == 0, "enemy Feel No Pain / Covering Reload ignore the player's Exhaust and Reload (block %d)" % foe.block)
 
 	RunManager.relics = ["base:" + _once_relic()]
-	var once = battle.relic_effect_system.current_listeners(battle.combat_hooks)[0]
+	var once = battle.combat.relic_effect_system.current_listeners(battle.combat_hooks)[0]
 	var pair: Array = []
 	var effects: Array = once.data.get("effects", [])
 	for i in effects.size():
@@ -93,10 +93,10 @@ func _run() -> void:
 		once.mark_used(pair)
 		_expect(not once.can_use(pair), "spent after use")
 		RunManager.relics = []
-		battle.relic_effect_system.current_listeners(battle.combat_hooks)
+		battle.combat.relic_effect_system.current_listeners(battle.combat_hooks)
 		RunManager.relics = ["base:" + _once_relic()]
-		battle.relic_effect_system.setup(battle)
-		var fresh = battle.relic_effect_system.current_listeners(battle.combat_hooks)[0]
+		battle.combat.relic_effect_system.setup(battle.combat)
+		var fresh = battle.combat.relic_effect_system.current_listeners(battle.combat_hooks)[0]
 		_expect(fresh.can_use(pair), "a new battle resets once-per-combat")
 
 	get_tree().current_scene = null

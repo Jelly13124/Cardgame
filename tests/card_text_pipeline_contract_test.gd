@@ -5,7 +5,7 @@ extends Node
 ## the same number the targeting preview and the hit use.
 
 const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
-const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
+const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://core/combat/combat_effects.gd
 
 var failures: PackedStringArray = []
 
@@ -29,13 +29,13 @@ func _run() -> void:
 	for _i in range(4):
 		await get_tree().process_frame
 	battle.player.strength = 3
-	battle.player.add_status("weak", 1)
-	battle.player.add_status("loaded", 2)
-	var card = battle.deck_manager.add_card_to_hand("base:strike")
+	battle.player.creature.add_status("weak", 1)
+	battle.player.creature.add_status("loaded", 2)
+	var card = battle.hand_view.node_of(battle.combat.add_card_to_hand("base:strike"))
 	await get_tree().process_frame
 	_expect(card != null, "a Shoot card joins the hand")
 	if card:
-		var values: Dictionary = COMBAT_EFFECTS.preview_effect_values(battle, card)
+		var values: Dictionary = COMBAT_EFFECTS.preview_effect_values(battle.combat, card.instance)
 		_expect(int(values.get(0, -1)) == 4, "pipeline previews Shoot at 4 (got %s)" % [values])
 		card.update_display()
 		var text: String = card.desc_label.get_parsed_text()

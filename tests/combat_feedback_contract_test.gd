@@ -2,12 +2,12 @@ extends Node
 
 const CONTROLLER_PATH := "uid://po237gnjpbo0"  # res://battle_scene/combat_feedback_controller.gd
 const BATTLE_SCENE_PATH := "res://battle_scene/battle_scene.gd"  # path-ok: reads source text
-const COMBAT_ENGINE_PATH := "res://battle_scene/combat_engine.gd"  # path-ok: reads source text
-const COMBAT_EFFECTS_PATH := "res://battle_scene/combat/combat_effects.gd"  # path-ok: reads source text
-const COMBAT_COMMANDS_PATH := "res://battle_scene/combat/combat_commands.gd"  # path-ok: reads source text
+const COMBAT_ENGINE_PATH := "res://core/combat/combat_manager.gd"  # path-ok: reads source text
+const COMBAT_EFFECTS_PATH := "res://core/combat/combat_effects.gd"  # path-ok: reads source text
+const COMBAT_COMMANDS_PATH := "res://core/combat/combat_commands.gd"  # path-ok: reads source text
 const ENEMY_ENTITY_PATH := "res://battle_scene/enemy_entity.gd"  # path-ok: reads source text
 const PLAYER_PATH := "res://battle_scene/player.gd"  # path-ok: reads source text
-const ENEMY_AI_PATH := "res://battle_scene/enemy_ai.gd"  # path-ok: reads source text
+const ENEMY_AI_PATH := "res://core/combat/enemy_turn.gd"  # path-ok: reads source text
 const EXPECTED_PROFILES := ["blocked", "heavy", "kill", "normal"]
 
 var failures: PackedStringArray = []
@@ -178,7 +178,7 @@ func _test_damage_path_integration() -> void:
 		"player-card damage forwards both critical and explicit-heavy context"
 	)
 	_expect(
-		commands_source.contains("await target.take_damage"),
+		commands_source.contains("await _presenter().hit(target, result, feedback)"),
 		"player-card resolution waits for the ordered target feedback"
 	)
 	_expect(
@@ -204,7 +204,7 @@ func _test_damage_path_integration() -> void:
 		)
 
 	_expect(
-		enemy_ai_source.contains("await main.effect_registry.execute")
+		enemy_ai_source.contains("await combat.effect_registry.execute")
 		and effects_source.contains("await services.combat_commands.damage("),
 		"enemy attacks wait for player hit feedback before continuing"
 	)

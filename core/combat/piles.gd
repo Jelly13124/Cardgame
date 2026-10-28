@@ -8,8 +8,8 @@ extends RefCounted
 ##   {"kind": "hand_full"}                  a draw stopped at the hand limit
 ## and every single-card move emits `card_moved(card, from, to)` ("" = created).
 
-const CARD_PILE = preload("uid://i2va650blxo7")  # res://core/combat/card_pile.gd (res://core/combat/card_pile.gd)
-const CARD_INSTANCE = preload("uid://c50mv4hudoncd")  # res://core/combat/card_instance.gd (res://core/combat/card_instance.gd)
+const CARD_PILE = preload("uid://i2va650blxo7")  # res://core/combat/card_pile.gd
+const CARD_INSTANCE = preload("uid://c50mv4hudoncd")  # res://core/combat/card_instance.gd
 
 const HAND_LIMIT := 10
 
@@ -19,6 +19,8 @@ var draw = CARD_PILE.named("draw")
 var hand = CARD_PILE.named("hand")
 var discard = CARD_PILE.named("discard")
 var exhaust = CARD_PILE.named("exhaust")
+## Cards played and waiting for or under resolution.
+var play = CARD_PILE.named("play")
 ## Shuffles an Array in place with the run's `shuffle` stream (core/rng/rng.gd).
 var rng = null
 
@@ -33,12 +35,14 @@ func pile(pile_name: String) -> RefCounted:
 			return discard
 		"exhaust":
 			return exhaust
+		"play":
+			return play
 	return null
 
 
 ## Name of the pile holding `card`, or "".
 func where(card) -> String:
-	for p in [hand, draw, discard, exhaust]:
+	for p in [hand, draw, discard, exhaust, play]:
 		if p.has(card):
 			return p.name
 	return ""

@@ -19,7 +19,7 @@ func _setup() -> void:
 
 	var bar = RUN_TOP_BAR.new()
 	bar.hp_from_player = true
-	bar.player_source = main.player if (main and "player" in main) else null
+	bar.player_source = main.player.creature if (main and "player" in main and main.player) else null
 	bar.show_character_button = false
 	bar.show_settings_button = true
 	bar.show_tools = true

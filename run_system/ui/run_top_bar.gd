@@ -46,7 +46,7 @@ signal tool_used(index: int)
 
 ## â”€â”€â”€ Config (set by host before add_child) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var hp_from_player: bool = false  # battle = true (live player HP)
-var player_source: Node = null  # the PlayerEntity when hp_from_player
+var player_source: Object = null  # the player creature (core/combat/creature.gd) when hp_from_player
 var show_character_button: bool = true  # map only (equipment locked in combat)
 var show_settings_button: bool = false  # battle only
 var show_tools: bool = false  # battle = tool slots are clickable/usable

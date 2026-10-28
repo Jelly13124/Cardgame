@@ -68,7 +68,7 @@ func _free(battle: Node) -> void:
 func _add_strikes(battle: Node, count: int) -> Array:
 	var cards: Array = []
 	for _i in range(count):
-		cards.append(battle.deck_manager.add_card_to_hand("base:strike"))
+		cards.append(battle.hand_view.node_of(battle.combat.add_card_to_hand("base:strike")))
 	await get_tree().process_frame
 	return cards
 
@@ -130,7 +130,7 @@ func test_cursor_returns_when_combat_ends_mid_aim() -> void:
 	battle.start_spell_targeting(cards[0])
 	await get_tree().process_frame
 	var arrow = battle.targeting_arrow
-	battle._victory()
+	battle.combat._end_combat("victory")
 	_expect(arrow == null or not is_instance_valid(arrow) or not arrow.cursor_hidden, "the arrow releases the cursor when combat ends")
 	_expect(Input.mouse_mode == Input.MOUSE_MODE_VISIBLE, "the cursor returns when combat ends mid-aim")
 	await _free(battle)
@@ -226,7 +226,7 @@ func test_discard_flight_lands_in_the_pile() -> void:
 
 func test_exhaust_burns_in_place() -> void:
 	var battle = await _battle()
-	var card = battle.deck_manager.add_card_to_hand("base:reload")
+	var card = battle.hand_view.node_of(battle.combat.add_card_to_hand("base:reload"))
 	await get_tree().process_frame
 	battle.play_spell(card, null)
 	var burned := await _wait_until(func() -> bool: return not battle.find_children("*", "CPUParticles2D", true, false).is_empty(), 3.0)
@@ -245,7 +245,7 @@ func test_combat_end_drops_waiting_cards() -> void:
 	for card in cards:
 		battle.play_spell(card, battle.enemy_container.get_child(0))
 	await get_tree().create_timer(0.1).timeout
-	battle._victory()
+	battle.combat._end_combat("victory")
 	await get_tree().create_timer(0.8).timeout
 	_expect(battle.card_animator.waiting_cards().is_empty(), "no card is left waiting after combat ends")
 	_expect(battle.discard_pile.has_card(cards[1]) and battle.discard_pile.has_card(cards[2]), "dropped cards are parked in the discard pile")
@@ -269,7 +269,7 @@ func test_played_card_loses_its_outline() -> void:
 func test_end_turn_discard_lands_whole() -> void:
 	var battle = await _battle()
 	var cards: Array = await _add_strikes(battle, 3)
-	await battle._animate_hand_discard(cards)
+	await battle.hand_view.animate_discard(cards.map(func(c): return c.instance))
 	_expect(cards.all(func(c) -> bool: return battle.discard_pile.has_card(c)), "every discarded hand card is in the pile")
 	_expect(cards.all(func(c) -> bool: return c.scale == Vector2.ONE), "hand cards join the pile only after their flight ends")
 	await get_tree().process_frame  # finished trails are freed at the end of the frame
@@ -282,7 +282,7 @@ func test_combat_end_hides_outlines() -> void:
 	var cards: Array = await _add_strikes(battle, 2)
 	battle.player.energy = 3
 	battle.refresh_hand_ui()
-	battle._victory()
+	battle.combat._end_combat("victory")
 	_expect(not cards.any(func(c) -> bool: return c.highlight.is_shown()), "outlines go out when combat ends")
 	await _free(battle)
 
@@ -310,7 +310,7 @@ func test_flying_card_stays_readable() -> void:
 
 func test_exhaust_embers_are_visible() -> void:
 	var battle = await _battle()
-	var card = battle.deck_manager.add_card_to_hand("base:reload")
+	var card = battle.hand_view.node_of(battle.combat.add_card_to_hand("base:reload"))
 	await get_tree().process_frame
 	battle.card_animator.burn_exhaust(card)
 	var bursts: Array = battle.find_children("*", "CPUParticles2D", true, false)

@@ -6,11 +6,8 @@ extends Node
 ## - a card that wins the fight stops running its remaining effects.
 
 const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://battle_scene/battle_scene.tscn
-
-
-class FakeCard:
-	extends Control
-	var card_info: Dictionary = {}
+const CARD_INSTANCE = preload("uid://c50mv4hudoncd")  # res://core/combat/card_instance.gd
+const ENEMY_TURN = preload("uid://d4np8yrt1ml3v")  # res://core/combat/enemy_turn.gd
 
 
 var failures: PackedStringArray = []
@@ -62,16 +59,16 @@ func test_queued_tool_with_dead_target_releases_input() -> void:
 	RunManager.tool_inventory.assign(["base:frag_grenade"])
 	var enemy: Node = battle.enemy_container.get_child(0)
 	# A card still resolving holds the queue; it kills the tool's target.
-	battle.action_queue.enqueue(
+	battle.combat.action_queue.enqueue(
 		"slow_card",
 		func() -> void:
 			await get_tree().create_timer(0.05).timeout
-			enemy.queue_free()
+			enemy.creature.apply_damage(99999)
 			await get_tree().create_timer(0.05).timeout
 	)
 	battle.call("_begin_tool_targeting", 0, "base:frag_grenade", RunManager.get_tool_data("base:frag_grenade"))
 	battle.call("_confirm_tool_targeting", enemy)
-	await battle.action_queue.drained
+	await battle.combat.action_queue.drained
 	_expect(not battle.get("_tool_resolving"), "tool input is released after its target died in the queue")
 	_expect(RunManager.tool_inventory == ["base:frag_grenade"], "a tool whose target died is not consumed")
 	await _free(battle)
@@ -87,38 +84,34 @@ func test_tools_refused_outside_player_turn() -> void:
 	if opened:
 		opened.queue_free()
 		await get_tree().process_frame
-	battle.turn_manager.is_player_turn = false
+	battle.combat.state.is_player_turn = false
 	battle.use_tool(0)
 	await get_tree().process_frame
 	_expect(battle.find_child("ToolUseConfirm", true, false) == null, "no tool confirmation during the enemy turn")
-	battle.turn_manager.is_player_turn = true
-	battle.set("_ending_turn", true)
+	battle.combat.state.is_player_turn = true
+	battle.combat.set("_ending_turn", true)
 	battle.use_tool(0)
 	await get_tree().process_frame
 	_expect(battle.find_child("ToolUseConfirm", true, false) == null, "no tool confirmation after End Turn")
-	battle.set("_ending_turn", false)
+	battle.combat.set("_ending_turn", false)
 	await _free(battle)
 
 
 func test_winning_card_stops_its_remaining_effects() -> void:
 	var battle = await _battle()
 	for extra in battle.enemy_container.get_children().slice(1):
+		extra.creature.removed = true
 		extra.free()
 	var enemy: Node = battle.enemy_container.get_child(0)
-	var card := FakeCard.new()
-	card.card_info = {
+	var card = CARD_INSTANCE.make("test:finisher", {
 		"name": "test_finisher",
 		"type": "attack",
 		"effects": [{"type": "deal_damage", "amount": 99999, "no_str": true}, {"type": "gain_energy", "amount": 5}],
-	}
-	add_child(card)
+	})
 	var energy_before: int = battle.player.energy
-	await battle.combat_engine.resolve_card_effect(card, enemy, battle.player)
-	for _i in range(3):  # victory is declared a frame after the last death
-		await get_tree().process_frame
+	await battle.combat.resolve_card_effect(card, enemy.creature)
 	_expect(battle.is_game_over, "killing the last enemy wins the fight")
 	_expect(battle.player.energy == energy_before, "the winning card's later effects do not run (energy %d → %d)" % [energy_before, battle.player.energy])
-	card.free()
 	await _free(battle)
 
 
@@ -128,7 +121,7 @@ func test_enemy_attack_hits_the_real_player() -> void:
 	var enemy: Node = battle.enemy_container.get_child(0)
 	battle.player.block = 0
 	var hp_before: int = battle.player.health
-	await battle.enemy_ai.execute_action(enemy, {"type": "attack", "amount": 3})
+	await ENEMY_TURN.execute_action(battle.combat, enemy.creature, {"type": "attack", "amount": 3})
 	_expect(battle.player.health < hp_before, "an enemy attack damages the real player (%d → %d)" % [hp_before, battle.player.health])
 	await _free(battle)
 
@@ -145,17 +138,17 @@ func test_two_full_rounds_on_the_real_battle() -> void:
 	battle.player.max_health = 999
 	for round_number in [2, 3]:
 		var target: Node = battle.enemy_container.get_child(0)
-		var shot = battle.deck_manager.add_card_to_hand("base:strike")
+		var shot = battle.hand_view.node_of(battle.combat.add_card_to_hand("base:strike"))
 		await get_tree().process_frame
 		battle.play_spell(shot, target)
 		battle._on_end_round_button_pressed()
 		var reached := await _wait_until(
 			func() -> bool:
-				return battle.turn_manager.is_player_turn and battle.turn_manager.current_round == round_number,
+				return battle.combat.state.is_player_turn and battle.combat.state.current_round == round_number,
 			30.0
 		)
 		_expect(reached, "round %d starts after the enemy turn" % round_number)
-		await battle.action_queue.drained if battle.action_queue.is_busy() else get_tree().process_frame
+		await battle.combat.action_queue.drained if battle.combat.action_queue.is_busy() else get_tree().process_frame
 	_expect(battle.player.health < 999, "enemies dealt damage to the real player during their turns")
 	Engine.time_scale = 1.0
 	await _free(battle)

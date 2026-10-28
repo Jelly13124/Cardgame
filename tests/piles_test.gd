@@ -38,7 +38,7 @@ func _run() -> void:
 func _deck(n: int) -> Array:
 	var out: Array = []
 	for i in range(n):
-		out.append(CARD_INSTANCE.make("base:card_%d" % i, {"type": "skill", "cost": 1}))
+		out.append(CARD_INSTANCE.make("test:card_%d" % i, {"type": "skill", "cost": 1}))
 	return out
 
 
@@ -87,8 +87,8 @@ func _test_hand_limit() -> void:
 
 func _test_discard_hand_keeps_retain() -> void:
 	var p = PILES.new()
-	var keep = CARD_INSTANCE.make("base:keep", {"type": "skill", "retain": true})
-	var drop = CARD_INSTANCE.make("base:drop", {"type": "skill"})
+	var keep = CARD_INSTANCE.make("test:keep", {"type": "skill", "retain": true})
+	var drop = CARD_INSTANCE.make("test:drop", {"type": "skill"})
 	p.add_new(keep, "hand")
 	p.add_new(drop, "hand")
 	_expect(p.discard_hand() == [drop], "end of turn discards every card that does not retain")
@@ -96,9 +96,9 @@ func _test_discard_hand_keeps_retain() -> void:
 
 
 func _test_card_costs() -> void:
-	var card = CARD_INSTANCE.make("base:x", {"type": "attack", "cost": 2})
+	var card = CARD_INSTANCE.make("test:x", {"type": "attack", "cost": 2})
 	_expect(card.cost() == 2, "printed cost")
 	card.cost_override = 0
 	_expect(card.cost() == 0, "a combat cost override wins")
-	_expect(CARD_INSTANCE.make("base:c", {"type": "curse"}).is_unplayable(), "curses are unplayable")
-	_expect(CARD_INSTANCE.make("base:e", {"effects": [{"type": "exhaust_self"}]}).exhausts(), "exhaust_self exhausts")
+	_expect(CARD_INSTANCE.make("test:c", {"type": "curse"}).is_unplayable(), "curses are unplayable")
+	_expect(CARD_INSTANCE.make("test:e", {"effects": [{"type": "exhaust_self"}]}).exhausts(), "exhaust_self exhausts")

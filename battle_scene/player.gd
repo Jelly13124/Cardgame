@@ -59,16 +59,10 @@ var charm: int:
 	set(value):
 		creature.charm = value
 
-signal health_changed(new_amount)
-signal energy_changed(new_amount)
-signal block_changed(new_amount)
-signal stats_changed
-signal status_changed
-signal died
 
 const HUD_SCRIPT = preload("uid://dqn0nfitycf2d")  # res://battle_scene/ui/character_hud.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
-const CREATURE = preload("uid://kab2636ev63e")  # res://core/combat/creature.gd (res://core/combat/creature.gd)
+const CREATURE = preload("uid://kab2636ev63e")  # res://core/combat/creature.gd
 const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://battle_scene/combat_fx.gd
 const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://battle_scene/combat_feedback_controller.gd
 const HERO_DIR = "res://battle_scene/assets/images/heroes/"
@@ -86,33 +80,15 @@ var status_system:
 		return creature.status_system
 	set(value):
 		creature.status_system = value
-var _death_resolving: bool = false
-var _death_settled: bool = false
 
 # ─── Yin/Yang polarity (Feng Shui Master hero) ────────────────────────────────
-## Rules in core/combat/creature.gd; these forward to the creature.
+## Rules in core/combat/creature.gd; the HUD reads them here.
 var current_polarity: String:
 	get:
 		return creature.current_polarity
 var harmony_active: bool:
 	get:
 		return creature.harmony_active
-
-
-func reset_polarity_turn(p: String) -> void:
-	creature.reset_polarity_turn(p)
-
-
-func set_polarity(p: String) -> void:
-	creature.set_polarity(p)
-
-
-func flip_polarity() -> void:
-	creature.flip_polarity()
-
-
-func is_card_matched(polarity: String) -> bool:
-	return creature.is_card_matched(polarity)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -154,12 +130,6 @@ static func _new_creature() -> RefCounted:
 
 
 func _init() -> void:
-	creature.host = self
-	creature.health_changed.connect(func(v): health_changed.emit(v))
-	creature.block_changed.connect(func(v): block_changed.emit(v))
-	creature.energy_changed.connect(func(v): energy_changed.emit(v))
-	creature.stats_changed.connect(func(): stats_changed.emit())
-	creature.status_changed.connect(func(): status_changed.emit())
 	creature.pulse_requested.connect(
 		func(kind: String):
 			if kind == "block":
@@ -389,67 +359,30 @@ func _current_sprite_texture() -> Texture2D:
 	return frames.get_frame_texture(anim, frame_idx)
 
 
-func notify_stats_changed() -> void:
-	stats_changed.emit()
-
-
-func notify_status_changed() -> void:
-	creature.notify_status_changed()
-
-
-func take_damage(
-	amount: int, silent: bool = false, feedback_tags: Dictionary = {}
-) -> void:
-	if _death_resolving or amount <= 0:
+## Hit feedback for a hit already applied to the creature (`result`:
+## core/combat/damage_result.gd): the shared four-tier feedback controller.
+func play_hit(result: Object, feedback_tags: Dictionary = {}) -> void:
+	var scene := COMBAT_FEEDBACK_CONTROLLER.scene_root_for(self)
+	var controller: Node = COMBAT_FEEDBACK_CONTROLLER.ensure(scene)
+	if controller == null:
 		return
-
-	var dmg_after_block := maxi(0, amount - block)
-	var blocked_amount := mini(block, amount)
-	var remaining_health := maxi(0, health - dmg_after_block)
-	var will_kill := remaining_health <= 0 and health > 0
-	var apply_health_change := func() -> void:
-		self.creature.apply_damage(amount)
-		if self.creature.health <= 0:
-			self._death_resolving = true
-
-	if silent:
-		apply_health_change.call()
-	else:
-		var scene := COMBAT_FEEDBACK_CONTROLLER.scene_root_for(self)
-		var controller: Node = COMBAT_FEEDBACK_CONTROLLER.ensure(scene)
-		if controller:
-			var profile := str(
-				controller.call(
-					"profile_for_hit",
-					dmg_after_block,
-					blocked_amount,
-					will_kill,
-					bool(feedback_tags.get("heavy", false)),
-					bool(feedback_tags.get("critical", false))
-				)
-			)
-			_play_hit_audio(profile, feedback_tags)
-			var reaction_target: Node2D = _visible_sprite()
-			if reaction_target == null:
-				reaction_target = self
-			var play_args := [
-				scene,
-				reaction_target,
-				get_hit_global_position(),
-				dmg_after_block,
-				blocked_amount,
-				profile,
-				apply_health_change,
-			]
-			if _uses_detached_feedback(feedback_tags):
-				controller.callv("play_hit", play_args)
-			else:
-				await controller.callv("play_hit", play_args)
-		else:
-			apply_health_change.call()
-
-	if will_kill:
-		_settle_death_once()
+	var profile := str(
+		controller.call(
+			"profile_for_hit",
+			result.hp_lost,
+			result.blocked,
+			result.killed,
+			bool(feedback_tags.get("heavy", false)),
+			bool(feedback_tags.get("critical", false))
+		)
+	)
+	_play_hit_audio(profile, feedback_tags)
+	var reaction_target: Node2D = _visible_sprite()
+	if reaction_target == null:
+		reaction_target = self
+	await controller.call(
+		"play_hit", scene, reaction_target, get_hit_global_position(), result.hp_lost, result.blocked, profile, func(): pass
+	)
 
 
 func _play_hit_audio(profile: String, feedback_tags: Dictionary) -> void:
@@ -462,12 +395,8 @@ func _play_hit_audio(profile: String, feedback_tags: Dictionary) -> void:
 	AudioManager.play_sfx("player_hurt", 0.0, pitch, 0.04)
 
 
-func _uses_detached_feedback(feedback_tags: Dictionary) -> bool:
-	return str(feedback_tags.get("source", "")) in COMBAT_SOURCE.DETACHED_FEEDBACK_KINDS
-
-
-## Red flash on the rendered sprite when hit — mirrors EnemyEntity._hit_flash. Tweens
-## back to the hero tint (not pure white) so the character's colour is preserved.
+## Red flash on the rendered sprite when hit — mirrors EnemyEntity. Tweens back
+## to the hero tint (not pure white) so the character's colour is preserved.
 func _hit_flash() -> void:
 	var spr: Node2D = _visible_sprite()
 	if spr == null or not is_instance_valid(spr):
@@ -477,41 +406,18 @@ func _hit_flash() -> void:
 	tw.tween_property(spr, "modulate", _hero_tint(), 0.22).set_trans(Tween.TRANS_QUAD)
 
 
-func heal(amount: int) -> void:
-	if creature.heal(amount) > 0:
-		AudioManager.play_sfx("heal")
-
-
-## Direct HP loss used by cards, events, and curses. Shows a floating damage
-## number like take_damage but ignores Block (Intangible caps it upstream).
-func lose_hp(amount: int) -> void:
-	if amount <= 0 or _death_resolving:
-		return
-	var will_kill := health > 0 and health - amount <= 0
-	creature.lose_hp(amount)
+## Direct HP loss already applied (cards, events, curses): flash and a floating
+## damage number.
+func play_hp_loss(amount: int) -> void:
 	_hit_flash()
-	var scene := get_tree().current_scene
+	var scene := get_tree().current_scene if is_inside_tree() else null
 	if scene:
 		var spawn_pos: Vector2 = global_position + Vector2(0, -TARGET_DISPLAY_HEIGHT * 0.5)
 		COMBAT_FX.spawn_damage_number(scene, spawn_pos, amount, 0)
-	if will_kill:
-		_settle_death_once()
 
 
-func _settle_death_once() -> void:
-	if _death_settled:
-		return
-	_death_resolving = true
-	_death_settled = true
-	died.emit()
-
-
-func add_block(amount: int) -> void:
-	creature.add_block(amount)
-
-
-## Quick scale pulse when gaining block — mirrors the enemy's block-action pulse
-## (enemy_ai "block"). Killed/reset if it overlaps so scale always lands at 1.
+## Quick scale pulse when gaining block — mirrors the enemy's block-action
+## pulse. Killed/reset if it overlaps so scale always lands at 1.
 var _block_pulse_tween: Tween
 
 
@@ -524,36 +430,10 @@ func play_block_pulse() -> void:
 	_block_pulse_tween.tween_property(self, "scale", Vector2.ONE, 0.1)
 
 
-func start_turn() -> void:
-	creature.start_turn()
-
-
-func end_turn() -> void:
-	creature.end_turn()
-
-
-## Grant Strength that lasts only until end of turn (kinetic_hammer).
-func gain_temp_strength(n: int) -> void:
-	creature.gain_temp_strength(n)
-
-
-func gain_energy(amount: int) -> void:
-	creature.gain_energy(amount)
-
-
-func pay_energy(cost: int) -> bool:
-	return creature.pay_energy(cost)
-
-
 func _refresh_hud() -> void:
 	if _hud and is_instance_valid(_hud):
 		_hud.update_stats(health, max_health, block)
 
 
-func add_status(status_name: String, stacks: int) -> void:
-	creature.add_status(status_name, stacks)
-
-
 func get_status_stacks(status_name: String) -> int:
-	return status_system.get_stacks(status_name)
-
+	return creature.get_status_stacks(status_name)
