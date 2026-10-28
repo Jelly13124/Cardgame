@@ -288,9 +288,9 @@ func summon_adds(enemy: Object, action: Dictionary) -> int:
 ## Boss-death rule: the boss dying ends the fight even with adds alive; the
 ## adds leave the field (no kill rewards). Otherwise the last death wins.
 func _on_enemy_died(enemy: RefCounted) -> void:
-	enemy_died.emit(enemy)
 	if is_game_over:
 		return
+	enemy_died.emit(enemy)
 	if state.encounter_has_boss and not state.living_boss_present():
 		for add in state.living_enemies():
 			add.removed = true
@@ -405,14 +405,16 @@ func _resolve_played_card(card: RefCounted, target: Object) -> void:
 	await resolve_card_effect(card, safe_target)
 	_resolving = null
 	card.in_play = false
+	# The card's flight to its pile is not waited for: the next play may start
+	# while it flies (the view puts it where the piles say once it lands).
 	if card.exhausts():
 		state.piles.move(card, "exhaust")
 		combat_hooks.react("after_card_exhausted", null)
-		await presenter.card_finished(card, "exhaust")
 		state.exhausted_ids.append(card.model_id)
+		presenter.card_finished(card, "exhaust")
 	else:
 		state.piles.move(card, "discard")
-		await presenter.card_finished(card, "discard")
+		presenter.card_finished(card, "discard")
 	presenter.refresh()
 
 
@@ -532,7 +534,11 @@ func draw_cards(count: int) -> void:
 
 
 ## A new card straight into the hand (Load Up's Reloads, discover, relics).
+## A full hand takes no more: returns null.
 func add_card_to_hand(card_id: String) -> RefCounted:
+	if state.piles.hand.size() >= state.piles.HAND_LIMIT:
+		show_notification("HAND FULL", Color(1, 0.4, 0.4))
+		return null
 	var card = make_card(card_id)
 	if card == null:
 		return null

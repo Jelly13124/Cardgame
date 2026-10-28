@@ -21,8 +21,16 @@ class SlowPresenter:
 	extends COMBAT_PRESENTER
 	var tree: SceneTree
 
+	var finishing := 0
+
 	func card_resolving(_card: Object) -> void:
 		await tree.create_timer(0.05).timeout
+
+	## The card's flight to its pile takes long; the queue must not wait for it.
+	func card_finished(_card: Object, _pile: String) -> void:
+		finishing += 1
+		await tree.create_timer(0.5).timeout
+		finishing -= 1
 
 
 var failures: PackedStringArray = []
@@ -53,6 +61,7 @@ func _run() -> void:
 	var lost: Array = await _fight("SIM1SEED22", 5, 999)
 	_expect(lost[0] == "defeat", "a 5-HP player loses to an enemy it cannot kill (%s)" % lost[0])
 	await _test_rapid_plays()
+	await _test_created_cards_respect_hand_limit()
 	RunManager.run_rng = saved_rng
 	if failures.is_empty():
 		print("[OK] combat simulation passed")
@@ -139,6 +148,20 @@ func _test_rapid_plays() -> void:
 			if not rapid:
 				await _drain(combat)
 		await _drain(combat)
+		if rapid:
+			_expect(slow.finishing > 0, "the queue does not wait for played cards to land in their pile")
+		while slow.finishing > 0:
+			await get_tree().process_frame
 		results.append([enemy.health, log, combat.state.attacks_played_this_turn])
 	_expect(results[0] == results[1], "rapid plays resolve like sequential ones: %s vs %s" % results)
 	_expect(results[0][2] == 3, "each queued Strike counted once (%d)" % results[0][2])
+
+
+## A card created into a full hand is not made (the old hand refused it).
+func _test_created_cards_respect_hand_limit() -> void:
+	var combat = _combat("SIM4SEED55", 60)
+	await combat.start()
+	while combat.state.piles.hand.size() < combat.state.piles.HAND_LIMIT:
+		combat.add_card_to_hand("base:defend")
+	_expect(combat.add_card_to_hand("base:reload") == null, "no card is created past the hand limit")
+	_expect(combat.state.piles.hand.size() == combat.state.piles.HAND_LIMIT, "the hand stays at the limit")

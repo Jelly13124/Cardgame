@@ -140,8 +140,10 @@ func card_finished(card: Object, pile: String) -> void:
 			node.queue_free()
 	else:
 		await screen.card_animator.fly_to_discard(node)
-		if is_instance_valid(node):
-			screen.discard_pile.add_card(node)
+		# The rules moved on during the flight (a reshuffle may already have taken
+		# the card back): land in the pile the card is in now.
+		if is_instance_valid(node) and _alive():
+			screen.hand_view.land(card, node)
 	if _alive():
 		screen._update_ui_labels()
 

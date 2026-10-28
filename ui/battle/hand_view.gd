@@ -48,6 +48,20 @@ func create_node(card: Object, pile: String) -> Node:
 	return node
 
 
+## Put a card node that just finished a flight into the container of the pile
+## its card is in now.
+func land(card: Object, node: Node) -> void:
+	if node.card_container and node.card_container.has_card(node):
+		return
+	match screen.combat.state.piles.where(card):
+		"hand":
+			hand.add_card(node)
+		"draw":
+			deck.add_card(node)
+		_:
+			discard_pile.add_card(node)
+
+
 ## Play a draw's events (core/combat/piles.gd) after any batch still running.
 func animate_draw(events: Array) -> void:
 	await _run_queued("draw", events)
