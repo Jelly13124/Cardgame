@@ -462,7 +462,7 @@ func _fit_and_center_description() -> void:
 ## with this card's live view: player stats, battle preview values, relic replays.
 func _build_description(data: Dictionary) -> String:
 	var view := {"stats": _get_player_stats(), "pipeline": {}, "replay_bonus": 0}
-	var scene = get_tree().current_scene if get_tree() else null
+	var scene = get_tree().current_scene if is_inside_tree() else null
 	var combat = scene.get("combat") if scene else null
 	if combat != null and combat.combat_commands != null:
 		var subject = instance if instance != null else self
@@ -489,7 +489,7 @@ func _colorize_keywords(text: String) -> String:
 ## Uses live player if battle is running, otherwise defaults.
 func _get_player_stats() -> Dictionary:
 	var defaults = {"strength": 0, "constitution": 0, "intelligence": 0, "luck": 0, "charm": 0}
-	var scene = get_tree().current_scene if get_tree() else null
+	var scene = get_tree().current_scene if is_inside_tree() else null
 	if scene and "player" in scene and is_instance_valid(scene.player):
 		var p = scene.player
 		return {
