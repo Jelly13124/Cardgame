@@ -27,15 +27,15 @@ const EXPECTED_TIERS := {
 	"base:rust_titan": "boss",
 }
 const EXPECTED_POOLS := {
-	"ENCOUNTER_POOLS_OPENING": [["base:scrap_rat"], ["base:hex_drone"], ["base:acid_spitter"]],
-	"ENCOUNTER_POOLS_EARLY": [
+	"opening": [["base:scrap_rat"], ["base:hex_drone"], ["base:acid_spitter"]],
+	"early": [
 		["base:wasteland_killer"],
 		["base:scrap_rat", "base:scrap_rat"],
 		["base:riot_hound"],
 		["base:mortar_cart"],
 		["base:trash_robot"],
 	],
-	"ENCOUNTER_POOLS_MID": [
+	"mid": [
 		["base:riot_hound"],
 		["base:mortar_cart"],
 		["base:slag_walker"],
@@ -44,7 +44,7 @@ const EXPECTED_POOLS := {
 		["base:chrome_hound"],
 		["base:riot_hound_alpha"],
 	],
-	"ENCOUNTER_POOLS_LATE": [
+	"late": [
 		["base:riot_hound_alpha"],
 		["base:rust_brute"],
 		["base:mortar_cart", "base:scrap_rat"],
@@ -55,10 +55,10 @@ const EXPECTED_POOLS := {
 	],
 }
 const BUDGETS := {
-	"ENCOUNTER_POOLS_OPENING": Vector2i(12, 18),
-	"ENCOUNTER_POOLS_EARLY": Vector2i(20, 30),
-	"ENCOUNTER_POOLS_MID": Vector2i(25, 34),
-	"ENCOUNTER_POOLS_LATE": Vector2i(34, 50),
+	"opening": Vector2i(12, 18),
+	"early": Vector2i(20, 30),
+	"mid": Vector2i(25, 34),
+	"late": Vector2i(34, 50),
 }
 
 var failures: PackedStringArray = []
@@ -85,13 +85,17 @@ func _run() -> void:
 			_expect(tier in ALLOWED_TIERS, "%s has a legal tier" % enemy_id)
 			_expect(tier == EXPECTED_TIERS[enemy_id], "%s has the approved tier" % enemy_id)
 
-	var run_script := RunManager.get_script() as Script
-	var run_constants: Dictionary = run_script.get_script_constant_map()
+	# Act 1 holds every band (content/acts/act1.json); later acts reuse them.
+	var bands := {}
+	for band in MODEL_DB.data("act", "base:act1").get("encounters", []):
+		bands[str(band.get("name", ""))] = band.get("pool", []).map(
+			func(e): return MODEL_DB.data("encounter", str(e)).get("monsters", [])
+		)
 	for pool_name in EXPECTED_POOLS:
-		_expect(run_constants.has(pool_name), "%s exists" % pool_name)
-		if not run_constants.has(pool_name):
+		_expect(bands.has(pool_name), "act 1 has the %s band" % pool_name)
+		if not bands.has(pool_name):
 			continue
-		var actual: Array = run_constants[pool_name]
+		var actual: Array = bands[pool_name]
 		_expect(actual == EXPECTED_POOLS[pool_name], "%s matches the approved roster" % pool_name)
 		_validate_pool(pool_name, actual, enemies)
 
@@ -136,7 +140,7 @@ func _validate_pool(pool_name: String, pools: Array, enemies: Dictionary) -> voi
 		_expect(not "elite" in tiers and not "boss" in tiers, "%s contains no elite or boss" % str(encounter))
 		if "heavy" in tiers:
 			_expect(encounter.size() == 1, "heavy encounter %s is solo" % [encounter])
-		if pool_name != "ENCOUNTER_POOLS_OPENING" and "minion" in tiers:
+		if pool_name != "opening" and "minion" in tiers:
 			_expect(encounter.size() == 2, "post-opening minion encounter %s has exactly two enemies" % [encounter])
 			_expect(tiers.count("minion") == 1 or tiers.count("minion") == 2, "post-opening minion role is valid")
 
@@ -221,12 +225,12 @@ func _expect_status_duration(
 func _test_selection_bands() -> void:
 	var original_act := RunManager.current_act
 	var samples := [
-		[1, 0, "ENCOUNTER_POOLS_OPENING"],
-		[1, 2, "ENCOUNTER_POOLS_EARLY"],
-		[1, 4, "ENCOUNTER_POOLS_MID"],
-		[1, 8, "ENCOUNTER_POOLS_LATE"],
-		[2, 0, "ENCOUNTER_POOLS_MID"],
-		[3, 0, "ENCOUNTER_POOLS_LATE"],
+		[1, 0, "opening"],
+		[1, 2, "early"],
+		[1, 4, "mid"],
+		[1, 8, "late"],
+		[2, 0, "mid"],
+		[3, 0, "late"],
 	]
 	for sample in samples:
 		RunManager.current_act = int(sample[0])

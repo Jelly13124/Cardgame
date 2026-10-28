@@ -1,0 +1,8 @@
+{
+  "id": "chrome_hound_and_scrap_rat",
+  "room": "monster",
+  "monsters": [
+    "chrome_hound",
+    "scrap_rat"
+  ]
+}

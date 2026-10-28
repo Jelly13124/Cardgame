@@ -13,6 +13,7 @@ const CARD_REWARD_ICON_PATH := "res://run_system/assets/images/ui_kit_lightline/
 # Shared palette lives in run_system/ui/theme/wasteland_theme.gd as
 # `T.PANEL_BG` etc. — see wasteland_theme.gd for all colors / builders.
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const REWARDS = preload("uid://dao6ryap2ksxs")  # res://core/run/rewards.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const INVENTORY_FULL_MODAL = preload("uid://deiqqoalu4lpl")  # res://run_system/ui/inventory_full_modal.gd
@@ -100,41 +101,36 @@ func _apply_static_theme() -> void:
 	T.apply_button_theme(draft_skip_button)
 
 
+## What this fight offers comes from the run layer (core/run/rewards.gd); this
+## screen only names and draws it.
 func _generate_loot() -> void:
 	available_loot.clear()
-	var gold_amount = 8  # flat per-fight; per-kill drops (enemy_entity) add on top
-
-	available_loot.append(
-		{
-			"id": "gold",
-			"type": "gold",
-			"amount": gold_amount,
-			"title": tr("UI_LOOT_GOLD_TITLE").format({"n": gold_amount}),
-			"subtitle": tr("UI_LOOT_GOLD_SUBTITLE"),
-			"icon": GOLD_ICON_PATH
-		}
-	)
-
-	# Card acquisition is combat-driven: every non-boss combat offers a 3-choose-1
-	# card draft. (Attributes come from LEVEL-UPS, surfaced on PROCEED.) Boss loot is
-	# handled in battle_scene._victory (never here).
-	var node_type: String = RunManager.last_battle_node_type
-	available_loot.append(
-		{
-			"id": "cards",
-			"type": "cards",
-			"title": tr("UI_LOOT_CARD_TITLE"),
-			"subtitle": tr("UI_LOOT_CARD_SUBTITLE"),
-			"icon": CARD_REWARD_ICON_PATH
-		}
-	)
-
-	# Tool drop: ONLY normal combats roll a tool (Luck-scaled). Elites give an
-	# equipment chance instead; boss loot is handled in battle_scene.
-	if node_type != "elite" and node_type != "boss":
-		if RunManager.rng("rewards").chance(RunManager.luck_tool_chance()):
-			var tool_id := RunManager.roll_tool_drop(node_type)
-			if tool_id != "":
+	for entry in REWARDS.combat_loot(RunManager.last_battle_node_type):
+		match str(entry["type"]):
+			"gold":
+				var gold_amount := int(entry["amount"])
+				available_loot.append(
+					{
+						"id": "gold",
+						"type": "gold",
+						"amount": gold_amount,
+						"title": tr("UI_LOOT_GOLD_TITLE").format({"n": gold_amount}),
+						"subtitle": tr("UI_LOOT_GOLD_SUBTITLE"),
+						"icon": GOLD_ICON_PATH
+					}
+				)
+			"cards":
+				available_loot.append(
+					{
+						"id": "cards",
+						"type": "cards",
+						"title": tr("UI_LOOT_CARD_TITLE"),
+						"subtitle": tr("UI_LOOT_CARD_SUBTITLE"),
+						"icon": CARD_REWARD_ICON_PATH
+					}
+				)
+			"tool":
+				var tool_id := str(entry["tool_id"])
 				var tdata := RunManager.get_tool_data(tool_id)
 				available_loot.append(
 					{
@@ -149,53 +145,42 @@ func _generate_loot() -> void:
 						"action": tr("UI_LOOT_ACTION_TAKE")
 					}
 				)
+			"equipment":
+				available_loot.append(_equipment_loot(entry))
 
-	# Equipment drop (Luck-scaled): normal = common, elite = uncommon. Boss equipment
-	# (guaranteed rare) is granted in battle_scene._victory. Rolls INDEPENDENTLY of the
-	# tool drop, so a normal fight can yield both.
-	var equip_rarity := ""
-	if node_type == "elite":
-		equip_rarity = "uncommon"
-	elif node_type != "boss":
-		equip_rarity = "common"
-	var demo_set_due := equip_rarity != "" and RunManager.should_offer_demo_set_piece()
-	if equip_rarity != "" and (demo_set_due or RunManager.rng("rewards").chance(RunManager.luck_equip_chance())):
-		var einst := RunManager.roll_demo_set_piece() if demo_set_due else {}
-		if einst.is_empty():
-			einst = RunManager.roll_shell_drop(equip_rarity)
-		var equip_id := str(einst.get("base", ""))
-		if equip_id != "":
-			var edata := RunManager.get_equipment_data(equip_id)
-			var einst_rarity := str(einst.get("rarity", equip_rarity))
-			var subtitle := ""
-			if demo_set_due:
-				var set_id := str(edata.get("set_id", ""))
-				var set_name := Settings.t("SET_%s_NAME" % MODEL_ID.key_entry(set_id), set_id.replace("_", " ").capitalize())
-				subtitle = tr("UI_LOOT_DEMO_SET_SUBTITLE").format({"set": set_name})
-			var spr := str(edata.get("sprite", ""))
-			var icon_path := (
-				"res://battle_scene/assets/images/%s" % spr
-				if spr != ""
-				else (
-					"res://battle_scene/assets/images/ui/equipment/%s_%s.png"
-					% [str(edata.get("slot", "")), einst_rarity]
-				)
-			)
-			available_loot.append(
-				{
-					"id": "equipment",
-					"type": "equipment",
-					"item_id": equip_id,
-					"rarity": einst_rarity,
-					"instance": einst,
-					"demo_set_piece": demo_set_due,
-					"title":
-					Settings.t("EQUIP_%s_NAME" % MODEL_ID.key_entry(equip_id), str(edata.get("name", equip_id))),
-					"subtitle": subtitle,
-					"icon": icon_path,
-					"action": tr("UI_LOOT_ACTION_TAKE")
-				}
-			)
+
+func _equipment_loot(entry: Dictionary) -> Dictionary:
+	var einst: Dictionary = entry["instance"]
+	var demo_set_due := bool(entry["demo_set_piece"])
+	var equip_id := str(einst.get("base", ""))
+	var edata := RunManager.get_equipment_data(equip_id)
+	var einst_rarity := str(einst.get("rarity", entry["rarity"]))
+	var subtitle := ""
+	if demo_set_due:
+		var set_id := str(edata.get("set_id", ""))
+		var set_name := Settings.t("SET_%s_NAME" % MODEL_ID.key_entry(set_id), set_id.replace("_", " ").capitalize())
+		subtitle = tr("UI_LOOT_DEMO_SET_SUBTITLE").format({"set": set_name})
+	var spr := str(edata.get("sprite", ""))
+	var icon_path := (
+		"res://battle_scene/assets/images/%s" % spr
+		if spr != ""
+		else (
+			"res://battle_scene/assets/images/ui/equipment/%s_%s.png"
+			% [str(edata.get("slot", "")), einst_rarity]
+		)
+	)
+	return {
+		"id": "equipment",
+		"type": "equipment",
+		"item_id": equip_id,
+		"rarity": einst_rarity,
+		"instance": einst,
+		"demo_set_piece": demo_set_due,
+		"title": Settings.t("EQUIP_%s_NAME" % MODEL_ID.key_entry(equip_id), str(edata.get("name", equip_id))),
+		"subtitle": subtitle,
+		"icon": icon_path,
+		"action": tr("UI_LOOT_ACTION_TAKE")
+	}
 
 
 func _populate_loot_ui() -> void:
@@ -394,10 +379,8 @@ func _open_attr_choice() -> void:
 func _generate_attr_options() -> void:
 	for child in draft_card_container.get_children():
 		child.queue_free()
-	var keys := _ATTR_KEYS.duplicate()
-	RunManager.rng("rewards").shuffle(keys)
-	for i in range(min(3, keys.size())):
-		draft_card_container.add_child(_make_attr_slot(str(keys[i])))
+	for attr in REWARDS.attribute_choices(_ATTR_KEYS, 3):
+		draft_card_container.add_child(_make_attr_slot(str(attr)))
 
 
 func _make_attr_slot(attr: String) -> Control:
@@ -520,17 +503,7 @@ func _on_reroll_pressed() -> void:
 
 
 func _categorize_cards() -> void:
-	for pool in _rarity_pools.values():
-		pool.clear()
-
-	for card_id in draft_pool:
-		var info := MODEL_DB.data("card", card_id)
-		if not info.is_empty():
-			var rarity = info.get("rarity", "common").to_lower()
-			if rarity in _rarity_pools:
-				_rarity_pools[rarity].append(card_id)
-			else:
-				_rarity_pools["common"].append(card_id)
+	_rarity_pools = REWARDS.rarity_pools(draft_pool)
 
 
 func _generate_draft_options() -> void:
@@ -544,33 +517,8 @@ func _generate_draft_options() -> void:
 		draft_card_container.add_child(_make_draft_card_slot(cid))
 
 
-## Roll a single card id for a draft slot (rarity weighted, Luck-boosted).
-func _roll_draft_card_id() -> String:
-	var roll = RunManager.rng("rewards").next_float()
-	var picked_rarity = "common"
-	if roll < 0.05:
-		picked_rarity = "rare"
-	elif roll < 0.30:
-		picked_rarity = "uncommon"
-	if picked_rarity != "rare" and RunManager.rng("rewards").chance(RunManager.luck_rarity_bonus()):
-		picked_rarity = "rare" if picked_rarity == "uncommon" else "uncommon"
-	if _rarity_pools[picked_rarity].is_empty():
-		if picked_rarity == "rare":
-			picked_rarity = "uncommon"
-		if _rarity_pools[picked_rarity].is_empty():
-			picked_rarity = "common"
-	var pool = _rarity_pools[picked_rarity]
-	return str(RunManager.rng("rewards").pick(pool)) if not pool.is_empty() else ""
-
-
-## Like _roll_draft_card_id but skips ids already used this draft, so the 3 slots
-## never show two of the same card (bounded retry — the rarity pools are large).
 func _roll_unique_draft_card_id(used: Dictionary) -> String:
-	for _attempt in range(24):
-		var cid := _roll_draft_card_id()
-		if cid != "" and not used.has(cid):
-			return cid
-	return _roll_draft_card_id()
+	return REWARDS.roll_unique_draft_card(_rarity_pools, used)
 
 
 func _make_draft_card_slot(card_id: String) -> Control:
@@ -651,14 +599,6 @@ func _after_draft() -> void:
 
 
 ## Returns "" if no drop. Otherwise the drop rarity for this node type.
-func _drop_rarity_for_node_type(node_type: String) -> String:
-	match node_type:
-		"elite":
-			return "uncommon"
-		"boss":
-			return "rare"
-		_:
-			return ""
 
 
 ## Claim a tool reward into the top-bar inventory. Slots full → warn (no silent

@@ -20,14 +20,8 @@ const SHOP_BACKGROUND_PATH := "res://run_system/assets/images/shop/shop_interior
 const SHOPKEEPER_PATH := "res://run_system/assets/images/shop/shopkeeper.png"
 
 # --- Pricing (per rarity) ---
-const CARD_PRICE := {"common": 65, "uncommon": 110, "rare": 175}
-const RELIC_PRICE := 135
-const REMOVE_CARD_PRICE := 75
-const SHOP_CARD_COUNT := 6
-const SHOP_RELIC_COUNT := 3
-const CARD_RARITY_SEQUENCE := ["common", "common", "uncommon", "common", "uncommon", "rare"]
-const TOOL_PRICE := 50  # tools have no rarity tiers — flat price
-const SHOP_TOOL_COUNT := 3
+const SHOP_STOCK = preload("uid://bxjesomogv04a")  # res://core/run/shop_stock.gd
+const CARD_POOLS = preload("uid://c76axesxo6wit")  # res://core/run/card_pools.gd
 
 const SHOP_BOARD_BG := Color(0.055, 0.040, 0.032, 0.66)
 const SHOP_PANEL_BG := Color(0.080, 0.055, 0.040, 0.92)
@@ -47,17 +41,6 @@ var _stock_cards: Array = []  # [{card_id, rarity, price}]
 var _stock_tools: Array = []  # [{tool_id, price}]
 var _stock_relics: Array = []  # [{relic_id, price}]
 var _remove_price: int = 75
-
-
-## Apply the current price modifiers to a base price. Always rounds up so
-## the player never gets things free due to rounding.
-func _discounted_price(base_cost: int) -> int:
-	# Charm lowers merchant prices (floored at 0.60x).
-	var price: float = float(base_cost) * RunManager.charm_shop_mult()
-	# Merchant surcharge on top of the Charm price.
-	if RunManager.has_ascension("base:a4_merchant_surcharge"):
-		price *= float(RunManager.ascension_param("base:a4_merchant_surcharge", "price_mult", 1.1))
-	return int(ceil(price))
 
 
 var _card_factory: Node
@@ -94,95 +77,17 @@ func _refresh_gold_label() -> void:
 # --- Stock rolling ---------------------------------------------------------
 
 
+## Stock and prices come from the run layer (core/run/shop_stock.gd).
 func _roll_stock() -> void:
-	_stock_cards.clear()
-	_stock_tools.clear()
-	_stock_relics.clear()
-
-	var card_pool := _list_cards_by_rarity()
-	for rarity in CARD_RARITY_SEQUENCE:
-		var pick := _take_random_from_pool(card_pool, rarity)
-		if pick == "":
-			continue
-		_stock_cards.append(
-			{"card_id": pick, "rarity": rarity, "price": _discounted_price(int(CARD_PRICE[rarity]))}
-		)
-
-	while _stock_cards.size() < SHOP_CARD_COUNT:
-		var fallback_card := _take_random_from_any_pool(card_pool, CARD_RARITY_SEQUENCE)
-		if fallback_card.is_empty():
-			break
-		var fallback_rarity := str(fallback_card["rarity"])
-		_stock_cards.append(
-			{
-				"card_id": str(fallback_card["id"]),
-				"rarity": fallback_rarity,
-				"price": _discounted_price(int(CARD_PRICE[fallback_rarity]))
-			}
-		)
-
-	# Tools have no rarity tiers — stock SHOP_TOOL_COUNT distinct tools at a flat price.
-	var tools_pool: Array = RunManager.tool_pool().duplicate()
-	RunManager.rng("shops").shuffle(tools_pool)
-	for i in range(min(SHOP_TOOL_COUNT, tools_pool.size())):
-		_stock_tools.append(_make_tool_stock_entry(str(tools_pool[i])))
-
-	var relic_pool := _list_unowned_relics()
-	while _stock_relics.size() < SHOP_RELIC_COUNT and not relic_pool.is_empty():
-		var index: int = RunManager.rng("shops").next_int(relic_pool.size())
-		var relic_id := str(relic_pool[index])
-		relic_pool.remove_at(index)
-		_stock_relics.append({"relic_id": relic_id, "price": _discounted_price(RELIC_PRICE)})
-
-	_remove_price = _discounted_price(REMOVE_CARD_PRICE)
-
-
-func _take_random_from_pool(pools: Dictionary, rarity: String) -> String:
-	var pool: Array = pools.get(rarity, [])
-	if pool.is_empty():
-		return ""
-	var index: int = RunManager.rng("shops").next_int(pool.size())
-	var pick := str(pool[index])
-	pool.remove_at(index)
-	pools[rarity] = pool
-	return pick
-
-
-func _take_random_from_any_pool(pools: Dictionary, rarity_order: Array) -> Dictionary:
-	var available: Array = []
-	for rarity_value in rarity_order:
-		var candidate_rarity := str(rarity_value)
-		var pool: Array = pools.get(candidate_rarity, [])
-		if not pool.is_empty() and not available.has(candidate_rarity):
-			available.append(candidate_rarity)
-	if available.is_empty():
-		return {}
-	var selected_rarity := str(RunManager.rng("shops").pick(available))
-	return {"id": _take_random_from_pool(pools, selected_rarity), "rarity": selected_rarity}
-
-
-func _make_tool_stock_entry(tool_id: String) -> Dictionary:
-	return {"tool_id": tool_id, "price": _discounted_price(TOOL_PRICE)}
-
-
-func _list_cards_by_rarity() -> Dictionary:
-	var result := {"common": [], "uncommon": [], "rare": []}
-	# Block any hero-exclusive cards that belong to a DIFFERENT hero than the
-	# current one (HERO_EXCLUSIVE_CARDS), so they never roll in this hero's shop.
-	var hero_id := str(RunManager.current_hero_id)
-	var blocked := {}
-	for h in MetaProgress.HERO_EXCLUSIVE_CARDS:
-		if h != hero_id:
-			for cid in MetaProgress.HERO_EXCLUSIVE_CARDS[h]:
-				blocked[str(cid)] = true
-	for card_id in RunManager.current_card_pool():
-		if blocked.has(card_id):
-			continue
-		var data := MODEL_DB.data("card", card_id)
-		var rarity := str(data.get("rarity", "common"))
-		if rarity in result:
-			result[rarity].append(card_id)
-	return result
+	var stock: Dictionary = SHOP_STOCK.roll(
+		CARD_POOLS.shop_cards_by_rarity(str(RunManager.current_hero_id)),
+		RunManager.tool_pool(),
+		_list_unowned_relics()
+	)
+	_stock_cards = stock["cards"]
+	_stock_tools = stock["tools"]
+	_stock_relics = stock["relics"]
+	_remove_price = int(stock["remove_price"])
 
 
 func _list_unowned_relics() -> Array:

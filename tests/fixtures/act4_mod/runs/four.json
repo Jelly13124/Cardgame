@@ -1,0 +1,13 @@
+{
+  "id": "four",
+  "acts": [
+    "base:act1",
+    "base:act2",
+    "base:act3",
+    "testmod:act4"
+  ],
+  "heroes": [
+    "base:cowboy_bill"
+  ],
+  "demo": false
+}

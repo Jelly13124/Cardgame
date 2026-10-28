@@ -1,0 +1,14 @@
+{
+  "id": "demo",
+  "acts": [
+    "act1"
+  ],
+  "heroes": [
+    "cowboy_bill"
+  ],
+  "demo": true,
+  "boss_victory_scrap": 130,
+  "reward_pools": {
+    "cowboy_bill": "cowboy_demo_rewards"
+  }
+}

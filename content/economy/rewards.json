@@ -1,0 +1,32 @@
+{
+  "id": "rewards",
+  "combat_gold": 8,
+  "card_rarity_rolls": [
+    {
+      "below": 0.05,
+      "rarity": "rare"
+    },
+    {
+      "below": 0.3,
+      "rarity": "uncommon"
+    },
+    {
+      "rarity": "common"
+    }
+  ],
+  "draft_size": 3,
+  "draft_unique_attempts": 24,
+  "equipment_drop_rarity": {
+    "elite": "uncommon",
+    "boss": "",
+    "default": "common"
+  },
+  "elite_scrap": [
+    8,
+    16
+  ],
+  "no_tool_rooms": [
+    "elite",
+    "boss"
+  ]
+}

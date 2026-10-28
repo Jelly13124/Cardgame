@@ -1,0 +1,92 @@
+{
+  "id": "act2",
+  "number": 2,
+  "floors": 12,
+  "width": 4,
+  "boss": "ash_warden",
+  "hp_mult": 1.25,
+  "dmg_mult": 1.15,
+  "encounters": [
+    {
+      "name": "mid",
+      "max_floor": 3,
+      "pool": [
+        "riot_hound",
+        "mortar_cart",
+        "slag_walker",
+        "acid_spitter_and_scrap_rat",
+        "wasteland_killer_and_scrap_rat",
+        "chrome_hound",
+        "riot_hound_alpha"
+      ]
+    },
+    {
+      "name": "late",
+      "pool": [
+        "riot_hound_alpha",
+        "rust_brute",
+        "mortar_cart_and_scrap_rat",
+        "chrome_hound_and_scrap_rat",
+        "mortar_cart_siege_and_scrap_rat",
+        "slag_walker_and_acid_spitter",
+        "riot_hound_pair"
+      ]
+    }
+  ],
+  "elites": [
+    "armored_patrol",
+    "chrome_warden",
+    "siege_breaker"
+  ],
+  "map": {
+    "single_node_first_and_last": true,
+    "first_merchant_floor": 5,
+    "guaranteed_treasure_floor": 6,
+    "early_floor_last": 4,
+    "max_extra_treasures": 2,
+    "max_children_per_node": 3,
+    "early_rolls": [
+      {
+        "below": 0.65,
+        "type": "enemy"
+      },
+      {
+        "below": 0.85,
+        "type": "unknown"
+      },
+      {
+        "type": "enemy"
+      }
+    ],
+    "rolls": [
+      {
+        "below": 0.37,
+        "type": "enemy"
+      },
+      {
+        "below": 0.55,
+        "type": "unknown"
+      },
+      {
+        "below": 0.7,
+        "type": "merchant"
+      },
+      {
+        "below": 0.88,
+        "type": "rest"
+      },
+      {
+        "below": 0.93,
+        "type": "treasure",
+        "capped": true
+      },
+      {
+        "type": "elite"
+      }
+    ]
+  },
+  "extract_rewards": {
+    "continue": 52,
+    "extract": 85
+  }
+}

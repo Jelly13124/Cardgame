@@ -26,5 +26,16 @@
     "luck": 0,
     "charm": 0
   },
-  "description": "A circuit-damaged robot with one surviving memory: an old western. Bill insists he is human, and the frontier seems willing to play along."
+  "description": "A circuit-damaged robot with one surviving memory: an old western. Bill insists he is human, and the frontier seems willing to play along.",
+  "exclusive_cards": [
+    "piston_jab",
+    "load_up",
+    "coagulate",
+    "dissect",
+    "hot_streak",
+    "all_in",
+    "hemorrhage",
+    "covering_reload",
+    "limit_break"
+  ]
 }

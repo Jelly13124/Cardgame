@@ -1,0 +1,7 @@
+{
+  "id": "ash_warden",
+  "room": "boss",
+  "monsters": [
+    "ash_warden"
+  ]
+}

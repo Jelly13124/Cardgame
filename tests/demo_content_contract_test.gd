@@ -58,10 +58,8 @@ func _run() -> void:
 
 
 func _test_demo_shape() -> void:
-	_expect(RunManager.DEMO_BUILD, "public build keeps demo gating enabled")
-	_expect(RunManager.DEMO_MAX_ACTS == 1, "demo contains one authored act")
-	_expect(RunManager.acts_total() == 1, "demo-aware act count is one")
-	_expect(RunManager.DEMO_BOSS == "base:rust_titan", "Rust Titan is the fixed demo boss")
+	_expect(RunManager.is_demo(), "public build keeps demo gating enabled")
+	_expect(RunManager.acts_total() == 1, "demo contains one authored act")
 	_expect(RunManager.current_act_boss() == "base:rust_titan", "runtime boss selection is fixed")
 
 

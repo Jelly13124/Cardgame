@@ -68,7 +68,7 @@ func _ready() -> void:
 	rm = RunManager
 
 	if rm.map_data.is_empty():
-		rm.generate_map(12, 4)
+		rm.generate_map()
 
 	_compute_positions()
 	_max_scroll = max(0.0, _get_total_width() - get_viewport_rect().size.x)

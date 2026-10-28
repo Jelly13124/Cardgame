@@ -1,0 +1,8 @@
+{
+  "id": "slag_walker_and_acid_spitter",
+  "room": "monster",
+  "monsters": [
+    "slag_walker",
+    "acid_spitter"
+  ]
+}

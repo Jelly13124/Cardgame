@@ -1,0 +1,7 @@
+{
+  "id": "armored_patrol",
+  "room": "elite",
+  "monsters": [
+    "armored_patrol"
+  ]
+}

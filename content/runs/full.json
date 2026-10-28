@@ -1,0 +1,13 @@
+{
+  "id": "full",
+  "acts": [
+    "act1",
+    "act2",
+    "act3"
+  ],
+  "heroes": [
+    "cowboy_bill"
+  ],
+  "demo": false,
+  "boss_victory_scrap": 130
+}

@@ -1,0 +1,22 @@
+{
+  "id": "shop",
+  "card_price": {
+    "common": 65,
+    "uncommon": 110,
+    "rare": 175
+  },
+  "relic_price": 135,
+  "remove_card_price": 75,
+  "card_count": 6,
+  "relic_count": 3,
+  "tool_price": 50,
+  "tool_count": 3,
+  "card_rarity_sequence": [
+    "common",
+    "common",
+    "uncommon",
+    "common",
+    "uncommon",
+    "rare"
+  ]
+}

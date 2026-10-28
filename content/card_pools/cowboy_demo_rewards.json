@@ -1,0 +1,33 @@
+{
+  "id": "cowboy_demo_rewards",
+  "cards": [
+    "piston_jab",
+    "load_up",
+    "coagulate",
+    "dissect",
+    "hot_streak",
+    "all_in",
+    "hemorrhage",
+    "covering_reload",
+    "limit_break",
+    "arc_flash",
+    "brace",
+    "hot_swap",
+    "rebar_wave",
+    "recoil_shot",
+    "reload",
+    "siphon",
+    "tape_patch",
+    "kinetic_baffle",
+    "cascade",
+    "chain_link",
+    "charged_shot",
+    "data_dump",
+    "deflector",
+    "lucky_streak",
+    "spiked_guard",
+    "sweep_arc",
+    "bone_breaker",
+    "stun_baton"
+  ]
+}

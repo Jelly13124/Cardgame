@@ -119,11 +119,12 @@ const ALLOWED_RELIC_EFFECT_TYPES = [
 # ─── Enemy schema ─────────────────────────────────────────────────────────────
 const REQUIRED_ENEMY_KEYS = ["id", "name", "sprite_id", "tier", "max_health", "action_pattern"]
 const ALLOWED_ENEMY_TIERS = ["minion", "normal", "heavy", "elite", "boss"]
+## Base-HP budget of a normal encounter, by the act band it sits in.
 const ENCOUNTER_BUDGETS := {
-	"ENCOUNTER_POOLS_OPENING": Vector2i(12, 18),
-	"ENCOUNTER_POOLS_EARLY": Vector2i(20, 30),
-	"ENCOUNTER_POOLS_MID": Vector2i(25, 34),
-	"ENCOUNTER_POOLS_LATE": Vector2i(34, 50),
+	"opening": Vector2i(12, 18),
+	"early": Vector2i(20, 30),
+	"mid": Vector2i(25, 34),
+	"late": Vector2i(34, 50),
 }
 const ALLOWED_ENEMY_ACTION_TYPES = [
 	"attack",
@@ -247,12 +248,27 @@ static func validate_all_data_at_startup() -> int:
 static func validate_encounter_pools() -> int:
 	var failures = 0
 	var enemies: Dictionary = _load_enemy_summaries()
-	var normal_sources: Dictionary = {
-		"ENCOUNTER_POOLS_OPENING": RunManager.ENCOUNTER_POOLS_OPENING,
-		"ENCOUNTER_POOLS_EARLY": RunManager.ENCOUNTER_POOLS_EARLY,
-		"ENCOUNTER_POOLS_MID": RunManager.ENCOUNTER_POOLS_MID,
-		"ENCOUNTER_POOLS_LATE": RunManager.ENCOUNTER_POOLS_LATE,
-	}
+	# Every act band's encounters (content/acts), once per band name.
+	var normal_sources: Dictionary = {}
+	var elite_roster: Array = []
+	var boss_roster: Array = []
+	for act_model in MODEL_DB.models("act"):
+		var act: Dictionary = act_model.data
+		for band in act.get("encounters", []):
+			var band_name := str(band.get("name", ""))
+			if not ENCOUNTER_BUDGETS.has(band_name):
+				push_error("DataValidator: %s band '%s' has no HP budget." % [act_model.id, band_name])
+				failures += 1
+				continue
+			var pools: Array = normal_sources.get(band_name, [])
+			for encounter_id in band.get("pool", []):
+				var monsters: Array = MODEL_DB.data("encounter", str(encounter_id)).get("monsters", [])
+				if not monsters in pools:
+					pools.append(monsters)
+			normal_sources[band_name] = pools
+		for encounter_id in act.get("elites", []):
+			elite_roster.append_array(MODEL_DB.data("encounter", str(encounter_id)).get("monsters", []))
+		boss_roster.append_array(MODEL_DB.data("encounter", str(act.get("boss", ""))).get("monsters", []))
 	for source_name in normal_sources:
 		var pools: Array = normal_sources[source_name]
 		var budget: Vector2i = ENCOUNTER_BUDGETS[source_name]
@@ -264,7 +280,7 @@ static func validate_encounter_pools() -> int:
 				if not enemies.has(id):
 					push_error(
 						(
-							"DataValidator: %s references unknown enemy id '%s' — add content/monsters or fix the constant."
+							"DataValidator: %s references unknown enemy id '%s' — add content/monsters or fix the encounter."
 							% [source_name, id]
 						)
 					)
@@ -285,7 +301,7 @@ static func validate_encounter_pools() -> int:
 			if "heavy" in tiers and pool.size() != 1:
 				push_error("DataValidator: heavy encounter %s must contain exactly one enemy." % [pool])
 				failures += 1
-			if source_name != "ENCOUNTER_POOLS_OPENING" and "minion" in tiers:
+			if source_name != "opening" and "minion" in tiers:
 				if pool.size() != 2:
 					push_error("DataValidator: post-opening minion encounter %s must contain two enemies." % [pool])
 					failures += 1
@@ -298,8 +314,8 @@ static func validate_encounter_pools() -> int:
 					push_error("DataValidator: invalid minion composition %s." % [pool])
 					failures += 1
 
-	failures += _validate_tier_roster("ELITE_ROSTER", RunManager.ELITE_ROSTER, "elite", enemies)
-	failures += _validate_tier_roster("ACT_BOSSES", RunManager.ACT_BOSSES, "boss", enemies)
+	failures += _validate_tier_roster("act elites", elite_roster, "elite", enemies)
+	failures += _validate_tier_roster("act bosses", boss_roster, "boss", enemies)
 	return failures
 
 

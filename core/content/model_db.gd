@@ -27,6 +27,10 @@ const CATEGORY_DIRS := {
 	"relic_pool": "relic_pools",
 	"status": "statuses",
 	"ascension": "ascension",
+	"encounter": "encounters",
+	"act": "acts",
+	"run_config": "runs",
+	"economy": "economy",
 }
 
 static var _models: Dictionary = {}  # category -> {full id -> content model}
@@ -239,12 +243,30 @@ static func _normalize_refs(category: String, d: Dictionary, ns: String, where: 
 			_ref_field(d, "set_id", "equipment_set", ns, where)
 		"character":
 			_ref_list(d, "starter_deck", "card", ns, where)
+			_ref_list(d, "exclusive_cards", "card", ns, where)
 			_ref_field(d, "card_pool", "card_pool", ns, where)
 			_ref_field(d, "relic_pool", "relic_pool", ns, where)
 		"card_pool":
 			_ref_list(d, "cards", "card", ns, where)
 		"relic_pool":
 			_ref_list(d, "relics", "relic", ns, where)
+		"encounter":
+			_ref_list(d, "monsters", "monster", ns, where)
+		"act":
+			_ref_field(d, "boss", "encounter", ns, where)
+			_ref_list(d, "elites", "encounter", ns, where)
+			for band in _dicts(d.get("encounters", [])):
+				_ref_list(band, "pool", "encounter", ns, where)
+		"run_config":
+			_ref_list(d, "acts", "act", ns, where)
+			_ref_list(d, "heroes", "character", ns, where)
+			if typeof(d.get("reward_pools")) == TYPE_DICTIONARY:
+				var pools := {}
+				for hero in d["reward_pools"]:
+					pools[_resolve_or_report("character", str(hero), ns, where + ".reward_pools")] = (
+						_resolve_or_report("card_pool", str(d["reward_pools"][hero]), ns, where + ".reward_pools")
+					)
+				d["reward_pools"] = pools
 
 
 static func _effects_refs(effects: Variant, ns: String, where: String) -> void:

@@ -23,6 +23,7 @@ extends "res://run_system/ui/window/draggable_window.gd"
 const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
 const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://run_system/ui/backpack_cell.gd
 const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
+const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
 const EQUIP_TOOLTIP = preload("uid://c6r8gr4gvx8ts")  # res://run_system/ui/equip_tooltip.gd
 const HERO_SPRITE_DIR := "res://battle_scene/assets/images/heroes/"
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
@@ -364,11 +365,11 @@ func _make_hero_arrow(glyph: String, kit_icon: String, step: int) -> Button:
 
 ## The selectable roster: every character in ModelDb, demo-filtered (the same
 ## rule the old picker strip applied). The full roster returns when
-## RunManager.DEMO_BUILD is flipped off.
+## the active run configuration is not the demo one.
 func _hero_roster() -> Array[String]:
 	var ids: Array[String] = []
 	for hero_id in _list_hero_ids():
-		if RunManager.DEMO_BUILD and not (hero_id in RunManager.DEMO_ALLOWED_HEROES):
+		if RunManager.is_demo() and not (hero_id in ACTS.heroes()):
 			continue
 		ids.append(hero_id)
 	return ids

@@ -70,30 +70,11 @@ const RESULT_SCREEN_SCRIPT = preload("uid://bxh1x1hy6fylv")  # res://run_system/
 const TUTORIAL_TIPS_SCRIPT = preload("uid://cc37k40gsd5x")  # res://ui/battle/tutorial_tips.gd
 const MAIN_MENU_PATH := "uid://dnjlmt1repvjw"  # res://run_system/ui/main_menu.tscn
 
-const BOSS_VICTORY_SCRAP := 130
-## Extract reward per act (keyed by RunManager.current_act). The final act has
-## NO entry — clearing its boss wins the run outright (no extract choice). Any
-## non-final act missing here falls back to a formula so adding a future act
-## can't silently route to the "game complete" branch.
-const EXTRACT_REWARDS := {
-	1: {"continue": 26, "extract": 40},
-	2: {"continue": 52, "extract": 85},
-}
-
-
-## Returns the {continue, extract} reward dict for the given act's boss, or
-## {} if `act` is the final act (no extract choice — full victory).
+const ACTS = preload("res://core/run/acts.gd")
+## The {continue, extract} Scrap for the given act's boss (content/acts), or
+## {} on the final act (no extract choice — full victory).
 func _extract_rewards_for_act(act: int) -> Dictionary:
-	# Demo-aware: on the final act (Act 1 in the public demo) there is no
-	# extract-vs-push choice — the boss kill wins outright.
-	if act >= RunManager.acts_total():
-		return {}
-	if EXTRACT_REWARDS.has(act):
-		return EXTRACT_REWARDS[act]
-	return {
-		"continue": max(16, act * 16),
-		"extract": max(33, act * 29),
-	}
+	return ACTS.extract_rewards(act)
 
 
 func _exit_tree() -> void:
@@ -915,7 +896,7 @@ func _victory():
 		# Final boss path: Scrap drops into the backpack; _settle_backpack
 		# banks it during _teardown_run, so end_run_victory's banked arg
 		# is 0 to avoid double-counting.
-		RunManager.add_scrap_to_backpack(BOSS_VICTORY_SCRAP)
+		RunManager.add_scrap_to_backpack(int(ACTS.run_config().get("boss_victory_scrap", 130)))
 		RunManager.end_run_victory(0, "victory")
 		# Demo: the final-act (Act 1) boss kill ends the demo — show the
 		# demo-complete / wishlist screen instead of silently returning to base.

@@ -27,13 +27,13 @@ func _run() -> void:
 		for act in [1, 2, 3]:
 			var want: Dictionary = golden[seed_string][str(act)]
 			RunManager.current_act = act
-			RunManager.generate_map(RunManager.FLOORS_PER_ACT, 4)
+			RunManager.generate_map()
 			var nodes: Array = []
 			for n in RunManager.map_data:
 				nodes.append([n.id, n.type, Array(n.children)])
 			_expect(_same(nodes, want["map"]), "%s act %d map unchanged" % [seed_string, act])
 			var picks: Array = []
-			for f in range(RunManager.FLOORS_PER_ACT):
+			for f in range(RunManager.floors_per_act()):
 				for t in ["enemy", "unknown", "elite", "boss"]:
 					picks.append([f, t, Array(RunManager.select_encounter(t, f))])
 			_expect(_same(picks, want["encounters"]), "%s act %d encounter picks unchanged" % [seed_string, act])

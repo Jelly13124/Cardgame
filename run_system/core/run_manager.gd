@@ -50,7 +50,7 @@ var _run_scrap_counter: int = 0
 # Progression
 var current_floor: int = 0
 ## Which act (大层) the player is on, 1..acts_total(). Each act is its own
-## FLOORS_PER_ACT-tall map ending in a single boss. Reset to 1 by start_new_run.
+## floors_per_act()-tall map ending in a single boss. Reset to 1 by start_new_run.
 ## advance_act() is retained for the full-game build; the one-act demo cannot
 ## advance beyond act 1.
 var current_act: int = 1
@@ -249,78 +249,34 @@ var current_encounter: Array[String] = ["base:trash_robot"]
 ## drop rules. Values: "enemy" | "elite" | "boss".
 var last_battle_node_type: String = "enemy"
 
-## Encounter pools by node type and floor band.
-## MapScene calls `select_encounter(type, floor)` before loading the battle scene
-## to populate `current_encounter`.
-const ENCOUNTER_POOLS_OPENING = [
-	["base:scrap_rat"],
-	["base:hex_drone"],
-	["base:acid_spitter"],
-]
-const ENCOUNTER_POOLS_EARLY = [
-	["base:wasteland_killer"],
-	["base:scrap_rat", "base:scrap_rat"],
-	["base:riot_hound"],
-	["base:mortar_cart"],
-	["base:trash_robot"],
-]
-const ENCOUNTER_POOLS_MID = [
-	["base:riot_hound"],
-	["base:mortar_cart"],
-	["base:slag_walker"],
-	["base:acid_spitter", "base:scrap_rat"],
-	["base:wasteland_killer", "base:scrap_rat"],
-	["base:chrome_hound"],
-	["base:riot_hound_alpha"],
-]
-const ENCOUNTER_POOLS_LATE = [
-	["base:riot_hound_alpha"],
-	["base:rust_brute"],
-	["base:mortar_cart", "base:scrap_rat"],
-	["base:chrome_hound", "base:scrap_rat"],
-	["base:mortar_cart_siege", "base:scrap_rat"],
-	["base:slag_walker", "base:acid_spitter"],
-	["base:riot_hound", "base:riot_hound"],
-]
-const ELITE_ROSTER: Array = ["base:armored_patrol", "base:chrome_warden", "base:siege_breaker"]
-## Acts (大层). Each act is its OWN FLOORS_PER_ACT-tall map ending in a single
-## boss at the top floor — there are no mid-map bosses. Clearing a non-final
-## act's boss offers an extract choice; clearing the final act's boss wins the
-## run. ACT_BOSSES[i] is the boss enemy id for act i+1. To retune, edit here.
-const ACTS_TOTAL: int = 3
-const ACT_BOSSES: Array[String] = ["base:rust_titan", "base:ash_warden", "base:junkyard_tyrant"]
-## Floors per act map (indices 0..FLOORS_PER_ACT-1); the top floor is the boss.
-const FLOORS_PER_ACT: int = 12
+## Acts, their encounters and the map rules are content (content/acts,
+## content/encounters, content/runs) read through core/run/acts.gd.
 
-## ── DEMO BUILD ────────────────────────────────────────────────────────────
-## Flip DEMO_BUILD to false to restore the planned 3-act, all-heroes game.
-## The public demo is one authored 12-floor act, always ending at Rust Titan.
-## acts_total() is the demo-aware cap used by is_final_act()/advance_act();
-## DEMO_ALLOWED_HEROES filters the Warehouse hero picker.
-const DEMO_BUILD: bool = true
-const DEMO_MAX_ACTS: int = 1
-const DEMO_BOSS: String = "base:rust_titan"
-const DEMO_ALLOWED_HEROES: Array[String] = ["base:cowboy_bill"]
-
-
-## Demo-aware act count. The full game has ACTS_TOTAL acts; the demo caps at one
-## act, so its boss victory ends and banks the run without a push-on choice.
+## Acts in this run (the active run configuration's act list).
 func acts_total() -> int:
-	return DEMO_MAX_ACTS if DEMO_BUILD else ACTS_TOTAL
+	return ACTS.count()
+
+
+## Demo build: the active run configuration is the demo one.
+func is_demo() -> bool:
+	return ACTS.is_demo()
+
+
+## Floors of the current act's map; the top floor is the boss.
+func floors_per_act() -> int:
+	return ACTS.floors(current_act)
 
 
 ## True when a floor index is the boss floor — always the top floor of an act.
 func is_boss_floor(floor_idx: int) -> bool:
-	return floor_idx == FLOORS_PER_ACT - 1
+	return floor_idx == floors_per_act() - 1
 
 
-## The boss enemy id for the act the player is currently on. Demo selection is
-## explicit so stale act state can never substitute a later full-game boss.
+## The boss enemy id for the act the player is currently on (the run's last
+## act's boss past the end of the run).
 func current_act_boss() -> String:
-	if DEMO_BUILD:
-		return DEMO_BOSS
-	var idx: int = clampi(current_act - 1, 0, ACT_BOSSES.size() - 1)
-	return ACT_BOSSES[idx]
+	var monsters: Array = MODEL_DB.data("encounter", ACTS.boss_encounter(current_act)).get("monsters", [])
+	return str(monsters[0]) if not monsters.is_empty() else ""
 
 
 ## True when the player is on the final act (its boss wins the run — no extract).
@@ -337,32 +293,23 @@ func advance_act() -> bool:
 	current_floor = 0
 	current_node_id = ""
 	visited_node_ids.clear()
-	generate_map(FLOORS_PER_ACT, 4)
+	generate_map()
 	return true
 
 
-## Per-act enemy stat multipliers (index = act-1). Bosses (ids in ACT_BOSSES)
-## are exempt — their power is tuned per-boss in sub-project C, not this curve.
-const ACT_HP_MULT: Array[float] = [1.0, 1.25, 1.5]
-const ACT_DMG_MULT: Array[float] = [1.0, 1.15, 1.30]
-## Enemy-pool tier offset per act: act N draws from a tier `(N-1)*offset` floors
-## deeper, so act 2 opens at the MID pool and act 3 at the LATE pool.
-const ACT_POOL_OFFSET: int = 4
-
-
 func act_hp_mult() -> float:
-	return ACT_HP_MULT[clampi(current_act - 1, 0, ACT_HP_MULT.size() - 1)]
+	return float(ACTS.act(current_act).get("hp_mult", 1.0))
 
 
 func act_dmg_mult() -> float:
-	return ACT_DMG_MULT[clampi(current_act - 1, 0, ACT_DMG_MULT.size() - 1)]
+	return float(ACTS.act(current_act).get("dmg_mult", 1.0))
 
 
 ## Scale a non-boss enemy's base HP by the current act multiplier. Bosses pass
 ## through unchanged. Stacks multiplicatively with ascension scaling, which is
-## applied separately at the enemy_entity spawn site.
+## applied separately at the spawn site.
 func scale_enemy_hp(base_hp: int, enemy_id: String) -> int:
-	if enemy_id in ACT_BOSSES:
+	if ACTS.monster_in_room(enemy_id, "boss"):
 		return base_hp
 	return int(round(base_hp * act_hp_mult()))
 
@@ -370,22 +317,13 @@ func scale_enemy_hp(base_hp: int, enemy_id: String) -> int:
 ## Scale a non-boss enemy's outgoing attack damage by the current act
 ## multiplier. Bosses pass through unchanged.
 func scale_enemy_damage(amount: int, enemy_id: String) -> int:
-	if enemy_id in ACT_BOSSES:
+	if ACTS.monster_in_room(enemy_id, "boss"):
 		return amount
 	return int(round(amount * act_dmg_mult()))
 
 
 const BATTLE_SCENE: String = "uid://dnhj5pp3c1v2l"  # res://ui/battle/battle_screen.tscn
 const MAP_SCENE: String = "uid://d3x5b8wvg2q"  # res://run_system/ui/map_scene.tscn
-const FIRST_MERCHANT_FLOOR_INDEX: int = 5  # Human-facing layer 6.
-const GUARANTEED_TREASURE_FLOOR_INDEX: int = 6  # Human-facing layer 7.
-## Floors 1..EARLY_FLOOR_LAST roll combat-only (no rest / treasure / merchant).
-const EARLY_FLOOR_LAST: int = 4
-## At most this many treasures spawn outside the guaranteed floor-6 chest.
-const MAX_EXTRA_TREASURES: int = 2
-## Map fan-out cap — each node connects to at most this many child nodes
-## on the next floor. Keeps the route readable and matches the STS shape.
-const MAX_CHILDREN_PER_NODE: int = 3
 
 # --- Map State ---
 ## Each entry: { "id": String, "floor": int, "slot": int, "type": String, "children": Array[String] }
@@ -405,6 +343,9 @@ var _run_effects = null
 const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
+const ENCOUNTERS = preload("uid://mlx3xqfjwlpq")  # res://core/run/encounters.gd
+const MAP_GENERATOR = preload("uid://gi3vuuinl2vb")  # res://core/run/map_generator.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const SAVE_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/content/save_migration.gd
 const BOUNTY_TRACKER = preload("uid://dufyeowl6elem")  # res://core/listeners/bounty_tracker.gd
@@ -443,227 +384,20 @@ func _ready() -> void:
 ##   Middle floors → 3-5 random nodes
 ##   Floor 6       -> all nodes are "treasure" (human-facing layer 7)
 ##   Merchants     -> only appear from floor 4 onward (human-facing layer 5+)
-func generate_map(num_floors: int = 12, width: int = 4) -> void:
+func generate_map() -> void:
 	# Each act's map comes from its own stream derived from the seed, so it does
 	# not depend on how many rolls the previous act used (STS2 builds act maps
 	# up front).
 	_map_rng = rng_for_act_map(current_act)
-	map_data.clear()
-	_node_index.clear()
 	current_node_id = ""
 	visited_node_ids.clear()
-
-	for f in range(num_floors):
-		# Determine how many nodes on this floor
-		var num_nodes: int
-		if f == 0 or f == num_floors - 1 or is_boss_floor(f):
-			num_nodes = 1  # Start (relic), mid-act bosses, and end (final boss) are single nodes
-		else:
-			num_nodes = _map_rng.next_range(2, 4)
-			num_nodes = mini(num_nodes, width)  # Can't exceed +---available slots
-			# Floors directly adjacent to a single-node floor must fit within
-			# the MAX_CHILDREN_PER_NODE cap of that single node, otherwise the
-			# orphan-fallback at _attach_orphan_to_under_cap_parent silently
-			# blows past the cap. Floor 1 sits below the start (relic),
-			# floor N-2 sits above the pre-boss-rest, and any floor sitting
-			# directly above a mid-boss does too.
-			if f == 1 or is_boss_floor(f - 1):
-				num_nodes = mini(num_nodes, MAX_CHILDREN_PER_NODE)
-
-		# Pick unique random slots — single nodes always go in the center
-		var slots: Array[int] = []
-		if num_nodes == 1:
-			@warning_ignore("integer_division")
-			slots.append(width / 2)
-		else:
-			var available: Array[int] = []
-			for s in range(width):
-				available.append(s)
-			_map_rng.shuffle(available)
-			for i in range(num_nodes):
-				slots.append(available[i])
-			slots.sort()
-
-		# Assign node types — track treasure count across the whole run so we
-		# can enforce MAX_EXTRA_TREASURES.
-		for slot in slots:
-			var node_type = _pick_node_type(f, num_floors, _count_extra_treasures())
-			var node = {
-				"id": "f%d_s%d" % [f, slot],
-				"floor": f,
-				"slot": slot,
-				"type": node_type,
-				"children": [] as Array[String]
-			}
-			map_data.append(node)
-
-	# Connect nodes floor by floor — every node has at most MAX_CHILDREN_PER_NODE
-	# outgoing edges (fan-out cap). Convergence (many parents per child) is fine.
-	for f in range(num_floors - 1):
-		var current_nodes = _get_nodes_on_floor(f)
-		var next_nodes = _get_nodes_on_floor(f + 1)
-
-		# Single-node current → next floor: connect to up to MAX closest by slot.
-		# (floor-1 was already width-capped above so this should reach every node.)
-		if current_nodes.size() == 1:
-			for nn in _closest_n_by_slot(next_nodes, current_nodes[0].slot, MAX_CHILDREN_PER_NODE):
-				current_nodes[0].children.append(nn.id)
-			continue
-
-		# Single-node next: all current nodes converge on it (fan-IN, no cap).
-		if next_nodes.size() == 1:
-			for cn in current_nodes:
-				cn.children.append(next_nodes[0].id)
-			continue
-
-		# Normal: each current node gets up to MAX closest within ±2 slot distance.
-		var fresh_children: Array[String] = []
-		for node in current_nodes:
-			fresh_children = []
-			for nn in _closest_n_by_slot_within(next_nodes, node.slot, MAX_CHILDREN_PER_NODE, 2):
-				fresh_children.append(nn.id)
-			# Fallback: distance cap rejected everyone — take single closest.
-			if fresh_children.is_empty():
-				var closest = _closest_n_by_slot(next_nodes, node.slot, 1)
-				if closest.size() > 0:
-					fresh_children.append(closest[0].id)
-			node.children = fresh_children
-
-		# Ensure every next-floor node has at least one parent. Prefer a parent
-		# that's still under the fan-out cap so we don't break it.
-		for next_node in next_nodes:
-			var has_parent = false
-			for node in current_nodes:
-				if next_node.id in node.children:
-					has_parent = true
-					break
-			if has_parent:
-				continue
-			_attach_orphan_to_under_cap_parent(next_node, current_nodes)
-
+	var elite_bias := 0.0
+	if has_ascension("base:a5_elite_bias"):
+		elite_bias = float(ascension_param("base:a5_elite_bias", "roll_floor", 0.5))
+	map_data = MAP_GENERATOR.generate(ACTS.act(current_act), _map_rng, elite_bias)
+	_node_index.clear()
 	for node in map_data:
 		_node_index[node.id] = node
-
-
-## Returns up to `count` nodes from `candidates`, ordered by slot distance to
-## `origin_slot` (closest first).
-static func _closest_n_by_slot(candidates: Array, origin_slot: int, count: int) -> Array:
-	var with_dist: Array = []
-	for c in candidates:
-		with_dist.append({"node": c, "dist": abs(int(c.slot) - origin_slot)})
-	with_dist.sort_custom(func(a, b): return a.dist < b.dist)
-	var out: Array = []
-	var take = mini(count, with_dist.size())
-	for i in range(take):
-		out.append(with_dist[i].node)
-	return out
-
-
-## Same as _closest_n_by_slot but additionally requires slot distance <= max_dist.
-static func _closest_n_by_slot_within(
-	candidates: Array, origin_slot: int, count: int, max_dist: int
-) -> Array:
-	var with_dist: Array = []
-	for c in candidates:
-		var d = abs(int(c.slot) - origin_slot)
-		if d <= max_dist:
-			with_dist.append({"node": c, "dist": d})
-	with_dist.sort_custom(func(a, b): return a.dist < b.dist)
-	var out: Array = []
-	var take = mini(count, with_dist.size())
-	for i in range(take):
-		out.append(with_dist[i].node)
-	return out
-
-
-## Attach an orphan child to the closest parent that still has room under the
-## fan-out cap. Falls back to closest parent overall if all are at cap (rare).
-static func _attach_orphan_to_under_cap_parent(orphan: Dictionary, current_nodes: Array) -> void:
-	var sorted: Array = current_nodes.duplicate()
-	sorted.sort_custom(
-		func(a, b): return abs(int(a.slot) - int(orphan.slot)) < abs(int(b.slot) - int(orphan.slot))
-	)
-	for parent in sorted:
-		if parent.children.size() < MAX_CHILDREN_PER_NODE:
-			parent.children.append(orphan.id)
-			return
-	# All at cap — rare; allow the closest to exceed cap so no orphan exists.
-	if sorted.size() > 0:
-		sorted[0].children.append(orphan.id)
-
-
-func _pick_node_type(floor_idx: int, total: int, treasure_extras_used: int = 0) -> String:
-	# Floor 0: starting relic choice
-	if floor_idx == 0:
-		return "relic"
-	# Last floor: final boss fight
-	if floor_idx == total - 1:
-		return "boss"
-	# Mid-act boss floors: force a single boss node so the route narrows
-	# (the slots-assignment code above already gives floors with one node
-	# the center slot — we just declare the type here).
-	if is_boss_floor(floor_idx):
-		return "boss"
-	# Pre-boss floor: always rest (campfire before the boss)
-	if floor_idx == total - 2:
-		return "rest"
-	# Human-facing layer 7: guaranteed relic chest layer.
-	if floor_idx == GUARANTEED_TREASURE_FLOOR_INDEX:
-		return "treasure"
-
-	var roll = _map_rng.next_float()
-
-	# Dangerous paths: bias mid/late rolls into the high (elite/treasure) tail by
-	# compressing the roll range into roll_floor..1.0, pushing most rolls past
-	# the elite threshold in the mid/late table.
-	if has_ascension("base:a5_elite_bias"):
-		var roll_floor := float(ascension_param("base:a5_elite_bias", "roll_floor", 0.5))
-		roll = roll * (1.0 - roll_floor) + roll_floor
-
-	# Early floors (1..EARLY_FLOOR_LAST): combat-only ramp — no rest, treasure,
-	# merchant, OR elite. Elites only appear from floor EARLY_FLOOR_LAST + 1 on
-	# (the mid/late table below), so the first 4 floors stay beginner-safe.
-	if floor_idx <= EARLY_FLOOR_LAST:
-		if roll < 0.65:
-			return "enemy"
-		if roll < 0.85:
-			return "unknown"
-		return "enemy"
-
-	# Mid/late floors: full pool with reduced treasure rate + global treasure cap.
-	# (Event "?" band widened 0.37-0.55 = 18%, taken from the plentiful enemy band, so
-	# the authored random events show up more without shrinking merchant/rest/elite.)
-	if roll < 0.37:
-		return "enemy"
-	if roll < 0.55:
-		return "unknown"
-	if roll < 0.70:  # merchant always available here (floor >= EARLY_FLOOR_LAST + 1)
-		return "merchant"
-	if roll < 0.88:  # widened rest band (formerly 0.55-0.82 = 27%, now 0.70-0.88 = 18%)
-		return "rest"
-	# Treasure: ~5% nominal AND gated by MAX_EXTRA_TREASURES so a run never
-	# rolls more than guaranteed-floor-6 + N extras.
-	if roll < 0.93 and treasure_extras_used < MAX_EXTRA_TREASURES:
-		return "treasure"
-	return "elite"
-
-
-## Counts treasure nodes generated so far that are NOT on the guaranteed
-## treasure floor — used to enforce MAX_EXTRA_TREASURES during generation.
-func _count_extra_treasures() -> int:
-	var count = 0
-	for node in map_data:
-		if node.type == "treasure" and node.floor != GUARANTEED_TREASURE_FLOOR_INDEX:
-			count += 1
-	return count
-
-
-func _get_nodes_on_floor(f: int) -> Array:
-	var result: Array = []
-	for node in map_data:
-		if node.floor == f:
-			result.append(node)
-	return result
 
 
 func get_node_by_id(id: String) -> Dictionary:
@@ -673,37 +407,10 @@ func get_node_by_id(id: String) -> Dictionary:
 # --- Encounter Selection ---
 
 
-## Picks an enemy roster based on node type and floor index.
-## Called by MapScene before transitioning to the battle scene.
+## Picks an enemy roster for a map node of `node_type` on `floor_idx` from the
+## current act's encounter data. Called by MapScene before the battle.
 func select_encounter(node_type: String, floor_idx: int) -> Array[String]:
-	var result: Array[String] = []
-	match node_type:
-		"boss":
-			# Boss is the current act's boss (floor_idx is always the top floor).
-			result.append(current_act_boss())
-		"elite":
-			# Pick ONE elite at random so elite nodes vary across a run (and across the
-			# two acts) instead of every elite being the same fight.
-			result.append(str(rng("elites").pick(ELITE_ROSTER)))
-		"enemy", "unknown":
-			var pool: Array
-			var tier_floor: int = floor_idx + (current_act - 1) * ACT_POOL_OFFSET
-			if tier_floor <= 1:
-				pool = ENCOUNTER_POOLS_OPENING
-			elif tier_floor <= 3:
-				pool = ENCOUNTER_POOLS_EARLY
-			elif tier_floor <= 7:
-				pool = ENCOUNTER_POOLS_MID
-			else:
-				pool = ENCOUNTER_POOLS_LATE
-			var pick = rng("encounters").pick(pool)
-			for id in pick:
-				result.append(str(id))
-		_:
-			result.append("base:trash_robot")
-	if result.is_empty():
-		result.append("base:trash_robot")
-	return result
+	return ENCOUNTERS.select(ACTS.act(current_act), ACTS.boss_encounter(current_act), node_type, floor_idx, rng)
 
 
 # --- Run Initialization ---
@@ -758,7 +465,7 @@ func start_new_run(
 	_seen_random_event_ids.clear()
 	demo_set_piece_ids_claimed.clear()
 	demo_featured_set_id = (
-		rng("up_front").pick(DEMO_FEATURED_SET_IDS) if DEMO_BUILD else ""
+		rng("up_front").pick(DEMO_FEATURED_SET_IDS) if is_demo() else ""
 	)
 	# Base deck = explicit `starter_deck` arg, else hero JSON's starter_deck, else
 	# DEFAULT_STARTER_DECK. The removed deck-editor override is intentionally not
@@ -844,7 +551,7 @@ func start_new_run(
 		add_relic(starting_relic)
 	current_encounter = ["base:trash_robot"]
 	last_battle_node_type = "enemy"
-	generate_map(FLOORS_PER_ACT, 4)
+	generate_map()
 
 	# Base attributes: hero JSON's starting_attributes overrides the default.
 	var attrs: Dictionary = current_hero_data.get("starting_attributes", {})
@@ -2002,7 +1709,7 @@ func _random_set_piece(tier: String) -> String:
 ## True when the next non-boss combat reward should advance the demo's featured
 ## three-piece set track. Floor values are zero-based map indices.
 func should_offer_demo_set_piece() -> bool:
-	if not DEMO_BUILD or current_act != 1 or demo_featured_set_id == "":
+	if not is_demo() or current_act != 1 or demo_featured_set_id == "":
 		return false
 	var milestone := demo_set_piece_ids_claimed.size()
 	if milestone >= DEMO_SET_TRACK_FLOORS.size():
@@ -2038,7 +1745,7 @@ func roll_demo_set_piece() -> Dictionary:
 
 
 func mark_demo_set_piece_claimed(instance: Dictionary) -> void:
-	if not DEMO_BUILD or instance.is_empty():
+	if not is_demo() or instance.is_empty():
 		return
 	var item_id := equip_base(instance)
 	var data := get_equipment_data(item_id)
@@ -2316,7 +2023,7 @@ func load_run() -> bool:
 	demo_set_piece_ids_claimed = _to_string_array(
 		data.get("demo_set_piece_ids_claimed", data.get("demo_set_piece_ids_offered", []))
 	)
-	if DEMO_BUILD and demo_featured_set_id == "":
+	if is_demo() and demo_featured_set_id == "":
 		demo_featured_set_id = DEMO_FEATURED_SET_IDS[0]
 	map_data = _normalize_map(data.get("map_data", []))
 	current_node_id = str(data.get("current_node_id", ""))

@@ -265,6 +265,7 @@ const REFORGE_COST := {"common": 15, "uncommon": 30, "rare": 50}
 ## Affix roller (per-instance equipment); used by reforge_stash_item.
 const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
 ## --- Bounty system (replaces the daily-task mock) ---
+const CARD_POOLS = preload("uid://c76axesxo6wit")  # res://core/run/card_pools.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const SAVE_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/content/save_migration.gd
 ## Max held contracts; the outpost shelf refuses takes beyond this.
@@ -272,61 +273,6 @@ const MAX_ACTIVE_BOUNTIES := 3
 ## Contracts on the outpost shelf per day (all free to take).
 const BOUNTY_SHELF_SIZE := 3
 
-## Hero-exclusive draft cards: only offered (loot/shop) when that hero is active, so
-## a hero's signature cards never roll in another hero's rewards.
-const HERO_EXCLUSIVE_CARDS := {
-	# Cowboy Bill — malfunctioning gunslinger: reload, critical hits and Short Circuit.
-	# Keep this identity separate from future heroes.
-	"base:cowboy_bill":
-	[
-		"base:piston_jab",
-		"base:load_up",
-		"base:coagulate",
-		"base:dissect",
-		"base:hot_streak",
-		"base:all_in",
-		"base:hemorrhage",
-		"base:covering_reload",
-		"base:limit_break",
-	],
-}
-
-## The public demo deliberately uses a focused reward pool. This controls newly
-## rolled reward/shop choices while DEMO_BUILD is active.
-const DEMO_REWARD_POOLS := {
-	"base:cowboy_bill": [
-		# Bill signature package (9)
-		"base:piston_jab",
-		"base:load_up",
-		"base:coagulate",
-		"base:dissect",
-		"base:hot_streak",
-		"base:all_in",
-		"base:hemorrhage",
-		"base:covering_reload",
-		"base:limit_break",
-		# Curated shared support (19)
-		"base:arc_flash",
-		"base:brace",
-		"base:hot_swap",
-		"base:rebar_wave",
-		"base:recoil_shot",
-		"base:reload",
-		"base:siphon",
-		"base:tape_patch",
-		"base:kinetic_baffle",
-		"base:cascade",
-		"base:chain_link",
-		"base:charged_shot",
-		"base:data_dump",
-		"base:deflector",
-		"base:lucky_streak",
-		"base:spiked_guard",
-		"base:sweep_arc",
-		"base:bone_breaker",
-		"base:stun_baton",
-	]
-}
 
 ## Removed upgrades used to grant invisible bonuses after their UI was deleted.
 ## On the next load, refund exactly the Caps spent at each owned level, erase the
@@ -383,40 +329,9 @@ func append_run_history(entry: Dictionary) -> void:
 ## Basic starter cards (in hero starter decks) are deliberately excluded from
 ## the reward/draft/shop pool — getting more of them as rewards is pointless
 ## and dilutes the pool.
-const BASIC_CARD_IDS := ["base:strike", "base:defend"]
-
-
-## Every card in the current character's card pool EXCEPT curses, the basics
-## (strike/defend), and any OTHER hero's exclusive cards (the active hero's own
-## exclusives ARE included). No unlock step: pool membership is enough.
+## The current hero's reward pool (core/run/card_pools.gd).
 func get_unlocked_card_pool() -> Array[String]:
-	var hero_id: String = str(RunManager.current_hero_id) if RunManager else ""
-	if RunManager and RunManager.DEMO_BUILD and DEMO_REWARD_POOLS.has(hero_id):
-		var focused: Array[String] = []
-		for card_id in DEMO_REWARD_POOLS[hero_id]:
-			var id := str(card_id)
-			var data := MODEL_DB.data("card", id)
-			if not data.is_empty() and str(data.get("type", "")) != "curse":
-				focused.append(id)
-		return focused
-
-	var pool: Array[String] = []
-	var blocked := {}
-	for h in HERO_EXCLUSIVE_CARDS:
-		if h != hero_id:
-			for cid in HERO_EXCLUSIVE_CARDS[h]:
-				blocked[str(cid)] = true
-
-	for card_id in RunManager.current_card_pool():
-		if card_id in BASIC_CARD_IDS:
-			continue
-		if blocked.has(card_id):
-			continue
-		var data := MODEL_DB.data("card", card_id)
-		if str(data.get("type", "")) == "curse":
-			continue
-		pool.append(card_id)
-	return pool
+	return CARD_POOLS.reward_pool(str(RunManager.current_hero_id) if RunManager else "")
 
 
 func add_caps(amount: int) -> void:

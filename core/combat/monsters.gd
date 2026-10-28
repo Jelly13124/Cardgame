@@ -8,6 +8,7 @@ const CREATURE = preload("uid://kab2636ev63e")  # res://core/combat/creature.gd
 const MONSTER_MOVES = preload("uid://bqwa1txur3b52")  # res://core/combat/monster_moves.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
+const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
 
 
 static func create(id: String) -> RefCounted:
@@ -16,8 +17,8 @@ static func create(id: String) -> RefCounted:
 	c.enemy_id = id
 	c.max_health = 30
 	c.health = 30
-	c.is_elite = id in RunManager.ELITE_ROSTER
-	c.is_boss = id in RunManager.ACT_BOSSES
+	c.is_elite = ACTS.monster_in_room(id, "elite")
+	c.is_boss = ACTS.monster_in_room(id, "boss")
 	# Writable copy: action patterns and phases are per-instance runtime state.
 	var data: Dictionary = MODEL_DB.mutable("monster", id)
 	if data.is_empty():

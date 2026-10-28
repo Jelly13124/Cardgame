@@ -1,0 +1,8 @@
+{
+  "id": "mortar_cart_and_scrap_rat",
+  "room": "monster",
+  "monsters": [
+    "mortar_cart",
+    "scrap_rat"
+  ]
+}

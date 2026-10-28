@@ -1,0 +1,82 @@
+{
+  "id": "act4",
+  "number": 4,
+  "floors": 12,
+  "width": 4,
+  "boss": "base:junkyard_tyrant",
+  "hp_mult": 1.75,
+  "dmg_mult": 1.45,
+  "encounters": [
+    {
+      "name": "late",
+      "max_floor": 2,
+      "pool": [
+        "testmod:rust_brute_pair"
+      ]
+    },
+    {
+      "name": "late",
+      "pool": [
+        "base:riot_hound_alpha",
+        "base:rust_brute",
+        "base:mortar_cart_and_scrap_rat",
+        "base:chrome_hound_and_scrap_rat",
+        "base:mortar_cart_siege_and_scrap_rat",
+        "base:slag_walker_and_acid_spitter",
+        "base:riot_hound_pair"
+      ]
+    }
+  ],
+  "elites": [
+    "base:armored_patrol",
+    "base:chrome_warden",
+    "base:siege_breaker"
+  ],
+  "map": {
+    "single_node_first_and_last": true,
+    "first_merchant_floor": 5,
+    "guaranteed_treasure_floor": 6,
+    "early_floor_last": 4,
+    "max_extra_treasures": 2,
+    "max_children_per_node": 3,
+    "early_rolls": [
+      {
+        "below": 0.65,
+        "type": "enemy"
+      },
+      {
+        "below": 0.85,
+        "type": "unknown"
+      },
+      {
+        "type": "enemy"
+      }
+    ],
+    "rolls": [
+      {
+        "below": 0.37,
+        "type": "enemy"
+      },
+      {
+        "below": 0.55,
+        "type": "unknown"
+      },
+      {
+        "below": 0.7,
+        "type": "merchant"
+      },
+      {
+        "below": 0.88,
+        "type": "rest"
+      },
+      {
+        "below": 0.93,
+        "type": "treasure",
+        "capped": true
+      },
+      {
+        "type": "elite"
+      }
+    ]
+  }
+}
