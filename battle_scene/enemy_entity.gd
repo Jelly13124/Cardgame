@@ -9,6 +9,8 @@ const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://core/combat/status_effects.gd
+const MONSTER_MOVES = preload("uid://bqwa1txur3b52")  # res://core/combat/monster_moves.gd
+const INTENTS = preload("uid://crt5cmvargkpn")  # res://core/combat/intents.gd
 const CREATURE = preload("uid://kab2636ev63e")  # res://core/combat/creature.gd
 const SELECTION_RETICLE = preload("uid://c6dicaops28n6")  # res://battle_scene/ui/selection_reticle.gd
 const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://battle_scene/combat/combat_effects.gd
@@ -31,9 +33,6 @@ const MAX_ANIMATION_FRAMES := 16
 const INTENT_BADGE_WIDTH := 104.0
 const INTENT_BADGE_HEIGHT := 36.0
 const INTENT_CELL_ICON_SIZE := Vector2(34.0, 34.0)
-## Ramp attacks are effectively unbounded in real fights. The ceiling only
-## prevents a deliberately stalled debug combat from overflowing a signed int.
-const MAX_SAFE_RAMP_DAMAGE := 1 << 60
 
 # ─── Stats ────────────────────────────────────────────────────────────────────
 ## Combat state lives in the creature (core/combat/creature.gd); this node
@@ -96,39 +95,18 @@ var status_system:
 ## Battle this enemy fights in; set by combat_commands.attach().
 var battle: Node = null
 
-## Short labels used inside the intent badge ("⚔ 5 +Weak" etc.).
-const _STATUS_SHORT_NAMES = {
-	"weak": "Weak",
-	"vulnerable": "Vuln",
-	"short_circuit": "Short Circuit",
-	"burn": "Burn",
-	"stun": "Stun",
-}
-
-# ─── Action Pattern ───────────────────────────────────────────────────────────
-## Array of { type, amount, label } dicts that cycle each turn.
-var action_pattern: Array = []
-var _action_index: int = 0
-## Number of times each named ramp counter has advanced. Kept outside the
-## pattern cursor so an attack continues to grow after the pattern loops.
-var _ramp_action_uses: Dictionary = {}
-
-## A breakable guard exposes the enemy when player damage removes all of the
-## armed Block. It expires if the Block survives until the enemy's next turn.
-
-# ─── HP-threshold phases (spec A2) ──────────────────────────────────────────────
-## Optional phase definitions parsed from JSON, e.g.
-##   { "hp_below": 0.5, "on_enter": [..actions..], "action_pattern": [..moves..] }
-## Sorted on parse by DESCENDING hp_below so the deepest crossed phase wins.
-var phases: Array = []
-## Indices (into `phases`) of phases already entered — each fires at most once.
-var _entered_phases: Dictionary = {}
-## on_enter actions queued by a phase transition, drained by enemy_ai at turn
-## start and run through execute_action (so summon/buff visuals + notifications
-## reuse the existing action handlers). Entity-side we only swap the pattern and
-## reset the pointer synchronously in take_damage; scene-routed effects wait for
-## the next enemy turn (no scene access needed mid-damage). See ADR notes in spec.
-var _pending_on_enter: Array = []
+# ─── Moves ────────────────────────────────────────────────────────────────────
+## The move state machine lives on the creature (core/combat/monster_moves.gd).
+var action_pattern: Array:
+	get:
+		return creature.moves.action_pattern
+	set(value):
+		creature.moves.action_pattern = value
+var phases: Array:
+	get:
+		return creature.moves.phases
+	set(value):
+		creature.moves.phases = value
 
 signal died
 signal status_changed
@@ -176,18 +154,8 @@ static func create(id: String) -> EnemyEntity:
 		# Per-act scaling (bosses exempt — see RunManager.scale_enemy_hp).
 		entity.max_health = RunManager.scale_enemy_hp(entity.max_health, id)
 		entity.health = entity.max_health
-		entity.action_pattern = data.get("action_pattern", [])
+		entity.creature.moves = MONSTER_MOVES.from_data(data)
 		entity.sprite_id = data.get("sprite_id", "")
-		# Optional HP-threshold phases (spec A2). Copy + sort by
-		# descending hp_below so the deepest crossed phase wins.
-		var raw_phases = data.get("phases", [])
-		if typeof(raw_phases) == TYPE_ARRAY and not raw_phases.is_empty():
-			var sorted_phases: Array = raw_phases.duplicate()
-			sorted_phases.sort_custom(
-				func(a, b):
-					return float(a.get("hp_below", 0.0)) > float(b.get("hp_below", 0.0))
-			)
-			entity.phases = sorted_phases
 	else:
 		push_error(
 			(
@@ -207,7 +175,9 @@ func _init() -> void:
 	creature.max_health = 30
 	creature.health = 30
 	creature.host = self
+	creature.moves = MONSTER_MOVES.new()
 	creature.status_changed.connect(func(): status_changed.emit())
+	creature.intent_changed.connect(_update_intent_display)
 
 
 func _ready() -> void:
@@ -459,32 +429,12 @@ func _health_bar_size() -> Vector2i:
 
 ## Returns the current action without advancing the index.
 func peek_next_action() -> Dictionary:
-	if action_pattern.is_empty():
-		return {"type": "attack", "amount": 6}
-	var pattern_index := _action_index % action_pattern.size()
-	var action: Dictionary = action_pattern[pattern_index].duplicate(true)
-	if str(action.get("type", "")) == "attack_ramp":
-		var counter_id := str(action.get("counter", "pattern_%d" % pattern_index))
-		var uses := int(_ramp_action_uses.get(counter_id, 0))
-		var value := int(action.get("amount", 1))
-		var multiplier := maxi(2, int(action.get("multiplier", 2)))
-		for _i in range(uses):
-			if value > MAX_SAFE_RAMP_DAMAGE / multiplier:
-				value = MAX_SAFE_RAMP_DAMAGE
-				break
-			value *= multiplier
-		action["amount"] = value
-	return action
+	return creature.moves.peek()
 
 
 ## Returns the current action AND advances to the next one.
 func consume_next_action() -> Dictionary:
-	var pattern_index: int = _action_index % maxi(1, action_pattern.size())
-	var a = peek_next_action()
-	if str(a.get("type", "")) == "attack_ramp":
-		var counter_id := str(a.get("counter", "pattern_%d" % pattern_index))
-		_ramp_action_uses[counter_id] = int(_ramp_action_uses.get(counter_id, 0)) + 1
-	_action_index = (_action_index + 1) % max(1, action_pattern.size())
+	var a: Dictionary = creature.moves.consume()
 	_update_intent_display()
 	return a
 
@@ -503,16 +453,6 @@ func intent_attack_damage(action: Dictionary) -> int:
 	if battle and is_instance_valid(battle) and battle.get("combat_commands"):
 		return COMBAT_EFFECTS.preview_enemy_attack(battle, self, action)
 	return int(action.get("amount", 0))
-
-
-## Localized short status label for the intent badge. Falls back to the English
-## _STATUS_SHORT_NAMES table (then capitalized id) when no translation exists.
-func _localized_status_short(status: String) -> String:
-	var key := "UI_COMBAT_SHORT_%s" % status.to_upper()
-	var localized := tr(key)
-	if localized != key:
-		return localized
-	return _STATUS_SHORT_NAMES.get(status, status.capitalize())
 
 
 func _add_intent_cell(
@@ -612,68 +552,9 @@ func _update_intent_display() -> void:
 
 
 ## Plain-language description of an action (the intent tooltip, and the
-## interrupt message): generated from the action's type and computed values.
+## interrupt message): core/combat/intents.gd with this enemy's attack damage.
 func intent_text(next: Dictionary, with_tips: bool = true) -> String:
-	var text := _intent_text_with_tips(next)
-	if not with_tips:
-		text = text.trim_suffix("\n" + tr("UI_COMBAT_INTENT_TIP_INTERRUPTIBLE"))
-	return text
-
-
-func _intent_text_with_tips(next: Dictionary) -> String:
-	var action_type := str(next.get("type", ""))
-	match action_type:
-		"attack", "attack_all", "attack_ramp":
-			var dmg := intent_attack_damage(next)
-			var tip := tr("UI_COMBAT_INTENT_TIP_ATTACK").format({"n": dmg})
-			if action_type == "attack_ramp":
-				tip += "\n" + tr("UI_COMBAT_INTENT_TIP_RAMP")
-			return _append_interrupt_tip(tip, next)
-		"attack_status":
-			var dmg := intent_attack_damage(next)
-			var status := _localized_status_short(str(next.get("status", "")))
-			var k := int(next.get("stacks", 1))
-			return _append_interrupt_tip(
-				tr("UI_COMBAT_INTENT_TIP_ATTACK_STATUS").format(
-					{"n": dmg, "status": status, "k": k}
-				),
-				next
-			)
-		"block":
-			return tr("UI_COMBAT_INTENT_TIP_DEFEND").format({"n": int(next.get("amount", 0))})
-		"breakable_block":
-			return tr("UI_COMBAT_INTENT_TIP_BREAKABLE_ARMOR").format(
-				{
-					"n": int(next.get("amount", 0)),
-					"status": _localized_status_short(str(next.get("status", "vulnerable"))),
-					"k": int(next.get("stacks", 1)),
-				}
-			)
-		"reflective_plating":
-			return tr("UI_COMBAT_INTENT_TIP_REFLECTIVE_PLATING").format(
-				{"n": int(next.get("amount", 0)), "k": int(next.get("thorns", 0))}
-			)
-		"heal":
-			return tr("UI_COMBAT_INTENT_TIP_HEAL").format({"n": int(next.get("amount", 0))})
-		"buff_self", "buff":
-			var status_id := str(next.get("status", ""))
-			if status_id != "":
-				return tr("UI_COMBAT_INTENT_TIP_BUFF_STATUS").format(
-					{"status": _localized_status_short(status_id), "k": int(next.get("stacks", 1))}
-				)
-			return tr("UI_COMBAT_INTENT_TIP_BUFF")
-		"telegraph":
-			return tr("UI_COMBAT_INTENT_TIP_CHARGE")
-		"summon":
-			return tr("UI_COMBAT_INTENT_TIP_SUMMON")
-		_:
-			return tr("UI_COMBAT_INTENT_TIP_UNKNOWN")
-
-
-func _append_interrupt_tip(tip: String, action: Dictionary) -> String:
-	if bool(action.get("interruptible", false)):
-		return tip + "\n" + tr("UI_COMBAT_INTENT_TIP_INTERRUPTIBLE")
-	return tip
+	return INTENTS.text(next, intent_attack_damage(next), with_tips)
 
 
 func _start_intent_float_anim() -> void:
@@ -771,10 +652,6 @@ func take_damage(
 	if bool(applied[0].get("armor_broken", false)):
 		_play_armor_break_reaction()
 
-	# Phase transitions only matter while alive (spec A2: never fire during death
-	# / HP<=0). Checked here on the damage path so the swap happens the moment HP
-	# first crosses a threshold.
-	_check_phase_transitions()
 
 
 ## Arms the Block gained this move as breakable armor: player damage that
@@ -808,55 +685,10 @@ func _uses_detached_feedback(feedback_tags: Dictionary) -> bool:
 	return str(feedback_tags.get("source", "")) in COMBAT_SOURCE.DETACHED_FEEDBACK_KINDS
 
 
-## After taking damage, if current HP has first dropped below `hp_below*max_health`
-## for an un-entered phase, enter the DEEPEST such phase: queue its on_enter
-## actions, replace the live action_pattern with the phase's, and reset the
-## action pointer. Each phase fires at most once. `phases` is pre-sorted by
-## descending hp_below, so the first un-entered crossed phase is the deepest.
-func _check_phase_transitions() -> void:
-	if phases.is_empty() or health <= 0 or max_health <= 0:
-		return
-	var hp_ratio := float(health) / float(max_health)
-	var target_index := -1
-	for i in range(phases.size()):
-		if _entered_phases.has(i):
-			continue
-		var hp_below := float(phases[i].get("hp_below", 0.0))
-		if hp_ratio < hp_below:
-			# phases sorted descending by hp_below → first crossed un-entered
-			# entry is the deepest threshold we just crossed.
-			target_index = i
-			break
-	if target_index < 0:
-		return
-	# Mark every crossed un-entered phase as entered so a single big hit that
-	# blows past multiple thresholds only triggers the deepest one, and shallower
-	# ones never fire retroactively.
-	for i in range(phases.size()):
-		if _entered_phases.has(i):
-			continue
-		if hp_ratio < float(phases[i].get("hp_below", 0.0)):
-			_entered_phases[i] = true
-	var phase: Dictionary = phases[target_index]
-	var on_enter = phase.get("on_enter", [])
-	if typeof(on_enter) == TYPE_ARRAY and not on_enter.is_empty():
-		_pending_on_enter.append_array(on_enter)
-	var new_pattern = phase.get("action_pattern", [])
-	if typeof(new_pattern) == TYPE_ARRAY and not new_pattern.is_empty():
-		action_pattern = new_pattern
-		_action_index = 0
-		_ramp_action_uses.clear()
-		_update_intent_display()
-
-
-## Drains queued on_enter actions from a just-entered phase. Called by enemy_ai
-## at the start of this enemy's turn so the actions run through execute_action
-## (reusing summon/buff_self visuals + notifications). Returns the queued actions
-## and clears the queue.
+## Drains queued on_enter actions from a just-entered phase (run by enemy_ai at
+## the start of this enemy's turn).
 func consume_pending_on_enter() -> Array:
-	var pending := _pending_on_enter
-	_pending_on_enter = []
-	return pending
+	return creature.moves.consume_pending_on_enter()
 
 
 func add_block(amount: int) -> void:

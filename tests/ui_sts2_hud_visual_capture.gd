@@ -33,7 +33,7 @@ func _capture(packed: PackedScene, path: String) -> void:
 			"action_pattern",
 			[{"type": "attack_status", "amount": 4, "status": "burn", "stacks": 2}]
 		)
-		enemy.set("_action_index", 0)
+		enemy.creature.moves.set("_action_index", 0)
 		enemy.call("update_intent_display")
 		await get_tree().process_frame
 	await RenderingServer.frame_post_draw

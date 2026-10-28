@@ -358,7 +358,7 @@ func _test_category_intents() -> void:
 		enemy.action_pattern = [
 			{"type": "attack_status", "amount": 4, "status": status_id, "stacks": 2}
 		]
-		enemy._action_index = 0
+		enemy.creature.moves._action_index = 0
 		enemy.update_intent_display()
 		_expect(
 			enemy.find_child("IntentAttack", true, false) != null,
@@ -378,7 +378,7 @@ func _test_category_intents() -> void:
 		var visible_text := ""
 		for label in enemy.find_children("*", "Label", true, false):
 			visible_text += " " + str(label.text)
-		var status_name := enemy._localized_status_short(status_id)
+		var status_name := enemy.INTENTS.short_status(status_id)
 		_expect(status_name not in visible_text, "%s name is hover-only" % status_id)
 		_expect(
 			status_name in str(enemy.get("_intent_tooltip")),
