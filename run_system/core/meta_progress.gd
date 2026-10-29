@@ -209,6 +209,8 @@ const CYBER_DOC_PERKS := {
 ## the attribute perks — a single tier-aware cap keeps the clinic's perk model uniform.
 const CYBER_HP_PERK := "cyber_hp"
 const CYBER_HP_PER_LEVEL := 5
+## Clinic perk level cap once the clinic reaches T3 (high_cap).
+const HIGH_PERK_CAP := 5
 ## --- Buildings refactor: single source of truth for the 4 base buildings ---
 ## Each entry: unlock_cost (SCRAP to go locked→T1), tier_costs ([T2 cost, T3 cost]
 ## in CAPS), functions (function key → minimum tier that gates it). Numbers are
@@ -389,7 +391,7 @@ func caps_perk_cost(perk_id: String) -> int:
 ## the const default. buy_caps_perk gates every clinic perk by this so the cap is
 ## tier-aware and single-sourced (the const CAPS_PERK_MAX_LEVEL remains the floor).
 func attr_perk_cap() -> int:
-	return 5 if building_can("clinic", "high_cap") else CAPS_PERK_MAX_LEVEL
+	return HIGH_PERK_CAP if building_can("clinic", "high_cap") else CAPS_PERK_MAX_LEVEL
 
 
 ## Returns the facility id a perk belongs to, or "" if unknown. Both the Cyber

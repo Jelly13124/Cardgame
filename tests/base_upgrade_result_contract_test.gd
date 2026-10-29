@@ -1,5 +1,8 @@
 extends Node
 
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const MARKET = preload("uid://brturtmxacges")  # res://core/meta/market.gd
+
 const RESULT_SCREEN_PATH := "res://run_system/ui/result_screen.gd"  # path-ok: reads source text
 const META_PROGRESS_PATH := "res://run_system/core/meta_progress.gd"  # path-ok: reads source text
 const HOME_BASE_PATH := "res://run_system/ui/home_base_scene.gd"  # path-ok: reads source text
@@ -317,7 +320,7 @@ func _test_clinic_cap_is_binary() -> void:
 		"clinic cap card exposes only locked and unlocked states"
 	)
 	_expect(
-		cap_body.contains("HIGH_CAP_LEVEL")
+		cap_body.contains("MetaProgress.HIGH_PERK_CAP")
 		and not cap_body.contains("_perk_dots(")
 		and not cap_body.contains("_cyan_dots("),
 		"clinic cap unlock displays fixed cap 5 without a progress-dot track"
@@ -349,7 +352,7 @@ func _test_concept_purchase_buttons() -> void:
 		"clinic preserves the concept's separate row and vitals CTA geometry"
 	)
 	_expect(
-		market_source.contains("_price_footer(MARKET_TOOL_PRICE, 175.0, 47.0)")
+		market_source.contains("_price_footer(MARKET.tool_price(), 175.0, 47.0)")
 		and market_source.contains("_price_footer(price, 184.0, 50.0)")
 		and market_source.contains('T.apply_concept_price_button(btn, "olive")')
 		and market_source.contains(
@@ -364,10 +367,14 @@ func _test_concept_purchase_buttons() -> void:
 		and not market_source.contains("market_vendor_counter_grenade.png"),
 		"market bakes its merchant and counter into the background without a duplicate NPC layer"
 	)
-	var market_pool_body := _function_body(market_source, "func _list_equipment_by_slot")
+	var set_bases_on_shelf: Array = []
+	for slot_entries in MARKET.equipment_by_slot().values():
+		for entry in slot_entries:
+			if str(MODEL_DB.data("equipment", str(entry["id"])).get("set_id", "")) != "":
+				set_bases_on_shelf.append(entry["id"])
 	_expect(
-		market_pool_body.contains('str(data.get("set_id", "")) != ""'),
-		"market stock excludes set bases instead of displaying them as ordinary gear"
+		set_bases_on_shelf.is_empty(),
+		"market stock excludes set bases instead of displaying them as ordinary gear (%s)" % [set_bases_on_shelf]
 	)
 	for asset_name in [
 		"market_shelf_panel_frame.png",

@@ -37,5 +37,33 @@
     "hemorrhage",
     "covering_reload",
     "limit_break"
+  ],
+  "start_relics": [
+    "crit_clip",
+    "double_fire_clip"
+  ],
+  "act_start_upgrades": [
+    {
+      "held": "crit_clip",
+      "offer": [
+        "crit_clip_volatile",
+        "crit_clip_deadeye",
+        "double_fire_clip"
+      ],
+      "replaces": [
+        "crit_clip_volatile",
+        "crit_clip_deadeye"
+      ]
+    },
+    {
+      "held": "double_fire_clip",
+      "offer": [
+        "double_fire_clip_burst",
+        "crit_clip"
+      ],
+      "replaces": [
+        "double_fire_clip_burst"
+      ]
+    }
   ]
 }

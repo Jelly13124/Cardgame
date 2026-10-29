@@ -55,31 +55,9 @@ const SHELF_CARD_GAP := 17
 const SHELF_ICON := Vector2(116, 116)
 const EQUIP_SHELF_ICON := Vector2(154, 154)
 
-## Equipment buy prices in Caps, by rarity (spec: 60/140/280).
-const EQUIP_CAPS_PRICE := {"common": 60, "uncommon": 140, "rare": 280}
-## Equipment shelf: FIVE items — one per equipment slot (owner 2026-07-08),
-## rarity rolled per slot by these weights.
-const EQUIP_SLOT_ORDER := ["weapon", "head", "chest", "hands", "accessory"]
-const EQUIP_RARITY_WEIGHTS := {"common": 50, "uncommon": 35, "rare": 15}
-## Flat Caps price per tool (tools have no rarity tiers).
-const MARKET_TOOL_PRICE := 40
-## How many random tools to stock (owner 2026-07-14: five, concept parity).
-const MARKET_TOOL_COUNT := 5
-## Refresh (ungated): base Caps cost, +10 per use this visit.
-const MARKET_REFRESH_BASE := 20
-const MARKET_REFRESH_STEP := 10
+## Stock, prices and conversion rates: core/meta/market.gd.
+const MARKET = preload("uid://brturtmxacges")  # res://core/meta/market.gd
 
-## Conversion tunables (Caps↔Scrap bidirectional, ~10% tax floored) [tunable].
-## Caps→Scrap 4:1 (kept from the old warehouse rate); Scrap→Caps is the reverse
-## direction at the inverse chunk so grinding the loop always loses to the tax.
-## Each row converts a fixed chunk of the SOURCE currency.
-const CONV_CAPS_CHUNK := 40  # Caps → Scrap: spend 40 caps
-const CONV_CAPS_RATE := 0.25  # → 10 scrap gross (before tax)
-const CONV_SCRAP_CHUNK := 20  # Scrap → Caps: spend 20 scrap
-const CONV_SCRAP_RATE := 2.0  # → 40 caps gross (before tax)
-const CONV_TAX := 0.10
-
-const RARITY_ORDER := ["common", "uncommon", "rare"]
 const RARITY_COLORS := {
 	"common": Color(0.85, 0.85, 0.85),
 	"uncommon": Color(0.45, 0.8, 1.0),
@@ -107,9 +85,9 @@ var _market_box: VBoxContainer = null
 func _build_content(container: VBoxContainer) -> void:
 	# Roll stock once for the session (stable until refreshed).
 	if _tool_stock.is_empty():
-		_tool_stock = _roll_tool_stock()
+		_tool_stock = MARKET.roll_tool_stock()
 	if _equip_stock.is_empty():
-		_equip_stock = _roll_equip_stock()
+		_equip_stock = MARKET.roll_equip_stock()
 
 	_market_box = container
 	# Repaint on currency / building changes. The base already connects _refresh
@@ -289,8 +267,8 @@ func _build_tool_tile(tool_id: String) -> Control:
 	_style_label(name_lbl, 18, Color(0.95, 0.70, 0.24), 1)
 	col.add_child(name_lbl)
 
-	var buy_btn := _price_footer(MARKET_TOOL_PRICE, 175.0, 47.0)
-	buy_btn.disabled = MetaProgress.caps < MARKET_TOOL_PRICE
+	var buy_btn := _price_footer(MARKET.tool_price(), 175.0, 47.0)
+	buy_btn.disabled = MetaProgress.caps < MARKET.tool_price()
 	buy_btn.pressed.connect(_on_buy_tool.bind(tool_id, buy_btn))
 	col.add_child(buy_btn)
 
@@ -298,11 +276,11 @@ func _build_tool_tile(tool_id: String) -> Control:
 
 
 func _on_buy_tool(tool_id: String, btn: Button) -> void:
-	if not MetaProgress.spend_caps(MARKET_TOOL_PRICE):
+	if not MetaProgress.spend_caps(MARKET.tool_price()):
 		return
 	if not RunManager.add_tool_to_backpack(tool_id):
 		# Backpack full → refund the Caps so the player isn't charged for nothing.
-		MetaProgress.add_caps(MARKET_TOOL_PRICE)
+		MetaProgress.add_caps(MARKET.tool_price())
 		if is_instance_valid(btn):
 			_set_price_button_status(btn, tr("UI_MARKET_BACKPACK_FULL"))
 		return
@@ -447,7 +425,7 @@ func _on_buy_equipment(base_id: String, rarity: String, price: int, btn: Button)
 
 
 func _refresh_cost() -> int:
-	return MARKET_REFRESH_BASE + MARKET_REFRESH_STEP * _refresh_uses
+	return MARKET.refresh_cost(_refresh_uses)
 
 
 func _on_refresh_stock() -> void:
@@ -455,8 +433,8 @@ func _on_refresh_stock() -> void:
 	if not MetaProgress.spend_caps(cost):
 		return
 	_refresh_uses += 1
-	_tool_stock = _roll_tool_stock()
-	_equip_stock = _roll_equip_stock()
+	_tool_stock = MARKET.roll_tool_stock()
+	_equip_stock = MARKET.roll_equip_stock()
 	_rebuild_market()
 
 
@@ -507,38 +485,34 @@ func _build_convert_section() -> Control:
 	body.add_child(group)
 
 	# Caps → Scrap (4:1, ~10% tax).
-	var caps_out := _converted_amount(CONV_CAPS_CHUNK, CONV_CAPS_RATE)
+	var caps_conv: Dictionary = MARKET.conversion("caps_to_scrap")
+	var caps_out := int(caps_conv["out"])
 	group.add_child(
 		_conversion_row(
-			CONV_CAPS_CHUNK,
+			int(caps_conv["chunk"]),
 			"caps",
 			caps_out,
 			"scrap",
-			MetaProgress.caps >= CONV_CAPS_CHUNK,
+			MetaProgress.caps >= int(caps_conv["chunk"]),
 			_on_convert_caps_to_scrap
 		)
 	)
 
 	# Scrap → Caps (reverse, ~10% tax).
-	var scrap_out := _converted_amount(CONV_SCRAP_CHUNK, CONV_SCRAP_RATE)
+	var scrap_conv: Dictionary = MARKET.conversion("scrap_to_caps")
+	var scrap_out := int(scrap_conv["out"])
 	group.add_child(
 		_conversion_row(
-			CONV_SCRAP_CHUNK,
+			int(scrap_conv["chunk"]),
 			"scrap",
 			scrap_out,
 			"caps",
-			MetaProgress.scrap >= CONV_SCRAP_CHUNK,
+			MetaProgress.scrap >= int(scrap_conv["chunk"]),
 			_on_convert_scrap_to_caps
 		)
 	)
 
 	return section
-
-
-## Post-tax destination amount for converting `chunk` of source at `rate`. Tax is
-## floored off the gross so grinding never rounds in the player's favor.
-func _converted_amount(chunk: int, rate: float) -> int:
-	return int(floor(chunk * rate * (1.0 - CONV_TAX)))
 
 
 ## One concept conversion row (row_convert language): [src icon][amount field] →
@@ -595,14 +569,15 @@ func _conversion_row(
 
 
 func _on_convert_scrap_to_caps() -> void:
-	if not MetaProgress.spend_scrap(CONV_SCRAP_CHUNK):
+	var conv: Dictionary = MARKET.conversion("scrap_to_caps")
+	if not MetaProgress.spend_scrap(int(conv["chunk"])):
 		return
-	var out := _converted_amount(CONV_SCRAP_CHUNK, CONV_SCRAP_RATE)
+	var out := int(conv["out"])
 	MetaProgress.add_caps(out)
 	_flash_status(
 		tr("UI_MARKET_CONVERT_OK").format(
 			{
-				"src": CONV_SCRAP_CHUNK,
+				"src": int(conv["chunk"]),
 				"src_name": tr("UI_MARKET_CONVERT_CUR_SCRAP"),
 				"dst": out,
 				"dst_name": tr("UI_MARKET_CONVERT_CUR_CAPS")
@@ -612,14 +587,15 @@ func _on_convert_scrap_to_caps() -> void:
 
 
 func _on_convert_caps_to_scrap() -> void:
-	if not MetaProgress.spend_caps(CONV_CAPS_CHUNK):
+	var conv: Dictionary = MARKET.conversion("caps_to_scrap")
+	if not MetaProgress.spend_caps(int(conv["chunk"])):
 		return
-	var out := _converted_amount(CONV_CAPS_CHUNK, CONV_CAPS_RATE)
+	var out := int(conv["out"])
 	MetaProgress.add_scrap(out)
 	_flash_status(
 		tr("UI_MARKET_CONVERT_OK").format(
 			{
-				"src": CONV_CAPS_CHUNK,
+				"src": int(conv["chunk"]),
 				"src_name": tr("UI_MARKET_CONVERT_CUR_CAPS"),
 				"dst": out,
 				"dst_name": tr("UI_MARKET_CONVERT_CUR_SCRAP")
@@ -831,78 +807,3 @@ func _ll_icon(icon_name: String, px: float) -> Control:
 	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return rect
-
-
-## Roll a small, session-stable tool stock from the whole tool pool.
-func _roll_tool_stock() -> Array:
-	var pool: Array = RunManager.tool_pool().duplicate()
-	RunManager.rng("shops").shuffle(pool)
-	var stock: Array = []
-	for i in range(min(MARKET_TOOL_COUNT, pool.size())):
-		stock.append(str(pool[i]))
-	return stock
-
-
-## Roll the equipment shelf: ONE item per equipment slot (owner 2026-07-08).
-## Per slot: roll a rarity by EQUIP_RARITY_WEIGHTS, pick a random base with that
-## slot+rarity; if no base exists at that exact rarity, pick any base of the
-## slot and keep its own rarity. Price follows the final rarity.
-func _roll_equip_stock() -> Array:
-	var by_slot := _list_equipment_by_slot()
-	var stock: Array = []
-	for slot in EQUIP_SLOT_ORDER:
-		var entries: Array = by_slot.get(slot, [])
-		if entries.is_empty():
-			continue
-		var rarity := _roll_rarity()
-		var pool: Array = entries.filter(func(e): return str(e.get("rarity", "")) == rarity)
-		var picked: Dictionary
-		if pool.is_empty():
-			picked = RunManager.rng("shops").pick(entries)
-			rarity = str(picked.get("rarity", "common"))
-		else:
-			picked = RunManager.rng("shops").pick(pool)
-		(
-			stock
-			. append(
-				{
-					"base": str(picked.get("id", "")),
-					"rarity": rarity,
-					"price": int(EQUIP_CAPS_PRICE.get(rarity, EQUIP_CAPS_PRICE["common"])),
-				}
-			)
-		)
-	return stock
-
-
-## Weighted rarity roll for one shelf slot.
-func _roll_rarity() -> String:
-	var total := 0
-	for r in EQUIP_RARITY_WEIGHTS:
-		total += int(EQUIP_RARITY_WEIGHTS[r])
-	var roll: int = RunManager.rng("shops").next_int(maxi(total, 1))
-	for r in RARITY_ORDER:
-		roll -= int(EQUIP_RARITY_WEIGHTS.get(r, 0))
-		if roll < 0:
-			return r
-	return "common"
-
-
-## slot → Array of {id, rarity} for every sellable base on disk. Only the three
-## shop rarities go on the shelf (set/cursed exotics drop elsewhere).
-func _list_equipment_by_slot() -> Dictionary:
-	var result := {}
-	for item_id in MODEL_DB.ids("equipment"):
-		var data := MODEL_DB.data("equipment", item_id)
-		var slot := str(data.get("slot", ""))
-		var rarity := str(data.get("rarity", "common"))
-		# Set pieces are exotic drops. Their base JSON keeps a compatibility rarity,
-		# but showing that value on the shelf made set art read as ordinary gear.
-		if str(data.get("set_id", "")) != "":
-			continue
-		if slot == "" or not rarity in RARITY_ORDER:
-			continue
-		if not result.has(slot):
-			result[slot] = []
-		(result[slot] as Array).append({"id": item_id, "rarity": rarity})
-	return result

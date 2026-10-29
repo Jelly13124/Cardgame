@@ -16,6 +16,7 @@ const EVENT_MODAL_SCRIPT = preload("uid://0gxdrhjtltvh")  # res://run_system/ui/
 const T_THEME = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 const BATTLE_PACKED = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
 const SHOP_PACKED = preload("uid://dr8unxxfi0w51")  # res://run_system/ui/shop_scene.tscn
+const ROOMS = preload("uid://cxmgdj3654rrj")  # res://core/run/rooms.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_sts2_bg.png"
 const NODE_ICON_DIR = "res://run_system/assets/images/map/nodes/"
@@ -327,24 +328,19 @@ func _on_node_clicked(node: Dictionary) -> void:
 	#   - popup-only branches release synchronously below
 	match node.type:
 		"relic":
-			# Bill's starting node is a build-defining clip pick: Crit Clip (burst /
-			# variance) vs Double-Fire Clip (guaranteed replay, ammo-gated). Both are
-			# unique relics, so neither rolls anywhere else — the unpicked one is gone
-			# for the run. Other heroes keep the random starting-relic roll.
-			# From Act 2 on, this floor-0 node opens Bill's clip-UPGRADE pick instead.
-			if str(rm.current_hero_id) == "base:cowboy_bill" and int(rm.current_act) >= 2:
-				var base_clip := _held_base_clip()
-				if base_clip != "":
-					_open_clip_upgrade_choice(base_clip)
-				else:
-					# Already upgraded (3-act runs) — give a normal relic pick rather
-					# than re-offering the starting clips.
-					_open_relic_choice(tr("UI_MAP_CHOOSE_A_RELIC"), "treasure")
-			elif str(rm.current_hero_id) == "base:cowboy_bill":
-				var clips: Array[String] = ["base:crit_clip", "base:double_fire_clip"]
-				_open_relic_choice(tr("UI_MAP_CHOOSE_STARTING_RELIC"), "starting", clips)
-			else:
-				_open_relic_choice(tr("UI_MAP_CHOOSE_STARTING_RELIC"), "starting")
+			# The hero's start-relic node (core/run/rooms.gd): a fixed starting pair,
+			# an upgrade of the held one in later acts, or a random pick.
+			var offer: Dictionary = ROOMS.start_relic_offer(str(rm.current_hero_id), int(rm.current_act))
+			match str(offer["kind"]):
+				"choice":
+					var pair: Array[String] = []
+					pair.assign(offer["relics"])
+					_open_relic_choice(tr("UI_MAP_CHOOSE_STARTING_RELIC"), "starting", pair)
+				"upgrade":
+					_open_clip_upgrade_choice(offer["relics"], offer["replaces"])
+				_:
+					var title := "UI_MAP_CHOOSE_STARTING_RELIC" if offer["source"] == "starting" else "UI_MAP_CHOOSE_A_RELIC"
+					_open_relic_choice(tr(title), str(offer["source"]))
 		"enemy", "elite", "boss":
 			rm.current_encounter = rm.select_encounter(node.type, int(node.floor))
 			rm.last_battle_node_type = node.type
@@ -392,67 +388,33 @@ func _open_event_node(floor_idx: int) -> void:
 	layer.add_child(modal)
 
 
-## "?" map node — rolls one of several outcomes for variety. Probabilities:
-##   40% enemy ambush       — same as before, drops into combat
-##   18% scavenge gold      — small pile of gold (5-20), into the backpack
-##   15% scrap cache        — 10-30 Scrap (only banks on extraction)
-##   12% scrap stash heal   — heal 6-12 HP (capped at max)
-##    7% free equipment     — uses the treasure-style grant path
-##    8% suspicious cache    — lose 6 HP, gain a relic (skipped if no relics left)
+## "?" map node with no event left: the run layer rolls the outcome
+## (core/run/rooms.gd) and applies it; this shows it.
 func _resolve_unknown_node(floor_idx: int) -> void:
-	var roll: float = RunManager.rng("unknown_map_point").next_float()
-
-	if roll < 0.40:
-		rm.current_encounter = rm.select_encounter("enemy", floor_idx)
-		rm.last_battle_node_type = "enemy"
-		SceneTransition.change_to_packed(BATTLE_PACKED)
-		# Scene change tears down — no need to reset click guard.
-		return
-
-	if roll < 0.58:
-		var gold: int = RunManager.rng("unknown_map_point").next_range(5, 20)
-		RunManager.add_gold(gold)
-		_show_popup(tr("UI_MAP_SCAVENGED_GOLD").format({"n": gold}))
-		_node_click_pending = false
-		return
-
-	if roll < 0.73:
-		# Scrap stays in the backpack and only counts on a successful extraction.
-		var amt: int = RunManager.rng("unknown_map_point").next_range(10, 30)
-		RunManager.add_scrap_to_backpack(amt)
-		_show_popup(tr("UI_MAP_SCRAP_DROP").format({"n": amt}))
-		_node_click_pending = false
-		return
-
-	if roll < 0.85:
-		var heal_amt: int = RunManager.rng("unknown_map_point").next_range(6, 12)
-		var before: int = rm.current_health
-		rm.modify_health(heal_amt)
-		var actual: int = rm.current_health - before
-		_show_popup(tr("UI_MAP_SCRAP_MEDKIT_HEAL").format({"n": actual}))
-		_node_click_pending = false
-		return
-
-	if roll < 0.92:
-		# _grant_treasure_equipment resets the click guard on every path
-		# (popup-only paths reset synchronously).
-		_grant_treasure_equipment()
-		return
-
-	# Tail 8%: suspicious cache. Skip if no relics to grant OR player at
-	# 1 HP (no payable cost — would be a free relic + "-0 HP" copy).
-	if rm.get_unowned_relic_ids().is_empty() or rm.current_health <= 1:
-		RunManager.add_gold(15)
-		_show_popup(tr("UI_MAP_CACHE_EMPTY_GOLD").format({"n": 15}))
-		_node_click_pending = false
-		return
-	# Cap loss at 6 and at (current_health - 1) so cache can never solo-
-	# kill the player. Routes through modify_health for death-gate safety.
-	var hp_loss: int = clampi(rm.current_health - 1, 1, 6)
-	rm.modify_health(-hp_loss)
-	# Click guard stays latched — _open_relic_choice will reset it via
-	# _on_relic_choice_selected when player picks.
-	_open_relic_choice(tr("UI_MAP_CACHE_PRIED_OPEN").format({"n": hp_loss}), "treasure")
+	var outcome: Dictionary = ROOMS.resolve_unknown()
+	var amount := int(outcome["amount"])
+	match str(outcome["kind"]):
+		"fight":
+			rm.current_encounter = rm.select_encounter("enemy", floor_idx)
+			rm.last_battle_node_type = "enemy"
+			SceneTransition.change_to_packed(BATTLE_PACKED)
+			return  # scene change tears down — no click guard to release
+		"gold":
+			_show_popup(tr("UI_MAP_SCAVENGED_GOLD").format({"n": amount}))
+		"scrap":
+			_show_popup(tr("UI_MAP_SCRAP_DROP").format({"n": amount}))
+		"heal":
+			_show_popup(tr("UI_MAP_SCRAP_MEDKIT_HEAL").format({"n": amount}))
+		"equipment":
+			_grant_treasure_equipment()  # releases the click guard itself
+			return
+		"cache_empty":
+			_show_popup(tr("UI_MAP_CACHE_EMPTY_GOLD").format({"n": amount}))
+		"cache":
+			# The relic pick releases the click guard when the player chooses.
+			_open_relic_choice(tr("UI_MAP_CACHE_PRIED_OPEN").format({"n": amount}), "treasure")
+			return
+	_node_click_pending = false
 
 
 ## Brief on-map toast for node outcomes that have no other obvious result
@@ -533,7 +495,7 @@ func _open_relic_choice(
 	)
 	if choices.is_empty():
 		if source_type == "treasure":
-			var gold = RunManager.rng("rewards").next_range(20, 45)
+			var gold := ROOMS.treasure_empty_gold()
 			RunManager.add_gold(gold)
 			_show_popup(tr("UI_MAP_NO_RELICS_FOUND_GOLD").format({"n": gold}))
 		else:
@@ -570,32 +532,13 @@ func _open_relic_choice(
 	_relic_choice_layer.visible = true
 
 
-## The base clip Bill currently holds ("crit_clip" / "double_fire_clip"), or "" if
-## he holds none or only an already-upgraded variant. Drives the Act 2+ upgrade node.
-func _held_base_clip() -> String:
-	if rm.has_relic("base:crit_clip"):
-		return "base:crit_clip"
-	if rm.has_relic("base:double_fire_clip"):
-		return "base:double_fire_clip"
-	return ""
-
-
-## Act 2+ opener for Bill: upgrade the held clip (REPLACES it) or grab the OTHER
-## base clip as a second exclusive relic (pure add). Modeled on _open_relic_choice,
-## but selection routes through _upgrade_replaces so an upgrade swaps out the old clip.
-func _open_clip_upgrade_choice(base_clip: String) -> void:
+## Later-act start node: upgrade the held start relic (an upgrade REPLACES the
+## relic named in `replaces`) or take another start relic (pure add).
+func _open_clip_upgrade_choice(choices: Array, replaces: Dictionary) -> void:
 	if not rm:
 		_node_click_pending = false
 		return
-	var choices: Array[String] = []
-	_upgrade_replaces = {}
-	if base_clip == "base:crit_clip":
-		choices = ["base:crit_clip_volatile", "base:crit_clip_deadeye", "base:double_fire_clip"]
-		_upgrade_replaces["base:crit_clip_volatile"] = "base:crit_clip"
-		_upgrade_replaces["base:crit_clip_deadeye"] = "base:crit_clip"
-	else:
-		choices = ["base:double_fire_clip_burst", "base:crit_clip"]
-		_upgrade_replaces["base:double_fire_clip_burst"] = "base:double_fire_clip"
+	_upgrade_replaces = replaces.duplicate()
 
 	for child in _relic_choice_box.get_children():
 		child.queue_free()
@@ -791,8 +734,7 @@ func _open_run_deck_viewer() -> void:
 ## Treasure equipment drop: 70% uncommon / 30% rare. Drops straight into the
 ## backpack; if every cell is taken the item is left behind with a notice.
 func _grant_treasure_equipment() -> void:
-	var rarity := "uncommon" if RunManager.rng("rewards").chance(0.7) else "rare"
-	var einst = RunManager.roll_shell_drop(rarity)
+	var einst: Dictionary = ROOMS.treasure_equipment()
 	var item_id = str(einst.get("base", ""))
 	if item_id == "":
 		_show_popup(tr("UI_MAP_CRATE_EMPTY"))

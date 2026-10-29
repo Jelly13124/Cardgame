@@ -6,6 +6,10 @@ extends Node
 ## the act's rewards, final boss → demo complete (run ends).
 
 const COMBAT_REWARDS = preload("uid://sn83hwnx1w3b")  # res://core/run/combat_rewards.gd
+const REWARDS = preload("uid://dao6ryap2ksxs")  # res://core/run/rewards.gd
+const SHOP_STOCK = preload("uid://bxjesomogv04a")  # res://core/run/shop_stock.gd
+const CARD_POOLS = preload("uid://c76axesxo6wit")  # res://core/run/card_pools.gd
+const MARKET = preload("uid://brturtmxacges")  # res://core/meta/market.gd
 const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
 
 var failures: PackedStringArray = []
@@ -47,9 +51,26 @@ func _run() -> void:
 	_expect(route["route"] == "demo_complete", "the demo's final boss completes the run (%s)" % route["route"])
 	_expect(not RunManager.is_run_active, "the run ended")
 	RunManager.clear_run_save()
+	_expect(_stock("STOCKSEED1") == _stock("STOCKSEED1"), "the same seed gives the same loot, shop and market stock")
+	_expect(_stock("STOCKSEED1") != _stock("STOCKSEED2"), "another seed gives other stock")
 	if failures.is_empty():
 		print("[OK] combat rewards route passed")
 		get_tree().quit(0)
 		return
 	push_error("combat rewards route failed: %s" % "; ".join(failures))
 	get_tree().quit(1)
+
+
+func _stock(seed_string: String) -> String:
+	RunManager.start_new_run("base:cowboy_bill", [], 0, seed_string)
+	var hero := str(RunManager.current_hero_id)
+	var out := [
+		REWARDS.combat_loot("enemy").map(func(e): return [e["type"], e.get("tool_id", ""), e.get("instance", {}).get("base", "")]),
+		REWARDS.roll_unique_draft_card(REWARDS.rarity_pools(CARD_POOLS.reward_pool(hero)), {}),
+		SHOP_STOCK.roll(CARD_POOLS.shop_cards_by_rarity(hero), RunManager.tool_pool(), RunManager.get_unowned_relic_ids()),
+		MARKET.roll_equip_stock(),
+		MARKET.roll_tool_stock(),
+	]
+	RunManager.is_run_active = false
+	RunManager.clear_run_save()
+	return JSON.stringify(out)

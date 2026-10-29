@@ -1,0 +1,41 @@
+{
+  "id": "unknown_room",
+  "outcomes": [
+    {
+      "below": 0.4,
+      "kind": "fight"
+    },
+    {
+      "below": 0.58,
+      "kind": "gold",
+      "min": 5,
+      "max": 20
+    },
+    {
+      "below": 0.73,
+      "kind": "scrap",
+      "min": 10,
+      "max": 30
+    },
+    {
+      "below": 0.85,
+      "kind": "heal",
+      "min": 6,
+      "max": 12
+    },
+    {
+      "below": 0.92,
+      "kind": "equipment"
+    },
+    {
+      "kind": "cache",
+      "max_hp_loss": 6,
+      "empty_gold": 15
+    }
+  ],
+  "treasure_empty_gold": [
+    20,
+    45
+  ],
+  "treasure_equipment_uncommon_chance": 0.7
+}

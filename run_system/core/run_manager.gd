@@ -2140,32 +2140,6 @@ func _emit_all_state() -> void:
 	emit_signal("relics_updated")
 
 
-## Debug tool testing
-func _input(event: InputEvent) -> void:
-	if not OS.is_debug_build():
-		return
-
-	if event is InputEventKey and event.pressed:
-		match event.keycode:
-			KEY_F9:
-				print("--- DEBUG: RUN MANAGER STATE ---")
-				print("Deck Size: ", player_deck.size())
-				print("Deck Contents: ", player_deck)
-				print("Health: ", current_health, "/", max_health)
-				print("Resources - Gold: ", gold, " Scrap(bank): ", total_run_scrap())
-				print("Items: ", equipped_items, " Inventory: ", inventory_items)
-				print("Relics: ", relics)
-			KEY_F10:
-				print("DEBUG: +100 Gold")
-				add_resources(100, 0)
-			KEY_F11:
-				print("DEBUG: Take 5 Damage")
-				modify_health(-5)
-			KEY_F12:
-				print("DEBUG: +test_relic")
-				add_relic("test_relic")
-
-
 ## The named seeded stream of the current run (see RunRngSet.STREAMS). Outside a
 ## run it returns a session-only, never-saved stream so callers need no guard.
 func rng(stream_name: String):

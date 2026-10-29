@@ -22,6 +22,7 @@ MetaProgress="*res://run_system/core/meta_progress.gd"
 Tooltip="*res://autoload/tooltip.gd"
 AudioManager="*res://autoload/audio_manager.gd"
 SceneTransition="*res://autoload/scene_transition.gd"
+Debug="*res://autoload/debug.gd"
 
 [display]
 

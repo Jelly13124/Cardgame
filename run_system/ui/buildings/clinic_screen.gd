@@ -26,13 +26,6 @@ extends "res://run_system/ui/buildings/building_screen_base.gd"
 
 const CLINIC_NPC_PATH := "res://run_system/assets/images/ui/clinic/npc_cyber_doctor.png"
 
-## Max-HP perk (cyber_hp): +5 max HP per level. Cost/level is sourced from
-## MetaProgress.caps_perk_cost(CYBER_HP_PERK); the +HP value is display-only here.
-const MAX_HP_PER_LEVEL := 5
-## Effective attribute level cap with clinic at T3 (spec: 3 → 5). This remains
-## the total dot count for purchasable perk rows; the separate cap-unlock card
-## deliberately has no dots because the tier unlock is binary.
-const HIGH_CAP_LEVEL := 5
 
 ## Lightline icon per base attribute (concept row order = CYBER_DOC_PERKS order).
 ## Missing PNGs fall back to the legacy attribute icons, then to a spacer.
@@ -220,13 +213,13 @@ func _build_vitals_card() -> Control:
 	var cap := MetaProgress.attr_perk_cap()
 
 	var dots_center := CenterContainer.new()
-	dots_center.add_child(_cyan_dots(lvl, HIGH_CAP_LEVEL, cap))
+	dots_center.add_child(_cyan_dots(lvl, MetaProgress.HIGH_PERK_CAP, cap))
 	body.add_child(dots_center)
 
 	var note := Label.new()
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	note.text = tr("UI_CLINIC_HP_PERK").format({"hp": MAX_HP_PER_LEVEL})
+	note.text = tr("UI_CLINIC_HP_PERK").format({"hp": MetaProgress.CYBER_HP_PER_LEVEL})
 	_style_label(note, TOK_FONT_DIM, TOK_TEXT_DIM, 1)
 	body.add_child(note)
 
@@ -259,7 +252,7 @@ func _build_cap_card() -> Control:
 
 	if MetaProgress.building_can("clinic", "high_cap"):
 		var value_lbl := Label.new()
-		value_lbl.text = "%s %d" % [tr("UI_CLINIC_CAP_TITLE"), HIGH_CAP_LEVEL]
+		value_lbl.text = "%s %d" % [tr("UI_CLINIC_CAP_TITLE"), MetaProgress.HIGH_PERK_CAP]
 		value_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_style_label(value_lbl, 22, Color(0.36, 0.86, 0.91), 2)
 		body.add_child(value_lbl)
@@ -357,13 +350,13 @@ func _ll_card(title: String) -> PanelContainer:
 	return panel
 
 
-## The concept attr-row dots: HIGH_CAP_LEVEL circles — orange filled up to `lvl`,
+## The concept attr-row dots: MetaProgress.HIGH_PERK_CAP circles — orange filled up to `lvl`,
 ## dark ring while within the current cap, extra-faint beyond it (sells the T3
 ## cap raise). Programmatic circles (StyleBoxFlat), so no PNG dependency.
 func _perk_dots(lvl: int, cap: int) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
-	for i in range(HIGH_CAP_LEVEL):
+	for i in range(MetaProgress.HIGH_PERK_CAP):
 		var dot := Panel.new()
 		dot.custom_minimum_size = Vector2(DOT_SIZE, DOT_SIZE)
 		var sb := StyleBoxFlat.new()

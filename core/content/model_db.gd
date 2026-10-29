@@ -244,6 +244,11 @@ static func _normalize_refs(category: String, d: Dictionary, ns: String, where: 
 		"character":
 			_ref_list(d, "starter_deck", "card", ns, where)
 			_ref_list(d, "exclusive_cards", "card", ns, where)
+			_ref_list(d, "start_relics", "relic", ns, where)
+			for upgrade in _dicts(d.get("act_start_upgrades", [])):
+				_ref_field(upgrade, "held", "relic", ns, where)
+				_ref_list(upgrade, "offer", "relic", ns, where)
+				_ref_list(upgrade, "replaces", "relic", ns, where)
 			_ref_field(d, "card_pool", "card_pool", ns, where)
 			_ref_field(d, "relic_pool", "relic_pool", ns, where)
 		"card_pool":

@@ -1,0 +1,33 @@
+{
+  "id": "market_economy",
+  "equipment_price": {
+    "common": 60,
+    "uncommon": 140,
+    "rare": 280
+  },
+  "equipment_slot_order": [
+    "weapon",
+    "head",
+    "chest",
+    "hands",
+    "accessory"
+  ],
+  "equipment_rarity_weights": {
+    "common": 50,
+    "uncommon": 35,
+    "rare": 15
+  },
+  "tool_price": 40,
+  "tool_count": 5,
+  "refresh_base": 20,
+  "refresh_step": 10,
+  "caps_to_scrap": {
+    "chunk": 40,
+    "rate": 0.25
+  },
+  "scrap_to_caps": {
+    "chunk": 20,
+    "rate": 2.0
+  },
+  "conversion_tax": 0.1
+}
