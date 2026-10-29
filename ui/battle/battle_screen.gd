@@ -70,11 +70,7 @@ const RESULT_SCREEN_SCRIPT = preload("uid://bxh1x1hy6fylv")  # res://run_system/
 const TUTORIAL_TIPS_SCRIPT = preload("uid://cc37k40gsd5x")  # res://ui/battle/tutorial_tips.gd
 const MAIN_MENU_PATH := "uid://dnjlmt1repvjw"  # res://run_system/ui/main_menu.tscn
 
-const ACTS = preload("res://core/run/acts.gd")
-## The {continue, extract} Scrap for the given act's boss (content/acts), or
-## {} on the final act (no extract choice — full victory).
-func _extract_rewards_for_act(act: int) -> Dictionary:
-	return ACTS.extract_rewards(act)
+const COMBAT_REWARDS = preload("uid://sn83hwnx1w3b")  # res://core/run/combat_rewards.gd
 
 
 func _exit_tree() -> void:
@@ -867,46 +863,18 @@ func _victory():
 	# choice / home-base transition is sufficient signal that the fight is won.
 	await get_tree().create_timer(3.0).timeout
 
-	# Caps award (Phase E2): accrue run-scoped caps sized by fight type. Like
-	# backpack scrap, caps stay at death-risk until banked by _settle_backpack on
-	# extract/victory. award_caps_for_combat dispatches boss/elite/normal so a
-	# boss fight grants ONLY the boss award (no boss + normal double-count).
-	RunManager.award_caps_for_combat(RunManager.last_battle_node_type)
-	# In-run XP: queue a card draft per level gained (consumed by the loot screen).
-	RunManager.gain_xp(RunManager.last_battle_node_type)
-
-	# Bounty: elite/boss victory. Single-fire (is_game_over guard above); must run
-	# BEFORE the boss branch's end_run_victory() flips is_run_active false.
-	RunManager.combat_won(RunManager.last_battle_node_type)
-
-	# Boss victory routing:
-	#   - non-final act boss → extract choice modal (rewards by current_act)
-	#   - final boss   → grant BOSS_VICTORY_SCRAP and return to home base
-	#   - non-boss     → normal loot modal
-	if RunManager.last_battle_node_type == "boss":
-		# Boss drops a rare-tier equipment (one of several drop sources; ~15% set piece).
-		var eq_inst := RunManager.roll_shell_drop("rare")
-		if not RunManager.add_equip_to_backpack(eq_inst):
-			show_notification(tr("UI_LOOT_BACKPACK_FULL"), Color(1.0, 0.45, 0.4))
-		var act: int = RunManager.current_act
-		var rewards: Dictionary = _extract_rewards_for_act(act)
-		if not rewards.is_empty():
-			_show_extract_choice(act, rewards)
-			return
-		# Final boss path: Scrap drops into the backpack; _settle_backpack
-		# banks it during _teardown_run, so end_run_victory's banked arg
-		# is 0 to avoid double-counting.
-		RunManager.add_scrap_to_backpack(int(ACTS.run_config().get("boss_victory_scrap", 130)))
-		RunManager.end_run_victory(0, "victory")
-		# Demo: the final-act (Act 1) boss kill ends the demo — show the
-		# demo-complete / wishlist screen instead of silently returning to base.
-		_show_result_screen("demo_complete")
-		return
-	# Elite kills drop a small amount of Scrap into the backpack (still at
-	# death risk until extraction); the normal loot flow handles the rest.
-	if RunManager.last_battle_node_type == "elite":
-		RunManager.add_scrap_to_backpack(RunManager.rng("rewards").next_range(8, 16))
-	_show_loot_modal()
+	# The run layer grants the rewards and picks where the run goes next.
+	var result: Dictionary = COMBAT_REWARDS.settle_victory(RunManager.last_battle_node_type, RunManager.current_act)
+	if bool(result.get("backpack_full", false)):
+		show_notification(tr("UI_LOOT_BACKPACK_FULL"), Color(1.0, 0.45, 0.4))
+	match str(result["route"]):
+		"extract_choice":
+			_show_extract_choice(int(result["act"]), result["rewards"])
+		"demo_complete":
+			# The demo's final boss: the demo-complete / wishlist screen.
+			_show_result_screen("demo_complete")
+		_:
+			_show_loot_modal()
 
 
 ## Cancel any in-flight hand-card drag at combat end and lock the hand so no new
@@ -940,20 +908,10 @@ func _show_extract_choice(act: int, rewards: Dictionary) -> void:
 func _on_extract_chosen(extract: bool, rewards: Dictionary, canvas: CanvasLayer) -> void:
 	if is_instance_valid(canvas):
 		canvas.queue_free()
-	if extract:
-		# Extract: Scrap is already in the backpack from the boss kill, and
-		# _settle_backpack banks it during _teardown_run, so pass 0 here.
-		var earned: int = int(rewards.get("extract", 0))
-		RunManager.add_scrap_to_backpack(earned)
-		RunManager.end_run_victory(0, "extracted")
+	if COMBAT_REWARDS.choose_extract(extract, rewards) == "home":
 		SceneTransition.change_to(HOME_BASE_PATH)
 	else:
-		# Push on: push-on Scrap drops into the backpack (still at death risk),
-		# advance to the next act (regenerates its fresh map), then drop into the
-		# normal loot flow so the player still gets gold + a card pick out of the
-		# boss kill. Loot closes → MAP_SCENE shows the new act's map.
-		RunManager.add_scrap_to_backpack(int(rewards.get("continue", 0)))
-		RunManager.advance_act()
+		# Pushed on into the next act: the normal loot, then its fresh map.
 		_show_loot_modal()
 
 

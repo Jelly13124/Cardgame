@@ -3,14 +3,14 @@ extends RefCounted
 ## Combat rewards (STS2 reward flow): what a won fight offers, as data the
 ## reward screen renders — gold, a card draft, a Luck-scaled tool and a
 ## Luck-scaled equipment piece — plus the draft's rarity-weighted card rolls and
-## the level-up attribute choices. Numbers come from content/economy/rewards.json;
+## the level-up attribute choices. Numbers come from content/economy/loot_economy.json;
 ## every roll uses the run's `rewards` stream.
 
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 
 
 static func economy() -> Dictionary:
-	return MODEL_DB.data("economy", "base:rewards")
+	return MODEL_DB.data("economy", "base:loot_economy")
 
 
 ## The loot entries of a won `node_type` fight, in display order:

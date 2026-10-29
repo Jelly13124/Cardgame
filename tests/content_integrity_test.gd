@@ -14,7 +14,7 @@ const CARD_FACTORY_SCENE = preload("uid://diap3gdfbqvjv")  # res://ui/battle/car
 
 const ID_CATEGORIES := [
 	"card", "monster", "relic", "equipment", "equipment_set", "event", "tool",
-	"bounty", "character", "base_upgrade", "status", "ascension", "encounter", "act", "run_config",
+	"bounty", "character", "base_upgrade", "status", "ascension", "encounter", "act", "run_config", "economy",
 ]
 const SKIP_DIRS := ["res://addons", "res://.godot", "res://tests/fixtures", "res://.superpowers"]
 
@@ -74,14 +74,18 @@ func _check_pools() -> void:
 		_expect(pooled_relics.has(relic_id), "relic %s belongs to a pool" % relic_id)
 
 
-## Card lists keyed by hero. Status names that equal a card id are skipped by
-## the literal scan, so these lists are checked by resolution instead.
+## Hero card lists live in content: each character's `exclusive_cards` and each
+## run configuration's `reward_pools` must resolve to cards.
 func _check_card_lists() -> void:
-	for table in [MetaProgress.HERO_EXCLUSIVE_CARDS, MetaProgress.DEMO_REWARD_POOLS]:
-		for hero_id in table:
-			_expect(MODEL_DB.has("character", str(hero_id)), "card list hero %s is a character" % hero_id)
-			for card_id in table[hero_id]:
-				_expect(MODEL_DB.has("card", str(card_id)), "card list entry %s is a card" % card_id)
+	for model in MODEL_DB.models("character"):
+		for card_id in model.data.get("exclusive_cards", []):
+			_expect(MODEL_DB.has("card", str(card_id)), "%s exclusive card %s is a card" % [model.id, card_id])
+	for model in MODEL_DB.models("run_config"):
+		var pools: Dictionary = model.data.get("reward_pools", {})
+		for hero_id in pools:
+			_expect(MODEL_DB.has("character", str(hero_id)), "%s reward pool hero %s is a character" % [model.id, hero_id])
+			for card_id in MODEL_DB.data("card_pool", str(pools[hero_id])).get("cards", []):
+				_expect(MODEL_DB.has("card", str(card_id)), "reward pool entry %s is a card" % card_id)
 
 
 func _scan_sources() -> void:

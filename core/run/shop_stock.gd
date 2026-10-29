@@ -2,14 +2,14 @@ extends RefCounted
 
 ## A merchant's stock (STS2 merchant inventory): cards by the rarity sequence,
 ## distinct tools and unowned relics at prices after Charm and the merchant
-## surcharge. Numbers from content/economy/shop.json; rolls use the run's
+## surcharge. Numbers from content/economy/merchant_economy.json; rolls use the run's
 ## `shops` stream.
 
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 
 
 static func economy() -> Dictionary:
-	return MODEL_DB.data("economy", "base:shop")
+	return MODEL_DB.data("economy", "base:merchant_economy")
 
 
 ## A base price after Charm (floored by RunManager) and the merchant surcharge;
