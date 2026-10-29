@@ -24,6 +24,7 @@
 ## programmatic StyleBox (T.ll_*) so a missing Codex asset never crashes.
 extends "res://run_system/ui/window/draggable_window.gd"
 
+const BASE_INVENTORY = preload("uid://p4f5t8025pe2")  # res://core/meta/base_inventory.gd
 const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
 const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
 const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://run_system/ui/backpack_cell.gd
@@ -691,20 +692,15 @@ func _dismantle_value(inst: Dictionary) -> int:
 ## Remove every matching BASE BACKPACK entry, then grant the summed Scrap once.
 ## Returns the same {count, scrap} shape as the legacy stash API for testability.
 func _dismantle_pending_by_rarity(rarity: String) -> Dictionary:
-	var kept: Array = []
-	var count := 0
+	var taken: Array = BASE_INVENTORY.remove_matching(
+		MetaProgress.profile, func(entry): return _bulk_pending_match(RunManager.equip_instance(entry), rarity)
+	)["items"]
+	var count := taken.size()
 	var scrap_total := 0
-	for entry in RunManager.pending_loadout:
-		var inst := RunManager.equip_instance(entry)
-		if _bulk_pending_match(inst, rarity):
-			count += 1
-			scrap_total += _dismantle_value(inst)
-		else:
-			kept.append(entry)
+	for inst in taken:
+		scrap_total += _dismantle_value(inst)
 	if count <= 0:
 		return {"count": 0, "scrap": 0}
-	RunManager.pending_loadout.clear()
-	RunManager.pending_loadout.append_array(kept)
 	_selected_index = -1
 	_selected_affix_index = -1
 	MetaProgress.add_scrap(scrap_total)
@@ -864,7 +860,7 @@ func _on_craft_pressed() -> void:
 		return
 	if not MetaProgress.spend_scrap(cost):
 		return
-	RunManager.pending_loadout.append(inst)
+	BASE_INVENTORY.add(MetaProgress.profile, inst, RunManager.effective_backpack_size())
 	AudioManager.play_sfx("forge_craft")
 	_refresh_character_backpack()
 	_rebuild()
@@ -1089,7 +1085,7 @@ func _dismantle_pending_item(index: int) -> bool:
 	if inst.is_empty():
 		return false
 	var amount := _dismantle_value(inst)
-	RunManager.pending_loadout.remove_at(index)
+	BASE_INVENTORY.remove_at(MetaProgress.profile, index)
 	_selected_index = -1
 	_selected_affix_index = -1
 	MetaProgress.add_scrap(amount)
@@ -1119,7 +1115,7 @@ func _reforge_pending_item(index: int, affix_index: int) -> bool:
 	inst["affixes"] = AFFIX_POOL.reroll_at(affixes, affix_index)
 	inst["reforge_index"] = affix_index
 	inst["reforge_count"] = int(inst.get("reforge_count", 0)) + 1
-	RunManager.pending_loadout[index] = inst
+	BASE_INVENTORY.replace_at(MetaProgress.profile, index, inst)
 	_refresh_character_backpack()
 	return true
 
@@ -1135,7 +1131,7 @@ func _curse_pending_item(index: int) -> bool:
 	inst["affixes"] = AFFIX_POOL.roll("cursed")
 	inst["cursed"] = true
 	inst["rarity"] = "cursed"
-	RunManager.pending_loadout[index] = inst
+	BASE_INVENTORY.replace_at(MetaProgress.profile, index, inst)
 	_refresh_character_backpack()
 	return true
 

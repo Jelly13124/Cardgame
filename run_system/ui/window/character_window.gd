@@ -20,6 +20,7 @@
 ## window is freed on close, which drops the connections.
 extends "res://run_system/ui/window/draggable_window.gd"
 
+const BASE_INVENTORY = preload("uid://p4f5t8025pe2")  # res://core/meta/base_inventory.gd
 const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
 const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://run_system/ui/backpack_cell.gd
 const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
@@ -1046,21 +1047,8 @@ func _carry_from_stash(entry: Variant) -> void:
 func _equip_from_carry(slot: String, entry: Variant) -> void:
 	if entry == null or not slot in RunManager.EQUIPMENT_SLOTS:
 		return
-	var inst: Dictionary = RunManager.equip_instance(entry)
-	if inst.is_empty():
-		return
-	var data: Dictionary = RunManager.get_equipment_data(RunManager.equip_base(inst))
-	if str(data.get("slot", "")) != slot:
-		return  # slot mismatch — ignore
-	var idx: int = RunManager.pending_loadout.find(entry)
-	if idx < 0:
-		return  # stale drag — the entry left the backpack
-	RunManager.pending_loadout.remove_at(idx)
-	var displaced: Variant = RunManager.pending_equipped.get(slot, null)
-	RunManager.pending_equipped[slot] = entry
-	if displaced != null:
-		# Room is guaranteed: we just freed the dragged entry's spot.
-		RunManager.pending_loadout.append(displaced)
+	if not BASE_INVENTORY.equip(MetaProgress.profile, slot, RunManager.equip_instance(entry))["ok"]:
+		return  # wrong slot or a stale drag
 	MetaProgress.save_progress()
 	AudioManager.play_sfx("ui_click")
 	_refresh_base()
@@ -1070,14 +1058,11 @@ func _equip_from_carry(slot: String, entry: Variant) -> void:
 ## Slot → backpack (click or drag-off): the queued item returns to
 ## pending_loadout when the backpack has room; otherwise flash a hint and keep it.
 func _unassign_slot_to_carry(slot: String) -> void:
-	var queued: Variant = RunManager.pending_equipped.get(slot, null)
-	if queued == null:
+	var result: Dictionary = BASE_INVENTORY.unequip(MetaProgress.profile, slot, RunManager.effective_backpack_size())
+	if not result["ok"]:
+		if result["reason"] == "backpack_full":
+			_flash_status(tr("UI_LOOT_BACKPACK_FULL"))
 		return
-	if RunManager.pending_loadout.size() >= RunManager.effective_backpack_size():
-		_flash_status(tr("UI_LOOT_BACKPACK_FULL"))
-		return
-	RunManager.pending_equipped.erase(slot)
-	RunManager.pending_loadout.append(queued)
 	MetaProgress.save_progress()
 	AudioManager.play_sfx("ui_back")
 	_refresh_base()
@@ -1087,22 +1072,7 @@ func _unassign_slot_to_carry(slot: String) -> void:
 ## Tolerantly remove malformed base-owned entries loaded from an old/corrupt
 ## profile. Valid gear never depends on membership in MetaProgress.stash.
 func _sanitize_pending() -> void:
-	var changed := false
-	for slot in RunManager.pending_equipped.keys():  # keys() is a copy — safe to erase
-		var inst := RunManager.equip_instance(RunManager.pending_equipped[slot])
-		var data := RunManager.get_equipment_data(RunManager.equip_base(inst))
-		if inst.is_empty() or str(data.get("slot", "")) != str(slot):
-			RunManager.pending_equipped.erase(slot)
-			changed = true
-	var kept: Array = []
-	for e in RunManager.pending_loadout:
-		if not RunManager.equip_instance(e).is_empty():
-			kept.append(e)
-	if kept.size() != RunManager.pending_loadout.size():
-		RunManager.pending_loadout.clear()
-		RunManager.pending_loadout.append_array(kept)
-		changed = true
-	if changed:
+	if BASE_INVENTORY.sanitize(MetaProgress.profile):
 		MetaProgress.save_progress()
 
 

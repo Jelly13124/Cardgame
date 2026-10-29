@@ -3,6 +3,7 @@ extends Control
 ## Slay-the-Spire style procedural map drawn over a wasteland map background.
 ## The route remains data-driven; only the presentation is custom-drawn here.
 
+const MAP_TRAVEL = preload("res://core/run/map_travel.gd")
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
 const MAP_RENDERER_SCRIPT = preload("uid://dxpxch0ouxcmv")  # res://ui/map/map_renderer.gd
@@ -216,13 +217,7 @@ func _draw() -> void:
 
 
 func _is_accessible(node_data: Dictionary) -> bool:
-	if node_data.floor == 0 and rm.current_node_id == "":
-		return true
-	if rm.current_node_id != "":
-		var current = rm.get_node_by_id(rm.current_node_id)
-		if not current.is_empty() and node_data.id in current.children:
-			return true
-	return false
+	return MAP_TRAVEL.accessible(rm.state, rm._node_index, node_data)
 
 
 func _get_node_at(pos: Vector2) -> Dictionary:
@@ -313,10 +308,9 @@ func _on_node_clicked(node: Dictionary) -> void:
 	if _node_click_pending:
 		return
 	_node_click_pending = true
-	rm.current_node_id = node.id
-	rm.current_floor = node.floor
-	if not (node.id in rm.visited_node_ids):
-		rm.visited_node_ids.append(node.id)
+	if not MAP_TRAVEL.enter(rm.state, rm._node_index, node)["ok"]:
+		_node_click_pending = false
+		return
 	queue_redraw()
 
 	await get_tree().create_timer(0.35).timeout
