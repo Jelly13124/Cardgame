@@ -26,8 +26,6 @@
     "siege_breaker"
   ],
   "map": {
-    "single_node_first_and_last": true,
-    "first_merchant_floor": 5,
     "guaranteed_treasure_floor": 6,
     "early_floor_last": 4,
     "max_extra_treasures": 2,

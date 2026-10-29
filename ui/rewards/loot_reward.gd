@@ -598,9 +598,6 @@ func _after_draft() -> void:
 	loot_root.visible = true
 
 
-## Returns "" if no drop. Otherwise the drop rarity for this node type.
-
-
 ## Claim a tool reward into the top-bar inventory. Slots full → warn (no silent
 ## loss); the player can skip by proceeding, or use a tool first and take it next.
 func _claim_tool_drop(tool_id: String, button: Button) -> void:

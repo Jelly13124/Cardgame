@@ -108,7 +108,7 @@ const SCRAP_PER_CELL := 30
 ## Tunables (grouped for easy balance):
 const CAPS_PER_COMBAT := 6  # normal (non-elite, non-boss) combat win
 const CAPS_PER_ELITE := 18  # elite win
-const CAPS_PER_BOSS := 45  # boss win (granted alongside BOSS_VICTORY_SCRAP)
+const CAPS_PER_BOSS := 45  # boss win (granted alongside the run config's boss_victory_scrap)
 const GOLD_PER_CAP := 10  # extraction: floor(run gold / GOLD_PER_CAP) → caps
 const STARTING_GOLD := 99  # baseline purse every run begins with (Command Center stacks on top)
 ## Run-scoped caps accrued so far this run (banked on extract/victory only).

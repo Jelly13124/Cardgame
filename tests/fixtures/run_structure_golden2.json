@@ -1,0 +1,566 @@
+{
+	"a5_map": [
+		[
+			"f0_s2",
+			"relic",
+			[
+				"f1_s2",
+				"f1_s3",
+				"f1_s0"
+			]
+		],
+		[
+			"f1_s0",
+			"enemy",
+			[
+				"f2_s0",
+				"f2_s1",
+				"f2_s2"
+			]
+		],
+		[
+			"f1_s2",
+			"unknown",
+			[
+				"f2_s2",
+				"f2_s1",
+				"f2_s3"
+			]
+		],
+		[
+			"f1_s3",
+			"unknown",
+			[
+				"f2_s3",
+				"f2_s2",
+				"f2_s1"
+			]
+		],
+		[
+			"f2_s0",
+			"unknown",
+			[
+				"f3_s1",
+				"f3_s2"
+			]
+		],
+		[
+			"f2_s1",
+			"enemy",
+			[
+				"f3_s1",
+				"f3_s2",
+				"f3_s3"
+			]
+		],
+		[
+			"f2_s2",
+			"unknown",
+			[
+				"f3_s2",
+				"f3_s1",
+				"f3_s3"
+			]
+		],
+		[
+			"f2_s3",
+			"enemy",
+			[
+				"f3_s3",
+				"f3_s2",
+				"f3_s1"
+			]
+		],
+		[
+			"f3_s1",
+			"enemy",
+			[
+				"f4_s1",
+				"f4_s0",
+				"f4_s2"
+			]
+		],
+		[
+			"f3_s2",
+			"enemy",
+			[
+				"f4_s2",
+				"f4_s1",
+				"f4_s3"
+			]
+		],
+		[
+			"f3_s3",
+			"enemy",
+			[
+				"f4_s3",
+				"f4_s2",
+				"f4_s1"
+			]
+		],
+		[
+			"f4_s0",
+			"unknown",
+			[
+				"f5_s0",
+				"f5_s2"
+			]
+		],
+		[
+			"f4_s1",
+			"unknown",
+			[
+				"f5_s0",
+				"f5_s2"
+			]
+		],
+		[
+			"f4_s2",
+			"unknown",
+			[
+				"f5_s2",
+				"f5_s0"
+			]
+		],
+		[
+			"f4_s3",
+			"unknown",
+			[
+				"f5_s2"
+			]
+		],
+		[
+			"f5_s0",
+			"unknown",
+			[
+				"f6_s1"
+			]
+		],
+		[
+			"f5_s2",
+			"merchant",
+			[
+				"f6_s1",
+				"f6_s3"
+			]
+		],
+		[
+			"f6_s1",
+			"treasure",
+			[
+				"f7_s1",
+				"f7_s0",
+				"f7_s2"
+			]
+		],
+		[
+			"f6_s3",
+			"treasure",
+			[
+				"f7_s3",
+				"f7_s2",
+				"f7_s1"
+			]
+		],
+		[
+			"f7_s0",
+			"merchant",
+			[
+				"f8_s1",
+				"f8_s2"
+			]
+		],
+		[
+			"f7_s1",
+			"rest",
+			[
+				"f8_s1",
+				"f8_s2"
+			]
+		],
+		[
+			"f7_s2",
+			"treasure",
+			[
+				"f8_s2",
+				"f8_s1"
+			]
+		],
+		[
+			"f7_s3",
+			"rest",
+			[
+				"f8_s2",
+				"f8_s1"
+			]
+		],
+		[
+			"f8_s1",
+			"merchant",
+			[
+				"f9_s1",
+				"f9_s0",
+				"f9_s3"
+			]
+		],
+		[
+			"f8_s2",
+			"unknown",
+			[
+				"f9_s1",
+				"f9_s3",
+				"f9_s0"
+			]
+		],
+		[
+			"f9_s0",
+			"rest",
+			[
+				"f10_s0",
+				"f10_s1"
+			]
+		],
+		[
+			"f9_s1",
+			"rest",
+			[
+				"f10_s1",
+				"f10_s0",
+				"f10_s3"
+			]
+		],
+		[
+			"f9_s3",
+			"elite",
+			[
+				"f10_s3",
+				"f10_s1"
+			]
+		],
+		[
+			"f10_s0",
+			"rest",
+			[
+				"f11_s2"
+			]
+		],
+		[
+			"f10_s1",
+			"rest",
+			[
+				"f11_s2"
+			]
+		],
+		[
+			"f10_s3",
+			"rest",
+			[
+				"f11_s2"
+			]
+		],
+		[
+			"f11_s2",
+			"boss",
+			[]
+		]
+	],
+	"boss_scaling": [
+		[
+			100,
+			10,
+			100
+		],
+		[
+			100,
+			10,
+			125
+		],
+		[
+			100,
+			10,
+			150
+		]
+	],
+	"stocks": {
+		"GOLDSTOCK1": [
+			[
+				[
+					"gold",
+					"",
+					"",
+					""
+				],
+				[
+					"cards",
+					"",
+					"",
+					""
+				],
+				[
+					"equipment",
+					"",
+					"base:gear_accessory_common",
+					"common"
+				]
+			],
+			[
+				"base:hot_swap",
+				"base:piston_jab"
+			],
+			[
+				[
+					"gold",
+					"",
+					"",
+					""
+				],
+				[
+					"cards",
+					"",
+					"",
+					""
+				]
+			],
+			[
+				"base:data_dump",
+				"base:brace"
+			],
+			[
+				[
+					{
+						"card_id": "base:weak_strike",
+						"price": 65,
+						"rarity": "common"
+					},
+					{
+						"card_id": "base:hot_swap",
+						"price": 65,
+						"rarity": "common"
+					},
+					{
+						"card_id": "base:dissect",
+						"price": 110,
+						"rarity": "uncommon"
+					},
+					{
+						"card_id": "base:piston_jab",
+						"price": 65,
+						"rarity": "common"
+					},
+					{
+						"card_id": "base:acid_splash",
+						"price": 110,
+						"rarity": "uncommon"
+					},
+					{
+						"card_id": "base:rebar_wave",
+						"price": 175,
+						"rarity": "rare"
+					}
+				],
+				[
+					{
+						"price": 50,
+						"tool_id": "base:blood_kit"
+					},
+					{
+						"price": 50,
+						"tool_id": "base:munitions_crate"
+					},
+					{
+						"price": 50,
+						"tool_id": "base:combat_stim"
+					}
+				],
+				[
+					{
+						"price": 135,
+						"relic_id": "base:serrated_barbs"
+					},
+					{
+						"price": 135,
+						"relic_id": "base:lucky_cog"
+					},
+					{
+						"price": 135,
+						"relic_id": "base:adrenaline_pump"
+					}
+				],
+				75
+			],
+			[
+				[
+					{
+						"base": "base:gear_weapon_common",
+						"price": 60,
+						"rarity": "common"
+					},
+					{
+						"base": "base:gear_head_uncommon",
+						"price": 140,
+						"rarity": "uncommon"
+					},
+					{
+						"base": "base:gear_chest_uncommon",
+						"price": 140,
+						"rarity": "uncommon"
+					},
+					{
+						"base": "base:gear_hands_common",
+						"price": 60,
+						"rarity": "common"
+					},
+					{
+						"base": "base:gear_accessory_common",
+						"price": 60,
+						"rarity": "common"
+					}
+				],
+				[
+					"base:toxin_vial",
+					"base:blood_kit",
+					"base:med_kit",
+					"base:adrenaline_shot",
+					"base:field_kit"
+				]
+			]
+		],
+		"GOLDSTOCK2": [
+			[
+				[
+					"gold",
+					"",
+					"",
+					""
+				],
+				[
+					"cards",
+					"",
+					"",
+					""
+				]
+			],
+			[
+				"base:siphon",
+				"base:siphon"
+			],
+			[
+				[
+					"gold",
+					"",
+					"",
+					""
+				],
+				[
+					"cards",
+					"",
+					"",
+					""
+				]
+			],
+			[
+				"base:arc_flash",
+				"base:piston_jab"
+			],
+			[
+				[
+					{
+						"card_id": "base:corrode",
+						"price": 65,
+						"rarity": "common"
+					},
+					{
+						"card_id": "base:strike",
+						"price": 65,
+						"rarity": "common"
+					},
+					{
+						"card_id": "base:venom_coat",
+						"price": 110,
+						"rarity": "uncommon"
+					},
+					{
+						"card_id": "base:tape_patch",
+						"price": 65,
+						"rarity": "common"
+					},
+					{
+						"card_id": "base:covering_reload",
+						"price": 110,
+						"rarity": "uncommon"
+					},
+					{
+						"card_id": "base:adrenaline",
+						"price": 175,
+						"rarity": "rare"
+					}
+				],
+				[
+					{
+						"price": 50,
+						"tool_id": "base:combat_stim"
+					},
+					{
+						"price": 50,
+						"tool_id": "base:blood_kit"
+					},
+					{
+						"price": 50,
+						"tool_id": "base:toxin_vial"
+					}
+				],
+				[
+					{
+						"price": 135,
+						"relic_id": "base:bulwark_plating"
+					},
+					{
+						"price": 135,
+						"relic_id": "base:brutal_servo"
+					},
+					{
+						"price": 135,
+						"relic_id": "base:signal_jammer"
+					}
+				],
+				75
+			],
+			[
+				[
+					{
+						"base": "base:gear_weapon_common",
+						"price": 60,
+						"rarity": "common"
+					},
+					{
+						"base": "base:gear_head_uncommon",
+						"price": 140,
+						"rarity": "uncommon"
+					},
+					{
+						"base": "base:gear_chest_rare",
+						"price": 280,
+						"rarity": "rare"
+					},
+					{
+						"base": "base:gear_hands_uncommon",
+						"price": 140,
+						"rarity": "uncommon"
+					},
+					{
+						"base": "base:gear_accessory_uncommon",
+						"price": 140,
+						"rarity": "uncommon"
+					}
+				],
+				[
+					"base:munitions_crate",
+					"base:energy_cell",
+					"base:adrenaline_shot",
+					"base:med_kit",
+					"base:field_kit"
+				]
+			]
+		]
+	}
+}

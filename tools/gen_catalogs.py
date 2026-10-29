@@ -32,7 +32,7 @@ EQUIPMENT_DIR = ROOT / "content" / "equipment"
 CARD_ART_BASE = ROOT / "battle_scene" / "assets" / "images" / "cards"
 ENEMY_ART_BASE = ROOT / "battle_scene" / "assets" / "images" / "enemies"
 EQUIP_ART_BASE = ROOT / "battle_scene" / "assets" / "images"
-RUN_MANAGER = ROOT / "run_system" / "core" / "run_manager.gd"
+ENCOUNTERS_DIR = ROOT / "content" / "encounters"
 
 YES = "✅"   # white check mark
 NO = "❌"    # cross mark
@@ -158,43 +158,21 @@ def gen_cards() -> str:
 # --------------------------------------------------------------------------- #
 
 def _enemy_tiers() -> dict[str, str]:
-    """Best-effort tier per enemy id by locating which encounter constant in
-    run_manager.gd references it. Verify against the source — this is a regex
-    heuristic, not a parse."""
-    tiers: dict[str, str] = {}
-    if not RUN_MANAGER.exists():
-        return tiers
-    text = RUN_MANAGER.read_text(encoding="utf-8", errors="replace")
-    # constant name -> tier label, in rough precedence order
-    consts = [
-        ("ENCOUNTER_POOLS_EARLY", "standard"),
-        ("ENCOUNTER_POOLS_MID", "standard"),
-        ("ENCOUNTER_POOLS_LATE", "standard"),
-        ("ELITE_ROSTER", "elite"),
-        ("BOSS_BY_FLOOR", "boss"),
-    ]
-    # region of each constant = its declaration until the next top-level
-    # declaration (const/var/func/@annotation), so a literal like BOSS_BY_FLOOR
-    # can't bleed into unrelated later code and misclassify an id.
-    regions = []
-    decl = re.compile(r"\n(?:const |var |func |@)")
-    for name, tier in consts:
-        m = re.search(rf"\b{name}\b", text)
-        if not m:
-            continue
-        start = m.start()
-        nxt = decl.search(text, start + len(name))
-        end = nxt.start() if nxt else len(text)
-        regions.append((start, end, tier))
+    """Tier per enemy id from the encounters that use it (content/encounters:
+    room "monster" = standard, "elite", "boss"; the highest wins)."""
+    room_tier = {"monster": "standard", "elite": "elite", "boss": "boss"}
     precedence = {"standard": 1, "elite": 2, "boss": 3}
-    for path in ENEMIES_DIR.glob("*.json"):
-        eid = path.stem
-        best = None
-        for start, end, tier in regions:
-            if re.search(rf'"(?:base:)?{re.escape(eid)}"', text[start:end]):
-                if best is None or precedence[tier] > precedence[best]:
-                    best = tier
-        tiers[eid] = best or "UNLISTED"
+    tiers: dict[str, str] = {path.stem: "UNLISTED" for path in ENEMIES_DIR.glob("*.json")}
+    for path in ENCOUNTERS_DIR.glob("*.json"):
+        data = _load_json(path) or {}
+        tier = room_tier.get(str(data.get("room", "")))
+        if tier is None:
+            continue
+        for ref in data.get("monsters", []):
+            eid = str(ref).split(":")[-1]
+            current = tiers.get(eid, "UNLISTED")
+            if current == "UNLISTED" or precedence[tier] > precedence[current]:
+                tiers[eid] = tier
     return tiers
 
 
