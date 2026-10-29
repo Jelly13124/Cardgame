@@ -118,7 +118,6 @@ func _reset_to_defaults() -> void:
 	active_bounties = []
 	bounty_shelf = []
 	bounty_shelf_date = ""
-	bounty_free_claimed = false
 	cards_seen = {}
 
 
@@ -175,10 +174,6 @@ var active_bounties: Array = []
 var bounty_shelf: Array = []
 ## Local date ("YYYY-MM-DD") the current shelf was rolled for.
 var bounty_shelf_date: String = ""
-## Legacy daily-free-claim flag from the market's "1 free + 2 paid" model.
-## UNUSED since the 2026-07-07 outpost redesign (every take is free) — kept
-## (and still persisted) only for save-file compatibility.
-var bounty_free_claimed: bool = false
 ## Card codex unlock set: card_id → true once the card has been played (demo
 ## rule: used = unlocked). Persisted; write-throttled in mark_card_seen.
 var cards_seen: Dictionary = {}
@@ -269,7 +264,8 @@ const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix
 ## --- Bounty system (replaces the daily-task mock) ---
 const CARD_POOLS = preload("uid://c76axesxo6wit")  # res://core/run/card_pools.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
-const SAVE_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/content/save_migration.gd
+const PROFILE_SAVE = preload("uid://cox1wehu1m6on")  # res://core/save/profile_save.gd
+const CONTENT_ID_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/save/content_id_migration.gd
 ## Max held contracts; the outpost shelf refuses takes beyond this.
 const MAX_ACTIVE_BOUNTIES := 3
 ## Contracts on the outpost shelf per day (all free to take).
@@ -279,11 +275,6 @@ const BOUNTY_SHELF_SIZE := 3
 ## Removed upgrades used to grant invisible bonuses after their UI was deleted.
 ## On the next load, refund exactly the Caps spent at each owned level, erase the
 ## stale ids, and save the cleaned profile. Erasure makes the migration idempotent.
-const REMOVED_UPGRADE_REFUND_COSTS := {
-	"med_bay": [50, 110, 180],
-	"starter_boost": [50, 110, 180],
-	"scrap_workshop": [50, 110, 180],
-}
 
 
 ## One-shot migration: a pre-slots profile lived at user://meta.json. If it exists and
@@ -530,20 +521,6 @@ func next_building_cost(id: String) -> int:
 	if cur - 1 >= tier_costs.size():
 		return -1
 	return int(tier_costs[cur - 1])
-
-
-## One-time migration: seed `buildings` from legacy facility/upgrade state so no
-## progress is lost when the buildings refactor lands. Idempotent — only ever
-## RAISES a building's tier (never lowers it). Legacy fields are NOT deleted (the
-## Phase-1 building screens still read caps_perk_levels / upgrades).
-func _normalize_buildings() -> void:
-	# Cyber Doctor facility unlocked → Clinic is at least tier 1.
-	if bool(facilities.get("cyber_doc", false)):
-		buildings["clinic"] = maxi(get_building_tier("clinic"), 1)
-	# Blacksmith safe-cell upgrade owned → Outpost at least tier 2 (safe_cells is
-	# an Outpost T2 function).
-	if get_upgrade_level("base:blacksmith") > 0:
-		buildings["outpost"] = maxi(get_building_tier("outpost"), 2)
 
 
 ## Effective permanent-stash capacity. A flat, building-independent constant:
@@ -892,7 +869,6 @@ func refresh_bounty_shelf_if_stale() -> void:
 		candidates.remove_at(i)
 	bounty_shelf = shelf
 	bounty_shelf_date = today
-	bounty_free_claimed = false
 	save_progress()
 	emit_signal("bounties_changed")
 
@@ -1034,9 +1010,8 @@ func save_progress() -> void:
 		"active_bounties": active_bounties,
 		"bounty_shelf": bounty_shelf,
 		"bounty_shelf_date": bounty_shelf_date,
-		"bounty_free_claimed": bounty_free_claimed,
 		"cards_seen": cards_seen,
-		"content_v": SAVE_MIGRATION.META_CONTENT_VERSION,
+		"schema_version": PROFILE_SAVE.CURRENT,
 	}
 	var err := SAVE_IO.write_json(_meta_path(), payload)
 	if err != OK:
@@ -1058,10 +1033,12 @@ func load_progress() -> void:
 	var recovered := status == SAVE_IO.RECOVERED
 	if recovered:
 		push_warning("MetaProgress: profile %s was corrupt, restored from %s" % [path, result.get("source", "")])
-	var migrated := SAVE_MIGRATION.meta_needs_migration(parsed)
+	# Older schema: back the loaded profile up once and migrate it; it is written
+	# back below.
+	var migrated: bool = PROFILE_SAVE.version_of(parsed) < PROFILE_SAVE.CURRENT
 	if migrated:
-		SAVE_MIGRATION.backup_once(path, parsed)
-		parsed = SAVE_MIGRATION.migrate_meta(parsed)
+		CONTENT_ID_MIGRATION.backup_once(path, parsed)
+		parsed = PROFILE_SAVE.migrate(parsed)
 	# Core was removed 2026-07-07: an old save's "core" key is simply ignored here
 	# (balance discarded, not migrated — owner decision). Missing/extra keys are
 	# fault-tolerant (JSON.get with defaults), so old and new saves both load clean.
@@ -1083,40 +1060,21 @@ func load_progress() -> void:
 		run_history = raw_history
 	max_ascension = clampi(int(parsed.get("max_ascension", 0)), 0, ASCENSION_CAP)
 	tutorial_seen = bool(parsed.get("tutorial_seen", false))
-	# Stash entries may be equip INSTANCE dicts (new) or legacy item_id Strings
-	# (old saves). Preserve both as-is — RunManager.as_equip_instance converts
-	# strings on read; no normalization needed here (lower-risk than rewriting
-	# the save). Anything that isn't a dict/string is coerced to a string id.
-	var raw_stash = parsed.get("stash", [])
-	if typeof(raw_stash) == TYPE_ARRAY:
-		stash.clear()
-		for s in raw_stash:
-			if typeof(s) == TYPE_DICTIONARY or typeof(s) == TYPE_STRING:
-				stash.append(s)
-			else:
-				stash.append(str(s))
-	# Base-owned gear is separate from stash. Old profiles lack these keys and
-	# therefore load an empty base backpack without altering their stored gear.
+	# Equipment is always an instance dict (profile schema v3).
+	stash.clear()
+	for item in parsed.get("stash", []):
+		if typeof(item) == TYPE_DICTIONARY:
+			stash.append(item)
 	RunManager.pending_loadout.clear()
-	var raw_base_loadout = parsed.get("base_loadout", [])
-	if typeof(raw_base_loadout) == TYPE_ARRAY:
-		for entry in raw_base_loadout:
-			if not RunManager.as_equip_instance(entry).is_empty():
-				RunManager.pending_loadout.append(entry)
+	for item in parsed.get("base_loadout", []):
+		if typeof(item) == TYPE_DICTIONARY:
+			RunManager.pending_loadout.append(item)
 	RunManager.pending_equipped.clear()
 	var raw_base_equipped = parsed.get("base_equipped", {})
 	if typeof(raw_base_equipped) == TYPE_DICTIONARY:
-		for raw_slot in raw_base_equipped:
-			var slot := str(raw_slot)
-			if slot not in RunManager.EQUIPMENT_SLOTS:
-				continue
-			var entry: Variant = raw_base_equipped[raw_slot]
-			var inst := RunManager.as_equip_instance(entry)
-			if inst.is_empty():
-				continue
-			var data := RunManager.get_equipment_data(RunManager.equip_base(inst))
-			if str(data.get("slot", "")) == slot:
-				RunManager.pending_equipped[slot] = entry
+		for slot in raw_base_equipped:
+			if typeof(raw_base_equipped[slot]) == TYPE_DICTIONARY:
+				RunManager.pending_equipped[str(slot)] = raw_base_equipped[slot]
 	# Back-compat: old saves predate the buildings refactor. Missing key →
 	# empty {} (all buildings locked). Stale ids from removed buildings (e.g.
 	# "warehouse") are carried along harmlessly — nothing reads them.
@@ -1126,9 +1084,6 @@ func load_progress() -> void:
 	if typeof(raw_buildings) == TYPE_DICTIONARY:
 		for bid in raw_buildings:
 			buildings[str(bid)] = int(raw_buildings[bid])
-	# One-time migration: seed building tiers from legacy facility/upgrade state
-	# so no progress is lost. Idempotent (only raises tiers); legacy fields kept.
-	_normalize_buildings()
 	# Bounty system + card codex: old saves predate these keys → defaults (no
 	# held contracts, stale shelf date so the next base visit rolls a shelf,
 	# empty codex). Entries are re-coerced since JSON round-trips ints as floats.
@@ -1146,35 +1101,12 @@ func load_progress() -> void:
 		for id in raw_shelf:
 			bounty_shelf.append(str(id))
 	bounty_shelf_date = str(parsed.get("bounty_shelf_date", ""))
-	bounty_free_claimed = bool(parsed.get("bounty_free_claimed", false))
 	cards_seen.clear()
 	var raw_seen = parsed.get("cards_seen", {})
 	if typeof(raw_seen) == TYPE_DICTIONARY:
 		for cid in raw_seen:
 			cards_seen[str(cid)] = true
-	if _migrate_removed_profile_state(parsed):
-		save_progress()
-		emit_signal("caps_changed", caps)
-		emit_signal("upgrades_changed")
-	elif recovered or migrated:
+	if recovered or migrated:
 		save_progress()
 
 
-## Refund and erase profile fields whose gameplay/UI no longer exists. The raw
-## payload is accepted so a stale starter_deck_override key is also stripped even
-## when no removed upgrade was owned.
-func _migrate_removed_profile_state(raw_profile: Dictionary) -> bool:
-	var changed := raw_profile.has("starter_deck_override")
-	var refund := 0
-	for upgrade_id in REMOVED_UPGRADE_REFUND_COSTS:
-		if not upgrades.has(upgrade_id):
-			continue
-		var costs: Array = REMOVED_UPGRADE_REFUND_COSTS[upgrade_id]
-		var level := clampi(int(upgrades.get(upgrade_id, 0)), 0, costs.size())
-		for i in range(level):
-			refund += int(costs[i])
-		upgrades.erase(upgrade_id)
-		changed = true
-	if refund > 0:
-		caps += refund
-	return changed

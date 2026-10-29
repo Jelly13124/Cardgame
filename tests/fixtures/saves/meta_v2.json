@@ -1,0 +1,44 @@
+{
+ "active_bounties": [],
+ "base_equipped": {},
+ "base_loadout": [],
+ "bounty_free_claimed": false,
+ "bounty_shelf": [],
+ "bounty_shelf_date": "",
+ "buildings": {},
+ "caps": 77,
+ "caps_perk_levels": {},
+ "cards_seen": {
+  "base:reload": true
+ },
+ "content_v": 2,
+ "facilities": {},
+ "max_ascension": 0,
+ "run_history": [],
+ "scrap": 0,
+ "stash": [
+  "base:gear_hands_common",
+  {
+   "affixes": [
+    {
+     "type": "attr_charm",
+     "value": 1
+    },
+    {
+     "type": "attr_constitution",
+     "value": 1
+    },
+    {
+     "type": "attr_strength",
+     "value": 1
+    }
+   ],
+   "base": "base:gear_weapon_rare",
+   "cursed": false,
+   "rarity": "rare",
+   "set_id": ""
+  }
+ ],
+ "tutorial_seen": false,
+ "upgrades": {}
+}

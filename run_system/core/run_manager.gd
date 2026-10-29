@@ -55,24 +55,6 @@ var current_floor: int = 0
 ## advance beyond act 1.
 var current_act: int = 1
 var player_deck: Array = []  # Array of Dictionaries (uid, card_id, bonus_attack, bonus_health)
-## Cards removed from the live design. Old run saves may still contain these bare
-## pre-namespace IDs (save migration keeps unresolvable refs verbatim);
-## load_run strips them before any card factory tries to instantiate missing data.
-const RETIRED_CARD_IDS := [
-	"crowbar_smash",
-	"pipe_swing",
-	"breach_charge",
-	"bulkhead_bleed",
-	"combat_stim",  # bare-ok: retired card id from v1 saves (a tool shares the name)
-	"focusing_blow",
-	"hemo_drive",
-	"last_breath",
-	"siphon_valve",
-]
-const CARD_ID_MIGRATIONS := {
-	"vent_plating": "base:kinetic_baffle",
-}
-
 ## Equipped gear, one slot per body part. Each value is an equipment INSTANCE
 ## dict (see as_equip_instance) or {} when the slot is empty. Legacy saves may
 ## still hold a plain item_id String here — every READ routes through
@@ -347,7 +329,8 @@ const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
 const ENCOUNTERS = preload("uid://mlx3xqfjwlpq")  # res://core/run/encounters.gd
 const MAP_GENERATOR = preload("uid://gi3vuuinl2vb")  # res://core/run/map_generator.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
-const SAVE_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/content/save_migration.gd
+const RUN_SAVE = preload("uid://dkhd2poukjb61")  # res://core/save/run_save.gd
+const CONTENT_ID_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/save/content_id_migration.gd
 const BOUNTY_TRACKER = preload("uid://dufyeowl6elem")  # res://core/listeners/bounty_tracker.gd
 ## Run listeners (STS2-style hooks at run level): the bounty tracker.
 var run_listeners: Array = [_make_bounty_tracker()]
@@ -1888,11 +1871,10 @@ func save_run() -> void:
 	if not is_run_active:
 		return
 	var payload := {
-		"v": SAVE_MIGRATION.RUN_VERSION,
+		"schema_version": RUN_SAVE.CURRENT,
 		"rng": run_rng.to_dict() if run_rng != null else {},
 		"is_run_active": is_run_active,
 		"current_hero_id": current_hero_id,
-		"current_hero_data": current_hero_data,
 		"ascension": ascension,
 		"max_health": max_health,
 		"current_health": current_health,
@@ -1916,8 +1898,6 @@ func save_run() -> void:
 			if run_started_msec > 0
 			else 0
 		),
-		# Kept for tolerant reads by older builds; new loads use run_elapsed_msec.
-		"run_started_msec": run_started_msec,
 		"base_attributes": base_attributes,
 		"player_attributes": player_attributes,
 		"current_encounter": current_encounter,
@@ -1950,9 +1930,11 @@ func load_run() -> bool:
 		push_warning("RunManager: run save was corrupt, resumed from %s" % result.get("source", ""))
 	if not bool(data.get("is_run_active", false)):
 		return false
-	if SAVE_MIGRATION.run_needs_id_migration(data):
-		SAVE_MIGRATION.backup_once(_run_save_path(), data)
-	data = SAVE_MIGRATION.migrate_run(data)
+	# Older schema: back the loaded save up once, migrate it, write it back.
+	var migrated: bool = RUN_SAVE.version_of(data) < RUN_SAVE.CURRENT
+	if migrated:
+		CONTENT_ID_MIGRATION.backup_once(_run_save_path(), data)
+		data = RUN_SAVE.migrate(data)
 	var saved_rng: Variant = data.get("rng", {})
 	if typeof(saved_rng) == TYPE_DICTIONARY and RUN_RNG_SET.is_valid_seed(str(saved_rng.get("seed_string", ""))):
 		run_rng = RUN_RNG_SET.from_dict(saved_rng)
@@ -1961,7 +1943,7 @@ func load_run() -> bool:
 		run_rng = RUN_RNG_SET.new(RUN_RNG_SET.random_seed_string())
 
 	current_hero_id = str(data.get("current_hero_id", ""))
-	current_hero_data = data.get("current_hero_data", {})
+	current_hero_data = MODEL_DB.mutable("character", current_hero_id)
 	ascension = int(data.get("ascension", 0))
 	max_health = int(data.get("max_health", 50))
 	current_health = int(data.get("current_health", max_health))
@@ -1972,57 +1954,22 @@ func load_run() -> bool:
 	current_floor = int(data.get("current_floor", 0))
 	current_act = int(data.get("current_act", 1))
 	player_deck = data.get("player_deck", [])
-	for i in range(player_deck.size()):
-		var entry: Variant = player_deck[i]
-		var old_card_id := str(entry.get("card_id", "")) if entry is Dictionary else str(entry)
-		if not CARD_ID_MIGRATIONS.has(old_card_id):
-			continue
-		var current_card_id: String = str(CARD_ID_MIGRATIONS[old_card_id])
-		if entry is Dictionary:
-			entry["card_id"] = current_card_id
-		else:
-			player_deck[i] = current_card_id
-	# Removed cards are intentionally not replaced: keeping a stale ID would make
-	# the card factory skip an invisible deck entry on every resumed battle.
-	player_deck = player_deck.filter(
-		func(entry: Variant) -> bool:
-			var card_id := str(entry.get("card_id", "")) if entry is Dictionary else str(entry)
-			return card_id not in RETIRED_CARD_IDS
-	)
-	# Migrate legacy gem saves: gems were removed, so strip any leftover `gems`
-	# field from deck entries (fault-tolerant — old saves must load, not crash).
-	for e in player_deck:
-		if e is Dictionary:
-			e.erase("gems")
 	equipped_items = data.get("equipped_items", {})
 	backpack = data.get("backpack", [])  # bare-ok: save key
-	# Legacy gem backpack cells no longer exist — null them out so the bag is clean.
-	for i in range(backpack.size()):
-		var c = backpack[i]
-		if c is Dictionary and c.get("kind") == "gem":
-			backpack[i] = null
 	relics = _to_string_array(data.get("relics", []))
 	tool_inventory = _to_string_array(data.get("tool_inventory", []))
 	xp = int(data.get("xp", 0))
 	level = int(data.get("level", 1))
 	pending_attr_points = int(data.get("pending_attr_points", 0))
 	reward_rerolls = int(data.get("reward_rerolls", 0))
-	var saved_elapsed_msec := int(data.get("run_elapsed_msec", -1))
-	if saved_elapsed_msec >= 0:
-		run_started_msec = Time.get_ticks_msec() - saved_elapsed_msec
-	else:
-		# Old saves only stored a process-local tick timestamp. It cannot be
-		# reconstructed safely after a restart, so resume their timer from zero.
-		run_started_msec = Time.get_ticks_msec()
+	run_started_msec = Time.get_ticks_msec() - int(data.get("run_elapsed_msec", 0))
 	base_attributes = data.get("base_attributes", base_attributes)
 	player_attributes = data.get("player_attributes", player_attributes)
 	current_encounter = _to_string_array(data.get("current_encounter", []))
 	last_battle_node_type = str(data.get("last_battle_node_type", "enemy"))
 	_seen_random_event_ids = _to_string_array(data.get("seen_random_event_ids", []))
 	demo_featured_set_id = str(data.get("demo_featured_set_id", ""))
-	demo_set_piece_ids_claimed = _to_string_array(
-		data.get("demo_set_piece_ids_claimed", data.get("demo_set_piece_ids_offered", []))
-	)
+	demo_set_piece_ids_claimed = _to_string_array(data.get("demo_set_piece_ids_claimed", []))
 	if is_demo() and demo_featured_set_id == "":
 		demo_featured_set_id = DEMO_FEATURED_SET_IDS[0]
 	map_data = _normalize_map(data.get("map_data", []))
@@ -2032,6 +1979,8 @@ func load_run() -> bool:
 	_reindex_map()
 	recompute_attributes()
 	is_run_active = true
+	if migrated:
+		save_run()
 	return true
 
 

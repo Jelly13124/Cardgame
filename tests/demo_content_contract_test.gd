@@ -7,6 +7,8 @@ const RUN_MANAGER_PATH := "res://run_system/core/run_manager.gd"  # path-ok: rea
 const TUTORIAL_PATH := "res://ui/battle/tutorial_tips.gd"  # path-ok: reads source text
 const BATTLE_PATH := "res://ui/battle/battle_screen.gd"  # path-ok: reads source text
 const RESULT_PATH := "res://ui/rewards/result_screen.gd"  # path-ok: reads source text
+const RUN_SAVE = preload("uid://dkhd2poukjb61")  # res://core/save/run_save.gd
+const PROFILE_SAVE = preload("uid://cox1wehu1m6on")  # res://core/save/profile_save.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const EQUIPMENT_SET_SCRIPT = preload("uid://b3s8io84xovx7")  # res://core/listeners/equipment_set.gd
 const FAKE_BATTLE = preload("uid://j25pi73kmisn")  # res://tests/support/fake_battle.gd
@@ -210,32 +212,29 @@ func _test_removed_mechanics() -> void:
 			"retired upgrade data is removed: %s" % removed
 		)
 	var run_source := FileAccess.get_file_as_string(RUN_MANAGER_PATH)
-	var meta_source := FileAccess.get_file_as_string(META_PROGRESS_PATH)
-	for retired_card in RunManager.RETIRED_CARD_IDS:
+	for retired_card in RUN_SAVE.RETIRED_CARD_IDS:
 		_expect(
 			MODEL_DB.resolve("card", retired_card) == "",
 			"retired card data is removed: %s" % retired_card
 		)
-	_expect(run_source.contains("RETIRED_CARD_IDS"), "old run saves strip retired card IDs")
 	_expect(
-		RunManager.CARD_ID_MIGRATIONS.get("vent_plating", "") == "base:kinetic_baffle",
+		RUN_SAVE.CARD_ID_MIGRATIONS.get("vent_plating", "") == "base:kinetic_baffle",
 		"old Kinetic Baffle card IDs migrate without deleting the card"
 	)
 	_expect(not run_source.contains('_get_meta_effect_value("med_bay")'), "retired Med Bay effect is not applied")
 	_expect(not run_source.contains('_get_meta_effect_value("starter_boost")'), "retired starter boost is not applied")
-	_expect(meta_source.contains("_migrate_removed_profile_state"), "old profiles receive the retired-upgrade migration")
-	var original_caps := MetaProgress.caps
-	var original_upgrades: Dictionary = MetaProgress.upgrades.duplicate(true)
-	MetaProgress.caps = 10
-	MetaProgress.upgrades = {"med_bay": 2, "scrap_workshop": 1, "base:command_center": 1}
-	var migrated := bool(MetaProgress._migrate_removed_profile_state({"starter_deck_override": []}))
-	_expect(migrated, "retired profile fields trigger migration")
-	_expect(MetaProgress.caps == 220, "retired levels refund their exact 210 Caps")
-	_expect(not MetaProgress.upgrades.has("med_bay"), "migration erases retired Med Bay levels")
-	_expect(not MetaProgress.upgrades.has("scrap_workshop"), "migration erases retired discount levels")
-	_expect(MetaProgress.upgrades.get("base:command_center", 0) == 1, "migration preserves active upgrades")
-	MetaProgress.caps = original_caps
-	MetaProgress.upgrades = original_upgrades
+	# Retired upgrades are refunded by the profile migration (v2 -> v3).
+	var migrated: Dictionary = PROFILE_SAVE.migrate({
+		"content_v": 2,
+		"caps": 10,
+		"upgrades": {"med_bay": 2, "scrap_workshop": 1, "base:command_center": 1},
+		"starter_deck_override": [],
+	})
+	_expect(int(migrated["caps"]) == 220, "retired levels refund their exact 210 Caps")
+	_expect(not migrated["upgrades"].has("med_bay"), "migration erases retired Med Bay levels")
+	_expect(not migrated["upgrades"].has("scrap_workshop"), "migration erases retired discount levels")
+	_expect(int(migrated["upgrades"].get("base:command_center", 0)) == 1, "migration preserves active upgrades")
+	_expect(not migrated.has("starter_deck_override"), "the retired starter deck override is dropped")
 
 
 func _test_tutorial_completion() -> void:
@@ -265,7 +264,7 @@ func _test_run_timer_resume_contract() -> void:
 	var load_body := _function_body(source, "func load_run")
 	_expect(save_body.contains('"run_elapsed_msec"'), "run saves persist elapsed duration")
 	_expect(
-		load_body.contains("Time.get_ticks_msec() - saved_elapsed_msec"),
+		load_body.contains('Time.get_ticks_msec() - int(data.get("run_elapsed_msec", 0))'),
 		"run loads rebuild the process-local timer from persisted elapsed duration"
 	)
 

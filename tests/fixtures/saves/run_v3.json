@@ -1,0 +1,618 @@
+{
+ "ascension": 0,
+ "backpack": [
+  {
+   "amount": 99,
+   "kind": "gold"
+  },
+  {
+   "item": {
+    "affixes": [
+     {
+      "type": "attr_intelligence",
+      "value": 1
+     },
+     {
+      "type": "attr_luck",
+      "value": 1
+     },
+     {
+      "type": "crit_pct",
+      "value": 5
+     }
+    ],
+    "base": "base:gear_head_rare",
+    "cursed": false,
+    "rarity": "rare",
+    "set_id": ""
+   },
+   "kind": "equip"
+  },
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null
+ ],
+ "base_attributes": {
+  "charm": 0,
+  "constitution": 0,
+  "intelligence": 0,
+  "luck": 0,
+  "strength": 0
+ },
+ "current_act": 1,
+ "current_encounter": [
+  "base:trash_robot"
+ ],
+ "current_floor": 3,
+ "current_health": 60,
+ "current_hero_data": {
+  "act_start_upgrades": [
+   {
+    "held": "base:crit_clip",
+    "offer": [
+     "base:crit_clip_volatile",
+     "base:crit_clip_deadeye",
+     "base:double_fire_clip"
+    ],
+    "replaces": [
+     "base:crit_clip_volatile",
+     "base:crit_clip_deadeye"
+    ]
+   },
+   {
+    "held": "base:double_fire_clip",
+    "offer": [
+     "base:double_fire_clip_burst",
+     "base:crit_clip"
+    ],
+    "replaces": [
+     "base:double_fire_clip_burst"
+    ]
+   }
+  ],
+  "animate_idle": false,
+  "card_pool": "base:cowboy",
+  "card_ui_skin": "cowboy_bill",
+  "description": "A circuit-damaged robot with one surviving memory: an old western. Bill insists he is human, and the frontier seems willing to play along.",
+  "exclusive_cards": [
+   "base:piston_jab",
+   "base:load_up",
+   "base:coagulate",
+   "base:dissect",
+   "base:hot_streak",
+   "base:all_in",
+   "base:hemorrhage",
+   "base:covering_reload",
+   "base:limit_break"
+  ],
+  "id": "base:cowboy_bill",
+  "max_health": 50.0,
+  "name": "Cowboy Bill",
+  "relic_pool": "base:cowboy",
+  "sprite_id": "cowboy_bill",
+  "start_relics": [
+   "base:crit_clip",
+   "base:double_fire_clip"
+  ],
+  "starter_deck": [
+   "base:strike",
+   "base:strike",
+   "base:strike",
+   "base:strike",
+   "base:weak_strike",
+   "base:defend",
+   "base:defend",
+   "base:defend",
+   "base:defend"
+  ],
+  "starting_attributes": {
+   "charm": 0.0,
+   "constitution": 0.0,
+   "intelligence": 0.0,
+   "luck": 0.0,
+   "strength": 0.0
+  },
+  "tint": "#ffffff"
+ },
+ "current_hero_id": "base:cowboy_bill",
+ "current_node_id": "",
+ "demo_featured_set_id": "base:weak_hunter",
+ "demo_set_piece_ids_claimed": [],
+ "equipped_items": {
+  "accessory": {},
+  "chest": {
+   "affixes": [
+    {
+     "type": "attr_constitution",
+     "value": 1
+    },
+    {
+     "type": "max_hp",
+     "value": 10
+    }
+   ],
+   "base": "base:gear_chest_uncommon",
+   "cursed": false,
+   "rarity": "uncommon",
+   "set_id": ""
+  },
+  "hands": {},
+  "head": {},
+  "weapon": {}
+ },
+ "is_run_active": true,
+ "last_battle_node_type": "enemy",
+ "level": 1,
+ "map_data": [
+  {
+   "children": [
+    "f1_s1",
+    "f1_s0"
+   ],
+   "floor": 0,
+   "id": "f0_s2",
+   "slot": 2,
+   "type": "relic"
+  },
+  {
+   "children": [
+    "f2_s0",
+    "f2_s1",
+    "f2_s2"
+   ],
+   "floor": 1,
+   "id": "f1_s0",
+   "slot": 0,
+   "type": "unknown"
+  },
+  {
+   "children": [
+    "f2_s1",
+    "f2_s0",
+    "f2_s2",
+    "f2_s3"
+   ],
+   "floor": 1,
+   "id": "f1_s1",
+   "slot": 1,
+   "type": "enemy"
+  },
+  {
+   "children": [
+    "f3_s0",
+    "f3_s1"
+   ],
+   "floor": 2,
+   "id": "f2_s0",
+   "slot": 0,
+   "type": "enemy"
+  },
+  {
+   "children": [
+    "f3_s1",
+    "f3_s0",
+    "f3_s3"
+   ],
+   "floor": 2,
+   "id": "f2_s1",
+   "slot": 1,
+   "type": "unknown"
+  },
+  {
+   "children": [
+    "f3_s1",
+    "f3_s3",
+    "f3_s0"
+   ],
+   "floor": 2,
+   "id": "f2_s2",
+   "slot": 2,
+   "type": "unknown"
+  },
+  {
+   "children": [
+    "f3_s3",
+    "f3_s1"
+   ],
+   "floor": 2,
+   "id": "f2_s3",
+   "slot": 3,
+   "type": "enemy"
+  },
+  {
+   "children": [
+    "f4_s0",
+    "f4_s2"
+   ],
+   "floor": 3,
+   "id": "f3_s0",
+   "slot": 0,
+   "type": "enemy"
+  },
+  {
+   "children": [
+    "f4_s0",
+    "f4_s2",
+    "f4_s3"
+   ],
+   "floor": 3,
+   "id": "f3_s1",
+   "slot": 1,
+   "type": "enemy"
+  },
+  {
+   "children": [
+    "f4_s3",
+    "f4_s2"
+   ],
+   "floor": 3,
+   "id": "f3_s3",
+   "slot": 3,
+   "type": "enemy"
+  },
+  {
+   "children": [
+    "f5_s0",
+    "f5_s1",
+    "f5_s2"
+   ],
+   "floor": 4,
+   "id": "f4_s0",
+   "slot": 0,
+   "type": "enemy"
+  },
+  {
+   "children": [
+    "f5_s2",
+    "f5_s1",
+    "f5_s3"
+   ],
+   "floor": 4,
+   "id": "f4_s2",
+   "slot": 2,
+   "type": "enemy"
+  },
+  {
+   "children": [
+    "f5_s3",
+    "f5_s2",
+    "f5_s1"
+   ],
+   "floor": 4,
+   "id": "f4_s3",
+   "slot": 3,
+   "type": "unknown"
+  },
+  {
+   "children": [
+    "f6_s1",
+    "f6_s2"
+   ],
+   "floor": 5,
+   "id": "f5_s0",
+   "slot": 0,
+   "type": "enemy"
+  },
+  {
+   "children": [
+    "f6_s1",
+    "f6_s2",
+    "f6_s3"
+   ],
+   "floor": 5,
+   "id": "f5_s1",
+   "slot": 1,
+   "type": "enemy"
+  },
+  {
+   "children": [
+    "f6_s2",
+    "f6_s1",
+    "f6_s3"
+   ],
+   "floor": 5,
+   "id": "f5_s2",
+   "slot": 2,
+   "type": "enemy"
+  },
+  {
+   "children": [
+    "f6_s3",
+    "f6_s2",
+    "f6_s1"
+   ],
+   "floor": 5,
+   "id": "f5_s3",
+   "slot": 3,
+   "type": "rest"
+  },
+  {
+   "children": [
+    "f7_s1",
+    "f7_s0",
+    "f7_s2"
+   ],
+   "floor": 6,
+   "id": "f6_s1",
+   "slot": 1,
+   "type": "treasure"
+  },
+  {
+   "children": [
+    "f7_s2",
+    "f7_s1",
+    "f7_s3"
+   ],
+   "floor": 6,
+   "id": "f6_s2",
+   "slot": 2,
+   "type": "treasure"
+  },
+  {
+   "children": [
+    "f7_s3",
+    "f7_s2",
+    "f7_s1"
+   ],
+   "floor": 6,
+   "id": "f6_s3",
+   "slot": 3,
+   "type": "treasure"
+  },
+  {
+   "children": [
+    "f8_s0",
+    "f8_s2"
+   ],
+   "floor": 7,
+   "id": "f7_s0",
+   "slot": 0,
+   "type": "rest"
+  },
+  {
+   "children": [
+    "f8_s0",
+    "f8_s2",
+    "f8_s3"
+   ],
+   "floor": 7,
+   "id": "f7_s1",
+   "slot": 1,
+   "type": "unknown"
+  },
+  {
+   "children": [
+    "f8_s2",
+    "f8_s3",
+    "f8_s0"
+   ],
+   "floor": 7,
+   "id": "f7_s2",
+   "slot": 2,
+   "type": "rest"
+  },
+  {
+   "children": [
+    "f8_s3",
+    "f8_s2"
+   ],
+   "floor": 7,
+   "id": "f7_s3",
+   "slot": 3,
+   "type": "treasure"
+  },
+  {
+   "children": [
+    "f9_s0",
+    "f9_s1",
+    "f9_s2"
+   ],
+   "floor": 8,
+   "id": "f8_s0",
+   "slot": 0,
+   "type": "enemy"
+  },
+  {
+   "children": [
+    "f9_s2",
+    "f9_s1",
+    "f9_s3"
+   ],
+   "floor": 8,
+   "id": "f8_s2",
+   "slot": 2,
+   "type": "treasure"
+  },
+  {
+   "children": [
+    "f9_s3",
+    "f9_s2",
+    "f9_s1"
+   ],
+   "floor": 8,
+   "id": "f8_s3",
+   "slot": 3,
+   "type": "enemy"
+  },
+  {
+   "children": [
+    "f10_s0",
+    "f10_s1",
+    "f10_s2"
+   ],
+   "floor": 9,
+   "id": "f9_s0",
+   "slot": 0,
+   "type": "enemy"
+  },
+  {
+   "children": [
+    "f10_s1",
+    "f10_s0",
+    "f10_s2"
+   ],
+   "floor": 9,
+   "id": "f9_s1",
+   "slot": 1,
+   "type": "enemy"
+  },
+  {
+   "children": [
+    "f10_s2",
+    "f10_s1",
+    "f10_s3"
+   ],
+   "floor": 9,
+   "id": "f9_s2",
+   "slot": 2,
+   "type": "rest"
+  },
+  {
+   "children": [
+    "f10_s3",
+    "f10_s2",
+    "f10_s1"
+   ],
+   "floor": 9,
+   "id": "f9_s3",
+   "slot": 3,
+   "type": "enemy"
+  },
+  {
+   "children": [
+    "f11_s2"
+   ],
+   "floor": 10,
+   "id": "f10_s0",
+   "slot": 0,
+   "type": "rest"
+  },
+  {
+   "children": [
+    "f11_s2"
+   ],
+   "floor": 10,
+   "id": "f10_s1",
+   "slot": 1,
+   "type": "rest"
+  },
+  {
+   "children": [
+    "f11_s2"
+   ],
+   "floor": 10,
+   "id": "f10_s2",
+   "slot": 2,
+   "type": "rest"
+  },
+  {
+   "children": [
+    "f11_s2"
+   ],
+   "floor": 10,
+   "id": "f10_s3",
+   "slot": 3,
+   "type": "rest"
+  },
+  {
+   "children": [],
+   "floor": 11,
+   "id": "f11_s2",
+   "slot": 2,
+   "type": "boss"
+  }
+ ],
+ "max_health": 60,
+ "pending_attr_points": 0,
+ "player_attributes": {
+  "charm": 0,
+  "constitution": 1,
+  "intelligence": 0,
+  "luck": 0,
+  "strength": 0
+ },
+ "player_deck": [
+  {
+   "card_id": "base:strike",
+   "uid": "1108551_2166"
+  },
+  {
+   "card_id": "base:strike",
+   "uid": "1108854_4272"
+  },
+  {
+   "card_id": "base:strike",
+   "uid": "1108861_1432"
+  },
+  {
+   "card_id": "base:strike",
+   "uid": "1108864_7280"
+  },
+  {
+   "card_id": "base:weak_strike",
+   "uid": "1108866_5851"
+  },
+  {
+   "card_id": "base:defend",
+   "uid": "1108868_6748"
+  },
+  {
+   "card_id": "base:defend",
+   "uid": "1108870_7512"
+  },
+  {
+   "card_id": "base:defend",
+   "uid": "1108872_7766"
+  },
+  {
+   "card_id": "base:defend",
+   "uid": "1108873_2592"
+  }
+ ],
+ "relics": [
+  "base:crit_clip"
+ ],
+ "reward_rerolls": 0,
+ "rng": {
+  "counters": {
+   "combat_card_generation": 0,
+   "combat_crits": 0,
+   "combat_targets": 0,
+   "elites": 0,
+   "encounters": 0,
+   "events": 0,
+   "monster_ai": 0,
+   "niche": 0,
+   "rewards": 5,
+   "shops": 0,
+   "shuffle": 0,
+   "unknown_map_point": 0,
+   "up_front": 1
+  },
+  "seed_string": "SAVESAMPLE"
+ },
+ "run_caps": 0,
+ "run_elapsed_msec": 5,
+ "run_scrap": 0,
+ "run_started_msec": 1108,
+ "seen_random_event_ids": [],
+ "tool_inventory": [],
+ "v": 3,
+ "visited_node_ids": [],
+ "xp": 0
+}

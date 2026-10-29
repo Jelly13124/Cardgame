@@ -1,8 +1,8 @@
 extends RefCounted
 
-## Save migration to namespaced content IDs (phase 2a). Pure functions on the
-## parsed save dictionaries; callers back the file up with `backup_once` before
-## writing a migrated save. Each known ID field resolves through ModelDb with its
+## The namespaced-content-ID steps of the save migrations (run v1 → v2,
+## profile v1 → v2). Pure functions on the parsed save dictionaries; loaders
+## back the file up with `backup_once` before writing a migrated save. Each known ID field resolves through ModelDb with its
 ## category; a ref that does not resolve (retired or unknown content) is kept
 ## verbatim so the migration itself never drops what the player owned.
 ## No class_name — preload. No scene tree.
@@ -10,38 +10,11 @@ extends RefCounted
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 
-## v2: namespaced content ids (phase 2a). v3: seeded RNG streams (phase 2b; a
-## missing `rng` key is handled by the loader, so 2→3 only bumps the version).
-const RUN_VERSION := 3
-const RUN_ID_VERSION := 2
-const META_CONTENT_VERSION := 2
 const BACKUP_SUFFIX := ".v1.bak"
 
 
-static func run_needs_migration(d: Dictionary) -> bool:
-	return int(d.get("v", 1)) < RUN_VERSION
-
-
-## True for saves from before namespaced ids (the ones worth a .v1.bak backup).
-static func run_needs_id_migration(d: Dictionary) -> bool:
-	return int(d.get("v", 1)) < RUN_ID_VERSION
-
-
-static func meta_needs_migration(d: Dictionary) -> bool:
-	return int(d.get("content_v", 1)) < META_CONTENT_VERSION
-
-
-static func migrate_run(d: Dictionary) -> Dictionary:
-	if not run_needs_migration(d):
-		return d
-	var out := d.duplicate(true)
-	if run_needs_id_migration(d):
-		_migrate_run_ids(out)
-	out["v"] = RUN_VERSION
-	return out
-
-
-static func _migrate_run_ids(out: Dictionary) -> void:
+## Run save v1 → v2 ids (core/save/run_save.gd).
+static func migrate_run_ids(out: Dictionary) -> void:
 	var hero := _ref("character", out.get("current_hero_id", ""))
 	out["current_hero_id"] = hero
 	var hero_data := MODEL_DB.mutable("character", hero)
@@ -72,10 +45,8 @@ static func _migrate_run_ids(out: Dictionary) -> void:
 		out["demo_featured_set_id"] = _ref("equipment_set", out["demo_featured_set_id"])
 
 
-static func migrate_meta(d: Dictionary) -> Dictionary:
-	if not meta_needs_migration(d):
-		return d
-	var out := d.duplicate(true)
+## Profile v1 → v2 ids (core/save/profile_save.gd).
+static func migrate_meta_ids(out: Dictionary) -> void:
 	if typeof(out.get("upgrades")) == TYPE_DICTIONARY:
 		out["upgrades"] = _migrate_keys(out["upgrades"], "base_upgrade")
 	if typeof(out.get("cards_seen")) == TYPE_DICTIONARY:
@@ -96,8 +67,6 @@ static func migrate_meta(d: Dictionary) -> Dictionary:
 		for entry in out["run_history"]:
 			if typeof(entry) == TYPE_DICTIONARY and entry.has("hero_id"):
 				entry["hero_id"] = _ref("character", entry["hero_id"])
-	out["content_v"] = META_CONTENT_VERSION
-	return out
 
 
 ## Write the loaded pre-migration data to `<file>.v1.bak` once. The data, not
