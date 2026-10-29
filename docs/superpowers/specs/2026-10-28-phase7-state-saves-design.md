@@ -20,7 +20,7 @@ a result. `run_system/` holds no code.
 | `Saves.SerializableRun`, `ISaveSchema` | `core/save/run_save.gd` (to/from dict, `schema_version`) |
 | `Saves.ProfileSave` | `core/save/profile_save.gd` |
 | `Saves.Migrations` + `MigrationManager` | `core/save/migration_chain.gd` (+ the steps in run_save / profile_save) |
-| player inventory commands | `core/run/backpack.gd`, `core/run/equipment.gd` (results, not booleans) |
+| player inventory commands | `core/meta/base_inventory.gd` (results, not booleans) |
 | `Map.MapTravel` | `core/run/map_travel.gd` |
 
 ## Saves
@@ -38,7 +38,8 @@ a result. `run_system/` holds no code.
   turned into equipment instances.
 - Profile v2 → v3: what `load_progress` normalizes today (buildings, removed profile state),
   equipment strings in the stash and the base loadout/equipped slots turned into instances,
-  and the retired `facilities` / `bounty_free_claimed` fields dropped.
+  and the retired `bounty_free_claimed` field dropped. (`facilities` stays: the clinic still
+  reads it.) Each migration backs up its own source version (`<file>.v<N>.bak`).
 - Historical samples (`tests/fixtures/saves/`) for every version migrate to the current shape
   and load (test).
 
@@ -50,12 +51,14 @@ a result. `run_system/` holds no code.
   but the data lives in the state objects.
 - Equipment is always an instance dictionary in state: `as_equip_instance` goes; content that
   grants equipment by id builds the instance at that point (`make_equip_instance`).
-- `backpack.gd` / `equipment.gd`: move, equip, unequip, store, discard return
-  `{ok, reason}`; the character, stash and forge windows call them instead of editing arrays.
+- `core/meta/base_inventory.gd`: the base-owned gear (equip, unequip, add, remove, replace,
+  sanitize) returns `{ok, reason}`; the character and forge windows call it instead of editing
+  arrays. In-run equipping keeps RunManager's existing `equip_to_slot` / `unequip_slot`
+  (their behavior is unchanged; a result-returning in-run service is left for later).
   `map_travel.gd`: entering a node (current node, floor, visited) for the map screen.
 - S8-04: the RNG streams are saved since phase 2b. A merchant's rolled stock is saved in the
   run state under its node id, so reopening that merchant after a reload shows the same
-  stock.
+  stock. The stock is cleared when a run starts and when an act starts (node ids repeat).
 
 ## Directories
 

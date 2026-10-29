@@ -598,14 +598,8 @@ func effective_stash_cap() -> int:
 func add_to_stash(item: Variant) -> bool:
 	if stash.size() >= effective_stash_cap():
 		return false
-	if typeof(item) == TYPE_STRING:
-		if str(item) == "":
-			return false
-	elif typeof(item) == TYPE_DICTIONARY:
-		if (item as Dictionary).is_empty():
-			return false
-	else:
-		return false
+	if typeof(item) != TYPE_DICTIONARY or str(item.get("base", "")) == "":
+		return false  # equipment is always an instance
 	stash.append(item)
 	save_progress()
 	return true
@@ -1078,7 +1072,7 @@ func load_progress() -> void:
 	# back below.
 	var migrated: bool = PROFILE_SAVE.version_of(parsed) < PROFILE_SAVE.CURRENT
 	if migrated:
-		CONTENT_ID_MIGRATION.backup_once(path, parsed)
+		CONTENT_ID_MIGRATION.backup_once(path, parsed, PROFILE_SAVE.version_of(parsed))
 		parsed = PROFILE_SAVE.migrate(parsed)
 	PROFILE_SAVE.apply(profile, parsed, ASCENSION_CAP)
 	if recovered or migrated:

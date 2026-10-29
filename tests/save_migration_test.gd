@@ -130,6 +130,15 @@ func _test_meta_v2() -> void:
 	_expect(PROFILE_SAVE.version_of(raw) == 2, "the v2 sample is a v2 profile")
 	var meta := PROFILE_SAVE.migrate(raw)
 	_expect(not meta.has("bounty_free_claimed"), "a retired field is dropped")
+	# Each migration backs up its own source version (an older .v1.bak from an
+	# earlier migration must not stop this one).
+	SAVE_IO.write_json("backup_probe.json", raw)
+	var probe := SAVE_IO.path("backup_probe.json")
+	var f := FileAccess.open(probe + ".v1.bak", FileAccess.WRITE)
+	f.store_string("{}")
+	f.close()
+	_expect(CONTENT_ID_MIGRATION.backup_once("backup_probe.json", raw, 2), "a v2 save gets its own backup")
+	_expect(FileAccess.file_exists(probe + ".v2.bak"), "the backup is named after the source version")
 	_expect(meta["stash"].all(_is_instance), "every stash entry is an instance")
 	_expect(int(meta["caps"]) == int(raw["caps"]), "no refund without removed upgrades")
 
@@ -141,8 +150,8 @@ func _test_backup_once() -> void:
 	var f := FileAccess.open(probe, FileAccess.WRITE)
 	f.store_string("{ truncated")
 	f.close()
-	_expect(CONTENT_ID_MIGRATION.backup_once("migration_probe.json", {"v": 1, "first": true}), "first backup written")
-	_expect(not CONTENT_ID_MIGRATION.backup_once("migration_probe.json", {"v": 1, "first": false}), "second backup skipped")
+	_expect(CONTENT_ID_MIGRATION.backup_once("migration_probe.json", {"v": 1, "first": true}, 1), "first backup written")
+	_expect(not CONTENT_ID_MIGRATION.backup_once("migration_probe.json", {"v": 1, "first": false}, 1), "second backup skipped")
 	var backup: Variant = JSON.parse_string(FileAccess.get_file_as_string(probe + ".v1.bak"))
 	_expect(typeof(backup) == TYPE_DICTIONARY and bool(backup.get("first", false)), "backup keeps the loaded data")
 

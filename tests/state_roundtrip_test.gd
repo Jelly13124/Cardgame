@@ -5,6 +5,7 @@ extends Node
 ## merchant's rolled stock is part of the run, so reopening it after a reload
 ## shows the same goods.
 
+const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
 const RUN_SAVE = preload("uid://dkhd2poukjb61")  # res://core/save/run_save.gd
 const PROFILE_SAVE = preload("uid://cox1wehu1m6on")  # res://core/save/profile_save.gd
 const RUN_STATE = preload("uid://cguglvtfurhlo")  # res://core/run/run_state.gd
@@ -54,6 +55,16 @@ func _run() -> void:
 	var second: Array = await _shop_cards()
 	_expect(not first.is_empty() and first == second, "reopening the merchant after a reload shows the same stock: %s vs %s" % [first, second])
 	_expect(bool(RunManager.state.shop_stock["f5_s1"]["cards"][0].get("sold", false)), "a bought offer stays sold after the reload")
+	# A new act and a new run never see an old merchant's stock (node ids repeat).
+	RunManager.state.shop_stock["f5_s1"] = {"cards": [], "tools": [], "relics": [], "remove_price": 1}
+	ACTS.active_run = "base:full"  # the demo has one act
+	_expect(RunManager.advance_act(), "the full game advances to act 2")
+	ACTS.active_run = ACTS.ACTIVE_RUN
+	_expect(RunManager.state.shop_stock.is_empty(), "a new act starts with no merchant stock")
+	RunManager.state.shop_stock["f5_s1"] = {"cards": [], "tools": [], "relics": [], "remove_price": 1}
+	RunManager.start_new_run("base:cowboy_bill", [], 0, "ROUNDTRIP2")
+	_expect(RunManager.state.shop_stock.is_empty(), "a new run starts with no merchant stock")
+	_expect(not MetaProgress.add_to_stash("base:gear_hands_common"), "the stash refuses a bare item id")
 	RunManager.is_run_active = false
 	RunManager.clear_run_save()
 	if failures.is_empty():

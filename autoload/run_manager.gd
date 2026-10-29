@@ -361,6 +361,7 @@ func advance_act() -> bool:
 		return false
 	current_act += 1
 	current_floor = 0
+	state.shop_stock.clear()  # node ids repeat every act
 	current_node_id = ""
 	visited_node_ids.clear()
 	generate_map()
@@ -522,6 +523,7 @@ func start_new_run(
 ) -> void:
 	# A fresh run invalidates any prior in-run save (can't resume the old one).
 	clear_run_save()
+	state.shop_stock.clear()
 	# Seed first: every roll below draws from the run's streams. An empty or
 	# invalid seed (callers validate typed seeds) picks a random one.
 	run_rng = RUN_RNG_SET.new(
@@ -1912,7 +1914,7 @@ func load_run() -> bool:
 	# Older schema: back the loaded save up once, migrate it, write it back.
 	var migrated: bool = RUN_SAVE.version_of(data) < RUN_SAVE.CURRENT
 	if migrated:
-		CONTENT_ID_MIGRATION.backup_once(_run_save_path(), data)
+		CONTENT_ID_MIGRATION.backup_once(_run_save_path(), data, RUN_SAVE.version_of(data))
 		data = RUN_SAVE.migrate(data)
 	RUN_SAVE.apply(state, data)
 	current_hero_data = MODEL_DB.mutable("character", current_hero_id)

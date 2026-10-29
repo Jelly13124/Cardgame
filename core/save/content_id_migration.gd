@@ -10,7 +10,6 @@ extends RefCounted
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 
-const BACKUP_SUFFIX := ".v1.bak"
 
 
 ## Run save v1 → v2 ids (core/save/run_save.gd).
@@ -69,12 +68,13 @@ static func migrate_meta_ids(out: Dictionary) -> void:
 				entry["hero_id"] = _ref("character", entry["hero_id"])
 
 
-## Write the loaded pre-migration data to `<file>.v1.bak` once. The data, not
-## the live file, is backed up: SaveIO may have recovered it from `.bak1` while
-## the live file is corrupt. Returns true when written; an existing backup (from
-## an earlier migration attempt) is never overwritten.
-static func backup_once(relative: String, loaded: Dictionary) -> bool:
-	var backup := SAVE_IO.path(relative) + BACKUP_SUFFIX
+## Write the loaded pre-migration data to `<file>.v<from_version>.bak`, once per
+## source version: each migration keeps its own backup, and a backup that
+## already exists (an earlier attempt) is never overwritten. The data, not the
+## live file, is backed up: SaveIO may have recovered it from `.bak1` while the
+## live file is corrupt. Returns true when written.
+static func backup_once(relative: String, loaded: Dictionary, from_version: int) -> bool:
+	var backup := SAVE_IO.path(relative) + ".v%d.bak" % from_version
 	if FileAccess.file_exists(backup):
 		return false
 	var f := FileAccess.open(backup, FileAccess.WRITE)
