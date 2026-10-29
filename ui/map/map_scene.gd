@@ -4,17 +4,17 @@ extends Control
 ## The route remains data-driven; only the presentation is custom-drawn here.
 
 const MAP_TRAVEL = preload("res://core/run/map_travel.gd")
-const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
 const MAP_RENDERER_SCRIPT = preload("uid://dxpxch0ouxcmv")  # res://ui/map/map_renderer.gd
-const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://run_system/ui/window/character_window.gd
-const RUN_DECK_VIEWER_MODAL = preload("uid://jvxfh15gtinx")  # res://run_system/ui/run_deck_viewer_modal.gd
+const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://ui/windows/character_window.gd
+const RUN_DECK_VIEWER_MODAL = preload("uid://jvxfh15gtinx")  # res://ui/common/run_deck_viewer_modal.gd
 const CARD_UPGRADE_MODAL = preload("uid://gq5b8t1mbeti")  # res://ui/rest/card_upgrade_modal.gd
-const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://run_system/ui/run_top_bar.gd
-const SETTINGS_PANEL_SCRIPT = preload("uid://ledls51ku43w")  # res://run_system/ui/settings_panel.gd
-const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://run_system/ui/pause_panel.gd
+const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://ui/common/run_top_bar.gd
+const SETTINGS_PANEL_SCRIPT = preload("uid://ledls51ku43w")  # res://ui/menus/settings_panel.gd
+const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://ui/menus/pause_panel.gd
 const EVENT_MODAL_SCRIPT = preload("uid://0gxdrhjtltvh")  # res://ui/events/event_modal.gd
-const T_THEME = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const T_THEME = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 const BATTLE_PACKED = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
 const SHOP_PACKED = preload("uid://dr8unxxfi0w51")  # res://ui/shop/shop_scene.tscn
 const ROOMS = preload("uid://cxmgdj3654rrj")  # res://core/run/rooms.gd
@@ -688,12 +688,12 @@ func _on_save_and_quit() -> void:
 	AudioManager.play_sfx("ui_back")
 	if rm and rm.is_run_active:
 		rm.save_run()
-	SceneTransition.change_to("uid://dnjlmt1repvjw")  # res://run_system/ui/main_menu.tscn
+	SceneTransition.change_to("uid://dnjlmt1repvjw")  # res://ui/menus/main_menu.tscn
 
 
 ## Open the How-to-Play rules panel (loaded at runtime; no-op until it exists).
 func _open_rules_panel() -> void:
-	var path := "uid://35njcmwpab3t"  # res://run_system/ui/rules_panel.gd
+	var path := "uid://35njcmwpab3t"  # res://ui/menus/rules_panel.gd
 	if not ResourceLoader.exists(path):
 		return
 	var script = load(path)

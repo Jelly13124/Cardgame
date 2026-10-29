@@ -320,7 +320,7 @@ const BULK_DISMANTLE_RARITIES := ["common", "uncommon", "rare"]
 ## Blacksmith: scrap cost to reforge (reroll one affix on) a stash item, by rarity.
 const REFORGE_COST := {"common": 15, "uncommon": 30, "rare": 50}
 ## Affix roller (per-instance equipment); used by reforge_stash_item.
-const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
+const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://core/meta/affixes.gd
 ## --- Bounty system (replaces the daily-task mock) ---
 const CARD_POOLS = preload("uid://c76axesxo6wit")  # res://core/run/card_pools.gd
 const PROFILE_STATE = preload("uid://1lid0vwtvi7n")  # res://core/meta/profile_state.gd

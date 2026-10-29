@@ -24,7 +24,7 @@ Light conventions for UI scripts. UI is currently the messiest part of the codeb
 
 ### 1. All shared visual styling goes through the shared theme script
 ```gdscript
-const T = preload("res://run_system/ui/theme/wasteland_theme.gd")
+const T = preload("res://ui/common/theme/wasteland_theme.gd")
 
 # Use builders, don't reinvent StyleBoxFlat.new()
 panel.add_theme_stylebox_override("panel", T.panel_with_shadow(T.PANEL_BG, T.PANEL_BORDER, 5))

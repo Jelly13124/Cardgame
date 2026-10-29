@@ -9,7 +9,7 @@ extends Node
 @onready var player = $Player
 @onready var enemy_container = $EnemyContainer
 
-const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://run_system/ui/pause_panel.gd
+const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://ui/menus/pause_panel.gd
 @onready var ui_manager = $BattleUIManager
 @onready var end_round_button = $EndRoundButton
 
@@ -58,7 +58,7 @@ const ENEMY_ENTITY = preload("uid://qtp7jvjqfbou")  # res://ui/battle/enemy_view
 const CARD_ANIMATOR_SCRIPT = preload("uid://co0n3ou8saknv")  # res://ui/battle/card_animator.gd
 const DISCOVER_MODAL = preload("uid://keeeggdto42o")  # res://ui/battle/discover_modal.gd
 const TOOL_USE_CONFIRM = preload("uid://dihe3sjaxh16")  # res://ui/battle/tool_use_confirm.gd
-const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 # NOTE: map_scene + home_base_scene are loaded lazily at the call site
 # (not preloaded) because doing so would create a cyclic dep
 # (map → battle → map) and the editor's static analysis chokes.
@@ -68,7 +68,7 @@ const LOOT_REWARD_SCENE = preload("uid://csl8exl41do23")  # res://ui/rewards/loo
 const EXTRACT_CHOICE_MODAL_SCRIPT = preload("uid://dl8ofvd880xht")  # res://ui/rewards/extract_choice_modal.gd
 const RESULT_SCREEN_SCRIPT = preload("uid://bxh1x1hy6fylv")  # res://ui/rewards/result_screen.gd
 const TUTORIAL_TIPS_SCRIPT = preload("uid://cc37k40gsd5x")  # res://ui/battle/tutorial_tips.gd
-const MAIN_MENU_PATH := "uid://dnjlmt1repvjw"  # res://run_system/ui/main_menu.tscn
+const MAIN_MENU_PATH := "uid://dnjlmt1repvjw"  # res://ui/menus/main_menu.tscn
 
 const COMBAT_REWARDS = preload("uid://sn83hwnx1w3b")  # res://core/run/combat_rewards.gd
 

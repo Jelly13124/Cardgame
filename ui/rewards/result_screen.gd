@@ -5,10 +5,10 @@
 ## shows it, and routes the player back to the home base. No class_name per project convention.
 extends Control
 
-const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const HOME_BASE_PATH := "uid://c6bvuu6kbx0pq"  # res://ui/base/home_base_scene.tscn
-const MAIN_MENU_PATH := "uid://dnjlmt1repvjw"  # res://run_system/ui/main_menu.tscn
+const MAIN_MENU_PATH := "uid://dnjlmt1repvjw"  # res://ui/menus/main_menu.tscn
 ## Set this project setting to the real app page before shipping. An empty or
 ## generic URL deliberately hides the CTA instead of sending players to Steam's
 ## home page and pretending the store integration is finished.

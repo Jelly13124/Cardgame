@@ -5,7 +5,7 @@ const CARD_PLAY = preload("uid://bxaw24a7fumhm")  # res://core/combat/card_play.
 const FAKE_BATTLE = preload("uid://j25pi73kmisn")  # res://tests/support/fake_battle.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const VALUE_PROPS = preload("uid://cccfcqt180t4x")  # res://core/combat/value_props.gd
-const CARD_UPGRADE = preload("uid://d2e2bfj6oa3yp")  # res://run_system/core/card_upgrade.gd
+const CARD_UPGRADE = preload("uid://d2e2bfj6oa3yp")  # res://core/run/card_upgrade.gd
 
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 

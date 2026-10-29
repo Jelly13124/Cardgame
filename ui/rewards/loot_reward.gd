@@ -10,13 +10,13 @@ signal closed
 const GOLD_ICON_PATH := "res://run_system/assets/images/home/currency/caps.png"
 const CARD_REWARD_ICON_PATH := "res://run_system/assets/images/ui_kit_lightline/iconb_cards_fan.png"
 
-# Shared palette lives in run_system/ui/theme/wasteland_theme.gd as
+# Shared palette lives in ui/common/theme/wasteland_theme.gd as
 # `T.PANEL_BG` etc. — see wasteland_theme.gd for all colors / builders.
-const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 const REWARDS = preload("uid://dao6ryap2ksxs")  # res://core/run/rewards.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
-const INVENTORY_FULL_MODAL = preload("uid://deiqqoalu4lpl")  # res://run_system/ui/inventory_full_modal.gd
+const INVENTORY_FULL_MODAL = preload("uid://deiqqoalu4lpl")  # res://ui/common/inventory_full_modal.gd
 # Lazy-loaded at call site to avoid map→battle→loot cyclic preload.
 const MAP_SCENE_PATH := "uid://d3x5b8wvg2q"  # res://ui/map/map_scene.tscn
 

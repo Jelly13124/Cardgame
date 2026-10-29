@@ -10,7 +10,7 @@ extends Control
 signal state_changed(building_id: String, tier: int)
 signal dismissed
 
-const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 const FRAME = preload(
 	"res://run_system/assets/images/ui/buildings/building_upgrade_popover_frame.png"
 )

@@ -6,15 +6,15 @@
 ## functions live in the per-building screens (ui/base/).
 extends Control
 
-const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 const MAP_PACKED = preload("uid://d3x5b8wvg2q")  # res://ui/map/map_scene.tscn
-const SETTINGS_PANEL = preload("uid://ledls51ku43w")  # res://run_system/ui/settings_panel.gd
-const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://run_system/ui/pause_panel.gd
+const SETTINGS_PANEL = preload("uid://ledls51ku43w")  # res://ui/menus/settings_panel.gd
+const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://ui/menus/pause_panel.gd
 ## Fallback hero when no character-window selection has been made — the base hero,
 ## always available. Keeps START NEW RUN robust (a run never begins with an empty hero).
 const DEFAULT_HERO_ID := "base:cowboy_bill"
-const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://run_system/ui/window/character_window.gd
-const STASH_WINDOW = preload("uid://cgyuqu543lioh")  # res://run_system/ui/window/stash_window.gd
+const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://ui/windows/character_window.gd
+const STASH_WINDOW = preload("uid://cgyuqu543lioh")  # res://ui/windows/stash_window.gd
 const BUILDING_SCREEN_BASE = preload("uid://wpvlhqpgylk7")  # res://ui/base/building_screen_base.gd
 ## Building selector order + per-building accent color. The tile art lives under
 ## run_system/assets/images/home/buildings/.
@@ -37,7 +37,7 @@ const MAP_CANVAS_SIZE := Vector2(1920, 1080)
 ## Grayscale-darken shader for LOCKED building buttons (replaces the old
 ## too-subtle modulate 0.75 dim). Applied as the button's material only — the
 ## brass lock overlay is a SIBLING TextureRect, so it stays full-color.
-const LOCKED_DESAT_SHADER = preload("res://run_system/ui/theme/locked_desat.gdshader")
+const LOCKED_DESAT_SHADER = preload("res://ui/common/theme/locked_desat.gdshader")
 ## Common visual ground line: every building's opaque art bottom sits this many
 ## px above its tile's bottom edge (the PNGs carry uneven transparent padding,
 ## so identical tile rects would otherwise render art at uneven baselines).
@@ -162,7 +162,7 @@ func _build() -> void:
 
 ## Open the How-to-Play panel (loaded at runtime; same pattern as map_scene._open_rules_panel).
 func _open_rules_panel() -> void:
-	var path := "uid://35njcmwpab3t"  # res://run_system/ui/rules_panel.gd
+	var path := "uid://35njcmwpab3t"  # res://ui/menus/rules_panel.gd
 	if not ResourceLoader.exists(path):
 		return
 	var script = load(path)
@@ -2058,7 +2058,7 @@ func _open_stash_window() -> void:
 ## already open are brought to front, never duplicated (positions are set AFTER
 ## WindowLayer.open(), which centers by default).
 func _open_forge_windows() -> void:
-	var wl = load("uid://brmgvym4d5nfq").ensure(self)  # res://run_system/ui/window/window_layer.gd
+	var wl = load("uid://brmgvym4d5nfq").ensure(self)  # res://ui/windows/window_layer.gd
 	var backdrop := wl.get_node_or_null("ForgeBackdrop") as TextureRect
 	if backdrop == null:
 		backdrop = TextureRect.new()
@@ -2077,7 +2077,7 @@ func _open_forge_windows() -> void:
 		wl.move_child(backdrop, 0)
 	var fw = wl.get_node_or_null("ForgeWindow")
 	if fw == null or fw.is_queued_for_deletion():
-		fw = load("uid://bdye5reaoadyn").new()  # res://run_system/ui/window/forge_window.gd
+		fw = load("uid://bdye5reaoadyn").new()  # res://ui/windows/forge_window.gd
 		fw.name = "ForgeWindow"
 		wl.open(fw)
 		fw.position = Vector2(120, 140)  # forge on the LEFT

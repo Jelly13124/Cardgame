@@ -8,7 +8,7 @@ extends RefCounted
 ## for empty or unknown values.
 
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
-const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
+const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://core/meta/affixes.gd
 
 
 static func instance(x: Variant) -> Dictionary:

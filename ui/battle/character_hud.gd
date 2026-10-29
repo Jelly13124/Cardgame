@@ -3,7 +3,7 @@ extends Control
 class_name CharacterHUD
 
 const BLOCK_BADGE_TEXTURE = preload("res://battle_scene/assets/images/ui/block_badge.png")
-const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 const STATUS_BADGES_VIEW = preload("uid://3i0uuprky2dc")  # res://ui/battle/status_badges_view.gd
 
 

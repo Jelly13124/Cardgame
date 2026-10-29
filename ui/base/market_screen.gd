@@ -29,8 +29,8 @@ extends "res://ui/base/building_screen_base.gd"
 
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
-const EQUIPMENT_ICON := preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
-const EQUIP_TOOLTIP := preload("uid://c6r8gr4gvx8ts")  # res://run_system/ui/equip_tooltip.gd
+const EQUIPMENT_ICON := preload("uid://c6mjhfe52nqj5")  # res://ui/common/equipment_icon.gd
+const EQUIP_TOOLTIP := preload("uid://c6r8gr4gvx8ts")  # res://ui/common/equip_tooltip.gd
 const MARKET_UI_DIR := "res://run_system/assets/images/ui/market/"
 const MARKET_SHELF_FRAME_PATH := MARKET_UI_DIR + "market_shelf_panel_frame.png"
 const MARKET_TOOL_CARD_PATH := MARKET_UI_DIR + "market_tool_card_frame.png"

@@ -10,7 +10,7 @@
 ## — the panel re-renders in place.
 extends Node
 
-const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 const MAX_WIDTH := 320.0
 const PADDING := 10
 const OFFSET_FROM_ANCHOR := Vector2(0, -12)  # lift above anchor

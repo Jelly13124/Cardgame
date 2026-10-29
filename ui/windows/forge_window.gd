@@ -22,12 +22,12 @@
 ## Rebuilds on scrap_changed / buildings_changed; frees on close. NO class_name
 ## (project convention) — loaded by path. Every lightline PNG lookup falls back to a
 ## programmatic StyleBox (T.ll_*) so a missing Codex asset never crashes.
-extends "res://run_system/ui/window/draggable_window.gd"
+extends "res://ui/windows/draggable_window.gd"
 
 const BASE_INVENTORY = preload("uid://p4f5t8025pe2")  # res://core/meta/base_inventory.gd
-const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
-const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
-const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://run_system/ui/backpack_cell.gd
+const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://core/meta/affixes.gd
+const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://ui/common/equipment_icon.gd
+const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://ui/common/backpack_cell.gd
 const BUILDING_UPGRADE_POPOVER = preload(
 	"uid://c12ycj00td76a"  # res://ui/base/building_upgrade_popover.gd
 )

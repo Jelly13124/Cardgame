@@ -18,14 +18,14 @@
 ##                 accept a raw stash payload — gear must pass through the bag.
 ## Listens to RunManager / MetaProgress state signals for live refresh; the
 ## window is freed on close, which drops the connections.
-extends "res://run_system/ui/window/draggable_window.gd"
+extends "res://ui/windows/draggable_window.gd"
 
 const BASE_INVENTORY = preload("uid://p4f5t8025pe2")  # res://core/meta/base_inventory.gd
-const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
-const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://run_system/ui/backpack_cell.gd
-const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
+const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://ui/common/equipment_icon.gd
+const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://ui/common/backpack_cell.gd
+const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://core/meta/affixes.gd
 const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
-const EQUIP_TOOLTIP = preload("uid://c6r8gr4gvx8ts")  # res://run_system/ui/equip_tooltip.gd
+const EQUIP_TOOLTIP = preload("uid://c6r8gr4gvx8ts")  # res://ui/common/equip_tooltip.gd
 const HERO_SPRITE_DIR := "res://battle_scene/assets/images/heroes/"
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
@@ -104,12 +104,12 @@ var _base_box: VBoxContainer
 ## open, close it and return null (so the `i` key toggles); otherwise create,
 ## open (centered) and return it.
 static func open_window(host: Node, p_mode: String) -> Control:
-	var wl = load("uid://brmgvym4d5nfq").ensure(host)  # res://run_system/ui/window/window_layer.gd
+	var wl = load("uid://brmgvym4d5nfq").ensure(host)  # res://ui/windows/window_layer.gd
 	var existing = wl.get_node_or_null("CharacterWindow")
 	if existing and not existing.is_queued_for_deletion():
 		existing.close()
 		return null
-	var win = load("uid://ba0f3y5ua1p6o").new()  # res://run_system/ui/window/character_window.gd
+	var win = load("uid://ba0f3y5ua1p6o").new()  # res://ui/windows/character_window.gd
 	win.name = "CharacterWindow"
 	win.mode = p_mode
 	wl.open(win)
@@ -1084,7 +1084,7 @@ func _toggle_stash_window() -> void:
 	var host := wl.get_parent()
 	if host == null:
 		return
-	load("uid://cgyuqu543lioh").open_window(host)  # res://run_system/ui/window/stash_window.gd
+	load("uid://cgyuqu543lioh").open_window(host)  # res://ui/windows/stash_window.gd
 
 
 ## Rebuild the sibling StashWindow (if open) after a cross-window move.

@@ -6,7 +6,7 @@ extends Node
 ## Run with CAPTURE_GOLDEN=1 to (re)write the fixture.
 
 const CARD_FACTORY = preload("uid://diap3gdfbqvjv")  # res://ui/battle/card_framework_adapters/my_card_factory.tscn
-const CARD_UPGRADE = preload("uid://d2e2bfj6oa3yp")  # res://run_system/core/card_upgrade.gd
+const CARD_UPGRADE = preload("uid://d2e2bfj6oa3yp")  # res://core/run/card_upgrade.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const FIXTURE := "res://tests/fixtures/golden/cards.json"
 

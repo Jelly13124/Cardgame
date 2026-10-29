@@ -22,12 +22,12 @@
 ## host scene, which drops the connections.
 ##
 ## NO class_name (project convention). Usage:
-##   var bar = preload("res://run_system/ui/window/currency_top_bar.gd").new()
+##   var bar = preload("res://ui/windows/currency_top_bar.gd").new()
 ##   host_scene.add_child(bar)
 ##   bar.center_box.add_child(start_button)  # host fills the exposed boxes
 extends CanvasLayer
 
-const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 
 ## Above WindowLayer's 60 so the bar stays readable over floating windows.
 const BAR_LAYER := 70

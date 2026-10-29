@@ -122,9 +122,9 @@ func _test_atomic_stash_transfers() -> void:
 
 func _test_window_transfer_wiring() -> void:
 	var character_source := FileAccess.get_file_as_string(
-		"res://run_system/ui/window/character_window.gd"  # path-ok: reads source text
+		"res://ui/windows/character_window.gd"  # path-ok: reads source text
 	)
-	var stash_source := FileAccess.get_file_as_string("res://run_system/ui/window/stash_window.gd")  # path-ok: reads source text
+	var stash_source := FileAccess.get_file_as_string("res://ui/windows/stash_window.gd")  # path-ok: reads source text
 	_expect(
 		character_source.contains("MetaProgress.move_stash_to_base_backpack(entry)"),
 		"character backpack uses the atomic stash-to-carry API"

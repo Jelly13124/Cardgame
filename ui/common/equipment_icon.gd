@@ -3,7 +3,7 @@
 extends Panel
 class_name EquipmentIcon
 
-const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 
 ## Per-rarity FILL colors (dark, used as the cell background). Cells tint by RARITY
 ## ONLY now — slot identity reads from the icon, not the background color (owner

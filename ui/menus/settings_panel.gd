@@ -8,8 +8,8 @@
 ## so a rebuilt overlay always shows the new locale.
 extends RefCounted
 
-const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
-const KEYBIND_ROW = preload("uid://kgnqlot8dw5g")  # res://run_system/ui/keybind_row.gd
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
+const KEYBIND_ROW = preload("uid://kgnqlot8dw5g")  # res://ui/menus/keybind_row.gd
 
 
 ## Append Language / Fullscreen / Volume rows to `box`. `on_language_change` is

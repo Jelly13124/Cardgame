@@ -7,7 +7,7 @@
 extends RefCounted
 class_name MapRenderer
 
-const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 
 const NODE_RADIUS: float = 32.0
 const NODE_ICON_SIZE: float = 64.0

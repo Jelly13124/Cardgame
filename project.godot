@@ -11,14 +11,14 @@ config_version=5
 [application]
 
 config/name="CardFramework"
-run/main_scene="res://run_system/ui/main_menu.tscn"
+run/main_scene="res://ui/menus/main_menu.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 
 [autoload]
 
 Settings="*res://autoload/settings.gd"
-RunManager="*res://run_system/core/run_manager.gd"
-MetaProgress="*res://run_system/core/meta_progress.gd"
+RunManager="*res://autoload/run_manager.gd"
+MetaProgress="*res://autoload/meta_progress.gd"
 Tooltip="*res://autoload/tooltip.gd"
 AudioManager="*res://autoload/audio_manager.gd"
 SceneTransition="*res://autoload/scene_transition.gd"

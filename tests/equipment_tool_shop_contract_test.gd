@@ -1,12 +1,12 @@
 extends Node
 
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
-const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
-const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://run_system/ui/backpack_cell.gd
-const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://run_system/ui/window/character_window.gd
+const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://ui/common/equipment_icon.gd
+const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://ui/common/backpack_cell.gd
+const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://ui/windows/character_window.gd
 const MARKET_SCREEN = preload("uid://5n0ylol4ybmn")  # res://ui/base/market_screen.gd
 const SHOP_SCENE = preload("uid://cwl3mw1l5eg5p")  # res://ui/shop/shop_scene.gd
-const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://run_system/ui/run_top_bar.gd
+const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://ui/common/run_top_bar.gd
 
 const GENERIC_EQUIPMENT_DIR := "res://battle_scene/assets/images/ui/equipment/"
 const GENERIC_EQUIPMENT_SLOTS := ["head", "chest", "weapon", "hands", "accessory"]
@@ -85,9 +85,9 @@ func _test_equipment_resolution_and_names() -> void:
 	_expect(method_exists, "EquipmentIcon exposes resolve_equipment_texture")
 
 	for path in [
-		"res://run_system/ui/window/character_window.gd",  # path-ok: reads source text
-		"res://run_system/ui/window/stash_window.gd",  # path-ok: reads source text
-		"res://run_system/ui/window/forge_window.gd",  # path-ok: reads source text
+		"res://ui/windows/character_window.gd",  # path-ok: reads source text
+		"res://ui/windows/stash_window.gd",  # path-ok: reads source text
+		"res://ui/windows/forge_window.gd",  # path-ok: reads source text
 	]:
 		var source := FileAccess.get_file_as_string(path)
 		_expect(

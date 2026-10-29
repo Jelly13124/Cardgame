@@ -6,11 +6,11 @@
 ## JSON `bonuses` summary is the legacy fallback when no rolled instance exists.
 ##
 ## Static-only helper (no class_name by project convention):
-##   const EQUIP_TOOLTIP = preload("res://run_system/ui/equip_tooltip.gd")
+##   const EQUIP_TOOLTIP = preload("res://ui/common/equip_tooltip.gd")
 ##   cell.hover_tip = EQUIP_TOOLTIP.text(data, slot, inst)
 extends RefCounted
 
-const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
+const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://core/meta/affixes.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 
 ## Rarity → BBCode hex for the header (mirrors equipment_icon.gd RARITY_COLORS).

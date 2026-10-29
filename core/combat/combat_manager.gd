@@ -22,7 +22,7 @@ const ENEMY_TURN = preload("uid://d4np8yrt1ml3v")  # res://core/combat/enemy_tur
 const RELIC_LISTENERS = preload("uid://b4d2o08tofxey")  # res://core/combat/relic_listeners.gd
 const EQUIPMENT_SET = preload("uid://b3s8io84xovx7")  # res://core/listeners/equipment_set.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
-const CARD_UPGRADE = preload("uid://d2e2bfj6oa3yp")  # res://run_system/core/card_upgrade.gd
+const CARD_UPGRADE = preload("uid://d2e2bfj6oa3yp")  # res://core/run/card_upgrade.gd
 const DISCOVER_POOL = preload("uid://c76axesxo6wit")  # res://core/run/card_pools.gd
 
 ## The fight ended: "victory" or "defeat".

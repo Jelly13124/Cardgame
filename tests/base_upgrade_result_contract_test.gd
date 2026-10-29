@@ -4,18 +4,18 @@ const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MARKET = preload("uid://brturtmxacges")  # res://core/meta/market.gd
 
 const RESULT_SCREEN_PATH := "res://ui/rewards/result_screen.gd"  # path-ok: reads source text
-const META_PROGRESS_PATH := "res://run_system/core/meta_progress.gd"  # path-ok: reads source text
+const META_PROGRESS_PATH := "res://autoload/meta_progress.gd"  # path-ok: reads source text
 const HOME_BASE_PATH := "res://ui/base/home_base_scene.gd"  # path-ok: reads source text
 const BUILDING_SCREEN_BASE_PATH := "res://ui/base/building_screen_base.gd"  # path-ok: reads source text
 const CLINIC_SCREEN_PATH := "res://ui/base/clinic_screen.gd"  # path-ok: reads source text
 const MARKET_SCREEN_PATH := "res://ui/base/market_screen.gd"  # path-ok: reads source text
 const OUTPOST_SCREEN_PATH := "res://ui/base/outpost_screen.gd"  # path-ok: reads source text
-const WASTELAND_THEME_PATH := "res://run_system/ui/theme/wasteland_theme.gd"  # path-ok: reads source text
+const WASTELAND_THEME_PATH := "res://ui/common/theme/wasteland_theme.gd"  # path-ok: reads source text
 const BUILDING_UPGRADE_POPOVER_PATH := (
 	"res://ui/base/building_upgrade_popover.gd"  # path-ok: reads source text
 )
-const FORGE_WINDOW_PATH := "res://run_system/ui/window/forge_window.gd"  # path-ok: reads source text
-const MAIN_MENU_PATH := "res://run_system/ui/main_menu.gd"  # path-ok: reads source text
+const FORGE_WINDOW_PATH := "res://ui/windows/forge_window.gd"  # path-ok: reads source text
+const MAIN_MENU_PATH := "res://ui/menus/main_menu.gd"  # path-ok: reads source text
 const UI_COMMON_PATH := "res://assets/translations/ui_common.csv"
 const UI_HOME_PATH := "res://assets/translations/ui_home.csv"
 const NORMAL_BUTTON_PATH := "res://run_system/assets/images/ui/start_screen/button_main_normal_v2.png"

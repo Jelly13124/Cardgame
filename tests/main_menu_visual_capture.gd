@@ -1,6 +1,6 @@
 extends Node
 
-const MAIN_MENU = preload("uid://dnjlmt1repvjw")  # res://run_system/ui/main_menu.tscn
+const MAIN_MENU = preload("uid://dnjlmt1repvjw")  # res://ui/menus/main_menu.tscn
 
 
 func _ready() -> void:

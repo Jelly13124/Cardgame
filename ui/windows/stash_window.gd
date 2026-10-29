@@ -22,12 +22,12 @@
 ## segmented sort buttons + orange auto-organize, rarity corner ribbons on
 ## filled cells, dashed-slot drag hint footer. Every lightline texture is
 ## null-guarded (silent programmatic fallback while Codex art regenerates).
-extends "res://run_system/ui/window/draggable_window.gd"
+extends "res://ui/windows/draggable_window.gd"
 
-const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
-const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://run_system/ui/backpack_cell.gd
-const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
-const EQUIP_TOOLTIP = preload("uid://c6r8gr4gvx8ts")  # res://run_system/ui/equip_tooltip.gd
+const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://ui/common/equipment_icon.gd
+const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://ui/common/backpack_cell.gd
+const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://core/meta/affixes.gd
+const EQUIP_TOOLTIP = preload("uid://c6r8gr4gvx8ts")  # res://ui/common/equip_tooltip.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 
 const WIN_SIZE := Vector2(860, 1000)
@@ -61,12 +61,12 @@ var _stash_page := 0
 ## base-mode CharacterWindow is open the stash docks BESIDE it (left if there is
 ## room, else right) for the D4 dual-window drag flow.
 static func open_window(host: Node) -> Control:
-	var wl = load("uid://brmgvym4d5nfq").ensure(host)  # res://run_system/ui/window/window_layer.gd
+	var wl = load("uid://brmgvym4d5nfq").ensure(host)  # res://ui/windows/window_layer.gd
 	var existing = wl.get_node_or_null("StashWindow")
 	if existing and not existing.is_queued_for_deletion():
 		existing.close()
 		return null
-	var win = load("uid://cgyuqu543lioh").new()  # res://run_system/ui/window/stash_window.gd
+	var win = load("uid://cgyuqu543lioh").new()  # res://ui/windows/stash_window.gd
 	win.name = "StashWindow"
 	wl.open(win)
 	var cw = wl.get_node_or_null("CharacterWindow")

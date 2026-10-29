@@ -1,7 +1,7 @@
 ## DraggableWindow — base for the floating base-UI windows (character / forge).
 ## Title-bar drag (clamped to viewport), ✕ close, click-to-front, optional
 ## title-bar icon buttons (add_title_button). Subclass via
-## `extends "res://run_system/ui/window/draggable_window.gd"` (no class_name,
+## `extends "res://ui/windows/draggable_window.gd"` (no class_name,
 ## the project preload convention), call `init_window(title, size)` in _ready, then add content into
 ## `content_root`. Windows that build their OWN header (show_title_bar=false)
 ## put it into `header_root` — the fixed strip ABOVE the content scroll — and
@@ -11,7 +11,7 @@
 ## lands).
 extends PanelContainer
 
-const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 
 signal closed
 

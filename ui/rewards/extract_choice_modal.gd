@@ -7,7 +7,7 @@
 extends Control
 class_name ExtractChoiceModal
 
-const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 
 signal chosen(extract: bool)
 

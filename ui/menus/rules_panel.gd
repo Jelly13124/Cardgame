@@ -3,7 +3,7 @@
 ## Close button or ESC. No class_name per project convention; owner instances + add_child.
 extends Control
 
-const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 
 ## Localized section keys, shown top to bottom.
 const SECTIONS := [

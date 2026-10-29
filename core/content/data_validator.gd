@@ -9,7 +9,7 @@ extends RefCounted
 class_name DataValidator
 
 # ─── Core resolvers ───────────────────────────────────────────────────────────
-const CARD_UPGRADE = preload("uid://d2e2bfj6oa3yp")  # res://run_system/core/card_upgrade.gd
+const CARD_UPGRADE = preload("uid://d2e2bfj6oa3yp")  # res://core/run/card_upgrade.gd
 
 # ─── Content ──────────────────────────────────────────────────────────────────
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd

@@ -423,7 +423,7 @@ const RUN_EFFECTS = preload("uid://divb5pd0mx4cc")  # res://core/effects/run_eff
 ## Run-context effect registry, built on first use.
 var _run_effects = null
 const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
-const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
+const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://core/meta/affixes.gd
 const RUN_STATE = preload("uid://cguglvtfurhlo")  # res://core/run/run_state.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd

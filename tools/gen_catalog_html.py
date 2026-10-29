@@ -275,7 +275,7 @@ def fmt_effect(e):
     return cap(t)
 
 
-# ── Card-upgrade resolver (Python mirror of run_system/core/card_upgrade.gd) ──
+# ── Card-upgrade resolver (Python mirror of core/run/card_upgrade.gd) ──
 # Keep IN SYNC with card_upgrade.gd. Bespoke `upgrade` block overrides
 # cost/title/description/effects (effects = full replacement); otherwise the
 # formula bumps beneficial numeric fields. Curses are never upgradeable.

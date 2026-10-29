@@ -2,8 +2,8 @@ extends Node
 
 const TEST_SAVE_ROOT = preload("uid://c5pfll7nw68un")  # res://tests/support/test_save_root.gd
 
-const META_PROGRESS_PATH := "res://run_system/core/meta_progress.gd"  # path-ok: reads source text
-const RUN_MANAGER_PATH := "res://run_system/core/run_manager.gd"  # path-ok: reads source text
+const META_PROGRESS_PATH := "res://autoload/meta_progress.gd"  # path-ok: reads source text
+const RUN_MANAGER_PATH := "res://autoload/run_manager.gd"  # path-ok: reads source text
 const TUTORIAL_PATH := "res://ui/battle/tutorial_tips.gd"  # path-ok: reads source text
 const BATTLE_PATH := "res://ui/battle/battle_screen.gd"  # path-ok: reads source text
 const RESULT_PATH := "res://ui/rewards/result_screen.gd"  # path-ok: reads source text
