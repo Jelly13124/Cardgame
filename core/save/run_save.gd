@@ -7,6 +7,7 @@ extends RefCounted
 
 const MIGRATION_CHAIN = preload("uid://bmeya57dgtty2")  # res://core/save/migration_chain.gd
 const CONTENT_ID_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/save/content_id_migration.gd
+const RUN_RNG_SET = preload("uid://ealvw2c6utr7")  # res://core/rng/run_rng_set.gd
 const LEGACY_EQUIPMENT = preload("uid://bpsstam8gekpw")  # res://core/save/legacy_equipment.gd
 
 const CURRENT := 4
@@ -45,6 +46,117 @@ static func migrate(data: Dictionary) -> Dictionary:
 	var out: Dictionary = chain().migrate(data, version_of(data))
 	out.erase("v")
 	out["schema_version"] = CURRENT
+	return out
+
+
+## The current-schema save of `state` (core/run/run_state.gd).
+## `elapsed_msec`: run time so far (the tick stamp itself is process-local).
+static func to_dict(state, elapsed_msec: int) -> Dictionary:
+	return {
+		"schema_version": CURRENT,
+		"rng": state.rng.to_dict() if state.rng != null else {},
+		"is_run_active": state.is_run_active,
+		"current_hero_id": state.hero_id,
+		"ascension": state.ascension,
+		"max_health": state.max_health,
+		"current_health": state.current_health,
+		"run_scrap": state.run_scrap,
+		"run_caps": state.run_caps,
+		"current_floor": state.current_floor,
+		"current_act": state.current_act,
+		"player_deck": state.deck,
+		"equipped_items": state.equipped,
+		"backpack": state.backpack,  # bare-ok: save key
+		"relics": state.relics,
+		"tool_inventory": state.tools,
+		"xp": state.xp,
+		"level": state.level,
+		"pending_attr_points": state.pending_attr_points,
+		"reward_rerolls": state.reward_rerolls,
+		"run_elapsed_msec": elapsed_msec,
+		"base_attributes": state.base_attributes,
+		"player_attributes": state.player_attributes,
+		"current_encounter": state.current_encounter,
+		"last_battle_node_type": state.last_battle_node_type,
+		"seen_random_event_ids": state.seen_event_ids,
+		"demo_featured_set_id": state.demo_featured_set_id,
+		"demo_set_piece_ids_claimed": state.demo_set_piece_ids_claimed,
+		"map_data": state.map_data,
+		"current_node_id": state.current_node_id,
+		"visited_node_ids": state.visited_node_ids,
+		"shop_stock": state.shop_stock,
+	}
+
+
+## Fill `state` from a current-schema save (JSON numbers come back as floats;
+## typed fields are re-coerced). A save without valid RNG continues on a fresh
+## seed.
+static func apply(state, d: Dictionary) -> void:
+	var saved_rng: Variant = d.get("rng", {})
+	if typeof(saved_rng) == TYPE_DICTIONARY and RUN_RNG_SET.is_valid_seed(str(saved_rng.get("seed_string", ""))):
+		state.rng = RUN_RNG_SET.from_dict(saved_rng)
+	else:
+		state.rng = RUN_RNG_SET.new(RUN_RNG_SET.random_seed_string())
+	state.is_run_active = bool(d.get("is_run_active", false))
+	state.hero_id = str(d.get("current_hero_id", ""))
+	state.ascension = int(d.get("ascension", 0))
+	state.max_health = int(d.get("max_health", 50))
+	state.current_health = int(d.get("current_health", state.max_health))
+	state.run_scrap = int(d.get("run_scrap", 0))
+	state.run_caps = int(d.get("run_caps", 0))
+	state.current_floor = int(d.get("current_floor", 0))
+	state.current_act = int(d.get("current_act", 1))
+	state.deck = d.get("player_deck", [])
+	state.equipped = d.get("equipped_items", {})
+	state.backpack = d.get("backpack", [])  # bare-ok: save key
+	state.relics = strings(d.get("relics", []))
+	state.tools = strings(d.get("tool_inventory", []))
+	state.xp = int(d.get("xp", 0))
+	state.level = int(d.get("level", 1))
+	state.pending_attr_points = int(d.get("pending_attr_points", 0))
+	state.reward_rerolls = int(d.get("reward_rerolls", 0))
+	state.base_attributes = d.get("base_attributes", state.base_attributes)
+	state.player_attributes = d.get("player_attributes", state.player_attributes)
+	state.current_encounter = strings(d.get("current_encounter", []))
+	state.last_battle_node_type = str(d.get("last_battle_node_type", "enemy"))
+	state.seen_event_ids = strings(d.get("seen_random_event_ids", []))
+	state.demo_featured_set_id = str(d.get("demo_featured_set_id", ""))
+	state.demo_set_piece_ids_claimed = strings(d.get("demo_set_piece_ids_claimed", []))
+	state.map_data = map_nodes(d.get("map_data", []))
+	state.current_node_id = str(d.get("current_node_id", ""))
+	state.visited_node_ids = strings(d.get("visited_node_ids", []))
+	var stock = d.get("shop_stock", {})
+	state.shop_stock = stock if typeof(stock) == TYPE_DICTIONARY else {}
+
+
+static func strings(v: Variant) -> Array[String]:
+	var out: Array[String] = []
+	if typeof(v) == TYPE_ARRAY:
+		for e in v:
+			out.append(str(e))
+	return out
+
+
+## Map nodes with their numeric fields re-coerced and children as Strings; extra
+## generator fields kept as they are.
+static func map_nodes(raw: Variant) -> Array:
+	var out: Array = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for node in raw:
+		if typeof(node) != TYPE_DICTIONARY:
+			continue
+		var n := {
+			"id": str(node.get("id", "")),
+			"floor": int(node.get("floor", 0)),
+			"slot": int(node.get("slot", 0)),
+			"type": str(node.get("type", "enemy")),
+			"children": strings(node.get("children", [])),
+		}
+		for k in node.keys():
+			if not n.has(k):
+				n[k] = node[k]
+		out.append(n)
 	return out
 
 

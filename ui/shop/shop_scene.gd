@@ -77,13 +77,19 @@ func _refresh_gold_label() -> void:
 # --- Stock rolling ---------------------------------------------------------
 
 
-## Stock and prices come from the run layer (core/run/shop_stock.gd).
+## Stock and prices come from the run layer (core/run/shop_stock.gd). A
+## merchant rolls once per map node; the stock is kept in the run state, so
+## reopening it (after a reload too) shows the same goods.
 func _roll_stock() -> void:
-	var stock: Dictionary = SHOP_STOCK.roll(
-		CARD_POOLS.shop_cards_by_rarity(str(RunManager.current_hero_id)),
-		RunManager.tool_pool(),
-		_list_unowned_relics()
-	)
+	var node_id := str(RunManager.current_node_id)
+	var stock: Dictionary = RunManager.state.shop_stock.get(node_id, {})
+	if stock.is_empty():
+		stock = SHOP_STOCK.roll(
+			CARD_POOLS.shop_cards_by_rarity(str(RunManager.current_hero_id)),
+			RunManager.tool_pool(),
+			_list_unowned_relics()
+		)
+		RunManager.state.shop_stock[node_id] = stock
 	_stock_cards = stock["cards"]
 	_stock_tools = stock["tools"]
 	_stock_relics = stock["relics"]
@@ -414,6 +420,8 @@ func _build_card_offer(entry: Dictionary) -> Control:
 	buy.add_theme_font_size_override("font_size", 18)
 	_style_offer_button(buy, RARITY_COLORS.get(str(entry.get("rarity", "common")), SHOP_PRICE))
 	buy.pressed.connect(_on_buy_card.bind(card_id, int(entry.get("price", 0)), buy))
+	if bool(entry.get("sold", false)):
+		_mark_sold(buy)
 	wrapper.add_child(buy)
 	return wrapper
 
@@ -447,6 +455,8 @@ func _build_relic_offer(entry: Dictionary) -> Control:
 	buy.add_theme_font_size_override("font_size", 18)
 	_style_offer_button(buy, Color(0.84, 0.68, 0.33))
 	buy.pressed.connect(_on_buy_relic.bind(relic_id, int(entry.get("price", 0)), buy))
+	if bool(entry.get("sold", false)):
+		_mark_sold(buy)
 	icon_button.pressed.connect(buy.emit_signal.bind("pressed"))
 	wrapper.add_child(buy)
 	return wrapper
@@ -470,6 +480,8 @@ func _build_tool_offer(entry: Dictionary) -> Control:
 		buy.expand_icon = true
 	_style_offer_button(buy, TOOL_ACCENT)
 	buy.pressed.connect(_on_buy_tool.bind(tool_id, int(entry.get("price", 0)), buy))
+	if bool(entry.get("sold", false)):
+		_mark_sold(buy)
 	wrapper.add_child(buy)
 
 	var price := Label.new()
@@ -671,6 +683,8 @@ func _build_card_stall(entry: Dictionary) -> Control:
 	price_row.add_child(price_lbl)
 	var buy_btn := _make_shop_button(tr("UI_SHOP_BUY"), Vector2(88, 34))
 	buy_btn.pressed.connect(_on_buy_card.bind(card_id, int(entry["price"]), buy_btn))
+	if bool(entry.get("sold", false)):
+		_mark_sold(buy_btn)
 	price_row.add_child(buy_btn)
 
 	return wrapper
@@ -756,6 +770,8 @@ func _build_tool_stall(entry: Dictionary) -> Control:
 	price_row.add_child(price_lbl)
 	var buy_btn := _make_shop_button(tr("UI_SHOP_BUY"), Vector2(78, 32))
 	buy_btn.pressed.connect(_on_buy_tool.bind(tool_id, int(entry["price"]), buy_btn))
+	if bool(entry.get("sold", false)):
+		_mark_sold(buy_btn)
 	price_row.add_child(buy_btn)
 
 	return frame
@@ -828,6 +844,8 @@ func _build_relic_stall(entry: Dictionary) -> Control:
 	price_row.add_child(price_lbl)
 	var buy_btn := _make_shop_button(tr("UI_SHOP_BUY"), Vector2(78, 32))
 	buy_btn.pressed.connect(_on_buy_relic.bind(relic_id, price, buy_btn))
+	if bool(entry.get("sold", false)):
+		_mark_sold(buy_btn)
 	price_row.add_child(buy_btn)
 
 	return frame
@@ -874,6 +892,7 @@ func _on_buy_card(card_id: String, price: int, btn: Button) -> void:
 	if RunManager.purchase_card(card_id, price):
 		AudioManager.play_sfx("purchase")
 		_mark_sold(btn)
+		_note_sold(_stock_cards, "card_id", card_id)
 	else:
 		AudioManager.play_sfx("error")
 
@@ -882,6 +901,7 @@ func _on_buy_tool(tool_id: String, price: int, btn: Button) -> void:
 	if RunManager.purchase_tool(tool_id, price):
 		AudioManager.play_sfx("purchase")
 		_mark_sold(btn)
+		_note_sold(_stock_tools, "tool_id", tool_id)
 	else:
 		AudioManager.play_sfx("error")
 
@@ -890,8 +910,17 @@ func _on_buy_relic(relic_id: String, price: int, btn: Button) -> void:
 	if RunManager.purchase_relic(relic_id, price):
 		AudioManager.play_sfx("purchase")
 		_mark_sold(btn)
+		_note_sold(_stock_relics, "relic_id", relic_id)
 	else:
 		AudioManager.play_sfx("error")
+
+
+## The bought offer stays sold in the stock kept for this merchant.
+func _note_sold(stock: Array, key: String, id: String) -> void:
+	for entry in stock:
+		if str(entry.get(key, "")) == id and not bool(entry.get("sold", false)):
+			entry["sold"] = true
+			return
 
 
 func _mark_sold(btn: Button) -> void:

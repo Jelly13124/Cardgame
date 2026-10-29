@@ -262,9 +262,11 @@ func _test_result_cta_guard() -> void:
 
 func _test_run_timer_resume_contract() -> void:
 	var source := FileAccess.get_file_as_string(RUN_MANAGER_PATH)
-	var save_body := _function_body(source, "func save_run")
 	var load_body := _function_body(source, "func load_run")
-	_expect(save_body.contains('"run_elapsed_msec"'), "run saves persist elapsed duration")
+	_expect(
+		int(RUN_SAVE.to_dict(RunManager.state, 4321).get("run_elapsed_msec", -1)) == 4321,
+		"run saves persist elapsed duration"
+	)
 	_expect(
 		load_body.contains('Time.get_ticks_msec() - int(data.get("run_elapsed_msec", 0))'),
 		"run loads rebuild the process-local timer from persisted elapsed duration"

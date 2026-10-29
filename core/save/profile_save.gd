@@ -37,6 +37,80 @@ static func migrate(data: Dictionary) -> Dictionary:
 	return out
 
 
+## The current-schema save of `profile` (core/meta/profile_state.gd).
+static func to_dict(profile) -> Dictionary:
+	return {
+		"schema_version": CURRENT,
+		"caps": profile.caps,
+		"scrap": profile.scrap,
+		"upgrades": profile.upgrades,
+		"facilities": profile.facilities,
+		"caps_perk_levels": profile.caps_perk_levels,
+		"run_history": profile.run_history,
+		"max_ascension": profile.max_ascension,
+		"stash": profile.stash,
+		"base_loadout": profile.base_loadout,
+		"base_equipped": profile.base_equipped,
+		"buildings": profile.buildings,
+		"tutorial_seen": profile.tutorial_seen,
+		"active_bounties": profile.active_bounties,
+		"bounty_shelf": profile.bounty_shelf,
+		"bounty_shelf_date": profile.bounty_shelf_date,
+		"cards_seen": profile.cards_seen,
+	}
+
+
+## Fill `profile` from a current-schema save. JSON numbers come back as floats
+## and dictionary keys as Strings, so typed values are re-coerced;
+## `max_ascension` is clamped to `ascension_cap`.
+static func apply(profile, d: Dictionary, ascension_cap: int) -> void:
+	profile.caps = int(d.get("caps", 0))
+	profile.scrap = int(d.get("scrap", 0))
+	profile.upgrades = _dict(d.get("upgrades"))
+	profile.facilities = _dict(d.get("facilities"))
+	profile.caps_perk_levels = _dict(d.get("caps_perk_levels"))
+	profile.run_history = d.get("run_history", []) if typeof(d.get("run_history")) == TYPE_ARRAY else []
+	profile.max_ascension = clampi(int(d.get("max_ascension", 0)), 0, ascension_cap)
+	profile.tutorial_seen = bool(d.get("tutorial_seen", false))
+	profile.stash = _instances(d.get("stash", []))
+	profile.base_loadout = _instances(d.get("base_loadout", []))
+	var equipped := {}
+	var raw_equipped = d.get("base_equipped", {})
+	if typeof(raw_equipped) == TYPE_DICTIONARY:
+		for slot in raw_equipped:
+			if typeof(raw_equipped[slot]) == TYPE_DICTIONARY:
+				equipped[str(slot)] = raw_equipped[slot]
+	profile.base_equipped = equipped
+	var buildings := {}
+	for bid in _dict(d.get("buildings")):
+		buildings[str(bid)] = int(d["buildings"][bid])
+	profile.buildings = buildings
+	var bounties: Array = []
+	for entry in d.get("active_bounties", []):
+		if typeof(entry) == TYPE_DICTIONARY and str(entry.get("id", "")) != "":
+			bounties.append({"id": str(entry["id"]), "progress": int(entry.get("progress", 0))})
+	profile.active_bounties = bounties
+	profile.bounty_shelf = (d.get("bounty_shelf", []) as Array).map(func(id): return str(id)) if typeof(d.get("bounty_shelf")) == TYPE_ARRAY else []
+	profile.bounty_shelf_date = str(d.get("bounty_shelf_date", ""))
+	var seen := {}
+	for card_id in _dict(d.get("cards_seen")):
+		seen[str(card_id)] = true
+	profile.cards_seen = seen
+
+
+static func _dict(v: Variant) -> Dictionary:
+	return v if typeof(v) == TYPE_DICTIONARY else {}
+
+
+static func _instances(v: Variant) -> Array:
+	var out: Array = []
+	if typeof(v) == TYPE_ARRAY:
+		for item in v:
+			if typeof(item) == TYPE_DICTIONARY:
+				out.append(item)
+	return out
+
+
 static func _v1_to_v2(d: Dictionary) -> Dictionary:
 	CONTENT_ID_MIGRATION.migrate_meta_ids(d)
 	return d

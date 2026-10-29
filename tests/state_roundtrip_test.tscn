@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bnrnqdh3434ak"]
+
+[ext_resource type="Script" path="res://tests/state_roundtrip_test.gd" id="1"]
+
+[node name="StateRoundtripTest" type="Node"]
+script = ExtResource("1")

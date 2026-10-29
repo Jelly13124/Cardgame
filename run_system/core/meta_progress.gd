@@ -135,48 +135,108 @@ signal bounties_changed
 
 ## "Money" currency. Spent at market/clinic and on outpost permanent
 ## upgrades; earned via run banking (extract/victory) + contract rewards.
-var caps: int = 0
+## The profile's persisted state (core/meta/profile_state.gd); the fields below
+## forward to it.
+var profile = PROFILE_STATE.new()
+
+var caps: int:
+	get:
+		return profile.caps
+	set(v):
+		profile.caps = v
 ## "Salvage" currency. Earned by dismantling equipment at the forge + battle drops
 ## (banked to here on extract/victory); spent on reforging and all building tiers.
-var scrap: int = 0
-var upgrades: Dictionary = {}
+var scrap: int:
+	get:
+		return profile.scrap
+	set(v):
+		profile.scrap = v
+var upgrades: Dictionary:
+	get:
+		return profile.upgrades
+	set(v):
+		profile.upgrades = v
 ## Legacy facilities unlocked once (one-time). facility_id → true once unlocked.
 ## Superseded by the tiered `buildings` model; kept for back-compat migration.
-var facilities: Dictionary = {}
+var facilities: Dictionary:
+	get:
+		return profile.facilities
+	set(v):
+		profile.facilities = v
 ## Tiered perks bought with Caps inside a facility. perk_id → int level.
-var caps_perk_levels: Dictionary = {}
+var caps_perk_levels: Dictionary:
+	get:
+		return profile.caps_perk_levels
+	set(v):
+		profile.caps_perk_levels = v
 ## Last 50 run summaries (newest at end). Persisted to meta.json.
 ## Each entry: { hero_id, floor, scrap_earned, outcome, timestamp }
-var run_history: Array = []
+var run_history: Array:
+	get:
+		return profile.run_history
+	set(v):
+		profile.run_history = v
 ## Highest difficulty completed. 0 means no ascension cleared.
-var max_ascension: int = 0
+var max_ascension: int:
+	get:
+		return profile.max_ascension
+	set(v):
+		profile.max_ascension = v
 ## True once the player has seen the first-battle tutorial tips. Persisted so the
 ## tips show exactly once across all runs. Set via mark_tutorial_seen().
-var tutorial_seen: bool = false
+var tutorial_seen: bool:
+	get:
+		return profile.tutorial_seen
+	set(v):
+		profile.tutorial_seen = v
 ## Permanent equipment stash — pure storage populated only by an explicit
 ## backpack/slot → stash transfer (plus legacy/base reward producers that have
 ## not yet moved to the backpack contract). Run settlement never writes here.
 ## Each entry is an equip INSTANCE dict (see RunManager.equip_instance), or a
 ## legacy item_id String from an older save — both are tolerated on read.
-var stash: Array = []
+var stash: Array:
+	get:
+		return profile.stash
+	set(v):
+		profile.stash = v
 ## Buildings refactor (4 clickable base buildings). building_id → tier int
 ## (0=locked, 1=unlocked, 2, 3). Persisted; back-compat default {}. Stale ids
 ## from old saves (e.g. the removed warehouse) are kept but harmless — no live
 ## code looks their tier up anymore.
-var buildings: Dictionary = {}
+var buildings: Dictionary:
+	get:
+		return profile.buildings
+	set(v):
+		profile.buildings = v
 ## Held bounty contracts (cross-run, cross-day persistent). Each entry:
 ## { "id": String, "progress": int }. Settled (reward granted + removed) the
 ## moment progress reaches the objective count. Capped at MAX_ACTIVE_BOUNTIES.
-var active_bounties: Array = []
+var active_bounties: Array:
+	get:
+		return profile.active_bounties
+	set(v):
+		profile.active_bounties = v
 ## Today's outpost bounty shelf: bounty ids on offer (BOUNTY_SHELF_SIZE per day,
 ## every contract is FREE to take). Rerolled when the local date changes
 ## (deterministic per date — same day, same shelf).
-var bounty_shelf: Array = []
+var bounty_shelf: Array:
+	get:
+		return profile.bounty_shelf
+	set(v):
+		profile.bounty_shelf = v
 ## Local date ("YYYY-MM-DD") the current shelf was rolled for.
-var bounty_shelf_date: String = ""
+var bounty_shelf_date: String:
+	get:
+		return profile.bounty_shelf_date
+	set(v):
+		profile.bounty_shelf_date = v
 ## Card codex unlock set: card_id → true once the card has been played (demo
 ## rule: used = unlocked). Persisted; write-throttled in mark_card_seen.
-var cards_seen: Dictionary = {}
+var cards_seen: Dictionary:
+	get:
+		return profile.cards_seen
+	set(v):
+		profile.cards_seen = v
 
 const RUN_HISTORY_CAP := 50
 const ASCENSION_CAP := 5
@@ -263,6 +323,7 @@ const REFORGE_COST := {"common": 15, "uncommon": 30, "rare": 50}
 const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
 ## --- Bounty system (replaces the daily-task mock) ---
 const CARD_POOLS = preload("uid://c76axesxo6wit")  # res://core/run/card_pools.gd
+const PROFILE_STATE = preload("uid://1lid0vwtvi7n")  # res://core/meta/profile_state.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const PROFILE_SAVE = preload("uid://cox1wehu1m6on")  # res://core/save/profile_save.gd
 const CONTENT_ID_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/save/content_id_migration.gd
@@ -992,27 +1053,7 @@ func mark_card_seen(card_id: String) -> void:
 
 
 func save_progress() -> void:
-	var payload := {
-		"caps": caps,
-		"scrap": scrap,
-		"upgrades": upgrades,
-		"facilities": facilities,
-		"caps_perk_levels": caps_perk_levels,
-		"run_history": run_history,
-		"max_ascension": max_ascension,
-		"stash": stash,
-		# The base backpack/equipment slots own these entries independently of
-		# stash. Kept in the profile so returned gear survives relaunches.
-		"base_loadout": RunManager.pending_loadout,
-		"base_equipped": RunManager.pending_equipped,
-		"buildings": buildings,
-		"tutorial_seen": tutorial_seen,
-		"active_bounties": active_bounties,
-		"bounty_shelf": bounty_shelf,
-		"bounty_shelf_date": bounty_shelf_date,
-		"cards_seen": cards_seen,
-		"schema_version": PROFILE_SAVE.CURRENT,
-	}
+	var payload := PROFILE_SAVE.to_dict(profile)
 	var err := SAVE_IO.write_json(_meta_path(), payload)
 	if err != OK:
 		push_warning("MetaProgress: failed to save profile (%s)" % error_string(err))
@@ -1039,73 +1080,7 @@ func load_progress() -> void:
 	if migrated:
 		CONTENT_ID_MIGRATION.backup_once(path, parsed)
 		parsed = PROFILE_SAVE.migrate(parsed)
-	# Core was removed 2026-07-07: an old save's "core" key is simply ignored here
-	# (balance discarded, not migrated — owner decision). Missing/extra keys are
-	# fault-tolerant (JSON.get with defaults), so old and new saves both load clean.
-	caps = int(parsed.get("caps", 0))
-	scrap = int(parsed.get("scrap", 0))
-	var raw_upgrades = parsed.get("upgrades", {})
-	if typeof(raw_upgrades) == TYPE_DICTIONARY:
-		upgrades = raw_upgrades
-	# Back-compat: old saves predate the two-layer base model. Missing keys →
-	# empty (cyber_doc locked, no perks bought).
-	var rf = parsed.get("facilities", {})
-	if typeof(rf) == TYPE_DICTIONARY:
-		facilities = rf
-	var rp = parsed.get("caps_perk_levels", {})
-	if typeof(rp) == TYPE_DICTIONARY:
-		caps_perk_levels = rp
-	var raw_history = parsed.get("run_history", [])
-	if typeof(raw_history) == TYPE_ARRAY:
-		run_history = raw_history
-	max_ascension = clampi(int(parsed.get("max_ascension", 0)), 0, ASCENSION_CAP)
-	tutorial_seen = bool(parsed.get("tutorial_seen", false))
-	# Equipment is always an instance dict (profile schema v3).
-	stash.clear()
-	for item in parsed.get("stash", []):
-		if typeof(item) == TYPE_DICTIONARY:
-			stash.append(item)
-	RunManager.pending_loadout.clear()
-	for item in parsed.get("base_loadout", []):
-		if typeof(item) == TYPE_DICTIONARY:
-			RunManager.pending_loadout.append(item)
-	RunManager.pending_equipped.clear()
-	var raw_base_equipped = parsed.get("base_equipped", {})
-	if typeof(raw_base_equipped) == TYPE_DICTIONARY:
-		for slot in raw_base_equipped:
-			if typeof(raw_base_equipped[slot]) == TYPE_DICTIONARY:
-				RunManager.pending_equipped[str(slot)] = raw_base_equipped[slot]
-	# Back-compat: old saves predate the buildings refactor. Missing key →
-	# empty {} (all buildings locked). Stale ids from removed buildings (e.g.
-	# "warehouse") are carried along harmlessly — nothing reads them.
-	# JSON int keys round-trip as Strings; values may parse as float, so coerce.
-	var raw_buildings = parsed.get("buildings", {})
-	buildings.clear()
-	if typeof(raw_buildings) == TYPE_DICTIONARY:
-		for bid in raw_buildings:
-			buildings[str(bid)] = int(raw_buildings[bid])
-	# Bounty system + card codex: old saves predate these keys → defaults (no
-	# held contracts, stale shelf date so the next base visit rolls a shelf,
-	# empty codex). Entries are re-coerced since JSON round-trips ints as floats.
-	active_bounties.clear()
-	var raw_bounties = parsed.get("active_bounties", [])
-	if typeof(raw_bounties) == TYPE_ARRAY:
-		for entry in raw_bounties:
-			if typeof(entry) == TYPE_DICTIONARY and str(entry.get("id", "")) != "":
-				active_bounties.append(
-					{"id": str(entry.get("id", "")), "progress": int(entry.get("progress", 0))}
-				)
-	bounty_shelf.clear()
-	var raw_shelf = parsed.get("bounty_shelf", [])
-	if typeof(raw_shelf) == TYPE_ARRAY:
-		for id in raw_shelf:
-			bounty_shelf.append(str(id))
-	bounty_shelf_date = str(parsed.get("bounty_shelf_date", ""))
-	cards_seen.clear()
-	var raw_seen = parsed.get("cards_seen", {})
-	if typeof(raw_seen) == TYPE_DICTIONARY:
-		for cid in raw_seen:
-			cards_seen[str(cid)] = true
+	PROFILE_SAVE.apply(profile, parsed, ASCENSION_CAP)
 	if recovered or migrated:
 		save_progress()
 

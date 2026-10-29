@@ -15,13 +15,29 @@ signal relics_updated
 signal run_ended(victory: bool, summary: Dictionary)
 
 # --- Run State ---
-var is_run_active: bool = false
-var current_hero_id: String = ""
+## The run's persisted state (core/run/run_state.gd); the fields below forward
+## to it.
+var state = RUN_STATE.new()
+
+var is_run_active: bool:
+	get:
+		return state.is_run_active
+	set(v):
+		state.is_run_active = v
+var current_hero_id: String:
+	get:
+		return state.hero_id
+	set(v):
+		state.hero_id = v
 ## Loaded hero JSON, populated by start_new_run. Empty until first run.
 var current_hero_data: Dictionary = {}
 ## Active difficulty modifier this run (0..5). Stored on RunManager so any
 ## subsystem can read it without going back to MetaProgress.
-var ascension: int = 0
+var ascension: int:
+	get:
+		return state.ascension
+	set(v):
+		state.ascension = v
 
 ## Run-scoped INTENT set by base building screens (warehouse hero-select / outpost
 ## difficulty) before a run starts. NOT persisted — cleared after start_new_run
@@ -32,8 +48,16 @@ var pending_hero_id: String = ""
 var pending_ascension: int = -1
 
 # Base Stats
-var max_health: int = 50
-var current_health: int = 50
+var max_health: int:
+	get:
+		return state.max_health
+	set(v):
+		state.max_health = v
+var current_health: int:
+	get:
+		return state.current_health
+	set(v):
+		state.current_health = v
 
 # Resources
 ## Gold is derived from the backpack now. Read-only computed property kept for
@@ -45,25 +69,39 @@ var gold: int:
 		push_warning("RunManager.gold is read-only — use add_gold()/spend_gold()")
 ## Vestigial in-run counter (kept for add_resources compat; callers always pass 0).
 ## Run-scrap that matters lives in the backpack as scrap stacks; see total_run_scrap().
-var _run_scrap_counter: int = 0
+var _run_scrap_counter: int:
+	get:
+		return state.run_scrap
+	set(v):
+		state.run_scrap = v
 
 # Progression
-var current_floor: int = 0
+var current_floor: int:
+	get:
+		return state.current_floor
+	set(v):
+		state.current_floor = v
 ## Which act (大层) the player is on, 1..acts_total(). Each act is its own
 ## floors_per_act()-tall map ending in a single boss. Reset to 1 by start_new_run.
 ## advance_act() is retained for the full-game build; the one-act demo cannot
 ## advance beyond act 1.
-var current_act: int = 1
-var player_deck: Array = []  # Array of Dictionaries (uid, card_id, bonus_attack, bonus_health)
+var current_act: int:
+	get:
+		return state.current_act
+	set(v):
+		state.current_act = v
+var player_deck: Array:
+	get:
+		return state.deck
+	set(v):
+		state.deck = v
 ## Equipped gear, one slot per body part. Each value is an equipment INSTANCE
 ## dict (see equip_instance) or {} when the slot is empty.
-var equipped_items: Dictionary = {
-	"head": {},
-	"chest": {},
-	"weapon": {},
-	"hands": {},
-	"accessory": {},
-}
+var equipped_items: Dictionary:
+	get:
+		return state.equipped
+	set(v):
+		state.equipped = v
 
 ## Backpack — the definitive store for unequipped loot. Fixed length
 ## MAX_INVENTORY. Each cell is one of:
@@ -71,7 +109,11 @@ var equipped_items: Dictionary = {
 ## Gold / Scrap / equipment share these cells.
 ## (The in-run resource stack was "core" before 2026-07-07; it is now "scrap",
 ## banking to MetaProgress.scrap on extract/victory.)
-var backpack: Array = []
+var backpack: Array:
+	get:
+		return state.backpack
+	set(v):
+		state.backpack = v
 signal backpack_changed
 signal tools_changed
 const GOLD_PER_CELL := 100
@@ -89,19 +131,31 @@ const CAPS_PER_BOSS := 45  # boss win (granted alongside the run config's boss_v
 const GOLD_PER_CAP := 10  # extraction: floor(run gold / GOLD_PER_CAP) → caps
 const STARTING_GOLD := 99  # baseline purse every run begins with (Command Center stacks on top)
 ## Run-scoped caps accrued so far this run (banked on extract/victory only).
-var _run_caps: int = 0
+var _run_caps: int:
+	get:
+		return state.run_caps
+	set(v):
+		state.run_caps = v
 ## Equipment physically owned by the base backpack between runs. Each entry is
 ## an equip instance dict. Unlike the old reference model, these entries are NOT
 ## duplicates/references of MetaProgress.stash: dragging between the two moves
 ## ownership atomically. MetaProgress persists this array in the active profile.
 ## start_new_run consumes it into the real run backpack.
-var pending_loadout: Array = []
+var pending_loadout: Array:
+	get:
+		return MetaProgress.profile.base_loadout
+	set(v):
+		MetaProgress.profile.base_loadout = v
 
 ## Equipment physically worn at the base and carried into the next run already
 ## equipped. Maps slot (one of EQUIPMENT_SLOTS) to an owned instance. It is
 ## persisted beside pending_loadout and is disjoint from the
 ## permanent stash; only an explicit drag into StashWindow stores it there.
-var pending_equipped: Dictionary = {}
+var pending_equipped: Dictionary:
+	get:
+		return MetaProgress.profile.base_equipped
+	set(v):
+		MetaProgress.profile.base_equipped = v
 
 ## Compatibility read-only view: the equip item_ids currently in the backpack
 ## (cell order). Mutate via add_to_inventory/discard_from_inventory/equip_to_slot.
@@ -109,20 +163,44 @@ var inventory_items: Array[String]:
 	get:
 		return backpack_equip_ids()
 
-var relics: Array[String] = []
+var relics: Array[String]:
+	get:
+		return state.relics
+	set(v):
+		state.relics = v
 ## Run-scoped one-time tools (StS2-style top-bar consumables). NOT in the backpack.
-var tool_inventory: Array[String] = []
+var tool_inventory: Array[String]:
+	get:
+		return state.tools
+	set(v):
+		state.tools = v
 
 ## In-run XP/level. Killing enemies grants XP; each level-up queues an attribute
 ## point (consumed by the loot screen via pending_attr_points). Reset in start_new_run.
-var xp: int = 0
-var level: int = 1
+var xp: int:
+	get:
+		return state.xp
+	set(v):
+		state.xp = v
+var level: int:
+	get:
+		return state.level
+	set(v):
+		state.level = v
 ## Unspent attribute points from level-ups (each → a 3-of-5 attribute pick, surfaced
 ## by the loot screen). Cards come from combat drafts; attributes come from leveling.
-var pending_attr_points: int = 0
+var pending_attr_points: int:
+	get:
+		return state.pending_attr_points
+	set(v):
+		state.pending_attr_points = v
 ## Reward-screen card-draft rerolls available this run (default 0). Granted by the
 ## Reroll Tokens base upgrade; spent in loot_reward; reset each run.
-var reward_rerolls: int = 0
+var reward_rerolls: int:
+	get:
+		return state.reward_rerolls
+	set(v):
+		state.reward_rerolls = v
 const XP_PER_KILL := {"enemy": 6, "elite": 14, "boss": 30}
 
 ## Wall-clock tick (msec) when the current run started — drives the top-bar run
@@ -178,20 +256,16 @@ const DEFAULT_STARTER_DECK = [
 ## set at run start; player_attributes is the COMPUTED total (base + bonuses
 ## from equipped items), refreshed by recompute_attributes() — never mutated
 ## directly by gameplay code outside RunManager.
-var base_attributes: Dictionary = {
-	"strength": 0,
-	"constitution": 0,
-	"intelligence": 0,
-	"luck": 0,
-	"charm": 0,
-}
-var player_attributes: Dictionary = {
-	"strength": 0,
-	"constitution": 0,
-	"intelligence": 0,
-	"luck": 0,
-	"charm": 0,
-}
+var base_attributes: Dictionary:
+	get:
+		return state.base_attributes
+	set(v):
+		state.base_attributes = v
+var player_attributes: Dictionary:
+	get:
+		return state.player_attributes
+	set(v):
+		state.player_attributes = v
 ## Cached equipment-affix totals, refreshed by recompute_attributes(). max_hp
 ## feeds the player's effective max-health (see equipment_max_hp_bonus);
 ## crit_pct feeds crit_chance().
@@ -203,15 +277,27 @@ var _equipment_crit_pct_bonus: int = 0
 var _random_events: Array = []
 ## Events already dealt during this run. The one-act demo uses a no-replacement
 ## event deck so a route cannot repeat the same vignette.
-var _seen_random_event_ids: Array[String] = []
+var _seen_random_event_ids: Array[String]:
+	get:
+		return state.seen_event_ids
+	set(v):
+		state.seen_event_ids = v
 
 ## Demo-only set onboarding track. Three milestone combat rewards offer distinct
 ## pieces from one featured set, ensuring the equipment differentiator becomes
 ## playable before the boss instead of existing only as a rare random drop.
 const DEMO_SET_TRACK_FLOORS: Array[int] = [2, 5, 8]
 const DEMO_FEATURED_SET_IDS: Array[String] = ["base:weak_hunter", "base:tank_engineer", "base:warden"]
-var demo_featured_set_id: String = ""
-var demo_set_piece_ids_claimed: Array[String] = []
+var demo_featured_set_id: String:
+	get:
+		return state.demo_featured_set_id
+	set(v):
+		state.demo_featured_set_id = v
+var demo_set_piece_ids_claimed: Array[String]:
+	get:
+		return state.demo_set_piece_ids_claimed
+	set(v):
+		state.demo_set_piece_ids_claimed = v
 
 ## Memoized relic view by id (ModelDb data with defaults filled in). Relic data is
 ## immutable at runtime; the relic effect system reads this per attack hit.
@@ -219,11 +305,19 @@ var _relic_data_cache: Dictionary = {}
 
 ## Enemy IDs to encounter in the next battle (set by MapScene before loading battle).
 ## Example: ["trash_robot", "wasteland_killer"]
-var current_encounter: Array[String] = ["base:trash_robot"]
+var current_encounter: Array[String]:
+	get:
+		return state.current_encounter
+	set(v):
+		state.current_encounter = v
 
 ## Set by map_scene before launching a battle. Used by loot_reward to decide
 ## drop rules. Values: "enemy" | "elite" | "boss".
-var last_battle_node_type: String = "enemy"
+var last_battle_node_type: String:
+	get:
+		return state.last_battle_node_type
+	set(v):
+		state.last_battle_node_type = v
 
 ## Acts, their encounters and the map rules are content (content/acts,
 ## content/encounters, content/runs) read through core/run/acts.gd.
@@ -303,11 +397,23 @@ const MAP_SCENE: String = "uid://d3x5b8wvg2q"  # res://ui/map/map_scene.tscn
 
 # --- Map State ---
 ## Each entry: { "id": String, "floor": int, "slot": int, "type": String, "children": Array[String] }
-var map_data: Array = []
-var current_node_id: String = ""  ## "" means player hasn't chosen a floor-0 node yet
+var map_data: Array:
+	get:
+		return state.map_data
+	set(v):
+		state.map_data = v
+var current_node_id: String:
+	get:
+		return state.current_node_id
+	set(v):
+		state.current_node_id = v
 ## IDs of nodes the player has actually entered, in walk order. Used by
 ## map_renderer to highlight the walked path (vs. nodes merely "below current floor").
-var visited_node_ids: Array[String] = []
+var visited_node_ids: Array[String]:
+	get:
+		return state.visited_node_ids
+	set(v):
+		state.visited_node_ids = v
 var _node_index: Dictionary = {}
 
 const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://core/content/data_validator.gd
@@ -318,6 +424,7 @@ const RUN_EFFECTS = preload("uid://divb5pd0mx4cc")  # res://core/effects/run_eff
 var _run_effects = null
 const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix_pool.gd
+const RUN_STATE = preload("uid://cguglvtfurhlo")  # res://core/run/run_state.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
 const ENCOUNTERS = preload("uid://mlx3xqfjwlpq")  # res://core/run/encounters.gd
@@ -330,7 +437,11 @@ const BOUNTY_TRACKER = preload("uid://dufyeowl6elem")  # res://core/listeners/bo
 var run_listeners: Array = [_make_bounty_tracker()]
 const RUN_RNG_SET = preload("uid://ealvw2c6utr7")  # res://core/rng/run_rng_set.gd
 ## Seeded streams of the current run (RunRngSet); null outside a run.
-var run_rng = null
+var run_rng:
+	get:
+		return state.rng
+	set(v):
+		state.rng = v
 ## Stream of the act map being generated (derived from the seed per act).
 var _map_rng = null
 ## Session-only streams for draws outside a run (home-base market, forge, menus).
@@ -1774,45 +1885,9 @@ func has_run_save() -> bool:
 func save_run() -> void:
 	if not is_run_active:
 		return
-	var payload := {
-		"schema_version": RUN_SAVE.CURRENT,
-		"rng": run_rng.to_dict() if run_rng != null else {},
-		"is_run_active": is_run_active,
-		"current_hero_id": current_hero_id,
-		"ascension": ascension,
-		"max_health": max_health,
-		"current_health": current_health,
-		"run_scrap": _run_scrap_counter,
-		"run_caps": _run_caps,
-		"current_floor": current_floor,
-		"current_act": current_act,
-		"player_deck": player_deck,
-		"equipped_items": equipped_items,
-		"backpack": backpack,  # bare-ok: save key
-		"relics": relics,
-		"tool_inventory": tool_inventory,
-		"xp": xp,
-		"level": level,
-		"pending_attr_points": pending_attr_points,
-		"reward_rerolls": reward_rerolls,
-		# Monotonic tick timestamps are process-local. Persist elapsed duration so
-		# continuing a run after restarting the game cannot jump the HUD timer.
-		"run_elapsed_msec": (
-			maxi(0, Time.get_ticks_msec() - run_started_msec)
-			if run_started_msec > 0
-			else 0
-		),
-		"base_attributes": base_attributes,
-		"player_attributes": player_attributes,
-		"current_encounter": current_encounter,
-		"last_battle_node_type": last_battle_node_type,
-		"seen_random_event_ids": _seen_random_event_ids,
-		"demo_featured_set_id": demo_featured_set_id,
-		"demo_set_piece_ids_claimed": demo_set_piece_ids_claimed,
-		"map_data": map_data,
-		"current_node_id": current_node_id,
-		"visited_node_ids": visited_node_ids,
-	}
+	# Monotonic tick stamps are process-local: persist the elapsed duration.
+	var elapsed := maxi(0, Time.get_ticks_msec() - run_started_msec) if run_started_msec > 0 else 0
+	var payload := RUN_SAVE.to_dict(state, elapsed)
 	var err := SAVE_IO.write_json(_run_save_path(), payload)
 	if err != OK:
 		push_warning("RunManager: could not write run save (%s)" % error_string(err))
@@ -1839,50 +1914,14 @@ func load_run() -> bool:
 	if migrated:
 		CONTENT_ID_MIGRATION.backup_once(_run_save_path(), data)
 		data = RUN_SAVE.migrate(data)
-	var saved_rng: Variant = data.get("rng", {})
-	if typeof(saved_rng) == TYPE_DICTIONARY and RUN_RNG_SET.is_valid_seed(str(saved_rng.get("seed_string", ""))):
-		run_rng = RUN_RNG_SET.from_dict(saved_rng)
-	else:
-		# Saves from before seeded streams: the run continues on a fresh seed.
-		run_rng = RUN_RNG_SET.new(RUN_RNG_SET.random_seed_string())
-
-	current_hero_id = str(data.get("current_hero_id", ""))
+	RUN_SAVE.apply(state, data)
 	current_hero_data = MODEL_DB.mutable("character", current_hero_id)
-	ascension = int(data.get("ascension", 0))
-	max_health = int(data.get("max_health", 50))
-	current_health = int(data.get("current_health", max_health))
-	# Fault-tolerant on the old "core" run-save key (discarded; runs' banked scrap
-	# lives in the backpack cells, which round-trip under "backpack").
-	_run_scrap_counter = int(data.get("run_scrap", 0))
-	_run_caps = int(data.get("run_caps", 0))
-	current_floor = int(data.get("current_floor", 0))
-	current_act = int(data.get("current_act", 1))
-	player_deck = data.get("player_deck", [])
-	equipped_items = data.get("equipped_items", {})
-	backpack = data.get("backpack", [])  # bare-ok: save key
-	relics = _to_string_array(data.get("relics", []))
-	tool_inventory = _to_string_array(data.get("tool_inventory", []))
-	xp = int(data.get("xp", 0))
-	level = int(data.get("level", 1))
-	pending_attr_points = int(data.get("pending_attr_points", 0))
-	reward_rerolls = int(data.get("reward_rerolls", 0))
 	run_started_msec = Time.get_ticks_msec() - int(data.get("run_elapsed_msec", 0))
-	base_attributes = data.get("base_attributes", base_attributes)
-	player_attributes = data.get("player_attributes", player_attributes)
-	current_encounter = _to_string_array(data.get("current_encounter", []))
-	last_battle_node_type = str(data.get("last_battle_node_type", "enemy"))
-	_seen_random_event_ids = _to_string_array(data.get("seen_random_event_ids", []))
-	demo_featured_set_id = str(data.get("demo_featured_set_id", ""))
-	demo_set_piece_ids_claimed = _to_string_array(data.get("demo_set_piece_ids_claimed", []))
 	if is_demo() and demo_featured_set_id == "":
 		demo_featured_set_id = DEMO_FEATURED_SET_IDS[0]
-	map_data = _normalize_map(data.get("map_data", []))
-	current_node_id = str(data.get("current_node_id", ""))
-	visited_node_ids = _to_string_array(data.get("visited_node_ids", []))
 
 	_reindex_map()
 	recompute_attributes()
-	is_run_active = true
 	if migrated:
 		save_run()
 	return true
@@ -1898,38 +1937,6 @@ func _reindex_map() -> void:
 	for node in map_data:
 		if typeof(node) == TYPE_DICTIONARY and node.has("id"):
 			_node_index[str(node.id)] = node
-
-
-func _to_string_array(v) -> Array[String]:
-	var out: Array[String] = []
-	if typeof(v) == TYPE_ARRAY:
-		for e in v:
-			out.append(str(e))
-	return out
-
-
-## Re-coerce JSON-parsed map nodes: numeric fields come back as floats, and
-## children must be a String array for id lookups to match. Extra generator
-## fields are preserved as-is.
-func _normalize_map(raw) -> Array:
-	var out: Array = []
-	if typeof(raw) != TYPE_ARRAY:
-		return out
-	for node in raw:
-		if typeof(node) != TYPE_DICTIONARY:
-			continue
-		var n := {
-			"id": str(node.get("id", "")),
-			"floor": int(node.get("floor", 0)),
-			"slot": int(node.get("slot", 0)),
-			"type": str(node.get("type", "enemy")),
-			"children": _to_string_array(node.get("children", [])),
-		}
-		for k in node.keys():
-			if not n.has(k):
-				n[k] = node[k]
-		out.append(n)
-	return out
 
 
 ## Settle the backpack at run end. Currency banks automatically; equipment never
