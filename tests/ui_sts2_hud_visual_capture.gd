@@ -1,6 +1,6 @@
 extends Node
 
-const MAP_SCENE = preload("uid://d3x5b8wvg2q")  # res://run_system/ui/map_scene.tscn
+const MAP_SCENE = preload("uid://d3x5b8wvg2q")  # res://ui/map/map_scene.tscn
 const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
 
 

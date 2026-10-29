@@ -38,7 +38,7 @@ class CheckLayersTest(unittest.TestCase):
         self.assertIn("layers: ok", out)
 
     def test_core_ui_reference_flagged(self):
-        self.write("core/run/rewards.gd", 'const V = preload("res://run_system/ui/loot_reward.gd")\n')
+        self.write("core/run/rewards.gd", 'const V = preload("res://ui/rewards/loot_reward.gd")\n')
         code, out = self.run_check()
         self.assertEqual(code, 1)
         self.assertIn("core/run/rewards.gd:1 L1", out)
@@ -46,7 +46,7 @@ class CheckLayersTest(unittest.TestCase):
     def test_core_ui_reference_by_uid_flagged(self):
         self.write("run_system/ui/loot_reward.gd", "extends Node\n")
         self.write("run_system/ui/loot_reward.gd.uid", "uid://cloot\n")
-        self.write("core/run/rewards.gd", 'const V = preload("uid://cloot")  # res://run_system/ui/loot_reward.gd\n')
+        self.write("core/run/rewards.gd", 'const V = preload("uid://cloot")  # res://ui/rewards/loot_reward.gd\n')
         code, out = self.run_check()
         self.assertEqual(code, 1)
         self.assertIn("core/run/rewards.gd:1 L1", out)

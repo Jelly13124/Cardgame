@@ -2,7 +2,7 @@ extends Node
 
 const TEST_SAVE_ROOT = preload("uid://c5pfll7nw68un")  # res://tests/support/test_save_root.gd
 
-const MARKET_SCREEN = preload("uid://5n0ylol4ybmn")  # res://run_system/ui/buildings/market_screen.gd
+const MARKET_SCREEN = preload("uid://5n0ylol4ybmn")  # res://ui/base/market_screen.gd
 
 var failures: PackedStringArray = []
 var _original_slot := 0

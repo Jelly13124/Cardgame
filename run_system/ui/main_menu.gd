@@ -10,8 +10,8 @@ const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_
 const SETTINGS_PANEL = preload("uid://ledls51ku43w")  # res://run_system/ui/settings_panel.gd
 const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 
-const HOME_BASE_PATH := "uid://c6bvuu6kbx0pq"  # res://run_system/ui/home_base_scene.tscn
-const MAP_SCENE_PATH := "uid://d3x5b8wvg2q"  # res://run_system/ui/map_scene.tscn
+const HOME_BASE_PATH := "uid://c6bvuu6kbx0pq"  # res://ui/base/home_base_scene.tscn
+const MAP_SCENE_PATH := "uid://d3x5b8wvg2q"  # res://ui/map/map_scene.tscn
 const RULES_PANEL_PATH := "uid://35njcmwpab3t"  # res://run_system/ui/rules_panel.gd
 const START_BG_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/bottlecap_hunter_start_background.png"
 const START_TITLE_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/title_bottlecap_hunter.png"

@@ -28,7 +28,7 @@ const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://run_system/core/affix
 const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://run_system/ui/equipment_icon.gd
 const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://run_system/ui/backpack_cell.gd
 const BUILDING_UPGRADE_POPOVER = preload(
-	"uid://c12ycj00td76a"  # res://run_system/ui/buildings/building_upgrade_popover.gd
+	"uid://c12ycj00td76a"  # res://ui/base/building_upgrade_popover.gd
 )
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 

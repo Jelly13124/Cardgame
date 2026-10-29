@@ -127,8 +127,8 @@ Caps 永久升级做成多行进度条卡片(名称 + 等级圆点 + 紧凑橙�
 
 ## 当前实现入口
 
-- 全屏壳与顶部栏:`run_system/ui/buildings/building_screen_base.gd`。
-- 共用废料升级弹窗:`run_system/ui/buildings/building_upgrade_popover.gd`。
+- 全屏壳与顶部栏:`ui/base/building_screen_base.gd`。
+- 共用废料升级弹窗:`ui/base/building_upgrade_popover.gd`。
 - 三个全屏服务页:`clinic_screen.gd`、`market_screen.gd`、`outpost_screen.gd`。
 - 铁匠铺窗口:`run_system/ui/window/forge_window.gd`。
 - 当前美术规则以 `docs/project-rules.md §1`、`docs/art-style-reference.md` 和 UI07

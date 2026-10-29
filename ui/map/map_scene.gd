@@ -5,17 +5,17 @@ extends Control
 
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 # Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
-const MAP_RENDERER_SCRIPT = preload("uid://dxpxch0ouxcmv")  # res://run_system/ui/map_renderer.gd
+const MAP_RENDERER_SCRIPT = preload("uid://dxpxch0ouxcmv")  # res://ui/map/map_renderer.gd
 const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://run_system/ui/window/character_window.gd
 const RUN_DECK_VIEWER_MODAL = preload("uid://jvxfh15gtinx")  # res://run_system/ui/run_deck_viewer_modal.gd
-const CARD_UPGRADE_MODAL = preload("uid://gq5b8t1mbeti")  # res://run_system/ui/card_upgrade_modal.gd
+const CARD_UPGRADE_MODAL = preload("uid://gq5b8t1mbeti")  # res://ui/rest/card_upgrade_modal.gd
 const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://run_system/ui/run_top_bar.gd
 const SETTINGS_PANEL_SCRIPT = preload("uid://ledls51ku43w")  # res://run_system/ui/settings_panel.gd
 const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://run_system/ui/pause_panel.gd
-const EVENT_MODAL_SCRIPT = preload("uid://0gxdrhjtltvh")  # res://run_system/ui/event_modal.gd
+const EVENT_MODAL_SCRIPT = preload("uid://0gxdrhjtltvh")  # res://ui/events/event_modal.gd
 const T_THEME = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 const BATTLE_PACKED = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
-const SHOP_PACKED = preload("uid://dr8unxxfi0w51")  # res://run_system/ui/shop_scene.tscn
+const SHOP_PACKED = preload("uid://dr8unxxfi0w51")  # res://ui/shop/shop_scene.tscn
 const ROOMS = preload("uid://cxmgdj3654rrj")  # res://core/run/rooms.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_sts2_bg.png"

@@ -22,7 +22,7 @@
 ##
 ## NO class_name (project convention): subclasses the base screen via its resource path.
 ## Reads ONLY the shared MetaProgress building/caps-perk API; edits no shared file.
-extends "res://run_system/ui/buildings/building_screen_base.gd"
+extends "res://ui/base/building_screen_base.gd"
 
 const CLINIC_NPC_PATH := "res://run_system/assets/images/ui/clinic/npc_cyber_doctor.png"
 

@@ -11,7 +11,7 @@ extends Control
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 const SETTINGS_PANEL = preload("uid://ledls51ku43w")  # res://run_system/ui/settings_panel.gd
 const RULES_PANEL = preload("uid://35njcmwpab3t")  # res://run_system/ui/rules_panel.gd
-const HOME_BASE_PATH := "uid://c6bvuu6kbx0pq"  # res://run_system/ui/home_base_scene.tscn
+const HOME_BASE_PATH := "uid://c6bvuu6kbx0pq"  # res://ui/base/home_base_scene.tscn
 
 ## Called when the player resumes (lets the opener unpause / clear its guard). Optional.
 var on_resume: Callable = Callable()

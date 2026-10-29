@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://d3x5b8wvg2q"]
 
-[ext_resource type="Script" path="res://run_system/ui/map_scene.gd" id="1_bc123"]
+[ext_resource type="Script" path="res://ui/map/map_scene.gd" id="1_bc123"]
 
 [node name="MapScene" type="Control"]
 layout_mode = 3

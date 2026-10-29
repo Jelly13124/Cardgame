@@ -15,7 +15,7 @@ const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://run_system/ui/w
 const RUN_DECK_VIEWER_MODAL = preload("uid://jvxfh15gtinx")  # res://run_system/ui/run_deck_viewer_modal.gd
 const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://run_system/ui/pause_panel.gd
 # Lazy-loaded at call site to avoid map→shop→map cyclic preload.
-const MAP_SCENE_PATH := "uid://d3x5b8wvg2q"  # res://run_system/ui/map_scene.tscn
+const MAP_SCENE_PATH := "uid://d3x5b8wvg2q"  # res://ui/map/map_scene.tscn
 const SHOP_BACKGROUND_PATH := "res://run_system/assets/images/shop/shop_interior_bg.png"
 const SHOPKEEPER_PATH := "res://run_system/assets/images/shop/shopkeeper.png"
 

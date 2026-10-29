@@ -3,16 +3,16 @@ extends Node
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MARKET = preload("uid://brturtmxacges")  # res://core/meta/market.gd
 
-const RESULT_SCREEN_PATH := "res://run_system/ui/result_screen.gd"  # path-ok: reads source text
+const RESULT_SCREEN_PATH := "res://ui/rewards/result_screen.gd"  # path-ok: reads source text
 const META_PROGRESS_PATH := "res://run_system/core/meta_progress.gd"  # path-ok: reads source text
-const HOME_BASE_PATH := "res://run_system/ui/home_base_scene.gd"  # path-ok: reads source text
-const BUILDING_SCREEN_BASE_PATH := "res://run_system/ui/buildings/building_screen_base.gd"  # path-ok: reads source text
-const CLINIC_SCREEN_PATH := "res://run_system/ui/buildings/clinic_screen.gd"  # path-ok: reads source text
-const MARKET_SCREEN_PATH := "res://run_system/ui/buildings/market_screen.gd"  # path-ok: reads source text
-const OUTPOST_SCREEN_PATH := "res://run_system/ui/buildings/outpost_screen.gd"  # path-ok: reads source text
+const HOME_BASE_PATH := "res://ui/base/home_base_scene.gd"  # path-ok: reads source text
+const BUILDING_SCREEN_BASE_PATH := "res://ui/base/building_screen_base.gd"  # path-ok: reads source text
+const CLINIC_SCREEN_PATH := "res://ui/base/clinic_screen.gd"  # path-ok: reads source text
+const MARKET_SCREEN_PATH := "res://ui/base/market_screen.gd"  # path-ok: reads source text
+const OUTPOST_SCREEN_PATH := "res://ui/base/outpost_screen.gd"  # path-ok: reads source text
 const WASTELAND_THEME_PATH := "res://run_system/ui/theme/wasteland_theme.gd"  # path-ok: reads source text
 const BUILDING_UPGRADE_POPOVER_PATH := (
-	"res://run_system/ui/buildings/building_upgrade_popover.gd"  # path-ok: reads source text
+	"res://ui/base/building_upgrade_popover.gd"  # path-ok: reads source text
 )
 const FORGE_WINDOW_PATH := "res://run_system/ui/window/forge_window.gd"  # path-ok: reads source text
 const MAIN_MENU_PATH := "res://run_system/ui/main_menu.gd"  # path-ok: reads source text
@@ -220,7 +220,7 @@ func _test_defeat_returns_to_base() -> void:
 	var source := FileAccess.get_file_as_string(RESULT_SCREEN_PATH)
 	var copy := FileAccess.get_file_as_string(UI_COMMON_PATH)
 	_expect(
-		source.contains('const HOME_BASE_PATH := "%s"' % ResourceUID.path_to_uid("res://run_system/ui/home_base_scene.tscn")),  # path-ok: derives the expected uid
+		source.contains('const HOME_BASE_PATH := "%s"' % ResourceUID.path_to_uid("res://ui/base/home_base_scene.tscn")),  # path-ok: derives the expected uid
 		"result screen declares the home-base destination"
 	)
 	_expect(

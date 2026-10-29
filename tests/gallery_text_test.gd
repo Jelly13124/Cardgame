@@ -3,7 +3,7 @@ extends Node
 ## The base card gallery shows the same generated text as the card face
 ## (one description generator), not the hand-written CARD_<id>_DESC rows.
 
-const HOME = preload("uid://c6bvuu6kbx0pq")  # res://run_system/ui/home_base_scene.tscn
+const HOME = preload("uid://c6bvuu6kbx0pq")  # res://ui/base/home_base_scene.tscn
 const CARD_DESCRIPTION = preload("uid://b4fkwjpel7452")  # res://core/content/card_description.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 

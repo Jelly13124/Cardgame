@@ -3,11 +3,11 @@
 ## base-only HUD: top resource chips, top-right difficulty/settings, bottom-left
 ## bounty board (held contracts + live progress), bottom-center START, and
 ## bottom-right Warehouse / Character / Gallery buttons. The base's actual
-## functions live in the per-building screens (run_system/ui/buildings/).
+## functions live in the per-building screens (ui/base/).
 extends Control
 
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
-const MAP_PACKED = preload("uid://d3x5b8wvg2q")  # res://run_system/ui/map_scene.tscn
+const MAP_PACKED = preload("uid://d3x5b8wvg2q")  # res://ui/map/map_scene.tscn
 const SETTINGS_PANEL = preload("uid://ledls51ku43w")  # res://run_system/ui/settings_panel.gd
 const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://run_system/ui/pause_panel.gd
 ## Fallback hero when no character-window selection has been made — the base hero,
@@ -15,7 +15,7 @@ const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://run_system/ui/pause_
 const DEFAULT_HERO_ID := "base:cowboy_bill"
 const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://run_system/ui/window/character_window.gd
 const STASH_WINDOW = preload("uid://cgyuqu543lioh")  # res://run_system/ui/window/stash_window.gd
-const BUILDING_SCREEN_BASE = preload("uid://wpvlhqpgylk7")  # res://run_system/ui/buildings/building_screen_base.gd
+const BUILDING_SCREEN_BASE = preload("uid://wpvlhqpgylk7")  # res://ui/base/building_screen_base.gd
 ## Building selector order + per-building accent color. The tile art lives under
 ## run_system/assets/images/home/buildings/.
 const BUILDING_ORDER := ["forge", "clinic", "market", "outpost"]
@@ -1655,10 +1655,10 @@ func _load_building_texture(building_id: String) -> Texture2D:
 func _open_building_screen(building_id: String) -> void:
 	if get_node_or_null("BuildingOverlay") != null:
 		return
-	# Convention: load run_system/ui/buildings/<id>_screen.gd (a BUILDING_SCREEN_BASE
+	# Convention: load ui/base/<id>_screen.gd (a BUILDING_SCREEN_BASE
 	# subclass) if it exists, else fall back to the shared base (placeholder content).
 	# This lets each building screen be added as its own isolated file.
-	var script_path := "res://run_system/ui/buildings/%s_screen.gd" % building_id
+	var script_path := "res://ui/base/%s_screen.gd" % building_id  # path-ok: per-building screen by convention
 	var screen = (
 		load(script_path).new()
 		if ResourceLoader.exists(script_path)

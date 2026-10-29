@@ -18,7 +18,7 @@ const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const INVENTORY_FULL_MODAL = preload("uid://deiqqoalu4lpl")  # res://run_system/ui/inventory_full_modal.gd
 # Lazy-loaded at call site to avoid map→battle→loot cyclic preload.
-const MAP_SCENE_PATH := "uid://d3x5b8wvg2q"  # res://run_system/ui/map_scene.tscn
+const MAP_SCENE_PATH := "uid://d3x5b8wvg2q"  # res://ui/map/map_scene.tscn
 
 ## The card pool from which draft choices are rolled. Populated at _ready
 ## from MetaProgress.get_unlocked_card_pool() — every non-curse, non-basic card

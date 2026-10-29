@@ -62,11 +62,11 @@ const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_
 # NOTE: map_scene + home_base_scene are loaded lazily at the call site
 # (not preloaded) because doing so would create a cyclic dep
 # (map → battle → map) and the editor's static analysis chokes.
-const HOME_BASE_PATH := "uid://c6bvuu6kbx0pq"  # res://run_system/ui/home_base_scene.tscn
-const MAP_SCENE_PATH := "uid://d3x5b8wvg2q"  # res://run_system/ui/map_scene.tscn
-const LOOT_REWARD_SCENE = preload("uid://csl8exl41do23")  # res://run_system/ui/loot_reward.tscn
-const EXTRACT_CHOICE_MODAL_SCRIPT = preload("uid://dl8ofvd880xht")  # res://run_system/ui/extract_choice_modal.gd
-const RESULT_SCREEN_SCRIPT = preload("uid://bxh1x1hy6fylv")  # res://run_system/ui/result_screen.gd
+const HOME_BASE_PATH := "uid://c6bvuu6kbx0pq"  # res://ui/base/home_base_scene.tscn
+const MAP_SCENE_PATH := "uid://d3x5b8wvg2q"  # res://ui/map/map_scene.tscn
+const LOOT_REWARD_SCENE = preload("uid://csl8exl41do23")  # res://ui/rewards/loot_reward.tscn
+const EXTRACT_CHOICE_MODAL_SCRIPT = preload("uid://dl8ofvd880xht")  # res://ui/rewards/extract_choice_modal.gd
+const RESULT_SCREEN_SCRIPT = preload("uid://bxh1x1hy6fylv")  # res://ui/rewards/result_screen.gd
 const TUTORIAL_TIPS_SCRIPT = preload("uid://cc37k40gsd5x")  # res://ui/battle/tutorial_tips.gd
 const MAIN_MENU_PATH := "uid://dnjlmt1repvjw"  # res://run_system/ui/main_menu.tscn
 

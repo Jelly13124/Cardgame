@@ -3,8 +3,8 @@ extends Node
 ## The home base lets the player type a run seed (empty = random; invalid text
 ## never starts a run) and the result screen shows the run's seed.
 
-const HOME = preload("uid://c6bvuu6kbx0pq")  # res://run_system/ui/home_base_scene.tscn
-const RESULT_SCREEN = preload("uid://bxh1x1hy6fylv")  # res://run_system/ui/result_screen.gd
+const HOME = preload("uid://c6bvuu6kbx0pq")  # res://ui/base/home_base_scene.tscn
+const RESULT_SCREEN = preload("uid://bxh1x1hy6fylv")  # res://ui/rewards/result_screen.gd
 
 var failures: PackedStringArray = []
 

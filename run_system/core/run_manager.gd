@@ -323,7 +323,7 @@ func scale_enemy_damage(amount: int, enemy_id: String) -> int:
 
 
 const BATTLE_SCENE: String = "uid://dnhj5pp3c1v2l"  # res://ui/battle/battle_screen.tscn
-const MAP_SCENE: String = "uid://d3x5b8wvg2q"  # res://run_system/ui/map_scene.tscn
+const MAP_SCENE: String = "uid://d3x5b8wvg2q"  # res://ui/map/map_scene.tscn
 
 # --- Map State ---
 ## Each entry: { "id": String, "floor": int, "slot": int, "type": String, "children": Array[String] }

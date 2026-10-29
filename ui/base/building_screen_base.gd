@@ -7,7 +7,7 @@ extends Control
 
 const T = preload("uid://dfcqloc58bvde")  # res://run_system/ui/theme/wasteland_theme.gd
 const BUILDING_UPGRADE_POPOVER = preload(
-	"uid://c12ycj00td76a"  # res://run_system/ui/buildings/building_upgrade_popover.gd
+	"uid://c12ycj00td76a"  # res://ui/base/building_upgrade_popover.gd
 )
 
 var building_id := ""

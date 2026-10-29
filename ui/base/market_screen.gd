@@ -25,7 +25,7 @@
 ## spacer / text so a missing asset never crashes (warn-free placeholder rule).
 ## NO class_name (project convention: subclass via path string, instantiate with `.new()`).
 ## Reads only the shared MetaProgress / RunManager API; edits no shared file.
-extends "res://run_system/ui/buildings/building_screen_base.gd"
+extends "res://ui/base/building_screen_base.gd"
 
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd

@@ -23,7 +23,7 @@
 ## a missing Codex asset never crashes (warn-free placeholder rule). Reads ONLY
 ## the shared MetaProgress upgrade/bounty API; edits no shared file.
 ## NO class_name (project convention) — instantiate via the base preload below.
-extends "res://run_system/ui/buildings/building_screen_base.gd"
+extends "res://ui/base/building_screen_base.gd"
 
 
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd

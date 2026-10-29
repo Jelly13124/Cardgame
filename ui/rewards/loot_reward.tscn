@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://csl8exl41do23"]
 
-[ext_resource type="Script" path="res://run_system/ui/loot_reward.gd" id="1_loot"]
+[ext_resource type="Script" path="res://ui/rewards/loot_reward.gd" id="1_loot"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_Frame"]
 bg_color = Color(0.075, 0.055, 0.045, 0.96)

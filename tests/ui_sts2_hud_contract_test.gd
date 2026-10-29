@@ -161,7 +161,7 @@ func _test_shared_top_bar() -> void:
 
 
 func _test_map_background() -> void:
-	var packed := load("uid://d3x5b8wvg2q") as PackedScene  # res://run_system/ui/map_scene.tscn
+	var packed := load("uid://d3x5b8wvg2q") as PackedScene  # res://ui/map/map_scene.tscn
 	var map := packed.instantiate()
 	add_child(map)
 	await get_tree().process_frame
