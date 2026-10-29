@@ -156,7 +156,7 @@ var tutorial_seen: bool = false
 ## Permanent equipment stash — pure storage populated only by an explicit
 ## backpack/slot → stash transfer (plus legacy/base reward producers that have
 ## not yet moved to the backpack contract). Run settlement never writes here.
-## Each entry is an equip INSTANCE dict (see RunManager.as_equip_instance), or a
+## Each entry is an equip INSTANCE dict (see RunManager.equip_instance), or a
 ## legacy item_id String from an older save — both are tolerated on read.
 var stash: Array = []
 ## Buildings refactor (4 clickable base buildings). building_id → tier int
@@ -567,7 +567,7 @@ func remove_from_stash(item: Variant) -> bool:
 func add_to_base_backpack(item: Variant) -> bool:
 	if RunManager.pending_loadout.size() >= RunManager.effective_backpack_size():
 		return false
-	if RunManager.as_equip_instance(item).is_empty():
+	if RunManager.equip_instance(item).is_empty():
 		return false
 	RunManager.pending_loadout.append(item)
 	save_progress()
@@ -584,7 +584,7 @@ func move_stash_to_base_backpack(item: Variant) -> bool:
 	if idx < 0:
 		return false
 	var entry: Variant = stash[idx]
-	if RunManager.as_equip_instance(entry).is_empty():
+	if RunManager.equip_instance(entry).is_empty():
 		return false
 	stash.remove_at(idx)
 	RunManager.pending_loadout.append(entry)
@@ -601,7 +601,7 @@ func move_base_backpack_to_stash(item: Variant) -> bool:
 	if idx < 0:
 		return false
 	var entry: Variant = RunManager.pending_loadout[idx]
-	if RunManager.as_equip_instance(entry).is_empty():
+	if RunManager.equip_instance(entry).is_empty():
 		return false
 	RunManager.pending_loadout.remove_at(idx)
 	stash.append(entry)
@@ -617,7 +617,7 @@ func move_base_slot_to_stash(slot: String) -> bool:
 	if not RunManager.pending_equipped.has(slot):
 		return false
 	var entry: Variant = RunManager.pending_equipped[slot]
-	if RunManager.as_equip_instance(entry).is_empty():
+	if RunManager.equip_instance(entry).is_empty():
 		return false
 	RunManager.pending_equipped.erase(slot)
 	stash.append(entry)
@@ -634,7 +634,7 @@ func move_base_slot_to_stash(slot: String) -> bool:
 func dismantle_stash_item(index: int) -> bool:
 	if index < 0 or index >= stash.size():
 		return false
-	var inst: Dictionary = RunManager.as_equip_instance(stash[index])
+	var inst: Dictionary = RunManager.equip_instance(stash[index])
 	var rarity: String = str(inst.get("rarity", "common"))
 	var amount: int = int(DISMANTLE_SCRAP.get(rarity, DISMANTLE_SCRAP["common"]))
 	if bool(inst.get("cursed", false)):
@@ -673,7 +673,7 @@ func preview_dismantle_by_rarity(rarity: String) -> Dictionary:
 	var count := 0
 	var scrap_total := 0
 	for entry in stash:
-		var inst: Dictionary = RunManager.as_equip_instance(entry)
+		var inst: Dictionary = RunManager.equip_instance(entry)
 		if not _bulk_dismantlable(inst, rarity):
 			continue
 		count += 1
@@ -691,7 +691,7 @@ func dismantle_stash_by_rarity(rarity: String) -> Dictionary:
 	var count := 0
 	var scrap_total := 0
 	for entry in stash:
-		var inst: Dictionary = RunManager.as_equip_instance(entry)
+		var inst: Dictionary = RunManager.equip_instance(entry)
 		if _bulk_dismantlable(inst, rarity):
 			count += 1
 			var r: String = str(inst.get("rarity", "common"))
@@ -727,7 +727,7 @@ func reforge_cost_for(inst: Dictionary) -> int:
 func reforge_stash_item_locked(item_index: int, affix_index: int) -> bool:
 	if item_index < 0 or item_index >= stash.size():
 		return false
-	var inst: Dictionary = RunManager.as_equip_instance(stash[item_index])
+	var inst: Dictionary = RunManager.equip_instance(stash[item_index])
 	if inst.is_empty():
 		return false
 	var affixes: Array = RunManager.equip_affixes(inst)
@@ -761,7 +761,7 @@ const CURSE_SCRAP_COST := 100
 func curse_stash_item(index: int) -> bool:
 	if index < 0 or index >= stash.size():
 		return false
-	var inst: Dictionary = RunManager.as_equip_instance(stash[index])
+	var inst: Dictionary = RunManager.equip_instance(stash[index])
 	if inst.is_empty():
 		return false
 	if bool(inst.get("cursed", false)):

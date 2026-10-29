@@ -199,7 +199,7 @@ func _test_pending_backpack_mutations() -> void:
 	scrap_before = MetaProgress.scrap
 	var reforge_cost := MetaProgress.reforge_cost_for(reforge_item)
 	_expect(bool(forge.call("_reforge_pending_item", 0, 0)), "reforge mutates a backpack entry")
-	var reforged := RunManager.as_equip_instance(RunManager.pending_loadout[0])
+	var reforged := RunManager.equip_instance(RunManager.pending_loadout[0])
 	_expect(int(reforged.get("reforge_count", 0)) == 1, "reforge count persists on backpack entry")
 	_expect(int(reforged.get("reforge_index", -1)) == 0, "first reforge locks the selected affix")
 	_expect(MetaProgress.scrap == scrap_before - reforge_cost, "reforge spends its escalating Scrap cost")
@@ -209,7 +209,7 @@ func _test_pending_backpack_mutations() -> void:
 	_set_pending([curse_item])
 	scrap_before = MetaProgress.scrap
 	_expect(bool(forge.call("_curse_pending_item", 0)), "curse mutates a backpack entry")
-	var cursed_result := RunManager.as_equip_instance(RunManager.pending_loadout[0])
+	var cursed_result := RunManager.equip_instance(RunManager.pending_loadout[0])
 	_expect(bool(cursed_result.get("cursed", false)), "curse flag persists on backpack entry")
 	_expect(str(cursed_result.get("rarity", "")) == "cursed", "curse promotes entry to cursed tier")
 	_expect(MetaProgress.scrap == scrap_before - 100, "curse spends 100 Scrap")
@@ -221,7 +221,7 @@ func _test_pending_backpack_mutations() -> void:
 	scrap_before = MetaProgress.scrap
 	forge.call("_on_craft_pressed")
 	_expect(RunManager.pending_loadout.size() == 1, "crafted equipment enters the base backpack")
-	var crafted := RunManager.as_equip_instance(RunManager.pending_loadout[0])
+	var crafted := RunManager.equip_instance(RunManager.pending_loadout[0])
 	_expect(str(crafted.get("rarity", "")) == "common", "common craft stays common rarity")
 	_expect(str(crafted.get("set_id", "")) == "", "craft never mints a normal set item")
 	_expect(str(crafted.get("base", "")) == "base:gear_head_common", "craft uses the non-set shell base")

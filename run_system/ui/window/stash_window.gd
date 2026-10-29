@@ -441,7 +441,7 @@ func _make_hint_slot(icon_name: String, frame_tint: Color) -> Control:
 func _stored_count() -> int:
 	var n := 0
 	for entry in MetaProgress.stash:
-		if not RunManager.as_equip_instance(entry).is_empty():
+		if not RunManager.equip_instance(entry).is_empty():
 			n += 1
 	return n
 
@@ -605,7 +605,7 @@ func _available_stash_indices() -> Array[int]:
 	var out: Array[int] = []
 	for i in range(MetaProgress.stash.size()):
 		var entry: Variant = MetaProgress.stash[i]
-		if RunManager.as_equip_instance(entry).is_empty():
+		if RunManager.equip_instance(entry).is_empty():
 			continue
 		out.append(i)
 	_apply_view_sort(out)
@@ -636,7 +636,7 @@ func _entry_sort_less(a: Variant, b: Variant, mode: int) -> bool:
 
 
 func _entry_sort_key(entry: Variant, mode: int) -> Array:
-	var inst: Dictionary = RunManager.as_equip_instance(entry)
+	var inst: Dictionary = RunManager.equip_instance(entry)
 	var base_id: String = RunManager.equip_base(inst)
 	var data: Dictionary = RunManager.get_equipment_data(base_id)
 	var slot := str(data.get("slot", ""))
@@ -668,7 +668,7 @@ func _entry_sort_key(entry: Variant, mode: int) -> Array:
 ## ForgeWindow bench; also a drop target for storing.
 func _make_stash_cell(stash_index: int) -> Control:
 	var entry: Variant = MetaProgress.stash[stash_index]
-	var inst: Dictionary = RunManager.as_equip_instance(entry)
+	var inst: Dictionary = RunManager.equip_instance(entry)
 	var base_id: String = RunManager.equip_base(inst)
 	var data: Dictionary = RunManager.get_equipment_data(base_id)
 	var slot := str(data.get("slot", "head"))

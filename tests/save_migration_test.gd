@@ -43,6 +43,7 @@ func _run() -> void:
 	_test_meta_v2()
 	_test_backup_once()
 	await _test_load_run_end_to_end()
+	_test_no_read_time_conversion()
 	if failures.is_empty():
 		print("[OK] save migration passed")
 		get_tree().quit(0)
@@ -159,3 +160,21 @@ func _test_load_run_end_to_end() -> void:
 	RunManager.is_run_active = false
 	RunManager.clear_run_save()
 	await get_tree().process_frame
+
+
+## Runtime code handles only the current shape: the read-time equipment
+## converter is gone everywhere (S6-02).
+func _test_no_read_time_conversion() -> void:
+	var hits: PackedStringArray = []
+	_scan("res://", hits)
+	_expect(hits.is_empty(), "no read-time equipment conversion left: %s" % [hits])
+
+
+func _scan(dir: String, hits: PackedStringArray) -> void:
+	for sub in DirAccess.get_directories_at(dir):
+		if sub in [".godot", ".git", "addons", ".superpowers", "tests"]:
+			continue
+		_scan(dir.path_join(sub), hits)
+	for f in DirAccess.get_files_at(dir):
+		if f.ends_with(".gd") and FileAccess.get_file_as_string(dir.path_join(f)).contains("as_equip" + "_instance"):
+			hits.append(dir.path_join(f))

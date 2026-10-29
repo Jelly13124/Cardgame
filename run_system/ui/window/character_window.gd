@@ -789,7 +789,7 @@ func _make_base_slot_column(slot: String) -> Control:
 	_slot_labels[slot] = label
 
 	var queued: Variant = RunManager.pending_equipped.get(slot, null)
-	var inst: Dictionary = RunManager.as_equip_instance(queued) if queued != null else {}
+	var inst: Dictionary = RunManager.equip_instance(queued) if queued != null else {}
 	if inst.is_empty():
 		_style_slot_empty(slot)
 		cell.drag_payload = {}
@@ -856,7 +856,7 @@ func _make_base_tool_slot_column() -> Control:
 
 
 func _make_carry_cell(entry: Variant) -> Control:
-	var inst: Dictionary = RunManager.as_equip_instance(entry)
+	var inst: Dictionary = RunManager.equip_instance(entry)
 	var base_id: String = RunManager.equip_base(inst)
 	var data: Dictionary = RunManager.get_equipment_data(base_id)
 	var slot := str(data.get("slot", "head"))
@@ -1027,7 +1027,7 @@ func _drop_into_backpack(data: Dictionary) -> void:
 ## Stash → backpack: atomically move ownership into pending_loadout (capped at
 ## the usable backpack size). Stale drags and a full bag leave both sides intact.
 func _carry_from_stash(entry: Variant) -> void:
-	if entry == null or RunManager.as_equip_instance(entry).is_empty():
+	if entry == null or RunManager.equip_instance(entry).is_empty():
 		return
 	if RunManager.pending_loadout.size() >= RunManager.effective_backpack_size():
 		_flash_status(tr("UI_LOOT_BACKPACK_FULL"))
@@ -1046,7 +1046,7 @@ func _carry_from_stash(entry: Variant) -> void:
 func _equip_from_carry(slot: String, entry: Variant) -> void:
 	if entry == null or not slot in RunManager.EQUIPMENT_SLOTS:
 		return
-	var inst: Dictionary = RunManager.as_equip_instance(entry)
+	var inst: Dictionary = RunManager.equip_instance(entry)
 	if inst.is_empty():
 		return
 	var data: Dictionary = RunManager.get_equipment_data(RunManager.equip_base(inst))
@@ -1089,14 +1089,14 @@ func _unassign_slot_to_carry(slot: String) -> void:
 func _sanitize_pending() -> void:
 	var changed := false
 	for slot in RunManager.pending_equipped.keys():  # keys() is a copy — safe to erase
-		var inst := RunManager.as_equip_instance(RunManager.pending_equipped[slot])
+		var inst := RunManager.equip_instance(RunManager.pending_equipped[slot])
 		var data := RunManager.get_equipment_data(RunManager.equip_base(inst))
 		if inst.is_empty() or str(data.get("slot", "")) != str(slot):
 			RunManager.pending_equipped.erase(slot)
 			changed = true
 	var kept: Array = []
 	for e in RunManager.pending_loadout:
-		if not RunManager.as_equip_instance(e).is_empty():
+		if not RunManager.equip_instance(e).is_empty():
 			kept.append(e)
 	if kept.size() != RunManager.pending_loadout.size():
 		RunManager.pending_loadout.clear()
@@ -1343,7 +1343,7 @@ func _refresh() -> void:
 	for slot in RunManager.EQUIPMENT_SLOTS:
 		var cell = _slot_cells[slot]
 		# Tolerant read: slot may hold an instance dict (new) or a legacy String.
-		var slot_inst: Dictionary = RunManager.as_equip_instance(
+		var slot_inst: Dictionary = RunManager.equip_instance(
 			RunManager.equipped_items.get(slot, {})
 		)
 		var item_id: String = RunManager.equip_base(slot_inst)
@@ -1413,9 +1413,7 @@ func _build_cell_content(index: int) -> Control:
 	if typeof(cell) == TYPE_DICTIONARY:
 		match str(cell.get("kind", "")):
 			"equip":
-				# Tolerant: equip cells now carry an instance under "item"; older
-				# cells carried a bare "id" String. as_equip_instance handles both.
-				var inst := RunManager.as_equip_instance(cell.get("item", cell.get("id", "")))
+				var inst := RunManager.equip_instance(cell.get("item", {}))
 				return _make_equip_cell(RunManager.equip_base(inst), index, inst)
 			"gold":
 				return _make_resource_cell(

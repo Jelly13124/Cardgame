@@ -105,7 +105,7 @@ func _test_equipment_resolution_and_names() -> void:
 			)
 
 	_reset_run_inventory()
-	RunManager.backpack[0] = {"kind": "equip", "id": "base:gear_hands_common"}
+	RunManager.backpack[0] = {"kind": "equip", "item": RunManager.make_equip_instance("base:gear_hands_common", "common")}
 	var window := CHARACTER_WINDOW.new()
 	window.mode = "map"
 	add_child(window)
@@ -246,7 +246,7 @@ func _test_tool_icon_assets() -> void:
 
 func _test_equipment_cell_sizing() -> void:
 	_reset_run_inventory()
-	RunManager.backpack[0] = {"kind": "equip", "id": "base:gear_hands_common"}
+	RunManager.backpack[0] = {"kind": "equip", "item": RunManager.make_equip_instance("base:gear_hands_common", "common")}
 	var window := CHARACTER_WINDOW.new()
 	window.mode = "map"
 	add_child(window)

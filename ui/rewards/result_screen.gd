@@ -147,7 +147,7 @@ func _summary_text() -> String:
 func _detail_text() -> String:
 	var gear_count := 0
 	for slot in RunManager.EQUIPMENT_SLOTS:
-		if not RunManager.as_equip_instance(RunManager.equipped_items.get(slot, {})).is_empty():
+		if not RunManager.equip_instance(RunManager.equipped_items.get(slot, {})).is_empty():
 			gear_count += 1
 	return (
 		tr("RESULT_SUMMARY_DETAILS")

@@ -19,14 +19,11 @@ var _bag_buttons: Array[Button] = []
 var _bag_grid: GridContainer = null
 
 
-## `incoming` may be a bare item_id String (display + re-add by id) or a rolled
-## instance Dictionary (display via its base, re-add the instance to keep affixes).
-func setup(incoming: Variant) -> void:
-	if typeof(incoming) == TYPE_DICTIONARY:
-		_incoming_instance = incoming
-		_incoming_item_id = RunManager.equip_base(incoming)
-	else:
-		_incoming_item_id = str(incoming)
+## `incoming` is the rolled equipment instance that did not fit (re-added as is,
+## keeping its affixes).
+func setup(incoming: Dictionary) -> void:
+	_incoming_instance = incoming
+	_incoming_item_id = RunManager.equip_base(incoming)
 
 
 func _ready() -> void:
@@ -167,10 +164,7 @@ func _on_discard_selected() -> void:
 	if RunManager.backpack_changed.is_connected(_rebuild_bag_grid):
 		RunManager.backpack_changed.disconnect(_rebuild_bag_grid)
 	RunManager.discard_from_inventory(_selected_bag_index)
-	var incoming_item = _incoming_instance
-	if incoming_item.is_empty():
-		incoming_item = _incoming_item_id
-	RunManager.add_to_inventory(incoming_item)
+	RunManager.add_to_inventory(_incoming_instance)
 	emit_signal("resolved", true)
 	queue_free()
 

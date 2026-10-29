@@ -657,7 +657,7 @@ func _preview_pending_dismantle(rarity: String) -> Dictionary:
 	var count := 0
 	var scrap_total := 0
 	for entry in RunManager.pending_loadout:
-		var inst := RunManager.as_equip_instance(entry)
+		var inst := RunManager.equip_instance(entry)
 		if not _bulk_pending_match(inst, rarity):
 			continue
 		count += 1
@@ -695,7 +695,7 @@ func _dismantle_pending_by_rarity(rarity: String) -> Dictionary:
 	var count := 0
 	var scrap_total := 0
 	for entry in RunManager.pending_loadout:
-		var inst := RunManager.as_equip_instance(entry)
+		var inst := RunManager.equip_instance(entry)
 		if _bulk_pending_match(inst, rarity):
 			count += 1
 			scrap_total += _dismantle_value(inst)
@@ -979,7 +979,7 @@ func _curse_item(index: int) -> void:
 
 func _selected_instance() -> Dictionary:
 	if _selected_index >= 0 and _selected_index < RunManager.pending_loadout.size():
-		return RunManager.as_equip_instance(RunManager.pending_loadout[_selected_index])
+		return RunManager.equip_instance(RunManager.pending_loadout[_selected_index])
 	return {}
 
 
@@ -1085,7 +1085,7 @@ func _dismantle_selected(index: int) -> void:
 func _dismantle_pending_item(index: int) -> bool:
 	if index < 0 or index >= RunManager.pending_loadout.size():
 		return false
-	var inst := RunManager.as_equip_instance(RunManager.pending_loadout[index])
+	var inst := RunManager.equip_instance(RunManager.pending_loadout[index])
 	if inst.is_empty():
 		return false
 	var amount := _dismantle_value(inst)
@@ -1102,7 +1102,7 @@ func _dismantle_pending_item(index: int) -> bool:
 func _reforge_pending_item(index: int, affix_index: int) -> bool:
 	if index < 0 or index >= RunManager.pending_loadout.size():
 		return false
-	var inst := RunManager.as_equip_instance(RunManager.pending_loadout[index])
+	var inst := RunManager.equip_instance(RunManager.pending_loadout[index])
 	if inst.is_empty():
 		return false
 	var affixes := RunManager.equip_affixes(inst)
@@ -1127,7 +1127,7 @@ func _reforge_pending_item(index: int, affix_index: int) -> bool:
 func _curse_pending_item(index: int) -> bool:
 	if index < 0 or index >= RunManager.pending_loadout.size():
 		return false
-	var inst := RunManager.as_equip_instance(RunManager.pending_loadout[index])
+	var inst := RunManager.equip_instance(RunManager.pending_loadout[index])
 	if inst.is_empty() or bool(inst.get("cursed", false)):
 		return false
 	if not MetaProgress.spend_scrap(CURSE_COST):

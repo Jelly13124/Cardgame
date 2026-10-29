@@ -7,6 +7,7 @@ const RUN_MANAGER_PATH := "res://run_system/core/run_manager.gd"  # path-ok: rea
 const TUTORIAL_PATH := "res://ui/battle/tutorial_tips.gd"  # path-ok: reads source text
 const BATTLE_PATH := "res://ui/battle/battle_screen.gd"  # path-ok: reads source text
 const RESULT_PATH := "res://ui/rewards/result_screen.gd"  # path-ok: reads source text
+const LEGACY_EQUIPMENT = preload("uid://bpsstam8gekpw")  # res://core/save/legacy_equipment.gd
 const RUN_SAVE = preload("uid://dkhd2poukjb61")  # res://core/save/run_save.gd
 const PROFILE_SAVE = preload("uid://cox1wehu1m6on")  # res://core/save/profile_save.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
@@ -143,9 +144,10 @@ func _test_set_onboarding_track() -> void:
 
 
 func _test_set_instance_integrity() -> void:
-	# Old profiles may still store a bare equipment id. Reading one of those ids
-	# must not recreate the retired "common set" display state.
-	var legacy_set := RunManager.as_equip_instance("base:weak_hunter_helm")
+	# Old saves may still store a bare equipment id. Migrating one of those ids
+	# (core/save/legacy_equipment.gd) must not recreate the retired "common
+	# set" display state.
+	var legacy_set := LEGACY_EQUIPMENT.instance("base:weak_hunter_helm")
 	_expect(str(legacy_set.get("set_id", "")) == "base:weak_hunter", "legacy set id is preserved")
 	_expect(str(legacy_set.get("rarity", "")) == "set", "legacy set strings normalize to set rarity")
 	_expect(
@@ -159,7 +161,7 @@ func _test_set_instance_integrity() -> void:
 		"cursed": false,
 		"set_id": "base:weak_hunter",
 	}
-	var normalized_dict := RunManager.as_equip_instance(legacy_dict)
+	var normalized_dict := LEGACY_EQUIPMENT.instance(legacy_dict)
 	_expect(str(normalized_dict.get("rarity", "")) == "set", "legacy set dictionaries normalize")
 	_expect(
 		RunManager.equip_affixes(normalized_dict).size() == 3,

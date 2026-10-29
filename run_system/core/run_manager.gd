@@ -56,10 +56,7 @@ var current_floor: int = 0
 var current_act: int = 1
 var player_deck: Array = []  # Array of Dictionaries (uid, card_id, bonus_attack, bonus_health)
 ## Equipped gear, one slot per body part. Each value is an equipment INSTANCE
-## dict (see as_equip_instance) or {} when the slot is empty. Legacy saves may
-## still hold a plain item_id String here — every READ routes through
-## as_equip_instance() so old strings convert on access (and re-save as
-## instances on the next mutation). See migration note on as_equip_instance.
+## dict (see equip_instance) or {} when the slot is empty.
 var equipped_items: Dictionary = {
 	"head": {},
 	"chest": {},
@@ -71,9 +68,7 @@ var equipped_items: Dictionary = {
 ## Backpack — the definitive store for unequipped loot. Fixed length
 ## MAX_INVENTORY. Each cell is one of:
 ##   null | {"kind":"equip","item":<instance>} | {"kind":"gold","amount":int} | {"kind":"scrap","amount":int}
-## Equip cells now carry a full instance dict under "item"; the legacy
-## {"kind":"equip","id":String} form is still READ (converted via
-## as_equip_instance) for back-compat. Gold / Scrap / equipment share these cells.
+## Gold / Scrap / equipment share these cells.
 ## (The in-run resource stack was "core" before 2026-07-07; it is now "scrap",
 ## banking to MetaProgress.scrap on extract/victory.)
 var backpack: Array = []
@@ -96,16 +91,15 @@ const STARTING_GOLD := 99  # baseline purse every run begins with (Command Cente
 ## Run-scoped caps accrued so far this run (banked on extract/victory only).
 var _run_caps: int = 0
 ## Equipment physically owned by the base backpack between runs. Each entry is
-## an equip instance dict (or a legacy item_id String, tolerated through
-## as_equip_instance). Unlike the old reference model, these entries are NOT
+## an equip instance dict. Unlike the old reference model, these entries are NOT
 ## duplicates/references of MetaProgress.stash: dragging between the two moves
 ## ownership atomically. MetaProgress persists this array in the active profile.
 ## start_new_run consumes it into the real run backpack.
 var pending_loadout: Array = []
 
 ## Equipment physically worn at the base and carried into the next run already
-## equipped. Maps slot (one of EQUIPMENT_SLOTS) to an owned instance (or legacy
-## String). It is persisted beside pending_loadout and is disjoint from the
+## equipped. Maps slot (one of EQUIPMENT_SLOTS) to an owned instance. It is
+## persisted beside pending_loadout and is disjoint from the
 ## permanent stash; only an explicit drag into StashWindow stores it there.
 var pending_equipped: Dictionary = {}
 
@@ -508,7 +502,7 @@ func start_new_run(
 		var queued: Variant = base_equipped.get(slot, null)
 		if queued == null:
 			continue
-		var inst := as_equip_instance(queued)
+		var inst := equip_instance(queued)
 		if inst.is_empty():
 			pending_equipped[slot] = queued
 			continue
@@ -593,18 +587,6 @@ func purchase_card(card_id: String, cost: int) -> bool:
 		return false
 	add_resources(-cost, 0)
 	add_card_to_deck(card_id)
-	return true
-
-
-## Spend gold to add equipment to inventory. Returns false on insufficient
-## gold OR inventory full (caller should show inventory-full UI if relevant).
-func purchase_equipment(item_id: String, cost: int) -> bool:
-	if gold < cost or item_id == "":
-		return false
-	if free_cells() <= 0:
-		return false  # caller handles UI; we don't auto-overflow paid purchases
-	add_resources(-cost, 0)
-	add_to_inventory(item_id)
 	return true
 
 
@@ -751,8 +733,7 @@ func backpack_count_used() -> int:
 	return effective_backpack_size() - free_cells()
 
 
-## Base item_ids of every equip cell (cell order). Tolerant of both the new
-## instance form and the legacy {"id":String} cell form.
+## Base item_ids of every equip cell (cell order).
 func backpack_equip_ids() -> Array[String]:
 	var out: Array[String] = []
 	for c in backpack:
@@ -762,8 +743,7 @@ func backpack_equip_ids() -> Array[String]:
 	return out
 
 
-## Every equip cell's instance dict (in backpack cell order). Tolerant of legacy
-## string cells (converted on read).
+## Every equip cell's instance dict (in backpack cell order).
 func backpack_equip_instances() -> Array:
 	var out: Array = []
 	for c in backpack:
@@ -905,7 +885,7 @@ func _normalize_gold() -> void:
 ## (built into an instance) or an instance dict (stored as-is). Returns false if
 ## the backpack is full or the input is empty.
 func add_equip_to_backpack(item: Variant) -> bool:
-	var inst := as_equip_instance(item)
+	var inst := equip_instance(item)
 	if inst.is_empty():
 		return false
 	_ensure_backpack()
@@ -936,99 +916,21 @@ func move_cell(from_idx: int, to_idx: int) -> void:
 #   { "base": <item_id>, "rarity": <r>, "affixes": [ {type,value}, .. ],
 #     "cursed": bool, "set_id": <id or ""> }
 #
-# Migration note: there is NO explicit migration pass. Every READ of a stored
-# equip (slot value or backpack equip cell) routes through as_equip_instance(),
-# so a legacy save holding plain item_id Strings converts those strings to
-# instances on access (deriving affixes from the item's JSON `bonuses` so its
-# exact stats are preserved). The next mutation that writes the slot/cell back
-# stores the instance form, so old saves silently upgrade over normal play.
+# Older saves are migrated once on load (core/save/run_save.gd and
+# profile_save.gd); state never holds the old item_id String form.
 
 
-## Central converter: normalize anything stored as "an equipment" into an
-## instance dict. Accepts an instance (returned as-is), a legacy item_id String
-## (built into an instance with affixes derived from the JSON `bonuses`), or the
-## empty/"" / null case (returns {}).
-func as_equip_instance(x: Variant) -> Dictionary:
-	if typeof(x) == TYPE_DICTIONARY:
-		if x.has("base"):
-			return _normalize_set_equip_instance(x)
-		return {}
-	if typeof(x) == TYPE_STRING:
-		var item_id: String = x
-		if item_id == "":
-			return {}
-		var data: Dictionary = get_equipment_data(item_id)
-		var affixes: Array = []
-		var bonuses: Variant = data.get("bonuses", {})
-		if typeof(bonuses) == TYPE_DICTIONARY:
-			for attr in bonuses.keys():
-				affixes.append({"type": "attr_" + str(attr), "value": int(bonuses[attr])})
-		return _normalize_set_equip_instance({
-			"base": item_id,
-			"rarity": str(data.get("rarity", "common")),
-			"affixes": affixes,
-			"cursed": false,
-			"set_id": str(data.get("set_id", "")),
-		})
-	return {}
-
-
-## Compatibility repair for the retired "ordinary set" state. Early profiles
-## may hold either a bare set item id or an instance minted before set rarity was
-## centralized. Keep any valid positive affixes, then deterministically fill to
-## three so repeated reads of a legacy string never reroll the player's stats.
-func _normalize_set_equip_instance(instance: Dictionary) -> Dictionary:
-	var base_id := str(instance.get("base", ""))
-	if base_id == "":
-		return instance
-	var data := get_equipment_data(base_id)
-	var set_id := str(instance.get("set_id", data.get("set_id", "")))
-	if set_id == "":
-		return instance
-
-	var source_affixes: Variant = instance.get("affixes", [])
-	var affixes: Array = []
-	var used_types := {}
-	if typeof(source_affixes) == TYPE_ARRAY:
-		for entry in source_affixes:
-			if typeof(entry) != TYPE_DICTIONARY or AFFIX_POOL.is_curse(entry):
-				continue
-			var affix_type := str(entry.get("type", ""))
-			if affix_type == "" or used_types.has(affix_type):
-				continue
-			affixes.append((entry as Dictionary).duplicate(true))
-			used_types[affix_type] = true
-			if affixes.size() == 3:
-				break
-	for template in AFFIX_POOL.POSITIVE:
-		if affixes.size() == 3:
-			break
-		var affix_type := str(template.get("type", ""))
-		if used_types.has(affix_type):
-			continue
-		affixes.append((template as Dictionary).duplicate(true))
-		used_types[affix_type] = true
-
-	if (
-		str(instance.get("rarity", "")) == "set"
-		and str(instance.get("set_id", "")) == set_id
-		and not bool(instance.get("cursed", false))
-		and instance.get("affixes", []) == affixes
-	):
-		return instance
-	var normalized := instance.duplicate(true)
-	normalized["rarity"] = "set"
-	normalized["set_id"] = set_id
-	normalized["cursed"] = false
-	normalized["affixes"] = affixes
-	return normalized
+## The equipment instance `x` holds ({base, rarity, affixes, cursed,
+## set_id}), or {} for an empty slot, an empty cell or anything else. Saves
+## migrate every older shape once (core/save/legacy_equipment.gd), so state only
+## ever holds instances: this only guards empty values.
+func equip_instance(x: Variant) -> Dictionary:
+	return x if typeof(x) == TYPE_DICTIONARY and str(x.get("base", "")) != "" else {}
 
 
 ## Build a FRESH rolled equipment instance for a base item_id. Reads slot/set_id
 ## from the item JSON and rolls real affixes via AFFIX_POOL.roll(rarity, cursed).
-## This is the grant path (drops / events / starter inventory) — unlike
-## as_equip_instance (which derives affixes from legacy `bonuses` for back-compat),
-## here affixes are rolled anew. Returns {} for an empty/unknown base.
+## This is the grant path (drops / events / starter inventory). Returns {} for an empty/unknown base.
 func make_equip_instance(base_id: String, rarity: String, cursed: bool = false) -> Dictionary:
 	if base_id == "":
 		return {}
@@ -1051,30 +953,29 @@ func make_equip_instance(base_id: String, rarity: String, cursed: bool = false) 
 
 ## The base item_id of an equip (instance / String / {}). "" when empty.
 func equip_base(inst: Variant) -> String:
-	var d := as_equip_instance(inst)
+	var d := equip_instance(inst)
 	return str(d.get("base", ""))
 
 
 ## The affix list of an equip (instance / String / {}). [] when empty.
 func equip_affixes(inst: Variant) -> Array:
-	var d := as_equip_instance(inst)
+	var d := equip_instance(inst)
 	var a: Variant = d.get("affixes", [])
 	return a if typeof(a) == TYPE_ARRAY else []
 
 
 ## The rarity of an equip (instance / String / {}). "" when empty.
 func equip_rarity(inst: Variant) -> String:
-	var d := as_equip_instance(inst)
+	var d := equip_instance(inst)
 	return str(d.get("rarity", ""))
 
 
-## Read the equip instance stored in backpack cell `cell` (tolerant of both the
-## new {"kind":"equip","item":<instance>} form and the legacy
-## {"kind":"equip","id":<string>} form). Returns {} if not an equip cell.
+## The equip instance stored in backpack cell `cell` ({"kind": "equip",
+## "item": <instance>}), or {} if it is not an equip cell.
 func _cell_equip_instance(cell: Variant) -> Dictionary:
 	if typeof(cell) != TYPE_DICTIONARY or cell.get("kind") != "equip":
 		return {}
-	return as_equip_instance(cell.get("item", cell.get("id", "")))
+	return equip_instance(cell.get("item", {}))
 
 
 ## Recompute player_attributes = base_attributes + the summed attribute affixes
@@ -1086,7 +987,7 @@ func recompute_attributes() -> void:
 	var max_hp_bonus := 0
 	var crit_pct_bonus := 0
 	for slot in EQUIPMENT_SLOTS:
-		var inst := as_equip_instance(equipped_items.get(slot, {}))
+		var inst := equip_instance(equipped_items.get(slot, {}))
 		if inst.is_empty():
 			continue
 		var t: Dictionary = AFFIX_POOL.attribute_totals(equip_affixes(inst))
@@ -1284,8 +1185,9 @@ func equip_to_slot(item: Variant, slot: String) -> bool:
 	if not slot in EQUIPMENT_SLOTS:
 		push_error("equip_to_slot: unknown slot '%s'" % slot)
 		return false
-	# `item` may be a base item_id String (the common UI path) or an instance.
-	var item_id := equip_base(item)
+	# `item` is a base item_id String (the UI path: the bag cell holding it) or
+	# an instance.
+	var item_id := str(item) if typeof(item) == TYPE_STRING else equip_base(item)
 	if item_id == "":
 		push_error("equip_to_slot: item is empty")
 		return false
@@ -1302,7 +1204,7 @@ func equip_to_slot(item: Variant, slot: String) -> bool:
 		)
 		return false
 
-	var prev := as_equip_instance(equipped_items.get(slot, {}))
+	var prev := equip_instance(equipped_items.get(slot, {}))
 	# Prefer the actual instance sitting in the backpack (it carries the rolled
 	# affixes); fall back to building one from `item` if it's not in the bag.
 	var bag_idx := _find_equip_cell(item_id)
@@ -1310,7 +1212,9 @@ func equip_to_slot(item: Variant, slot: String) -> bool:
 	if bag_idx >= 0:
 		to_equip = _cell_equip_instance(backpack[bag_idx])
 	else:
-		to_equip = as_equip_instance(item)
+		to_equip = equip_instance(item)
+	if to_equip.is_empty():
+		return false  # an id that is not in the bag: nothing to equip
 	# Equipping from the backpack frees that cell, so swapping with a slot item
 	# is net-zero; only a NEW item (not already in the bag) needs a free cell
 	# to receive `prev`.
@@ -1332,7 +1236,7 @@ func unequip_slot(slot: String) -> bool:
 	if not slot in EQUIPMENT_SLOTS:
 		push_error("unequip_slot: unknown slot '%s'" % slot)
 		return false
-	var inst := as_equip_instance(equipped_items.get(slot, {}))
+	var inst := equip_instance(equipped_items.get(slot, {}))
 	if inst.is_empty():
 		return true  # already empty, treat as success no-op
 	if not add_equip_to_backpack(inst):
@@ -1367,7 +1271,7 @@ func discard_from_inventory(index: int) -> void:
 func get_active_set_tiers() -> Dictionary:
 	var counts: Dictionary = {}
 	for slot in EQUIPMENT_SLOTS:
-		var inst := as_equip_instance(equipped_items.get(slot, {}))
+		var inst := equip_instance(equipped_items.get(slot, {}))
 		if inst.is_empty():
 			continue
 		# Prefer the instance's set_id (rolled per-instance); fall back to the
@@ -2054,7 +1958,7 @@ func _settle_backpack(victory: bool, outcome: String) -> void:
 			if not inst.is_empty():
 				pending_loadout.append(inst.duplicate(true))
 		for slot in EQUIPMENT_SLOTS:
-			var eq := as_equip_instance(equipped_items.get(slot, {}))
+			var eq := equip_instance(equipped_items.get(slot, {}))
 			if not eq.is_empty():
 				pending_equipped[slot] = eq.duplicate(true)
 	else:
