@@ -69,6 +69,9 @@ Overridden by each event:
 - `is_allowed(run_state) -> bool`: defaults to `true`.
 - `calculate_vars() -> void`: fills `dynamic_vars` before the first page. Defaults to doing
   nothing.
+- `page_art(page) -> String`: the art name for a page. Defaults to the event's art. rad_storm
+  uses `rad_storm_bunker` from BUNKER on, and cursed_safe uses `cursed_safe_open` on OPEN.
+  Missing page art falls back to the event's art.
 
 Provided to events:
 
@@ -218,6 +221,10 @@ be shown to the user before merge.
   - the luck chance, for a luck option;
   - the lethal warning, when `will_kill_player` is set;
   - the relic or card hover tip.
+  - Lock, luck and lethal icons from `ui/events/icons/`. Until Codex delivers them, a text
+    suffix stands in.
+- New art (page illustrations and option icons) is listed in `docs/art/codex-art-requests.md`
+  for Codex.
 - The existing UI contract test moves to the new nodes and keeps its assertions: names, art
   under the shelf, and content below the bar.
 
