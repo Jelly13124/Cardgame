@@ -297,10 +297,18 @@ an event without paying it out twice.
 - Produces (`event_room.gd`, `extends Control`):
   - `var model: EventModel`, set before `_ready`.
   - `signal resolved`.
-  - It moves into `event_room.gd` the full-screen fit, the art background, the vignette, the
-    music swap and `_finalize` from `event_modal.gd`, keeping the node names
-    `EventBackground`, `EventContent` and `EventTextVignette`.
-  - The art path is `events/<page_art or art or entry>.png`.
+  - It moves into `event_room.gd` the full-screen fit, the music swap and `_finalize` from
+    `event_modal.gd`. The layout is the spec's left-portrait, right-text layout:
+    - `EventBackground`: `TextureRect`, full screen, `events/backdrops/act_<current_act>.png`
+      with `STRETCH_KEEP_ASPECT_COVERED`, plus a `ColorRect` scrim `Color(0, 0, 0, 0.55)`.
+      Missing backdrop: a `ColorRect` `Color(0.08, 0.07, 0.06)`.
+    - `EventPortrait`: `Panel` frame, position `(80, BAR_HEIGHT + (1080 - BAR_HEIGHT - 768) / 2)`,
+      size 1024×768, `clip_contents = true`. Its child `TextureRect` uses
+      `STRETCH_KEEP_ASPECT_COVERED`, so 1408×768 art shows at 1:1 height, centre-cropped.
+    - `EventContent`: the `event_layout`, x 1144 to 1840, top `BAR_HEIGHT + 16`.
+    - No `EventTextVignette`.
+  - The portrait path is `events/<page_art or art or entry>.png`; it refreshes on
+    `state_changed`.
   - On option press it calls `model.choose(i)`:
     - When the call returns true and this is the first resolved option of the room, it
       calls `RunManager.event_option_resolved()`.
@@ -338,7 +346,12 @@ an event without paying it out twice.
     `page == "TWO"`, and the probe's counter of `GO` runs equals 1.
 
   `card_event_ui_contract_test`: build the room from the probe model instead of
-  `event_data`, and keep the three layout assertions.
+  `event_data`. Assert:
+  - nodes `EventBackground`, `EventPortrait` and `EventContent` exist and `EventTextVignette`
+    does not;
+  - `EventPortrait` and `EventContent` both start at or below `RUN_TOP_BAR.BAR_HEIGHT`;
+  - the portrait's right edge is left of the content's left edge;
+  - with a 1408×768 portrait texture, the drawn scale is 1.0 (height 768 in a 768 frame).
 
 - [ ] **Step 2: Run the tests and confirm they fail.**
 
@@ -509,26 +522,11 @@ an event without paying it out twice.
 - Modify: `docs/art/codex-art-requests.md`
 - Test: none (docs). Then a windowed playtest for the user.
 
-- [ ] **Step 1: Update `docs/art/codex-art-requests.md`.** Under "Event illustrations", add:
-
-  | File | Event / page |
-  |---|---|
-  | `rad_storm_bunker.png` | Rad Storm, inside the bunker: a glowing core in a dark concrete room, dust in the hatch light |
-  | `cursed_safe_open.png` | Humming Strongbox, open: coins and a pulsing green core inside the box |
-
-  Add a new section, "Event option icons": folder `ui/events/icons/`, 32×32 RGBA PNG with a
-  transparent background, readable on the dark vignette. The button falls back to its text
-  suffix when an icon is missing.
-
-  | File | Meaning |
-  |---|---|
-  | `lock.png` | Option locked by an attribute |
-  | `luck.png` | Luck check (dice) |
-  | `lethal.png` | This option can kill you |
-
-  Keep the three existing missing illustrations (adrenaline_shot, deserter_charm,
-  torn_coin_pouch). Add any replacement entries the user names under a "Redo (looks wrong)"
-  section with the user's reason.
+- [ ] **Step 1: Check `docs/art/codex-art-requests.md` against what shipped.** The art list
+  was written up front (commit "docs(art): event layout, redraws and shop layers for
+  Codex"). Confirm every file name and size there matches the code: portrait 1024×768,
+  backdrops `events/backdrops/act_<n>.png` 1920×1080, icons `ui/events/icons/*.png` 32×32,
+  page art `rad_storm_bunker` and `cursed_safe_open`. Fix the doc if the code moved.
 
 - [ ] **Step 2: Commit.**
 

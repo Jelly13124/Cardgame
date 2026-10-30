@@ -211,8 +211,20 @@ be shown to the user before merge.
 ## UI
 
 - `event_room.gd` is opened by the map in place of the modal. It owns the music swap and the
-  `resolved` signal that the map waits for. It keeps the current look: page art behind the
-  transparent relic shelf, the text vignette, and content kept below the top bar.
+  `resolved` signal that the map waits for.
+- Layout follows STS2's default event layout (decided 2026-10-30): a framed illustration on
+  the left and the text column on the right, instead of the illustration stretched over the
+  whole screen. Everything sits below the top bar (`RUN_TOP_BAR.BAR_HEIGHT`, 132 px) in the
+  1920×1080 viewport:
+  - `EventPortrait`: a 1024×768 frame at x 80, centred vertically in the area below the bar.
+    The illustration is drawn at 1:1, never scaled up. Existing 1408×768 art fills the frame
+    at its own height and is centre-cropped to 1024 wide, so it works before the redraws
+    arrive.
+  - `EventContent`: the text column from x 1144 to x 1840.
+  - `EventBackground`: a full-screen backdrop behind both, `events/backdrops/act_<n>.png`
+    for the current act (1920×1080), with a dark scrim so the text stays readable. A missing
+    backdrop falls back to a flat dark fill.
+  - The full-screen text vignette (`EventTextVignette`) is removed; the scrim replaces it.
 - `event_layout.gd` renders the title, page text (with `dynamic_vars` substituted) and the
   option list. It rebuilds on `state_changed`.
 - `event_option_button.gd` renders one option:
@@ -225,8 +237,12 @@ be shown to the user before merge.
     suffix stands in.
 - New art (page illustrations and option icons) is listed in `docs/art/codex-art-requests.md`
   for Codex.
-- The existing UI contract test moves to the new nodes and keeps its assertions: names, art
-  under the shelf, and content below the bar.
+- The existing UI contract test moves to the new nodes. It asserts the node names
+  `EventBackground`, `EventPortrait` and `EventContent`, that the portrait and the content
+  start below the bar, that they do not overlap, and that the portrait texture is not scaled
+  up.
+- Art for the new layout, and redraws of the event illustrations and the shop background in
+  the one house style, are listed in `docs/art/codex-art-requests.md`.
 
 ## Out of scope
 
