@@ -8,6 +8,7 @@ const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const EVENT_POOL = preload("uid://dr3dtuxwul371")  # res://core/run/events/event_pool.gd
 const EVENT_ROOM = preload("uid://cyvheo458ghoj")  # res://ui/events/event_room.gd
 const MAP_SCENE = preload("uid://d3x5b8wvg2q")  # res://ui/map/map_scene.tscn
+const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 const MOD_DIR := "res://tests/fixtures/content_mod/"
 
 var failures: PackedStringArray = []
@@ -74,6 +75,8 @@ func _run() -> void:
 	_expect(RunManager.state.current_event.is_empty(), "proceed clears current_event")
 
 	await _test_map_reopens_unfinished_event()
+	await _test_map_deals_a_playable_event()
+	await _test_every_resolved_option_is_saved()
 
 	RunManager.is_run_active = false
 	RunManager.clear_run_save()
@@ -107,3 +110,47 @@ func _test_map_reopens_unfinished_event() -> void:
 				_expect(content.model.page == "INITIAL" and buttons.size() > 1, "an unfinished event reopens at INITIAL")
 		map.queue_free()
 		await _frames(2)
+
+
+## A freshly dealt event (map → enter_event → room) shows its options.
+func _test_map_deals_a_playable_event() -> void:
+	RunManager.start_new_run("base:cowboy_bill", [], 0, "EVTROOM03")
+	var deck: Array[String] = ["base:hooded_stranger"]
+	RunManager.state.event_deck = deck
+	RunManager.current_node_id = str(RunManager.map_data[0]["id"])
+	var map = MAP_SCENE.instantiate()
+	add_child(map)
+	await _frames(2)
+	map._open_event_node(0)
+	await _frames(3)
+	var content = map.find_child("EventContent", true, false)
+	_expect(content != null, "the map opens the dealt event")
+	if content != null:
+		_expect(_buttons(content).size() == 3, "a dealt event shows its options, got %d" % _buttons(content).size())
+	map.queue_free()
+	await _frames(2)
+
+
+## Every resolved option is saved, so quitting after a later page cannot undo
+## its effects.
+func _test_every_resolved_option_is_saved() -> void:
+	RunManager.start_new_run("base:cowboy_bill", [], 0, "EVTROOM04")
+	var deck: Array[String] = ["base:cursed_safe"]
+	RunManager.state.event_deck = deck
+	var model = RunManager.enter_event("n9")
+	var room = EVENT_ROOM.new()
+	room.model = model
+	add_child(room)
+	await _frames(2)
+	var gold: int = RunManager.gold
+	room._on_option_pressed(0)  # CRACK
+	await _frames(1)
+	room._on_option_pressed(0)  # POCKET: +40 gold and rust
+	await _frames(1)
+	var saved: Dictionary = SAVE_IO.read_json(RunManager._run_save_path()).get("data", {})
+	var deck_saved: Array = saved.get("player_deck", [])
+	_expect(deck_saved.any(func(e): return str(e.get("card_id", "")) == "base:rust"),
+		"the second page's curse is in the save")
+	_expect(RunManager.gold == gold + 40, "POCKET paid out")
+	room.queue_free()
+	await _frames(2)

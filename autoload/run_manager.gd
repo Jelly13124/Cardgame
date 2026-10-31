@@ -1226,6 +1226,7 @@ func enter_event(node_id: String):
 		return null
 	state.current_event = {"node_id": node_id, "event_id": model.id, "finished": false}
 	save_run()
+	model.begin()
 	return model
 
 
@@ -1245,8 +1246,9 @@ func resume_event():
 	return model
 
 
-## The first option of the visit resolved: from now on a reload shows the event
-## as finished.
+## An option resolved: its effects are saved, and from now on a reload shows
+## the event as finished. Runs after every option, so a later page's effects
+## cannot be undone by quitting.
 func event_option_resolved() -> void:
 	if state.current_event.is_empty() or not is_run_active:
 		return

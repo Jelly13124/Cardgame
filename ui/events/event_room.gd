@@ -27,7 +27,6 @@ var _layout
 ## Bumped on every state_changed: an option that changed nothing still gets
 ## its buttons back.
 var _state_seq := 0
-var _resolved_once := false
 var _done := false
 ## BGM playing when the event opened — restored on close.
 var _prev_music: String = ""
@@ -177,6 +176,5 @@ func _on_option_pressed(index: int) -> void:
 		return
 	if seq == _state_seq:
 		_layout.rebuild()  # nothing changed the page: give the buttons back
-	if chosen and not _resolved_once:
-		_resolved_once = true
+	if chosen:
 		RunManager.event_option_resolved()
