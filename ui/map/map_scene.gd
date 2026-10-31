@@ -13,7 +13,7 @@ const CARD_UPGRADE_MODAL = preload("uid://gq5b8t1mbeti")  # res://ui/rest/card_u
 const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://ui/common/run_top_bar.gd
 const SETTINGS_PANEL_SCRIPT = preload("uid://ledls51ku43w")  # res://ui/menus/settings_panel.gd
 const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://ui/menus/pause_panel.gd
-const EVENT_MODAL_SCRIPT = preload("uid://0gxdrhjtltvh")  # res://ui/events/event_modal.gd
+const EVENT_ROOM_SCRIPT = preload("res://ui/events/event_room.gd")
 const T_THEME = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 const BATTLE_PACKED = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
 const SHOP_PACKED = preload("uid://dr8unxxfi0w51")  # res://ui/shop/shop_scene.tscn
@@ -362,8 +362,8 @@ func _on_node_clicked(node: Dictionary) -> void:
 ## _on_relic_choice_selected); the fallback releases it on its own paths.
 func _open_event_node(floor_idx: int) -> void:
 	# Phase 9a interim: scripted events open in the event room from Task 4 on.
-	var event: Dictionary = {}
-	if event.is_empty():
+	var model = null
+	if model == null:
 		_resolve_unknown_node(floor_idx)
 		return
 
@@ -372,8 +372,8 @@ func _open_event_node(floor_idx: int) -> void:
 	layer.layer = 120
 	add_child(layer)
 
-	var modal = EVENT_MODAL_SCRIPT.new()
-	modal.event_data = event
+	var modal = EVENT_ROOM_SCRIPT.new()
+	modal.model = model
 	modal.resolved.connect(
 		func():
 			_node_click_pending = false  # release click guard so next node is clickable

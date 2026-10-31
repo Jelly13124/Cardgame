@@ -3,6 +3,7 @@ extends Node
 ## Contract for core/effects: one registry maps effect types to handlers per
 ## context ("combat", "enemy", "run"); event options run through it.
 
+const EVENT_MODEL = preload("uid://csw4b0frh20t")  # res://core/run/events/event_model.gd
 const EFFECT_REGISTRY = preload("uid://7gab4te60cto")  # res://core/effects/effect_registry.gd
 const EFFECT_CONTEXT = preload("uid://bx2g3askncfr6")  # res://core/effects/effect_context.gd
 const RUN_EFFECTS = preload("uid://divb5pd0mx4cc")  # res://core/effects/run_effects.gd
@@ -43,7 +44,9 @@ func _run() -> void:
 	ctx.kind = "run"
 	await registry.execute(ctx, {"type": "gain_gold", "amount": 7})
 	_expect(RunManager.gold == gold_before + 7, "run gain_gold adds 7 gold (got %d)" % (RunManager.gold - gold_before))
-	RunManager.apply_event_effects([{"type": "gain_gold", "amount": 3}])
+	var event = EVENT_MODEL.new()
+	event.owner = RunManager
+	event.apply([{"type": "gain_gold", "amount": 3}])
 	_expect(RunManager.gold == gold_before + 10, "event options use the registry")
 	RunManager.gold = gold_before
 

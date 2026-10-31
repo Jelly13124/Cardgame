@@ -1,7 +1,9 @@
 extends Node
 
 const CARD_UPGRADE_MODAL = preload("uid://gq5b8t1mbeti")  # res://ui/rest/card_upgrade_modal.gd
-const EVENT_MODAL = preload("uid://0gxdrhjtltvh")  # res://ui/events/event_modal.gd
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const EVENT_ROOM = preload("uid://cyvheo458ghoj")  # res://ui/events/event_room.gd
+const EVENT_POOL = preload("uid://dr3dtuxwul371")  # res://core/run/events/event_pool.gd
 const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://ui/common/run_top_bar.gd
 const RUN_DECK_VIEWER_MODAL = preload("uid://jvxfh15gtinx")  # res://ui/common/run_deck_viewer_modal.gd
 
@@ -86,36 +88,37 @@ func _run() -> void:
 	upgrade.queue_free()
 	await _frames(3)
 
-	var event := EVENT_MODAL.new()
-	event.event_data = {
-		"id": "contract_event",
-		"title": "Contract Event",
-		"description": "Event copy floats directly over the scene.",
-		"options": [{"text": "Continue", "effects": [], "result": "Done"}],
-	}
+	MODEL_DB.inject_dir("res://tests/fixtures/content_mod/", "mymod")
+	var model = EVENT_POOL.instantiate("mymod:probe")
+	model.begin()
+	var event = EVENT_ROOM.new()
+	event.model = model
 	add_child(event)
 	await _frames(5)
-	var vignette := event.find_child("EventTextVignette", true, false) as TextureRect
 	var event_bg := event.find_child("EventBackground", true, false) as Control
 	_expect(event_bg != null, "event exposes its page background")
 	if event_bg != null:
 		_expect(
 			is_equal_approx(event_bg.offset_top, RUN_TOP_BAR.PAGE_ART_TOP),
-			"event art continues behind the transparent relic shelf",
+			"event backdrop continues behind the transparent relic shelf",
 		)
+	_expect(event.find_child("EventTextVignette", true, false) == null, "the full-screen text vignette is gone")
+	var portrait := event.find_child("EventPortrait", true, false) as Control
 	var event_content := event.find_child("EventContent", true, false) as Control
-	_expect(event_content != null, "event exposes its interactive content")
-	if event_content != null:
-		_expect(
-			event_content.offset_top >= RUN_TOP_BAR.BAR_HEIGHT,
-			"event copy and choices stay below the complete persistent top bar",
-		)
-	_expect(vignette != null, "event uses a named unboxed text vignette")
-	if vignette != null:
-		_expect(
-			vignette.texture is GradientTexture2D,
-			"event text support is a soft gradient, not a rectangular backing panel",
-		)
+	_expect(portrait != null and event_content != null, "event exposes its portrait and its content")
+	if portrait != null and event_content != null:
+		_expect(portrait.position.y >= RUN_TOP_BAR.BAR_HEIGHT, "the portrait stays below the top bar")
+		_expect(event_content.position.y >= RUN_TOP_BAR.BAR_HEIGHT,
+			"event copy and choices stay below the complete persistent top bar")
+		_expect(portrait.position.x + portrait.size.x <= event_content.position.x,
+			"the portrait sits left of the text column")
+		var art := portrait.find_child("EventPortraitArt", true, false) as TextureRect
+		_expect(art != null, "the portrait has an art rect")
+		if art != null:
+			art.texture = PlaceholderTexture2D.new()
+			(art.texture as PlaceholderTexture2D).size = Vector2(1408, 768)
+			_expect(is_equal_approx(portrait.size.y, 768.0) and is_equal_approx(art.size.y, 768.0),
+				"1408x768 art is drawn at 1:1 height in the 768 frame")
 	event.queue_free()
 	await _frames(3)
 

@@ -410,12 +410,7 @@ var visited_node_ids: Array[String]:
 var _node_index: Dictionary = {}
 
 const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://core/content/data_validator.gd
-const EFFECT_REGISTRY = preload("uid://7gab4te60cto")  # res://core/effects/effect_registry.gd
-const EFFECT_CONTEXT = preload("uid://bx2g3askncfr6")  # res://core/effects/effect_context.gd
-const RUN_EFFECTS = preload("uid://divb5pd0mx4cc")  # res://core/effects/run_effects.gd
 const EVENT_POOL = preload("uid://dr3dtuxwul371")  # res://core/run/events/event_pool.gd
-## Run-context effect registry, built on first use.
-var _run_effects = null
 const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://core/meta/affixes.gd
 const RUN_STATE = preload("uid://cguglvtfurhlo")  # res://core/run/run_state.gd
@@ -1214,8 +1209,8 @@ func grant_attribute(attr: String, amount: int) -> void:
 
 
 # --- Random events (luck/charm driven "?" node) ----------------------------
-# Data schema + validator live in data_validator.gd. Effect types are dispatched
-# by apply_event_effects() to the matching RunManager mutation.
+# Events are scripts (core/run/events/); these are the run-facade calls the map
+# and the event room use. Effects run through EventModel.apply.
 
 const EVENT_LUCK_CHECK_BASE := 0.35
 const EVENT_LUCK_CHECK_PER_LUCK := 0.04
@@ -1267,37 +1262,11 @@ func finish_event() -> void:
 	save_run()
 
 
-## True if an event option's `requires` (luck/charm) gate is met by current
-## attributes. Options with no `requires` are always unlocked.
-func option_unlocked(option: Dictionary) -> bool:
-	var requires: Variant = option.get("requires", {})
-	if typeof(requires) != TYPE_DICTIONARY:
-		return true
-	for attr in requires.keys():
-		if _attr(str(attr)) < int(requires[attr]):
-			return false
-	return true
-
-
 ## Success probability for a luck_check option. clamp(0.35 + luck*0.04, 0, 0.9).
 func luck_check_chance() -> float:
 	return clampf(
 		EVENT_LUCK_CHECK_BASE + _attr("luck") * EVENT_LUCK_CHECK_PER_LUCK, 0.0, EVENT_LUCK_CHECK_CAP
 	)
-
-
-## Apply an event option's effects through the shared effect registry ("run"
-## context; see core/effects/run_effects.gd). Run handlers are synchronous, so
-## every effect has been applied when this returns.
-func apply_event_effects(effects: Array) -> void:
-	if _run_effects == null:
-		_run_effects = EFFECT_REGISTRY.new()
-		RUN_EFFECTS.register_into(_run_effects)
-	var ctx = EFFECT_CONTEXT.new()
-	ctx.kind = "run"
-	for effect in effects:
-		if typeof(effect) == TYPE_DICTIONARY:
-			_run_effects.execute(ctx, effect)
 
 
 ## Equip item_id into slot. If slot is occupied, the previous occupant moves

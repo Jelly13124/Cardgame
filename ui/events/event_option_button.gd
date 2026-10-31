@@ -1,0 +1,90 @@
+## One event option as a button (STS2 NEventOptionButton): its text, plus the
+## lock reason, the luck chance and a lethal warning. Icons from
+## ui/events/icons/ show when present; a text suffix stands in until then.
+## class_name is intentionally omitted by project convention — preload.
+extends Button
+
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const ICON_DIR := "res://ui/events/icons/"
+
+var option
+
+
+func setup(p_option, model) -> void:
+	option = p_option
+	var label: String = model.format(Settings.t(option.text_key))
+	var locked: bool = option.is_locked()
+	if locked and option.lock_reason != "":
+		label += _marker("lock", "[%s]" % option.lock_reason, option.lock_reason)
+	if option.chance >= 0.0:
+		var pct := "%d%%" % roundi(option.chance * 100.0)
+		label += _marker("luck", "(%s)" % pct, pct)
+	if option.will_kill_player:
+		label += _marker("lethal", "☠", "")
+	text = label
+	custom_minimum_size = Vector2(0, 64)
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	add_theme_font_override("font", T.display_font(600))
+	add_theme_font_size_override("font_size", 21)
+	alignment = HORIZONTAL_ALIGNMENT_CENTER if option.is_proceed else HORIZONTAL_ALIGNMENT_LEFT
+	autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	focus_mode = Control.FOCUS_NONE
+	# STS-style option card: frosted-dark row, gold edge on hover, dim when locked.
+	add_theme_stylebox_override("normal", _style(false, locked))
+	add_theme_stylebox_override("hover", _style(true, locked))
+	add_theme_stylebox_override("pressed", _style(true, locked))
+	add_theme_stylebox_override("disabled", _style(false, true))
+	var fg := Color(0.95, 0.91, 0.79) if not locked else Color(0.60, 0.56, 0.49)
+	if option.will_kill_player:
+		fg = Color(1.0, 0.42, 0.36)
+	add_theme_color_override("font_color", fg)
+	add_theme_color_override("font_hover_color", fg if option.will_kill_player else Color(1.0, 0.97, 0.84))
+	add_theme_color_override("font_pressed_color", fg)
+	add_theme_color_override("font_disabled_color", fg)
+	disabled = locked
+	if not locked:
+		mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	tooltip_text = _hover_tip()
+
+
+## "  <text>" for a marker: with its icon file present, the icon shows and only
+## `icon_text` follows the label; without it, the whole `fallback`.
+func _marker(kind: String, fallback: String, icon_text: String) -> String:
+	var path := ICON_DIR + kind + ".png"
+	if not ResourceLoader.exists(path):
+		return "  " + fallback
+	icon = load(path)
+	return "  " + icon_text if icon_text != "" else ""
+
+
+## Relic or card hover text from ModelDb.
+func _hover_tip() -> String:
+	for pair in [["relic", option.relic_id], ["card", option.card_id]]:
+		if pair[1] == "":
+			continue
+		var data: Dictionary = MODEL_DB.data(pair[0], pair[1])
+		if not data.is_empty():
+			return "%s\n%s" % [str(data.get("title", pair[1])), str(data.get("description", ""))]
+	return ""
+
+
+func _style(hover: bool, locked: bool) -> StyleBoxFlat:
+	var st := StyleBoxFlat.new()
+	if locked:
+		st.bg_color = Color(0.055, 0.068, 0.072, 0.90)
+		st.border_color = Color(0.30, 0.31, 0.29, 0.78)
+	elif hover:
+		st.bg_color = Color(0.09, 0.11, 0.115, 0.98)
+		st.border_color = Color(1.0, 0.48, 0.08)
+	else:
+		st.bg_color = Color(0.045, 0.060, 0.066, 0.96)
+		st.border_color = Color(0.62, 0.52, 0.32, 0.88)
+	st.set_border_width_all(1)
+	st.border_width_left = 3 if not locked else 1
+	st.set_corner_radius_all(4)
+	st.content_margin_left = 22
+	st.content_margin_right = 22
+	st.content_margin_top = 14
+	st.content_margin_bottom = 14
+	return st
