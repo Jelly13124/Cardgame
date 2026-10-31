@@ -201,6 +201,7 @@ const HERO_ATTRIBUTE_KEYS = ["strength", "constitution", "intelligence", "luck",
 
 # ─── Random event schema ─────────────────────────────────────────────────────
 const REQUIRED_EVENT_KEYS = ["id", "title", "options"]
+const SCRIPTED_EVENT_KEYS = ["id", "script", "script_path", "acts", "art"]
 const ALLOWED_EVENT_EFFECT_TYPES = [
 	"gain_gold",
 	"lose_hp",
@@ -1109,6 +1110,17 @@ static func validate_hero(data: Dictionary, path: String) -> bool:
 static func validate_event(data: Dictionary, source_path: String) -> bool:
 	var prefix := "Event '%s'" % source_path
 	var ok := true
+
+	# Scripted event (phase 9a): {id, script, acts?, art?}; text lives in the CSV.
+	if data.has("script"):
+		for key in data:
+			if not key in SCRIPTED_EVENT_KEYS:
+				push_error("%s: unknown key '%s' on a scripted event" % [prefix, key])
+				ok = false
+		if data.has("acts") and typeof(data["acts"]) != TYPE_ARRAY:
+			push_error("%s: 'acts' must be an Array" % prefix)
+			ok = false
+		return ok
 
 	for key in REQUIRED_EVENT_KEYS:
 		if not data.has(key):

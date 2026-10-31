@@ -97,6 +97,12 @@ func _run() -> void:
 	})
 	_expect(int(MODEL_DB.data("card", "mymod:nestedvar")["end_turn_in_hand"][0]["amount"]) == 2,
 		"nested effect lists are filled too")
+	# Scripted events (phase 9a): the JSON names a script next to it.
+	_expect(MODEL_DB.event_script("mymod:probe") is Script, "event script resolved next to its JSON")
+	_expect(Array(MODEL_DB.data("event", "mymod:probe").get("acts", [])) == [1], "event acts kept")
+	MODEL_DB.inject("event", "mymod", "ghost", {"id": "ghost", "script": "ghost.gd"})
+	_expect(MODEL_DB.load_errors().any(func(e): return "ghost" in str(e)), "missing event script is a load error")
+	_expect(MODEL_DB.event_script("mymod:ghost") == null, "missing event script resolves to null")
 	MODEL_DB.remove("card", "mymod:zap")
 	_expect(not MODEL_DB.has("card", "mymod:zap"), "remove drops a model")
 	MODEL_DB.reset()

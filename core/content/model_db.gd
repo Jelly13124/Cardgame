@@ -10,6 +10,7 @@ extends RefCounted
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const CARD_VARS = preload("uid://dagno1w0jtl2n")  # res://core/content/card_vars.gd
 const CONTENT_MODEL = preload("uid://bd6thqkfhu232")  # res://core/content/content_model.gd
+const EVENT_MODEL_PATH := "res://core/run/events/event_model.gd"  # path-ok: identity check against Script.resource_path
 
 const CONTENT_ROOT := "res://content/"
 const CATEGORY_DIRS := {
@@ -36,6 +37,7 @@ const CATEGORY_DIRS := {
 static var _models: Dictionary = {}  # category -> {full id -> content model}
 static var _errors: Array[String] = []
 static var _base_loaded := false
+static var _event_scripts: Dictionary = {}  # full event id -> Script
 
 
 static func ensure_loaded() -> void:
@@ -49,6 +51,7 @@ static func ensure_loaded() -> void:
 static func reset() -> void:
 	_models.clear()
 	_errors.clear()
+	_event_scripts.clear()
 	_base_loaded = false
 
 
@@ -111,6 +114,12 @@ static func resolve(category: String, ref: String, context_ns: String = MODEL_ID
 	return ""
 
 
+## The script of a scripted event (phase 9a), or null.
+static func event_script(id: String) -> Script:
+	ensure_loaded()
+	return _event_scripts.get(id, null)
+
+
 static func load_errors() -> Array[String]:
 	ensure_loaded()
 	return _errors.duplicate()
@@ -125,7 +134,8 @@ static func inject_dir(root: String, ns: String) -> void:
 ## Register one entry. `entry_data.id`, when present, must equal `entry`.
 static func inject(category: String, ns: String, entry: String, entry_data: Dictionary) -> void:
 	ensure_loaded()
-	if _register(category, ns, entry, entry_data.duplicate(true), "%s/%s/%s" % [ns, category, entry]):
+	var dir: String = CONTENT_ROOT.path_join(CATEGORY_DIRS.get(category, ""))
+	if _register(category, ns, entry, entry_data.duplicate(true), "%s/%s/%s" % [ns, category, entry], dir):
 		_finalize(category, MODEL_ID.make(ns, entry))
 
 
@@ -152,7 +162,7 @@ static func _load_root(root: String, ns: String) -> void:
 				_errors.append("%s: not a JSON object" % path)
 				continue
 			var entry := file_name.get_basename()
-			if _register(category, ns, entry, parsed, path):
+			if _register(category, ns, entry, parsed, path, dir_path):
 				added.append([category, MODEL_ID.make(ns, entry)])
 	# References resolve only after the whole root is registered, so content
 	# can point at entries in files loaded later.
@@ -160,7 +170,7 @@ static func _load_root(root: String, ns: String) -> void:
 		_finalize(pair[0], pair[1])
 
 
-static func _register(category: String, ns: String, entry: String, raw: Dictionary, where: String) -> bool:
+static func _register(category: String, ns: String, entry: String, raw: Dictionary, where: String, dir: String) -> bool:
 	if not CATEGORY_DIRS.has(category):
 		_errors.append("%s: unknown category '%s'" % [where, category])
 		return false
@@ -169,6 +179,10 @@ static func _register(category: String, ns: String, entry: String, raw: Dictiona
 		_errors.append("%s: id '%s' does not match file name '%s'" % [where, local_id, entry])
 	if not _models.has(category):
 		_models[category] = {}
+	if category == "event" and raw.has("script"):
+		# `script` is relative to the JSON's directory unless it is a res:// path.
+		var script := str(raw["script"])
+		raw["script_path"] = script if script.begins_with("res://") else dir.path_join(script)
 	var model = CONTENT_MODEL.new(category, ns, entry, raw)
 	raw["id"] = model.id
 	_models[category][model.id] = model
@@ -181,7 +195,25 @@ static func _finalize(category: String, id: String) -> void:
 	_normalize_refs(category, model.data, model.ns, "%s %s" % [category, id])
 	if category == "card":
 		_substitute_card_vars(model.data, "card %s" % id)
+	if category == "event" and model.data.has("script_path"):
+		_load_event_script(id, str(model.data["script_path"]))
 	_make_read_only(model.data)
+
+
+## A missing script, or one that does not extend EventModel, is a load error.
+static func _load_event_script(id: String, path: String) -> void:
+	_event_scripts.erase(id)
+	if not ResourceLoader.exists(path):
+		_errors.append("event %s: script '%s' not found" % [id, path])
+		return
+	var script: Script = load(path) as Script
+	var base: Script = script
+	while base != null and base.resource_path != EVENT_MODEL_PATH:
+		base = base.get_base_script()
+	if base == null:
+		_errors.append("event %s: script '%s' does not extend EventModel" % [id, path])
+		return
+	_event_scripts[id] = script
 
 
 # --- card vars -------------------------------------------------------------------
@@ -235,6 +267,11 @@ static func _normalize_refs(category: String, d: Dictionary, ns: String, where: 
 				_effects_refs(phase.get("action_pattern", []), ns, where)
 				_effects_refs(phase.get("on_enter", []), ns, where)
 		"event":
+			if typeof(d.get("acts")) == TYPE_ARRAY:
+				var acts: Array[int] = []
+				for act in d["acts"]:
+					acts.append(int(act))  # JSON numbers parse as floats
+				d["acts"] = acts
 			for option in _dicts(d.get("options", [])):
 				for key in option:
 					if str(key).begins_with("effects"):
