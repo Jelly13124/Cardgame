@@ -6,7 +6,7 @@ extends Node
 
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const EVENT_POOL = preload("uid://dr3dtuxwul371")  # res://core/run/events/event_pool.gd
-const EVENT_ROOM = preload("res://ui/events/event_room.gd")
+const EVENT_ROOM = preload("uid://cyvheo458ghoj")  # res://ui/events/event_room.gd
 const GUARD := 20
 
 var failures: PackedStringArray = []
