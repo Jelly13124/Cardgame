@@ -31,7 +31,7 @@ func _snapshot() -> Dictionary:
 	for i in 3:
 		drops.append(RunManager.roll_shell_drop("common"))
 	return {"map": JSON.stringify(RunManager.map_data), "encounters": encounters, "drops": drops,
-		"event": str(RunManager.pick_random_event().get("id", ""))}
+		"event": RunManager.state.event_deck.duplicate()}
 
 
 func _run() -> void:
@@ -74,7 +74,8 @@ func _path(detour: bool) -> Dictionary:
 	RunManager.start_new_run("base:cowboy_bill", [], 0, "PATHSEED01")
 	if detour:
 		for i in 3:
-			RunManager.pick_random_event()
+			if RunManager.enter_event("x") != null:
+				RunManager.finish_event()
 			RunManager.rng("unknown_map_point").next_float()
 			RunManager.roll_shell_drop("common")
 		RunManager.select_encounter("elite", 5)

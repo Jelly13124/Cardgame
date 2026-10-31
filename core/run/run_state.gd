@@ -45,6 +45,12 @@ var player_attributes: Dictionary = {
 	"charm": 0,
 }
 var seen_event_ids: Array[String] = []
+## This act's shuffled event deck (core/run/events/event_pool.gd).
+var event_deck: Array[String] = []
+## The event of the current `?` node: {node_id, event_id, finished}, or {}.
+## `finished` turns true once the first option resolves, so a reload cannot
+## pay the event out twice.
+var current_event: Dictionary = {}
 var demo_featured_set_id: String = ""
 var demo_set_piece_ids_claimed: Array[String] = []
 var current_encounter: Array[String] = ["base:trash_robot"]

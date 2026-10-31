@@ -3,14 +3,16 @@ extends RefCounted
 ## The run save's schema (STS2 SerializableRun): its version and the chain that
 ## brings an older run save to it. v1 bare content ids · v2 namespaced ids ·
 ## v3 seeded RNG streams · v4 current: equipment always instances, no hero data
-## copy, retired cards and gem leftovers gone, elapsed time only.
+## copy, retired cards and gem leftovers gone, elapsed time only · v5 current:
+## scripted events — per-act event deck and the event in progress.
 
 const MIGRATION_CHAIN = preload("uid://bmeya57dgtty2")  # res://core/save/migration_chain.gd
 const CONTENT_ID_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/save/content_id_migration.gd
 const RUN_RNG_SET = preload("uid://ealvw2c6utr7")  # res://core/rng/run_rng_set.gd
 const LEGACY_EQUIPMENT = preload("uid://bpsstam8gekpw")  # res://core/save/legacy_equipment.gd
+const EVENT_POOL = preload("uid://dr3dtuxwul371")  # res://core/run/events/event_pool.gd
 
-const CURRENT := 4
+const CURRENT := 5
 ## Cards removed from the game; old saves may still hold their bare ids.
 const RETIRED_CARD_IDS := [
 	"crowbar_smash",
@@ -34,6 +36,7 @@ static func chain() -> RefCounted:
 		.add(1, _v1_to_v2)
 		.add(2, func(d): return d)  # v3 only added the `rng` key; the loader defaults it
 		.add(3, _v3_to_v4)
+		.add(4, _v4_to_v5)
 	)
 
 
@@ -78,7 +81,9 @@ static func to_dict(state, elapsed_msec: int) -> Dictionary:
 		"player_attributes": state.player_attributes,
 		"current_encounter": state.current_encounter,
 		"last_battle_node_type": state.last_battle_node_type,
-		"seen_random_event_ids": state.seen_event_ids,
+		"seen_event_ids": state.seen_event_ids,
+		"event_deck": state.event_deck,
+		"current_event": state.current_event,
 		"demo_featured_set_id": state.demo_featured_set_id,
 		"demo_set_piece_ids_claimed": state.demo_set_piece_ids_claimed,
 		"map_data": state.map_data,
@@ -119,7 +124,9 @@ static func apply(state, d: Dictionary) -> void:
 	state.player_attributes = d.get("player_attributes", state.player_attributes)
 	state.current_encounter = strings(d.get("current_encounter", []))
 	state.last_battle_node_type = str(d.get("last_battle_node_type", "enemy"))
-	state.seen_event_ids = strings(d.get("seen_random_event_ids", []))
+	state.seen_event_ids = strings(d.get("seen_event_ids", []))
+	state.event_deck = strings(d.get("event_deck", []))
+	state.current_event = current_event(d.get("current_event", {}))
 	state.demo_featured_set_id = str(d.get("demo_featured_set_id", ""))
 	state.demo_set_piece_ids_claimed = strings(d.get("demo_set_piece_ids_claimed", []))
 	state.map_data = map_nodes(d.get("map_data", []))
@@ -127,6 +134,14 @@ static func apply(state, d: Dictionary) -> void:
 	state.visited_node_ids = strings(d.get("visited_node_ids", []))
 	var stock = d.get("shop_stock", {})
 	state.shop_stock = stock if typeof(stock) == TYPE_DICTIONARY else {}
+
+
+## {node_id, event_id, finished} with types re-coerced, or {} when absent or
+## malformed.
+static func current_event(v: Variant) -> Dictionary:
+	if typeof(v) != TYPE_DICTIONARY or str(v.get("event_id", "")) == "":
+		return {}
+	return {"node_id": str(v.get("node_id", "")), "event_id": str(v["event_id"]), "finished": bool(v.get("finished", false))}
 
 
 static func strings(v: Variant) -> Array[String]:
@@ -200,6 +215,25 @@ static func _v3_to_v4(d: Dictionary) -> Dictionary:
 	d.erase("run_started_msec")
 	# Hero data is read from ModelDb by id.
 	d.erase("current_hero_data")
+	return d
+
+
+## v5: scripted events. The seen list is renamed; this act's deck is dealt from
+## the saved `up_front` stream (its advanced counter is written back, so the
+## step is deterministic); no event is in progress.
+static func _v4_to_v5(d: Dictionary) -> Dictionary:
+	var seen: Array = d.get("seen_random_event_ids", [])
+	d.erase("seen_random_event_ids")
+	d["seen_event_ids"] = seen
+	var saved_rng: Variant = d.get("rng", {})
+	var rng_set = (
+		RUN_RNG_SET.from_dict(saved_rng)
+		if typeof(saved_rng) == TYPE_DICTIONARY and RUN_RNG_SET.is_valid_seed(str(saved_rng.get("seed_string", "")))
+		else RUN_RNG_SET.new(RUN_RNG_SET.random_seed_string())
+	)
+	d["event_deck"] = EVENT_POOL.build_deck(int(d.get("current_act", 1)), seen, rng_set.stream("up_front"))
+	d["rng"] = rng_set.to_dict()
+	d["current_event"] = {}
 	return d
 
 

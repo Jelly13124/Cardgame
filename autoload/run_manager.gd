@@ -272,16 +272,6 @@ var player_attributes: Dictionary:
 var _equipment_max_hp_bonus: int = 0
 var _equipment_crit_pct_bonus: int = 0
 
-## Random-event definitions (read-only ModelDb data). Populated by
-## load_random_events().
-var _random_events: Array = []
-## Events already dealt during this run. The one-act demo uses a no-replacement
-## event deck so a route cannot repeat the same vignette.
-var _seen_random_event_ids: Array[String]:
-	get:
-		return state.seen_event_ids
-	set(v):
-		state.seen_event_ids = v
 
 ## Demo-only set onboarding track. Three milestone combat rewards offer distinct
 ## pieces from one featured set, ensuring the equipment differentiator becomes
@@ -362,6 +352,8 @@ func advance_act() -> bool:
 	current_act += 1
 	current_floor = 0
 	state.shop_stock.clear()  # node ids repeat every act
+	state.event_deck = EVENT_POOL.build_deck(current_act, state.seen_event_ids, rng("up_front"))
+	state.current_event = {}
 	current_node_id = ""
 	visited_node_ids.clear()
 	generate_map()
@@ -421,6 +413,7 @@ const DATA_VALIDATOR = preload("uid://bdhbhkhs5p4v3")  # res://core/content/data
 const EFFECT_REGISTRY = preload("uid://7gab4te60cto")  # res://core/effects/effect_registry.gd
 const EFFECT_CONTEXT = preload("uid://bx2g3askncfr6")  # res://core/effects/effect_context.gd
 const RUN_EFFECTS = preload("uid://divb5pd0mx4cc")  # res://core/effects/run_effects.gd
+const EVENT_POOL = preload("uid://dr3dtuxwul371")  # res://core/run/events/event_pool.gd
 ## Run-context effect registry, built on first use.
 var _run_effects = null
 const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
@@ -458,7 +451,6 @@ func _ready() -> void:
 	assert(
 		failures == 0, "DataValidator: %d JSON schema failure(s) — see editor output." % failures
 	)
-	load_random_events()
 	_ensure_backpack()
 
 
@@ -552,11 +544,13 @@ func start_new_run(
 	pending_attr_points = 0
 	reward_rerolls = 0
 	run_started_msec = Time.get_ticks_msec()
-	_seen_random_event_ids.clear()
+	state.seen_event_ids.clear()
 	demo_set_piece_ids_claimed.clear()
 	demo_featured_set_id = (
 		rng("up_front").pick(DEMO_FEATURED_SET_IDS) if is_demo() else ""
 	)
+	state.event_deck = EVENT_POOL.build_deck(1, [], rng("up_front"))
+	state.current_event = {}
 	# Base deck = explicit `starter_deck` arg, else hero JSON's starter_deck, else
 	# DEFAULT_STARTER_DECK. The removed deck-editor override is intentionally not
 	# read: old profiles are cleaned/refunded by MetaProgress's schema migration.
@@ -1228,33 +1222,49 @@ const EVENT_LUCK_CHECK_PER_LUCK := 0.04
 const EVENT_LUCK_CHECK_CAP := 0.90
 
 
-## Collect every random-event definition from ModelDb (read-only data).
-func load_random_events() -> void:
-	_random_events = []
-	for model in MODEL_DB.models("event"):
-		_random_events.append(model.data)
+## Deal the next event for `?` node `node_id` (core/run/events/event_pool.gd).
+## The event is recorded unfinished and the run saved before the room opens, so
+## a reload reopens this same event. Null when the deck has nothing that fits.
+func enter_event(node_id: String):
+	var model = EVENT_POOL.next(state)
+	if model == null:
+		return null
+	state.current_event = {"node_id": node_id, "event_id": model.id, "finished": false}
+	save_run()
+	return model
 
 
-## Deal a random event without replacement for the current run. Once every event
-## has been seen, start a fresh deck as a defensive fallback for unusually long
-## custom runs. Returns {} when none are loaded.
-func pick_random_event() -> Dictionary:
-	if _random_events.is_empty():
-		return {}
-	var available: Array = []
-	for event in _random_events:
-		if typeof(event) != TYPE_DICTIONARY:
-			continue
-		if not str(event.get("id", "")) in _seen_random_event_ids:
-			available.append(event)
-	if available.is_empty():
-		_seen_random_event_ids.clear()
-		available = _random_events.duplicate()
-	var picked: Dictionary = rng("up_front").pick(available)
-	var picked_id := str(picked.get("id", ""))
-	if picked_id != "":
-		_seen_random_event_ids.append(picked_id)
-	return picked
+## The event in progress after a reload, or null. An unfinished event restarts
+## at its first page; a finished one shows only the proceed option, so its
+## effects cannot apply twice.
+func resume_event():
+	if state.current_event.is_empty():
+		return null
+	var model = EVENT_POOL.instantiate(str(state.current_event["event_id"]))
+	if model == null:
+		return null
+	if bool(state.current_event.get("finished", false)):
+		model.set_event_finished("RESUMED")
+	else:
+		model.begin()
+	return model
+
+
+## The first option of the visit resolved: from now on a reload shows the event
+## as finished.
+func event_option_resolved() -> void:
+	if state.current_event.is_empty() or not is_run_active:
+		return
+	state.current_event["finished"] = true
+	save_run()
+
+
+## The player proceeded out of the event.
+func finish_event() -> void:
+	var event_id := str(state.current_event.get("event_id", ""))
+	state.current_event = {}
+	_emit_run_event("after_event_finished", event_id)
+	save_run()
 
 
 ## True if an event option's `requires` (luck/charm) gate is met by current

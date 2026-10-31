@@ -67,7 +67,7 @@ func _is_instance(x: Variant) -> bool:
 
 func _test_run_v1() -> void:
 	var run := RUN_SAVE.migrate(_fixture(RUN_V1))
-	_expect(int(run["schema_version"]) == 4 and not run.has("v"), "run save reaches schema v4")
+	_expect(int(run["schema_version"]) == 5 and not run.has("v"), "run save reaches schema v5")
 	_expect(run["current_hero_id"] == "base:cowboy_bill", "hero id migrated")
 	_expect(not run.has("current_hero_data"), "no copy of the hero data is saved")
 	var deck_ids: Array = run["player_deck"].map(func(e): return e["card_id"])
@@ -89,7 +89,14 @@ func _test_run_v1() -> void:
 	_expect(run["relics"] == ["base:bounty_tags", "base:crit_clip"], "relics migrated")
 	_expect(run["tool_inventory"] == ["base:smoke_bomb", ""], "tool slots migrated, empty kept")
 	_expect(run["current_encounter"] == ["base:scrap_rat", "base:hex_drone"], "encounter migrated")
-	_expect(run["seen_random_event_ids"] == ["base:adrenaline_shot"], "seen events migrated as events")
+	_expect(run["seen_event_ids"] == ["base:adrenaline_shot"], "seen events migrated as events")
+	_expect(not run.has("seen_random_event_ids"), "the v4 seen-event key is renamed")
+	_expect(not Array(run["event_deck"]).has("base:adrenaline_shot"), "the migrated deck drops seen events")
+	_expect(run["current_event"] == {}, "no event is in progress after migration")
+	var seeded := _fixture(RUN_V1)
+	seeded["rng"] = {"seed_string": "MIGSEED01", "counters": {}}
+	var deck_a: Array = RUN_SAVE.migrate(seeded)["event_deck"]
+	_expect(deck_a == RUN_SAVE.migrate(seeded)["event_deck"], "the migrated deck is deterministic")
 	_expect(run["demo_set_piece_ids_claimed"] == ["base:weak_hunter_helm"], "claimed pieces migrated")
 	_expect(int(run["run_elapsed_msec"]) == 0 and not run.has("run_started_msec"), "the timer resumes from the elapsed time only")
 	_expect(RUN_SAVE.migrate(run) == run, "migrating a current run save is the identity")
@@ -99,8 +106,13 @@ func _test_run_v3() -> void:
 	var raw := _fixture(RUN_V3)
 	_expect(RUN_SAVE.version_of(raw) == 3, "the v3 sample is a v3 save")
 	var run := RUN_SAVE.migrate(raw)
-	_expect(int(run["schema_version"]) == 4, "the v3 sample reaches v4")
-	_expect(run["rng"] == raw["rng"], "the RNG state is kept")
+	_expect(int(run["schema_version"]) == 5, "the v3 sample reaches v5")
+	_expect(run["rng"]["seed_string"] == raw["rng"]["seed_string"], "the RNG seed is kept")
+	var kept := true
+	for stream in raw["rng"].get("counters", {}):
+		if stream != "up_front" and int(run["rng"]["counters"][stream]) != int(raw["rng"]["counters"][stream]):
+			kept = false
+	_expect(kept, "the RNG counters are kept; only up_front advances for the v5 event deck")
 	for slot in run["equipped_items"]:
 		var v: Variant = run["equipped_items"][slot]
 		_expect(v == {} or _is_instance(v), "slot %s holds an instance or nothing" % slot)

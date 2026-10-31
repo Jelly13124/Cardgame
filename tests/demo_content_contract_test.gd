@@ -96,20 +96,27 @@ func _test_focused_card_pool() -> void:
 
 
 func _test_event_deck() -> void:
-	var original_events: Array = RunManager._random_events.duplicate(true)
-	var original_seen: Array[String] = RunManager._seen_random_event_ids.duplicate()
-	RunManager._random_events = [
-		{"id": "contract_a"},
-		{"id": "contract_b"},
-		{"id": "contract_c"},
-	]
-	RunManager._seen_random_event_ids.clear()
+	var state = RunManager.state
+	var original_deck: Array[String] = state.event_deck.duplicate()
+	var original_seen: Array[String] = state.seen_event_ids.duplicate()
+	var deck: Array[String] = []
+	for entry in ["contract_a", "contract_b", "contract_c"]:
+		MODEL_DB.inject("event", "mymod", entry, {"id": entry, "script": "res://tests/fixtures/content_mod/events/probe.gd"})  # path-ok: event JSON script field
+		deck.append("mymod:" + entry)
+	state.event_deck = deck
+	state.seen_event_ids.clear()
 	var dealt := {}
 	for _i in range(3):
-		dealt[str(RunManager.pick_random_event().get("id", ""))] = true
+		var model = RunManager.enter_event("contract")
+		if model != null:
+			dealt[model.id] = true
+			RunManager.finish_event()
 	_expect(dealt.size() == 3, "random events do not repeat before the deck is exhausted")
-	RunManager._random_events = original_events
-	RunManager._seen_random_event_ids = original_seen
+	_expect(RunManager.enter_event("contract") == null, "an exhausted deck deals nothing")
+	for entry in ["contract_a", "contract_b", "contract_c"]:
+		MODEL_DB.remove("event", "mymod:" + entry)
+	state.event_deck = original_deck
+	state.seen_event_ids = original_seen
 
 
 func _test_set_onboarding_track() -> void:

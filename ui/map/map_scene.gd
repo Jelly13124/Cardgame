@@ -361,7 +361,8 @@ func _on_node_clicked(node: Dictionary) -> void:
 ## click guard is released by the modal's `resolved` callback (mirroring
 ## _on_relic_choice_selected); the fallback releases it on its own paths.
 func _open_event_node(floor_idx: int) -> void:
-	var event: Dictionary = rm.pick_random_event()
+	# Phase 9a interim: scripted events open in the event room from Task 4 on.
+	var event: Dictionary = {}
 	if event.is_empty():
 		_resolve_unknown_node(floor_idx)
 		return

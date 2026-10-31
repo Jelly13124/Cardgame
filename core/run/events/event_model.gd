@@ -131,6 +131,12 @@ func will_kill(damage: int) -> bool:
 	return int(owner.current_health) <= damage
 
 
+## Text key of the current page. A finished event reopened after a reload
+## shows the shared "behind you" line.
+func page_text_key() -> String:
+	return "UI_EVENT_RESUMED_DONE" if page == "RESUMED" else text_key("PAGE_" + page)
+
+
 func text_key(suffix: String) -> String:
 	return "EVENT_%s_%s" % [MODEL_ID.entry_of(id).to_upper(), suffix]
 
