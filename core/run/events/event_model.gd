@@ -81,13 +81,19 @@ func luck_option(key: String, on_success: Callable, on_fail: Callable) -> RefCou
 	return opt
 
 
+## A page change after the run ended (a lethal option) is dropped: the loss
+## flow owns the screen and no proceed option may appear.
 func set_event_state(new_page: String, options: Array) -> void:
+	if _run_over():
+		return
 	page = new_page
 	current_options = options
 	state_changed.emit()
 
 
 func set_event_finished(new_page: String) -> void:
+	if _run_over():
+		return
 	page = new_page
 	var proceed = EVENT_OPTION.new()
 	proceed.key = "PROCEED"
@@ -125,6 +131,10 @@ func apply(effects: Array) -> void:
 	for effect in effects:
 		if typeof(effect) == TYPE_DICTIONARY:
 			_run_effects.execute(ctx, effect)
+
+
+func _run_over() -> bool:
+	return owner != null and not bool(owner.is_run_active)
 
 
 func will_kill(damage: int) -> bool:

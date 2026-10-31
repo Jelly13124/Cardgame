@@ -8,6 +8,7 @@ extends Control
 const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://ui/common/run_top_bar.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
+const RESULT_SCREEN = preload("uid://bxh1x1hy6fylv")  # res://ui/rewards/result_screen.gd
 const EVENT_LAYOUT = preload("res://ui/events/event_layout.gd")
 
 const ART_DIR := "res://run_system/assets/images/events/"
@@ -140,6 +141,19 @@ func _refresh_portrait() -> void:
 	_portrait_art.texture = null
 
 
+## The run ended inside the event: the end-of-run screen on top, as after a
+## lost battle.
+func _show_defeat() -> void:
+	_done = true
+	var canvas := CanvasLayer.new()
+	canvas.layer = 250
+	add_child(canvas)
+	var screen = RESULT_SCREEN.new()
+	screen.name = "ResultScreen"
+	screen.mode = "defeat"
+	canvas.add_child(screen)
+
+
 func _on_state_changed() -> void:
 	_state_seq += 1
 	_refresh_portrait()
@@ -159,7 +173,8 @@ func _on_option_pressed(index: int) -> void:
 	var seq := _state_seq
 	var chosen: bool = model.choose(index)
 	if not RunManager.is_run_active:
-		return  # the run was lost inside the event; the loss flow owns the screen
+		_show_defeat()  # the run was lost inside the event
+		return
 	if seq == _state_seq:
 		_layout.rebuild()  # nothing changed the page: give the buttons back
 	if chosen and not _resolved_once:

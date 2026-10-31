@@ -33,7 +33,11 @@ EVENT_RAD_STORM_PAGE_HUNKER,You wrap up tight and breathe through your scarf. Th
 EVENT_RAD_STORM_OPT_CONVOY,Wave down a passing convoy for shelter,拦下过路的车队求个庇护
 EVENT_RAD_STORM_PAGE_CONVOY,"Your frantic charm earns a wave back. They haul you into a sealed truck, patch you up, and slip you some coin for the road.",你拼命挥手、巧言相求，换来对方回应。他们把你拽进密封货车，替你包扎，还塞给你些路费。
 EVENT_RAD_STORM_OPT_SPRINT,Sprint through the glow toward a bunker,冲过辉光，奔向一座地堡
-EVENT_RAD_STORM_PAGE_SPRINT_OK,"You thread the worst of it and slam the bunker hatch. Inside, a sealed crate of pre-war scrap waits in the dark — and you feel charmed.",你穿过最凶的一段，砰地关上地堡舱门。黑暗里，一箱密封的战前废料静静等着——你只觉时运在身。
+EVENT_RAD_STORM_PAGE_BUNKER,"You thread the worst of it and slam the bunker hatch. Inside, a sealed crate of pre-war scrap — and below it, a hot core still ticking in the concrete. Every scoop of rubble pays. Every scoop costs {rad} HP.",你穿过最凶的一段，砰地关上地堡舱门。里面有一箱密封的战前废料——再往下，一颗炽热的核心还在水泥里嘀嗒作响。每挖一铲都有收获，每挖一铲都要付出 {rad} 点生命。
+EVENT_RAD_STORM_OPT_DIG,"Dig deeper (+10 scrap, lose {rad} HP)",往深处挖（+10 废料，失去 {rad} 点生命）
+EVENT_RAD_STORM_PAGE_DEATH_WARNING,Your hands shake and your gums bleed. The counter on your wrist screams. One more scoop at {rad} HP and the core keeps you down here for good.,你双手发抖，牙龈渗血，腕上的计数器尖叫不停。再挖一铲要 {rad} 点生命——这颗核心会把你永远留在下面。
+EVENT_RAD_STORM_OPT_LEAVE,Climb out while you still can,趁还能动，爬出去
+EVENT_RAD_STORM_PAGE_LEAVE,"You haul your pack up the ladder and wait out the last of the storm in the hatch light, pockets heavy, lungs burning.",你拖着背包爬上梯子，在舱口的光里熬过风暴的尾巴，口袋沉甸甸的，肺里火辣辣的。
 EVENT_RAD_STORM_PAGE_SPRINT_FAIL,"The storm catches you in the open. You reach the bunker scorched and retching, the dose still burning in your lungs.",风暴在旷野里逮住了你。你抵达地堡时焦灼欲呕，那股辐射还在肺里灼烧。
 EVENT_MUTANT_BAZAAR_TITLE,The Mutant Bazaar,变异者集市
 EVENT_MUTANT_BAZAAR_PAGE_INITIAL,"Under a tarp of stitched hides, a four-armed trader fans out salvage across a battered table. Every price is a starting price — if you can talk fast enough.",拼缝兽皮的篷布下，一个四臂商人把废件摊满破桌。每个价码都只是起价——只要你嘴皮子够快。
@@ -70,8 +74,13 @@ EVENT_COLLAPSED_OVERPASS_PAGE_CRAWL_OK,The slab holds. You drag out a sealed cra
 EVENT_COLLAPSED_OVERPASS_PAGE_CRAWL_FAIL,"The wind shifts. Concrete shears loose and pins your leg — you wrench free with torn wiring, the cache buried for good.",风向变了。混凝土崩落，压住了你的腿——你扯断受损线路挣脱出来，补给就此永远埋在了下面。
 EVENT_CURSED_SAFE_TITLE,Humming Strongbox,嗡鸣保险箱
 EVENT_CURSED_SAFE_PAGE_INITIAL,"A dented strongbox hums on a cracked altar, leaking sickly green light through its seams. Caps glint inside — but the air tastes of rot and bad luck.",一只凹陷的保险箱在龟裂的祭台上嗡嗡作响，缝隙里渗出病态的绿光。里面有瓶盖闪烁——可空气里弥漫着腐烂与霉运的味道。
-EVENT_CURSED_SAFE_OPT_CRACK,Crack it open and pocket the caps,撬开它，把瓶盖塞进兜里
-EVENT_CURSED_SAFE_PAGE_CRACK,Caps spill into your hands — and a film of orange rust creeps up your arm. A curse settles into your pack.,瓶盖落进你手心——一层橙色的锈迹顺着手臂爬上来。一张诅咒钻进了你的行囊。
+EVENT_CURSED_SAFE_OPT_CRACK,Crack it open,撬开它
+EVENT_CURSED_SAFE_PAGE_OPEN,"The lid groans open. Caps glitter in a shallow tray, and beneath them a green core hums, wired into the box's guts. The rust is already creeping over the hinges.",箱盖吱呀一声打开。浅托盘里瓶盖闪闪发亮，托盘下方，一颗绿色核心嗡嗡作响，导线连着箱子的内脏。锈迹已经爬上了合页。
+EVENT_CURSED_SAFE_OPT_POCKET,Pocket the caps and go,把瓶盖揣进兜里就走
+EVENT_CURSED_SAFE_OPT_PRY,Pry out the humming core too,连那颗嗡鸣的核心也撬出来
+EVENT_CURSED_SAFE_PAGE_PRY_OK,"The core comes loose with a wet click and cools in your palm into good, sellable scrap. The caps spill after it — and the rust follows them up your arm.",核心湿漉漉地咔哒一声松脱，在你掌心冷却成一块好卖的废料。瓶盖跟着倾泻而出——锈迹也跟着爬上了你的手臂。
+EVENT_CURSED_SAFE_PAGE_PRY_FAIL,The core flares as you twist it. Green light floods your eyes and something cold and frantic crawls in behind them. You keep the caps. You keep the rust. You keep the fear.,你一拧，核心骤然亮起。绿光灌满你的双眼，某种冰冷而慌乱的东西从眼后爬了进去。瓶盖归你，锈迹归你，恐惧也归你。
+EVENT_CURSED_SAFE_PAGE_POCKET,Caps spill into your hands — and a film of orange rust creeps up your arm. A curse settles into your pack.,瓶盖落进你手心——一层橙色的锈迹顺着手臂爬上来。一张诅咒钻进了你的行囊。
 EVENT_CURSED_SAFE_OPT_LEAVE,Leave it. Nothing glows green for free.,走开。会发绿光的东西没一样是白送的。
 EVENT_CURSED_SAFE_PAGE_LEAVE,"You back away. The box hums on, waiting for someone greedier.",你退开了。箱子继续嗡鸣，等着更贪心的人。
 EVENT_TORN_COIN_POUCH_TITLE,Torn Coin Pouch,破洞钱袋
