@@ -16,7 +16,10 @@ func setup(p_option, model) -> void:
 	var label: String = model.format(Settings.t(option.text_key))
 	var locked: bool = option.is_locked()
 	if locked and option.lock_reason != "":
-		label += _marker("lock", "[%s]" % option.lock_reason, option.lock_reason)
+		var reason: String = option.lock_reason
+		if option.lock_attr != "":
+			reason = "%s %d" % [Settings.t("UI_BATTLE_ATTR_%s" % option.lock_attr.to_upper(), option.lock_attr.capitalize()), option.lock_need]
+		label += _marker("lock", "[%s]" % reason, reason)
 	if option.chance >= 0.0:
 		var pct := "%d%%" % roundi(option.chance * 100.0)
 		label += _marker("luck", "(%s)" % pct, pct)

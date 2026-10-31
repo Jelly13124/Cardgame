@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://prjjjbdao1wv"]
+
+[ext_resource type="Script" path="res://tests/event_content_test.gd" id="1"]
+
+[node name="EventContentTest" type="Node"]
+script = ExtResource("1")

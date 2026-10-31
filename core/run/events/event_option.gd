@@ -7,8 +7,11 @@ extends RefCounted
 var key: String
 var text_key: String
 var on_chosen: Callable
-## Shown on a locked option ("Charm 5").
+## Why the option is locked ("Charm 5"); the attribute gate's parts are kept
+## so the button can show the attribute's localized name.
 var lock_reason: String = ""
+var lock_attr: String = ""
+var lock_need: int = 0
 ## Success chance of a luck option; -1 for any other option.
 var chance: float = -1.0
 ## Hover tips reusing the relic and card tooltips.
@@ -32,5 +35,7 @@ func requires(attrs: Dictionary) -> RefCounted:
 		var have: int = owner._attr(str(attr)) if owner != null else 0
 		if have < need:
 			lock_reason = "%s %d" % [str(attr).capitalize(), need]
+			lock_attr = str(attr)
+			lock_need = need
 			break
 	return self

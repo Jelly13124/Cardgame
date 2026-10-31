@@ -91,6 +91,13 @@ func _ready() -> void:
 	# "at the map, about to pick the next node."
 	if rm.is_run_active and not peek_mode:
 		rm.save_run()
+		# A run saved inside an event reopens it (finished events show only
+		# the proceed option, so nothing pays out twice).
+		if str(rm.state.current_event.get("node_id", "")) == rm.current_node_id and rm.current_node_id != "":
+			var resumed = rm.resume_event()
+			if resumed != null:
+				_node_click_pending = true
+				_open_event_room(resumed)
 
 	if peek_mode:
 		_build_peek_close_button()
@@ -356,31 +363,34 @@ func _on_node_clicked(node: Dictionary) -> void:
 			_node_click_pending = false
 
 
-## "?" map node — try to open a data-driven random event. If no events are
-## loaded, fall back to the legacy random-outcome roll (the safety net). The
-## click guard is released by the modal's `resolved` callback (mirroring
-## _on_relic_choice_selected); the fallback releases it on its own paths.
+## "?" map node — deal the act's next event (saved before the room opens, so a
+## reload reopens it). With no event left, roll the `?` table instead; that
+## fallback releases the click guard on its own paths.
 func _open_event_node(floor_idx: int) -> void:
-	# Phase 9a interim: scripted events open in the event room from Task 4 on.
-	var model = null
+	var model = rm.enter_event(rm.current_node_id)
 	if model == null:
 		_resolve_unknown_node(floor_idx)
 		return
+	_open_event_room(model)
 
+
+## Show `model` in the event room above the map. The click guard is released
+## by the room's `resolved` callback.
+func _open_event_room(model) -> void:
 	var layer := CanvasLayer.new()
-	layer.name = "EventModalLayer"
+	layer.name = "EventRoomLayer"
 	layer.layer = 120
 	add_child(layer)
 
-	var modal = EVENT_ROOM_SCRIPT.new()
-	modal.model = model
-	modal.resolved.connect(
+	var room = EVENT_ROOM_SCRIPT.new()
+	room.model = model
+	room.resolved.connect(
 		func():
 			_node_click_pending = false  # release click guard so next node is clickable
 			layer.queue_free()
 			queue_redraw()
 	)
-	layer.add_child(modal)
+	layer.add_child(room)
 
 
 ## "?" map node with no event left: the run layer rolls the outcome

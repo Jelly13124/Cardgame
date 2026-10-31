@@ -10,7 +10,7 @@ extends RefCounted
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const CARD_VARS = preload("uid://dagno1w0jtl2n")  # res://core/content/card_vars.gd
 const CONTENT_MODEL = preload("uid://bd6thqkfhu232")  # res://core/content/content_model.gd
-const EVENT_MODEL_PATH := "res://core/run/events/event_model.gd"  # path-ok: identity check against Script.resource_path
+const EVENT_MODEL_PATH := "res://core/run/events/event_model.gd"  # path-ok: loaded for an identity check against event scripts
 
 const CONTENT_ROOT := "res://content/"
 const CATEGORY_DIRS := {
@@ -207,8 +207,12 @@ static func _load_event_script(id: String, path: String) -> void:
 		_errors.append("event %s: script '%s' not found" % [id, path])
 		return
 	var script: Script = load(path) as Script
+	if script == null:
+		_errors.append("event %s: script '%s' failed to load" % [id, path])
+		return
+	var event_model: Script = load(EVENT_MODEL_PATH)
 	var base: Script = script
-	while base != null and base.resource_path != EVENT_MODEL_PATH:
+	while base != null and base != event_model:
 		base = base.get_base_script()
 	if base == null:
 		_errors.append("event %s: script '%s' does not extend EventModel" % [id, path])
@@ -272,10 +276,6 @@ static func _normalize_refs(category: String, d: Dictionary, ns: String, where: 
 				for act in d["acts"]:
 					acts.append(int(act))  # JSON numbers parse as floats
 				d["acts"] = acts
-			for option in _dicts(d.get("options", [])):
-				for key in option:
-					if str(key).begins_with("effects"):
-						_effects_refs(option[key], ns, where)
 		"equipment":
 			_ref_field(d, "set_id", "equipment_set", ns, where)
 		"character":

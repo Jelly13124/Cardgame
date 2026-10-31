@@ -7,6 +7,7 @@ extends Node
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const EVENT_POOL = preload("uid://dr3dtuxwul371")  # res://core/run/events/event_pool.gd
 const EVENT_ROOM = preload("uid://cyvheo458ghoj")  # res://ui/events/event_room.gd
+const MAP_SCENE = preload("uid://d3x5b8wvg2q")  # res://ui/map/map_scene.tscn
 const MOD_DIR := "res://tests/fixtures/content_mod/"
 
 var failures: PackedStringArray = []
@@ -72,6 +73,8 @@ func _run() -> void:
 	_expect(resolved[0], "proceed emits resolved")
 	_expect(RunManager.state.current_event.is_empty(), "proceed clears current_event")
 
+	await _test_map_reopens_unfinished_event()
+
 	RunManager.is_run_active = false
 	RunManager.clear_run_save()
 	if failures.is_empty():
@@ -80,3 +83,27 @@ func _run() -> void:
 		return
 	push_error("event room contract failed: %s" % "; ".join(failures))
 	get_tree().quit(1)
+
+
+## map_reopens_unfinished_event: a run saved inside an event reopens it on the
+## map; a finished one shows only the proceed button.
+func _test_map_reopens_unfinished_event() -> void:
+	for finished in [false, true]:
+		RunManager.start_new_run("base:cowboy_bill", [], 0, "EVTROOM02")
+		RunManager.current_node_id = str(RunManager.map_data[0]["id"])
+		RunManager.state.current_event = {
+			"node_id": RunManager.current_node_id, "event_id": "base:hooded_stranger", "finished": finished,
+		}
+		var map = MAP_SCENE.instantiate()
+		add_child(map)
+		await _frames(3)
+		var content = map.find_child("EventContent", true, false)
+		_expect(content != null, "the map reopens the event (finished=%s)" % finished)
+		if content != null:
+			var buttons := _buttons(content)
+			if finished:
+				_expect(content.model.is_finished and buttons.size() == 1, "a finished event reopens with only proceed")
+			else:
+				_expect(content.model.page == "INITIAL" and buttons.size() > 1, "an unfinished event reopens at INITIAL")
+		map.queue_free()
+		await _frames(2)

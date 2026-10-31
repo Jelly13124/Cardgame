@@ -537,32 +537,36 @@ def build_bounties():
 
 # ── Random events (the "?" map node) ────────────────────────────────────────
 def build_events():
+    # Events are scripts (content/events/<id>.gd); the JSON only names the
+    # script and the acts. Options and pages are read from the CSV keys.
     items = load_json_dir("content/events")
     ev_tr = load_tr("ui_events.csv")
     cards = []
     for eid, d in items:
         up = eid.upper()
-        en = ev_tr.get(f"EVENT_{up}_TITLE", {}).get("en", d.get("title", eid))
+        en = ev_tr.get(f"EVENT_{up}_TITLE", {}).get("en", eid)
         zh = ev_tr.get(f"EVENT_{up}_TITLE", {}).get("zh", "")
-        desc = ev_tr.get(f"EVENT_{up}_DESC", {}).get("zh") or d.get("description", "")
-        opts = ""
-        for i, opt in enumerate(d.get("options", [])):
-            otext = ev_tr.get(f"EVENT_{up}_OPT{i}_TEXT", {}).get("zh") or opt.get("text", "")
-            effs = " · ".join(fmt_effect(e) for e in opt.get("effects", [])) or "—"
-            opts += (f'<li><b>{esc(otext)}</b>'
-                     f'<br><span style="color:#9c917c;font-size:12px">→ {esc(effs)}</span></li>')
-        is_trap = any(e.get("type") == "add_curse"
-                      for opt in d.get("options", []) for e in opt.get("effects", []))
+        desc = ev_tr.get(f"EVENT_{up}_PAGE_INITIAL", {}).get("zh", "")
+        opt_keys = [k for k in ev_tr if k.startswith(f"EVENT_{up}_OPT_")]
+        page_keys = [k for k in ev_tr if k.startswith(f"EVENT_{up}_PAGE_") and not k.endswith("_INITIAL")]
+        opts = "".join(f'<li><b>{esc(ev_tr[k].get("zh") or ev_tr[k].get("en", ""))}</b></li>' for k in opt_keys)
+        pages = "".join(
+            f'<li><span style="color:#9c917c;font-size:12px">{esc(k.split("_PAGE_", 1)[1])} → '
+            f'{esc(ev_tr[k].get("zh") or ev_tr[k].get("en", ""))}</span></li>' for k in page_keys)
+        script_path = os.path.join("content/events", d.get("script", f"{eid}.gd"))
+        source = open(script_path, encoding="utf-8").read() if os.path.exists(script_path) else ""
+        is_trap = "add_curse" in source
         trap = ('<span class="pill" style="color:#e0584c;border-color:#e0584c">curse-trap</span>'
                 if is_trap else "")
+        acts = "acts " + ", ".join(str(a) for a in d["acts"]) if d.get("acts") else "all acts"
         c = "#e0584c" if is_trap else "#7fc7d9"
         search = f"{eid} {en} {zh}".lower()
         cards.append(
             f'<div class="card" data-search="{esc(search)}" style="border-left-color:{c}">'
             f'<h3>{esc(en)} <span class="zh">{esc(zh)}</span></h3>'
             f'<div class="meta">{trap}<span class="pill" style="color:#6b6256">{esc(eid)}</span>'
-            f'<span class="pill">{len(d.get("options", []))} options</span></div>'
-            f'<div class="desc">{esc(desc)}</div><ul class="eff">{opts}</ul></div>')
+            f'<span class="pill">{len(opt_keys)} options</span><span class="pill">{esc(acts)}</span></div>'
+            f'<div class="desc">{esc(desc)}</div><ul class="eff">{opts}{pages}</ul></div>')
     body = section("Random Events 随机事件", len(cards), "".join(cards))
     page("events.html", "Events · 事件",
          'The "?" map node — each presents 2–3 attribute-gated choices',
