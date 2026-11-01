@@ -42,6 +42,31 @@ func _run() -> void:
 		return
 
 	var enemy = battle.enemy_container.get_child(0)
+	# hit_spark_by_source: an enemy's blow, an area blast and a player's shot.
+	var spark_enemy = battle.view_of(battle.combat.add_enemy(MONSTERS.create("base:scrap_rat")))
+	spark_enemy.health = 40
+	battle.player.health = 50
+	await _real_seconds(0.6)  # earlier sparks burn out first
+	await battle.combat.combat_commands.damage(
+		COMBAT_SOURCE.make("enemy", "enemy", spark_enemy.creature), [battle.player.creature], 3, 0
+	)
+	_expect(_has_spark(battle, "blunt"), "an enemy hit throws a blunt spark")
+	await battle.combat.execute_effect(
+		{"type": "deal_damage_all", "amount": 2, "no_str": true},
+		null,
+		COMBAT_SOURCE.make("card", "player", battle.player.creature)
+	)
+	_expect(_has_spark(battle, "blast"), "area damage throws a blast")
+	await _real_seconds(0.6)
+	await battle.combat.execute_effect(
+		{"type": "deal_damage", "amount": 2, "no_str": true},
+		spark_enemy.creature,
+		COMBAT_SOURCE.make("card", "player", battle.player.creature)
+	)
+	_expect(_has_spark(battle, "shot"), "a card shot throws a shot spark")
+	battle.combat.combat_commands.raw_hit(DEBUG_SOURCE, spark_enemy.creature, 999, {"source": "test"})
+	await _real_seconds(0.3)
+
 	var controller: Node = FEEDBACK_CONTROLLER.ensure(battle)
 	controller.feedback_started.connect(
 		func(profile: String) -> void: _profiles.append(profile)
@@ -170,6 +195,13 @@ func _run() -> void:
 	_expect(is_equal_approx(Engine.time_scale, 1.0), "leaving battle restores normal time scale")
 
 	_finish()
+
+
+func _has_spark(battle: Node, kind: String) -> bool:
+	for child in battle.get_children():
+		if String(child.name).begins_with("CombatHitSpark_" + kind):
+			return true
+	return false
 
 
 func _real_seconds(seconds: float) -> void:

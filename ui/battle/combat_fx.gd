@@ -1,56 +1,8 @@
-## Lightweight combat feedback helpers — damage numbers + screen shake.
+## Lightweight combat feedback helpers — feedback text, recoil and the battlefield punch.
 ## Static methods so callers don't need an instance. Spawned nodes
 ## self-destroy after their tween finishes.
 extends RefCounted
 class_name CombatFX
-
-
-## Spawn a floating damage number at `world_pos`. The label rises and
-## fades over ~0.7s, then queue_frees. Color tints by context:
-##   - blocked > 0  → grey-blue ("absorbed")
-##   - amount  >= 10 → bright red ("big hit")
-##   - default      → light red
-static func spawn_damage_number(
-	scene_root: Node, world_pos: Vector2, amount: int, blocked: int = 0
-) -> void:
-	if not is_instance_valid(scene_root) or scene_root.get_tree() == null:
-		return
-	if amount <= 0 and blocked <= 0:
-		return
-
-	var label := Label.new()
-	label.text = str(amount) if blocked == 0 else "%d (-%d blocked)" % [amount, blocked]
-	label.add_theme_font_size_override("font_size", 28 if amount >= 10 else 22)
-	label.add_theme_color_override("font_color", _color_for_hit(amount, blocked))
-	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
-	label.add_theme_constant_override("shadow_offset_x", 2)
-	label.add_theme_constant_override("shadow_offset_y", 2)
-
-	# Use a CanvasLayer so the label always draws on top of the battlefield
-	# and isn't clipped by container bounds.
-	var layer := CanvasLayer.new()
-	layer.layer = 50
-	scene_root.add_child(layer)
-	layer.add_child(label)
-
-	# Center on the spawn point. label.get_minimum_size() forces a
-	# synchronous text-measurement (Label normally only measures on next
-	# layout pass). Assigning that to label.size lets us subtract half-
-	# width in the SAME frame, so the first rendered frame is already
-	# centered — no deferred-callable lag or first-frame mis-position.
-	label.size = label.get_minimum_size()
-	label.position = world_pos - Vector2(label.size.x * 0.5, 0)
-
-	var tween := scene_root.create_tween()
-	tween.set_parallel(true)
-	(
-		tween
-		. tween_property(label, "position:y", world_pos.y - 56, 0.7)
-		. set_trans(Tween.TRANS_QUAD)
-		. set_ease(Tween.EASE_OUT)
-	)
-	tween.tween_property(label, "modulate:a", 0.0, 0.7).set_delay(0.15)
-	tween.chain().tween_callback(layer.queue_free)
 
 
 ## Spawn a compact local feedback label near a combatant. This is intentionally
@@ -124,29 +76,39 @@ static func shake(target: Node2D, intensity: float = 4.0, duration: float = 0.12
 	recoil(target, intensity, duration)
 
 
-## Lethal-only battlefield jolt. Both sides receive one identical offset and return,
-## which preserves spacing and avoids prolonged vibration.
-static func shake_screen(scene: Node, intensity: float = 6.0, duration: float = 0.22) -> void:
+## Battlefield punch (STS2 ScreenPunchInstance): both sides swing horizontally,
+## cos(remaining x 60) x `strength` x CubicOut(remaining / duration), and settle
+## back on their rest positions together.
+static func punch_screen(scene: Node, strength: float, duration: float = 0.3) -> void:
 	if scene == null or not is_instance_valid(scene):
 		return
 	for prop in ["player", "enemy_container"]:
 		var n = scene.get(prop)
 		if n is Node2D and is_instance_valid(n):
-			_jolt(n, Vector2(-intensity, intensity * 0.10), duration)
+			_punch(n, strength, duration)
 
 
-static func _jolt(target: Node2D, offset: Vector2, duration: float) -> void:
+static func punch_offset(strength: float, remaining: float, duration: float) -> float:
+	if remaining <= 0.0 or duration <= 0.0:
+		return 0.0
+	var t := remaining / duration
+	var ease_out := 1.0 - pow(1.0 - t, 3.0)
+	return cos(remaining * 60.0) * strength * ease_out
+
+
+static func _punch(target: Node2D, strength: float, duration: float) -> void:
 	var origin := _prepare_position_tween(target)
 	var tween := target.create_tween()
 	target.set_meta(_SHAKE_TWEEN_META, tween)
-	(
-		tween
-		. tween_property(target, "position", origin + offset, duration * 0.32)
-		. set_trans(Tween.TRANS_QUAD)
-		. set_ease(Tween.EASE_OUT)
+	tween.tween_method(
+		func(remaining: float) -> void:
+			if is_instance_valid(target):
+				target.position = origin + Vector2(punch_offset(strength, remaining, duration), 0.0),
+		duration, 0.0, duration
 	)
-	tween.tween_property(target, "position", origin - offset * 0.12, duration * 0.20)
-	tween.tween_property(target, "position", origin, duration * 0.48)
+	tween.tween_callback(func() -> void:
+		if is_instance_valid(target):
+			target.position = origin)
 
 
 static func _prepare_position_tween(target: Node2D) -> Vector2:
@@ -162,11 +124,3 @@ static func _prepare_position_tween(target: Node2D) -> Vector2:
 			prior.kill()
 	target.position = origin
 	return origin
-
-
-static func _color_for_hit(amount: int, blocked: int) -> Color:
-	if blocked > 0 and amount == 0:
-		return Color(0.65, 0.85, 1.0)  # fully absorbed — cool blue-grey
-	if amount >= 10:
-		return Color(1.0, 0.35, 0.25)  # big hit — saturated red
-	return Color(1.0, 0.65, 0.55)  # normal — pinkish red

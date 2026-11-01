@@ -9,6 +9,9 @@ const ENEMY_ENTITY_PATH := "res://ui/battle/enemy_view.gd"  # path-ok: reads sou
 const PLAYER_PATH := "res://ui/battle/player_view.gd"  # path-ok: reads source text
 const ENEMY_AI_PATH := "res://core/combat/enemy_turn.gd"  # path-ok: reads source text
 const EXPECTED_PROFILES := ["blocked", "heavy", "kill", "normal"]
+const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://ui/battle/combat_fx.gd
+const DAMAGE_NUMBER = preload("uid://clps6my10jkri")  # res://ui/battle/damage_number_vfx.gd
+const HIT_SPARK = preload("uid://c81e6d5uadhem")  # res://ui/battle/hit_spark_vfx.gd
 
 var failures: PackedStringArray = []
 
@@ -27,6 +30,10 @@ func _expect(condition: bool, message: String) -> void:
 func _run() -> void:
 	await _test_reusable_feedback_controller()
 	_test_damage_path_integration()
+	_test_shake_tiers()
+	_test_punch_envelope()
+	_test_hit_spark_kinds()
+	await _test_damage_number_flight()
 
 	if failures.is_empty():
 		print("[OK] Combat feedback contract passed")
@@ -69,10 +76,6 @@ func _test_reusable_feedback_controller() -> void:
 			"%s profile configures hitstop" % profile_name
 		)
 		_expect(
-			profile.has("shake_intensity"),
-			"%s profile configures camera shake" % profile_name
-		)
-		_expect(
 			profile.has("damage_number_scale"),
 			"%s profile configures damage-number emphasis" % profile_name
 		)
@@ -84,16 +87,6 @@ func _test_reusable_feedback_controller() -> void:
 			profile.has("impact_size"),
 			"%s profile configures local impact size" % profile_name
 		)
-	_expect(
-		float(profiles["normal"]["shake_intensity"]) == 0.0
-		and float(profiles["blocked"]["shake_intensity"]) == 0.0
-		and float(profiles["heavy"]["shake_intensity"]) == 0.0,
-		"ordinary, blocked, and heavy hits do not shake the whole battlefield"
-	)
-	_expect(
-		float(profiles["kill"]["shake_intensity"]) > 0.0,
-		"lethal feedback alone retains a restrained battlefield jolt"
-	)
 	_expect(
 		float(profiles["normal"]["impact_size"]) < float(profiles["heavy"]["impact_size"])
 		and float(profiles["heavy"]["impact_size"]) <= float(profiles["kill"]["impact_size"]),
@@ -158,6 +151,69 @@ func _test_reusable_feedback_controller() -> void:
 		target.queue_free()
 
 	controller.queue_free()
+
+
+## shake_tiers: STS2 ShakeStrength by HP taken; blocked weak, lethal strong.
+func _test_shake_tiers() -> void:
+	var controller = load(CONTROLLER_PATH).new()
+	var cases := [
+		[1, "normal", 5.0], [5, "normal", 5.0], [6, "normal", 20.0], [10, "heavy", 20.0],
+		[11, "heavy", 40.0], [30, "heavy", 40.0], [0, "blocked", 5.0], [2, "kill", 40.0],
+	]
+	for c in cases:
+		var got: float = controller.shake_for_hit(c[0], c[1])
+		_expect(is_equal_approx(got, c[2]), "%d HP (%s) punches %s px, got %s" % [c[0], c[1], c[2], got])
+	controller.free()
+
+
+## punch_envelope: cos(remaining x 60) x strength x CubicOut(remaining / duration).
+func _test_punch_envelope() -> void:
+	_expect(is_equal_approx(COMBAT_FX.punch_offset(40.0, 0.3, 0.3), 40.0 * cos(18.0)), "the punch starts at full strength")
+	_expect(COMBAT_FX.punch_offset(40.0, 0.0, 0.3) == 0.0, "the punch ends at rest")
+	var envelope := func(remaining: float) -> float: return 1.0 - pow(1.0 - remaining / 0.3, 3.0)
+	_expect(envelope.call(0.05) < envelope.call(0.15) and envelope.call(0.15) < envelope.call(0.3), "the punch decays")
+	_expect(absf(COMBAT_FX.punch_offset(40.0, 0.15, 0.3)) <= 40.0 * envelope.call(0.15) + 0.001, "the swing stays inside its envelope")
+
+
+## hit_spark_kinds: each hit kind throws its own burst; unknown kinds are shots.
+func _test_hit_spark_kinds() -> void:
+	var shot = HIT_SPARK.spawn(self, Vector2.ZERO, "shot")
+	var blast = HIT_SPARK.spawn(self, Vector2.ZERO, "blast")
+	var shock = HIT_SPARK.spawn(self, Vector2.ZERO, "shock")
+	var unknown = HIT_SPARK.spawn(self, Vector2.ZERO, "laser")
+	var heavy = HIT_SPARK.spawn(self, Vector2.ZERO, "shot", 1.5)
+	_expect(String(shot.get_parent().name).begins_with("CombatHitSpark_shot"), "a shot names its layer")
+	_expect(blast.amount > shot.amount, "a blast throws more sparks than a shot")
+	_expect(shock.color_ramp.get_color(0) != shot.color_ramp.get_color(0), "a shock has its own colour")
+	_expect(unknown.color_ramp.get_color(0) == shot.color_ramp.get_color(0) and unknown.amount == shot.amount, "an unknown kind falls back to a shot")
+	_expect(heavy.amount > shot.amount, "emphasis throws more sparks")
+	for sparks in [shot, blast, shock, unknown, heavy]:
+		_expect(sparks.emitting and sparks.one_shot, "sparks burst once")
+		sparks.get_parent().queue_free()
+
+
+## damage_number_flight: pops in at 2.5x, launches up, falls, tints, frees itself.
+func _test_damage_number_flight() -> void:
+	var number = DAMAGE_NUMBER.spawn(self, Vector2(500, 500), "17", Color.RED, 1.2)
+	_expect(number != null, "a damage number spawns")
+	if number == null:
+		return
+	var layer: Node = number.get_parent()
+	var label: Label = number.get_node("Label")
+	_expect(label.text == "17", "the number shows its text")
+	_expect(number.scale.is_equal_approx(Vector2.ONE * 2.5), "the number pops in at 2.5x")
+	_expect(number.velocity.y >= -800.0 and number.velocity.y <= -700.0, "it launches up at 700-800 px/s")
+	_expect(absf(number.velocity.x) <= 100.0, "it drifts sideways at most 100 px/s")
+	_expect(absf(number.rotation_degrees) <= 5.0, "it tilts at most 5 degrees")
+	_expect(label.get_theme_font_size("font_size") == roundi(44 * 1.2), "emphasis scales the font")
+	var start_y: float = number.position.y
+	await get_tree().create_timer(0.2).timeout
+	_expect(number.position.y < start_y, "it rises first")
+	await get_tree().create_timer(0.8).timeout
+	_expect(number.position.y > start_y, "then gravity brings it down")
+	_expect(label.modulate.is_equal_approx(DAMAGE_NUMBER.CREAM), "it has tinted to cream")
+	await get_tree().create_timer(1.2).timeout
+	_expect(not is_instance_valid(layer), "it frees itself after fading")
 
 
 func _test_damage_path_integration() -> void:

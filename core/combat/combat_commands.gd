@@ -55,6 +55,7 @@ func preview_damage(
 
 
 ## Deals one hit to each live target in order. `tags`: "heavy" (feedback),
+## "vfx" (the hit spark: shot, blast, shock or blunt),
 ## "overload" (crit rule), "feedback_source" (override the feedback source).
 ## Stops after the game ends or after a boss dies (its adds are freed next frame).
 func damage(
@@ -181,4 +182,15 @@ func _feedback(source, calc) -> Dictionary:
 		tags["status"] = calc.tags["status"]
 	elif kind == "status":
 		tags["status"] = source.id
+	tags["vfx"] = str(calc.tags.get("vfx", _default_vfx(kind, tags)))
 	return tags
+
+
+## The spark a hit throws when its effect names none: an electric discharge for
+## Short Circuit, a blow for enemies, a bullet otherwise.
+func _default_vfx(kind: String, tags: Dictionary) -> String:
+	if str(tags.get("status", "")) == "short_circuit":
+		return "shock"
+	if kind == "enemy":
+		return "blunt"
+	return "shot"

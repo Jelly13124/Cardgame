@@ -63,8 +63,8 @@ var charm: int:
 const HUD_SCRIPT = preload("uid://dqn0nfitycf2d")  # res://ui/battle/character_hud.gd
 const COMBAT_SOURCE = preload("uid://jgs131055xrk")  # res://core/combat/combat_source.gd
 const CREATURE = preload("uid://kab2636ev63e")  # res://core/combat/creature.gd
-const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://ui/battle/combat_fx.gd
 const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://ui/battle/combat_feedback_controller.gd
+const DAMAGE_NUMBER = preload("uid://clps6my10jkri")  # res://ui/battle/damage_number_vfx.gd
 const HERO_DIR = "res://battle_scene/assets/images/heroes/"
 const DEFAULT_HERO_SPRITE_ID = "cowboy_bill"  # fallback when no hero data loaded  # bare-ok: sprite id
 const TARGET_DISPLAY_HEIGHT := 256.0
@@ -381,7 +381,8 @@ func play_hit(result: Object, feedback_tags: Dictionary = {}) -> void:
 	if reaction_target == null:
 		reaction_target = self
 	await controller.call(
-		"play_hit", scene, reaction_target, get_hit_global_position(), result.hp_lost, result.blocked, profile, func(): pass
+		"play_hit", scene, reaction_target, get_hit_global_position(), result.hp_lost, result.blocked, profile, func(): pass,
+		str(feedback_tags.get("vfx", "shot"))
 	)
 
 
@@ -413,7 +414,7 @@ func play_hp_loss(amount: int) -> void:
 	var scene := get_tree().current_scene if is_inside_tree() else null
 	if scene:
 		var spawn_pos: Vector2 = global_position + Vector2(0, -TARGET_DISPLAY_HEIGHT * 0.5)
-		COMBAT_FX.spawn_damage_number(scene, spawn_pos, amount, 0)
+		DAMAGE_NUMBER.spawn(scene, spawn_pos, str(amount), DAMAGE_NUMBER.HP_LOSS_COLOR)
 
 
 ## Quick scale pulse when gaining block — mirrors the enemy's block-action

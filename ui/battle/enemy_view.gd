@@ -11,13 +11,13 @@ const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.g
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://core/combat/status_effects.gd
 const MONSTERS = preload("uid://dvu3etytjqum8")  # res://core/combat/monsters.gd
 const ENEMY_TURN = preload("uid://d4np8yrt1ml3v")  # res://core/combat/enemy_turn.gd
-const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://ui/battle/combat_fx.gd
 const MONSTER_MOVES = preload("uid://bqwa1txur3b52")  # res://core/combat/monster_moves.gd
 const INTENTS = preload("uid://crt5cmvargkpn")  # res://core/combat/intents.gd
 const CREATURE = preload("uid://kab2636ev63e")  # res://core/combat/creature.gd
 const SELECTION_RETICLE = preload("uid://c6dicaops28n6")  # res://ui/battle/selection_reticle.gd
 const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://core/combat/combat_effects.gd
 const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://ui/battle/combat_feedback_controller.gd
+const DAMAGE_NUMBER = preload("uid://clps6my10jkri")  # res://ui/battle/damage_number_vfx.gd
 
 # Intent badge icon textures — preloaded once instead of `load()`-ing on every
 # intent refresh (which can fire frequently as enemy / player status changes).
@@ -559,7 +559,8 @@ func play_hit(result: Object, feedback_tags: Dictionary = {}) -> void:
 		_play_hit_audio(profile, feedback_tags)
 		var reaction_target: Node2D = _sprite if is_instance_valid(_sprite) else self
 		await controller.call(
-			"play_hit", scene, reaction_target, get_hit_global_position(), result.hp_lost, result.blocked, profile, func(): pass
+			"play_hit", scene, reaction_target, get_hit_global_position(), result.hp_lost, result.blocked, profile, func(): pass,
+		str(feedback_tags.get("vfx", "shot"))
 		)
 	if result.armor_broken and not result.killed and is_instance_valid(self):
 		_play_armor_break_reaction()
@@ -569,7 +570,7 @@ func play_hit(result: Object, feedback_tags: Dictionary = {}) -> void:
 func play_hp_loss(amount: int) -> void:
 	var scene := get_tree().current_scene if is_inside_tree() else null
 	if scene:
-		COMBAT_FX.spawn_damage_number(scene, get_hit_global_position(), amount, 0)
+		DAMAGE_NUMBER.spawn(scene, get_hit_global_position(), str(amount), DAMAGE_NUMBER.HP_LOSS_COLOR)
 
 
 ## The creature died: death sound, then the view leaves (once).

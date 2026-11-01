@@ -334,6 +334,8 @@ static func _damage_effect(ctx, effect: Dictionary) -> void:
 		services.show_notification(_t("UI_COMBAT_NO_TARGET"), NO_TARGET_COLOR)
 		return
 	var tags := {"heavy": bool(effect.get("heavy", false))}
+	if type == "deal_damage_all":
+		tags["vfx"] = "blast"
 	await services.combat_commands.damage(
 		ctx.source, targets, damage_base(ctx, effect), damage_props(ctx.source, effect), ctx.play,
 		_loaded_bonus(ctx), tags

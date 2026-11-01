@@ -9,6 +9,8 @@ extends Node
 class_name CombatFeedbackController
 
 const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://ui/battle/combat_fx.gd
+const DAMAGE_NUMBER = preload("uid://clps6my10jkri")  # res://ui/battle/damage_number_vfx.gd
+const HIT_SPARK = preload("uid://c81e6d5uadhem")  # res://ui/battle/hit_spark_vfx.gd
 const IMPACT_ROOT := "res://battle_scene/assets/images/fx/combat_feedback/"
 const CONTROLLER_NODE_NAME := "CombatFeedbackController"
 
@@ -17,13 +19,19 @@ const PROFILE_BLOCKED := "blocked"
 const PROFILE_HEAVY := "heavy"
 const PROFILE_KILL := "kill"
 
+## Battlefield punch per hit (STS2 ShakeStrength): pixels by the HP the hit
+## took. A fully blocked hit punches weakly; a lethal one strongly.
+const SHAKE_WEAK := 5.0
+const SHAKE_MEDIUM := 20.0
+const SHAKE_STRONG := 40.0
+const SHAKE_SECONDS := 0.3
+
 ## Exactly four shared feedback tiers.  Critical hits intentionally do not have a
 ## fifth profile: `profile_for_hit()` maps both critical and explicit heavy attacks
 ## to PROFILE_HEAVY.
 const PROFILES := {
 	PROFILE_NORMAL: {
 		"hitstop_seconds": 0.014,
-		"shake_intensity": 0.0,
 		"damage_number_scale": 1.0,
 		"reaction_strength": 2.4,
 		"reaction_seconds": 0.095,
@@ -33,7 +41,6 @@ const PROFILES := {
 	},
 	PROFILE_BLOCKED: {
 		"hitstop_seconds": 0.010,
-		"shake_intensity": 0.0,
 		"damage_number_scale": 0.9,
 		"reaction_strength": 1.2,
 		"reaction_seconds": 0.08,
@@ -43,7 +50,6 @@ const PROFILES := {
 	},
 	PROFILE_HEAVY: {
 		"hitstop_seconds": 0.034,
-		"shake_intensity": 0.0,
 		"damage_number_scale": 1.22,
 		"reaction_strength": 5.2,
 		"reaction_seconds": 0.14,
@@ -53,7 +59,6 @@ const PROFILES := {
 	},
 	PROFILE_KILL: {
 		"hitstop_seconds": 0.048,
-		"shake_intensity": 2.6,
 		"damage_number_scale": 1.36,
 		"reaction_strength": 6.8,
 		"reaction_seconds": 0.17,
@@ -146,13 +151,15 @@ func play_hit(
 	amount: int,
 	blocked: int,
 	profile: String,
-	apply_health_change: Callable
+	apply_health_change: Callable,
+	hit_vfx := HIT_SPARK.KIND_SHOT
 ) -> void:
 	var resolved_profile := profile if PROFILES.has(profile) else PROFILE_NORMAL
 	var settings: Dictionary = PROFILES[resolved_profile]
 
 	feedback_started.emit(resolved_profile)
 	_spawn_impact_sequence(scene_root, world_pos, resolved_profile, settings)
+	HIT_SPARK.spawn(scene_root, world_pos, hit_vfx, float(settings.get("damage_number_scale", 1.0)))
 	_play_target_reaction(target, resolved_profile, settings)
 	# _play_hitstop invokes this boundary before its first await.  That keeps
 	# logical HP/block changes synchronous even when a DoT, relic, or thorns
@@ -164,7 +171,7 @@ func play_hit(
 	await _play_hitstop(scene_root, float(settings["hitstop_seconds"]), apply_boundary)
 
 	_spawn_damage_number(scene_root, world_pos, amount, blocked, resolved_profile, settings)
-	_play_camera_shake(scene_root, resolved_profile, settings)
+	_play_camera_shake(scene_root, shake_for_hit(amount, resolved_profile))
 	feedback_finished.emit(resolved_profile)
 
 
@@ -224,13 +231,22 @@ func _play_target_reaction(target: Node2D, profile: String, settings: Dictionary
 	tween.tween_property(target, "modulate", rest_color, flash_seconds).set_trans(Tween.TRANS_QUAD)
 
 
-## Whole-battlefield response, throttled so multi-hit cards read as a rhythmic burst
+## Pixels the battlefield punches for a hit that took `amount` HP: under 6
+## weak, under 11 medium, else strong; blocked is weak and lethal is strong.
+func shake_for_hit(amount: int, profile: String) -> float:
+	if profile == PROFILE_KILL:
+		return SHAKE_STRONG
+	if profile == PROFILE_BLOCKED or amount < 6:
+		return SHAKE_WEAK
+	if amount < 11:
+		return SHAKE_MEDIUM
+	return SHAKE_STRONG
+
+
+## Whole-battlefield punch, throttled so multi-hit cards read as a rhythmic burst
 ## rather than turning the playfield into continuous vibration.
-func _play_camera_shake(scene_root: Node, _profile: String, settings: Dictionary) -> void:
-	if not is_instance_valid(scene_root):
-		return
-	var intensity := float(settings.get("shake_intensity", 0.0))
-	if intensity <= 0.0:
+func _play_camera_shake(scene_root: Node, strength: float) -> void:
+	if not is_instance_valid(scene_root) or strength <= 0.0:
 		return
 	var now := Time.get_ticks_msec()
 	var last := int(scene_root.get_meta(_LAST_SCREEN_SHAKE_META, -1000000))
@@ -242,11 +258,7 @@ func _play_camera_shake(scene_root: Node, _profile: String, settings: Dictionary
 	# enemy_container properties.  Guard those properties here so this controller is
 	# also safe in isolated previews and contract tests.
 	if _has_property(scene_root, "player") or _has_property(scene_root, "enemy_container"):
-		COMBAT_FX.shake_screen(
-			scene_root,
-			intensity,
-			clampf(0.13 + intensity * 0.008, 0.14, 0.24)
-		)
+		COMBAT_FX.punch_screen(scene_root, strength, SHAKE_SECONDS)
 
 
 ## Profile-aware result number.  It is deliberately spawned after HP changes so the
@@ -259,45 +271,13 @@ func _spawn_damage_number(
 	profile: String,
 	settings: Dictionary
 ) -> void:
-	if not is_instance_valid(scene_root) or scene_root.get_tree() == null:
-		return
 	if amount <= 0 and blocked <= 0:
 		return
-
-	var layer := CanvasLayer.new()
-	layer.name = "CombatDamageNumber"
-	layer.layer = 51
-	layer.process_mode = Node.PROCESS_MODE_ALWAYS
-	scene_root.add_child(layer)
-
-	var label := Label.new()
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# A fully absorbed hit must not display the absorbed amount as HP damage.
-	label.text = "0" if profile == PROFILE_BLOCKED else str(amount)
-	var emphasis := float(settings.get("damage_number_scale", 1.0))
-	label.add_theme_font_size_override("font_size", roundi(30.0 * emphasis))
-	label.add_theme_color_override("font_color", _number_color(profile))
-	label.add_theme_color_override("font_outline_color", Color(0.055, 0.045, 0.035, 0.98))
-	label.add_theme_constant_override("outline_size", 5 if profile in [PROFILE_HEAVY, PROFILE_KILL] else 3)
-	layer.add_child(label)
-
-	label.size = label.get_minimum_size()
-	label.pivot_offset = label.size * 0.5
-	label.position = world_pos - Vector2(label.size.x * 0.5, label.size.y * 0.62)
-	label.scale = Vector2.ONE * (1.16 if profile in [PROFILE_HEAVY, PROFILE_KILL] else 1.06)
-
-	var rise := 46.0 if profile in [PROFILE_HEAVY, PROFILE_KILL] else 34.0
-	var life := 0.62 if profile == PROFILE_KILL else 0.52
-	var tween := scene_root.create_tween().set_parallel(true)
-	(
-		tween
-		. tween_property(label, "position:y", label.position.y - rise, life)
-		. set_trans(Tween.TRANS_QUAD)
-		. set_ease(Tween.EASE_OUT)
+	var text := "0" if profile == PROFILE_BLOCKED else str(amount)
+	DAMAGE_NUMBER.spawn(
+		scene_root, world_pos, text, _number_color(profile), float(settings.get("damage_number_scale", 1.0))
 	)
-	tween.tween_property(label, "scale", Vector2.ONE, 0.09).set_trans(Tween.TRANS_BACK)
-	tween.tween_property(label, "modulate:a", 0.0, life * 0.55).set_delay(life * 0.45)
-	tween.chain().tween_callback(layer.queue_free)
 
 
 ## Spawn the four-frame, transparent comic impact sequence for this profile.
