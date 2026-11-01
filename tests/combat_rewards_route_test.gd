@@ -7,7 +7,7 @@ extends Node
 
 const COMBAT_REWARDS = preload("uid://sn83hwnx1w3b")  # res://core/run/combat_rewards.gd
 const REWARDS = preload("uid://dao6ryap2ksxs")  # res://core/run/rewards.gd
-const SHOP_STOCK = preload("uid://bxjesomogv04a")  # res://core/run/shop_stock.gd
+const MERCHANT_INVENTORY = preload("uid://dgj1md8jt0tg7")  # res://core/run/merchant/merchant_inventory.gd
 const CARD_POOLS = preload("uid://c76axesxo6wit")  # res://core/run/card_pools.gd
 const MARKET = preload("uid://brturtmxacges")  # res://core/meta/market.gd
 const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
@@ -67,7 +67,7 @@ func _stock(seed_string: String) -> String:
 	var out := [
 		REWARDS.combat_loot("enemy").map(func(e): return [e["type"], e.get("tool_id", ""), e.get("instance", {}).get("base", "")]),
 		REWARDS.roll_unique_draft_card(REWARDS.rarity_pools(CARD_POOLS.reward_pool(hero)), {}),
-		SHOP_STOCK.roll(CARD_POOLS.shop_cards_by_rarity(hero), RunManager.tool_pool(), RunManager.get_unowned_relic_ids()),
+		MERCHANT_INVENTORY.create(RunManager).to_dict(),
 		MARKET.roll_equip_stock(),
 		MARKET.roll_tool_stock(),
 	]

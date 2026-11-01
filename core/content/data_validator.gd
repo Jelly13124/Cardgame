@@ -43,7 +43,7 @@ const REQUIRED_CARD_KEYS = ["id", "title", "type", "cost", "effects"]
 const ALLOWED_CARD_TYPES = ["attack", "skill", "ability", "curse"]
 # "unique" = hero-starting relics (e.g. crit_clip). Drop/shop pools bucket by
 # common/uncommon/rare and must never surface a unique relic (see
-# get_unowned_relic_ids / shop_scene._list_unowned_relics, which exclude it).
+# get_unowned_relic_ids, which the merchant and rewards use, excludes it).
 const ALLOWED_RARITIES = ["common", "uncommon", "rare", "unique", "curse"]
 const EFFECT_CATALOG = preload("uid://880atc7mnnie")  # res://core/effects/effect_catalog.gd
 

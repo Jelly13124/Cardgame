@@ -31,7 +31,7 @@ func _run() -> void:
 		map_source.contains("layer.layer = RUN_TOP_BAR.CANVAS_LAYER"),
 		"map mounts the shared top bar on the persistent HUD layer",
 	)
-	var shop_source := FileAccess.get_file_as_string("res://ui/shop/shop_scene.gd")  # path-ok: reads source text
+	var shop_source := FileAccess.get_file_as_string("res://ui/shop/merchant_room.gd")  # path-ok: reads source text
 	_expect(
 		shop_source.contains("topbar_layer.layer = RUN_TOP_BAR.CANVAS_LAYER"),
 		"shop mounts the same shared top bar on the persistent HUD layer",

@@ -59,6 +59,9 @@ var map_data: Array = []
 var current_node_id: String = ""  ## "" means player hasn't chosen a floor-0 node yet
 var visited_node_ids: Array[String] = []
 var rng = null
-## Merchant stock rolled this run, by map node id (reopening a merchant after a
-## reload shows the same stock).
+## Merchant inventories rolled this run, by map node id
+## (core/run/merchant/merchant_inventory.gd to_dict); reopening a merchant after
+## a reload shows the same stock.
 var shop_stock: Dictionary = {}
+## Card removals bought from merchants this run: each raises the next price.
+var merchant_removals_used: int = 0

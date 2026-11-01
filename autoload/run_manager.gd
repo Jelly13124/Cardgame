@@ -511,6 +511,7 @@ func start_new_run(
 	# A fresh run invalidates any prior in-run save (can't resume the old one).
 	clear_run_save()
 	state.shop_stock.clear()
+	state.merchant_removals_used = 0
 	# Seed first: every roll below draws from the run's streams. An empty or
 	# invalid seed (callers validate typed seeds) picks a random one.
 	run_rng = RUN_RNG_SET.new(
@@ -680,40 +681,6 @@ func remove_card_from_deck_by_uid(uid: String) -> bool:
 	return false
 
 
-# --- Shop purchases (gold-gated wrappers) -----------------------------------
-
-
-## Spend gold to add a card to the deck. Returns false on insufficient gold.
-func purchase_card(card_id: String, cost: int) -> bool:
-	if gold < cost or card_id == "":
-		return false
-	add_resources(-cost, 0)
-	add_card_to_deck(card_id)
-	return true
-
-
-## Spend gold to add a relic. Returns false on insufficient gold or duplicate.
-func purchase_relic(relic_id: String, cost: int) -> bool:
-	if gold < cost or relic_id == "":
-		return false
-	if relic_id in relics:
-		return false  # already owned
-	add_resources(-cost, 0)
-	add_relic(relic_id)
-	return true
-
-
-## Spend gold to remove a card from the deck. Returns false on insufficient
-## gold or unknown uid.
-func purchase_card_removal(uid: String, cost: int) -> bool:
-	if gold < cost or uid == "":
-		return false
-	if not remove_card_from_deck_by_uid(uid):
-		return false
-	add_resources(-cost, 0)
-	return true
-
-
 # --- Run events (run listeners: bounty tracker) ----------------------------
 # Typed events owned by the code that changes run state; every run listener
 # defining `after_<event>` hears them while a run is active.
@@ -740,6 +707,11 @@ func card_upgraded(entry: Dictionary) -> void:
 
 func run_extracted() -> void:
 	_emit_run_event("after_run_extracted", null)
+
+
+## A merchant sale: {entry, gold_spent} (core/run/merchant/merchant_entry.gd).
+func item_purchased(purchase: Dictionary) -> void:
+	_emit_run_event("after_item_purchased", purchase)
 
 
 ## Mark a run-deck entry upgraded and report it (the one owner of upgrades).
@@ -1629,16 +1601,6 @@ func roll_tool_drop(_node_type: String = "") -> String:
 	return str(rng("rewards").pick(pool))
 
 
-## Spend gold to add a tool to the top-bar inventory. Returns false on insufficient
-## gold, an unknown id, or no free tool slot (caller handles the UI in each case).
-func purchase_tool(tool_id: String, cost: int) -> bool:
-	if tool_id == "" or gold < cost:
-		return false
-	if backpack_count_used() >= effective_backpack_size():
-		return false  # no room in the bag for the tool
-	add_resources(-cost, 0)
-	add_tool_to_backpack(tool_id)
-	return true
 
 
 ## Read-only equipment definition. Returns {} on miss.

@@ -325,69 +325,84 @@
 				"base:data_dump",
 				"base:brace"
 			],
-			[
-				[
+			{
+				"cards": [
 					{
+						"base_cost": 67,
 						"card_id": "base:weak_strike",
-						"price": 65,
-						"rarity": "common"
+						"on_sale": false,
+						"rarity": "common",
+						"slot": 0
 					},
 					{
-						"card_id": "base:hot_swap",
-						"price": 65,
-						"rarity": "common"
+						"base_cost": 111,
+						"card_id": "base:sweep_arc",
+						"on_sale": false,
+						"rarity": "uncommon",
+						"slot": 1
 					},
 					{
-						"card_id": "base:dissect",
-						"price": 110,
-						"rarity": "uncommon"
+						"base_cost": 63,
+						"card_id": "base:arc_flash",
+						"on_sale": false,
+						"rarity": "common",
+						"slot": 2
 					},
 					{
-						"card_id": "base:piston_jab",
-						"price": 65,
-						"rarity": "common"
+						"base_cost": 62,
+						"card_id": "base:reload",
+						"on_sale": false,
+						"rarity": "common",
+						"slot": 3
 					},
 					{
-						"card_id": "base:acid_splash",
-						"price": 110,
-						"rarity": "uncommon"
+						"base_cost": 57,
+						"card_id": "base:venom_coat",
+						"on_sale": true,
+						"rarity": "uncommon",
+						"slot": 4
 					},
 					{
-						"card_id": "base:rebar_wave",
-						"price": 175,
-						"rarity": "rare"
+						"base_cost": 182,
+						"card_id": "base:adrenaline",
+						"on_sale": false,
+						"rarity": "rare",
+						"slot": 5
 					}
 				],
-				[
+				"relics": [
 					{
-						"price": 50,
+						"base_cost": 117,
+						"relic_id": "base:cracked_battery"
+					},
+					{
+						"base_cost": 219,
+						"relic_id": "base:war_drum"
+					},
+					{
+						"base_cost": 138,
+						"relic_id": "base:signal_jammer"
+					}
+				],
+				"removal": {
+					"base_cost": 75,
+					"used": false
+				},
+				"tools": [
+					{
+						"base_cost": 50,
 						"tool_id": "base:blood_kit"
 					},
 					{
-						"price": 50,
-						"tool_id": "base:munitions_crate"
+						"base_cost": 49,
+						"tool_id": "base:adrenaline_shot"
 					},
 					{
-						"price": 50,
-						"tool_id": "base:combat_stim"
+						"base_cost": 49,
+						"tool_id": "base:energy_cell"
 					}
-				],
-				[
-					{
-						"price": 135,
-						"relic_id": "base:serrated_barbs"
-					},
-					{
-						"price": 135,
-						"relic_id": "base:lucky_cog"
-					},
-					{
-						"price": 135,
-						"relic_id": "base:adrenaline_pump"
-					}
-				],
-				75
-			],
+				]
+			},
 			[
 				[
 					{
@@ -396,14 +411,14 @@
 						"rarity": "common"
 					},
 					{
-						"base": "base:gear_head_uncommon",
-						"price": 140,
-						"rarity": "uncommon"
+						"base": "base:gear_head_common",
+						"price": 60,
+						"rarity": "common"
 					},
 					{
-						"base": "base:gear_chest_uncommon",
-						"price": 140,
-						"rarity": "uncommon"
+						"base": "base:gear_chest_rare",
+						"price": 280,
+						"rarity": "rare"
 					},
 					{
 						"base": "base:gear_hands_common",
@@ -419,9 +434,9 @@
 				[
 					"base:toxin_vial",
 					"base:blood_kit",
-					"base:med_kit",
-					"base:adrenaline_shot",
-					"base:field_kit"
+					"base:field_kit",
+					"base:smoke_bomb",
+					"base:munitions_crate"
 				]
 			]
 		],
@@ -462,69 +477,84 @@
 				"base:arc_flash",
 				"base:piston_jab"
 			],
-			[
-				[
+			{
+				"cards": [
 					{
-						"card_id": "base:corrode",
-						"price": 65,
-						"rarity": "common"
+						"base_cost": 53,
+						"card_id": "base:acid_splash",
+						"on_sale": true,
+						"rarity": "uncommon",
+						"slot": 0
 					},
 					{
-						"card_id": "base:strike",
-						"price": 65,
-						"rarity": "common"
+						"base_cost": 65,
+						"card_id": "base:recoil_shot",
+						"on_sale": false,
+						"rarity": "common",
+						"slot": 1
 					},
 					{
-						"card_id": "base:venom_coat",
-						"price": 110,
-						"rarity": "uncommon"
+						"base_cost": 68,
+						"card_id": "base:hot_swap",
+						"on_sale": false,
+						"rarity": "common",
+						"slot": 2
 					},
 					{
-						"card_id": "base:tape_patch",
-						"price": 65,
-						"rarity": "common"
+						"base_cost": 65,
+						"card_id": "base:arc_flash",
+						"on_sale": false,
+						"rarity": "common",
+						"slot": 3
 					},
 					{
-						"card_id": "base:covering_reload",
-						"price": 110,
-						"rarity": "uncommon"
+						"base_cost": 180,
+						"card_id": "base:all_in",
+						"on_sale": false,
+						"rarity": "rare",
+						"slot": 4
 					},
 					{
+						"base_cost": 180,
 						"card_id": "base:adrenaline",
-						"price": 175,
-						"rarity": "rare"
+						"on_sale": false,
+						"rarity": "rare",
+						"slot": 5
 					}
 				],
-				[
+				"relics": [
 					{
-						"price": 50,
-						"tool_id": "base:combat_stim"
+						"base_cost": 123,
+						"relic_id": "base:steel_plating"
 					},
 					{
-						"price": 50,
-						"tool_id": "base:blood_kit"
-					},
-					{
-						"price": 50,
-						"tool_id": "base:toxin_vial"
-					}
-				],
-				[
-					{
-						"price": 135,
-						"relic_id": "base:bulwark_plating"
-					},
-					{
-						"price": 135,
-						"relic_id": "base:brutal_servo"
-					},
-					{
-						"price": 135,
+						"base_cost": 132,
 						"relic_id": "base:signal_jammer"
+					},
+					{
+						"base_cost": 166,
+						"relic_id": "base:war_horn"
 					}
 				],
-				75
-			],
+				"removal": {
+					"base_cost": 75,
+					"used": false
+				},
+				"tools": [
+					{
+						"base_cost": 50,
+						"tool_id": "base:energy_cell"
+					},
+					{
+						"base_cost": 52,
+						"tool_id": "base:munitions_crate"
+					},
+					{
+						"base_cost": 50,
+						"tool_id": "base:med_kit"
+					}
+				]
+			},
 			[
 				[
 					{
@@ -533,32 +563,32 @@
 						"rarity": "common"
 					},
 					{
-						"base": "base:gear_head_uncommon",
+						"base": "base:gear_head_common",
+						"price": 60,
+						"rarity": "common"
+					},
+					{
+						"base": "base:gear_chest_uncommon",
 						"price": 140,
 						"rarity": "uncommon"
 					},
 					{
-						"base": "base:gear_chest_rare",
-						"price": 280,
-						"rarity": "rare"
+						"base": "base:gear_hands_common",
+						"price": 60,
+						"rarity": "common"
 					},
 					{
-						"base": "base:gear_hands_uncommon",
-						"price": 140,
-						"rarity": "uncommon"
-					},
-					{
-						"base": "base:gear_accessory_uncommon",
-						"price": 140,
-						"rarity": "uncommon"
+						"base": "base:gear_accessory_common",
+						"price": 60,
+						"rarity": "common"
 					}
 				],
 				[
+					"base:field_kit",
 					"base:munitions_crate",
-					"base:energy_cell",
-					"base:adrenaline_shot",
-					"base:med_kit",
-					"base:field_kit"
+					"base:smoke_bomb",
+					"base:combat_stim",
+					"base:blood_kit"
 				]
 			]
 		]

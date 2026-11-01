@@ -10,8 +10,7 @@ const GOLDEN := "res://tests/fixtures/run_structure_golden.json"  # path-ok: dat
 const GOLDEN2 := "res://tests/fixtures/run_structure_golden2.json"  # path-ok: data fixture read as text
 const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
 const REWARDS = preload("uid://dao6ryap2ksxs")  # res://core/run/rewards.gd
-const SHOP_STOCK = preload("uid://bxjesomogv04a")  # res://core/run/shop_stock.gd
-const CARD_POOLS = preload("uid://c76axesxo6wit")  # res://core/run/card_pools.gd
+const MERCHANT_INVENTORY = preload("uid://dgj1md8jt0tg7")  # res://core/run/merchant/merchant_inventory.gd
 const MARKET = preload("uid://brturtmxacges")  # res://core/meta/market.gd
 
 var failures: PackedStringArray = []
@@ -78,17 +77,13 @@ func _check_golden2(golden: Dictionary) -> void:
 	RunManager.current_act = 1
 	for seed_string in golden["stocks"]:
 		RunManager.start_new_run("base:cowboy_bill", [], 0, seed_string)
-		var hero := str(RunManager.current_hero_id)
 		var seq := []
 		for node_type in ["enemy", "elite"]:
 			RunManager.last_battle_node_type = node_type
 			seq.append(REWARDS.combat_loot(node_type).map(_loot_row))
 			var pools := REWARDS.rarity_pools(MetaProgress.get_unlocked_card_pool())
 			seq.append([REWARDS.roll_unique_draft_card(pools, {}), REWARDS.roll_unique_draft_card(pools, {})])
-		var shop: Dictionary = SHOP_STOCK.roll(
-			CARD_POOLS.shop_cards_by_rarity(hero), RunManager.tool_pool(), _unowned_shop_relics()
-		)
-		seq.append([shop["cards"], shop["tools"], shop["relics"], shop["remove_price"]])
+		seq.append(MERCHANT_INVENTORY.create(RunManager).to_dict())
 		seq.append([MARKET.roll_equip_stock(), MARKET.roll_tool_stock()])
 		_expect(_same(seq, golden["stocks"][seed_string]), "%s loot, draft, shop and market stock unchanged" % seed_string)
 	RunManager.start_new_run("base:cowboy_bill", [], 5, "GOLDENA5MP")
@@ -111,18 +106,6 @@ func _loot_row(e: Dictionary) -> Array:
 			var inst: Dictionary = e["instance"]
 			return ["equipment", "", str(inst.get("base", "")), str(inst.get("rarity", e["rarity"]))]
 	return [e["type"], "", "", ""]
-
-
-## The shop's relic candidates (ui/shop/shop_scene.gd _list_unowned_relics).
-func _unowned_shop_relics() -> Array:
-	var out: Array = []
-	for relic_id in RunManager.current_relic_pool():
-		if relic_id in RunManager.relics:
-			continue
-		if str(RunManager.get_relic_data(relic_id).get("rarity", "common")) == "unique":
-			continue
-		out.append(relic_id)
-	return out
 
 
 ## The full game's bosses per act (the old ACT_BOSSES table).

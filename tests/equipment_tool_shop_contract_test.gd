@@ -5,7 +5,8 @@ const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://ui/common/equipme
 const BACKPACK_CELL = preload("uid://dmuvktofnybnk")  # res://ui/common/backpack_cell.gd
 const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://ui/windows/character_window.gd
 const MARKET_SCREEN = preload("uid://5n0ylol4ybmn")  # res://ui/base/market_screen.gd
-const SHOP_SCENE = preload("uid://cwl3mw1l5eg5p")  # res://ui/shop/shop_scene.gd
+const MERCHANT_INVENTORY = preload("uid://dgj1md8jt0tg7")  # res://core/run/merchant/merchant_inventory.gd
+const MERCHANT_SLOT = preload("uid://b8xlpnq6b5osf")  # res://ui/shop/merchant_slot.gd
 const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://ui/common/run_top_bar.gd
 
 const GENERIC_EQUIPMENT_DIR := "res://battle_scene/assets/images/ui/equipment/"
@@ -450,12 +451,13 @@ func _test_default_unequip_refreshes_immediately() -> void:
 
 
 func _test_shop_tool_stall() -> void:
-	var shop := SHOP_SCENE.new()
-	var stall = shop.call("_build_tool_stall", {"tool_id": "base:med_kit", "price": 40})
-	_expect(stall is Control, "tool shop stall builds without a rarity field")
-	if stall is Control:
-		stall.queue_free()
-	shop.queue_free()
+	RunManager.start_new_run("base:cowboy_bill", [], 0, "TOOLSLOT1")
+	var inv = MERCHANT_INVENTORY.create(RunManager)
+	var slot = MERCHANT_SLOT.create(inv.tool_entries[0])
+	add_child(slot)
+	_expect(slot.buy_button.text == str(inv.tool_entries[0].cost()), "a tool slot shows its price")
+	_expect(not slot.is_on_sale() and slot.sale_tag.modulate.a == 0.0, "a tool is never on sale")
+	slot.queue_free()
 
 
 func _test_deck_icon() -> void:

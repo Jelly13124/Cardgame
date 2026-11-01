@@ -77,7 +77,7 @@ Code layering, the target directory structure and the uid reference rule are in
     *   *Loads `content/cards/{card_id}.json` and returns Card nodes.*
 
 ### 🛒 Shop & Rest
-*   **Shop Scene**: `ui/shop/shop_scene.tscn` + `.gd`
+*   **Merchant Room**: `ui/shop/merchant_room.tscn` + `.gd` (slots in `merchant_slot.gd`, card removal in `merchant_card_removal.gd`; stock in `core/run/merchant/`)
     *   *Merchant map node loads this. Rolls 6 cards + 3 tools + 3 relics + remove-card service (equipment is no longer sold here). Prices and pools defined at the top of the script.*
 *   **Rest Choice Modal**: built inline in `map_scene.gd` (`_open_rest_choice`)
     *   *HEAL 25% HP or UPGRADE A CARD (opens `card_upgrade_modal.gd`).*

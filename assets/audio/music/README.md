@@ -11,7 +11,7 @@ Looping is forced in code, so the file does **not** need baked loop points.
 | `map.ogg` | The run map | `map_scene.gd` |
 | `battle.ogg` | Normal + elite fights | `battle_scene.gd` |
 | `boss.ogg` | Boss fights | `battle_scene.gd` (when the node is a boss) |
-| `shop.ogg` | Merchant shop | `shop_scene.gd` |
+| `shop.ogg` | Merchant shop | `merchant_room.gd` |
 | `event.ogg` | Random event scene | `event_modal.gd` |
 
 ## Format

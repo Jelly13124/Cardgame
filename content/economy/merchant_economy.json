@@ -1,22 +1,39 @@
 {
   "id": "merchant_economy",
+  "card_slots": [
+    { "type": "attack" },
+    { "type": "attack" },
+    { "type": "skill" },
+    { "type": "skill" },
+    { "type": "ability" },
+    { "rarity": "rare" }
+  ],
+  "card_rarity_weights": {
+    "common": 55,
+    "uncommon": 38,
+    "rare": 7
+  },
   "card_price": {
     "common": 65,
     "uncommon": 110,
     "rare": 175
   },
-  "relic_price": 135,
-  "remove_card_price": 75,
-  "card_count": 6,
+  "card_price_variance": [0.95, 1.05],
   "relic_count": 3,
-  "tool_price": 50,
+  "relic_rarity_weights": {
+    "common": 55,
+    "uncommon": 33,
+    "rare": 12
+  },
+  "relic_price": {
+    "common": 135,
+    "uncommon": 165,
+    "rare": 200
+  },
+  "relic_price_variance": [0.85, 1.15],
   "tool_count": 3,
-  "card_rarity_sequence": [
-    "common",
-    "common",
-    "uncommon",
-    "common",
-    "uncommon",
-    "rare"
-  ]
+  "tool_price": 50,
+  "tool_price_variance": [0.95, 1.05],
+  "remove_card_price": 75,
+  "remove_card_price_step": 25
 }

@@ -10,7 +10,7 @@ const RUN_SAVE = preload("uid://dkhd2poukjb61")  # res://core/save/run_save.gd
 const PROFILE_SAVE = preload("uid://cox1wehu1m6on")  # res://core/save/profile_save.gd
 const RUN_STATE = preload("uid://cguglvtfurhlo")  # res://core/run/run_state.gd
 const PROFILE_STATE = preload("uid://1lid0vwtvi7n")  # res://core/meta/profile_state.gd
-const SHOP = preload("uid://dr8unxxfi0w51")  # res://ui/shop/shop_scene.tscn
+const SHOP = preload("uid://dr8unxxfi0w51")  # res://ui/shop/merchant_room.tscn
 
 var failures: PackedStringArray = []
 
@@ -46,22 +46,24 @@ func _run() -> void:
 	_expect(profile.caps == 321 and profile.stash.size() == MetaProgress.stash.size(), "a profile save restores the same profile")
 	_expect(RunManager.pending_loadout == MetaProgress.profile.base_loadout, "the base loadout lives in the profile")
 
-	# A merchant: open, remember the stock, save and load, reopen.
+	# A merchant: open, buy the first card, save and load, reopen.
 	RunManager.current_node_id = "f5_s1"
-	var first: Array = await _shop_cards()
-	RunManager.state.shop_stock["f5_s1"]["cards"][0]["sold"] = true  # bought before the reload
+	RunManager.add_resources(1000, 0)
+	var first: Array = await _shop_cards(true)
+	RunManager.state.merchant_removals_used = 2
 	RunManager.save_run()
 	_expect(RunManager.load_run(), "the run loads back")
 	var second: Array = await _shop_cards()
-	_expect(not first.is_empty() and first == second, "reopening the merchant after a reload shows the same stock: %s vs %s" % [first, second])
-	_expect(bool(RunManager.state.shop_stock["f5_s1"]["cards"][0].get("sold", false)), "a bought offer stays sold after the reload")
+	_expect(first.size() == 6 and first.slice(1) == second.slice(1), "reopening the merchant after a reload shows the same stock: %s vs %s" % [first, second])
+	_expect(second[0] == "", "a bought card stays sold after the reload")
+	_expect(RunManager.state.merchant_removals_used == 2, "the removal count survives the reload")
 	# A new act and a new run never see an old merchant's stock (node ids repeat).
-	RunManager.state.shop_stock["f5_s1"] = {"cards": [], "tools": [], "relics": [], "remove_price": 1}
+	RunManager.state.shop_stock["f5_s1"] = {"cards": [], "tools": [], "relics": []}
 	ACTS.active_run = "base:full"  # the demo has one act
 	_expect(RunManager.advance_act(), "the full game advances to act 2")
 	ACTS.active_run = ACTS.ACTIVE_RUN
 	_expect(RunManager.state.shop_stock.is_empty(), "a new act starts with no merchant stock")
-	RunManager.state.shop_stock["f5_s1"] = {"cards": [], "tools": [], "relics": [], "remove_price": 1}
+	RunManager.state.shop_stock["f5_s1"] = {"cards": [], "tools": [], "relics": []}
 	RunManager.start_new_run("base:cowboy_bill", [], 0, "ROUNDTRIP2")
 	_expect(RunManager.state.shop_stock.is_empty(), "a new run starts with no merchant stock")
 	_expect(not MetaProgress.add_to_stash("base:gear_hands_common"), "the stash refuses a bare item id")
@@ -75,11 +77,15 @@ func _run() -> void:
 	get_tree().quit(1)
 
 
-func _shop_cards() -> Array:
+## The card ids a merchant room shows ("" for a sold slot); `buy_first` buys
+## slot 0 through the room first.
+func _shop_cards(buy_first := false) -> Array:
 	var shop = SHOP.instantiate()
 	add_child(shop)
 	await get_tree().process_frame
-	var cards: Array = shop._stock_cards.map(func(e): return str(e["card_id"]))
+	if buy_first:
+		shop.inventory.card_entries[0].try_purchase()
+	var cards: Array = shop.inventory.card_entries.map(func(e): return e.card_id)
 	shop.queue_free()
 	await get_tree().process_frame
 	return cards

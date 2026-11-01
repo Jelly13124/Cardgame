@@ -4,7 +4,8 @@ extends RefCounted
 ## brings an older run save to it. v1 bare content ids · v2 namespaced ids ·
 ## v3 seeded RNG streams · v4 current: equipment always instances, no hero data
 ## copy, retired cards and gem leftovers gone, elapsed time only · v5 current:
-## scripted events — per-act event deck and the event in progress.
+## scripted events — per-act event deck and the event in progress · v6 current:
+## merchant inventories of entries and the run's card-removal count.
 
 const MIGRATION_CHAIN = preload("uid://bmeya57dgtty2")  # res://core/save/migration_chain.gd
 const CONTENT_ID_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/save/content_id_migration.gd
@@ -12,7 +13,7 @@ const RUN_RNG_SET = preload("uid://ealvw2c6utr7")  # res://core/rng/run_rng_set.
 const LEGACY_EQUIPMENT = preload("uid://bpsstam8gekpw")  # res://core/save/legacy_equipment.gd
 const EVENT_POOL = preload("uid://dr3dtuxwul371")  # res://core/run/events/event_pool.gd
 
-const CURRENT := 5
+const CURRENT := 6
 ## Cards removed from the game; old saves may still hold their bare ids.
 const RETIRED_CARD_IDS := [
 	"crowbar_smash",
@@ -37,6 +38,7 @@ static func chain() -> RefCounted:
 		.add(2, func(d): return d)  # v3 only added the `rng` key; the loader defaults it
 		.add(3, _v3_to_v4)
 		.add(4, _v4_to_v5)
+		.add(5, _v5_to_v6)
 	)
 
 
@@ -90,6 +92,7 @@ static func to_dict(state, elapsed_msec: int) -> Dictionary:
 		"current_node_id": state.current_node_id,
 		"visited_node_ids": state.visited_node_ids,
 		"shop_stock": state.shop_stock,
+		"merchant_removals_used": state.merchant_removals_used,
 	}
 
 
@@ -134,6 +137,7 @@ static func apply(state, d: Dictionary) -> void:
 	state.visited_node_ids = strings(d.get("visited_node_ids", []))
 	var stock = d.get("shop_stock", {})
 	state.shop_stock = stock if typeof(stock) == TYPE_DICTIONARY else {}
+	state.merchant_removals_used = int(d.get("merchant_removals_used", 0))
 
 
 ## {node_id, event_id, finished} with types re-coerced, or {} when absent or
@@ -235,6 +239,46 @@ static func _v4_to_v5(d: Dictionary) -> Dictionary:
 	d["rng"] = rng_set.to_dict()
 	d["current_event"] = {}
 	return d
+
+
+## v6: merchant inventories. Each saved stock {cards, tools, relics,
+## remove_price} (offers with `price` and `sold`) becomes entry dictionaries:
+## the old price is the base cost, a sold offer is out of stock, cards keep no
+## slot and no sale. No removals used yet.
+static func _v5_to_v6(d: Dictionary) -> Dictionary:
+	var stocks: Variant = d.get("shop_stock", {})
+	var out := {}
+	if typeof(stocks) == TYPE_DICTIONARY:
+		for node_id in stocks:
+			var old: Variant = stocks[node_id]
+			if typeof(old) == TYPE_DICTIONARY:
+				out[node_id] = _v6_stock(old)
+	d["shop_stock"] = out
+	d["merchant_removals_used"] = 0
+	return d
+
+
+static func _v6_stock(old: Dictionary) -> Dictionary:
+	var entries := func(key: String, id_key: String) -> Array:
+		var list: Array = []
+		var raw: Variant = old.get(key, [])
+		if typeof(raw) != TYPE_ARRAY:
+			return list
+		for offer in raw:
+			if typeof(offer) != TYPE_DICTIONARY:
+				continue
+			var sold := bool(offer.get("sold", false))
+			var e := {"base_cost": int(offer.get("price", 0)), id_key: "" if sold else str(offer.get(id_key, ""))}
+			if key == "cards":
+				e.merge({"slot": -1, "rarity": str(offer.get("rarity", "")), "on_sale": false})
+			list.append(e)
+		return list
+	return {
+		"cards": entries.call("cards", "card_id"),
+		"relics": entries.call("relics", "relic_id"),
+		"tools": entries.call("tools", "tool_id"),
+		"removal": {"base_cost": int(old.get("remove_price", 0)), "used": false},
+	}
 
 
 ## A backpack cell in the current shape: null, currency/tool cells as they are,

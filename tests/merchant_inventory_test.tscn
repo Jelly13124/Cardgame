@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dmq7ub3p6euvv"]
+
+[ext_resource type="Script" path="res://tests/merchant_inventory_test.gd" id="1"]
+
+[node name="MerchantInventoryTest" type="Node"]
+script = ExtResource("1")

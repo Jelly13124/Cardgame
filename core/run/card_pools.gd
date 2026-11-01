@@ -35,16 +35,16 @@ static func reward_pool(hero_id: String) -> Array[String]:
 	return pool
 
 
-## Cards of `hero_id`'s character pool a merchant can stock, by rarity.
-static func shop_cards_by_rarity(hero_id: String) -> Dictionary:
-	var result := {"common": [], "uncommon": [], "rare": []}
+## Cards of `hero_id`'s character pool a merchant can stock (curses never).
+static func shop_cards(hero_id: String) -> Array:
+	var result: Array = []
 	var blocked := others_exclusive(hero_id)
 	for card_id in RunManager.current_card_pool():
 		if blocked.has(card_id):
 			continue
-		var rarity := str(MODEL_DB.data("card", card_id).get("rarity", "common"))
-		if rarity in result:
-			result[rarity].append(card_id)
+		if str(MODEL_DB.data("card", card_id).get("type", "")) == "curse":
+			continue
+		result.append(card_id)
 	return result
 
 
