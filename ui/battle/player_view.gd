@@ -140,6 +140,7 @@ func _init() -> void:
 func _ready() -> void:
 	# Tag the player so per-entity combat systems can distinguish the hero from enemies.
 	add_to_group("player_entity")
+	creature.healed.connect(_on_healed)
 	_build_visual()
 
 
@@ -407,6 +408,12 @@ func _hit_flash() -> void:
 	tw.tween_property(spr, "modulate", _hero_tint(), 0.22).set_trans(Tween.TRANS_QUAD)
 
 
+func _on_healed(amount: int) -> void:
+	var scene := COMBAT_FEEDBACK_CONTROLLER.scene_root_for(self) if is_inside_tree() else null
+	if scene:
+		DAMAGE_NUMBER.spawn_heal(scene, global_position + Vector2(0, -TARGET_DISPLAY_HEIGHT * 0.5), amount)
+
+
 ## Direct HP loss already applied (cards, events, curses): flash and a floating
 ## damage number.
 func play_hp_loss(amount: int) -> void:
@@ -414,7 +421,7 @@ func play_hp_loss(amount: int) -> void:
 	var scene := get_tree().current_scene if is_inside_tree() else null
 	if scene:
 		var spawn_pos: Vector2 = global_position + Vector2(0, -TARGET_DISPLAY_HEIGHT * 0.5)
-		DAMAGE_NUMBER.spawn(scene, spawn_pos, str(amount), DAMAGE_NUMBER.HP_LOSS_COLOR)
+		DAMAGE_NUMBER.spawn(scene, spawn_pos, amount)
 
 
 ## Quick scale pulse when gaining block — mirrors the enemy's block-action

@@ -104,3 +104,4 @@ UI_COMBAT_STATUS_FEEL_NO_PAIN_DESC,Whenever a card is Exhausted gain Block equal
 UI_COMBAT_WEALTHY,💰 +{n} Caps,💰 +{n} 瓶盖
 UI_COMBAT_HEAL,💚 +{n} HP,💚 +{n} 生命
 UI_COMBAT_FLEE,{name} flees!,{name} 逃跑了！
+UI_COMBAT_BLOCKED,BLOCKED,格挡

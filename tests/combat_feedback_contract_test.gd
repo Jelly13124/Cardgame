@@ -192,28 +192,42 @@ func _test_hit_spark_kinds() -> void:
 		sparks.get_parent().queue_free()
 
 
-## damage_number_flight: pops in at 2.5x, launches up, falls, tints, frees itself.
+## damage_number_flight: pops in red at 2.5x, launches up, falls, turns cream,
+## frees itself (STS2 vfx_damage_num).
 func _test_damage_number_flight() -> void:
-	var number = DAMAGE_NUMBER.spawn(self, Vector2(500, 500), "17", Color.RED, 1.2)
+	var number = DAMAGE_NUMBER.spawn(self, Vector2(500, 500), 17, 1.2)
 	_expect(number != null, "a damage number spawns")
 	if number == null:
 		return
 	var layer: Node = number.get_parent()
 	var label: Label = number.get_node("Label")
-	_expect(label.text == "17", "the number shows its text")
+	_expect(label.text == "17", "the number shows the damage")
+	_expect(label.modulate.is_equal_approx(DAMAGE_NUMBER.DAMAGE_RED), "it pops in red")
+	_expect(label.get_theme_color("font_color") == DAMAGE_NUMBER.CREAM, "the glyphs are cream")
+	_expect(label.get_theme_constant("outline_size") == 20, "STS2's heavy outline")
 	_expect(number.scale.is_equal_approx(Vector2.ONE * 2.5), "the number pops in at 2.5x")
 	_expect(number.velocity.y >= -800.0 and number.velocity.y <= -700.0, "it launches up at 700-800 px/s")
 	_expect(absf(number.velocity.x) <= 100.0, "it drifts sideways at most 100 px/s")
 	_expect(absf(number.rotation_degrees) <= 5.0, "it tilts at most 5 degrees")
-	_expect(label.get_theme_font_size("font_size") == roundi(44 * 1.2), "emphasis scales the font")
+	_expect(label.get_theme_font_size("font_size") == roundi(64 * 1.2), "emphasis scales the 64 px font")
 	var start_y: float = number.position.y
 	await get_tree().create_timer(0.2).timeout
 	_expect(number.position.y < start_y, "it rises first")
 	await get_tree().create_timer(0.8).timeout
 	_expect(number.position.y > start_y, "then gravity brings it down")
-	_expect(label.modulate.is_equal_approx(DAMAGE_NUMBER.CREAM), "it has tinted to cream")
+	_expect(label.modulate.is_equal_approx(DAMAGE_NUMBER.CREAM), "it has turned cream")
 	await get_tree().create_timer(1.2).timeout
 	_expect(not is_instance_valid(layer), "it frees itself after fading")
+
+	var blocked = DAMAGE_NUMBER.spawn_blocked(self, Vector2(500, 500))
+	var blocked_label: Label = blocked.get_node("Label")
+	_expect(blocked_label.text == tr("UI_COMBAT_BLOCKED") and blocked_label.text != "UI_COMBAT_BLOCKED", "a full block reads BLOCKED")
+	_expect(blocked_label.modulate.is_equal_approx(DAMAGE_NUMBER.BLOCKED_BLUE), "BLOCKED starts blue")
+	_expect(blocked.velocity == Vector2.ZERO, "BLOCKED drifts, it does not fly")
+	var heal = DAMAGE_NUMBER.spawn_heal(self, Vector2(500, 500), 6)
+	_expect(heal.get_node("Label").text == "6" and heal.get_node("Label").modulate.is_equal_approx(DAMAGE_NUMBER.HEAL_GREEN), "a heal shows a green number")
+	blocked.get_parent().queue_free()
+	heal.get_parent().queue_free()
 
 
 func _test_damage_path_integration() -> void:

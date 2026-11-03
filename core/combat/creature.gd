@@ -14,6 +14,8 @@ signal stats_changed
 signal status_changed
 signal intent_changed
 signal died
+## HP actually restored by heal() (views show the number).
+signal healed(amount: int)
 ## A presentation hint the rules raise without awaiting it ("block").
 signal pulse_requested(kind: String)
 
@@ -133,6 +135,8 @@ func heal(amount: int) -> int:
 	var before := health
 	health = mini(health + amount, max_health)
 	health_changed.emit(health)
+	if health > before:
+		healed.emit(health - before)
 	return health - before
 
 

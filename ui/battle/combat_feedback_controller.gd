@@ -273,11 +273,11 @@ func _spawn_damage_number(
 ) -> void:
 	if amount <= 0 and blocked <= 0:
 		return
-	# A fully absorbed hit must not display the absorbed amount as HP damage.
-	var text := "0" if profile == PROFILE_BLOCKED else str(amount)
-	DAMAGE_NUMBER.spawn(
-		scene_root, world_pos, text, _number_color(profile), float(settings.get("damage_number_scale", 1.0))
-	)
+	# A fully absorbed hit reads BLOCKED, never the absorbed amount as damage.
+	if profile == PROFILE_BLOCKED:
+		DAMAGE_NUMBER.spawn_blocked(scene_root, world_pos)
+		return
+	DAMAGE_NUMBER.spawn(scene_root, world_pos, amount, float(settings.get("damage_number_scale", 1.0)))
 
 
 ## Spawn the four-frame, transparent comic impact sequence for this profile.
@@ -355,15 +355,3 @@ func _flash_color(profile: String) -> Color:
 			return Color(1.0, 0.98, 0.88, 1.0)
 		_:
 			return Color(1.0, 0.91, 0.82, 1.0)
-
-
-func _number_color(profile: String) -> Color:
-	match profile:
-		PROFILE_BLOCKED:
-			return Color(0.45, 0.92, 1.0, 1.0)
-		PROFILE_HEAVY:
-			return Color(1.0, 0.68, 0.18, 1.0)
-		PROFILE_KILL:
-			return Color(1.0, 0.28, 0.16, 1.0)
-		_:
-			return Color(0.96, 0.84, 0.62, 1.0)

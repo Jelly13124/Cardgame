@@ -183,6 +183,14 @@ func _run() -> void:
 	_expect(status_death_count[0] == 1, "lethal status damage emits death immediately")
 	await _real_seconds(0.10)
 
+	# heal_number: a heal that restores HP shows a green number; a full heal does not.
+	battle.player.health = battle.player.max_health - 4
+	var before_heal := _count_numbers(battle)
+	battle.player.creature.heal(10)
+	_expect(_count_numbers(battle) == before_heal + 1, "a heal shows its number")
+	battle.player.creature.heal(10)
+	_expect(_count_numbers(battle) == before_heal + 1, "healing at full HP shows nothing")
+
 	var self_cost_death_count := [0]
 	battle.player.creature.died.connect(func() -> void: self_cost_death_count[0] += 1)
 	battle.player.health = 3
@@ -195,6 +203,10 @@ func _run() -> void:
 	_expect(is_equal_approx(Engine.time_scale, 1.0), "leaving battle restores normal time scale")
 
 	_finish()
+
+
+func _count_numbers(battle: Node) -> int:
+	return battle.get_children().filter(func(c): return String(c.name).begins_with("CombatDamageNumber")).size()
 
 
 func _has_spark(battle: Node, kind: String) -> bool:

@@ -155,6 +155,7 @@ func _init() -> void:
 
 
 func _ready() -> void:
+	creature.healed.connect(_on_healed)
 	creature.status_changed.connect(func(): status_changed.emit())
 	creature.intent_changed.connect(_update_intent_display)
 	_build_visual()
@@ -566,11 +567,17 @@ func play_hit(result: Object, feedback_tags: Dictionary = {}) -> void:
 		_play_armor_break_reaction()
 
 
+func _on_healed(amount: int) -> void:
+	var scene := COMBAT_FEEDBACK_CONTROLLER.scene_root_for(self) if is_inside_tree() else null
+	if scene:
+		DAMAGE_NUMBER.spawn_heal(scene, get_hit_global_position(), amount)
+
+
 ## Direct HP loss already applied: a floating damage number.
 func play_hp_loss(amount: int) -> void:
 	var scene := get_tree().current_scene if is_inside_tree() else null
 	if scene:
-		DAMAGE_NUMBER.spawn(scene, get_hit_global_position(), str(amount), DAMAGE_NUMBER.HP_LOSS_COLOR)
+		DAMAGE_NUMBER.spawn(scene, get_hit_global_position(), amount)
 
 
 ## The creature died: death sound, then the view leaves (once).
