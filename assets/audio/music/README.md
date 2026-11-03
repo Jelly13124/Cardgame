@@ -31,7 +31,12 @@ that permits commercial game use (credit as required), or your own. Note the sou
 
 | Track | Source | License |
 |---|---|---|
-| `battle` / `boss` / `map` / `home` / `shop` / `event` .ogg | Procedural synth — `tools/gen_audio.py` (project-owned) | Original to this project; regenerate with `python tools/gen_audio.py` |
+| — | No music ships right now. | — |
+
+> **No BGM (2026-11-02).** The procedural synth tracks from `tools/gen_audio.py`
+> were removed because they sounded poor; the game is silent until real tracks are
+> dropped in here. Missing files are skipped (`AudioManager.play_music` returns
+> when the `.ogg` does not exist), so no code change is needed either way.
 
 > The title screen is **intentionally silent** — the old licensed `menu.ogg`
 > (*Wild West - Desert Wind*) was removed on 2026-06-25; `main_menu.gd` calls
