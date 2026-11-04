@@ -87,6 +87,18 @@ func _test_reusable_feedback_controller() -> void:
 			profile.has("impact_size"),
 			"%s profile configures local impact size" % profile_name
 		)
+	# STS2 freezes time only for big moments: ordinary and blocked hits must
+	# not stall card flights.
+	_expect(
+		float(profiles["normal"]["hitstop_seconds"]) == 0.0
+		and float(profiles["blocked"]["hitstop_seconds"]) == 0.0,
+		"ordinary and blocked hits have no hit stop"
+	)
+	_expect(
+		float(profiles["heavy"]["hitstop_seconds"]) > 0.0
+		and float(profiles["kill"]["hitstop_seconds"]) > 0.0,
+		"heavy hits and kills keep their hit stop"
+	)
 	_expect(
 		float(profiles["normal"]["impact_size"]) < float(profiles["heavy"]["impact_size"])
 		and float(profiles["heavy"]["impact_size"]) <= float(profiles["kill"]["impact_size"]),

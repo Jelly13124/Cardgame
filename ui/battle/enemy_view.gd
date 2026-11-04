@@ -18,6 +18,7 @@ const SELECTION_RETICLE = preload("uid://c6dicaops28n6")  # res://ui/battle/sele
 const COMBAT_EFFECTS = preload("uid://do16of5onpg33")  # res://core/combat/combat_effects.gd
 const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://ui/battle/combat_feedback_controller.gd
 const DAMAGE_NUMBER = preload("uid://clps6my10jkri")  # res://ui/battle/damage_number_vfx.gd
+const ENEMY_DEATH_VFX = preload("uid://cayme2wbim86o")  # res://ui/battle/enemy_death_vfx.gd
 
 # Intent badge icon textures — preloaded once instead of `load()`-ing on every
 # intent refresh (which can fire frequently as enemy / player status changes).
@@ -580,12 +581,14 @@ func play_hp_loss(amount: int) -> void:
 		DAMAGE_NUMBER.spawn(scene, get_hit_global_position(), amount)
 
 
-## The creature died: death sound, then the view leaves (once).
+## The creature died (once): death sound, a dissolving snapshot of the body
+## stays behind, and the view itself leaves at once.
 func play_death() -> void:
 	if _death_settled:
 		return
 	_death_settled = true
 	AudioManager.play_sfx("enemy_death")
+	ENEMY_DEATH_VFX.spawn(self, _sprite)
 	queue_free()
 
 

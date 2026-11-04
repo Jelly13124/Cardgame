@@ -47,6 +47,9 @@ var _tool_resolving := false
 var _pending_tool_index := -1
 var _pending_tool_id := ""
 var _pending_tool_data: Dictionary = {}
+## Hand rebuilds so far (the frame-coalescing contract counts them).
+var hand_refresh_count: int = 0
+var _ui_refresh_queued: bool = false
 
 const TARGETING_ARROW_SCRIPT = preload("uid://dq6nkaqdhlsp4")  # res://ui/battle/targeting_arrow.gd
 const COMBAT_FX = preload("uid://dx2h4lk8uoasg")  # res://ui/battle/combat_fx.gd
@@ -77,10 +80,12 @@ func _exit_tree() -> void:
 	# Restore normal speed when leaving combat so the map / menus run at 1x
 	# regardless of the battle-speed setting (Engine.time_scale is global).
 	Engine.time_scale = 1.0
+	MetaProgress.end_deferred_saves()
 
 
 func _ready():
 	print("BATTLE STARTING (STS Layout)")
+	MetaProgress.begin_deferred_saves()
 	AudioManager.play_music("boss" if RunManager.last_battle_node_type == "boss" else "battle")
 	card_manager.debug_mode = false
 	Engine.time_scale = Settings.game_speed
@@ -602,9 +607,23 @@ func _cancel_active_targeting() -> void:
 # ─── Turn Events ──────────────────────────────────────────────────────────────
 
 
+## Energy shows at once; the hand and enemy intents are rebuilt once at the
+## end of the frame however many player changes asked for it (one card play
+## changes energy, block, stats and statuses in a row).
 func _update_ui_labels():
 	if player:
 		ui_manager.update_labels(player.energy, player.max_energy)
+	if _ui_refresh_queued:
+		return
+	_ui_refresh_queued = true
+	call_deferred("_flush_ui_refresh")
+
+
+func _flush_ui_refresh() -> void:
+	_ui_refresh_queued = false
+	if not is_inside_tree():
+		return
+	if player:
 		refresh_hand_ui()
 	# Player status (vulnerable etc.) affects every enemy's intent display.
 	_refresh_all_enemy_intents()
@@ -621,6 +640,7 @@ func _refresh_all_enemy_intents() -> void:
 
 
 func refresh_hand_ui():
+	hand_refresh_count += 1
 	for card in hand.get_cards():
 		# Cards resting in a pile are hidden (the pile glyph stands in for them);
 		# anything that reaches the hand must be visible again.
@@ -830,6 +850,7 @@ func _on_enemy_died(enemy: RefCounted) -> void:
 
 func _on_combat_ended(outcome: String) -> void:
 	_tool_resolving = false  # a tool still queued was dropped with the fight
+	MetaProgress.end_deferred_saves()  # the fight is over: write what it changed
 	if outcome == "victory":
 		_victory()
 	else:

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://lgmq74mhx41b"]
+
+[ext_resource type="Script" path="res://tests/enemy_death_vfx_test.gd" id="1"]
+
+[node name="EnemyDeathVfxTest" type="Node"]
+script = ExtResource("1")

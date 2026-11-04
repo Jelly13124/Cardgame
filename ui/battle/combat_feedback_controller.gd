@@ -26,12 +26,14 @@ const SHAKE_MEDIUM := 20.0
 const SHAKE_STRONG := 40.0
 const SHAKE_SECONDS := 0.3
 
+## Hit stop only on heavy hits and kills (STS2 keeps it for big moments): a
+## freeze on every hit stalls card flights and reads as stutter.
 ## Exactly four shared feedback tiers.  Critical hits intentionally do not have a
 ## fifth profile: `profile_for_hit()` maps both critical and explicit heavy attacks
 ## to PROFILE_HEAVY.
 const PROFILES := {
 	PROFILE_NORMAL: {
-		"hitstop_seconds": 0.014,
+		"hitstop_seconds": 0.0,
 		"damage_number_scale": 1.0,
 		"reaction_strength": 2.4,
 		"reaction_seconds": 0.095,
@@ -40,7 +42,7 @@ const PROFILES := {
 		"impact_fps": 28.0,
 	},
 	PROFILE_BLOCKED: {
-		"hitstop_seconds": 0.010,
+		"hitstop_seconds": 0.0,
 		"damage_number_scale": 0.9,
 		"reaction_strength": 1.2,
 		"reaction_seconds": 0.08,

@@ -49,6 +49,9 @@ var instance: RefCounted = null
 ## Playable outline (battle_scene/ui/card_highlight.gd), behind the card face.
 var highlight: ColorRect
 var _rarity_frames: Dictionary = {}
+## Times the description was typeset (refreshes with unchanged text skip it).
+var description_builds: int = 0
+var _shown_description_key := ""
 
 # Legacy fallback-frame colors. The unified generated battle face intentionally
 # omits rarity decoration so profession color and card content remain dominant.
@@ -381,14 +384,20 @@ func set_card_data(data: Dictionary) -> void:
 		highlight.set_source(silhouette, size)
 
 	# ── Description: build from effects[] showing real calculated numbers ────
+	# Typesetting and fitting is the costly part of a refresh: skip it when the
+	# text and skin are what the label already shows.
 	var desc = _build_description(data)
-	if uses_generated_skin:
-		desc_label.parse_bbcode("[center]" + _colorize_keywords(desc) + "[/center]")
-		call_deferred("_fit_and_center_description")
-	else:
-		desc_label.parse_bbcode(
-			"[center][font_size=13]" + _colorize_keywords(desc) + "[/font_size][/center]"
-		)
+	var shown_key := "%s|%s" % [uses_generated_skin, desc]
+	if shown_key != _shown_description_key:
+		_shown_description_key = shown_key
+		description_builds += 1
+		if uses_generated_skin:
+			desc_label.parse_bbcode("[center]" + _colorize_keywords(desc) + "[/center]")
+			call_deferred("_fit_and_center_description")
+		else:
+			desc_label.parse_bbcode(
+				"[center][font_size=13]" + _colorize_keywords(desc) + "[/font_size][/center]"
+			)
 
 	# Only legacy cards keep the previous rarity frame. The unified generated
 	# battle face omits a rarity marker to preserve the single-frame hierarchy.

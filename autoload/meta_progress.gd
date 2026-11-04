@@ -138,6 +138,9 @@ signal bounties_changed
 ## The profile's persisted state (core/meta/profile_state.gd); the fields below
 ## forward to it.
 var profile = PROFILE_STATE.new()
+## Battle-time save deferral (begin_deferred_saves / end_deferred_saves).
+var _defer_saves := false
+var _save_pending := false
 
 var caps: int:
 	get:
@@ -1046,7 +1049,31 @@ func mark_card_seen(card_id: String) -> void:
 	save_progress()
 
 
+## While a battle runs, profile saves only mark the profile dirty: a write
+## (stringify, temp file, verify, backup rotation) costs a visible frame.
+## end_deferred_saves() writes once when the battle is left.
+func begin_deferred_saves() -> void:
+	_defer_saves = true
+
+
+func end_deferred_saves() -> void:
+	_defer_saves = false
+	if _save_pending:
+		save_progress()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_PREDELETE:
+		if _save_pending:
+			_defer_saves = false
+			save_progress()
+
+
 func save_progress() -> void:
+	if _defer_saves:
+		_save_pending = true
+		return
+	_save_pending = false
 	var payload := PROFILE_SAVE.to_dict(profile)
 	var err := SAVE_IO.write_json(_meta_path(), payload)
 	if err != OK:

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://hvo3vo3wv5ar"]
+
+[ext_resource type="Script" path="res://tests/battle_refresh_perf_test.gd" id="1"]
+
+[node name="BattleRefreshPerfTest" type="Node"]
+script = ExtResource("1")
