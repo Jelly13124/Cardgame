@@ -156,8 +156,8 @@ static func strings(v: Variant) -> Array[String]:
 	return out
 
 
-## Map nodes with their numeric fields re-coerced and children as Strings; extra
-## generator fields kept as they are.
+## Map nodes with their numeric fields re-coerced, children as Strings and the
+## printed rewards as whole numbers; extra generator fields kept as they are.
 static func map_nodes(raw: Variant) -> Array:
 	var out: Array = []
 	if typeof(raw) != TYPE_ARRAY:
@@ -171,11 +171,22 @@ static func map_nodes(raw: Variant) -> Array:
 			"slot": int(node.get("slot", 0)),
 			"type": str(node.get("type", "enemy")),
 			"children": strings(node.get("children", [])),
+			"rewards": _rewards(node.get("rewards", {})),
 		}
 		for k in node.keys():
 			if not n.has(k):
 				n[k] = node[k]
 		out.append(n)
+	return out
+
+
+## A node's printed rewards ({caps, scrap}) as ints; JSON reads numbers back
+## as floats.
+static func _rewards(raw: Variant) -> Dictionary:
+	var out := {}
+	if typeof(raw) == TYPE_DICTIONARY:
+		for k in raw:
+			out[str(k)] = int(raw[k])
 	return out
 
 

@@ -418,6 +418,7 @@ const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
 const ENCOUNTERS = preload("uid://mlx3xqfjwlpq")  # res://core/run/encounters.gd
 const MAP_GENERATOR = preload("uid://gi3vuuinl2vb")  # res://core/run/map_generator.gd
+const MAP_TRAVEL = preload("uid://0qgp786g5ulg")  # res://core/run/map_travel.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const RUN_SAVE = preload("uid://dkhd2poukjb61")  # res://core/save/run_save.gd
 const CONTENT_ID_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/save/content_id_migration.gd
@@ -451,31 +452,37 @@ func _ready() -> void:
 # --- Map Generation ---
 
 
-## Generates a procedural map with the given number of rows and max width.
-## Rules:
-##   Floor 0       → 1 node: "relic" (choose starting relic)
-##   Floor N-1     → 1 node: "boss"
-##   Floor N-2     → all nodes are "rest" (pre-boss campfire)
-##   Middle floors → 3-5 random nodes
-##   Floor 6       -> all nodes are "treasure" (human-facing layer 7)
-##   Merchants     -> only appear from floor 4 onward (human-facing layer 5+)
+## Starts the act's route (core/run/map_generator.gd): the start node, its
+## choices and their previews. The route grows as nodes are entered.
 func generate_map() -> void:
-	# Each act's map comes from its own stream derived from the seed, so it does
-	# not depend on how many rolls the previous act used (STS2 builds act maps
-	# up front).
 	current_node_id = ""
 	visited_node_ids.clear()
-	var elite_bias := 0.0
-	if has_ascension("base:a5_elite_bias"):
-		elite_bias = float(ascension_param("base:a5_elite_bias", "roll_floor", 0.5))
-	map_data = MAP_GENERATOR.start(ACTS.act(current_act), current_act, _route_rng(), elite_bias)
-	_node_index.clear()
-	for node in map_data:
-		_node_index[node.id] = node
+	map_data = MAP_GENERATOR.start(ACTS.act(current_act), current_act, _route_rng(), _elite_bias())
+	_reindex_map()
 
 
 func get_node_by_id(id: String) -> Dictionary:
 	return _node_index.get(id, {})
+
+
+## Enters the route node `node_id` (core/run/map_travel.gd) and grows the route
+## from it: {ok} or {ok: false, reason}.
+func enter_map_node(node_id: String) -> Dictionary:
+	var node: Dictionary = get_node_by_id(node_id)
+	if node.is_empty():
+		return {"ok": false, "reason": "unknown_node"}
+	var result: Dictionary = MAP_TRAVEL.enter(state, _node_index, node)
+	if not bool(result.get("ok", false)):
+		return result
+	map_data = MAP_GENERATOR.grow(map_data, node_id, ACTS.act(current_act), current_act, _route_rng(), _elite_bias())
+	_reindex_map()
+	return result
+
+
+func _elite_bias() -> float:
+	if has_ascension("base:a5_elite_bias"):
+		return float(ascension_param("base:a5_elite_bias", "roll_floor", 0.5))
+	return 0.0
 
 
 # --- Encounter Selection ---
