@@ -5,15 +5,17 @@ extends RefCounted
 ## v3 seeded RNG streams · v4 current: equipment always instances, no hero data
 ## copy, retired cards and gem leftovers gone, elapsed time only · v5 current:
 ## scripted events — per-act event deck and the event in progress · v6 current:
-## merchant inventories of entries and the run's card-removal count.
+## merchant inventories of entries and the run's card-removal count · v7
+## current: route map nodes carry their printed rewards.
 
 const MIGRATION_CHAIN = preload("uid://bmeya57dgtty2")  # res://core/save/migration_chain.gd
 const CONTENT_ID_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/save/content_id_migration.gd
 const RUN_RNG_SET = preload("uid://ealvw2c6utr7")  # res://core/rng/run_rng_set.gd
 const LEGACY_EQUIPMENT = preload("uid://bpsstam8gekpw")  # res://core/save/legacy_equipment.gd
 const EVENT_POOL = preload("uid://dr3dtuxwul371")  # res://core/run/events/event_pool.gd
+const MAP_GENERATOR = preload("uid://gi3vuuinl2vb")  # res://core/run/map_generator.gd
 
-const CURRENT := 6
+const CURRENT := 7
 ## Cards removed from the game; old saves may still hold their bare ids.
 const RETIRED_CARD_IDS := [
 	"crowbar_smash",
@@ -39,6 +41,7 @@ static func chain() -> RefCounted:
 		.add(3, _v3_to_v4)
 		.add(4, _v4_to_v5)
 		.add(5, _v5_to_v6)
+		.add(6, _v6_to_v7)
 	)
 
 
@@ -266,6 +269,23 @@ static func _v5_to_v6(d: Dictionary) -> Dictionary:
 				out[node_id] = _v6_stock(old)
 	d["shop_stock"] = out
 	d["merchant_removals_used"] = 0
+	return d
+
+
+## v7: the route map. Every saved node without rewards gets the ones its card
+## would print, rolled from the node's own rewards stream, so an old act graph
+## plays on under the route rules.
+static func _v6_to_v7(d: Dictionary) -> Dictionary:
+	var saved_rng: Variant = d.get("rng", {})
+	var seed_string := str(saved_rng.get("seed_string", "")) if typeof(saved_rng) == TYPE_DICTIONARY else ""
+	var rng_set = RUN_RNG_SET.new(seed_string if RUN_RNG_SET.is_valid_seed(seed_string) else RUN_RNG_SET.random_seed_string())
+	var act := int(d.get("current_act", 1))
+	var nodes: Variant = d.get("map_data", [])
+	if typeof(nodes) == TYPE_ARRAY:
+		for n in nodes:
+			if typeof(n) == TYPE_DICTIONARY and not n.has("rewards"):
+				var stream = rng_set.derived("map_act_%d_%s_rewards" % [act, str(n.get("id", ""))])
+				n["rewards"] = MAP_GENERATOR.node_rewards(str(n.get("type", "enemy")), stream)
 	return d
 
 
