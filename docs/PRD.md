@@ -28,7 +28,7 @@ or second act in the demo. The three-act extract-or-push structure remains a
 full-game ruleset behind `RunManager.DEMO_BUILD = false`.
 
 1. **Hero Select + Loadout** - The demo uses Cowboy Bill (fixed starter deck + attribute spread); the player explicitly moves stored gear into the owned base backpack, which becomes the next-run carry
-2. **Map** - Choose the next encounter node (normal / elite / rest / shop / treasure / ? event / boss) within the act's ~12-floor map
+2. **Route** - Each floor offers 2–3 cards showing the room, its rewards and the next floor's rooms; floors 0, 6, 10 and 11 are fixed (relic, treasure, rest, boss)
 3. **Battle** - STS-style card combat
 4. **Loot Reward** - Post-battle: claim gold/Scrap and optionally draft 1 new card
 5. **Demo Boss Victory** - Defeat Rust Titan on floor 12; bank carried currencies while gear returns to the owned base backpack/equipment slots, show the result, and return to base
@@ -350,7 +350,7 @@ Central source of truth for a run. Persists across scene changes.
 - Starter decks are fixed per hero/run setup; players do not build starter decks manually
 
 ### Map System
-- `map_scene.gd` shows available encounter nodes for the current floor
+- `map_scene.gd` shows the current floor's route choice cards (`route_choice_card.gd`) and a floor track
 - Player can manage equipment on this screen (swap items freely)
 - Before loading `battle_scene.tscn`, the map sets `RunManager.current_encounter`
 - Enemy encounters escalate in difficulty by floor
