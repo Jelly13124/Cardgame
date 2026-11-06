@@ -67,7 +67,7 @@ func _is_instance(x: Variant) -> bool:
 
 func _test_run_v1() -> void:
 	var run := RUN_SAVE.migrate(_fixture(RUN_V1))
-	_expect(int(run["schema_version"]) == 6 and not run.has("v"), "run save reaches schema v6")
+	_expect(int(run["schema_version"]) == 7 and not run.has("v"), "run save reaches schema v7")
 	_expect(run["current_hero_id"] == "base:cowboy_bill", "hero id migrated")
 	_expect(not run.has("current_hero_data"), "no copy of the hero data is saved")
 	var deck_ids: Array = run["player_deck"].map(func(e): return e["card_id"])
@@ -106,7 +106,7 @@ func _test_run_v3() -> void:
 	var raw := _fixture(RUN_V3)
 	_expect(RUN_SAVE.version_of(raw) == 3, "the v3 sample is a v3 save")
 	var run := RUN_SAVE.migrate(raw)
-	_expect(int(run["schema_version"]) == 6, "the v3 sample reaches v6")
+	_expect(int(run["schema_version"]) == 7, "the v3 sample reaches v7")
 	_expect(run["rng"]["seed_string"] == raw["rng"]["seed_string"], "the RNG seed is kept")
 	var kept := true
 	for stream in raw["rng"].get("counters", {}):
@@ -116,7 +116,10 @@ func _test_run_v3() -> void:
 	for slot in run["equipped_items"]:
 		var v: Variant = run["equipped_items"][slot]
 		_expect(v == {} or _is_instance(v), "slot %s holds an instance or nothing" % slot)
-	_expect(run["map_data"] == raw["map_data"] and run["player_deck"] == raw["player_deck"], "map and deck are untouched")
+	var bare := func(nodes: Array) -> Array:
+		return nodes.map(func(n): return [n["id"], n["type"], n["children"]])
+	_expect(bare.call(run["map_data"]) == bare.call(raw["map_data"]) and run["player_deck"] == raw["player_deck"], "map and deck are untouched")
+	_expect(run["map_data"].all(func(n): return n.has("rewards")), "every map node gains its printed rewards (v7)")
 
 
 func _test_meta_v1() -> void:
