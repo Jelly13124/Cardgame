@@ -432,7 +432,6 @@ var run_rng:
 	set(v):
 		state.rng = v
 ## Stream of the act map being generated (derived from the seed per act).
-var _map_rng = null
 ## Session-only streams for draws outside a run (home-base market, forge, menus).
 var _scratch_rng = null
 ## Seed of the run that just ended, for the result screen.
@@ -464,13 +463,12 @@ func generate_map() -> void:
 	# Each act's map comes from its own stream derived from the seed, so it does
 	# not depend on how many rolls the previous act used (STS2 builds act maps
 	# up front).
-	_map_rng = rng_for_act_map(current_act)
 	current_node_id = ""
 	visited_node_ids.clear()
 	var elite_bias := 0.0
 	if has_ascension("base:a5_elite_bias"):
 		elite_bias = float(ascension_param("base:a5_elite_bias", "roll_floor", 0.5))
-	map_data = MAP_GENERATOR.generate(ACTS.act(current_act), _map_rng, elite_bias)
+	map_data = MAP_GENERATOR.start(ACTS.act(current_act), current_act, _route_rng(), elite_bias)
 	_node_index.clear()
 	for node in map_data:
 		_node_index[node.id] = node
@@ -1960,11 +1958,14 @@ func run_seed() -> String:
 	return run_rng.seed_string if run_rng != null else _last_run_seed
 
 
-## Fresh, unsaved stream for `act`'s map; same seed and act give the same map.
-func rng_for_act_map(act: int):
-	if run_rng == null:
-		return rng("niche")
-	return run_rng.derived("map_act_%d" % act)
+## The run's stream set for the route map (core/run/map_generator.gd derives
+## one unsaved stream per node from it); a scratch set outside a run.
+func _route_rng():
+	if run_rng != null:
+		return run_rng
+	if _scratch_rng == null:
+		_scratch_rng = RUN_RNG_SET.new(RUN_RNG_SET.random_seed_string())
+	return _scratch_rng
 
 
 ## True when the run's ascension level reaches the named rule's level
