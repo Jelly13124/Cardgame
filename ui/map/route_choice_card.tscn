@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://e44exoef6xwg"]
+
+[ext_resource type="Script" path="res://ui/map/route_choice_card.gd" id="1"]
+
+[node name="RouteChoiceCard" type="Control"]
+custom_minimum_size = Vector2(300, 420)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 300.0
+offset_bottom = 420.0
+script = ExtResource("1")
