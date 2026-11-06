@@ -885,19 +885,6 @@ func award_run_caps(n: int) -> void:
 	_run_caps += n
 
 
-## Award caps for a combat win, sized by the battle node type. Called from the
-## victory path the same way scrap is dropped per fight type, so a boss fight
-## grants the boss award only (never boss + normal).
-func award_caps_for_combat(node_type: String) -> void:
-	match node_type:
-		"boss":
-			award_run_caps(CAPS_PER_BOSS)
-		"elite":
-			award_run_caps(CAPS_PER_ELITE)
-		_:
-			award_run_caps(CAPS_PER_COMBAT)
-
-
 func _add_stacked(kind: String, n: int, per: int) -> int:
 	_ensure_backpack()
 	var remaining := n

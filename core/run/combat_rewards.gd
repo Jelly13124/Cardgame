@@ -2,31 +2,35 @@ extends RefCounted
 
 ## What a won fight gives and where the run goes next (STS2: the combat room
 ## ends, the run decides rewards). The battle only reports its result; this
-## grants Caps, XP and the bounty event, the boss equipment and Scrap or the
-## elite Scrap, and returns the route the screen shows:
+## grants XP and the bounty event, the Caps and Scrap printed on the route
+## node's card (core/run/map_generator.gd), or the boss award, equipment and
+## Scrap, and returns the route the screen shows:
 ##   {route: "extract_choice", act, rewards: {continue, extract}}
 ##   {route: "demo_complete"}                 the run's final boss fell
 ##   {route: "loot"}                          the normal reward screen
 ## plus `backpack_full: true` when the boss equipment did not fit.
 
 const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
-const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 
 
-static func settle_victory(node_type: String, act: int) -> Dictionary:
+## `rewards`: the fought node's printed rewards, {caps, scrap}.
+static func settle_victory(node_type: String, act: int, rewards: Dictionary) -> Dictionary:
 	# Caps stay at death risk until banked; a boss grants only the boss award.
-	RunManager.award_caps_for_combat(node_type)
-	# A card draft per level gained (the loot screen consumes them).
+	if node_type == "boss":
+		RunManager.award_run_caps(RunManager.CAPS_PER_BOSS)
+	else:
+		RunManager.award_run_caps(int(rewards.get("caps", 0)))
+	# XP; each level gained queues an attribute pick (the loot screen consumes them).
 	RunManager.gain_xp(node_type)
 	# Bounty event, before a final-boss victory ends the run.
 	RunManager.combat_won(node_type)
 	if node_type == "boss":
 		var out := {"backpack_full": not RunManager.add_equip_to_backpack(RunManager.roll_shell_drop("rare"))}
-		var rewards: Dictionary = ACTS.extract_rewards(act)
-		if not rewards.is_empty():
+		var extract: Dictionary = ACTS.extract_rewards(act)
+		if not extract.is_empty():
 			out["route"] = "extract_choice"
 			out["act"] = act
-			out["rewards"] = rewards
+			out["rewards"] = extract
 			return out
 		# Final boss: the Scrap drops into the backpack and is banked when the run
 		# ends, so end_run_victory banks 0 more.
@@ -35,8 +39,7 @@ static func settle_victory(node_type: String, act: int) -> Dictionary:
 		out["route"] = "demo_complete"
 		return out
 	if node_type == "elite":
-		var scrap: Array = MODEL_DB.data("economy", "base:loot_economy").get("elite_scrap", [8, 16])
-		RunManager.add_scrap_to_backpack(RunManager.rng("rewards").next_range(int(scrap[0]), int(scrap[1])))
+		RunManager.add_scrap_to_backpack(int(rewards.get("scrap", 0)))
 	return {"route": "loot", "backpack_full": false}
 
 

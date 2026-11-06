@@ -885,7 +885,11 @@ func _victory():
 	await get_tree().create_timer(3.0).timeout
 
 	# The run layer grants the rewards and picks where the run goes next.
-	var result: Dictionary = COMBAT_REWARDS.settle_victory(RunManager.last_battle_node_type, RunManager.current_act)
+	var result: Dictionary = COMBAT_REWARDS.settle_victory(
+		RunManager.last_battle_node_type,
+		RunManager.current_act,
+		RunManager.get_node_by_id(RunManager.current_node_id).get("rewards", {})
+	)
 	if bool(result.get("backpack_full", false)):
 		show_notification(tr("UI_LOOT_BACKPACK_FULL"), Color(1.0, 0.45, 0.4))
 	match str(result["route"]):

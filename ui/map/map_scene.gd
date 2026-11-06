@@ -815,7 +815,7 @@ func _open_rest_choice_legacy() -> void:
 	T.apply_button_theme(heal_btn)
 	heal_btn.pressed.connect(
 		func():
-			var heal_amount = int(rm.max_health * 0.25)
+			var heal_amount = ROOMS.rest_heal_amount(rm.max_health)
 			rm.modify_health(heal_amount)
 			_show_popup(tr("UI_MAP_RESTED_HEAL").format({"n": heal_amount}))
 			modal.queue_free()
@@ -894,7 +894,7 @@ func _open_rest_choice() -> void:
 	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	modal.add_child(rule)
 
-	var heal_amount := int(rm.max_health * 0.25)
+	var heal_amount := ROOMS.rest_heal_amount(rm.max_health)
 	var heal_text := ("休息\n恢复 %d" % heal_amount) if Settings.language == "zh" else ("REST\nHEAL %d" % heal_amount)
 	var heal_btn := _rest_hotspot(Rect2(0.075, 0.55, 0.25, 0.23), heal_text)
 	heal_btn.pressed.connect(

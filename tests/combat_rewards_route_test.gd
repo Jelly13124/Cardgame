@@ -11,6 +11,7 @@ const MERCHANT_INVENTORY = preload("uid://dgj1md8jt0tg7")  # res://core/run/merc
 const CARD_POOLS = preload("uid://c76axesxo6wit")  # res://core/run/card_pools.gd
 const MARKET = preload("uid://brturtmxacges")  # res://core/meta/market.gd
 const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
+const ROOMS = preload("uid://cxmgdj3654rrj")  # res://core/run/rooms.gd
 
 var failures: PackedStringArray = []
 
@@ -29,14 +30,19 @@ func _expect(condition: bool, message: String) -> void:
 func _run() -> void:
 	RunManager.start_new_run("base:cowboy_bill", [], 0, "ROUTES0001")
 	var scrap_before := RunManager.total_run_scrap()
-	_expect(COMBAT_REWARDS.settle_victory("enemy", 1)["route"] == "loot", "a normal fight goes to the loot screen")
+	var caps_before: int = RunManager._run_caps
+	_expect(COMBAT_REWARDS.settle_victory("enemy", 1, {"caps": 6})["route"] == "loot", "a normal fight goes to the loot screen")
+	_expect(RunManager._run_caps - caps_before == 6, "a normal fight pays its printed 6 Caps")
 	_expect(RunManager.total_run_scrap() == scrap_before, "a normal fight drops no Scrap")
-	_expect(COMBAT_REWARDS.settle_victory("elite", 1)["route"] == "loot", "an elite goes to the loot screen")
+	caps_before = RunManager._run_caps
+	_expect(COMBAT_REWARDS.settle_victory("elite", 1, {"caps": 18, "scrap": 11})["route"] == "loot", "an elite goes to the loot screen")
+	_expect(RunManager._run_caps - caps_before == 18, "an elite pays its printed 18 Caps")
 	var elite_scrap := RunManager.total_run_scrap() - scrap_before
-	_expect(elite_scrap >= 8 and elite_scrap <= 16, "an elite drops 8–16 Scrap (%d)" % elite_scrap)
+	_expect(elite_scrap == 11, "an elite drops its printed 11 Scrap (%d)" % elite_scrap)
+	_expect(ROOMS.rest_heal_amount(80) == 20, "a campfire heals a quarter of max HP")
 
 	ACTS.active_run = "base:full"
-	var route: Dictionary = COMBAT_REWARDS.settle_victory("boss", 1)
+	var route: Dictionary = COMBAT_REWARDS.settle_victory("boss", 1, {})
 	_expect(route["route"] == "extract_choice", "a non-final boss offers the extract choice (%s)" % route["route"])
 	var rewards: Dictionary = route.get("rewards", {})
 	_expect(
@@ -47,7 +53,7 @@ func _run() -> void:
 	ACTS.active_run = ACTS.ACTIVE_RUN
 
 	RunManager.current_act = 1
-	route = COMBAT_REWARDS.settle_victory("boss", 1)
+	route = COMBAT_REWARDS.settle_victory("boss", 1, {})
 	_expect(route["route"] == "demo_complete", "the demo's final boss completes the run (%s)" % route["route"])
 	_expect(not RunManager.is_run_active, "the run ended")
 	RunManager.clear_run_save()

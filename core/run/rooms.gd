@@ -86,3 +86,9 @@ static func treasure_equipment() -> Dictionary:
 static func treasure_empty_gold() -> int:
 	var span: Array = table().get("treasure_empty_gold", [20, 45])
 	return RunManager.rng("rewards").next_range(int(span[0]), int(span[1]))
+
+
+## What a campfire heals: a quarter of max HP. The rest room and the route
+## card both read it, so the card prints what the rest pays.
+static func rest_heal_amount(max_health: int) -> int:
+	return int(max_health * 0.25)
