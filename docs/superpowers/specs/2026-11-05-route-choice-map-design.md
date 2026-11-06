@@ -29,8 +29,9 @@ Floors are numbered here from 0, as in code (`floor 0` is the first floor the pl
 
 - Room types on rolled floors come from the act's existing tables (`early_rolls` through
   `early_floor_last`, then `rolls`), with the extra-treasure cap and the A5 elite bias as
-  today. Merchants keep their current earliest floor, which those tables already encode.
-- On one floor, non-combat types do not repeat: at most one `shop`, one `rest`, one
+  today. Floors through `early_floor_last` (4) roll only `enemy` and `unknown`, so merchants,
+  rests, elites and extra treasures first appear on floor 5, as now.
+- On one floor, non-combat types do not repeat: at most one `merchant`, one `rest`, one
   `unknown`, one `treasure`. `enemy` and `elite` may repeat. A rolled repeat is re-rolled
   from the same stream; after 8 tries the floor keeps fewer cards (at least 2; if only one
   distinct type is possible, it falls back to `enemy` for the second card).
@@ -44,7 +45,7 @@ Floors are numbered here from 0, as in code (`floor 0` is the first floor the pl
 | `elite` | Caps amount, exact Scrap amount, card draft |
 | `treasure` | relic choice (3-of-1, as today) |
 | `rest` | heal amount (25% of max HP, as today) |
-| `shop` | none |
+| `merchant` | none |
 | `unknown` | none (stays a surprise) |
 | `relic`, `boss` | as today, no amounts |
 
