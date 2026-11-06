@@ -888,7 +888,7 @@ func _victory():
 	var result: Dictionary = COMBAT_REWARDS.settle_victory(
 		RunManager.last_battle_node_type,
 		RunManager.current_act,
-		RunManager.get_node_by_id(RunManager.current_node_id).get("rewards", {})
+		RunManager.battle_rewards()
 	)
 	if bool(result.get("backpack_full", false)):
 		show_notification(tr("UI_LOOT_BACKPACK_FULL"), Color(1.0, 0.45, 0.4))

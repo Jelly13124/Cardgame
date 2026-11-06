@@ -479,6 +479,16 @@ func enter_map_node(node_id: String) -> Dictionary:
 	return result
 
 
+## What the fight just won pays: the printed rewards of the route node it was
+## fought on, or, for a fight rolled from another room (a "?" outcome), the
+## rewards a node of the fought type would print.
+func battle_rewards() -> Dictionary:
+	var node: Dictionary = get_node_by_id(current_node_id)
+	if str(node.get("type", "")) == last_battle_node_type:
+		return node.get("rewards", {})
+	return MAP_GENERATOR.node_rewards(last_battle_node_type, rng("rewards"))
+
+
 func _elite_bias() -> float:
 	if has_ascension("base:a5_elite_bias"):
 		return float(ascension_param("base:a5_elite_bias", "roll_floor", 0.5))

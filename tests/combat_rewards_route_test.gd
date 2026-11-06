@@ -40,6 +40,15 @@ func _run() -> void:
 	var elite_scrap := RunManager.total_run_scrap() - scrap_before
 	_expect(elite_scrap == 11, "an elite drops its printed 11 Scrap (%d)" % elite_scrap)
 	_expect(ROOMS.rest_heal_amount(80) == 20, "a campfire heals a quarter of max HP")
+	# A fight rolled from a "?" room is not the node's own room: it pays a fight's Caps.
+	RunManager.map_data = [{"id": "q", "floor": 1, "slot": 0, "type": "unknown", "children": [] as Array[String], "rewards": {}},
+		{"id": "e", "floor": 1, "slot": 1, "type": "enemy", "children": [] as Array[String], "rewards": {"caps": 6}}]
+	RunManager._reindex_map()
+	RunManager.current_node_id = "q"
+	RunManager.last_battle_node_type = "enemy"
+	_expect(RunManager.battle_rewards() == {"caps": 6}, "a fight from a ? room pays a fight's Caps (%s)" % RunManager.battle_rewards())
+	RunManager.current_node_id = "e"
+	_expect(RunManager.battle_rewards() == {"caps": 6}, "a route fight pays its printed rewards")
 
 	ACTS.active_run = "base:full"
 	var route: Dictionary = COMBAT_REWARDS.settle_victory("boss", 1, {})
