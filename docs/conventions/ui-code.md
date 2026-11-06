@@ -12,8 +12,8 @@ Light conventions for UI scripts. UI is currently the messiest part of the codeb
 | Shared top bar (HP/XP bars, gold/act chips, relic shelf) | `run_system/ui/run_top_bar.gd` |
 | Battle top-bar host (settings/pause menu only) | `battle_scene/ui/battle_top_bar.gd` |
 | Battle notifications + pile viewer + inspect overlay | `battle_scene/battle_ui_manager.gd` |
-| Map rendering (background, paths, nodes, legend) | `run_system/ui/map_renderer.gd` (extracted from map_scene) |
-| Map interaction + relic modal | `run_system/ui/map_scene.gd` |
+| Route choice card (one room, its rewards, next floor) | `ui/map/route_choice_card.gd` |
+| Route map screen (floor track, cards, room opening, relic modal) | `ui/map/map_scene.gd` |
 | Loot reward screen + card draft | `run_system/ui/loot_reward.gd` |
 | Hero selection | `run_system/ui/hero_select.gd` |
 | Shared theme | `run_system/ui/theme/wasteland_theme.gd` (legacy filename; palette follows the original 2D American-comic/UI07 contract) |
@@ -89,7 +89,7 @@ Individual UI files have a soft cap of ~400 lines. Currently:
 
 | File | Lines | Status |
 |---|---|---|
-| `map_scene.gd` | ~412 | ✅ Recently split (was 628 — `_draw_*` extracted to `map_renderer.gd`) |
+| `map_scene.gd` | ~855 | Route cards replaced the node graph; room-opening paths still live here |
 | `loot_reward.gd` | ~362 | ✅ Recently slimmed (theme dedup) |
 | `run_top_bar.gd` | 408 | ⚠️ Slightly over cap — justified (cohesive: vitals+chips+buttons+relic shelf) |
 | `battle_top_bar.gd` | 145 | ✅ Slimmed — now hosts run_top_bar |

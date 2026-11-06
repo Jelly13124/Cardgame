@@ -400,8 +400,8 @@ var current_node_id: String:
 		return state.current_node_id
 	set(v):
 		state.current_node_id = v
-## IDs of nodes the player has actually entered, in walk order. Used by
-## map_renderer to highlight the walked path (vs. nodes merely "below current floor").
+## IDs of route nodes the player has entered this act, in walk order (the map
+## screen reads it to tell a fresh act from a resumed one).
 var visited_node_ids: Array[String]:
 	get:
 		return state.visited_node_ids
