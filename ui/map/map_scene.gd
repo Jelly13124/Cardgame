@@ -1,12 +1,12 @@
 extends Control
 
-## Slay-the-Spire style procedural map drawn over a wasteland map background.
-## The route remains data-driven; only the presentation is custom-drawn here.
+## The route map: a floor track and one card per choice on the current floor
+## (ui/map/route_choice_card.gd), drawn over the wasteland map background. The
+## route itself is run data (core/run/map_generator.gd, grown by
+## RunManager.enter_map_node); this screen shows it and opens the chosen room.
 
-const MAP_TRAVEL = preload("res://core/run/map_travel.gd")
 const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
-# Preloaded so we don't depend on Godot's class_name registry being warm at parse time.
-const MAP_RENDERER_SCRIPT = preload("uid://dxpxch0ouxcmv")  # res://ui/map/map_renderer.gd
+const ROUTE_CHOICE_CARD = preload("uid://e44exoef6xwg")  # res://ui/map/route_choice_card.tscn
 const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://ui/windows/character_window.gd
 const RUN_DECK_VIEWER_MODAL = preload("uid://jvxfh15gtinx")  # res://ui/common/run_deck_viewer_modal.gd
 const CARD_UPGRADE_MODAL = preload("uid://gq5b8t1mbeti")  # res://ui/rest/card_upgrade_modal.gd
@@ -20,42 +20,30 @@ const SHOP_PACKED = preload("uid://dr8unxxfi0w51")  # res://ui/shop/merchant_roo
 const ROOMS = preload("uid://cxmgdj3654rrj")  # res://core/run/rooms.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_sts2_bg.png"
-const NODE_ICON_DIR = "res://run_system/assets/images/map/nodes/"
 const REST_SITE_BACKGROUND_PATH = "res://run_system/assets/images/rest/rest_site_bg.png"
 
-const MAP_LEFT: float = 180.0
-const MAP_TOP: float = 155.0
-const MAP_BOTTOM_PADDING: float = 210.0
-const FLOOR_SPACING: float = 310.0
-
-# Rendering is delegated to MapRenderer; node-icon sizing constants live there too.
-# Legend / TYPE_COLORS also moved into MapRenderer.
+const CARD_GAP := 48
+const CARD_SLIDE_PX := 40.0
+const CARD_STAGGER := 0.06
+const CHOOSE_SECONDS := 0.25
 
 var rm: Node
 var map_background_tex: Texture2D
-var _node_icon_textures: Dictionary = {}
-var _node_positions: Dictionary = {}
-var _hovered_node_id: String = ""
-var _scroll_offset: float = 0.0
-var _max_scroll: float = 0.0
-var _is_dragging: bool = false
-var _drag_start_x: float = 0.0
-var _drag_start_scroll: float = 0.0
 var _relic_choice_layer: CanvasLayer
 var _relic_choice_box: VBoxContainer
 var _is_relic_choice_open: bool = false
 ## When the active relic-choice modal is a clip-upgrade pick (the Act 2+ opener),
 ## maps each offered relic id → the clip it REPLACES ("" = pure add / second clip).
 var _upgrade_replaces: Dictionary = {}
-## Re-entrancy guard for _on_node_clicked. The handler awaits a 0.35s
-## timer before transitioning; without this, a rapid second click on a
-## CHILD of the just-clicked node passes _is_accessible and starts a
-## second coroutine that clobbers current_encounter / current_node_id.
+## Re-entrancy guard for _choose: set before the choose motion, released by the
+## room once it resolves (or torn down by the scene change). A second choice
+## while it is set is ignored, so one floor never opens two rooms.
 var _node_click_pending: bool = false
-var _renderer: RefCounted  # MapRenderer; kept untyped to avoid class_name parse ordering
 ## When true, this map is a read-only PEEK overlay shown over an active battle:
 ## no node travel, no checkpoint save, no music swap — plus a "back to battle" button.
 var peek_mode: bool = false
+var _floor_track: HBoxContainer
+var _choice_row: HBoxContainer
 
 
 func _ready() -> void:
@@ -63,8 +51,6 @@ func _ready() -> void:
 		AudioManager.play_music("map")
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	map_background_tex = _load_texture(MAP_BACKGROUND_PATH)
-	_load_node_icons()
-	_renderer = MAP_RENDERER_SCRIPT.new(self)
 
 	# RunManager is a registered autoload (project.godot) — always available.
 	rm = RunManager
@@ -72,11 +58,8 @@ func _ready() -> void:
 	if rm.map_data.is_empty():
 		rm.generate_map()
 
-	_compute_positions()
-	_max_scroll = max(0.0, _get_total_width() - get_viewport_rect().size.x)
-	_scroll_to_current()
-
-	get_viewport().size_changed.connect(_on_viewport_resized)
+	_build_route_layout()
+	_build_route()
 	_build_relic_choice_layer()
 	_build_top_bar()
 
@@ -140,99 +123,104 @@ func _load_texture(path: String) -> Texture2D:
 	return null
 
 
-func _load_node_icons() -> void:
-	_node_icon_textures.clear()
-	for entry in MAP_RENDERER_SCRIPT.LEGEND_ENTRIES:
-		var node_type = str(entry[0])
-		_node_icon_textures[node_type] = _load_texture(NODE_ICON_DIR + node_type + ".png")
-
-
-func _on_viewport_resized() -> void:
-	_compute_positions()
-	_max_scroll = max(0.0, _get_total_width() - get_viewport_rect().size.x)
-	_scroll_offset = clampf(_scroll_offset, 0.0, _max_scroll)
-	queue_redraw()
-
-
-func _compute_positions() -> void:
-	_node_positions.clear()
-	if not rm:
-		return
-
-	var vp = get_viewport_rect().size
-	var max_slot = max(1, _get_max_slot())
-	var map_height = maxf(260.0, vp.y - MAP_TOP - MAP_BOTTOM_PADDING)
-	var slot_spacing = map_height / float(max_slot)
-	var center_y = MAP_TOP + map_height * 0.5
-
-	# Pre-count nodes per floor so we can Y-center single-node floors
-	# (start relic, boss) without depending on which slot they happen to be in.
-	var nodes_per_floor: Dictionary = {}
-	for node in rm.map_data:
-		nodes_per_floor[node.floor] = nodes_per_floor.get(node.floor, 0) + 1
-
-	for node in rm.map_data:
-		var x = MAP_LEFT + node.floor * FLOOR_SPACING
-		var y: float
-		if nodes_per_floor.get(node.floor, 0) == 1:
-			y = center_y
-		else:
-			y = MAP_TOP + node.slot * slot_spacing
-		_node_positions[node.id] = Vector2(x, y)
-
-
-func _get_max_floor() -> int:
-	var result = 0
-	for node in rm.map_data:
-		if node.floor > result:
-			result = node.floor
-	return result
-
-
-func _get_max_slot() -> int:
-	var result = 0
-	for node in rm.map_data:
-		if node.slot > result:
-			result = node.slot
-	return result
-
-
-func _get_total_width() -> float:
-	return MAP_LEFT + (_get_max_floor() + 2) * FLOOR_SPACING + 200.0
-
-
-func _scroll_to_current() -> void:
-	if rm.current_node_id == "":
-		_scroll_offset = 0.0
-		return
-
-	var node = rm.get_node_by_id(rm.current_node_id)
-	if not node.is_empty():
-		var target = MAP_LEFT + node.floor * FLOOR_SPACING - get_viewport_rect().size.x * 0.35
-		_scroll_offset = clampf(target, 0.0, _max_scroll)
-
-
-func _get_screen_pos(node_id: String) -> Vector2:
-	if node_id in _node_positions:
-		return _node_positions[node_id] - Vector2(_scroll_offset, 0)
-	return Vector2.ZERO
-
-
 func _draw() -> void:
-	if _renderer:
-		_renderer.draw(get_viewport_rect().size)
+	if map_background_tex:
+		draw_texture_rect(map_background_tex, Rect2(Vector2.ZERO, size), false)
 
 
-func _is_accessible(node_data: Dictionary) -> bool:
-	return MAP_TRAVEL.accessible(rm.state, rm._node_index, node_data)
+## The floor track under the top bar and the centred row of choice cards.
+func _build_route_layout() -> void:
+	var column := VBoxContainer.new()
+	column.name = "RouteColumn"
+	column.set_anchors_preset(Control.PRESET_FULL_RECT)
+	column.offset_top = RUN_TOP_BAR.BAR_HEIGHT + 24.0
+	column.offset_bottom = -40.0
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(column)
+	_floor_track = HBoxContainer.new()
+	_floor_track.name = "FloorTrack"
+	_floor_track.alignment = BoxContainer.ALIGNMENT_CENTER
+	_floor_track.add_theme_constant_override("separation", 8)
+	_floor_track.custom_minimum_size = Vector2(0, 12)
+	_floor_track.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(_floor_track)
+	var center := CenterContainer.new()
+	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(center)
+	_choice_row = HBoxContainer.new()
+	_choice_row.name = "ChoiceRow"
+	_choice_row.add_theme_constant_override("separation", CARD_GAP)
+	_choice_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	center.add_child(_choice_row)
 
 
-func _get_node_at(pos: Vector2) -> Dictionary:
-	for node in rm.map_data:
-		var sp = _get_screen_pos(node.id)
-		if pos.distance_to(sp) <= MAP_RENDERER_SCRIPT.NODE_RADIUS + 8:
-			return node
-	return {}
+## The nodes the player can choose now: the start node on a fresh act, else
+## the current node's children.
+func _choices() -> Array:
+	if rm.current_node_id == "":
+		return rm.map_data.filter(func(n): return int(n.floor) == 0)
+	var out: Array = []
+	for child_id in rm.get_node_by_id(rm.current_node_id).get("children", []):
+		var node: Dictionary = rm.get_node_by_id(str(child_id))
+		if not node.is_empty():
+			out.append(node)
+	return out
+
+
+## Rebuilds the floor track and the cards from the run's route.
+func _build_route() -> void:
+	var choices := _choices()
+	var floors: int = rm.floors_per_act()
+	var offered_floor := int(choices[0].floor) if not choices.is_empty() else floors
+	for c in _floor_track.get_children():
+		_floor_track.remove_child(c)
+		c.queue_free()
+	for f in range(floors):
+		var pip := ColorRect.new()
+		pip.custom_minimum_size = Vector2(44, 10) if f == offered_floor else Vector2(28, 8)
+		pip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if f < offered_floor:
+			pip.color = T.GLASS_GOLD
+		elif f == offered_floor:
+			pip.color = T.ACCENT_NEON_BLUE
+		elif f == floors - 1:
+			pip.color = T.ACCENT_DANGER
+		else:
+			pip.color = T.GLASS_HAIRLINE_DIM
+		_floor_track.add_child(pip)
+	for c in _choice_row.get_children():
+		_choice_row.remove_child(c)
+		c.queue_free()
+	var heal: int = ROOMS.rest_heal_amount(rm.max_health)
+	for i in range(choices.size()):
+		var node: Dictionary = choices[i]
+		var next_types: Array = []
+		for child_id in node.get("children", []):
+			next_types.append(str(rm.get_node_by_id(str(child_id)).get("type", "")))
+		var card = ROUTE_CHOICE_CARD.instantiate()
+		var slot := Control.new()
+		slot.custom_minimum_size = card.custom_minimum_size
+		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_choice_row.add_child(slot)
+		slot.add_child(card)
+		card.setup(node, next_types, heal, not peek_mode)
+		card.chosen.connect(_choose)
+		card.position = Vector2(0, CARD_SLIDE_PX)
+		card.modulate.a = 0.0
+		var tween: Tween = card.create_tween().set_parallel(true)
+		tween.tween_property(card, "position:y", 0.0, 0.2).set_delay(i * CARD_STAGGER).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		tween.tween_property(card, "modulate:a", 1.0, 0.2).set_delay(i * CARD_STAGGER)
+
+
+func _cards() -> Array:
+	var out: Array = []
+	for slot in _choice_row.get_children():
+		for c in slot.get_children():
+			if c.has_signal("chosen"):
+				out.append(c)
+	return out
 
 
 func _input(event: InputEvent) -> void:
@@ -255,50 +243,19 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
-	# Block ALL map input while any modal is open (relic choice, rest choice,
-	# treasure equipment grant, inventory-full, extract, etc.) OR a node-click
-	# coroutine is still resolving. Without this, a click outside a non-FULL_RECT
-	# modal can re-enter _on_node_clicked and clobber rm.current_encounter mid-
-	# transition, leaving the modal orphaned in a freed scene.
-	if _is_relic_choice_open or _node_click_pending or _is_page_open():
-		return
-
-	if event is InputEventMouseMotion:
-		var node = _get_node_at(event.position)
-		var new_id = node.get("id", "") if not node.is_empty() else ""
-		if new_id != _hovered_node_id:
-			_hovered_node_id = new_id
-			queue_redraw()
-		if _is_dragging:
-			_scroll_offset = clampf(
-				_drag_start_scroll - (event.position.x - _drag_start_x), 0.0, _max_scroll
-			)
-			queue_redraw()
-
-	elif event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT:
-			if event.pressed:
-				var node = _get_node_at(event.position)
-				if not node.is_empty() and _is_accessible(node):
-					_on_node_clicked(node)
-				else:
-					_is_dragging = true
-					_drag_start_x = event.position.x
-					_drag_start_scroll = _scroll_offset
-			else:
-				_is_dragging = false
-		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			_scroll_offset = clampf(_scroll_offset + 50.0, 0.0, _max_scroll)
-			queue_redraw()
-		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			_scroll_offset = clampf(_scroll_offset - 50.0, 0.0, _max_scroll)
-			queue_redraw()
+	# 1 / 2 / 3 choose the card at that position (_choose refuses while a
+	# modal, a page or another choice is open).
+	if event is InputEventKey and event.pressed and not event.echo:
+		var index := [KEY_1, KEY_2, KEY_3].find(event.keycode)
+		var cards := _cards()
+		if index >= 0 and index < cards.size():
+			_choose(cards[index].node_id)
+			get_viewport().set_input_as_handled()
 
 
 ## True while a page sits over the map: a floating window (character window on
-## WindowLayer) or the full-screen run-deck viewer. map_scene resolves node
-## clicks in the GLOBAL _input(), which fires regardless of what's painted on
-## top — without this gate, clicks pass through to map nodes (the 误触 bug).
+## WindowLayer) or the full-screen run-deck viewer. Choices are refused while
+## one is open, so nothing behind it is chosen by mistake (the 误触 bug).
 func _is_page_open() -> bool:
 	var wl = get_node_or_null("WindowLayer")
 	return (wl != null and wl.has_windows()) or get_node_or_null("RunDeckViewerModal") != null
@@ -309,19 +266,34 @@ func _is_character_window_open() -> bool:
 	return wl != null and wl.get_node_or_null("CharacterWindow") != null
 
 
-func _on_node_clicked(node: Dictionary) -> void:
-	if peek_mode:
-		return  # read-only peek over a battle — no travel
-	if _node_click_pending:
+## Choose the route node `node_id`: travel there, play the choose motion, show
+## the next floor's cards and open the room. Ignored in a peek, while another
+## choice resolves, or under an open page or modal.
+func _choose(node_id: String) -> void:
+	if peek_mode or _node_click_pending or _is_relic_choice_open or _is_page_open():
+		return
+	var node: Dictionary = rm.get_node_by_id(node_id)
+	if node.is_empty():
 		return
 	_node_click_pending = true
-	if not MAP_TRAVEL.enter(rm.state, rm._node_index, node)["ok"]:
+	if not rm.enter_map_node(node_id)["ok"]:
 		_node_click_pending = false
 		return
-	queue_redraw()
+	AudioManager.play_sfx("ui_click")
+	var tween := create_tween().set_parallel(true)
+	for card in _cards():
+		card.interactive = false
+		if card.node_id == node_id:
+			tween.tween_property(card, "scale", Vector2.ONE * 1.1, CHOOSE_SECONDS)
+		else:
+			tween.tween_property(card, "modulate:a", 0.0, CHOOSE_SECONDS)
+	await tween.finished
+	_build_route()
+	_enter_room(node)
 
-	await get_tree().create_timer(0.35).timeout
 
+## Opens the room of the node just entered.
+func _enter_room(node: Dictionary) -> void:
 	# Each branch is responsible for releasing _node_click_pending when its
 	# work is done:
 	#   - scene-change branches don't need to release (scene tears down)
@@ -756,100 +728,6 @@ func _grant_treasure_equipment() -> void:
 	_node_click_pending = false
 
 
-## Rest-stop choice modal. Player picks HEAL (25% HP) or UPGRADE (open card
-## picker). Cancelling the picker returns to this choice; once a path
-## resolves, the modal closes and the rest is consumed.
-func _open_rest_choice_legacy() -> void:
-	var existing = get_node_or_null("RestChoiceModal")
-	if existing:
-		return  # already open
-
-	var modal := Control.new()
-	modal.name = "RestChoiceModal"
-	modal.set_anchors_preset(Control.PRESET_FULL_RECT)
-	modal.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(modal)
-
-	var bg := ColorRect.new()
-	bg.color = Color(0, 0, 0, 0.6)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.mouse_filter = Control.MOUSE_FILTER_STOP
-	modal.add_child(bg)
-
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	modal.add_child(center)
-
-	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", T_THEME.panel_textured("dark"))
-	panel.custom_minimum_size = Vector2(520, 220)
-	center.add_child(panel)
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 20)
-	margin.add_theme_constant_override("margin_right", 20)
-	margin.add_theme_constant_override("margin_top", 18)
-	margin.add_theme_constant_override("margin_bottom", 18)
-	panel.add_child(margin)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 16)
-	margin.add_child(vbox)
-
-	var title := Label.new()
-	title.text = "休息处" if Settings.language == "zh" else "REST SITE"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 22)
-	title.add_theme_color_override("font_color", Color(1, 0.95, 0.5))
-	vbox.add_child(title)
-
-	var buttons := HBoxContainer.new()
-	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
-	buttons.add_theme_constant_override("separation", 18)
-	vbox.add_child(buttons)
-
-	var heal_btn := Button.new()
-	heal_btn.text = tr("UI_MAP_REST_HEAL_BTN")
-	heal_btn.custom_minimum_size = Vector2(200, 60)
-	heal_btn.focus_mode = Control.FOCUS_NONE
-	T.apply_button_theme(heal_btn)
-	heal_btn.pressed.connect(
-		func():
-			var heal_amount = ROOMS.rest_heal_amount(rm.max_health)
-			rm.modify_health(heal_amount)
-			_show_popup(tr("UI_MAP_RESTED_HEAL").format({"n": heal_amount}))
-			modal.queue_free()
-			_node_click_pending = false  # release click guard
-	)
-	buttons.add_child(heal_btn)
-
-	# Upgrade a card (classic StS smith). Closes the rest choice, then opens the
-	# card-upgrade picker. We deliberately do NOT release the click guard here — the
-	# picker's `upgraded`/`cancelled` signals release it, so the map stays gated
-	# while the picker is up (and never soft-locks if the player cancels).
-	var upgrade_btn := Button.new()
-	upgrade_btn.text = tr("UI_MAP_REST_UPGRADE_BTN")
-	upgrade_btn.custom_minimum_size = Vector2(200, 60)
-	upgrade_btn.focus_mode = Control.FOCUS_NONE
-	T.apply_button_theme(upgrade_btn)
-	upgrade_btn.pressed.connect(
-		func():
-			modal.queue_free()
-			var picker := CARD_UPGRADE_MODAL.new()
-			add_child(picker)
-			picker.upgraded.connect(
-				func():
-					_show_popup(tr("UI_MAP_CARD_UPGRADED"))
-					_node_click_pending = false,
-				CONNECT_ONE_SHOT
-			)
-			picker.cancelled.connect(func(): _node_click_pending = false, CONNECT_ONE_SHOT)
-	)
-	buttons.add_child(upgrade_btn)
-
-
-## Accepted UI07 rest-site page: scene-first interaction with the live top bar
-## still visible. Gameplay effects are unchanged from the former center modal.
 func _open_rest_choice() -> void:
 	var existing = get_node_or_null("RestChoiceModal")
 	if existing:
