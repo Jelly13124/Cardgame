@@ -28,7 +28,7 @@ or second act in the demo. The three-act extract-or-push structure remains a
 full-game ruleset behind `RunManager.DEMO_BUILD = false`.
 
 1. **Hero Select + Loadout** - The demo uses Cowboy Bill (fixed starter deck + attribute spread); the player explicitly moves stored gear into the owned base backpack, which becomes the next-run carry
-2. **Route** - Each floor offers 2–3 cards showing the room, its rewards and the next floor's rooms; floors 0, 6, 10 and 11 are fixed (relic, treasure, rest, boss)
+2. **Route** - Each floor offers 2–3 cards showing the room, its rewards and the next floor's rooms; fight cards show their monsters and a strength tag (weak / normal / strong pays 6 / 8 / 11 Caps). Floor 1 is fights only; floors 2–4 can also offer a shop, rest or treasure; floors 0, 6, 10 and 11 are fixed (relic, treasure, rest, boss)
 3. **Battle** - STS-style card combat
 4. **Loot Reward** - Post-battle: claim gold/Scrap and optionally draft 1 new card
 5. **Demo Boss Victory** - Defeat Rust Titan on floor 12; bank carried currencies while gear returns to the owned base backpack/equipment slots, show the result, and return to base
@@ -272,7 +272,7 @@ Forge uses the same popover but keeps its distinct workbench header composition.
 
 ### Rules
 - **Building unlocks and tier-ups both cost Scrap** (`building_cost_currency()`).
-- Caps/Scrap are earned by extracting or completing runs — NOT from dying.
+- Caps/Scrap are earned by extracting or completing runs — NOT from dying. In a run, Caps are the backpack's gold (the only run currency); extraction or victory banks them 1:1.
 - Building unlocks + tiers persist permanently across runs (true meta-progression).
 - Hero selection + next-run loadout live in the CharacterWindow's base mode (press **i**).
 - Retired hidden tracks (`med_bay`, `starter_boost`, `scrap_workshop`) are removed; old save levels are refunded once and erased.
