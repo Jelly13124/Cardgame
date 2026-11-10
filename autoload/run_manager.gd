@@ -1858,6 +1858,10 @@ func load_run() -> bool:
 
 	_reindex_map()
 	recompute_attributes()
+	# Caps owed from an older save (its hidden run caps) go into the backpack;
+	# what does not fit stays owed and is banked when the run settles.
+	if state.legacy_caps > 0:
+		state.legacy_caps -= add_gold(state.legacy_caps)
 	if migrated:
 		save_run()
 	return true

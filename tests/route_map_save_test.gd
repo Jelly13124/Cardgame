@@ -6,6 +6,7 @@ extends Node
 ## children instead of dangling ids.
 
 const RUN_SAVE = preload("uid://dkhd2poukjb61")  # res://core/save/run_save.gd
+const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 
 var failures: PackedStringArray = []
 
@@ -30,7 +31,7 @@ func _run() -> void:
 	d["current_floor"] = 3
 	d["visited_node_ids"] = ["f0_s0", "f1_s0", "f2_s0", "f3_s0"]
 	var migrated: Dictionary = RUN_SAVE.migrate(d)
-	_expect(int(migrated["schema_version"]) == RUN_SAVE.CURRENT and RUN_SAVE.CURRENT == 7, "the save is now v7")
+	_expect(int(migrated["schema_version"]) == RUN_SAVE.CURRENT and RUN_SAVE.CURRENT == 8, "the save is now v8")
 	for n in migrated["map_data"]:
 		_expect(n.has("rewards"), "node %s gained rewards" % n["id"])
 		if n["type"] == "enemy":
@@ -55,6 +56,8 @@ func _run() -> void:
 		for c in RunManager.get_node_by_id(next).children:
 			_expect(not RunManager.get_node_by_id(c).is_empty(), "%s's child %s is on the map" % [next, c])
 	_expect(RunManager.current_floor == floors - 1, "the old graph reaches the boss floor")
+	_check_v7(false)
+	_check_v7(true)
 	RunManager.is_run_active = false
 	RunManager.clear_run_save()
 	if failures.is_empty():
@@ -85,3 +88,35 @@ func _old_graph() -> Array:
 				"children": children,
 			})
 	return nodes
+
+
+## A v7 save holds hidden run caps and fight nodes without encounters. v8 moves
+## the caps into backpack gold on load (what does not fit is kept to bank) and
+## gives fight nodes an encounter, a strength and gold rewards.
+func _check_v7(backpack_full: bool) -> void:
+	RunManager.start_new_run("base:cowboy_bill", [], 0, "OLDV7SAVE1")
+	RunManager.generate_map()
+	if backpack_full:
+		for i in range(RunManager.effective_backpack_size()):
+			RunManager.backpack[i] = {"kind": "scrap", "amount": 30}
+	var gold_before := RunManager.total_gold()
+	var d: Dictionary = RUN_SAVE.to_dict(RunManager.state, 0)
+	d["schema_version"] = 7
+	d.erase("legacy_caps")
+	d["run_caps"] = 30
+	for n in d["map_data"]:
+		n.erase("encounter")
+		n.erase("strength")
+		if n["type"] == "enemy":
+			n["rewards"] = {"caps": 6}
+	var migrated: Dictionary = RUN_SAVE.migrate(d)
+	_expect(int(migrated["schema_version"]) == 8 and not migrated.has("run_caps") and int(migrated.get("legacy_caps", 0)) == 30, "v8 carries the hidden caps as legacy_caps")
+	for n in migrated["map_data"]:
+		if n["type"] == "enemy":
+			_expect(str(n.get("encounter", "")) != "" and int(n["rewards"].get("gold", 0)) in [6, 8, 11] and not n["rewards"].has("caps"), "old fight %s gains an encounter and gold (%s)" % [n["id"], n["rewards"]])
+	SAVE_IO.write_json(RunManager._run_save_path(), d)
+	_expect(RunManager.load_run(), "the v7 save loads")
+	if backpack_full:
+		_expect(RunManager.state.legacy_caps == 30, "legacy caps that do not fit are banked (%d)" % RunManager.state.legacy_caps)
+	else:
+		_expect(RunManager.total_gold() - gold_before == 30 and RunManager.state.legacy_caps == 0, "the hidden caps became backpack gold")

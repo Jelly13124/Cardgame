@@ -6,7 +6,9 @@ extends RefCounted
 ## copy, retired cards and gem leftovers gone, elapsed time only · v5 current:
 ## scripted events — per-act event deck and the event in progress · v6 current:
 ## merchant inventories of entries and the run's card-removal count · v7
-## current: route map nodes carry their printed rewards.
+## current: route map nodes carry their printed rewards · v8 current: one run
+## currency (hidden run caps become legacy_caps) and fight nodes carry their
+## encounter and strength.
 
 const MIGRATION_CHAIN = preload("uid://bmeya57dgtty2")  # res://core/save/migration_chain.gd
 const CONTENT_ID_MIGRATION = preload("uid://27jpcb0ubw68")  # res://core/save/content_id_migration.gd
@@ -14,8 +16,9 @@ const RUN_RNG_SET = preload("uid://ealvw2c6utr7")  # res://core/rng/run_rng_set.
 const LEGACY_EQUIPMENT = preload("uid://bpsstam8gekpw")  # res://core/save/legacy_equipment.gd
 const EVENT_POOL = preload("uid://dr3dtuxwul371")  # res://core/run/events/event_pool.gd
 const MAP_GENERATOR = preload("uid://gi3vuuinl2vb")  # res://core/run/map_generator.gd
+const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
 
-const CURRENT := 7
+const CURRENT := 8
 ## Cards removed from the game; old saves may still hold their bare ids.
 const RETIRED_CARD_IDS := [
 	"crowbar_smash",
@@ -42,6 +45,7 @@ static func chain() -> RefCounted:
 		.add(4, _v4_to_v5)
 		.add(5, _v5_to_v6)
 		.add(6, _v6_to_v7)
+		.add(7, _v7_to_v8)
 	)
 
 
@@ -286,6 +290,25 @@ static func _v6_to_v7(d: Dictionary) -> Dictionary:
 			if typeof(n) == TYPE_DICTIONARY and not n.has("rewards"):
 				var stream = rng_set.derived("map_act_%d_%s_rewards" % [act, str(n.get("id", ""))])
 				n["rewards"] = MAP_GENERATOR.node_rewards(str(n.get("type", "enemy")), stream)
+	return d
+
+
+## v8: one run currency. The hidden run caps move to legacy_caps (RunManager
+## adds them to the backpack on load), and every fight node without an
+## encounter gets one, with its strength and gold rewards, by the route rule.
+static func _v7_to_v8(d: Dictionary) -> Dictionary:
+	d["legacy_caps"] = int(d.get("run_caps", 0)) + int(d.get("legacy_caps", 0))
+	d.erase("run_caps")
+	var saved_rng: Variant = d.get("rng", {})
+	var seed_string := str(saved_rng.get("seed_string", "")) if typeof(saved_rng) == TYPE_DICTIONARY else ""
+	var rng_set = RUN_RNG_SET.new(seed_string if RUN_RNG_SET.is_valid_seed(seed_string) else RUN_RNG_SET.random_seed_string())
+	var act_number := int(d.get("current_act", 1))
+	var act: Dictionary = ACTS.act(act_number)
+	var nodes: Variant = d.get("map_data", [])
+	if typeof(nodes) == TYPE_ARRAY:
+		for n in nodes:
+			if typeof(n) == TYPE_DICTIONARY and str(n.get("type", "")) in ["enemy", "elite"] and str(n.get("encounter", "")) == "":
+				MAP_GENERATOR.fill_fight(n, act, act_number, rng_set)
 	return d
 
 
