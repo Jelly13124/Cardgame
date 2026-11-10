@@ -315,7 +315,7 @@ func _enter_room(node: Dictionary) -> void:
 					var title := "UI_MAP_CHOOSE_STARTING_RELIC" if offer["source"] == "starting" else "UI_MAP_CHOOSE_A_RELIC"
 					_open_relic_choice(tr(title), str(offer["source"]))
 		"enemy", "elite", "boss":
-			rm.current_encounter = rm.select_encounter(node.type, int(node.floor))
+			rm.current_encounter = rm.encounter_for(node)
 			rm.last_battle_node_type = node.type
 			SceneTransition.change_to_packed(BATTLE_PACKED)
 		"rest":

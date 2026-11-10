@@ -467,6 +467,15 @@ func enter_map_node(node_id: String) -> Dictionary:
 	return result
 
 
+## The monsters a fight node holds: its stored encounter, or a fresh pick for
+## its room type and floor when it has none (old saves, acts without elites).
+func encounter_for(node: Dictionary) -> Array[String]:
+	var stored := ENCOUNTERS.monsters_of(str(node.get("encounter", "")))
+	if not stored.is_empty():
+		return stored
+	return select_encounter(str(node.get("type", "enemy")), int(node.get("floor", 0)))
+
+
 ## What the fight just won pays: the printed rewards of the route node it was
 ## fought on, or, for a fight rolled from another room (a "?" outcome), the
 ## rewards a node of the fought type would print.

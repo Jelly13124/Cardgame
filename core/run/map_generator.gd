@@ -8,13 +8,15 @@ extends RefCounted
 ## the branches that were not taken. Room types come from the act's tables
 ## (core/run/acts.gd); rewards are rolled with the node and printed on its card.
 ##
-## A map node: {id, floor, slot, type, children: Array[String], rewards}.
+## A map node: {id, floor, slot, type, children: Array[String], encounter,
+## strength, rewards}.
 ## Ids are the parent's id plus the card's index ("f0", "f0.1", "f0.1.2").
 ## A node's children come from the stream "map_act_<act>_<parent id>" and its
 ## rewards from "map_act_<act>_<id>_rewards", so the same seed and the same
 ## route always give the same cards, whatever order they are generated in.
 
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const ENCOUNTERS = preload("uid://mlx3xqfjwlpq")  # res://core/run/encounters.gd
 
 ## Room types a floor never offers twice.
 const UNIQUE_PER_FLOOR := ["merchant", "rest", "unknown", "treasure"]
@@ -92,20 +94,37 @@ static func roll_children(parent: Dictionary, map_data: Array, act: Dictionary, 
 	for i in range(types.size()):
 		var id := "%s.%d" % [str(parent.id), i]
 		ids.append(id)
-		nodes.append({
-			"id": id,
-			"floor": f,
-			"slot": i,
-			"type": types[i],
-			"children": [] as Array[String],
-			"rewards": node_rewards(types[i], run_rng.derived("map_act_%d_%s_rewards" % [act_number, id])),
-		})
+		var node := {"id": id, "floor": f, "slot": i, "type": types[i], "children": [] as Array[String]}
+		fill_fight(node, act, act_number, run_rng)
+		nodes.append(node)
 	for i in range(map_data.size() - 1, -1, -1):
 		if str(map_data[i].id) in ids:
 			map_data.remove_at(i)
 	map_data.append_array(nodes)
 	parent.children = ids
 	return nodes
+
+
+## Rolls `node`'s encounter, strength and rewards from its rewards stream
+## ("map_act_<act>_<id>_rewards"): an enemy fights an encounter of its floor's
+## band and pays by its strength, an elite fights one of the act's elites
+## (none when the act lists none), other rooms fight nothing.
+static func fill_fight(node: Dictionary, act: Dictionary, act_number: int, run_rng) -> void:
+	var rng = run_rng.derived("map_act_%d_%s_rewards" % [act_number, str(node.id)])
+	var type := str(node.type)
+	node["encounter"] = ""
+	node["strength"] = ""
+	match type:
+		"enemy":
+			var pool := ENCOUNTERS.band_pool(act, int(node.floor))
+			if not pool.is_empty():
+				node["encounter"] = str(rng.pick(pool))
+			node["strength"] = ENCOUNTERS.strength(act, int(node.floor), str(node.encounter))
+		"elite":
+			var elites: Array = act.get("elites", [])
+			if not elites.is_empty():
+				node["encounter"] = str(rng.pick(elites))
+	node["rewards"] = node_rewards(type, rng, str(node.strength) if node.strength != "" else "normal")
 
 
 ## What a room of `type` pays, rolled from `rng`: Caps (backpack gold) for

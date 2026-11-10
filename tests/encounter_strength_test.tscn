@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b0o7ak8v7q0c2"]
+
+[ext_resource type="Script" path="res://tests/encounter_strength_test.gd" id="1"]
+
+[node name="EncounterStrengthTest" type="Node"]
+script = ExtResource("1")

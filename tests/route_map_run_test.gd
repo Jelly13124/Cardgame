@@ -38,6 +38,9 @@ func _run() -> void:
 		if RunManager.current_floor == 3 and not saved_at_floor_3:
 			saved_at_floor_3 = true
 			_check_reload()
+	var fight := {"type": "enemy", "floor": 3, "encounter": "base:scrap_rat_pair"}
+	_expect(Array(RunManager.encounter_for(fight)) == Array(RunManager.ENCOUNTERS.monsters_of("base:scrap_rat_pair")) and RunManager.encounter_for(fight).size() == 2, "a fight node fights its stored encounter (%s)" % [RunManager.encounter_for(fight)])
+	_expect(not RunManager.encounter_for({"type": "elite", "floor": 6, "encounter": ""}).is_empty(), "a fight node with no stored encounter falls back to a pick")
 	_expect(RunManager.current_floor == floors - 1, "the route reaches the boss floor")
 	_expect(RunManager.get_node_by_id(RunManager.current_node_id).get("type", "") == "boss", "the last node is the boss")
 	RunManager.is_run_active = false

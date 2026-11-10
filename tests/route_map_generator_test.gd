@@ -8,6 +8,7 @@ extends Node
 const MAP_GENERATOR = preload("uid://gi3vuuinl2vb")  # res://core/run/map_generator.gd
 const RUN_RNG_SET = preload("uid://ealvw2c6utr7")  # res://core/rng/run_rng_set.gd
 const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
+const ENCOUNTERS = preload("uid://mlx3xqfjwlpq")  # res://core/run/encounters.gd
 
 const SEED := "ROUTEMAP01"
 const UNIQUE_TYPES := ["merchant", "rest", "unknown", "treasure"]
@@ -33,6 +34,7 @@ func _run() -> void:
 	_check_walks(act)
 	_check_determinism(act)
 	_check_elite_bias(act)
+	_check_encounters(act)
 	_check_act_two_differs()
 	if failures.is_empty():
 		print("[OK] route map generator passed")
@@ -147,7 +149,7 @@ func _check_walks(act: Dictionary) -> void:
 func _check_rewards(type: String, rewards: Dictionary) -> void:
 	match type:
 		"enemy":
-			_expect(rewards == {"gold": 8}, "a fight prints 8 Caps (%s)" % rewards)
+			_expect(int(rewards.get("gold", 0)) in [6, 8, 11], "a fight prints 6, 8 or 11 Caps (%s)" % rewards)
 		"elite":
 			_expect(int(rewards.get("gold", 0)) == 18, "an elite prints 18 Caps (%s)" % rewards)
 			var scrap := int(rewards.get("scrap", 0))
@@ -179,3 +181,45 @@ func _check_act_two_differs() -> void:
 	var two: Array = flat.call(MAP_GENERATOR.start(ACTS.act(2), 2, RUN_RNG_SET.new(SEED)))
 	_expect(one != two, "act 2 route differs from act 1")
 	ACTS.active_run = "base:demo"
+
+
+## Fight nodes carry their encounter: enemies from their floor's band with a
+## strength that sets their gold, elites from the act's elite list; an act with
+## no elites leaves elite encounters empty (battle falls back to selection).
+func _check_encounters(act: Dictionary) -> void:
+	var gold_by := {"weak": 6, "normal": 8, "strong": 11}
+	for bias in [0.0, 0.99]:
+		var map: Array = MAP_GENERATOR.start(act, 1, RUN_RNG_SET.new(SEED), bias)
+		var current := "f0"
+		for f in range(11):
+			map = MAP_GENERATOR.grow(map, current, act, 1, RUN_RNG_SET.new(SEED), bias)
+			for n in map:
+				if n.type == "enemy":
+					_expect(str(n.encounter) in ENCOUNTERS.band_pool(act, int(n.floor)), "%s fights its band (%s)" % [n.id, n.get("encounter")])
+					_expect(str(n.strength) in gold_by, "%s has a strength (%s)" % [n.id, n.get("strength")])
+					_expect(int(n.rewards.get("gold", 0)) == int(gold_by.get(str(n.get("strength")), -1)), "%s pays by strength" % n.id)
+				elif n.type == "elite":
+					_expect(str(n.encounter) in act.elites and str(n.strength) == "", "%s fights an elite (%s)" % [n.id, n.get("encounter")])
+				else:
+					_expect(str(n.get("encounter", "")) == "", "%s holds no encounter" % n.id)
+			var children: Array = _by_id(map)[current].children
+			if children.is_empty():
+				break
+			current = str(children[0])
+	# empty elite list falls back
+	var no_elites := act.duplicate(true)
+	no_elites["elites"] = []
+	var map2: Array = MAP_GENERATOR.start(no_elites, 1, RUN_RNG_SET.new(SEED), 0.99)
+	var at := "f0"
+	var found := false
+	for f in range(11):
+		map2 = MAP_GENERATOR.grow(map2, at, no_elites, 1, RUN_RNG_SET.new(SEED), 0.99)
+		for n in map2:
+			if n.type == "elite":
+				found = true
+				_expect(str(n.encounter) == "", "an act without elites leaves %s empty" % n.id)
+		var kids: Array = _by_id(map2)[at].children
+		if kids.is_empty():
+			break
+		at = str(kids[0])
+	_expect(found, "the A5 bias rolled at least one elite")
