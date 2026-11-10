@@ -46,7 +46,7 @@ func _run() -> void:
 			_expect(got == want, "floor %d %s is %s (got %s)" % [floor_idx, enc, want, got])
 			seen[got] = true
 	_expect(seen.size() >= 2, "act 1 bands produce at least two strengths (%s)" % [seen.keys()])
-	_expect(ENCOUNTERS.strength(act, 1, "base:no_such") == "normal", "unknown encounter is normal")
+	_expect(ENCOUNTERS.strength(act, 1, "test_only:no_such_encounter") == "normal", "unknown encounter is normal")
 	_expect(ENCOUNTERS.monsters_of("base:scrap_rat_pair").size() == 2, "a pair encounter has two monsters")
 	if failures.is_empty():
 		print("[OK] encounter strength passed")
