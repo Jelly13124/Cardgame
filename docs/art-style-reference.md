@@ -33,8 +33,8 @@ Do not copy named characters, logos, exact scene layouts, or franchise-specific 
 These files are the current production look. New art should match their flatness, line weight, color handling, and low-noise finish:
 
 - **Cowboy Bill runtime style:** `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`
-- **Battle background style:** `battle_scene/assets/images/backgrounds/wasteland_battlefield_quiet_v6.png`
-- **Route map background style:** `run_system/assets/images/map/wasteland_route_map_sts2_bg.png`
+- **Battle background style:** `battle_scene/assets/images/backgrounds/wasteland_battlefield_quiet_v6.png` (style reference only: this file is 1672×941 and is being redrawn at 1920×1080, see `docs/handoffs/2026-11-10-codex-art-handoff.md`)
+- **Route map background style:** `run_system/assets/images/map/wasteland_route_map_sts2_bg.png` (style reference only: this file is 1672×941 and is being redrawn at 1920×1080, see `docs/handoffs/2026-11-10-codex-art-handoff.md`); the route map now shows one centred row of choice cards, so its redraw keeps the centre calm
 - **Playable card illustration style:** the current PNGs under `battle_scene/assets/images/cards/player/` form the approved collective reference set. Compare several cards for line weight, flatness, color range, close-up versus wide composition, and subject variety. Follow the recurring majority look, ignore isolated outliers or cards explicitly queued for rework, and do not reproduce one card's framing across the deck.
 - **Persistent UI screen style:** `docs/art/previews/base_building_forge_ui_dismantle_simple_comic_20260707.png`
 

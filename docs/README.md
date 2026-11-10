@@ -13,8 +13,12 @@ Start here after cloning the repository.
 7. `docs/PROJECT_STRUCTURE.md` — scene, script, data, and asset map.
 8. `docs/conventions/` — implementation contracts and coding conventions.
 
-9. `docs/handoffs/2026-07-24-workstation-transfer.md` is the active transfer
-   checkpoint for cloning this branch onto the replacement computer.
+9. `docs/handoffs/` — open hand-offs to other agents. Current:
+   `2026-11-10-codex-art-handoff.md` (missing and outdated art for Codex).
+10. `docs/superpowers/specs/` and `docs/superpowers/plans/` — the design and plan
+    of each feature since the 2026-10 refactor, named by date. They record why a
+    system is shaped the way it is; the code and the documents above are what is
+    current.
 
 ## Generated references
 
@@ -22,8 +26,6 @@ Start here after cloning the repository.
 `tools/gen_catalog_html.py`. Never hand-edit its HTML. Regenerate it after card,
 enemy, relic, equipment, tool, event, affix, or keyword changes.
 
-The documentation tree intentionally contains current contracts only. Historical
-plans, delivery reports, superseded ADRs, and tombstone documents are not retained.
-The workstation-transfer handoff above is the only active handoff and may be
-deleted after the replacement computer has cloned, verified, and resumed the
-project.
+Apart from the dated specs and plans above, the documentation tree contains
+current contracts only. Delivery reports, superseded ADRs and tombstone documents
+are not retained, and a hand-off is deleted once its work is done.

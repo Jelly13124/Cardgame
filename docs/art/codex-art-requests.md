@@ -1,5 +1,10 @@
 # Art requests for Codex
 
+> **Superseded 2026-11-10.** The open requests now live in
+> `docs/handoffs/2026-11-10-codex-art-handoff.md`, re-checked against the files on
+> disk. Keep this file for its **House style** section; the request tables below are
+> history.
+
 Assets the game needs that do not exist yet. Collected during the phase 5–7
 refactor (2026-10-28). Each entry names the file to create, the size and the
 look to match. The game already falls back gracefully when a file is missing

@@ -22,7 +22,7 @@ reads these files by path.
 | character | `content/characters/{id}.json` | `validate_hero()` |
 | base_upgrade | `content/base_upgrades/{id}.json` | `validate_base_upgrade()` |
 | card_pool / relic_pool | `content/card_pools/`, `content/relic_pools/` | ModelDb reference check |
-| Encounter pools | constants in `run_system/core/run_manager.gd` | `DataValidator.validate_encounter_pools()` |
+| Encounter pools | constants in `autoload/run_manager.gd` | `DataValidator.validate_encounter_pools()` |
 
 Art stays in `battle_scene/assets/` and `run_system/assets/`.
 
@@ -98,7 +98,7 @@ there is a structural replacement (it may use `$name`, filled with the upgraded
 vars). A card with none of these uses each effect type's default deltas (the
 `upgrade` key of its definition in `combat_effects.gd`).
 
-Cards grow **in-run** via the rest-campfire upgrade picker. `run_system/core/card_upgrade.gd` (`resolve()`) is the source of truth; `deck_manager.gd` applies it at battle start when a `player_deck` entry's `upgraded` flag is set. There are **no `_plus` variant JSON files** — a card has at most one JSON, plus an optional upgrade rule inside it.
+Cards grow **in-run** via the rest-campfire upgrade picker. `core/run/card_upgrade.gd` (`resolve()`) is the source of truth; `deck_manager.gd` applies it at battle start when a `player_deck` entry's `upgraded` flag is set. There are **no `_plus` variant JSON files** — a card has at most one JSON, plus an optional upgrade rule inside it.
 
 A card may carry an optional top-level `"upgrade"` dict that **overrides** the base card when upgraded:
 
@@ -165,7 +165,7 @@ Optional `phases` (array) — HP-threshold phase transitions. Each phase has `hp
 
 ## Effect types (cards)
 
-Authoritative list: the combat effect definitions registered in `battle_scene/combat/combat_effects.gd` (`DataValidator.allowed_card_effect_types()`). As of this writing:
+Authoritative list: the combat effect definitions registered in `core/combat/combat_effects.gd` (`DataValidator.allowed_card_effect_types()`). As of this writing:
 
 - Damage: `deal_damage`, `deal_damage_all`, `deal_damage_str_mult` (damage = `mult` × Strength; needs `mult`), `scale_damage_by_attacks`, `deal_damage_block_mult`
 - Defense: `gain_block`
@@ -183,7 +183,7 @@ Authoritative list: the combat effect definitions registered in `battle_scene/co
 
 **Tools:** `content/tools/{tool_id}.json` are one-time battle consumables — shape `{id, title, target ("enemy"|"self"|"none"), rarity, effects[], icon}`. Their `effects[]` reuse this same effect vocabulary (resolved through the shared effect registry as tool sources: fixed values — no STR/CON, Weak/Vulnerable or crits — after their own ×(1+0.08·INT) scaling); validated by `DataValidator.validate_tool` (`REQUIRED_TOOL_KEYS` / `ALLOWED_TOOL_TARGETS`).
 
-When adding a new effect type, register it once in `battle_scene/combat/combat_effects.gd` (`register_into`) with its handler and definition.
+When adding a new effect type, register it once in `core/combat/combat_effects.gd` (`register_into`) with its handler and definition.
 
 ---
 

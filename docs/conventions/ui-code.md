@@ -8,15 +8,15 @@ Light conventions for UI scripts. UI is currently the messiest part of the codeb
 
 | Concern | Files |
 |---|---|
-| Battle HUD (HP bar, block badge, status badges) | `battle_scene/ui/character_hud.gd` |
-| Shared top bar (HP/XP bars, gold/act chips, relic shelf) | `run_system/ui/run_top_bar.gd` |
-| Battle top-bar host (settings/pause menu only) | `battle_scene/ui/battle_top_bar.gd` |
-| Battle notifications + pile viewer + inspect overlay | `battle_scene/battle_ui_manager.gd` |
+| Battle HUD (HP bar, block badge, status badges) | `ui/battle/character_hud.gd` |
+| Shared top bar (HP/XP bars, gold/act chips, relic shelf) | `ui/common/run_top_bar.gd` |
+| Battle top-bar host (settings/pause menu only) | `ui/battle/battle_top_bar.gd` |
+| Battle notifications + pile viewer + inspect overlay | `ui/battle/battle_ui_manager.gd` |
 | Route choice card (one room, its rewards, next floor) | `ui/map/route_choice_card.gd` |
 | Route map screen (floor track, cards, room opening, relic modal) | `ui/map/map_scene.gd` |
-| Loot reward screen + card draft | `run_system/ui/loot_reward.gd` |
-| Hero selection | `run_system/ui/hero_select.gd` |
-| Shared theme | `run_system/ui/theme/wasteland_theme.gd` (legacy filename; palette follows the original 2D American-comic/UI07 contract) |
+| Loot reward screen + card draft | `ui/rewards/loot_reward.gd` |
+| Hero selection (demo: Cowboy Bill only) | `ui/windows/character_window.gd` |
+| Shared theme | `ui/common/theme/wasteland_theme.gd` (legacy filename; palette follows the original 2D American-comic/UI07 contract) |
 
 ---
 
@@ -113,4 +113,4 @@ When a file approaches 400 lines, the responsibilities are usually entangled. Co
 
 - Read `docs/project-rules.md`, `docs/art-style-reference.md`, and
   `docs/PROJECT_STRUCTURE.md` for current style and structure rules.
-- The shared theme palette lives in `run_system/ui/theme/wasteland_theme.gd` - read its constants before defining new colors locally, and keep new colors aligned with the original 2D American-comic/UI07 direction.
+- The shared theme palette lives in `ui/common/theme/wasteland_theme.gd` - read its constants before defining new colors locally, and keep new colors aligned with the original 2D American-comic/UI07 direction.

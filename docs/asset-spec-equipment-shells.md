@@ -5,7 +5,7 @@
 ## Runtime model
 
 Generic equipment uses shared art by `slot × rarity`. The 15 generic equipment
-JSON files intentionally keep `sprite: ""`; `run_system/ui/equipment_icon.gd`
+JSON files intentionally keep `sprite: ""`; `ui/common/equipment_icon.gd`
 resolves them from:
 
 `battle_scene/assets/images/ui/equipment/{slot}_{rarity}.png`

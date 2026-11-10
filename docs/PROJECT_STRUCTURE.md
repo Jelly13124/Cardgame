@@ -36,8 +36,8 @@ Code layering, the target directory structure and the uid reference rule are in
     *   *Where to adjust nodes, banners, font sizes, and container positions.*
 *   **Card Logic & Colors**: `ui/battle/play_card.gd`
     *   *Where the live math is calculated and Rarity Colors (Silver/Blue/Golds) are defined in `RARITY_COLORS`.*
-*   **Shape & Effects**: `battle_scene/card_art_mask.gdshader`
-    *   *The shader that handles the "Angled Bottom" shape for Attack cards.*
+*   **Highlight**: `ui/battle/card_highlight.gdshader`
+    *   *The shape-hugging outline: always on for a playable hand card, hover/focus only elsewhere.*
 
 ### 📄 Card Data (JSON)
 *   **Player Cards**: `content/cards/`
@@ -78,7 +78,7 @@ Code layering, the target directory structure and the uid reference rule are in
 
 ### 🛒 Shop & Rest
 *   **Merchant Room**: `ui/shop/merchant_room.tscn` + `.gd` (slots in `merchant_slot.gd`, card removal in `merchant_card_removal.gd`; stock in `core/run/merchant/`)
-    *   *Merchant map node loads this. Rolls 6 cards + 3 tools + 3 relics + remove-card service (equipment is no longer sold here). Prices and pools defined at the top of the script.*
+    *   *The merchant route card opens this. `core/run/merchant/merchant_inventory.gd` builds 6 cards + 3 tools + 3 relics + the card-removal service as entries; each entry owns its stock, its price (base, variance and sale, then Charm, ascension and relic hooks) and its purchase. Equipment is not sold here.*
 *   **Rest Choice Modal**: built inline in `map_scene.gd` (`_open_rest_choice`)
     *   *HEAL 25% HP or UPGRADE A CARD (opens `card_upgrade_modal.gd`).*
 
@@ -95,8 +95,8 @@ Code layering, the target directory structure and the uid reference rule are in
 *   **Inventory Full Modal**: `ui/common/inventory_full_modal.gd` — discard-or-skip flow when bag overflows.
 
 ### ❓ Random Events
-*   **Event Modal**: `ui/events/event_modal.gd`
-    *   *The "?" map-node event scene. Loads an event from `content/events/*.json`, presents the choices, and applies the chosen outcome.*
+*   **Event Room**: `ui/events/event_room.gd` (+ `event_option_button.gd`)
+    *   *Opened by a "?" route card: the act's event deck deals an `EventModel` (`core/run/events/`); the room shows its art on the left and its pages and options on the right, and a save made inside it reopens the event.*
 
 ### 🏃 Run Management
 *   **Run Shape**: the current public demo is **one 12-floor act** with a fixed `rust_titan` boss (`DEMO_BUILD = true`, `DEMO_MAX_ACTS = 1`); defeating it is a final victory with no extract-vs-push screen. The same manager retains the planned 3-act architecture behind `DEMO_BUILD = false`. Loot lives in a **20-cell backpack** where Gold / Scrap / equipment compete for space. On success only currencies bank automatically; gear returns to the independently persisted base backpack/slots (`pending_loadout` / `pending_equipped`). On death only safe-cell gear survives. `MetaProgress.stash` is permanent storage changed only by explicit player transfers.
@@ -141,7 +141,7 @@ All gameplay content is data-driven. Add GDScript only when introducing a new sh
 *   **Tools**: `content/tools/{tool_id}.json` — StS2-style one-time battle consumables; `effects[]` reuse the card effect vocabulary (`validate_tool`).
 *   **Base Upgrades**: `content/base_upgrades/{upgrade_id}.json` (5 active definitions: command_center, blacksmith, backpack, reroll_tokens, tool_slots). `ALLOWED_BASE_UPGRADE_EFFECT_KEYS` in `data_validator.gd` is the authoritative schema.
 *   **Heroes**: `content/characters/{hero_id}.json` (`cowboy_bill.json`) — `player.gd` reads `sprite_id` / `tint` / starting stats dynamically from the selected hero's JSON (`RunManager.current_hero_data`), falling back to `cowboy_bill` when none is loaded.
-*   **Random Events**: `content/events/{event_id}.json` (12 events) — content (choices, outcomes) for the "?" map node, surfaced by `ui/events/event_modal.gd`. Three are "greed-trap" curse-injection events (`torn_coin_pouch` / `deserter_charm` / `adrenaline_shot`): a boon + an `add_curse` effect. Events are dir-scanned into the pool; localized via `EVENT_<ID>_*` keys in `assets/translations/ui_events.csv`.
+*   **Random Events**: `content/events/{event_id}.json` (12 events; each names its acts and its script in `core/run/events/scripts/`, an `EventModel` with pages and options) — dealt from the per-act event deck for the "?" route card and shown by `ui/events/event_room.gd` (picture left, text and options right). Three are "greed-trap" curse-injection events (`torn_coin_pouch` / `deserter_charm` / `adrenaline_shot`): a boon + an `add_curse` effect. Events are dir-scanned into the pool; localized via `EVENT_<ID>_*` keys in `assets/translations/ui_events.csv`.
 
 All schemas validated at startup by `core/content/data_validator.gd`.
 

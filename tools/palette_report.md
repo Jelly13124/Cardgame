@@ -85,4 +85,4 @@ Observation: the source art is overwhelmingly warm-brown dominated (top 40 resul
 | `TEXT_SECONDARY` | `#b08060` | dimmer text / subtitle |
 | `SHADOW_COLOR` | `#00000042` (alpha 0.26) | drop shadows |
 
-**Total: 14 named colors.** Copy these into `run_system/ui/theme/wasteland_theme.gd` (renamed from `wasteland_cartoon_theme.gd`).
+**Total: 14 named colors.** Copy these into `ui/common/theme/wasteland_theme.gd` (renamed from `wasteland_cartoon_theme.gd`).

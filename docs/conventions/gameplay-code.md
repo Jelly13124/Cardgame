@@ -56,7 +56,7 @@ For data that ships with the game (cards, enemies, encounter pools):
 For generated sprite assets: warn-only with a `ColorRect` fallback is OK because regeneration may be in flight.
 
 ### 6. A new card effect type is one registration
-Register the type in `battle_scene/combat/combat_effects.gd` (`register_into`)
+Register the type in `core/combat/combat_effects.gd` (`register_into`)
 with its handler and its definition (`target`, `params`, `upgrade` defaults,
 `describe`; see `core/effects/effect_registry.gd`). The validator, enemy
 targeting, the upgrade default and the card text all read the definition.
@@ -72,7 +72,7 @@ script (`core/listeners/statuses/<key>.gd`, see rule 8).
 Never compute damage, Block or status stacks by hand: build a value with
 `core/combat/value_calc.gd` and run it through `combat_hooks.compute_*`
 (previews pass `preview = true` and must not commit). Change HP, Block and
-statuses only through `battle_scene/combat/combat_commands.gd`, so modifiers,
+statuses only through `core/combat/combat_commands.gd`, so modifiers,
 Intangible and reactions (on-hit, Thorns, relics) apply everywhere.
 
 ### 8. Content behaviour is a listener; the core only broadcasts
@@ -140,7 +140,7 @@ shared test runner/plugin, or before Steam launch.
 ## Suggested workflow when adding gameplay
 
 1. Define the JSON schema first (in `DataValidator` if new field types).
-2. Register the handler in `battle_scene/combat/combat_effects.gd` (cards, tools, relics, sets, enemy moves) or `core/effects/run_effects.gd` (event options).
+2. Register the handler in `core/combat/combat_effects.gd` (cards, tools, relics, sets, enemy moves) or `core/effects/run_effects.gd` (event options).
 3. Add JSON content files.
 4. Headless validate: `godot --headless --path . --quit-after 5` — should print `DataValidator: all card/enemy/relic JSON files passed schema check.`
 5. Run the relevant `tests/*_contract_test.tscn` scene headlessly.

@@ -61,7 +61,7 @@ the short operational gate for agents.
 ## UI gate
 
 - Use UI07: light borders, flat fills, sparse lines, and clear hierarchy.
-- The shared `run_system/ui/run_top_bar.gd` is persistent on every in-run screen.
+- The shared `ui/common/run_top_bar.gd` is persistent on every in-run screen.
   Map, battle, event, rest, card-upgrade, deck, reward, and shop content begins
   below its full `BAR_HEIGHT`. Scene art may continue behind the transparent relic
   shelf from `PAGE_ART_TOP`; never hide, duplicate, or paint over the run top bar.

@@ -80,7 +80,7 @@ the App ID and the file is ignored.)
 
 ## Demo scope reminder
 
-The demo is gated by `RunManager.DEMO_BUILD` (`run_system/core/run_manager.gd`):
+The demo is gated by `RunManager.DEMO_BUILD` (`autoload/run_manager.gd`):
 - `DEMO_MAX_ACTS = 1` — one 12-floor act; floor 12 is the fixed `rust_titan` boss, and defeating it completes and banks the demo run without an extract-vs-push choice.
 - `DEMO_ALLOWED_HEROES = ["cowboy_bill"]` — only Cowboy Bill in the Warehouse picker.
 

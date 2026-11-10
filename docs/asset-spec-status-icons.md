@@ -2,7 +2,7 @@
 
 **Last audited:** 2026-07-22
 
-The status badge system is already wired. `battle_scene/status_effect_system.gd`
+The status badge system is already wired. `ui/battle/status_badges_view.gd`
 loads `battle_scene/assets/images/ui/status/<status_id>.png` and falls back to a
 short glyph when a PNG is absent. Stack counts are rendered by code; never bake
 numbers or text into an icon.

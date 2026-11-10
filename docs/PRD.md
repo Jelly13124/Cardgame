@@ -57,7 +57,7 @@ full-game ruleset behind `RunManager.DEMO_BUILD = false`.
 | **Curse** | **Unplayable** — returns to hand if played; punishes you each turn it sits in hand (`end_turn_in_hand`) | — |
 
 ### Card Effects System (Data-Driven)
-All effects are defined in card JSON via the `effects[]` array. One effect registry (`core/effects/effect_registry.gd`, combat handlers in `battle_scene/combat/combat_effects.gd`) runs them for cards, tools, relics, equipment sets, curses, enemy moves and event options alike. Supported effect types:
+All effects are defined in card JSON via the `effects[]` array. One effect registry (`core/effects/effect_registry.gd`, combat handlers in `core/combat/combat_effects.gd`) runs them for cards, tools, relics, equipment sets, curses, enemy moves and event options alike. Supported effect types:
 
 - `deal_damage` — Single-target damage (scales with `strength`)
 - `deal_damage_all` — All-enemy damage
@@ -75,7 +75,7 @@ All effects are defined in card JSON via the `effects[]` array. One effect regis
 
 > The list above is a selection. The **authoritative** set is the effect definitions in `combat_effects.gd` (`DataValidator.allowed_card_effect_types()`) (32 card types) — see `docs/conventions/data-files.md` for the full categorized list.
 
-Cards built from existing effects require only JSON. A genuinely new shared effect registers its handler and definition once in `battle_scene/combat/combat_effects.gd` (`register_into`); the validator, targeting, upgrade default and card text read that definition.
+Cards built from existing effects require only JSON. A genuinely new shared effect registers its handler and definition once in `core/combat/combat_effects.gd` (`register_into`); the validator, targeting, upgrade default and card text read that definition.
 
 ### Combat Value Pipeline
 
@@ -135,7 +135,7 @@ Equipment is gear the player equips to **boost their five attributes** via rolle
 - Each piece shows its rolled affixes, a rarity color, and flavor text
 
 ### Rarity & Affixes (5-tier)
-A dropped piece becomes an **instance** that rolls its affixes at grant time (`RunManager.make_equip_instance` → `run_system/core/affix_pool.gd`). Rarity drives both the affix count and the tile color:
+A dropped piece becomes an **instance** that rolls its affixes at grant time (`RunManager.make_equip_instance` → `core/meta/affixes.gd`). Rarity drives both the affix count and the tile color:
 
 | Rarity | 中文 | Affixes | Color | Notes |
 |---|---|---|---|---|
@@ -243,7 +243,7 @@ Outpost permanent upgrades). See `meta_progress.gd` `BUILDING_DEFS`
 + `building_cost_currency()`.
 
 **Windowed UI (2026-07-02/03 refactor).** The base uses Diablo-style **draggable,
-coexisting windows** (`run_system/ui/window/`). Pressing **i** (home base / map / battle)
+coexisting windows** (`ui/windows/`). Pressing **i** (home base / map / battle)
 toggles the **CharacterWindow** — Diablo-4 layout: paper-doll CENTER, equip slots flanking
 it (head/chest/hands left; weapon/accessory + tools right), **backpack grid BELOW**; modes:
 `base` / `map` (editable) / `battle` (read-only). **Backpack ≠ stash (D4 model):** the
@@ -388,15 +388,15 @@ BattleScene (Node)
 
 | Script | Responsibility |
 |---|---|
-| `battle_scene.gd` | Central orchestrator: wires all subsystems, targeting state |
-| `combat_engine.gd` | Card-play orchestration (gunshot animation, Replay passes, matched bonus, after-attack); effects run through the registry, values through `core/combat` |
-| `combat/combat_commands.gd` | The only way combat changes HP, Block and statuses: pipeline → apply → hooks |
-| `combat/combat_effects.gd` | Effect handlers for cards, tools, relics, sets, curses and enemy moves; preview helpers |
-| `enemy_entity.gd` | Loads from JSON; manages sprite via `sprite_id`; action pattern cycling |
-| `enemy_ai.gd` | Spawns enemies; runs the enemy turn; dispatches moves through the effect registry |
-| `deck_manager.gd` | Draw/discard/reshuffle logic |
-| `play_card.gd` | Routes attack vs skill via mouse events |
-| `run_manager.gd` | Autoload: all persistent run state including equipment and relics |
+| `ui/battle/battle_screen.gd` | Battle scene: builds the views, the hand and the HUD over a `CombatManager` |
+| `core/combat/combat_manager.gd` | Runs a fight without a scene: turns, draw (3 per turn), energy, end turn, win/loss |
+| `core/combat/card_play.gd` | Card-play orchestration (targeting, Replay passes, after-attack) through the action queue |
+| `core/combat/combat_commands.gd` | The only way combat changes HP, Block and statuses: pipeline → apply → hooks |
+| `core/combat/combat_effects.gd` | Effect handlers for cards, tools, relics, sets, curses and enemy moves; preview helpers |
+| `core/combat/monster_moves.gd` / `enemy_turn.gd` | Enemy move patterns, ramps and HP phases; the enemy turn |
+| `core/combat/piles.gd` | Draw / hand / discard / exhaust piles |
+| `ui/battle/enemy_view.gd`, `player_view.gd`, `play_card.gd` | Battle views: sprites, intents, cards |
+| `autoload/run_manager.gd` | Autoload: run state (route, backpack, deck, relics, equipment) over `core/run/run_state.gd` |
 
 ### Card JSON Schema
 
@@ -627,7 +627,7 @@ Function reference: `docs/building-screens-functions.md`.
   are now obtainable in a run; curses are clearable at the shop's card-removal service.
 
 ### ✅ Phase 11 — Discover mechanic
-- ✅ New **`discover` effect** + `DiscoverModal` (`battle_scene/discover_modal.gd`, a brand-new
+- ✅ New **`discover` effect** + `DiscoverModal` (`ui/battle/discover_modal.gd`, a brand-new
   full-screen 3-choose-1 popup) + `discover_pool.gd` (filters candidates by card type or by a
   theme tag like `short_circuit`). The picked card enters the **current hand for this combat only**;
   optional `free` makes it cost 0 this combat (a `cost_override` card meta).

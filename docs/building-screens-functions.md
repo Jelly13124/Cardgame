@@ -26,7 +26,7 @@
   仅在点击升级后的弹窗中显示消耗与持有量。
 - **装备悬停 tooltip(全局规则,2026-07-08)**:稀有度·槽位(按稀有度着色)+
   词条行(诅咒红/增益绿);**不显示随机生成名**,仅套装件保留自己的名字 + 套装行。
-  实现:`run_system/ui/equip_tooltip.gd` 共享 helper(角色窗/仓库/铁匠铺/黑市共用)。
+  实现:`ui/common/equip_tooltip.gd` 共享 helper(角色窗/仓库/铁匠铺/黑市共用)。
 
 | 楼 | 解锁(Scrap) | 升级 T2/T3(Scrap) | 内部服务货币 |
 |---|---|---|---|
@@ -130,6 +130,6 @@ Caps 永久升级做成多行进度条卡片(名称 + 等级圆点 + 紧凑橙�
 - 全屏壳与顶部栏:`ui/base/building_screen_base.gd`。
 - 共用废料升级弹窗:`ui/base/building_upgrade_popover.gd`。
 - 三个全屏服务页:`clinic_screen.gd`、`market_screen.gd`、`outpost_screen.gd`。
-- 铁匠铺窗口:`run_system/ui/window/forge_window.gd`。
+- 铁匠铺窗口:`ui/windows/forge_window.gd`。
 - 当前美术规则以 `docs/project-rules.md §1`、`docs/art-style-reference.md` 和 UI07
   运行时组件为准；`docs/art/previews/` 只保存评审记录,不是实现规范。
