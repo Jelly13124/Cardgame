@@ -308,7 +308,11 @@ static func _v7_to_v8(d: Dictionary) -> Dictionary:
 	if typeof(nodes) == TYPE_ARRAY:
 		for n in nodes:
 			if typeof(n) == TYPE_DICTIONARY and str(n.get("type", "")) in ["enemy", "elite"] and str(n.get("encounter", "")) == "":
+				var old_rewards: Variant = n.get("rewards", {})
 				MAP_GENERATOR.fill_fight(n, act, act_number, rng_set)
+				# Scrap an old elite card already printed stays what it printed.
+				if typeof(old_rewards) == TYPE_DICTIONARY and old_rewards.has("scrap"):
+					n["rewards"]["scrap"] = int(old_rewards["scrap"])
 	return d
 
 

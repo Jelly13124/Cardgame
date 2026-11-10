@@ -69,6 +69,8 @@ func _run() -> void:
 	_expect(not RunManager.is_run_active, "the run ended")
 	RunManager.clear_run_save()
 	_check_boss_overflow()
+	_expect(REWARDS.combat_loot("boss", 0).all(func(e): return e["type"] != "gold"), "a fight paying no Caps shows no Caps row")
+	_check_owed_caps_banked()
 	_expect(_stock("STOCKSEED1") == _stock("STOCKSEED1"), "the same seed gives the same loot, shop and market stock")
 	_expect(_stock("STOCKSEED1") != _stock("STOCKSEED2"), "another seed gives other stock")
 	if failures.is_empty():
@@ -104,5 +106,21 @@ func _check_boss_overflow() -> void:
 	COMBAT_REWARDS.settle_victory("boss", 1, {})
 	_expect(RunManager.state.legacy_caps == 45, "boss gold that does not fit is kept for settlement (%d)" % RunManager.state.legacy_caps)
 	ACTS.active_run = ACTS.ACTIVE_RUN
+	RunManager.is_run_active = false
+	RunManager.clear_run_save()
+
+
+## Owed caps (boss overflow, an old save's hidden caps) bank 1:1 with the
+## backpack's gold when the run is extracted.
+func _check_owed_caps_banked() -> void:
+	RunManager.start_new_run("base:cowboy_bill", [], 0, "OWEDCAPS01")
+	for i in range(RunManager.effective_backpack_size()):
+		RunManager.backpack[i] = {"kind": "scrap", "amount": 30}
+	RunManager.backpack[0] = {"kind": "gold", "amount": 20}
+	RunManager.state.legacy_caps = 45
+	var before: int = MetaProgress.caps
+	RunManager.call("_settle_backpack", true, "extracted")
+	_expect(MetaProgress.caps - before == 65, "extraction banks backpack Caps plus owed caps (%d)" % (MetaProgress.caps - before))
+	MetaProgress.caps = before
 	RunManager.is_run_active = false
 	RunManager.clear_run_save()

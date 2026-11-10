@@ -19,7 +19,10 @@ static func economy() -> Dictionary:
 ## `gold`: the Caps the fought node printed (RunManager.battle_rewards()).
 static func combat_loot(node_type: String, gold: int) -> Array:
 	var eco := economy()
-	var loot: Array = [{"type": "gold", "amount": gold}, {"type": "cards"}]
+	# A fight that pays no Caps here (the boss puts its Caps straight into the
+	# backpack) shows no Caps row.
+	var loot: Array = [{"type": "gold", "amount": gold}] if gold > 0 else []
+	loot.append({"type": "cards"})
 	if not node_type in eco.get("no_tool_rooms", []):
 		if RunManager.rng("rewards").chance(RunManager.luck_tool_chance()):
 			var tool_id := RunManager.roll_tool_drop(node_type)

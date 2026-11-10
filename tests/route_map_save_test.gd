@@ -109,11 +109,14 @@ func _check_v7(backpack_full: bool) -> void:
 		n.erase("strength")
 		if n["type"] == "enemy":
 			n["rewards"] = {"caps": 6}
+	d["map_data"].append({"id": "old_elite", "floor": 6, "slot": 0, "type": "elite", "children": [], "rewards": {"caps": 18, "scrap": 13}})
 	var migrated: Dictionary = RUN_SAVE.migrate(d)
 	_expect(int(migrated["schema_version"]) == 8 and not migrated.has("run_caps") and int(migrated.get("legacy_caps", 0)) == 30, "v8 carries the hidden caps as legacy_caps")
 	for n in migrated["map_data"]:
 		if n["type"] == "enemy":
 			_expect(str(n.get("encounter", "")) != "" and int(n["rewards"].get("gold", 0)) in [6, 8, 11] and not n["rewards"].has("caps"), "old fight %s gains an encounter and gold (%s)" % [n["id"], n["rewards"]])
+	var elites: Array = migrated["map_data"].filter(func(n): return n["type"] == "elite")
+	_expect(elites.size() == 1 and int(elites[0]["rewards"].get("scrap", 0)) == 13, "an old elite keeps its printed Scrap (%s)" % [elites])
 	SAVE_IO.write_json(RunManager._run_save_path(), d)
 	_expect(RunManager.load_run(), "the v7 save loads")
 	if backpack_full:
