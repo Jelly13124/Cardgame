@@ -119,6 +119,7 @@ func _check_pruned(map: Array, entered: String) -> void:
 func _check_walks(act: Dictionary) -> void:
 	var fixed := {6: "treasure", 10: "rest", 11: "boss"}
 	var pick_rng = RUN_RNG_SET.new(SEED).derived("test_picks")
+	var early_seen := {}
 	for i in range(200):
 		var rng_set = RUN_RNG_SET.new("ROUTEW%04d" % i)
 		var walk := _walk(act, 1, rng_set, pick_rng)
@@ -136,14 +137,20 @@ func _check_walks(act: Dictionary) -> void:
 				_expect(types.size() >= 2 and types.size() <= 3, "floor %d offers 2–3 cards (%d)" % [f, types.size()])
 				for t in UNIQUE_TYPES:
 					_expect(types.count(t) <= 1, "floor %d repeats %s" % [f, t])
+				if f == 1:
+					_expect(types.all(func(t): return t == "enemy"), "floor 1 offers only fights (%s)" % [types])
 				if f <= 4:
-					for t in ["merchant", "rest", "elite"]:
-						_expect(not t in types, "no %s on floor %d" % [t, f])
+					_expect(not "elite" in types, "no elite on floor %d" % f)
+					if f >= 2:
+						for t in types:
+							early_seen[t] = true
 			for row in snap:
 				if row[0] in ids:
 					_check_rewards(str(row[1]), row[3])
 		if not failures.is_empty():
 			return
+	for t in ["merchant", "rest", "treasure"]:
+		_expect(early_seen.has(t), "floors 2–4 sometimes offer a %s" % t)
 
 
 func _check_rewards(type: String, rewards: Dictionary) -> void:

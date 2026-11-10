@@ -171,6 +171,8 @@ static func _pick_node_type(
 ) -> String:
 	if floor_idx == 0:
 		return "relic"
+	if floor_idx == 1:
+		return "enemy"  # the first floor is fights only, told apart by encounter
 	if floor_idx == total - 1:
 		return "boss"
 	if floor_idx == total - 2:
