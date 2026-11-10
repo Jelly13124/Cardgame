@@ -46,6 +46,15 @@ func _run() -> void:
 	still._gui_input(_click())
 	_expect(none.is_empty(), "a card that is not interactive ignores clicks")
 
+	var fight = _card({"id": "g", "type": "enemy", "encounter": "base:scrap_rat_pair", "strength": "strong", "rewards": {"gold": 11}}, [], 20, true)
+	_expect(fight.get_node("%Portraits").get_child_count() == 2, "a fight shows its two monsters")
+	_expect(fight.get_node("%StrengthTag").visible and fight.get_node("%StrengthTag").text == tr("UI_ROUTE_STRENGTH_STRONG"), "a strong fight is tagged strong")
+	_expect("11" in _rows(fight)[0], "a strong fight prints 11 Caps (%s)" % [_rows(fight)])
+	var elite = _card({"id": "h", "type": "elite", "encounter": "base:armored_patrol", "strength": "", "rewards": {"gold": 18, "scrap": 9}}, [], 20, true)
+	_expect(elite.get_node("%Portraits").get_child_count() == 1 and not elite.get_node("%StrengthTag").visible, "an elite shows one portrait and no tag")
+	var camp = _card({"id": "i", "type": "rest", "rewards": {}}, [], 20, true)
+	_expect(camp.get_node("%Portraits").get_child_count() == 0, "a campfire shows no portraits")
+
 	if failures.is_empty():
 		print("[OK] route choice card passed")
 		get_tree().quit(0)

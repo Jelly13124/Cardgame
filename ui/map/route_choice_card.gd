@@ -12,6 +12,12 @@ const NODE_ICON_DIR := "res://run_system/assets/images/map/nodes/"
 const CAPS_ICON := "res://run_system/assets/images/home/currency/caps.png"
 const SCRAP_ICON := "res://run_system/assets/images/home/currency/scrap.png"
 const CARD_SIZE := Vector2(300, 420)
+const ENCOUNTERS = preload("uid://mlx3xqfjwlpq")  # res://core/run/encounters.gd
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
+const ENEMY_ART_DIR := "res://battle_scene/assets/images/enemies/"
+const MAX_PORTRAITS := 3
+const PORTRAIT_PX := 56
+const STRENGTH_COLORS := {"weak": T.ACCENT_NEON_GREEN, "normal": T.UI_HEADER_GOLD, "strong": T.ACCENT_DANGER}
 
 var node_id := ""
 var interactive := false
@@ -50,6 +56,21 @@ func _init() -> void:
 	title.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
 	T.style_display(title, 26)
 	_add_unique(box, title, "TypeName")
+
+	var foes := HBoxContainer.new()
+	foes.alignment = BoxContainer.ALIGNMENT_CENTER
+	foes.add_theme_constant_override("separation", 8)
+	foes.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(foes)
+	var portraits := HBoxContainer.new()
+	portraits.add_theme_constant_override("separation", 4)
+	portraits.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_add_unique(foes, portraits, "Portraits")
+	var tag := Label.new()
+	tag.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	T.style_display(tag, 18)
+	tag.visible = false
+	_add_unique(foes, tag, "StrengthTag")
 
 	var rewards := VBoxContainer.new()
 	rewards.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -92,6 +113,7 @@ func setup(node: Dictionary, next_types: Array, heal_amount: int, is_interactive
 	for c in %Rewards.get_children():
 		c.queue_free()
 		%Rewards.remove_child(c)
+	_show_foes(str(node.get("encounter", "")), str(node.get("strength", "")))
 	var rewards: Dictionary = node.get("rewards", {})
 	match type:
 		"enemy", "elite":
@@ -115,6 +137,34 @@ func setup(node: Dictionary, next_types: Array, heal_amount: int, is_interactive
 		small.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		small.tooltip_text = tr("UI_MAP_LEGEND_%s" % str(t).to_upper())
 		%NextRow.add_child(small)
+
+
+## Up to three monster portraits of `encounter` and its strength tag
+## (hidden when `strength` is "": elites and non-fights).
+func _show_foes(encounter: String, strength: String) -> void:
+	for c in %Portraits.get_children():
+		%Portraits.remove_child(c)
+		c.queue_free()
+	var shown := 0
+	for monster_id in ENCOUNTERS.monsters_of(encounter):
+		if shown >= MAX_PORTRAITS:
+			break
+		var sprite := str(MODEL_DB.data("monster", monster_id).get("sprite_id", monster_id.get_slice(":", monster_id.get_slice_count(":") - 1)))
+		var tex := _icon("%s%s/attack/%s_attack_0.png" % [ENEMY_ART_DIR, sprite, sprite])
+		if tex == null:
+			continue
+		var face := TextureRect.new()
+		face.texture = tex
+		face.custom_minimum_size = Vector2(PORTRAIT_PX, PORTRAIT_PX)
+		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		%Portraits.add_child(face)
+		shown += 1
+	%StrengthTag.visible = strength != ""
+	if strength != "":
+		%StrengthTag.text = tr("UI_ROUTE_STRENGTH_%s" % strength.to_upper())
+		%StrengthTag.add_theme_color_override("font_color", STRENGTH_COLORS.get(strength, T.UI_HEADER_GOLD))
 
 
 func _gui_input(event: InputEvent) -> void:
