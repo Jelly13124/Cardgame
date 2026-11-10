@@ -34,10 +34,10 @@ func _run() -> void:
 	for n in migrated["map_data"]:
 		_expect(n.has("rewards"), "node %s gained rewards" % n["id"])
 		if n["type"] == "enemy":
-			_expect(n["rewards"] == {"caps": 6}, "an old fight prints 6 Caps (%s)" % n["rewards"])
+			_expect(int(n["rewards"].get("gold", 0)) in [6, 8, 11], "an old fight prints its Caps (%s)" % n["rewards"])
 		if n["type"] == "elite":
 			var scrap := int(n["rewards"].get("scrap", 0))
-			_expect(int(n["rewards"].get("caps", 0)) == 18 and scrap >= 8 and scrap <= 16, "an old elite prints 18 Caps and 8–16 Scrap")
+			_expect(int(n["rewards"].get("gold", 0)) == 18 and scrap >= 8 and scrap <= 16, "an old elite prints 18 Caps and 8–16 Scrap")
 	_expect(RUN_SAVE.migrate(d) == migrated, "the migration is deterministic")
 	RUN_SAVE.apply(RunManager.state, migrated)
 	RunManager._reindex_map()

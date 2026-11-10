@@ -69,7 +69,7 @@ static func to_dict(state, elapsed_msec: int) -> Dictionary:
 		"max_health": state.max_health,
 		"current_health": state.current_health,
 		"run_scrap": state.run_scrap,
-		"run_caps": state.run_caps,
+		"legacy_caps": state.legacy_caps,
 		"current_floor": state.current_floor,
 		"current_act": state.current_act,
 		"player_deck": state.deck,
@@ -114,7 +114,7 @@ static func apply(state, d: Dictionary) -> void:
 	state.max_health = int(d.get("max_health", 50))
 	state.current_health = int(d.get("current_health", state.max_health))
 	state.run_scrap = int(d.get("run_scrap", 0))
-	state.run_caps = int(d.get("run_caps", 0))
+	state.legacy_caps = int(d.get("legacy_caps", 0))
 	state.current_floor = int(d.get("current_floor", 0))
 	state.current_act = int(d.get("current_act", 1))
 	state.deck = d.get("player_deck", [])

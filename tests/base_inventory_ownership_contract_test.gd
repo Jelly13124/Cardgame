@@ -194,14 +194,13 @@ func _test_success_settlement() -> void:
 	RunManager.backpack[1] = {"kind": "scrap", "amount": 12}
 	RunManager.backpack[2] = {"kind": "equip", "item": carried}
 	RunManager.equipped_items["weapon"] = worn
-	RunManager.set("_run_caps", 6)
 	var stash_before: Array = MetaProgress.stash.duplicate(true)
 
 	RunManager.call("_settle_backpack", true, "extracted")
 
 	_expect(MetaProgress.stash == stash_before, "successful return never changes stash")
 	_expect(MetaProgress.scrap == 12, "successful return banks carried Scrap")
-	_expect(MetaProgress.caps == 8, "successful return banks run Caps plus converted Gold")
+	_expect(MetaProgress.caps == 25, "successful return banks backpack Caps 1:1")
 	_expect(
 		_base_ids(RunManager.pending_loadout) == ["base:gear_chest_uncommon"],
 		"successful return moves backpack gear into owned base backpack"

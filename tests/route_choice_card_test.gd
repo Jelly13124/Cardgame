@@ -21,7 +21,7 @@ func _expect(condition: bool, message: String) -> void:
 
 
 func _run() -> void:
-	var card = _card({"id": "f0.1", "type": "elite", "rewards": {"caps": 18, "scrap": 11}}, ["rest", "enemy"], 20, true)
+	var card = _card({"id": "f0.1", "type": "elite", "rewards": {"gold": 18, "scrap": 11}}, ["rest", "enemy"], 20, true)
 	_expect(card.get_node("%TypeName").text == tr("UI_MAP_LEGEND_ELITE"), "the card names its room")
 	var rows := _rows(card)
 	_expect(rows.size() == 3, "an elite prints Caps, Scrap and a card draft (%s)" % [rows])
@@ -32,7 +32,7 @@ func _run() -> void:
 	card._gui_input(_click())
 	_expect(picked == ["f0.1"], "a click chooses the card once (%s)" % [picked])
 
-	_expect(_rows(_card({"id": "a", "type": "enemy", "rewards": {"caps": 6}}, [], 20, true)).size() == 2, "a fight prints Caps and a card draft")
+	_expect(_rows(_card({"id": "a", "type": "enemy", "rewards": {"gold": 6}}, [], 20, true)).size() == 2, "a fight prints Caps and a card draft")
 	var rest_rows := _rows(_card({"id": "b", "type": "rest", "rewards": {}}, [], 20, true))
 	_expect(rest_rows.size() == 1 and "20" in rest_rows[0], "a campfire prints its heal (%s)" % [rest_rows])
 	_expect(_rows(_card({"id": "c", "type": "unknown", "rewards": {}}, [], 20, true)).is_empty(), "an event prints nothing")
@@ -40,7 +40,7 @@ func _run() -> void:
 	var chest := _rows(_card({"id": "e", "type": "treasure", "rewards": {}}, [], 20, true))
 	_expect(chest == [tr("UI_ROUTE_RELIC_CHOICE")], "a treasure prints the relic choice (%s)" % [chest])
 
-	var still = _card({"id": "f", "type": "enemy", "rewards": {"caps": 6}}, [], 20, false)
+	var still = _card({"id": "f", "type": "enemy", "rewards": {"gold": 6}}, [], 20, false)
 	var none: Array = []
 	still.chosen.connect(func(id): none.append(id))
 	still._gui_input(_click())

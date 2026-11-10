@@ -95,7 +95,7 @@ func setup(node: Dictionary, next_types: Array, heal_amount: int, is_interactive
 	var rewards: Dictionary = node.get("rewards", {})
 	match type:
 		"enemy", "elite":
-			_add_row(CAPS_ICON, "+%d" % int(rewards.get("caps", 0)), T.TEXT_MAIN)
+			_add_row(CAPS_ICON, "+%d" % int(rewards.get("gold", 0)), T.TEXT_MAIN)
 			if type == "elite":
 				_add_row(SCRAP_ICON, "+%d" % int(rewards.get("scrap", 0)), T.TEXT_MAIN)
 			_add_row("", tr("UI_ROUTE_CARD_DRAFT"), T.ACCENT_NEON_BLUE)

@@ -12,7 +12,9 @@ var ascension: int = 0
 var max_health: int = 50
 var current_health: int = 50
 var run_scrap: int = 0
-var run_caps: int = 0
+## Caps owed to the backpack that did not fit (boss gold, an old save's hidden
+## caps); banked 1:1 with the backpack's gold when the run is settled.
+var legacy_caps: int = 0
 var current_floor: int = 0
 var current_act: int = 1
 var deck: Array = []  # Array of Dictionaries (uid, card_id, bonus_attack, bonus_health)

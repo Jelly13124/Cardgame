@@ -119,23 +119,11 @@ signal tools_changed
 const GOLD_PER_CELL := 100
 const SCRAP_PER_CELL := 30
 
-## ── Caps (瓶盖) earning — Phase E2 ──────────────────────────────────────────
-## Caps accrue into a run-scoped counter during the run and are banked to
-## MetaProgress ONLY on extract / full victory (see _settle_backpack). A death
-## banks nothing — unbanked caps are lost, the same rule backpack scrap follows
-## outside the safe cells.
-## Tunables (grouped for easy balance):
-const CAPS_PER_COMBAT := 6  # normal (non-elite, non-boss) combat win
-const CAPS_PER_ELITE := 18  # elite win
-const CAPS_PER_BOSS := 45  # boss win (granted alongside the run config's boss_victory_scrap)
-const GOLD_PER_CAP := 10  # extraction: floor(run gold / GOLD_PER_CAP) → caps
+## ── Caps (瓶盖) ───────────────────────────────────────────────────────────
+## The run's only currency is the backpack's gold, shown as Caps. Extract or a
+## full victory banks it 1:1 into MetaProgress caps (see _settle_backpack); a
+## death banks nothing, the same rule backpack scrap follows outside safe cells.
 const STARTING_GOLD := 99  # baseline purse every run begins with (Command Center stacks on top)
-## Run-scoped caps accrued so far this run (banked on extract/victory only).
-var _run_caps: int:
-	get:
-		return state.run_caps
-	set(v):
-		state.run_caps = v
 ## Equipment physically owned by the base backpack between runs. Each entry is
 ## an equip instance dict. Unlike the old reference model, these entries are NOT
 ## duplicates/references of MetaProgress.stash: dragging between the two moves
@@ -580,7 +568,7 @@ func start_new_run(
 	# Reset resources and health (hero max_health overrides default 50).
 	# gold is derived from the backpack — clearing the backpack zeroes it.
 	_run_scrap_counter = 0
-	_run_caps = 0
+	state.legacy_caps = 0
 	current_floor = 0
 	current_act = 1
 	max_health = int(current_hero_data.get("max_health", 50))
@@ -887,14 +875,6 @@ func add_scrap_to_backpack(n: int) -> int:
 
 
 ## ── Caps earning helpers (Phase E2) ─────────────────────────────────────────
-## Accrue caps into the run-scoped counter. Banked to MetaProgress only at
-## extract / victory (see _settle_backpack) — mirrors the backpack-scrap banking.
-func award_run_caps(n: int) -> void:
-	if n <= 0:
-		return
-	_run_caps += n
-
-
 func _add_stacked(kind: String, n: int, per: int) -> int:
 	_ensure_backpack()
 	var remaining := n
@@ -1900,13 +1880,12 @@ func _settle_backpack(victory: bool, outcome: String) -> void:
 		var carried := total_run_scrap()
 		if carried > 0:
 			MetaProgress.add_scrap(carried)
-		# Caps bank alongside scrap: accrued per-fight caps + leftover run gold
-		# converted at GOLD_PER_CAP (floor). Banked on extract / victory only; a
-		# death (else-branch below) banks no caps.
-		var banked_caps := _run_caps + int(total_gold() / GOLD_PER_CAP)
+		# Caps bank alongside scrap: the backpack's gold 1:1, plus any owed
+		# caps that never fit. Extract / victory only; a death banks none.
+		var banked_caps: int = total_gold() + int(state.legacy_caps)
 		if banked_caps > 0:
 			MetaProgress.add_caps(banked_caps)
-		_run_caps = 0
+		state.legacy_caps = 0
 		for c in backpack:
 			var inst := _cell_equip_instance(c)
 			if not inst.is_empty():

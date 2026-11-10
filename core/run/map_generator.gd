@@ -108,15 +108,18 @@ static func roll_children(parent: Dictionary, map_data: Array, act: Dictionary, 
 	return nodes
 
 
-## What a room of `type` pays, rolled from `rng`: Caps for fights, Caps and
-## Scrap for elites, nothing printed for the other rooms.
-static func node_rewards(type: String, rng) -> Dictionary:
+## What a room of `type` pays, rolled from `rng`: Caps (backpack gold) for
+## fights by `strength`, Caps and Scrap for elites, nothing printed for the
+## other rooms. Values: content/economy/loot_economy.json.
+static func node_rewards(type: String, rng, strength := "normal") -> Dictionary:
+	var eco: Dictionary = MODEL_DB.data("economy", "base:loot_economy")
 	match type:
 		"enemy":
-			return {"caps": RunManager.CAPS_PER_COMBAT}
+			var by_strength: Dictionary = eco.get("combat_gold_by_strength", {})
+			return {"gold": int(by_strength.get(strength, by_strength.get("normal", 8)))}
 		"elite":
-			var scrap: Array = MODEL_DB.data("economy", "base:loot_economy").get("elite_scrap", [8, 16])
-			return {"caps": RunManager.CAPS_PER_ELITE, "scrap": rng.next_range(int(scrap[0]), int(scrap[1]))}
+			var scrap: Array = eco.get("elite_scrap", [8, 16])
+			return {"gold": int(eco.get("elite_gold", 18)), "scrap": rng.next_range(int(scrap[0]), int(scrap[1]))}
 	return {}
 
 

@@ -105,7 +105,7 @@ func _apply_static_theme() -> void:
 ## screen only names and draws it.
 func _generate_loot() -> void:
 	available_loot.clear()
-	for entry in REWARDS.combat_loot(RunManager.last_battle_node_type):
+	for entry in REWARDS.combat_loot(RunManager.last_battle_node_type, int(RunManager.battle_rewards().get("gold", 0))):
 		match str(entry["type"]):
 			"gold":
 				var gold_amount := int(entry["amount"])

@@ -16,9 +16,10 @@ static func economy() -> Dictionary:
 ## The loot entries of a won `node_type` fight, in display order:
 ## {type: "gold", amount} · {type: "cards"} · {type: "tool", tool_id} ·
 ## {type: "equipment", instance, demo_set_piece}.
-static func combat_loot(node_type: String) -> Array:
+## `gold`: the Caps the fought node printed (RunManager.battle_rewards()).
+static func combat_loot(node_type: String, gold: int) -> Array:
 	var eco := economy()
-	var loot: Array = [{"type": "gold", "amount": int(eco.get("combat_gold", 8))}, {"type": "cards"}]
+	var loot: Array = [{"type": "gold", "amount": gold}, {"type": "cards"}]
 	if not node_type in eco.get("no_tool_rooms", []):
 		if RunManager.rng("rewards").chance(RunManager.luck_tool_chance()):
 			var tool_id := RunManager.roll_tool_drop(node_type)

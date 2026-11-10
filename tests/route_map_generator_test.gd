@@ -147,9 +147,9 @@ func _check_walks(act: Dictionary) -> void:
 func _check_rewards(type: String, rewards: Dictionary) -> void:
 	match type:
 		"enemy":
-			_expect(rewards == {"caps": 6}, "a fight prints 6 Caps (%s)" % rewards)
+			_expect(rewards == {"gold": 8}, "a fight prints 8 Caps (%s)" % rewards)
 		"elite":
-			_expect(int(rewards.get("caps", 0)) == 18, "an elite prints 18 Caps (%s)" % rewards)
+			_expect(int(rewards.get("gold", 0)) == 18, "an elite prints 18 Caps (%s)" % rewards)
 			var scrap := int(rewards.get("scrap", 0))
 			_expect(scrap >= 8 and scrap <= 16, "an elite prints 8–16 Scrap (%s)" % rewards)
 		_:

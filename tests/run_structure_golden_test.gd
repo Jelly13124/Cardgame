@@ -76,7 +76,7 @@ func _check_golden2(golden: Dictionary) -> void:
 		var seq := []
 		for node_type in ["enemy", "elite"]:
 			RunManager.last_battle_node_type = node_type
-			seq.append(REWARDS.combat_loot(node_type).map(_loot_row))
+			seq.append(REWARDS.combat_loot(node_type, 8).map(_loot_row))
 			var pools := REWARDS.rarity_pools(MetaProgress.get_unlocked_card_pool())
 			seq.append([REWARDS.roll_unique_draft_card(pools, {}), REWARDS.roll_unique_draft_card(pools, {})])
 		seq.append(MERCHANT_INVENTORY.create(RunManager).to_dict())

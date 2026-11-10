@@ -11,15 +11,17 @@ extends RefCounted
 ## plus `backpack_full: true` when the boss equipment did not fit.
 
 const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
+const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 
 
-## `rewards`: the fought node's printed rewards, {caps, scrap}.
+## `rewards`: the fought node's printed rewards, {gold, scrap}; the loot screen
+## pays the gold, this pays an elite's Scrap.
 static func settle_victory(node_type: String, act: int, rewards: Dictionary) -> Dictionary:
-	# Caps stay at death risk until banked; a boss grants only the boss award.
+	# The boss's Caps go straight into the backpack; what does not fit is owed
+	# and banked when the run settles.
 	if node_type == "boss":
-		RunManager.award_run_caps(RunManager.CAPS_PER_BOSS)
-	else:
-		RunManager.award_run_caps(int(rewards.get("caps", 0)))
+		var boss_gold := int(MODEL_DB.data("economy", "base:loot_economy").get("boss_gold", 45))
+		RunManager.state.legacy_caps += boss_gold - RunManager.add_gold(boss_gold)
 	# XP; each level gained queues an attribute pick (the loot screen consumes them).
 	RunManager.gain_xp(node_type)
 	# Bounty event, before a final-boss victory ends the run.
