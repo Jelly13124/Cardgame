@@ -560,7 +560,7 @@ func _make_relic_choice_button(relic_id: String, source_type: String) -> Button:
 	button.add_theme_stylebox_override("hover", T.button_textured("hover"))
 	button.add_theme_stylebox_override("pressed", T.button_textured("pressed"))
 	# Description shows on hover only — the card itself shows just the name.
-	button.tooltip_text = description
+	Tooltip.bind_hover(button, description)
 	button.pressed.connect(_on_relic_choice_selected.bind(relic_id, source_type))
 
 	var margin = MarginContainer.new()

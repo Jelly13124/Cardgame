@@ -16,9 +16,6 @@ const RULES_PANEL_PATH := "uid://35njcmwpab3t"  # res://ui/menus/rules_panel.gd
 const START_BG_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/bottlecap_hunter_start_background.png"
 const START_TITLE_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/title_bottlecap_hunter.png"
 const START_DIVIDER_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/divider_bottlecap.png"
-const START_BUTTON_NORMAL_PATH := "res://run_system/assets/images/ui/start_screen/button_main_normal_v2.png"
-const START_BUTTON_SELECTED_PATH := "res://run_system/assets/images/ui/start_screen/button_main_selected_v2.png"
-const START_SAVE_STRIP_PATH := "res://run_system/assets/images/ui/start_screen/save_info_strip_clean.png"
 const START_LANGUAGE_BUTTON_PATH := "res://run_system/assets/images/ui/start_screen/icon_button_language.png"
 const START_SETTINGS_BUTTON_PATH := "res://run_system/assets/images/ui/start_screen/icon_button_settings.png"
 
@@ -117,28 +114,8 @@ func _load_texture(path: String) -> Texture2D:
 	return null
 
 
-func _start_stylebox(path: String, state: String = "normal") -> StyleBox:
-	var tex := _load_texture(path)
-	if tex == null:
-		return T.ll_button("normal") if path == START_BUTTON_SELECTED_PATH else T.ll_button_olive("normal")
-	var box := StyleBoxTexture.new()
-	box.texture = tex
-	box.texture_margin_left = 30
-	box.texture_margin_right = 30
-	box.texture_margin_top = 20
-	box.texture_margin_bottom = 20
-	box.content_margin_left = 22
-	box.content_margin_right = 22
-	box.content_margin_top = 12
-	box.content_margin_bottom = 12
-	match state:
-		"hover":
-			box.modulate_color = Color(1.10, 1.10, 1.10, 1.0)
-		"pressed":
-			box.modulate_color = Color(0.86, 0.86, 0.86, 1.0)
-		"disabled":
-			box.modulate_color = Color(0.46, 0.46, 0.46, 0.82)
-	return box
+func _start_stylebox(state: String = "normal") -> StyleBox:
+	return T.kit_box("button_primary_" + state, Vector4(22, 12, 22, 12))
 
 
 func _start_menu_button(text: String, handler: Callable) -> Button:
@@ -149,10 +126,10 @@ func _start_menu_button(text: String, handler: Callable) -> Button:
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.add_theme_font_override("font", T.display_font(700))
 	button.add_theme_font_size_override("font_size", 26)
-	button.add_theme_stylebox_override("normal", _start_stylebox(START_BUTTON_NORMAL_PATH))
-	button.add_theme_stylebox_override("hover", _start_stylebox(START_BUTTON_SELECTED_PATH, "hover"))
-	button.add_theme_stylebox_override("pressed", _start_stylebox(START_BUTTON_SELECTED_PATH, "pressed"))
-	button.add_theme_stylebox_override("disabled", _start_stylebox(START_BUTTON_NORMAL_PATH, "disabled"))
+	button.add_theme_stylebox_override("normal", _start_stylebox())
+	button.add_theme_stylebox_override("hover", _start_stylebox("hover"))
+	button.add_theme_stylebox_override("pressed", _start_stylebox("pressed"))
+	button.add_theme_stylebox_override("disabled", _start_stylebox("disabled"))
 	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	button.add_theme_color_override("font_color", Color(0.93, 0.80, 0.56))
 	button.add_theme_color_override("font_hover_color", Color(1.0, 0.93, 0.70))
@@ -225,16 +202,10 @@ func _start_save_info_button() -> Button:
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(_on_saves)
 
-	var bg := NinePatchRect.new()
+	var bg := Panel.new()
 	bg.name = "SaveStripBackground"
-	bg.texture = _load_texture(START_SAVE_STRIP_PATH)
+	bg.add_theme_stylebox_override("panel", T.kit_box("panel_hard_9slice"))
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.patch_margin_left = 30
-	bg.patch_margin_top = 22
-	bg.patch_margin_right = 30
-	bg.patch_margin_bottom = 22
-	bg.axis_stretch_horizontal = NinePatchRect.AXIS_STRETCH_MODE_STRETCH
-	bg.axis_stretch_vertical = NinePatchRect.AXIS_STRETCH_MODE_STRETCH
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(bg)
 
@@ -411,15 +382,7 @@ func _modal_slot_card(n: int, mode: String, layer: CanvasLayer) -> Control:
 	var occupied := MetaProgress.slot_exists(n)
 	var sub_text := _slot_summary_text(n, info)
 
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color(0.10, 0.075, 0.04, 0.96)
-	normal.border_color = Color(0.34, 0.26, 0.15)
-	normal.set_border_width_all(1)
-	normal.set_corner_radius_all(7)
-	normal.content_margin_left = 16
-	normal.content_margin_right = 16
-	normal.content_margin_top = 10
-	normal.content_margin_bottom = 10
+	var normal := T.kit_box("panel_hard_9slice", Vector4(16, 10, 16, 10))
 
 	# Info column (shared by both modes).
 	var info_box := VBoxContainer.new()
@@ -447,9 +410,8 @@ func _modal_slot_card(n: int, mode: String, layer: CanvasLayer) -> Control:
 		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		card.add_theme_stylebox_override("normal", normal)
-		var hov := normal.duplicate()
-		hov.bg_color = Color(0.18, 0.13, 0.07, 0.98)
-		hov.border_color = Color(1.0, 0.81, 0.27)
+		var hov := normal.duplicate() as StyleBoxTexture
+		hov.modulate_color = T.SKIN_HOVER_TINT
 		card.add_theme_stylebox_override("hover", hov)
 		card.add_theme_stylebox_override("pressed", normal)
 		card.add_theme_stylebox_override("focus", StyleBoxEmpty.new())

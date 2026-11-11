@@ -124,11 +124,12 @@ func _test_shared_top_bar() -> void:
 	_expect(bar.find_child("ActLabel", true, false) == null, "top bar removes the Act readout")
 	var deck_button: Button = null
 	for candidate in bar.find_children("*", "Button", true, false):
-		if (candidate as Button).tooltip_text == tr("UI_BATTLE_VIEW_RUN_DECK"):
+		if str(candidate.get_meta(Tooltip.TOOLTIP_TEXT_META, "")) == tr("UI_BATTLE_VIEW_RUN_DECK"):
 			deck_button = candidate as Button
 			break
 	_expect(deck_button != null, "top bar keeps the run-deck interaction")
 	if deck_button:
+		_expect(deck_button.tooltip_text.is_empty(), "run-deck hints use the shared tooltip overlay")
 		var deck_path := deck_button.icon.resource_path if deck_button.icon else ""
 		_expect(
 			deck_path.ends_with("/iconb_deck_stack.png"),
@@ -136,11 +137,12 @@ func _test_shared_top_bar() -> void:
 		)
 	var settings_button: Button = null
 	for candidate in bar.find_children("*", "Button", true, false):
-		if (candidate as Button).tooltip_text == tr("SETTINGS_BUTTON"):
+		if str(candidate.get_meta(Tooltip.TOOLTIP_TEXT_META, "")) == tr("SETTINGS_BUTTON"):
 			settings_button = candidate as Button
 			break
 	_expect(settings_button != null, "battle top bar keeps the settings interaction")
 	if settings_button:
+		_expect(settings_button.tooltip_text.is_empty(), "settings hints use the shared tooltip overlay")
 		var settings_path := settings_button.icon.resource_path if settings_button.icon else ""
 		_expect(
 			settings_path.ends_with("/icon_gear.png"),
@@ -349,8 +351,8 @@ func _test_battle_energy_and_end_turn() -> void:
 		if style is StyleBoxTexture and style.texture:
 			style_path = style.texture.resource_path
 		_expect(
-			style_path.ends_with("/hud_end_turn_orange.png"),
-			"EndRoundButton uses the high-contrast orange plate (got %s)" % style_path
+			style_path.ends_with("/kit/button_primary_normal.png"),
+			"EndRoundButton uses the shared primary button skin (got %s)" % style_path
 		)
 
 	battle.queue_free()

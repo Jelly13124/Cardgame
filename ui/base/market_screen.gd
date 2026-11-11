@@ -21,8 +21,8 @@
 ## no longer has a bounty section. The base card-unlock/card-shop system was
 ## removed (Phase A refactor) — the Market doesn't sell cards.
 ##
-## Every generated market PNG lookup falls back to a programmatic StyleBox /
-## spacer / text so a missing asset never crashes (warn-free placeholder rule).
+## Shared panel artwork comes from the common theme; item art retains spacers /
+## text when a source texture is missing.
 ## NO class_name (project convention: subclass via path string, instantiate with `.new()`).
 ## Reads only the shared MetaProgress / RunManager API; edits no shared file.
 extends "res://ui/base/building_screen_base.gd"
@@ -31,16 +31,6 @@ const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const EQUIPMENT_ICON := preload("uid://c6mjhfe52nqj5")  # res://ui/common/equipment_icon.gd
 const EQUIP_TOOLTIP := preload("uid://c6r8gr4gvx8ts")  # res://ui/common/equip_tooltip.gd
-const MARKET_UI_DIR := "res://run_system/assets/images/ui/market/"
-const MARKET_SHELF_FRAME_PATH := MARKET_UI_DIR + "market_shelf_panel_frame.png"
-const MARKET_TOOL_CARD_PATH := MARKET_UI_DIR + "market_tool_card_frame.png"
-const MARKET_EQUIP_CARD_PATHS := {
-	"common": MARKET_UI_DIR + "market_equip_card_common.png",
-	"uncommon": MARKET_UI_DIR + "market_equip_card_uncommon.png",
-	"rare": MARKET_UI_DIR + "market_equip_card_rare.png",
-}
-const MARKET_EXCHANGE_ROW_PATH := MARKET_UI_DIR + "market_exchange_row_frame.png"
-
 ## Pixel geometry measured from the accepted 1672×941 concept and mapped to
 ## 1920×1080. The normal project stretch policy scales this composition at
 ## other resolutions without changing the internal proportions.
@@ -214,7 +204,7 @@ func _build_tool_tile(tool_id: String) -> Control:
 		tool_tip += "\n%s" % tool_desc
 	Tooltip.bind_hover(card, tool_tip)
 	card.add_theme_stylebox_override(
-		"panel", _market_texture_style(MARKET_TOOL_CARD_PATH, T.ll_inset(), 16, 16, 0)
+		"panel", T.kit_box("panel_hard_9slice")
 	)
 
 	var margin := MarginContainer.new()
@@ -337,9 +327,8 @@ func _build_equip_tile(entry: Dictionary) -> Control:
 	card.custom_minimum_size = Vector2(0, EQUIP_CARD_HEIGHT)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	Tooltip.bind_hover(card, EQUIP_TOOLTIP.text(data, slot, {"rarity": rarity}))
-	var frame_path := str(MARKET_EQUIP_CARD_PATHS.get(rarity, MARKET_EQUIP_CARD_PATHS["common"]))
 	card.add_theme_stylebox_override(
-		"panel", _market_texture_style(frame_path, T.ll_inset(), 16, 16, 0)
+		"panel", T.state_box("normal", 0, RARITY_COLORS.get(rarity, Color.WHITE))
 	)
 
 	var margin := MarginContainer.new()
@@ -530,7 +519,7 @@ func _conversion_row(
 	panel.name = "MarketConversion_%s_to_%s" % [src_cur, dst_cur]
 	panel.custom_minimum_size = Vector2(0, 80)
 	panel.add_theme_stylebox_override(
-		"panel", _market_texture_style(MARKET_EXCHANGE_ROW_PATH, T.ll_inset(), 14, 14, 0)
+		"panel", T.kit_box("panel_hard_9slice")
 	)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	Tooltip.bind_hover(panel, tr("UI_MARKET_CONVERT_TAX_NOTE"))
@@ -622,7 +611,7 @@ func _make_section(title: String, with_refresh: bool = false) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.add_theme_stylebox_override(
-		"panel", _market_texture_style(MARKET_SHELF_FRAME_PATH, T.ll_section(), 22, 18, 7)
+		"panel", T.kit_box("panel_hard_9slice", Vector4.ONE * 7)
 	)
 
 	var margin := MarginContainer.new()
@@ -745,12 +734,7 @@ func _olive_button(text: String) -> Button:
 func _amount_field(amount: int) -> Control:
 	var field := PanelContainer.new()
 	field.custom_minimum_size = Vector2(106, 51)
-	var fallback := StyleBoxFlat.new()
-	fallback.bg_color = Color(0.07, 0.065, 0.055, 0.95)
-	fallback.border_color = Color(0.34, 0.30, 0.20, 0.9)
-	fallback.set_border_width_all(1)
-	fallback.set_corner_radius_all(4)
-	var box := T.lightline_box("bar_plain", fallback, 24)
+	var box := T.input_box()
 	box.content_margin_left = 10
 	box.content_margin_right = 10
 	box.content_margin_top = 5
@@ -763,33 +747,6 @@ func _amount_field(amount: int) -> Control:
 	_style_label(lbl, 18, PRICE_COLOR, 1)
 	field.add_child(lbl)
 	return field
-
-
-## Load one generated market frame as a nine-slice StyleBox. Every frame keeps
-## a programmatic fallback, so a missing/importing asset cannot crash the shop.
-func _market_texture_style(
-	texture_path: String,
-	fallback: StyleBox,
-	margin_h: int,
-	margin_v: int,
-	content_margin: int
-) -> StyleBox:
-	if not ResourceLoader.exists(texture_path):
-		return fallback
-	var texture := load(texture_path) as Texture2D
-	if texture == null:
-		return fallback
-	var style := StyleBoxTexture.new()
-	style.texture = texture
-	style.texture_margin_left = margin_h
-	style.texture_margin_right = margin_h
-	style.texture_margin_top = margin_v
-	style.texture_margin_bottom = margin_v
-	style.content_margin_left = content_margin
-	style.content_margin_right = content_margin
-	style.content_margin_top = content_margin
-	style.content_margin_bottom = content_margin
-	return style
 
 
 ## A lightline PNG as a fixed-size TextureRect, or an equal-size empty spacer

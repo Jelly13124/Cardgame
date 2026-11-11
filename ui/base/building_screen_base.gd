@@ -347,7 +347,7 @@ func _refresh() -> void:
 		var maxed := tier >= MetaProgress.MAX_BUILDING_TIER
 		_upgrade_button.disabled = maxed
 		_upgrade_button.modulate = Color.WHITE if not maxed else Color(0.58, 0.58, 0.58, 0.88)
-		_upgrade_button.tooltip_text = tr("UI_BUILD_MAX") if maxed else ""
+		Tooltip.bind_hover(_upgrade_button, tr("UI_BUILD_MAX") if maxed else "")
 
 
 func _on_close_pressed() -> void:
@@ -438,11 +438,7 @@ func _section_header(text: String) -> Control:
 
 func _styled_panel(dark: bool = false) -> PanelContainer:
 	var panel := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = TOK_PANEL_BG_DARK if dark else TOK_PANEL_BG
-	style.border_color = TOK_LINE
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(TOK_RADIUS)
+	var style := T.ll_inset() if dark else T.ll_panel()
 	style.content_margin_left = TOK_MARGIN_INNER
 	style.content_margin_right = TOK_MARGIN_INNER
 	style.content_margin_top = TOK_MARGIN_INNER

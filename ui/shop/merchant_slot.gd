@@ -120,7 +120,7 @@ func _build_relic() -> void:
 	custom_minimum_size = Vector2(132, 200)
 	var data: Dictionary = RunManager.get_relic_data(entry.relic_id)
 	var icon := _icon_button(str(data.get("icon", "")), Vector2(104, 104))
-	icon.tooltip_text = Settings.t("RELIC_%s_TITLE" % MODEL_ID.key_entry(entry.relic_id), str(data.get("title", entry.relic_id)))
+	Tooltip.bind_hover(icon, Settings.t("RELIC_%s_TITLE" % MODEL_ID.key_entry(entry.relic_id), str(data.get("title", entry.relic_id))))
 	for state in ["normal", "hover", "pressed", "focus"]:  # bare-ok: theme state
 		icon.add_theme_stylebox_override(state, StyleBoxEmpty.new())
 	icon.pressed.connect(func(): entry.try_purchase())
@@ -134,7 +134,7 @@ func _build_tool() -> void:
 	custom_minimum_size = Vector2(92, 150)
 	var data: Dictionary = RunManager.get_tool_data(entry.tool_id)
 	var icon := _icon_button(str(data.get("icon", "")), Vector2(82, 90))
-	icon.tooltip_text = Settings.t("TOOL_%s_TITLE" % MODEL_ID.key_entry(entry.tool_id), str(data.get("title", entry.tool_id)))
+	Tooltip.bind_hover(icon, Settings.t("TOOL_%s_TITLE" % MODEL_ID.key_entry(entry.tool_id), str(data.get("title", entry.tool_id))))
 	style_button(icon, TOOL_ACCENT)
 	icon.pressed.connect(func(): entry.try_purchase())
 	add_child(icon)
@@ -188,19 +188,11 @@ func _hover(node: Control, to: Vector2) -> void:
 
 
 static func style_button(button: Button, accent: Color) -> void:
-	for state in ["normal", "pressed", "disabled"]:
-		var style := StyleBoxFlat.new()
-		style.bg_color = Color(0.045, 0.055, 0.055, 0.94)
-		style.border_color = accent if state != "disabled" else Color(0.28, 0.28, 0.27, 0.75)
-		style.set_border_width_all(1)
-		style.set_corner_radius_all(5)
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var style := T.ll_button_olive(state) as StyleBoxTexture
+		style.modulate_color *= accent
+		style.set_content_margin_all(2.0 if state == "hover" else 1.0)
 		button.add_theme_stylebox_override(state, style)
-	var hover := StyleBoxFlat.new()
-	hover.bg_color = Color(0.08, 0.09, 0.085, 0.98)
-	hover.border_color = accent.lightened(0.18)
-	hover.set_border_width_all(2)
-	hover.set_corner_radius_all(5)
-	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	button.add_theme_color_override("font_color", Color(0.97, 0.85, 0.58))
 	button.add_theme_color_override("font_hover_color", Color.WHITE)

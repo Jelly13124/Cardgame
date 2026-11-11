@@ -18,15 +18,15 @@ const FORGE_WINDOW_PATH := "res://ui/windows/forge_window.gd"  # path-ok: reads 
 const MAIN_MENU_PATH := "res://ui/menus/main_menu.gd"  # path-ok: reads source text
 const UI_COMMON_PATH := "res://assets/translations/ui_common.csv"
 const UI_HOME_PATH := "res://assets/translations/ui_home.csv"
-const NORMAL_BUTTON_PATH := "res://run_system/assets/images/ui/start_screen/button_main_normal_v2.png"
-const SELECTED_BUTTON_PATH := "res://run_system/assets/images/ui/start_screen/button_main_selected_v2.png"
-const BOUNTY_BOARD_FRAME_PATH := "res://run_system/assets/images/home/base_hud/bounty_board_frame_exact.png"
+const NORMAL_BUTTON_PATH := "res://run_system/assets/images/ui/kit/button_primary_normal.png"
+const SELECTED_BUTTON_PATH := "res://run_system/assets/images/ui/kit/button_primary_hover.png"
+const BOUNTY_BOARD_FRAME_PATH := "res://run_system/assets/images/ui/kit/panel_hard_9slice.png"
 const BUILDING_UPGRADE_FRAME_PATH := (
-	"res://run_system/assets/images/ui/buildings/building_upgrade_popover_frame.png"
+	"res://run_system/assets/images/ui/kit/panel_hard_9slice.png"
 )
 const PRICE_PLAQUE_PATHS := [
-	"res://run_system/assets/images/ui_kit_lightline/price_plaque_olive_concept.png",
-	"res://run_system/assets/images/ui_kit_lightline/price_plaque_orange_concept.png",
+	"res://run_system/assets/images/ui/kit/button_secondary_normal.png",
+	"res://run_system/assets/images/ui/kit/button_primary_normal.png",
 ]
 const FORGE_WORKBENCH_PATH := (
 	"res://run_system/assets/images/ui/forge/forge_blacksmith_workbench.png"
@@ -42,12 +42,10 @@ const BUILDING_INTERIOR_PATHS := [
 	"res://run_system/assets/images/buildings/outpost_bg.png",
 ]
 const MARKET_COMPONENT_SIZES := {
-	"res://run_system/assets/images/ui/market/market_shelf_panel_frame.png": Vector2i(1309, 329),
-	"res://run_system/assets/images/ui/market/market_tool_card_frame.png": Vector2i(238, 254),
-	"res://run_system/assets/images/ui/market/market_equip_card_common.png": Vector2i(238, 301),
-	"res://run_system/assets/images/ui/market/market_equip_card_uncommon.png": Vector2i(238, 301),
-	"res://run_system/assets/images/ui/market/market_equip_card_rare.png": Vector2i(238, 301),
-	"res://run_system/assets/images/ui/market/market_exchange_row_frame.png": Vector2i(609, 80),
+	"res://run_system/assets/images/ui/kit/panel_hard_9slice.png": Vector2i(96, 96),
+	"res://run_system/assets/images/ui/kit/panel_soft_9slice.png": Vector2i(96, 96),
+	"res://run_system/assets/images/ui/kit/input_9slice.png": Vector2i(192, 64),
+	"res://run_system/assets/images/ui/kit/button_secondary_normal.png": Vector2i(192, 64),
 }
 const BUILDING_BADGE_PATHS := [
 	"res://run_system/assets/images/home/base_hud/badge_forge.png",
@@ -78,7 +76,7 @@ func _run() -> void:
 	_test_clinic_cap_is_binary()
 	_test_concept_purchase_buttons()
 	_test_home_icon_only_and_bounty_contract()
-	_test_main_menu_uses_native_wide_buttons()
+	_test_main_menu_uses_shared_buttons()
 	if failures.is_empty():
 		print("[OK] Base upgrade and result routing contract passed")
 		get_tree().quit(0)
@@ -95,16 +93,20 @@ func _test_generated_assets() -> void:
 	for texture in [normal, selected]:
 		if texture == null:
 			continue
-		var ratio := float(texture.get_width()) / maxf(1.0, float(texture.get_height()))
-		_expect(absf(ratio - 4.375) < 0.25, "main-menu button asset keeps native 420:96 ratio")
+		_expect(
+			Vector2i(texture.get_width(), texture.get_height()) == Vector2i(192, 64),
+			"main-menu buttons use the shared source canvas before nine-slice layout"
+		)
 
-	_expect(ResourceLoader.exists(BOUNTY_BOARD_FRAME_PATH), "exact bounty-board frame component exists")
+	_expect(ResourceLoader.exists(BOUNTY_BOARD_FRAME_PATH), "shared bounty-board panel exists")
 	if ResourceLoader.exists(BOUNTY_BOARD_FRAME_PATH):
 		var bounty_frame := load(BOUNTY_BOARD_FRAME_PATH) as Texture2D
-		_expect(bounty_frame != null, "exact bounty-board frame imports as a texture")
+		_expect(bounty_frame != null, "shared bounty-board panel imports as a texture")
 		if bounty_frame != null:
-			var bounty_ratio := float(bounty_frame.get_width()) / maxf(1.0, float(bounty_frame.get_height()))
-			_expect(absf(bounty_ratio - (360.0 / 226.0)) < 0.12, "bounty-board frame preserves the compact 360:226 silhouette")
+			_expect(
+				Vector2i(bounty_frame.get_width(), bounty_frame.get_height()) == Vector2i(96, 96),
+				"bounty-board frame uses the shared panel source canvas"
+			)
 
 	for path in BUILDING_BADGE_PATHS:
 		_expect(ResourceLoader.exists(path), "replacement building badge exists: %s" % path)
@@ -197,22 +199,22 @@ func _test_generated_assets() -> void:
 
 	for path_variant in MARKET_COMPONENT_SIZES:
 		var path := str(path_variant)
-		_expect(ResourceLoader.exists(path), "exact Market UI component exists: %s" % path)
+		_expect(ResourceLoader.exists(path), "shared base UI component exists: %s" % path)
 		if not ResourceLoader.exists(path):
 			continue
 		var component := load(path) as Texture2D
-		_expect(component != null, "exact Market UI component imports: %s" % path)
+		_expect(component != null, "shared base UI component imports: %s" % path)
 		if component == null:
 			continue
 		var expected_size: Vector2i = MARKET_COMPONENT_SIZES[path]
 		_expect(
 			Vector2i(component.get_width(), component.get_height()) == expected_size,
-			"Market UI component keeps its measured concept footprint: %s" % path
+			"base UI component keeps the shared source dimensions: %s" % path
 		)
 		var component_image := component.get_image()
 		_expect(
 			component_image != null and component_image.get_pixel(0, 0).a < 0.05,
-			"Market UI component keeps transparent corners for nine-slice composition: %s" % path
+			"base UI component keeps transparent corners for nine-slice composition: %s" % path
 		)
 
 
@@ -262,7 +264,7 @@ func _test_building_upgrade_lives_inside() -> void:
 	var home_copy := FileAccess.get_file_as_string(UI_HOME_PATH)
 	for marker in [
 		'name = "BuildingUpgradePopover"',
-		"building_upgrade_popover_frame.png",
+		'T.kit_box("panel_hard_9slice")',
 		'T.ll_button_dark("normal")',
 		"MetaProgress.unlock_building(building_id)",
 		"MetaProgress.upgrade_building(building_id)",
@@ -338,8 +340,8 @@ func _test_concept_purchase_buttons() -> void:
 		theme_source.contains("static func centered_currency_button_content(")
 		and theme_source.contains('holder.name = "CenteredCurrencyContent"')
 		and theme_source.contains('button.set_meta("concept_price_button", true)')
-		and theme_source.contains("price_plaque_olive_concept")
-		and theme_source.contains("price_plaque_orange_concept"),
+		and theme_source.contains("button_secondary_")
+		and theme_source.contains("button_primary_"),
 		"building price plaques share one centered icon/amount implementation"
 	)
 	_expect(
@@ -376,21 +378,10 @@ func _test_concept_purchase_buttons() -> void:
 		set_bases_on_shelf.is_empty(),
 		"market stock excludes set bases instead of displaying them as ordinary gear (%s)" % [set_bases_on_shelf]
 	)
-	for asset_name in [
-		"market_shelf_panel_frame.png",
-		"market_tool_card_frame.png",
-		"market_equip_card_common.png",
-		"market_equip_card_uncommon.png",
-		"market_equip_card_rare.png",
-		"market_exchange_row_frame.png",
-	]:
-		_expect(
-			market_source.contains(asset_name),
-			"market source wires the generated exact-match component: %s" % asset_name
-		)
 	_expect(
-		market_source.contains("_market_texture_style("),
-		"market applies generated full-card and shelf textures through its texture style helper"
+		market_source.contains('T.kit_box("panel_hard_9slice")')
+		and market_source.contains('T.state_box("normal", 0, RARITY_COLORS.get(rarity, Color.WHITE))'),
+		"market shelves and offers share the common skin while preserving rarity tint"
 	)
 	_expect(
 		market_source.contains('tr("UI_MARKET_REFRESH_VERB")')
@@ -446,8 +437,10 @@ func _test_home_icon_only_and_bounty_contract() -> void:
 		building_icon_body.contains("Vector2(84, 84)"),
 		"the single facility badge fills the original click target"
 	)
-	_expect(source.contains(BOUNTY_BOARD_FRAME_PATH), "home loads the exact bounty-board raster component")
-	_expect(bounty_body.contains("BOUNTY_BOARD_FRAME"), "bounty-board construction applies the exact raster frame")
+	_expect(
+		bounty_body.contains('T.kit_box("panel_hard_9slice")'),
+		"bounty-board construction applies the shared hard panel"
+	)
 	_expect(not source.contains("BountyRefreshCountdown"), "bounty board hides the refresh countdown")
 	_expect(not source.contains("BountyRefreshTimer"), "bounty board has no visible-countdown timer")
 	_expect(not source.contains("BountyRewardSeal"), "bounty rows omit the three reward seals")
@@ -484,19 +477,18 @@ func _float_assignment(source: String, key: String) -> float:
 	return float(matched.get_string(1)) if matched != null else NAN
 
 
-func _test_main_menu_uses_native_wide_buttons() -> void:
+func _test_main_menu_uses_shared_buttons() -> void:
 	var source := FileAccess.get_file_as_string(MAIN_MENU_PATH)
 	var save_strip_body := _function_body(source, "func _start_save_info_button")
-	_expect(source.contains("button_main_normal_v2.png"), "main menu uses native-wide normal button")
-	_expect(source.contains("button_main_selected_v2.png"), "main menu uses native-wide selected button")
+	var button_body := _function_body(source, "func _start_stylebox")
 	_expect(
-		source.contains("save_info_strip_clean.png"),
-		"start-screen save strip uses the clean gear-free component"
+		button_body.contains('T.kit_box("button_primary_" + state'),
+		"main menu uses all four shared primary button states"
 	)
 	_expect(
-		save_strip_body.contains("NinePatchRect.new()")
+		save_strip_body.contains('T.kit_box("panel_hard_9slice")')
 		and save_strip_body.contains('name = "SaveStripBackground"'),
-		"save strip preserves its border with a named nine-patch background"
+		"save strip preserves its named background with the shared nine-slice panel"
 	)
 	_expect(
 		not save_strip_body.contains("TextureRect.STRETCH_SCALE"),

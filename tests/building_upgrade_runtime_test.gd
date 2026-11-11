@@ -59,6 +59,7 @@ func _run() -> void:
 	add_child(home)
 	await _frames(6)
 
+	_test_shared_home_skin(home)
 	await _test_locked_clinic_route(home)
 	await _test_locked_forge_route(home)
 	await _test_forge_backdrop_lifecycle(home)
@@ -81,6 +82,45 @@ func _run() -> void:
 		return
 	push_error("Building upgrade runtime flow failed: %s" % "; ".join(failures))
 	get_tree().quit(1)
+
+
+func _test_shared_home_skin(home: Node) -> void:
+	var depart := home.find_child("StartRunButton", true, false) as Button
+	var difficulty := home.find_child("DifficultyButton", true, false) as Button
+	var seed_field := home.find_child("SeedField", true, false) as LineEdit
+	_expect(depart != null and difficulty != null and seed_field != null, "home keeps its launch controls")
+	for button in [depart, difficulty]:
+		if button == null:
+			continue
+		for state in ["normal", "hover", "pressed", "disabled"]:
+			_expect(
+				_uses_shared_skin(button.get_theme_stylebox(state)),
+				"home %s uses the shared %s skin" % [button.name, state]
+			)
+	if depart != null:
+		_expect(
+			depart.offset_left == -335.0 and depart.offset_top == -172.0
+			and depart.offset_right == 335.0 and depart.offset_bottom == -65.0,
+			"the new depart skin preserves the accepted launch position"
+		)
+	if seed_field != null:
+		_expect(
+			_uses_shared_skin(seed_field.get_theme_stylebox("normal")),
+			"the seed field uses the shared input skin"
+		)
+	var board := home.find_child("BountyBoardPanel", true, false) as PanelContainer
+	_expect(
+		board != null and _uses_shared_skin(board.get_theme_stylebox("panel")),
+		"the home bounty board uses the common panel artwork"
+	)
+
+
+func _uses_shared_skin(style: StyleBox) -> bool:
+	var texture_style := style as StyleBoxTexture
+	return (
+		texture_style != null and texture_style.texture != null
+		and texture_style.texture.resource_path.begins_with("res://run_system/assets/images/ui/kit/")
+	)
 
 
 func _test_locked_clinic_route(home: Node) -> void:
@@ -278,8 +318,8 @@ func _test_accepted_building_surfaces(home: Node) -> void:
 				var shelf := overlay.find_child(str(shelf_contract[0]), true, false) as PanelContainer
 				_expect(
 					shelf != null
-					and shelf.get_theme_stylebox("panel") is StyleBoxTexture,
-					"market %s uses the generated full shelf-panel texture" % shelf_contract[0]
+					and _uses_shared_skin(shelf.get_theme_stylebox("panel")),
+					"market %s uses the shared shelf-panel texture" % shelf_contract[0]
 				)
 				if shelf != null:
 					_expect(
@@ -297,8 +337,8 @@ func _test_accepted_building_surfaces(home: Node) -> void:
 				var tool_card := candidate as PanelContainer
 				_expect(
 					tool_card != null
-					and tool_card.get_theme_stylebox("panel") is StyleBoxTexture,
-					"every market tool offer uses the generated full-card texture"
+					and _uses_shared_skin(tool_card.get_theme_stylebox("panel")),
+					"every market tool offer uses the shared full-card texture"
 				)
 				if tool_card != null:
 					_expect(
@@ -316,8 +356,8 @@ func _test_accepted_building_surfaces(home: Node) -> void:
 				var equipment_card := candidate as PanelContainer
 				_expect(
 					equipment_card != null
-					and equipment_card.get_theme_stylebox("panel") is StyleBoxTexture,
-					"every market equipment offer uses its generated rarity-card texture"
+					and _uses_shared_skin(equipment_card.get_theme_stylebox("panel")),
+					"every market equipment offer uses the shared skin with its rarity tint"
 				)
 				if equipment_card != null:
 					_expect(
@@ -339,8 +379,8 @@ func _test_accepted_building_surfaces(home: Node) -> void:
 				var conversion_row := candidate as PanelContainer
 				_expect(
 					conversion_row != null
-					and conversion_row.get_theme_stylebox("panel") is StyleBoxTexture,
-					"each market conversion row uses the generated exchange-row texture"
+					and _uses_shared_skin(conversion_row.get_theme_stylebox("panel")),
+					"each market conversion row uses the shared exchange-row texture"
 				)
 			var price_buttons := _concept_price_buttons(overlay)
 			_expect(

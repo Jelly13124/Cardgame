@@ -21,7 +21,9 @@ const STRENGTH_COLORS := {"weak": T.ACCENT_NEON_GREEN, "normal": T.UI_HEADER_GOL
 
 var node_id := ""
 var interactive := false
-var _style: StyleBoxFlat
+var _style: StyleBoxTexture
+var _hover_style: StyleBoxTexture
+var _panel: PanelContainer
 
 
 func _init() -> void:
@@ -32,11 +34,14 @@ func _init() -> void:
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_style = T.panel_with_shadow(T.GLASS_BG, T.GLASS_HAIRLINE, 10, 2)
-	_style.content_margin_left = 18
-	_style.content_margin_right = 18
-	_style.content_margin_top = 20
-	_style.content_margin_bottom = 18
+	_panel = panel
+	_style = T.state_box("normal", 0.0)
+	_hover_style = T.state_box("hover", 0.0)
+	for style: StyleBox in [_style, _hover_style]:
+		style.content_margin_left = 18
+		style.content_margin_right = 18
+		style.content_margin_top = 20
+		style.content_margin_bottom = 18
 	panel.add_theme_stylebox_override("panel", _style)
 	add_child(panel)
 	var box := VBoxContainer.new()
@@ -135,7 +140,7 @@ func setup(node: Dictionary, next_types: Array, heal_amount: int, is_interactive
 		small.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		small.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		small.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		small.tooltip_text = tr("UI_MAP_LEGEND_%s" % str(t).to_upper())
+		Tooltip.bind_hover(small, tr("UI_MAP_LEGEND_%s" % str(t).to_upper()))
 		%NextRow.add_child(small)
 
 
@@ -178,7 +183,7 @@ func _gui_input(event: InputEvent) -> void:
 func _set_hover(on: bool) -> void:
 	if not interactive:
 		return
-	_style.border_color = T.GLASS_GOLD_BRIGHT if on else T.GLASS_HAIRLINE
+	_panel.add_theme_stylebox_override("panel", _hover_style if on else _style)
 	var tween := create_tween()
 	tween.tween_property(self, "scale", Vector2.ONE * (1.05 if on else 1.0), 0.1)
 

@@ -47,15 +47,12 @@ const GROUND_INSET := 12.0
 const HERO_HEADSHOT_PATH := "res://battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_headshot.png"
 const HERO_PORTRAIT_PATH := "res://battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_portrait.png"
 const BASE_HUD_ICON_DIR := "res://run_system/assets/images/home/base_hud/"
-const BOUNTY_BOARD_FRAME := "res://run_system/assets/images/home/base_hud/bounty_board_frame_exact.png"
 const BOUNTY_HEADER_CLIPBOARD := "res://run_system/assets/images/home/base_hud/bounty_header_clipboard.png"
 const CURRENCY_ICON_DIR := "res://run_system/assets/images/home/currency/"
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const CARD_DESCRIPTION = preload("uid://b4fkwjpel7452")  # res://core/content/card_description.gd
 const RUN_RNG_SET = preload("uid://ealvw2c6utr7")  # res://core/rng/run_rng_set.gd
-const SEED_FIELD_BORDER := Color(0.55, 0.42, 0.26, 1.0)
-const SEED_FIELD_INVALID_BORDER := Color(0.9, 0.25, 0.2, 1.0)
 ## Locked-gallery slot art: the same card back battle uses (play_card.gd).
 const GALLERY_CARD_BACK := "res://battle_scene/assets/images/cards/ui/card_back.png"
 const TOP_HUD_LAYER := 70
@@ -367,6 +364,7 @@ func _make_top_difficulty_button() -> Button:
 	btn.add_theme_stylebox_override("normal", _home_button_style("normal"))
 	btn.add_theme_stylebox_override("hover", _home_button_style("hover"))
 	btn.add_theme_stylebox_override("pressed", _home_button_style("pressed"))
+	btn.add_theme_stylebox_override("disabled", _home_button_style("disabled"))
 	btn.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	btn.pressed.connect(_show_difficulty_popup)
 
@@ -423,12 +421,13 @@ func _make_square_icon_button(icon_id: String, tooltip: String, callback: Callab
 	var btn := Button.new()
 	btn.name = icon_id.capitalize() + "Button"
 	btn.custom_minimum_size = Vector2(58, 56)
-	btn.tooltip_text = tooltip
+	Tooltip.bind_hover(btn, tooltip)
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	btn.add_theme_stylebox_override("normal", _home_frameless_button_style("normal"))
-	btn.add_theme_stylebox_override("hover", _home_frameless_button_style("hover"))
-	btn.add_theme_stylebox_override("pressed", _home_frameless_button_style("pressed"))
+	btn.add_theme_stylebox_override("normal", _home_nav_button_style("normal"))
+	btn.add_theme_stylebox_override("hover", _home_nav_button_style("hover"))
+	btn.add_theme_stylebox_override("pressed", _home_nav_button_style("pressed"))
+	btn.add_theme_stylebox_override("disabled", _home_nav_button_style("disabled"))
 	btn.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	btn.pressed.connect(callback)
 
@@ -458,7 +457,7 @@ func _add_bounty_board_panel(root: Control) -> void:
 	panel.offset_right = 408.0
 	panel.offset_bottom = -68.0
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	panel.add_theme_stylebox_override("panel", _home_bounty_frame_style(BOUNTY_BOARD_FRAME))
+	panel.add_theme_stylebox_override("panel", T.kit_box("panel_hard_9slice"))
 	root.add_child(panel)
 
 	var margin := MarginContainer.new()
@@ -515,7 +514,7 @@ func _add_bounty_board_panel(root: Control) -> void:
 	var pickup_badge := PanelContainer.new()
 	pickup_badge.custom_minimum_size = Vector2(23, 23)
 	pickup_badge.add_theme_stylebox_override(
-		"panel", _home_flat_style(Color(0.025, 0.12, 0.14, 0.96), Color(0.10, 0.78, 0.86, 1.0), 12, 2)
+		"panel", T.state_box("selected", 0)
 	)
 	pickup_row.add_child(pickup_badge)
 	var pickup_plus := Label.new()
@@ -686,11 +685,11 @@ func _make_daily_task_row(
 	progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	progress.add_theme_stylebox_override(
 		"background",
-		_home_flat_style(Color("#36332e"), Color("#36332e"), 2, 0)
+		T.semantic_fill(Color("#36332e"))
 	)
 	var fill_color := Color("#c77a20") if highlighted else Color("#289ba7")
 	progress.add_theme_stylebox_override(
-		"fill", _home_flat_style(fill_color, fill_color, 2, 0)
+		"fill", T.semantic_fill(fill_color)
 	)
 	text_box.add_child(progress)
 	row.add_child(_bounty_divider())
@@ -719,6 +718,7 @@ func _add_start_run_button(root: Control) -> void:
 	button.add_theme_stylebox_override("normal", _home_start_button_style("normal"))
 	button.add_theme_stylebox_override("hover", _home_start_button_style("hover"))
 	button.add_theme_stylebox_override("pressed", _home_start_button_style("pressed"))
+	button.add_theme_stylebox_override("disabled", _home_start_button_style("disabled"))
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
@@ -768,13 +768,9 @@ func _add_seed_field(root: Control) -> void:
 
 func _style_seed_field(field: LineEdit, invalid: bool) -> void:
 	field.set_meta("seed_invalid", invalid)
-	field.tooltip_text = tr("UI_HOME_SEED_INVALID") if invalid else ""
+	Tooltip.bind_hover(field, tr("UI_HOME_SEED_INVALID") if invalid else "")
 	for state in ["normal", "focus"]:  # bare-ok: theme state
-		var box := StyleBoxFlat.new()
-		box.bg_color = Color(0.08, 0.055, 0.035, 0.88)
-		box.border_color = SEED_FIELD_INVALID_BORDER if invalid else SEED_FIELD_BORDER
-		box.set_border_width_all(2)
-		box.set_corner_radius_all(6)
+		var box := T.input_box(invalid)
 		box.content_margin_left = 10
 		box.content_margin_right = 10
 		field.add_theme_stylebox_override(state, box)
@@ -832,18 +828,9 @@ func _add_bottom_nav(root: Control) -> void:
 	)
 
 
-## Frameless styleboxes for the floating icon buttons (nav + settings gear) —
-## owner wants NO box behind them: invisible at rest, a faint warm wash on
-## hover / press so they still read as pressable.
-func _home_frameless_button_style(state: String) -> StyleBox:
-	if state == "normal":
-		return StyleBoxEmpty.new()
-	var sb := StyleBoxFlat.new()
-	sb.set_corner_radius_all(10)
-	sb.bg_color = (
-		Color(0.0, 0.0, 0.0, 0.22) if state == "pressed" else Color(1.0, 0.86, 0.55, 0.12)
-	)
-	return sb
+## Navigation controls share the secondary button skin.
+func _home_nav_button_style(state: String) -> StyleBox:
+	return T.ll_button_dark(state)
 
 
 func _make_home_nav_button(
@@ -852,12 +839,13 @@ func _make_home_nav_button(
 	var btn := Button.new()
 	btn.name = icon_id.capitalize() + "NavButton"
 	btn.custom_minimum_size = Vector2(126, 148)
-	btn.tooltip_text = tooltip
+	Tooltip.bind_hover(btn, tooltip)
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	btn.add_theme_stylebox_override("normal", _home_frameless_button_style("normal"))
-	btn.add_theme_stylebox_override("hover", _home_frameless_button_style("hover"))
-	btn.add_theme_stylebox_override("pressed", _home_frameless_button_style("pressed"))
+	btn.add_theme_stylebox_override("normal", _home_nav_button_style("normal"))
+	btn.add_theme_stylebox_override("hover", _home_nav_button_style("hover"))
+	btn.add_theme_stylebox_override("pressed", _home_nav_button_style("pressed"))
+	btn.add_theme_stylebox_override("disabled", _home_nav_button_style("disabled"))
 	btn.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	btn.pressed.connect(callback)
 
@@ -921,97 +909,33 @@ func _home_text(zh: String, en: String) -> String:
 
 
 func _daily_divider() -> Control:
-	var line := Panel.new()
+	var line := T.ui_divider()
 	line.custom_minimum_size = Vector2(0, 1)
-	line.add_theme_stylebox_override(
-		"panel", _home_flat_style(Color(0.24, 0.18, 0.10, 0.75), Color(0, 0, 0, 0), 0, 0)
-	)
 	return line
 
 
 func _bounty_divider() -> Control:
-	var line := ColorRect.new()
-	line.custom_minimum_size = Vector2(0, 1)
-	line.color = Color("#302c26")
-	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return line
+	return _daily_divider()
 
 
-func _home_top_bar_style() -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.06, 0.052, 0.04, 0.94)
-	style.border_color = Color(0.36, 0.27, 0.15, 1.0)
-	style.border_width_bottom = 2
-	return style
+func _home_top_bar_style() -> StyleBox:
+	return T.kit_box("panel_hard_9slice")
 
 
-func _home_panel_style() -> StyleBoxFlat:
-	var style := _home_flat_style(
-		Color(0.075, 0.060, 0.042, 0.94), Color(0.38, 0.29, 0.16, 1.0), 7, 2
-	)
-	style.shadow_color = Color(0.0, 0.0, 0.0, 0.42)
-	style.shadow_size = 8
-	style.shadow_offset = Vector2(0, 4)
-	return style
+func _home_panel_style() -> StyleBox:
+	return T.kit_box("panel_hard_9slice")
 
 
-func _home_bounty_frame_style(path: String) -> StyleBox:
-	var texture := _load_home_texture(path)
-	if texture == null:
-		return _home_panel_style()
-	var style := StyleBoxTexture.new()
-	style.texture = texture
-	style.draw_center = true
-	return style
+func _home_chip_style() -> StyleBox:
+	return T.kit_box("panel_hard_9slice")
 
 
-func _home_chip_style() -> StyleBoxFlat:
-	return _home_flat_style(Color(0.055, 0.045, 0.032, 0.96), Color(0.39, 0.30, 0.18, 1.0), 7, 2)
-
-
-func _home_button_style(state: String) -> StyleBoxFlat:
-	match state:
-		"hover":
-			return _home_flat_style(
-				Color(0.12, 0.090, 0.052, 0.98), Color(0.76, 0.56, 0.24, 1.0), 7, 2
-			)
-		"pressed":
-			return _home_flat_style(
-				Color(0.045, 0.036, 0.024, 0.98), Color(0.25, 0.19, 0.11, 1.0), 7, 2
-			)
-		_:
-			return _home_flat_style(
-				Color(0.075, 0.060, 0.038, 0.98), Color(0.36, 0.28, 0.16, 1.0), 7, 2
-			)
+func _home_button_style(state: String) -> StyleBox:
+	return T.ll_button_dark(state)
 
 
 func _home_start_button_style(state: String) -> StyleBox:
-	var bg := Color(0.44, 0.12, 0.075, 0.98)
-	var border := Color(0.72, 0.45, 0.23, 1.0)
-	if state == "hover":
-		bg = Color(0.55, 0.16, 0.095, 0.99)
-		border = Color(0.96, 0.64, 0.28, 1.0)
-	elif state == "pressed":
-		bg = Color(0.31, 0.075, 0.050, 0.99)
-		border = Color(0.46, 0.27, 0.15, 1.0)
-	var style := _home_flat_style(bg, border, 8, 3)
-	style.shadow_color = Color(0.0, 0.0, 0.0, 0.50)
-	style.shadow_size = 10
-	style.shadow_offset = Vector2(0, 6)
-	style.content_margin_left = 28.0
-	style.content_margin_right = 28.0
-	style.content_margin_top = 22.0
-	style.content_margin_bottom = 18.0
-	return T.concept_box("depart_plaque_%s" % state, style, 58, 36, 28)
-
-
-func _home_flat_style(bg: Color, border: Color, radius: int, border_width: int) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = bg
-	style.border_color = border
-	style.set_border_width_all(border_width)
-	style.set_corner_radius_all(radius)
-	return style
+	return T.kit_box("button_primary_" + state, Vector4(28, 22, 28, 18))
 
 
 func _add_building_sprites() -> void:
@@ -1143,7 +1067,7 @@ func _current_difficulty() -> int:
 func _refresh_difficulty_button() -> void:
 	if is_instance_valid(_difficulty_button):
 		var label_text := tr("UI_HOME_DIFFICULTY_BTN").format({"a": _current_difficulty()})
-		_difficulty_button.tooltip_text = label_text
+		Tooltip.bind_hover(_difficulty_button, label_text)
 		if _difficulty_button.has_meta("label"):
 			var lbl = _difficulty_button.get_meta("label")
 			if lbl is Label and is_instance_valid(lbl):
@@ -1242,23 +1166,14 @@ func _on_home_difficulty_chosen(value: int) -> void:
 
 
 func _style_difficulty_button(button: Button, selected: bool, disabled: bool) -> void:
-	var bg := Color(0.13, 0.10, 0.075, 0.96)
-	var border := Color(0.55, 0.36, 0.18, 1.0)
 	var text := Color(0.86, 0.76, 0.58, 1.0)
 	if selected:
-		bg = Color(0.30, 0.17, 0.065, 0.98)
-		border = Color(1.0, 0.72, 0.28, 1.0)
 		text = Color(1.0, 0.90, 0.55, 1.0)
 	elif disabled:
-		bg = Color(0.07, 0.06, 0.052, 0.78)
-		border = Color(0.25, 0.20, 0.16, 0.75)
 		text = Color(0.42, 0.36, 0.28, 0.85)
-	button.add_theme_stylebox_override("normal", T.rounded_button(bg, border, 5, 2))
-	button.add_theme_stylebox_override(
-		"hover", T.rounded_button(bg.lightened(0.10), Color(0.35, 0.88, 1.0, 1.0), 5, 2)
-	)
-	button.add_theme_stylebox_override("pressed", T.rounded_button(bg.darkened(0.10), border, 5, 2))
-	button.add_theme_stylebox_override("disabled", T.rounded_button(bg, border, 5, 2))
+	var family := "primary" if selected else "secondary"
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		button.add_theme_stylebox_override(state, T.kit_box("button_%s_%s" % [family, state]))
 	button.add_theme_color_override("font_color", text)
 	button.add_theme_color_override("font_hover_color", text.lightened(0.15))
 	button.add_theme_color_override("font_pressed_color", text)
@@ -1284,7 +1199,7 @@ func _add_interactive_building(
 	button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	# The separate icon-only medallion owns the facility tooltip. Keep the large
 	# art button tooltip-free so it never lingers above an interior screen.
-	button.tooltip_text = ""
+	Tooltip.bind_hover(button, "")
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	# Each building PNG carries different transparent padding, so identical tile
@@ -1411,14 +1326,14 @@ func _add_building_icon(building_id: String, rect: Rect2) -> void:
 	icon_button.name = "BuildingIconOnly_%s" % building_id
 	icon_button.focus_mode = Control.FOCUS_NONE
 	icon_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	icon_button.tooltip_text = "%s · %s" % [
+	Tooltip.bind_hover(icon_button, "%s · %s" % [
 		tr("UI_BUILD_%s_NAME" % building_id.to_upper()),
 		(
 			tr("UI_BUILD_LOCKED")
 			if MetaProgress.get_building_tier(building_id) <= 0
 			else "T%d" % MetaProgress.get_building_tier(building_id)
 		),
-	]
+	])
 	var icon_rect := Rect2(
 		rect.position + Vector2((rect.size.x - 84.0) * 0.5, -4.0),
 		Vector2(84.0, 84.0)
@@ -1537,7 +1452,7 @@ func _make_start_door() -> Control:
 	var door := PanelContainer.new()
 	door.custom_minimum_size = Vector2(300, 196)
 	door.add_theme_stylebox_override(
-		"panel", T.panel_with_shadow(Color(0.16, 0.12, 0.05, 0.97), accent, 6, 4)
+		"panel", T.state_box("selected", 0, accent)
 	)
 	door.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
@@ -1576,7 +1491,7 @@ func _make_building_tile(building_id: String) -> Control:
 	var border := accent
 	border.a = 1.0
 	tile.add_theme_stylebox_override(
-		"panel", T.panel_with_shadow(Color(0.075, 0.060, 0.048, 0.96), border, 6, 3)
+		"panel", T.state_box("normal", 0, border)
 	)
 	tile.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
@@ -1587,7 +1502,7 @@ func _make_building_tile(building_id: String) -> Control:
 	# Accent header strip across the top with the building name (prominent, distinct).
 	var header_strip := PanelContainer.new()
 	header_strip.add_theme_stylebox_override(
-		"panel", T.panel_with_shadow(Color(accent.r, accent.g, accent.b, 0.92), border, 4, 0)
+		"panel", T.state_box("normal", 0, accent)
 	)
 	box.add_child(header_strip)
 	var header_margin := MarginContainer.new()
@@ -1837,7 +1752,7 @@ func _make_gallery_card_slot(card_id: String) -> Control:
 	slot.custom_minimum_size = Vector2(214, 300)
 	slot.add_theme_stylebox_override(
 		"panel",
-		_home_flat_style(Color(0.045, 0.036, 0.026, 0.88), Color(0.26, 0.20, 0.12, 1.0), 6, 1)
+		T.panel_flat(Color(0.045, 0.036, 0.026, 0.88), Color(0.26, 0.20, 0.12, 1.0), 6, 1)
 	)
 
 	var data: Dictionary = MODEL_DB.data("card", card_id)
@@ -1877,7 +1792,7 @@ func _make_gallery_card_slot(card_id: String) -> Control:
 	cost.add_theme_color_override("font_color", Color(0.85, 0.95, 1.0, 1.0))
 	cost.add_theme_stylebox_override(
 		"normal",
-		_home_flat_style(Color(0.06, 0.09, 0.10, 0.96), Color(0.18, 0.62, 0.72, 1.0), 5, 1)
+		T.panel_flat(Color(0.06, 0.09, 0.10, 0.96), Color(0.18, 0.62, 0.72, 1.0), 5, 1)
 	)
 	meta.add_child(cost)
 
@@ -1917,7 +1832,7 @@ func _make_gallery_locked_slot() -> Control:
 	slot.custom_minimum_size = Vector2(214, 300)
 	slot.add_theme_stylebox_override(
 		"panel",
-		_home_flat_style(Color(0.030, 0.026, 0.020, 0.88), Color(0.17, 0.14, 0.10, 1.0), 6, 1)
+		T.panel_flat(Color(0.030, 0.026, 0.020, 0.88), Color(0.17, 0.14, 0.10, 1.0), 6, 1)
 	)
 
 	var margin := MarginContainer.new()
@@ -1987,7 +1902,7 @@ func _make_stash_button() -> Control:
 	button.ignore_texture_size = true
 	button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	button.tooltip_text = tr("UI_STASH_WINDOW_TITLE")
+	Tooltip.bind_hover(button, tr("UI_STASH_WINDOW_TITLE"))
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.mouse_entered.connect(func() -> void: AudioManager.play_sfx("ui_hover"))
@@ -2020,7 +1935,7 @@ func _make_character_button() -> Control:
 	button.ignore_texture_size = true
 	button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	button.tooltip_text = tr("UI_EQUIP_TITLE_CHARACTER")
+	Tooltip.bind_hover(button, tr("UI_EQUIP_TITLE_CHARACTER"))
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.mouse_entered.connect(
@@ -2036,8 +1951,7 @@ func _make_character_button() -> Control:
 		# Border-only frame overlay so the square portrait reads as a button.
 		var frame := Panel.new()
 		frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var sb := T.rounded_button(Color(0, 0, 0, 0), Color(0.62, 0.48, 0.28, 0.9), 6, 2)
-		sb.draw_center = false
+		var sb := T.semantic_outline(Color(0.62, 0.48, 0.28, 0.9), 2, 6)
 		frame.add_theme_stylebox_override("panel", sb)
 		frame.set_anchors_preset(Control.PRESET_FULL_RECT)
 		button.add_child(frame)

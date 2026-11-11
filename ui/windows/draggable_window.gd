@@ -118,7 +118,7 @@ func add_title_button(text_or_icon: String, tooltip: String, cb: Callable) -> Bu
 		push_warning("add_title_button called on a window without a title bar.")
 		return b
 	b.text = text_or_icon
-	b.tooltip_text = tooltip
+	Tooltip.bind_hover(b, tooltip)
 	b.flat = true
 	b.focus_mode = Control.FOCUS_NONE
 	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND

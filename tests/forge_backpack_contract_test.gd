@@ -55,21 +55,21 @@ func _test_vertical_layout_and_backpack_only_drop() -> void:
 	var craft_tab := forge.find_child("ForgeTab_craft", true, false) as Button
 	_expect(craft_tab != null, "forge tabs expose stable named buttons")
 	if craft_tab:
-		var normal_style := craft_tab.get_theme_stylebox("normal") as StyleBoxFlat
-		var hover_style := craft_tab.get_theme_stylebox("hover") as StyleBoxFlat
+		var normal_style := craft_tab.get_theme_stylebox("normal") as StyleBoxTexture
+		var hover_style := craft_tab.get_theme_stylebox("hover") as StyleBoxTexture
 		_expect(
-			normal_style != null and hover_style != null,
-			"forge tabs use one shared flat-frame component"
+			normal_style != null and hover_style != null
+			and _style_texture_path(normal_style).ends_with("/kit/button_secondary_normal.png")
+			and _style_texture_path(hover_style).ends_with("/kit/button_secondary_hover.png"),
+			"forge tabs use the shared secondary button state artwork"
 		)
-		_expect(
-			normal_style != null
-			and hover_style != null
-			and normal_style.bg_color != hover_style.bg_color
-			and normal_style.get_border_width(SIDE_LEFT)
-			== hover_style.get_border_width(SIDE_LEFT)
-			and normal_style.corner_radius_top_left == hover_style.corner_radius_top_left,
-			"forge tab hover changes color without changing geometry"
-		)
+		if normal_style != null and hover_style != null:
+			for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+				_expect(
+					normal_style.get_texture_margin(side) == hover_style.get_texture_margin(side)
+					and normal_style.get_content_margin(side) == hover_style.get_content_margin(side),
+					"forge tab hover preserves slices and content geometry on side %d" % side
+				)
 	var expected_rows := ["all", "common", "uncommon", "rare"]
 	var expected_zh := ["全部", "普通", "精良", "军官"]
 	for i in range(expected_rows.size()):
@@ -105,9 +105,9 @@ func _test_vertical_layout_and_backpack_only_drop() -> void:
 	if single_action:
 		_expect(
 			_style_texture_path(single_action.get_theme_stylebox("normal")).ends_with(
-				"/forge_dismantle_action.png"
+				"/kit/button_primary_normal.png"
 			),
-			"single dismantle uses its dedicated UI component"
+			"single dismantle uses the shared primary action skin"
 		)
 
 	var workbench = forge.find_child("ForgeWorkbenchCell", true, false)

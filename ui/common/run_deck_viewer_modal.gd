@@ -83,7 +83,7 @@ func _build() -> void:
 	header.add_child(title)
 	var close := T.ll_close_button()
 	close.name = "RunDeckClose"
-	close.tooltip_text = tr("PAUSE_BACK")
+	Tooltip.bind_hover(close, tr("PAUSE_BACK"))
 	close.pressed.connect(_close)
 	header.add_child(close)
 	vbox.add_child(T.ui_divider())

@@ -11,9 +11,6 @@ signal state_changed(building_id: String, tier: int)
 signal dismissed
 
 const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
-const FRAME = preload(
-	"res://run_system/assets/images/ui/buildings/building_upgrade_popover_frame.png"
-)
 
 const POPUP_SIZE := Vector2(384, 288)
 
@@ -57,11 +54,9 @@ func _ready() -> void:
 
 
 func _build() -> void:
-	var frame := TextureRect.new()
+	var frame := Panel.new()
 	frame.name = "UpgradePopoverFrame"
-	frame.texture = FRAME
-	frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	frame.stretch_mode = TextureRect.STRETCH_SCALE
+	frame.add_theme_stylebox_override("panel", T.kit_box("panel_hard_9slice"))
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(frame)
@@ -177,15 +172,15 @@ func _refresh() -> void:
 	_confirm_button.modulate = Color.WHITE if affordable else Color(0.58, 0.58, 0.58, 0.9)
 	if maxed:
 		_confirm_button.text = tr("UI_BUILD_MAX")
-		_confirm_button.tooltip_text = ""
+		Tooltip.bind_hover(_confirm_button, "")
 	else:
 		_confirm_button.text = _local_text("确认升级", "CONFIRM")
-		_confirm_button.tooltip_text = (
+		Tooltip.bind_hover(_confirm_button, (
 			""
 			if affordable
 			else _local_text("废料不足，还差 %d", "Not enough Scrap — need %d more")
 			% (cost - MetaProgress.scrap)
-		)
+		))
 
 
 func _rebuild_currency_host(host: HBoxContainer, prefix: String, amount: int) -> void:

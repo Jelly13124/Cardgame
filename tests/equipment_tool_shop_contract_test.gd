@@ -468,11 +468,12 @@ func _test_deck_icon() -> void:
 	await _frames(2)
 	var deck_button: Button = null
 	for candidate in bar.find_children("*", "Button", true, false):
-		if (candidate as Button).tooltip_text == tr("UI_BATTLE_VIEW_RUN_DECK"):
+		if str(candidate.get_meta(Tooltip.TOOLTIP_TEXT_META, "")) == tr("UI_BATTLE_VIEW_RUN_DECK"):
 			deck_button = candidate as Button
 			break
 	_expect(deck_button != null, "top bar exposes the run-deck button")
 	if deck_button != null:
+		_expect(deck_button.tooltip_text.is_empty(), "run-deck hints use the shared tooltip overlay")
 		var path := deck_button.icon.resource_path if deck_button.icon else ""
 		_expect(
 			path.ends_with("/iconb_deck_stack.png"),

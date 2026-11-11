@@ -5,6 +5,8 @@
 ## class_name is intentionally omitted by project convention — preload.
 extends Control
 
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
+
 const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://ui/common/run_top_bar.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
@@ -54,11 +56,7 @@ func _fit_to_viewport() -> void:
 func _build() -> void:
 	_add_backdrop()
 	var below_bar := RUN_TOP_BAR.BAR_HEIGHT
-	var frame := StyleBoxFlat.new()
-	frame.bg_color = Color(0.03, 0.03, 0.03)
-	frame.border_color = Color(0.62, 0.52, 0.32)
-	frame.set_border_width_all(3)
-	frame.set_corner_radius_all(4)
+	var frame := T.state_box("normal", 3.0)
 	var portrait := Panel.new()
 	portrait.name = "EventPortrait"
 	portrait.position = Vector2(PORTRAIT_X, below_bar + (SCREEN_HEIGHT - below_bar - PORTRAIT_SIZE.y) * 0.5)
@@ -78,8 +76,7 @@ func _build() -> void:
 	_portrait_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	portrait.add_child(_portrait_art)
 	# The frame's border is drawn again over the art's edge.
-	var edge := frame.duplicate() as StyleBoxFlat
-	edge.draw_center = false
+	var edge := T.semantic_outline(Color(0.62, 0.52, 0.32), 3, 4)
 	var border := Panel.new()
 	border.set_anchors_preset(Control.PRESET_FULL_RECT)
 	border.mouse_filter = Control.MOUSE_FILTER_IGNORE

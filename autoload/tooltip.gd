@@ -11,14 +11,14 @@
 extends Node
 
 const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
-const MAX_WIDTH := 320.0
-const PADDING := 10
+const MAX_WIDTH := 333.0
 const OFFSET_FROM_ANCHOR := Vector2(0, -12)  # lift above anchor
 const TOOLTIP_TEXT_META := &"global_tooltip_text"
 const TOOLTIP_BOUND_META := &"global_tooltip_bound"
 
 var _layer: CanvasLayer
 var _panel: PanelContainer
+var _shadow: NinePatchRect
 var _label: RichTextLabel
 var _visible: bool = false
 var _follow_mouse: bool = false
@@ -42,21 +42,32 @@ func _ready() -> void:
 	# in battle), which was wasteful when the tooltip wasn't visible.
 	_last_scene = get_tree().current_scene
 
+	_shadow = NinePatchRect.new()
+	_shadow.name = "TooltipShadow"
+	_shadow.texture = T.kit_tex("tooltip_shadow_9slice")
+	var patches: Vector4 = T.KIT_PATCH_MARGINS["tooltip_shadow_9slice"]
+	_shadow.patch_margin_left = int(patches.x)
+	_shadow.patch_margin_top = int(patches.y)
+	_shadow.patch_margin_right = int(patches.z)
+	_shadow.patch_margin_bottom = int(patches.w)
+	_shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_shadow.visible = false
+	_layer.add_child(_shadow)
+
 	_panel = PanelContainer.new()
-	_panel.add_theme_stylebox_override(
-		"panel",
-		T.panel_with_shadow(Color(0.06, 0.05, 0.04, 0.96), Color(0.55, 0.42, 0.20, 1.0), 4, 2)
-	)
+	_panel.name = "TooltipPanel"
+	_panel.custom_minimum_size = T.TOOLTIP_BASE_SIZE
+	_panel.add_theme_stylebox_override("panel", T.kit_box("tooltip_panel_9slice"))
 	_panel.visible = false
-	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE  # never block clicks
-	_panel.z_index = 4096
+	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layer.add_child(_panel)
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", PADDING)
-	margin.add_theme_constant_override("margin_right", PADDING)
-	margin.add_theme_constant_override("margin_top", PADDING - 2)
-	margin.add_theme_constant_override("margin_bottom", PADDING - 2)
+	margin.name = "ContentMargins"
+	margin.add_theme_constant_override("margin_left", int(T.TOOLTIP_CONTENT_MARGINS.x))
+	margin.add_theme_constant_override("margin_top", int(T.TOOLTIP_CONTENT_MARGINS.y))
+	margin.add_theme_constant_override("margin_right", int(T.TOOLTIP_CONTENT_MARGINS.z))
+	margin.add_theme_constant_override("margin_bottom", int(T.TOOLTIP_CONTENT_MARGINS.w))
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_panel.add_child(margin)
 
@@ -64,11 +75,13 @@ func _ready() -> void:
 	_label.bbcode_enabled = true
 	_label.fit_content = true
 	_label.scroll_active = false
-	_label.custom_minimum_size = Vector2(0, 0)
+	_label.custom_minimum_size = Vector2.ZERO
 	_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_label.add_theme_color_override("default_color", Color(0.95, 0.92, 0.82))
-	_label.add_theme_font_size_override("normal_font_size", 16)
-	_label.add_theme_font_size_override("bold_font_size", 16)
+	_label.add_theme_font_override("normal_font", T.display_font(600))
+	_label.add_theme_font_override("bold_font", T.display_font(700))
+	_label.add_theme_color_override("default_color", T.TEXT_MAIN)
+	_label.add_theme_font_size_override("normal_font_size", T.TOOLTIP_FONT_SIZE)
+	_label.add_theme_font_size_override("bold_font_size", T.TOOLTIP_FONT_SIZE)
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(_label)
 
@@ -99,12 +112,18 @@ func _process(_dt: float) -> void:
 func bind_hover(control: Control, text: String) -> void:
 	if control == null:
 		return
+	var previous_text := str(control.get_meta(TOOLTIP_TEXT_META, ""))
 	control.tooltip_text = ""
 	control.set_meta(TOOLTIP_TEXT_META, text)
+	var owner_id := control.get_instance_id()
+	if _visible and _owner_id == owner_id and previous_text != text:
+		if text.is_empty():
+			hide_if_owner(owner_id)
+		elif control.is_inside_tree():
+			show(text, control.global_position + Vector2(control.size.x * 0.5, 0), owner_id)
 	if bool(control.get_meta(TOOLTIP_BOUND_META, false)):
 		return
 	control.set_meta(TOOLTIP_BOUND_META, true)
-	var owner_id := control.get_instance_id()
 	control.mouse_entered.connect(_show_bound_hover.bind(weakref(control), owner_id))
 	control.mouse_exited.connect(hide_if_owner.bind(owner_id))
 	control.tree_exited.connect(hide_if_owner.bind(owner_id))
@@ -138,6 +157,7 @@ func show(text: String, anchor_global_pos: Vector2 = Vector2.ZERO, owner_id: int
 	_label.text = text
 	_label.custom_minimum_size = Vector2(min(MAX_WIDTH, _measure_text_width(text)), 0)
 	_panel.visible = true
+	_shadow.visible = true
 	_visible = true
 	_follow_mouse = anchor_global_pos == Vector2.ZERO
 	# Defer first position so RichTextLabel has time to measure fit_content height.
@@ -154,6 +174,7 @@ func hide() -> void:
 	if not _panel:
 		return
 	_panel.visible = false
+	_shadow.visible = false
 	_visible = false
 	_owner_id = 0
 
@@ -176,20 +197,21 @@ func _position_panel(anchor: Vector2) -> void:
 	if pos.y < 4:
 		pos.y = anchor.y - OFFSET_FROM_ANCHOR.y
 	# Clamp horizontally inside the viewport.
-	pos.x = clampf(pos.x, 4, viewport_size.x - size.x - 4)
+	pos.x = clampf(pos.x, 4, maxf(4, viewport_size.x - size.x - 4))
+	pos.y = clampf(pos.y, 4, maxf(4, viewport_size.y - size.y - 4))
 	_panel.position = pos
+	_shadow.position = pos + Vector2(3, 2)
+	_shadow.size = size
 
 
 func _measure_text_width(text: String) -> float:
-	# Approximate — RichTextLabel's fit_content handles real wrapping.
-	var longest_line := 0
+	var widest := 0.0
+	var font := _label.get_theme_font("normal_font")
 	var bbcode_pattern := RegEx.new()
 	bbcode_pattern.compile("\\[[^\\]]+\\]")
 	for line in text.split("\n"):
-		# Strip every BBCode tag, including parameterized tags such as
-		# [color=#9fd0ff]. Counting those control characters made rich equipment
-		# and tool hints hit MAX_WIDTH even when their visible text was short.
 		var stripped := bbcode_pattern.sub(line, "", true)
-		if stripped.length() > longest_line:
-			longest_line = stripped.length()
-	return float(longest_line) * 8.5  # rough px-per-char at 16pt
+		widest = maxf(
+			widest, font.get_string_size(stripped, HORIZONTAL_ALIGNMENT_LEFT, -1, T.TOOLTIP_FONT_SIZE).x
+		)
+	return widest

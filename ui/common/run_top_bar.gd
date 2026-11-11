@@ -106,14 +106,12 @@ func _build() -> void:
 	portrait_panel.offset_bottom = (MAIN_BAR_HEIGHT + PORTRAIT_SIZE) * 0.5
 	# The "hole" look: near-black inset with a black rim; hover lightens slightly
 	# so the map's clickable portrait reads as interactive.
-	var hole := T.panel_flat(Color(0.030, 0.026, 0.022, 1.0), Color(0.0, 0.0, 0.0, 0.9), 10, 3)
-	var hole_hover := T.panel_flat(Color(0.06, 0.052, 0.044, 1.0), Color(0.0, 0.0, 0.0, 0.9), 10, 3)
-	portrait_panel.add_theme_stylebox_override("normal", hole)
-	portrait_panel.add_theme_stylebox_override("hover", hole_hover)
-	portrait_panel.add_theme_stylebox_override("pressed", hole)
+	portrait_panel.add_theme_stylebox_override("normal", T.state_box("normal", 3.0))
+	portrait_panel.add_theme_stylebox_override("hover", T.state_box("hover", 3.0))
+	portrait_panel.add_theme_stylebox_override("pressed", T.state_box("pressed", 3.0))
 	portrait_panel.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	if show_character_button:
-		portrait_panel.tooltip_text = tr("UI_MAP_CHARACTER_BTN")
+		Tooltip.bind_hover(portrait_panel, tr("UI_MAP_CHARACTER_BTN"))
 		portrait_panel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		portrait_panel.pressed.connect(func(): character_pressed.emit())
 	add_child(portrait_panel)
@@ -322,12 +320,12 @@ func _make_xp_tick() -> ProgressBar:
 	tick.max_value = 1.0
 	tick.value = 0.0
 	tick.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tick.add_theme_stylebox_override(
-		"background", T.panel_flat(Color(0.02, 0.035, 0.04, 0.82), Color(0, 0, 0, 0), 2, 0)
-	)
-	tick.add_theme_stylebox_override(
-		"fill", T.panel_flat(Color(0.28, 0.82, 0.90), Color(0, 0, 0, 0), 2, 0)
-	)
+	var track := T.semantic_fill(Color(0.02, 0.035, 0.04, 0.82))
+	track.set_corner_radius_all(2)
+	tick.add_theme_stylebox_override("background", track)
+	var fill := T.semantic_fill(Color(0.28, 0.82, 0.90))
+	fill.set_corner_radius_all(2)
+	tick.add_theme_stylebox_override("fill", fill)
 	return tick
 
 
@@ -400,7 +398,7 @@ func _run_elapsed_secs() -> int:
 func _make_icon_button(text: String, tooltip: String, icon_id: String = "") -> Button:
 	var button := Button.new()
 	button.text = text
-	button.tooltip_text = tooltip
+	Tooltip.bind_hover(button, tooltip)
 	button.custom_minimum_size = Vector2(48, 48)
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -510,11 +508,8 @@ func _make_empty_tool_slot() -> Control:
 	p.custom_minimum_size = Vector2(40, 40)
 	p.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0, 0, 0, 0.22)
-	sb.set_corner_radius_all(8)
-	sb.set_border_width_all(1)
-	sb.border_color = Color(0.5, 0.45, 0.35, 0.45)
+	var sb := T.ll_button_olive("disabled") as StyleBoxTexture
+	sb.set_content_margin_all(1.0)
 	p.add_theme_stylebox_override("panel", sb)
 	return p
 
@@ -545,16 +540,10 @@ func _make_tool_slot(index: int, tool_id: String) -> Button:
 		b.text = _short_label(title)
 		b.add_theme_font_size_override("font_size", 18)
 		b.add_theme_color_override("font_color", T.TEXT_MAIN)
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.10, 0.12, 0.16, 0.85)
-	sb.set_corner_radius_all(8)
-	sb.set_border_width_all(2)
-	sb.border_color = Color(0.55, 0.75, 0.95, 0.9)
-	b.add_theme_stylebox_override("normal", sb)
-	var sbh: StyleBoxFlat = sb.duplicate()
-	sbh.border_color = Color(0.78, 0.92, 1.0, 1.0)
-	b.add_theme_stylebox_override("hover", sbh)
-	b.add_theme_stylebox_override("pressed", sb)
+	for state in ["normal", "hover", "pressed"]:
+		var style := T.ll_button_olive(state) as StyleBoxTexture
+		style.set_content_margin_all(2.0)
+		b.add_theme_stylebox_override(state, style)
 	if show_tools:
 		b.pressed.connect(func() -> void: tool_used.emit(index))
 	return b

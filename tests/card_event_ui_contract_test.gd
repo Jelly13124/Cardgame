@@ -6,6 +6,8 @@ const EVENT_ROOM = preload("uid://cyvheo458ghoj")  # res://ui/events/event_room.
 const EVENT_POOL = preload("uid://dr3dtuxwul371")  # res://core/run/events/event_pool.gd
 const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://ui/common/run_top_bar.gd
 const RUN_DECK_VIEWER_MODAL = preload("uid://jvxfh15gtinx")  # res://ui/common/run_deck_viewer_modal.gd
+const CARD_FACTORY_SCENE = preload("uid://diap3gdfbqvjv")  # res://ui/battle/card_framework_adapters/my_card_factory.tscn
+const MERCHANT_CARD_REMOVAL = preload("uid://cb444odpyv0bh")  # res://ui/shop/merchant_card_removal.gd
 
 var failures: PackedStringArray = []
 
@@ -53,6 +55,13 @@ func _run() -> void:
 	var upgrade := CARD_UPGRADE_MODAL.new()
 	add_child(upgrade)
 	await _frames(5)
+	var view_upgrades := upgrade.find_child("ViewUpgrades", true, false) as CheckBox
+	_expect(
+		view_upgrades != null
+		and view_upgrades.get_theme_icon("checked").resource_path.ends_with("/kit/checkbox_checked.png")
+		and view_upgrades.get_theme_icon("unchecked").resource_path.ends_with("/kit/checkbox_unchecked.png"),
+		"the upgrade toggle displays the shared checkbox artwork"
+	)
 	var upgrade_bg := upgrade.find_child("UpgradeBackdrop", true, false) as Control
 	_expect(upgrade_bg != null, "upgrade page exposes its content backdrop")
 	if upgrade_bg != null:
@@ -87,6 +96,7 @@ func _run() -> void:
 				_expect(not outline.visible, "%s clears highlight after hover" % frame_name)
 	upgrade.queue_free()
 	await _frames(3)
+	await _test_removal_preview_state()
 
 	MODEL_DB.inject_dir("res://tests/fixtures/content_mod/", "mymod")
 	var model = EVENT_POOL.instantiate("mymod:probe")
@@ -160,6 +170,68 @@ func _run() -> void:
 		return
 	push_error("Card/event UI contract failed: %s" % "; ".join(failures))
 	get_tree().quit(1)
+
+
+func _test_removal_preview_state() -> void:
+	var factory := CARD_FACTORY_SCENE.instantiate()
+	add_child(factory)
+	factory.card_size = Vector2(208, 286)
+	var removal := MERCHANT_CARD_REMOVAL.new()
+	removal.set("_card_factory", factory)
+	add_child(removal)
+	var wrapper := removal.call("_card_choice", "base:strike", "preview-only") as Control
+	add_child(wrapper)
+	await _frames(3)
+	_expect(wrapper.custom_minimum_size == Vector2(180, 260), "removal keeps its existing input slot geometry")
+	_expect(
+		not wrapper.has_theme_stylebox_override("panel")
+		and not wrapper.get_children().any(func(child): return child is Panel),
+		"the normal removal preview has a transparent wrapper without a decorative panel"
+	)
+	var card: Control = null
+	var pick: Button = null
+	for child in wrapper.get_children():
+		if child.has_method("update_playable"):
+			card = child
+		elif child is Button:
+			pick = child
+	_expect(card != null and pick != null, "removal exposes the original card and its input button")
+	if card != null and pick != null:
+		_expect(
+			card.position == Vector2(10, 20)
+			and card.scale.is_equal_approx(Vector2.ONE * (160.0 / 208.0))
+			and card.get("suppress_playable_glow") == true,
+			"removal preserves the card geometry and suppresses the hand playability cue"
+		)
+		for state in ["normal", "hover", "pressed", "focus", "disabled"]:  # bare-ok: Godot button theme state
+			_expect(pick.get_theme_stylebox(state) is StyleBoxEmpty, "removal input adds no %s frame" % state)
+		var highlight := card.get("highlight") as Control
+		_expect(highlight != null, "removal reuses the card's shape-hugging highlight")
+		if highlight != null:
+			var material := highlight.material as ShaderMaterial
+			_expect(
+				highlight.get_parent() == card.get_node("FrontFace")
+				and material != null and material.shader.resource_path.ends_with("/card_highlight.gdshader")
+				and not bool(highlight.call("is_shown")),
+				"the existing card silhouette highlight starts hidden"
+			)
+			pick.mouse_entered.emit()
+			_expect(bool(highlight.call("is_shown")), "removal hover requests the close card outline")
+			await get_tree().create_timer(0.55).timeout
+			_expect(
+				material != null and float(material.get_shader_parameter("width_px")) > 0.0,
+				"the hover outline becomes visible through the existing card shader"
+			)
+			pick.mouse_exited.emit()
+			_expect(
+				not bool(highlight.call("is_shown"))
+				and material != null and is_zero_approx(float(material.get_shader_parameter("width_px"))),
+				"removal clears its close outline immediately when hover ends"
+			)
+	wrapper.queue_free()
+	removal.queue_free()
+	factory.queue_free()
+	await _frames(3)
 
 
 func _frames(count: int) -> void:

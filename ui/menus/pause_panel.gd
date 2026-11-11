@@ -210,17 +210,8 @@ func _menu_button(text: String, cb: Callable, danger: bool = false) -> Button:
 			"pressed": Color(0.55, 0.20, 0.17),
 		}
 		for state in danger_tints:
-			var box := T.ll_button("normal")
-			if box is StyleBoxTexture:
-				(box as StyleBoxTexture).modulate_color = danger_tints[state]
-			else:
-				# lw PNG absent — programmatic red fallback keeps the danger read.
-				box = StyleBoxFlat.new()
-				(box as StyleBoxFlat).bg_color = Color(0.52, 0.13, 0.11)
-				(box as StyleBoxFlat).set_border_width_all(2)
-				(box as StyleBoxFlat).border_color = Color(0.86, 0.32, 0.26)
-				(box as StyleBoxFlat).set_corner_radius_all(6)
-				(box as StyleBoxFlat).set_content_margin_all(8)
+			var box := T.kit_box("button_primary_" + state)
+			box.modulate_color = danger_tints[state]
 			b.add_theme_stylebox_override(state, box)
 		b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 		b.add_theme_color_override("font_color", Color(1.0, 0.93, 0.90))

@@ -123,30 +123,15 @@ func _ready():
 	_maybe_show_tutorial()
 
 
-## Compact comic placard. One generated plate supplies every interaction state;
-## Godot keeps the localized label and applies only a restrained value shift.
+## The compact action shares the global four-state skin and keeps its current bounds.
 func _style_end_round_button() -> void:
-	var plate_tex := T.lightline_tex("hud_end_turn_orange")
-	if plate_tex == null:
-		return
 	for state in ["normal", "hover", "pressed", "disabled"]:
-		# Scale the compact plate as a whole. It is already authored at the same
-		# aspect family as the runtime button, so a 9-slice would over-extend its
-		# clipped ends into decorative horizontal rails.
-		var tb := StyleBoxTexture.new()
-		tb.texture = plate_tex
-		match state:
-			"hover":
-				tb.modulate_color = Color(1.08, 1.08, 1.08)
-			"pressed":
-				tb.modulate_color = Color(0.88, 0.88, 0.88)
-			"disabled":
-				tb.modulate_color = Color(0.58, 0.58, 0.58)
-		tb.content_margin_left = 28
-		tb.content_margin_right = 28
-		tb.content_margin_top = 8
-		tb.content_margin_bottom = 8
-		end_round_button.add_theme_stylebox_override(state, tb)
+		var style := T.ll_button(state)
+		style.content_margin_left = 28
+		style.content_margin_right = 28
+		style.content_margin_top = 8
+		style.content_margin_bottom = 8
+		end_round_button.add_theme_stylebox_override(state, style)
 	var cream := Color(0.96, 0.90, 0.74, 1.0)
 	end_round_button.add_theme_color_override("font_color", cream)
 	end_round_button.add_theme_color_override("font_hover_color", Color(1.0, 0.95, 0.82, 1.0))
