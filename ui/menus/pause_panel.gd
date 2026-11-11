@@ -200,22 +200,10 @@ func _menu_button(text: String, cb: Callable, danger: bool = false) -> Button:
 	b.custom_minimum_size = Vector2(400, 52)
 	b.focus_mode = Control.FOCUS_NONE
 	b.add_theme_font_size_override("font_size", 21)
-	T.apply_button_theme(b)
+	T.apply_action_button(b, "list")
 	if danger:
-		# Whole button red (not just the label) for the destructive Abandon / Quit actions:
-		# the lw orange button re-tinted crimson so the ink chrome matches the other rows.
-		var danger_tints := {
-			"normal": Color(0.70, 0.25, 0.21),
-			"hover": Color(0.84, 0.32, 0.26),
-			"pressed": Color(0.55, 0.20, 0.17),
-		}
-		for state in danger_tints:
-			var box := T.kit_box("button_primary_" + state)
-			box.modulate_color = danger_tints[state]
-			b.add_theme_stylebox_override(state, box)
-		b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-		b.add_theme_color_override("font_color", Color(1.0, 0.93, 0.90))
-		b.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0))
+		b.add_theme_color_override("font_color", T.ACCENT_DANGER)
+		b.add_theme_color_override("font_hover_color", T.UI_HEADER_GOLD)
 	b.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	b.pressed.connect(cb)
 	return b

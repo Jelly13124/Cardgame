@@ -218,15 +218,10 @@ func _next_unlock_name(next_tier: int) -> String:
 func _style_action_button(button: Button, primary: bool) -> void:
 	button.add_theme_font_override("font", T.display_font(700))
 	button.add_theme_font_size_override("font_size", 17)
-	button.add_theme_color_override("font_color", T.TEXT_MAIN)
-	button.add_theme_color_override("font_hover_color", Color(1.0, 0.95, 0.82))
-	if primary:
-		T.apply_concept_price_button(button, "orange")
-	else:
-		button.add_theme_stylebox_override("normal", T.ll_button_dark("normal"))
-		button.add_theme_stylebox_override("hover", T.ll_button_dark("hover"))
-		button.add_theme_stylebox_override("pressed", T.ll_button_dark("pressed"))
-		button.add_theme_stylebox_override("disabled", T.ll_button_dark("disabled"))
+	T.apply_action_button(
+		button, "primary" if primary else "secondary",
+		Vector4(14, 8, 14, 9) if primary else T.BUTTON_CONTENT_MARGINS
+	)
 
 
 func _on_scrap_changed(_value: int) -> void:

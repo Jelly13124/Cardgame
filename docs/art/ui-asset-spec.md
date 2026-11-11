@@ -33,20 +33,16 @@
 
 ## 第 1 阶段原创共用皮肤
 
-目录为 `run_system/assets/images/ui/kit/`。下表逐项列出实际文件。按钮为每种状态独立的贴图。
+目录为 `run_system/assets/images/ui/kit/`。按钮已按逆向复核改为底图与独立轮廓，普通、悬停、按下和禁用复用底图，通过主题调色与视觉层反馈。旧八张四态底板由四张分层图替换。
 
 | 完成 | 文件路径 | 原图尺寸 | 显示尺寸与用途 | 九宫格边距 |
 |---|---|---|---|---|
 | [x] | `run_system/assets/images/ui/kit/panel_hard_9slice.png` | 96×96 RGBA | 按面板控件尺寸拉伸；皮肤基准展示为 550×250 | 24/24/24/24 |
 | [x] | `run_system/assets/images/ui/kit/panel_soft_9slice.png` | 96×96 RGBA | 按面板控件尺寸拉伸；皮肤基准展示为 550×250 | 24/24/24/24 |
-| [x] | `run_system/assets/images/ui/kit/button_primary_normal.png` | 192×64 RGBA | 按按钮控件尺寸拉伸；原生基准 192×64 | 20/16/20/16 |
-| [x] | `run_system/assets/images/ui/kit/button_primary_hover.png` | 192×64 RGBA | 按按钮控件尺寸拉伸；原生基准 192×64 | 20/16/20/16 |
-| [x] | `run_system/assets/images/ui/kit/button_primary_pressed.png` | 192×64 RGBA | 按按钮控件尺寸拉伸；原生基准 192×64 | 20/16/20/16 |
-| [x] | `run_system/assets/images/ui/kit/button_primary_disabled.png` | 192×64 RGBA | 按按钮控件尺寸拉伸；原生基准 192×64 | 20/16/20/16 |
-| [x] | `run_system/assets/images/ui/kit/button_secondary_normal.png` | 192×64 RGBA | 按按钮控件尺寸拉伸；原生基准 192×64 | 20/16/20/16 |
-| [x] | `run_system/assets/images/ui/kit/button_secondary_hover.png` | 192×64 RGBA | 按按钮控件尺寸拉伸；原生基准 192×64 | 20/16/20/16 |
-| [x] | `run_system/assets/images/ui/kit/button_secondary_pressed.png` | 192×64 RGBA | 按按钮控件尺寸拉伸；原生基准 192×64 | 20/16/20/16 |
-| [x] | `run_system/assets/images/ui/kit/button_secondary_disabled.png` | 192×64 RGBA | 按按钮控件尺寸拉伸；原生基准 192×64 | 20/16/20/16 |
+| [x] | `run_system/assets/images/ui/kit/button_primary_base.png` | 320×96 RGBA | 展示 320×80，基地出发 670×107；九宫格，阴影复用此图 | 20/16/20/16 |
+| [x] | `run_system/assets/images/ui/kit/button_primary_outline.png` | 320×96 RGBA | 与底图同尺寸对齐，透明中心，独立交互描边 | 20/16/20/16 |
+| [x] | `run_system/assets/images/ui/kit/button_secondary_base.png` | 320×96 RGBA | 展示 320×80，基地难度 278×56；九宫格，阴影复用此图 | 20/16/20/16 |
+| [x] | `run_system/assets/images/ui/kit/button_secondary_outline.png` | 320×96 RGBA | 与底图同尺寸对齐，透明中心，独立交互描边 | 20/16/20/16 |
 | [x] | `run_system/assets/images/ui/kit/tooltip_panel_9slice.png` | 320×96 RGBA | 初始 400×118，随正文向下扩展 | 55/43/91/32 |
 | [x] | `run_system/assets/images/ui/kit/tooltip_shadow_9slice.png` | 320×96 RGBA | 初始 400×118，随正文向下扩展 | 55/43/91/32 |
 | [x] | `run_system/assets/images/ui/kit/banner_long.png` | 652×162 RGBA | 652×162；按使用处等比缩小 | 无 |
@@ -69,7 +65,7 @@
 
 ### 共用皮肤的应用
 
-基地、建筑窗口、主菜单、存档行、角色与锻造窗口、事件、商店、路线卡、奖励、休息选项和通用按钮引用同一套主题构造方法。主题原有入口保持兼容，装饰性面板和按钮均返回 StyleBoxTexture。
+基地、建筑窗口、主菜单、存档行、角色与锻造窗口、事件、商店、路线卡、奖励、休息选项和通用按钮引用同一套主题构造方法。装饰面板与兼容按钮样式使用 StyleBoxTexture；动态按钮保留原生 Button 输入与文字，独立的 Shadow、Face、Outline 子层由共用控制器管理。
 
 数据进度、稀有度色点与角色地面阴影使用集中定义的语义填充，安全格、图像边缘与焦点状态使用共用的细线语义轮廓。卡牌升级预览的两处既有贴卡交互轮廓保持其专属几何与显隐规则。商店删牌页卡格透明，悬停调用卡牌现有轮廓。
 
@@ -88,3 +84,15 @@
 新增与更新的检查覆盖23份皮肤尺寸、四态按钮、九宫格边距、下拉展开菜单、种子无效态、复选框、提示所有者和即时更新、卡牌预览轮廓、安全格货币文字遮挡，以及原有基地出发按钮位置。新测试场景已由 `tools/assign_scene_uids.gd` 分配引擎UID。
 
 30张改后原生截图与结构示意保存在 `bottlecap-ui-stage1-20261110/after/`、`reference/`、`comparisons/`。截图启动使用隔离存档与私有桌面，最后一次截图日志无错误。卡牌源文件、卡图、字体资源和已确认的五项战斗反馈文件与阶段起点一致。
+
+## 第1阶段按钮修订验收
+
+本次替换了主、次按钮的厚角片底板，新增4张320×96分层图并移除原8张四态图；共用皮肤交付数为19张。生成使用内置图像工具，原始稿保留于 Codex 默认生成目录，完整提示词、确定性调色与拆层处理、交付哈希记录在系统临时目录 `bottlecap-ui-buttons-20261110/` 的 `generation-prompts.json`、`process_buttons.py` 与 `asset-manifest.json`。
+
+主菜单使用32号实时文字与24×24选择箭头。箭头复用已交付的32×32原创下拉图旋转显示，放在文字左侧12像素。主、次按钮的阴影复用底图，偏移(0,4)，轮廓单独显示。菜单没有整块底板，列表保持位置稳定并用较安静的底色遮住无关的底层画面。
+
+悬停0.05秒，失焦0.5秒Expo-Out；主按钮视觉缩放1.05/0.95，次按钮1.025/0.975。输入命中区、原生文字和图标保持稳定。状态同步覆盖鼠标、键盘、禁用、隐藏恢复、拖出回入、重复应用与退出树。迁移时保留原文字内距，基地出发为28/22/28/18，结束回合为28/8/28/8，建筑升级确认键为14/8/14/9。
+
+指定Godot4.6.3的完整 `tools/run_tests.ps1` 最终返回0：71项通过、0项失败，工具测试与架构检查通过。新增与更新的界面检查分布于5个现有测试，包含真实鼠标和键盘输入。最终控制台证据保存在临时目录 `bottlecap-ui-buttons-20261110/tests/full-final.console.log`，不依赖成功后会自动清理的测试工作目录。
+
+32张改后1920×1080截图、改前对照和自绘STS2结构示意由 `bottlecap-ui-buttons-20261110/review.html` 浏览。改前来自本轮起点 `af106b5` 对应的前轮实际游戏截图；建筑升级弹窗为新增检查项。最终截图日志无ERROR或WARNING，正式中文Cowboy Bill卡壳核验通过。主目录状态与修订前一致，卡牌源文件、卡图、字体和五项冻结战斗特效无改动。本次没有新增场景文件，新增脚本UID由Godot生成。

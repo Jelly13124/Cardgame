@@ -361,10 +361,7 @@ func _make_top_difficulty_button() -> Button:
 	btn.custom_minimum_size = Vector2(278, 56)
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	btn.add_theme_stylebox_override("normal", _home_button_style("normal"))
-	btn.add_theme_stylebox_override("hover", _home_button_style("hover"))
-	btn.add_theme_stylebox_override("pressed", _home_button_style("pressed"))
-	btn.add_theme_stylebox_override("disabled", _home_button_style("disabled"))
+	T.apply_action_button(btn, "secondary")
 	btn.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	btn.pressed.connect(_show_difficulty_popup)
 
@@ -424,10 +421,7 @@ func _make_square_icon_button(icon_id: String, tooltip: String, callback: Callab
 	Tooltip.bind_hover(btn, tooltip)
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	btn.add_theme_stylebox_override("normal", _home_nav_button_style("normal"))
-	btn.add_theme_stylebox_override("hover", _home_nav_button_style("hover"))
-	btn.add_theme_stylebox_override("pressed", _home_nav_button_style("pressed"))
-	btn.add_theme_stylebox_override("disabled", _home_nav_button_style("disabled"))
+	T.apply_action_button(btn, "secondary")
 	btn.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	btn.pressed.connect(callback)
 
@@ -710,15 +704,7 @@ func _add_start_run_button(root: Control) -> void:
 	button.offset_bottom = -65.0
 	button.add_theme_font_override("font", T.display_font(700))
 	button.add_theme_font_size_override("font_size", 46)
-	button.add_theme_color_override("font_color", Color(1.0, 0.86, 0.64, 1.0))
-	button.add_theme_color_override("font_hover_color", Color(1.0, 0.93, 0.74, 1.0))
-	button.add_theme_color_override("font_pressed_color", Color(0.95, 0.78, 0.56, 1.0))
-	button.add_theme_color_override("font_outline_color", Color(0.10, 0.035, 0.02, 1.0))
-	button.add_theme_constant_override("outline_size", 5)
-	button.add_theme_stylebox_override("normal", _home_start_button_style("normal"))
-	button.add_theme_stylebox_override("hover", _home_start_button_style("hover"))
-	button.add_theme_stylebox_override("pressed", _home_start_button_style("pressed"))
-	button.add_theme_stylebox_override("disabled", _home_start_button_style("disabled"))
+	T.apply_action_button(button, "primary", Vector4(28, 22, 28, 18))
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
@@ -828,11 +814,6 @@ func _add_bottom_nav(root: Control) -> void:
 	)
 
 
-## Navigation controls share the secondary button skin.
-func _home_nav_button_style(state: String) -> StyleBox:
-	return T.ll_button_dark(state)
-
-
 func _make_home_nav_button(
 	icon_id: String, label_text: String, tooltip: String, callback: Callable
 ) -> Button:
@@ -842,10 +823,7 @@ func _make_home_nav_button(
 	Tooltip.bind_hover(btn, tooltip)
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	btn.add_theme_stylebox_override("normal", _home_nav_button_style("normal"))
-	btn.add_theme_stylebox_override("hover", _home_nav_button_style("hover"))
-	btn.add_theme_stylebox_override("pressed", _home_nav_button_style("pressed"))
-	btn.add_theme_stylebox_override("disabled", _home_nav_button_style("disabled"))
+	T.apply_action_button(btn, "secondary")
 	btn.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	btn.pressed.connect(callback)
 
@@ -930,14 +908,6 @@ func _home_chip_style() -> StyleBox:
 	return T.kit_box("panel_hard_9slice")
 
 
-func _home_button_style(state: String) -> StyleBox:
-	return T.ll_button_dark(state)
-
-
-func _home_start_button_style(state: String) -> StyleBox:
-	return T.kit_box("button_primary_" + state, Vector4(28, 22, 28, 18))
-
-
 func _add_building_sprites() -> void:
 	# Re-entrant: also fires on buildings_changed. Free the prior visuals (immediately,
 	# so there's no one-frame double-draw) and rebuild under a single root container.
@@ -1001,22 +971,12 @@ func _add_depart_controls(parent: Control) -> void:
 	var button := Button.new()
 	button.name = "StartRunButton"
 	button.text = TranslationServer.translate("UI_HOME_START_RUN")
-	# 500×96 (was ×88): the accent plate art is 128px tall, and together with the
-	# shallower 20px vertical 9-slice margins the taller button keeps the baked
-	# plate from reading vertically squashed. Composition is unchanged — bottom
-	# stays 10px above the screen edge, difficulty pill 6px above the button.
+	# Preserve the compact launch cluster's existing 500×96 hit area; the shared
+	# primary role owns its face, outline, shadow and interaction feedback.
 	button.custom_minimum_size = Vector2(500, 96)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.add_theme_font_size_override("font_size", 38)
-	T.apply_button_theme(button)  # hover tick + scale-pop juice
-	# Accent restyle over the generic theme: red-clay plate + gold rim (kit
-	# btn_accent_* when delivered), warm cream label in every state.
-	button.add_theme_stylebox_override("normal", T.ui_button_accent("normal"))
-	button.add_theme_stylebox_override("hover", T.ui_button_accent("hover"))
-	button.add_theme_stylebox_override("pressed", T.ui_button_accent("pressed"))
-	button.add_theme_color_override("font_color", T.UI_ACCENT_TEXT)
-	button.add_theme_color_override("font_hover_color", T.UI_ACCENT_TEXT)
-	button.add_theme_color_override("font_pressed_color", T.UI_ACCENT_TEXT)
+	T.apply_action_button(button, "primary")
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
@@ -1034,23 +994,12 @@ func _add_difficulty_button(parent: Control) -> void:
 	btn.add_theme_font_size_override("font_size", 20)
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	T.apply_button_theme(btn)
-	_style_brass_button(btn)
+	T.apply_action_button(btn, "secondary")
 	btn.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	btn.pressed.connect(_show_difficulty_popup)
 	parent.add_child(btn)
 	_difficulty_button = btn
 	_refresh_difficulty_button()
-
-
-## Glass bar-button restyle over apply_button_theme (keeps its hover juice /
-## font colors, swaps the textured skin for the theme's menu-glass styles —
-## incl. the disabled state, which otherwise falls back to the engine grey).
-func _style_brass_button(btn: Button) -> void:
-	btn.add_theme_stylebox_override("normal", T.ui_button_brass("normal"))
-	btn.add_theme_stylebox_override("hover", T.ui_button_brass("hover"))
-	btn.add_theme_stylebox_override("pressed", T.ui_button_brass("pressed"))
-	btn.add_theme_stylebox_override("disabled", T.ui_button_brass("disabled"))
 
 
 ## The same clamp the old difficulty bar applied on build: pending ascension
@@ -1165,21 +1114,8 @@ func _on_home_difficulty_chosen(value: int) -> void:
 			_style_difficulty_button(btn, btn.button_pressed, btn.disabled)
 
 
-func _style_difficulty_button(button: Button, selected: bool, disabled: bool) -> void:
-	var text := Color(0.86, 0.76, 0.58, 1.0)
-	if selected:
-		text = Color(1.0, 0.90, 0.55, 1.0)
-	elif disabled:
-		text = Color(0.42, 0.36, 0.28, 0.85)
-	var family := "primary" if selected else "secondary"
-	for state in ["normal", "hover", "pressed", "disabled"]:
-		button.add_theme_stylebox_override(state, T.kit_box("button_%s_%s" % [family, state]))
-	button.add_theme_color_override("font_color", text)
-	button.add_theme_color_override("font_hover_color", text.lightened(0.15))
-	button.add_theme_color_override("font_pressed_color", text)
-	button.add_theme_color_override("font_disabled_color", text)
-	button.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.85))
-	button.add_theme_constant_override("outline_size", 1)
+func _style_difficulty_button(button: Button, selected: bool, _disabled: bool) -> void:
+	T.apply_action_button(button, "primary" if selected else "secondary")
 
 
 func _add_interactive_building(
@@ -1680,10 +1616,7 @@ func _open_card_gallery() -> void:
 	close.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	close.add_theme_font_override("font", T.display_font(700))
 	close.add_theme_font_size_override("font_size", 24)
-	close.add_theme_stylebox_override("normal", _home_button_style("normal"))
-	close.add_theme_stylebox_override("hover", _home_button_style("hover"))
-	close.add_theme_stylebox_override("pressed", _home_button_style("pressed"))
-	close.add_theme_color_override("font_color", Color(0.94, 0.82, 0.60, 1.0))
+	T.apply_action_button(close, "secondary")
 	close.pressed.connect(func() -> void: AudioManager.play_sfx("ui_back"))
 	close.pressed.connect(layer.queue_free)
 	header.add_child(close)

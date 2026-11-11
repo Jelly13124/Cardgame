@@ -59,9 +59,10 @@ func _test_vertical_layout_and_backpack_only_drop() -> void:
 		var hover_style := craft_tab.get_theme_stylebox("hover") as StyleBoxTexture
 		_expect(
 			normal_style != null and hover_style != null
-			and _style_texture_path(normal_style).ends_with("/kit/button_secondary_normal.png")
-			and _style_texture_path(hover_style).ends_with("/kit/button_secondary_hover.png"),
-			"forge tabs use the shared secondary button state artwork"
+			and _style_texture_path(normal_style).ends_with("/kit/button_secondary_base.png")
+			and normal_style.texture == hover_style.texture
+			and normal_style.modulate_color != hover_style.modulate_color,
+			"forge tabs reuse the shared secondary silhouette with distinct state tints"
 		)
 		if normal_style != null and hover_style != null:
 			for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
@@ -105,7 +106,7 @@ func _test_vertical_layout_and_backpack_only_drop() -> void:
 	if single_action:
 		_expect(
 			_style_texture_path(single_action.get_theme_stylebox("normal")).ends_with(
-				"/kit/button_primary_normal.png"
+				"/kit/button_primary_base.png"
 			),
 			"single dismantle uses the shared primary action skin"
 		)

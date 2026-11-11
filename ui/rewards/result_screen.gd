@@ -129,9 +129,7 @@ func _build() -> void:
 	back.custom_minimum_size = Vector2(320, 56)
 	back.add_theme_font_override("font", T.display_font(700))
 	back.add_theme_font_size_override("font_size", 22)
-	T.apply_button_theme(back)
-	for state in ["normal", "hover", "pressed"]:
-		back.add_theme_stylebox_override(state, T.ll_button(state))
+	T.apply_action_button(back, "primary")
 	back.pressed.connect(_on_back)
 	box.add_child(back)
 

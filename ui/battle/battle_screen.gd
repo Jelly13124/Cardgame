@@ -106,7 +106,6 @@ func _ready():
 
 	# Apply textured wasteland button skin to the End Round button.
 	if end_round_button:
-		T.apply_button_theme(end_round_button)
 		_style_end_round_button()
 
 	# The shared deck-book glyph replaces the old card-fan/card-back art on both
@@ -123,15 +122,9 @@ func _ready():
 	_maybe_show_tutorial()
 
 
-## The compact action shares the global four-state skin and keeps its current bounds.
+## Share the primary action layers while keeping the existing HUD bounds.
 func _style_end_round_button() -> void:
-	for state in ["normal", "hover", "pressed", "disabled"]:
-		var style := T.ll_button(state)
-		style.content_margin_left = 28
-		style.content_margin_right = 28
-		style.content_margin_top = 8
-		style.content_margin_bottom = 8
-		end_round_button.add_theme_stylebox_override(state, style)
+	T.apply_action_button(end_round_button, "primary", Vector4(28, 8, 28, 8))
 	var cream := Color(0.96, 0.90, 0.74, 1.0)
 	end_round_button.add_theme_color_override("font_color", cream)
 	end_round_button.add_theme_color_override("font_hover_color", Color(1.0, 0.95, 0.82, 1.0))

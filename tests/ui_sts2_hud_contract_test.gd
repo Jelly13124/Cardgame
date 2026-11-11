@@ -346,13 +346,13 @@ func _test_battle_energy_and_end_turn() -> void:
 	_expect(end_turn != null, "battle keeps the EndRoundButton interaction")
 	if end_turn:
 		_expect(end_turn.size.x <= 240.0, "EndRoundButton stays compact at 240 px or less")
-		var style := end_turn.get_theme_stylebox("normal")
-		var style_path := ""
-		if style is StyleBoxTexture and style.texture:
-			style_path = style.texture.resource_path
+		var visuals := end_turn.get_node_or_null("ActionVisuals") as Control
+		var face := end_turn.get_node_or_null("ActionVisuals/Face") as NinePatchRect
+		var style_path := face.texture.resource_path if face != null and face.texture != null else ""
 		_expect(
-			style_path.ends_with("/kit/button_primary_normal.png"),
-			"EndRoundButton uses the shared primary button skin (got %s)" % style_path
+			visuals != null and visuals.get("role") == "primary"
+			and style_path.ends_with("/kit/button_primary_base.png"),
+			"EndRoundButton uses the shared layered primary action (got %s)" % style_path
 		)
 
 	battle.queue_free()

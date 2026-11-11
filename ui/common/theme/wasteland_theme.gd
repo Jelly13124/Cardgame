@@ -75,17 +75,14 @@ const RESULT_SCRIM = Color(0.024, 0.027, 0.032, 0.94)
 
 # ─── Shared original UI kit ────────────────────────────────────────────────────
 const KIT_DIR := "res://run_system/assets/images/ui/kit/"
+const BUTTON_FEEDBACK = preload("uid://5f5teq5vofyg")  # res://ui/common/theme/button_feedback.gd
 const KIT_PATCH_MARGINS := {
+	"button_secondary_outline": Vector4(20, 16, 20, 16),
+	"button_secondary_base": Vector4(20, 16, 20, 16),
+	"button_primary_outline": Vector4(20, 16, 20, 16),
+	"button_primary_base": Vector4(20, 16, 20, 16),
 	"panel_hard_9slice": Vector4(24, 24, 24, 24),
 	"panel_soft_9slice": Vector4(24, 24, 24, 24),
-	"button_primary_normal": Vector4(20, 16, 20, 16),
-	"button_primary_hover": Vector4(20, 16, 20, 16),
-	"button_primary_pressed": Vector4(20, 16, 20, 16),
-	"button_primary_disabled": Vector4(20, 16, 20, 16),
-	"button_secondary_normal": Vector4(20, 16, 20, 16),
-	"button_secondary_hover": Vector4(20, 16, 20, 16),
-	"button_secondary_pressed": Vector4(20, 16, 20, 16),
-	"button_secondary_disabled": Vector4(20, 16, 20, 16),
 	"tooltip_panel_9slice": Vector4(55, 43, 91, 32),
 	"tooltip_shadow_9slice": Vector4(55, 43, 91, 32),
 	"dropdown_9slice": Vector4(20, 16, 20, 16),
@@ -102,11 +99,56 @@ const SKIN_PRESSED_TINT := Color(0.82, 0.84, 0.80)
 const SKIN_LOCKED_TINT := Color(0.54, 0.58, 0.55, 0.92)
 const SKIN_DISABLED_TINT := Color(0.58, 0.58, 0.58, 0.92)
 
+const BUTTON_VISUALS_NAME := "ActionVisuals"
+const BUTTON_CONTENT_MARGINS := Vector4(18, 10, 18, 12)
+const BUTTON_FONT_OUTLINE := Color(0.035, 0.028, 0.020, 0.96)
+const BUTTON_DISABLED_TEXT := Color(0.72, 0.66, 0.58, 0.92)
+const BUTTON_SHADOW_TINT := Color(0, 0, 0, 0.45)
+const BUTTON_SHADOW_OFFSET := Vector2(0, 4)
+const BUTTON_HOVER_SECONDS := 0.05
+const BUTTON_EXIT_SECONDS := 0.5
+const BUTTON_PRESS_SECONDS := 0.5
+const BUTTON_RELEASE_SECONDS := 0.5
+const BUTTON_ROLE_SCALES := {
+	"primary": Vector2(1.05, 0.95), "secondary": Vector2(1.025, 0.975),
+	"menu": Vector2.ONE, "list": Vector2.ONE,
+}
+const BUTTON_FONT_OUTLINE_SIZES := {"primary": 3, "secondary": 2, "menu": 4, "list": 2}
+const MENU_MARKER_SIZE := Vector2(24, 24)
+const MENU_MARKER_GAP := 12.0
+const MENU_MARKER_ROTATION := -PI * 0.5
+const BUTTON_FACE_TINTS := {
+	"primary": {
+		"normal": Color.WHITE, "hover": Color(1.4, 1.4, 1.4),
+		"pressed": Color(0.72, 0.72, 0.72), "disabled": Color(0.55, 0.55, 0.55, 0.86),
+	},
+	"secondary": {
+		"normal": Color.WHITE, "hover": Color(1.25, 1.25, 1.25),
+		"pressed": Color(0.78, 0.78, 0.78), "disabled": Color(0.55, 0.55, 0.55, 0.86),
+	},
+	"list": {
+		"normal": Color(0.9, 0.9, 0.9, 0.90), "hover": Color(1.1, 1.1, 1.1, 1.0),
+		"pressed": Color(0.7, 0.7, 0.7, 1.0), "disabled": Color(0.55, 0.55, 0.55, 0.45),
+	},
+}
+const LEGACY_BUTTON_SKINS := {
+	"button_primary_normal": {"family": "primary", "state": "normal"},
+	"button_primary_hover": {"family": "primary", "state": "hover"},
+	"button_primary_pressed": {"family": "primary", "state": "pressed"},
+	"button_primary_disabled": {"family": "primary", "state": "disabled"},
+	"button_secondary_normal": {"family": "secondary", "state": "normal"},
+	"button_secondary_hover": {"family": "secondary", "state": "hover"},
+	"button_secondary_pressed": {"family": "secondary", "state": "pressed"},
+	"button_secondary_disabled": {"family": "secondary", "state": "disabled"},
+}
+
 static var _kit_textures: Dictionary = {}
 
 
 ## Mandatory original kit textures report a missing asset at the lookup boundary.
 static func kit_tex(asset_name: String) -> Texture2D:
+	if LEGACY_BUTTON_SKINS.has(asset_name):
+		asset_name = "button_%s_base" % LEGACY_BUTTON_SKINS[asset_name]["family"]
 	if _kit_textures.has(asset_name):
 		return _kit_textures[asset_name]
 	var path := KIT_DIR + asset_name + ".png"
@@ -126,8 +168,13 @@ static func kit_box(
 	asset_name: String, content_margins: Vector4 = Vector4.ZERO
 ) -> StyleBoxTexture:
 	var style := StyleBoxTexture.new()
-	style.texture = kit_tex(asset_name)
-	var patches: Vector4 = KIT_PATCH_MARGINS.get(asset_name, Vector4.ZERO)
+	var resolved_name := asset_name
+	if LEGACY_BUTTON_SKINS.has(asset_name):
+		var legacy: Dictionary = LEGACY_BUTTON_SKINS[asset_name]
+		resolved_name = "button_%s_base" % legacy["family"]
+		style.modulate_color = BUTTON_FACE_TINTS[legacy["family"]][legacy["state"]]
+	style.texture = kit_tex(resolved_name)
+	var patches: Vector4 = KIT_PATCH_MARGINS.get(resolved_name, Vector4.ZERO)
 	style.texture_margin_left = patches.x
 	style.texture_margin_top = patches.y
 	style.texture_margin_right = patches.z
@@ -203,7 +250,7 @@ static func apply_dropdown_theme(option: OptionButton) -> void:
 	option.add_theme_color_override("font_hover_color", SAND_LIGHT)
 	option.add_theme_color_override("font_pressed_color", SAND_LIGHT)
 	var popup := option.get_popup()
-	popup.add_theme_color_override("font_hover_color", LEATHER_DARK)
+	popup.add_theme_color_override("font_hover_color", TEXT_MAIN)
 	var popup_styles := {
 		"panel": kit_box("panel_hard_9slice"),
 		"hover": kit_box("button_secondary_hover"),
@@ -272,42 +319,103 @@ static func button_textured(state: String = "normal") -> StyleBoxTexture:
 	return ll_button_olive(state)
 
 
+## Role profiles keep source art, feedback rhythm and colors in one place.
+static func button_feedback_profile(role: String = "secondary") -> Dictionary:
+	if role == "quiet":
+		role = "list"
+	elif role == "menu_text":
+		role = "menu"
+	if role not in ["primary", "secondary", "menu", "list"]:
+		push_warning("Unknown button role: %s" % role)
+		role = "secondary"
+	var family := "primary" if role == "primary" else "secondary"
+	var tint_family := "list" if role == "list" else family
+	return {
+		"role": role,
+		"base_texture": kit_tex("button_%s_base" % family),
+		"outline_texture": kit_tex("button_%s_outline" % family),
+		"patch_margins": KIT_PATCH_MARGINS["button_%s_base" % family],
+		"face_tints": BUTTON_FACE_TINTS[tint_family].duplicate(),
+		"show_face": role != "menu",
+		"show_outline": role != "menu",
+		"show_shadow": role in ["primary", "secondary"],
+		"shadow_offset": BUTTON_SHADOW_OFFSET,
+		"shadow_tint": BUTTON_SHADOW_TINT,
+		"outline_tint": UI_HEADER_GOLD,
+		"hover_scale": BUTTON_ROLE_SCALES[role].x,
+		"pressed_scale": BUTTON_ROLE_SCALES[role].y,
+		"hover_seconds": BUTTON_HOVER_SECONDS,
+		"exit_seconds": BUTTON_EXIT_SECONDS,
+		"press_seconds": BUTTON_PRESS_SECONDS,
+		"release_seconds": BUTTON_RELEASE_SECONDS,
+		"hover_trans": Tween.TRANS_LINEAR,
+		"hover_ease": Tween.EASE_OUT,
+		"exit_trans": Tween.TRANS_EXPO,
+		"exit_ease": Tween.EASE_OUT,
+		"press_trans": Tween.TRANS_EXPO,
+		"press_ease": Tween.EASE_OUT,
+		"hover_sound": "ui_hover",
+		"font_outline_size": BUTTON_FONT_OUTLINE_SIZES[role],
+		"marker_texture": kit_tex("dropdown_arrow"),
+		"marker_size": MENU_MARKER_SIZE,
+		"marker_gap": MENU_MARKER_GAP,
+		"marker_rotation": MENU_MARKER_ROTATION,
+		"marker_tint": Color.WHITE,
+	}
+
+
+## The native Button owns input and content; its independent child owns movement.
+static func apply_action_button(
+	button: Button, role: String = "secondary",
+	content_margins: Vector4 = Vector4(-1, -1, -1, -1)
+) -> void:
+	var profile := button_feedback_profile(role)
+	if content_margins.x < 0:
+		content_margins = BUTTON_CONTENT_MARGINS
+		if button.has_theme_stylebox_override("normal"):
+			var previous := button.get_theme_stylebox("normal")
+			content_margins = Vector4(
+				previous.get_margin(SIDE_LEFT), previous.get_margin(SIDE_TOP),
+				previous.get_margin(SIDE_RIGHT), previous.get_margin(SIDE_BOTTOM)
+			)
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:  # bare-ok: Godot theme states
+		var empty := StyleBoxEmpty.new()
+		empty.content_margin_left = content_margins.x
+		empty.content_margin_top = content_margins.y
+		empty.content_margin_right = content_margins.z
+		empty.content_margin_bottom = content_margins.w
+		button.add_theme_stylebox_override(state, empty)
+	button.add_theme_color_override("font_color", TEXT_MAIN)
+	var highlighted_text := UI_HEADER_GOLD if profile["role"] == "menu" else SAND_LIGHT
+	button.add_theme_color_override("font_hover_color", highlighted_text)
+	button.add_theme_color_override("font_focus_color", highlighted_text)
+	button.add_theme_color_override("font_pressed_color", SAND_LIGHT)
+	button.add_theme_color_override("font_hover_pressed_color", SAND_LIGHT)
+	button.add_theme_color_override("font_disabled_color", BUTTON_DISABLED_TEXT)
+	button.add_theme_color_override("font_outline_color", BUTTON_FONT_OUTLINE)
+	button.add_theme_constant_override("outline_size", int(profile["font_outline_size"]))
+	var visuals := button.get_node_or_null(NodePath(BUTTON_VISUALS_NAME))
+	if visuals == null:
+		visuals = BUTTON_FEEDBACK.new()
+		visuals.name = BUTTON_VISUALS_NAME
+		button.add_child(visuals)
+		visuals.configure(button, profile)
+	else:
+		visuals.configure(button, profile)
+
+
+static func apply_menu_text_button(button: Button) -> void:
+	apply_action_button(button, "menu")
+
+
+static func apply_quiet_button(button: Button) -> void:
+	apply_action_button(button, "list")
+
+
 static func apply_button_theme(
 	button: Button, _bg: Color = Color.WHITE, _border: Color = Color.WHITE, _radius: int = 4
 ) -> void:
-	for state in ["normal", "hover", "pressed", "disabled"]:
-		button.add_theme_stylebox_override(state, button_textured(state))
-	button.add_theme_color_override("font_color", TEXT_MAIN)
-	button.add_theme_color_override("font_hover_color", SAND_LIGHT)
-	button.add_theme_color_override("font_pressed_color", SAND_LIGHT)
-	button.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
-	button.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.82))
-	button.add_theme_constant_override("outline_size", 1)
-	button.mouse_entered.connect(
-		func() -> void:
-			if not is_instance_valid(button) or button.disabled:
-				return
-			AudioManager.play_sfx("ui_hover")
-			_button_pop(button, Vector2(1.04, 1.04), 0.08)
-	)
-	button.mouse_exited.connect(
-		func() -> void:
-			if is_instance_valid(button):
-				_button_pop(button, Vector2.ONE, 0.10)
-	)
-
-
-static func _button_pop(button: Button, to: Vector2, dur: float) -> void:
-	if not is_instance_valid(button) or not button.is_inside_tree():
-		return  # create_tween() outside the tree warns; skip if mid-removal
-	var prev = button.get_meta("_juice_tw") if button.has_meta("_juice_tw") else null
-	if prev != null and (prev is Tween) and prev.is_valid():
-		prev.kill()
-	button.pivot_offset = button.size / 2.0
-	var tw := button.create_tween()
-	button.set_meta("_juice_tw", tw)
-	tw.tween_property(button, "scale", to, dur).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-
+	apply_action_button(button, "secondary", BUTTON_CONTENT_MARGINS)
 
 static func fade_in(control: Control, dur: float = 0.16) -> void:
 	if not is_instance_valid(control) or not control.is_inside_tree():
@@ -593,9 +701,8 @@ static func concept_price_button(variant: String, state: String = "normal") -> S
 
 
 static func apply_concept_price_button(button: Button, variant: String) -> void:
-	for state in ["normal", "hover", "pressed", "disabled"]:
-		button.add_theme_stylebox_override(state, concept_price_button(variant, state))
-
+	var role := "secondary" if variant == "olive" else "primary"
+	apply_action_button(button, role, Vector4(14, 8, 14, 9))
 
 static func ll_charcoal_panel() -> StyleBoxTexture:
 	return kit_box("panel_hard_9slice", Vector4(16, 12, 16, 12))
@@ -613,10 +720,8 @@ static func ll_close_button(px: float = 48.0) -> Button:
 	button.custom_minimum_size = Vector2(px, px)
 	button.add_theme_font_override("font", display_font(600))
 	button.add_theme_font_size_override("font_size", int(px * 0.45))
-	for state in ["normal", "hover", "pressed", "disabled"]:
-		button.add_theme_stylebox_override(state, kit_box("button_secondary_" + state))
+	apply_action_button(button, "secondary", Vector4.ZERO)
 	return button
-
 
 static func ll_slot(state: String = "normal") -> StyleBoxTexture:
 	return state_box(state, 3)
@@ -627,11 +732,7 @@ static func ll_inset_thin() -> StyleBoxTexture:
 
 
 static func apply_choice_button(button: Button) -> void:
-	for state in ["normal", "hover", "pressed", "disabled"]:
-		button.add_theme_stylebox_override(state, ll_button_olive(state))
-	var focus := semantic_outline(UI_HEADER_GOLD, 2, 4)
-	button.add_theme_stylebox_override("focus", focus)
-
+	apply_action_button(button, "list", BUTTON_CONTENT_MARGINS)
 
 # ─── Retained original icon sources ────────────────────────────────────────────
 const UI_KIT_DIR := "res://run_system/assets/images/ui_kit/"

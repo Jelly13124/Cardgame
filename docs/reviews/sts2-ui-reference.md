@@ -88,6 +88,8 @@
 
 来源为 `scenes/screens/main_menu.tscn`、`scenes/ui/{proceed_button,back_button,confirm_button,abandon_run_yes_button,abandon_run_no_button}.tscn`、`scenes/rewards/reward_button.tscn`、`scenes/combat/end_turn_button.tscn`、`scenes/rest_site/rest_site_button.tscn` 与相应 C# 类。
 
+本项目按钮修订采用四种共用角色：primary、secondary、menu、list。前两类由原创底图、复用底图的阴影、透明轮廓和原生文字组成；菜单不铺底板，列表降低底板存在感。交互控制器只缩放视觉子层，原生 Button 的命中区与内容布局保持固定；这一点是本项目为现有布局做的适配。悬停 0.05 秒、失焦 0.5 秒 Expo-Out，主次视觉缩放分别为 1.05/1.025，按下为 0.95/0.975。皮肤、颜色、边距和节奏集中定义于 `ui/common/theme/wasteland_theme.gd`，`button_feedback.gd` 负责状态和图层同步。卡牌与战斗特效不在本轮修订范围。
+
 ## 本轮实施与复查
 
 工作区为独立的 `feat/ui-refresh`，起点是 `main` 的 `c644bee`。

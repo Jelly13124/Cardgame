@@ -71,13 +71,10 @@ func _apply_static_theme() -> void:
 
 
 func _style_action(button: Button, primary: bool = false) -> void:
-	T.apply_button_theme(button)
+	T.apply_action_button(button, "primary" if primary else "secondary")
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.add_theme_font_override("font", T.display_font(700))
 	button.add_theme_font_size_override("font_size", 22)
-	if primary:
-		for state in ["normal", "hover", "pressed"]:
-			button.add_theme_stylebox_override(state, T.ll_button(state))
 
 
 ## What this fight offers comes from the run layer (core/run/rewards.gd); this

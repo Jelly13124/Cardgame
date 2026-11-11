@@ -89,14 +89,11 @@ func _test_shared_home_skin(home: Node) -> void:
 	var difficulty := home.find_child("DifficultyButton", true, false) as Button
 	var seed_field := home.find_child("SeedField", true, false) as LineEdit
 	_expect(depart != null and difficulty != null and seed_field != null, "home keeps its launch controls")
-	for button in [depart, difficulty]:
+	for item in [[depart, "primary"], [difficulty, "secondary"]]:
+		var button := item[0] as Button
 		if button == null:
 			continue
-		for state in ["normal", "hover", "pressed", "disabled"]:
-			_expect(
-				_uses_shared_skin(button.get_theme_stylebox(state)),
-				"home %s uses the shared %s skin" % [button.name, state]
-			)
+		_test_home_action_layers(button, str(item[1]))
 	if depart != null:
 		_expect(
 			depart.offset_left == -335.0 and depart.offset_top == -172.0
@@ -113,6 +110,52 @@ func _test_shared_home_skin(home: Node) -> void:
 		board != null and _uses_shared_skin(board.get_theme_stylebox("panel")),
 		"the home bounty board uses the common panel artwork"
 	)
+
+
+func _test_home_action_layers(button: Button, role: String) -> void:
+	var visuals := button.get_node_or_null("ActionVisuals") as Control
+	_expect(visuals != null and visuals.get("role") == role,
+		"home %s uses the shared layered %s role" % [button.name, role])
+	if visuals == null:
+		return
+	var face := visuals.get_node_or_null("Face") as NinePatchRect
+	var shadow := visuals.get_node_or_null("Shadow") as NinePatchRect
+	var outline := visuals.get_node_or_null("Outline") as NinePatchRect
+	_expect(face != null and shadow != null and outline != null,
+		"home %s keeps face, shadow and feedback outline separate" % button.name)
+	if face == null or shadow == null or outline == null:
+		return
+	_expect(face.texture != null and face.texture.resource_path.ends_with("/kit/button_%s_base.png" % role)
+		and shadow.texture == face.texture and outline.texture != null
+		and outline.texture.resource_path.ends_with("/kit/button_%s_outline.png" % role),
+		"home %s resolves all artwork through the shared %s skin" % [button.name, role])
+	var was_disabled := button.disabled
+	var bounds := button.get_global_rect()
+	var tints: Array[Color] = []
+	button.disabled = false
+	button.button_up.emit()
+	button.mouse_exited.emit()
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		if state == "hover":
+			button.mouse_entered.emit()
+		elif state == "pressed":
+			button.button_down.emit()
+		elif state == "disabled":
+			button.disabled = true
+		visuals.call("sync_state", true)
+		_expect(visuals.get("feedback_state") == state,
+			"home %s supplies the shared %s visual state" % [button.name, state])
+		_expect(button.get_theme_stylebox(state) is StyleBoxEmpty,
+			"home %s leaves %s artwork to its independent layers" % [button.name, state])
+		_expect(not tints.has(face.modulate),
+			"home %s gives %s a distinct surface tint" % [button.name, state])
+		tints.append(face.modulate)
+		_expect(button.get_global_rect() == bounds and button.scale == Vector2.ONE,
+			"home %s preserves its input area throughout %s feedback" % [button.name, state])
+	button.disabled = was_disabled
+	button.button_up.emit()
+	button.mouse_exited.emit()
+	visuals.call("sync_state", true)
 
 
 func _uses_shared_skin(style: StyleBox) -> bool:

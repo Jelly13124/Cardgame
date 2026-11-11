@@ -160,12 +160,9 @@ func _build_top_bar() -> Control:
 	_upgrade_button.add_theme_font_override("font", T.display_font(700))
 	_upgrade_button.add_theme_font_size_override("font_size", 19)
 	_upgrade_button.add_theme_constant_override("icon_max_width", 24)
-	_upgrade_button.add_theme_color_override("font_color", Color(1.0, 0.91, 0.72))
-	_upgrade_button.add_theme_color_override("font_hover_color", Color(1.0, 0.97, 0.84))
 	_upgrade_button.icon = T.lightline_tex("icon_uparrow")
 	_upgrade_button.expand_icon = true
-	for state in ["normal", "hover", "pressed", "disabled"]:
-		_upgrade_button.add_theme_stylebox_override(state, T.ll_button(state))
+	T.apply_action_button(_upgrade_button, "primary")
 	_upgrade_button.pressed.connect(_toggle_upgrade_popover)
 	left.add_child(_upgrade_button)
 
@@ -216,6 +213,7 @@ func _build_top_bar() -> Control:
 
 	var close_btn := T.ll_close_button(52.0)
 	close_btn.name = "BuildingCloseButton"
+	T.apply_action_button(close_btn, "secondary")
 	close_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	close_btn.pressed.connect(_on_close_pressed)
 	right.add_child(close_btn)

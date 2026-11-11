@@ -2,6 +2,8 @@ extends Node
 
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MARKET = preload("uid://brturtmxacges")  # res://core/meta/market.gd
+const MAIN_MENU = preload("uid://d211ta0xyw0wr")  # res://ui/menus/main_menu.gd
+const BUILDING_UPGRADE_POPOVER = preload("uid://c12ycj00td76a")  # res://ui/base/building_upgrade_popover.gd
 
 const RESULT_SCREEN_PATH := "res://ui/rewards/result_screen.gd"  # path-ok: reads source text
 const META_PROGRESS_PATH := "res://autoload/meta_progress.gd"  # path-ok: reads source text
@@ -18,15 +20,15 @@ const FORGE_WINDOW_PATH := "res://ui/windows/forge_window.gd"  # path-ok: reads 
 const MAIN_MENU_PATH := "res://ui/menus/main_menu.gd"  # path-ok: reads source text
 const UI_COMMON_PATH := "res://assets/translations/ui_common.csv"
 const UI_HOME_PATH := "res://assets/translations/ui_home.csv"
-const NORMAL_BUTTON_PATH := "res://run_system/assets/images/ui/kit/button_primary_normal.png"
-const SELECTED_BUTTON_PATH := "res://run_system/assets/images/ui/kit/button_primary_hover.png"
+const NORMAL_BUTTON_PATH := "res://run_system/assets/images/ui/kit/button_primary_base.png"
+const SELECTED_BUTTON_PATH := "res://run_system/assets/images/ui/kit/button_primary_outline.png"
 const BOUNTY_BOARD_FRAME_PATH := "res://run_system/assets/images/ui/kit/panel_hard_9slice.png"
 const BUILDING_UPGRADE_FRAME_PATH := (
 	"res://run_system/assets/images/ui/kit/panel_hard_9slice.png"
 )
 const PRICE_PLAQUE_PATHS := [
-	"res://run_system/assets/images/ui/kit/button_secondary_normal.png",
-	"res://run_system/assets/images/ui/kit/button_primary_normal.png",
+	"res://run_system/assets/images/ui/kit/button_secondary_base.png",
+	"res://run_system/assets/images/ui/kit/button_primary_base.png",
 ]
 const FORGE_WORKBENCH_PATH := (
 	"res://run_system/assets/images/ui/forge/forge_blacksmith_workbench.png"
@@ -45,7 +47,7 @@ const MARKET_COMPONENT_SIZES := {
 	"res://run_system/assets/images/ui/kit/panel_hard_9slice.png": Vector2i(96, 96),
 	"res://run_system/assets/images/ui/kit/panel_soft_9slice.png": Vector2i(96, 96),
 	"res://run_system/assets/images/ui/kit/input_9slice.png": Vector2i(192, 64),
-	"res://run_system/assets/images/ui/kit/button_secondary_normal.png": Vector2i(192, 64),
+	"res://run_system/assets/images/ui/kit/button_secondary_base.png": Vector2i(320, 96),
 }
 const BUILDING_BADGE_PATHS := [
 	"res://run_system/assets/images/home/base_hud/badge_forge.png",
@@ -94,7 +96,7 @@ func _test_generated_assets() -> void:
 		if texture == null:
 			continue
 		_expect(
-			Vector2i(texture.get_width(), texture.get_height()) == Vector2i(192, 64),
+			Vector2i(texture.get_width(), texture.get_height()) == Vector2i(320, 96),
 			"main-menu buttons use the shared source canvas before nine-slice layout"
 		)
 
@@ -265,7 +267,6 @@ func _test_building_upgrade_lives_inside() -> void:
 	for marker in [
 		'name = "BuildingUpgradePopover"',
 		'T.kit_box("panel_hard_9slice")',
-		'T.ll_button_dark("normal")',
 		"MetaProgress.unlock_building(building_id)",
 		"MetaProgress.upgrade_building(building_id)",
 	]:
@@ -334,7 +335,6 @@ func _test_concept_purchase_buttons() -> void:
 	var clinic_source := FileAccess.get_file_as_string(CLINIC_SCREEN_PATH)
 	var market_source := FileAccess.get_file_as_string(MARKET_SCREEN_PATH)
 	var outpost_source := FileAccess.get_file_as_string(OUTPOST_SCREEN_PATH)
-	var popover_source := FileAccess.get_file_as_string(BUILDING_UPGRADE_POPOVER_PATH)
 
 	_expect(
 		theme_source.contains("static func centered_currency_button_content(")
@@ -402,11 +402,25 @@ func _test_concept_purchase_buttons() -> void:
 		and not outpost_source.contains("_build_npc_art_stage("),
 		"outpost keeps the accepted NPC-free service composition"
 	)
-	_expect(
-		popover_source.contains('T.ll_button_dark("normal")')
-		and popover_source.contains('T.apply_concept_price_button(button, "orange")'),
-		"upgrade popover keeps the concept's dark cancel / orange confirm hierarchy"
-	)
+	var popover := BUILDING_UPGRADE_POPOVER.new()
+	for primary in [false, true]:
+		var action := Button.new()
+		popover.call("_style_action_button", action, primary)
+		var visuals := action.get_node_or_null("ActionVisuals") as Control
+		var role := "primary" if primary else "secondary"
+		_expect(visuals != null and visuals.get("role") == role,
+			"upgrade popover preserves the shared %s action hierarchy" % role)
+		var face := action.get_node_or_null("ActionVisuals/Face") as NinePatchRect
+		_expect(face != null and face.texture != null
+			and face.texture.resource_path.ends_with("/button_%s_base.png" % role),
+			"upgrade popover resolves %s feedback through the shared layered skin" % role)
+		var style := action.get_theme_stylebox("normal")
+		var padding := Vector4(style.get_content_margin(SIDE_LEFT), style.get_content_margin(SIDE_TOP),
+			style.get_content_margin(SIDE_RIGHT), style.get_content_margin(SIDE_BOTTOM))
+		_expect(padding == (Vector4(14, 8, 14, 9) if primary else Vector4(18, 10, 18, 12)),
+			"upgrade popover preserves the %s action's content geometry" % role)
+		action.free()
+	popover.free()
 
 
 func _test_home_icon_only_and_bounty_contract() -> void:
@@ -478,19 +492,26 @@ func _float_assignment(source: String, key: String) -> float:
 
 
 func _test_main_menu_uses_shared_buttons() -> void:
-	var source := FileAccess.get_file_as_string(MAIN_MENU_PATH)
-	var save_strip_body := _function_body(source, "func _start_save_info_button")
-	var button_body := _function_body(source, "func _start_stylebox")
-	_expect(
-		button_body.contains('T.kit_box("button_primary_" + state'),
-		"main menu uses all four shared primary button states"
-	)
-	_expect(
-		save_strip_body.contains('T.kit_box("panel_hard_9slice")')
-		and save_strip_body.contains('name = "SaveStripBackground"'),
-		"save strip preserves its named background with the shared nine-slice panel"
-	)
-	_expect(
-		not save_strip_body.contains("TextureRect.STRETCH_SCALE"),
-		"save strip never scales its border artwork out of proportion"
-	)
+	var menu := MAIN_MENU.new()
+	var action := menu.call("_start_menu_button", "New game", func() -> void: pass) as Button
+	_expect(action != null, "main menu constructs a native action button")
+	if action != null:
+		var visuals := action.get_node_or_null("ActionVisuals") as Control
+		_expect(visuals != null and visuals.get("role") == "menu",
+			"main menu keeps its actions in the shared text-first menu role")
+		_expect(action.text == "New game", "main menu preserves live text above its feedback")
+		action.free()
+	var save_strip := menu.call("_start_save_info_button") as Button
+	_expect(save_strip != null, "save strip remains a native action button")
+	if save_strip != null:
+		var visuals := save_strip.get_node_or_null("ActionVisuals") as Control
+		_expect(visuals != null and visuals.get("role") == "list",
+			"save strip uses the shared fixed-layout list surface")
+		var face := save_strip.get_node_or_null("ActionVisuals/Face") as NinePatchRect
+		_expect(face != null and face.texture != null
+			and face.texture.resource_path.ends_with("/button_secondary_base.png"),
+			"save strip retains a shared nine-slice backing without distorting its border")
+		_expect(save_strip.find_children("*", "Label", true, false).size() == 2,
+			"save strip keeps its slot and version information separate from its surface")
+		save_strip.free()
+	menu.free()
