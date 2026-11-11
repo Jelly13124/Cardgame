@@ -70,7 +70,6 @@ const MAP_SCENE_PATH := "uid://d3x5b8wvg2q"  # res://ui/map/map_scene.tscn
 const LOOT_REWARD_SCENE = preload("uid://csl8exl41do23")  # res://ui/rewards/loot_reward.tscn
 const EXTRACT_CHOICE_MODAL_SCRIPT = preload("uid://dl8ofvd880xht")  # res://ui/rewards/extract_choice_modal.gd
 const RESULT_SCREEN_SCRIPT = preload("uid://bxh1x1hy6fylv")  # res://ui/rewards/result_screen.gd
-const PILE_HUD_SCRIPT = preload("uid://7sp1evs2hvaa")  # res://ui/battle/pile_hud.gd
 const TUTORIAL_TIPS_SCRIPT = preload("uid://cc37k40gsd5x")  # res://ui/battle/tutorial_tips.gd
 const MAIN_MENU_PATH := "uid://dnjlmt1repvjw"  # res://ui/menus/main_menu.tscn
 
@@ -109,8 +108,8 @@ func _ready():
 	if end_round_button:
 		_style_end_round_button()
 
-	_setup_pile_icon(deck, "draw")
-	_setup_pile_icon(discard_pile, "discard")
+	_setup_pile_icon(deck, "iconb_deck_stack", true)
+	_setup_pile_icon(discard_pile, "iconb_deck_stack", false)
 
 	_start_new_game()
 
@@ -623,40 +622,39 @@ func refresh_hand_ui():
 
 ## Preserve the data-host geometry used by the frozen card flights. Its separate
 ## hotspot owns input; the direct CountLabel preserves Pile's automatic updates.
-func _setup_pile_icon(pile: Control, kind: String) -> void:
-	if pile == null or pile.get_node_or_null("PileInput") != null:
+func _setup_pile_icon(pile: Node, icon_name: String, mirrored: bool) -> void:
+	if pile == null or pile.get_node_or_null("PileIcon") != null:
 		return
+	# The pile owns no visible card surface in battle. This is intentional: the
+	# old CardBackVisual nodes were static scene art and hide_cards cannot control
+	# them. Keep this true even if the replacement icon is unavailable.
 	pile.hide_cards = true
-	pile.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	pile.get_node("Cards").mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for legacy_name in ["CardBackVisual", "Placeholder"]:
 		var legacy := pile.get_node_or_null(legacy_name)
 		if legacy != null:
 			legacy.queue_free()
-	var input := Control.new()
-	input.name = "PileInput"
-	input.position = Vector2(40, 70)
-	input.size = Vector2(80, 80)
-	input.mouse_filter = Control.MOUSE_FILTER_STOP
-	input.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	pile.add_child(input)
-	var count := Label.new()
-	count.name = "CountLabel"
-	count.position = input.position
-	count.size = input.size
-	count.z_index = 26
-	pile.add_child(count)
-	var hud := PILE_HUD_SCRIPT.new()
-	hud.name = "PileHUD"
-	input.add_child(hud)
-	hud.configure(input, kind, 26, count)
-	input.gui_input.connect(_on_pile_gui_input.bind(kind, input))
-
-
-func _on_pile_gui_input(event: InputEvent, kind: String, input: Control) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		ui_manager.open_pile(kind)
-		input.accept_event()
+	var tex := T.lightline_tex(icon_name)
+	if tex == null:
+		return
+	var icon := TextureRect.new()
+	icon.name = "PileIcon"
+	icon.texture = tex
+	icon.flip_h = mirrored
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	# This is a pile glyph, not a rendered stack of full-size cards. Keep it
+	# compact inside the existing 160x220 pile interaction area. Bias the draw
+	# glyph toward the left edge and the discard glyph toward the right so the
+	# fanned hand cannot cover either one.
+	icon.offset_left = 10.0 if mirrored else 70.0
+	icon.offset_top = -104.0
+	icon.offset_right = icon.offset_left + 80.0
+	icon.offset_bottom = -20.0
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.z_index = 25
+	pile.add_child(icon)
 
 
 ## Draw-pile / discard-pile card counts, drawn on each pile's glyph. Refreshed on
@@ -670,9 +668,30 @@ func _refresh_pile_counts() -> void:
 
 
 func _set_pile_count(pile: Node, n: int) -> void:
-	var hud := pile.get_node_or_null("PileInput/PileHUD")
-	if hud:
-		hud.set_count(n)
+	var lbl: Label = pile.get_node_or_null("CountLabel")
+	if lbl == null:
+		lbl = Label.new()
+		lbl.name = "CountLabel"
+		# Attach the count to the compact glyph instead of leaving a large floating
+		# numeral where the old full-size card stack used to be.
+		var pile_icon := pile.get_node_or_null("PileIcon") as Control
+		var icon_left := pile_icon.offset_left if pile_icon else 40.0
+		var icon_right := pile_icon.offset_right if pile_icon else 120.0
+		lbl.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+		lbl.offset_left = icon_left
+		lbl.offset_top = -138.0
+		lbl.offset_right = icon_right
+		lbl.offset_bottom = -102.0
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		lbl.z_index = 30
+		lbl.add_theme_font_size_override("font_size", 22)
+		lbl.add_theme_color_override("font_color", Color(1.0, 0.96, 0.85))
+		lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.95))
+		lbl.add_theme_constant_override("outline_size", 4)
+		pile.add_child(lbl)
+	lbl.text = str(n)
 
 
 # ── Exhaust pile (hidden): exhausted cards collect here instead of vanishing.
@@ -687,8 +706,7 @@ func view_exhaust_pile() -> void:
 
 func _refresh_exhaust_indicator() -> void:
 	var n: int = combat.state.exhausted_ids.size() if combat else 0
-	var btn := get_node_or_null("ExhaustIndicator") as Button
-	var was_visible := btn != null and btn.visible
+	var btn: Button = get_node_or_null("ExhaustIndicator")
 	if btn == null:
 		btn = Button.new()
 		btn.name = "ExhaustIndicator"
@@ -698,22 +716,15 @@ func _refresh_exhaust_indicator() -> void:
 		btn.anchor_right = 1.0
 		btn.anchor_top = 1.0
 		btn.anchor_bottom = 1.0
-		btn.offset_left = -195.0
-		btn.offset_top = -95.0
-		btn.offset_right = -115.0
-		btn.offset_bottom = -15.0
-		for state in ["normal", "hover", "pressed", "disabled", "focus"]:  # bare-ok: Godot button theme states
-			btn.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+		btn.offset_left = -250.0
+		btn.offset_top = -152.0
+		btn.offset_right = -116.0
+		btn.offset_bottom = -114.0
+		btn.add_theme_font_size_override("font_size", 17)
 		btn.pressed.connect(view_exhaust_pile)
 		add_child(btn)
-		var hud := PILE_HUD_SCRIPT.new()
-		hud.name = "PileHUD"
-		btn.add_child(hud)
-		hud.configure(btn, "exhaust", 32)
 	btn.visible = n > 0
-	btn.get_node("PileHUD").set_count(n)
-	if n > 0 and not was_visible and not is_game_over:
-		btn.get_node("PileHUD").anim_in()
+	btn.text = tr("UI_BATTLE_EXHAUST_SHORT").format({"n": n})
 
 
 ## Build the combat from RunManager state (or defaults if no run is active) and

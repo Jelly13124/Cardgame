@@ -99,52 +99,43 @@
 
 ## 第2阶段战斗 HUD 素材
 
-本阶段新增33张原创PNG。六份构造图集/图标包由内置图像工具生成，按网格提取、去品红、统一有限调色板、对齐和缩小；最终游戏仅加载下表PNG。盾碎片由原创整盾的互补锯齿裁切产生，画布和中心一致。结束回合四态由已确认的原创主按钮源图按九宫格原生角点重组与调色，未使用STS2素材。
+本阶段只保留血条、格挡和意图的原创PNG。能量球、抽牌堆、弃牌堆、消耗堆继续使用阶段一已经验收的界面，不在本次重构范围。盾碎片由原创整盾的互补锯齿裁切产生，画布和中心一致。结束回合四态由已确认的原创主按钮源图按九宫格原生角点重组与调色，未使用STS2素材。
 
 | 完成 | 文件路径 | 原图尺寸 | 显示尺寸与用途 | 九宫格边距 |
 |---|---|---|---|---|
-| [x] | `battle_scene/assets/images/ui/combat/energy_layer_1.png` | 256×256 RGBA | 128×128；五层同心，闪光独立 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/energy_layer_2.png` | 256×256 RGBA | 128×128；五层同心，闪光独立 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/energy_layer_3.png` | 256×256 RGBA | 128×128；五层同心，闪光独立 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/energy_layer_4.png` | 256×256 RGBA | 128×128；五层同心，闪光独立 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/energy_layer_5.png` | 256×256 RGBA | 128×128；五层同心，闪光独立 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/energy_flash.png` | 256×256 RGBA | 128×128；五层同心，闪光独立 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/attack_1.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/attack_2.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/attack_3.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/attack_4.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/attack_5.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/multi.png` | 64×64 RGBA | 24×24，多段辅助标记 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/block.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/buff.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/debuff.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/charge.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/unknown.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/escape.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/summon.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/hp_frame.png` | 250×16 RGBA | 250×16；原生尺寸，裁切显示进度 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/hp_track.png` | 250×16 RGBA | 250×16；原生尺寸，裁切显示进度 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/hp_fill.png` | 250×16 RGBA | 250×16；原生尺寸，裁切显示进度 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/hp_loss.png` | 250×16 RGBA | 250×16；原生尺寸，裁切显示进度 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/block.png` | 60×60 RGBA | 60×60；盾与左右碎片同画布 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/block_left.png` | 60×60 RGBA | 60×60；盾与左右碎片同画布 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/block_right.png` | 60×60 RGBA | 60×60；盾与左右碎片同画布 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/draw.png` | 80×80 RGBA | 80×80；悬停视觉1.25倍，命中保持80 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/discard.png` | 80×80 RGBA | 80×80；悬停视觉1.25倍，命中保持80 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/exhaust.png` | 80×80 RGBA | 80×80；悬停视觉1.25倍，命中保持80 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/end_turn_normal.png` | 220×90 RGBA | 220×90；四态复用同一命中区 | 20/16/20/16 |
-| [x] | `battle_scene/assets/images/ui/combat/end_turn_hover.png` | 220×90 RGBA | 220×90；四态复用同一命中区 | 20/16/20/16 |
-| [x] | `battle_scene/assets/images/ui/combat/end_turn_pressed.png` | 220×90 RGBA | 220×90；四态复用同一命中区 | 20/16/20/16 |
-| [x] | `battle_scene/assets/images/ui/combat/end_turn_disabled.png` | 220×90 RGBA | 220×90；四态复用同一命中区 | 20/16/20/16 |
+| [x] | `battle_scene/assets/images/ui/combat/hp_frame.png` | 250×16 RGBA | 250×16；血条底框 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/hp_track.png` | 250×16 RGBA | 250×16；血条底槽 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/hp_fill.png` | 250×16 RGBA | 250×16；当前血量 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/hp_loss.png` | 250×16 RGBA | 250×16；掉血残影 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/block.png` | 60×60 RGBA | 60×60；格挡盾 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/block_left.png` | 60×60 RGBA | 60×60；碎盾左半 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/block_right.png` | 60×60 RGBA | 60×60；碎盾右半 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/attack_1.png` | 64×64 RGBA | 64×64；攻击档位1 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/attack_2.png` | 64×64 RGBA | 64×64；攻击档位2 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/attack_3.png` | 64×64 RGBA | 64×64；攻击档位3 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/attack_4.png` | 64×64 RGBA | 64×64；攻击档位4 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/attack_5.png` | 64×64 RGBA | 64×64；攻击档位5 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/multi.png` | 64×64 RGBA | 24×24；多段标记 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/block.png` | 64×64 RGBA | 64×64；格挡意图 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/buff.png` | 64×64 RGBA | 64×64；增益意图 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/debuff.png` | 64×64 RGBA | 64×64；减益意图 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/charge.png` | 64×64 RGBA | 64×64；蓄力意图 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/unknown.png` | 64×64 RGBA | 64×64；未知意图 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/escape.png` | 64×64 RGBA | 64×64；逃跑意图 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/summon.png` | 64×64 RGBA | 64×64；召唤意图 | 无 |
 
 ### 布局与反馈
 
-1920×1080 下能量球为(100,828,128,128)，结束回合命中为(1604,846,220,90)。抽弃热点为(15,985,80,80)与(1825,985,80,80)，消耗堆为(1725,985,80,80)。数据牌堆保留160×220宿主，80px热点是独立子控件；既有卡牌飞行的宿主偏移(80,110)仍落在可见图标中心，卡牌动画文件没有修改。
+本阶段保留原能量、抽牌堆、弃牌堆和消耗堆的已验收几何与素材；结束回合命中为(1604,846,220,90)。卡牌动画文件没有修改。
 
 血条四层250×16。数字24/描边16；盾60×60、数字24/14，盾贴在本条左端局部(-8,-22)，避免260px相邻槽位间覆盖其他血条。状态图40×40、计数18/10，48×40单元在250px流式容器内换行。
 
 五档攻击按预计单段伤害乘次数分档，严格小于5/10/20/40，达到边界即进入下一档；数字22/12。攻击图是五张不同原画，其他八类图标分别交付。浮动周期2秒、摆幅10px、基线抬高8px、同组相位差0.3弧度；出现1秒、淡出0.5秒。Boss缩放时仍按全局变换留出顶栏安全区。
 
-能量2/3层旋转30/60°每秒，空能量降为5/10并变暗，恢复闪光独立。能量进0.6秒Expo-Out、出0.6秒Back-In；牌堆进0.5秒Expo-Out、出0.5秒Back-In；结束回合进0.5秒Back-Out、出0.5秒Expo-Out。常态悬停与按下只动视觉层，进出场期间关闭输入。
+本阶段不重构能量和牌堆；结束回合进0.5秒Back-Out、出0.5秒Expo-Out。常态悬停与按下只动视觉层，进出场期间关闭输入。
 
 所有局内顶栏和遗物架仍是同一共用组件。教程完整根区域为(0,132,1920,948)，面板从(680,200)开始，避开顶栏、能量球与手牌。素材来源、提示词、哈希与处理脚本在系统临时目录 `bottlecap-ui-stage2-20261110/`；`review.html` 提供实际画面、改前与STS2自绘线框并排对照。
+
+## 本轮回滚说明
+
+业主确认能量球、抽牌堆、弃牌堆和卡牌/手牌视觉已经满意，因此已从第二阶段实现中移除新能量/牌堆脚本与素材，恢复阶段一版本。卡牌资源、手牌脚本和卡牌飞行动画未发生变化。血条、格挡和意图的第二阶段素材与逻辑保留。
