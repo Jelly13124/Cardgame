@@ -66,14 +66,14 @@ func _test_live_attack_severity() -> void:
 	var enemy := ENEMY.create("base:trash_robot")
 	enemy.combat = battle.combat
 	battle.combat.add_enemy(enemy.creature)
-	enemy.action_pattern = [{"type": "attack", "amount": 12}]
+	enemy.action_pattern = [{"type": "attack", "amount": 24}]
 	add_child(enemy)
 
 	var high := _attack_icon(enemy).texture.resource_path
-	_expect(_attack_value(enemy) == "12", "attack shows the shared preview amount")
+	_expect(_attack_value(enemy) == "24", "attack shows the shared preview amount")
 	enemy.creature.add_status("weak", 2)
 	var medium := _attack_icon(enemy).texture.resource_path
-	_expect(_attack_value(enemy) == "6", "Weak refreshes the visible amount immediately")
+	_expect(_attack_value(enemy) == "12", "Weak refreshes the visible amount immediately")
 
 	enemy.action_pattern = [{"type": "attack_status", "amount": 4, "status": "burn"}]
 	enemy.update_intent_display()
@@ -81,7 +81,7 @@ func _test_live_attack_severity() -> void:
 	_expect(_attack_value(enemy) == "2", "attack with a status uses the same preview")
 	_expect(enemy.find_child("IntentDebuff", true, false) != null, "status rider stays visible")
 	_expect(low != medium and medium != high, "live-damage tiers use different original blade images")
-	_expect(_attack_icon(enemy).size == Vector2(64, 64), "severity preserves the native 64px icon size")
+	_expect(_attack_icon(enemy).size == Vector2(52, 52), "severity uses the compact 52px icon size")
 	_expect(
 		high.ends_with("/intents/attack_3.png") and medium.ends_with("/intents/attack_2.png")
 		and low.ends_with("/intents/attack_1.png"),

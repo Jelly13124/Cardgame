@@ -191,8 +191,8 @@ func _test_battle_energy_and_end_turn() -> void:
 	var background := battle.get_node_or_null("BattleBackground")
 	var background_path := _texture_path(background)
 	_expect(
-		background_path.ends_with("/wasteland_battlefield_quiet_v6.png"),
-		"battle uses the cool layered comic combat-stage background (got %s)" % background_path
+		background_path.ends_with("/wasteland_battlefield_act1_v1.png"),
+		"Act 1 battle uses the refreshed comic combat-stage background (got %s)" % background_path
 	)
 	_expect(
 		background.self_modulate.r > 1.35

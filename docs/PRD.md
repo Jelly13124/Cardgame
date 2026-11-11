@@ -450,7 +450,7 @@ The approved production exemplars are Cowboy Bill's current runtime art and the 
 - `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`
 - `battle_scene/assets/images/heroes/cowboy_bill/idle/`
 - `battle_scene/assets/images/heroes/cowboy_bill/attack/`
-- `battle_scene/assets/images/backgrounds/wasteland_battlefield_quiet_v6.png`
+- `battle_scene/assets/images/backgrounds/wasteland_battlefield_act1_v1.png` (Act 1 production background; Acts 2 and 3 remain on their existing backgrounds)
 - `run_system/assets/images/map/wasteland_route_map_sts2_bg.png`
 - `battle_scene/assets/images/cards/player/*.png` considered collectively as a varied reference set; the recurring majority look is authoritative, while isolated outliers or cards queued for rework are not
 
@@ -490,7 +490,7 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 4. Reference final PNGs from JSON or runtime loaders; gameplay must not reference raw sheets.
 
 - **Folder:** `enemies/{sprite_id}/{anim}/{sprite_id}_{anim}_{n}.png` or `heroes/{hero_id}/{anim}/{hero_id}_{anim}_{n}.png`.
-- **Frame counts:** Cowboy Bill holds `idle_0` as a static rest pose because hero data sets `animate_idle: false`; his attack uses 8 frames. Standard enemy attacks use 4 frames by default with `attack_0` as the static rest/wind-up pose. Enemy attacks must hit exactly once; repeated hit poses or multi-swing loops are rejected.
+- **Frame counts:** Cowboy Bill uses an authored 8-frame idle loop and an 8-frame attack. Standard enemy attacks use 4 frames by default with `attack_0` as the static rest/wind-up pose. Enemy attacks must hit exactly once; repeated hit poses or multi-swing loops are rejected.
 - **Scale:** frames render at the size set by gameplay/UI code; scale does not change the art direction.
 - **Source sheets:** keep raw/generated sheets in `generated_sheet/` folders only.
 ---

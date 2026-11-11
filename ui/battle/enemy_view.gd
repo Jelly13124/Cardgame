@@ -20,19 +20,24 @@ const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://ui/bat
 const DAMAGE_NUMBER = preload("uid://clps6my10jkri")  # res://ui/battle/damage_number_vfx.gd
 const ENEMY_DEATH_VFX = preload("uid://cayme2wbim86o")  # res://ui/battle/enemy_death_vfx.gd
 
-# Five original images carry attack severity; display scale and tint stay fixed.
+# Three original sword silhouettes carry attack severity; the number remains a
+# separate label so the icon stays readable at a glance.
 const INTENT_ATTACK_TEXTURES := [
 	preload("uid://cnl4xvglknbpx"),  # res://battle_scene/assets/images/ui/combat/intents/attack_1.png
 	preload("uid://bn6puo60siu16"),  # res://battle_scene/assets/images/ui/combat/intents/attack_2.png
 	preload("uid://b17fj0m5wl32q"),  # res://battle_scene/assets/images/ui/combat/intents/attack_3.png
-	preload("uid://eb4r4ktynj1t"),  # res://battle_scene/assets/images/ui/combat/intents/attack_4.png
-	preload("uid://ccjm2mp37oh0i"),  # res://battle_scene/assets/images/ui/combat/intents/attack_5.png
 ]
 const INTENT_ICON_MULTI = preload("uid://c2pgn1drmy2aj")  # res://battle_scene/assets/images/ui/combat/intents/multi.png
 const INTENT_ICON_BLOCK = preload("uid://cgifa8t5ypwb4")  # res://battle_scene/assets/images/ui/combat/intents/block.png
 const INTENT_ICON_BUFF = preload("uid://cudrvv4ubwpbc")  # res://battle_scene/assets/images/ui/combat/intents/buff.png
 const INTENT_ICON_CHARGE = preload("uid://imyhsfwxky1u")  # res://battle_scene/assets/images/ui/combat/intents/charge.png
 const INTENT_ICON_DEBUFF = preload("uid://bv4asgcdcdnlm")  # res://battle_scene/assets/images/ui/combat/intents/debuff.png
+const INTENT_ICON_CARD_DEBUFF = preload("uid://bn1g0lxqed2sj")  # res://battle_scene/assets/images/ui/combat/intents/card_debuff.png
+const INTENT_ICON_DEATH_BLOW = preload("uid://b3h2emm5j0q41")  # res://battle_scene/assets/images/ui/combat/intents/death_blow.png
+const INTENT_ICON_HEAL = preload("uid://cghvbnbgpivxw")  # res://battle_scene/assets/images/ui/combat/intents/heal.png
+const INTENT_ICON_SLEEP = preload("uid://c1fj5e0as1ft6")  # res://battle_scene/assets/images/ui/combat/intents/sleep.png
+const INTENT_ICON_STATUS = preload("uid://bwa6n0ann7ts")  # res://battle_scene/assets/images/ui/combat/intents/status.png
+const INTENT_ICON_STUN = preload("uid://bmeg1mrrwqv8s")  # res://battle_scene/assets/images/ui/combat/intents/stun.png
 const INTENT_ICON_UNKNOWN = preload("uid://b21njwpfhuxut")  # res://battle_scene/assets/images/ui/combat/intents/unknown.png
 const INTENT_ICON_ESCAPE = preload("uid://c5tc5skq1j7cg")  # res://battle_scene/assets/images/ui/combat/intents/escape.png
 const INTENT_ICON_SUMMON = preload("uid://dpqqq3hyykbv")  # res://battle_scene/assets/images/ui/combat/intents/summon.png
@@ -45,12 +50,13 @@ const NORMAL_HUD_SIZE := Vector2i(250, 16)
 const ELITE_HUD_SIZE := Vector2i(250, 16)
 const BOSS_HUD_SIZE := Vector2i(250, 16)
 const MAX_ANIMATION_FRAMES := 16
-const INTENT_BADGE_WIDTH := 200.0
-const INTENT_BADGE_HEIGHT := 84.0
-const INTENT_CELL_ICON_SIZE := 64.0
+const INTENT_BADGE_WIDTH := 176.0
+const INTENT_BADGE_HEIGHT := 72.0
+const INTENT_CELL_ICON_SIZE := 52.0
 const INTENT_BOB_PERIOD := 2.0
-const INTENT_BOB_AMPLITUDE := 10.0
-const INTENT_BOB_BASE := -8.0
+## STS2's 10px envelope is peak-to-peak; the local offset is therefore 5px.
+const INTENT_BOB_AMPLITUDE := 5.0
+const INTENT_BOB_BASE := -4.0
 const INTENT_PHASE_STEP := 0.3
 const INTENT_APPEAR_SECONDS := 1.0
 const INTENT_DISAPPEAR_SECONDS := 0.5
@@ -448,18 +454,14 @@ func intent_attack_damage(action: Dictionary) -> int:
 	return int(action.get("amount", 0))
 
 
-## Five tiers classify the complete projected move, including repeats.
+## Three tiers classify the complete projected move, including repeats.
 ## The combat pipeline still supplies one projected hit; UI never edits it.
 static func attack_intent_tier(total_damage: int) -> int:
 	if total_damage < 5:
 		return 1
-	if total_damage < 10:
-		return 2
 	if total_damage < 20:
-		return 3
-	if total_damage < 40:
-		return 4
-	return 5
+		return 2
+	return 3
 
 
 func _attack_intent_entry(action: Dictionary) -> Dictionary:
@@ -493,11 +495,24 @@ func _intent_entries(action: Dictionary) -> Array[Dictionary]:
 		"reflective_plating":
 			entries.append(_intent_entry("Block", INTENT_ICON_BLOCK, str(int(action.get("amount", 0)))))
 			entries.append(_intent_entry("Buff", INTENT_ICON_BUFF, str(int(action.get("thorns", 0)))))
-		"heal", "buff", "buff_self":
+		"heal":
+			var heal_amount := int(action.get("amount", 0))
+			entries.append(_intent_entry("Heal", INTENT_ICON_HEAL, str(heal_amount) if heal_amount > 0 else ""))
+		"buff", "buff_self":
 			var amount := int(action.get("amount", action.get("stacks", 0)))
 			entries.append(_intent_entry("Buff", INTENT_ICON_BUFF, str(amount) if amount > 0 else ""))
 		"add_curse":
-			entries.append(_intent_entry("Debuff", INTENT_ICON_DEBUFF))
+			entries.append(_intent_entry("CardDebuff", INTENT_ICON_CARD_DEBUFF))
+		"death_blow":
+			entries.append(_intent_entry("DeathBlow", INTENT_ICON_DEATH_BLOW))
+		"sleep":
+			entries.append(_intent_entry("Sleep", INTENT_ICON_SLEEP))
+		"status":
+			entries.append(_intent_entry("Status", INTENT_ICON_STATUS, str(int(action.get("stacks", 0)))))
+		"stun":
+			entries.append(_intent_entry("Stun", INTENT_ICON_STUN))
+		"card_debuff":
+			entries.append(_intent_entry("CardDebuff", INTENT_ICON_CARD_DEBUFF))
 		"telegraph":
 			entries.append(_intent_entry("Charge", INTENT_ICON_CHARGE))
 		"summon":
@@ -536,8 +551,8 @@ func _add_intent_cell(kind: String) -> Control:
 
 	var label := Label.new()
 	label.name = "IntentValue"
-	label.position = Vector2(-16.0, 52.0)
-	label.size = Vector2(96.0, 32.0)
+	label.position = Vector2(-12.0, 42.0)
+	label.size = Vector2(76.0, 28.0)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 22)
@@ -549,8 +564,8 @@ func _add_intent_cell(kind: String) -> Control:
 
 	var marker := TextureRect.new()
 	marker.name = "MultiMarker"
-	marker.position = Vector2(43.0, 30.0)
-	marker.size = Vector2(24.0, 24.0)
+	marker.position = Vector2(34.0, 24.0)
+	marker.size = Vector2(20.0, 20.0)
 	marker.texture = INTENT_ICON_MULTI
 	marker.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	marker.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED

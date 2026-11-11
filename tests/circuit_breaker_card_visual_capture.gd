@@ -25,7 +25,7 @@ func _capture() -> void:
 	var background := TextureRect.new()
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	background.texture = load(
-		"res://battle_scene/assets/images/backgrounds/wasteland_battlefield_quiet_v6.png"
+		"res://battle_scene/assets/images/backgrounds/wasteland_battlefield_act1_v1.png"
 	)
 	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED

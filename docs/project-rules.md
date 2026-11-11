@@ -38,7 +38,7 @@ The approved production exemplars are:
 - `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`
 - `battle_scene/assets/images/heroes/cowboy_bill/idle/`
 - `battle_scene/assets/images/heroes/cowboy_bill/attack/`
-- `battle_scene/assets/images/backgrounds/wasteland_battlefield_quiet_v6.png` and `run_system/assets/images/map/wasteland_route_map_sts2_bg.png` — style references only; both are 1672×941 and are being redrawn at 1920×1080 (`docs/handoffs/2026-11-10-codex-art-handoff.md`)
+- `battle_scene/assets/images/backgrounds/wasteland_battlefield_act1_v1.png` and `run_system/assets/images/map/wasteland_route_map_sts2_bg.png` — the Act 1 production background is now 1920×1080; the route map remains a style reference until its own redraw pass (`docs/handoffs/2026-11-10-codex-art-handoff.md`)
 - `battle_scene/assets/images/cards/player/` as the approved collective card-art reference set. Compare multiple current cards to preserve composition and palette variety; follow the recurring majority look rather than treating one outlier or a card queued for rework as the universal template.
 - `docs/art/previews/base_building_forge_ui_dismantle_simple_comic_20260707.png` for persistent UI screen style
 
@@ -154,7 +154,7 @@ battle_scene/assets/images/
 - **One subfolder per entity** - never put two enemies' frames in the same folder.
 - **Subfolder name = `sprite_id`** - must match exactly what is in the enemy JSON.
 - **Animation frames go in per-animation subfolders** - `idle/` and `attack/`; add optional future animation folders only when runtime actually plays them.
-- **Hero idle behavior is data-driven** - Cowboy Bill currently has `animate_idle: false`, so runtime holds `idle_0` as a static rest pose. Do not enable or generate a looping idle unless the hero data intentionally opts in. Enemies may still use `attack_0` as the static rest pose unless they are explicitly wired for idle frames.
+- **Hero idle behavior is data-driven** - Cowboy Bill opts into the authored 8-frame `idle/` loop. Keep the feet baseline and scale stable across the loop. Enemies may still use `attack_0` as the static rest pose unless they are explicitly wired for idle frames.
 - **One-off images stay at the entity root** - portraits and single static images do not need animation subfolders.
 - **No loose animation PNGs at the parent `/enemies/` folder or entity root** - always use a named animation subfolder.
 - **Generation script lives inside the entity subfolder** it generates art for when the script is entity-specific; shared scripts may live at the asset category root.

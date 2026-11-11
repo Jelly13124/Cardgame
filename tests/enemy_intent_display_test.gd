@@ -58,15 +58,15 @@ func _path(icon: TextureRect) -> String:
 func _test_damage_tiers_and_categories() -> void:
 	var enemy := _enemy({"type": "attack", "amount": 4})
 	await get_tree().process_frame
-	for row in [[0, 1], [4, 1], [5, 2], [9, 2], [10, 3], [19, 3], [20, 4], [39, 4], [40, 5], [80, 5]]:
+	for row in [[0, 1], [4, 1], [5, 2], [19, 2], [20, 3], [80, 3]]:
 		_set_action(enemy, {"type": "attack", "amount": row[0]})
 		var icon := _icon(enemy, "Attack")
 		_expect(_path(icon).ends_with("/combat/intents/attack_%d.png" % row[1]),
 			"damage %d selects original attack tier %d" % row)
-		_expect(icon != null and icon.size == Vector2(64, 64), "every severity uses the same 64px footprint")
+		_expect(icon != null and icon.size == Vector2(52, 52), "every severity uses the same compact 52px footprint")
 		_expect(icon != null and icon.modulate == Color.WHITE, "severity keeps the original PNG colors")
 	_set_action(enemy, {"type": "attack", "amount": 7, "hits": 3})
-	_expect(_path(_icon(enemy, "Attack")).ends_with("/combat/intents/attack_4.png"), "7x3 chooses tier 4 from total 21")
+	_expect(_path(_icon(enemy, "Attack")).ends_with("/combat/intents/attack_3.png"), "7x3 chooses tier 3 from total 21")
 	var attack := enemy.find_child("IntentAttack", true, false)
 	var value := attack.find_child("IntentValue", true, false) as Label
 	_expect(value != null and value.text == "7×3", "multi-hit prints projected per-hit damage and count")
@@ -81,7 +81,10 @@ func _test_damage_tiers_and_categories() -> void:
 	for row in [["unknown", "Unknown", "unknown"], ["future_action", "Unknown", "unknown"],
 		["escape", "Escape", "escape"], ["summon", "Summon", "summon"],
 		["telegraph", "Charge", "charge"], ["block", "Block", "block"],
-		["buff_self", "Buff", "buff"], ["add_curse", "Debuff", "debuff"]]:
+		["buff_self", "Buff", "buff"], ["add_curse", "CardDebuff", "card_debuff"],
+		["heal", "Heal", "heal"], ["sleep", "Sleep", "sleep"],
+		["status", "Status", "status"], ["stun", "Stun", "stun"],
+		["death_blow", "DeathBlow", "death_blow"]]:
 		_set_action(enemy, {"type": row[0], "amount": 5})
 		_expect(_path(_icon(enemy, row[1])).ends_with("/combat/intents/%s.png" % row[2]),
 			"%s receives its matching intent category" % row[0])
@@ -130,7 +133,7 @@ func _test_status_predictions() -> void:
 	var attack := enemy.find_child("IntentAttack", true, false)
 	var label := attack.find_child("IntentValue", true, false) as Label
 	_expect(label != null and label.text == "9×2", "Weak and Vulnerable use the shared projected per-hit result (9)")
-	_expect(_path(_icon(enemy, "Attack")).ends_with("/combat/intents/attack_3.png"), "status-adjusted total 18 chooses tier 3")
+	_expect(_path(_icon(enemy, "Attack")).ends_with("/combat/intents/attack_2.png"), "status-adjusted total 18 chooses tier 2")
 	_expect(_icon(enemy, "Debuff") != null, "status attack keeps the separate generic debuff icon")
 	battle.player.add_status("intangible", 1)
 	enemy.update_intent_display()
@@ -154,16 +157,16 @@ func _test_animation_lifecycle() -> void:
 		_expect(is_equal_approx(attack.modulate.a, 0.5), "entry fade reaches half opacity after 0.5s")
 		var first := attack.find_child("Floating", true, false) as Control
 		var second := debuff.find_child("Floating", true, false) as Control
-		_expect(first != null and is_equal_approx(first.position.y, -18.0), "bob reaches -18px at quarter period")
-		_expect(second != null and absf(second.position.y - (-17.553365)) < 0.01, "second icon has 0.3rad phase offset")
+		_expect(first != null and is_equal_approx(first.position.y, -9.0), "bob reaches -9px at quarter period")
+		_expect(second != null and absf(second.position.y - (-8.775)) < 0.02, "second icon has 0.3rad phase offset")
 		enemy.call("_process", 0.5)
 		_expect(is_equal_approx(attack.modulate.a, 1.0), "entry finishes at 1s")
-		_expect(first != null and is_equal_approx(first.position.y, -8.0), "bob crosses its -8px base at half period")
+		_expect(first != null and is_equal_approx(first.position.y, -4.0), "bob crosses its -4px base at half period")
 		enemy.update_intent_display()
 		_expect(enemy.find_child("IntentAttack", true, false) == attack and attack.modulate.a == 1.0,
 			"unchanged refresh preserves the live cell without replaying appearance")
 		enemy.call("_process", 1.0)
-		_expect(first != null and is_equal_approx(first.position.y, -8.0), "bob returns after its full 2s period")
+		_expect(first != null and is_equal_approx(first.position.y, -4.0), "bob returns after its full 2s period")
 		enemy.global_position = Vector2(500, 400)
 		var planted := enemy.global_position
 		enemy.call("_process", 0.5)

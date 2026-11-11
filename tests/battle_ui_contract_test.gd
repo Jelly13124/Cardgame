@@ -32,6 +32,7 @@ func _run() -> void:
 	await test_enemy_formations_stay_on_the_field()
 	await test_boss_and_replacement_summons_stay_on_the_field()
 	await test_outline_follows_playability()
+	await test_playable_outline_breathes()
 	await test_outline_is_not_a_hover_toggle()
 	await test_arrow_is_segmented_and_hides_the_cursor()
 	await test_cursor_returns_when_combat_ends_mid_aim()
@@ -153,6 +154,26 @@ func test_outline_follows_playability() -> void:
 	battle._on_end_round_button_pressed()
 	await get_tree().process_frame
 	_expect(not cards.any(func(c) -> bool: return is_instance_valid(c) and c.highlight.is_shown()), "End Turn hides every outline")
+	await _free(battle)
+
+
+func test_playable_outline_breathes() -> void:
+	var battle = await _battle()
+	var cards: Array = await _add_strikes(battle, 1)
+	battle.player.energy = 3
+	battle.refresh_hand_ui()
+	var material := cards[0].highlight.material as ShaderMaterial
+	await get_tree().create_timer(0.6).timeout
+	var first_alpha := (material.get_shader_parameter("glow_color") as Color).a
+	await get_tree().create_timer(0.3).timeout
+	var second_alpha := (material.get_shader_parameter("glow_color") as Color).a
+	_expect(absf(first_alpha - second_alpha) > 0.02,
+		"playable outline breathes instead of staying at a constant alpha")
+	battle.player.energy = 0
+	battle.refresh_hand_ui()
+	await get_tree().create_timer(0.6).timeout
+	_expect(is_zero_approx(float(material.get_shader_parameter("width_px"))),
+		"playable outline restores its hidden width when the card becomes unaffordable")
 	await _free(battle)
 
 

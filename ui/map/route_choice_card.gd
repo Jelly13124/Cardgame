@@ -24,6 +24,7 @@ var interactive := false
 var _style: StyleBoxTexture
 var _hover_style: StyleBoxTexture
 var _panel: PanelContainer
+var _hover_tween: Tween
 
 
 func _init() -> void:
@@ -184,8 +185,15 @@ func _set_hover(on: bool) -> void:
 	if not interactive:
 		return
 	_panel.add_theme_stylebox_override("panel", _hover_style if on else _style)
-	var tween := create_tween()
-	tween.tween_property(self, "scale", Vector2.ONE * (1.05 if on else 1.0), 0.1)
+	if _hover_tween != null:
+		_hover_tween.kill()
+	_hover_tween = create_tween()
+	_hover_tween.tween_property(
+		self,
+		"scale",
+		Vector2.ONE * (1.035 if on else 1.0),
+		0.05 if on else 0.5
+	).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
 
 
 func _add_row(icon_path: String, text: String, color: Color) -> void:

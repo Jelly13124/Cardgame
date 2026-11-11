@@ -123,7 +123,7 @@ Code layering, the target directory structure and the uid reference rule are in
 *   **Shop Scene Art (PNG, optional)**: `run_system/assets/images/shop/` (background + shopkeeper)
 *   **Hero Sprites (PNG/Animated)**: `battle_scene/assets/images/heroes/{sprite_id}/` (e.g. `cowboy_bill/`; the active hero's `sprite_id` comes from its `content/characters/` JSON)
 *   **Enemy Sprites (PNG/Animated)**: `battle_scene/assets/images/enemies/`
-*   **Battle Backgrounds**: `battle_scene/assets/images/backgrounds/` (active: `wasteland_battlefield_quiet_v6.png`)
+*   **Battle Backgrounds**: `battle_scene/assets/images/backgrounds/` (active Act 1: `wasteland_battlefield_act1_v1.png`; later acts remain separate)
 *   **Map Art and Node Icons**: `run_system/assets/images/map/` (active background: `wasteland_route_map_sts2_bg.png`)
 *   **Relic Icons**: `run_system/assets/images/relics/`
 *   **Lightline UI Kit (PNG)**: `run_system/assets/images/ui_kit_lightline/` — the base-building UI component library sliced from source sheets: **89 named pieces** (`icon_*` / `panel_*` / `btn_*` / `bar_*` / `card_*` / `slot_*` / `row_*` …) + `manifest.json` (per-piece 9-slice margins). Consumed through `wasteland_theme.gd`'s `ll_*` StyleBox hooks (`ll_panel` / `ll_titlebar` / `ll_section` / `ll_inset` / `ll_button` / `ll_button_olive` / `ll_slot`) — every lookup falls back to a programmatic StyleBox so a missing piece never crashes. Raw uncut sheets: `run_system/assets/images/ui_kit_imagegen_v2_lightline/`.

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://eb4r4ktynj1t"
-path="res://.godot/imported/attack_4.png-06d03bf0ec4d2ee420568e486bf7f5ff.ctex"
+uid="uid://drhxhy60vq5p7"
+path="res://.godot/imported/wasteland_battlefield_act1_v1.png-61de5c58c01a829f526634059741d1a7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle_scene/assets/images/ui/combat/intents/attack_4.png"
-dest_files=["res://.godot/imported/attack_4.png-06d03bf0ec4d2ee420568e486bf7f5ff.ctex"]
+source_file="res://battle_scene/assets/images/backgrounds/wasteland_battlefield_act1_v1.png"
+dest_files=["res://.godot/imported/wasteland_battlefield_act1_v1.png-61de5c58c01a829f526634059741d1a7.ctex"]
 
 [params]
 

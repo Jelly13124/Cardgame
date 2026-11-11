@@ -107,19 +107,23 @@
 | [x] | `battle_scene/assets/images/ui/combat/hp_track.png` | 250×16 RGBA | 250×16；血条底槽 | 无 |
 | [x] | `battle_scene/assets/images/ui/combat/hp_fill.png` | 250×16 RGBA | 250×16；当前血量 | 无 |
 | [x] | `battle_scene/assets/images/ui/combat/hp_loss.png` | 250×16 RGBA | 250×16；掉血残影 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/attack_1.png` | 64×64 RGBA | 64×64；攻击档位1 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/attack_2.png` | 64×64 RGBA | 64×64；攻击档位2 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/attack_3.png` | 64×64 RGBA | 64×64；攻击档位3 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/attack_4.png` | 64×64 RGBA | 64×64；攻击档位4 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/attack_5.png` | 64×64 RGBA | 64×64；攻击档位5 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/attack_1.png` | 64×64 RGBA | 52×52；低伤害短剑 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/attack_2.png` | 64×64 RGBA | 52×52；中伤害长剑 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/attack_3.png` | 64×64 RGBA | 52×52；高伤害重剑 | 无 |
 | [x] | `battle_scene/assets/images/ui/combat/intents/multi.png` | 64×64 RGBA | 24×24；多段标记 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/block.png` | 64×64 RGBA | 64×64；格挡意图 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/buff.png` | 64×64 RGBA | 64×64；增益意图 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/debuff.png` | 64×64 RGBA | 64×64；减益意图 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/charge.png` | 64×64 RGBA | 64×64；蓄力意图 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/unknown.png` | 64×64 RGBA | 64×64；未知意图 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/escape.png` | 64×64 RGBA | 64×64；逃跑意图 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/intents/summon.png` | 64×64 RGBA | 64×64；召唤意图 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/block.png` | 64×64 RGBA | 52×52；格挡意图 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/buff.png` | 64×64 RGBA | 52×52；增益意图 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/debuff.png` | 64×64 RGBA | 52×52；减益意图 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/charge.png` | 64×64 RGBA | 52×52；蓄力意图 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/unknown.png` | 64×64 RGBA | 52×52；未知意图 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/escape.png` | 64×64 RGBA | 52×52；逃跑意图 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/summon.png` | 64×64 RGBA | 52×52；召唤意图 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/card_debuff.png` | 64×64 RGBA | 52×52；卡牌负面 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/death_blow.png` | 64×64 RGBA | 52×52；濒死一击 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/heal.png` | 64×64 RGBA | 52×52；回复 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/sleep.png` | 64×64 RGBA | 52×52；沉睡 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/status.png` | 64×64 RGBA | 52×52；状态 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/stun.png` | 64×64 RGBA | 52×52；眩晕 | 无 |
 
 ### 布局与反馈
 
@@ -127,7 +131,7 @@
 
 血条四层250×16。数字24/描边16；格挡沿用原有42×49盾牌、数字25/2，位置沿用旧HUD。状态图40×40、计数18/10，48×40单元在250px流式容器内换行。
 
-五档攻击按预计单段伤害乘次数分档，严格小于5/10/20/40，达到边界即进入下一档；数字22/12。攻击图是五张不同原画，其他八类图标分别交付。浮动周期2秒、摆幅10px、基线抬高8px、同组相位差0.3弧度；出现1秒、淡出0.5秒。Boss缩放时仍按全局变换留出顶栏安全区。
+三档攻击按预计总伤害分档：严格小于5、5–19、20以上；数字22/12。攻击图是三张不同剑形原画，其他类别使用独立单一语义图标。浮动周期2秒、峰值摆幅5px（总包络约10px）、基线抬高4px、同组相位差0.3弧度；出现1秒、淡出0.5秒。Boss缩放时仍按全局变换留出顶栏安全区。
 
 本阶段不重构能量和牌堆；结束回合进0.5秒Back-Out、出0.5秒Expo-Out。常态悬停与按下只动视觉层，进出场期间关闭输入。
 
