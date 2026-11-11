@@ -27,6 +27,7 @@ const INTENT_ICON_BLOCK = preload("res://battle_scene/assets/images/ui/intent_bl
 const INTENT_ICON_BUFF = preload("res://battle_scene/assets/images/ui/intent_buff.png")
 const INTENT_ICON_CHARGE = preload("res://battle_scene/assets/images/ui/intent_charge.png")
 const INTENT_ICON_DEBUFF = preload("res://battle_scene/assets/images/ui/intent_debuff.png")
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 const NORMAL_DISPLAY_HEIGHT := 256.0
 const ELITE_DISPLAY_HEIGHT := 320.0
 const BOSS_DISPLAY_HEIGHT := 384.0
@@ -455,7 +456,7 @@ func _add_intent_cell(
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override("font_size", 22)
 		label.add_theme_constant_override("outline_size", 2)
-		label.add_theme_color_override("font_outline_color", Color("#211611"))
+		label.add_theme_color_override("font_outline_color", T.COMBAT_TRACK_BG)
 		label.add_theme_color_override("font_color", color)
 		label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.95))
 		label.add_theme_constant_override("shadow_offset_x", 2)
@@ -470,13 +471,13 @@ func _add_intent_cell(
 func _add_attack_intent(action: Dictionary) -> void:
 	var damage := intent_attack_damage(action)
 	var icon_size := 24.0
-	var color := Color("#ffe5d4")
+	var color := T.INTENT_ATTACK_LOW
 	if damage >= ATTACK_INTENT_HIGH:
 		icon_size = 32.0
-		color = Color("#ff9d83")
+		color = T.INTENT_ATTACK_HIGH
 	elif damage >= ATTACK_INTENT_MEDIUM:
 		icon_size = 28.0
-		color = Color("#ffc69e")
+		color = T.INTENT_ATTACK_MEDIUM
 	_add_intent_cell("Attack", INTENT_ICON_ATTACK, str(damage), color, icon_size)
 
 

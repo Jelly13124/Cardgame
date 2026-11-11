@@ -113,7 +113,7 @@ func _build_ui() -> void:
 	add_child(frame)
 
 	var track := ColorRect.new()
-	track.color = Color("#211611")
+	track.color = T.COMBAT_TRACK_BG
 	track.position = Vector2(6, 5)
 	track.size = Vector2(bar_width - 12, frame_height - 10)
 	track.mouse_filter = Control.MOUSE_FILTER_IGNORE

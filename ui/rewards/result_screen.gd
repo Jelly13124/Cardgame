@@ -36,7 +36,7 @@ func _build() -> void:
 
 	var dim := ColorRect.new()
 	dim.name = "ResultBackdrop"
-	dim.color = Color(0.024, 0.027, 0.032, 0.94)
+	dim.color = T.RESULT_SCRIM
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(dim)

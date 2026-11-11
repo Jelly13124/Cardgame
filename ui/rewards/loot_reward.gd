@@ -60,6 +60,7 @@ func _ready() -> void:
 
 func _apply_static_theme() -> void:
 	$RewardBackdrop.offset_top = RUN_TOP_BAR.PAGE_ART_TOP
+	$RewardBackdrop.color = T.REWARD_SCRIM
 	loot_root.offset_top = RUN_TOP_BAR.BAR_HEIGHT
 	draft_overlay.offset_top = RUN_TOP_BAR.BAR_HEIGHT
 	for title: Label in [$LootContents/TitleLabel, draft_title]:

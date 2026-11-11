@@ -84,6 +84,15 @@ const UI_ACCENT_BG_PRESSED = Color(0.30, 0.09, 0.055, 0.96)
 const UI_ACCENT_RIM = GLASS_GOLD  # accent gold rim (1px hairline)
 const UI_ACCENT_TEXT = Color("#ffe8c0")  # accent button label
 
+# ─── Combat readouts and page scrims ──────────────────────────────────────────
+const COMBAT_TRACK_BG = Color("#211611")
+const INTENT_ATTACK_LOW = Color("#ffe5d4")
+const INTENT_ATTACK_MEDIUM = Color("#ffc69e")
+const INTENT_ATTACK_HIGH = Color("#ff9d83")
+const ENERGY_EMPTY_TINT = Color(0.57, 0.63, 0.62)
+const REWARD_SCRIM = Color(0.035, 0.037, 0.043, 0.92)
+const RESULT_SCRIM = Color(0.024, 0.027, 0.032, 0.94)
+
 # ─── Builders ─────────────────────────────────────────────────────────────────
 
 

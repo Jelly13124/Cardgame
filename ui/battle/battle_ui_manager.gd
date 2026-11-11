@@ -144,7 +144,7 @@ func _build_energy_display() -> void:
 
 func _refresh_energy_layers() -> void:
 	if _energy_frame != null:
-		_energy_frame.self_modulate = Color(0.57, 0.63, 0.62) if _energy_value == 0 else Color.WHITE
+		_energy_frame.self_modulate = T.ENERGY_EMPTY_TINT if _energy_value == 0 else Color.WHITE
 	if _energy_ring != null:
 		_energy_ring.queue_redraw()
 
