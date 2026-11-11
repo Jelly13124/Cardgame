@@ -204,6 +204,14 @@ func _present_state(immediate: bool, previous_state: String) -> void:
 		target_scale = float(_profile["pressed_scale"])
 	var face_tints: Dictionary = _profile["face_tints"]
 	var face_tint: Color = face_tints[feedback_state]
+	var state_textures: Dictionary = _profile.get("state_textures", {})
+	if state_textures.has(feedback_state):
+		_face.texture = state_textures[feedback_state]
+	var target_offset := Vector2.ZERO
+	if feedback_state == "hover":
+		target_offset = _profile.get("hover_offset", Vector2.ZERO)
+	elif feedback_state == "pressed":
+		target_offset = _profile.get("pressed_offset", Vector2.ZERO)
 	var marker_tint: Color = _profile["marker_tint"]
 	if feedback_state not in ["hover", "pressed"] or _button.text.is_empty():
 		marker_tint.a = 0.0
@@ -218,6 +226,7 @@ func _present_state(immediate: bool, previous_state: String) -> void:
 	_outline.visible = outline_tint.a > 0.0 or _outline.modulate.a > 0.0
 	if immediate:
 		scale = Vector2.ONE * target_scale
+		position = target_offset
 		_face.modulate = face_tint
 		_outline.modulate = outline_tint
 		_outline.visible = outline_tint.a > 0.0
@@ -240,6 +249,7 @@ func _present_state(immediate: bool, previous_state: String) -> void:
 		seconds = float(_profile["release_seconds"])
 	_motion = create_tween().set_parallel(true).set_trans(transition).set_ease(easing)
 	_motion.tween_property(self, "scale", Vector2.ONE * target_scale, seconds)
+	_motion.tween_property(self, "position", target_offset, seconds)
 	_motion.tween_property(_face, "modulate", face_tint, seconds)
 	_motion.tween_property(_outline, "modulate", outline_tint, seconds)
 	if _marker != null:

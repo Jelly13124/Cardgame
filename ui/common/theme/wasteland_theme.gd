@@ -66,12 +66,54 @@ const UI_ACCENT_TEXT = Color("#ffe8c0")  # accent button label
 
 # ─── Combat readouts and page scrims ──────────────────────────────────────────
 const COMBAT_TRACK_BG = Color("#211611")
+const COMBAT_HP_TEXT = Color("#fff8e8")
+const COMBAT_HP_OUTLINE = Color("#071018")
+const COMBAT_BLOCK_TEXT = Color("#fff8e8")
+const COMBAT_BLOCK_OUTLINE = Color("#10283b")
+const COMBAT_STATUS_TEXT = Color("#fff0c7")
+const COMBAT_STATUS_OUTLINE = Color("#0d0603")
+const COMBAT_ASSET_DIR := "res://battle_scene/assets/images/ui/combat/"
+static var _combat_textures: Dictionary = {}
 const INTENT_ATTACK_LOW = Color("#ffe5d4")
 const INTENT_ATTACK_MEDIUM = Color("#ffc69e")
 const INTENT_ATTACK_HIGH = Color("#ff9d83")
 const ENERGY_EMPTY_TINT = Color(0.57, 0.63, 0.62)
 const REWARD_SCRIM = Color(0.035, 0.037, 0.043, 0.92)
 const RESULT_SCRIM = Color(0.024, 0.027, 0.032, 0.94)
+
+
+static func combat_tex(asset_name: String) -> Texture2D:
+	if _combat_textures.has(asset_name):
+		return _combat_textures[asset_name]
+	var texture := load(COMBAT_ASSET_DIR + asset_name + ".png") as Texture2D
+	if texture == null:
+		push_error("Missing original combat HUD texture: %s" % asset_name)
+		return null
+	_combat_textures[asset_name] = texture
+	return texture
+
+
+static func apply_end_turn_button(button: Button) -> void:
+	apply_action_button(button, "primary", Vector4(24, 8, 24, 8))
+	var profile := button_feedback_profile("primary")
+	profile["role"] = "end_turn"
+	profile["base_texture"] = combat_tex("end_turn_normal")
+	profile["hover_scale"] = 1.0
+	profile["pressed_scale"] = 1.0
+	profile["hover_offset"] = Vector2(0, -2)
+	profile["pressed_offset"] = Vector2(0, 8)
+	profile["state_textures"] = {}
+	profile["face_tints"] = {}
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		profile["state_textures"][state] = combat_tex("end_turn_" + state)
+		profile["face_tints"][state] = Color.WHITE
+	button.get_node(NodePath(BUTTON_VISUALS_NAME)).configure(button, profile)
+	button.add_theme_font_override("font", combat_font(700))
+	button.add_theme_font_size_override("font_size", 30)
+	button.add_theme_constant_override("outline_size", 12)
+	button.add_theme_color_override("font_color", COMBAT_HP_TEXT)
+	button.add_theme_color_override("font_hover_color", COMBAT_HP_TEXT)
+	button.add_theme_color_override("font_outline_color", COMBAT_HP_OUTLINE)
 
 # ─── Shared original UI kit ────────────────────────────────────────────────────
 const KIT_DIR := "res://run_system/assets/images/ui/kit/"

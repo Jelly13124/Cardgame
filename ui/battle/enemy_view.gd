@@ -20,26 +20,40 @@ const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://ui/bat
 const DAMAGE_NUMBER = preload("uid://clps6my10jkri")  # res://ui/battle/damage_number_vfx.gd
 const ENEMY_DEATH_VFX = preload("uid://cayme2wbim86o")  # res://ui/battle/enemy_death_vfx.gd
 
-# Intent badge icon textures — preloaded once instead of `load()`-ing on every
-# intent refresh (which can fire frequently as enemy / player status changes).
-const INTENT_ICON_ATTACK = preload("res://battle_scene/assets/images/ui/intent_attack.png")
-const INTENT_ICON_BLOCK = preload("res://battle_scene/assets/images/ui/intent_block.png")
-const INTENT_ICON_BUFF = preload("res://battle_scene/assets/images/ui/intent_buff.png")
-const INTENT_ICON_CHARGE = preload("res://battle_scene/assets/images/ui/intent_charge.png")
-const INTENT_ICON_DEBUFF = preload("res://battle_scene/assets/images/ui/intent_debuff.png")
+# Five original images carry attack severity; display scale and tint stay fixed.
+const INTENT_ATTACK_TEXTURES := [
+	preload("uid://cnl4xvglknbpx"),  # res://battle_scene/assets/images/ui/combat/intents/attack_1.png
+	preload("uid://bn6puo60siu16"),  # res://battle_scene/assets/images/ui/combat/intents/attack_2.png
+	preload("uid://b17fj0m5wl32q"),  # res://battle_scene/assets/images/ui/combat/intents/attack_3.png
+	preload("uid://eb4r4ktynj1t"),  # res://battle_scene/assets/images/ui/combat/intents/attack_4.png
+	preload("uid://ccjm2mp37oh0i"),  # res://battle_scene/assets/images/ui/combat/intents/attack_5.png
+]
+const INTENT_ICON_MULTI = preload("uid://c2pgn1drmy2aj")  # res://battle_scene/assets/images/ui/combat/intents/multi.png
+const INTENT_ICON_BLOCK = preload("uid://cgifa8t5ypwb4")  # res://battle_scene/assets/images/ui/combat/intents/block.png
+const INTENT_ICON_BUFF = preload("uid://cudrvv4ubwpbc")  # res://battle_scene/assets/images/ui/combat/intents/buff.png
+const INTENT_ICON_CHARGE = preload("uid://imyhsfwxky1u")  # res://battle_scene/assets/images/ui/combat/intents/charge.png
+const INTENT_ICON_DEBUFF = preload("uid://bv4asgcdcdnlm")  # res://battle_scene/assets/images/ui/combat/intents/debuff.png
+const INTENT_ICON_UNKNOWN = preload("uid://b21njwpfhuxut")  # res://battle_scene/assets/images/ui/combat/intents/unknown.png
+const INTENT_ICON_ESCAPE = preload("uid://c5tc5skq1j7cg")  # res://battle_scene/assets/images/ui/combat/intents/escape.png
+const INTENT_ICON_SUMMON = preload("uid://dpqqq3hyykbv")  # res://battle_scene/assets/images/ui/combat/intents/summon.png
 const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
+const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://ui/common/run_top_bar.gd
 const NORMAL_DISPLAY_HEIGHT := 256.0
 const ELITE_DISPLAY_HEIGHT := 320.0
 const BOSS_DISPLAY_HEIGHT := 384.0
-const NORMAL_HUD_SIZE := Vector2i(200, 10)
-const ELITE_HUD_SIZE := Vector2i(200, 10)
-const BOSS_HUD_SIZE := Vector2i(200, 10)
+const NORMAL_HUD_SIZE := Vector2i(250, 16)
+const ELITE_HUD_SIZE := Vector2i(250, 16)
+const BOSS_HUD_SIZE := Vector2i(250, 16)
 const MAX_ANIMATION_FRAMES := 16
-const INTENT_BADGE_WIDTH := 104.0
-const INTENT_BADGE_HEIGHT := 36.0
-const INTENT_CELL_ICON_SIZE := 34.0
-const ATTACK_INTENT_MEDIUM := 6
-const ATTACK_INTENT_HIGH := 12
+const INTENT_BADGE_WIDTH := 200.0
+const INTENT_BADGE_HEIGHT := 84.0
+const INTENT_CELL_ICON_SIZE := 64.0
+const INTENT_BOB_PERIOD := 2.0
+const INTENT_BOB_AMPLITUDE := 10.0
+const INTENT_BOB_BASE := -8.0
+const INTENT_PHASE_STEP := 0.3
+const INTENT_APPEAR_SECONDS := 1.0
+const INTENT_DISAPPEAR_SECONDS := 0.5
 
 # ─── Stats ────────────────────────────────────────────────────────────────────
 ## Combat state lives in the creature (core/combat/creature.gd); this node
@@ -124,7 +138,10 @@ var _hud: Node
 var _sprite: AnimatedSprite2D
 var _intent_cells: HBoxContainer
 var _intent_bg: Control
-var _intent_tween: Tween
+var _intent_time := 0.0
+var _active_intents: Dictionary = {}
+var _retiring_intents: Array[Control] = []
+var _intent_anchor := Vector2.ZERO
 var _intent_tooltip: String = ""
 var _display_size := Vector2(NORMAL_DISPLAY_HEIGHT, NORMAL_DISPLAY_HEIGHT)
 var _content_height := NORMAL_DISPLAY_HEIGHT
@@ -239,7 +256,7 @@ func _build_sprite_visual(sid: String) -> void:
 	add_child(_sprite)
 	_show_rest_pose()
 
-	_build_intent_badge(Vector2(-INTENT_BADGE_WIDTH * 0.5, -display_height - 48.0))
+	_build_intent_badge(Vector2(-INTENT_BADGE_WIDTH * 0.5, -display_height - INTENT_BADGE_HEIGHT - 10.0))
 	_build_health_bar(Vector2(-112.5, 28))
 
 
@@ -343,7 +360,7 @@ func _build_placeholder_visual() -> void:
 	add_child(body)
 	_display_size = body.size
 	_content_height = body.size.y
-	_build_intent_badge(Vector2(-INTENT_BADGE_WIDTH * 0.5, -304))
+	_build_intent_badge(Vector2(-INTENT_BADGE_WIDTH * 0.5, -256.0 - INTENT_BADGE_HEIGHT - 10.0))
 	_build_health_bar(Vector2(-112.5, 28))
 
 
@@ -352,7 +369,9 @@ func _build_placeholder_visual() -> void:
 func _build_intent_badge(intent_pos: Vector2) -> void:
 	_intent_bg = Control.new()
 	_intent_bg.size = Vector2(INTENT_BADGE_WIDTH, INTENT_BADGE_HEIGHT)
+	_intent_bg.name = "IntentDisplay"
 	_intent_bg.position = intent_pos
+	_intent_anchor = intent_pos
 	# STOP (not IGNORE) so the badge can detect hover for its tooltip.
 	_intent_bg.mouse_filter = Control.MOUSE_FILTER_STOP
 	_intent_bg.z_index = 20
@@ -382,7 +401,7 @@ func _build_intent_badge(intent_pos: Vector2) -> void:
 
 
 ## Builds the health bar (CharacterHUD) below the sprite. Every enemy uses the
-## same lightweight 200x10 footprint as the player; encounter weight stays in
+## same lightweight 250x16 footprint as the player; encounter weight stays in
 ## sprite scale and intent presentation rather than HUD chrome.
 func _build_health_bar(hud_pos: Vector2) -> void:
 	var hud_size := _health_bar_size()
@@ -429,108 +448,155 @@ func intent_attack_damage(action: Dictionary) -> int:
 	return int(action.get("amount", 0))
 
 
-func _add_intent_cell(
-	kind: String, texture: Texture2D, value: String, color: Color,
-	icon_size: float = INTENT_CELL_ICON_SIZE
-) -> Control:
-	var cell := HBoxContainer.new()
-	cell.name = "Intent%s" % kind
-	cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	cell.add_theme_constant_override("separation", 2)
+## Five tiers classify the complete projected move, including repeats.
+## The combat pipeline still supplies one projected hit; UI never edits it.
+static func attack_intent_tier(total_damage: int) -> int:
+	if total_damage < 5:
+		return 1
+	if total_damage < 10:
+		return 2
+	if total_damage < 20:
+		return 3
+	if total_damage < 40:
+		return 4
+	return 5
 
+
+func _attack_intent_entry(action: Dictionary) -> Dictionary:
+	var damage := intent_attack_damage(action)
+	# Existing moves are single hits. Optional `hits` is display metadata for a
+	# multi-hit move; `attack_all` means targets, never an implicit repeat count.
+	var hits := maxi(1, int(action.get("hits", 1)))
+	return {
+		"kind": "Attack",
+		"texture": INTENT_ATTACK_TEXTURES[attack_intent_tier(damage * hits) - 1],
+		"value": "%d×%d" % [damage, hits] if hits > 1 else str(damage),
+		"multi": hits > 1,
+	}
+
+
+func _intent_entry(kind: String, texture: Texture2D, value: String = "") -> Dictionary:
+	return {"kind": kind, "texture": texture, "value": value, "multi": false}
+
+
+func _intent_entries(action: Dictionary) -> Array[Dictionary]:
+	var entries: Array[Dictionary] = []
+	var action_type := str(action.get("type", ""))
+	match action_type:
+		"attack", "attack_ramp", "attack_all":
+			entries.append(_attack_intent_entry(action))
+		"attack_status":
+			entries.append(_attack_intent_entry(action))
+			entries.append(_intent_entry("Debuff", INTENT_ICON_DEBUFF))
+		"block", "breakable_block":
+			entries.append(_intent_entry("Block", INTENT_ICON_BLOCK, str(int(action.get("amount", 0)))))
+		"reflective_plating":
+			entries.append(_intent_entry("Block", INTENT_ICON_BLOCK, str(int(action.get("amount", 0)))))
+			entries.append(_intent_entry("Buff", INTENT_ICON_BUFF, str(int(action.get("thorns", 0)))))
+		"heal", "buff", "buff_self":
+			var amount := int(action.get("amount", action.get("stacks", 0)))
+			entries.append(_intent_entry("Buff", INTENT_ICON_BUFF, str(amount) if amount > 0 else ""))
+		"add_curse":
+			entries.append(_intent_entry("Debuff", INTENT_ICON_DEBUFF))
+		"telegraph":
+			entries.append(_intent_entry("Charge", INTENT_ICON_CHARGE))
+		"summon":
+			entries.append(_intent_entry("Summon", INTENT_ICON_SUMMON))
+		"escape":
+			entries.append(_intent_entry("Escape", INTENT_ICON_ESCAPE))
+		_:
+			entries.append(_intent_entry("Unknown", INTENT_ICON_UNKNOWN))
+	return entries
+
+
+func _add_intent_cell(kind: String) -> Control:
+	var cell := Control.new()
+	cell.name = "Intent%s" % kind
+	cell.custom_minimum_size = Vector2(INTENT_CELL_ICON_SIZE, INTENT_BADGE_HEIGHT)
+	cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cell.modulate.a = 0.0
+	cell.set_meta("fade_elapsed", 0.0)
+	cell.set_meta("fade_from", 0.0)
+	cell.set_meta("fade_to", 1.0)
+	cell.set_meta("fade_duration", INTENT_APPEAR_SECONDS)
+
+	var floating := Control.new()
+	floating.name = "Floating"
+	floating.size = cell.custom_minimum_size
+	floating.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cell.add_child(floating)
 	var icon := TextureRect.new()
 	icon.name = "Icon"
-	icon.custom_minimum_size = Vector2.ONE * icon_size
-	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	icon.texture = texture
+	icon.size = Vector2.ONE * INTENT_CELL_ICON_SIZE
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	cell.add_child(icon)
+	floating.add_child(icon)
 
-	if value != "":
-		var label := Label.new()
-		label.name = "IntentValue"
-		label.text = value
-		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.add_theme_font_size_override("font_size", 22)
-		label.add_theme_constant_override("outline_size", 2)
-		label.add_theme_color_override("font_outline_color", T.COMBAT_TRACK_BG)
-		label.add_theme_color_override("font_color", color)
-		label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.95))
-		label.add_theme_constant_override("shadow_offset_x", 2)
-		label.add_theme_constant_override("shadow_offset_y", 2)
-		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		cell.add_child(label)
+	var label := Label.new()
+	label.name = "IntentValue"
+	label.position = Vector2(-16.0, 52.0)
+	label.size = Vector2(96.0, 32.0)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 22)
+	label.add_theme_constant_override("outline_size", 12)
+	label.add_theme_color_override("font_outline_color", T.COMBAT_TRACK_BG)
+	label.add_theme_color_override("font_color", Color.WHITE)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	floating.add_child(label)
 
+	var marker := TextureRect.new()
+	marker.name = "MultiMarker"
+	marker.position = Vector2(43.0, 30.0)
+	marker.size = Vector2(24.0, 24.0)
+	marker.texture = INTENT_ICON_MULTI
+	marker.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	marker.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	floating.add_child(marker)
 	_intent_cells.add_child(cell)
+	_active_intents[kind] = cell
 	return cell
-
-
-func _add_attack_intent(action: Dictionary) -> void:
-	var damage := intent_attack_damage(action)
-	var icon_size := 24.0
-	var color := T.INTENT_ATTACK_LOW
-	if damage >= ATTACK_INTENT_HIGH:
-		icon_size = 32.0
-		color = T.INTENT_ATTACK_HIGH
-	elif damage >= ATTACK_INTENT_MEDIUM:
-		icon_size = 28.0
-		color = T.INTENT_ATTACK_MEDIUM
-	_add_intent_cell("Attack", INTENT_ICON_ATTACK, str(damage), color, icon_size)
 
 
 func _update_intent_display() -> void:
 	if not _intent_cells:
 		return
-	for child in _intent_cells.get_children():
-		_intent_cells.remove_child(child)
-		child.queue_free()
-
 	var next := peek_next_action()
-	var action_type := str(next.get("type", ""))
-	match action_type:
-		"attack", "attack_ramp", "attack_all":
-			_add_attack_intent(next)
-		"attack_status":
-			_add_attack_intent(next)
-			_add_intent_cell("Debuff", INTENT_ICON_DEBUFF, "", Color.WHITE)
-		"block", "breakable_block":
-			_add_intent_cell(
-				"Block",
-				INTENT_ICON_BLOCK,
-				str(int(next.get("amount", 0))),
-				Color("#a6dbff")
-			)
-		"reflective_plating":
-			_add_intent_cell(
-				"Block",
-				INTENT_ICON_BLOCK,
-				str(int(next.get("amount", 0))),
-				Color("#a6dbff")
-			)
-			_add_intent_cell(
-				"Buff",
-				INTENT_ICON_BUFF,
-				str(int(next.get("thorns", 0))),
-				Color("#b8ff9e")
-			)
-		"heal", "buff", "buff_self":
-			var amount := int(next.get("amount", next.get("stacks", 0)))
-			_add_intent_cell(
-				"Buff",
-				INTENT_ICON_BUFF,
-				str(amount) if amount > 0 else "",
-				Color("#b8ff9e")
-			)
-		"add_curse":
-			_add_intent_cell("Debuff", INTENT_ICON_DEBUFF, "", Color.WHITE)
-		"telegraph", "summon":
-			_add_intent_cell("Charge", INTENT_ICON_CHARGE, "", Color("#ffdb6b"))
-		_:
-			_add_intent_cell("Buff", INTENT_ICON_BUFF, "", Color("#b8ff9e"))
+	var entries := _intent_entries(next)
+	var present: Array[String] = []
+	for entry in entries:
+		present.append(entry["kind"])
+	for kind in _active_intents.keys():
+		if kind in present:
+			continue
+		var retiring: Control = _active_intents[kind]
+		retiring.reparent(_intent_bg)
+		retiring.name = "Retiring%s" % kind
+		retiring.set_meta("fade_elapsed", 0.0)
+		retiring.set_meta("fade_from", retiring.modulate.a)
+		retiring.set_meta("fade_to", 0.0)
+		retiring.set_meta("fade_duration", INTENT_DISAPPEAR_SECONDS)
+		_retiring_intents.append(retiring)
+		_active_intents.erase(kind)
+	for idx in range(entries.size()):
+		var entry: Dictionary = entries[idx]
+		var kind: String = entry["kind"]
+		var cell: Control = _active_intents.get(kind)
+		if cell == null:
+			cell = _add_intent_cell(kind)
+		_intent_cells.move_child(cell, idx)
+		cell.set_meta("intent_phase", float(idx) * INTENT_PHASE_STEP)
+		var floating := cell.get_node("Floating") as Control
+		(floating.get_node("Icon") as TextureRect).texture = entry["texture"]
+		var label := floating.get_node("IntentValue") as Label
+		label.text = entry["value"]
+		label.visible = not label.text.is_empty()
+		(floating.get_node("MultiMarker") as TextureRect).visible = entry["multi"]
 	_intent_tooltip = intent_text(next)
+	_update_intent_float_positions()
 
 
 ## Plain-language description of an action (the intent tooltip, and the
@@ -540,14 +606,54 @@ func intent_text(next: Dictionary, with_tips: bool = true) -> String:
 
 
 func _start_intent_float_anim() -> void:
+	_intent_time = 0.0
+	_update_intent_float_positions()
+
+
+func _process(delta: float) -> void:
 	if not _intent_bg:
 		return
-	var start_y = _intent_bg.position.y
-	_intent_tween = create_tween().set_loops()
-	_intent_tween.tween_property(_intent_bg, "position:y", start_y - 6, 1.5).set_trans(
-		Tween.TRANS_SINE
+	_intent_time = fmod(_intent_time + delta, INTENT_BOB_PERIOD)
+	for cell in _active_intents.values():
+		_advance_intent_fade(cell, delta)
+	for idx in range(_retiring_intents.size() - 1, -1, -1):
+		var cell := _retiring_intents[idx]
+		_advance_intent_fade(cell, delta)
+		if float(cell.get_meta("fade_elapsed")) >= INTENT_DISAPPEAR_SECONDS:
+			_retiring_intents.remove_at(idx)
+			cell.queue_free()
+	_update_intent_float_positions()
+
+
+func _advance_intent_fade(cell: Control, delta: float) -> void:
+	var duration := float(cell.get_meta("fade_duration"))
+	var elapsed := minf(float(cell.get_meta("fade_elapsed")) + delta, duration)
+	cell.set_meta("fade_elapsed", elapsed)
+	cell.modulate.a = lerpf(float(cell.get_meta("fade_from")), float(cell.get_meta("fade_to")), elapsed / duration)
+
+
+func _update_intent_float_positions() -> void:
+	if not _intent_bg:
+		return
+	# Combat pulses can scale the actor and its ancestors. Measure the complete
+	# bob envelope in viewport space, then move only the badge by the inverse
+	# transformed shortfall. A pixel of clearance absorbs transform rounding.
+	var actor_to_viewport := get_global_transform_with_canvas()
+	var bob_bounds := Rect2(
+		_intent_anchor + Vector2(0.0, INTENT_BOB_BASE - INTENT_BOB_AMPLITUDE),
+		Vector2(INTENT_BADGE_WIDTH, INTENT_BADGE_HEIGHT + INTENT_BOB_AMPLITUDE * 2.0)
 	)
-	_intent_tween.tween_property(_intent_bg, "position:y", start_y, 1.5).set_trans(Tween.TRANS_SINE)
+	var viewport_bounds: Rect2 = actor_to_viewport * bob_bounds
+	var shortfall := float(RUN_TOP_BAR.BAR_HEIGHT) + 1.0 - viewport_bounds.position.y
+	_intent_bg.position = _intent_anchor
+	if shortfall > 0.0 and not is_zero_approx(actor_to_viewport.determinant()):
+		var viewport_to_actor := actor_to_viewport.affine_inverse()
+		_intent_bg.position += viewport_to_actor * Vector2(0.0, shortfall) - viewport_to_actor.origin
+	var cells: Array = _active_intents.values() + _retiring_intents
+	for cell in cells:
+		var floating := cell.get_node("Floating") as Control
+		var phase := float(cell.get_meta("intent_phase", 0.0))
+		floating.position.y = INTENT_BOB_BASE - sin(_intent_time * TAU / INTENT_BOB_PERIOD + phase) * INTENT_BOB_AMPLITUDE
 
 
 # ─── Combat ───────────────────────────────────────────────────────────────────

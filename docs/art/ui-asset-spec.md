@@ -1,6 +1,6 @@
 # 界面素材规格与交付状态
 
-日期为 2026-11-10，分支为 `feat/ui-refresh`。本页按验收阶段记录已核验的交付 PNG。当前阶段为第 1 阶段，后续阶段在获得确认后补齐相应条目。
+日期为 2026-11-10，分支为 `feat/ui-refresh`。本页按验收阶段记录已核验的交付 PNG。当前阶段为第 2 阶段，前一阶段按钮已确认；后续阶段在获得确认后继续。
 
 ## 共用约定
 
@@ -15,10 +15,10 @@
 
 | 完成 | 文件路径 | 原图尺寸 | 显示尺寸 | 九宫格 | 格式 |
 |---|---|---|---|---|---|
-| [x] | `battle_scene/assets/images/ui/status/deadeye.png` | 64×64 | 30×30 当前；40×40 为第 2 阶段目标 | 无 | RGBA |
-| [x] | `battle_scene/assets/images/ui/status/loaded.png` | 64×64 | 30×30 当前；40×40 为第 2 阶段目标 | 无 | RGBA |
-| [x] | `battle_scene/assets/images/ui/status/overload_protocol.png` | 64×64 | 30×30 当前；40×40 为第 2 阶段目标 | 无 | RGBA |
-| [x] | `battle_scene/assets/images/ui/status/reactive_plating.png` | 64×64 | 30×30 当前；40×40 为第 2 阶段目标 | 无 | RGBA |
+| [x] | `battle_scene/assets/images/ui/status/deadeye.png` | 64×64 | 40×40 当前 | 无 | RGBA |
+| [x] | `battle_scene/assets/images/ui/status/loaded.png` | 64×64 | 40×40 当前 | 无 | RGBA |
+| [x] | `battle_scene/assets/images/ui/status/overload_protocol.png` | 64×64 | 40×40 当前 | 无 | RGBA |
+| [x] | `battle_scene/assets/images/ui/status/reactive_plating.png` | 64×64 | 40×40 当前 | 无 | RGBA |
 | [x] | `run_system/assets/images/events/adrenaline_shot.png` | 1024×768 | 1024×768 | 无 | RGB |
 | [x] | `run_system/assets/images/events/backdrops/act_1.png` | 1920×1080 | 1920×1000 可见区，从 y=80 起；1920×1080 原图覆盖裁切 | 无 | RGB |
 | [x] | `run_system/assets/images/events/backdrops/act_2.png` | 1920×1080 | 1920×1000 可见区，从 y=80 起；1920×1080 原图覆盖裁切 | 无 | RGB |
@@ -96,3 +96,55 @@
 指定Godot4.6.3的完整 `tools/run_tests.ps1` 最终返回0：71项通过、0项失败，工具测试与架构检查通过。新增与更新的界面检查分布于5个现有测试，包含真实鼠标和键盘输入。最终控制台证据保存在临时目录 `bottlecap-ui-buttons-20261110/tests/full-final.console.log`，不依赖成功后会自动清理的测试工作目录。
 
 32张改后1920×1080截图、改前对照和自绘STS2结构示意由 `bottlecap-ui-buttons-20261110/review.html` 浏览。改前来自本轮起点 `af106b5` 对应的前轮实际游戏截图；建筑升级弹窗为新增检查项。最终截图日志无ERROR或WARNING，正式中文Cowboy Bill卡壳核验通过。主目录状态与修订前一致，卡牌源文件、卡图、字体和五项冻结战斗特效无改动。本次没有新增场景文件，新增脚本UID由Godot生成。
+
+## 第2阶段战斗 HUD 素材
+
+本阶段新增33张原创PNG。六份构造图集/图标包由内置图像工具生成，按网格提取、去品红、统一有限调色板、对齐和缩小；最终游戏仅加载下表PNG。盾碎片由原创整盾的互补锯齿裁切产生，画布和中心一致。结束回合四态由已确认的原创主按钮源图按九宫格原生角点重组与调色，未使用STS2素材。
+
+| 完成 | 文件路径 | 原图尺寸 | 显示尺寸与用途 | 九宫格边距 |
+|---|---|---|---|---|
+| [x] | `battle_scene/assets/images/ui/combat/energy_layer_1.png` | 256×256 RGBA | 128×128；五层同心，闪光独立 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/energy_layer_2.png` | 256×256 RGBA | 128×128；五层同心，闪光独立 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/energy_layer_3.png` | 256×256 RGBA | 128×128；五层同心，闪光独立 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/energy_layer_4.png` | 256×256 RGBA | 128×128；五层同心，闪光独立 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/energy_layer_5.png` | 256×256 RGBA | 128×128；五层同心，闪光独立 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/energy_flash.png` | 256×256 RGBA | 128×128；五层同心，闪光独立 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/attack_1.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/attack_2.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/attack_3.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/attack_4.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/attack_5.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/multi.png` | 64×64 RGBA | 24×24，多段辅助标记 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/block.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/buff.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/debuff.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/charge.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/unknown.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/escape.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/intents/summon.png` | 64×64 RGBA | 64×64；档位不改变尺寸 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/hp_frame.png` | 250×16 RGBA | 250×16；原生尺寸，裁切显示进度 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/hp_track.png` | 250×16 RGBA | 250×16；原生尺寸，裁切显示进度 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/hp_fill.png` | 250×16 RGBA | 250×16；原生尺寸，裁切显示进度 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/hp_loss.png` | 250×16 RGBA | 250×16；原生尺寸，裁切显示进度 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/block.png` | 60×60 RGBA | 60×60；盾与左右碎片同画布 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/block_left.png` | 60×60 RGBA | 60×60；盾与左右碎片同画布 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/block_right.png` | 60×60 RGBA | 60×60；盾与左右碎片同画布 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/draw.png` | 80×80 RGBA | 80×80；悬停视觉1.25倍，命中保持80 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/discard.png` | 80×80 RGBA | 80×80；悬停视觉1.25倍，命中保持80 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/exhaust.png` | 80×80 RGBA | 80×80；悬停视觉1.25倍，命中保持80 | 无 |
+| [x] | `battle_scene/assets/images/ui/combat/end_turn_normal.png` | 220×90 RGBA | 220×90；四态复用同一命中区 | 20/16/20/16 |
+| [x] | `battle_scene/assets/images/ui/combat/end_turn_hover.png` | 220×90 RGBA | 220×90；四态复用同一命中区 | 20/16/20/16 |
+| [x] | `battle_scene/assets/images/ui/combat/end_turn_pressed.png` | 220×90 RGBA | 220×90；四态复用同一命中区 | 20/16/20/16 |
+| [x] | `battle_scene/assets/images/ui/combat/end_turn_disabled.png` | 220×90 RGBA | 220×90；四态复用同一命中区 | 20/16/20/16 |
+
+### 布局与反馈
+
+1920×1080 下能量球为(100,828,128,128)，结束回合命中为(1604,846,220,90)。抽弃热点为(15,985,80,80)与(1825,985,80,80)，消耗堆为(1725,985,80,80)。数据牌堆保留160×220宿主，80px热点是独立子控件；既有卡牌飞行的宿主偏移(80,110)仍落在可见图标中心，卡牌动画文件没有修改。
+
+血条四层250×16。数字24/描边16；盾60×60、数字24/14，盾贴在本条左端局部(-8,-22)，避免260px相邻槽位间覆盖其他血条。状态图40×40、计数18/10，48×40单元在250px流式容器内换行。
+
+五档攻击按预计单段伤害乘次数分档，严格小于5/10/20/40，达到边界即进入下一档；数字22/12。攻击图是五张不同原画，其他八类图标分别交付。浮动周期2秒、摆幅10px、基线抬高8px、同组相位差0.3弧度；出现1秒、淡出0.5秒。Boss缩放时仍按全局变换留出顶栏安全区。
+
+能量2/3层旋转30/60°每秒，空能量降为5/10并变暗，恢复闪光独立。能量进0.6秒Expo-Out、出0.6秒Back-In；牌堆进0.5秒Expo-Out、出0.5秒Back-In；结束回合进0.5秒Back-Out、出0.5秒Expo-Out。常态悬停与按下只动视觉层，进出场期间关闭输入。
+
+所有局内顶栏和遗物架仍是同一共用组件。教程完整根区域为(0,132,1920,948)，面板从(680,200)开始，避开顶栏、能量球与手牌。素材来源、提示词、哈希与处理脚本在系统临时目录 `bottlecap-ui-stage2-20261110/`；`review.html` 提供实际画面、改前与STS2自绘线框并排对照。

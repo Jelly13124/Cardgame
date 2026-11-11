@@ -81,7 +81,7 @@ RULES_EQUIPMENT,"Equipment: gear in 5 slots (head/chest/weapon/hands/accessory) 
 RULES_RELICS,"Relics: passive items that last the whole run — they bend rules or trigger on events. Found from elites, shops and bosses; they work automatically.","遗物:贯穿整局的被动物品——改变规则或在事件时触发。来自精英、商店和 Boss,自动生效。"
 RULES_BASE,"Home Base: spend Scrap to unlock and upgrade the Forge, Clinic, Market and Outpost. Services inside each building may cost Caps or Scrap.","基地:使用废料解锁并升级铁匠铺、义体诊所、黑市和前哨站。建筑内的具体服务会消耗瓶盖或废料。"
 RULES_CLOSE,Close,关闭
-TIP_1,"Welcome! Spend energy (top-left) to play cards from your hand.","欢迎!消耗能量(左上角)打出手牌。"
+TIP_1,"Welcome! Spend the energy shown at the lower left to play cards from your hand.","欢迎！使用左下方的能量打出手牌。"
 TIP_2,"Drag an ATTACK card onto an enemy to hit it. Drag SKILL cards upward to play them.","把攻击牌拖到敌人身上攻击;把技能牌向上拖出来打出。"
 TIP_3,"Each enemy's intent icon shows its next move. Gain Block to survive big hits.","每个敌人的意图图标显示它的下一步。获得格挡来扛住重击。"
 TIP_4,"Out of moves? Press END TURN. Good luck out there!","没法行动了?点击结束回合。祝你好运!"

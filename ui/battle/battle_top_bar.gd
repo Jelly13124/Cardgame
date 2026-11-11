@@ -15,9 +15,13 @@ func _ready() -> void:
 
 
 func _setup() -> void:
-	main = get_tree().current_scene
+	if get_node_or_null("RunTopBar"):
+		return
+	# The host also works when a battle is instanced under a test or overlay scene.
+	main = get_parent().get_parent()
 
 	var bar = RUN_TOP_BAR.new()
+	bar.name = "RunTopBar"
 	bar.hp_from_player = true
 	bar.player_source = main.player.creature if (main and "player" in main and main.player) else null
 	bar.show_character_button = false

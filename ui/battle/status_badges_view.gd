@@ -6,7 +6,9 @@ extends RefCounted
 
 const STATUS_EFFECTS = preload("uid://cq4eulp4ci8is")  # res://core/combat/status_effects.gd
 const STATUS_ICON_DIR := "res://battle_scene/assets/images/ui/status/"
-const STATUS_ICON_SIZE := 30.0
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
+const STATUS_ICON_SIZE := 40.0
+const STATUS_BADGE_SIZE := Vector2(48, 40)
 
 
 ## Replace the badges in `container` with one per status in `statuses`
@@ -15,6 +17,7 @@ static func rebuild(container: Node, statuses: Dictionary) -> void:
 	if container == null or not is_instance_valid(container):
 		return
 	for child in container.get_children():
+		container.remove_child(child)
 		child.queue_free()
 	for status_name in statuses:
 		var stacks: int = int(statuses[status_name])
@@ -54,22 +57,24 @@ static func _tooltip(status_name: String, stacks: int) -> String:
 
 static func _make_status_badge(status_name: String, stacks: int) -> Control:
 	var badge = Control.new()
-	badge.custom_minimum_size = Vector2(STATUS_ICON_SIZE, STATUS_ICON_SIZE)
-	badge.size = Vector2(STATUS_ICON_SIZE, STATUS_ICON_SIZE)
+	badge.custom_minimum_size = STATUS_BADGE_SIZE
+	badge.size = STATUS_BADGE_SIZE
 	badge.mouse_filter = Control.MOUSE_FILTER_PASS
 
 	var icon_texture := _load_status_icon(status_name)
 	if icon_texture:
 		var icon = TextureRect.new()
+		icon.name = "Icon"
 		icon.texture = icon_texture
 		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+		icon.size = Vector2(STATUS_ICON_SIZE, STATUS_ICON_SIZE)
 		badge.add_child(icon)
 	else:
 		var fallback = Label.new()
+		fallback.name = "Fallback"
 		fallback.text = STATUS_EFFECTS.status_label(status_name)
 		fallback.add_theme_font_size_override("font_size", 18)
 		fallback.add_theme_color_override("font_color", STATUS_EFFECTS.status_color(status_name))
@@ -80,22 +85,24 @@ static func _make_status_badge(status_name: String, stacks: int) -> Control:
 		badge.add_child(fallback)
 
 	var stack_label = Label.new()
+	stack_label.name = "StackCount"
 	stack_label.text = str(stacks)
 	stack_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stack_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	stack_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	stack_label.add_theme_font_size_override("font_size", 13)
-	stack_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.72))
-	stack_label.add_theme_color_override("font_outline_color", Color(0.05, 0.025, 0.012, 1.0))
-	stack_label.add_theme_constant_override("outline_size", 3)
+	stack_label.add_theme_font_override("font", T.combat_font(700))
+	stack_label.add_theme_font_size_override("font_size", 18)
+	stack_label.add_theme_color_override("font_color", T.COMBAT_STATUS_TEXT)
+	stack_label.add_theme_color_override("font_outline_color", T.COMBAT_STATUS_OUTLINE)
+	stack_label.add_theme_constant_override("outline_size", 10)
 	stack_label.anchor_left = 0.0
 	stack_label.anchor_top = 0.0
 	stack_label.anchor_right = 1.0
 	stack_label.anchor_bottom = 1.0
 	stack_label.offset_left = 0.0
 	stack_label.offset_top = 0.0
-	stack_label.offset_right = 3.0
-	stack_label.offset_bottom = 2.0
+	stack_label.offset_right = 0.0
+	stack_label.offset_bottom = 0.0
 	badge.add_child(stack_label)
 	return badge
 

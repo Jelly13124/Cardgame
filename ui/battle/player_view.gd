@@ -68,7 +68,7 @@ const DAMAGE_NUMBER = preload("uid://clps6my10jkri")  # res://ui/battle/damage_n
 const HERO_DIR = "res://battle_scene/assets/images/heroes/"
 const DEFAULT_HERO_SPRITE_ID = "cowboy_bill"  # fallback when no hero data loaded  # bare-ok: sprite id
 const TARGET_DISPLAY_HEIGHT := 256.0
-const PLAYER_HUD_SIZE := Vector2i(200, 10)
+const PLAYER_HUD_SIZE := Vector2i(250, 16)
 const MUZZLE_NATIVE_POSITION := Vector2(224, 94)
 const MAX_ANIMATION_FRAMES := 16
 

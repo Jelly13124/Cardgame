@@ -4,7 +4,7 @@ extends Node
 
 const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://ui/windows/character_window.gd
 const RUN_DECK_VIEWER_MODAL = preload("uid://jvxfh15gtinx")  # res://ui/common/run_deck_viewer_modal.gd
-const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
+const ENERGY_ORB = preload("uid://bw7ft80f37jg5")  # res://ui/battle/energy_orb.gd
 
 @export_group("UI Nodes")
 @export var energy_label: Label
@@ -18,11 +18,14 @@ const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_them
 var notify_tween: Tween
 var inspected_card: Control = null
 var _energy_display: Control
-var _energy_frame: TextureRect
-var _energy_ring: Control
-var _energy_tween: Tween
 var _energy_value := -1
-var _energy_fraction := 0.0
+var _energy_maximum := 0
+var _hud_exiting := false
+var _end_turn_home := Vector2.ZERO
+var _end_turn_size := Vector2.ZERO
+var _end_turn_home_set := false
+var _end_turn_motion: Tween
+var _end_turn_transition := false
 var _pile_viewer: Control
 ## Tracks which pile the viewer is currently showing ("draw"/"discard"/"deck"/"")
 ## so the Q/E toggle logic doesn't compare against the (now localized) title text.
@@ -41,122 +44,114 @@ func _ready() -> void:
 	if not energy_label:
 		energy_label = main.get_node("EnergyLabel")
 	_build_energy_display.call_deferred()
+	anim_in.call_deferred()
 
 	if notify_label:
 		notify_label.modulate.a = 0
 
 
-func update_labels(energy: int, max_energy: int) -> void:
-	if energy_label == null:
-		return
-	var count := "%d/%d" % [energy, max_energy]
-	if count == energy_label.text and _energy_value >= 0:
-		return
-	var energy_changed := _energy_value >= 0 and energy != _energy_value
-	_energy_value = energy
-	_energy_fraction = clampf(float(energy) / maxi(1, max_energy), 0.0, 1.0)
-	energy_label.text = count
-	_refresh_energy_layers()
-	if energy_changed:
-		_pop_energy()
+func _process(_delta: float) -> void:
+	_sync_end_turn_state()
 
 
-## Quick scale-pop on the energy orb whenever energy changes — spend/gain now reads
-## kinetically instead of a silent text swap.
-func _pop_energy() -> void:
-	if _energy_display == null or not is_instance_valid(_energy_display):
+func _sync_end_turn_state() -> void:
+	if main.end_round_button:
+		var disabled: bool = (
+			_hud_exiting or _end_turn_transition or main.is_targeting
+			or not main._accepts_player_input()
+		)
+		if main.end_round_button.disabled != disabled:
+			main.end_round_button.disabled = disabled
+			var visuals: Node = main.end_round_button.get_node_or_null("ActionVisuals")
+			if visuals:
+				visuals.sync_state()
+
+
+func anim_in() -> void:
+	if main.is_game_over:
+		anim_out()
 		return
-	_energy_display.pivot_offset = Vector2(52, 52)
-	_energy_display.scale = Vector2(1.16, 1.16)
-	if _energy_tween and _energy_tween.is_valid():
-		_energy_tween.kill()
-	_energy_tween = create_tween()
-	(
-		_energy_tween
-		. tween_property(_energy_display, "scale", Vector2.ONE, 0.18)
-		. set_trans(Tween.TRANS_BACK)
-		. set_ease(Tween.EASE_OUT)
+	_hud_exiting = false
+	if _energy_display:
+		_energy_display.anim_in()
+	for hud in _pile_huds():
+		hud.anim_in()
+	_animate_end_turn(true)
+
+
+func anim_out() -> void:
+	_hud_exiting = true
+	if _energy_display:
+		_energy_display.anim_out()
+	for hud in _pile_huds():
+		hud.anim_out()
+	_animate_end_turn(false)
+
+
+func _pile_huds() -> Array:
+	var result: Array = []
+	for path in ["CardManager/Deck/PileInput/PileHUD", "CardManager/DiscardPile/PileInput/PileHUD", "ExhaustIndicator/PileHUD"]:
+		var hud := main.get_node_or_null(path)
+		if hud:
+			result.append(hud)
+	return result
+
+
+func _animate_end_turn(entering: bool) -> void:
+	var button: Button = main.end_round_button
+	if button == null:
+		return
+	if not _end_turn_home_set:
+		_end_turn_home = button.position
+		_end_turn_size = button.size
+		_end_turn_home_set = true
+	if _end_turn_motion and _end_turn_motion.is_valid():
+		_end_turn_motion.kill()
+	_end_turn_transition = true
+	if entering:
+		button.position = _end_turn_home + Vector2(0, 250)
+	_sync_end_turn_state()
+	var destination := _end_turn_home if entering else _end_turn_home + Vector2(0, 250)
+	var transition := Tween.TRANS_BACK if entering else Tween.TRANS_EXPO
+	_end_turn_motion = create_tween()
+	_end_turn_motion.tween_property(button, "position", destination, 0.5).set_trans(transition).set_ease(Tween.EASE_OUT)
+	_end_turn_motion.finished.connect(
+		func() -> void:
+			# Control position tweens can accumulate subpixel size drift at anchors.
+			button.position = destination
+			button.size = _end_turn_size
+			_end_turn_transition = false
+			_sync_end_turn_state()
 	)
+
+
+func update_labels(energy: int, max_energy: int) -> void:
+	_sync_end_turn_state()
+	_energy_value = energy
+	_energy_maximum = max_energy
+	if _energy_display:
+		_energy_display.set_energy(energy, max_energy)
+	elif energy_label:
+		energy_label.text = "%d/%d" % [energy, max_energy]
 
 
 func _build_energy_display() -> void:
 	if not energy_label or _energy_display:
 		return
-
-	_energy_display = Control.new()
+	_energy_display = ENERGY_ORB.new()
 	_energy_display.name = "EnergyDisplay"
-	_energy_display.anchor_left = 0.0
 	_energy_display.anchor_top = 1.0
-	_energy_display.anchor_right = 0.0
 	_energy_display.anchor_bottom = 1.0
-	# One compact hand-inked token, bottom-aligned with End Round across the hand.
-	_energy_display.offset_left = 32.0
-	_energy_display.offset_top = -396.0
-	_energy_display.offset_right = 136.0
-	_energy_display.offset_bottom = -292.0
-	_energy_display.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# The reference uses a zero-size bottom anchor with a 128 px child below it.
+	_energy_display.offset_left = 100.0
+	_energy_display.offset_top = -252.0
+	_energy_display.offset_right = 228.0
+	_energy_display.offset_bottom = -124.0
 	_energy_display.z_index = 20
 	main.add_child(_energy_display)
-
-	# The faceted medallion is stationary. Its charge ring and count have their own layers.
-	var medal_rect := Rect2(0.0, 0.0, 104.0, 104.0)
-	var medal_tex := T.lightline_tex("hud_energy_badge_sts2")
-	if medal_tex != null:
-		var medal := TextureRect.new()
-		medal.name = "Frame"
-		medal.texture = medal_tex
-		medal.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-		medal.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		medal.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		medal.position = medal_rect.position
-		medal.size = medal_rect.size
-		medal.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_energy_display.add_child(medal)
-		_energy_frame = medal
-	_energy_ring = Control.new()
-	_energy_ring.name = "EnergyChargeRing"
-	_energy_ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_energy_ring.draw.connect(_draw_energy_ring)
-	_energy_display.add_child(_energy_ring)
-
-	var old_parent = energy_label.get_parent()
-	if old_parent:
-		old_parent.remove_child(energy_label)
-	_energy_display.add_child(energy_label)
-	energy_label.anchor_left = 0.0
-	energy_label.anchor_top = 0.0
-	energy_label.anchor_right = 0.0
-	energy_label.anchor_bottom = 0.0
-	energy_label.offset_left = medal_rect.position.x
-	energy_label.offset_top = medal_rect.position.y
-	energy_label.offset_right = medal_rect.end.x
-	energy_label.offset_bottom = medal_rect.end.y
-	energy_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	energy_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	energy_label.add_theme_font_override("font", T.display_font(700))
-	energy_label.add_theme_font_size_override("font_size", 32)
-	energy_label.add_theme_color_override("font_color", Color(0.035, 0.07, 0.08, 1.0))
-	energy_label.add_theme_color_override("font_outline_color", Color(0.80, 0.92, 0.94, 0.30))
-	energy_label.add_theme_constant_override("outline_size", 1)
-	energy_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_refresh_energy_layers()
-
-
-func _refresh_energy_layers() -> void:
-	if _energy_frame != null:
-		_energy_frame.self_modulate = T.ENERGY_EMPTY_TINT if _energy_value == 0 else Color.WHITE
-	if _energy_ring != null:
-		_energy_ring.queue_redraw()
-
-
-func _draw_energy_ring() -> void:
-	var center := _energy_display.size * 0.5
-	var start := -PI * 0.5
-	_energy_ring.draw_arc(center, 35.0, start, start + TAU, 64, T.PANEL_BG_DARK, 2.0, true)
-	if _energy_fraction > 0.0:
-		_energy_ring.draw_arc(
-			center, 35.0, start, start + TAU * _energy_fraction, 64, T.UI_HEADER_GOLD, 3.0, true
-		)
+	_energy_display.configure(energy_label)
+	if _energy_value >= 0:
+		_energy_display.set_energy(_energy_value, _energy_maximum)
 
 
 func show_notification(text: String, color: Color = Color.WHITE) -> void:
@@ -192,6 +187,20 @@ func close_inspection() -> void:
 
 
 # --- Pile Viewer UI ---
+
+
+## Mouse pile hotspots use the same viewer and snapshot path as keyboard shortcuts.
+func open_pile(kind: String) -> void:
+	if main.is_game_over:
+		return
+	if pile_viewer_layer.visible and _current_pile_kind == kind:
+		hide_pile_viewer()
+		return
+	_current_pile_kind = kind
+	if kind == "draw":
+		show_pile_viewer(tr("UI_BATTLE_DRAW_PILE"), main.deck)
+	elif kind == "discard":
+		show_pile_viewer(tr("UI_BATTLE_DISCARD_PILE"), main.discard_pile)
 
 
 func show_pile_viewer(title: String, pile_container: CardContainer) -> void:

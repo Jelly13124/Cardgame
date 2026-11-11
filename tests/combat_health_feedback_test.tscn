@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cql1y0h8ev6du"]
+
+[ext_resource type="Script" uid="uid://dgsqe3m4tpf8k" path="res://tests/combat_health_feedback_test.gd" id="1"]
+
+[node name="CombatHealthFeedbackTest" type="Node"]
+script = ExtResource("1")
