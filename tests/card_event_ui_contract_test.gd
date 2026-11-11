@@ -139,6 +139,17 @@ func _run() -> void:
 			deck_content.offset_top >= RUN_TOP_BAR.BAR_HEIGHT,
 			"run-deck cards stay below the complete persistent top bar",
 		)
+	var deck_title := deck_viewer.find_child("RunDeckTitle", true, false) as Label
+	var deck_close := deck_viewer.find_child("RunDeckClose", true, false) as Button
+	_expect(deck_title != null and deck_title.global_position.y >= RUN_TOP_BAR.BAR_HEIGHT,
+		"deck title is visible below the persistent bar")
+	_expect(deck_close != null and deck_close.global_position.y >= RUN_TOP_BAR.BAR_HEIGHT,
+		"deck close button is clickable below the persistent bar")
+	var grid := deck_viewer.find_child("CardGrid", true, false) as GridContainer
+	_expect(grid != null and grid.get_child_count() == 1, "the shared grid shows the run card")
+	if grid != null:
+		_expect(grid.find_children("*", "Panel", true, false).is_empty(),
+			"deck card slots do not draw permanent preview frames")
 	deck_viewer.queue_free()
 	RunManager.player_deck = original_deck
 	await _frames(3)

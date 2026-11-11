@@ -36,7 +36,9 @@ const BOSS_HUD_SIZE := Vector2i(200, 10)
 const MAX_ANIMATION_FRAMES := 16
 const INTENT_BADGE_WIDTH := 104.0
 const INTENT_BADGE_HEIGHT := 36.0
-const INTENT_CELL_ICON_SIZE := Vector2(34.0, 34.0)
+const INTENT_CELL_ICON_SIZE := 34.0
+const ATTACK_INTENT_MEDIUM := 6
+const ATTACK_INTENT_HIGH := 12
 
 # ─── Stats ────────────────────────────────────────────────────────────────────
 ## Combat state lives in the creature (core/combat/creature.gd); this node
@@ -427,7 +429,8 @@ func intent_attack_damage(action: Dictionary) -> int:
 
 
 func _add_intent_cell(
-	kind: String, texture: Texture2D, value: String, color: Color
+	kind: String, texture: Texture2D, value: String, color: Color,
+	icon_size: float = INTENT_CELL_ICON_SIZE
 ) -> Control:
 	var cell := HBoxContainer.new()
 	cell.name = "Intent%s" % kind
@@ -436,7 +439,8 @@ func _add_intent_cell(
 
 	var icon := TextureRect.new()
 	icon.name = "Icon"
-	icon.custom_minimum_size = INTENT_CELL_ICON_SIZE
+	icon.custom_minimum_size = Vector2.ONE * icon_size
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	icon.texture = texture
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -448,7 +452,10 @@ func _add_intent_cell(
 		var label := Label.new()
 		label.name = "IntentValue"
 		label.text = value
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override("font_size", 22)
+		label.add_theme_constant_override("outline_size", 2)
+		label.add_theme_color_override("font_outline_color", Color("#211611"))
 		label.add_theme_color_override("font_color", color)
 		label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.95))
 		label.add_theme_constant_override("shadow_offset_x", 2)
@@ -458,6 +465,19 @@ func _add_intent_cell(
 
 	_intent_cells.add_child(cell)
 	return cell
+
+
+func _add_attack_intent(action: Dictionary) -> void:
+	var damage := intent_attack_damage(action)
+	var icon_size := 24.0
+	var color := Color("#ffe5d4")
+	if damage >= ATTACK_INTENT_HIGH:
+		icon_size = 32.0
+		color = Color("#ff9d83")
+	elif damage >= ATTACK_INTENT_MEDIUM:
+		icon_size = 28.0
+		color = Color("#ffc69e")
+	_add_intent_cell("Attack", INTENT_ICON_ATTACK, str(damage), color, icon_size)
 
 
 func _update_intent_display() -> void:
@@ -471,19 +491,9 @@ func _update_intent_display() -> void:
 	var action_type := str(next.get("type", ""))
 	match action_type:
 		"attack", "attack_ramp", "attack_all":
-			_add_intent_cell(
-				"Attack",
-				INTENT_ICON_ATTACK,
-				str(intent_attack_damage(next)),
-				Color("#ffc69e")
-			)
+			_add_attack_intent(next)
 		"attack_status":
-			_add_intent_cell(
-				"Attack",
-				INTENT_ICON_ATTACK,
-				str(intent_attack_damage(next)),
-				Color("#ffc69e")
-			)
+			_add_attack_intent(next)
 			_add_intent_cell("Debuff", INTENT_ICON_DEBUFF, "", Color.WHITE)
 		"block", "breakable_block":
 			_add_intent_cell(

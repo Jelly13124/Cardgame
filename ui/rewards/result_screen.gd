@@ -19,16 +19,24 @@ var mode: String = "defeat"
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_fit_to_viewport()
+	get_viewport().size_changed.connect(_fit_to_viewport)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build()
+
+
+func _fit_to_viewport() -> void:
+	position = Vector2.ZERO
+	size = get_viewport_rect().size
 
 
 func _build() -> void:
 	var is_win := mode == "demo_complete"
 
 	var dim := ColorRect.new()
-	dim.color = Color(0.02, 0.02, 0.03, 0.82)
+	dim.name = "ResultBackdrop"
+	dim.color = Color(0.024, 0.027, 0.032, 0.94)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(dim)
@@ -39,7 +47,7 @@ func _build() -> void:
 
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(640, 420)
-	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	panel.add_theme_stylebox_override("panel", T.ll_inset_thin())
 	center.add_child(panel)
 
 	var margin := MarginContainer.new()
@@ -57,7 +65,7 @@ func _build() -> void:
 	var title := Label.new()
 	title.text = tr("RESULT_DEMO_TITLE") if is_win else tr("RESULT_DEFEAT_TITLE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 44)
+	T.style_display(title, 44, 700)
 	title.add_theme_color_override("font_color", T.ACCENT_NEON_GREEN if is_win else T.ACCENT_DANGER)
 	box.add_child(title)
 
@@ -66,7 +74,7 @@ func _build() -> void:
 	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.custom_minimum_size = Vector2(560, 0)
-	body.add_theme_font_size_override("font_size", 20)
+	T.style_display(body, 22)
 	body.add_theme_color_override("font_color", T.TEXT_MAIN)
 	box.add_child(body)
 
@@ -119,9 +127,11 @@ func _build() -> void:
 	var back := Button.new()
 	back.text = tr("RESULT_BACK_TO_MENU") if is_win else tr("RESULT_BACK_TO_BASE")
 	back.custom_minimum_size = Vector2(320, 56)
-	back.focus_mode = Control.FOCUS_NONE
+	back.add_theme_font_override("font", T.display_font(700))
 	back.add_theme_font_size_override("font_size", 22)
 	T.apply_button_theme(back)
+	for state in ["normal", "hover", "pressed"]:
+		back.add_theme_stylebox_override(state, T.ll_button(state))
 	back.pressed.connect(_on_back)
 	box.add_child(back)
 

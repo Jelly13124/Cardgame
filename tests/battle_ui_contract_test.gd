@@ -6,12 +6,19 @@ extends Node
 
 const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
 const CARD_ANIMATOR = preload("uid://co0n3ou8saknv")  # res://ui/battle/card_animator.gd
+const MONSTERS = preload("uid://dvu3etytjqum8")  # res://core/combat/monsters.gd
+const TEST_SAVE_ROOT = preload("uid://c5pfll7nw68un")  # res://tests/support/test_save_root.gd
 
 var failures: PackedStringArray = []
 
 
 func _ready() -> void:
+	TEST_SAVE_ROOT.use("battle_ui_contract_test")
 	call_deferred("_run")
+
+
+func _exit_tree() -> void:
+	TEST_SAVE_ROOT.release()
 
 
 func _expect(condition: bool, message: String) -> void:
@@ -22,6 +29,8 @@ func _expect(condition: bool, message: String) -> void:
 
 
 func _run() -> void:
+	await test_enemy_formations_stay_on_the_field()
+	await test_boss_and_replacement_summons_stay_on_the_field()
 	await test_outline_follows_playability()
 	await test_outline_is_not_a_hover_toggle()
 	await test_arrow_is_segmented_and_hides_the_cursor()
@@ -71,6 +80,62 @@ func _add_strikes(battle: Node, count: int) -> Array:
 		cards.append(battle.hand_view.node_of(battle.combat.add_card_to_hand("base:strike")))
 	await get_tree().process_frame
 	return cards
+
+
+func test_enemy_formations_stay_on_the_field() -> void:
+	var battle = await _battle()
+	var first = battle.combat.state.living_enemies()[0]
+	_expect(is_equal_approx(battle.view_of(first).global_position.x, 1440.0), "a solo enemy keeps its original field anchor")
+	_check_enemy_field_bounds(battle)
+	for count in range(2, 5):
+		var added: int = battle.combat.summon_adds(first, {"enemy_ids": ["base:trash_robot"], "count": 1})
+		_expect(added == 1 and battle.combat.state.field_count() == count, "the formation accepts enemy %d" % count)
+		_check_enemy_field_bounds(battle)
+	await _free(battle)
+
+
+func test_boss_and_replacement_summons_stay_on_the_field() -> void:
+	var battle = await _battle()
+	var initial = battle.combat.state.living_enemies()[0]
+	initial.removed = true
+	battle.view_of(initial).queue_free()
+	var boss = battle.combat.add_enemy(MONSTERS.create("base:rust_titan"))
+	_expect(is_equal_approx(battle.view_of(boss).global_position.x, 1440.0), "a solo boss keeps the original field anchor")
+	var added: int = battle.combat.summon_adds(boss, {"enemy_ids": ["base:trash_robot"], "count": 3})
+	_expect(added == 3 and battle.combat.state.field_count() == 4, "a boss can share the field with three adds")
+	_check_enemy_field_bounds(battle)
+	for replacement in range(3):
+		var victim = battle.combat.state.living_enemies()[1]
+		var dying_view = battle.view_of(victim)
+		var death_position: Vector2 = dying_view.global_position
+		victim.lose_hp(victim.health)
+		# During hit feedback a dead view can still exist; after feedback it is queued.
+		if replacement == 1:
+			dying_view.queue_free()
+		added = battle.combat.summon_adds(boss, {"enemy_ids": ["base:trash_robot"], "count": 1})
+		_expect(added == 1 and battle.combat.state.field_count() == 4, "a replacement summon uses a living field slot")
+		_expect(dying_view.global_position == death_position, "summoning leaves the dying view at its impact position")
+		_check_enemy_field_bounds(battle)
+		await get_tree().process_frame
+	await _free(battle)
+
+
+func _check_enemy_field_bounds(battle: Node) -> void:
+	var previous_x := -INF
+	for creature in battle.combat.state.living_enemies():
+		var view = battle.view_of(creature)
+		_expect(view != null, "every living enemy has a field view")
+		if view == null:
+			continue
+		var sprite: AnimatedSprite2D = view.get("_sprite")
+		var texture := sprite.sprite_frames.get_frame_texture("attack", 0)
+		var half_width := texture.get_width() * sprite.global_scale.x * 0.5
+		var left: float = sprite.global_position.x - half_width
+		var right: float = sprite.global_position.x + half_width
+		_expect(left >= 640.0 and right <= 1840.0, "enemy canvas fits the field (%.1f..%.1f)" % [left, right])
+		_expect(view.global_position.x - previous_x >= 259.0, "living enemies remain separately targetable in field order")
+		_expect(view.scale == Vector2.ONE, "formation placement preserves enemy scale")
+		previous_x = view.global_position.x
 
 
 func test_outline_follows_playability() -> void:

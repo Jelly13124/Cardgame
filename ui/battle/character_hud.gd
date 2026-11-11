@@ -1,86 +1,12 @@
-## CharacterHUD — smooth comic health bar with the original block shield.
+## CharacterHUD — separate health and Block readouts.
 extends Control
 class_name CharacterHUD
 
+const HP_FRAME_TEXTURE = preload("res://battle_scene/assets/images/ui/hp_bar_frame.png")
+const HP_FILL_TEXTURE = preload("res://battle_scene/assets/images/ui/hp_bar_fill.png")
 const BLOCK_BADGE_TEXTURE = preload("res://battle_scene/assets/images/ui/block_badge.png")
 const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 const STATUS_BADGES_VIEW = preload("uid://3i0uuprky2dc")  # res://ui/battle/status_badges_view.gd
-
-
-class SmoothHealthBar:
-	extends Control
-
-	var ratio: float = 1.0:
-		set(value):
-			ratio = clampf(value, 0.0, 1.0)
-			queue_redraw()
-	var fill_color := Color.WHITE
-	var track_color := Color("#131a16")
-	var edge_color := Color("#ef7047")
-	var fill_shadow_color := Color("#5f100c")
-
-	func _rounded_style(color: Color, radius: int) -> StyleBoxFlat:
-		var style := StyleBoxFlat.new()
-		style.bg_color = color
-		style.set_corner_radius_all(radius)
-		style.anti_aliasing = true
-		return style
-
-	func _draw() -> void:
-		# One dark recessed trough only. The previous black shell + steel keyline
-		# added an unwanted second frame around this already tiny HUD element.
-		var trough_rect := Rect2(Vector2.ZERO, size)
-		var trough_radius := roundi(trough_rect.size.y * 0.5)
-		draw_style_box(_rounded_style(track_color, trough_radius), trough_rect)
-		# A quiet inner bevel adds depth without becoming another outside border.
-		draw_line(
-			trough_rect.position + Vector2(5.0, 1.0),
-			Vector2(trough_rect.end.x - 5.0, trough_rect.position.y + 1.0),
-			Color("#272d27"),
-			1.0
-		)
-		if ratio <= 0.0:
-			return
-		var core_height := minf(4.0, size.y - 4.0)
-		var core_rect := Rect2(
-			Vector2(4.0, (size.y - core_height) * 0.5),
-			Vector2(size.x - 8.0, core_height)
-		)
-		var fill_width := core_rect.size.x * ratio
-		if fill_width <= 0.5:
-			return
-		var fill_rect := Rect2(core_rect.position, Vector2(fill_width, core_rect.size.y))
-		var fill_radius := mini(roundi(core_height * 0.5), roundi(fill_width * 0.5))
-		draw_style_box(_rounded_style(fill_color, fill_radius), fill_rect)
-		if fill_width < 7.0 or core_rect.size.y < 3.0:
-			return
-		var detail_width := fill_width - 3.0
-		# Painted inner core: a restrained top catchlight and a dark lower lip.
-		draw_line(
-			fill_rect.position + Vector2(1.5, 0.0),
-			Vector2(fill_rect.position.x + detail_width, fill_rect.position.y),
-			edge_color,
-			1.0
-		)
-		draw_line(
-			fill_rect.position + Vector2(1.5, fill_rect.size.y - 1.0),
-			Vector2(
-				fill_rect.position.x + detail_width,
-				fill_rect.position.y + fill_rect.size.y - 1.0
-			),
-			fill_shadow_color,
-			1.0
-		)
-		# Sparse ink nicks stop the bar reading as a perfectly smooth neon tube.
-		for fraction in [0.23, 0.57, 0.82]:
-			var nick_x := fill_rect.position.x + floorf(fill_width * fraction)
-			if nick_x < fill_rect.end.x - 2.0:
-				draw_line(
-					Vector2(nick_x, fill_rect.position.y + 1.0),
-					Vector2(nick_x + 1.0, fill_rect.position.y + 1.0),
-					Color(0.18, 0.02, 0.025, 0.38),
-					1.0
-				)
 
 
 class HealthValueText:
@@ -154,8 +80,7 @@ class HealthValueText:
 @export var bar_height: int = 10
 @export var is_player_hud: bool = false
 
-var _hp_frame: Control
-var _hp_bar: SmoothHealthBar
+var _hp_bar: TextureProgressBar
 var _hp_label: HealthValueText
 var _block_badge: TextureRect
 var _block_label: Label
@@ -173,30 +98,49 @@ func _build_ui() -> void:
 	size = Vector2(bar_width, bar_height)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	_hp_frame = Control.new()
-	_hp_frame.name = "HpFrame"
-	_hp_frame.position = Vector2(0, -1)
-	_hp_frame.size = Vector2(bar_width, bar_height)
-	_hp_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_hp_frame)
+	var frame_height := HP_FRAME_TEXTURE.get_height()
+	var frame := NinePatchRect.new()
+	frame.name = "HpFrame"
+	frame.texture = HP_FRAME_TEXTURE
+	frame.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	frame.patch_margin_left = 8
+	frame.patch_margin_right = 8
+	frame.patch_margin_top = 5
+	frame.patch_margin_bottom = 5
+	frame.position = Vector2(0, (bar_height - frame_height) * 0.5 - 1)
+	frame.size = Vector2(bar_width, frame_height)
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(frame)
 
-	_hp_bar = SmoothHealthBar.new()
+	var track := ColorRect.new()
+	track.color = Color("#211611")
+	track.position = Vector2(6, 5)
+	track.size = Vector2(bar_width - 12, frame_height - 10)
+	track.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	frame.add_child(track)
+
+	_hp_bar = TextureProgressBar.new()
 	_hp_bar.name = "HpBar"
-	_hp_bar.size = Vector2(bar_width, bar_height)
+	_hp_bar.texture_progress = HP_FILL_TEXTURE
+	_hp_bar.nine_patch_stretch = true
+	_hp_bar.stretch_margin_left = 1
+	_hp_bar.stretch_margin_right = 1
+	_hp_bar.stretch_margin_top = 1
+	_hp_bar.stretch_margin_bottom = 1
+	_hp_bar.step = 0.0
+	_hp_bar.position = track.position
+	_hp_bar.size = track.size
 	_hp_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_hp_bar.fill_color = Color("#c73a25")
-	_hp_bar.edge_color = Color("#ef7047")
-	_hp_bar.fill_shadow_color = Color("#5f100c")
-	_hp_frame.add_child(_hp_bar)
+	frame.add_child(_hp_bar)
 
 	_hp_label = HealthValueText.new()
 	_hp_label.name = "HpLabel"
-	_hp_label.position = Vector2(0, -12)
+	_hp_label.position = Vector2(0, (frame_height - 34) * 0.5)
 	_hp_label.size = Vector2(bar_width, 34)
 	_hp_label.font_size = 26
 	_hp_label.display_font = T.display_font(600)
 	_hp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_hp_frame.add_child(_hp_label)
+	frame.add_child(_hp_label)
 
 	# Original shield icon only; there is no shield bar or secondary fill.
 	_block_badge = TextureRect.new()
@@ -263,11 +207,7 @@ func update_stats(hp: int, max_hp: int, blk: int) -> void:
 	current_block = maxi(0, blk)
 	if not _hp_bar:
 		return
-	var shielded := current_block > 0
-	_hp_bar.fill_color = Color("#3f8fb6") if shielded else Color("#c73a25")
-	_hp_bar.edge_color = Color("#91d5ed") if shielded else Color("#ef7047")
-	_hp_bar.fill_shadow_color = Color("#153d55") if shielded else Color("#5f100c")
-	_hp_bar.ratio = 1.0 if shielded else float(current_health) / float(max_health)
+	_hp_bar.ratio = float(current_health) / float(max_health)
 	_hp_label.text = "%d/%d" % [current_health, max_health]
 	_block_badge.visible = current_block > 0
 	_block_label.text = str(current_block)

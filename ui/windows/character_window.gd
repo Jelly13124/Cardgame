@@ -226,7 +226,7 @@ func _refresh_base() -> void:
 	_base_box.add_child(_build_d4_middle_base())
 
 	var hero_data := _load_hero(_effective_hero_id())
-	_base_box.add_child(_build_base_attribute_strip(hero_data.get("starting_attributes", {})))
+	_base_box.add_child(_build_attribute_strip(hero_data.get("starting_attributes", {})))
 
 	# ── BOTTOM: next-run backpack (pending_loadout), locked cells to 7×3 ──
 	var cap := RunManager.effective_backpack_size()
@@ -391,44 +391,6 @@ func _cycle_hero(step: int) -> void:
 	_refresh_base()
 
 
-## Run-mode five-attribute chip strip under the doll: the SAME lw stat icons as
-## the base strip (fist/torso/brain/clover/star — the canonical set), a value
-## Label per attribute registered in _attr_value_labels for live _refresh()
-## updates, and the shared per-attribute tooltip.
-func _make_run_attr_strip() -> Control:
-	_attr_value_labels.clear()
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 12)
-	for attr in ATTR_ORDER:
-		var pair := HBoxContainer.new()
-		pair.add_theme_constant_override("separation", 3)
-		pair.mouse_filter = Control.MOUSE_FILTER_STOP
-		pair.tooltip_text = _base_attribute_tooltip(attr)
-		var tex := T.lightline_tex(str(ATTR_LL_ICONS.get(attr, "")))
-		if tex == null:
-			var tex_path := str(ATTR_ICON_PATHS.get(attr, ""))
-			if tex_path != "" and ResourceLoader.exists(tex_path):
-				tex = load(tex_path) as Texture2D
-		if tex != null:
-			var icon := TextureRect.new()
-			icon.texture = tex
-			icon.custom_minimum_size = Vector2(18, 18)
-			icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-			icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			pair.add_child(icon)
-		var value := Label.new()
-		value.add_theme_font_size_override("font_size", 14)
-		value.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
-		value.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		pair.add_child(value)
-		_attr_value_labels[attr] = value
-		row.add_child(pair)
-	return row
-
-
 ## (Re)build the charcoal header into the base-class header_root — the fixed
 ## strip ABOVE the content scroll, so the drag handle can neither scroll away
 ## nor lose the pointer mid-drag. Clears first: base mode re-mounts on every
@@ -525,38 +487,43 @@ func _build_base_backpack_panel(used: int, cap: int) -> GridContainer:
 	return grid
 
 
-## Base-mode five-stat strip above the backpack, using the project attribute icons.
-func _build_base_attribute_strip(attrs: Variant) -> Control:
-	var a: Dictionary = attrs if typeof(attrs) == TYPE_DICTIONARY else {}
+## Use the same named attributes in the base preview and the live run window.
+func _build_attribute_strip(attrs: Variant, live := false) -> Control:
+	var values: Dictionary = attrs if attrs is Dictionary else {}
+	if live:
+		_attr_value_labels.clear()
 	var holder := CenterContainer.new()
-	holder.name = "BaseAttributeStrip"
-	holder.custom_minimum_size = Vector2(0, 48)
+	holder.name = "RunAttributeStrip" if live else "BaseAttributeStrip"
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 14)
 	holder.add_child(row)
 	for attr in ATTR_ORDER:
-		var pill := _make_base_attribute_pill(attr, int(a.get(attr, 0)))
+		var pill := _make_attribute_pill(attr, int(values.get(attr, 0)), live)
 		row.add_child(pill)
 	return holder
 
 
-## One attribute chip (charcoal concept): a dark gunmetal cell holding the stat
-## icon + its value. Prefers the lightline stat icons (fist/torso/brain/clover/
-## star); falls back to the battle-scene attribute art, else value-only.
-func _make_base_attribute_pill(attr: String, value: int) -> Control:
+func _make_attribute_pill(attr: String, value: int, live: bool) -> Control:
 	var chip := PanelContainer.new()
 	chip.name = "AttrPill_%s" % attr
-	chip.custom_minimum_size = Vector2(88, 40)
+	chip.custom_minimum_size = Vector2(88, 52)
 	chip.mouse_filter = Control.MOUSE_FILTER_STOP
-	chip.tooltip_text = _base_attribute_tooltip(attr)
-	chip.add_theme_stylebox_override("panel", _charcoal_chip_style())
+	var attribute_name := tr(str(ATTR_LABEL_KEYS[attr]))
+	var detail := tr("UI_BATTLE_KEYWORD_%s_DESC" % attr.to_upper())
+	chip.tooltip_text = "%s\n%s" % [attribute_name, detail]
+	chip.add_theme_stylebox_override("panel", T.ll_inset_thin())
 
+	var body := VBoxContainer.new()
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	body.alignment = BoxContainer.ALIGNMENT_CENTER
+	body.add_theme_constant_override("separation", 0)
+	chip.add_child(body)
 	var pill := HBoxContainer.new()
 	pill.alignment = BoxContainer.ALIGNMENT_CENTER
 	pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pill.add_theme_constant_override("separation", 6)
-	chip.add_child(pill)
+	body.add_child(pill)
 
 	var tex := T.lightline_tex(str(ATTR_LL_ICONS.get(attr, "")))
 	if tex == null:
@@ -581,24 +548,16 @@ func _make_base_attribute_pill(attr: String, value: int) -> Control:
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pill.add_child(label)
+	if live:
+		_attr_value_labels[attr] = label
+	var caption := Label.new()
+	caption.text = attribute_name
+	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	caption.add_theme_font_size_override("font_size", 13)
+	caption.add_theme_color_override("font_color", T.TEXT_MAIN)
+	body.add_child(caption)
 	return chip
-
-
-func _base_attribute_tooltip(attr: String) -> String:
-	var name := tr(str(ATTR_LABEL_KEYS.get(attr, attr)))
-	match attr:
-		"strength":
-			return "%s\n%s" % [name, "每点 +1 攻击伤害。"]
-		"constitution":
-			return "%s\n%s" % [name, "每点 +1 获得的格挡。"]
-		"intelligence":
-			return "%s\n%s" % [name, "每点使你施加的状态 +1 层，并增强工具效果。"]
-		"luck":
-			return "%s\n%s" % [name, "提高战利品稀有度，并增加发现工具的概率。"]
-		"charm":
-			return "%s\n%s" % [name, "降低商店价格，并影响部分事件选项。"]
-		_:
-			return name
 
 
 func _make_base_back_button() -> Button:
@@ -1137,6 +1096,7 @@ func _build_map_battle() -> void:
 
 	# ── MIDDLE: the D4 zone ──
 	vroot.add_child(_build_d4_middle_run())
+	vroot.add_child(_build_attribute_strip(RunManager.player_attributes, true))
 
 	# ── BOTTOM: backpack header + fixed 7×3 grid (hint hidden in battle) ──
 	vroot.add_child(T.ui_divider())
@@ -1156,7 +1116,7 @@ func _build_map_battle() -> void:
 	vroot.add_child(_status_label)
 
 
-## The run-mode middle zone: LEFT head/chest/hands · CENTER doll + attributes ·
+## The run-mode middle zone: LEFT head/chest/hands · CENTER doll ·
 ## RIGHT weapon/accessory + the equipped tool row. Slot cells are persistent
 ## (refilled by _refresh), matching the old equipment-zone behavior.
 func _build_d4_middle_run() -> Control:
@@ -1180,9 +1140,6 @@ func _build_d4_middle_run() -> Control:
 	_portrait_rect = stack.get_meta("doll_rect")
 	portrait_stage.add_child(stack)
 
-	# Five-attribute chip strip (lw stat icons + values, per-attr hover tooltip)
-	# — replaces the old dim 11px text line so run mode matches the base strip.
-	portrait_stage.add_child(_make_run_attr_strip())
 	row.add_child(portrait_stage)
 
 	var right := VBoxContainer.new()
@@ -1862,20 +1819,6 @@ func _base_slot_box_style(state: String = "cell_empty") -> StyleBox:
 	if state == "filled":
 		style.bg_color = Color(0.058, 0.060, 0.055, 0.94)
 		style.border_color = Color(0.43, 0.43, 0.37, 1.0)
-	return style
-
-
-## The attribute-chip cell (charcoal concept): a small dark gunmetal plate.
-func _charcoal_chip_style() -> StyleBox:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.052, 0.056, 0.052, 0.95)
-	style.border_color = Color(0.27, 0.28, 0.25, 0.9)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(5)
-	style.content_margin_left = 8
-	style.content_margin_right = 10
-	style.content_margin_top = 4
-	style.content_margin_bottom = 4
 	return style
 
 

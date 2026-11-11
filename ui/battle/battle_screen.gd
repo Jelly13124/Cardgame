@@ -822,15 +822,32 @@ func view_of(creature: Object) -> Node:
 	return view if view != null and is_instance_valid(view) and not view.is_queued_for_deletion() else null
 
 
-## An enemy joined the fight: its view takes the next field slot.
+## Reflow only living views when a new enemy joins; death feedback keeps its position.
 func spawn_enemy_view(creature: Object) -> Node:
 	var view = ENEMY_ENTITY.for_creature(creature)
 	view.combat = combat
-	var idx = enemy_container.get_child_count()
-	view.position = Vector2(idx * 260, 0)
 	enemy_container.add_child(view)
 	_views[creature] = view
+	_layout_enemy_views()
 	return view
+
+
+func _layout_enemy_views() -> void:
+	var views: Array[Node2D] = []
+	for creature in combat.state.living_enemies():
+		var view := view_of(creature) as Node2D
+		if view != null:
+			views.append(view)
+	var spacing := 260.0
+	var first_x := -spacing * (views.size() - 1) * 0.5
+	var right_edge := -INF
+	for i in views.size():
+		var display_size: Vector2 = views[i].get("_display_size")
+		right_edge = maxf(right_edge, first_x + i * spacing + display_size.x * 0.5)
+	var field_right: float = get_viewport().get_visible_rect().end.x - 80.0 - enemy_container.global_position.x
+	var shift := minf(0.0, field_right - right_edge)
+	for i in views.size():
+		views[i].position.x = first_x + i * spacing + shift
 
 
 ## Run bookkeeping for a committed play: bounty and card codex.

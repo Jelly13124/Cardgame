@@ -89,8 +89,7 @@ static func register_into(registry) -> void:
 
 
 # ─── Card text (each type's `describe`; card_description.gd builds the card) ─
-# `v` holds the computed numbers: base, mult, stacks, base_after_mult, scales,
-# stat_val, total, final (pipeline value in battle), data (the card).
+# `v` holds the card, computed numbers and whether to show the scaling breakdown.
 
 
 static func _num(v: Dictionary) -> String:
@@ -104,7 +103,7 @@ static func _num(v: Dictionary) -> String:
 
 
 static func _describe_scaled(v: Dictionary, plain_key: String, scaling_key: String) -> PackedStringArray:
-	if bool(v["scales"]):
+	if bool(v["show_scaling_breakdown"]):
 		return [_t(scaling_key).format({"val": _num(v), "base": v["base_after_mult"], "stat": v["stat_val"]})]
 	return [_t(plain_key).format({"val": _num(v)})]
 

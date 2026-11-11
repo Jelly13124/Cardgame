@@ -47,6 +47,13 @@ func _run() -> void:
 		_expect(grid.columns == 7, "backpack uses seven columns")
 		_expect(grid.get_child_count() == 21, "backpack renders three rows of seven cells")
 
+	var strip := window.find_child("RunAttributeStrip", true, false)
+	_expect(strip != null, "run character window has a named attribute strip")
+	if strip != null:
+		for attribute in ["STRENGTH", "CONSTITUTION", "INTELLIGENCE", "LUCK", "CHARM"]:
+			_expect(_has_label_text(strip, tr("UI_EQUIP_ATTR_SHORT_" + attribute)),
+				"attribute %s has a visible localized label" % attribute)
+
 	window.queue_free()
 	await get_tree().process_frame
 	if failures.is_empty():

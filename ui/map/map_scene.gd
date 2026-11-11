@@ -772,9 +772,16 @@ func _open_rest_choice() -> void:
 	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	modal.add_child(rule)
 
-	var heal_amount := ROOMS.rest_heal_amount(rm.max_health)
-	var heal_text := ("休息\n恢复 %d" % heal_amount) if Settings.language == "zh" else ("REST\nHEAL %d" % heal_amount)
-	var heal_btn := _rest_hotspot(Rect2(0.075, 0.55, 0.25, 0.23), heal_text)
+	var heal_amount := mini(
+		ROOMS.rest_heal_amount(rm.max_health), rm.max_health - rm.current_health
+	)
+	var heal_btn := _rest_option(
+		Vector2(0.20, 0.70),
+		"icon_heart",
+		tr("UI_MAP_LEGEND_REST"),
+		tr("UI_ROUTE_HEAL").format({"n": heal_amount})
+	)
+	heal_btn.name = "HealChoice"
 	heal_btn.pressed.connect(
 		func():
 			rm.modify_health(heal_amount)
@@ -784,8 +791,13 @@ func _open_rest_choice() -> void:
 	)
 	modal.add_child(heal_btn)
 
-	var upgrade_text := "升级" if Settings.language == "zh" else "UPGRADE"
-	var upgrade_btn := _rest_hotspot(Rect2(0.50, 0.58, 0.28, 0.22), upgrade_text)
+	var upgrade_btn := _rest_option(
+		Vector2(0.66, 0.73),
+		"icon_hammer",
+		tr("UI_MAP_REST_UPGRADE_BTN"),
+		tr("UI_UPGRADE_MODAL_HINT")
+	)
+	upgrade_btn.name = "UpgradeChoice"
 	upgrade_btn.pressed.connect(
 		func():
 			modal.queue_free()
@@ -827,29 +839,57 @@ func _open_rest_choice() -> void:
 	modal.add_child(leave_btn)
 
 
-func _rest_hotspot(rect: Rect2, label_text: String) -> Button:
+func _rest_option(
+	anchor: Vector2, icon_name: String, title_text: String, detail_text: String
+) -> Button:
 	var button := Button.new()
-	button.text = label_text
-	button.anchor_left = rect.position.x
-	button.anchor_top = rect.position.y
-	button.anchor_right = rect.end.x
-	button.anchor_bottom = rect.end.y
-	button.focus_mode = Control.FOCUS_NONE
+	button.anchor_left = anchor.x
+	button.anchor_top = anchor.y
+	button.anchor_right = anchor.x
+	button.anchor_bottom = anchor.y
+	button.offset_left = -176.0
+	button.offset_right = 176.0
+	button.offset_top = -58.0
+	button.offset_bottom = 58.0
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.add_theme_font_override("font", T_THEME.display_font(650))
-	button.add_theme_font_size_override("font_size", 20)
-	button.add_theme_color_override("font_color", Color(0.96, 0.83, 0.58))
-	button.add_theme_color_override("font_hover_color", Color.WHITE)
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color(0.02, 0.03, 0.035, 0.10)
-	normal.set_corner_radius_all(12)
-	button.add_theme_stylebox_override("normal", normal)
-	var hover := normal.duplicate() as StyleBoxFlat
-	hover.bg_color = Color(0.06, 0.07, 0.07, 0.14)
-	hover.border_color = Color(1.0, 0.42, 0.04, 0.95)
-	hover.set_border_width_all(3)
-	button.add_theme_stylebox_override("hover", hover)
-	button.add_theme_stylebox_override("pressed", hover)
-	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+	T_THEME.apply_choice_button(button)
+
+	var row := HBoxContainer.new()
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	row.offset_left = 16.0
+	row.offset_right = -16.0
+	row.add_theme_constant_override("separation", 14)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(row)
+
+	var icon := TextureRect.new()
+	icon.name = "ChoiceIcon"
+	icon.texture = T_THEME.lightline_tex(icon_name)
+	icon.custom_minimum_size = Vector2(66, 66)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(icon)
+
+	var copy := VBoxContainer.new()
+	copy.alignment = BoxContainer.ALIGNMENT_CENTER
+	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(copy)
+
+	var title := Label.new()
+	title.text = title_text
+	T_THEME.style_display(title, 28, 700)
+	title.add_theme_color_override("font_color", T_THEME.TEXT_MAIN)
+	copy.add_child(title)
+
+	var detail := Label.new()
+	detail.name = "ChoiceDetail"
+	detail.text = detail_text
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	T_THEME.style_display(detail, 20)
+	detail.add_theme_color_override("font_color", T_THEME.UI_BRASS_LIGHT)
+	copy.add_child(detail)
 	return button

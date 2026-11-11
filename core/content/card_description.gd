@@ -10,6 +10,7 @@ extends RefCounted
 ##   stats: {strength, constitution, intelligence, luck, charm}
 ##   pipeline: {effect_index: final value} from the battle preview (or {})
 ##   replay_bonus: extra replays on attacks from held relics (0 outside battle)
+##   show_scaling_breakdown: opt in to base + attribute for diagnostics
 
 const EFFECT_CATALOG = preload("uid://880atc7mnnie")  # res://core/effects/effect_catalog.gd
 const STATUS_SYS = preload("uid://cq4eulp4ci8is")  # res://core/combat/status_effects.gd
@@ -50,6 +51,7 @@ static func build(data: Dictionary, view: Dictionary = {}) -> String:
 
 	var stats: Dictionary = view.get("stats", DEFAULT_STATS)
 	var pipeline: Dictionary = view.get("pipeline", {})
+	var show_scaling_breakdown := bool(view.get("show_scaling_breakdown", false))
 	var lines: PackedStringArray = []
 	for effect_index in effects.size():
 		var effect = effects[effect_index]
@@ -58,10 +60,6 @@ static func build(data: Dictionary, view: Dictionary = {}) -> String:
 		var base: int = int(effect.get("amount", 0))
 		var mult: float = float(effect.get("multiplier", 1))
 		var stacks: int = int(effect.get("stacks", 1))
-		# The breakdown shows base + attribute; the colored total is the pipeline
-		# number in battle. Scaling effects ALWAYS show the "(base+stat)"
-		# breakdown — even when the stat is 0 — so players can tell a card that
-		# grows from a fixed one.
 		var base_after_mult: int = int(base * mult) if mult != 1 else base
 		var scales := str(def.get("scales", ""))
 		if scales != "" and bool(effect.get(SCALING_OPT_OUT.get(scales, ""), false)):
@@ -74,7 +72,7 @@ static func build(data: Dictionary, view: Dictionary = {}) -> String:
 			"mult": mult,
 			"stacks": stacks,
 			"base_after_mult": base_after_mult,
-			"scales": scales != "",
+			"show_scaling_breakdown": scales != "" and show_scaling_breakdown,
 			"stat_val": stat_val,
 			"total": total,
 			"final": int(pipeline.get(effect_index, total)),

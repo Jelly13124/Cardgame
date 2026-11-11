@@ -214,22 +214,19 @@ func _test_battle_energy_and_end_turn() -> void:
 	var player_hud: Node = player.get("_hud") if player else null
 	_expect(player_hud != null, "player builds its CharacterHUD")
 	if player_hud:
-		_expect(player_hud.bar_width == 200, "player uses the compact 200 px smooth bar")
-		_expect(player_hud.bar_height == 10, "player uses one frameless 10 px trough around a thin core")
+		_expect(player_hud.bar_width == 200, "player uses a compact 200 px health bar")
+		_expect(player_hud.bar_height == 10, "player keeps the existing health HUD anchor height")
 		player_hud.update_stats(63, 100, 6)
-		var simple_frame := player_hud.get_node_or_null("HpFrame") as Control
-		var simple_bar := player_hud.get_node_or_null("HpFrame/HpBar") as Control
+		var simple_frame := player_hud.get_node_or_null("HpFrame") as NinePatchRect
+		var simple_bar := player_hud.get_node_or_null("HpFrame/HpBar") as TextureProgressBar
 		var simple_label := player_hud.get_node_or_null("HpFrame/HpLabel") as Control
 		var block_badge := player_hud.get_node_or_null("BlockBadge") as TextureRect
 		var block_label := player_hud.get_node_or_null("BlockBadge/BlockLabel") as Label
-		_expect(simple_frame != null, "health exposes one compact frame")
-		_expect(simple_bar != null, "health builds the rounded real-HP fill")
+		_expect(simple_frame != null and simple_frame.size == Vector2(200, 18), "health uses one compact frame")
+		_expect(simple_bar != null, "health builds the textured real-HP fill")
 		if simple_bar:
-			_expect(simple_bar.size == Vector2(200.0, 10.0), "health fill matches the frameless inset trough")
-			_expect(is_equal_approx(float(simple_bar.get("ratio")), 1.0), "Block hides the empty HP segment")
-			_expect(simple_bar.get("fill_color") == Color("#3f8fb6"), "shielded health uses the inset blue core")
-			_expect(simple_bar.get("edge_color") == Color("#91d5ed"), "shielded health uses a blue core highlight")
-			_expect(simple_bar.get("track_color") == Color("#131a16"), "health uses one recessed dark-olive trough")
+			_expect(simple_bar.size == Vector2(188, 8), "health fill sits inside the frame")
+			_expect(is_equal_approx(simple_bar.ratio, 0.63), "Block preserves the empty HP segment")
 		_expect(
 			simple_label != null
 			and str(simple_label.get("text")) == "63/100"
@@ -244,7 +241,7 @@ func _test_battle_energy_and_end_turn() -> void:
 			"health text scales with the compact bar (actual size %s)"
 			% str(simple_label.size if simple_label else Vector2.ZERO)
 		)
-		_expect(simple_label != null and simple_label.position.y == -12.0, "health number is vertically centered over the thin core")
+		_expect(simple_label != null and simple_label.position.y == -8.0, "health number is vertically centered over the thin core")
 		_expect(
 			simple_label != null
 			and simple_label.get("font_color") == Color("#fff8e8")
@@ -270,11 +267,8 @@ func _test_battle_energy_and_end_turn() -> void:
 		_expect(block_badge != null and not block_badge.visible, "Block shield hides at zero")
 		_expect(
 			simple_bar != null
-			and is_equal_approx(float(simple_bar.get("ratio")), 0.63)
-			and simple_bar.get("fill_color") == Color("#c73a25")
-			and simple_bar.get("edge_color") == Color("#ef7047")
-			and simple_bar.get("fill_shadow_color") == Color("#5f100c"),
-			"real layered red HP returns with zero Block"
+			and is_equal_approx(simple_bar.ratio, 0.63),
+			"HP stays proportional when Block is removed"
 		)
 	var normal_enemy := ENEMY_ENTITY.create("base:trash_robot")
 	var elite_enemy := ENEMY_ENTITY.create("base:armored_patrol")
@@ -329,7 +323,22 @@ func _test_battle_energy_and_end_turn() -> void:
 			energy_path.ends_with("/hud_energy_badge_sts2.png"),
 			"battle energy uses hud_energy_badge_sts2.png (got %s)" % energy_path
 		)
-		_expect(energy.get_node_or_null("EnergyCore") == null, "battle removes the old loose core orb")
+		var dial := energy.get_node_or_null("EnergyChargeRing") as Control
+		_expect(dial != null, "energy badge has a separate charge ring")
+		if frame is TextureRect and dial != null:
+			battle.ui_manager.update_labels(0, 3)
+			_expect(frame.self_modulate != Color.WHITE, "zero energy dims the badge")
+			battle.ui_manager.update_labels(2, 3)
+			_expect(frame.self_modulate == Color.WHITE, "gaining energy restores the badge")
+		battle.ui_manager.show_pile_viewer_from_names(tr("UI_BATTLE_EXHAUST_PILE"), [], "exhaust")
+		var pile_title := battle.find_child("RunDeckTitle", true, false) as Label
+		var pile_grid := battle.find_child("CardGrid", true, false) as GridContainer
+		await get_tree().process_frame
+		_expect(pile_title != null and pile_title.global_position.y >= RUN_TOP_BAR.BAR_HEIGHT,
+			"battle pile uses the shared page below the top bar")
+		_expect(pile_grid != null and pile_grid.get_child_count() == 0,
+			"an empty exhaust pile does not show the run deck")
+		battle.ui_manager.hide_pile_viewer()
 
 	var end_turn := battle.get_node_or_null("EndRoundButton") as Button
 	_expect(end_turn != null, "battle keeps the EndRoundButton interaction")

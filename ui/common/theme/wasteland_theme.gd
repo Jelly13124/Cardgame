@@ -974,6 +974,21 @@ static func ll_inset_thin() -> StyleBox:
 # ─── Internal ─────────────────────────────────────────────────────────────────
 
 
+## Shared quiet decision rows for loot, rest and other in-run choices.
+static func apply_choice_button(button: Button) -> void:
+	var normal := ll_inset_thin() as StyleBoxFlat
+	var hover := normal.duplicate() as StyleBoxFlat
+	hover.bg_color = normal.bg_color.lightened(0.10)
+	hover.border_color = UI_HEADER_GOLD
+	var focus := hover.duplicate() as StyleBoxFlat
+	focus.draw_center = false
+	focus.set_border_width_all(2)
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", normal)
+	button.add_theme_stylebox_override("focus", focus)
+
+
 static func _base(bg: Color, border: Color, radius: int, border_width: int) -> StyleBoxFlat:
 	var style = StyleBoxFlat.new()
 	style.bg_color = bg
