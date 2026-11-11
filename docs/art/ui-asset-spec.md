@@ -99,7 +99,7 @@
 
 ## 第2阶段战斗 HUD 素材
 
-本阶段只保留血条、格挡和意图的原创PNG。能量球、抽牌堆、弃牌堆、消耗堆继续使用阶段一已经验收的界面，不在本次重构范围。盾碎片由原创整盾的互补锯齿裁切产生，画布和中心一致。结束回合四态由已确认的原创主按钮源图按九宫格原生角点重组与调色，未使用STS2素材。
+本阶段只保留血条、格挡和意图的原创PNG。能量球、抽牌堆、弃牌堆、消耗堆继续使用阶段一已经验收的界面，不在本次重构范围。格挡继续使用原有小型盾牌素材；本轮不替换盾牌造型。结束回合四态由已确认的原创主按钮源图按九宫格原生角点重组与调色，未使用STS2素材。
 
 | 完成 | 文件路径 | 原图尺寸 | 显示尺寸与用途 | 九宫格边距 |
 |---|---|---|---|---|
@@ -107,9 +107,6 @@
 | [x] | `battle_scene/assets/images/ui/combat/hp_track.png` | 250×16 RGBA | 250×16；血条底槽 | 无 |
 | [x] | `battle_scene/assets/images/ui/combat/hp_fill.png` | 250×16 RGBA | 250×16；当前血量 | 无 |
 | [x] | `battle_scene/assets/images/ui/combat/hp_loss.png` | 250×16 RGBA | 250×16；掉血残影 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/block.png` | 60×60 RGBA | 60×60；格挡盾 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/block_left.png` | 60×60 RGBA | 60×60；碎盾左半 | 无 |
-| [x] | `battle_scene/assets/images/ui/combat/block_right.png` | 60×60 RGBA | 60×60；碎盾右半 | 无 |
 | [x] | `battle_scene/assets/images/ui/combat/intents/attack_1.png` | 64×64 RGBA | 64×64；攻击档位1 | 无 |
 | [x] | `battle_scene/assets/images/ui/combat/intents/attack_2.png` | 64×64 RGBA | 64×64；攻击档位2 | 无 |
 | [x] | `battle_scene/assets/images/ui/combat/intents/attack_3.png` | 64×64 RGBA | 64×64；攻击档位3 | 无 |
@@ -128,7 +125,7 @@
 
 本阶段保留原能量、抽牌堆、弃牌堆和消耗堆的已验收几何与素材；结束回合命中为(1604,846,220,90)。卡牌动画文件没有修改。
 
-血条四层250×16。数字24/描边16；盾60×60、数字24/14，盾贴在本条左端局部(-8,-22)，避免260px相邻槽位间覆盖其他血条。状态图40×40、计数18/10，48×40单元在250px流式容器内换行。
+血条四层250×16。数字24/描边16；格挡沿用原有42×49盾牌、数字25/2，位置沿用旧HUD。状态图40×40、计数18/10，48×40单元在250px流式容器内换行。
 
 五档攻击按预计单段伤害乘次数分档，严格小于5/10/20/40，达到边界即进入下一档；数字22/12。攻击图是五张不同原画，其他八类图标分别交付。浮动周期2秒、摆幅10px、基线抬高8px、同组相位差0.3弧度；出现1秒、淡出0.5秒。Boss缩放时仍按全局变换留出顶栏安全区。
 

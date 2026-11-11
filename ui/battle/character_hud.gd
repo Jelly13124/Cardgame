@@ -6,14 +6,12 @@ const HP_FRAME_TEXTURE = preload("uid://b2u0iqtxuidao")  # res://battle_scene/as
 const HP_TRACK_TEXTURE = preload("uid://gv1jempqnjx")  # res://battle_scene/assets/images/ui/combat/hp_track.png
 const HP_FILL_TEXTURE = preload("uid://d2155rjnybhx8")  # res://battle_scene/assets/images/ui/combat/hp_fill.png
 const HP_LOSS_TEXTURE = preload("uid://dhfm1ghrfe5f2")  # res://battle_scene/assets/images/ui/combat/hp_loss.png
-const BLOCK_BADGE_TEXTURE = preload("uid://c7mcdnarsbor2")  # res://battle_scene/assets/images/ui/combat/block.png
-const BLOCK_LEFT_TEXTURE = preload("uid://opu1x5mgoafg")  # res://battle_scene/assets/images/ui/combat/block_left.png
-const BLOCK_RIGHT_TEXTURE = preload("uid://lc2dx63jrpv3")  # res://battle_scene/assets/images/ui/combat/block_right.png
+const BLOCK_BADGE_TEXTURE = preload("uid://ca643u7b4lt6h")  # res://battle_scene/assets/images/ui/block_badge.png
 const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 const STATUS_BADGES_VIEW = preload("uid://3i0uuprky2dc")  # res://ui/battle/status_badges_view.gd
 const HP_SIZE := Vector2(250, 16)
-const BLOCK_SIZE := Vector2(60, 60)
-const BLOCK_POSITION := Vector2(-8, -22)
+const BLOCK_SIZE := Vector2(42, 49)
+const BLOCK_POSITION := Vector2(-21, -21)
 const HP_LOSS_HOLD_SECONDS := 1.0
 const HP_ECHO_SECONDS := 1.0
 
@@ -111,34 +109,33 @@ func _build_ui() -> void:
 	_hp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.add_child(_hp_label)
 
-	_block_badge = _texture_rect("BlockBadge", BLOCK_BADGE_TEXTURE, BLOCK_SIZE)
+	_block_badge = TextureRect.new()
+	_block_badge.name = "BlockBadge"
+	var cropped_badge := AtlasTexture.new()
+	cropped_badge.atlas = BLOCK_BADGE_TEXTURE
+	cropped_badge.region = Rect2(9, 5, 46, 54)
+	_block_badge.texture = cropped_badge
+	_block_badge.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_block_badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_block_badge.position = BLOCK_POSITION
+	_block_badge.custom_minimum_size = Vector2.ZERO
+	_block_badge.size = BLOCK_SIZE
+	_block_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_block_badge.visible = false
 	add_child(_block_badge)
 
 	_block_label = Label.new()
 	_block_label.name = "BlockLabel"
-	_block_label.position = Vector2(0, -1)
+	_block_label.position = Vector2(0, -3)
 	_block_label.size = BLOCK_SIZE
 	_block_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_block_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_block_label.add_theme_font_override("font", T.combat_font(700))
-	_block_label.add_theme_font_size_override("font_size", 24)
-	_block_label.add_theme_color_override("font_color", T.COMBAT_BLOCK_TEXT)
-	_block_label.add_theme_color_override("font_outline_color", T.COMBAT_BLOCK_OUTLINE)
-	_block_label.add_theme_constant_override("outline_size", 14)
+	_block_label.add_theme_font_size_override("font_size", 25)
+	_block_label.add_theme_color_override("font_color", Color.WHITE)
+	_block_label.add_theme_color_override("font_outline_color", Color("#10283b"))
+	_block_label.add_theme_constant_override("outline_size", 2)
 	_block_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_block_badge.add_child(_block_label)
-
-	_block_break = Control.new()
-	_block_break.name = "BlockBreak"
-	_block_break.position = BLOCK_POSITION
-	_block_break.size = BLOCK_SIZE
-	_block_break.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_block_break.visible = false
-	_block_break.add_child(_texture_rect("Left", BLOCK_LEFT_TEXTURE, BLOCK_SIZE))
-	_block_break.add_child(_texture_rect("Right", BLOCK_RIGHT_TEXTURE, BLOCK_SIZE))
-	add_child(_block_break)
 
 	_status_badges = HFlowContainer.new()
 	_status_badges.name = "StatusBadges"
@@ -209,7 +206,6 @@ func snap_stats(hp: int, max_hp: int, blk: int) -> void:
 	_hp_echo_tween = null
 	_block_appear_tween = null
 	_cancel_block_break()
-	_block_break.modulate.a = 1.0
 	_set_fill_health(float(current_health))
 	_set_echo_health(float(current_health))
 	_hp_label.text = "%d/%d" % [current_health, max_health]
@@ -287,7 +283,6 @@ func _refresh_health_echo(is_damage: bool) -> void:
 
 func _refresh_block(previous_block: int) -> void:
 	if current_block > 0:
-		_cancel_block_break()
 		_block_badge.visible = true
 		if previous_block <= 0:
 			_appear_block()
@@ -296,7 +291,6 @@ func _refresh_block(previous_block: int) -> void:
 			_block_appear_tween.kill()
 			_block_appear_tween = null
 		_block_badge.visible = false
-		_break_block()
 
 
 func _appear_block() -> void:
@@ -314,26 +308,5 @@ func _appear_block() -> void:
 
 
 func _cancel_block_break() -> void:
-	if _block_break_tween != null:
-		_block_break_tween.kill()
-		_block_break_tween = null
-	_block_break.visible = false
-
-
-func _break_block() -> void:
-	_cancel_block_break()
-	_block_break.visible = true
-	_block_break.modulate.a = 1.0
-	var left := _block_break.get_node("Left") as TextureRect
-	var right := _block_break.get_node("Right") as TextureRect
-	for half in [left, right]:
-		half.position = Vector2.ZERO
-		half.rotation = 0.0
-		half.pivot_offset = BLOCK_SIZE * 0.5
-	_block_break_tween = create_tween().set_parallel()
-	_block_break_tween.tween_property(left, "position", Vector2(-18, 18), 0.4)
-	_block_break_tween.tween_property(right, "position", Vector2(18, 18), 0.4)
-	_block_break_tween.tween_property(left, "rotation", -0.25, 0.4)
-	_block_break_tween.tween_property(right, "rotation", 0.25, 0.4)
-	_block_break_tween.tween_property(_block_break, "modulate:a", 0.0, 0.4)
-	_block_break_tween.chain().tween_callback(func(): _block_break.visible = false)
+	_block_break_tween = null
+	_block_break = null

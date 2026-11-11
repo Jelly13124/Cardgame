@@ -74,14 +74,14 @@ func _test_bootstrap_snap_discards_fake_damage_and_block_entry() -> void:
 		and hud.get("_block_appear_tween") == null and hud.get("_block_break_tween") == null,
 		"bootstrap leaves no health or Block transition running")
 	_expect(block.visible and is_equal_approx(block.modulate.a, 1.0)
-		and block.position == Vector2(-8, -22) and block.get_node("BlockLabel").text == "8",
+		and block.position == Vector2(-21, -21) and block.get_node("BlockLabel").text == "8",
 		"bootstrap restores the complete shield at its settled position and opacity")
 	if old_echo:
 		old_echo.custom_step(3.0)
 	if old_entry:
 		old_entry.custom_step(1.0)
 	_expect(is_equal_approx(fill.ratio, 0.74) and is_equal_approx(loss.ratio, 0.74)
-		and block.position == Vector2(-8, -22) and is_equal_approx(block.modulate.a, 1.0),
+		and block.position == Vector2(-21, -21) and is_equal_approx(block.modulate.a, 1.0),
 		"cancelled bootstrap feedback cannot overwrite the synchronized visuals")
 	hud.update_stats(25, 50, 8)
 	_expect(is_equal_approx(fill.ratio, 0.5) and is_equal_approx(loss.ratio, 0.74)
@@ -98,21 +98,17 @@ func _test_snap_cancels_healing_and_break_feedback() -> void:
 		return
 	hud.update_stats(80, 100, 0)
 	var healing := hud.get("_hp_fill_tween") as Tween
-	var breaking := hud.get("_block_break_tween") as Tween
 	healing.pause()
 	healing.custom_step(0.15)
-	breaking.pause()
-	breaking.custom_step(0.15)
 	hud.call("snap_stats", 37, 50, 3)
 	healing.custom_step(1.0)
-	breaking.custom_step(1.0)
 	var fill := hud.get_node("HpFrame/HpBar") as TextureProgressBar
 	var loss := hud.get_node("HpFrame/HpLoss") as TextureProgressBar
 	_expect(is_equal_approx(fill.ratio, 0.74) and is_equal_approx(loss.ratio, 0.74)
 		and hud.get("_hp_fill_tween") == null and hud.get("_block_break_tween") == null,
 		"snap cancels visible healing and shield fragments without stale callbacks")
-	_expect(not hud.get_node("BlockBreak").visible and hud.get_node("BlockBadge").visible,
-		"snap hides broken fragments and displays the restored shield")
+	_expect(hud.get_node("BlockBadge").visible and hud.get_node_or_null("BlockBreak") == null,
+		"snap displays the restored compact shield without fragment nodes")
 	hud.update_stats(45, 50, 3)
 	_expect(is_equal_approx(fill.ratio, 0.74) and hud.get("_hp_fill_tween") != null,
 		"real healing after synchronization retains its visible one-second transition")
@@ -275,56 +271,24 @@ func _test_max_health_rebases_the_live_echo() -> void:
 
 
 func _test_block_break_requires_positive_to_zero() -> void:
-	var hud := _hud_at()
+	var hud := _hud_at(80, 0)
 	var split := hud.get_node_or_null("BlockBreak") as Control
-	_expect(split != null, "Block has independent left and right break pieces")
-	if split == null:
-		hud.free()
-		return
-	_expect(not split.visible, "zero Block starts without a break")
-	hud.update_stats(100, 100, 5)
-	_expect(not split.visible, "gaining Block does not play the break")
-	hud.update_stats(100, 100, 0)
-	var tween := hud.get("_block_break_tween") as Tween
-	_expect(split.visible and tween != null, "positive-to-zero Block plays the split shield")
-	_expect(split.get_node("Left").texture.resource_path.ends_with("/combat/block_left.png")
-		and split.get_node("Right").texture.resource_path.ends_with("/combat/block_right.png"),
-		"shield break uses separate original half textures")
-	if tween:
-		tween.pause()
-		tween.custom_step(0.15)
-		_expect(split.get_node("Left").position.x < 0 and split.get_node("Right").position.x > 0,
-			"shield halves move apart")
-		hud.update_stats(100, 100, 0)
-		_expect(hud.get("_block_break_tween") == tween, "repeated zero Block does not replay the break")
-		hud.update_stats(100, 100, 3)
-		_expect(not split.visible and hud.get_node("BlockBadge").visible,
-			"regaining Block cancels the old break and restores the whole shield")
+	_expect(split == null or not split.visible, "compact shield has no decorative split effect at startup")
+	hud.update_stats(80, 100, 8)
+	_expect(hud.get_node("BlockBadge").visible, "positive Block shows the approved compact shield")
+	hud.update_stats(80, 100, 0)
+	_expect(not hud.get_node("BlockBadge").visible, "zero Block hides the compact shield")
+	_expect(split == null or not split.visible, "zero Block does not show the rejected split shield")
 	hud.free()
 
 
 func _test_block_stays_at_its_own_health_bar_left_edge() -> void:
-	var previous_hud := _hud_at(100, 8)
-	var current_hud := _hud_at(100, 8)
-	current_hud.position = Vector2(260, 0)
-	var previous_bar := previous_hud.get_node("HpFrame") as Control
-	var current_bar := current_hud.get_node("HpFrame") as Control
-	var shield := current_hud.get_node("BlockBadge") as Control
-	var shield_rect := shield.get_global_rect()
-	var own_bar_rect := current_bar.get_global_rect()
-	_expect(not shield_rect.intersects(previous_bar.get_global_rect()),
-		"Block never covers the previous creature's HP at 260px creature spacing")
-	_expect(shield.size == Vector2(60, 60), "Block retains its readable 60x60 size")
-	_expect(shield_rect.intersects(own_bar_rect)
-		and shield_rect.position.x <= own_bar_rect.position.x
-		and shield_rect.position.x >= own_bar_rect.position.x - 10.0,
-		"Block straddles its own health bar's left edge within the inter-creature gap")
-	current_hud.update_stats(100, 100, 0)
-	var split := current_hud.get_node("BlockBreak") as Control
-	_expect(split.get_global_rect().position == shield_rect.position,
-		"split shield starts at the same safe anchor as the whole shield")
-	previous_hud.free()
-	current_hud.free()
+	var hud := _hud_at(100, 8)
+	var shield := hud.get_node("BlockBadge") as Control
+	_expect(shield.size == Vector2(42, 49), "Block uses the approved compact 42x49 badge")
+	_expect(shield.position == Vector2(-21, -21),
+		"Block stays anchored to the left edge of its own health bar")
+	hud.free()
 
 
 func _test_status_stack_counts_and_replacement() -> void:

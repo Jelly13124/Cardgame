@@ -49,8 +49,8 @@ func _test_health_and_block() -> void:
 	_expect(fill != null and is_equal_approx(fill.ratio, 0.62), "Block preserves partial HP")
 	_expect(hp_label.get("text") == "31/50", "HP text shows current and max")
 	_expect(shield.visible and shield_label.text == "8", "Block stays in its separate shield")
-	_expect(shield.size == Vector2(60, 60) and shield.position.x < 0,
-		"Block keeps a 60x60 readout left of HP")
+	_expect(shield.size == Vector2(42, 49) and shield.position.x < 0,
+		"Block keeps a 42x49 readout left of HP")
 	hud.update_stats(0, 50, 8)
 	_expect(fill != null and is_zero_approx(fill.ratio), "Block does not fill an empty HP bar")
 	_expect(hp_label.get("text") == "0/50" and shield.visible, "zero HP and Block remain distinct")

@@ -19,6 +19,8 @@ func _expect(condition: bool, message: String) -> void:
 
 func _texture_path(node: Node) -> String:
 	if node is TextureRect and node.texture:
+		if node.texture is AtlasTexture and node.texture.atlas:
+			return node.texture.atlas.resource_path
 		return node.texture.resource_path
 	if node is NinePatchRect and node.texture:
 		return node.texture.resource_path
@@ -234,9 +236,9 @@ func _test_battle_energy_and_end_turn() -> void:
 		_expect(number != null and str(number.get("text")) == "63/100" and number.size == Vector2(250, 40) and number.position == Vector2(0, -12), "health text stays centered over the thin bar")
 		_expect(number != null and int(number.get("font_size")) == 24 and int(number.get("outline_size")) == 16, "health text uses 24/16 typography")
 		_expect(number != null and number.get("font_color") == Color("#fff8e8") and number.get("outline_color") == Color("#071018"), "health number keeps warm white fill and strong ink outline")
-		_expect(block != null and block.visible and block.size == Vector2(60, 60), "Block has an independent 60 px shield")
-		_expect(_texture_path(block).ends_with("/combat/block.png"), "Block uses the original combat shield art")
-		_expect(block_number != null and block_number.text == "6" and block_number.get_theme_font_size("font_size") == 24 and block_number.get_theme_constant("outline_size") == 14, "Block count uses 24/14 typography")
+		_expect(block != null and block.visible and block.size == Vector2(42, 49), "Block has an independent compact shield")
+		_expect(_texture_path(block).ends_with("/block_badge.png"), "Block uses the original combat shield art")
+		_expect(block_number != null and block_number.text == "6" and block_number.get_theme_font_size("font_size") == 25 and block_number.get_theme_constant("outline_size") == 2, "Block count uses the compact shield typography")
 		player_hud.update_stats(63, 100, 0)
 		_expect(block != null and not block.visible, "Block shield hides at zero")
 		_expect(bar != null and is_equal_approx(bar.ratio, 0.63), "HP remains proportional when Block is removed")
