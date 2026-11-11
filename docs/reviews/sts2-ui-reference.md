@@ -66,6 +66,28 @@
 - **营火。** `rest_site_room.tscn` 将场景背景、角色、交互列分开。标题约 (460,154,1000,80)，字号 36、描边 15。选项容器约 (561,255,799,163)，间距 100。单项约 247×163，选项图源 256×169，描边层 256×173，标签 28/12。说明区约 (549,513,822,393)，字号 28。每幕场景可叠加前景、火光、粒子和光照遮罩。以 Overgrowth 为例，背景导入宽 3072，火焰和分区墙光为独立贴图，通过灯光与火焰着色器调制。UI 选项进场 0.5 秒 Cubic-Out；悬停 0.05 秒升至 1.1×，恢复 1 秒 Expo-Out，说明位移 0.8 秒 Expo-Out。场景的火焰节奏独立于按钮。
 - **通用弹窗。** `NModalContainer` 负责堆叠、阻挡输入与遮层。典型 `vertical_popup.tscn` 在中心约 (699,240,522,600)，取 716×816 图集片作 TextureRect。标题 32/12，正文 26，左右内距 50，按钮分别靠底部两端。设置、放弃、错误、确认复用不同组合。弹窗遮层 0.3 秒到 0.85，普通 OverlayStack 遮层 0.5 秒 Cubic-Out。弹窗层和全屏牌组层的关闭行为、焦点回收有独立宿主。
 
+## 按钮的图层与交互复核
+
+本节补查 `NClickableControl`、`NButton`、`NMainMenuTextButton`、`NConfirmButton`、`NBackButton`、`NProceedButton`，并与实际场景交叉核对。输入基础链为 `Control → NClickableControl → NButton → 用途子类`。基础层负责鼠标、手柄焦点、按下释放、拖动取消和启用状态；表现由用途子类驱动自己的子节点。
+
+| 用途 | 场景分层 | 状态和节奏 |
+|---|---|---|
+| 主菜单常规动作 | 每项为 Control 与 MegaLabel。屏幕根节点共用两张选择指示图，源 56×56、显示 40×40。单项最小 200×50，文字 32、描边 18，主题为 StyleBoxEmpty。 | `NMainMenuTextButton.OnFocus` 在 0.05 秒内将文字放大至 1.05 倍并改色。离开为 0.5 秒 Expo-Out。按下为 0.2 秒 Cubic-Out 到 0.95 倍，并降低文字透明度。 |
+| 弹窗确认和取消 | Control 命中与 Visuals 分开；Visuals 中有 Image、Outline、Label。主底为普通 TextureRect。确认和取消使用不同底图及 HSV 基值。文字 28、描边 16。 | `NPopupYesNoButton` 焦点时将轮廓切为金色加法混合，视觉在 0.05 秒到 1.025 倍，S/V 各增加 0.25。失焦 0.5 秒 Expo-Out；按下 0.5 秒 Expo-Out 到 0.975 倍；释放 0.05 秒恢复。 |
+| 继续 | 命中为 269×108；Image 控件 296×155，下挂复用同一底图的 Shadow、独立 Outline 和 Label。阴影偏移 (12,12)，文字 34、描边 12。 | `NProceedButton` 焦点 0.05 秒到 1.05 倍、V=1.4。按下 0.5 秒 Expo-Out 到 0.95 倍。释放缩放 0.5 秒 Expo-Out，S/V 的回归另用 0.05 秒。轮廓可在每 0.5 秒 α=0.25/0.75 之间呼吸。 |
+| 奖励行与暂停行 | 奖励行为 Background、Icon、Label 与四角选择标记。单张底图源 910×196，奖励显示 402×86；暂停菜单复用底图，最小 372×80。 | `NRewardButton` 将普通、悬停、按下明度设为 0.9/1.1/0.7，失焦与按下用 0.5 秒 Expo-Out。行位置稳定，焦点反馈独立。 |
+| 事件选项 | Image、Shadow、Outline、RedFlash、BlueFlash、文字与投票分层。Image 与 Outline 为独立 NinePatchRect。 | `NEventOptionButton` 焦点 0.05 秒到 1.01 倍，按下到 0.99 倍，恢复 0.5 秒 Expo-Out，轮廓退出 0.3 秒。 |
+| 营火选项 | Visuals 内为 Icon 与 Outline，Label 为 Visuals 的外部同级。源图 256×169、轮廓 256×173。 | `NRestSiteButton` 在 0.05 秒将图像放大到 1.1 倍，标签另下移 6；回落 1 秒 Expo-Out。禁用由 S=0、V=0.6 调制。 |
+| 结束回合 | Visuals/Image、Glow、GlowVfx、Label，以及独立长按条和多人准备提示。底图和两层复用的发光图均为 512×256、显示 0.5 倍。命中 220×90。 | `NEndTurnButton` 悬停上移 2、V=1.5；按下下移 8；恢复 0.5 秒 Expo-Out。运行时显示锚点为 (1604,846)，隐藏位置下移 250。 |
+
+`shaders/hsv.gdshader` 采样原图后处理色相、饱和度和亮度，再乘节点调色。其色相运算使用 YIQ 空间。轮廓和发光通常有自己的图像节点，加法混合来自材质。角色热点还有另一种做法，例如 `NMerchantButton` 在 Spine 的 default 与 outline 皮肤之间切换。
+
+图集资源的 AtlasTexture `margin` 用于恢复裁切前透明画布，和九宫格的 `patch_margin` 是两种属性。继续底图的图集区域为 381×178，加透明余量后逻辑画布为 393×192。普通动作按钮多使用 TextureRect；事件选项才是已核实的主要九宫格按钮家族。
+
+这次复核修正了共用皮肤的应用方向。当前项目把主操作、菜单操作和奖励行普遍铺上红或青色底板，四态整图切换占主导，视觉分工较少。下一版按钮应按用途保持共用交互接口：菜单文字配轻量选择反馈，主要动作配原创底图与独立轮廓/阴影，奖励与列表使用安静的底板。状态由文字、明度、轮廓和小幅位移分别表达。生产美术仍按本项目自己的敌人画风制作。
+
+来源为 `scenes/screens/main_menu.tscn`、`scenes/ui/{proceed_button,back_button,confirm_button,abandon_run_yes_button,abandon_run_no_button}.tscn`、`scenes/rewards/reward_button.tscn`、`scenes/combat/end_turn_button.tscn`、`scenes/rest_site/rest_site_button.tscn` 与相应 C# 类。
+
 ## 本轮实施与复查
 
 工作区为独立的 `feat/ui-refresh`，起点是 `main` 的 `c644bee`。
@@ -77,7 +99,7 @@
 - 角色属性统一为图标、数值和名称，局内属性列放在纸娃娃与背包之间，提示复用现有双语关键词文案。
 - 营火用独立可聚焦选项展示图标与实际可恢复生命。奖励行与营火共用主题的 `apply_choice_button`，卡选去掉额外的实体托盘。结果页显式适配视口，中央面板可正确居中。
 - 窗口截图以隔离的临时存档运行在私有 Windows 桌面。基线使用成功启动的中文 Cowboy Bill 对局并检查正式卡壳。首次失败测试局产生的英文兼容卡面已从对比集撤下。
-- 桌面 `STS2-UI-Reference/v0.107.1-59260271/` 保存恢复的 82 份 C#、完整 90 份可读着色器、选定文本场景、REA 完整证据和复用脚本，附 `manifest.json` 来源与哈希。
+- 桌面 `STS2-UI-Reference/v0.107.1-59260271/` 保存恢复的 88 份 C#、完整 90 份可读着色器、选定文本场景、REA 完整证据和复用脚本，附 `manifest.json` 来源与哈希。
 
 当前分支仍可见的美术缺口包括注射器等事件缺图、九张旧事件插画和两张 1672×941 的场景背景。主目录已有未提交的 P0 事件、状态与选项图，本分支基线来自已提交的 `main`，因此截图中的缺图状态与主目录直接运行时可能不同。后续整合时需同时核对这些素材与交接清单。
 
