@@ -21,6 +21,9 @@ const ROOMS = preload("uid://cxmgdj3654rrj")  # res://core/run/rooms.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_sts2_bg.png"
 const REST_SITE_BACKGROUND_PATH = "res://run_system/assets/images/rest/rest_site_bg.png"
+const REST_HEAL_ART_PATH = "res://run_system/assets/images/rest/rest_site_bg.png"
+const REST_UPGRADE_ART_PATH = "res://run_system/assets/images/ui/forge/anvil_art.png"
+const REST_OPTION_SOURCE_SIZE := Vector2(256, 169)
 
 const CARD_GAP := 48
 const CARD_SLIDE_PX := 40.0
@@ -813,10 +816,11 @@ func _open_rest_choice() -> void:
 		ROOMS.rest_heal_amount(rm.max_health), rm.max_health - rm.current_health
 	)
 	var heal_btn := _rest_option(
-		Vector2(0.20, 0.70),
+		Vector2(0.41, 0.40),
 		"icon_heart",
 		tr("UI_MAP_LEGEND_REST"),
-		tr("UI_ROUTE_HEAL").format({"n": heal_amount})
+		tr("UI_ROUTE_HEAL").format({"n": heal_amount}) if heal_amount > 0 else tr("UI_ROUTE_HEAL_FULL"),
+		REST_HEAL_ART_PATH
 	)
 	heal_btn.name = "HealChoice"
 	heal_btn.pressed.connect(
@@ -829,10 +833,11 @@ func _open_rest_choice() -> void:
 	modal.add_child(heal_btn)
 
 	var upgrade_btn := _rest_option(
-		Vector2(0.66, 0.73),
+		Vector2(0.59, 0.40),
 		"icon_hammer",
 		tr("UI_MAP_REST_UPGRADE_BTN"),
-		tr("UI_UPGRADE_MODAL_HINT")
+		tr("UI_UPGRADE_MODAL_HINT"),
+		REST_UPGRADE_ART_PATH
 	)
 	upgrade_btn.name = "UpgradeChoice"
 	upgrade_btn.pressed.connect(
@@ -877,28 +882,70 @@ func _open_rest_choice() -> void:
 
 
 func _rest_option(
-	anchor: Vector2, icon_name: String, title_text: String, detail_text: String
+	anchor: Vector2, icon_name: String, title_text: String, detail_text: String, art_path: String = ""
 ) -> Button:
 	var button := Button.new()
 	button.anchor_left = anchor.x
 	button.anchor_top = anchor.y
 	button.anchor_right = anchor.x
 	button.anchor_bottom = anchor.y
-	button.offset_left = -176.0
-	button.offset_right = 176.0
-	button.offset_top = -58.0
-	button.offset_bottom = 58.0
+	button.offset_left = -123.5
+	button.offset_right = 123.5
+	button.offset_top = -81.5
+	button.offset_bottom = 81.5
+	button.custom_minimum_size = Vector2(247, 163)
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
 
-	T_THEME.apply_choice_button(button)
+	var art := TextureRect.new()
+	art.name = "RestChoiceArt"
+	art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	art.texture = _load_texture(art_path)
+	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(art)
+
+	var outline := Panel.new()
+	outline.name = "RestChoiceOutline"
+	outline.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var outline_style := StyleBoxFlat.new()
+	outline_style.bg_color = Color(0.04, 0.025, 0.016, 0.20)
+	outline_style.border_color = Color(0.90, 0.72, 0.36, 0.92)
+	outline_style.set_border_width_all(3)
+	outline_style.set_corner_radius_all(7)
+	outline.add_theme_stylebox_override("panel", outline_style)
+	button.add_child(outline)
 
 	var row := HBoxContainer.new()
 	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	row.offset_left = 16.0
-	row.offset_right = -16.0
+	row.offset_left = 12.0
+	row.offset_top = 76.0
+	row.offset_right = -12.0
+	row.offset_bottom = -8.0
 	row.add_theme_constant_override("separation", 14)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(row)
+
+	button.mouse_entered.connect(
+		func():
+			var tween := button.create_tween()
+			tween.set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_OUT)
+			tween.tween_property(button, "scale", Vector2(1.1, 1.1), 0.05)
+			# Description follows the source art with an Expo-Out settle.
+			row.create_tween().set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT).tween_property(row, "position:y", 70.0, 0.8)
+	)
+	button.mouse_exited.connect(
+		func():
+			var tween := button.create_tween()
+			tween.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+			tween.tween_property(button, "scale", Vector2.ONE, 1.0)
+			row.create_tween().set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT).tween_property(row, "position:y", 76.0, 0.8)
+	)
 
 	var icon := TextureRect.new()
 	icon.name = "ChoiceIcon"

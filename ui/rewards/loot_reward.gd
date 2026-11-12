@@ -9,6 +9,14 @@ signal closed
 # In-run currency is Caps (owner 2026-07-08): same bottle-cap icon as the base.
 const GOLD_ICON_PATH := "res://run_system/assets/images/home/currency/caps.png"
 const CARD_REWARD_ICON_PATH := "res://run_system/assets/images/ui_kit_lightline/iconb_cards_fan.png"
+const BANNER_LONG_PATH := "res://run_system/assets/images/ui/kit/banner_long.png"
+const REWARD_PANEL_SIZE := Vector2(526, 640)
+const REWARD_ROW_SIZE := Vector2(402, 86)
+const CONTINUE_SIZE := Vector2(269, 108)
+const CARD_REWARD_CENTER_Y := 76.0
+const CARD_REWARD_PITCH := 350.0
+const CARD_REWARD_ACTION_TOP := 884.0
+const CARD_REWARD_ACTION_BOTTOM := 957.0
 
 # Shared palette lives in ui/common/theme/wasteland_theme.gd as
 # `T.PANEL_BG` etc. — see wasteland_theme.gd for all colors / builders.
@@ -30,10 +38,12 @@ var draft_pool: Array = []
 @onready var loot_root: VBoxContainer = $LootContents
 @onready var loot_list_container: VBoxContainer = $LootContents/LootList
 @onready var proceed_button: Button = $LootContents/ProceedButton
-@onready var draft_overlay: VBoxContainer = $DraftOverlay
+@onready var draft_overlay: Control = $DraftOverlay
 @onready var draft_title: Label = $DraftOverlay/TitleLabel
 @onready var draft_card_container: HBoxContainer = $DraftOverlay/CardsContainer
 @onready var draft_skip_button: Button = $DraftOverlay/Actions/SkipDraftButton
+@onready var reward_panel: Panel = $RewardPanel
+@onready var reward_banner: TextureRect = $RewardBanner
 
 var _card_factory: Node = null
 var available_loot = []
@@ -45,7 +55,7 @@ func _ready() -> void:
 	proceed_button.pressed.connect(_on_proceed_pressed)
 	draft_skip_button.pressed.connect(_on_skip_draft_pressed)
 	draft_overlay.visible = false
-	T.fade_in(self)  # soft entrance instead of a hard pop-in
+	_animate_overlay_in()
 
 	_card_factory = preload("uid://diap3gdfbqvjv").instantiate()  # res://ui/battle/card_framework_adapters/my_card_factory.tscn
 	add_child(_card_factory)
@@ -61,13 +71,24 @@ func _ready() -> void:
 func _apply_static_theme() -> void:
 	$RewardBackdrop.offset_top = RUN_TOP_BAR.PAGE_ART_TOP
 	$RewardBackdrop.color = T.REWARD_SCRIM
-	loot_root.offset_top = RUN_TOP_BAR.BAR_HEIGHT
+	loot_root.offset_top = RUN_TOP_BAR.BAR_HEIGHT + 40.0
+	# Keep the draft layer itself below the persistent top bar. Its child offsets
+	# are authored in the layer's local space so the measured action band still
+	# lands at y=884..957 in the viewport.
 	draft_overlay.offset_top = RUN_TOP_BAR.BAR_HEIGHT
+	reward_panel.custom_minimum_size = REWARD_PANEL_SIZE
+	reward_panel.add_theme_stylebox_override("panel", T.panel_textured("hard"))
+	reward_banner.texture = _load_texture(BANNER_LONG_PATH)
+	reward_banner.custom_minimum_size = Vector2(652, 162)
 	for title: Label in [$LootContents/TitleLabel, draft_title]:
 		T.style_display(title, 44, 700)
 		title.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
+		title.add_theme_color_override("font_outline_color", Color(0.08, 0.04, 0.02, 0.96))
+		title.add_theme_constant_override("outline_size", 16)
 	_style_action(proceed_button, true)
 	_style_action(draft_skip_button)
+	proceed_button.custom_minimum_size = CONTINUE_SIZE
+	draft_card_container.add_theme_constant_override("separation", int(CARD_REWARD_PITCH - 312.0))
 
 
 func _style_action(button: Button, primary: bool = false) -> void:
@@ -75,6 +96,19 @@ func _style_action(button: Button, primary: bool = false) -> void:
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.add_theme_font_override("font", T.display_font(700))
 	button.add_theme_font_size_override("font_size", 22)
+	button.add_theme_color_override("font_outline_color", Color(0.08, 0.04, 0.02, 0.96))
+	button.add_theme_constant_override("outline_size", 12)
+
+
+func _animate_overlay_in() -> void:
+	modulate.a = 0.0
+	reward_panel.position.y += 24.0
+	reward_banner.position.y += 12.0
+	var tween := create_tween().set_parallel(true)
+	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(reward_panel, "position:y", reward_panel.position.y - 24.0, 0.5)
+	tween.tween_property(reward_banner, "position:y", reward_banner.position.y - 12.0, 0.5)
+	tween.tween_property(self, "modulate:a", 1.0, 0.5).set_trans(Tween.TRANS_LINEAR)
 
 
 ## What this fight offers comes from the run layer (core/run/rewards.gd); this
@@ -169,7 +203,7 @@ func _populate_loot_ui() -> void:
 
 func _make_loot_row(loot: Dictionary) -> Button:
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(700, 80)
+	button.custom_minimum_size = REWARD_ROW_SIZE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	T.apply_choice_button(button)
 	button.pressed.connect(_on_loot_selected.bind(str(loot["id"]), button))
@@ -177,7 +211,7 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	var row := HBoxContainer.new()
 	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	row.offset_left = 14.0
-	row.offset_right = -24.0
+	row.offset_right = -14.0
 	row.add_theme_constant_override("separation", 12)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(row)
@@ -186,7 +220,9 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	var title := Label.new()
 	title.text = str(loot.get("title", tr("UI_LOOT_DEFAULT_TITLE")))
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	T.style_display(title, 28, 600)
+	T.style_display(title, 24, 600)
+	title.add_theme_color_override("font_outline_color", Color(0.06, 0.035, 0.02, 0.94))
+	title.add_theme_constant_override("outline_size", 12)
 	title.add_theme_color_override("font_color", T.TEXT_MAIN)
 	row.add_child(title)
 
@@ -194,6 +230,8 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	action.text = str(loot.get("action", tr("UI_LOOT_ACTION_CLAIM")))
 	T.style_display(action, 20, 700)
 	action.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
+	action.add_theme_color_override("font_outline_color", Color(0.06, 0.035, 0.02, 0.94))
+	action.add_theme_constant_override("outline_size", 12)
 	row.add_child(action)
 	return button
 
@@ -202,13 +240,13 @@ func _make_icon_well(icon_path: String) -> Control:
 	# Bare art, no framing box (owner 2026-07-08: stop framing every item —
 	# the reward icons carry themselves).
 	var holder = CenterContainer.new()
-	holder.custom_minimum_size = Vector2(58, 58)
+	holder.custom_minimum_size = Vector2(56, 56)
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var texture = _load_texture(icon_path)
 	if texture:
 		var icon = TextureRect.new()
-		icon.custom_minimum_size = Vector2(50, 50)
+		icon.custom_minimum_size = Vector2(56, 56)
 		icon.texture = texture
 		icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED

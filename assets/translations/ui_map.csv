@@ -45,6 +45,7 @@ UI_MAP_BACK_TO_BATTLE,Back to Battle,返回战斗
 UI_ROUTE_CARD_DRAFT,Card draft,选卡
 UI_ROUTE_RELIC_CHOICE,Choose 1 of 3 relics,遗物三选一
 UI_ROUTE_HEAL,Heal {n},回复 {n}
+UI_ROUTE_HEAL_FULL,Full health,已满血
 UI_ROUTE_NEXT,Next,下一层
 UI_ROUTE_STRENGTH_WEAK,Weak,弱
 UI_ROUTE_STRENGTH_NORMAL,Normal,中

@@ -12,3 +12,4 @@
 - 阶段 A 在 `7ba184e` 提交｜全量 `tools/run_tests.ps1` 75/75、工具测试、分层检查通过；改前/改后实际截图与过渡截图在 `C:\Users\Jerry\AppData\Local\Temp\bottlecap-ui-overnight-20261112\review.html`｜如需回退，回到 `645d4c5` 并只撤销阶段 A 文件。
 - 测试与截图均使用临时用户目录和测试存档根；截图、原始生成稿、STS2 阅读证据留在仓库外临时目录｜保护真实存档，避免将参考资源交付为原创资源｜截图工具、测试启动命令。
 - 先保留全套实际改前截图，再改生产视觉；保留单屏前后和原创坐标线框三列｜用户需要明早逐屏验收｜临时 `review.html` 与捕获脚本。
+- 阶段 B 的奖励、选卡、营火、结算与通用弹窗共用压暗遮罩、横幅和材质底板；选卡层自身从 `BAR_HEIGHT` 起算，并把局部坐标折回到全局动作带 `y=884..957`，避免顶栏被覆盖｜既满足 persistent top bar 的层级，也保留用户给定的动作位置；如果视觉不合适改 `ui/rewards/loot_reward.gd`、`ui/rewards/loot_reward.tscn`、`ui/map/map_scene.gd`、`ui/rewards/result_screen.gd`、`ui/rewards/extract_choice_modal.gd`。
