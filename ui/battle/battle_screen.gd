@@ -75,6 +75,15 @@ const MAIN_MENU_PATH := "uid://dnjlmt1repvjw"  # res://ui/menus/main_menu.tscn
 
 const COMBAT_REWARDS = preload("uid://sn83hwnx1w3b")  # res://core/run/combat_rewards.gd
 
+## Full-screen act backdrops are original variants of the approved wasteland
+## language. The current act selects the quiet scene before combat entities
+## enter, so Act 2/3 never fall back to the Act 1 desert by accident.
+const ACT_BATTLE_BACKGROUND := {
+	1: "res://battle_scene/assets/images/backgrounds/wasteland_battlefield_act1_v1.png",
+	2: "res://battle_scene/assets/images/backgrounds/wasteland_battlefield_act2_city.png",
+	3: "res://battle_scene/assets/images/backgrounds/wasteland_battlefield_act3_radiation.png",
+}
+
 
 func _exit_tree() -> void:
 	# Restore normal speed when leaving combat so the map / menus run at 1x
@@ -87,6 +96,7 @@ func _ready():
 	print("BATTLE STARTING (STS Layout)")
 	MetaProgress.begin_deferred_saves()
 	AudioManager.play_music("boss" if RunManager.last_battle_node_type == "boss" else "battle")
+	_apply_act_battle_background()
 	card_manager.debug_mode = false
 	Engine.time_scale = Settings.game_speed
 
@@ -117,6 +127,13 @@ func _ready():
 
 	# First-battle tutorial tips — shown once ever, gated on MetaProgress.
 	_maybe_show_tutorial()
+
+
+func _apply_act_battle_background() -> void:
+	var act := clampi(int(RunManager.current_act), 1, 3)
+	var path := str(ACT_BATTLE_BACKGROUND.get(act, ACT_BATTLE_BACKGROUND[1]))
+	if ResourceLoader.exists(path):
+		$BattleBackground.texture = load(path) as Texture2D
 
 
 ## Shared visual feedback leaves the native input rectangle and label independent.

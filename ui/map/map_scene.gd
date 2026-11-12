@@ -19,10 +19,10 @@ const BATTLE_PACKED = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_s
 const SHOP_PACKED = preload("uid://dr8unxxfi0w51")  # res://ui/shop/merchant_room.tscn
 const ROOMS = preload("uid://cxmgdj3654rrj")  # res://core/run/rooms.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
-const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_sts2_bg.png"
-const REST_SITE_BACKGROUND_PATH = "res://run_system/assets/images/rest/rest_site_bg.png"
+const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_pixel_bg.png"
+const REST_SITE_BACKGROUND_PATH = "res://run_system/assets/images/ui/rest/campfire_scene_1920.png"
 const ROUTE_TITLE_BANNER_PATH := "res://run_system/assets/images/ui/kit/banner_long.png"
-const REST_HEAL_ART_PATH = "res://run_system/assets/images/rest/rest_site_bg.png"
+const REST_HEAL_ART_PATH = "res://run_system/assets/images/ui/rest/campfire_scene_1920.png"
 const REST_UPGRADE_ART_PATH = "res://run_system/assets/images/ui/forge/anvil_art.png"
 const REST_OPTION_SOURCE_SIZE := Vector2(256, 169)
 

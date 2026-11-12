@@ -130,8 +130,14 @@ func _add_backdrop() -> void:
 func _refresh_portrait() -> void:
 	var event_art := str(MODEL_DB.data("event", model.id).get("art", MODEL_ID.entry_of(model.id)))
 	for art in [model.page_art(model.page), event_art]:
-		var path: String = ART_DIR + str(art) + ".png"
-		if str(art) != "" and ResourceLoader.exists(path):
+		if str(art) == "":
+			continue
+		# Stage E keeps the legacy event illustrations at a uniform 1024x768
+		# source footprint; fall back to the older name for any page art that has
+		# not been refreshed yet.
+		var refreshed_path: String = ART_DIR + str(art) + "_1024x768.png"
+		var path: String = refreshed_path if ResourceLoader.exists(refreshed_path) else ART_DIR + str(art) + ".png"
+		if ResourceLoader.exists(path):
 			_portrait_art.texture = load(path)
 			return
 	_portrait_art.texture = null

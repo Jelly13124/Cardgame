@@ -174,8 +174,8 @@ func _test_map_background() -> void:
 	if map.map_background_tex:
 		background_path = map.map_background_tex.resource_path
 	_expect(
-		background_path.ends_with("/wasteland_route_map_sts2_bg.png"),
-		"map uses the approved STS2-minimal background (got %s)" % background_path
+		background_path.ends_with("/wasteland_route_map_pixel_bg.png"),
+		"map uses the approved quiet 1920x1080 background (got %s)" % background_path
 	)
 	map.queue_free()
 	await get_tree().process_frame
