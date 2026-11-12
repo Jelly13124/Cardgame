@@ -29,18 +29,17 @@ func _run() -> void:
 	var removal := FileAccess.get_file_as_string(REMOVAL_PATH)
 	var slot := FileAccess.get_file_as_string(SLOT_PATH)
 
-	# The route title needs a stable banner and a dark text treatment over map art.
-	_expect(map.contains("RouteTitleBanner"), "map title has a named banner layer")
-	_expect(map.contains("banner_long.png"), "map title resolves the shared long banner")
-	_expect(map.contains("LEATHER_DARK"), "map title uses dark text on the banner")
-	_expect(map.contains("RouteChoicesPanel") and map.contains("StyleBoxEmpty.new()"), "route choices have no outer beige frame")
+	# The route is a linked node graph below the persistent top bar. It uses the
+	# same dark title treatment but no longer creates a three-card holder.
+	_expect(map.contains("RouteGraph"), "map creates the node graph layer")
+	_expect(map.contains("draw_dashed_line"), "map draws dashed route links")
+	_expect(map.contains("NODE_SIZE"), "map nodes have an explicit measured size")
 	_expect(map.contains("RUN_TOP_BAR.BAR_HEIGHT"), "map content remains below the persistent top bar")
+	_expect(not map.contains("RouteChoicesPanel"), "map has no outer card frame")
 
-	# Route cards should present their contents without the old outer beige frame,
-	# and sparse rest/treasure previews should use the available height.
-	_expect(route.contains("StyleBoxEmpty.new()"), "route card normal state has no outer frame")
-	_expect(route.contains("ALIGNMENT_CENTER"), "route card content is vertically centered")
-	_expect(route.contains("CARD_SIZE"), "route card keeps an explicit measured size")
+	# The old card implementation remains available to legacy content tests, but
+	# the map scene no longer depends on it for route selection.
+	_expect(not map.contains("ROUTE_CHOICE_CARD"), "map does not instantiate choice cards")
 
 	# Removal is a product in the same shelf language: icon, title and currency
 	# price are independent children, rather than a two-line bare button label.

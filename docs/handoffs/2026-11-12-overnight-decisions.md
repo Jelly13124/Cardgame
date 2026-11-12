@@ -26,3 +26,5 @@
 - 路线地图背景替换为 1920×1080 的原创废土漫画场景，中心留出安静区域承载路线卡｜解决旧羊皮纸/杂乱背景与三槽路线层级冲突｜如果不合适改 `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`。
 - 主角战斗显示目标高度降到 256，强制 tint alpha 为 1，并用可见像素底线和归一化枪口锚点保持 idle/attack 对齐｜修复待机过透明、主角过大，同时保留 384px 原画源像素和枪口/受击/血条相对位置｜如果不合适改 `ui/battle/player_view.gd`、`tests/hero_presentation_contract_test.gd`、`tests/hero_attack_art_contract_test.gd`。
 - 暂停阶段 E 的事件插画重画项，不改事件背景、`ui/events/event_room.gd`，也不把事件尺寸文档从旧规格改成新规格｜用户明确要求先停下该项，后续规格为全屏 1920×1080/2112×1188、右侧自然变暗留文案｜恢复该项时改 `ui/events/event_room.gd`、事件资源、`docs/handoffs/2026-11-10-codex-art-handoff.md`、`docs/art/ui-asset-spec.md`。
+- 地图方案改为节点路径图，撤销三选一卡片决定：按已生成的 `floor` 列和 `slot` 排布节点，用虚线连接 `children`，只让当前可达节点可点击，保留动态生成和 pruning｜用户明确改为参考截图的路线地图；这样先改变信息呈现，不破坏现有旅行规则和存档结构｜如果不合适改 `ui/map/map_scene.gd`、`tests/map_route_scene_test.gd`、`tests/stage_c_map_shop_contract_test.gd`。
+- 路线背景改为浅色废土地图纸面，四周保留原创荒地漫画环境，中间留低对比度空间放路径节点；尺寸保持 1920×1080｜参考图需要浅色地图底和清晰虚线，现有深色/场景式背景会压住节点｜如果不合适改 `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`。

@@ -1,12 +1,11 @@
 extends Control
 
-## The route map: a floor track and one card per choice on the current floor
-## (ui/map/route_choice_card.gd), drawn over the wasteland map background. The
-## route itself is run data (core/run/map_generator.gd, grown by
-## RunManager.enter_map_node); this screen shows it and opens the chosen room.
+## The route map: a progressively revealed node graph drawn over the wasteland
+## map background. The route itself remains run data
+## (core/run/map_generator.gd, grown by RunManager.enter_map_node); this screen
+## shows the known links and opens the chosen room.
 
 const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
-const ROUTE_CHOICE_CARD = preload("uid://e44exoef6xwg")  # res://ui/map/route_choice_card.tscn
 const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://ui/windows/character_window.gd
 const RUN_DECK_VIEWER_MODAL = preload("uid://jvxfh15gtinx")  # res://ui/common/run_deck_viewer_modal.gd
 const CARD_UPGRADE_MODAL = preload("uid://gq5b8t1mbeti")  # res://ui/rest/card_upgrade_modal.gd
@@ -21,21 +20,19 @@ const ROOMS = preload("uid://cxmgdj3654rrj")  # res://core/run/rooms.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_pixel_bg.png"
 const REST_SITE_BACKGROUND_PATH = "res://run_system/assets/images/ui/rest/campfire_scene_1920.png"
-const ROUTE_TITLE_BANNER_PATH := "res://run_system/assets/images/ui/kit/banner_long.png"
 const REST_HEAL_ART_PATH = "res://run_system/assets/images/ui/rest/campfire_scene_1920.png"
 const REST_UPGRADE_ART_PATH = "res://run_system/assets/images/ui/forge/anvil_art.png"
 const REST_OPTION_SOURCE_SIZE := Vector2(256, 169)
 
-## The map presents three equally weighted slots, like a route draft. A floor
-## with one or two legal nodes still keeps those cards centred inside the same
-## three-slot rhythm so the screen never jumps between floors.
-const CARD_SIZE := Vector2(320, 460)
-const CHOICE_SLOTS := 3
-const CARD_GAP := 28
-const CARD_SLIDE_PX := 40.0
-const CARD_STAGGER := 0.06
-const CHOOSE_SECONDS := 0.25
-const ROUTE_PANEL_MIN := Vector2(1120, 460)
+## The map is a readable node graph: each floor is a column, links are drawn
+## between known children, and only legal next nodes are interactive. The run
+## model still reveals the route progressively; this is a presentation change,
+## not a change to route generation or travel rules.
+const NODE_SIZE := Vector2(84, 84)
+const NODE_CHOOSE_SECONDS := 0.22
+const GRAPH_INSET_X := 92.0
+const GRAPH_INSET_TOP := 92.0
+const GRAPH_INSET_BOTTOM := 92.0
 
 var rm: Node
 var map_background_tex: Texture2D
@@ -52,8 +49,9 @@ var _node_click_pending: bool = false
 ## When true, this map is a read-only PEEK overlay shown over an active battle:
 ## no node travel, no checkpoint save, no music swap — plus a "back to battle" button.
 var peek_mode: bool = false
-var _floor_track: HBoxContainer
-var _choice_row: HBoxContainer
+var _route_graph: Control
+var _route_nodes: Dictionary = {}
+var _node_positions: Dictionary = {}
 
 
 func _ready() -> void:
@@ -136,102 +134,75 @@ func _load_texture(path: String) -> Texture2D:
 func _draw() -> void:
 	if map_background_tex:
 		draw_texture_rect(map_background_tex, Rect2(Vector2.ZERO, size), false)
+	_draw_route_edges()
 
 
-## The floor track under the top bar and the centred row of choice cards.
-## The route header and soft panel keep the choice area readable on the map art;
-## all route data and click handling remain owned by _build_route/_choose.
+func _draw_route_edges() -> void:
+	if not rm or _node_positions.is_empty():
+		return
+	var graph_origin := Vector2(0.0, RUN_TOP_BAR.BAR_HEIGHT + 102.0)
+	var visited: Dictionary = {}
+	for id in rm.visited_node_ids:
+		visited[str(id)] = true
+	var active: Dictionary = {}
+	for node in _choices():
+		active[str(node.get("id", ""))] = true
+	for node in rm.map_data:
+		var parent_id := str(node.get("id", ""))
+		if not _node_positions.has(parent_id):
+			continue
+		for child_id in node.get("children", []):
+			var child := str(child_id)
+			if not _node_positions.has(child):
+				continue
+			var edge_color := Color(0.98, 0.42, 0.12, 0.95) if active.has(child) or (visited.has(parent_id) and visited.has(child)) else Color(0.33, 0.28, 0.23, 0.85)
+			draw_dashed_line(_node_positions[parent_id] + graph_origin, _node_positions[child] + graph_origin, edge_color, 4.0, 12.0, true)
+
+
+## The graph sits below the persistent top bar. A title and hint preserve the
+## old hierarchy while the route itself is rendered as linked nodes.
 func _build_route_layout() -> void:
-	var column := VBoxContainer.new()
+	var column := Control.new()
 	column.name = "RouteColumn"
 	column.set_anchors_preset(Control.PRESET_FULL_RECT)
-	column.offset_top = RUN_TOP_BAR.BAR_HEIGHT + 18.0
-	column.offset_bottom = -28.0
+	column.offset_top = RUN_TOP_BAR.BAR_HEIGHT
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(column)
-	var prompt := Label.new()
-	prompt.name = "ChoicePrompt"
-	prompt.text = tr("UI_ROUTE_CHOOSE")
-	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	prompt.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	T.style_display(prompt, 26, 700, 1)
-	prompt.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
-	prompt.custom_minimum_size = Vector2(0, 38)
-	column.add_child(prompt)
-	_floor_track = HBoxContainer.new()
-	_floor_track.name = "FloorTrack"
-	_floor_track.alignment = BoxContainer.ALIGNMENT_CENTER
-	_floor_track.add_theme_constant_override("separation", 8)
-	_floor_track.custom_minimum_size = Vector2(0, 16)
-	_floor_track.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_child(_floor_track)
-	var header := VBoxContainer.new()
-	header.name = "RouteHeader"
-	header.custom_minimum_size = Vector2(0, 76)
-	header.alignment = BoxContainer.ALIGNMENT_CENTER
-	header.add_theme_constant_override("separation", 4)
-	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var title_banner := Control.new()
-	title_banner.name = "RouteTitleBanner"
-	title_banner.custom_minimum_size = Vector2(620, 58)
-	title_banner.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	title_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var banner_art := TextureRect.new()
-	banner_art.name = "RouteTitleBannerArt"
-	banner_art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	banner_art.texture = _load_texture(ROUTE_TITLE_BANNER_PATH)
-	banner_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	banner_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	banner_art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	banner_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	title_banner.add_child(banner_art)
 	var title := T.ui_header_label(tr("UI_MAP_CHOOSE_ROUTE"), 30)
 	title.name = "RouteTitle"
-	title.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	title.anchor_left = 0.5
+	title.anchor_right = 0.5
+	title.offset_left = -310.0
+	title.offset_right = 310.0
+	title.offset_top = 18.0
+	title.offset_bottom = 68.0
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title.add_theme_color_override("font_color", T.LEATHER_DARK)
 	title.add_theme_color_override("font_outline_color", Color(0.93, 0.76, 0.49, 0.92))
 	title.add_theme_constant_override("outline_size", 3)
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	title_banner.add_child(title)
-	header.add_child(title_banner)
+	column.add_child(title)
 	var hint := Label.new()
+	hint.name = "RouteHint"
 	hint.text = tr("UI_MAP_ROUTE_HINT")
+	hint.anchor_left = 0.5
+	hint.anchor_right = 0.5
+	hint.offset_left = -380.0
+	hint.offset_right = 380.0
+	hint.offset_top = 66.0
+	hint.offset_bottom = 96.0
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_color_override("font_color", T.UI_LABEL_DIM)
 	T.style_display(hint, 17)
 	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	header.add_child(hint)
-	column.add_child(header)
-	var center := CenterContainer.new()
-	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_child(center)
-	var panel := PanelContainer.new()
-	panel.name = "RouteChoicesPanel"
-	panel.custom_minimum_size = ROUTE_PANEL_MIN
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# Route cards sit directly on the map art; the old beige group frame made a
-	# second, empty card around the actual choices.
-	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	center.add_child(panel)
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 34)
-	margin.add_theme_constant_override("margin_right", 34)
-	margin.add_theme_constant_override("margin_top", 24)
-	margin.add_theme_constant_override("margin_bottom", 24)
-	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(margin)
-	_choice_row = HBoxContainer.new()
-	_choice_row.name = "ChoiceRow"
-	_choice_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_choice_row.add_theme_constant_override("separation", CARD_GAP)
-	_choice_row.custom_minimum_size = Vector2(
-		CARD_SIZE.x * CHOICE_SLOTS + CARD_GAP * (CHOICE_SLOTS - 1), CARD_SIZE.y
-	)
-	_choice_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.add_child(_choice_row)
+	column.add_child(hint)
+	_route_graph = Control.new()
+	_route_graph.name = "RouteGraph"
+	_route_graph.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_route_graph.offset_top = 102.0
+	_route_graph.offset_bottom = -18.0
+	_route_graph.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(_route_graph)
 
 
 ## The nodes the player can choose now: the start node on a fresh act, else
@@ -247,59 +218,114 @@ func _choices() -> Array:
 	return out
 
 
-## Rebuilds the floor track and the cards from the run's route.
+## Rebuilds the node graph from the run's currently known route.
 func _build_route() -> void:
-	var choices := _choices()
-	var floors: int = rm.floors_per_act()
-	var offered_floor := int(choices[0].floor) if not choices.is_empty() else floors
-	for c in _floor_track.get_children():
-		_floor_track.remove_child(c)
-		c.queue_free()
-	for f in range(floors):
-		var pip := ColorRect.new()
-		pip.custom_minimum_size = Vector2(44, 10) if f == offered_floor else Vector2(28, 8)
-		pip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		if f < offered_floor:
-			pip.color = T.GLASS_GOLD
-		elif f == offered_floor:
-			pip.color = T.ACCENT_NEON_BLUE
-		elif f == floors - 1:
-			pip.color = T.ACCENT_DANGER
-		else:
-			pip.color = T.GLASS_HAIRLINE_DIM
-		_floor_track.add_child(pip)
-	for c in _choice_row.get_children():
-		_choice_row.remove_child(c)
-		c.queue_free()
-	var heal: int = ROOMS.rest_heal_amount(rm.max_health)
-	for i in range(choices.size()):
-		var node: Dictionary = choices[i]
-		var next_types: Array = []
-		for child_id in node.get("children", []):
-			next_types.append(str(rm.get_node_by_id(str(child_id)).get("type", "")))
-		var card = ROUTE_CHOICE_CARD.instantiate()
-		var slot := Control.new()
-		slot.custom_minimum_size = card.custom_minimum_size
-		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_choice_row.add_child(slot)
-		slot.add_child(card)
-		card.setup(node, next_types, heal, not peek_mode, i + 1)
-		card.chosen.connect(_choose)
-		card.position = Vector2(0, CARD_SLIDE_PX)
-		card.modulate.a = 0.0
-		var tween: Tween = card.create_tween().set_parallel(true)
-		tween.tween_property(card, "position:y", 0.0, 0.2).set_delay(i * CARD_STAGGER).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		tween.tween_property(card, "modulate:a", 1.0, 0.2).set_delay(i * CARD_STAGGER)
+	if not _route_graph:
+		return
+	for child in _route_graph.get_children():
+		child.queue_free()
+	_route_nodes.clear()
+	_node_positions.clear()
+	var known: Array = rm.map_data.duplicate()
+	if known.is_empty():
+		queue_redraw()
+		return
+	var max_floor := 0
+	for node in known:
+		max_floor = maxi(max_floor, int(node.get("floor", 0)))
+	var viewport_size := get_viewport_rect().size
+	var graph_width := maxf(viewport_size.x - GRAPH_INSET_X * 2.0, 1200.0)
+	var graph_height := maxf(viewport_size.y - RUN_TOP_BAR.BAR_HEIGHT - 120.0, 620.0)
+	var column_gap := graph_width / float(maxi(max_floor, 1))
+	var active_ids: Dictionary = {}
+	for node in _choices():
+		active_ids[str(node.get("id", ""))] = true
+	var by_floor: Dictionary = {}
+	for node in known:
+		var floor := int(node.get("floor", 0))
+		if not by_floor.has(floor):
+			by_floor[floor] = []
+		by_floor[floor].append(node)
+	for floor in by_floor.keys():
+		var floor_nodes: Array = by_floor[floor]
+		floor_nodes.sort_custom(func(a, b): return int(a.get("slot", 0)) < int(b.get("slot", 0)))
+		var spacing := minf(178.0, (graph_height - GRAPH_INSET_TOP - GRAPH_INSET_BOTTOM) / float(maxi(floor_nodes.size(), 1)))
+		var center_y := graph_height * 0.5
+		for i in range(floor_nodes.size()):
+			var node: Dictionary = floor_nodes[i]
+			var offset := (float(i) - float(floor_nodes.size() - 1) * 0.5) * spacing
+			_node_positions[str(node.get("id", ""))] = Vector2(GRAPH_INSET_X + column_gap * float(floor), center_y + offset)
+	for node in known:
+		var id := str(node.get("id", ""))
+		if not _node_positions.has(id):
+			continue
+		var button := _make_route_node(node, bool(active_ids.get(id, false)))
+		button.position = _node_positions[id] - NODE_SIZE * 0.5
+		_route_graph.add_child(button)
+		_route_nodes[id] = button
+	queue_redraw()
 
 
-func _cards() -> Array:
-	var out: Array = []
-	for slot in _choice_row.get_children():
-		for c in slot.get_children():
-			if c.has_signal("chosen"):
-				out.append(c)
-	return out
+func _make_route_node(node: Dictionary, interactive: bool) -> Button:
+	var id := str(node.get("id", ""))
+	var type := str(node.get("type", "enemy"))
+	var button := Button.new()
+	button.name = "RouteNode_%s" % id.replace(".", "_")
+	button.custom_minimum_size = NODE_SIZE
+	button.size = NODE_SIZE
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if interactive and not peek_mode else Control.CURSOR_ARROW
+	button.disabled = not interactive or peek_mode
+	button.set_meta("node_id", id)
+	button.set_meta("interactive", interactive and not peek_mode)
+	button.add_theme_stylebox_override("normal", _route_node_style(node, false))
+	button.add_theme_stylebox_override("hover", _route_node_style(node, true))
+	button.add_theme_stylebox_override("pressed", _route_node_style(node, true))
+	button.add_theme_stylebox_override("disabled", _route_node_style(node, false))
+	button.pressed.connect(_choose.bind(id))
+	var icon := TextureRect.new()
+	icon.name = "Icon"
+	icon.texture = _load_texture("res://run_system/assets/images/map/nodes/%s.png" % type)
+	icon.position = Vector2(14, 14)
+	icon.size = Vector2(56, 56)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(icon)
+	var label := Label.new()
+	label.name = "TypeLabel"
+	label.text = _route_node_label(type)
+	label.position = Vector2(-70, 45)
+	label.size = Vector2(140, 28)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_color_override("font_color", T.TEXT_MAIN if interactive else T.UI_LABEL_DIM)
+	label.add_theme_color_override("font_outline_color", Color(0.07, 0.04, 0.02, 0.86))
+	label.add_theme_constant_override("outline_size", 5)
+	T.style_display(label, 16, 700)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_route_graph.add_child(label)
+	label.position = _node_positions.get(id, Vector2.ZERO) + Vector2(-70, 45)
+	return button
+
+
+func _route_node_style(node: Dictionary, hovered: bool) -> StyleBoxFlat:
+	var id := str(node.get("id", ""))
+	var visited: bool = id in Array(rm.visited_node_ids)
+	var current: bool = id == str(rm.current_node_id) or (rm.current_node_id == "" and int(node.get("floor", 0)) == 0)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.16, 0.12, 0.08, 0.94) if not visited else Color(0.31, 0.18, 0.08, 0.96)
+	style.border_color = T.ACCENT_NEON_BLUE if current else (T.UI_HEADER_GOLD if hovered or visited else Color(0.22, 0.17, 0.12, 0.95))
+	style.set_border_width_all(5 if current else 3)
+	style.set_corner_radius_all(38)
+	style.shadow_color = Color(0.03, 0.02, 0.01, 0.5)
+	style.shadow_size = 5
+	return style
+
+
+func _route_node_label(type: String) -> String:
+	var key := "UI_MAP_LEGEND_%s" % type.to_upper()
+	var translated := tr(key)
+	return translated if translated != key else type.capitalize()
 
 
 func _input(event: InputEvent) -> void:
@@ -322,13 +348,13 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
-	# 1 / 2 / 3 choose the card at that position (_choose refuses while a
-	# modal, a page or another choice is open).
+	# 1 / 2 / 3 choose the first legal nodes (mouse clicks are the primary map
+	# interaction, while the shortcuts remain useful for keyboard play).
 	if event is InputEventKey and event.pressed and not event.echo:
 		var index := [KEY_1, KEY_2, KEY_3].find(event.keycode)
-		var cards := _cards()
-		if index >= 0 and index < cards.size():
-			_choose(cards[index].node_id)
+		var choices := _choices()
+		if index >= 0 and index < choices.size():
+			_choose(str(choices[index].get("id", "")))
 			get_viewport().set_input_as_handled()
 
 
@@ -352,7 +378,7 @@ func _choose(node_id: String) -> void:
 	if peek_mode or _node_click_pending or _is_relic_choice_open or _is_page_open():
 		return
 	var node: Dictionary = rm.get_node_by_id(node_id)
-	if node.is_empty():
+	if node.is_empty() or not node_id in _choices().map(func(n): return str(n.get("id", ""))):
 		return
 	_node_click_pending = true
 	if not rm.enter_map_node(node_id)["ok"]:
@@ -360,12 +386,13 @@ func _choose(node_id: String) -> void:
 		return
 	AudioManager.play_sfx("ui_click")
 	var tween := create_tween().set_parallel(true)
-	for card in _cards():
-		card.interactive = false
-		if card.node_id == node_id:
-			tween.tween_property(card, "scale", Vector2.ONE * 1.1, CHOOSE_SECONDS)
+	for id in _route_nodes.keys():
+		var button: Button = _route_nodes[id]
+		button.disabled = true
+		if str(id) == node_id:
+			tween.tween_property(button, "scale", Vector2.ONE * 1.16, NODE_CHOOSE_SECONDS)
 		else:
-			tween.tween_property(card, "modulate:a", 0.0, CHOOSE_SECONDS)
+			tween.tween_property(button, "modulate:a", 0.0, NODE_CHOOSE_SECONDS)
 	await tween.finished
 	_build_route()
 	_enter_room(node)

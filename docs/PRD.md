@@ -350,7 +350,7 @@ Central source of truth for a run. Persists across scene changes.
 - Starter decks are fixed per hero/run setup; players do not build starter decks manually
 
 ### Map System
-- `map_scene.gd` shows the current floor's route choice cards (`route_choice_card.gd`) and a floor track
+- `map_scene.gd` shows the progressively revealed route node graph: floor columns, dashed child links, visited/current highlights, and clickable reachable nodes
 - Player can manage equipment on this screen (swap items freely)
 - Before loading `battle_scene.tscn`, the map sets `RunManager.current_encounter`
 - Enemy encounters escalate in difficulty by floor

@@ -12,7 +12,7 @@ Light conventions for UI scripts. UI is currently the messiest part of the codeb
 | Shared top bar (HP/XP bars, gold/act chips, relic shelf) | `ui/common/run_top_bar.gd` |
 | Battle top-bar host (settings/pause menu only) | `ui/battle/battle_top_bar.gd` |
 | Battle notifications + pile viewer + inspect overlay | `ui/battle/battle_ui_manager.gd` |
-| Route choice card (one room, its rewards, next floor) | `ui/map/route_choice_card.gd` |
+| Route map node graph (room icon, links, reachable state) | `ui/map/map_scene.gd` |
 | Route map screen (floor track, cards, room opening, relic modal) | `ui/map/map_scene.gd` |
 | Loot reward screen + card draft | `ui/rewards/loot_reward.gd` |
 | Hero selection (demo: Cowboy Bill only) | `ui/windows/character_window.gd` |
