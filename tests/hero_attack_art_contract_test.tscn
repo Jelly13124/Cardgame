@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bu0pd6kk80fnd"]
+
+[ext_resource path="res://tests/hero_attack_art_contract_test.gd" type="Script" id="1_test"]
+
+[node name="HeroAttackArtContractTest" type="Node"]
+script = ExtResource("1_test")
