@@ -67,12 +67,12 @@ const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://ui/bat
 const DAMAGE_NUMBER = preload("uid://clps6my10jkri")  # res://ui/battle/damage_number_vfx.gd
 const HERO_DIR = "res://battle_scene/assets/images/heroes/"
 const DEFAULT_HERO_SPRITE_ID = "cowboy_bill"  # fallback when no hero data loaded  # bare-ok: sprite id
-const TARGET_DISPLAY_HEIGHT := 256.0
+const TARGET_DISPLAY_HEIGHT := 384.0
 const PLAYER_HUD_SIZE := Vector2i(250, 16)
 # The refreshed Bill attack sheet places the revolver muzzle low and to the
 # right.  Keep the gunshot origin in the authored frame's native pixels so the
 # existing muzzle-flash VFX lands on the barrel instead of above his head.
-const MUZZLE_NATIVE_POSITION := Vector2(214, 140)
+const MUZZLE_NATIVE_POSITION := Vector2(334, 220)
 const MAX_ANIMATION_FRAMES := 16
 
 var _sprite: AnimatedSprite2D

@@ -145,7 +145,8 @@ var _sprite: AnimatedSprite2D
 var _intent_cells: HBoxContainer
 var _intent_bg: Control
 var _intent_time := 0.0
-var _active_intents: Dictionary = {}
+var _active_intents: Array[Control] = []
+var _displayed_intent_action: Dictionary = {}
 var _retiring_intents: Array[Control] = []
 var _intent_anchor := Vector2.ZERO
 var _intent_tooltip: String = ""
@@ -524,9 +525,9 @@ func _intent_entries(action: Dictionary) -> Array[Dictionary]:
 	return entries
 
 
-func _add_intent_cell(kind: String) -> Control:
+func _add_intent_cell(entry: Dictionary, index: int) -> Control:
 	var cell := Control.new()
-	cell.name = "Intent%s" % kind
+	cell.name = "Intent%s" % entry["kind"]
 	cell.custom_minimum_size = Vector2(INTENT_CELL_ICON_SIZE, INTENT_BADGE_HEIGHT)
 	cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	cell.modulate.a = 0.0
@@ -534,6 +535,7 @@ func _add_intent_cell(kind: String) -> Control:
 	cell.set_meta("fade_from", 0.0)
 	cell.set_meta("fade_to", 1.0)
 	cell.set_meta("fade_duration", INTENT_APPEAR_SECONDS)
+	cell.set_meta("intent_phase", float(index) * INTENT_PHASE_STEP)
 
 	var floating := Control.new()
 	floating.name = "Floating"
@@ -571,9 +573,34 @@ func _add_intent_cell(kind: String) -> Control:
 	marker.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	floating.add_child(marker)
-	_intent_cells.add_child(cell)
-	_active_intents[kind] = cell
+	# Install the complete new visual before the cell can enter a drawn frame.
+	_update_intent_cell(cell, entry)
+	_intent_cells.add_child(cell, true)
+	_active_intents.append(cell)
 	return cell
+
+
+func _update_intent_cell(cell: Control, entry: Dictionary) -> void:
+	var floating := cell.get_node("Floating") as Control
+	(floating.get_node("Icon") as TextureRect).texture = entry["texture"]
+	var label := floating.get_node("IntentValue") as Label
+	label.text = entry["value"]
+	label.visible = not label.text.is_empty()
+	(floating.get_node("MultiMarker") as TextureRect).visible = entry["multi"]
+
+
+func _retire_intent_cells() -> void:
+	for cell in _active_intents:
+		# Leave the layout while preserving the outgoing slot position and phase.
+		# Its icon and value belong to the old move until the exit fade finishes.
+		cell.reparent(_intent_bg)
+		cell.name = "Retiring%s" % cell.name
+		cell.set_meta("fade_elapsed", 0.0)
+		cell.set_meta("fade_from", cell.modulate.a)
+		cell.set_meta("fade_to", 0.0)
+		cell.set_meta("fade_duration", INTENT_DISAPPEAR_SECONDS)
+		_retiring_intents.append(cell)
+	_active_intents.clear()
 
 
 func _update_intent_display() -> void:
@@ -581,35 +608,16 @@ func _update_intent_display() -> void:
 		return
 	var next := peek_next_action()
 	var entries := _intent_entries(next)
-	var present: Array[String] = []
-	for entry in entries:
-		present.append(entry["kind"])
-	for kind in _active_intents.keys():
-		if kind in present:
-			continue
-		var retiring: Control = _active_intents[kind]
-		retiring.reparent(_intent_bg)
-		retiring.name = "Retiring%s" % kind
-		retiring.set_meta("fade_elapsed", 0.0)
-		retiring.set_meta("fade_from", retiring.modulate.a)
-		retiring.set_meta("fade_to", 0.0)
-		retiring.set_meta("fade_duration", INTENT_DISAPPEAR_SECONDS)
-		_retiring_intents.append(retiring)
-		_active_intents.erase(kind)
+	# A move change reveals a new ordered group even when its kinds match.
+	# Status-only prediction refreshes keep the current slots and fade progress.
+	if next != _displayed_intent_action:
+		_retire_intent_cells()
+		_displayed_intent_action = next.duplicate(true)
 	for idx in range(entries.size()):
-		var entry: Dictionary = entries[idx]
-		var kind: String = entry["kind"]
-		var cell: Control = _active_intents.get(kind)
-		if cell == null:
-			cell = _add_intent_cell(kind)
-		_intent_cells.move_child(cell, idx)
-		cell.set_meta("intent_phase", float(idx) * INTENT_PHASE_STEP)
-		var floating := cell.get_node("Floating") as Control
-		(floating.get_node("Icon") as TextureRect).texture = entry["texture"]
-		var label := floating.get_node("IntentValue") as Label
-		label.text = entry["value"]
-		label.visible = not label.text.is_empty()
-		(floating.get_node("MultiMarker") as TextureRect).visible = entry["multi"]
+		if idx >= _active_intents.size():
+			_add_intent_cell(entries[idx], idx)
+		else:
+			_update_intent_cell(_active_intents[idx], entries[idx])
 	_intent_tooltip = intent_text(next)
 	_update_intent_float_positions()
 
@@ -629,7 +637,7 @@ func _process(delta: float) -> void:
 	if not _intent_bg:
 		return
 	_intent_time = fmod(_intent_time + delta, INTENT_BOB_PERIOD)
-	for cell in _active_intents.values():
+	for cell in _active_intents:
 		_advance_intent_fade(cell, delta)
 	for idx in range(_retiring_intents.size() - 1, -1, -1):
 		var cell := _retiring_intents[idx]
@@ -664,7 +672,7 @@ func _update_intent_float_positions() -> void:
 	if shortfall > 0.0 and not is_zero_approx(actor_to_viewport.determinant()):
 		var viewport_to_actor := actor_to_viewport.affine_inverse()
 		_intent_bg.position += viewport_to_actor * Vector2(0.0, shortfall) - viewport_to_actor.origin
-	var cells: Array = _active_intents.values() + _retiring_intents
+	var cells: Array = _active_intents + _retiring_intents
 	for cell in cells:
 		var floating := cell.get_node("Floating") as Control
 		var phase := float(cell.get_meta("intent_phase", 0.0))

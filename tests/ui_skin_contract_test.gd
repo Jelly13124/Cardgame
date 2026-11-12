@@ -59,6 +59,25 @@ func _test_asset_contract() -> void:
 	)
 	panel.content_margin_left = 3
 	_expect(T.panel_textured().content_margin_left == 16, "customizing one panel leaves other callers independent")
+	_test_no_baked_corner_accent()
+
+
+func _test_no_baked_corner_accent() -> void:
+	# A colored tab baked into this nine-patch repeats on every small inventory
+	# slot and route tile, regardless of whether corner.png is instantiated.
+	var image := Image.load_from_file("res://run_system/assets/images/ui/kit/panel_hard_9slice.png")
+	_expect(image != null, "shared panel source can be inspected")
+	if image == null:
+		return
+	var red_corner_pixels := 0
+	for y in range(24):
+		for x in range(image.get_width() - 24, image.get_width()):
+			var pixel := image.get_pixel(x, y)
+			if pixel.a > 0.47 and pixel.r > 0.31 and pixel.r > pixel.g * 1.6 and pixel.r > pixel.b * 1.6:
+				red_corner_pixels += 1
+	_expect(red_corner_pixels == 0, "reusable panel has no red corner ornament to repeat on small controls")
+	_expect(image.get_pixel(image.get_width() / 2, image.get_height() / 2).a > 0.99,
+		"the quiet panel interior stays opaque after removing its corner accent")
 
 
 func _test_button_states() -> void:

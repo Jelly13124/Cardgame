@@ -296,12 +296,17 @@ func _test_battle_energy_and_end_turn() -> void:
 			"battle energy uses hud_energy_badge_sts2.png (got %s)" % energy_path
 		)
 		var dial := energy.get_node_or_null("EnergyChargeRing") as Control
-		_expect(dial != null, "energy badge has a separate charge ring")
-		if frame is TextureRect and dial != null:
+		_expect(dial == null, "energy badge has no decorative charge ring")
+		var count := energy.get_node_or_null("EnergyLabel") as Label
+		_expect(count != null, "energy badge keeps its independent count")
+		if frame is TextureRect:
 			battle.ui_manager.update_labels(0, 3)
 			_expect(frame.self_modulate != Color.WHITE, "zero energy dims the badge")
+			_expect(count != null and count.text == "0/3", "zero energy keeps the correct readable count")
 			battle.ui_manager.update_labels(2, 3)
 			_expect(frame.self_modulate == Color.WHITE, "gaining energy restores the badge")
+			_expect(count != null and count.text == "2/3", "gaining energy updates the count")
+			_expect(energy.scale.x > 1.0, "energy changes retain the existing scale feedback")
 		battle.ui_manager.show_pile_viewer_from_names(tr("UI_BATTLE_EXHAUST_PILE"), [], "exhaust")
 		var pile_title := battle.find_child("RunDeckTitle", true, false) as Label
 		var pile_grid := battle.find_child("CardGrid", true, false) as GridContainer

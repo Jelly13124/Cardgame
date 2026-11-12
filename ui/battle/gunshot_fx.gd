@@ -4,9 +4,10 @@ extends RefCounted
 ## muzzle flash and a bullet flying to the target. Contact is the hit feedback
 ## the presenter plays next.
 
-const MUZZLE_FLASH_TEX = preload("res://battle_scene/assets/images/fx/gunshot/muzzle_flash.png")
-const BULLET_TEX = preload("res://battle_scene/assets/images/fx/gunshot/bullet.png")
+const MUZZLE_FLASH_TEX = preload("uid://cubpm0ij26f63")  # res://battle_scene/assets/images/fx/gunshot/muzzle_flash.png
+const BULLET_TEX = preload("uid://bwarkguw2wf6m")  # res://battle_scene/assets/images/fx/gunshot/bullet.png
 const PLAYER_GUNSHOT_WINDUP_SECONDS := 0.22
+const PLAYER_GUNSHOT_FLASH_SECONDS := 0.16
 
 
 static func play(screen: Node, shooter: Node, target: Node) -> void:
@@ -27,10 +28,15 @@ static func play(screen: Node, shooter: Node, target: Node) -> void:
 	muzzle.rotation = direction.angle()
 	var bullet = _make_fx_sprite(screen, BULLET_TEX, origin + direction * 18.0, Vector2(0.42, 0.42))
 	bullet.rotation = direction.angle()
-
+	var flash_timer := screen.get_tree().create_timer(PLAYER_GUNSHOT_FLASH_SECONDS)
+	flash_timer.timeout.connect(
+		func() -> void:
+			if is_instance_valid(muzzle):
+				muzzle.queue_free()
+	)
+	# Preserve the authored 50ms fire-to-projectile phase while making the
+	# muzzle readable for the full flash window.
 	await screen.get_tree().create_timer(0.05).timeout
-	if is_instance_valid(muzzle):
-		muzzle.queue_free()
 
 	var flight = screen.create_tween().set_parallel(true)
 	(
@@ -42,6 +48,11 @@ static func play(screen: Node, shooter: Node, target: Node) -> void:
 	flight.tween_property(bullet, "modulate:a", 0.0, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(
 		Tween.EASE_IN
 	)
+	# The projectile leaves on the firing frame.  The flash remains visible for
+	# the full authored window so the shot reads clearly without delaying the
+	# existing contact timing.
+	var flash_tween := screen.create_tween()
+	flash_tween.tween_property(muzzle, "modulate:a", 0.0, PLAYER_GUNSHOT_FLASH_SECONDS)
 	await flight.finished
 	if is_instance_valid(bullet):
 		bullet.queue_free()

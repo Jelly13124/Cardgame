@@ -19,7 +19,6 @@ var notify_tween: Tween
 var inspected_card: Control = null
 var _energy_display: Control
 var _energy_frame: TextureRect
-var _energy_ring: Control
 var _energy_tween: Tween
 var _energy_value := -1
 var _energy_fraction := 0.0
@@ -164,7 +163,7 @@ func _build_energy_display() -> void:
 	_energy_display.z_index = 20
 	main.add_child(_energy_display)
 
-	# The faceted medallion is stationary. Its charge ring and count have their own layers.
+	# The faceted medallion is stationary. The count remains an independent text layer.
 	var medal_rect := Rect2(0.0, 0.0, 104.0, 104.0)
 	var medal_tex := T.lightline_tex("hud_energy_badge_sts2")
 	if medal_tex != null:
@@ -179,12 +178,6 @@ func _build_energy_display() -> void:
 		medal.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_energy_display.add_child(medal)
 		_energy_frame = medal
-	_energy_ring = Control.new()
-	_energy_ring.name = "EnergyChargeRing"
-	_energy_ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_energy_ring.draw.connect(_draw_energy_ring)
-	_energy_display.add_child(_energy_ring)
-
 	var old_parent = energy_label.get_parent()
 	if old_parent:
 		old_parent.remove_child(energy_label)
@@ -211,18 +204,6 @@ func _build_energy_display() -> void:
 func _refresh_energy_layers() -> void:
 	if _energy_frame != null:
 		_energy_frame.self_modulate = T.ENERGY_EMPTY_TINT if _energy_value == 0 else Color.WHITE
-	if _energy_ring != null:
-		_energy_ring.queue_redraw()
-
-
-func _draw_energy_ring() -> void:
-	var center := _energy_display.size * 0.5
-	var start := -PI * 0.5
-	_energy_ring.draw_arc(center, 35.0, start, start + TAU, 64, T.PANEL_BG_DARK, 2.0, true)
-	if _energy_fraction > 0.0:
-		_energy_ring.draw_arc(
-			center, 35.0, start, start + TAU * _energy_fraction, 64, T.UI_HEADER_GOLD, 3.0, true
-		)
 
 
 func show_notification(text: String, color: Color = Color.WHITE) -> void:
