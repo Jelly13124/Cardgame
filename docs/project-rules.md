@@ -38,7 +38,7 @@ The approved production exemplars are:
 - `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`
 - `battle_scene/assets/images/heroes/cowboy_bill/idle/`
 - `battle_scene/assets/images/heroes/cowboy_bill/attack/`
-- `battle_scene/assets/images/backgrounds/wasteland_battlefield_act1_v1.png` and `run_system/assets/images/map/wasteland_route_map_sts2_bg.png` — the Act 1 production background is now 1920×1080; the route map remains a style reference until its own redraw pass (`docs/handoffs/2026-11-10-codex-art-handoff.md`)
+- `battle_scene/assets/images/backgrounds/wasteland_battlefield_act1_v1.png`, `wasteland_battlefield_act2_city.png`, `wasteland_battlefield_act3_radiation.png`, and `run_system/assets/images/map/wasteland_route_map_pixel_bg.png` — the three act backgrounds and route map are the current 1920×1080 production exemplars
 - `battle_scene/assets/images/cards/player/` as the approved collective card-art reference set. Compare multiple current cards to preserve composition and palette variety; follow the recurring majority look rather than treating one outlier or a card queued for rework as the universal template.
 - `docs/art/previews/base_building_forge_ui_dismantle_simple_comic_20260707.png` for persistent UI screen style
 
