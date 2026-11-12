@@ -21,6 +21,7 @@ const ROOMS = preload("uid://cxmgdj3654rrj")  # res://core/run/rooms.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_sts2_bg.png"
 const REST_SITE_BACKGROUND_PATH = "res://run_system/assets/images/rest/rest_site_bg.png"
+const ROUTE_TITLE_BANNER_PATH := "res://run_system/assets/images/ui/kit/banner_long.png"
 const REST_HEAL_ART_PATH = "res://run_system/assets/images/rest/rest_site_bg.png"
 const REST_UPGRADE_ART_PATH = "res://run_system/assets/images/ui/forge/anvil_art.png"
 const REST_OPTION_SOURCE_SIZE := Vector2(256, 169)
@@ -154,12 +155,33 @@ func _build_route_layout() -> void:
 	header.name = "RouteHeader"
 	header.custom_minimum_size = Vector2(0, 76)
 	header.alignment = BoxContainer.ALIGNMENT_CENTER
-	header.add_theme_constant_override("separation", 2)
+	header.add_theme_constant_override("separation", 4)
 	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var title_banner := Control.new()
+	title_banner.name = "RouteTitleBanner"
+	title_banner.custom_minimum_size = Vector2(620, 58)
+	title_banner.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	title_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var banner_art := TextureRect.new()
+	banner_art.name = "RouteTitleBannerArt"
+	banner_art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	banner_art.texture = _load_texture(ROUTE_TITLE_BANNER_PATH)
+	banner_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	banner_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	banner_art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	banner_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title_banner.add_child(banner_art)
 	var title := T.ui_header_label(tr("UI_MAP_CHOOSE_ROUTE"), 30)
+	title.name = "RouteTitle"
+	title.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.add_theme_color_override("font_color", T.LEATHER_DARK)
+	title.add_theme_color_override("font_outline_color", Color(0.93, 0.76, 0.49, 0.92))
+	title.add_theme_constant_override("outline_size", 3)
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	header.add_child(title)
+	title_banner.add_child(title)
+	header.add_child(title_banner)
 	var hint := Label.new()
 	hint.text = tr("UI_MAP_ROUTE_HINT")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -176,7 +198,9 @@ func _build_route_layout() -> void:
 	panel.name = "RouteChoicesPanel"
 	panel.custom_minimum_size = ROUTE_PANEL_MIN
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override("panel", T.panel_textured("soft"))
+	# Route cards sit directly on the map art; the old beige group frame made a
+	# second, empty card around the actual choices.
+	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	center.add_child(panel)
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 34)

@@ -13,3 +13,4 @@
 - 测试与截图均使用临时用户目录和测试存档根；截图、原始生成稿、STS2 阅读证据留在仓库外临时目录｜保护真实存档，避免将参考资源交付为原创资源｜截图工具、测试启动命令。
 - 先保留全套实际改前截图，再改生产视觉；保留单屏前后和原创坐标线框三列｜用户需要明早逐屏验收｜临时 `review.html` 与捕获脚本。
 - 阶段 B 的奖励、选卡、营火、结算与通用弹窗共用压暗遮罩、横幅和材质底板；选卡层自身从 `BAR_HEIGHT` 起算，并把局部坐标折回到全局动作带 `y=884..957`，避免顶栏被覆盖｜既满足 persistent top bar 的层级，也保留用户给定的动作位置；如果视觉不合适改 `ui/rewards/loot_reward.gd`、`ui/rewards/loot_reward.tscn`、`ui/map/map_scene.gd`、`ui/rewards/result_screen.gd`、`ui/rewards/extract_choice_modal.gd`。
+- 阶段 C 的路线标题使用 `banner_long.png` 加深色字，路线组框与卡片常态都改为空样式，稀少内容卡的 VBox 在可用高度内居中；商店删卡服务改为与商品同样的图标/标题/价格货位，遗物提示统一走共享 Tooltip 并包含说明，价格统一使用 54×54 Caps、39 号字和 15 px 描边｜保持 UI07 的轻边框与 STS2 的库存信息层级，同时不改变商店库存规则；涉及 `ui/map/map_scene.gd`、`ui/map/route_choice_card.gd`、`ui/shop/merchant_card_removal.gd`、`ui/shop/merchant_slot.gd` 及 Stage C 合约测试。

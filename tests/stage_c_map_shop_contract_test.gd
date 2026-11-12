@@ -1,0 +1,65 @@
+extends Node
+
+## Stage C regression contract for the route map and merchant inventory.
+## The checks are intentionally small and visual: they pin the hierarchy and
+## measured values that make the map title/card previews and shop prices legible.
+
+const MAP_PATH := "res://ui/map/map_scene.gd" # path-ok: reads source text
+const ROUTE_PATH := "res://ui/map/route_choice_card.gd" # path-ok: reads source text
+const REMOVAL_PATH := "res://ui/shop/merchant_card_removal.gd" # path-ok: reads source text
+const SLOT_PATH := "res://ui/shop/merchant_slot.gd" # path-ok: reads source text
+
+var failures: PackedStringArray = []
+
+
+func _ready() -> void:
+	call_deferred("_run")
+
+
+func _expect(condition: bool, message: String) -> void:
+	if condition:
+		return
+	failures.append(message)
+	print("[FAIL] ", message)
+
+
+func _run() -> void:
+	var map := FileAccess.get_file_as_string(MAP_PATH)
+	var route := FileAccess.get_file_as_string(ROUTE_PATH)
+	var removal := FileAccess.get_file_as_string(REMOVAL_PATH)
+	var slot := FileAccess.get_file_as_string(SLOT_PATH)
+
+	# The route title needs a stable banner and a dark text treatment over map art.
+	_expect(map.contains("RouteTitleBanner"), "map title has a named banner layer")
+	_expect(map.contains("banner_long.png"), "map title resolves the shared long banner")
+	_expect(map.contains("LEATHER_DARK"), "map title uses dark text on the banner")
+	_expect(map.contains("RouteChoicesPanel") and map.contains("StyleBoxEmpty.new()"), "route choices have no outer beige frame")
+	_expect(map.contains("RUN_TOP_BAR.BAR_HEIGHT"), "map content remains below the persistent top bar")
+
+	# Route cards should present their contents without the old outer beige frame,
+	# and sparse rest/treasure previews should use the available height.
+	_expect(route.contains("StyleBoxEmpty.new()"), "route card normal state has no outer frame")
+	_expect(route.contains("ALIGNMENT_CENTER"), "route card content is vertically centered")
+	_expect(route.contains("CARD_SIZE"), "route card keeps an explicit measured size")
+
+	# Removal is a product in the same shelf language: icon, title and currency
+	# price are independent children, rather than a two-line bare button label.
+	_expect(removal.contains("iconb_cards_fan.png"), "removal slot has a card-service icon")
+	_expect(removal.contains("RemoveCardIcon"), "removal slot names its product icon")
+	_expect(removal.contains("RemoveCardTitle"), "removal slot names its product title")
+	_expect(removal.contains("centered_currency_button_content"), "removal price uses shared currency content")
+	_expect(removal.contains("54") and removal.contains("39") and removal.contains("15"), "removal price keeps the 54px icon and 39/15 typography")
+
+	# Relics and prices use the same shared tooltip/currency conventions as the
+	# rest of the shop, including the relic description on hover.
+	_expect(slot.contains("Tooltip.bind_hover"), "relic slot binds the shared hover tooltip")
+	_expect(slot.contains("RELIC_%s_DESC"), "relic tooltip includes the localized description")
+	_expect(slot.contains("54") and slot.contains("39") and slot.contains("15"), "shop prices keep the 54px icon and 39/15 typography")
+
+	if failures.is_empty():
+		print("[OK] Stage C map/shop contract passed")
+		get_tree().quit(0)
+		return
+	push_error("Stage C map/shop contract failed: %s" % "; ".join(failures))
+	get_tree().quit(1)
+

@@ -21,8 +21,8 @@ const STRENGTH_COLORS := {"weak": T.ACCENT_NEON_GREEN, "normal": T.UI_HEADER_GOL
 
 var node_id := ""
 var interactive := false
-var _style: StyleBoxTexture
-var _hover_style: StyleBoxTexture
+var _style: StyleBox
+var _hover_style: StyleBox
 var _panel: PanelContainer
 var _hover_tween: Tween
 
@@ -36,17 +36,20 @@ func _init() -> void:
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_panel = panel
-	_style = T.state_box("normal", 0.0)
-	_hover_style = T.state_box("hover", 0.0)
-	for style: StyleBox in [_style, _hover_style]:
-		style.content_margin_left = 18
-		style.content_margin_right = 18
-		style.content_margin_top = 16
-		style.content_margin_bottom = 14
+	# The route card itself is the content target. Keep its normal state open so
+	# the shared beige panel skin cannot read as a second, empty card frame.
+	_style = StyleBoxEmpty.new()
+	_hover_style = T.semantic_outline(T.ACCENT_NEON_BLUE, 2, 8)
+	_hover_style.content_margin_left = 18
+	_hover_style.content_margin_right = 18
+	_hover_style.content_margin_top = 16
+	_hover_style.content_margin_bottom = 14
 	panel.add_theme_stylebox_override("panel", _style)
 	add_child(panel)
 	var box := VBoxContainer.new()
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_theme_constant_override("separation", 7)
 	panel.add_child(box)
 
