@@ -26,7 +26,12 @@ const REST_HEAL_ART_PATH = "res://run_system/assets/images/ui/rest/campfire_scen
 const REST_UPGRADE_ART_PATH = "res://run_system/assets/images/ui/forge/anvil_art.png"
 const REST_OPTION_SOURCE_SIZE := Vector2(256, 169)
 
-const CARD_GAP := 48
+## The map presents three equally weighted slots, like a route draft. A floor
+## with one or two legal nodes still keeps those cards centred inside the same
+## three-slot rhythm so the screen never jumps between floors.
+const CARD_SIZE := Vector2(320, 460)
+const CHOICE_SLOTS := 3
+const CARD_GAP := 28
 const CARD_SLIDE_PX := 40.0
 const CARD_STAGGER := 0.06
 const CHOOSE_SECONDS := 0.25
@@ -140,15 +145,24 @@ func _build_route_layout() -> void:
 	var column := VBoxContainer.new()
 	column.name = "RouteColumn"
 	column.set_anchors_preset(Control.PRESET_FULL_RECT)
-	column.offset_top = RUN_TOP_BAR.BAR_HEIGHT + 20.0
-	column.offset_bottom = -40.0
+	column.offset_top = RUN_TOP_BAR.BAR_HEIGHT + 18.0
+	column.offset_bottom = -28.0
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(column)
+	var prompt := Label.new()
+	prompt.name = "ChoicePrompt"
+	prompt.text = tr("UI_ROUTE_CHOOSE")
+	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	prompt.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	T.style_display(prompt, 26, 700, 1)
+	prompt.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
+	prompt.custom_minimum_size = Vector2(0, 38)
+	column.add_child(prompt)
 	_floor_track = HBoxContainer.new()
 	_floor_track.name = "FloorTrack"
 	_floor_track.alignment = BoxContainer.ALIGNMENT_CENTER
 	_floor_track.add_theme_constant_override("separation", 8)
-	_floor_track.custom_minimum_size = Vector2(0, 12)
+	_floor_track.custom_minimum_size = Vector2(0, 16)
 	_floor_track.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(_floor_track)
 	var header := VBoxContainer.new()
@@ -212,9 +226,10 @@ func _build_route_layout() -> void:
 	_choice_row = HBoxContainer.new()
 	_choice_row.name = "ChoiceRow"
 	_choice_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_choice_row.add_theme_constant_override("separation", 24)
-	_choice_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_choice_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_choice_row.add_theme_constant_override("separation", CARD_GAP)
+	_choice_row.custom_minimum_size = Vector2(
+		CARD_SIZE.x * CHOICE_SLOTS + CARD_GAP * (CHOICE_SLOTS - 1), CARD_SIZE.y
+	)
 	_choice_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(_choice_row)
 
@@ -269,7 +284,7 @@ func _build_route() -> void:
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_choice_row.add_child(slot)
 		slot.add_child(card)
-		card.setup(node, next_types, heal, not peek_mode)
+		card.setup(node, next_types, heal, not peek_mode, i + 1)
 		card.chosen.connect(_choose)
 		card.position = Vector2(0, CARD_SLIDE_PX)
 		card.modulate.a = 0.0

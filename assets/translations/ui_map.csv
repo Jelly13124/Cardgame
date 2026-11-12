@@ -47,6 +47,7 @@ UI_ROUTE_RELIC_CHOICE,Choose 1 of 3 relics,遗物三选一
 UI_ROUTE_HEAL,Heal {n},回复 {n}
 UI_ROUTE_HEAL_FULL,Full health,已满血
 UI_ROUTE_NEXT,Next,下一层
+UI_ROUTE_CHOOSE,Choose a route,选择路线
 UI_ROUTE_STRENGTH_WEAK,Weak,弱
 UI_ROUTE_STRENGTH_NORMAL,Normal,中
 UI_ROUTE_STRENGTH_STRONG,Strong,强

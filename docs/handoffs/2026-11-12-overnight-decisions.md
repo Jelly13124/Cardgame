@@ -17,3 +17,12 @@
 - 阶段 D 保留现有原创基地背景与四座建筑运行图，只统一基地面板改用 `panel_textured("hard")`，保留 normal/hover/pressed 建筑状态、锁定灰阶、浮动建筑徽章、悬赏/难度/种子/出发/三入口层级｜现有资产已满足 1920×1080 与新敌人画风，重画会扩大风险且不改变信息层级；如果需要调整改 `ui/base/home_base_scene.gd`、基地运行图资源和 Stage D 合约测试。
 - 阶段 E 复用现有原创荒地画风，把 Act 2/3 选为城市废墟/冷色辐射变体，补齐 1920×1080 全屏副本和 1024×768 事件插画副本；战斗在 `_ready` 按 `RunManager.current_act` 换背景，事件页优先加载 `_1024x768` 版本｜现有构图已符合新敌人画风，尺寸统一比重新生成一整套更可控；如果需要回退改 `ui/battle/battle_screen.gd`、`ui/map/map_scene.gd`、`ui/menus/main_menu.gd`、`ui/events/event_room.gd` 和 Stage E 资源副本。
 - 阶段 F 将新敌人、新主角、三幕背景和 UI07 皮肤写入两份认可样板文档，并把最终截图与 13 张原创结构示意集中到临时 `review.html`｜让明早验收同时有运行画面和可核对的结构尺寸；若需回退改 `docs/art-style-reference.md`、`docs/project-rules.md`、`docs/art/ui-asset-spec.md` 与临时 review 生成脚本。
+
+## 本轮追加决定（2026-11-12）
+
+- 地图概念图和实际地图页保留现有 persistent topbar 原样，三选一内容从 `RUN_TOP_BAR.BAR_HEIGHT` 以下开始｜用户明确概念图不要更改已有 topbar，且 UI07 要保持顶栏稳定｜如果不合适改 `ui/map/map_scene.gd`、`ui/map/route_choice_card.gd`、`ui/map/route_choice_card.tscn`；不要改 `ui/common/run_top_bar.gd`。
+- 路线选择改为固定三槽结构，卡片为 320×460、间距 28，并显示 1/2/3 选择编号｜采用 Slay the Spire 式三选一信息节奏，同时保持本项目废土漫画画风和可读性｜如果不合适改 `ui/map/map_scene.gd`、`ui/map/route_choice_card.gd`、`tests/map_route_scene_test.gd`、`tests/route_choice_card_test.gd`。
+- 奖励界面回退到过夜改动前的紧凑居中结构，保留遮罩和完整顶栏安全间距｜过夜版本的巨型底板、横幅和绝对定位造成画面变丑，用户要求沿用之前奖励界面｜如果不合适改 `ui/rewards/loot_reward.gd`、`ui/rewards/loot_reward.tscn`、`ui/rewards/result_screen.gd`、`ui/rewards/extract_choice_modal.gd` 及 Stage B 合约测试。
+- 路线地图背景替换为 1920×1080 的原创废土漫画场景，中心留出安静区域承载路线卡｜解决旧羊皮纸/杂乱背景与三槽路线层级冲突｜如果不合适改 `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`。
+- 主角战斗显示目标高度降到 256，强制 tint alpha 为 1，并用可见像素底线和归一化枪口锚点保持 idle/attack 对齐｜修复待机过透明、主角过大，同时保留 384px 原画源像素和枪口/受击/血条相对位置｜如果不合适改 `ui/battle/player_view.gd`、`tests/hero_presentation_contract_test.gd`、`tests/hero_attack_art_contract_test.gd`。
+- 暂停阶段 E 的事件插画重画项，不改事件背景、`ui/events/event_room.gd`，也不把事件尺寸文档从旧规格改成新规格｜用户明确要求先停下该项，后续规格为全屏 1920×1080/2112×1188、右侧自然变暗留文案｜恢复该项时改 `ui/events/event_room.gd`、事件资源、`docs/handoffs/2026-11-10-codex-art-handoff.md`、`docs/art/ui-asset-spec.md`。

@@ -1,8 +1,8 @@
 extends Node
 
-## Focused Stage B regression contract. This intentionally starts red against the
-## legacy reward/rest/result surfaces, then turns green as the shared overlay
-## structure and measured geometry land.
+## Focused Stage B regression contract. This keeps the reward and result
+## overlays on the readable pre-overnight structure while preserving the
+## persistent run top bar clearance.
 
 const LOOT_PATH := "res://ui/rewards/loot_reward.gd" # path-ok: reads source text
 const LOOT_SCENE_PATH := "res://ui/rewards/loot_reward.tscn" # path-ok: reads scene text
@@ -38,21 +38,19 @@ func _run() -> void:
 	var result := FileAccess.get_file_as_string(RESULT_PATH)
 	var extract := FileAccess.get_file_as_string(EXTRACT_PATH)
 
-	# Rewards and card draft share the battle scrim/banner/panel structure while
-	# preserving the persistent top bar's full clearance.
-	_expect(loot.contains("banner_long.png"), "rewards resolves the shared long banner")
-	_expect(loot.contains("RewardPanel"), "rewards owns a measured body panel")
-	_expect(loot.contains("Vector2(526, 640)"), "rewards body uses the 526x640 target footprint")
-	_expect(loot.contains("Vector2(402, 86)"), "reward rows keep the 402x86 hit geometry")
-	_expect(loot.contains("Vector2(269, 108)"), "continue keeps the 269x108 hit geometry")
-	_expect(loot.contains("BACK_OUT") or loot.contains("TRANS_BACK"), "rewards entrance uses back-out motion")
-	_expect(scene.contains("RewardPanel") and scene.contains("RewardBanner"), "reward scene declares panel and banner layers")
+	# Rewards keep the earlier readable VBox structure: one centered content
+	# column, compact list rows and a normal-sized continue action. The backdrop
+	# and content still start below the persistent top bar.
+	_expect(loot.contains("T.fade_in(self)"), "rewards use the readable fade-in entrance")
+	_expect(loot.contains("loot_root.offset_top = RUN_TOP_BAR.BAR_HEIGHT"), "rewards clear the full top bar")
+	_expect(loot.contains("Vector2(700, 80)"), "reward rows keep the readable hit geometry")
+	_expect(loot.contains("Vector2(220, 54)"), "continue keeps the compact hit geometry")
+	_expect(not loot.contains("REWARD_PANEL_SIZE"), "rewards do not add an oversized absolute panel")
+	_expect(not scene.contains("RewardPanel") and not scene.contains("RewardBanner"), "reward scene keeps the simple content stack")
 
-	# Card picks stay card-native, with the measured centre pitch and low action
-	# band instead of a generic holder around the hand.
-	_expect(loot.contains("CARD_REWARD_CENTER_Y"), "card reward exposes centre-y anchor")
-	_expect(loot.contains("CARD_REWARD_PITCH"), "card reward exposes 350px card pitch")
-	_expect(loot.contains("884.0") and loot.contains("957.0"), "card reward actions stay in the y=884..957 band")
+	# Card picks remain card-native and use the same top-bar-safe VBox overlay.
+	_expect(loot.contains("draft_overlay.offset_top = RUN_TOP_BAR.BAR_HEIGHT"), "card draft clears the full top bar")
+	_expect(not loot.contains("CARD_REWARD_CENTER_Y") and not loot.contains("CARD_REWARD_PITCH"), "card draft avoids the oversized absolute layout")
 
 	# Rest/campfire choices use source art plus a shape-hugging outline, and a
 	# full-health run reads 已满血 instead of 回复0.
@@ -62,10 +60,12 @@ func _run() -> void:
 	_expect(map.contains("UI_ROUTE_HEAL_FULL"), "full-health rest copy uses the explicit 已满血 key")
 	_expect(map.contains("RUN_TOP_BAR.BAR_HEIGHT"), "rest content starts below the complete top bar")
 
-	# Result, extract, and the shared modal all use the banner/panel hierarchy.
-	_expect(result.contains("banner_short.png") and result.contains("ResultPanel"), "result uses shared banner and panel layers")
-	_expect(extract.contains("banner_short.png") and extract.contains("ModalPanel"), "extract modal uses the shared modal hierarchy")
+	# Result and extract return to their compact centered panels while retaining
+	# the full top-bar clearance introduced before the overnight visual pass.
+	_expect(not result.contains("banner_short.png") and not result.contains("ResultPanel"), "result keeps the compact centered panel")
+	_expect(not extract.contains("banner_short.png") and not extract.contains("ModalPanel"), "extract keeps the compact centered panel")
 	_expect(result.contains("RUN_TOP_BAR.BAR_HEIGHT"), "result keeps the run top bar clearance")
+	_expect(extract.contains("RUN_TOP_BAR.BAR_HEIGHT"), "extract keeps the run top bar clearance")
 
 	if failures.is_empty():
 		print("[OK] Stage B overlay contract passed")

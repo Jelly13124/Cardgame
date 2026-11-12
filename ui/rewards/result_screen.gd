@@ -8,7 +8,6 @@ extends Control
 const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://ui/common/run_top_bar.gd
-const BANNER_SHORT_PATH := "res://run_system/assets/images/ui/kit/banner_short.png"
 const HOME_BASE_PATH := "uid://c6bvuu6kbx0pq"  # res://ui/base/home_base_scene.tscn
 const MAIN_MENU_PATH := "uid://dnjlmt1repvjw"  # res://ui/menus/main_menu.tscn
 ## Set this project setting to the real app page before shipping. An empty or
@@ -45,26 +44,11 @@ func _build() -> void:
 	add_child(dim)
 
 	var center := CenterContainer.new()
-	center.name = "ResultPanelLayer"
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.offset_top = RUN_TOP_BAR.BAR_HEIGHT
 	add_child(center)
 
-	var banner := TextureRect.new()
-	banner.name = "ResultBanner"
-	banner.texture = load(BANNER_SHORT_PATH) as Texture2D
-	banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	banner.offset_left = -180.0
-	banner.offset_top = 118.0
-	banner.offset_right = 180.0
-	banner.offset_bottom = 214.0
-	banner.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	banner.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(banner)
-
 	var panel := PanelContainer.new()
-	panel.name = "ResultPanel"
 	panel.custom_minimum_size = Vector2(640, 420)
 	panel.add_theme_stylebox_override("panel", T.ll_inset_thin())
 	center.add_child(panel)

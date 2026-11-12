@@ -11,7 +11,10 @@ const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_them
 const NODE_ICON_DIR := "res://run_system/assets/images/map/nodes/"
 const CAPS_ICON := "res://run_system/assets/images/home/currency/caps.png"
 const SCRAP_ICON := "res://run_system/assets/images/home/currency/scrap.png"
-const CARD_SIZE := Vector2(320, 368)
+## The route screen keeps three equally weighted choices visible at once. The
+## slightly wider card leaves enough room for a readable encounter preview and
+## reward rows without turning the card into a dense panel.
+const CARD_SIZE := Vector2(320, 460)
 const ENCOUNTERS = preload("uid://mlx3xqfjwlpq")  # res://core/run/encounters.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const ENEMY_ART_DIR := "res://battle_scene/assets/images/enemies/"
@@ -46,6 +49,39 @@ func _init() -> void:
 	_hover_style.content_margin_bottom = 14
 	panel.add_theme_stylebox_override("panel", _style)
 	add_child(panel)
+
+	# A compact index makes the three-choice structure scannable and mirrors the
+	# number-key shortcuts shown by the map screen. It is deliberately a small
+	# flat badge instead of a second decorative frame around the card.
+	var choice_number := PanelContainer.new()
+	choice_number.name = "ChoiceNumber"
+	choice_number.anchor_left = 0.0
+	choice_number.anchor_top = 0.0
+	choice_number.anchor_right = 0.0
+	choice_number.anchor_bottom = 0.0
+	choice_number.offset_left = 14.0
+	choice_number.offset_top = 12.0
+	choice_number.offset_right = 48.0
+	choice_number.offset_bottom = 46.0
+	choice_number.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var number_style := StyleBoxFlat.new()
+	number_style.bg_color = Color(0.08, 0.055, 0.025, 0.94)
+	number_style.border_color = T.GLASS_GOLD
+	number_style.set_border_width_all(1)
+	number_style.set_corner_radius_all(17)
+	number_style.content_margin_left = 2.0
+	number_style.content_margin_right = 2.0
+	choice_number.add_theme_stylebox_override("panel", number_style)
+	var number_label := Label.new()
+	number_label.name = "Label"
+	number_label.text = "•"
+	number_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	number_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	number_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	number_label.add_theme_color_override("font_color", T.TEXT_MAIN)
+	number_label.add_theme_font_size_override("font_size", 20)
+	choice_number.add_child(number_label)
+	add_child(choice_number)
 	var box := VBoxContainer.new()
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -112,9 +148,16 @@ func _init() -> void:
 
 ## Shows `node` ({id, type, rewards}); `next_types` are the room types of the
 ## floor it leads to; `heal_amount` is what a campfire would heal now.
-func setup(node: Dictionary, next_types: Array, heal_amount: int, is_interactive: bool) -> void:
+func setup(
+	node: Dictionary,
+	next_types: Array,
+	heal_amount: int,
+	is_interactive: bool,
+	choice_index: int = 0
+) -> void:
 	node_id = str(node.get("id", ""))
 	interactive = is_interactive
+	get_node("ChoiceNumber/Label").text = str(choice_index) if choice_index > 0 else "•"
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if interactive else Control.CURSOR_ARROW
 	var type := str(node.get("type", "enemy"))
 	%TypeIcon.texture = _icon(NODE_ICON_DIR + type + ".png")

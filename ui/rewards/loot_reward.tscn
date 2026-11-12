@@ -19,30 +19,14 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="RewardPanel" type="Panel" parent="."]
-layout_mode = 0
-offset_left = 697.0
-offset_top = 236.0
-offset_right = 1223.0
-offset_bottom = 876.0
-mouse_filter = 2
-
-[node name="RewardBanner" type="TextureRect" parent="."]
-layout_mode = 0
-offset_left = 634.0
-offset_top = 160.0
-offset_right = 1286.0
-offset_bottom = 322.0
-mouse_filter = 2
-expand_mode = 1
-stretch_mode = 5
-
 [node name="LootContents" type="VBoxContainer" parent="."]
-layout_mode = 0
-offset_left = 759.0
-offset_top = 300.0
-offset_right = 1161.0
-offset_bottom = 850.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -44.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_constants/separation = 26
 alignment = 1
 
@@ -57,7 +41,7 @@ size_flags_horizontal = 4
 theme_override_constants/separation = 10
 
 [node name="ProceedButton" type="Button" parent="LootContents"]
-custom_minimum_size = Vector2(269, 108)
+custom_minimum_size = Vector2(220, 54)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "UI_LOOT_PROCEED"
@@ -68,34 +52,24 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_bottom = -44.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 1
+theme_override_constants/separation = 30
+alignment = 1
 
 [node name="TitleLabel" type="Label" parent="DraftOverlay"]
-layout_mode = 0
-offset_left = 634.0
-offset_top = 48.0
-offset_right = 1286.0
-offset_bottom = 118.0
+layout_mode = 2
 text = "UI_LOOT_DRAFT_TITLE"
 horizontal_alignment = 1
 
 [node name="CardsContainer" type="HBoxContainer" parent="DraftOverlay"]
-layout_mode = 0
-offset_left = 404.0
-offset_top = 238.0
-offset_right = 1516.0
-offset_bottom = 698.0
-theme_override_constants/separation = 38
+layout_mode = 2
+theme_override_constants/separation = 36
 alignment = 1
 
 [node name="Actions" type="HBoxContainer" parent="DraftOverlay"]
-layout_mode = 0
-offset_left = 710.0
-offset_top = 752.0
-offset_right = 1210.0
-offset_bottom = 825.0
+layout_mode = 2
 theme_override_constants/separation = 14
 alignment = 1
 

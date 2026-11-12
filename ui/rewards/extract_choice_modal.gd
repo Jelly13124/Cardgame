@@ -9,7 +9,6 @@ class_name ExtractChoiceModal
 
 const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://ui/common/run_top_bar.gd
-const BANNER_SHORT_PATH := "res://run_system/assets/images/ui/kit/banner_short.png"
 
 signal chosen(extract: bool)
 
@@ -33,7 +32,6 @@ func _ready() -> void:
 
 func _build() -> void:
 	var bg := ColorRect.new()
-	bg.name = "ModalScrim"
 	bg.color = Color(0, 0, 0, 0.78)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg.offset_top = RUN_TOP_BAR.BAR_HEIGHT
@@ -45,21 +43,7 @@ func _build() -> void:
 	center.offset_top = RUN_TOP_BAR.BAR_HEIGHT
 	add_child(center)
 
-	var banner := TextureRect.new()
-	banner.name = "ModalBanner"
-	banner.texture = load(BANNER_SHORT_PATH) as Texture2D
-	banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	banner.offset_left = -180.0
-	banner.offset_top = 154.0
-	banner.offset_right = 180.0
-	banner.offset_bottom = 250.0
-	banner.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	banner.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(banner)
-
 	var panel := PanelContainer.new()
-	panel.name = "ModalPanel"
 	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
 	panel.custom_minimum_size = Vector2(640, 380)
 	center.add_child(panel)

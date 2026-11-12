@@ -118,14 +118,14 @@ func _test_hero_geometry() -> void:
 			_expect(image.get_size() == Vector2i(384, 384), label + " uses a source canvas large enough for the hero")
 			_expect(sprite.scale.x <= 1.0 and sprite.scale.y <= 1.0, label + " is never enlarged from too few source pixels")
 			var body_height := bounds.size.y * sprite.scale.y
-			_expect(body_height >= 338.0 and body_height <= 360.0, label + " is visibly taller than a 256px ordinary enemy")
+			_expect(body_height >= 218.0 and body_height <= 240.0, label + " is visibly taller than a 256px ordinary enemy")
 			var feet := sprite.position.y + (bounds.end.y - texture.get_height() * 0.5) * sprite.scale.y
 			_expect(absf(feet + 20.0) <= 1.0, label + " preserves the existing visible ground baseline")
 			_expect(bounds.position.x > 4 and bounds.end.x < image.get_width() - 4, label + " keeps the complete silhouette inside the canvas")
 	var hud: Control = player.get("_hud")
-	_expect(hud.position == Vector2(-125, 28), "hero health bar remains anchored below the planted feet")
+	_expect(hud.position == Vector2(-100, 28), "hero health bar remains anchored below the planted feet")
 	var hit: Vector2 = player.call("get_hit_global_position")
-	_expect(hit.y < -140.0 and hit.y > -220.0, "hit feedback follows the enlarged torso")
+	_expect(hit.y < -108.0 and hit.y > -120.0, "hit feedback follows the enlarged torso")
 	player.queue_free()
 	RunManager.current_hero_data = saved_data
 

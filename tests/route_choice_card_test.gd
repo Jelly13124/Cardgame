@@ -22,7 +22,8 @@ func _expect(condition: bool, message: String) -> void:
 
 func _run() -> void:
 	var card = _card({"id": "f0.1", "type": "elite", "rewards": {"gold": 18, "scrap": 11}}, ["rest", "enemy"], 20, true)
-	_expect(card.custom_minimum_size == Vector2(320, 368), "route choices use the compact 320x368 card geometry")
+	_expect(card.custom_minimum_size == Vector2(320, 460), "route cards use the wider three-choice size")
+	_expect(card.get_node_or_null("ChoiceNumber") != null, "route cards expose a compact choice number")
 	_expect(card.get_node("%Rewards").size_flags_vertical == Control.SIZE_SHRINK_CENTER, "route rewards stay compact instead of expanding into a blank well")
 	_expect(card.get_node("%TypeName").text == tr("UI_MAP_LEGEND_ELITE"), "the card names its room")
 	var rows := _rows(card)
