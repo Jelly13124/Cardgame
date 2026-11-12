@@ -6,13 +6,17 @@ extends ColorRect
 
 const SHADER = preload("res://ui/battle/card_highlight.gdshader")
 const COLOR := Color(0.2, 0.92, 1.0, 0.98)
-## Outline width in pixels when fully shown. The pulse changes alpha, not the
-## silhouette footprint, so the playable cue remains close to the card edge.
+## Resting outline width in pixels. The pulse breathes around this value while
+## staying close to the card edge, rather than becoming a decorative frame.
 const WIDTH := 9.0
-## STS2-style playable feedback breathes gently after the 0.5 s reveal.
-const PULSE_PERIOD := 1.2
-const PULSE_MIN_ALPHA := 0.62
-const PULSE_MAX_ALPHA := 0.98
+## STS2-style playable feedback breathes visibly after the 0.5 s reveal. Both
+## opacity and thickness move together so the cue reads at a glance over bright
+## or dark card art.
+const PULSE_PERIOD := 1.0
+const PULSE_MIN_ALPHA := 0.25
+const PULSE_MAX_ALPHA := 1.0
+const PULSE_MIN_WIDTH := 7.0
+const PULSE_MAX_WIDTH := 13.0
 ## The rect extends this far beyond the card on every side.
 const MARGIN := 12.0
 
@@ -75,6 +79,8 @@ func anim_hide_instantly() -> void:
 func anim_flash() -> void:
 	if _target <= 0.0 or not is_inside_tree():
 		return
+	var resume_pulse := _pulse_enabled
+	_pulse_enabled = false
 	if _tween:
 		_tween.kill()
 	_tween = create_tween()
@@ -82,6 +88,8 @@ func anim_flash() -> void:
 	_tween.tween_method(_set_width, WIDTH * 2.0, WIDTH, 0.35).set_ease(Tween.EASE_OUT).set_trans(
 		Tween.TRANS_CUBIC
 	)
+	if resume_pulse:
+		_tween.tween_callback(_begin_pulse)
 
 
 func _tween_width(to: float, seconds: float) -> void:
@@ -134,4 +142,8 @@ func _process(delta: float) -> void:
 		return
 	_pulse_time = fmod(_pulse_time + delta, PULSE_PERIOD)
 	var wave := 0.5 + 0.5 * sin(_pulse_time * TAU / PULSE_PERIOD)
+	# Smooth the endpoints so the highlight eases into and out of its flash,
+	# while the wider width makes the change readable without a hard pop.
+	wave = wave * wave * (3.0 - 2.0 * wave)
 	_set_glow_alpha(lerpf(PULSE_MIN_ALPHA, PULSE_MAX_ALPHA, wave))
+	_set_width(lerpf(PULSE_MIN_WIDTH, PULSE_MAX_WIDTH, wave))

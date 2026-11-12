@@ -11,12 +11,12 @@ const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_them
 const NODE_ICON_DIR := "res://run_system/assets/images/map/nodes/"
 const CAPS_ICON := "res://run_system/assets/images/home/currency/caps.png"
 const SCRAP_ICON := "res://run_system/assets/images/home/currency/scrap.png"
-const CARD_SIZE := Vector2(300, 420)
+const CARD_SIZE := Vector2(320, 368)
 const ENCOUNTERS = preload("uid://mlx3xqfjwlpq")  # res://core/run/encounters.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const ENEMY_ART_DIR := "res://battle_scene/assets/images/enemies/"
 const MAX_PORTRAITS := 3
-const PORTRAIT_PX := 56
+const PORTRAIT_PX := 48
 const STRENGTH_COLORS := {"weak": T.ACCENT_NEON_GREEN, "normal": T.UI_HEADER_GOLD, "strong": T.ACCENT_DANGER}
 
 var node_id := ""
@@ -41,17 +41,17 @@ func _init() -> void:
 	for style: StyleBox in [_style, _hover_style]:
 		style.content_margin_left = 18
 		style.content_margin_right = 18
-		style.content_margin_top = 20
-		style.content_margin_bottom = 18
+		style.content_margin_top = 16
+		style.content_margin_bottom = 14
 	panel.add_theme_stylebox_override("panel", _style)
 	add_child(panel)
 	var box := VBoxContainer.new()
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_theme_constant_override("separation", 10)
+	box.add_theme_constant_override("separation", 7)
 	panel.add_child(box)
 
 	var icon := TextureRect.new()
-	icon.custom_minimum_size = Vector2(96, 96)
+	icon.custom_minimum_size = Vector2(72, 72)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -60,12 +60,12 @@ func _init() -> void:
 	var title := Label.new()
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
-	T.style_display(title, 26)
+	T.style_display(title, 24)
 	_add_unique(box, title, "TypeName")
 
 	var foes := HBoxContainer.new()
 	foes.alignment = BoxContainer.ALIGNMENT_CENTER
-	foes.add_theme_constant_override("separation", 8)
+	foes.add_theme_constant_override("separation", 6)
 	foes.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(foes)
 	var portraits := HBoxContainer.new()
@@ -79,9 +79,9 @@ func _init() -> void:
 	_add_unique(foes, tag, "StrengthTag")
 
 	var rewards := VBoxContainer.new()
-	rewards.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	rewards.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	rewards.alignment = BoxContainer.ALIGNMENT_CENTER
-	rewards.add_theme_constant_override("separation", 8)
+	rewards.add_theme_constant_override("separation", 5)
 	rewards.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_add_unique(box, rewards, "Rewards")
 
@@ -93,13 +93,13 @@ func _init() -> void:
 	next_label.text = tr("UI_ROUTE_NEXT")
 	next_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	next_label.add_theme_color_override("font_color", T.UI_LABEL_DIM)
-	next_label.add_theme_font_size_override("font_size", 16)
+	next_label.add_theme_font_size_override("font_size", 15)
 	box.add_child(next_label)
 
 	var next_row := HBoxContainer.new()
 	next_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	next_row.add_theme_constant_override("separation", 10)
-	next_row.custom_minimum_size = Vector2(0, 28)
+	next_row.add_theme_constant_override("separation", 8)
+	next_row.custom_minimum_size = Vector2(0, 24)
 	next_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_add_unique(box, next_row, "NextRow")
 
@@ -137,7 +137,7 @@ func setup(node: Dictionary, next_types: Array, heal_amount: int, is_interactive
 	for t in next_types:
 		var small := TextureRect.new()
 		small.texture = _icon(NODE_ICON_DIR + str(t) + ".png")
-		small.custom_minimum_size = Vector2(28, 28)
+		small.custom_minimum_size = Vector2(24, 24)
 		small.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		small.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		small.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -212,7 +212,7 @@ func _add_row(icon_path: String, text: String, color: Color) -> void:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_color_override("font_color", color)
-	T.style_display(label, 22)
+	T.style_display(label, 20)
 	row.add_child(label)
 	%Rewards.add_child(row)
 

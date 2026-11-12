@@ -49,3 +49,5 @@ UI_ROUTE_NEXT,Next,下一层
 UI_ROUTE_STRENGTH_WEAK,Weak,弱
 UI_ROUTE_STRENGTH_NORMAL,Normal,中
 UI_ROUTE_STRENGTH_STRONG,Strong,强
+UI_MAP_CHOOSE_ROUTE,Choose your route,选择路线
+UI_MAP_ROUTE_HINT,Pick one node to continue,选择一个节点继续

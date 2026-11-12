@@ -164,11 +164,22 @@ func test_playable_outline_breathes() -> void:
 	battle.refresh_hand_ui()
 	var material := cards[0].highlight.material as ShaderMaterial
 	await get_tree().create_timer(0.6).timeout
-	var first_alpha := (material.get_shader_parameter("glow_color") as Color).a
-	await get_tree().create_timer(0.3).timeout
-	var second_alpha := (material.get_shader_parameter("glow_color") as Color).a
-	_expect(absf(first_alpha - second_alpha) > 0.02,
-		"playable outline breathes instead of staying at a constant alpha")
+	var alpha_min := 1.0
+	var alpha_max := 0.0
+	var width_min := INF
+	var width_max := -INF
+	for _i in range(90):
+		var glow := material.get_shader_parameter("glow_color") as Color
+		var width := float(material.get_shader_parameter("width_px"))
+		alpha_min = minf(alpha_min, glow.a)
+		alpha_max = maxf(alpha_max, glow.a)
+		width_min = minf(width_min, width)
+		width_max = maxf(width_max, width)
+		await get_tree().process_frame
+	_expect(alpha_max - alpha_min > 0.25,
+		"playable outline has a visible brightness breath (range %.2f)" % (alpha_max - alpha_min))
+	_expect(width_max - width_min > 3.5,
+		"playable outline has a visible thickness breath (range %.2f)" % (width_max - width_min))
 	battle.player.energy = 0
 	battle.refresh_hand_ui()
 	await get_tree().create_timer(0.6).timeout

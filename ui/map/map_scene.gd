@@ -26,6 +26,7 @@ const CARD_GAP := 48
 const CARD_SLIDE_PX := 40.0
 const CARD_STAGGER := 0.06
 const CHOOSE_SECONDS := 0.25
+const ROUTE_PANEL_MIN := Vector2(1120, 460)
 
 var rm: Node
 var map_background_tex: Texture2D
@@ -129,11 +130,13 @@ func _draw() -> void:
 
 
 ## The floor track under the top bar and the centred row of choice cards.
+## The route header and soft panel keep the choice area readable on the map art;
+## all route data and click handling remain owned by _build_route/_choose.
 func _build_route_layout() -> void:
 	var column := VBoxContainer.new()
 	column.name = "RouteColumn"
 	column.set_anchors_preset(Control.PRESET_FULL_RECT)
-	column.offset_top = RUN_TOP_BAR.BAR_HEIGHT + 24.0
+	column.offset_top = RUN_TOP_BAR.BAR_HEIGHT + 20.0
 	column.offset_bottom = -40.0
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(column)
@@ -144,15 +147,49 @@ func _build_route_layout() -> void:
 	_floor_track.custom_minimum_size = Vector2(0, 12)
 	_floor_track.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(_floor_track)
+	var header := VBoxContainer.new()
+	header.name = "RouteHeader"
+	header.custom_minimum_size = Vector2(0, 76)
+	header.alignment = BoxContainer.ALIGNMENT_CENTER
+	header.add_theme_constant_override("separation", 2)
+	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var title := T.ui_header_label(tr("UI_MAP_CHOOSE_ROUTE"), 30)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	header.add_child(title)
+	var hint := Label.new()
+	hint.text = tr("UI_MAP_ROUTE_HINT")
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_color_override("font_color", T.UI_LABEL_DIM)
+	T.style_display(hint, 17)
+	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	header.add_child(hint)
+	column.add_child(header)
 	var center := CenterContainer.new()
 	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(center)
+	var panel := PanelContainer.new()
+	panel.name = "RouteChoicesPanel"
+	panel.custom_minimum_size = ROUTE_PANEL_MIN
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override("panel", T.panel_textured("soft"))
+	center.add_child(panel)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 34)
+	margin.add_theme_constant_override("margin_right", 34)
+	margin.add_theme_constant_override("margin_top", 24)
+	margin.add_theme_constant_override("margin_bottom", 24)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(margin)
 	_choice_row = HBoxContainer.new()
 	_choice_row.name = "ChoiceRow"
-	_choice_row.add_theme_constant_override("separation", CARD_GAP)
+	_choice_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_choice_row.add_theme_constant_override("separation", 24)
+	_choice_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_choice_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_choice_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	center.add_child(_choice_row)
+	margin.add_child(_choice_row)
 
 
 ## The nodes the player can choose now: the start node on a fresh act, else

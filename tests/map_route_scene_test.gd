@@ -27,6 +27,8 @@ func _run() -> void:
 	var map = await _open_map(false)
 	_expect(_row(map).get_child_count() == 1, "a fresh run offers the single relic card (%d)" % _row(map).get_child_count())
 	_expect(map.find_child("FloorTrack", true, false).get_child_count() == 12, "the floor track has 12 pips")
+	_expect(map.find_child("RouteChoicesPanel", true, false) != null, "the route choices sit inside a shared presentation panel")
+	_expect(map.find_child("RouteHeader", true, false) != null, "the route map labels the choice section")
 	map.queue_free()
 
 	RunManager.enter_map_node("f0")
