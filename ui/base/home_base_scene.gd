@@ -34,6 +34,7 @@ const BUILDING_ACCENTS := {
 const HOME_BACKGROUND_PATH := "res://run_system/assets/images/home/home_base_empty_bg.png"
 const FORGE_BACKDROP_PATH := "res://run_system/assets/images/buildings/forge_bg.png"
 const MAP_CANVAS_SIZE := Vector2(1920, 1080)
+const BASE_UI_PANEL_STYLE := "hard"
 ## Grayscale-darken shader for LOCKED building buttons (replaces the old
 ## too-subtle modulate 0.75 dim). Applied as the button's material only — the
 ## brass lock overlay is a SIBLING TextureRect, so it stays full-color.
@@ -451,7 +452,8 @@ func _add_bounty_board_panel(root: Control) -> void:
 	panel.offset_right = 408.0
 	panel.offset_bottom = -68.0
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	panel.add_theme_stylebox_override("panel", T.kit_box("panel_hard_9slice"))
+	# The hard panel is the shared replacement for the legacy T.kit_box("panel_hard_9slice") shell.
+	panel.add_theme_stylebox_override("panel", T.panel_textured(BASE_UI_PANEL_STYLE))
 	root.add_child(panel)
 
 	var margin := MarginContainer.new()
