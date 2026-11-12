@@ -87,17 +87,15 @@ func _test_damage_tiers_and_categories() -> void:
 	var attack := enemy.find_child("IntentAttack", true, false)
 	var value := attack.find_child("IntentValue", true, false) as Label
 	_expect(value != null and value.text == "7×3", "multi-hit prints projected per-hit damage and count")
-	var marker := attack.find_child("MultiMarker", true, false) as TextureRect
-	_expect(marker != null and marker.visible and _path(marker).ends_with("/combat/intents/multi.png"),
-		"multi-hit has its separate marker")
+	_expect(attack.find_child("MultiMarker", true, false) == null,
+		"attack intents keep only the severity blade and damage value")
 	_expect(value != null and value.get_theme_font_size("font_size") == 22
 		and value.get_theme_constant("outline_size") == 12, "damage text remains readable over the scene")
 	_set_action(enemy, {"type": "attack_all", "amount": 8})
 	attack = enemy.find_child("IntentAttack", true, false)
 	value = attack.find_child("IntentValue", true, false) as Label
-	marker = attack.find_child("MultiMarker", true, false) as TextureRect
-	_expect(value != null and value.text == "8" and marker != null and not marker.visible,
-		"all-target attack remains one hit without explicit repeat metadata")
+	_expect(value != null and value.text == "8" and attack.find_child("MultiMarker", true, false) == null,
+		"all-target attack remains one hit without a secondary marker")
 	for row in [["unknown", "Unknown", "unknown"], ["future_action", "Unknown", "unknown"],
 		["escape", "Escape", "escape"], ["summon", "Summon", "summon"],
 		["telegraph", "Charge", "charge"], ["block", "Block", "block"],

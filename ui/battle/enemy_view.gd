@@ -27,7 +27,6 @@ const INTENT_ATTACK_TEXTURES := [
 	preload("uid://bn6puo60siu16"),  # res://battle_scene/assets/images/ui/combat/intents/attack_2.png
 	preload("uid://b17fj0m5wl32q"),  # res://battle_scene/assets/images/ui/combat/intents/attack_3.png
 ]
-const INTENT_ICON_MULTI = preload("uid://c2pgn1drmy2aj")  # res://battle_scene/assets/images/ui/combat/intents/multi.png
 const INTENT_ICON_BLOCK = preload("uid://cgifa8t5ypwb4")  # res://battle_scene/assets/images/ui/combat/intents/block.png
 const INTENT_ICON_BUFF = preload("uid://cudrvv4ubwpbc")  # res://battle_scene/assets/images/ui/combat/intents/buff.png
 const INTENT_ICON_CHARGE = preload("uid://imyhsfwxky1u")  # res://battle_scene/assets/images/ui/combat/intents/charge.png
@@ -474,12 +473,11 @@ func _attack_intent_entry(action: Dictionary) -> Dictionary:
 		"kind": "Attack",
 		"texture": INTENT_ATTACK_TEXTURES[attack_intent_tier(damage * hits) - 1],
 		"value": "%d×%d" % [damage, hits] if hits > 1 else str(damage),
-		"multi": hits > 1,
 	}
 
 
 func _intent_entry(kind: String, texture: Texture2D, value: String = "") -> Dictionary:
-	return {"kind": kind, "texture": texture, "value": value, "multi": false}
+	return {"kind": kind, "texture": texture, "value": value}
 
 
 func _intent_entries(action: Dictionary) -> Array[Dictionary]:
@@ -564,15 +562,6 @@ func _add_intent_cell(entry: Dictionary, index: int) -> Control:
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	floating.add_child(label)
 
-	var marker := TextureRect.new()
-	marker.name = "MultiMarker"
-	marker.position = Vector2(34.0, 24.0)
-	marker.size = Vector2(20.0, 20.0)
-	marker.texture = INTENT_ICON_MULTI
-	marker.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	marker.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	floating.add_child(marker)
 	# Install the complete new visual before the cell can enter a drawn frame.
 	_update_intent_cell(cell, entry)
 	_intent_cells.add_child(cell, true)
@@ -586,7 +575,6 @@ func _update_intent_cell(cell: Control, entry: Dictionary) -> void:
 	var label := floating.get_node("IntentValue") as Label
 	label.text = entry["value"]
 	label.visible = not label.text.is_empty()
-	(floating.get_node("MultiMarker") as TextureRect).visible = entry["multi"]
 
 
 func _retire_intent_cells() -> void:
