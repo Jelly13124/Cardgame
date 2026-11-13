@@ -1,8 +1,8 @@
 extends Node
 
 ## Golden snapshot of every card's text and resolved effects, base and upgraded,
-## in both locales and with/without player stats. Phase 4 moves the description
-## and upgrade code; this test pins the output to what main produced.
+## in both locales and with/without player stats. Text uses the concise card
+## face presentation; effects and upgrade values remain pinned independently.
 ## Run with CAPTURE_GOLDEN=1 to (re)write the fixture.
 
 const CARD_FACTORY = preload("uid://diap3gdfbqvjv")  # res://ui/battle/card_framework_adapters/my_card_factory.tscn

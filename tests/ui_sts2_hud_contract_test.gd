@@ -19,6 +19,8 @@ func _expect(condition: bool, message: String) -> void:
 
 func _texture_path(node: Node) -> String:
 	if node is TextureRect and node.texture:
+		if node.texture is AtlasTexture and node.texture.atlas:
+			return node.texture.atlas.resource_path
 		return node.texture.resource_path
 	if node is NinePatchRect and node.texture:
 		return node.texture.resource_path
@@ -124,11 +126,12 @@ func _test_shared_top_bar() -> void:
 	_expect(bar.find_child("ActLabel", true, false) == null, "top bar removes the Act readout")
 	var deck_button: Button = null
 	for candidate in bar.find_children("*", "Button", true, false):
-		if (candidate as Button).tooltip_text == tr("UI_BATTLE_VIEW_RUN_DECK"):
+		if str(candidate.get_meta(Tooltip.TOOLTIP_TEXT_META, "")) == tr("UI_BATTLE_VIEW_RUN_DECK"):
 			deck_button = candidate as Button
 			break
 	_expect(deck_button != null, "top bar keeps the run-deck interaction")
 	if deck_button:
+		_expect(deck_button.tooltip_text.is_empty(), "run-deck hints use the shared tooltip overlay")
 		var deck_path := deck_button.icon.resource_path if deck_button.icon else ""
 		_expect(
 			deck_path.ends_with("/iconb_deck_stack.png"),
@@ -136,11 +139,12 @@ func _test_shared_top_bar() -> void:
 		)
 	var settings_button: Button = null
 	for candidate in bar.find_children("*", "Button", true, false):
-		if (candidate as Button).tooltip_text == tr("SETTINGS_BUTTON"):
+		if str(candidate.get_meta(Tooltip.TOOLTIP_TEXT_META, "")) == tr("SETTINGS_BUTTON"):
 			settings_button = candidate as Button
 			break
 	_expect(settings_button != null, "battle top bar keeps the settings interaction")
 	if settings_button:
+		_expect(settings_button.tooltip_text.is_empty(), "settings hints use the shared tooltip overlay")
 		var settings_path := settings_button.icon.resource_path if settings_button.icon else ""
 		_expect(
 			settings_path.ends_with("/icon_gear.png"),
@@ -170,8 +174,8 @@ func _test_map_background() -> void:
 	if map.map_background_tex:
 		background_path = map.map_background_tex.resource_path
 	_expect(
-		background_path.ends_with("/wasteland_route_map_sts2_bg.png"),
-		"map uses the approved STS2-minimal background (got %s)" % background_path
+		background_path.ends_with("/wasteland_route_map_pixel_bg.png"),
+		"map uses the approved quiet 1920x1080 background (got %s)" % background_path
 	)
 	map.queue_free()
 	await get_tree().process_frame
@@ -187,8 +191,8 @@ func _test_battle_energy_and_end_turn() -> void:
 	var background := battle.get_node_or_null("BattleBackground")
 	var background_path := _texture_path(background)
 	_expect(
-		background_path.ends_with("/wasteland_battlefield_quiet_v6.png"),
-		"battle uses the cool layered comic combat-stage background (got %s)" % background_path
+		background_path.ends_with("/wasteland_battlefield_act1_v1.png"),
+		"Act 1 battle uses the refreshed comic combat-stage background (got %s)" % background_path
 	)
 	_expect(
 		background.self_modulate.r > 1.35
@@ -214,77 +218,39 @@ func _test_battle_energy_and_end_turn() -> void:
 	var player_hud: Node = player.get("_hud") if player else null
 	_expect(player_hud != null, "player builds its CharacterHUD")
 	if player_hud:
-		_expect(player_hud.bar_width == 200, "player uses the compact 200 px smooth bar")
-		_expect(player_hud.bar_height == 10, "player uses one frameless 10 px trough around a thin core")
+		_expect(player_hud.bar_width == 250 and player_hud.bar_height == 16, "creature health uses the reference 250x16 geometry")
+		var initial_loss := player_hud.get_node("HpFrame/HpLoss") as TextureProgressBar
+		_expect(is_equal_approx(initial_loss.ratio, float(player.health) / player.max_health)
+			and player_hud.get("_hp_echo_tween") == null and player_hud.get("_hp_fill_tween") == null,
+			"restoring run HP at battle startup does not fake a damage or healing animation")
 		player_hud.update_stats(63, 100, 6)
-		var simple_frame := player_hud.get_node_or_null("HpFrame") as Control
-		var simple_bar := player_hud.get_node_or_null("HpFrame/HpBar") as Control
-		var simple_label := player_hud.get_node_or_null("HpFrame/HpLabel") as Control
-		var block_badge := player_hud.get_node_or_null("BlockBadge") as TextureRect
-		var block_label := player_hud.get_node_or_null("BlockBadge/BlockLabel") as Label
-		_expect(simple_frame != null, "health exposes one compact frame")
-		_expect(simple_bar != null, "health builds the rounded real-HP fill")
-		if simple_bar:
-			_expect(simple_bar.size == Vector2(200.0, 10.0), "health fill matches the frameless inset trough")
-			_expect(is_equal_approx(float(simple_bar.get("ratio")), 1.0), "Block hides the empty HP segment")
-			_expect(simple_bar.get("fill_color") == Color("#3f8fb6"), "shielded health uses the inset blue core")
-			_expect(simple_bar.get("edge_color") == Color("#91d5ed"), "shielded health uses a blue core highlight")
-			_expect(simple_bar.get("track_color") == Color("#131a16"), "health uses one recessed dark-olive trough")
-		_expect(
-			simple_label != null
-			and str(simple_label.get("text")) == "63/100"
-			and is_equal_approx(simple_label.size.x, 200.0)
-			and simple_label.size.y == 34.0,
-			"health text stays centered over the rounded bar"
-		)
-		_expect(
-			simple_label != null
-			and int(simple_label.get("font_size")) == 26
-			and simple_label.size.y == 34.0,
-			"health text scales with the compact bar (actual size %s)"
-			% str(simple_label.size if simple_label else Vector2.ZERO)
-		)
-		_expect(simple_label != null and simple_label.position.y == -12.0, "health number is vertically centered over the thin core")
-		_expect(
-			simple_label != null
-			and simple_label.get("font_color") == Color("#fff8e8")
-			and simple_label.get("outline_color") == Color("#071018"),
-			"health number uses an STS-like warm white fill with a strong ink outline"
-		)
-		_expect(block_badge != null and block_badge.visible, "Block restores the original shield icon")
-		_expect(
-			block_badge != null and block_badge.size == Vector2(42.0, 49.0),
-			"Block shield scales down with the compact health HUD (got %s)"
-			% str(block_badge.size if block_badge else Vector2.ZERO)
-		)
-		var badge_atlas := block_badge.texture as AtlasTexture if block_badge else null
-		_expect(
-			badge_atlas != null
-			and badge_atlas.atlas.resource_path.ends_with("/block_badge.png")
-			and badge_atlas.region == Rect2(9, 5, 46, 54),
-			"Block uses the original block_badge.png resource"
-		)
-		_expect(block_label != null and block_label.text == "6", "Block value is centered inside the shield")
-		_expect(player_hud.get_node_or_null("HpFrame/ShieldBarOverlay") == null, "plain HUD has no shield overlay bar")
+		var frame := player_hud.get_node_or_null("HpFrame") as TextureRect
+		var bar := player_hud.get_node_or_null("HpFrame/HpBar") as TextureProgressBar
+		var loss := player_hud.get_node_or_null("HpFrame/HpLoss") as TextureProgressBar
+		var number := player_hud.get_node_or_null("HpFrame/HpLabel") as Control
+		var block := player_hud.get_node_or_null("BlockBadge") as TextureRect
+		var block_number := player_hud.get_node_or_null("BlockBadge/BlockLabel") as Label
+		_expect(frame != null and frame.size == Vector2(250, 16) and _texture_path(frame).ends_with("/combat/hp_frame.png"), "health uses the original 250x16 frame layer")
+		_expect(bar != null and bar.size == Vector2(250, 16) and is_equal_approx(bar.ratio, 0.63), "health foreground immediately matches the creature")
+		_expect(loss != null and loss.size == Vector2(250, 16), "health loss has its own independent layer")
+		_expect(number != null and str(number.get("text")) == "63/100" and number.size == Vector2(250, 40) and number.position == Vector2(0, -12), "health text stays centered over the thin bar")
+		_expect(number != null and int(number.get("font_size")) == 24 and int(number.get("outline_size")) == 16, "health text uses 24/16 typography")
+		_expect(number != null and number.get("font_color") == Color("#fff8e8") and number.get("outline_color") == Color("#071018"), "health number keeps warm white fill and strong ink outline")
+		_expect(block != null and block.visible and block.size == Vector2(42, 49), "Block has an independent compact shield")
+		_expect(_texture_path(block).ends_with("/block_badge.png"), "Block uses the original combat shield art")
+		_expect(block_number != null and block_number.text == "6" and block_number.get_theme_font_size("font_size") == 25 and block_number.get_theme_constant("outline_size") == 2, "Block count uses the compact shield typography")
 		player_hud.update_stats(63, 100, 0)
-		_expect(block_badge != null and not block_badge.visible, "Block shield hides at zero")
-		_expect(
-			simple_bar != null
-			and is_equal_approx(float(simple_bar.get("ratio")), 0.63)
-			and simple_bar.get("fill_color") == Color("#c73a25")
-			and simple_bar.get("edge_color") == Color("#ef7047")
-			and simple_bar.get("fill_shadow_color") == Color("#5f100c"),
-			"real layered red HP returns with zero Block"
-		)
+		_expect(block != null and not block.visible, "Block shield hides at zero")
+		_expect(bar != null and is_equal_approx(bar.ratio, 0.63), "HP remains proportional when Block is removed")
 	var normal_enemy := ENEMY_ENTITY.create("base:trash_robot")
 	var elite_enemy := ENEMY_ENTITY.create("base:armored_patrol")
 	var boss_enemy := ENEMY_ENTITY.create("base:rust_titan")
 	_expect(not normal_enemy.is_elite and not normal_enemy.is_boss, "normal factory classification")
 	_expect(elite_enemy.is_elite and not elite_enemy.is_boss, "elite factory classification")
 	_expect(boss_enemy.is_boss and not boss_enemy.is_elite, "boss factory classification")
-	_expect(normal_enemy._health_bar_size() == Vector2i(200, 10), "normal enemies match the player 200x10 bar")
-	_expect(elite_enemy._health_bar_size() == Vector2i(200, 10), "elites match the player 200x10 bar")
-	_expect(boss_enemy._health_bar_size() == Vector2i(200, 10), "bosses match the player 200x10 bar")
+	_expect(normal_enemy._health_bar_size() == Vector2i(250, 16), "normal enemies match the player 250x16 bar")
+	_expect(elite_enemy._health_bar_size() == Vector2i(250, 16), "elites match the player 250x16 bar")
+	_expect(boss_enemy._health_bar_size() == Vector2i(250, 16), "bosses match the player 250x16 bar")
 	normal_enemy.free()
 	elite_enemy.free()
 	boss_enemy.free()
@@ -333,22 +299,38 @@ func _test_battle_energy_and_end_turn() -> void:
 		# STS2 combat_ui.tscn: EnergyCounterContainer centred 100 px from the left, 252 px above the bottom.
 		var energy_center: Vector2 = energy.get_global_rect().get_center()
 		_expect(energy_center.is_equal_approx(Vector2(100, 828)), "energy sits where STS2's does (%s)" % energy_center)
+		var dial := energy.get_node_or_null("EnergyChargeRing") as Control
+		_expect(dial == null, "energy badge has no decorative charge ring")
+		var count := energy.get_node_or_null("EnergyLabel") as Label
+		_expect(count != null, "energy badge keeps its independent count")
+		if frame is TextureRect:
+			battle.ui_manager.update_labels(0, 3)
+			_expect(frame.self_modulate != Color.WHITE, "zero energy dims the badge")
+			_expect(count != null and count.text == "0/3", "zero energy keeps the correct readable count")
+			battle.ui_manager.update_labels(2, 3)
+			_expect(frame.self_modulate == Color.WHITE, "gaining energy restores the badge")
+			_expect(count != null and count.text == "2/3", "gaining energy updates the count")
+			_expect(energy.scale.x > 1.0, "energy changes retain the existing scale feedback")
+		battle.ui_manager.show_pile_viewer_from_names(tr("UI_BATTLE_EXHAUST_PILE"), [], "exhaust")
+		var pile_title := battle.find_child("RunDeckTitle", true, false) as Label
+		var pile_grid := battle.find_child("CardGrid", true, false) as GridContainer
+		await get_tree().process_frame
+		_expect(pile_title != null and pile_title.global_position.y >= RUN_TOP_BAR.BAR_HEIGHT,
+			"battle pile uses the shared page below the top bar")
+		_expect(pile_grid != null and pile_grid.get_child_count() == 0,
+			"an empty exhaust pile does not show the run deck")
+		battle.ui_manager.hide_pile_viewer()
 
 	var end_turn := battle.get_node_or_null("EndRoundButton") as Button
 	_expect(end_turn != null, "battle keeps the EndRoundButton interaction")
 	if end_turn:
-		_expect(end_turn.size.x <= 240.0, "EndRoundButton stays compact at 240 px or less")
-		# STS2 end_turn_button.tscn: right edge 96 px in, top 234 px above the bottom, below the creatures' health bars.
-		var end_rect := end_turn.get_global_rect()
-		_expect(is_equal_approx(end_rect.end.x, 1824.0) and is_equal_approx(end_rect.position.y, 846.0), "End Round sits where STS2's does (%s)" % end_rect)
-		var style := end_turn.get_theme_stylebox("normal")
-		var style_path := ""
-		if style is StyleBoxTexture and style.texture:
-			style_path = style.texture.resource_path
-		_expect(
-			style_path.ends_with("/hud_end_turn_orange.png"),
-			"EndRoundButton uses the high-contrast orange plate (got %s)" % style_path
-		)
+		_expect(end_turn.size == Vector2(220, 90), "EndRoundButton keeps the approved 220x90 input rectangle")
+		var visuals := end_turn.get_node_or_null("ActionVisuals") as Control
+		var face := end_turn.get_node_or_null("ActionVisuals/Face") as NinePatchRect
+		var style_path := face.texture.resource_path if face != null and face.texture != null else ""
+		_expect(visuals != null and visuals.get("role") == "end_turn"
+			and style_path.ends_with("/combat/end_turn_normal.png"),
+			"EndRoundButton keeps the original end-turn art state")
 
 	battle.queue_free()
 	await get_tree().process_frame
@@ -373,14 +355,15 @@ func _test_category_intents() -> void:
 		var debuff := enemy.find_child("IntentDebuff", true, false)
 		_expect(debuff != null, "attack_status shows generic debuff intent for %s" % status_id)
 		if debuff:
-			var icon := debuff.get_node_or_null("Icon") as TextureRect
+			var icon := debuff.find_child("Icon", true, false) as TextureRect
 			_expect(
-				_texture_path(icon).ends_with("/intent_debuff.png"),
+				_texture_path(icon).ends_with("/combat/intents/debuff.png"),
 				"%s uses the shared generic debuff icon" % status_id
 			)
 		var values := enemy.find_children("IntentValue", "Label", true, false)
 		for value in values:
-			_expect(str(value.text).is_valid_int(), "always-visible intent labels contain numbers only")
+			if value.visible:
+				_expect(str(value.text).is_valid_int(), "always-visible single-hit intent labels contain numbers only")
 		var visible_text := ""
 		for label in enemy.find_children("*", "Label", true, false):
 			visible_text += " " + str(label.text)

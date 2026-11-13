@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://ca64ue25d84cj"]
+
+[ext_resource type="Script" uid="uid://cmwoyw6g8xqvo" path="res://tests/combat_hud_readability_test.gd" id="1"]
+
+[node name="CombatHudReadabilityTest" type="Node"]
+script = ExtResource("1")

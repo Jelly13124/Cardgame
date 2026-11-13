@@ -275,9 +275,9 @@ func _build_reward_row(reward: Dictionary) -> Control:
 		echip.add_child(_ll_icon("icon_armor", 26))
 		var tier_lbl := Label.new()
 		tier_lbl.text = equip_tier.substr(0, 1).to_upper()
-		tier_lbl.tooltip_text = Settings.t("UI_BOUNTY_REWARD_EQUIP", "Equipment ({t})").format(
+		Tooltip.bind_hover(tier_lbl, Settings.t("UI_BOUNTY_REWARD_EQUIP", "Equipment ({t})").format(
 			{"t": equip_tier}
-		)
+		))
 		# Ink on parchment (the poster card is opaque parchment now).
 		tier_lbl.add_theme_font_size_override("font_size", 16)
 		tier_lbl.add_theme_color_override("font_color", Color(0.18, 0.26, 0.38))
@@ -306,7 +306,7 @@ func _build_take_button(bounty_id: String) -> Button:
 		btn.disabled = true
 	elif MetaProgress.active_bounties.size() >= MetaProgress.MAX_ACTIVE_BOUNTIES:
 		btn.disabled = true
-		btn.tooltip_text = tr("UI_OUTPOST_BOUNTY_FULL")
+		Tooltip.bind_hover(btn, tr("UI_OUTPOST_BOUNTY_FULL"))
 	else:
 		btn.pressed.connect(_on_take_bounty.bind(bounty_id))
 	return btn
@@ -500,7 +500,7 @@ func _add_upgrade_row(
 		"UPGRADE_%s_TIER%d" % [MODEL_ID.key_entry(upgrade_id), int(next_tier.get("level", lvl + 1))],
 		str(next_tier.get("effect_text", ""))
 	)
-	panel.tooltip_text = tr("UI_HOME_UPGRADE_NEXT").format({"text": effect_text})
+	Tooltip.bind_hover(panel, tr("UI_HOME_UPGRADE_NEXT").format({"text": effect_text}))
 	T.centered_currency_button_content(
 		buy, int(next_tier.get("cost", 0)), "caps", 21, 27, true, 7
 	)
@@ -628,14 +628,9 @@ func _ll_icon(icon_name: String, px: float) -> Control:
 	return rect
 
 
-## Parchment-toned fallback for the poster card while card_poster.png is absent.
+## Shared soft panel used by the poster card fallback.
 func _poster_fallback_style() -> StyleBox:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.72, 0.62, 0.44, 0.16)
-	style.border_color = Color(0.62, 0.52, 0.34, 0.9)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(TOK_RADIUS)
-	return style
+	return T.kit_box("panel_soft_9slice")
 
 
 func _add_lock_note(container: VBoxContainer, text: String) -> void:

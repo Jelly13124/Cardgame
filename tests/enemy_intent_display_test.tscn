@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://nqyxdbc86f0w"]
+
+[ext_resource type="Script" path="res://tests/enemy_intent_display_test.gd" id="1"]
+
+[node name="EnemyIntentDisplayTest" type="Node"]
+script = ExtResource("1")

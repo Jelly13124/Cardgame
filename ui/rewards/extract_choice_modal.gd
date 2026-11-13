@@ -8,6 +8,7 @@ extends Control
 class_name ExtractChoiceModal
 
 const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
+const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://ui/common/run_top_bar.gd
 
 signal chosen(extract: bool)
 
@@ -33,11 +34,13 @@ func _build() -> void:
 	var bg := ColorRect.new()
 	bg.color = Color(0, 0, 0, 0.78)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.offset_top = RUN_TOP_BAR.BAR_HEIGHT
 	bg.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(bg)
 
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.offset_top = RUN_TOP_BAR.BAR_HEIGHT
 	add_child(center)
 
 	var panel := PanelContainer.new()

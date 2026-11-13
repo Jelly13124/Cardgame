@@ -34,10 +34,10 @@ func setup(p_option, model) -> void:
 	autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	focus_mode = Control.FOCUS_NONE
 	# STS-style option card: frosted-dark row, gold edge on hover, dim when locked.
-	add_theme_stylebox_override("normal", _style(false, locked))
-	add_theme_stylebox_override("hover", _style(true, locked))
-	add_theme_stylebox_override("pressed", _style(true, locked))
-	add_theme_stylebox_override("disabled", _style(false, true))
+	add_theme_stylebox_override("normal", _style("normal", locked))
+	add_theme_stylebox_override("hover", _style("hover", locked))
+	add_theme_stylebox_override("pressed", _style("pressed", locked))
+	add_theme_stylebox_override("disabled", _style("disabled", true))
 	var fg := Color(0.95, 0.91, 0.79) if not locked else Color(0.60, 0.56, 0.49)
 	if option.will_kill_player:
 		fg = Color(1.0, 0.42, 0.36)
@@ -48,7 +48,7 @@ func setup(p_option, model) -> void:
 	disabled = locked
 	if not locked:
 		mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	tooltip_text = _hover_tip()
+	Tooltip.bind_hover(self, _hover_tip())
 
 
 ## "  <text>" for a marker: with its icon file present, the icon shows and only
@@ -72,20 +72,8 @@ func _hover_tip() -> String:
 	return ""
 
 
-func _style(hover: bool, locked: bool) -> StyleBoxFlat:
-	var st := StyleBoxFlat.new()
-	if locked:
-		st.bg_color = Color(0.055, 0.068, 0.072, 0.90)
-		st.border_color = Color(0.30, 0.31, 0.29, 0.78)
-	elif hover:
-		st.bg_color = Color(0.09, 0.11, 0.115, 0.98)
-		st.border_color = Color(1.0, 0.48, 0.08)
-	else:
-		st.bg_color = Color(0.045, 0.060, 0.066, 0.96)
-		st.border_color = Color(0.62, 0.52, 0.32, 0.88)
-	st.set_border_width_all(1)
-	st.border_width_left = 3 if not locked else 1
-	st.set_corner_radius_all(4)
+func _style(state: String, locked: bool) -> StyleBoxTexture:
+	var st := T.ll_button_olive("disabled" if locked else state) as StyleBoxTexture
 	st.content_margin_left = 22
 	st.content_margin_right = 22
 	st.content_margin_top = 14

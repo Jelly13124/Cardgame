@@ -67,9 +67,16 @@ const COMBAT_FEEDBACK_CONTROLLER = preload("uid://po237gnjpbo0")  # res://ui/bat
 const DAMAGE_NUMBER = preload("uid://clps6my10jkri")  # res://ui/battle/damage_number_vfx.gd
 const HERO_DIR = "res://battle_scene/assets/images/heroes/"
 const DEFAULT_HERO_SPRITE_ID = "cowboy_bill"  # fallback when no hero data loaded  # bare-ok: sprite id
+## Bill's source frames are authored at 384px, but the combat board keeps the
+## visible hero at the same compact height used before the high-resolution
+## redraw.  Scaling from the source canvas (rather than enlarging it) keeps
+## idle and attack silhouettes comparable to the enemies.
 const TARGET_DISPLAY_HEIGHT := 256.0
+const FOOT_BASELINE_Y := -20.0
 const PLAYER_HUD_SIZE := Vector2i(200, 10)
-const MUZZLE_NATIVE_POSITION := Vector2(224, 94)
+## Native pixel anchor in the 384px Bill frames.  Runtime scaling converts it
+## to the same global muzzle point for every attack frame.
+const MUZZLE_NATIVE_POSITION := Vector2(334, 220)
 const MAX_ANIMATION_FRAMES := 16
 
 var _sprite: AnimatedSprite2D
@@ -110,7 +117,13 @@ func _hero_tint() -> Color:
 	var hex := str(RunManager.current_hero_data["tint"])
 	if hex == "" or not hex.begins_with("#"):
 		return Color.WHITE
-	return Color.html(hex) if Color.html_is_valid(hex) else Color.WHITE
+	if not Color.html_is_valid(hex):
+		return Color.WHITE
+	var tint := Color.html(hex)
+	# Tint is a colour choice, never a visibility control.  A stale save or a
+	# six/eight-digit editor value must not make the static idle pose ghosted.
+	tint.a = 1.0
+	return tint
 
 
 ## Hero definitions can opt out of a looping rest animation. Cowboy Bill is
@@ -236,7 +249,7 @@ func _apply_display_scale(frames: SpriteFrames) -> void:
 		return
 	var display_scale := TARGET_DISPLAY_HEIGHT / height
 	_sprite.scale = Vector2(display_scale, display_scale)
-	_sprite.position = Vector2(0, -TARGET_DISPLAY_HEIGHT * 0.5)
+	_sprite.position = Vector2(0, _position_for_foot_baseline(tex, display_scale))
 
 
 func _apply_fallback_display_scale() -> void:
@@ -247,7 +260,21 @@ func _apply_fallback_display_scale() -> void:
 		return
 	var display_scale := TARGET_DISPLAY_HEIGHT / height
 	_fallback_sprite.scale = Vector2(display_scale, display_scale)
-	_fallback_sprite.position = Vector2(0, -TARGET_DISPLAY_HEIGHT * 0.5)
+	_fallback_sprite.position = Vector2(
+		0, _position_for_foot_baseline(_fallback_sprite.texture, display_scale)
+	)
+
+
+func _position_for_foot_baseline(tex: Texture2D, display_scale: float) -> float:
+	var image := tex.get_image()
+	if image == null or image.is_empty():
+		return -TARGET_DISPLAY_HEIGHT * 0.5
+	var used := image.get_used_rect()
+	if used.size.y <= 0:
+		return -TARGET_DISPLAY_HEIGHT * 0.5
+	var native_center := float(tex.get_height()) * 0.5
+	var visible_bottom := (float(used.position.y + used.size.y) - native_center) * display_scale
+	return FOOT_BASELINE_Y - visible_bottom
 
 
 func _first_frame_texture(frames: SpriteFrames) -> Texture2D:
@@ -318,14 +345,24 @@ func get_muzzle_global_position() -> Vector2:
 	var tex := _current_sprite_texture()
 	if _sprite and is_instance_valid(_sprite) and tex:
 		var native_origin := Vector2(tex.get_width(), tex.get_height()) * 0.5
-		return _sprite.to_global(MUZZLE_NATIVE_POSITION - native_origin)
+		return _sprite.to_global(_muzzle_anchor_for_texture(tex) - native_origin)
 	if _fallback_sprite and is_instance_valid(_fallback_sprite) and _fallback_sprite.texture:
 		var native_origin := (
 			Vector2(_fallback_sprite.texture.get_width(), _fallback_sprite.texture.get_height())
 			* 0.5
 		)
-		return _fallback_sprite.to_global(MUZZLE_NATIVE_POSITION - native_origin)
+		return _fallback_sprite.to_global(
+			_muzzle_anchor_for_texture(_fallback_sprite.texture) - native_origin
+		)
 	return global_position + Vector2(TARGET_DISPLAY_HEIGHT * 0.38, -TARGET_DISPLAY_HEIGHT * 0.41)
+
+
+func _muzzle_anchor_for_texture(tex: Texture2D) -> Vector2:
+	if tex == null or tex.get_width() <= 0:
+		return MUZZLE_NATIVE_POSITION
+	# The block fallback is still a 256px frame.  Preserve the authored barrel
+	# proportion instead of applying the 384px coordinate literally.
+	return MUZZLE_NATIVE_POSITION * (float(tex.get_width()) / 384.0)
 
 
 func get_hit_global_position() -> Vector2:

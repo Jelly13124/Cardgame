@@ -39,6 +39,8 @@ const GENERATED_COST_POSITION := Vector2(5, 3)
 const GENERATED_COST_SIZE := Vector2(35, 35)
 const GENERATED_COST_FONT_SIZE := 25
 const GENERATED_COST_FONT_EMBOLDEN := 0.9
+const GENERATED_DESCRIPTION_MAX_FONT_SIZE := 17
+const GENERATED_DESCRIPTION_MIN_FONT_SIZE := 12
 
 ## Discover candidates aren't hand cards — suppress the "can I afford it" glow.
 var suppress_playable_glow: bool = false
@@ -203,8 +205,6 @@ func _configure_generated_skin(data: Dictionary) -> bool:
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	desc_box_texture.position = Vector2(16, 166)
 	desc_box_texture.size = Vector2(181, 108)
-	desc_label.position = Vector2(8, 8)
-	desc_label.size = Vector2(165, 92)
 	type_badge_texture.position = Vector2(62, 156)
 	type_badge_texture.size = Vector2(84, 20)
 	cost_badge.position = GENERATED_COST_POSITION
@@ -240,7 +240,6 @@ func _configure_generated_skin(data: Dictionary) -> bool:
 		card_type, GENERATED_TYPE_TEXT_COLORS["skill"]
 	)
 	desc_label.add_theme_font_override("normal_font", generated_description_font)
-	desc_label.add_theme_font_size_override("normal_font_size", 14)
 	desc_label.add_theme_color_override(
 		"default_color", Color("#d8ccdf") if is_curse else Color("#f0d4a1")
 	)
@@ -442,9 +441,8 @@ func set_card_data(data: Dictionary) -> void:
 		)
 
 
-## Keep short copy at the approved size; only long cards step down until they
-## fit. The tiny integrated type notch occupies the top seam, so center copy in
-## the uninterrupted recessed field beneath it.
+## Keep short copy large and step down to fit longer cards. Center the text
+## in the recessed field below the integrated type notch.
 func _fit_and_center_description() -> void:
 	if not is_instance_valid(desc_label) or not is_instance_valid(desc_box_texture):
 		return
@@ -456,8 +454,9 @@ func _fit_and_center_description() -> void:
 	)
 	desc_label.position = Vector2(8, top_clearance)
 	desc_label.size = Vector2(available_width, available_height)
-	for font_size in range(14, 11, -1):
+	for font_size in range(GENERATED_DESCRIPTION_MAX_FONT_SIZE, GENERATED_DESCRIPTION_MIN_FONT_SIZE - 1, -1):
 		desc_label.add_theme_font_size_override("normal_font_size", font_size)
+		desc_label.add_theme_font_size_override("italics_font_size", font_size)
 		desc_label.size = Vector2(available_width, available_height)
 		if desc_label.get_content_height() <= available_height:
 			break
@@ -466,10 +465,14 @@ func _fit_and_center_description() -> void:
 	desc_label.size.y = content_height
 
 
-## Card text from the one description generator (battle_scene/card_description.gd)
-## with this card's live view: player stats, battle preview values, relic replays.
-func _build_description(data: Dictionary) -> String:
-	var view := {"stats": _get_player_stats(), "pipeline": {}, "replay_bonus": 0}
+## Card text with this card's live stats, preview values and relic replays.
+func _build_description(data: Dictionary, show_scaling_breakdown: bool = false) -> String:
+	var view := {
+		"stats": _get_player_stats(),
+		"pipeline": {},
+		"replay_bonus": 0,
+		"show_scaling_breakdown": show_scaling_breakdown,
+	}
 	var scene = get_tree().current_scene if is_inside_tree() else null
 	var combat = scene.get("combat") if scene else null
 	if combat != null and combat.combat_commands != null:

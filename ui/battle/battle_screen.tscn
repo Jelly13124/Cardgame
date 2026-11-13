@@ -15,7 +15,7 @@
 [ext_resource type="Script" path="res://ui/battle/battle_ui_manager.gd" id="19_ui"]
 [ext_resource type="Script" path="res://ui/battle/card_framework_adapters/card_play_zone.gd" id="20_playzone"]
 [ext_resource type="Script" path="res://ui/battle/battle_top_bar.gd" id="21_topbar"]
-[ext_resource type="Texture2D" path="res://battle_scene/assets/images/backgrounds/wasteland_battlefield_quiet_v6.png" id="22_bg"]
+[ext_resource type="Texture2D" uid="uid://drhxhy60vq5p7" path="res://battle_scene/assets/images/backgrounds/wasteland_battlefield_act1_v1.png" id="22_bg"]
 
 [sub_resource type="Curve" id="Curve_lsli3"]
 _limits = [-10.0, 10.0, 0.0, 1.0]
@@ -145,10 +145,10 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -326.0
+offset_left = -316.0
 offset_top = -234.0
 offset_right = -96.0
-offset_bottom = -162.0
+offset_bottom = -144.0
 grow_horizontal = 0
 grow_vertical = 0
 theme_override_colors/font_color = Color(1, 0.8, 0, 1)
@@ -210,60 +210,6 @@ grow_vertical = 2
 layer = 101
 visible = false
 
-[node name="Overlay" type="ColorRect" parent="PileViewerLayer" unique_id=987654330]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0, 0, 0, 0.9)
-
-[node name="TitleLabel" type="Label" parent="PileViewerLayer" unique_id=987654331]
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -200.0
-offset_top = 50.0
-offset_right = 200.0
-offset_bottom = 120.0
-grow_horizontal = 2
-theme_override_font_sizes/font_size = 48
-text = "UI_BATTLE_PILE_VIEWER"
-horizontal_alignment = 1
-
-[node name="CloseButton" type="Button" parent="PileViewerLayer" unique_id=1849204857]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -120.0
-offset_top = 40.0
-offset_right = -40.0
-offset_bottom = 120.0
-grow_horizontal = 0
-theme_override_colors/font_color = Color(1, 0.3, 0.3, 1)
-theme_override_font_sizes/font_size = 48
-text = "X"
-
-[node name="ScrollContainer" type="ScrollContainer" parent="PileViewerLayer" unique_id=987654332]
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -800.0
-offset_top = -300.0
-offset_right = 800.0
-offset_bottom = 350.0
-grow_horizontal = 2
-grow_vertical = 2
-horizontal_scroll_mode = 0
-
-[node name="GridContainer" type="GridContainer" parent="PileViewerLayer/ScrollContainer" unique_id=987654333]
-layout_mode = 2
-theme_override_constants/h_separation = 30
-theme_override_constants/v_separation = 30
-columns = 8
-
 [node name="BattleUIManager" type="Node" parent="." unique_id=654921374]
 script = ExtResource("19_ui")
 energy_label = NodePath("../EnergyLabel")
@@ -271,8 +217,6 @@ notify_label = NodePath("../NotificationLabel")
 inspect_layer = NodePath("../InspectLayer")
 inspect_pivot = NodePath("../InspectLayer/InspectOverlay/InspectPivot")
 pile_viewer_layer = NodePath("../PileViewerLayer")
-pile_viewer_title = NodePath("../PileViewerLayer/TitleLabel")
-pile_viewer_grid = NodePath("../PileViewerLayer/ScrollContainer/GridContainer")
 
 [connection signal="pressed" from="EndRoundButton" to="." method="_on_end_round_button_pressed"]
 [connection signal="gui_input" from="InspectLayer/InspectOverlay" to="BattleUIManager" method="_on_inspect_overlay_gui_input"]

@@ -276,11 +276,11 @@ func _refresh_header_state() -> void:
 		_caps_label.text = str(MetaProgress.caps)
 	if is_instance_valid(_upgrade_button):
 		var tier := MetaProgress.get_building_tier("forge")
-		_upgrade_button.tooltip_text = (
+		Tooltip.bind_hover(_upgrade_button, (
 			tr("UI_BUILD_MAX")
 			if tier >= MetaProgress.MAX_BUILDING_TIER
 			else tr("UI_BUILD_ACTION_UPGRADE_HEAD").format({"n": tier + 1})
-		)
+		))
 
 
 func _on_caps_changed(_value: int) -> void:
@@ -440,7 +440,7 @@ func _build_tab_icon(tab_id: String) -> Control:
 	if not unlocked:
 		btn.disabled = true
 		if TAB_LOCK_KEYS.has(tab_id):
-			btn.tooltip_text = tr(str(TAB_LOCK_KEYS[tab_id]))
+			Tooltip.bind_hover(btn, tr(str(TAB_LOCK_KEYS[tab_id])))
 	elif not selected:
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		var tid := tab_id
@@ -454,30 +454,10 @@ func _build_tab_icon(tab_id: String) -> Control:
 	return btn
 
 
-## Diablo-style tab rhythm without Diablo-style rendered chrome: every state
-## keeps the same frame, border width, corner radius and padding. Only color
-## changes between idle, hover, selected, pressed and locked states.
-func _forge_tab_style(state: String, selected: bool, unlocked: bool) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.065, 0.070, 0.072, 0.96)
-	style.border_color = Color(0.31, 0.30, 0.27, 0.95)
-	if not unlocked:
-		style.bg_color = Color(0.045, 0.047, 0.048, 0.82)
-		style.border_color = Color(0.22, 0.22, 0.21, 0.72)
-	elif selected:
-		style.bg_color = Color(0.22, 0.105, 0.035, 0.98)
-		style.border_color = Color(0.96, 0.51, 0.16, 1.0)
-		if state == "hover":
-			style.bg_color = Color(0.27, 0.135, 0.045, 0.99)
-			style.border_color = Color(1.0, 0.69, 0.25, 1.0)
-	elif state == "hover":
-		style.bg_color = Color(0.145, 0.105, 0.060, 0.98)
-		style.border_color = Color(0.88, 0.62, 0.26, 1.0)
-	elif state == "pressed":
-		style.bg_color = Color(0.19, 0.095, 0.035, 0.99)
-		style.border_color = Color(0.94, 0.49, 0.15, 1.0)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(6)
+## Every tab state uses the shared skin with identical content padding.
+func _forge_tab_style(state: String, selected: bool, unlocked: bool) -> StyleBoxTexture:
+	var skin_state := state if unlocked else "disabled"
+	var style := (T.ll_button(skin_state) if selected else T.ll_button_olive(skin_state)) as StyleBoxTexture
 	style.content_margin_left = 14
 	style.content_margin_right = 14
 	style.content_margin_top = 8
@@ -628,7 +608,7 @@ func _bulk_button_row(rarity: String, label_text: String, icon_name: String) -> 
 	else:
 		button.disabled = true
 		button.modulate = Color(1, 1, 1, 0.5)
-		button.tooltip_text = tr("UI_FORGE_BULK_NONE")
+		Tooltip.bind_hover(button, tr("UI_FORGE_BULK_NONE"))
 	row.add_child(button)
 	if not enabled:
 		row.modulate = Color(1, 1, 1, 0.72)
@@ -642,9 +622,8 @@ func _rarity_dot(rarity: String) -> Control:
 	holder.custom_minimum_size = Vector2(30, 30)
 	var dot := Panel.new()
 	dot.custom_minimum_size = Vector2(14, 14)
-	var sb := StyleBoxFlat.new()
+	var sb := T.semantic_fill(EQUIPMENT_ICON.RARITY_COLORS.get(rarity, Color(0.95, 0.96, 0.98)))
 	sb.set_corner_radius_all(7)
-	sb.bg_color = EQUIPMENT_ICON.RARITY_COLORS.get(rarity, Color(0.95, 0.96, 0.98))
 	sb.border_color = Color(0.0, 0.0, 0.0, 0.55)
 	sb.set_border_width_all(2)
 	dot.add_theme_stylebox_override("panel", sb)
@@ -1201,12 +1180,8 @@ func _build_affix_row(
 	return btn
 
 
-func _affix_row_style(picked: bool) -> StyleBoxFlat:
-	var st := StyleBoxFlat.new()
-	st.bg_color = Color(0.16, 0.14, 0.11, 0.9) if picked else Color(0.10, 0.10, 0.12, 0.55)
-	st.border_color = Color(1.0, 0.82, 0.35) if picked else Color(0.32, 0.30, 0.26, 0.8)
-	st.set_border_width_all(2 if picked else 1)
-	st.set_corner_radius_all(5)
+func _affix_row_style(picked: bool) -> StyleBoxTexture:
+	var st := (T.ll_button() if picked else T.ll_button_olive()) as StyleBoxTexture
 	st.content_margin_left = 10
 	st.content_margin_right = 10
 	st.content_margin_top = 4
@@ -1267,6 +1242,7 @@ func _picker_row(icon_name: String, label_text: String, option: OptionButton) ->
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_style_label(lbl, 15, Color(0.92, 0.88, 0.76))
 	row.add_child(lbl)
+	T.apply_dropdown_theme(option)
 	row.add_child(option)
 	return row
 
@@ -1288,10 +1264,8 @@ func _apply_dark_button(btn: Button) -> void:
 	btn.add_theme_color_override("font_hover_color", Color(1.0, 0.95, 0.78))
 	btn.add_theme_color_override("font_pressed_color", Color(0.9, 0.84, 0.66))
 	btn.add_theme_color_override("font_disabled_color", Color(0.7, 0.64, 0.5, 0.9))
-	btn.add_theme_stylebox_override("normal", T.ll_section())
-	btn.add_theme_stylebox_override("hover", _button_hover_style())
-	btn.add_theme_stylebox_override("pressed", T.ll_section())
-	btn.add_theme_stylebox_override("disabled", T.ll_section())
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		btn.add_theme_stylebox_override(state, T.ll_button_olive(state))
 
 
 # --- small shared helpers ------------------------------------------------------
@@ -1315,30 +1289,8 @@ func _ll_icon(icon_name: String, px: float) -> Control:
 	return rect
 
 
-func _button_hover_style() -> StyleBoxFlat:
-	var st := StyleBoxFlat.new()
-	st.bg_color = Color(0.13, 0.12, 0.10, 0.92)
-	st.border_color = Color(0.76, 0.58, 0.28, 0.75)
-	st.set_border_width_all(1)
-	st.set_corner_radius_all(6)
-	return st
-
-
 func _dismantle_action_style(state: String, primary: bool) -> StyleBox:
-	var fallback := T.ll_button(state) if primary else T.ll_button_olive(state)
-	var style := T.lightline_box("forge_dismantle_action", fallback, 24, 20)
-	var textured := style as StyleBoxTexture
-	if textured == null:
-		return style
-	var tint := Color.WHITE if primary else Color(0.62, 0.67, 0.50, 1.0)
-	match state:
-		"hover":
-			tint = tint.lightened(0.10)
-		"pressed":
-			tint = tint.darkened(0.16)
-		"disabled":
-			tint = Color(tint.r, tint.g, tint.b, 0.42)
-	textured.modulate_color = tint
+	var textured := (T.ll_button(state) if primary else T.ll_button_olive(state)) as StyleBoxTexture
 	textured.content_margin_left = 18
 	textured.content_margin_right = 18
 	textured.content_margin_top = 9

@@ -13,6 +13,7 @@ const CARD_REWARD_ICON_PATH := "res://run_system/assets/images/ui_kit_lightline/
 # Shared palette lives in ui/common/theme/wasteland_theme.gd as
 # `T.PANEL_BG` etc. — see wasteland_theme.gd for all colors / builders.
 const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
+const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://ui/common/run_top_bar.gd
 const REWARDS = preload("uid://dao6ryap2ksxs")  # res://core/run/rewards.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
@@ -26,15 +27,13 @@ const MAP_SCENE_PATH := "uid://d3x5b8wvg2q"  # res://ui/map/map_scene.tscn
 ## default; there is no per-card unlock system).
 var draft_pool: Array = []
 
-@onready var loot_root = $VBoxContainer
-@onready var loot_list_container = $VBoxContainer/LootPanel/MarginContainer/LootList
-@onready var proceed_button = $VBoxContainer/BottomRow/MarginContainer/ProceedButton
-@onready var draft_overlay = $DraftOverlay
-@onready var draft_title = $DraftOverlay/VBoxContainer/TitleLabel
-@onready
-var draft_card_container = $DraftOverlay/VBoxContainer/DraftPanel/MarginContainer/CardsContainer
-@onready
-var draft_skip_button = $DraftOverlay/VBoxContainer/BottomRow/MarginContainer/SkipDraftButton
+@onready var loot_root: VBoxContainer = $LootContents
+@onready var loot_list_container: VBoxContainer = $LootContents/LootList
+@onready var proceed_button: Button = $LootContents/ProceedButton
+@onready var draft_overlay: VBoxContainer = $DraftOverlay
+@onready var draft_title: Label = $DraftOverlay/TitleLabel
+@onready var draft_card_container: HBoxContainer = $DraftOverlay/CardsContainer
+@onready var draft_skip_button: Button = $DraftOverlay/Actions/SkipDraftButton
 
 var _card_factory: Node = null
 var available_loot = []
@@ -50,9 +49,7 @@ func _ready() -> void:
 
 	_card_factory = preload("uid://diap3gdfbqvjv").instantiate()  # res://ui/battle/card_framework_adapters/my_card_factory.tscn
 	add_child(_card_factory)
-	# play_card.tscn is intrinsically 208x286; match it so the bg lines up with the
-	# (208-laid-out) frame/art/labels. Draft cards are scaled back down below to
-	# keep their original on-screen footprint.
+	# Match the 208×286 layout of the shared PlayCard scene before scaling its previews.
 	_card_factory.card_size = Vector2(208, 286)
 
 	_apply_static_theme()
@@ -62,43 +59,22 @@ func _ready() -> void:
 
 
 func _apply_static_theme() -> void:
-	# lw pass 2026-07-08: the whole screen now wears the lightline ink chrome —
-	# the old orange StyleBoxFlat frames + neon-blue claim plates were the last
-	# pre-lw holdouts on the battle path.
-	$BackgroundColor.color = Color(0.035, 0.027, 0.020, 0.72)
-	$VBoxContainer.add_theme_constant_override("separation", 14)
-	$VBoxContainer/BannerPanel.custom_minimum_size = Vector2(520, 104)
-	$VBoxContainer/LootPanel.custom_minimum_size = Vector2(760, 278)
-	$VBoxContainer/BannerPanel/MarginContainer.add_theme_constant_override("margin_left", 58)
-	$VBoxContainer/BannerPanel/MarginContainer.add_theme_constant_override("margin_right", 58)
-	$VBoxContainer/BannerPanel/MarginContainer.add_theme_constant_override("margin_top", 16)
-	$VBoxContainer/BannerPanel/MarginContainer.add_theme_constant_override("margin_bottom", 16)
-	$VBoxContainer/BannerPanel/MarginContainer/TitleLabel.add_theme_font_size_override(
-		"font_size", 44
-	)
-	$VBoxContainer/BannerPanel/MarginContainer/TitleLabel.add_theme_color_override(
-		"font_color", Color(1.0, 0.84, 0.48, 1.0)
-	)
-	$VBoxContainer/BannerPanel/MarginContainer/TitleLabel.add_theme_color_override(
-		"font_outline_color", Color(0.0, 0.0, 0.0, 0.72)
-	)
-	$VBoxContainer/BannerPanel/MarginContainer/TitleLabel.add_theme_constant_override(
-		"outline_size", 3
-	)
-	$VBoxContainer/LootPanel/MarginContainer.add_theme_constant_override("margin_left", 28)
-	$VBoxContainer/LootPanel/MarginContainer.add_theme_constant_override("margin_right", 28)
-	$VBoxContainer/LootPanel/MarginContainer.add_theme_constant_override("margin_top", 24)
-	$VBoxContainer/LootPanel/MarginContainer.add_theme_constant_override("margin_bottom", 24)
-	loot_list_container.add_theme_constant_override("separation", 12)
+	$RewardBackdrop.offset_top = RUN_TOP_BAR.PAGE_ART_TOP
+	$RewardBackdrop.color = T.REWARD_SCRIM
+	loot_root.offset_top = RUN_TOP_BAR.BAR_HEIGHT
+	draft_overlay.offset_top = RUN_TOP_BAR.BAR_HEIGHT
+	for title: Label in [$LootContents/TitleLabel, draft_title]:
+		T.style_display(title, 44, 700)
+		title.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
+	_style_action(proceed_button, true)
+	_style_action(draft_skip_button)
 
-	$VBoxContainer/BannerPanel.add_theme_stylebox_override("panel", T.ll_section())
-	$VBoxContainer/LootPanel.add_theme_stylebox_override("panel", T.ll_panel())
-	$DraftOverlay/VBoxContainer/DraftPanel.add_theme_stylebox_override(
-		"panel", T.panel_textured("dark")
-	)
-	# Buttons auto-pick up textured normal/hover/pressed via apply_button_theme.
-	T.apply_button_theme(proceed_button)
-	T.apply_button_theme(draft_skip_button)
+
+func _style_action(button: Button, primary: bool = false) -> void:
+	T.apply_action_button(button, "primary" if primary else "secondary")
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.add_theme_font_override("font", T.display_font(700))
+	button.add_theme_font_size_override("font_size", 22)
 
 
 ## What this fight offers comes from the run layer (core/run/rewards.gd); this
@@ -192,66 +168,47 @@ func _populate_loot_ui() -> void:
 
 
 func _make_loot_row(loot: Dictionary) -> Button:
-	var button = Button.new()
-	button.custom_minimum_size = Vector2(704, 104)
+	var button := Button.new()
+	button.custom_minimum_size = Vector2(700, 80)
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.focus_mode = Control.FOCUS_NONE
-	button.text = ""
-	button.add_theme_stylebox_override("normal", _row_box(1.0))
-	button.add_theme_stylebox_override("hover", _row_box(1.22))
-	button.add_theme_stylebox_override("pressed", _row_box(0.82))
+	T.apply_choice_button(button)
 	button.pressed.connect(_on_loot_selected.bind(str(loot["id"]), button))
 
-	var margin = MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 16)
-	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 10)
-	margin.add_theme_constant_override("margin_bottom", 10)
-	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	button.add_child(margin)
-
-	var row = HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	var row := HBoxContainer.new()
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	row.offset_left = 14.0
+	row.offset_right = -24.0
+	row.add_theme_constant_override("separation", 12)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.add_child(row)
+	button.add_child(row)
+	row.add_child(_make_icon_well(str(loot.get("icon", ""))))
 
-	row.add_child(_make_icon_well(str(loot.get("icon", "")), str(loot.get("type", ""))))
-
-	var copy = VBoxContainer.new()
-	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	copy.alignment = BoxContainer.ALIGNMENT_CENTER
-	copy.add_theme_constant_override("separation", 4)
-	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(copy)
-
-	var title = Label.new()
+	var title := Label.new()
 	title.text = str(loot.get("title", tr("UI_LOOT_DEFAULT_TITLE")))
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	T.style_display(title, 28, 600)
 	title.add_theme_color_override("font_color", T.TEXT_MAIN)
-	title.add_theme_font_size_override("font_size", 29)
-	title.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.72))
-	title.add_theme_constant_override("outline_size", 2)
-	title.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	copy.add_child(title)
+	row.add_child(title)
 
-	row.add_child(_make_claim_plate(str(loot.get("action", tr("UI_LOOT_ACTION_CLAIM")))))
+	var action := Label.new()
+	action.text = str(loot.get("action", tr("UI_LOOT_ACTION_CLAIM")))
+	T.style_display(action, 20, 700)
+	action.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
+	row.add_child(action)
 	return button
 
 
-func _make_icon_well(icon_path: String, loot_type: String = "") -> Control:
+func _make_icon_well(icon_path: String) -> Control:
 	# Bare art, no framing box (owner 2026-07-08: stop framing every item —
 	# the reward icons carry themselves).
-	var is_primary_reward := loot_type in ["gold", "cards"]
 	var holder = CenterContainer.new()
-	holder.custom_minimum_size = Vector2(76, 76)
+	holder.custom_minimum_size = Vector2(58, 58)
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var texture = _load_texture(icon_path)
 	if texture:
 		var icon = TextureRect.new()
-		icon.custom_minimum_size = Vector2(58, 58) if is_primary_reward else Vector2(52, 52)
+		icon.custom_minimum_size = Vector2(50, 50)
 		icon.texture = texture
 		icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -267,38 +224,6 @@ func _make_icon_well(icon_path: String, loot_type: String = "") -> Control:
 		holder.add_child(fallback)
 
 	return holder
-
-
-func _make_claim_plate(label_text: String = "") -> PanelContainer:
-	# The lw orange action plate (same read as the buildings' buy buttons) —
-	# replaces the old neon-blue box that fought the warm palette.
-	var plate = PanelContainer.new()
-	plate.custom_minimum_size = Vector2(112, 54)
-	plate.add_theme_stylebox_override("panel", T.ll_button("normal"))
-	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	var label = Label.new()
-	label.text = label_text if label_text != "" else tr("UI_LOOT_ACTION_CLAIM")
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 20)
-	label.add_theme_color_override("font_color", Color(0.16, 0.10, 0.04))
-	label.add_theme_color_override("font_outline_color", Color(1.0, 0.92, 0.72, 0.35))
-	label.add_theme_constant_override("outline_size", 1)
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	plate.add_child(label)
-	return plate
-
-
-## One lw inset per reward row; `brightness` derives the hover (lighter) and
-## pressed (darker) states from the same ink texture via modulate.
-func _row_box(brightness: float) -> StyleBox:
-	var box := T.ll_inset()
-	box.content_margin_top = 10.0
-	box.content_margin_bottom = 10.0
-	if brightness != 1.0 and box is StyleBoxTexture:
-		(box as StyleBoxTexture).modulate_color = Color(brightness, brightness, brightness)
-	return box
 
 
 func _on_loot_selected(loot_id: String, button: Button) -> void:
@@ -385,11 +310,11 @@ func _generate_attr_options() -> void:
 
 func _make_attr_slot(attr: String) -> Control:
 	var wrapper = Control.new()
-	wrapper.custom_minimum_size = Vector2(300, 400)
+	wrapper.custom_minimum_size = Vector2(248, 306)
 	wrapper.pivot_offset = wrapper.custom_minimum_size * 0.5
 	var frame = Panel.new()
 	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
-	frame.add_theme_stylebox_override("panel", T.panel_textured("dark"))
+	frame.add_theme_stylebox_override("panel", T.ll_inset_thin())
 	wrapper.add_child(frame)
 	var box = VBoxContainer.new()
 	box.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -406,7 +331,7 @@ func _make_attr_slot(attr: String) -> Control:
 			icon_tex = load(legacy_path) as Texture2D
 	if icon_tex != null:
 		var icon := TextureRect.new()
-		icon.custom_minimum_size = Vector2(132, 132)
+		icon.custom_minimum_size = Vector2(108, 108)
 		icon.texture = icon_tex
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -481,12 +406,10 @@ func _open_card_draft() -> void:
 func _refresh_reroll_btn() -> void:
 	if _reroll_btn == null:
 		_reroll_btn = Button.new()
-		_reroll_btn.focus_mode = Control.FOCUS_NONE
-		_reroll_btn.custom_minimum_size = Vector2(240, 46)
-		_reroll_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		_reroll_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		_reroll_btn.custom_minimum_size = Vector2(220, 54)
+		_style_action(_reroll_btn)
 		_reroll_btn.pressed.connect(_on_reroll_pressed)
-		$DraftOverlay/VBoxContainer.add_child(_reroll_btn)
+		$DraftOverlay/Actions.add_child(_reroll_btn)
 	_reroll_btn.visible = true
 	var n: int = RunManager.reward_rerolls
 	_reroll_btn.text = tr("UI_LOOT_REROLL").format({"n": n})
@@ -522,10 +445,9 @@ func _roll_unique_draft_card_id(used: Dictionary) -> String:
 
 
 func _make_draft_card_slot(card_id: String) -> Control:
-	# Bigger card, and NO frame box behind it — just the card itself.
 	var card_w := 208.0
 	var card_h := 286.0
-	var disp_scale := 1.5  # up from the old ~1.15 footprint
+	var disp_scale := 1.5
 	var disp := Vector2(card_w, card_h) * disp_scale
 	var wrapper = Control.new()
 	# Pad so the hover scale-up doesn't clip against the neighbours.

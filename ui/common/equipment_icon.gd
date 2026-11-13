@@ -5,16 +5,6 @@ class_name EquipmentIcon
 
 const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 
-## Per-rarity FILL colors (dark, used as the cell background). Cells tint by RARITY
-## ONLY now — slot identity reads from the icon, not the background color (owner
-## request: too many colors). The brighter RARITY_COLORS stays on the border.
-const RARITY_BG_COLORS := {
-	"common": Color(0.28, 0.28, 0.31, 1.0),  # neutral graphite
-	"uncommon": Color(0.16, 0.27, 0.42, 1.0),  # dark steel blue
-	"rare": Color(0.40, 0.31, 0.12, 1.0),  # dark gold-brown
-	"set": Color(0.16, 0.34, 0.20, 1.0),  # dark green — set pieces
-	"cursed": Color(0.38, 0.14, 0.15, 1.0),  # dark red — cursed gear
-}
 const SLOT_LETTERS := {
 	"head": "H",
 	"chest": "C",
@@ -112,7 +102,7 @@ func set_equipment(
 ) -> void:
 	if not _label:
 		_build()
-	# Slot-tinted fill + a rarity-colored border (white/blue/gold).
+	# The shared frame carries the rarity tint (white/blue/gold).
 	add_theme_stylebox_override("panel", _equip_style(slot, rarity, 0.72))
 
 	# Label = SLOT_LETTERS preferred, else first char of item name
@@ -153,17 +143,11 @@ static func resolve_equipment_texture(
 	return null
 
 
-## Slot-colored fill with a rarity-colored border, single-sourcing the equipment
-## icon look so rarity (white/blue/gold) is readable at a glance.
-func _equip_style(_slot: String, rarity: String, alpha: float) -> StyleBoxFlat:
-	# Background tints by RARITY only — slot identity reads from the icon (owner request).
-	var bg: Color = RARITY_BG_COLORS.get(rarity, RARITY_BG_COLORS["common"])
-	bg.a = alpha
-	var style := StyleBoxFlat.new()
-	style.bg_color = bg
-	style.border_color = RARITY_COLORS.get(rarity, RARITY_COLORS["common"])
-	style.set_border_width_all(3)
-	style.set_corner_radius_all(6)
+## Rarity tint stays on the shared equipment skin; slot identity comes from its icon.
+func _equip_style(_slot: String, rarity: String, alpha: float) -> StyleBoxTexture:
+	var rarity_color: Color = RARITY_COLORS.get(rarity, RARITY_COLORS["common"])
+	var style := T.ui_slot_box("filled", rarity_color) as StyleBoxTexture
+	style.modulate_color.a = alpha
 	style.set_content_margin_all(2)
 	return style
 
@@ -195,8 +179,8 @@ func _try_show_slot_icon(slot: String, modulate_color: Color) -> void:
 
 func _apply_slot_placeholder_style(_slot: String, alpha: float) -> void:
 	# Neutral fill — no per-slot color (owner request); the slot icon carries category.
-	var color: Color = Color(0.20, 0.20, 0.23, alpha)
-	var style := T.panel_with_shadow(color, T.PANEL_BORDER, 2, 3)
+	var style := T.ui_slot_box("empty") as StyleBoxTexture
+	style.modulate_color.a = alpha
 	style.content_margin_left = 2
 	style.content_margin_right = 2
 	style.content_margin_top = 2

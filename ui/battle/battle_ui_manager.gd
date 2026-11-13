@@ -3,14 +3,13 @@ extends Node
 ## BattleUIManager handles notifications, inspection, and pile viewing.
 
 const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://ui/windows/character_window.gd
+const RUN_DECK_VIEWER_MODAL = preload("uid://jvxfh15gtinx")  # res://ui/common/run_deck_viewer_modal.gd
 const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 
 @export_group("UI Nodes")
 @export var energy_label: Label
 @export var notify_label: Label
 @export var pile_viewer_layer: CanvasLayer
-@export var pile_viewer_title: Label
-@export var pile_viewer_grid: Container
 @export var inspect_layer: CanvasLayer
 @export var inspect_pivot: Control
 
@@ -18,19 +17,26 @@ const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_them
 
 var notify_tween: Tween
 var inspected_card: Control = null
-var _energy_display: Control = null
+var _energy_display: Control
+var _energy_frame: TextureRect
+var _energy_tween: Tween
+var _energy_value := -1
+var _energy_fraction := 0.0
+var _pile_viewer: Control
 ## Tracks which pile the viewer is currently showing ("draw"/"discard"/"deck"/"")
 ## so the Q/E toggle logic doesn't compare against the (now localized) title text.
 var _current_pile_kind: String = ""
+var _hud_exiting := false
+var _end_turn_home := Vector2.ZERO
+var _end_turn_size := Vector2.ZERO
+var _end_turn_home_set := false
+var _end_turn_motion: Tween
+var _end_turn_transition := false
 
 
 func _ready() -> void:
 	if not pile_viewer_layer:
 		pile_viewer_layer = main.get_node("PileViewerLayer")
-	if not pile_viewer_title:
-		pile_viewer_title = main.get_node("PileViewerLayer/TitleLabel")
-	if not pile_viewer_grid:
-		pile_viewer_grid = main.get_node("PileViewerLayer/ScrollContainer/GridContainer")
 	if not inspect_layer:
 		inspect_layer = main.get_node("InspectLayer")
 	if not inspect_pivot:
@@ -41,20 +47,83 @@ func _ready() -> void:
 		energy_label = main.get_node("EnergyLabel")
 	_build_energy_display.call_deferred()
 
-	var close_btn = main.get_node_or_null("PileViewerLayer/CloseButton")
-	if close_btn:
-		close_btn.pressed.connect(hide_pile_viewer)
-
 	if notify_label:
 		notify_label.modulate.a = 0
 
 
+func _process(_delta: float) -> void:
+	_sync_end_turn_state()
+
+
+func _sync_end_turn_state() -> void:
+	if main.end_round_button:
+		var disabled: bool = (
+			_hud_exiting or _end_turn_transition or main.is_targeting
+			or not main._accepts_player_input()
+		)
+		if main.end_round_button.disabled != disabled:
+			main.end_round_button.disabled = disabled
+			var visuals: Node = main.end_round_button.get_node_or_null("ActionVisuals")
+			if visuals:
+				visuals.sync_state()
+
+
+func anim_in() -> void:
+	if main.is_game_over:
+		anim_out()
+		return
+	_hud_exiting = false
+	_animate_end_turn(true)
+
+
+func anim_out() -> void:
+	_hud_exiting = true
+	_animate_end_turn(false)
+
+
+func _animate_end_turn(entering: bool) -> void:
+	var button: Button = main.end_round_button
+	if button == null:
+		return
+	if not _end_turn_home_set:
+		_end_turn_home = button.position
+		_end_turn_size = button.size
+		_end_turn_home_set = true
+	if _end_turn_motion and _end_turn_motion.is_valid():
+		_end_turn_motion.kill()
+	_end_turn_transition = true
+	if entering:
+		button.position = _end_turn_home + Vector2(0, 250)
+	_sync_end_turn_state()
+	var destination := _end_turn_home if entering else _end_turn_home + Vector2(0, 250)
+	var transition := Tween.TRANS_BACK if entering else Tween.TRANS_EXPO
+	_end_turn_motion = create_tween()
+	_end_turn_motion.tween_property(button, "position", destination, 0.5).set_trans(transition).set_ease(Tween.EASE_OUT)
+	_end_turn_motion.finished.connect(
+		func() -> void:
+			# Control position tweens can accumulate subpixel size drift at anchors.
+			button.position = destination
+			button.size = _end_turn_size
+			_end_turn_transition = false
+			_sync_end_turn_state()
+	)
+
+
+
+
 func update_labels(energy: int, max_energy: int) -> void:
-	if energy_label:
-		# Compact "3/3" (no spaces) so the number sits inside the round medal's
-		# inner ring instead of poking past its edges.
-		energy_label.text = "%d/%d" % [energy, max_energy]
-	_pop_energy()
+	if energy_label == null:
+		return
+	var count := "%d/%d" % [energy, max_energy]
+	if count == energy_label.text and _energy_value >= 0:
+		return
+	var energy_changed := _energy_value >= 0 and energy != _energy_value
+	_energy_value = energy
+	_energy_fraction = clampf(float(energy) / maxi(1, max_energy), 0.0, 1.0)
+	energy_label.text = count
+	_refresh_energy_layers()
+	if energy_changed:
+		_pop_energy()
 
 
 ## Quick scale-pop on the energy orb whenever energy changes — spend/gain now reads
@@ -64,9 +133,11 @@ func _pop_energy() -> void:
 		return
 	_energy_display.pivot_offset = Vector2(52, 52)
 	_energy_display.scale = Vector2(1.16, 1.16)
-	var tw := create_tween()
+	if _energy_tween and _energy_tween.is_valid():
+		_energy_tween.kill()
+	_energy_tween = create_tween()
 	(
-		tw
+		_energy_tween
 		. tween_property(_energy_display, "scale", Vector2.ONE, 0.18)
 		. set_trans(Tween.TRANS_BACK)
 		. set_ease(Tween.EASE_OUT)
@@ -93,8 +164,7 @@ func _build_energy_display() -> void:
 	_energy_display.z_index = 20
 	main.add_child(_energy_display)
 
-	# The single faceted badge is the entire energy visual. The localized numeric
-	# value stays deterministic and is reparented over its empty centre.
+	# The faceted medallion is stationary. The count remains an independent text layer.
 	var medal_rect := Rect2(0.0, 0.0, 104.0, 104.0)
 	var medal_tex := T.lightline_tex("hud_energy_badge_sts2")
 	if medal_tex != null:
@@ -108,7 +178,7 @@ func _build_energy_display() -> void:
 		medal.size = medal_rect.size
 		medal.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_energy_display.add_child(medal)
-
+		_energy_frame = medal
 	var old_parent = energy_label.get_parent()
 	if old_parent:
 		old_parent.remove_child(energy_label)
@@ -129,6 +199,12 @@ func _build_energy_display() -> void:
 	energy_label.add_theme_color_override("font_outline_color", Color(0.80, 0.92, 0.94, 0.30))
 	energy_label.add_theme_constant_override("outline_size", 1)
 	energy_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_refresh_energy_layers()
+
+
+func _refresh_energy_layers() -> void:
+	if _energy_frame != null:
+		_energy_frame.self_modulate = T.ENERGY_EMPTY_TINT if _energy_value == 0 else Color.WHITE
 
 
 func show_notification(text: String, color: Color = Color.WHITE) -> void:
@@ -167,106 +243,52 @@ func close_inspection() -> void:
 
 
 func show_pile_viewer(title: String, pile_container: CardContainer) -> void:
-	if not pile_viewer_layer:
-		return
-
-	pile_viewer_title.text = title
-
-	# Clear existing cards
-	_clear_pile_viewer_grid()
-
-	# Populate with cards from the pile
-	for card_data in pile_container.get_cards():
-		var card_name = card_data.card_info.get("id", "")
-		if card_name.is_empty():
-			continue
-		_add_card_to_viewer(card_name)
-
-	pile_viewer_layer.visible = true
+	var entries: Array = []
+	for card in pile_container.get_cards():
+		var card_id := str(card.card_info.get("id", ""))
+		if card_id != "":
+			entries.append({"card_id": card_id, "card_info": card.card_info.duplicate(true)})
+	_show_deck_page(title, entries, _current_pile_kind)
 
 
-## Like show_pile_viewer but populated from card-name strings — used by the hidden
-## Exhaust pile, whose cards no longer exist as nodes once exhausted.
 func show_pile_viewer_from_names(title: String, names, kind: String) -> void:
-	if not pile_viewer_layer:
-		return
-	_current_pile_kind = kind
-	pile_viewer_title.text = title
-	_clear_pile_viewer_grid()
-	for nm in names:
-		if str(nm) != "":
-			_add_card_to_viewer(str(nm))
-	pile_viewer_layer.visible = true
+	_show_deck_page(title, Array(names), kind)
 
 
 func show_run_deck_viewer(title: String = "", deck_entries: Array = []) -> void:
-	if not pile_viewer_layer:
+	if pile_viewer_layer.visible and _current_pile_kind == "deck":
+		hide_pile_viewer()
 		return
-	if title.is_empty():
-		title = tr("UI_BATTLE_RUN_DECK")
-	_current_pile_kind = "deck"
-
-	# If no entries were passed, build them: prefer RunManager.player_deck if a run
-	# is active, otherwise fall back to the live battle's hand+deck+discard.
 	if deck_entries.is_empty():
 		if RunManager.is_run_active:
 			deck_entries = RunManager.player_deck.duplicate()
 		else:
 			for pile in [main.hand, main.deck, main.discard_pile]:
-				if pile and pile.has_method("get_cards"):
-					for card in pile.get_cards():
-						if is_instance_valid(card):
-							deck_entries.append(card.card_info.get("id", ""))
+				for card in pile.get_cards():
+					if is_instance_valid(card):
+						deck_entries.append(str(card.card_info.get("id", "")))
+	_show_deck_page(title, deck_entries, "deck")
 
-	pile_viewer_title.text = title
-	_clear_pile_viewer_grid()
 
-	for entry in deck_entries:
-		var card_name = _card_id_from_deck_entry(entry)
-		if card_name.is_empty():
-			continue
-		_add_card_to_viewer(card_name)
-
-	pile_viewer_layer.visible = true
+func _show_deck_page(title: String, entries: Array, kind: String) -> void:
+	hide_pile_viewer()
+	var page := RUN_DECK_VIEWER_MODAL.new()
+	page.configure(title, entries)
+	page.dismiss_on_cancel = false
+	page.closed.connect(hide_pile_viewer)
+	_pile_viewer = page
+	_current_pile_kind = kind
+	pile_viewer_layer.add_child(page)
+	pile_viewer_layer.show()
 
 
 func hide_pile_viewer() -> void:
-	if not pile_viewer_layer:
-		return
-	pile_viewer_layer.visible = false
+	if is_instance_valid(_pile_viewer):
+		_pile_viewer.hide()
+		_pile_viewer.queue_free()
+	_pile_viewer = null
 	_current_pile_kind = ""
-	_clear_pile_viewer_grid()
-
-
-func _clear_pile_viewer_grid() -> void:
-	if not pile_viewer_grid:
-		return
-	for child in pile_viewer_grid.get_children():
-		child.queue_free()
-
-
-func _add_card_to_viewer(card_name: String) -> void:
-	if card_name.is_empty():
-		return
-	var card_instance = main.card_factory.create_card(card_name, null)
-	if card_instance:
-		if card_instance.get_parent():
-			card_instance.get_parent().remove_child(card_instance)
-		card_instance.show_front = true
-		card_instance.can_be_interacted_with = false
-		card_instance.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		card_instance.scale = Vector2(0.7, 0.7)
-		pile_viewer_grid.add_child(card_instance)
-
-
-func _card_id_from_deck_entry(entry) -> String:
-	if typeof(entry) == TYPE_STRING:
-		return entry
-	if typeof(entry) == TYPE_DICTIONARY:
-		return str(entry.get("card_id", entry.get("name", "")))
-	if entry is Control and "card_info" in entry:
-		return str(entry.card_info.get("id", ""))
-	return ""
+	pile_viewer_layer.hide()
 
 
 func _input(event: InputEvent) -> void:
@@ -288,6 +310,7 @@ func _input(event: InputEvent) -> void:
 			close_inspection()
 		elif pile_viewer_layer and pile_viewer_layer.visible:
 			hide_pile_viewer()
+			get_viewport().set_input_as_handled()
 
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == Settings.get_key("view_draw"):

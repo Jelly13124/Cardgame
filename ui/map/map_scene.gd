@@ -19,8 +19,11 @@ const BATTLE_PACKED = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_s
 const SHOP_PACKED = preload("uid://dr8unxxfi0w51")  # res://ui/shop/merchant_room.tscn
 const ROOMS = preload("uid://cxmgdj3654rrj")  # res://core/run/rooms.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
-const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_sts2_bg.png"
-const REST_SITE_BACKGROUND_PATH = "res://run_system/assets/images/rest/rest_site_bg.png"
+const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_pixel_bg.png"
+const REST_SITE_BACKGROUND_PATH = "res://run_system/assets/images/ui/rest/campfire_scene_1920.png"
+const REST_HEAL_ART_PATH = "res://run_system/assets/images/ui/rest/campfire_scene_1920.png"
+const REST_UPGRADE_ART_PATH = "res://run_system/assets/images/ui/forge/anvil_art.png"
+const REST_OPTION_SOURCE_SIZE := Vector2(256, 169)
 
 const POP_SECONDS := 0.2
 const ENTER_DELAY_SECONDS := 0.3
@@ -462,7 +465,7 @@ func _make_relic_choice_button(relic_id: String, source_type: String) -> Button:
 	button.add_theme_stylebox_override("hover", T.button_textured("hover"))
 	button.add_theme_stylebox_override("pressed", T.button_textured("pressed"))
 	# Description shows on hover only — the card itself shows just the name.
-	button.tooltip_text = description
+	Tooltip.bind_hover(button, description)
 	button.pressed.connect(_on_relic_choice_selected.bind(relic_id, source_type))
 
 	var margin = MarginContainer.new()
@@ -674,9 +677,17 @@ func _open_rest_choice() -> void:
 	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	modal.add_child(rule)
 
-	var heal_amount := ROOMS.rest_heal_amount(rm.max_health)
-	var heal_text := ("休息\n恢复 %d" % heal_amount) if Settings.language == "zh" else ("REST\nHEAL %d" % heal_amount)
-	var heal_btn := _rest_hotspot(Rect2(0.075, 0.55, 0.25, 0.23), heal_text)
+	var heal_amount := mini(
+		ROOMS.rest_heal_amount(rm.max_health), rm.max_health - rm.current_health
+	)
+	var heal_btn := _rest_option(
+		Vector2(0.41, 0.40),
+		"icon_heart",
+		tr("UI_MAP_LEGEND_REST"),
+		tr("UI_ROUTE_HEAL").format({"n": heal_amount}) if heal_amount > 0 else tr("UI_ROUTE_HEAL_FULL"),
+		REST_HEAL_ART_PATH
+	)
+	heal_btn.name = "HealChoice"
 	heal_btn.pressed.connect(
 		func():
 			rm.modify_health(heal_amount)
@@ -686,8 +697,14 @@ func _open_rest_choice() -> void:
 	)
 	modal.add_child(heal_btn)
 
-	var upgrade_text := "升级" if Settings.language == "zh" else "UPGRADE"
-	var upgrade_btn := _rest_hotspot(Rect2(0.50, 0.58, 0.28, 0.22), upgrade_text)
+	var upgrade_btn := _rest_option(
+		Vector2(0.59, 0.40),
+		"icon_hammer",
+		tr("UI_MAP_REST_UPGRADE_BTN"),
+		tr("UI_UPGRADE_MODAL_HINT"),
+		REST_UPGRADE_ART_PATH
+	)
+	upgrade_btn.name = "UpgradeChoice"
 	upgrade_btn.pressed.connect(
 		func():
 			modal.queue_free()
@@ -729,29 +746,99 @@ func _open_rest_choice() -> void:
 	modal.add_child(leave_btn)
 
 
-func _rest_hotspot(rect: Rect2, label_text: String) -> Button:
+func _rest_option(
+	anchor: Vector2, icon_name: String, title_text: String, detail_text: String, art_path: String = ""
+) -> Button:
 	var button := Button.new()
-	button.text = label_text
-	button.anchor_left = rect.position.x
-	button.anchor_top = rect.position.y
-	button.anchor_right = rect.end.x
-	button.anchor_bottom = rect.end.y
-	button.focus_mode = Control.FOCUS_NONE
+	button.anchor_left = anchor.x
+	button.anchor_top = anchor.y
+	button.anchor_right = anchor.x
+	button.anchor_bottom = anchor.y
+	button.offset_left = -123.5
+	button.offset_right = 123.5
+	button.offset_top = -81.5
+	button.offset_bottom = 81.5
+	button.custom_minimum_size = Vector2(247, 163)
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.add_theme_font_override("font", T_THEME.display_font(650))
-	button.add_theme_font_size_override("font_size", 20)
-	button.add_theme_color_override("font_color", Color(0.96, 0.83, 0.58))
-	button.add_theme_color_override("font_hover_color", Color.WHITE)
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color(0.02, 0.03, 0.035, 0.10)
-	normal.set_corner_radius_all(12)
-	button.add_theme_stylebox_override("normal", normal)
-	var hover := normal.duplicate() as StyleBoxFlat
-	hover.bg_color = Color(0.06, 0.07, 0.07, 0.14)
-	hover.border_color = Color(1.0, 0.42, 0.04, 0.95)
-	hover.set_border_width_all(3)
-	button.add_theme_stylebox_override("hover", hover)
-	button.add_theme_stylebox_override("pressed", hover)
-	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
+
+	var art := TextureRect.new()
+	art.name = "RestChoiceArt"
+	art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	art.texture = _load_texture(art_path)
+	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(art)
+
+	var outline := Panel.new()
+	outline.name = "RestChoiceOutline"
+	outline.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var outline_style := StyleBoxFlat.new()
+	outline_style.bg_color = Color(0.04, 0.025, 0.016, 0.20)
+	outline_style.border_color = Color(0.90, 0.72, 0.36, 0.92)
+	outline_style.set_border_width_all(3)
+	outline_style.set_corner_radius_all(7)
+	outline.add_theme_stylebox_override("panel", outline_style)
+	button.add_child(outline)
+
+	var row := HBoxContainer.new()
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	row.offset_left = 12.0
+	row.offset_top = 76.0
+	row.offset_right = -12.0
+	row.offset_bottom = -8.0
+	row.add_theme_constant_override("separation", 14)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(row)
+
+	button.mouse_entered.connect(
+		func():
+			var tween := button.create_tween()
+			tween.set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_OUT)
+			tween.tween_property(button, "scale", Vector2(1.1, 1.1), 0.05)
+			# Description follows the source art with an Expo-Out settle.
+			row.create_tween().set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT).tween_property(row, "position:y", 70.0, 0.8)
+	)
+	button.mouse_exited.connect(
+		func():
+			var tween := button.create_tween()
+			tween.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+			tween.tween_property(button, "scale", Vector2.ONE, 1.0)
+			row.create_tween().set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT).tween_property(row, "position:y", 76.0, 0.8)
+	)
+
+	var icon := TextureRect.new()
+	icon.name = "ChoiceIcon"
+	icon.texture = T_THEME.lightline_tex(icon_name)
+	icon.custom_minimum_size = Vector2(66, 66)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(icon)
+
+	var copy := VBoxContainer.new()
+	copy.alignment = BoxContainer.ALIGNMENT_CENTER
+	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(copy)
+
+	var title := Label.new()
+	title.text = title_text
+	T_THEME.style_display(title, 28, 700)
+	title.add_theme_color_override("font_color", T_THEME.TEXT_MAIN)
+	copy.add_child(title)
+
+	var detail := Label.new()
+	detail.name = "ChoiceDetail"
+	detail.text = detail_text
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	T_THEME.style_display(detail, 20)
+	detail.add_theme_color_override("font_color", T_THEME.UI_BRASS_LIGHT)
+	copy.add_child(detail)
 	return button

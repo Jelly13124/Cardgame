@@ -305,33 +305,19 @@ func _build_sort_row() -> Control:
 	return row
 
 
-## Lightline ◀ / ▶ page arrow at its native square-ish aspect; text fallback
-## while the arrow PNGs are undelivered.
+## Compact page navigation uses the common button states at the existing size.
 func _make_page_button(delta: int) -> Button:
-	var b := Button.new()
-	b.focus_mode = Control.FOCUS_NONE
-	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	b.custom_minimum_size = Vector2(40, 39)
-	var tex := T.lightline_tex("btn_arrow_left" if delta < 0 else "btn_arrow_right")
-	if tex != null:
-		for state in ["normal", "hover", "pressed", "disabled"]:
-			var box := StyleBoxTexture.new()
-			box.texture = tex
-			match state:
-				"hover":
-					box.modulate_color = Color(1.15, 1.15, 1.15)
-				"pressed":
-					box.modulate_color = Color(0.82, 0.82, 0.82)
-				"disabled":
-					box.modulate_color = Color(0.45, 0.45, 0.45, 0.8)
-			b.add_theme_stylebox_override(state, box)
-	else:
-		b.text = "‹" if delta < 0 else "›"
-		b.add_theme_font_size_override("font_size", 26)
-		T.apply_button_theme(b)
-	b.pressed.connect(_change_page.bind(delta))
-	return b
+	var button := Button.new()
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button.custom_minimum_size = Vector2(40, 39)
+	button.text = "‹" if delta < 0 else "›"
+	button.add_theme_font_size_override("font_size", 26)
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		button.add_theme_stylebox_override(state, T.kit_box("button_secondary_" + state))
+	button.pressed.connect(_change_page.bind(delta))
+	return button
 
 
 ## Cyan progress dots under the grid — current page lit, others dimmed.
@@ -484,41 +470,17 @@ func _dark_button_box(state: String) -> StyleBox:
 	return box
 
 
-## Style the sort OptionButton with the lightline dropdown field (its ▼ cap is
-## baked into the art, so the theme arrow is blanked). Themed-button fallback
-## while the PNG is undelivered.
+## The shared dropdown keeps the sort control's established content padding.
 func _style_sort_dropdown(sort: OptionButton) -> void:
 	sort.focus_mode = Control.FOCUS_NONE
 	sort.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	sort.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
-	sort.add_theme_color_override("font_hover_color", T.UI_HEADER_GOLD)
-	sort.add_theme_color_override("font_pressed_color", T.UI_HEADER_GOLD)
-	var tex := T.lightline_tex("field_dropdown")
-	if tex == null:
-		T.apply_button_theme(sort)
-		return
+	T.apply_dropdown_theme(sort)
 	for state in ["normal", "hover", "pressed", "disabled"]:
-		var box := StyleBoxTexture.new()
-		box.texture = tex
-		box.texture_margin_left = 28
-		box.texture_margin_top = 26
-		box.texture_margin_right = 92
-		box.texture_margin_bottom = 26
+		var box := sort.get_theme_stylebox(state)
 		box.content_margin_left = 18
 		box.content_margin_right = 68
 		box.content_margin_top = 4
 		box.content_margin_bottom = 6
-		match state:
-			"hover":
-				box.modulate_color = Color(1.1, 1.1, 1.1)
-			"pressed":
-				box.modulate_color = Color(0.86, 0.86, 0.86)
-			"disabled":
-				box.modulate_color = Color(0.6, 0.6, 0.6)
-		sort.add_theme_stylebox_override(state, box)
-	# Blank the built-in arrow — the field art already bakes its own ▼ cap.
-	var blank := Image.create_empty(2, 2, false, Image.FORMAT_RGBA8)
-	sort.add_theme_icon_override("arrow", ImageTexture.create_from_image(blank))
 
 
 func _on_sort_selected(index: int) -> void:

@@ -13,10 +13,9 @@ const SAVE_IO = preload("uid://seo0j510xyq1")  # res://core/save/save_io.gd
 const HOME_BASE_PATH := "uid://c6bvuu6kbx0pq"  # res://ui/base/home_base_scene.tscn
 const MAP_SCENE_PATH := "uid://d3x5b8wvg2q"  # res://ui/map/map_scene.tscn
 const RULES_PANEL_PATH := "uid://35njcmwpab3t"  # res://ui/menus/rules_panel.gd
-const START_BG_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/bottlecap_hunter_start_background.png"
+const START_BG_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/bottlecap_hunter_start_background_1920.png"
 const START_TITLE_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/title_bottlecap_hunter.png"
 const START_DIVIDER_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/divider_bottlecap.png"
-const START_SAVE_STRIP_PATH := "res://run_system/assets/images/ui/start_screen/save_info_strip_clean.png"
 const START_LANGUAGE_BUTTON_PATH := "res://run_system/assets/images/ui/start_screen/icon_button_language.png"
 const START_SETTINGS_BUTTON_PATH := "res://run_system/assets/images/ui/start_screen/icon_button_settings.png"
 
@@ -122,33 +121,10 @@ func _start_menu_button(text: String, handler: Callable) -> Button:
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.add_theme_font_override("font", T.display_font(700))
-	# STS2 NMainMenuTextButton: a text entry with no box; the label turns gold
-	# and grows a little on hover.
-	for state in ["normal", "hover", "pressed", "disabled", "focus"]:  # bare-ok: theme state names
-		button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
-	button.add_theme_font_size_override("font_size", 30)
-	button.add_theme_color_override("font_color", Color("#efe2c4"))
-	button.add_theme_color_override("font_hover_color", Color("#f2c56a"))
-	button.add_theme_color_override("font_pressed_color", Color("#f2c56a"))
-	button.add_theme_color_override("font_focus_color", Color("#f2c56a"))
-	button.add_theme_color_override("font_disabled_color", Color(0.60, 0.52, 0.40, 0.70))
-	button.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.02, 0.92))
-	button.add_theme_constant_override("outline_size", 8)
+	button.add_theme_font_size_override("font_size", 32)
+	T.apply_action_button(button, "menu", Vector4(22, 12, 22, 12))
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(handler)
-	button.mouse_entered.connect(
-		func() -> void:
-			if not is_instance_valid(button) or button.disabled:
-				return
-			AudioManager.play_sfx("ui_hover")
-			button.pivot_offset = button.size / 2.0
-			T._button_pop(button, Vector2(1.08, 1.08), 0.05)
-	)
-	button.mouse_exited.connect(
-		func() -> void:
-			if is_instance_valid(button):
-				T._button_pop(button, Vector2.ONE, 0.10)
-	)
 	return button
 
 
@@ -171,16 +147,15 @@ func _start_icon_button(texture_path: String, handler: Callable) -> Button:
 	button.add_child(icon)
 	button.mouse_entered.connect(
 		func() -> void:
-			if not is_instance_valid(button):
+			if not is_instance_valid(button) or button.disabled:
 				return
 			AudioManager.play_sfx("ui_hover")
-			button.pivot_offset = button.size / 2.0
-			T._button_pop(button, Vector2(1.08, 1.08), 0.05)
+			icon.self_modulate = T.SKIN_HOVER_TINT
 	)
 	button.mouse_exited.connect(
 		func() -> void:
 			if is_instance_valid(button):
-				T._button_pop(button, Vector2.ONE, 0.10)
+				icon.self_modulate = Color.WHITE
 	)
 	return button
 
@@ -194,25 +169,9 @@ func _start_save_info_button() -> Button:
 	var button := Button.new()
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
-	button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
-	button.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
-	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	T.apply_action_button(button, "list")
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(_on_saves)
-
-	var bg := NinePatchRect.new()
-	bg.name = "SaveStripBackground"
-	bg.texture = _load_texture(START_SAVE_STRIP_PATH)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.patch_margin_left = 30
-	bg.patch_margin_top = 22
-	bg.patch_margin_right = 30
-	bg.patch_margin_bottom = 22
-	bg.axis_stretch_horizontal = NinePatchRect.AXIS_STRETCH_MODE_STRETCH
-	bg.axis_stretch_vertical = NinePatchRect.AXIS_STRETCH_MODE_STRETCH
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	button.add_child(bg)
 
 	var pad := MarginContainer.new()
 	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -245,20 +204,20 @@ func _start_save_info_button() -> Button:
 	return button
 
 
-func _menu_button(text: String, handler: Callable) -> Button:
+func _menu_button(text: String, handler: Callable, role: String = "secondary") -> Button:
 	var button := Button.new()
 	button.text = text
 	button.custom_minimum_size = Vector2(360, 52)
 	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_override("font", T.display_font(600))
 	button.add_theme_font_size_override("font_size", 21)
-	T.apply_button_theme(button)
+	T.apply_action_button(button, role)
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(handler)
 	return button
 
 
-func _small_button(text: String, handler: Callable, accent: Color = T.TEXT_MAIN) -> Button:
+func _small_button(text: String, handler: Callable, role: String = "secondary") -> Button:
 	var b := Button.new()
 	b.text = text
 	b.custom_minimum_size = Vector2(92, 44)
@@ -266,8 +225,7 @@ func _small_button(text: String, handler: Callable, accent: Color = T.TEXT_MAIN)
 	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	b.add_theme_font_override("font", T.display_font(600))
 	b.add_theme_font_size_override("font_size", 16)
-	T.apply_button_theme(b)
-	b.add_theme_color_override("font_color", accent)
+	T.apply_action_button(b, role)
 	b.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	b.pressed.connect(handler)
 	return b
@@ -387,15 +345,7 @@ func _modal_slot_card(n: int, mode: String, layer: CanvasLayer) -> Control:
 	var occupied := MetaProgress.slot_exists(n)
 	var sub_text := _slot_summary_text(n, info)
 
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color(0.10, 0.075, 0.04, 0.96)
-	normal.border_color = Color(0.34, 0.26, 0.15)
-	normal.set_border_width_all(1)
-	normal.set_corner_radius_all(7)
-	normal.content_margin_left = 16
-	normal.content_margin_right = 16
-	normal.content_margin_top = 10
-	normal.content_margin_bottom = 10
+	var normal := T.kit_box("panel_hard_9slice", Vector4(16, 10, 16, 10))
 
 	# Info column (shared by both modes).
 	var info_box := VBoxContainer.new()
@@ -422,13 +372,7 @@ func _modal_slot_card(n: int, mode: String, layer: CanvasLayer) -> Control:
 		card.custom_minimum_size = Vector2(0, 58)
 		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		card.add_theme_stylebox_override("normal", normal)
-		var hov := normal.duplicate()
-		hov.bg_color = Color(0.18, 0.13, 0.07, 0.98)
-		hov.border_color = Color(1.0, 0.81, 0.27)
-		card.add_theme_stylebox_override("hover", hov)
-		card.add_theme_stylebox_override("pressed", normal)
-		card.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+		T.apply_action_button(card, "list")
 		card.pressed.connect(
 			func() -> void:
 				AudioManager.play_sfx("ui_click")
@@ -462,12 +406,15 @@ func _modal_slot_card(n: int, mode: String, layer: CanvasLayer) -> Control:
 			func() -> void:
 				layer.queue_free()
 				_enter_slot(n),
-			Color(1.0, 0.86, 0.4)
+			"primary"
 		)
 		hbox.add_child(cont_btn)
 		var del_btn := _small_button(
-			tr("SLOT_DELETE"), func() -> void: _confirm_delete(n), T.ACCENT_DANGER
+			tr("SLOT_DELETE"), func() -> void: _confirm_delete(n)
 		)
+		del_btn.add_theme_color_override("font_color", T.ACCENT_DANGER)
+		del_btn.add_theme_color_override("font_hover_color", T.ACCENT_DANGER.lightened(0.15))
+		del_btn.add_theme_color_override("font_pressed_color", T.ACCENT_DANGER)
 		hbox.add_child(del_btn)
 	else:
 		var empty := Label.new()
@@ -562,11 +509,11 @@ func _confirm_modal(message: String, confirm_label: String, on_yes: Callable) ->
 		confirm_label,
 		func() -> void:
 			layer.queue_free()
-			on_yes.call()
+			on_yes.call(),
+		"primary"
 	)
 	yes.custom_minimum_size = Vector2(180, 50)
 	yes.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	yes.add_theme_color_override("font_color", Color(1.0, 0.72, 0.4))
 	var no := _menu_button(tr("MENU_CANCEL"), func() -> void: layer.queue_free())
 	no.custom_minimum_size = Vector2(180, 50)
 	no.size_flags_horizontal = Control.SIZE_EXPAND_FILL

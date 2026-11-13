@@ -1,23 +1,6 @@
-## Shared theming primitives for the Hardcore 128 Pixel Wasteland UI.
-## Used by loot_reward, map_scene, battle_top_bar, and any future UI scene.
-##
-## The palette is sampled directly from the project's actual sprite art via
-## `tools/extract_palette.py` — see `tools/palette_report.md` for the source
-## frequency breakdown and the picked canonical 14 colors. Updating colors
-## here only is fine; do NOT inline hex codes in consumer scripts.
-##
-## Provides:
-##   1. Shared color palette constants (sampled + accent neons)
-##   2. StyleBoxFlat builders for the three common shapes used across the project:
-##      - panel_with_shadow(): drop-shadowed panel (loot_reward backgrounds)
-##      - panel_flat():        flat panel, no shadow (relic modal, battle top bar)
-##      - rounded_button():    button-style box with optional shadow
-##
-## Per-scene compositions (e.g. wrapping panel_flat + extra margins for a relic
-## panel) stay in the consuming scene — only the base shape lives here.
-##
-## Naming note: this file is intentionally `wasteland_theme.gd` (no style-era
-## suffix) because the project's art direction has pivoted multiple times.
+## Shared original PNG skin, palette and presentation helpers.
+## All panel and button chrome resolves here so screens share fixed patch margins.
+## Card fonts and illustrations have their own approved presentation contract.
 extends RefCounted
 class_name WastelandTheme
 
@@ -41,10 +24,7 @@ const TEXT_MAIN = Color("#f0d8a8")  # high-contrast text on dark
 const TEXT_SECONDARY = Color("#b08060")  # dimmer text / subtitle
 const SHADOW_COLOR = Color(0.00, 0.00, 0.00, 0.42)
 
-# ─── Menu-glass surfaces (the ACTIVE windowed-chrome look) ───────────────────
-# Sampled from main_menu.gd's slot cards — the minimal "dark glass" language the
-# owner approved: translucent very-dark warm brown, 1px hairline borders, gold
-# accents, art carries the screen. All ui_* builders below render these.
+# ─── Retained semantic palette used by existing information readouts ──────────
 const GLASS_BG = Color(0.10, 0.075, 0.04, 0.96)  # panel / button surface
 const GLASS_BG_TITLE = Color(0.13, 0.10, 0.055, 0.96)  # titlebar (a touch lighter)
 const GLASS_BG_HOVER = Color(0.13, 0.098, 0.052, 0.96)  # ≈ surface ×1.3
@@ -58,7 +38,7 @@ const GLASS_HAIRLINE_FAINT = Color(0.16, 0.12, 0.07)  # locked-cell border
 const GLASS_GOLD = Color(0.78, 0.56, 0.22)  # accent stripe / hover border
 const GLASS_GOLD_BRIGHT = Color(1.0, 0.81, 0.27)  # headline gold / hot hover
 
-# ─── Windowed-UI v2 chrome (approved character-window mockup palette) ────────
+# ─── Text and information accents ───────────────────────────────────────────
 const UI_WINDOW_BG = Color("#14100a")  # floating-window body
 const UI_TITLEBAR_BG = Color("#221610")  # title-bar strip
 const UI_BORDER_BRASS = Color("#6b5228")  # window / plate border
@@ -84,100 +64,401 @@ const UI_ACCENT_BG_PRESSED = Color(0.30, 0.09, 0.055, 0.96)
 const UI_ACCENT_RIM = GLASS_GOLD  # accent gold rim (1px hairline)
 const UI_ACCENT_TEXT = Color("#ffe8c0")  # accent button label
 
-# ─── Builders ─────────────────────────────────────────────────────────────────
+# ─── Combat readouts and page scrims ──────────────────────────────────────────
+const COMBAT_TRACK_BG = Color("#211611")
+const COMBAT_HP_TEXT = Color("#fff8e8")
+const COMBAT_HP_OUTLINE = Color("#071018")
+const COMBAT_BLOCK_TEXT = Color("#fff8e8")
+const COMBAT_BLOCK_OUTLINE = Color("#10283b")
+const COMBAT_STATUS_TEXT = Color("#fff0c7")
+const COMBAT_STATUS_OUTLINE = Color("#0d0603")
+const COMBAT_ASSET_DIR := "res://battle_scene/assets/images/ui/combat/"
+static var _combat_textures: Dictionary = {}
+const INTENT_ATTACK_LOW = Color("#ffe5d4")
+const INTENT_ATTACK_MEDIUM = Color("#ffc69e")
+const INTENT_ATTACK_HIGH = Color("#ff9d83")
+const ENERGY_EMPTY_TINT = Color(0.57, 0.63, 0.62)
+const REWARD_SCRIM = Color(0.035, 0.037, 0.043, 0.92)
+const RESULT_SCRIM = Color(0.024, 0.027, 0.032, 0.94)
 
 
-## Generic panel with drop shadow. Used by loot_reward backgrounds.
+static func combat_tex(asset_name: String) -> Texture2D:
+	if _combat_textures.has(asset_name):
+		return _combat_textures[asset_name]
+	var texture := load(COMBAT_ASSET_DIR + asset_name + ".png") as Texture2D
+	if texture == null:
+		push_error("Missing original combat HUD texture: %s" % asset_name)
+		return null
+	_combat_textures[asset_name] = texture
+	return texture
+
+
+static func apply_end_turn_button(button: Button) -> void:
+	apply_action_button(button, "primary", Vector4(24, 8, 24, 8))
+	var profile := button_feedback_profile("primary")
+	profile["role"] = "end_turn"
+	profile["base_texture"] = combat_tex("end_turn_normal")
+	profile["hover_scale"] = 1.0
+	profile["pressed_scale"] = 1.0
+	profile["hover_offset"] = Vector2(0, -2)
+	profile["pressed_offset"] = Vector2(0, 8)
+	profile["state_textures"] = {}
+	profile["face_tints"] = {}
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		profile["state_textures"][state] = combat_tex("end_turn_" + state)
+		profile["face_tints"][state] = Color.WHITE
+	button.get_node(NodePath(BUTTON_VISUALS_NAME)).configure(button, profile)
+	button.add_theme_font_override("font", combat_font(700))
+	button.add_theme_font_size_override("font_size", 30)
+	button.add_theme_constant_override("outline_size", 12)
+	button.add_theme_color_override("font_color", COMBAT_HP_TEXT)
+	button.add_theme_color_override("font_hover_color", COMBAT_HP_TEXT)
+	button.add_theme_color_override("font_outline_color", COMBAT_HP_OUTLINE)
+
+# ─── Shared original UI kit ────────────────────────────────────────────────────
+const KIT_DIR := "res://run_system/assets/images/ui/kit/"
+const BUTTON_FEEDBACK = preload("uid://5f5teq5vofyg")  # res://ui/common/theme/button_feedback.gd
+const KIT_PATCH_MARGINS := {
+	"button_secondary_outline": Vector4(20, 16, 20, 16),
+	"button_secondary_base": Vector4(20, 16, 20, 16),
+	"button_primary_outline": Vector4(20, 16, 20, 16),
+	"button_primary_base": Vector4(20, 16, 20, 16),
+	"panel_hard_9slice": Vector4(24, 24, 24, 24),
+	"panel_soft_9slice": Vector4(24, 24, 24, 24),
+	"tooltip_panel_9slice": Vector4(55, 43, 91, 32),
+	"tooltip_shadow_9slice": Vector4(55, 43, 91, 32),
+	"dropdown_9slice": Vector4(20, 16, 20, 16),
+	"input_9slice": Vector4(20, 16, 20, 16),
+	"divider": Vector4(8, 0, 8, 0),
+}
+const TOOLTIP_CONTENT_MARGINS := Vector4(22, 16, 45, 28)
+const TOOLTIP_BASE_SIZE := Vector2(400, 118)
+const TOOLTIP_FONT_SIZE := 22
+const INPUT_INVALID_TINT := Color(1.0, 0.48, 0.40)
+const SKIN_HOVER_TINT := Color(1.10, 1.10, 1.06)
+const SKIN_SELECTED_TINT := Color(1.15, 1.08, 0.83)
+const SKIN_PRESSED_TINT := Color(0.82, 0.84, 0.80)
+const SKIN_LOCKED_TINT := Color(0.54, 0.58, 0.55, 0.92)
+const SKIN_DISABLED_TINT := Color(0.58, 0.58, 0.58, 0.92)
+
+const BUTTON_VISUALS_NAME := "ActionVisuals"
+const BUTTON_CONTENT_MARGINS := Vector4(18, 10, 18, 12)
+const BUTTON_FONT_OUTLINE := Color(0.035, 0.028, 0.020, 0.96)
+const BUTTON_DISABLED_TEXT := Color(0.72, 0.66, 0.58, 0.92)
+const BUTTON_SHADOW_TINT := Color(0, 0, 0, 0.45)
+const BUTTON_SHADOW_OFFSET := Vector2(0, 4)
+const BUTTON_HOVER_SECONDS := 0.05
+const BUTTON_EXIT_SECONDS := 0.5
+const BUTTON_PRESS_SECONDS := 0.5
+const BUTTON_RELEASE_SECONDS := 0.5
+const BUTTON_ROLE_SCALES := {
+	"primary": Vector2(1.05, 0.95), "secondary": Vector2(1.025, 0.975),
+	"menu": Vector2.ONE, "list": Vector2.ONE,
+}
+const BUTTON_FONT_OUTLINE_SIZES := {"primary": 3, "secondary": 2, "menu": 4, "list": 2}
+const MENU_MARKER_SIZE := Vector2(24, 24)
+const MENU_MARKER_GAP := 12.0
+const MENU_MARKER_ROTATION := -PI * 0.5
+const BUTTON_FACE_TINTS := {
+	"primary": {
+		"normal": Color.WHITE, "hover": Color(1.4, 1.4, 1.4),
+		"pressed": Color(0.72, 0.72, 0.72), "disabled": Color(0.55, 0.55, 0.55, 0.86),
+	},
+	"secondary": {
+		"normal": Color.WHITE, "hover": Color(1.25, 1.25, 1.25),
+		"pressed": Color(0.78, 0.78, 0.78), "disabled": Color(0.55, 0.55, 0.55, 0.86),
+	},
+	"list": {
+		"normal": Color(0.9, 0.9, 0.9, 0.90), "hover": Color(1.1, 1.1, 1.1, 1.0),
+		"pressed": Color(0.7, 0.7, 0.7, 1.0), "disabled": Color(0.55, 0.55, 0.55, 0.45),
+	},
+}
+const LEGACY_BUTTON_SKINS := {
+	"button_primary_normal": {"family": "primary", "state": "normal"},
+	"button_primary_hover": {"family": "primary", "state": "hover"},
+	"button_primary_pressed": {"family": "primary", "state": "pressed"},
+	"button_primary_disabled": {"family": "primary", "state": "disabled"},
+	"button_secondary_normal": {"family": "secondary", "state": "normal"},
+	"button_secondary_hover": {"family": "secondary", "state": "hover"},
+	"button_secondary_pressed": {"family": "secondary", "state": "pressed"},
+	"button_secondary_disabled": {"family": "secondary", "state": "disabled"},
+}
+
+static var _kit_textures: Dictionary = {}
+
+
+## Mandatory original kit textures report a missing asset at the lookup boundary.
+static func kit_tex(asset_name: String) -> Texture2D:
+	if LEGACY_BUTTON_SKINS.has(asset_name):
+		asset_name = "button_%s_base" % LEGACY_BUTTON_SKINS[asset_name]["family"]
+	if _kit_textures.has(asset_name):
+		return _kit_textures[asset_name]
+	var path := KIT_DIR + asset_name + ".png"
+	if not ResourceLoader.exists(path):
+		push_error("Missing shared UI skin: %s" % path)
+		return null
+	var texture := load(path) as Texture2D
+	if texture == null:
+		push_error("Invalid shared UI skin: %s" % path)
+		return null
+	_kit_textures[asset_name] = texture
+	return texture
+
+
+## Vector4 values are left, top, right, bottom. Texture patches stay centralized.
+static func kit_box(
+	asset_name: String, content_margins: Vector4 = Vector4.ZERO
+) -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	var resolved_name := asset_name
+	if LEGACY_BUTTON_SKINS.has(asset_name):
+		var legacy: Dictionary = LEGACY_BUTTON_SKINS[asset_name]
+		resolved_name = "button_%s_base" % legacy["family"]
+		style.modulate_color = BUTTON_FACE_TINTS[legacy["family"]][legacy["state"]]
+	style.texture = kit_tex(resolved_name)
+	var patches: Vector4 = KIT_PATCH_MARGINS.get(resolved_name, Vector4.ZERO)
+	style.texture_margin_left = patches.x
+	style.texture_margin_top = patches.y
+	style.texture_margin_right = patches.z
+	style.texture_margin_bottom = patches.w
+	style.content_margin_left = content_margins.x
+	style.content_margin_top = content_margins.y
+	style.content_margin_right = content_margins.z
+	style.content_margin_bottom = content_margins.w
+	return style
+
+
+## Quiet panels carry selection/rarity state through a tint on the shared artwork.
+static func state_box(
+	state: String = "normal", content_margin: float = 6.0, tint: Color = Color.WHITE
+) -> StyleBoxTexture:
+	var style := kit_box("panel_hard_9slice", Vector4.ONE * content_margin)
+	var state_tint := Color.WHITE
+	match state:
+		"hover":
+			state_tint = SKIN_HOVER_TINT
+		"selected", "filled":
+			state_tint = SKIN_SELECTED_TINT
+		"pressed":
+			state_tint = SKIN_PRESSED_TINT
+		"locked":
+			state_tint = SKIN_LOCKED_TINT
+		"disabled":
+			state_tint = SKIN_DISABLED_TINT
+	style.modulate_color = state_tint * tint
+	return style
+
+
+## Solid-color data marks and progress fills remain semantic shapes in one place.
+static func semantic_fill(color: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	return style
+
+
+## Thin state borders leave the content beneath them unobscured.
+static func semantic_outline(color: Color, width: int, radius: int) -> StyleBoxFlat:
+	var style := semantic_fill(Color.TRANSPARENT)
+	style.draw_center = false
+	style.border_color = color
+	style.set_border_width_all(width)
+	style.set_corner_radius_all(radius)
+	return style
+
+
+static func input_box(invalid: bool = false) -> StyleBoxTexture:
+	var style := kit_box("input_9slice", Vector4(14, 8, 14, 8))
+	if invalid:
+		style.modulate_color = INPUT_INVALID_TINT
+	return style
+
+
+static func dropdown_box(state: String = "normal") -> StyleBoxTexture:
+	var style := kit_box("dropdown_9slice", Vector4(14, 8, 34, 8))
+	if state == "hover":
+		style.modulate_color = SKIN_HOVER_TINT
+	elif state == "pressed":
+		style.modulate_color = SKIN_PRESSED_TINT
+	elif state == "disabled":
+		style.modulate_color = SKIN_DISABLED_TINT
+	return style
+
+
+static func apply_dropdown_theme(option: OptionButton) -> void:
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		option.add_theme_stylebox_override(state, dropdown_box(state))
+	option.add_theme_icon_override("arrow", kit_tex("dropdown_arrow"))
+	option.add_theme_color_override("font_color", TEXT_MAIN)
+	option.add_theme_color_override("font_hover_color", SAND_LIGHT)
+	option.add_theme_color_override("font_pressed_color", SAND_LIGHT)
+	var popup := option.get_popup()
+	popup.add_theme_color_override("font_hover_color", TEXT_MAIN)
+	var popup_styles := {
+		"panel": kit_box("panel_hard_9slice"),
+		"hover": kit_box("button_secondary_hover"),
+	}
+	for style_name in popup_styles:
+		var previous := popup.get_theme_stylebox(style_name)
+		var style: StyleBoxTexture = popup_styles[style_name]
+		for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+			style.set_content_margin(side, previous.get_margin(side))
+		popup.add_theme_stylebox_override(style_name, style)
+
+
+static func checkbox_tex(checked: bool, disabled: bool = false) -> Texture2D:
+	var asset_name := "checkbox_checked" if checked else "checkbox_unchecked"
+	if disabled:
+		asset_name += "_disabled"
+	return kit_tex(asset_name)
+
+
+static func apply_checkbox_theme(button: CheckBox) -> void:
+	button.add_theme_icon_override("checked", checkbox_tex(true))
+	button.add_theme_icon_override("unchecked", checkbox_tex(false))
+	button.add_theme_icon_override("checked_disabled", checkbox_tex(true, true))
+	button.add_theme_icon_override("unchecked_disabled", checkbox_tex(false, true))
+	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
+	var focus := semantic_outline(UI_HEADER_GOLD, 2, 4)
+	button.add_theme_stylebox_override("focus", focus)
+
+
+# ─── Compatible panel and button entry points ──────────────────────────────────
+## Legacy color/radius arguments remain accepted while the artwork owns the skin.
 static func panel_with_shadow(
-	bg: Color, border: Color, radius: int = 4, border_width: int = 3
-) -> StyleBoxFlat:
-	var style = _base(bg, border, radius, border_width)
-	style.shadow_color = SHADOW_COLOR
-	style.shadow_size = 8
-	style.shadow_offset = Vector2(4, 4)
-	return style
+	_bg: Color, _border: Color, _radius: int = 4, _border_width: int = 3
+) -> StyleBoxTexture:
+	return kit_box("panel_hard_9slice")
 
 
-## Flat panel without shadow. Used by the relic modal and battle top bar.
 static func panel_flat(
-	bg: Color, border: Color, radius: int = 8, border_width: int = 3
-) -> StyleBoxFlat:
-	return _base(bg, border, radius, border_width)
+	_bg: Color, _border: Color, _radius: int = 8, _border_width: int = 3
+) -> StyleBoxTexture:
+	return kit_box("panel_hard_9slice")
 
 
-## Rounded button-shaped style. Optionally adds content margins for use as a panel.
 static func rounded_button(
-	bg: Color, border: Color, radius: int = 6, border_width: int = 1
-) -> StyleBoxFlat:
-	return _base(bg, border, radius, border_width)
+	_bg: Color, _border: Color, _radius: int = 6, _border_width: int = 1
+) -> StyleBoxTexture:
+	return button_textured()
 
 
-## Reward row style: panel_with_shadow wrapped with row-content padding.
-## Used by loot_reward to render the list of loot rows.
-static func reward_row_style(bg: Color, border: Color) -> StyleBoxFlat:
-	var style = panel_with_shadow(bg, border, 3)
-	style.content_margin_left = 12.0
-	style.content_margin_right = 12.0
-	style.content_margin_top = 8.0
-	style.content_margin_bottom = 8.0
-	return style
+static func reward_row_style(_bg: Color, _border: Color) -> StyleBoxTexture:
+	return kit_box("button_secondary_normal", Vector4(12, 8, 12, 8))
 
 
-## Square icon well frame with a slightly thicker border than a normal panel.
-## Used by loot_reward's icon thumbnails.
-static func icon_frame_style() -> StyleBoxFlat:
-	return panel_with_shadow(Color(0.045, 0.04, 0.035, 1.0), Color(0.62, 0.44, 0.22, 1.0), 2, 3)
+static func icon_frame_style() -> StyleBoxTexture:
+	return state_box("normal", 3)
 
 
-## Apply panel + hover + pressed stylebox triplet to a Button.
-## Routes through button_textured(), i.e. the active lightline ink set — the
-## game-wide default button. The `bg`/`border`/`radius` params are ignored —
-## kept for caller signature compatibility. Callers that need pure programmatic
-## style can use rounded_button().
+static func panel_textured(variant: String = "default") -> StyleBoxTexture:
+	var asset_name := "panel_soft_9slice" if variant == "soft" else "panel_hard_9slice"
+	return kit_box(asset_name, Vector4.ONE * 16)
+
+
+static func button_textured(state: String = "normal") -> StyleBoxTexture:
+	return ll_button_olive(state)
+
+
+## Role profiles keep source art, feedback rhythm and colors in one place.
+static func button_feedback_profile(role: String = "secondary") -> Dictionary:
+	if role == "quiet":
+		role = "list"
+	elif role == "menu_text":
+		role = "menu"
+	if role not in ["primary", "secondary", "menu", "list"]:
+		push_warning("Unknown button role: %s" % role)
+		role = "secondary"
+	var family := "primary" if role == "primary" else "secondary"
+	var tint_family := "list" if role == "list" else family
+	return {
+		"role": role,
+		"base_texture": kit_tex("button_%s_base" % family),
+		"outline_texture": kit_tex("button_%s_outline" % family),
+		"patch_margins": KIT_PATCH_MARGINS["button_%s_base" % family],
+		"face_tints": BUTTON_FACE_TINTS[tint_family].duplicate(),
+		"show_face": role != "menu",
+		"show_outline": role != "menu",
+		"show_shadow": role in ["primary", "secondary"],
+		"shadow_offset": BUTTON_SHADOW_OFFSET,
+		"shadow_tint": BUTTON_SHADOW_TINT,
+		"outline_tint": UI_HEADER_GOLD,
+		"hover_scale": BUTTON_ROLE_SCALES[role].x,
+		"pressed_scale": BUTTON_ROLE_SCALES[role].y,
+		"hover_seconds": BUTTON_HOVER_SECONDS,
+		"exit_seconds": BUTTON_EXIT_SECONDS,
+		"press_seconds": BUTTON_PRESS_SECONDS,
+		"release_seconds": BUTTON_RELEASE_SECONDS,
+		"hover_trans": Tween.TRANS_LINEAR,
+		"hover_ease": Tween.EASE_OUT,
+		"exit_trans": Tween.TRANS_EXPO,
+		"exit_ease": Tween.EASE_OUT,
+		"press_trans": Tween.TRANS_EXPO,
+		"press_ease": Tween.EASE_OUT,
+		"hover_sound": "ui_hover",
+		"font_outline_size": BUTTON_FONT_OUTLINE_SIZES[role],
+		"marker_texture": kit_tex("dropdown_arrow"),
+		"marker_size": MENU_MARKER_SIZE,
+		"marker_gap": MENU_MARKER_GAP,
+		"marker_rotation": MENU_MARKER_ROTATION,
+		"marker_tint": Color.WHITE,
+	}
+
+
+## The native Button owns input and content; its independent child owns movement.
+static func apply_action_button(
+	button: Button, role: String = "secondary",
+	content_margins: Vector4 = Vector4(-1, -1, -1, -1)
+) -> void:
+	var profile := button_feedback_profile(role)
+	if content_margins.x < 0:
+		content_margins = BUTTON_CONTENT_MARGINS
+		if button.has_theme_stylebox_override("normal"):
+			var previous := button.get_theme_stylebox("normal")
+			content_margins = Vector4(
+				previous.get_margin(SIDE_LEFT), previous.get_margin(SIDE_TOP),
+				previous.get_margin(SIDE_RIGHT), previous.get_margin(SIDE_BOTTOM)
+			)
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:  # bare-ok: Godot theme states
+		var empty := StyleBoxEmpty.new()
+		empty.content_margin_left = content_margins.x
+		empty.content_margin_top = content_margins.y
+		empty.content_margin_right = content_margins.z
+		empty.content_margin_bottom = content_margins.w
+		button.add_theme_stylebox_override(state, empty)
+	button.add_theme_color_override("font_color", TEXT_MAIN)
+	var highlighted_text := UI_HEADER_GOLD if profile["role"] == "menu" else SAND_LIGHT
+	button.add_theme_color_override("font_hover_color", highlighted_text)
+	button.add_theme_color_override("font_focus_color", highlighted_text)
+	button.add_theme_color_override("font_pressed_color", SAND_LIGHT)
+	button.add_theme_color_override("font_hover_pressed_color", SAND_LIGHT)
+	button.add_theme_color_override("font_disabled_color", BUTTON_DISABLED_TEXT)
+	button.add_theme_color_override("font_outline_color", BUTTON_FONT_OUTLINE)
+	button.add_theme_constant_override("outline_size", int(profile["font_outline_size"]))
+	var visuals := button.get_node_or_null(NodePath(BUTTON_VISUALS_NAME))
+	if visuals == null:
+		visuals = BUTTON_FEEDBACK.new()
+		visuals.name = BUTTON_VISUALS_NAME
+		button.add_child(visuals)
+		visuals.configure(button, profile)
+	else:
+		visuals.configure(button, profile)
+
+
+static func apply_menu_text_button(button: Button) -> void:
+	apply_action_button(button, "menu")
+
+
+static func apply_quiet_button(button: Button) -> void:
+	apply_action_button(button, "list")
+
+
 static func apply_button_theme(
 	button: Button, _bg: Color = Color.WHITE, _border: Color = Color.WHITE, _radius: int = 4
 ) -> void:
-	button.add_theme_stylebox_override("normal", button_textured("normal"))
-	button.add_theme_stylebox_override("hover", button_textured("hover"))
-	button.add_theme_stylebox_override("pressed", button_textured("pressed"))
-	button.add_theme_color_override("font_color", TEXT_MAIN)
-	button.add_theme_color_override("font_hover_color", SAND_LIGHT)
-	button.add_theme_color_override("font_pressed_color", SAND_LIGHT)
-	button.add_theme_color_override("font_disabled_color", Color(0.72, 0.64, 0.50, 0.92))
-	button.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.82))
-	button.add_theme_constant_override("outline_size", 1)
-	# Hover "juice": a soft tick + a subtle scale pop. Attached here so every themed
-	# button across the game gets the same alive feedback for free.
-	button.mouse_entered.connect(
-		func() -> void:
-			if not is_instance_valid(button) or button.disabled:
-				return
-			AudioManager.play_sfx("ui_hover")
-			_button_pop(button, Vector2(1.04, 1.04), 0.08)
-	)
-	button.mouse_exited.connect(
-		func() -> void:
-			if is_instance_valid(button):
-				_button_pop(button, Vector2.ONE, 0.10)
-	)
+	apply_action_button(button, "secondary", BUTTON_CONTENT_MARGINS)
 
-
-## Tween a button's scale (centered) with the prior pop killed first, so rapid
-## hover in/out doesn't stack fighting tweens. Used by apply_button_theme's juice.
-static func _button_pop(button: Button, to: Vector2, dur: float) -> void:
-	if not is_instance_valid(button) or not button.is_inside_tree():
-		return  # create_tween() outside the tree warns; skip if mid-removal
-	var prev = button.get_meta("_juice_tw") if button.has_meta("_juice_tw") else null
-	if prev != null and (prev is Tween) and prev.is_valid():
-		prev.kill()
-	button.pivot_offset = button.size / 2.0
-	var tw := button.create_tween()
-	button.set_meta("_juice_tw", tw)
-	tw.tween_property(button, "scale", to, dur).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-
-
-## Fade a freshly-shown modal/overlay in (modulate only — safe under any container,
-## unlike scale/position which fight layout). Call once the control is in the tree.
 static func fade_in(control: Control, dur: float = 0.16) -> void:
 	if not is_instance_valid(control) or not control.is_inside_tree():
 		return
@@ -185,26 +466,18 @@ static func fade_in(control: Control, dur: float = 0.16) -> void:
 	control.create_tween().tween_property(control, "modulate:a", 1.0, dur)
 
 
-## Theme an HSlider's track + filled area to wasteland tones (kills the default
-## grey/blue slider). The grabber stays the engine default — small + unobtrusive.
 static func style_slider(slider: HSlider, accent: Color = Color(0.82, 0.58, 0.25)) -> void:
 	slider.focus_mode = Control.FOCUS_NONE
-	var track := StyleBoxFlat.new()
-	track.bg_color = Color(0.06, 0.05, 0.04, 0.95)
-	track.border_color = Color(0.0, 0.0, 0.0, 0.5)
-	track.set_border_width_all(1)
+	var track := semantic_fill(GLASS_BG_DEEP)
 	track.set_corner_radius_all(4)
 	slider.add_theme_stylebox_override("slider", track)
-	var fill := StyleBoxFlat.new()
-	fill.bg_color = accent
+	var fill := semantic_fill(accent)
 	fill.set_corner_radius_all(4)
 	slider.add_theme_stylebox_override("grabber_area", fill)
 	slider.add_theme_stylebox_override("grabber_area_highlight", fill)
 
 
-# ─── Display font (Oswald — condensed, for titles/labels/numbers) ─────────────
-## Oswald is Latin-only, so it falls back to the project CJK font for Chinese —
-## English/numbers get the condensed HUD look, 中文 still renders via Noto.
+# ─── Existing fonts and currency content ────────────────────────────────────────
 const DISPLAY_FONT_SRC = preload("res://assets/fonts/Oswald.ttf")
 const CJK_FALLBACK = preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 const COMBAT_FONT_SRC = preload("res://assets/fonts/Kreon-VariableFont_wght.ttf")
@@ -240,37 +513,6 @@ static func style_display(label: Label, size: int, weight: int = 600, spacing: i
 		label.add_theme_constant_override("font_spacing_glyph", spacing)
 
 
-# ─── Textured (PNG-based) builders ────────────────────────────────────────────
-# The game-wide default panel / button skin. Since 2026-07-08 these resolve to
-# the ACTIVE lightline ink set (ui_kit_lightline/<INK_SET>_*) — the same flat
-# charcoal + thin gold-line language as the building pages and the draggable
-# windows. (The Kenney CC0 placeholder art these used to wrap was deleted with
-# this change; a missing lightline PNG falls back to the programmatic
-# menu-glass styles, so a regenerating kit never breaks boot.)
-
-
-## 9-slice panel — the ink-set charcoal window panel. The `variant` arg
-## ("default" / "dark") is kept for caller signature compatibility; both
-## variants resolve to the same lightline panel now that the tinted Kenney
-## pair is gone.
-static func panel_textured(_variant: String = "default") -> StyleBox:
-	var fb := _base(GLASS_BG, GLASS_HAIRLINE, 7, 1)
-	fb.set_content_margin_all(16.0)
-	var box := lightline_box(INK_SET + "_panel", fb, 34)
-	if box is StyleBoxTexture:
-		(box as StyleBoxTexture).set_content_margin_all(16.0)
-	return box
-
-
-## 9-slice button stylebox — the ink-set olive (secondary) button, the quiet
-## game-wide default; primary CTAs use ll_button() (orange) directly.
-## state: normal / hover / pressed.
-static func button_textured(state: String = "normal") -> StyleBox:
-	return ll_button_olive(state)
-
-
-## Currency icon PNGs (Codex art). Keyed by currency id: caps / scrap. (The `core`
-## icon PNG is left on disk but no longer referenced — Core removed 2026-07-07.)
 const _CURRENCY_ICON_DIR := "res://run_system/assets/images/home/currency/"
 
 ## Currency display fallback names (used only if the icon PNG is missing, so
@@ -408,32 +650,156 @@ static func overlay_cost_badge(
 	return holder
 
 
-## A square ✕ close button for the full-screen pages (character / run-deck).
-## The caller anchors it to the page's top-right corner and connects `pressed`.
-## Resolves to the lightline square ✕ — the same art as the draggable windows.
+# ─── Shared window, selection and action hooks ─────────────────────────────────
 static func close_x_button() -> Button:
 	return ll_close_button(48.0)
 
 
-# ─── Windowed-UI v2 builders (character / stash / forge window chrome) ───────
-# Every shape routes through the checked-in ui_kit texture hooks below. A
-# missing PNG falls back to the programmatic StyleBoxFlat silently.
+static func ui_panel() -> StyleBoxTexture:
+	return kit_box("panel_hard_9slice")
 
-## ACTIVE skin directory — every kit lookup (ui_kit_tex / _ui_kit_box) resolves
-## through this one const, so flipping it swaps the ENTIRE windowed-UI skin:
-##   "res://run_system/assets/images/ui_kit_none/"       — DISABLED (dir doesn't
-##       exist): every lookup misses → the programmatic menu-glass fallbacks
-##       below render everywhere. This is the ACTIVE look — the owner rejected
-##       all three texture kits in favor of main_menu's minimal dark glass.
-##   "res://run_system/assets/images/ui_kit/"            — Codex wasteland kit
-## (The rejected Kenney comparison kits were deleted in the 2026-07-08 art audit
-## — style rule §1 is original 2D American-comic art with LIGHTWEIGHT UI, and
-## off-style kits on disk kept misleading art passes. Missing files always hit
-## the flat fallbacks.)
+
+static func ui_titlebar() -> StyleBoxTexture:
+	return kit_box("panel_hard_9slice", Vector4(12, 0, 8, 0))
+
+
+static func ui_inset_panel() -> StyleBoxTexture:
+	return state_box()
+
+
+static func ui_slot_box(
+	state: String = "empty", border_override: Color = Color(0, 0, 0, 0)
+) -> StyleBoxTexture:
+	var tint := border_override if border_override.a > 0.0 else Color.WHITE
+	return state_box(state, 3, tint)
+
+
+static func ui_nameplate_box() -> StyleBoxTexture:
+	return kit_box("panel_hard_9slice", Vector4(10, 3, 10, 3))
+
+
+static func ui_header_label(text: String, size: int = 14) -> Label:
+	var l := Label.new()
+	l.text = text
+	var fv := display_font(700)
+	fv.spacing_glyph = 2
+	l.add_theme_font_override("font", fv)
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", UI_HEADER_GOLD)
+	return l
+
+
+static func ui_bottom_bar() -> StyleBoxTexture:
+	return kit_box("panel_hard_9slice")
+
+
+static func ui_button_brass(state: String = "normal") -> StyleBoxTexture:
+	return kit_box("button_secondary_" + state, Vector4(16, 10, 16, 10))
+
+
+static func ui_button_accent(state: String = "normal") -> StyleBoxTexture:
+	return kit_box("button_primary_" + state)
+
+
+static func ui_divider() -> Control:
+	var line := Panel.new()
+	line.custom_minimum_size = Vector2(0, 8)
+	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	line.add_theme_stylebox_override("panel", kit_box("divider"))
+	return line
+
+
+static func ll_panel() -> StyleBoxTexture:
+	return ui_panel()
+
+
+static func ll_titlebar() -> StyleBoxTexture:
+	return ui_titlebar()
+
+
+static func ll_section() -> StyleBoxTexture:
+	return kit_box("panel_hard_9slice")
+
+
+static func ll_inset() -> StyleBoxTexture:
+	return state_box()
+
+
+static func ll_button(state: String = "normal") -> StyleBoxTexture:
+	return kit_box("button_primary_" + state, Vector4(18, 10, 18, 12))
+
+
+static func ll_button_olive(state: String = "normal") -> StyleBoxTexture:
+	return kit_box("button_secondary_" + state, Vector4(18, 10, 18, 12))
+
+
+static func ll_button_dark(state: String = "normal") -> StyleBoxTexture:
+	return ll_button_olive(state)
+
+
+static func concept_price_button(variant: String, state: String = "normal") -> StyleBoxTexture:
+	var kind := "secondary" if variant == "olive" else "primary"
+	return kit_box("button_%s_%s" % [kind, state], Vector4(14, 8, 14, 9))
+
+
+static func apply_concept_price_button(button: Button, variant: String) -> void:
+	var role := "secondary" if variant == "olive" else "primary"
+	apply_action_button(button, role, Vector4(14, 8, 14, 9))
+
+static func ll_charcoal_panel() -> StyleBoxTexture:
+	return kit_box("panel_hard_9slice", Vector4(16, 12, 16, 12))
+
+
+static func ll_titleplate() -> StyleBoxTexture:
+	return kit_box("panel_hard_9slice", Vector4(20, 6, 20, 6))
+
+
+static func ll_close_button(px: float = 48.0) -> Button:
+	var button := Button.new()
+	button.text = "×"
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.custom_minimum_size = Vector2(px, px)
+	button.add_theme_font_override("font", display_font(600))
+	button.add_theme_font_size_override("font_size", int(px * 0.45))
+	apply_action_button(button, "secondary", Vector4.ZERO)
+	return button
+
+static func ll_slot(state: String = "normal") -> StyleBoxTexture:
+	return state_box(state, 3)
+
+
+static func ll_inset_thin() -> StyleBoxTexture:
+	return state_box()
+
+
+static func apply_choice_button(button: Button) -> void:
+	apply_action_button(button, "list", BUTTON_CONTENT_MARGINS)
+
+# ─── Retained original icon sources ────────────────────────────────────────────
 const UI_KIT_DIR := "res://run_system/assets/images/ui_kit/"
+const LIGHTLINE_DIR := "res://run_system/assets/images/ui_kit_lightline/"
+const INK_SET := "lw"
 const CONCEPT_UI_DIR := "res://run_system/assets/images/ui/concept_dark_panel/"
-
 static var _concept_tex_cache: Dictionary = {}
+
+
+static func ui_kit_tex(kit_name: String) -> Texture2D:
+	var path := UI_KIT_DIR + kit_name + ".png"
+	if ResourceLoader.exists(path):
+		var tex = load(path)
+		if tex is Texture2D:
+			return tex
+	return null
+
+
+static func lightline_tex(tex_name: String) -> Texture2D:
+	var path := LIGHTLINE_DIR + tex_name + ".png"
+	if ResourceLoader.exists(path):
+		var tex = load(path)
+		if tex is Texture2D:
+			return tex
+	return null
 
 
 static func concept_tex(asset_name: String) -> Texture2D:
@@ -454,536 +820,22 @@ static func concept_tex(asset_name: String) -> Texture2D:
 	return tex
 
 
-static func concept_box(
-	asset_name: String,
-	fallback: StyleBox,
-	margin_h: int = 0,
-	margin_v: int = -1,
-	content_margin: int = 0
-) -> StyleBox:
-	var tex := concept_tex(asset_name)
-	if tex == null:
-		return fallback
-	var style := StyleBoxTexture.new()
-	style.texture = tex
-	if margin_v < 0:
-		margin_v = margin_h
-	style.texture_margin_left = margin_h
-	style.texture_margin_right = margin_h
-	style.texture_margin_top = margin_v
-	style.texture_margin_bottom = margin_v
-	if content_margin > 0:
-		style.content_margin_left = content_margin
-		style.content_margin_right = content_margin
-		style.content_margin_top = content_margin
-		style.content_margin_bottom = content_margin
-	return style
-
-
-## A ui_kit texture by basename ("icon_lock" → <UI_KIT_DIR>/icon_lock.png), or
-## null while that file is undelivered. Callers must handle null with a flat
-## fallback.
-static func ui_kit_tex(kit_name: String) -> Texture2D:
-	var path := UI_KIT_DIR + kit_name + ".png"
-	if ResourceLoader.exists(path):
-		var tex = load(path)
-		if tex is Texture2D:
-			return tex
-	return null
-
-
-## StyleBoxTexture over a ui_kit 9-slice PNG, or `fallback` while the kit is
-## undelivered. margin_h / margin_v are the 9-slice texture margins from the
-## asset spec (margin_v = -1 mirrors margin_h). `tile_h` switches the middle
-## column from STRETCH to TILE — for targets much wider than the source art
-## (the full-width bottom bar), where stretching smears the baked detail.
-## Only pass tile_h for art whose middle strip actually wraps cleanly.
-static func _ui_kit_box(
-	kit_name: String,
-	fallback: StyleBoxFlat,
-	margin_h: int = 0,
-	margin_v: int = -1,
-	tile_h: bool = false
-) -> StyleBox:
-	var tex := ui_kit_tex(kit_name)
-	if tex == null:
-		return fallback
-	var style := StyleBoxTexture.new()
-	style.texture = tex
-	if margin_v < 0:
-		margin_v = margin_h
-	style.texture_margin_left = margin_h
-	style.texture_margin_right = margin_h
-	style.texture_margin_top = margin_v
-	style.texture_margin_bottom = margin_v
-	if tile_h:
-		style.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
-	return style
-
-
-## Floating-window body chrome (character / stash / forge windows) — menu glass:
-## translucent dark surface + 1px hairline, radius 7; a soft drop shadow keeps
-## the floating window separated from the scene beneath (depth, not ornament).
-static func ui_panel() -> StyleBox:
-	var fb := _base(GLASS_BG, GLASS_HAIRLINE, 7, 1)
-	fb.shadow_color = SHADOW_COLOR
-	fb.shadow_size = 10
-	fb.shadow_offset = Vector2(0, 4)
-	return _ui_kit_box("panel_window", fb, 48)
-
-
-## Floating-window title-bar strip — slightly lighter glass with the menu's 3px
-## gold LEFT accent stripe + a 1px bottom hairline separating it from the body.
-## (Deliberately NOT tile_h: the kit titlebar art's middle strip has a hard
-## left↔right wrap discontinuity — irrelevant while the kit is disabled, kept
-## for a future kit re-enable.)
-static func ui_titlebar() -> StyleBox:
-	var fb := StyleBoxFlat.new()
-	fb.bg_color = GLASS_BG_TITLE
-	fb.border_color = GLASS_GOLD
-	fb.border_width_left = 3
-	fb.border_width_bottom = 1
-	fb.corner_radius_top_left = 7
-	fb.corner_radius_top_right = 7
-	fb.content_margin_left = 12.0
-	fb.content_margin_right = 8.0
-	return _ui_kit_box("panel_window_titlebar", fb, 48, 16)
-
-
-## Recessed inner well (paper-doll spotlight / inset sections) — darker glass +
-## hairline, radius 5.
-static func ui_inset_panel() -> StyleBox:
-	return _ui_kit_box("panel_inset", _base(GLASS_BG_DEEP, GLASS_HAIRLINE, 5, 1), 48)
-
-
-## Slot / backpack-cell box for the v2 window chrome. States:
-##   "empty"      — equip slot awaiting gear (slot glyph on inset bg)
-##   "cell_empty" — unlocked empty backpack grid cell
-##   "locked"     — backpack cell beyond the unlocked capacity
-##   "hover"      — brass hover/selected ring
-##   "filled"     — carries gear; pass the rarity color as border_override
-##   "tool"       — the optional tool slot (lighter border reads as "dashed")
-## Kit hooks slot_normal / slot_hover / slot_locked skin the non-informational
-## states; "filled" and "tool" stay flat so the rarity border is never lost.
-static func ui_slot_box(
-	state: String = "empty", border_override: Color = Color(0, 0, 0, 0)
-) -> StyleBox:
-	var kit_name := ""
-	match state:
-		"locked":
-			kit_name = "slot_locked"
-		"hover":
-			kit_name = "slot_hover"
-		"empty", "cell_empty":
-			kit_name = "slot_normal"
-	if kit_name != "":
-		var tex := ui_kit_tex(kit_name)
-		if tex:
-			var style := StyleBoxTexture.new()
-			style.texture = tex
-			return style
-	var fb: StyleBoxFlat
-	match state:
-		"locked":
-			fb = _base(GLASS_BG_LOCKED, GLASS_HAIRLINE_FAINT, 5, 1)
-		"cell_empty":
-			fb = _base(GLASS_BG_CELL, GLASS_HAIRLINE_DIM, 5, 1)
-		"hover":
-			fb = _base(GLASS_BG_HOVER, GLASS_GOLD, 5, 1)
-		"filled":
-			# 2px stays HERE ONLY: the border carries the rarity color (info,
-			# not ornament) and needs the weight to read at 56-76px cell sizes.
-			fb = _base(GLASS_BG, UI_BRASS_LIGHT, 5, 2)
-		"tool":
-			fb = _base(GLASS_BG_CELL, UI_TOOL_BORDER, 5, 1)
-		_:
-			fb = _base(GLASS_BG_DEEP, GLASS_HAIRLINE, 5, 1)
-	if border_override.a > 0.0:
-		fb.border_color = border_override
-	return fb
-
-
-## The hero-switcher name plate (and other small hairline plates) — glass.
-static func ui_nameplate_box() -> StyleBoxFlat:
-	var style := _base(GLASS_BG, GLASS_HAIRLINE, 5, 1)
-	style.content_margin_left = 10.0
-	style.content_margin_right = 10.0
-	style.content_margin_top = 3.0
-	style.content_margin_bottom = 3.0
-	return style
-
-
-## Gold section-header Label (display font, wide glyph spacing) — the v2 window
-## chrome's section titles.
-static func ui_header_label(text: String, size: int = 14) -> Label:
-	var l := Label.new()
-	l.text = text
-	var fv := display_font(700)
-	fv.spacing_glyph = 2
-	l.add_theme_font_override("font", fv)
-	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", UI_HEADER_GOLD)
-	return l
-
-
-## The home-base bottom HUD bar body — one quiet glass strip: translucent dark
-## surface whose only drawn border is a 1px hairline TOP edge (the other three
-## sides sit on the screen edge, so they stay width 0). Kit hook kept for a
-## future re-enable (`panel_bottom_bar.png`, tile_h — see git history for the
-## seam measurements).
-static func ui_bottom_bar() -> StyleBox:
-	var fb := StyleBoxFlat.new()
-	fb.bg_color = GLASS_BG
-	fb.border_color = GLASS_HAIRLINE
-	fb.border_width_top = 1
-	return _ui_kit_box("panel_bottom_bar", fb, 64, 24, true)
-
-
-## Default bar-button — menu glass: dark translucent surface + 1px hairline;
-## hover turns the border gold and lightens the surface a touch, pressed
-## darkens it, disabled goes darker with a faint hairline.
-## state: "normal" / "hover" / "pressed" / "disabled".
-static func ui_button_brass(state: String = "normal") -> StyleBox:
-	var fb: StyleBoxFlat
-	match state:
-		"hover":
-			fb = _base(GLASS_BG_HOVER, GLASS_GOLD, 7, 1)
-		"pressed":
-			fb = _base(GLASS_BG_PRESSED, GLASS_HAIRLINE, 7, 1)
-		"disabled":
-			fb = _base(GLASS_BG_PRESSED, GLASS_HAIRLINE_FAINT, 7, 1)
-		_:
-			fb = _base(GLASS_BG, GLASS_HAIRLINE, 7, 1)
-	fb.content_margin_left = 16.0
-	fb.content_margin_right = 16.0
-	fb.content_margin_top = 10.0
-	fb.content_margin_bottom = 10.0
-	return _ui_kit_box("btn_brass_" + state, fb, 24)
-
-
-## Accent (giant START) button — the same glass language but the surface is a
-## warm dark red with a 1px gold rim, so it reads as THE primary action without
-## turning candy. Hover brightens both surface and rim; pressed darkens. Label
-## text pairs with UI_ACCENT_TEXT (cream).
-static func ui_button_accent(state: String = "normal") -> StyleBox:
-	var bg := UI_ACCENT_BG
-	var rim := UI_ACCENT_RIM
-	match state:
-		"hover":
-			bg = UI_ACCENT_BG_HOVER
-			rim = GLASS_GOLD_BRIGHT
-		"pressed":
-			bg = UI_ACCENT_BG_PRESSED
-	return _ui_kit_box("btn_accent_" + state, _base(bg, rim, 7, 1), 24, 20)
-
-
-## A 1px-thin horizontal divider line (the v2 chrome's only separator shape).
-static func ui_divider() -> Control:
-	var line := Panel.new()
-	line.custom_minimum_size = Vector2(0, 1)
-	var style := StyleBoxFlat.new()
-	style.bg_color = GLASS_HAIRLINE_DIM
-	line.add_theme_stylebox_override("panel", style)
-	return line
-
-
-# ─── Lightline component kit (concept-parity building UIs) ───────────────────
-# A Codex "lightline" component sheet set (olive-brass metal frames + orange
-# primary buttons) sliced into named transparent PNGs under ui_kit_lightline/;
-# manifest.json carries each piece's bbox + 9-slice margins. These hooks mirror
-# the ui_kit_tex / _ui_kit_box pattern: use the PNG when present, fall back to a
-# programmatic StyleBox otherwise. ADDITIVE — no existing surface switches to
-# them yet (Phase 1 foundation; later phases wire the building windows here).
-const LIGHTLINE_DIR := "res://run_system/assets/images/ui_kit_lightline/"
-const LIGHTLINE_MANIFEST := "res://run_system/assets/images/ui_kit_lightline/manifest.json"
-
-static var _ll_margins_cache: Dictionary = {}
-static var _ll_margins_loaded: bool = false
-
-
-## Parse manifest.json once → {name: {left,top,right,bottom}} for the 9-sliceable
-## pieces (nine_slice != null). Cached; a missing/invalid manifest yields an empty
-## map, so lightline_box() falls back to its mh / mv args silently.
-static func _ll_margins() -> Dictionary:
-	if _ll_margins_loaded:
-		return _ll_margins_cache
-	_ll_margins_loaded = true
-	if not FileAccess.file_exists(LIGHTLINE_MANIFEST):
-		return _ll_margins_cache
-	var f := FileAccess.open(LIGHTLINE_MANIFEST, FileAccess.READ)
-	if f == null:
-		return _ll_margins_cache
-	var parsed = JSON.parse_string(f.get_as_text())
-	f.close()
-	if not (parsed is Array):
-		return _ll_margins_cache
-	for entry in parsed:
-		if entry is Dictionary and entry.get("nine_slice", null) is Dictionary:
-			_ll_margins_cache[str(entry.get("name", ""))] = entry["nine_slice"]
-	return _ll_margins_cache
-
-
-## A lightline PNG by basename ("panel_window" → ui_kit_lightline/panel_window.png),
-## or null while that file is undelivered. Callers must handle null with a fallback.
-static func lightline_tex(tex_name: String) -> Texture2D:
-	var path := LIGHTLINE_DIR + tex_name + ".png"
-	if ResourceLoader.exists(path):
-		var tex = load(path)
-		if tex is Texture2D:
-			return tex
-	return null
-
-
-## StyleBoxTexture over a lightline 9-slice PNG, or `fallback` while the PNG is
-## absent. 9-slice margins come from manifest.json when the piece has them; the
-## mh / mv args are the fallback margins used when the manifest lacks an entry
-## (mv = -1 mirrors mh).
+## Existing chrome callers pass a shared textured fallback during migration.
 static func lightline_box(
-	box_name: String, fallback: StyleBox, mh: int = 24, mv: int = -1
-) -> StyleBox:
-	var tex := lightline_tex(box_name)
-	if tex == null:
+	_box_name: String, fallback: StyleBox, _mh: int = 24, _mv: int = -1
+) -> StyleBoxTexture:
+	if fallback is StyleBoxTexture:
 		return fallback
-	if mv < 0:
-		mv = mh
-	var l := mh
-	var r := mh
-	var t := mv
-	var b := mv
-	var m: Dictionary = _ll_margins().get(box_name, {})
-	if not m.is_empty():
-		l = int(m.get("left", mh))
-		r = int(m.get("right", mh))
-		t = int(m.get("top", mv))
-		b = int(m.get("bottom", mv))
-	var style := StyleBoxTexture.new()
-	style.texture = tex
-	style.texture_margin_left = l
-	style.texture_margin_right = r
-	style.texture_margin_top = t
-	style.texture_margin_bottom = b
-	return style
+	return kit_box("panel_hard_9slice")
 
 
-## Lightline floating-window body — 9-slice panel_window, else the menu-glass panel.
-## Active ink-UI component set (owner A/B, 2026-07-08): "ul" = sheet 08
-## ultralight (pure black comic outline) / "lw" = sheet 07 lightweight (thin
-## brass rim). This ONE word flips every ll_* chrome hook below — both sets
-## ship the same 12-piece contract (<set>_panel / _bar / _btn_orange / ...).
-const INK_SET := "lw"
-
-
-## Every ll_* hook resolves to the active ink set: flat charcoal fills + one
-## thin outline — the lightweight language the owner locked on 2026-07-08. The
-## older olive/brass and charcoal-rivet pieces stay on disk for posters/ghosts
-## but no chrome hook points at them.
-static func ll_panel() -> StyleBox:
-	return lightline_box(INK_SET + "_panel", ui_panel(), 34)
-
-
-## Title-bar strip — the thin ink bar, else the glass titlebar.
-static func ll_titlebar() -> StyleBox:
-	return lightline_box(INK_SET + "_bar", ui_titlebar(), 26, 20)
-
-
-## Section panel — the wide ink panel, else a hairline glass panel.
-static func ll_section() -> StyleBox:
-	return lightline_box(INK_SET + "_panel_wide", _base(GLASS_BG, GLASS_HAIRLINE, 6, 1), 34)
-
-
-## Recessed inset well — the small ink card, else deep glass.
-static func ll_inset() -> StyleBox:
-	return lightline_box(INK_SET + "_panel_sm", _base(GLASS_BG_DEEP, GLASS_HAIRLINE, 5, 1), 28)
-
-
-## Primary (orange) button. state: normal / hover / pressed — one flat ink-
-## outlined base PNG with hover/pressed derived by modulate, else the
-## programmatic brass button.
-static func ll_button(state: String = "normal") -> StyleBox:
-	return _ll_button_from(INK_SET + "_btn_orange", state)
-
-
-## Secondary (olive) button — same single-base + modulate-state scheme.
-static func ll_button_olive(state: String = "normal") -> StyleBox:
-	return _ll_button_from(INK_SET + "_btn_olive", state)
-
-
-## Quiet charcoal action used by secondary decisions in the accepted building
-## concepts (notably the Cancel side of the upgrade popover).  The component is
-## already part of UI07; keeping it here prevents local ad-hoc dark buttons.
-static func ll_button_dark(state: String = "normal") -> StyleBox:
-	return _ll_button_from("btn_dark", state)
-
-
-## Dedicated compact price/action plaques recreated from the accepted building
-## concepts. They intentionally do not reuse lw_btn_*: those older assets retain
-## a long pointed/notched silhouette even when resized to the concept geometry.
-static func concept_price_button(variant: String, state: String = "normal") -> StyleBox:
-	var base_name := (
-		"price_plaque_olive_concept"
-		if variant == "olive"
-		else "price_plaque_orange_concept"
-	)
-	var fallback := ll_button_olive(state) if variant == "olive" else ll_button(state)
-	var box := lightline_box(base_name, fallback, 20, 16)
-	var texture_box := box as StyleBoxTexture
-	if texture_box == null:
-		return box
-	# Match the accepted concept palette rather than the brighter source render:
-	# olive centre ≈ #503e1e; orange centre ≈ #ac610b.
-	var base_tint := (
-		Color(1.10, 0.97, 0.74) if variant == "olive" else Color(0.81, 0.84, 0.60)
-	)
-	texture_box.modulate_color = base_tint
-	match state:
-		"hover":
-			texture_box.modulate_color = Color(
-				base_tint.r * 1.08, base_tint.g * 1.08, base_tint.b * 1.08, 1.0
-			)
-		"pressed":
-			texture_box.modulate_color = Color(
-				base_tint.r * 0.84, base_tint.g * 0.84, base_tint.b * 0.84, 1.0
-			)
-		"disabled":
-			texture_box.modulate_color = Color(
-				base_tint.r * 0.52, base_tint.g * 0.52, base_tint.b * 0.52, 1.0
-			)
-	texture_box.content_margin_left = 14
-	texture_box.content_margin_right = 14
-	texture_box.content_margin_top = 8
-	texture_box.content_margin_bottom = 9
-	return texture_box
-
-
-static func apply_concept_price_button(button: Button, variant: String) -> void:
-	for state in ["normal", "hover", "pressed", "disabled"]:
-		button.add_theme_stylebox_override(state, concept_price_button(variant, state))
-
-
-## Shared body for ll_button / ll_button_olive: 9-slice the base PNG (fallback to
-## the brass button), then tint hover brighter / pressed darker and add label
-## content margins so text doesn't crowd the ornamented edges.
-static func _ll_button_from(base_name: String, state: String) -> StyleBox:
-	var box := lightline_box(base_name, ui_button_brass(state), 26)
-	var tb := box as StyleBoxTexture
-	if tb == null:
-		return box
-	match state:
-		"hover":
-			tb.modulate_color = Color(1.12, 1.12, 1.12)
-		"pressed":
-			tb.modulate_color = Color(0.86, 0.86, 0.86)
-	tb.content_margin_left = 18
-	tb.content_margin_right = 18
-	tb.content_margin_top = 10
-	tb.content_margin_bottom = 12
-	return tb
-
-
-## Window body for the draggable character/stash/forge windows — since the
-## sheet-08 switch this is the SAME ink panel as ll_panel (the riveted charcoal
-## frame retired per the no-ornament rule); kept as its own hook so windows can
-## diverge from fullscreen pages again later without touching call sites.
-static func ll_charcoal_panel() -> StyleBox:
-	var box := lightline_box(INK_SET + "_panel", ui_panel(), 34)
-	var tb := box as StyleBoxTexture
-	if tb != null:
-		tb.content_margin_left = 16.0
-		tb.content_margin_right = 16.0
-		tb.content_margin_top = 12.0
-		tb.content_margin_bottom = 12.0
-	return box
-
-
-## Recessed title plate (the 角色/仓库 header slot) — the thin ink bar.
-static func ll_titleplate() -> StyleBox:
-	var box := lightline_box(INK_SET + "_bar", ui_titlebar(), 26, 20)
-	var tb := box as StyleBoxTexture
-	if tb != null:
-		tb.content_margin_left = 20.0
-		tb.content_margin_right = 20.0
-		tb.content_margin_top = 6.0
-		tb.content_margin_bottom = 6.0
-	return box
-
-
-## The square ✕ close button (the active set's btn_close at its NATIVE aspect —
-## owner rule 2026-07-08: never stretch it wide). Fixed square size; hover/
-## pressed derive from the same art by modulate. Falls back to a themed text-✕
-## button while the PNG is undelivered.
-static func ll_close_button(px: float = 48.0) -> Button:
-	var btn := Button.new()
-	btn.focus_mode = Control.FOCUS_NONE
-	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var tex := lightline_tex(INK_SET + "_btn_close")
-	if tex == null:
-		btn.text = "✕"
-		btn.custom_minimum_size = Vector2(px, px)
-		btn.add_theme_font_size_override("font_size", int(px * 0.45))
-		apply_button_theme(btn)
-		return btn
-	btn.custom_minimum_size = Vector2(px, px * tex.get_height() / maxf(tex.get_width(), 1.0))
-	for state in ["normal", "hover", "pressed", "disabled"]:
-		var box := StyleBoxTexture.new()
-		box.texture = tex
-		match state:
-			"hover":
-				box.modulate_color = Color(1.15, 1.15, 1.15)
-			"pressed":
-				box.modulate_color = Color(0.82, 0.82, 0.82)
-			"disabled":
-				box.modulate_color = Color(0.55, 0.55, 0.55)
-		btn.add_theme_stylebox_override(state, box)
-	return btn
-
-
-## Lightline slot box — since 2026-07-08 a THIN programmatic cell (owner: the
-## lightweight concept look; the olive slot_*.png bevels read too heavy at cell
-## size). state: normal (1px warm-grey hairline) / selected (orange ring) /
-## locked (dimmed — nothing baked in anymore, pair with a lock-glyph overlay).
-static func ll_slot(state: String = "normal") -> StyleBox:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.055, 0.058, 0.068, 0.94)
-	style.border_color = Color(0.36, 0.36, 0.31, 0.9)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(4)
-	style.set_content_margin_all(3)
-	match state:
-		"selected":
-			style.border_color = Color(0.95, 0.62, 0.25, 1.0)
-			style.set_border_width_all(2)
-		"locked":
-			style.bg_color = Color(0.040, 0.042, 0.050, 0.92)
-			style.border_color = Color(0.22, 0.22, 0.20, 0.85)
-	return style
-
-
-## Thin recessed well (charcoal concept) — the lightweight sibling of ll_inset
-## for the character/stash windows: flat dark fill + 1px hairline, no chunky
-## double border.
-static func ll_inset_thin() -> StyleBox:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.045, 0.048, 0.056, 0.92)
-	style.border_color = Color(0.30, 0.30, 0.26, 0.9)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(4)
-	style.set_content_margin_all(6)
-	return style
-
-
-# ─── Internal ─────────────────────────────────────────────────────────────────
-
-
-static func _base(bg: Color, border: Color, radius: int, border_width: int) -> StyleBoxFlat:
-	var style = StyleBoxFlat.new()
-	style.bg_color = bg
-	style.border_color = border
-	style.border_width_left = border_width
-	style.border_width_top = border_width
-	style.border_width_right = border_width
-	style.border_width_bottom = border_width
-	style.corner_radius_top_left = radius
-	style.corner_radius_top_right = radius
-	style.corner_radius_bottom_left = radius
-	style.corner_radius_bottom_right = radius
-	return style
+static func concept_box(
+	_asset_name: String,
+	fallback: StyleBox,
+	_margin_h: int = 0,
+	_margin_v: int = -1,
+	_content_margin: int = 0
+) -> StyleBoxTexture:
+	if fallback is StyleBoxTexture:
+		return fallback
+	return kit_box("panel_hard_9slice")
