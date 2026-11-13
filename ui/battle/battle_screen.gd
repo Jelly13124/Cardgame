@@ -781,7 +781,12 @@ func _start_new_game():
 	combat = COMBAT_MANAGER.new()
 	presenter = BATTLE_PRESENTER.new(self)
 	combat.presenter = presenter
-	combat.setup({"player": pc, "deck": deck_list, "encounter": encounter})
+	combat.setup({
+		"player": pc,
+		"deck": deck_list,
+		"encounter": encounter,
+		"hand_draw": int(RunManager.current_hero_data.get("hand_draw", COMBAT_MANAGER.DEFAULT_HAND_DRAW)),
+	})
 	combat.combat_ended.connect(_on_combat_ended)
 	combat.card_played.connect(_on_card_played)
 	combat.enemy_died.connect(_on_enemy_died)

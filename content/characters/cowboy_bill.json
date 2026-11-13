@@ -8,6 +8,7 @@
   "relic_pool": "cowboy",
   "tint": "#ffffff",
   "max_health": 50,
+  "hand_draw": 5,
   "starter_deck": [
     "strike",
     "strike",
