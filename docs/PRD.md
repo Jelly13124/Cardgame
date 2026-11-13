@@ -39,7 +39,7 @@ full-game ruleset behind `RunManager.DEMO_BUILD = false`.
 ## Battle System
 
 ### Turn Structure
-1. Player draws **3 cards** from the draw pile
+1. Player draws **5 cards** from the draw pile (the hero's `hand_draw`, changed by `modify_hand_draw` listeners; hand limit 10)
 2. Player plays cards spending **energy** (resets to 3 each round)
 3. Player clicks **END ROUND**
 4. Enemy executes its **next action** from its action pattern
@@ -529,7 +529,7 @@ Function reference: `docs/building-screens-functions.md`.
 - ✅ **UI**: currency HUD shows only Caps + Scrap; building unlock and upgrade badges both use Scrap.
 
 ### ✅ Phase 1 — Core Combat (Complete)
-- STS card play loop (draw 3 / play / discard / enemy turn)
+- STS card play loop (draw 5 / play / discard / enemy turn)
 - Attack card drag-to-target with arrow
 - Skill/ability cards via play zone
 - Data-driven effect system (effects[] in JSON)

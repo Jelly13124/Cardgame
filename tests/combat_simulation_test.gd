@@ -33,6 +33,13 @@ class SlowPresenter:
 		finishing -= 1
 
 
+## A rule that draws one more card each turn.
+class DrawOneMore:
+	extends "res://core/listeners/listener.gd"
+	func modify_hand_draw(calc) -> void:
+		calc.value += 1
+
+
 var failures: PackedStringArray = []
 
 
@@ -62,6 +69,7 @@ func _run() -> void:
 	_expect(lost[0] == "defeat", "a 5-HP player loses to an enemy it cannot kill (%s)" % lost[0])
 	await _test_rapid_plays()
 	await _test_created_cards_respect_hand_limit()
+	await _test_turn_draw()
 	RunManager.run_rng = saved_rng
 	if failures.is_empty():
 		print("[OK] combat simulation passed")
@@ -165,3 +173,28 @@ func _test_created_cards_respect_hand_limit() -> void:
 		combat.add_card_to_hand("base:defend")
 	_expect(combat.add_card_to_hand("base:reload") == null, "no card is created past the hand limit")
 	_expect(combat.state.piles.hand.size() == combat.state.piles.HAND_LIMIT, "the hand stays at the limit")
+
+
+## A turn draws the hero's hand draw (5 unless the hero says otherwise),
+## changed by modify_hand_draw listeners (STS2 Hook.ModifyHandDraw).
+func _test_turn_draw() -> void:
+	var combat = _combat("DRAWFIVE01", 60)
+	await combat.start()
+	_expect(combat.state.piles.hand.cards.size() == 5, "a turn draws 5 cards (%d)" % combat.state.piles.hand.cards.size())
+	var three = _combat_with({"hand_draw": 3})
+	await three.start()
+	_expect(three.state.piles.hand.cards.size() == 3, "a hero with hand_draw 3 draws 3 (%d)" % three.state.piles.hand.cards.size())
+	var more = _combat("DRAWFIVE01", 60)
+	more.combat_hooks.add_listener(DrawOneMore.new())
+	await more.start()
+	_expect(more.state.piles.hand.cards.size() == 6, "a draw listener adds a card (%d)" % more.state.piles.hand.cards.size())
+
+
+func _combat_with(extra: Dictionary) -> RefCounted:
+	RunManager.run_rng = RUN_RNG_SET.new("DRAWFIVE01")
+	var player = CREATURE.player(60, 60)
+	var combat = COMBAT_MANAGER.new()
+	var config := {"player": player, "deck": STARTER, "encounter": ["base:trash_robot"], "relics": false}
+	config.merge(extra)
+	combat.setup(config)
+	return combat
