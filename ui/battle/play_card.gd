@@ -523,7 +523,7 @@ func _on_mouse_entered() -> void:
 		var anchor := global_position + Vector2(size.x * 0.5, -12.0)
 		if card_container != null and card_container.has_method("anchor_point"):
 			# A hovered hand card rises to show fully; the tip sits above it.
-			anchor = Vector2(global_position.x + size.x * 0.5, card_container.anchor_point().y - size.y - 8.0)
+			anchor = Vector2(global_position.x + size.x * 0.5, card_container.anchor_point().y - size.y * card_container.FACE_SCALE - 8.0)
 		Tooltip.show(glossary, anchor, get_instance_id())
 
 

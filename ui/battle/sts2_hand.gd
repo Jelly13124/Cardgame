@@ -2,14 +2,15 @@ extends "res://ui/battle/card_framework_adapters/no_reorder_hand.gd"
 
 ## The battle hand laid out like STS2 (HandPosHelper, NPlayerHand.RefreshLayout).
 ## The anchor is the hand's bottom centre, at the screen's bottom edge. Each
-## card's centre sits at STS2's per-hand-size offset from the anchor, scaled
-## from STS2's 300 px card to ours, turned by STS2's angle, at STS2's rest scale,
+## card's centre sits at STS2's per-hand-size offset from the anchor in STS2's
+## pixels, turned by STS2's angle, at STS2's rest scale of its 300 px card,
 ## so most of each card hides below the screen. The hovered card snaps to full
 ## size, upright, with its whole face showing; its neighbours make way. Held
 ## (dragged) cards are left where the mouse has them.
 
-## Our card width over STS2's (300 px): positions keep STS2's proportions.
-const CARD_RATIO := 208.0 / 300.0
+## Our 208 px card face is drawn at STS2's 300 px card width, so cards take the
+## same room on screen as STS2's.
+const FACE_SCALE := 300.0 / 208.0
 const BASE_SCALE := 0.8
 ## STS2 HandPosHelper._cardPositionData: card centres from the anchor, by hand size.
 const POSITIONS := [
@@ -37,7 +38,7 @@ const ANGLES := [
 	[-12.0, -9.0, -6.0, -3.0, 0.0, 3.0, 6.0, 9.0, 12.0],
 	[-15.0, -12.0, -9.0, -6.0, -3.0, 3.0, 6.0, 9.0, 12.0, 15.0],
 ]
-## NPlayerHand: a hovered card pushes neighbours up to 100 px (STS2 scale),
+## NPlayerHand: a hovered card pushes neighbours up to 100 px,
 ## falling off over 4 cards.
 const HOVER_PUSH := 100.0
 const HOVER_PUSH_FALLOFF := 4.0
@@ -47,7 +48,7 @@ var _targets: Dictionary = {}
 
 
 ## STS2's slot for card `index` of a `hand_size` hand: {position (centre offset
-## from the anchor, in our pixels), angle_deg, scale}.
+## from the anchor), angle_deg, scale (of our card face)}.
 static func slot(hand_size: int, index: int) -> Dictionary:
 	var n := clampi(hand_size, 1, POSITIONS.size())
 	var i := clampi(index, 0, n - 1)
@@ -60,9 +61,9 @@ static func slot(hand_size: int, index: int) -> Dictionary:
 		10:
 			factor = 0.85
 	return {
-		"position": POSITIONS[n - 1][i] * CARD_RATIO,
+		"position": POSITIONS[n - 1][i],
 		"angle_deg": float(ANGLES[n - 1][i]),
-		"scale": BASE_SCALE * factor,
+		"scale": BASE_SCALE * factor * FACE_SCALE,
 	}
 
 
@@ -123,11 +124,11 @@ func _update_target_positions() -> void:
 		var angle: float = s.angle_deg
 		var card_scale: float = s.scale
 		if focus > -1:
-			center.x -= signf(float(focus - i)) * lerpf(HOVER_PUSH, 0.0, minf(1.0, absf(focus - i) / HOVER_PUSH_FALLOFF)) * CARD_RATIO
+			center.x -= signf(float(focus - i)) * lerpf(HOVER_PUSH, 0.0, minf(1.0, absf(focus - i) / HOVER_PUSH_FALLOFF))
 		if i == focus:
 			angle = 0.0
-			card_scale = 1.0
-			center.y = anchor.y - card.size.y * 0.5 + 2.0
+			card_scale = FACE_SCALE
+			center.y = anchor.y - card.size.y * FACE_SCALE * 0.5 + 2.0
 		_targets[card] = {"center": center, "angle_deg": angle, "scale": card_scale}
 		partitions.append(center.x)
 		var half: Vector2 = card.size * card_scale * 0.5
