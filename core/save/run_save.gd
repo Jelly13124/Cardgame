@@ -280,16 +280,8 @@ static func _v5_to_v6(d: Dictionary) -> Dictionary:
 ## would print, rolled from the node's own rewards stream, so an old act graph
 ## plays on under the route rules.
 static func _v6_to_v7(d: Dictionary) -> Dictionary:
-	var saved_rng: Variant = d.get("rng", {})
-	var seed_string := str(saved_rng.get("seed_string", "")) if typeof(saved_rng) == TYPE_DICTIONARY else ""
-	var rng_set = RUN_RNG_SET.new(seed_string if RUN_RNG_SET.is_valid_seed(seed_string) else RUN_RNG_SET.random_seed_string())
-	var act := int(d.get("current_act", 1))
-	var nodes: Variant = d.get("map_data", [])
-	if typeof(nodes) == TYPE_ARRAY:
-		for n in nodes:
-			if typeof(n) == TYPE_DICTIONARY and not n.has("rewards"):
-				var stream = rng_set.derived("map_act_%d_%s_rewards" % [act, str(n.get("id", ""))])
-				n["rewards"] = MAP_GENERATOR.node_rewards(str(n.get("type", "enemy")), stream)
+	# v7 gave route nodes printed rewards; the act map has none (v9 erases
+	# whatever an older save still carries), so nothing is filled here.
 	return d
 
 
@@ -299,20 +291,6 @@ static func _v6_to_v7(d: Dictionary) -> Dictionary:
 static func _v7_to_v8(d: Dictionary) -> Dictionary:
 	d["legacy_caps"] = int(d.get("run_caps", 0)) + int(d.get("legacy_caps", 0))
 	d.erase("run_caps")
-	var saved_rng: Variant = d.get("rng", {})
-	var seed_string := str(saved_rng.get("seed_string", "")) if typeof(saved_rng) == TYPE_DICTIONARY else ""
-	var rng_set = RUN_RNG_SET.new(seed_string if RUN_RNG_SET.is_valid_seed(seed_string) else RUN_RNG_SET.random_seed_string())
-	var act_number := int(d.get("current_act", 1))
-	var act: Dictionary = ACTS.act(act_number)
-	var nodes: Variant = d.get("map_data", [])
-	if typeof(nodes) == TYPE_ARRAY:
-		for n in nodes:
-			if typeof(n) == TYPE_DICTIONARY and str(n.get("type", "")) in ["enemy", "elite"] and str(n.get("encounter", "")) == "":
-				var old_rewards: Variant = n.get("rewards", {})
-				MAP_GENERATOR.fill_fight(n, act, act_number, rng_set)
-				# Scrap an old elite card already printed stays what it printed.
-				if typeof(old_rewards) == TYPE_DICTIONARY and old_rewards.has("scrap"):
-					n["rewards"]["scrap"] = int(old_rewards["scrap"])
 	return d
 
 

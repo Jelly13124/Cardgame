@@ -1,12 +1,11 @@
 extends Node
 
-## Acts and encounters as data change nothing: for two seeds and acts 1–3, the
-## encounter picks and the act multipliers equal the golden recorded from the
-## code before (tests/fixtures/run_structure_golden.json). The route map's rules
-## are asserted by tests/route_map_generator_test.gd.
+## Acts, maps and encounters as data change nothing: for two seeds and acts
+## 1–3, the generated maps, the encounter picks and the act multipliers equal
+## the golden recorded from the code before (tests/fixtures/run_structure_golden.json).
 
 const GOLDEN := "res://tests/fixtures/run_structure_golden.json"  # path-ok: data fixture read as text
-## Boss scaling and seeded loot / draft / shop / market sequences,
+## Boss scaling, an A5 map and seeded loot / draft / shop / market sequences,
 ## recorded from the code before phase 6 (c423e2e).
 const GOLDEN2 := "res://tests/fixtures/run_structure_golden2.json"  # path-ok: data fixture read as text
 const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
@@ -35,6 +34,11 @@ func _run() -> void:
 		for act in [1, 2, 3]:
 			var want: Dictionary = golden[seed_string][str(act)]
 			RunManager.current_act = act
+			RunManager.generate_map()
+			var nodes: Array = []
+			for n in RunManager.map_data:
+				nodes.append([n.id, n.type, Array(n.children)])
+			_expect(_same(nodes, want["map"]), "%s act %d map unchanged" % [seed_string, act])
 			var picks: Array = []
 			for f in range(RunManager.floors_per_act()):
 				for t in ["enemy", "unknown", "elite", "boss"]:
@@ -82,6 +86,15 @@ func _check_golden2(golden: Dictionary) -> void:
 		seq.append(MERCHANT_INVENTORY.create(RunManager).to_dict())
 		seq.append([MARKET.roll_equip_stock(), MARKET.roll_tool_stock()])
 		_expect(_same(seq, golden["stocks"][seed_string]), "%s loot, draft, shop and market stock unchanged" % seed_string)
+	RunManager.start_new_run("base:cowboy_bill", [], 5, "GOLDENA5MP")
+	RunManager.current_act = 1
+	RunManager.generate_map()
+	_expect(
+		_same(RunManager.map_data.map(func(n): return [n.id, n.type, Array(n.children)]), golden["a5_map"]),
+		"the A5 (elite bias) map is unchanged"
+	)
+	RunManager.is_run_active = false
+	RunManager.clear_run_save()
 
 
 ## The old loot row shape: [type, tool_id, item_id, rarity].

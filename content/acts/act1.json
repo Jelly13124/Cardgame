@@ -65,25 +65,12 @@
     "max_children_per_node": 3,
     "early_rolls": [
       {
-        "below": 0.55,
+        "below": 0.65,
         "type": "enemy"
       },
       {
-        "below": 0.8,
+        "below": 0.85,
         "type": "unknown"
-      },
-      {
-        "below": 0.88,
-        "type": "merchant"
-      },
-      {
-        "below": 0.95,
-        "type": "rest"
-      },
-      {
-        "below": 1.0,
-        "type": "treasure",
-        "capped": true
       },
       {
         "type": "enemy"
