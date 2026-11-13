@@ -18,7 +18,7 @@ const EVENT_POOL = preload("uid://dr3dtuxwul371")  # res://core/run/events/event
 const MAP_GENERATOR = preload("uid://gi3vuuinl2vb")  # res://core/run/map_generator.gd
 const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
 
-const CURRENT := 8
+const CURRENT := 9
 ## Cards removed from the game; old saves may still hold their bare ids.
 const RETIRED_CARD_IDS := [
 	"crowbar_smash",
@@ -46,6 +46,7 @@ static func chain() -> RefCounted:
 		.add(5, _v5_to_v6)
 		.add(6, _v6_to_v7)
 		.add(7, _v7_to_v8)
+		.add(8, _v8_to_v9)
 	)
 
 
@@ -163,8 +164,8 @@ static func strings(v: Variant) -> Array[String]:
 	return out
 
 
-## Map nodes with their numeric fields re-coerced, children as Strings and the
-## printed rewards as whole numbers; extra generator fields kept as they are.
+## Map nodes with their numeric fields re-coerced and children as Strings; extra
+## generator fields kept as they are.
 static func map_nodes(raw: Variant) -> Array:
 	var out: Array = []
 	if typeof(raw) != TYPE_ARRAY:
@@ -178,22 +179,11 @@ static func map_nodes(raw: Variant) -> Array:
 			"slot": int(node.get("slot", 0)),
 			"type": str(node.get("type", "enemy")),
 			"children": strings(node.get("children", [])),
-			"rewards": _rewards(node.get("rewards", {})),
 		}
 		for k in node.keys():
 			if not n.has(k):
 				n[k] = node[k]
 		out.append(n)
-	return out
-
-
-## A node's printed rewards ({caps, scrap}) as ints; JSON reads numbers back
-## as floats.
-static func _rewards(raw: Variant) -> Dictionary:
-	var out := {}
-	if typeof(raw) == TYPE_DICTIONARY:
-		for k in raw:
-			out[str(k)] = int(raw[k])
 	return out
 
 
@@ -291,6 +281,52 @@ static func _v6_to_v7(d: Dictionary) -> Dictionary:
 static func _v7_to_v8(d: Dictionary) -> Dictionary:
 	d["legacy_caps"] = int(d.get("run_caps", 0)) + int(d.get("legacy_caps", 0))
 	d.erase("run_caps")
+	return d
+
+
+## v9: back to the act map. A save on the route-card map (any node id other
+## than f<floor>_s<slot>) gets the act map for its seed and act; the player
+## stands on the lowest-slot node of their floor, or stays at the start; an
+## event in progress follows them to that node; route shop stock is dropped.
+## Route fields (rewards, encounter, strength) are erased from every node.
+static func _v8_to_v9(d: Dictionary) -> Dictionary:
+	var nodes: Variant = d.get("map_data", [])
+	if typeof(nodes) != TYPE_ARRAY:
+		nodes = []
+	var graph_id := RegEx.create_from_string("^f[0-9]+_s[0-9]+$")
+	var is_route := false
+	for n in nodes:
+		if typeof(n) != TYPE_DICTIONARY or graph_id.search(str(n.get("id", ""))) == null:
+			is_route = true
+			break
+	if is_route:
+		var saved_rng: Variant = d.get("rng", {})
+		var seed_string := str(saved_rng.get("seed_string", "")) if typeof(saved_rng) == TYPE_DICTIONARY else ""
+		var rng_set = RUN_RNG_SET.new(seed_string if RUN_RNG_SET.is_valid_seed(seed_string) else RUN_RNG_SET.random_seed_string())
+		var act_number := int(d.get("current_act", 1))
+		nodes = MAP_GENERATOR.generate(ACTS.act(act_number), rng_set.derived("map_act_%d" % act_number))
+		var old_current := str(d.get("current_node_id", ""))
+		var current := ""
+		if old_current != "":
+			var on_floor: Array = nodes.filter(func(n): return int(n.floor) == int(d.get("current_floor", 0)))
+			on_floor.sort_custom(func(a, b): return int(a.slot) < int(b.slot))
+			if not on_floor.is_empty():
+				current = str(on_floor[0].id)
+		d["current_node_id"] = current
+		d["visited_node_ids"] = [] if current == "" else [current]
+		var event: Variant = d.get("current_event", {})
+		if typeof(event) == TYPE_DICTIONARY and not event.is_empty():
+			if current == "":
+				d["current_event"] = {}
+			else:
+				event["node_id"] = current
+		d["shop_stock"] = {}
+	for n in nodes:
+		if typeof(n) == TYPE_DICTIONARY:
+			n.erase("rewards")
+			n.erase("encounter")
+			n.erase("strength")
+	d["map_data"] = nodes
 	return d
 
 
