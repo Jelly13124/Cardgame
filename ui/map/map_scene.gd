@@ -1,20 +1,20 @@
 extends Control
 
-## The route map: a floor track and one card per choice on the current floor
-## (ui/map/route_choice_card.gd), drawn over the wasteland map background. The
-## route itself is run data (core/run/map_generator.gd, grown by
-## RunManager.enter_map_node); this screen shows it and opens the chosen room.
+## The act map screen: the whole act as a scrollable node map
+## (ui/map/node_map_view.gd) under the shared top bar. The map is run data
+## (core/run/map_generator.gd, walked with core/run/map_travel.gd); this screen
+## shows it, moves the player when a node is chosen and opens its room.
 
 const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 const MAP_TRAVEL = preload("uid://0qgp786g5ulg")  # res://core/run/map_travel.gd
-const ROUTE_CHOICE_CARD = preload("uid://e44exoef6xwg")  # res://ui/map/route_choice_card.tscn
+const NODE_MAP_VIEW = preload("uid://lrkaemmv8tjv")  # res://ui/map/node_map_view.gd
 const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://ui/windows/character_window.gd
 const RUN_DECK_VIEWER_MODAL = preload("uid://jvxfh15gtinx")  # res://ui/common/run_deck_viewer_modal.gd
 const CARD_UPGRADE_MODAL = preload("uid://gq5b8t1mbeti")  # res://ui/rest/card_upgrade_modal.gd
 const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://ui/common/run_top_bar.gd
 const SETTINGS_PANEL_SCRIPT = preload("uid://ledls51ku43w")  # res://ui/menus/settings_panel.gd
 const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://ui/menus/pause_panel.gd
-const EVENT_ROOM_SCRIPT = preload("res://ui/events/event_room.gd")
+const EVENT_ROOM_SCRIPT = preload("uid://cyvheo458ghoj")  # res://ui/events/event_room.gd
 const T_THEME = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 const BATTLE_PACKED = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
 const SHOP_PACKED = preload("uid://dr8unxxfi0w51")  # res://ui/shop/merchant_room.tscn
@@ -23,10 +23,8 @@ const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.g
 const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_sts2_bg.png"
 const REST_SITE_BACKGROUND_PATH = "res://run_system/assets/images/rest/rest_site_bg.png"
 
-const CARD_GAP := 48
-const CARD_SLIDE_PX := 40.0
-const CARD_STAGGER := 0.06
-const CHOOSE_SECONDS := 0.25
+const POP_SECONDS := 0.2
+const ENTER_DELAY_SECONDS := 0.3
 
 var rm: Node
 var map_background_tex: Texture2D
@@ -43,8 +41,7 @@ var _node_click_pending: bool = false
 ## When true, this map is a read-only PEEK overlay shown over an active battle:
 ## no node travel, no checkpoint save, no music swap — plus a "back to battle" button.
 var peek_mode: bool = false
-var _floor_track: HBoxContainer
-var _choice_row: HBoxContainer
+var _map_view: Control
 
 
 func _ready() -> void:
@@ -59,8 +56,7 @@ func _ready() -> void:
 	if rm.map_data.is_empty():
 		rm.generate_map()
 
-	_build_route_layout()
-	_build_route()
+	_build_map_view()
 	_build_relic_choice_layer()
 	_build_top_bar()
 
@@ -124,104 +120,21 @@ func _load_texture(path: String) -> Texture2D:
 	return null
 
 
-func _draw() -> void:
-	if map_background_tex:
-		draw_texture_rect(map_background_tex, Rect2(Vector2.ZERO, size), false)
+## The act map under the top bar (ui/map/node_map_view.gd); the old route-map
+## art stays as its background until the parchment arrives.
+func _build_map_view() -> void:
+	_map_view = NODE_MAP_VIEW.new()
+	_map_view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_map_view.offset_top = RUN_TOP_BAR.PAGE_ART_TOP
+	_map_view.fallback_background = map_background_tex
+	add_child(_map_view)
+	_map_view.node_chosen.connect(_choose)
+	_refresh_map_view()
 
 
-## The floor track under the top bar and the centred row of choice cards.
-func _build_route_layout() -> void:
-	var column := VBoxContainer.new()
-	column.name = "RouteColumn"
-	column.set_anchors_preset(Control.PRESET_FULL_RECT)
-	column.offset_top = RUN_TOP_BAR.BAR_HEIGHT + 24.0
-	column.offset_bottom = -40.0
-	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(column)
-	_floor_track = HBoxContainer.new()
-	_floor_track.name = "FloorTrack"
-	_floor_track.alignment = BoxContainer.ALIGNMENT_CENTER
-	_floor_track.add_theme_constant_override("separation", 8)
-	_floor_track.custom_minimum_size = Vector2(0, 12)
-	_floor_track.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_child(_floor_track)
-	var center := CenterContainer.new()
-	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_child(center)
-	_choice_row = HBoxContainer.new()
-	_choice_row.name = "ChoiceRow"
-	_choice_row.add_theme_constant_override("separation", CARD_GAP)
-	_choice_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	center.add_child(_choice_row)
-
-
-## The nodes the player can choose now: the start node on a fresh act, else
-## the current node's children.
-func _choices() -> Array:
-	if rm.current_node_id == "":
-		return rm.map_data.filter(func(n): return int(n.floor) == 0)
-	var out: Array = []
-	for child_id in rm.get_node_by_id(rm.current_node_id).get("children", []):
-		var node: Dictionary = rm.get_node_by_id(str(child_id))
-		if not node.is_empty():
-			out.append(node)
-	return out
-
-
-## Rebuilds the floor track and the cards from the run's route.
-func _build_route() -> void:
-	var choices := _choices()
-	var floors: int = rm.floors_per_act()
-	var offered_floor := int(choices[0].floor) if not choices.is_empty() else floors
-	for c in _floor_track.get_children():
-		_floor_track.remove_child(c)
-		c.queue_free()
-	for f in range(floors):
-		var pip := ColorRect.new()
-		pip.custom_minimum_size = Vector2(44, 10) if f == offered_floor else Vector2(28, 8)
-		pip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		if f < offered_floor:
-			pip.color = T.GLASS_GOLD
-		elif f == offered_floor:
-			pip.color = T.ACCENT_NEON_BLUE
-		elif f == floors - 1:
-			pip.color = T.ACCENT_DANGER
-		else:
-			pip.color = T.GLASS_HAIRLINE_DIM
-		_floor_track.add_child(pip)
-	for c in _choice_row.get_children():
-		_choice_row.remove_child(c)
-		c.queue_free()
-	var heal: int = ROOMS.rest_heal_amount(rm.max_health)
-	for i in range(choices.size()):
-		var node: Dictionary = choices[i]
-		var next_types: Array = []
-		for child_id in node.get("children", []):
-			next_types.append(str(rm.get_node_by_id(str(child_id)).get("type", "")))
-		var card = ROUTE_CHOICE_CARD.instantiate()
-		var slot := Control.new()
-		slot.custom_minimum_size = card.custom_minimum_size
-		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_choice_row.add_child(slot)
-		slot.add_child(card)
-		card.setup(node, next_types, heal, not peek_mode)
-		card.chosen.connect(_choose)
-		card.position = Vector2(0, CARD_SLIDE_PX)
-		card.modulate.a = 0.0
-		var tween: Tween = card.create_tween().set_parallel(true)
-		tween.tween_property(card, "position:y", 0.0, 0.2).set_delay(i * CARD_STAGGER).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		tween.tween_property(card, "modulate:a", 1.0, 0.2).set_delay(i * CARD_STAGGER)
-
-
-func _cards() -> Array:
-	var out: Array = []
-	for slot in _choice_row.get_children():
-		for c in slot.get_children():
-			if c.has_signal("chosen"):
-				out.append(c)
-	return out
+func _refresh_map_view() -> void:
+	var visited: Array = Array(rm.visited_node_ids)
+	_map_view.setup(rm.map_data, rm.current_node_id, visited, not peek_mode)
 
 
 func _input(event: InputEvent) -> void:
@@ -244,15 +157,6 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
-	# 1 / 2 / 3 choose the card at that position (_choose refuses while a
-	# modal, a page or another choice is open).
-	if event is InputEventKey and event.pressed and not event.echo:
-		var index := [KEY_1, KEY_2, KEY_3].find(event.keycode)
-		var cards := _cards()
-		if index >= 0 and index < cards.size():
-			_choose(cards[index].node_id)
-			get_viewport().set_input_as_handled()
-
 
 ## True while a page sits over the map: a floating window (character window on
 ## WindowLayer) or the full-screen run-deck viewer. Choices are refused while
@@ -267,9 +171,9 @@ func _is_character_window_open() -> bool:
 	return wl != null and wl.get_node_or_null("CharacterWindow") != null
 
 
-## Choose the route node `node_id`: travel there, play the choose motion, show
-## the next floor's cards and open the room. Ignored in a peek, while another
-## choice resolves, or under an open page or modal.
+## Choose the map node `node_id`: travel there, pop the node, then open the
+## room. Ignored in a peek, while another choice resolves, or under an open page
+## or modal.
 func _choose(node_id: String) -> void:
 	if peek_mode or _node_click_pending or _is_relic_choice_open or _is_page_open():
 		return
@@ -281,15 +185,13 @@ func _choose(node_id: String) -> void:
 		_node_click_pending = false
 		return
 	AudioManager.play_sfx("ui_click")
-	var tween := create_tween().set_parallel(true)
-	for card in _cards():
-		card.interactive = false
-		if card.node_id == node_id:
-			tween.tween_property(card, "scale", Vector2.ONE * 1.1, CHOOSE_SECONDS)
-		else:
-			tween.tween_property(card, "modulate:a", 0.0, CHOOSE_SECONDS)
-	await tween.finished
-	_build_route()
+	var button: Control = _map_view.node_button(node_id)
+	if button != null:
+		var pop := create_tween()
+		pop.tween_property(button, "scale", Vector2.ONE * 1.25, POP_SECONDS * 0.5)
+		pop.tween_property(button, "scale", Vector2.ONE, POP_SECONDS * 0.5)
+	await get_tree().create_timer(ENTER_DELAY_SECONDS).timeout
+	_refresh_map_view()
 	_enter_room(node)
 
 
