@@ -330,11 +330,17 @@ func _test_battle_energy_and_end_turn() -> void:
 			"battle energy uses hud_energy_badge_sts2.png (got %s)" % energy_path
 		)
 		_expect(energy.get_node_or_null("EnergyCore") == null, "battle removes the old loose core orb")
+		# STS2 combat_ui.tscn: EnergyCounterContainer centred 100 px from the left, 252 px above the bottom.
+		var energy_center: Vector2 = energy.get_global_rect().get_center()
+		_expect(energy_center.is_equal_approx(Vector2(100, 828)), "energy sits where STS2's does (%s)" % energy_center)
 
 	var end_turn := battle.get_node_or_null("EndRoundButton") as Button
 	_expect(end_turn != null, "battle keeps the EndRoundButton interaction")
 	if end_turn:
 		_expect(end_turn.size.x <= 240.0, "EndRoundButton stays compact at 240 px or less")
+		# STS2 end_turn_button.tscn: right edge 96 px in, top 234 px above the bottom, below the creatures' health bars.
+		var end_rect := end_turn.get_global_rect()
+		_expect(is_equal_approx(end_rect.end.x, 1824.0) and is_equal_approx(end_rect.position.y, 846.0), "End Round sits where STS2's does (%s)" % end_rect)
 		var style := end_turn.get_theme_stylebox("normal")
 		var style_path := ""
 		if style is StyleBoxTexture and style.texture:

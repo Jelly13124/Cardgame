@@ -83,11 +83,12 @@ func _build_energy_display() -> void:
 	_energy_display.anchor_top = 1.0
 	_energy_display.anchor_right = 0.0
 	_energy_display.anchor_bottom = 1.0
-	# One compact hand-inked token, bottom-aligned with End Round across the hand.
-	_energy_display.offset_left = 32.0
-	_energy_display.offset_top = -396.0
-	_energy_display.offset_right = 136.0
-	_energy_display.offset_bottom = -292.0
+	# One compact hand-inked token where STS2 centres its energy counter
+	# (combat_ui.tscn: 100 px from the left, 252 px above the bottom).
+	_energy_display.offset_left = 48.0
+	_energy_display.offset_top = -304.0
+	_energy_display.offset_right = 152.0
+	_energy_display.offset_bottom = -200.0
 	_energy_display.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_energy_display.z_index = 20
 	main.add_child(_energy_display)
