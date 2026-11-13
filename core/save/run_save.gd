@@ -293,10 +293,9 @@ static func _v8_to_v9(d: Dictionary) -> Dictionary:
 	var nodes: Variant = d.get("map_data", [])
 	if typeof(nodes) != TYPE_ARRAY:
 		nodes = []
-	var graph_id := RegEx.create_from_string("^f[0-9]+_s[0-9]+$")
 	var is_route := false
 	for n in nodes:
-		if typeof(n) != TYPE_DICTIONARY or graph_id.search(str(n.get("id", ""))) == null:
+		if typeof(n) != TYPE_DICTIONARY or not _is_graph_id(str(n.get("id", ""))):
 			is_route = true
 			break
 	if is_route:
@@ -328,6 +327,15 @@ static func _v8_to_v9(d: Dictionary) -> Dictionary:
 			n.erase("strength")
 	d["map_data"] = nodes
 	return d
+
+
+## True for an act-map node id, "f<floor>_s<slot>" (route ids hold dots).
+static func _is_graph_id(id: String) -> bool:
+	var parts := id.split("_")
+	return (
+		parts.size() == 2 and parts[0].begins_with("f") and parts[1].begins_with("s")
+		and parts[0].substr(1).is_valid_int() and parts[1].substr(1).is_valid_int()
+	)
 
 
 static func _v6_stock(old: Dictionary) -> Dictionary:

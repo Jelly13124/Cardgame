@@ -13,6 +13,7 @@ const MAP_NODE_BUTTON = preload("uid://dxs0bi6rnni22")  # res://ui/map/map_node_
 const ICON_DIR := "res://run_system/assets/images/map/nodes/"
 const PARCHMENT_PATH := "res://run_system/assets/images/map/route_parchment.png"
 const FLAG_PATH := "res://run_system/assets/images/map/start_flag.png"
+const LEGEND_CARD_PATH := "res://run_system/assets/images/map/legend_card.png"
 const LEFT := 170.0
 const RIGHT_PAD := 260.0
 const FLOOR_SPACING := 300.0
@@ -230,7 +231,17 @@ func _build_legend() -> void:
 	style.content_margin_right = 14
 	style.content_margin_top = 10
 	style.content_margin_bottom = 10
-	card.add_theme_stylebox_override("panel", style)
+	var card_art := MAP_NODE_BUTTON._load(LEGEND_CARD_PATH)
+	if card_art != null:
+		var art_style := StyleBoxTexture.new()
+		art_style.texture = card_art
+		art_style.content_margin_left = 18
+		art_style.content_margin_right = 18
+		art_style.content_margin_top = 16
+		art_style.content_margin_bottom = 16
+		card.add_theme_stylebox_override("panel", art_style)
+	else:
+		card.add_theme_stylebox_override("panel", style)
 	add_child(card)
 	_legend_entries = VBoxContainer.new()
 	_legend_entries.name = "LegendEntries"
