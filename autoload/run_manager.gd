@@ -453,6 +453,15 @@ func get_node_by_id(id: String) -> Dictionary:
 	return _node_index.get(id, {})
 
 
+## Moves the player to the map node `node_id` (core/run/map_travel.gd):
+## {ok} or {ok: false, reason}. The act map does not change on a move.
+func enter_map_node(node_id: String) -> Dictionary:
+	var node := get_node_by_id(node_id)
+	if node.is_empty():
+		return {"ok": false, "reason": "unknown_node"}
+	return MAP_TRAVEL.enter(state, _node_index, node)
+
+
 ## What the fight just won pays in Caps, by its room type
 ## (content/economy/loot_economy.json): fights and "?" fights pay
 ## `combat_gold`, elites `elite_gold`; the boss pays through settlement.

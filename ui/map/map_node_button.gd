@@ -30,7 +30,9 @@ var _icon: TextureRect
 
 
 func _init() -> void:
-	mouse_filter = Control.MOUSE_FILTER_STOP
+	# PASS: the map view behind still gets the wheel and drags over a node;
+	# an available node accepts its own click.
+	mouse_filter = Control.MOUSE_FILTER_PASS
 	_icon = TextureRect.new()
 	_icon.name = "Icon"
 	_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE

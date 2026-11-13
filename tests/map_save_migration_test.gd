@@ -46,6 +46,10 @@ func _run() -> void:
 	_expect(str(m2["current_event"].get("node_id", "")) == str(m2["current_node_id"]) and str(m2["current_event"].get("event_id", "")) == "base:hooded_stranger", "the event in progress is re-keyed to the new node")
 	_expect(m2["shop_stock"].is_empty(), "route shop stock is dropped")
 
+	var lost := _route_save("f0.1.0.2", 30)
+	var m5: Dictionary = RUN_SAVE.migrate(lost)
+	_expect(str(m5["current_node_id"]) == "" and int(m5["current_floor"]) == 0, "a floor the new map lacks puts the player at the start, floor 0 (%s, %s)" % [m5["current_node_id"], m5["current_floor"]])
+	_expect(int(migrated["current_floor"]) == 3, "the migrated floor matches the chosen node")
 	var at_start := _route_save("", 0)
 	var m3: Dictionary = RUN_SAVE.migrate(at_start)
 	_expect(str(m3["current_node_id"]) == "" and Array(m3["visited_node_ids"]).is_empty(), "a save at the start stays at the start")

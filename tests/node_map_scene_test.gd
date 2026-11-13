@@ -35,6 +35,21 @@ func _run() -> void:
 	_expect(_buttons(view).size() == RunManager.map_data.size(), "one node control per node (%d vs %d)" % [_buttons(view).size(), RunManager.map_data.size()])
 	_expect(_available(view) == [start_id], "only the start is available on a fresh act (%s)" % [_available(view)])
 	_expect(view.find_child("LegendEntries", true, false).get_child_count() == 8, "the legend lists 8 room types")
+	# The wheel and drags reach the view over a node: nodes pass mouse events on
+	# (headless runs do not route pushed mouse events, so the filter and the
+	# view's own handler are checked directly).
+	_expect(_buttons(view).all(func(b): return b.mouse_filter == Control.MOUSE_FILTER_PASS), "every node passes mouse events on to the map view")
+	var before: float = view._scroll
+	var wheel := InputEventMouseButton.new()
+	wheel.button_index = MOUSE_BUTTON_WHEEL_DOWN
+	wheel.pressed = true
+	view._gui_input(wheel)
+	_expect(view._scroll > before, "the wheel scrolls the map (%.0f -> %.0f)" % [before, view._scroll])
+	var before_map := JSON.stringify(RunManager.map_data)
+	_expect(RunManager.enter_map_node(start_id)["ok"] and JSON.stringify(RunManager.map_data) == before_map, "RunManager.enter_map_node travels without changing the map")
+	RunManager.state.current_node_id = ""
+	RunManager.state.visited_node_ids.clear()
+	RunManager.state.current_floor = 0
 	map.queue_free()
 	await get_tree().process_frame
 

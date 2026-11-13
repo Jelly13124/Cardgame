@@ -312,6 +312,10 @@ static func _v8_to_v9(d: Dictionary) -> Dictionary:
 			if not on_floor.is_empty():
 				current = str(on_floor[0].id)
 		d["current_node_id"] = current
+		d["current_floor"] = 0
+		for n in nodes:
+			if str(n.id) == current:
+				d["current_floor"] = int(n.floor)
 		d["visited_node_ids"] = [] if current == "" else [current]
 		var event: Variant = d.get("current_event", {})
 		if typeof(event) == TYPE_DICTIONARY and not event.is_empty():

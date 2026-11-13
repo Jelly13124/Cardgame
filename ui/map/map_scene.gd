@@ -6,7 +6,6 @@ extends Control
 ## shows it, moves the player when a node is chosen and opens its room.
 
 const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
-const MAP_TRAVEL = preload("uid://0qgp786g5ulg")  # res://core/run/map_travel.gd
 const NODE_MAP_VIEW = preload("uid://lrkaemmv8tjv")  # res://ui/map/node_map_view.gd
 const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://ui/windows/character_window.gd
 const RUN_DECK_VIEWER_MODAL = preload("uid://jvxfh15gtinx")  # res://ui/common/run_deck_viewer_modal.gd
@@ -181,7 +180,7 @@ func _choose(node_id: String) -> void:
 	if node.is_empty():
 		return
 	_node_click_pending = true
-	if not MAP_TRAVEL.enter(rm.state, rm._node_index, node)["ok"]:
+	if not rm.enter_map_node(node_id)["ok"]:
 		_node_click_pending = false
 		return
 	AudioManager.play_sfx("ui_click")
