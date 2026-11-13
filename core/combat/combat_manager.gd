@@ -50,6 +50,10 @@ var equipment_set_system: RefCounted = null
 
 ## Monster ids spawned at the first player turn.
 var encounter: Array = []
+## Cards drawn at the start of each player turn before modify_hand_draw
+## listeners (STS2: 5). The hero's `hand_draw` sets it (config "hand_draw").
+const DEFAULT_HAND_DRAW := 5
+var hand_draw: int = DEFAULT_HAND_DRAW
 var _deck: Array = []
 var _enemy_spawned := false
 var _summon_cursor: int = 0
@@ -82,6 +86,7 @@ func setup(config: Dictionary) -> void:
 	state.player.died.connect(_on_player_died)
 	state.piles.rng = RunManager.rng("shuffle")
 	_deck = config.get("deck", [])
+	hand_draw = int(config.get("hand_draw", DEFAULT_HAND_DRAW))
 
 
 ## Battle start: start-of-combat listeners, the shuffled draw pile, round 1.
@@ -173,7 +178,7 @@ func _start_player_turn() -> void:
 	_ending_turn = false
 	turn_started.emit("player")
 	presenter.refresh()
-	draw_cards(3)
+	draw_cards(maxi(0, int(combat_hooks.compute("modify_hand_draw", HOOK_VALUE.make(hand_draw, {"round": round_number})))))
 
 
 ## End Turn: queued behind every play already made; holds the queue through the

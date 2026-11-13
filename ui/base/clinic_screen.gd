@@ -135,13 +135,13 @@ func _build_attr_perk_row(perk_id: String) -> Control:
 	panel.size_flags_stretch_ratio = 1.0
 	# Full perk name + level on hover (the concept row only shows the bare
 	# attribute name, so the descriptive copy moves to the tooltip).
-	panel.tooltip_text = (
+	Tooltip.bind_hover(panel, (
 		"%s — %s"
 		% [
 			tr("UI_CLINIC_PERK_%s" % perk_id.to_upper()),
 			tr("UI_CLINIC_PERK_LEVEL").format({"cur": lvl, "max": cap}),
 		]
-	)
+	))
 
 	var m := MarginContainer.new()
 	for side in ["margin_left", "margin_right"]:
@@ -352,14 +352,14 @@ func _ll_card(title: String) -> PanelContainer:
 
 ## The concept attr-row dots: MetaProgress.HIGH_PERK_CAP circles — orange filled up to `lvl`,
 ## dark ring while within the current cap, extra-faint beyond it (sells the T3
-## cap raise). Programmatic circles (StyleBoxFlat), so no PNG dependency.
+## cap raise). These dots remain semantic progress marks.
 func _perk_dots(lvl: int, cap: int) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	for i in range(MetaProgress.HIGH_PERK_CAP):
 		var dot := Panel.new()
 		dot.custom_minimum_size = Vector2(DOT_SIZE, DOT_SIZE)
-		var sb := StyleBoxFlat.new()
+		var sb := T.semantic_fill(DOT_EMPTY_BG)
 		sb.set_corner_radius_all(int(DOT_SIZE / 2.0))
 		if i < lvl:
 			sb.bg_color = DOT_FILL

@@ -440,12 +440,12 @@ func _ready() -> void:
 # --- Map Generation ---
 
 
-## Starts the act's route (core/run/map_generator.gd): the start node, its
-## choices and their previews. The route grows as nodes are entered.
+## Builds the act's map (core/run/map_generator.gd) from the act's own map
+## stream, so it does not depend on how many rolls earlier acts used.
 func generate_map() -> void:
 	current_node_id = ""
 	visited_node_ids.clear()
-	map_data = MAP_GENERATOR.start(ACTS.act(current_act), current_act, _route_rng(), _elite_bias())
+	map_data = MAP_GENERATOR.generate(ACTS.act(current_act), rng_for_act_map(current_act), _elite_bias())
 	_reindex_map()
 
 
@@ -453,37 +453,26 @@ func get_node_by_id(id: String) -> Dictionary:
 	return _node_index.get(id, {})
 
 
-## Enters the route node `node_id` (core/run/map_travel.gd) and grows the route
-## from it: {ok} or {ok: false, reason}.
+## Moves the player to the map node `node_id` (core/run/map_travel.gd):
+## {ok} or {ok: false, reason}. The act map does not change on a move.
 func enter_map_node(node_id: String) -> Dictionary:
-	var node: Dictionary = get_node_by_id(node_id)
+	var node := get_node_by_id(node_id)
 	if node.is_empty():
 		return {"ok": false, "reason": "unknown_node"}
-	var result: Dictionary = MAP_TRAVEL.enter(state, _node_index, node)
-	if not bool(result.get("ok", false)):
-		return result
-	map_data = MAP_GENERATOR.grow(map_data, node_id, ACTS.act(current_act), current_act, _route_rng(), _elite_bias())
-	_reindex_map()
-	return result
+	return MAP_TRAVEL.enter(state, _node_index, node)
 
 
-## The monsters a fight node holds: its stored encounter, or a fresh pick for
-## its room type and floor when it has none (old saves, acts without elites).
-func encounter_for(node: Dictionary) -> Array[String]:
-	var stored := ENCOUNTERS.monsters_of(str(node.get("encounter", "")))
-	if not stored.is_empty():
-		return stored
-	return select_encounter(str(node.get("type", "enemy")), int(node.get("floor", 0)))
-
-
-## What the fight just won pays: the printed rewards of the route node it was
-## fought on, or, for a fight rolled from another room (a "?" outcome), the
-## rewards a node of the fought type would print.
+## What the fight just won pays in Caps, by its room type
+## (content/economy/loot_economy.json): fights and "?" fights pay
+## `combat_gold`, elites `elite_gold`; the boss pays through settlement.
 func battle_rewards() -> Dictionary:
-	var node: Dictionary = get_node_by_id(current_node_id)
-	if str(node.get("type", "")) == last_battle_node_type:
-		return node.get("rewards", {})
-	return MAP_GENERATOR.node_rewards(last_battle_node_type, rng("rewards"))
+	var eco: Dictionary = MODEL_DB.data("economy", "base:loot_economy")
+	match last_battle_node_type:
+		"enemy", "unknown":
+			return {"gold": int(eco.get("combat_gold", 8))}
+		"elite":
+			return {"gold": int(eco.get("elite_gold", 18))}
+	return {}
 
 
 func _elite_bias() -> float:
@@ -1954,14 +1943,11 @@ func run_seed() -> String:
 	return run_rng.seed_string if run_rng != null else _last_run_seed
 
 
-## The run's stream set for the route map (core/run/map_generator.gd derives
-## one unsaved stream per node from it); a scratch set outside a run.
-func _route_rng():
-	if run_rng != null:
-		return run_rng
-	if _scratch_rng == null:
-		_scratch_rng = RUN_RNG_SET.new(RUN_RNG_SET.random_seed_string())
-	return _scratch_rng
+## Fresh, unsaved stream for `act`'s map; same seed and act give the same map.
+func rng_for_act_map(act: int):
+	if run_rng == null:
+		return rng("niche")
+	return run_rng.derived("map_act_%d" % act)
 
 
 ## True when the run's ascension level reaches the named rule's level

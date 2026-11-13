@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://c8v7pcj6jdthk"]
-
-[ext_resource type="Script" path="res://tests/map_route_scene_test.gd" id="1"]
-
-[node name="MapRouteSceneTest" type="Node"]
-script = ExtResource("1")

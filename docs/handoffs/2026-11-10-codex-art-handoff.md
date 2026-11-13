@@ -91,13 +91,11 @@ scales them, so they look blurry and do not match the rest of the game. Redraw e
 `buried_cache`, `caravan_checkpoint`, `collapsed_overpass`, `cursed_safe`,
 `fortune_shrine`, `hooded_stranger`, `mutant_bazaar`, `rad_storm`, `stranded_trader`.
 
-### Battle background: redraw at 1920×1080
-`battle_scene/assets/images/backgrounds/wasteland_battlefield_quiet_v6.png` is
-1672×941 and is stretched to 1920×1080. Redraw it under the same name at **1920×1080 RGB**,
-keeping the composition and mood but with more presence than the current flat, pale
-version. The hero stands on the left third and up to three enemies on the right half,
-all on a ground line near y 760. Keep the bottom 300 px calm, because the hand of cards
-sits there.
+### Battle background: Act 1 complete, later acts pending
+`battle_scene/assets/images/backgrounds/wasteland_battlefield_act1_v1.png` is the current
+**1920×1080 RGB** Act 1 production background. It keeps the centre ground calm for the
+hero, enemies, intent icons and feedback, with the salvage props pushed to the edges.
+Acts 2 and 3 remain on their existing backgrounds until their own redraw pass.
 
 ### Route map background: redraw at 1920×1080
 `run_system/assets/images/map/wasteland_route_map_sts2_bg.png` is 1672×941 and was drawn

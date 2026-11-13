@@ -59,6 +59,7 @@ func _run() -> void:
 	add_child(home)
 	await _frames(6)
 
+	_test_shared_home_skin(home)
 	await _test_locked_clinic_route(home)
 	await _test_locked_forge_route(home)
 	await _test_forge_backdrop_lifecycle(home)
@@ -81,6 +82,88 @@ func _run() -> void:
 		return
 	push_error("Building upgrade runtime flow failed: %s" % "; ".join(failures))
 	get_tree().quit(1)
+
+
+func _test_shared_home_skin(home: Node) -> void:
+	var depart := home.find_child("StartRunButton", true, false) as Button
+	var difficulty := home.find_child("DifficultyButton", true, false) as Button
+	var seed_field := home.find_child("SeedField", true, false) as LineEdit
+	_expect(depart != null and difficulty != null and seed_field != null, "home keeps its launch controls")
+	for item in [[depart, "primary"], [difficulty, "secondary"]]:
+		var button := item[0] as Button
+		if button == null:
+			continue
+		_test_home_action_layers(button, str(item[1]))
+	if depart != null:
+		_expect(
+			depart.offset_left == -335.0 and depart.offset_top == -172.0
+			and depart.offset_right == 335.0 and depart.offset_bottom == -65.0,
+			"the new depart skin preserves the accepted launch position"
+		)
+	if seed_field != null:
+		_expect(
+			_uses_shared_skin(seed_field.get_theme_stylebox("normal")),
+			"the seed field uses the shared input skin"
+		)
+	var board := home.find_child("BountyBoardPanel", true, false) as PanelContainer
+	_expect(
+		board != null and _uses_shared_skin(board.get_theme_stylebox("panel")),
+		"the home bounty board uses the common panel artwork"
+	)
+
+
+func _test_home_action_layers(button: Button, role: String) -> void:
+	var visuals := button.get_node_or_null("ActionVisuals") as Control
+	_expect(visuals != null and visuals.get("role") == role,
+		"home %s uses the shared layered %s role" % [button.name, role])
+	if visuals == null:
+		return
+	var face := visuals.get_node_or_null("Face") as NinePatchRect
+	var shadow := visuals.get_node_or_null("Shadow") as NinePatchRect
+	var outline := visuals.get_node_or_null("Outline") as NinePatchRect
+	_expect(face != null and shadow != null and outline != null,
+		"home %s keeps face, shadow and feedback outline separate" % button.name)
+	if face == null or shadow == null or outline == null:
+		return
+	_expect(face.texture != null and face.texture.resource_path.ends_with("/kit/button_%s_base.png" % role)
+		and shadow.texture == face.texture and outline.texture != null
+		and outline.texture.resource_path.ends_with("/kit/button_%s_outline.png" % role),
+		"home %s resolves all artwork through the shared %s skin" % [button.name, role])
+	var was_disabled := button.disabled
+	var bounds := button.get_global_rect()
+	var tints: Array[Color] = []
+	button.disabled = false
+	button.button_up.emit()
+	button.mouse_exited.emit()
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		if state == "hover":
+			button.mouse_entered.emit()
+		elif state == "pressed":
+			button.button_down.emit()
+		elif state == "disabled":
+			button.disabled = true
+		visuals.call("sync_state", true)
+		_expect(visuals.get("feedback_state") == state,
+			"home %s supplies the shared %s visual state" % [button.name, state])
+		_expect(button.get_theme_stylebox(state) is StyleBoxEmpty,
+			"home %s leaves %s artwork to its independent layers" % [button.name, state])
+		_expect(not tints.has(face.modulate),
+			"home %s gives %s a distinct surface tint" % [button.name, state])
+		tints.append(face.modulate)
+		_expect(button.get_global_rect() == bounds and button.scale == Vector2.ONE,
+			"home %s preserves its input area throughout %s feedback" % [button.name, state])
+	button.disabled = was_disabled
+	button.button_up.emit()
+	button.mouse_exited.emit()
+	visuals.call("sync_state", true)
+
+
+func _uses_shared_skin(style: StyleBox) -> bool:
+	var texture_style := style as StyleBoxTexture
+	return (
+		texture_style != null and texture_style.texture != null
+		and texture_style.texture.resource_path.begins_with("res://run_system/assets/images/ui/kit/")
+	)
 
 
 func _test_locked_clinic_route(home: Node) -> void:
@@ -278,8 +361,8 @@ func _test_accepted_building_surfaces(home: Node) -> void:
 				var shelf := overlay.find_child(str(shelf_contract[0]), true, false) as PanelContainer
 				_expect(
 					shelf != null
-					and shelf.get_theme_stylebox("panel") is StyleBoxTexture,
-					"market %s uses the generated full shelf-panel texture" % shelf_contract[0]
+					and _uses_shared_skin(shelf.get_theme_stylebox("panel")),
+					"market %s uses the shared shelf-panel texture" % shelf_contract[0]
 				)
 				if shelf != null:
 					_expect(
@@ -297,8 +380,8 @@ func _test_accepted_building_surfaces(home: Node) -> void:
 				var tool_card := candidate as PanelContainer
 				_expect(
 					tool_card != null
-					and tool_card.get_theme_stylebox("panel") is StyleBoxTexture,
-					"every market tool offer uses the generated full-card texture"
+					and _uses_shared_skin(tool_card.get_theme_stylebox("panel")),
+					"every market tool offer uses the shared full-card texture"
 				)
 				if tool_card != null:
 					_expect(
@@ -316,8 +399,8 @@ func _test_accepted_building_surfaces(home: Node) -> void:
 				var equipment_card := candidate as PanelContainer
 				_expect(
 					equipment_card != null
-					and equipment_card.get_theme_stylebox("panel") is StyleBoxTexture,
-					"every market equipment offer uses its generated rarity-card texture"
+					and _uses_shared_skin(equipment_card.get_theme_stylebox("panel")),
+					"every market equipment offer uses the shared skin with its rarity tint"
 				)
 				if equipment_card != null:
 					_expect(
@@ -339,8 +422,8 @@ func _test_accepted_building_surfaces(home: Node) -> void:
 				var conversion_row := candidate as PanelContainer
 				_expect(
 					conversion_row != null
-					and conversion_row.get_theme_stylebox("panel") is StyleBoxTexture,
-					"each market conversion row uses the generated exchange-row texture"
+					and _uses_shared_skin(conversion_row.get_theme_stylebox("panel")),
+					"each market conversion row uses the shared exchange-row texture"
 				)
 			var price_buttons := _concept_price_buttons(overlay)
 			_expect(

@@ -31,7 +31,7 @@ func _run() -> void:
 	for _i in range(3):
 		_expect(RunManager.advance_act(), "advancing to the next act")
 	_expect(RunManager.current_act == 4 and RunManager.is_final_act(), "act 4 is the final act")
-	_expect(_walk_to_boss() == "boss", "act 4's route ends in its boss")
+	_expect(RunManager.map_data.size() > 0 and RunManager.map_data[RunManager.map_data.size() - 1].type == "boss", "act 4's map ends in its boss")
 	_expect(RunManager.current_act_boss() == "base:junkyard_tyrant", "act 4's boss comes from its data")
 	_expect(RunManager.select_encounter("enemy", 0) == ["base:rust_brute", "base:rust_brute"], "act 4's own encounter is picked on floor 0")
 	_expect(RunManager.scale_enemy_hp(100, "base:scrap_rat") == 175, "act 4's HP multiplier applies")
@@ -45,15 +45,3 @@ func _run() -> void:
 		return
 	push_error("fourth act failed: %s" % "; ".join(failures))
 	get_tree().quit(1)
-
-
-## Walks act 4's route by its first choice each floor; returns the last room type.
-func _walk_to_boss() -> String:
-	if not RunManager.enter_map_node("f0")["ok"]:
-		return ""
-	for i in range(RunManager.floors_per_act()):
-		var children: Array = RunManager.get_node_by_id(RunManager.current_node_id).get("children", [])
-		if children.is_empty():
-			break
-		RunManager.enter_map_node(str(children[0]))
-	return str(RunManager.get_node_by_id(RunManager.current_node_id).get("type", ""))

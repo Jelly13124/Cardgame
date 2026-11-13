@@ -8,10 +8,13 @@ const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_them
 const MERCHANT_SLOT = preload("uid://b8xlpnq6b5osf")  # res://ui/shop/merchant_slot.gd
 
 const CARD_SCALE := 160.0 / 208.0
+const CARD_SERVICE_ICON_PATH := "res://run_system/assets/images/ui_kit_lightline/iconb_cards_fan.png"
 
 var entry
 var picker: Control = null
 var _card_factory: Node
+var _price_content: Control
+var _price_label: Label
 
 
 static func create(p_entry, card_factory: Node) -> Button:
@@ -24,11 +27,51 @@ static func create(p_entry, card_factory: Node) -> Button:
 
 func _build() -> void:
 	name = "RemoveCardService"
+	custom_minimum_size = Vector2(180, 236)
 	focus_mode = Control.FOCUS_NONE
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	add_theme_font_override("font", T.display_font(650))
-	add_theme_font_size_override("font_size", 20)
 	MERCHANT_SLOT.style_button(self, Color(0.67, 0.54, 0.34))
+	text = ""
+	var content := VBoxContainer.new()
+	content.name = "RemoveCardProduct"
+	content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	content.add_theme_constant_override("separation", 4)
+	content.alignment = BoxContainer.ALIGNMENT_CENTER
+	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(content)
+	var icon := TextureRect.new()
+	icon.name = "RemoveCardIcon"
+	icon.custom_minimum_size = Vector2(72, 72)
+	icon.texture = load(CARD_SERVICE_ICON_PATH) if ResourceLoader.exists(CARD_SERVICE_ICON_PATH) else null
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content.add_child(icon)
+	var title := Label.new()
+	title.name = "RemoveCardTitle"
+	title.text = tr("UI_SHOP_REMOVE")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	T.style_display(title, 20, 700)
+	title.add_theme_color_override("font_color", T.TEXT_MAIN)
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content.add_child(title)
+	var price_button := Button.new()
+	price_button.name = "RemoveCardPrice"
+	price_button.custom_minimum_size = Vector2(164, 70)
+	price_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	price_button.focus_mode = Control.FOCUS_NONE
+	_price_content = T.centered_currency_button_content(price_button, 0, "caps", 39, 54, true, 4)
+	if _price_content.get_child_count() > 0:
+		var price_row := _price_content.get_child(0)
+		if price_row is HBoxContainer:
+			_price_label = price_row.get_meta("amount_label", null) as Label
+	if _price_label != null:
+		_price_label.add_theme_font_override("font", T.display_font(700))
+		_price_label.add_theme_font_size_override("font_size", 39)
+		_price_label.add_theme_color_override("font_outline_color", Color(0.08, 0.04, 0.02, 0.96))
+		_price_label.add_theme_constant_override("outline_size", 15)
+	content.add_child(price_button)
 	pressed.connect(open_picker)
 	entry.entry_updated.connect(refresh)
 	entry.purchase_completed.connect(_on_purchase_completed)
@@ -47,9 +90,14 @@ func _on_resources_changed(_gold: int, _scrap: int) -> void:
 
 func refresh() -> void:
 	disabled = not entry.is_stocked()
-	text = tr("UI_SHOP_SOLD") if disabled else "%s\n%d" % [tr("UI_SHOP_REMOVE"), entry.cost()]
+	text = tr("UI_SHOP_SOLD") if disabled else ""
+	if _price_content != null:
+		_price_content.visible = not disabled
+	if _price_label != null and not disabled:
+		_price_label.text = str(entry.cost())
 	var color := Color(0.97, 0.85, 0.58) if entry.enough_gold() else MERCHANT_SLOT.PRICE_SHORT
-	add_theme_color_override("font_color", color)
+	if _price_label != null:
+		_price_label.add_theme_color_override("font_color", color)
 
 
 func open_picker() -> void:
@@ -139,38 +187,35 @@ func _build_picker() -> Control:
 func _card_choice(card_id: String, uid: String) -> Control:
 	var wrapper := Control.new()
 	wrapper.custom_minimum_size = Vector2(180, 260)
-	var rest := T.panel_with_shadow(Color(0.09, 0.072, 0.055, 0.92), T.PANEL_BORDER, 3)
-	var lit := T.panel_with_shadow(Color(0.18, 0.06, 0.06, 0.96), Color(1.0, 0.4, 0.3), 3)
-
-	var frame := Panel.new()
-	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
-	frame.add_theme_stylebox_override("panel", rest)
-	wrapper.add_child(frame)
-
 	var card = _card_factory.create_card(card_id, null)
 	if card:
 		if card.get_parent():
 			card.get_parent().remove_child(card)
 		card.can_be_interacted_with = false
+		card.suppress_playable_glow = true
 		card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card.position = Vector2(10, 20)
 		card.pivot_offset = Vector2.ZERO
 		card.scale = Vector2.ONE * CARD_SCALE
 		wrapper.add_child(card)
+		if card.highlight:
+			card.highlight.anim_hide_instantly()
 
 	var button := Button.new()
 	button.set_anchors_preset(Control.PRESET_FULL_RECT)
 	button.flat = true
+	for state in ["normal", "hover", "pressed", "focus", "disabled"]:  # bare-ok: Godot button theme state
+		button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.pressed.connect(_on_pick.bind(uid))
 	wrapper.add_child(button)
 	if card:
 		button.mouse_entered.connect(func():
-			frame.add_theme_stylebox_override("panel", lit)
+			card.highlight.anim_show()
 			card.create_tween().tween_property(card, "scale", Vector2.ONE * CARD_SCALE * 1.06, 0.10))
 		button.mouse_exited.connect(func():
-			frame.add_theme_stylebox_override("panel", rest)
+			card.highlight.anim_hide_instantly()
 			card.create_tween().tween_property(card, "scale", Vector2.ONE * CARD_SCALE, 0.10))
 	return wrapper
 

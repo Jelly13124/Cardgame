@@ -1,31 +1,32 @@
 extends Control
 
-## The route map: a floor track and one card per choice on the current floor
-## (ui/map/route_choice_card.gd), drawn over the wasteland map background. The
-## route itself is run data (core/run/map_generator.gd, grown by
-## RunManager.enter_map_node); this screen shows it and opens the chosen room.
+## The act map screen: the whole act as a scrollable node map
+## (ui/map/node_map_view.gd) under the shared top bar. The map is run data
+## (core/run/map_generator.gd, walked with core/run/map_travel.gd); this screen
+## shows it, moves the player when a node is chosen and opens its room.
 
 const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
-const ROUTE_CHOICE_CARD = preload("uid://e44exoef6xwg")  # res://ui/map/route_choice_card.tscn
+const NODE_MAP_VIEW = preload("uid://lrkaemmv8tjv")  # res://ui/map/node_map_view.gd
 const CHARACTER_WINDOW = preload("uid://ba0f3y5ua1p6o")  # res://ui/windows/character_window.gd
 const RUN_DECK_VIEWER_MODAL = preload("uid://jvxfh15gtinx")  # res://ui/common/run_deck_viewer_modal.gd
 const CARD_UPGRADE_MODAL = preload("uid://gq5b8t1mbeti")  # res://ui/rest/card_upgrade_modal.gd
 const RUN_TOP_BAR = preload("uid://dd4fkkrkiwgrj")  # res://ui/common/run_top_bar.gd
 const SETTINGS_PANEL_SCRIPT = preload("uid://ledls51ku43w")  # res://ui/menus/settings_panel.gd
 const PAUSE_PANEL = preload("uid://dggg8eoy0notq")  # res://ui/menus/pause_panel.gd
-const EVENT_ROOM_SCRIPT = preload("res://ui/events/event_room.gd")
+const EVENT_ROOM_SCRIPT = preload("uid://cyvheo458ghoj")  # res://ui/events/event_room.gd
 const T_THEME = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 const BATTLE_PACKED = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
 const SHOP_PACKED = preload("uid://dr8unxxfi0w51")  # res://ui/shop/merchant_room.tscn
 const ROOMS = preload("uid://cxmgdj3654rrj")  # res://core/run/rooms.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
-const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_sts2_bg.png"
-const REST_SITE_BACKGROUND_PATH = "res://run_system/assets/images/rest/rest_site_bg.png"
+const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_pixel_bg.png"
+const REST_SITE_BACKGROUND_PATH = "res://run_system/assets/images/ui/rest/campfire_scene_1920.png"
+const REST_HEAL_ART_PATH = "res://run_system/assets/images/ui/rest/campfire_scene_1920.png"
+const REST_UPGRADE_ART_PATH = "res://run_system/assets/images/ui/forge/anvil_art.png"
+const REST_OPTION_SOURCE_SIZE := Vector2(256, 169)
 
-const CARD_GAP := 48
-const CARD_SLIDE_PX := 40.0
-const CARD_STAGGER := 0.06
-const CHOOSE_SECONDS := 0.25
+const POP_SECONDS := 0.2
+const ENTER_DELAY_SECONDS := 0.3
 
 var rm: Node
 var map_background_tex: Texture2D
@@ -42,8 +43,7 @@ var _node_click_pending: bool = false
 ## When true, this map is a read-only PEEK overlay shown over an active battle:
 ## no node travel, no checkpoint save, no music swap — plus a "back to battle" button.
 var peek_mode: bool = false
-var _floor_track: HBoxContainer
-var _choice_row: HBoxContainer
+var _map_view: Control
 
 
 func _ready() -> void:
@@ -58,8 +58,7 @@ func _ready() -> void:
 	if rm.map_data.is_empty():
 		rm.generate_map()
 
-	_build_route_layout()
-	_build_route()
+	_build_map_view()
 	_build_relic_choice_layer()
 	_build_top_bar()
 
@@ -123,104 +122,21 @@ func _load_texture(path: String) -> Texture2D:
 	return null
 
 
-func _draw() -> void:
-	if map_background_tex:
-		draw_texture_rect(map_background_tex, Rect2(Vector2.ZERO, size), false)
+## The act map under the top bar (ui/map/node_map_view.gd); the old route-map
+## art stays as its background until the parchment arrives.
+func _build_map_view() -> void:
+	_map_view = NODE_MAP_VIEW.new()
+	_map_view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_map_view.offset_top = RUN_TOP_BAR.PAGE_ART_TOP
+	_map_view.fallback_background = map_background_tex
+	add_child(_map_view)
+	_map_view.node_chosen.connect(_choose)
+	_refresh_map_view()
 
 
-## The floor track under the top bar and the centred row of choice cards.
-func _build_route_layout() -> void:
-	var column := VBoxContainer.new()
-	column.name = "RouteColumn"
-	column.set_anchors_preset(Control.PRESET_FULL_RECT)
-	column.offset_top = RUN_TOP_BAR.BAR_HEIGHT + 24.0
-	column.offset_bottom = -40.0
-	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(column)
-	_floor_track = HBoxContainer.new()
-	_floor_track.name = "FloorTrack"
-	_floor_track.alignment = BoxContainer.ALIGNMENT_CENTER
-	_floor_track.add_theme_constant_override("separation", 8)
-	_floor_track.custom_minimum_size = Vector2(0, 12)
-	_floor_track.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_child(_floor_track)
-	var center := CenterContainer.new()
-	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_child(center)
-	_choice_row = HBoxContainer.new()
-	_choice_row.name = "ChoiceRow"
-	_choice_row.add_theme_constant_override("separation", CARD_GAP)
-	_choice_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	center.add_child(_choice_row)
-
-
-## The nodes the player can choose now: the start node on a fresh act, else
-## the current node's children.
-func _choices() -> Array:
-	if rm.current_node_id == "":
-		return rm.map_data.filter(func(n): return int(n.floor) == 0)
-	var out: Array = []
-	for child_id in rm.get_node_by_id(rm.current_node_id).get("children", []):
-		var node: Dictionary = rm.get_node_by_id(str(child_id))
-		if not node.is_empty():
-			out.append(node)
-	return out
-
-
-## Rebuilds the floor track and the cards from the run's route.
-func _build_route() -> void:
-	var choices := _choices()
-	var floors: int = rm.floors_per_act()
-	var offered_floor := int(choices[0].floor) if not choices.is_empty() else floors
-	for c in _floor_track.get_children():
-		_floor_track.remove_child(c)
-		c.queue_free()
-	for f in range(floors):
-		var pip := ColorRect.new()
-		pip.custom_minimum_size = Vector2(44, 10) if f == offered_floor else Vector2(28, 8)
-		pip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		if f < offered_floor:
-			pip.color = T.GLASS_GOLD
-		elif f == offered_floor:
-			pip.color = T.ACCENT_NEON_BLUE
-		elif f == floors - 1:
-			pip.color = T.ACCENT_DANGER
-		else:
-			pip.color = T.GLASS_HAIRLINE_DIM
-		_floor_track.add_child(pip)
-	for c in _choice_row.get_children():
-		_choice_row.remove_child(c)
-		c.queue_free()
-	var heal: int = ROOMS.rest_heal_amount(rm.max_health)
-	for i in range(choices.size()):
-		var node: Dictionary = choices[i]
-		var next_types: Array = []
-		for child_id in node.get("children", []):
-			next_types.append(str(rm.get_node_by_id(str(child_id)).get("type", "")))
-		var card = ROUTE_CHOICE_CARD.instantiate()
-		var slot := Control.new()
-		slot.custom_minimum_size = card.custom_minimum_size
-		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_choice_row.add_child(slot)
-		slot.add_child(card)
-		card.setup(node, next_types, heal, not peek_mode)
-		card.chosen.connect(_choose)
-		card.position = Vector2(0, CARD_SLIDE_PX)
-		card.modulate.a = 0.0
-		var tween: Tween = card.create_tween().set_parallel(true)
-		tween.tween_property(card, "position:y", 0.0, 0.2).set_delay(i * CARD_STAGGER).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		tween.tween_property(card, "modulate:a", 1.0, 0.2).set_delay(i * CARD_STAGGER)
-
-
-func _cards() -> Array:
-	var out: Array = []
-	for slot in _choice_row.get_children():
-		for c in slot.get_children():
-			if c.has_signal("chosen"):
-				out.append(c)
-	return out
+func _refresh_map_view() -> void:
+	var visited: Array = Array(rm.visited_node_ids)
+	_map_view.setup(rm.map_data, rm.current_node_id, visited, not peek_mode)
 
 
 func _input(event: InputEvent) -> void:
@@ -243,15 +159,6 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
-	# 1 / 2 / 3 choose the card at that position (_choose refuses while a
-	# modal, a page or another choice is open).
-	if event is InputEventKey and event.pressed and not event.echo:
-		var index := [KEY_1, KEY_2, KEY_3].find(event.keycode)
-		var cards := _cards()
-		if index >= 0 and index < cards.size():
-			_choose(cards[index].node_id)
-			get_viewport().set_input_as_handled()
-
 
 ## True while a page sits over the map: a floating window (character window on
 ## WindowLayer) or the full-screen run-deck viewer. Choices are refused while
@@ -266,9 +173,9 @@ func _is_character_window_open() -> bool:
 	return wl != null and wl.get_node_or_null("CharacterWindow") != null
 
 
-## Choose the route node `node_id`: travel there, play the choose motion, show
-## the next floor's cards and open the room. Ignored in a peek, while another
-## choice resolves, or under an open page or modal.
+## Choose the map node `node_id`: travel there, pop the node, then open the
+## room. Ignored in a peek, while another choice resolves, or under an open page
+## or modal.
 func _choose(node_id: String) -> void:
 	if peek_mode or _node_click_pending or _is_relic_choice_open or _is_page_open():
 		return
@@ -280,15 +187,13 @@ func _choose(node_id: String) -> void:
 		_node_click_pending = false
 		return
 	AudioManager.play_sfx("ui_click")
-	var tween := create_tween().set_parallel(true)
-	for card in _cards():
-		card.interactive = false
-		if card.node_id == node_id:
-			tween.tween_property(card, "scale", Vector2.ONE * 1.1, CHOOSE_SECONDS)
-		else:
-			tween.tween_property(card, "modulate:a", 0.0, CHOOSE_SECONDS)
-	await tween.finished
-	_build_route()
+	var button: Control = _map_view.node_button(node_id)
+	if button != null:
+		var pop := create_tween()
+		pop.tween_property(button, "scale", Vector2.ONE * 1.25, POP_SECONDS * 0.5)
+		pop.tween_property(button, "scale", Vector2.ONE, POP_SECONDS * 0.5)
+	await get_tree().create_timer(ENTER_DELAY_SECONDS).timeout
+	_refresh_map_view()
 	_enter_room(node)
 
 
@@ -315,7 +220,7 @@ func _enter_room(node: Dictionary) -> void:
 					var title := "UI_MAP_CHOOSE_STARTING_RELIC" if offer["source"] == "starting" else "UI_MAP_CHOOSE_A_RELIC"
 					_open_relic_choice(tr(title), str(offer["source"]))
 		"enemy", "elite", "boss":
-			rm.current_encounter = rm.encounter_for(node)
+			rm.current_encounter = rm.select_encounter(node.type, int(node.floor))
 			rm.last_battle_node_type = node.type
 			SceneTransition.change_to_packed(BATTLE_PACKED)
 		"rest":
@@ -560,7 +465,7 @@ func _make_relic_choice_button(relic_id: String, source_type: String) -> Button:
 	button.add_theme_stylebox_override("hover", T.button_textured("hover"))
 	button.add_theme_stylebox_override("pressed", T.button_textured("pressed"))
 	# Description shows on hover only — the card itself shows just the name.
-	button.tooltip_text = description
+	Tooltip.bind_hover(button, description)
 	button.pressed.connect(_on_relic_choice_selected.bind(relic_id, source_type))
 
 	var margin = MarginContainer.new()
@@ -772,9 +677,17 @@ func _open_rest_choice() -> void:
 	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	modal.add_child(rule)
 
-	var heal_amount := ROOMS.rest_heal_amount(rm.max_health)
-	var heal_text := ("休息\n恢复 %d" % heal_amount) if Settings.language == "zh" else ("REST\nHEAL %d" % heal_amount)
-	var heal_btn := _rest_hotspot(Rect2(0.075, 0.55, 0.25, 0.23), heal_text)
+	var heal_amount := mini(
+		ROOMS.rest_heal_amount(rm.max_health), rm.max_health - rm.current_health
+	)
+	var heal_btn := _rest_option(
+		Vector2(0.41, 0.40),
+		"icon_heart",
+		tr("UI_MAP_LEGEND_REST"),
+		tr("UI_ROUTE_HEAL").format({"n": heal_amount}) if heal_amount > 0 else tr("UI_ROUTE_HEAL_FULL"),
+		REST_HEAL_ART_PATH
+	)
+	heal_btn.name = "HealChoice"
 	heal_btn.pressed.connect(
 		func():
 			rm.modify_health(heal_amount)
@@ -784,8 +697,14 @@ func _open_rest_choice() -> void:
 	)
 	modal.add_child(heal_btn)
 
-	var upgrade_text := "升级" if Settings.language == "zh" else "UPGRADE"
-	var upgrade_btn := _rest_hotspot(Rect2(0.50, 0.58, 0.28, 0.22), upgrade_text)
+	var upgrade_btn := _rest_option(
+		Vector2(0.59, 0.40),
+		"icon_hammer",
+		tr("UI_MAP_REST_UPGRADE_BTN"),
+		tr("UI_UPGRADE_MODAL_HINT"),
+		REST_UPGRADE_ART_PATH
+	)
+	upgrade_btn.name = "UpgradeChoice"
 	upgrade_btn.pressed.connect(
 		func():
 			modal.queue_free()
@@ -827,29 +746,99 @@ func _open_rest_choice() -> void:
 	modal.add_child(leave_btn)
 
 
-func _rest_hotspot(rect: Rect2, label_text: String) -> Button:
+func _rest_option(
+	anchor: Vector2, icon_name: String, title_text: String, detail_text: String, art_path: String = ""
+) -> Button:
 	var button := Button.new()
-	button.text = label_text
-	button.anchor_left = rect.position.x
-	button.anchor_top = rect.position.y
-	button.anchor_right = rect.end.x
-	button.anchor_bottom = rect.end.y
-	button.focus_mode = Control.FOCUS_NONE
+	button.anchor_left = anchor.x
+	button.anchor_top = anchor.y
+	button.anchor_right = anchor.x
+	button.anchor_bottom = anchor.y
+	button.offset_left = -123.5
+	button.offset_right = 123.5
+	button.offset_top = -81.5
+	button.offset_bottom = 81.5
+	button.custom_minimum_size = Vector2(247, 163)
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.add_theme_font_override("font", T_THEME.display_font(650))
-	button.add_theme_font_size_override("font_size", 20)
-	button.add_theme_color_override("font_color", Color(0.96, 0.83, 0.58))
-	button.add_theme_color_override("font_hover_color", Color.WHITE)
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color(0.02, 0.03, 0.035, 0.10)
-	normal.set_corner_radius_all(12)
-	button.add_theme_stylebox_override("normal", normal)
-	var hover := normal.duplicate() as StyleBoxFlat
-	hover.bg_color = Color(0.06, 0.07, 0.07, 0.14)
-	hover.border_color = Color(1.0, 0.42, 0.04, 0.95)
-	hover.set_border_width_all(3)
-	button.add_theme_stylebox_override("hover", hover)
-	button.add_theme_stylebox_override("pressed", hover)
-	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
+	button.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
+
+	var art := TextureRect.new()
+	art.name = "RestChoiceArt"
+	art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	art.texture = _load_texture(art_path)
+	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(art)
+
+	var outline := Panel.new()
+	outline.name = "RestChoiceOutline"
+	outline.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var outline_style := StyleBoxFlat.new()
+	outline_style.bg_color = Color(0.04, 0.025, 0.016, 0.20)
+	outline_style.border_color = Color(0.90, 0.72, 0.36, 0.92)
+	outline_style.set_border_width_all(3)
+	outline_style.set_corner_radius_all(7)
+	outline.add_theme_stylebox_override("panel", outline_style)
+	button.add_child(outline)
+
+	var row := HBoxContainer.new()
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	row.offset_left = 12.0
+	row.offset_top = 76.0
+	row.offset_right = -12.0
+	row.offset_bottom = -8.0
+	row.add_theme_constant_override("separation", 14)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(row)
+
+	button.mouse_entered.connect(
+		func():
+			var tween := button.create_tween()
+			tween.set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_OUT)
+			tween.tween_property(button, "scale", Vector2(1.1, 1.1), 0.05)
+			# Description follows the source art with an Expo-Out settle.
+			row.create_tween().set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT).tween_property(row, "position:y", 70.0, 0.8)
+	)
+	button.mouse_exited.connect(
+		func():
+			var tween := button.create_tween()
+			tween.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+			tween.tween_property(button, "scale", Vector2.ONE, 1.0)
+			row.create_tween().set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT).tween_property(row, "position:y", 76.0, 0.8)
+	)
+
+	var icon := TextureRect.new()
+	icon.name = "ChoiceIcon"
+	icon.texture = T_THEME.lightline_tex(icon_name)
+	icon.custom_minimum_size = Vector2(66, 66)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(icon)
+
+	var copy := VBoxContainer.new()
+	copy.alignment = BoxContainer.ALIGNMENT_CENTER
+	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(copy)
+
+	var title := Label.new()
+	title.text = title_text
+	T_THEME.style_display(title, 28, 700)
+	title.add_theme_color_override("font_color", T_THEME.TEXT_MAIN)
+	copy.add_child(title)
+
+	var detail := Label.new()
+	detail.name = "ChoiceDetail"
+	detail.text = detail_text
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	T_THEME.style_display(detail, 20)
+	detail.add_theme_color_override("font_color", T_THEME.UI_BRASS_LIGHT)
+	copy.add_child(detail)
 	return button

@@ -18,7 +18,7 @@ const EVENT_POOL = preload("uid://dr3dtuxwul371")  # res://core/run/events/event
 const MAP_GENERATOR = preload("uid://gi3vuuinl2vb")  # res://core/run/map_generator.gd
 const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
 
-const CURRENT := 8
+const CURRENT := 9
 ## Cards removed from the game; old saves may still hold their bare ids.
 const RETIRED_CARD_IDS := [
 	"crowbar_smash",
@@ -46,6 +46,7 @@ static func chain() -> RefCounted:
 		.add(5, _v5_to_v6)
 		.add(6, _v6_to_v7)
 		.add(7, _v7_to_v8)
+		.add(8, _v8_to_v9)
 	)
 
 
@@ -163,8 +164,8 @@ static func strings(v: Variant) -> Array[String]:
 	return out
 
 
-## Map nodes with their numeric fields re-coerced, children as Strings and the
-## printed rewards as whole numbers; extra generator fields kept as they are.
+## Map nodes with their numeric fields re-coerced and children as Strings; extra
+## generator fields kept as they are.
 static func map_nodes(raw: Variant) -> Array:
 	var out: Array = []
 	if typeof(raw) != TYPE_ARRAY:
@@ -178,22 +179,11 @@ static func map_nodes(raw: Variant) -> Array:
 			"slot": int(node.get("slot", 0)),
 			"type": str(node.get("type", "enemy")),
 			"children": strings(node.get("children", [])),
-			"rewards": _rewards(node.get("rewards", {})),
 		}
 		for k in node.keys():
 			if not n.has(k):
 				n[k] = node[k]
 		out.append(n)
-	return out
-
-
-## A node's printed rewards ({caps, scrap}) as ints; JSON reads numbers back
-## as floats.
-static func _rewards(raw: Variant) -> Dictionary:
-	var out := {}
-	if typeof(raw) == TYPE_DICTIONARY:
-		for k in raw:
-			out[str(k)] = int(raw[k])
 	return out
 
 
@@ -280,16 +270,8 @@ static func _v5_to_v6(d: Dictionary) -> Dictionary:
 ## would print, rolled from the node's own rewards stream, so an old act graph
 ## plays on under the route rules.
 static func _v6_to_v7(d: Dictionary) -> Dictionary:
-	var saved_rng: Variant = d.get("rng", {})
-	var seed_string := str(saved_rng.get("seed_string", "")) if typeof(saved_rng) == TYPE_DICTIONARY else ""
-	var rng_set = RUN_RNG_SET.new(seed_string if RUN_RNG_SET.is_valid_seed(seed_string) else RUN_RNG_SET.random_seed_string())
-	var act := int(d.get("current_act", 1))
-	var nodes: Variant = d.get("map_data", [])
-	if typeof(nodes) == TYPE_ARRAY:
-		for n in nodes:
-			if typeof(n) == TYPE_DICTIONARY and not n.has("rewards"):
-				var stream = rng_set.derived("map_act_%d_%s_rewards" % [act, str(n.get("id", ""))])
-				n["rewards"] = MAP_GENERATOR.node_rewards(str(n.get("type", "enemy")), stream)
+	# v7 gave route nodes printed rewards; the act map has none (v9 erases
+	# whatever an older save still carries), so nothing is filled here.
 	return d
 
 
@@ -299,21 +281,65 @@ static func _v6_to_v7(d: Dictionary) -> Dictionary:
 static func _v7_to_v8(d: Dictionary) -> Dictionary:
 	d["legacy_caps"] = int(d.get("run_caps", 0)) + int(d.get("legacy_caps", 0))
 	d.erase("run_caps")
-	var saved_rng: Variant = d.get("rng", {})
-	var seed_string := str(saved_rng.get("seed_string", "")) if typeof(saved_rng) == TYPE_DICTIONARY else ""
-	var rng_set = RUN_RNG_SET.new(seed_string if RUN_RNG_SET.is_valid_seed(seed_string) else RUN_RNG_SET.random_seed_string())
-	var act_number := int(d.get("current_act", 1))
-	var act: Dictionary = ACTS.act(act_number)
-	var nodes: Variant = d.get("map_data", [])
-	if typeof(nodes) == TYPE_ARRAY:
-		for n in nodes:
-			if typeof(n) == TYPE_DICTIONARY and str(n.get("type", "")) in ["enemy", "elite"] and str(n.get("encounter", "")) == "":
-				var old_rewards: Variant = n.get("rewards", {})
-				MAP_GENERATOR.fill_fight(n, act, act_number, rng_set)
-				# Scrap an old elite card already printed stays what it printed.
-				if typeof(old_rewards) == TYPE_DICTIONARY and old_rewards.has("scrap"):
-					n["rewards"]["scrap"] = int(old_rewards["scrap"])
 	return d
+
+
+## v9: back to the act map. A save on the route-card map (any node id other
+## than f<floor>_s<slot>) gets the act map for its seed and act; the player
+## stands on the lowest-slot node of their floor, or stays at the start; an
+## event in progress follows them to that node; route shop stock is dropped.
+## Route fields (rewards, encounter, strength) are erased from every node.
+static func _v8_to_v9(d: Dictionary) -> Dictionary:
+	var nodes: Variant = d.get("map_data", [])
+	if typeof(nodes) != TYPE_ARRAY:
+		nodes = []
+	var is_route := false
+	for n in nodes:
+		if typeof(n) != TYPE_DICTIONARY or not _is_graph_id(str(n.get("id", ""))):
+			is_route = true
+			break
+	if is_route:
+		var saved_rng: Variant = d.get("rng", {})
+		var seed_string := str(saved_rng.get("seed_string", "")) if typeof(saved_rng) == TYPE_DICTIONARY else ""
+		var rng_set = RUN_RNG_SET.new(seed_string if RUN_RNG_SET.is_valid_seed(seed_string) else RUN_RNG_SET.random_seed_string())
+		var act_number := int(d.get("current_act", 1))
+		nodes = MAP_GENERATOR.generate(ACTS.act(act_number), rng_set.derived("map_act_%d" % act_number))
+		var old_current := str(d.get("current_node_id", ""))
+		var current := ""
+		if old_current != "":
+			var on_floor: Array = nodes.filter(func(n): return int(n.floor) == int(d.get("current_floor", 0)))
+			on_floor.sort_custom(func(a, b): return int(a.slot) < int(b.slot))
+			if not on_floor.is_empty():
+				current = str(on_floor[0].id)
+		d["current_node_id"] = current
+		d["current_floor"] = 0
+		for n in nodes:
+			if str(n.id) == current:
+				d["current_floor"] = int(n.floor)
+		d["visited_node_ids"] = [] if current == "" else [current]
+		var event: Variant = d.get("current_event", {})
+		if typeof(event) == TYPE_DICTIONARY and not event.is_empty():
+			if current == "":
+				d["current_event"] = {}
+			else:
+				event["node_id"] = current
+		d["shop_stock"] = {}
+	for n in nodes:
+		if typeof(n) == TYPE_DICTIONARY:
+			n.erase("rewards")
+			n.erase("encounter")
+			n.erase("strength")
+	d["map_data"] = nodes
+	return d
+
+
+## True for an act-map node id, "f<floor>_s<slot>" (route ids hold dots).
+static func _is_graph_id(id: String) -> bool:
+	var parts := id.split("_")
+	return (
+		parts.size() == 2 and parts[0].begins_with("f") and parts[1].begins_with("s")
+		and parts[0].substr(1).is_valid_int() and parts[1].substr(1).is_valid_int()
+	)
 
 
 static func _v6_stock(old: Dictionary) -> Dictionary:

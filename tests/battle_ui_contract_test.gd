@@ -6,12 +6,19 @@ extends Node
 
 const BATTLE_SCENE = preload("uid://dnhj5pp3c1v2l")  # res://ui/battle/battle_screen.tscn
 const CARD_ANIMATOR = preload("uid://co0n3ou8saknv")  # res://ui/battle/card_animator.gd
+const MONSTERS = preload("uid://dvu3etytjqum8")  # res://core/combat/monsters.gd
+const TEST_SAVE_ROOT = preload("uid://c5pfll7nw68un")  # res://tests/support/test_save_root.gd
 
 var failures: PackedStringArray = []
 
 
 func _ready() -> void:
+	TEST_SAVE_ROOT.use("battle_ui_contract_test")
 	call_deferred("_run")
+
+
+func _exit_tree() -> void:
+	TEST_SAVE_ROOT.release()
 
 
 func _expect(condition: bool, message: String) -> void:
@@ -22,7 +29,10 @@ func _expect(condition: bool, message: String) -> void:
 
 
 func _run() -> void:
+	await test_enemy_formations_stay_on_the_field()
+	await test_boss_and_replacement_summons_stay_on_the_field()
 	await test_outline_follows_playability()
+	await test_playable_outline_breathes()
 	await test_outline_is_not_a_hover_toggle()
 	await test_arrow_is_segmented_and_hides_the_cursor()
 	await test_cursor_returns_when_combat_ends_mid_aim()
@@ -73,6 +83,66 @@ func _add_strikes(battle: Node, count: int) -> Array:
 	return cards
 
 
+func test_enemy_formations_stay_on_the_field() -> void:
+	var battle = await _battle()
+	var first = battle.combat.state.living_enemies()[0]
+	_expect(is_equal_approx(battle.view_of(first).global_position.x, 1440.0), "a solo enemy keeps its original field anchor")
+	_check_enemy_field_bounds(battle)
+	for count in range(2, 5):
+		var added: int = battle.combat.summon_adds(first, {"enemy_ids": ["base:trash_robot"], "count": 1})
+		_expect(added == 1 and battle.combat.state.field_count() == count, "the formation accepts enemy %d" % count)
+		_check_enemy_field_bounds(battle)
+	await _free(battle)
+
+
+func test_boss_and_replacement_summons_stay_on_the_field() -> void:
+	var battle = await _battle()
+	var initial = battle.combat.state.living_enemies()[0]
+	initial.removed = true
+	battle.view_of(initial).queue_free()
+	var boss = battle.combat.add_enemy(MONSTERS.create("base:rust_titan"))
+	_expect(is_equal_approx(battle.view_of(boss).global_position.x, 1440.0), "a solo boss keeps the original field anchor")
+	var added: int = battle.combat.summon_adds(boss, {"enemy_ids": ["base:trash_robot"], "count": 3})
+	_expect(added == 3 and battle.combat.state.field_count() == 4, "a boss can share the field with three adds")
+	_check_enemy_field_bounds(battle)
+	for replacement in range(3):
+		var victim = battle.combat.state.living_enemies()[1]
+		var dying_view = battle.view_of(victim)
+		var death_position: Vector2 = dying_view.global_position
+		victim.lose_hp(victim.health)
+		# During hit feedback a dead view can still exist; after feedback it is queued.
+		if replacement == 1:
+			dying_view.queue_free()
+		added = battle.combat.summon_adds(boss, {"enemy_ids": ["base:trash_robot"], "count": 1})
+		_expect(added == 1 and battle.combat.state.field_count() == 4, "a replacement summon uses a living field slot")
+		_expect(dying_view.global_position == death_position, "summoning leaves the dying view at its impact position")
+		_check_enemy_field_bounds(battle)
+		await get_tree().process_frame
+	await _free(battle)
+
+
+## STS2's placement (sts2_creature_layout.gd): enemies stay on screen, clear
+## of the hero, and each keeps its own target area, in field order.
+func _check_enemy_field_bounds(battle: Node) -> void:
+	var hero_right: float = battle.player.global_position.x + battle.player.TARGET_DISPLAY_HEIGHT * 0.5
+	var previous_right := -INF
+	for creature in battle.combat.state.living_enemies():
+		var view = battle.view_of(creature)
+		_expect(view != null, "every living enemy has a field view")
+		if view == null:
+			continue
+		var sprite: AnimatedSprite2D = view.get("_sprite")
+		var texture := sprite.sprite_frames.get_frame_texture("attack", 0)
+		var half_width := texture.get_width() * sprite.global_scale.x * 0.5
+		var left: float = sprite.global_position.x - half_width
+		var right: float = sprite.global_position.x + half_width
+		_expect(left >= hero_right and right <= 1920.0, "enemy canvas fits the field (%.1f..%.1f)" % [left, right])
+		var target: Rect2 = view.get_targeting_rect()
+		_expect(target.position.x >= previous_right, "living enemies remain separately targetable in field order")
+		previous_right = target.end.x
+		_expect(view.scale == Vector2.ONE, "formation placement preserves enemy scale")
+
+
 func test_outline_follows_playability() -> void:
 	var battle = await _battle()
 	var cards: Array = await _add_strikes(battle, 2)
@@ -88,6 +158,37 @@ func test_outline_follows_playability() -> void:
 	battle._on_end_round_button_pressed()
 	await get_tree().process_frame
 	_expect(not cards.any(func(c) -> bool: return is_instance_valid(c) and c.highlight.is_shown()), "End Turn hides every outline")
+	await _free(battle)
+
+
+func test_playable_outline_breathes() -> void:
+	var battle = await _battle()
+	var cards: Array = await _add_strikes(battle, 1)
+	battle.player.energy = 3
+	battle.refresh_hand_ui()
+	var material := cards[0].highlight.material as ShaderMaterial
+	await get_tree().create_timer(0.6).timeout
+	var alpha_min := 1.0
+	var alpha_max := 0.0
+	var width_min := INF
+	var width_max := -INF
+	for _i in range(90):
+		var glow := material.get_shader_parameter("glow_color") as Color
+		var width := float(material.get_shader_parameter("width_px"))
+		alpha_min = minf(alpha_min, glow.a)
+		alpha_max = maxf(alpha_max, glow.a)
+		width_min = minf(width_min, width)
+		width_max = maxf(width_max, width)
+		await get_tree().process_frame
+	_expect(alpha_max - alpha_min > 0.25,
+		"playable outline has a visible brightness breath (range %.2f)" % (alpha_max - alpha_min))
+	_expect(width_max - width_min > 3.5,
+		"playable outline has a visible thickness breath (range %.2f)" % (width_max - width_min))
+	battle.player.energy = 0
+	battle.refresh_hand_ui()
+	await get_tree().create_timer(0.6).timeout
+	_expect(is_zero_approx(float(material.get_shader_parameter("width_px"))),
+		"playable outline restores its hidden width when the card becomes unaffordable")
 	await _free(battle)
 
 

@@ -36,19 +36,15 @@ func _run() -> void:
 	_expect(MetaProgress.caps == meta_caps_before, "a fight banks nothing by itself")
 	_expect(RunManager.total_run_scrap() == scrap_before, "a normal fight drops no Scrap")
 	_expect(REWARDS.combat_loot("enemy", 8)[0] == {"type": "gold", "amount": 8}, "the loot gold row pays the printed 8")
-	_expect(COMBAT_REWARDS.settle_victory("elite", 1, {"gold": 18, "scrap": 11})["route"] == "loot", "an elite goes to the loot screen")
+	_expect(COMBAT_REWARDS.settle_victory("elite", 1, {})["route"] == "loot", "an elite goes to the loot screen")
 	var elite_scrap := RunManager.total_run_scrap() - scrap_before
-	_expect(elite_scrap == 11, "an elite drops its printed 11 Scrap (%d)" % elite_scrap)
+	_expect(elite_scrap >= 8 and elite_scrap <= 16, "an elite rolls 8–16 Scrap (%d)" % elite_scrap)
 	_expect(ROOMS.rest_heal_amount(80) == 20, "a campfire heals a quarter of max HP")
-	# A fight rolled from a "?" room is not the node's own room: it pays a normal fight's gold.
-	RunManager.map_data = [{"id": "q", "floor": 1, "slot": 0, "type": "unknown", "children": [] as Array[String], "rewards": {}},
-		{"id": "e", "floor": 1, "slot": 1, "type": "enemy", "children": [] as Array[String], "rewards": {"gold": 11}}]
-	RunManager._reindex_map()
-	RunManager.current_node_id = "q"
-	RunManager.last_battle_node_type = "enemy"
-	_expect(RunManager.battle_rewards() == {"gold": 8}, "a fight from a ? room pays 8 (%s)" % RunManager.battle_rewards())
-	RunManager.current_node_id = "e"
-	_expect(RunManager.battle_rewards() == {"gold": 11}, "a route fight pays its printed rewards")
+	# Gold is a lookup by the fought room type; no map node is needed.
+	var want := {"enemy": {"gold": 8}, "elite": {"gold": 18}, "unknown": {"gold": 8}, "boss": {}}
+	for room in want:
+		RunManager.last_battle_node_type = room
+		_expect(RunManager.battle_rewards() == want[room], "a won %s pays %s (%s)" % [room, want[room], RunManager.battle_rewards()])
 
 	ACTS.active_run = "base:full"
 	var route: Dictionary = COMBAT_REWARDS.settle_victory("boss", 1, {})

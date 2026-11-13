@@ -1,169 +1,83 @@
 extends RefCounted
 
-## An act's route: the map grows one floor at a time instead of being built
-## whole. Each floor offers 2–3 choice cards (one on the fixed floors: the start
-## relic, the guaranteed treasure, the campfire before the boss and the boss).
-## A node's `children` are the cards of the floor after it, so they are its
-## binding preview. Entering a node rolls its children's children and prunes
-## the branches that were not taken. Room types come from the act's tables
-## (core/run/acts.gd); rewards are rolled with the node and printed on its card.
-##
-## A map node: {id, floor, slot, type, children: Array[String], encounter,
-## strength, rewards}.
-## Ids are the parent's id plus the card's index ("f0", "f0.1", "f0.1.2").
-## A node's children come from the stream "map_act_<act>_<parent id>" and its
-## rewards from "map_act_<act>_<id>_rewards", so the same seed and the same
-## route always give the same cards, whatever order they are generated in.
+## An act's map (STS2 StandardActMap): `floors` floors of 1–`width` nodes, the
+## first and the top floor single nodes (start relic, boss), the floor below
+## the boss a rest, a guaranteed treasure floor, and node types rolled from the
+## act's tables. Each node connects to at most `max_children_per_node` nodes on
+## the next floor. Parameters come from the act definition (core/run/acts.gd);
+## rolls use the act's own map stream.
 
-const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
-const ENCOUNTERS = preload("uid://mlx3xqfjwlpq")  # res://core/run/encounters.gd
-
-## Room types a floor never offers twice.
-const UNIQUE_PER_FLOOR := ["merchant", "rest", "unknown", "treasure"]
-## Re-rolls allowed for one card before a repeated type is dropped.
-const MAX_REROLLS := 8
+## A map node: {id, floor, slot, type, children: Array[String]}.
 
 
-## The start node, its children and their children. `elite_bias_floor` > 0
-## compresses rolls into [floor, 1) (ascension Dangerous Paths).
-static func start(act: Dictionary, act_number: int, run_rng, elite_bias_floor := 0.0) -> Array:
-	var root := {
-		"id": "f0", "floor": 0, "slot": 0, "type": "relic", "children": [] as Array[String], "rewards": {},
-	}
-	var map_data: Array = [root]
-	for child in roll_children(root, map_data, act, act_number, run_rng, elite_bias_floor):
-		roll_children(child, map_data, act, act_number, run_rng, elite_bias_floor)
-	return map_data
-
-
-## The map after entering `entered_id`: each of its children gets its own
-## children (rolled again when missing or pointing at pruned nodes), then only
-## the walked path, the entered node's children and their children remain.
-static func grow(map_data: Array, entered_id: String, act: Dictionary, act_number: int, run_rng, elite_bias_floor := 0.0) -> Array:
-	var entered: Dictionary = _find(map_data, entered_id)
-	if entered.is_empty():
-		return map_data
-	if _needs_children(map_data, entered, act):
-		roll_children(entered, map_data, act, act_number, run_rng, elite_bias_floor)
-	for child_id in entered.children:
-		var child: Dictionary = _find(map_data, child_id)
-		if _needs_children(map_data, child, act):
-			roll_children(child, map_data, act, act_number, run_rng, elite_bias_floor)
-	var keep := {entered_id: true}
-	for child_id in entered.children:
-		keep[child_id] = true
-		for grandchild_id in _find(map_data, child_id).get("children", []):
-			keep[grandchild_id] = true
-	return map_data.filter(
-		func(n): return keep.has(str(n.id)) or entered_id.begins_with(str(n.id) + ".")
-	)
-
-
-## Rolls `parent`'s children (the next floor's cards), replaces any earlier
-## nodes with the same ids, appends them to `map_data`, sets `parent.children`
-## and returns them. A parent on the top floor gets none.
-static func roll_children(parent: Dictionary, map_data: Array, act: Dictionary, act_number: int, run_rng, elite_bias_floor: float) -> Array:
+## `elite_bias_floor` > 0 compresses rolls into [floor, 1) (ascension Dangerous
+## Paths).
+static func generate(act: Dictionary, rng, elite_bias_floor := 0.0) -> Array:
 	var rules: Dictionary = act.get("map", {})
 	var num_floors := int(act.get("floors", 12))
-	var f := int(parent.floor) + 1
-	var ids: Array[String] = []
-	var nodes: Array = []
-	if f >= num_floors:
-		parent.children = ids
-		return nodes
-	var rng = run_rng.derived("map_act_%d_%s" % [act_number, str(parent.id)])
-	var extras := _extra_treasures_on_path(map_data, str(parent.id), rules)
-	var types: Array[String] = []
-	if _is_fixed_floor(f, num_floors, rules):
-		types.append(_pick_node_type(rules, f, num_floors, extras, rng, elite_bias_floor))
-	else:
-		var count: int = rng.next_range(2, 3)
-		for i in range(count):
-			var t := _pick_node_type(rules, f, num_floors, extras, rng, elite_bias_floor)
-			var tries := 0
-			while t in UNIQUE_PER_FLOOR and t in types and tries < MAX_REROLLS:
-				t = _pick_node_type(rules, f, num_floors, extras, rng, elite_bias_floor)
-				tries += 1
-			if t in UNIQUE_PER_FLOOR and t in types:
-				continue
-			types.append(t)
-			if t == "treasure":
-				extras += 1
-		while types.size() < 2:
-			types.append("enemy")
-	for i in range(types.size()):
-		var id := "%s.%d" % [str(parent.id), i]
-		ids.append(id)
-		var node := {"id": id, "floor": f, "slot": i, "type": types[i], "children": [] as Array[String]}
-		fill_fight(node, act, act_number, run_rng)
-		nodes.append(node)
-	for i in range(map_data.size() - 1, -1, -1):
-		if str(map_data[i].id) in ids:
-			map_data.remove_at(i)
-	map_data.append_array(nodes)
-	parent.children = ids
-	return nodes
-
-
-## Rolls `node`'s encounter, strength and rewards from its rewards stream
-## ("map_act_<act>_<id>_rewards"): an enemy fights an encounter of its floor's
-## band and pays by its strength, an elite fights one of the act's elites
-## (none when the act lists none), other rooms fight nothing.
-static func fill_fight(node: Dictionary, act: Dictionary, act_number: int, run_rng) -> void:
-	var rng = run_rng.derived("map_act_%d_%s_rewards" % [act_number, str(node.id)])
-	var type := str(node.type)
-	node["encounter"] = ""
-	node["strength"] = ""
-	match type:
-		"enemy":
-			var pool := ENCOUNTERS.band_pool(act, int(node.floor))
-			if not pool.is_empty():
-				node["encounter"] = str(rng.pick(pool))
-			node["strength"] = ENCOUNTERS.strength(act, int(node.floor), str(node.encounter))
-		"elite":
-			var elites: Array = act.get("elites", [])
-			if not elites.is_empty():
-				node["encounter"] = str(rng.pick(elites))
-	node["rewards"] = node_rewards(type, rng, str(node.strength) if node.strength != "" else "normal")
-
-
-## What a room of `type` pays, rolled from `rng`: Caps (backpack gold) for
-## fights by `strength`, Caps and Scrap for elites, nothing printed for the
-## other rooms. Values: content/economy/loot_economy.json.
-static func node_rewards(type: String, rng, strength := "normal") -> Dictionary:
-	var eco: Dictionary = MODEL_DB.data("economy", "base:loot_economy")
-	match type:
-		"enemy":
-			var by_strength: Dictionary = eco.get("combat_gold_by_strength", {})
-			return {"gold": int(by_strength.get(strength, by_strength.get("normal", 8)))}
-		"elite":
-			var scrap: Array = eco.get("elite_scrap", [8, 16])
-			return {"gold": int(eco.get("elite_gold", 18)), "scrap": rng.next_range(int(scrap[0]), int(scrap[1]))}
-	return {}
-
-
-static func _is_fixed_floor(f: int, num_floors: int, rules: Dictionary) -> bool:
-	return f == 0 or f >= num_floors - 2 or f == int(rules.get("guaranteed_treasure_floor", 6))
-
-
-## True when `node` should get (new) children: it is below the top floor and
-## has none, or names a child that is no longer on the map.
-static func _needs_children(map_data: Array, node: Dictionary, act: Dictionary) -> bool:
-	if node.is_empty() or int(node.floor) + 1 >= int(act.get("floors", 12)):
-		return false
-	if node.children.is_empty():
-		return true
-	for child_id in node.children:
-		if _find(map_data, child_id).is_empty():
-			return true
-	return false
-
-
-static func _find(map_data: Array, id: String) -> Dictionary:
-	for n in map_data:
-		if str(n.id) == id:
-			return n
-	return {}
+	var width := int(act.get("width", 4))
+	var max_children := int(rules.get("max_children_per_node", 3))
+	var map_data: Array = []
+	for f in range(num_floors):
+		var num_nodes: int
+		if f == 0 or f == num_floors - 1:
+			num_nodes = 1  # start (relic) and the boss are single nodes
+		else:
+			num_nodes = mini(rng.next_range(2, 4), width)
+			# A floor right above a single node must fit within that node's
+			# fan-out cap, or the orphan fallback would break the cap.
+			if f == 1 or f - 1 == num_floors - 1:
+				num_nodes = mini(num_nodes, max_children)
+		var slots: Array[int] = []
+		if num_nodes == 1:
+			@warning_ignore("integer_division")
+			slots.append(width / 2)
+		else:
+			var available: Array[int] = []
+			for s in range(width):
+				available.append(s)
+			rng.shuffle(available)
+			for i in range(num_nodes):
+				slots.append(available[i])
+			slots.sort()
+		for slot in slots:
+			map_data.append({
+				"id": "f%d_s%d" % [f, slot],
+				"floor": f,
+				"slot": slot,
+				"type": _pick_node_type(rules, f, num_floors, _count_extra_treasures(map_data, rules), rng, elite_bias_floor),
+				"children": [] as Array[String],
+			})
+	for f in range(num_floors - 1):
+		var current_nodes := _nodes_on_floor(map_data, f)
+		var next_nodes := _nodes_on_floor(map_data, f + 1)
+		if current_nodes.size() == 1:
+			for nn in _closest_n_by_slot(next_nodes, current_nodes[0].slot, max_children):
+				current_nodes[0].children.append(nn.id)
+			continue
+		if next_nodes.size() == 1:
+			for cn in current_nodes:
+				cn.children.append(next_nodes[0].id)
+			continue
+		for node in current_nodes:
+			var fresh_children: Array[String] = []
+			for nn in _closest_n_by_slot_within(next_nodes, node.slot, max_children, 2):
+				fresh_children.append(nn.id)
+			if fresh_children.is_empty():
+				var closest = _closest_n_by_slot(next_nodes, node.slot, 1)
+				if closest.size() > 0:
+					fresh_children.append(closest[0].id)
+			node.children = fresh_children
+		# Every next-floor node gets a parent, preferring one under the cap.
+		for next_node in next_nodes:
+			var has_parent := false
+			for node in current_nodes:
+				if next_node.id in node.children:
+					has_parent = true
+					break
+			if not has_parent:
+				_attach_orphan(next_node, current_nodes, max_children)
+	return map_data
 
 
 static func _pick_node_type(
@@ -171,8 +85,6 @@ static func _pick_node_type(
 ) -> String:
 	if floor_idx == 0:
 		return "relic"
-	if floor_idx == 1:
-		return "enemy"  # the first floor is fights only, told apart by encounter
 	if floor_idx == total - 1:
 		return "boss"
 	if floor_idx == total - 2:
@@ -194,13 +106,47 @@ static func _pick_node_type(
 	return "enemy"
 
 
-## Treasures off the guaranteed floor on the walked path up to `parent_id`
-## (the parent and its ancestors).
-static func _extra_treasures_on_path(map_data: Array, parent_id: String, rules: Dictionary) -> int:
+## Treasure nodes generated so far outside the guaranteed treasure floor.
+static func _count_extra_treasures(map_data: Array, rules: Dictionary) -> int:
 	var guaranteed := int(rules.get("guaranteed_treasure_floor", 6))
 	var count := 0
-	for n in map_data:
-		var id := str(n.id)
-		if (id == parent_id or parent_id.begins_with(id + ".")) and n.type == "treasure" and int(n.floor) != guaranteed:
+	for node in map_data:
+		if node.type == "treasure" and node.floor != guaranteed:
 			count += 1
 	return count
+
+
+static func _nodes_on_floor(map_data: Array, f: int) -> Array:
+	return map_data.filter(func(n): return n.floor == f)
+
+
+static func _closest_n_by_slot(candidates: Array, origin_slot: int, count: int) -> Array:
+	return _closest_n_by_slot_within(candidates, origin_slot, count, 1 << 30)
+
+
+static func _closest_n_by_slot_within(candidates: Array, origin_slot: int, count: int, max_dist: int) -> Array:
+	var with_dist: Array = []
+	for c in candidates:
+		var d: int = abs(int(c.slot) - origin_slot)
+		if d <= max_dist:
+			with_dist.append({"node": c, "dist": d})
+	with_dist.sort_custom(func(a, b): return a.dist < b.dist)
+	var out: Array = []
+	for i in range(mini(count, with_dist.size())):
+		out.append(with_dist[i].node)
+	return out
+
+
+## The closest parent still under the cap takes the orphan; if all are full the
+## closest one exceeds the cap (rare) so no node is unreachable.
+static func _attach_orphan(orphan: Dictionary, current_nodes: Array, max_children: int) -> void:
+	var sorted: Array = current_nodes.duplicate()
+	sorted.sort_custom(
+		func(a, b): return abs(int(a.slot) - int(orphan.slot)) < abs(int(b.slot) - int(orphan.slot))
+	)
+	for parent in sorted:
+		if parent.children.size() < max_children:
+			parent.children.append(orphan.id)
+			return
+	if sorted.size() > 0:
+		sorted[0].children.append(orphan.id)

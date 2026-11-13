@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dclugnqfo2v45"]
+
+[ext_resource path="res://tests/gunshot_fx_contract_test.gd" type="Script" id="1_test"]
+
+[node name="GunshotFxContractTest" type="Node"]
+script = ExtResource("1_test")

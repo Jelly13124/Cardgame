@@ -1095,6 +1095,9 @@ static func validate_hero(data: Dictionary, path: String) -> bool:
 	if data.has("animate_idle") and typeof(data["animate_idle"]) != TYPE_BOOL:
 		push_error("%s: animate_idle must be a bool" % prefix)
 		ok = false
+	if data.has("hand_draw") and (typeof(data["hand_draw"]) not in [TYPE_INT, TYPE_FLOAT] or int(data["hand_draw"]) < 1):
+		push_error("%s: hand_draw must be a whole number of at least 1" % prefix)
+		ok = false
 	for attr in HERO_ATTRIBUTE_KEYS:
 		if not data["starting_attributes"].has(attr):
 			push_error("%s: starting_attributes missing '%s'" % [prefix, attr])

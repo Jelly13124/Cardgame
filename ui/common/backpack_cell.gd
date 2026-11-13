@@ -15,6 +15,8 @@
 ## fail on class_name for custom types).
 extends Control
 
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
+
 ## Read-only mode (battle character window): blocks drag sources AND drop targets.
 var locked := false
 var drag_payload: Dictionary = {}
@@ -77,11 +79,7 @@ func _make_preview() -> Control:
 	p.custom_minimum_size = Vector2(60, 60)
 	p.size = Vector2(60, 60)
 	p.modulate = Color(1, 1, 1, 0.85)
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.12, 0.10, 0.08, 0.95)
-	sb.border_color = preview_color
-	sb.set_border_width_all(2)
-	sb.set_corner_radius_all(3)
+	var sb := T.state_box("normal", 2.0, preview_color)
 	p.add_theme_stylebox_override("panel", sb)
 	# Prefer the real sprite; fall back to the letter glyph when there's no art.
 	if preview_tex:

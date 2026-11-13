@@ -32,32 +32,6 @@ static func monsters_of(encounter_id: String) -> Array[String]:
 	return result
 
 
-## How hard a normal encounter is for its floor: the summed max HP of its
-## monsters against the mean of its band — "weak" under 85%, "strong" over
-## 115%, else "normal" (also when the encounter or its band is unknown).
-static func strength(act: Dictionary, floor_idx: int, encounter_id: String) -> String:
-	var own := _total_hp(encounter_id)
-	var pool := band_pool(act, floor_idx)
-	if own <= 0 or pool.is_empty():
-		return "normal"
-	var total := 0.0
-	for enc in pool:
-		total += _total_hp(str(enc))
-	var mean := total / float(pool.size())
-	if own < mean * 0.85:
-		return "weak"
-	if own > mean * 1.15:
-		return "strong"
-	return "normal"
-
-
-static func _total_hp(encounter_id: String) -> int:
-	var sum := 0
-	for m in monsters_of(encounter_id):
-		sum += int(MODEL_DB.data("monster", m).get("max_health", 0))
-	return sum
-
-
 ## The normal encounter pool of the band `floor_idx` falls in.
 static func band_pool(act: Dictionary, floor_idx: int) -> Array:
 	var bands: Array = act.get("encounters", [])

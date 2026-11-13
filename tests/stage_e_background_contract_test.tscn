@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dtmdpdea5ilp0"]
+
+[ext_resource type="Script" path="res://tests/stage_e_background_contract_test.gd" id="1_test"]
+
+[node name="StageEBackgroundContractTest" type="Node"]
+script = ExtResource("1_test")

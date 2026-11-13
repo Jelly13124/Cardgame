@@ -28,7 +28,7 @@ or second act in the demo. The three-act extract-or-push structure remains a
 full-game ruleset behind `RunManager.DEMO_BUILD = false`.
 
 1. **Hero Select + Loadout** - The demo uses Cowboy Bill (fixed starter deck + attribute spread); the player explicitly moves stored gear into the owned base backpack, which becomes the next-run carry
-2. **Route** - Each floor offers 2–3 cards showing the room, its rewards and the next floor's rooms; fight cards show their monsters and a strength tag (weak / normal / strong pays 6 / 8 / 11 Caps). Floor 1 is fights only; floors 2–4 can also offer a shop, rest or treasure; floors 0, 6, 10 and 11 are fixed (relic, treasure, rest, boss)
+2. **Map** - The whole act is a branching node map (12 floors, 2–4 nodes per middle floor, floor 0 relic, floor 6 treasure, floor 10 rest, floor 11 boss); the player picks one of the current node's children. Nodes show only their room type. A won fight pays 8 Caps (elite 18 plus 8–16 Scrap, boss 45).
 3. **Battle** - STS-style card combat
 4. **Loot Reward** - Post-battle: claim gold/Scrap and optionally draft 1 new card
 5. **Demo Boss Victory** - Defeat Rust Titan on floor 12; bank carried currencies while gear returns to the owned base backpack/equipment slots, show the result, and return to base
@@ -39,7 +39,7 @@ full-game ruleset behind `RunManager.DEMO_BUILD = false`.
 ## Battle System
 
 ### Turn Structure
-1. Player draws **3 cards** from the draw pile
+1. Player draws **5 cards** from the draw pile (the hero's `hand_draw`, changed by `modify_hand_draw` listeners; hand limit 10)
 2. Player plays cards spending **energy** (resets to 3 each round)
 3. Player clicks **END ROUND**
 4. Enemy executes its **next action** from its action pattern
@@ -350,7 +350,7 @@ Central source of truth for a run. Persists across scene changes.
 - Starter decks are fixed per hero/run setup; players do not build starter decks manually
 
 ### Map System
-- `map_scene.gd` shows the current floor's route choice cards (`route_choice_card.gd`) and a floor track
+- `map_scene.gd` shows the act as a scrollable parchment node map (`node_map_view.gd`, `map_node_button.gd`)
 - Player can manage equipment on this screen (swap items freely)
 - Before loading `battle_scene.tscn`, the map sets `RunManager.current_encounter`
 - Enemy encounters escalate in difficulty by floor
@@ -529,7 +529,7 @@ Function reference: `docs/building-screens-functions.md`.
 - ✅ **UI**: currency HUD shows only Caps + Scrap; building unlock and upgrade badges both use Scrap.
 
 ### ✅ Phase 1 — Core Combat (Complete)
-- STS card play loop (draw 3 / play / discard / enemy turn)
+- STS card play loop (draw 5 / play / discard / enemy turn)
 - Attack card drag-to-target with arrow
 - Skill/ability cards via play zone
 - Data-driven effect system (effects[] in JSON)

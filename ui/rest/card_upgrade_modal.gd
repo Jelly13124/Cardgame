@@ -124,6 +124,7 @@ func _build_bottom_controls() -> void:
 	_view_upgrades.add_theme_font_override("font", T.display_font(600))
 	_view_upgrades.add_theme_font_size_override("font_size", 20)
 	_view_upgrades.add_theme_color_override("font_color", Color(0.94, 0.80, 0.52))
+	T.apply_checkbox_theme(_view_upgrades)
 	_view_upgrades.toggled.connect(_on_view_upgrades_toggled)
 	add_child(_view_upgrades)
 
@@ -184,19 +185,11 @@ func _build_side_controls() -> void:
 
 
 func _style_side_button(button: Button, accent: Color) -> void:
-	for state in ["normal", "pressed", "disabled"]:
-		var style := StyleBoxFlat.new()
-		style.bg_color = Color(0.055, 0.072, 0.080, 0.97)
-		style.border_color = accent if state != "disabled" else Color(0.3, 0.32, 0.33, 0.7)
-		style.set_border_width_all(2)
-		style.set_corner_radius_all(8)
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var style := T.ll_button_olive(state) as StyleBoxTexture
+		style.modulate_color *= accent
+		style.set_content_margin_all(3.0 if state == "hover" else 2.0)
 		button.add_theme_stylebox_override(state, style)
-	var hover := StyleBoxFlat.new()
-	hover.bg_color = Color(0.09, 0.12, 0.13, 0.99)
-	hover.border_color = accent.lightened(0.18)
-	hover.set_border_width_all(3)
-	hover.set_corner_radius_all(8)
-	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	button.add_theme_color_override("font_color", Color(0.96, 0.91, 0.80))
 	button.add_theme_color_override("font_hover_color", Color.WHITE)

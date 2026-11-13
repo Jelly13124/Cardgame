@@ -58,6 +58,7 @@ const COMBAT_MANAGER = preload("uid://dumevejih8ygv")  # res://core/combat/comba
 const BATTLE_PRESENTER = preload("uid://du6lk20qqijeu")  # res://ui/battle/battle_presenter.gd
 const HAND_VIEW = preload("uid://dselhm1i0ycf")  # res://ui/battle/hand_view.gd
 const ENEMY_ENTITY = preload("uid://qtp7jvjqfbou")  # res://ui/battle/enemy_view.gd
+const CREATURE_LAYOUT = preload("uid://bnx6w7s37vqt7")  # res://ui/battle/sts2_creature_layout.gd
 const CARD_ANIMATOR_SCRIPT = preload("uid://co0n3ou8saknv")  # res://ui/battle/card_animator.gd
 const DISCOVER_MODAL = preload("uid://keeeggdto42o")  # res://ui/battle/discover_modal.gd
 const TOOL_USE_CONFIRM = preload("uid://dihe3sjaxh16")  # res://ui/battle/tool_use_confirm.gd
@@ -75,6 +76,15 @@ const MAIN_MENU_PATH := "uid://dnjlmt1repvjw"  # res://ui/menus/main_menu.tscn
 
 const COMBAT_REWARDS = preload("uid://sn83hwnx1w3b")  # res://core/run/combat_rewards.gd
 
+## Full-screen act backdrops are original variants of the approved wasteland
+## language. The current act selects the quiet scene before combat entities
+## enter, so Act 2/3 never fall back to the Act 1 desert by accident.
+const ACT_BATTLE_BACKGROUND := {
+	1: "res://battle_scene/assets/images/backgrounds/wasteland_battlefield_act1_v1.png",
+	2: "res://battle_scene/assets/images/backgrounds/wasteland_battlefield_act2_city.png",
+	3: "res://battle_scene/assets/images/backgrounds/wasteland_battlefield_act3_radiation.png",
+}
+
 
 func _exit_tree() -> void:
 	# Restore normal speed when leaving combat so the map / menus run at 1x
@@ -87,6 +97,7 @@ func _ready():
 	print("BATTLE STARTING (STS Layout)")
 	MetaProgress.begin_deferred_saves()
 	AudioManager.play_music("boss" if RunManager.last_battle_node_type == "boss" else "battle")
+	_apply_act_battle_background()
 	card_manager.debug_mode = false
 	Engine.time_scale = Settings.game_speed
 
@@ -106,12 +117,8 @@ func _ready():
 
 	# Apply textured wasteland button skin to the End Round button.
 	if end_round_button:
-		T.apply_button_theme(end_round_button)
 		_style_end_round_button()
 
-	# The shared deck-book glyph replaces the old card-fan/card-back art on both
-	# piles. Mirroring gives the draw and discard sides opposite directions while
-	# keeping one visual language with the top-bar deck icon.
 	_setup_pile_icon(deck, "iconb_deck_stack", true)
 	_setup_pile_icon(discard_pile, "iconb_deck_stack", false)
 
@@ -123,37 +130,16 @@ func _ready():
 	_maybe_show_tutorial()
 
 
-## Compact comic placard. One generated plate supplies every interaction state;
-## Godot keeps the localized label and applies only a restrained value shift.
+func _apply_act_battle_background() -> void:
+	var act := clampi(int(RunManager.current_act), 1, 3)
+	var path := str(ACT_BATTLE_BACKGROUND.get(act, ACT_BATTLE_BACKGROUND[1]))
+	if ResourceLoader.exists(path):
+		$BattleBackground.texture = load(path) as Texture2D
+
+
+## Shared visual feedback leaves the native input rectangle and label independent.
 func _style_end_round_button() -> void:
-	var plate_tex := T.lightline_tex("hud_end_turn_orange")
-	if plate_tex == null:
-		return
-	for state in ["normal", "hover", "pressed", "disabled"]:
-		# Scale the compact plate as a whole. It is already authored at the same
-		# aspect family as the runtime button, so a 9-slice would over-extend its
-		# clipped ends into decorative horizontal rails.
-		var tb := StyleBoxTexture.new()
-		tb.texture = plate_tex
-		match state:
-			"hover":
-				tb.modulate_color = Color(1.08, 1.08, 1.08)
-			"pressed":
-				tb.modulate_color = Color(0.88, 0.88, 0.88)
-			"disabled":
-				tb.modulate_color = Color(0.58, 0.58, 0.58)
-		tb.content_margin_left = 28
-		tb.content_margin_right = 28
-		tb.content_margin_top = 8
-		tb.content_margin_bottom = 8
-		end_round_button.add_theme_stylebox_override(state, tb)
-	var cream := Color(0.96, 0.90, 0.74, 1.0)
-	end_round_button.add_theme_color_override("font_color", cream)
-	end_round_button.add_theme_color_override("font_hover_color", Color(1.0, 0.95, 0.82, 1.0))
-	end_round_button.add_theme_color_override("font_pressed_color", cream)
-	end_round_button.add_theme_color_override("font_disabled_color", Color(0.62, 0.59, 0.52, 0.9))
-	end_round_button.add_theme_color_override("font_outline_color", Color(0.02, 0.025, 0.025, 0.95))
-	end_round_button.add_theme_constant_override("outline_size", 3)
+	T.apply_end_turn_button(end_round_button)
 
 
 ## Show the first-battle tip sequence until the player actually finishes it.
@@ -162,7 +148,8 @@ func _maybe_show_tutorial() -> void:
 	if MetaProgress.tutorial_seen:
 		return
 	var canvas := CanvasLayer.new()
-	canvas.layer = 240
+	canvas.name = "TutorialLayer"
+	canvas.layer = 140
 	add_child(canvas)
 	var tips: Control = TUTORIAL_TIPS_SCRIPT.new()
 	tips.completed.connect(
@@ -330,7 +317,7 @@ func update_polarity_hud() -> void:
 		_polarity_badge.z_index = 200
 		_polarity_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		# Top-left, near the player HP/energy HUD. Owner will fine-tune.
-		_polarity_badge.position = Vector2(40, 40)
+		_polarity_badge.position = Vector2(40, 148)
 		add_child(_polarity_badge)
 
 	var polarity: String = str(player.current_polarity)
@@ -651,10 +638,8 @@ func refresh_hand_ui():
 	_refresh_pile_counts()
 
 
-## One bare iconb glyph per pile (no frame, no card-back stack): the icon IS the
-## pile's whole visual, with the count label on top of it. Uses the framework's
-## own Pile.hide_cards switch, which re-applies on every stack update (a manual
-## per-card hide gets overwritten by _update_target_positions).
+## Preserve the data-host geometry used by the frozen card flights. Its separate
+## hotspot owns input; the direct CountLabel preserves Pile's automatic updates.
 func _setup_pile_icon(pile: Node, icon_name: String, mirrored: bool) -> void:
 	if pile == null or pile.get_node_or_null("PileIcon") != null:
 		return
@@ -778,10 +763,17 @@ func _start_new_game():
 	else:
 		deck_list = _practice_deck()
 	player._refresh_hud()
+	# Loading run stats is initialization, not a combat damage/healing event.
+	player._hud.snap_stats(player.health, player.max_health, player.block)
 	combat = COMBAT_MANAGER.new()
 	presenter = BATTLE_PRESENTER.new(self)
 	combat.presenter = presenter
-	combat.setup({"player": pc, "deck": deck_list, "encounter": encounter})
+	combat.setup({
+		"player": pc,
+		"deck": deck_list,
+		"encounter": encounter,
+		"hand_draw": int(RunManager.current_hero_data.get("hand_draw", COMBAT_MANAGER.DEFAULT_HAND_DRAW)),
+	})
 	combat.combat_ended.connect(_on_combat_ended)
 	combat.card_played.connect(_on_card_played)
 	combat.enemy_died.connect(_on_enemy_died)
@@ -822,15 +814,42 @@ func view_of(creature: Object) -> Node:
 	return view if view != null and is_instance_valid(view) and not view.is_queued_for_deletion() else null
 
 
-## An enemy joined the fight: its view takes the next field slot.
+## Reflow only living views when a new enemy joins; death feedback keeps its position.
 func spawn_enemy_view(creature: Object) -> Node:
 	var view = ENEMY_ENTITY.for_creature(creature)
 	view.combat = combat
-	var idx = enemy_container.get_child_count()
-	view.position = Vector2(idx * 260, 0)
 	enemy_container.add_child(view)
 	_views[creature] = view
+	# However it leaves (death, a boss's adds dismissed), the rest close ranks.
+	view.tree_exited.connect(call_deferred.bind("layout_creatures"))
+	layout_creatures()
 	return view
+
+
+## Places the hero and every enemy still on the field by STS2's rules
+## (sts2_creature_layout.gd), using each view's displayed sprite width. When
+## the field shrinks, only the enemies scale: the hero keeps scale 1, which its
+## pulses and hit points assume.
+func layout_creatures() -> void:
+	if not is_inside_tree() or is_queued_for_deletion():
+		return
+	var views: Array = []
+	var widths: Array = []
+	# Only living enemies take a spot: a dying view stays where it was hit.
+	for creature in combat.state.living_enemies() if combat != null else []:
+		var view = view_of(creature)
+		if view == null:
+			continue
+		views.append(view)
+		widths.append(view._display_size.x)
+	var placed: Dictionary = CREATURE_LAYOUT.arrange(player.TARGET_DISPLAY_HEIGHT, widths)
+	var s: float = placed.scale
+	player.global_position = placed.player
+	enemy_container.global_position = placed.enemy_origin
+	enemy_container.scale = Vector2.ONE * s
+	var offsets: Array = CREATURE_LAYOUT.enemy_positions(widths)
+	for i in views.size():
+		views[i].position = offsets[i]
 
 
 ## Run bookkeeping for a committed play: bounty and card codex.
@@ -849,6 +868,7 @@ func _on_enemy_died(enemy: RefCounted) -> void:
 
 
 func _on_combat_ended(outcome: String) -> void:
+	ui_manager.anim_out()
 	_tool_resolving = false  # a tool still queued was dropped with the fight
 	MetaProgress.end_deferred_saves()  # the fight is over: write what it changed
 	if outcome == "victory":

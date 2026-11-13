@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://du4snbf82r8j8"]
+
+[ext_resource type="Script" path="res://tests/stage_d_home_base_contract_test.gd" id="1_test"]
+
+[node name="StageDHomeBaseContractTest" type="Node"]
+script = ExtResource("1_test")
