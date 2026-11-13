@@ -61,6 +61,13 @@ func _run() -> void:
 		var rest: Array = hand._held_cards
 		for i in rest.size():
 			_expect(hand.target_of(rest[i]).center.is_equal_approx(anchor + STS2_HAND.slot(4, i).position), "after the hovered card leaves, card %d uses the 4-card slot" % i)
+		# A relayout while a card is hovered moves its return spot (drop on
+		# nothing) to its new rest slot.
+		var kept = rest[1]
+		hand.set_hovered(kept)
+		hand.remove_card(rest[3])
+		var rest_top_left: Vector2 = anchor + STS2_HAND.slot(3, 1).position - kept.size * 0.5
+		_expect(kept.original_destination.is_equal_approx(rest_top_left), "a hovered card returns to its new rest slot (%s vs %s)" % [kept.original_destination, rest_top_left])
 	battle.queue_free()
 	RunManager.is_run_active = false
 	RunManager.clear_run_save()

@@ -118,7 +118,8 @@ func _update_target_positions() -> void:
 	for i in count:
 		var card: Card = _held_cards[i]
 		var s := slot(count, i)
-		var center: Vector2 = anchor + s.position
+		var rest_center: Vector2 = anchor + s.position
+		var center := rest_center
 		var angle: float = s.angle_deg
 		var card_scale: float = s.scale
 		if focus > -1:
@@ -144,6 +145,9 @@ func _update_target_positions() -> void:
 			card.rotation = 0.0
 			card.global_position = top_left
 			card.current_hover_position = card.position
+			# Dropped on nothing, the card goes back to its rest slot.
+			card.original_destination = rest_center - card.size * 0.5
+			card.original_rotation = deg_to_rad(s.angle_deg)
 			continue
 		card.original_scale = Vector2.ONE * card_scale
 		card.original_hover_rotation = deg_to_rad(angle)

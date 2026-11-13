@@ -328,6 +328,9 @@ func get_targeting_rect() -> Rect2:
 	var height: float = _content_height
 	if height < 84.0:
 		height = 84.0
+	# The field may shrink the enemy container (sts2_creature_layout.gd).
+	width *= global_scale.x
+	height *= global_scale.y
 	return Rect2(global_position.x - width * 0.5, global_position.y - height, width, height)
 
 

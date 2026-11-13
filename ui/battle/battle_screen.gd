@@ -834,13 +834,19 @@ func spawn_enemy_view(creature: Object) -> Node:
 	view.combat = combat
 	enemy_container.add_child(view)
 	_views[creature] = view
+	# However it leaves (death, a boss's adds dismissed), the rest close ranks.
+	view.tree_exited.connect(call_deferred.bind("layout_creatures"))
 	layout_creatures()
 	return view
 
 
 ## Places the hero and every enemy still on the field by STS2's rules
-## (sts2_creature_layout.gd), using each view's displayed sprite width.
+## (sts2_creature_layout.gd), using each view's displayed sprite width. When
+## the field shrinks, only the enemies scale: the hero keeps scale 1, which its
+## pulses and hit points assume.
 func layout_creatures() -> void:
+	if not is_inside_tree() or is_queued_for_deletion():
+		return
 	var views: Array = []
 	var widths: Array = []
 	for view in enemy_container.get_children():
@@ -851,7 +857,6 @@ func layout_creatures() -> void:
 	var placed: Dictionary = CREATURE_LAYOUT.arrange(player.TARGET_DISPLAY_HEIGHT, widths)
 	var s: float = placed.scale
 	player.global_position = placed.player
-	player.scale = Vector2.ONE * s
 	enemy_container.global_position = placed.enemy_origin
 	enemy_container.scale = Vector2.ONE * s
 	var offsets: Array = CREATURE_LAYOUT.enemy_positions(widths)

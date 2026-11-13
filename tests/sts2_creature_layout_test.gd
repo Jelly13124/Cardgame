@@ -82,6 +82,23 @@ func _run() -> void:
 	for v in _living_views(battle):
 		var right: float = v.global_position.x + v._display_size.x * 0.5 * v.global_scale.x
 		_expect(right <= 1920.0, "a crowded field stays on screen (right edge %.1f)" % right)
+	# The hero keeps its own size (pulses and hit points assume scale 1).
+	_expect(battle.player.scale == Vector2.ONE, "the hero is never shrunk (%s)" % battle.player.scale)
+	# A shrunken enemy's target area shrinks with it.
+	var shrunk = _living_views(battle)[0]
+	if shrunk.global_scale.x < 1.0:
+		var rect: Rect2 = shrunk.get_targeting_rect()
+		var want_w: float = maxf(shrunk._display_size.x * 0.75, 84.0) * shrunk.global_scale.x
+		_expect(is_equal_approx(rect.size.x, want_w), "the target area follows the enemy's scale (%.1f vs %.1f)" % [rect.size.x, want_w])
+	else:
+		_expect(false, "the four-enemy field should shrink in this test")
+
+	# A dead enemy leaves the field and the rest close ranks.
+	var middle = _living_views(battle)[1]
+	middle.queue_free()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check_field(battle, "after a death")
 
 	battle.queue_free()
 	RunManager.is_run_active = false
