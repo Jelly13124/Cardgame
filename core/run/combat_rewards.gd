@@ -14,8 +14,8 @@ const ACTS = preload("uid://c7qo73muxvmd4")  # res://core/run/acts.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 
 
-## `rewards`: the fought node's printed rewards, {gold, scrap}; the loot screen
-## pays the gold, this pays an elite's Scrap.
+## `rewards`: what the fight pays in Caps ({gold}, RunManager.battle_rewards());
+## the loot screen pays it. An elite also rolls its Scrap here.
 static func settle_victory(node_type: String, act: int, rewards: Dictionary) -> Dictionary:
 	# The boss's Caps go straight into the backpack; what does not fit is owed
 	# and banked when the run settles.
@@ -41,7 +41,8 @@ static func settle_victory(node_type: String, act: int, rewards: Dictionary) -> 
 		out["route"] = "demo_complete"
 		return out
 	if node_type == "elite":
-		RunManager.add_scrap_to_backpack(int(rewards.get("scrap", 0)))
+		var scrap: Array = MODEL_DB.data("economy", "base:loot_economy").get("elite_scrap", [8, 16])
+		RunManager.add_scrap_to_backpack(RunManager.rng("rewards").next_range(int(scrap[0]), int(scrap[1])))
 	return {"route": "loot", "backpack_full": false}
 
 

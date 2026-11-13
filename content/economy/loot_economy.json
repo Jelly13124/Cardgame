@@ -1,10 +1,6 @@
 {
   "id": "loot_economy",
-  "combat_gold_by_strength": {
-    "weak": 6,
-    "normal": 8,
-    "strong": 11
-  },
+  "combat_gold": 8,
   "elite_gold": 18,
   "boss_gold": 45,
   "card_rarity_rolls": [
