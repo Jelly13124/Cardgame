@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dcv8tmpgohf8x"]
+
+[ext_resource type="Script" path="res://tests/sts2_hand_layout_test.gd" id="1"]
+
+[node name="Sts2HandLayoutTest" type="Node"]
+script = ExtResource("1")

@@ -39,7 +39,6 @@ const GENERATED_COST_POSITION := Vector2(5, 3)
 const GENERATED_COST_SIZE := Vector2(35, 35)
 const GENERATED_COST_FONT_SIZE := 25
 const GENERATED_COST_FONT_EMBOLDEN := 0.9
-const HAND_HOVER_LIFT := 80.0
 
 ## Discover candidates aren't hand cards — suppress the "can I afford it" glow.
 var suppress_playable_glow: bool = false
@@ -518,27 +517,49 @@ func _on_mouse_entered() -> void:
 	# Keyword glossary tooltip: explain any statuses / attributes this card uses.
 	var glossary := _build_keyword_glossary()
 	if glossary != "":
-		var tooltip_lift := HAND_HOVER_LIFT if card_container is Hand else 12.0
-		Tooltip.show(
-			glossary,
-			global_position + Vector2(size.x * 0.5, -tooltip_lift),
-			get_instance_id()
-		)
+		var anchor := global_position + Vector2(size.x * 0.5, -12.0)
+		if card_container != null and card_container.has_method("anchor_point"):
+			# A hovered hand card rises to show fully; the tip sits above it.
+			anchor = Vector2(global_position.x + size.x * 0.5, card_container.anchor_point().y - size.y - 8.0)
+		Tooltip.show(glossary, anchor, get_instance_id())
 
 
 func _on_mouse_exited() -> void:
 	Tooltip.hide_if_owner(get_instance_id())
 
 
-## Hand cards remain fully visible at rest; focus adds only a clear StS-style
-## lift and straightens the card. Non-hand previews keep a restrained hover so
-## deck/reward layouts do not jump.
+## In the battle hand, hover belongs to the STS2 hand (full size, upright, whole
+## face showing). Other previews keep a restrained hover so deck and reward
+## layouts do not jump.
 func _start_hover_animation() -> void:
-	var is_hand_card := card_container is Hand
-	hover_distance = int(HAND_HOVER_LIFT) if is_hand_card else 12
-	hover_scale = 1.12 if is_hand_card else 1.06
+	if card_container != null and card_container.has_method("set_hovered"):
+		# The STS2 hand owns hover: it snaps this card to full size and moves
+		# the neighbours (ui/battle/sts2_hand.gd).
+		if hover_tween and hover_tween.is_valid():
+			hover_tween.kill()
+			hover_tween = null
+		original_position = position
+		original_scale = scale
+		original_hover_rotation = rotation
+		current_hover_position = position
+		card_container.set_hovered(self)
+		return
+	hover_distance = 12
+	hover_scale = 1.06
 	hover_rotation = 0.0
 	super._start_hover_animation()
+
+
+func _stop_hover_animation() -> void:
+	if card_container != null and card_container.has_method("clear_hovered"):
+		if hover_tween and hover_tween.is_valid():
+			hover_tween.kill()
+			hover_tween = null
+		# Deferred: the hand's relayout moves cards, which must not happen in
+		# the middle of this card's own state change.
+		card_container.call_deferred("clear_hovered", self)
+		return
+	super._stop_hover_animation()
 
 
 ## Builds a "[b]Keyword[/b]: definition" glossary for the statuses and global

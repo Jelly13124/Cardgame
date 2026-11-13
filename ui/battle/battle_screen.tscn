@@ -9,7 +9,7 @@
 [ext_resource type="PackedScene" path="res://addons/card-framework/hand.tscn" id="3_xp5g3"]
 [ext_resource type="PackedScene" path="res://ui/battle/player_view.tscn" id="7_player"]
 [ext_resource type="Script" path="res://addons/card-framework/hand.gd" id="10_wrush"]
-[ext_resource type="Script" path="res://ui/battle/card_framework_adapters/no_reorder_hand.gd" id="11_noreorder"]
+[ext_resource type="Script" path="res://ui/battle/sts2_hand.gd" id="11_noreorder"]
 [ext_resource type="Script" path="res://addons/card-framework/pile.gd" id="12_ixui7"]
 
 [ext_resource type="Script" path="res://ui/battle/battle_ui_manager.gd" id="19_ui"]
@@ -73,10 +73,9 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -380.0
-offset_top = -310.0
-offset_right = 380.0
-offset_bottom = -60.0
+offset_left = -760.0
+offset_top = -420.0
+offset_right = 760.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 1
