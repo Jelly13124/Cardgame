@@ -487,8 +487,6 @@ func _float_assignment(source: String, key: String) -> float:
 func _test_main_menu_uses_native_wide_buttons() -> void:
 	var source := FileAccess.get_file_as_string(MAIN_MENU_PATH)
 	var save_strip_body := _function_body(source, "func _start_save_info_button")
-	_expect(source.contains("button_main_normal_v2.png"), "main menu uses native-wide normal button")
-	_expect(source.contains("button_main_selected_v2.png"), "main menu uses native-wide selected button")
 	_expect(
 		source.contains("save_info_strip_clean.png"),
 		"start-screen save strip uses the clean gear-free component"

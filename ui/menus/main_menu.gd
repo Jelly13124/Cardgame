@@ -122,10 +122,9 @@ func _start_menu_button(text: String, handler: Callable) -> Button:
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.add_theme_font_override("font", T.display_font(700))
-	button.add_theme_font_size_override("font_size", 26)
 	# STS2 NMainMenuTextButton: a text entry with no box; the label turns gold
 	# and grows a little on hover.
-	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:  # bare-ok: theme state names
 		button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
 	button.add_theme_font_size_override("font_size", 30)
 	button.add_theme_color_override("font_color", Color("#efe2c4"))

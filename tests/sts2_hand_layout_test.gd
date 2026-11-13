@@ -5,7 +5,7 @@ extends Node
 ## scaled by 208/300, rest scale 0.8, the hovered card at scale 1 and angle 0
 ## showing fully, neighbours pushed aside, held cards left alone.
 
-const STS2_HAND = preload("res://ui/battle/sts2_hand.gd")
+const STS2_HAND = preload("uid://bys4oyehlumcn")  # res://ui/battle/sts2_hand.gd
 const K := 208.0 / 300.0
 
 var failures: PackedStringArray = []
@@ -30,7 +30,7 @@ func _run() -> void:
 	_expect(is_equal_approx(STS2_HAND.slot(10, 9).scale, 0.68), "ten cards rest at 0.68 (%s)" % [STS2_HAND.slot(10, 9)])
 
 	RunManager.start_new_run("base:cowboy_bill", [], 0, "HANDLAYOUT1")
-	var battle = load("res://ui/battle/battle_screen.tscn").instantiate()
+	var battle = load("uid://dnhj5pp3c1v2l").instantiate()  # res://ui/battle/battle_screen.tscn
 	add_child(battle)
 	for i in 90:
 		await get_tree().process_frame

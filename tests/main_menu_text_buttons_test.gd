@@ -19,7 +19,7 @@ func _expect(condition: bool, message: String) -> void:
 
 
 func _run() -> void:
-	var menu = load("res://ui/menus/main_menu.tscn").instantiate()
+	var menu = load("uid://dnjlmt1repvjw").instantiate()
 	add_child(menu)
 	for i in 4:
 		await get_tree().process_frame
@@ -31,7 +31,7 @@ func _run() -> void:
 	found.sort_custom(func(a, b): return a.position.y < b.position.y)
 	_expect(found.map(func(b): return b.text) == want, "the four entries keep their order (%s)" % [found.map(func(b): return b.text)])
 	for b in found:
-		for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+		for state in ["normal", "hover", "pressed", "disabled", "focus"]:  # bare-ok: theme state names
 			_expect(b.get_theme_stylebox(state) is StyleBoxEmpty, "%s has no %s box" % [b.text, state])
 		_expect(b.get_theme_color("font_hover_color") != b.get_theme_color("font_color"), "%s changes colour on hover" % b.text)
 	menu.queue_free()

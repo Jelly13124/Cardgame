@@ -53,6 +53,7 @@ func creature_removed(creature: Object) -> void:
 	var view = screen.view_of(creature) if _alive() else null
 	if view != null:
 		view.queue_free()
+		screen.layout_creatures()
 
 
 func card_windup(dealer: Object, target: Object) -> void:

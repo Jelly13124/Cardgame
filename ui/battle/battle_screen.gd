@@ -58,6 +58,7 @@ const COMBAT_MANAGER = preload("uid://dumevejih8ygv")  # res://core/combat/comba
 const BATTLE_PRESENTER = preload("uid://du6lk20qqijeu")  # res://ui/battle/battle_presenter.gd
 const HAND_VIEW = preload("uid://dselhm1i0ycf")  # res://ui/battle/hand_view.gd
 const ENEMY_ENTITY = preload("uid://qtp7jvjqfbou")  # res://ui/battle/enemy_view.gd
+const CREATURE_LAYOUT = preload("uid://bnx6w7s37vqt7")  # res://ui/battle/sts2_creature_layout.gd
 const CARD_ANIMATOR_SCRIPT = preload("uid://co0n3ou8saknv")  # res://ui/battle/card_animator.gd
 const DISCOVER_MODAL = preload("uid://keeeggdto42o")  # res://ui/battle/discover_modal.gd
 const TOOL_USE_CONFIRM = preload("uid://dihe3sjaxh16")  # res://ui/battle/tool_use_confirm.gd
@@ -831,11 +832,31 @@ func view_of(creature: Object) -> Node:
 func spawn_enemy_view(creature: Object) -> Node:
 	var view = ENEMY_ENTITY.for_creature(creature)
 	view.combat = combat
-	var idx = enemy_container.get_child_count()
-	view.position = Vector2(idx * 260, 0)
 	enemy_container.add_child(view)
 	_views[creature] = view
+	layout_creatures()
 	return view
+
+
+## Places the hero and every enemy still on the field by STS2's rules
+## (sts2_creature_layout.gd), using each view's displayed sprite width.
+func layout_creatures() -> void:
+	var views: Array = []
+	var widths: Array = []
+	for view in enemy_container.get_children():
+		if view.is_queued_for_deletion():
+			continue
+		views.append(view)
+		widths.append(view._display_size.x)
+	var placed: Dictionary = CREATURE_LAYOUT.arrange(player.TARGET_DISPLAY_HEIGHT, widths)
+	var s: float = placed.scale
+	player.global_position = placed.player
+	player.scale = Vector2.ONE * s
+	enemy_container.global_position = placed.enemy_origin
+	enemy_container.scale = Vector2.ONE * s
+	var offsets: Array = CREATURE_LAYOUT.enemy_positions(widths)
+	for i in views.size():
+		views[i].position = offsets[i]
 
 
 ## Run bookkeeping for a committed play: bounty and card codex.
