@@ -16,8 +16,6 @@ const RULES_PANEL_PATH := "uid://35njcmwpab3t"  # res://ui/menus/rules_panel.gd
 const START_BG_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/bottlecap_hunter_start_background.png"
 const START_TITLE_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/title_bottlecap_hunter.png"
 const START_DIVIDER_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/divider_bottlecap.png"
-const START_BUTTON_NORMAL_PATH := "res://run_system/assets/images/ui/start_screen/button_main_normal_v2.png"
-const START_BUTTON_SELECTED_PATH := "res://run_system/assets/images/ui/start_screen/button_main_selected_v2.png"
 const START_SAVE_STRIP_PATH := "res://run_system/assets/images/ui/start_screen/save_info_strip_clean.png"
 const START_LANGUAGE_BUTTON_PATH := "res://run_system/assets/images/ui/start_screen/icon_button_language.png"
 const START_SETTINGS_BUTTON_PATH := "res://run_system/assets/images/ui/start_screen/icon_button_settings.png"
@@ -117,30 +115,6 @@ func _load_texture(path: String) -> Texture2D:
 	return null
 
 
-func _start_stylebox(path: String, state: String = "normal") -> StyleBox:
-	var tex := _load_texture(path)
-	if tex == null:
-		return T.ll_button("normal") if path == START_BUTTON_SELECTED_PATH else T.ll_button_olive("normal")
-	var box := StyleBoxTexture.new()
-	box.texture = tex
-	box.texture_margin_left = 30
-	box.texture_margin_right = 30
-	box.texture_margin_top = 20
-	box.texture_margin_bottom = 20
-	box.content_margin_left = 22
-	box.content_margin_right = 22
-	box.content_margin_top = 12
-	box.content_margin_bottom = 12
-	match state:
-		"hover":
-			box.modulate_color = Color(1.10, 1.10, 1.10, 1.0)
-		"pressed":
-			box.modulate_color = Color(0.86, 0.86, 0.86, 1.0)
-		"disabled":
-			box.modulate_color = Color(0.46, 0.46, 0.46, 0.82)
-	return box
-
-
 func _start_menu_button(text: String, handler: Callable) -> Button:
 	var button := Button.new()
 	button.text = text
@@ -149,17 +123,18 @@ func _start_menu_button(text: String, handler: Callable) -> Button:
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.add_theme_font_override("font", T.display_font(700))
 	button.add_theme_font_size_override("font_size", 26)
-	button.add_theme_stylebox_override("normal", _start_stylebox(START_BUTTON_NORMAL_PATH))
-	button.add_theme_stylebox_override("hover", _start_stylebox(START_BUTTON_SELECTED_PATH, "hover"))
-	button.add_theme_stylebox_override("pressed", _start_stylebox(START_BUTTON_SELECTED_PATH, "pressed"))
-	button.add_theme_stylebox_override("disabled", _start_stylebox(START_BUTTON_NORMAL_PATH, "disabled"))
-	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	button.add_theme_color_override("font_color", Color(0.93, 0.80, 0.56))
-	button.add_theme_color_override("font_hover_color", Color(1.0, 0.93, 0.70))
-	button.add_theme_color_override("font_pressed_color", Color(1.0, 0.88, 0.62))
-	button.add_theme_color_override("font_disabled_color", Color(0.60, 0.52, 0.40, 0.86))
+	# STS2 NMainMenuTextButton: a text entry with no box; the label turns gold
+	# and grows a little on hover.
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+		button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	button.add_theme_font_size_override("font_size", 30)
+	button.add_theme_color_override("font_color", Color("#efe2c4"))
+	button.add_theme_color_override("font_hover_color", Color("#f2c56a"))
+	button.add_theme_color_override("font_pressed_color", Color("#f2c56a"))
+	button.add_theme_color_override("font_focus_color", Color("#f2c56a"))
+	button.add_theme_color_override("font_disabled_color", Color(0.60, 0.52, 0.40, 0.70))
 	button.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.02, 0.92))
-	button.add_theme_constant_override("outline_size", 3)
+	button.add_theme_constant_override("outline_size", 8)
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(handler)
 	button.mouse_entered.connect(
@@ -167,7 +142,8 @@ func _start_menu_button(text: String, handler: Callable) -> Button:
 			if not is_instance_valid(button) or button.disabled:
 				return
 			AudioManager.play_sfx("ui_hover")
-			T._button_pop(button, Vector2(1.035, 1.035), 0.08)
+			button.pivot_offset = button.size / 2.0
+			T._button_pop(button, Vector2(1.08, 1.08), 0.05)
 	)
 	button.mouse_exited.connect(
 		func() -> void:
@@ -199,7 +175,8 @@ func _start_icon_button(texture_path: String, handler: Callable) -> Button:
 			if not is_instance_valid(button):
 				return
 			AudioManager.play_sfx("ui_hover")
-			T._button_pop(button, Vector2(1.035, 1.035), 0.08)
+			button.pivot_offset = button.size / 2.0
+			T._button_pop(button, Vector2(1.08, 1.08), 0.05)
 	)
 	button.mouse_exited.connect(
 		func() -> void:
