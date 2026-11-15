@@ -1,5 +1,7 @@
 # One Run Currency and Route Encounter Preview
 
+> **Partly superseded (2026-11-12):** the single run currency still holds. The route-card preview parts were replaced by the node map; see `docs/superpowers/specs/2026-11-12-node-map-return-design.md`.
+
 The 2026-11-09 review found two problems with the route map. First, the run has two
 currencies called Caps. The top bar and the shop use backpack gold, labelled Caps. A
 fight also adds hidden run caps, and the route card prints those, not what the loot

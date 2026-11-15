@@ -108,6 +108,6 @@ func stop_music() -> void:
 
 
 ## The currently-playing track name ("" if none). Lets a caller capture the current
-## BGM and restore it later — e.g. the event modal swaps to event.ogg then restores map.
+## BGM and restore it later — e.g. the event room swaps to event.ogg then restores map.
 func current_track() -> String:
 	return _current_music

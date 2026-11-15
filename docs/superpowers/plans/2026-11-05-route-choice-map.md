@@ -1,5 +1,7 @@
 # Route Choice Map Implementation Plan
 
+> **Superseded (2026-11-12):** the route-card map was replaced by the branching node map again; see `docs/superpowers/specs/2026-11-12-node-map-return-design.md`. Kept as a record.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the branching node map with a route of 2–3 choice cards per floor, each

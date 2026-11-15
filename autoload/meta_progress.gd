@@ -1,7 +1,7 @@
-## Persistent meta-progression. Survives across runs. Loaded from
-## user://meta.json at autoload _ready; saved on every mutation.
-##
-## Schema: { "caps": int, "scrap": int, "upgrades": { "<id>": int } }
+## Persistent meta-progression. Survives across runs. Loaded from the active
+## slot's user://slot_<n>/meta.json at autoload _ready; saved on every mutation.
+## The profile shape lives in core/meta/profile_state.gd and is serialized by
+## core/save/profile_save.gd.
 ##   - caps: current spendable Caps currency (the "money" currency — market/clinic
 ##     services, outpost permanent upgrades, run banking)
 ##   - scrap: current spendable Scrap currency (the "salvage" currency — earned by
@@ -13,7 +13,7 @@ extends Node
 
 ## Save slots. Each slot is an independent profile under user://slot_{n}/. The
 ## active slot lives in Settings.active_slot (set by the slot-select screen).
-## Legacy global user://meta.json is no longer read (the slot system supersedes it).
+## A pre-slot global user://meta.json is imported into slot 1 once (_migrate_legacy_save).
 const SLOT_COUNT := 3
 ## Pre-slots profile, relative to SaveIO.root.
 const LEGACY_SAVE_PATH := "meta.json"

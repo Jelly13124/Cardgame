@@ -35,8 +35,7 @@ func _run() -> void:
 	_expect(map.contains("RUN_TOP_BAR.BAR_HEIGHT"), "map content remains below the persistent top bar")
 	_expect(not map.contains("RouteChoicesPanel"), "map has no outer card frame")
 
-	# The old card implementation remains available to legacy content tests, but
-	# the map scene no longer depends on it for route selection.
+	# The three-card route chooser was removed with the node map's return.
 	_expect(not map.contains("ROUTE_CHOICE_CARD"), "map does not instantiate choice cards")
 
 	# Removal is a product in the same shelf language: icon, title and currency

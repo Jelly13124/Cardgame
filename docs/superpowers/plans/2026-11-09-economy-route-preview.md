@@ -1,5 +1,7 @@
 # One Run Currency and Route Encounter Preview Implementation Plan
 
+> **Partly superseded (2026-11-12):** the single run currency still holds. The route-card preview parts were replaced by the node map; see `docs/superpowers/specs/2026-11-12-node-map-return-design.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make backpack gold the only in-run currency (banked 1:1), pre-roll fight encounters onto route nodes with a strength tag and gold by strength, and widen early-floor room types.

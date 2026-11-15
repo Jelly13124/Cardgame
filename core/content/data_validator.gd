@@ -470,7 +470,7 @@ static func validate_card(data: Dictionary, source_path: String) -> bool:
 							ok = false
 
 	# Coverage warning (non-fatal): a card with neither a bespoke upgrade block nor
-	# a formula-bumpable effect resolves to a no-op upgrade. Phase 5 closes the gap.
+	# a formula-bumpable effect resolves to a no-op upgrade.
 	if str(data.get("type", "")) != "curse" and not CARD_UPGRADE.is_upgradeable(data):
 		push_warning(
 			(

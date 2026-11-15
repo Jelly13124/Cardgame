@@ -22,7 +22,7 @@ reads these files by path.
 | character | `content/characters/{id}.json` | `validate_hero()` |
 | base_upgrade | `content/base_upgrades/{id}.json` | `validate_base_upgrade()` |
 | card_pool / relic_pool | `content/card_pools/`, `content/relic_pools/` | ModelDb reference check |
-| Encounter pools | constants in `autoload/run_manager.gd` | `DataValidator.validate_encounter_pools()` |
+| encounter / act | `content/encounters/{id}.json`, `content/acts/{id}.json` (encounter bands) | `DataValidator.validate_encounter_pools()` |
 
 Art stays in `battle_scene/assets/` and `run_system/assets/`.
 
@@ -98,7 +98,7 @@ there is a structural replacement (it may use `$name`, filled with the upgraded
 vars). A card with none of these uses each effect type's default deltas (the
 `upgrade` key of its definition in `combat_effects.gd`).
 
-Cards grow **in-run** via the rest-campfire upgrade picker. `core/run/card_upgrade.gd` (`resolve()`) is the source of truth; `deck_manager.gd` applies it at battle start when a `player_deck` entry's `upgraded` flag is set. There are **no `_plus` variant JSON files** — a card has at most one JSON, plus an optional upgrade rule inside it.
+Cards grow **in-run** via the rest-campfire upgrade picker. `core/run/card_upgrade.gd` (`resolve()`) is the source of truth; `core/combat/combat_manager.gd` applies it at battle start when a `player_deck` entry's `upgraded` flag is set. There are **no `_plus` variant JSON files** — a card has at most one JSON, plus an optional upgrade rule inside it.
 
 A card may carry an optional top-level `"upgrade"` dict that **overrides** the base card when upgraded:
 
@@ -230,7 +230,7 @@ To verify locally:
 ```bash
 godot --headless --path . --quit-after 5
 ```
-Expected output: `DataValidator: all card/enemy/relic JSON files passed schema check.`
+Expected output: `DataValidator: all card/enemy/relic/equipment/set JSON files passed schema check.`
 
 If you see `X validation failure(s)`, the error log above explains what's wrong (missing field, unknown effect type, typo in status name, encounter pool references a missing enemy id, etc.).
 
@@ -240,7 +240,7 @@ If you see `X validation failure(s)`, the error log above explains what's wrong 
 
 - **Cost range:** cards currently use 0, 1, or 2 energy. We haven't formalized a max — but cost 3+ should justify itself.
 - **HP / damage scale:** enemy HP ranges from 12 (swarmer) to 110 (boss). Player has 50 max HP. Damage from individual cards: 2-12; from boss: up to 22 per hit. Scaling rules aren't formal yet — adjust by playtest.
-- **Rarity weights** (for loot draft): common 70 / uncommon 25 / rare 5. Defined in `loot_reward.gd`.
+- **Rarity weights** (for loot draft): common 70 / uncommon 25 / rare 5. Defined in `content/economy/loot_economy.json` (`card_rarity_rolls`), rolled by `core/run/rewards.gd`.
 
 ---
 

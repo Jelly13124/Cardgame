@@ -1,6 +1,6 @@
 # Phase 6: Acts and Run Structure as Data
 
-Roadmap: `docs/reviews/sts2-architecture-review/10-roadmap.md` §阶段 6. Findings: S5-01, S4-03,
+Roadmap: phase 6 of the 2026-10-22 STS2 architecture review (the review was never committed and was deleted on 2026-11-13; finding IDs refer to it). Findings: S5-01, S4-03,
 S5-03, S5-04, S5-05, S1-07, S5-07, S6-04 (S4-04 deferred, see below). Decisions delegated by the
 user ("follow the STS2 code structure"); mod loading is out of scope.
 

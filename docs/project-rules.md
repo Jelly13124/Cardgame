@@ -169,10 +169,10 @@ battle_scene/assets/images/
 |---|---|---|---|
 | Animation frame | `{sprite_id}_{anim}_{n}.png` | `enemies/{sprite_id}/{anim}/` | `enemies/trash_robot/attack/trash_robot_attack_0.png` |
 | Generation script | `generate_enemy.ps1` | `enemies/` or entity folder | `enemies/generate_enemy.ps1` |
-| Enemy JSON | `{enemy_id}.json` | `content/monsters/` | `robot_grunt.json` |
-| Hero JSON | `{hero_id}.json` | `content/characters/` | `warrior.json` |
+| Enemy JSON | `{enemy_id}.json` | `content/monsters/` | `acid_spitter.json` |
+| Hero JSON | `{hero_id}.json` | `content/characters/` | `cowboy_bill.json` |
 | Card JSON | `{card_id}.json` | `content/cards/` | `strike.json` |
-| Equipment JSON | `{item_id}.json` | `content/equipment/` | `scrap_gauntlet.json` |
+| Equipment JSON | `{item_id}.json` | `content/equipment/` | `gear_accessory_common.json` |
 | Relic JSON | `{relic_id}.json` | `content/relics/` | `cracked_battery.json` |
 
 ---
@@ -207,7 +207,7 @@ battle_scene/assets/images/
 
 The browsable tables under `docs/catalog_html/` (cards / relics / equipment / enemies /
 tools / events / bounties / affixes / keywords) are the reference for *what content exists*.
-They are **generated** from the JSON data + translation CSVs + `affix_pool.gd` by
+They are **generated** from the JSON data + translation CSVs + `core/meta/affixes.gd` by
 `tools/gen_catalog_html.py`. Treat the catalog as the design surface, and work in this
 order for ANY content add / remove / retune:
 

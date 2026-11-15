@@ -47,7 +47,7 @@ var suppress_playable_glow: bool = false
 ## The combat card this node shows (core/combat/card_instance.gd); null for
 ## cards outside a combat (rewards, codex, discover offers).
 var instance: RefCounted = null
-## Playable outline (battle_scene/ui/card_highlight.gd), behind the card face.
+## Playable outline (ui/battle/card_highlight.gd), behind the card face.
 var highlight: ColorRect
 var _rarity_frames: Dictionary = {}
 ## Times the description was typeset (refreshes with unchanged text skip it).

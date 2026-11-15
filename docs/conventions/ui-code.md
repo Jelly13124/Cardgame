@@ -25,7 +25,7 @@ Light conventions for UI scripts. UI is currently the messiest part of the codeb
 
 ### 1. All shared visual styling goes through the shared theme script
 ```gdscript
-const T = preload("res://ui/common/theme/wasteland_theme.gd")
+const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 
 # Use builders, don't reinvent StyleBoxFlat.new()
 panel.add_theme_stylebox_override("panel", T.panel_with_shadow(T.PANEL_BG, T.PANEL_BORDER, 5))
@@ -61,26 +61,12 @@ Currently `WastelandTheme` is a legacy-named script class with builder methods (
 
 ## ⚠️ Known violations (deliberate or backlog)
 
-### A. `battle_scene.gd` reaches into `ui_manager` directly
-`battle_scene.gd` calls `ui_manager.show_notification(...)`, `ui_manager.update_labels(...)`, `_update_ui_labels()` 10+ times. Tight coupling between gameplay layer and UI.
+### A. Battle UI refresh is partly pull-based
+Combat rules no longer touch the UI (`core/combat/` runs headless since the phase 5 split), but on the UI side `ui/battle/battle_presenter.gd` and `ui/battle/hand_view.gd` still call `screen._update_ui_labels()` directly after changes. The player's `stats_changed` / `status_changed` signals also trigger it. Forgetting a call leaves stale labels.
 
-**Why we ignore the rule:** event bus refactor is deferred maintainability work. Current pain is low; cost is high.
+**Why we ignore the rule:** the refresh is cheap and the remaining call sites are few; replacing them with per-label signals is deferred.
 
-**Reconsider:** when adding analytics, replay system, or non-UI consumers of game events.
-
-### B. UI updates are pull-based (manual `_update_ui_labels()` calls)
-Every gameplay state change is followed by a manual UI refresh call. Forgetting one = stale UI.
-
-**Why we ignore the rule:** see A. Same deferred maintainability.
-
-**Mitigation today:** UI refresh is cheap; we call `_update_ui_labels()` liberally rather than selectively. Wastes a few ms per turn, but no visible bug.
-
-### C. `character_hud.gd` data layer is reached from outside via `find_child("StatusBadges", true, false)`
-`status_effect_system.gd` reaches into the HUD to refresh status badge container by string-name lookup. Couples the status data layer to the UI tree structure.
-
-**Why we ignore the rule:** quick hack from the early status effect system. Should become a signal (`status_changed`) that the HUD subscribes to.
-
-**Reconsider:** part of the event-bus refactor.
+**Reconsider:** when adding a non-UI consumer of these events (replay, analytics) or when a stale label bug appears.
 
 ---
 
@@ -90,12 +76,16 @@ Individual UI files have a soft cap of ~400 lines. Currently:
 
 | File | Lines | Status |
 |---|---|---|
-| `map_scene.gd` | ~760 | The node map view draws the map; room-opening paths still live here |
-| `loot_reward.gd` | ~362 | ✅ Recently slimmed (theme dedup) |
-| `run_top_bar.gd` | 408 | ⚠️ Slightly over cap — justified (cohesive: vitals+chips+buttons+relic shelf) |
-| `battle_top_bar.gd` | 145 | ✅ Slimmed — now hosts run_top_bar |
-| `battle_ui_manager.gd` | ~180 | ✅ OK |
-| `character_hud.gd` | ~120 | ✅ OK |
+| `battle_screen.gd` | ~1160 | ⚠️ Over cap — views, input, targeting, HUD and post-combat routing in one room script |
+| `map_scene.gd` | ~840 | ⚠️ Over cap — the node map view draws the map; room opening and the rest choice still live here |
+| `run_top_bar.gd` | ~670 | ⚠️ Over cap — vitals, chips, buttons and relic shelf |
+| `loot_reward.gd` | ~620 | ⚠️ Over cap |
+| `play_card.gd` | ~590 | ⚠️ Over cap — card face, skins, text fitting and hover |
+| `battle_ui_manager.gd` | ~350 | ✅ OK |
+| `character_hud.gd` | ~310 | ✅ OK |
+| `battle_top_bar.gd` | ~50 | ✅ Hosts run_top_bar |
+
+Line counts as of 2026-11-13.
 
 When a file approaches 400 lines, the responsibilities are usually entangled. Consider splitting by concern (e.g. settings panel vs status display vs relic chips).
 

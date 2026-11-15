@@ -80,8 +80,9 @@ Statuses, relics, equipment sets, ascension rules and the bounty tracker are
 listeners (`core/listeners/listener.gd`): they define the hooks they care about
 and the broadcaster (`core/combat/combat_hooks.gd`) calls them in a fixed order
 — attributes, statuses (player, then enemies), crits, relics, equipment sets,
-ascension. Never name a status or relic in `battle_scene.gd`,
-`combat_engine.gd` or `player.gd` (`tests/core_names_no_content_test.gd`).
+ascension. Never name a status or relic in `ui/battle/battle_screen.gd`,
+`core/combat/combat_manager.gd`, `core/combat/enemy_turn.gd` or
+`ui/battle/player_view.gd` (`tests/core_names_no_content_test.gd`).
 
 - A status listener is created per creature when the status gains stacks and
   dropped at 0; it reads its stacks with `amount()` and its numbers from
@@ -106,9 +107,9 @@ ascension. Never name a status or relic in `battle_scene.gd`,
 ### A. UI/data layer coupling
 **Rule (from Donchitos):** "NO direct references to UI code — use events/signals for cross-system communication."
 
-**Our state:** `battle_scene.gd` directly calls `ui_manager.show_notification(...)`, `_update_ui_labels()`, etc. Combat effect handlers reach up to `services.show_notification(...)`. Tight coupling between gameplay and UI.
+**Our state:** combat rules run headless in `core/combat/` and talk to the screen only through the presenter interface (`combat_presenter.gd`, a null presenter in tests). Two couplings remain: effect handlers in `core/combat/combat_effects.gd` call `services.show_notification(...)` for floating text, and the battle UI refreshes labels by calling `screen._update_ui_labels()` (see `docs/conventions/ui-code.md`, violation A).
 
-**Why we ignore the rule:** decoupling via signals would require a project-wide event bus refactor (see the "M5" item in the audit). Cost is high; current pain is low. Tracked as deferred maintainability work.
+**Why we ignore the rule:** replacing these with a project-wide event bus costs more than the current pain. Tracked as deferred maintainability work.
 
 **Reconsider when:** event bus becomes worth the cost (e.g. adding analytics, replay system, AI playtester).
 
@@ -121,14 +122,15 @@ ascension. Never name a status or relic in `battle_scene.gd`,
 autoload's convenience and consistent global run state exceed the current
 testability cost.
 
-**Reconsider when:** we add unit tests as a first-class practice; or net play; or `run_manager.gd` exceeds 600 lines.
+**Reconsider when:** we add net play, or splitting `run_manager.gd` becomes worth it. It is already ~1970 lines, past the 600-line trigger first set here; run and profile data moved to `core/run/run_state.gd` / `core/meta/profile_state.gd` in phase 7, but the autoload still holds most run services.
 
 ### C. Contract tests instead of a unit-test framework
 **Rule (from Donchitos):** "Write unit tests for all gameplay logic — separate logic from presentation."
 
 **Our state:** there is no third-party unit-test framework, but `tests/*.tscn` now
 contains headless Godot contract tests for card systems, demo pools, encounters,
-inventory, shops, transitions, UI layout, and combat feedback. DataValidator and
+inventory, shops, transitions, UI layout, and combat feedback. `tools/run_tests.ps1`
+(or `tools/run_tests.sh`) runs them all plus the layer and reference checks. DataValidator and
 the clean headless boot remain the broad startup gates; manual/windowed playtests
 are still required for feel and final visuals.
 
@@ -142,8 +144,8 @@ shared test runner/plugin, or before Steam launch.
 1. Define the JSON schema first (in `DataValidator` if new field types).
 2. Register the handler in `core/combat/combat_effects.gd` (cards, tools, relics, sets, enemy moves) or `core/effects/run_effects.gd` (event options).
 3. Add JSON content files.
-4. Headless validate: `godot --headless --path . --quit-after 5` — should print `DataValidator: all card/enemy/relic JSON files passed schema check.`
-5. Run the relevant `tests/*_contract_test.tscn` scene headlessly.
+4. Headless validate: `godot --headless --path . --quit-after 5` — should print `DataValidator: all card/enemy/relic/equipment/set JSON files passed schema check.`
+5. Run `tools/run_tests.ps1` (or `tools/run_tests.sh`) with `GODOT_BIN` set; `-Only <glob>` runs a subset.
 6. Playtest the new content in editor when behavior or visuals changed.
 7. Regenerate `docs/catalog_html/` with `python tools/gen_catalog_html.py`.
 

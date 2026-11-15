@@ -148,7 +148,7 @@
 | P0 | 能量是静态一图，角色 HP 是细条，大小攻击同一个图标。 | 将能量底、活动环和数字分开；HP 底、当前量、格挡提示独立；攻击严重度由实际预览值驱动，统一图标锚点。涉及 `ui/battle/battle_ui_manager.gd`、`ui/battle/character_hud.gd`、`ui/battle/enemy_view.gd`。 | 先测现有 `energy_core.png`、`hp_bar_fill.png`、`hp_bar_frame.png` 与意图图标能否按目标尺寸使用；需补时画本项目风格的环和档位图。 |
 | P1 | 营火依赖背景上的文字热区；奖励和结算的信息被多层框包裹。 | 营火把背景与两个可读、可聚焦的选项分开，显示当前可恢复 HP。战利品与结算给标题、条目、继续操作清晰位置。共享九宫格、按钮取 `ui/common/theme/wasteland_theme.gd`。涉及 `ui/map/map_scene.gd`、`ui/rewards/loot_reward.{gd,tscn}`、`ui/rewards/result_screen.gd`。 | 有营火背景和 lightline 皮肤。后续可补交接要求的奖励背景、营火选项图。 |
 | P1 | 角色属性像一排没有标签的小色点，部分标签中英混用。 | 将图标、名称、数值编成同一行的五组信息，支持翻译和属性提示。涉及 `ui/windows/character_window.gd`、`assets/translations/`。 | 复用五属性图标。 |
-| P2 | 路线卡、事件、商店已有各自结构，按钮与面板仍有局部重复定义。 | 整理共享样式，按 `BAR_HEIGHT` 检查页头与热点。保持路线卡的独有布局和商店库存契约。涉及 `ui/map/route_choice_card.gd`、`ui/events/event_option_button.gd`、`ui/shop/merchant_room.gd` 及共享主题。 | 新路线背景和缺失事件图遵循现有交接；正式皮肤统一维护。 |
+| P2 | 地图、事件、商店已有各自结构，按钮与面板仍有局部重复定义。 | 整理共享样式，按 `BAR_HEIGHT` 检查页头与热点。保持节点地图的独有布局和商店库存契约。涉及 `ui/map/node_map_view.gd`、`ui/events/event_option_button.gd`、`ui/shop/merchant_room.gd` 及共享主题。（2026-11-13：三选路线卡已由节点地图取代。） | 新路线背景和缺失事件图遵循现有交接；正式皮肤统一维护。 |
 | P2 | 战斗角色占画幅偏小，场地留白较多，个别敌人的图像语言与卡图不同。 | 本轮按后续要求已统一全部敌人原画。战场构图继续按一至四敌站位与牌区验证；后续背景和主角比例另行匹配目标像素。涉及 `ui/battle/battle_screen.gd`、`ui/battle/player_view.gd`、`ui/battle/enemy_view.gd`、角色与战场 PNG。 | 80 张敌人四帧已交付。更大显示尺寸需要足够像素的主角与背景原画。伤害数字、命中火花、停顿、枪口火光、死亡溶解继续使用现有反馈。 |
 
 共享主题只维护一份面板和按钮皮肤。各局内页面的交互层从 `BAR_HEIGHT` 下方起，背景可从 `PAGE_ART_TOP` 开始。布局取本项目自己的废土平涂、线稿、锈红和灰青。所有引用证据只用于理解结构与时序。

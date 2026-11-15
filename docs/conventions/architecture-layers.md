@@ -4,11 +4,11 @@ How the code is organised, which layer may depend on which, and how files
 reference each other. `python tools/check_layers.py` enforces the checkable
 rules and runs as part of `tools/run_tests.ps1` / `tools/run_tests.sh`.
 
-Background: `docs/reviews/sts2-architecture-review/` (report 11 and the
-roadmap) explains why the project moves toward this structure and in which
-phase each directory is filled.
+Background: the 2026-10-22 STS2 architecture review led to this structure;
+the refactor phase specs in `docs/superpowers/specs/` record how each
+directory was filled.
 
-## Target structure
+## Structure
 
 ```
 res://
@@ -24,15 +24,16 @@ res://
 ├── content/     data only (JSON): cards, enemies, relics, statuses, acts, …
 ├── ui/          everything that is drawn: battle, map, shop, rewards, base, windows, menus, theme
 ├── autoload/    thin global entry points (Settings, AudioManager, Tooltip, SceneTransition, …)
-├── assets/      art, audio, fonts, translations
+├── assets/      audio, fonts, translations
 ├── addons/      third-party plugins (untouched)
 ├── tests/       scene tests (+ tests/support/ helpers)
 └── tools/       Python / PowerShell / shell / editor tools
 ```
 
-Today only `core/save/` and `autoload/` exist; `battle_scene/` and
-`run_system/` are migrated phase by phase (see the roadmap). New code goes into
-the target directories whenever its layer is clear.
+The code migration is complete. `battle_scene/assets/images/` and
+`run_system/assets/images/` still hold the art (cards, heroes, enemies, battle
+backgrounds; map, shop, relics, base and UI kit) and no code. New code goes into
+the directories above.
 
 ## Dependency rules
 

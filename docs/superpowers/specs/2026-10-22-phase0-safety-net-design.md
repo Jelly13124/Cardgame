@@ -2,7 +2,7 @@
 
 日期：2026-10-22
 分支：`refactor/phase0-safety-net`（worktree：`Desktop/Cardgame-phase0`，基于 `176d866`）
-来源：架构审查路线图 `docs/reviews/sts2-architecture-review/10-roadmap.md` 阶段 0（审查文档目前在主目录 `Desktop/Cardgame/docs/reviews/`，尚未提交）
+来源：2026-10-22 STS2 架构审查路线图阶段 0（审查报告未入库，已于 2026-11-13 删除；文中 Sx-xx 编号指该审查的条目）
 
 ## 目标
 

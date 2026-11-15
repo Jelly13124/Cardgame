@@ -9,10 +9,10 @@ Looping is forced in code, so the file does **not** need baked loop points.
 | `menu.ogg` | Title / main menu | `main_menu.gd` |
 | `home.ogg` | Home base (between runs) | `home_base_scene.gd` |
 | `map.ogg` | The run map | `map_scene.gd` |
-| `battle.ogg` | Normal + elite fights | `battle_scene.gd` |
-| `boss.ogg` | Boss fights | `battle_scene.gd` (when the node is a boss) |
+| `battle.ogg` | Normal + elite fights | `battle_screen.gd` |
+| `boss.ogg` | Boss fights | `battle_screen.gd` (when the node is a boss) |
 | `shop.ogg` | Merchant shop | `merchant_room.gd` |
-| `event.ogg` | Random event scene | `event_modal.gd` |
+| `event.ogg` | Random event scene | `event_room.gd` |
 
 ## Format
 - **OGG Vorbis**, stereo, 44.1 kHz. Any reasonable length — it loops seamlessly in

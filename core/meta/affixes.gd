@@ -3,7 +3,7 @@
 ## Used via `const AFFIX_POOL = preload("res://core/meta/affixes.gd")`
 ## and its static funcs (no class_name per project convention). This module owns only the
 ## affix DATA + roll/reroll/summary logic. Storage, save migration, and the
-## recompute consumer live elsewhere (Phase 2 E_B). No UI here.
+## recompute consumer live elsewhere (core/save/, autoload/run_manager.gd). No UI here.
 ##
 ## An affix is `{ "type": String, "value": int }`. Positives are deliberately
 ## small (a single common affix should sit below the old multi-bonus items).
@@ -20,7 +20,7 @@ const POSITIVE := [
 	{"type": "max_hp", "value": 10},
 ]
 
-## Curse affixes (consumed in Phase 5). Negative values.
+## Curse affixes (rolled on cursed equipment). Negative values.
 const CURSE := [
 	{"type": "curse_attr_strength", "value": -1},
 	{"type": "curse_attr_constitution", "value": -1},

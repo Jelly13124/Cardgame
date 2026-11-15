@@ -1,6 +1,6 @@
 # Phase 7: State Ownership and Save Versioning
 
-Roadmap: `docs/reviews/sts2-architecture-review/10-roadmap.md` §阶段 7. Findings: S5-02, S6-01,
+Roadmap: phase 7 of the 2026-10-22 STS2 architecture review (the review was never committed and was deleted on 2026-11-13; finding IDs refer to it). Findings: S5-02, S6-01,
 S7-02, S8-02, S6-02, S8-04. Decisions delegated by the user ("follow the STS2 code structure").
 Mod loading is out of scope.
 

@@ -345,14 +345,14 @@ Central source of truth for a run. Persists across scene changes.
 | `highest_extract_floor` | Highest floor the player safely extracted from this run |
 
 ### Deck Persistence
-- `RunManager.player_deck` is read by `deck_manager.reset_deck()` at battle start
+- `RunManager.player_deck` is read by `core/combat/combat_manager.gd` at battle start
 - Cards drafted from loot rewards are added via `RunManager.add_card_to_deck()`
 - Starter decks are fixed per hero/run setup; players do not build starter decks manually
 
 ### Map System
 - `map_scene.gd` shows the act as a scrollable parchment node map (`node_map_view.gd`, `map_node_button.gd`)
 - Player can manage equipment on this screen (swap items freely)
-- Before loading `battle_scene.tscn`, the map sets `RunManager.current_encounter`
+- Before loading `ui/battle/battle_screen.tscn`, the map sets `RunManager.current_encounter`
 - Enemy encounters escalate in difficulty by floor
 
 ### Loot Reward
@@ -369,19 +369,22 @@ Rewards are node-typed (see "Rewards by node type" in Phase 7):
 ### Scene Structure
 
 ```
-BattleScene (Node)
-├── CardManager (Control) — Card framework, manages drag/drop
-│   ├── CardPlayZone      — Invisible drop target for skill/ability cards
-│   ├── Hand              — Player's current hand (fan layout)
-│   ├── Deck              — Draw pile
-│   ├── DiscardPile       — Discard pile
-│   └── (exhaust uses queue_free directly — no dedicated removal pile)
-├── Player (Node2D)        — PlayerEntity: HP, attributes, AnimatedSprite2D
-├── EnemyContainer (Node2D) — Holds all EnemyEntity nodes for current encounter
-├── TurnManager            — Round counter, energy, turn signals
-├── CombatEngine           — Generic effect resolver
-├── EnemyAI                — Spawns enemies, executes enemy turns
-└── BattleUIManager        — Pile viewer, card inspect, notifications
+BattleScene (Node)                — ui/battle/battle_screen.gd: the room over a CombatManager
+├── BattleBackground (TextureRect) — act background
+├── CardManager (Control)          — card framework, manages drag/drop
+│   ├── CardPlayZone               — invisible drop target for skill/ability cards
+│   ├── Hand                       — ui/battle/sts2_hand.gd: STS2 hand slots, hover lift
+│   ├── Deck                       — draw pile
+│   └── DiscardPile                — discard pile
+├── Player                         — ui/battle/player_view.gd (hero sprite, HUD)
+├── EnemyContainer (Node2D)        — enemy views, placed by ui/battle/sts2_creature_layout.gd
+├── EnergyLabel / EndRoundButton / NotificationLabel
+├── TopBarLayer / TopBar           — the shared run top bar
+├── InspectLayer, PileViewerLayer  — card inspect and pile viewer overlays
+└── BattleUIManager                — pile viewer, card inspect, notifications
+
+Combat rules (turns, energy, piles, effects, enemy turns) run headless in
+core/combat/ (CombatManager); the scene only displays them.
 ```
 
 ### Key Scripts
@@ -389,7 +392,7 @@ BattleScene (Node)
 | Script | Responsibility |
 |---|---|
 | `ui/battle/battle_screen.gd` | Battle scene: builds the views, the hand and the HUD over a `CombatManager` |
-| `core/combat/combat_manager.gd` | Runs a fight without a scene: turns, draw (3 per turn), energy, end turn, win/loss |
+| `core/combat/combat_manager.gd` | Runs a fight without a scene: turns, draw (the hero's `hand_draw`, 5 for Cowboy Bill), energy, end turn, win/loss |
 | `core/combat/card_play.gd` | Card-play orchestration (targeting, Replay passes, after-attack) through the action queue |
 | `core/combat/combat_commands.gd` | The only way combat changes HP, Block and statuses: pipeline → apply → hooks |
 | `core/combat/combat_effects.gd` | Effect handlers for cards, tools, relics, sets, curses and enemy moves; preview helpers |
@@ -548,7 +551,7 @@ Function reference: `docs/building-screens-functions.md`.
   three planned set pieces are surfaced before the boss so the equipment differentiator is playable.
 
 ### ✅ Phase 3 — Equipment & Relics (Complete)
-- ✅ Equipment system: 5 body-part slots, **rolled affixes** (5-tier common/uncommon/rare/set/cursed = 1/2/3/3/3+curse; `affix_pool.gd`; **each item guarantees 1 attribute affix**), 3 sets with tiered bonuses (3-piece / 5-piece). Gear = **15 generic shells** (`gear_{slot}_{tier}`, art shared by slot×rarity) + **15 set pieces**; set/cursed derived at roll time; cursed drops at Ascension ≥ 3 or via the forge. _(2026-07-02: replaced the 8 bespoke misc items.)_
+- ✅ Equipment system: 5 body-part slots, **rolled affixes** (5-tier common/uncommon/rare/set/cursed = 1/2/3/3/3+curse; `core/meta/affixes.gd`; **each item guarantees 1 attribute affix**), 3 sets with tiered bonuses (3-piece / 5-piece). Gear = **15 generic shells** (`gear_{slot}_{tier}`, art shared by slot×rarity) + **15 set pieces**; set/cursed derived at roll time; cursed drops at Ascension ≥ 3 or via the forge. _(2026-07-02: replaced the 8 bespoke misc items.)_
 - ✅ The 20-cell Extraction Backpack stores Gold, Scrap, equipment, and tools; safe cells govern what survives a failed run.
 - ✅ Equipment drops are Luck-scaled (normal = common, elite = uncommon, boss = guaranteed rare); the treasure node is a 3-choose-1 relic pick.
 - ✅ Relic system: passive run effects, JSON-driven (RelicEffectSystem)
@@ -562,7 +565,7 @@ Function reference: `docs/building-screens-functions.md`.
 - ✅ Four tiered buildings provide Forge, Clinic, Market, and Outpost services.
 - ✅ Building unlocks and tier-ups spend Scrap; Clinic, Market, and Outpost permanent upgrades spend Caps.
 - ✅ Death routes to home base and preserves only safe-cell contents from the run backpack.
-- ✅ Hero JSON schema + dynamic loader: heroes/*.json (cowboy_bill); player.gd reads sprite/tint/stats from RunManager.current_hero_data
+- ✅ Hero JSON schema + dynamic loader: content/characters/*.json (cowboy_bill); `ui/battle/player_view.gd` reads sprite/tint/stats from RunManager.current_hero_data
 - ✅ Hero selection and loadout management live in the CharacterWindow.
 - ✅ Run history panel: home base shows the latest run outcomes.
 - ✅ Ascension difficulty: 5 levels, each adds a negative modifier (enemy HP+10%, player -5 max HP, -1 first-turn energy, +10% shop prices, elite-heavy maps)
@@ -628,7 +631,7 @@ Function reference: `docs/building-screens-functions.md`.
 
 ### ✅ Phase 11 — Discover mechanic
 - ✅ New **`discover` effect** + `DiscoverModal` (`ui/battle/discover_modal.gd`, a brand-new
-  full-screen 3-choose-1 popup) + `discover_pool.gd` (filters candidates by card type or by a
+  full-screen 3-choose-1 popup) + `core/run/card_pools.gd` (filters candidates by card type or by a
   theme tag like `short_circuit`). The picked card enters the **current hand for this combat only**;
   optional `free` makes it cost 0 this combat (a `cost_override` card meta).
 - ✅ **3 discover tools** (`blood_kit`, displayed as Circuit Kit, uses the `short_circuit` pool / `munitions_crate` attack / `field_kit` skill)

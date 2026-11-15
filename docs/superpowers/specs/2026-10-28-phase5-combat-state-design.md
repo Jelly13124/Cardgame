@@ -1,6 +1,6 @@
 # Phase 5: Rules/Presentation Split and the Combat State Object
 
-Roadmap: `docs/reviews/sts2-architecture-review/10-roadmap.md` §阶段 5. Findings: S1-05, S1-06,
+Roadmap: phase 5 of the 2026-10-22 STS2 architecture review (the review was never committed and was deleted on 2026-11-13; finding IDs refer to it). Findings: S1-05, S1-06,
 S1-08, S4-06, S7-01. Decisions were delegated by the user ("you decide everything, follow the
 STS2 code structure"); mod loading (phase 8) is out of scope.
 

@@ -144,7 +144,7 @@
 ### Task 7: Card text from the pipeline, docs, cleanup
 
 **Files:**
-- Modify: `battle_scene/play_card.gd` (`deal_damage`/`deal_damage_all`/`gain_block` numbers from `combat_effects.preview_effect_value(services, card_data, effect) -> int` when a battle is running; current formula otherwise), `docs/conventions/gameplay-code.md` (rule 6 → registry + validator), `docs/PRD.md` (combat rules: props, stages, Intangible), `docs/reviews/…/10-roadmap.md` is untracked in main — add the wounds/assassin and queue notes to `docs/superpowers/specs/2026-10-23-phase1-combat-pipeline-design.md` follow-up section instead
+- Modify: `battle_scene/play_card.gd` (`deal_damage`/`deal_damage_all`/`gain_block` numbers from `combat_effects.preview_effect_value(services, card_data, effect) -> int` when a battle is running; current formula otherwise), `docs/conventions/gameplay-code.md` (rule 6 → registry + validator), `docs/PRD.md` (combat rules: props, stages, Intangible), the review roadmap was never committed — add the wounds/assassin and queue notes to `docs/superpowers/specs/2026-10-23-phase1-combat-pipeline-design.md` follow-up section instead
 - Test: extend `combat_hooks_contract_test` (card text number for Shoot with STR 3 and Weak == preview against a target without modifiers)
 
 - [ ] **Step 1–4:** failing assertion → implement → full run exit 0.

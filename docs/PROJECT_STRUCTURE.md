@@ -2,7 +2,7 @@
 
 This guide provides a precise map of the codebase for adjusting the UI, logic, and assets.
 
-**Last audited:** 2026-07-24. Runtime code and JSON remain authoritative when
+**Last audited:** 2026-11-13. Runtime code and JSON remain authoritative when
 this map falls behind implementation.
 
 ## Documentation
@@ -54,13 +54,14 @@ Code layering, the target directory structure and the uid reference rule are in
     *   *The root scene where nodes for the Player, Enemies, and Deck are positioned.*
 *   **Battle Screen (room)**: `ui/battle/battle_screen.gd` — views, input, targeting, HUD and post-combat routing; animations through `ui/battle/battle_presenter.gd`, card nodes mirrored from the piles by `ui/battle/hand_view.gd`, creature views `ui/battle/{player_view,enemy_view}.gd`
     *   *Handles high-level battle transitions and UI refreshes when stats change.*
+*   **Hand and creature layout (STS2 values)**: `ui/battle/sts2_hand.gd` (hand slot positions, angles and scale, hover lift and neighbour push; cards drawn at STS2's 300 px width) and `ui/battle/sts2_creature_layout.gd` (hero and enemy positions, crowded-field shrink), applied by `battle_screen.gd` `layout_creatures()`
 *   **Targeting**: `ui/battle/targeting_arrow.gd`
     *   *Logic for the "Zap" arrow when playing Attack cards.*
 
 ### ⚙️ Combat Logic
 *   **Core Engine** (`core/combat/`, no scene tree): `combat_manager.gd` (STS2 CombatManager: setup, turns, card play queue, outcome), `combat_state.gd`, `creature.gd`, `monster_moves.gd`, `intents.gd`, `card_instance.gd`, `piles.gd`, `enemy_turn.gd`, `combat_commands.gd`, `combat_effects.gd`, `combat_presenter.gd` (null presenter: a whole fight runs headless, see `tests/combat_simulation_test.gd`), plus the value pipeline, hooks and rule listeners; `core/effects/` (effect registry and catalog, run-context effects)
     *   *The brain of the game. It resolves all card effects (damage, block, buffs) triggered by JSON data.*
-*   **Run layer** (`core/run/`, data in `content/acts`, `content/encounters`, `content/runs`, `content/economy`): `acts.gd` (the active run configuration — demo or full — and each act's floors, boss, encounter bands, elites, multipliers, map rules, extract rewards), `map_generator.gd` (the whole act map: 12 floors of 1–4 nodes and their links), `map_travel.gd`, `encounters.gd`, `combat_rewards.gd` (a battle reports its result; this grants rewards and picks the route), `rewards.gd` (loot, card draft, attribute choices), `shop_stock.gd`, `card_pools.gd` (reward/shop/discover pools; hero `exclusive_cards`, run `reward_pools`), `rooms.gd` (start-relic offers from the hero JSON, the "?" fallback table, treasure). Base market rules: `core/meta/market.gd`. Debug keys: `autoload/debug.gd`. A new act is a data file plus an entry in the run configuration's `acts`.
+*   **Run layer** (`core/run/`, data in `content/acts`, `content/encounters`, `content/runs`, `content/economy`): `acts.gd` (the active run configuration — demo or full — and each act's floors, boss, encounter bands, elites, multipliers, map rules, extract rewards), `map_generator.gd` (the whole act map: 12 floors of 1–4 nodes and their links), `map_travel.gd`, `encounters.gd`, `combat_rewards.gd` (a battle reports its result; this grants rewards and picks the route), `rewards.gd` (loot, card draft, attribute choices), `card_pools.gd` (reward/shop/discover pools; hero `exclusive_cards`, run `reward_pools`), `rooms.gd` (start-relic offers from the hero JSON, the "?" fallback table, treasure). Base market rules: `core/meta/market.gd`. Debug keys: `autoload/debug.gd`. A new act is a data file plus an entry in the run configuration's `acts`.
 *   **State and saves**: `core/run/run_state.gd` and `core/meta/profile_state.gd` hold the persisted run and profile data (plain data); the `RunManager` / `MetaProgress` autoloads (`autoload/`) forward their fields to them. `core/save/run_save.gd` (schema v4) and `profile_save.gd` (v3) serialize them and migrate older saves once on load through `core/save/migration_chain.gd`; samples of every historical version live in `tests/fixtures/saves/`. UI changes base gear through `core/meta/base_inventory.gd` and map position through `core/run/map_travel.gd`. `run_system/` now holds art assets only.
 *   **Status Effects**: `core/combat/status_effects.gd` (badges: `ui/battle/status_badges_view.gd`)
     *   *System for managing Short Circuit, Burn, Weak, Vulnerable, Stun, and persistent player powers.*
@@ -78,14 +79,14 @@ Code layering, the target directory structure and the uid reference rule are in
 
 ### 🛒 Shop & Rest
 *   **Merchant Room**: `ui/shop/merchant_room.tscn` + `.gd` (slots in `merchant_slot.gd`, card removal in `merchant_card_removal.gd`; stock in `core/run/merchant/`)
-    *   *The merchant route card opens this. `core/run/merchant/merchant_inventory.gd` builds 6 cards + 3 tools + 3 relics + the card-removal service as entries; each entry owns its stock, its price (base, variance and sale, then Charm, ascension and relic hooks) and its purchase. Equipment is not sold here.*
+    *   *A merchant node on the map opens this. `core/run/merchant/merchant_inventory.gd` builds 6 cards + 3 tools + 3 relics + the card-removal service as entries; each entry owns its stock, its price (base, variance and sale, then Charm, ascension and relic hooks) and its purchase. Equipment is not sold here.*
 *   **Rest Choice Modal**: built inline in `map_scene.gd` (`_open_rest_choice`)
     *   *HEAL 25% HP or UPGRADE A CARD (opens `card_upgrade_modal.gd`).*
 
 ### ⬆️ Card Upgrade System
 *   **Upgrade logic**: `core/run/card_upgrade.gd` (upgrade resolver) — `resolve(card_info)` returns the upgraded `card_info` (bumped cost/description/effects). **Hybrid**: a bespoke top-level `upgrade` block overrides cost/title/description/effects (effects = full replacement), else `formula()` bumps beneficial numeric fields (damage +2 / block +3 / attr+energy +1 / status stacks +1 / draw +1); `is_upgradeable()` returns false for curses. In-run card upgrades are the growth axis.
 *   **Upgrade picker**: `ui/rest/card_upgrade_modal.gd` — opened from the rest campfire; the player flips ONE deck entry's `upgraded` flag to true (locked for the run). Already-upgraded / non-upgradeable cards are dimmed.
-*   **Mechanic**: `player_deck` entries carry an `upgraded: bool`; `deck_manager.gd` re-applies `CARD_UPGRADE.resolve(card_info)` at battle start when set. `run_deck_viewer_modal.gd` renders the deck (upgraded cards show their upgraded stats).
+*   **Mechanic**: `player_deck` entries carry an `upgraded: bool`; `core/combat/combat_manager.gd` re-applies `CARD_UPGRADE.resolve(card_info)` at battle start when set. `run_deck_viewer_modal.gd` renders the deck (upgraded cards show their upgraded stats).
 
 ### 🎒 Equipment System
 *   **Data**: `content/equipment/{item_id}.json` (**15 generic shells** `gear_{slot}_{tier}` sharing art by slot×rarity + **15 set pieces**, 3 sets × 5) + `content/equipment_sets/{set_id}.json` (3 sets). Rarity is **5-tier** (`core/meta/affixes.gd`): common/uncommon/rare/set/cursed roll 1/2/3/3/3 affixes, **each guaranteeing 1 attribute affix** — `set` = a piece carrying a `set_id` (green, grants set bonuses), `cursed` = 3 positives + 1 curse affix (red). Drops route through `RunManager.roll_shell_drop(tier)` (~15% a set piece, else a shell; cursed at Ascension ≥ 3 or via the forge). Instances roll affixes at drop time (`make_equip_instance`).
@@ -96,7 +97,7 @@ Code layering, the target directory structure and the uid reference rule are in
 
 ### ❓ Random Events
 *   **Event Room**: `ui/events/event_room.gd` (+ `event_option_button.gd`)
-    *   *Opened by a "?" route card: the act's event deck deals an `EventModel` (`core/run/events/`); the room shows its art on the left and its pages and options on the right, and a save made inside it reopens the event.*
+    *   *Opened by a "?" map node: the act's event deck deals an `EventModel` (`core/run/events/`); the room shows its art on the left and its pages and options on the right, and a save made inside it reopens the event.*
 
 ### 🏃 Run Management
 *   **Run Shape**: the current public demo is **one 12-floor act** with a fixed `rust_titan` boss (`DEMO_BUILD = true`, `DEMO_MAX_ACTS = 1`); defeating it is a final victory with no extract-vs-push screen. The same manager retains the planned 3-act architecture behind `DEMO_BUILD = false`. Loot lives in a **20-cell backpack** where Gold / Scrap / equipment compete for space. On success only currencies bank automatically; gear returns to the independently persisted base backpack/slots (`pending_loadout` / `pending_equipped`). On death only safe-cell gear survives. `MetaProgress.stash` is permanent storage changed only by explicit player transfers.
@@ -124,7 +125,7 @@ Code layering, the target directory structure and the uid reference rule are in
 *   **Hero Sprites (PNG/Animated)**: `battle_scene/assets/images/heroes/{sprite_id}/` (e.g. `cowboy_bill/`; the active hero's `sprite_id` comes from its `content/characters/` JSON)
 *   **Enemy Sprites (PNG/Animated)**: `battle_scene/assets/images/enemies/`
 *   **Battle Backgrounds**: `battle_scene/assets/images/backgrounds/` (active Act 1: `wasteland_battlefield_act1_v1.png`; later acts remain separate)
-*   **Map Art and Node Icons**: `run_system/assets/images/map/` (active background: `wasteland_route_map_sts2_bg.png`)
+*   **Map Art and Node Icons**: `run_system/assets/images/map/` (active background: `wasteland_route_map_pixel_bg.png`)
 *   **Relic Icons**: `run_system/assets/images/relics/`
 *   **Lightline UI Kit (PNG)**: `run_system/assets/images/ui_kit_lightline/` — the base-building UI component library sliced from source sheets: **89 named pieces** (`icon_*` / `panel_*` / `btn_*` / `bar_*` / `card_*` / `slot_*` / `row_*` …) + `manifest.json` (per-piece 9-slice margins). Consumed through `wasteland_theme.gd`'s `ll_*` StyleBox hooks (`ll_panel` / `ll_titlebar` / `ll_section` / `ll_inset` / `ll_button` / `ll_button_olive` / `ll_slot`) — every lookup falls back to a programmatic StyleBox so a missing piece never crashes. Raw uncut sheets: `run_system/assets/images/ui_kit_imagegen_v2_lightline/`.
 
@@ -140,8 +141,8 @@ All gameplay content is data-driven. Add GDScript only when introducing a new sh
 *   **Equipment Sets**: `content/equipment_sets/{set_id}.json` (each set has 2 tiers: 3-piece + 5-piece)
 *   **Tools**: `content/tools/{tool_id}.json` — StS2-style one-time battle consumables; `effects[]` reuse the card effect vocabulary (`validate_tool`).
 *   **Base Upgrades**: `content/base_upgrades/{upgrade_id}.json` (5 active definitions: command_center, blacksmith, backpack, reroll_tokens, tool_slots). `ALLOWED_BASE_UPGRADE_EFFECT_KEYS` in `data_validator.gd` is the authoritative schema.
-*   **Heroes**: `content/characters/{hero_id}.json` (`cowboy_bill.json`) — `player.gd` reads `sprite_id` / `tint` / starting stats dynamically from the selected hero's JSON (`RunManager.current_hero_data`), falling back to `cowboy_bill` when none is loaded.
-*   **Random Events**: `content/events/{event_id}.json` (12 events; each names its acts and its script in `core/run/events/scripts/`, an `EventModel` with pages and options) — dealt from the per-act event deck for the "?" route card and shown by `ui/events/event_room.gd` (picture left, text and options right). Three are "greed-trap" curse-injection events (`torn_coin_pouch` / `deserter_charm` / `adrenaline_shot`): a boon + an `add_curse` effect. Events are dir-scanned into the pool; localized via `EVENT_<ID>_*` keys in `assets/translations/ui_events.csv`.
+*   **Heroes**: `content/characters/{hero_id}.json` (`cowboy_bill.json`) — `ui/battle/player_view.gd` reads `sprite_id` / `tint` / starting stats dynamically from the selected hero's JSON (`RunManager.current_hero_data`), falling back to `cowboy_bill` when none is loaded.
+*   **Random Events**: `content/events/{event_id}.json` (12 events; each names its acts and its script in `core/run/events/scripts/`, an `EventModel` with pages and options) — dealt from the per-act event deck for the "?" map node and shown by `ui/events/event_room.gd` (picture left, text and options right). Three are "greed-trap" curse-injection events (`torn_coin_pouch` / `deserter_charm` / `adrenaline_shot`): a boon + an `add_curse` effect. Events are dir-scanned into the pool; localized via `EVENT_<ID>_*` keys in `assets/translations/ui_events.csv`.
 
 All schemas validated at startup by `core/content/data_validator.gd`.
 
@@ -150,8 +151,6 @@ All schemas validated at startup by `core/content/data_validator.gd`.
 ## Agent and Repository Surfaces
 
 *   **Agent entry point**: `AGENTS.md`
-*   **Project-local agent skills**: `.agents/skills/` (reserved; currently empty)
-*   **Project-local Codex configuration**: `.codex/` (reserved; currently empty)
 *   **Documentation**: `docs/`
 *   **Maintenance and generation scripts**: `tools/`
 *   **Automated checks**: `tests/` — run everything with `tools/run_tests.ps1` (or `tools/run_tests.sh`); known bugs are listed in `tests/expected_failures.txt`

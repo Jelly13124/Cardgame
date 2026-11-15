@@ -1,5 +1,7 @@
 # Route Choice Map
 
+> **Superseded (2026-11-12):** the route-card map was replaced by the branching node map again; see `docs/superpowers/specs/2026-11-12-node-map-return-design.md`. Kept as a record.
+
 The node map reads as Slay the Spire 2: a branching graph of normal, elite, rest, shop,
 treasure, `?` and boss nodes. This change replaces it with a route of choice cards. Each
 floor offers 2–3 cards; each card states its room, its rewards and which rooms the floor

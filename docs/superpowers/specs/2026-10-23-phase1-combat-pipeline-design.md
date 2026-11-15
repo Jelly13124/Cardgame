@@ -2,7 +2,7 @@
 
 日期：2026-10-23
 分支：`refactor/phase1-combat-pipeline`（worktree：`Desktop/Cardgame-phase1`，基于阶段 0 分支 `17d4e6c`）
-来源：架构审查路线图 `docs/reviews/sts2-architecture-review/10-roadmap.md` 阶段 1，以及与作者的逐条确认（2026-10-22～23 对话）。
+来源：2026-10-22 STS2 架构审查路线图阶段 1（审查报告未入库，已于 2026-11-13 删除；文中 Sx-xx 编号指该审查的条目），以及与作者的逐条确认（2026-10-22～23 对话）。
 对照：STS2 v0.107.1 反编译代码（`Hook.ModifyDamage`、`ValueProp`、`IntangiblePower`、`AbstractModel.AfterDamageGiven/AfterAttack`、`ActionQueueSet`/`ActionExecutor`），以及 slaythespire.wiki.gg 的 STS2 易伤页面。
 
 ## 目标

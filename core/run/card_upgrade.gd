@@ -41,8 +41,8 @@ static func resolve(base: Dictionary) -> Dictionary:
 
 ## Generic numeric bump for cards without a bespoke `upgrade.effects`. ONLY the
 ## unambiguously-beneficial effect types are bumped; scaling / cost / self-debuff
-## effects are deliberately excluded so they route to a bespoke `upgrade` block
-## (Phase 5 audit). Field names match the real card JSON: damage/block/stat use
+## effects are deliberately excluded so they route to a bespoke `upgrade` block.
+## Field names match the real card JSON: damage/block/stat use
 ## `amount`; status applies use `stacks`.
 static func formula(effects: Array) -> Array:
 	var out: Array = effects.duplicate(true)
