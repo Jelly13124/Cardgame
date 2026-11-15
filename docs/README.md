@@ -14,7 +14,8 @@ Start here after cloning the repository.
 8. `docs/conventions/` — implementation contracts and coding conventions.
 
 9. `docs/handoffs/` — open hand-offs to other agents. Current:
-   `2026-11-10-codex-art-handoff.md` (missing and outdated art for Codex).
+   `2026-11-10-codex-art-handoff.md` (missing and outdated art for Codex),
+   `2026-11-14-codex-hit-vfx-handoff.md` (hit-effect textures and flipbooks for Codex).
 10. `docs/superpowers/specs/` and `docs/superpowers/plans/` — the design and plan
     of each feature since the 2026-10 refactor, named by date. They record why a
     system is shaped the way it is; the code and the documents above are what is
