@@ -2,12 +2,14 @@
 
 **Canonical style name:** Original 2D American-Comic Sci-Fi Western
 
-**Active style source:** this written style contract. Do not use old project reference images as global style references.
+**Owner decision (2026-11-14):** every image in the game, AI-generated or not, follows the look of the 20-enemy roster redrawn on 2026-11-10 (commit `e8aa358`). That roster is the primary yardstick: when a written rule and the roster disagree, match the roster. Generated assets must attach two or three roster frames as image references, not rely on text alone. The full style bible and the redraw list are in `docs/handoffs/2026-11-14-codex-ui-art-handoff.md`.
+
+**Active style source:** this written style contract, measured against the enemy roster. Do not use old project reference images as global style references.
 
 **Character identity note:** `docs/art/cowboy-bill-character-sheet-reference.png` may be used only to preserve Cowboy Bill's identity markers, not as the global art style.
 **External nuclear-wasteland TV-cartoon study board:** `docs/art/external-references/rick-morty-s3e2-wasteland/reference-board.png` and its `README.md` are the approved external study set for grounded wasteland population design, silhouette variety, flat line treatment, color separation, and sparse staging. They are copyrighted reference material rather than production exemplars; never copy their characters, costumes, masks, props, crops, vehicles, locations, or scene layouts. Runtime code and exported game assets must not depend on them.
 **Enemy identity source:** `docs/enemy-art-direction.md` is the active non-boss enemy design and attack-animation contract.
-**Approved in-game exemplars:** `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`, `battle_scene/assets/images/backgrounds/wasteland_battlefield_act1_v1.png`, `battle_scene/assets/images/backgrounds/wasteland_battlefield_act2_city.png`, `battle_scene/assets/images/backgrounds/wasteland_battlefield_act3_radiation.png`, `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`, the current illustrations under `battle_scene/assets/images/cards/player/` considered as a varied collective set, and the persistent UI screen style anchor `docs/art/previews/base_building_forge_ui_dismantle_simple_comic_20260707.png`.
+**Approved in-game exemplars:** `battle_scene/assets/images/enemies/*/attack/*_attack_0.png` (the 20-enemy roster redrawn on 2026-11-10), `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`, `battle_scene/assets/images/backgrounds/wasteland_battlefield_act1_v1.png`, `run_system/assets/images/home/home_base_empty_bg.png`, and the in-style majority of the card illustrations under `battle_scene/assets/images/cards/player/` (not the cards queued for rework in `docs/handoffs/2026-11-14-codex-ui-art-handoff.md` section J). Queued for rework, so **never** use them as references: the act 2 and act 3 battle backgrounds, `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`, the event illustrations and backdrops, the shop background and shopkeeper, the rest-site and forge art, the main-menu background, the home buildings, relics, equipment, status and attribute icons, and the 14 cards listed in the handoff's section J.
 
 This file defines the locked art direction. The target is original sci-fi western game art in a Rick-and-Morty-style adult sci-fi TV-cartoon visual language: confident wobbly 2D outlines, rubbery but recognizable anatomy, off-kilter proportions, expressive comedy faces, flat cel colors, controlled medium-low detail, and bright toxic accent colors. Use a few purposeful dents, seams, patches, crooked joints, cables, and nuclear-wasteland survival cues so the world feels lived-in rather than sterile. Never copy franchise characters, props, locations, or exact designs. The project is not pixel art, clean corporate vector art, preschool illustration, or gritty rendered concept art.
 
@@ -26,17 +28,20 @@ Do not copy named characters, logos, exact scene layouts, or franchise-specific 
 - **Background policy:** scene backgrounds and card illustrations are scene-ready rectangular PNGs with no baked UI, text, or labels. Character sprites, standalone props, UI icons, and FX use transparent PNGs or solid `#FF00FF` cleanup backgrounds.
 - **Card illustration policy:** player card art is a `512x320` landscape illustration PNG. Each card uses one primary action, one clear subject and at most one target, with three-to-seven large flat background shapes, sparse ground/alien marks, and at most a small paired action cue such as muzzle flash plus impact star. Add a few purposeful dents, seams, patches, crooked joints, cables, or expressive eye marks; do not add texture noise. No dense rocks, dust/debris clouds, scratch fields, rivet fields, hatching, material texture, cinematic concept-art lighting, or realistic mechanical panel detail. The image is art only: no cost badge, no title label, no rarity text, no type label, no description box, no speech bubble, and no card frame baked into the illustration.
 - **UI icon policy:** UI components and combat intent icons must be as simple as possible. Prefer one clear silhouette and one main color: red sword for attack, blue shield for block, green arrow/glow for buff, orange warning mark for charge. Do not add character faces, skulls, props, texture, or extra salvage detail unless the icon's gameplay meaning requires it.
-- **UI screen policy:** persistent UI screens follow `docs/art/previews/base_building_forge_ui_dismantle_simple_comic_20260707.png`: simple line-art 2D American comic / TV-animation UI, lightweight borders, flat panel fills, sparse icon silhouettes, clear button hierarchy, and minimal texture. Avoid thick rendered metal frames, bulky armored corners, rivet fields, heavy bevels, dense scratches, dark fantasy ornament, and Diablo-like material rendering.
+- **UI screen policy:** persistent UI screens follow the approved `docs/art/previews/ui-v2-style-tile.png` and the three UI materials (paper, painted scrap plate, canvas) in `docs/handoffs/2026-11-14-codex-ui-art-handoff.md`: simple line-art 2D American comic / TV-animation UI, lightweight borders, flat panel fills, sparse icon silhouettes, clear button hierarchy, and minimal texture. Avoid thick rendered metal frames, bulky armored corners, rivet fields, heavy bevels, dense scratches, dark fantasy ornament, and Diablo-like material rendering.
 
 ## Approved Exemplars
 
 These files are the current production look. New art should match their flatness, line weight, color handling, and low-noise finish:
 
+- **Primary yardstick, the enemy roster:** `battle_scene/assets/images/enemies/*/attack/*_attack_0.png` (the 20-enemy roster redrawn on 2026-11-10). The clearest references are `rust_brute`, `trash_robot`, `wasteland_killer`, `scrap_rat`, and `mortar_cart`.
 - **Cowboy Bill runtime style:** `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`
-- **Battle background style:** `battle_scene/assets/images/backgrounds/wasteland_battlefield_act1_v1.png`, `wasteland_battlefield_act2_city.png`, and `wasteland_battlefield_act3_radiation.png` (all 1920×1080; the current act selects the matching variant).
-- **Route map background style:** `run_system/assets/images/map/wasteland_route_map_pixel_bg.png` (1920×1080, quiet centre for the choice cards); the route map now shows one centred row of choice cards, so its redraw keeps the centre calm
-- **Playable card illustration style:** the current PNGs under `battle_scene/assets/images/cards/player/` form the approved collective reference set. Compare several cards for line weight, flatness, color range, close-up versus wide composition, and subject variety. Follow the recurring majority look, ignore isolated outliers or cards explicitly queued for rework, and do not reproduce one card's framing across the deck.
-- **Persistent UI screen style:** `docs/art/previews/base_building_forge_ui_dismantle_simple_comic_20260707.png`
+- **Background style:** `battle_scene/assets/images/backgrounds/wasteland_battlefield_act1_v1.png` and `run_system/assets/images/home/home_base_empty_bg.png`. Act 2 and act 3 backgrounds are being redrawn to match them.
+- **Route map style:** the act map is a node map on pale parchment. Until the parchment in `docs/handoffs/2026-11-14-codex-ui-art-handoff.md` section A is approved, there is no map exemplar; follow that section.
+- **Playable card illustration style:** the current PNGs under `battle_scene/assets/images/cards/player/` form the collective reference set, except the cards queued for rework in the handoff's section J. Compare several cards for line weight, flatness, color range, close-up versus wide composition, and subject variety. Follow the recurring majority look, and do not reproduce one card's framing across the deck.
+- **Persistent UI screen style:** the approved UI style tile `docs/art/previews/ui-v2-style-tile.png` once the owner approves it. Until then, follow the UI rules below. `docs/art/previews/base_building_forge_ui_dismantle_simple_comic_20260707.png` is superseded as the UI anchor: its light borders and flat fills still apply, its dark gunmetal slab panels do not.
+
+Queued for rework, so **never** use them as references: the act 2 and act 3 battle backgrounds, `run_system/assets/images/map/wasteland_route_map_pixel_bg.png`, the event illustrations and backdrops, the shop background and shopkeeper, the rest-site and forge art, the main-menu background, the home buildings, relics, equipment, status and attribute icons, and the 14 cards listed in the handoff's section J.
 
 The old Cowboy Bill character sheet is identity documentation only. It is useful for checking Bill's one orange eye, hat/star, red scarf, patched duster, boots, revolver, and gadget motifs. It must not pull new assets back toward rendered concept-sheet detail.
 
@@ -47,7 +52,7 @@ Map and battle backgrounds must be simple, graphic, and readable behind UI.
 - **No pixel art:** no chunky pixels, retro tile seams, dithered pixel shading, pixelated rock clusters, or 16-bit map language.
 - **No clutter:** keep the playable/readable center low-detail. Put props at edges and corners only.
 - **No gritty rendering:** avoid detailed cracks, tiny repeated stones, dense trash piles, heavy texture overlays, and realistic ruined-building detail.
-- **Roads and paths:** use broad, smooth, flat-color path shapes. The current route map uses a horizontal path across the middle, not a vertical or diagonal main road.
+- **Roads and paths:** battle and scene backgrounds use broad, smooth, flat-color path shapes. The act map is a node map: its parchment carries no roads or paths, because the code draws them.
 - **Battle arena:** leave a wide empty center ground plane for combat silhouettes, card FX, and UI readability.
 - **Props:** use a few weird cartoon props only: crooked pipes, simple cactus silhouettes, slime puddles, odd antennas, small sci-fi shacks, portal-green glow, and simple alien mesas.
 
@@ -87,7 +92,7 @@ UI icons are readability tools first and illustrations second.
 - Block intent uses a simple blue shield silhouette.
 - Avoid ornate frames, skull motifs, tiny bolts, dense linework, or themed props in small UI icons.
 - If a UI asset becomes less readable when styled, simplify it before adding project-world detail.
-- Full UI screens and concept screens should prioritize simple line drawings, flat color blocks, light frame lines, and readable button/list rhythm. Use the forge dismantle concept anchor above as the default for future base-building screens.
+- Full UI screens and concept screens should prioritize simple line drawings, flat color blocks, light frame lines, and readable button/list rhythm. Build panels from the three UI materials in the 2026-11-14 handoff (paper, painted scrap plate, canvas), drawn in the roster style with light frame lines.
 - Every in-run screen uses the same persistent `run_top_bar.gd`. Scene art, panels,
   titles, cards, and interaction targets begin below its complete 132 px height.
   Scene art may continue behind the transparent relic shelf from 80 px; never
@@ -101,7 +106,7 @@ Use this prompt anchor for generated character, enemy, relic, card, UI icon, FX,
 
 ```text
 original simple flat 2D American-comic sci-fi western TV-cartoon game art,
-matching the approved in-game exemplars in battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png, battle_scene/assets/images/backgrounds/wasteland_battlefield_act1_v1.png, battle_scene/assets/images/backgrounds/wasteland_battlefield_act2_city.png, battle_scene/assets/images/backgrounds/wasteland_battlefield_act3_radiation.png, run_system/assets/images/map/wasteland_route_map_pixel_bg.png, and the varied current card illustrations under battle_scene/assets/images/cards/player/ considered collectively,
+matching the attached reference frames from the 2026-11-10 enemy roster (battle_scene/assets/images/enemies/*/attack/*_attack_0.png), Cowboy Bill (cowboy_bill_identity_offbeat_v2.png) and the act 1 battle background (wasteland_battlefield_act1_v1.png),
 Rick-and-Morty-style adult sci-fi TV-animation visual language without copied designs, confident wobbly dark cartoon outlines, rubbery anatomy, off-kilter proportions, large flat shape blocks, controlled purposeful interior lines, broad two-to-three-value cel shading,
 grounded nuclear-wasteland sci-fi western, recognizable humanoid survivors, complete mutated animals, and simple functional salvage machines, patched workwear, cloth wraps, goggles, respirators, faded hazard colors, sparse brass/scrap accents, hoses, antennas, and improvised utility gear,
 bright toxic green, cyan, and warm orange glow accents used sparingly,

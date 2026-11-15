@@ -1,5 +1,8 @@
 # Codex handoff: missing and outdated art (2026-11-10)
 
+> On 2026-11-14 the event illustrations, event backdrops and UI items in this file
+> moved to `2026-11-14-codex-ui-art-handoff.md`. Where the two differ, follow that one.
+
 Audit of the game at `main` 7ad21fc (route choice map). It supersedes the open items
 in `docs/art/codex-art-requests.md` (2026-10-30); the house style section there still
 applies. Every item below was checked against the files on disk and the code that

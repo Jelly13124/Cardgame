@@ -18,6 +18,13 @@ the short operational gate for agents.
 
 ## Non-negotiable visual direction
 
+- **Owner decision (2026-11-14):** every image in the game, AI-generated or not, follows
+  the look of the 20-enemy roster redrawn on 2026-11-10 (commit `e8aa358`,
+  `battle_scene/assets/images/enemies/*/attack/*_attack_0.png`). When a written rule
+  and the roster disagree, match the roster. Attach two or three roster frames as image
+  references when generating. The style bible and redraw list are in
+  `docs/handoffs/2026-11-14-codex-ui-art-handoff.md`.
+
 - Use original, simple flat 2D American-comic sci-fi-western TV-cartoon art.
 - Use a Rick-and-Morty-style adult sci-fi TV-cartoon visual language: confident
   wobbly outlines, rubbery but recognizable anatomy, off-kilter proportions,
@@ -32,7 +39,8 @@ the short operational gate for agents.
   are the approved collective card-art reference set. Compare several cards for
   line weight, color, composition variety, and detail level; do not turn one card
   into a template for every illustration. Follow the recurring majority look,
-  not an isolated outlier or a card explicitly queued for rework.
+  not an isolated outlier or a card explicitly queued for rework (section J of
+  `docs/handoffs/2026-11-14-codex-ui-art-handoff.md`).
 
 ## Enemy-art gate
 
@@ -60,7 +68,9 @@ the short operational gate for agents.
 
 ## UI gate
 
-- Use UI07: light borders, flat fills, sparse lines, and clear hierarchy.
+- Use light borders, flat fills, sparse lines, and clear hierarchy. Panels are paper,
+  painted scrap plate, or canvas, drawn in the enemy-roster style (see the 2026-11-14
+  handoff). No generic dark slab panels, rivet fields, or heavy bevels.
 - The shared `ui/common/run_top_bar.gd` is persistent on every in-run screen.
   Map, battle, event, rest, card-upgrade, deck, reward, and shop content begins
   below its full `BAR_HEIGHT`. Scene art may continue behind the transparent relic

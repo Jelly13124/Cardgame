@@ -1,5 +1,8 @@
 # Node map art brief (for GPT)
 
+> Superseded on 2026-11-14 by section A of
+> `docs/handoffs/2026-11-14-codex-ui-art-handoff.md`. None of these files was delivered.
+
 The act map is a horizontally scrolling chart of octagonal nodes joined by dashed paths.
 The code already draws everything as placeholders (`ui/map/node_map_view.gd`,
 `ui/map/map_node_button.gd`), and each file below replaces a placeholder as soon as it
