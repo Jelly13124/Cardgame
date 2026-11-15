@@ -1,10 +1,11 @@
 extends "res://ui/battle/card_framework_adapters/no_reorder_hand.gd"
 
 ## The battle hand laid out like STS2 (HandPosHelper, NPlayerHand.RefreshLayout).
-## The anchor is the hand's bottom centre, at the screen's bottom edge. Each
+## The anchor is the hand's bottom centre, 60 px above the screen's bottom
+## edge (battle_screen.tscn; raised after playtest so more of each card shows). Each
 ## card's centre sits at STS2's per-hand-size offset from the anchor in STS2's
 ## pixels, turned by STS2's angle, at STS2's rest scale of its 300 px card,
-## so most of each card hides below the screen. The hovered card snaps to full
+## so the lower part of each card hides below the screen. The hovered card snaps to full
 ## size, upright, with its whole face showing; its neighbours make way. Held
 ## (dragged) cards are left where the mouse has them.
 

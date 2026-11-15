@@ -93,8 +93,8 @@ func _drain() -> void:
 	_busy = false
 
 
-## Single draws are staggered 0.1 s. A reshuffle flies every discard card back
-## to the deck first; the draws after it move in ONE batch so the hand re-fans
+## Single draws are staggered 0.1 s. A reshuffle moves every discard card back
+## to the deck first (no flight); the draws after it move in ONE batch so the hand re-fans
 ## once.
 func _play_draw(events: Array) -> void:
 	var i := 0
@@ -125,28 +125,17 @@ func _play_draw(events: Array) -> void:
 
 
 func _play_reshuffle(cards: Array) -> void:
+	# No card flight: the playtest found the face-down cards flying back to the
+	# deck distracting, so the cards move straight over and only the pile
+	# counters and the notification show the reshuffle.
 	screen.show_notification("RESHUFFLING", Color(0.4, 0.8, 1.0))
-	var nodes: Array = []
 	for c in cards:
 		var n = node_of(c)
-		if n != null:
-			nodes.append(n)
-	var start_positions: Array = nodes.map(func(n): return n.global_position)
-	# Detach from the discard pile so its layout stops fighting the flight.
-	for n in nodes:
+		if n == null or not is_instance_valid(n):
+			continue
 		if n.card_container and n.card_container.has_card(n):
 			n.card_container.remove_card(n)
-	const RESHUFFLE_STAGGER := 0.04
-	const RESHUFFLE_FLIGHT := 0.34
-	for k in range(nodes.size()):
-		if is_instance_valid(nodes[k]):
-			screen.card_animator.fly_to_deck(nodes[k], start_positions[k])
-		if k < nodes.size() - 1:
-			await _wait(RESHUFFLE_STAGGER)
-	await _wait(RESHUFFLE_FLIGHT)
-	for n in nodes:
-		if is_instance_valid(n):
-			deck.add_card(n)
+		deck.add_card(n)
 	screen._update_ui_labels()
 	await _wait(0.15)
 
