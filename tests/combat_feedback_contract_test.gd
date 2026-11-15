@@ -32,7 +32,9 @@ func _run() -> void:
 	_test_damage_path_integration()
 	_test_shake_tiers()
 	_test_punch_envelope()
+	await _test_punch_moves_whole_scene()
 	_test_hit_spark_kinds()
+	_test_hit_spark_layers()
 	await _test_damage_number_flight()
 
 	if failures.is_empty():
@@ -187,6 +189,51 @@ func _test_punch_envelope() -> void:
 	_expect(absf(COMBAT_FX.punch_offset(40.0, 0.15, 0.3)) <= 40.0 * envelope.call(0.15) + 0.001, "the swing stays inside its envelope")
 
 
+## punch_moves_whole_scene: like STS2's SceneContainer shake, the punch moves the
+## background, the player and the enemies by one shared offset along the given
+## angle, so the camera seems to shake instead of the hero sliding on a still
+## backdrop; everything returns to rest.
+func _test_punch_moves_whole_scene() -> void:
+	var script := GDScript.new()
+	script.source_code = "extends Node
+var player
+var enemy_container
+"
+	script.reload()
+	var scene := Node.new()
+	scene.set_script(script)
+	add_child(scene)
+	var background := TextureRect.new()
+	background.name = "BattleBackground"
+	background.position = Vector2(-48, -48)
+	scene.add_child(background)
+	var player := Node2D.new()
+	player.position = Vector2(400, 600)
+	scene.add_child(player)
+	var enemies := Node2D.new()
+	enemies.position = Vector2(1400, 600)
+	scene.add_child(enemies)
+	scene.set("player", player)
+	scene.set("enemy_container", enemies)
+	COMBAT_FX.punch_screen(scene, 40.0, 0.3, 90.0)
+	# Sample every frame: a stalled headless frame can skip past the whole swing.
+	var largest := 0.0
+	var together := true
+	var vertical := true
+	var started := Time.get_ticks_msec()
+	while Time.get_ticks_msec() - started < 450:
+		await get_tree().process_frame
+		var bg_offset: Vector2 = background.position - Vector2(-48, -48)
+		largest = maxf(largest, bg_offset.length())
+		together = together and (player.position - Vector2(400, 600)).distance_to(bg_offset) < 0.01 and (enemies.position - Vector2(1400, 600)).distance_to(bg_offset) < 0.01
+		vertical = vertical and absf(bg_offset.x) < 0.01
+	_expect(largest > 1.0, "the punch moves the background")
+	_expect(together, "background, player and enemies move together")
+	_expect(vertical, "a 90 degree punch moves straight up and down")
+	_expect(background.position.is_equal_approx(Vector2(-48, -48)) and player.position.is_equal_approx(Vector2(400, 600)), "everything settles back at rest")
+	scene.queue_free()
+
+
 ## hit_spark_kinds: each hit kind throws its own burst; unknown kinds are shots.
 func _test_hit_spark_kinds() -> void:
 	var shot = HIT_SPARK.spawn(self, Vector2.ZERO, "shot")
@@ -203,6 +250,27 @@ func _test_hit_spark_kinds() -> void:
 		_expect(sparks.emitting and sparks.one_shot, "sparks burst once")
 		sparks.get_parent().queue_free()
 
+
+## hit_spark_layers: a burst is STS2's stack of textured, additive layers (a
+## centre glow, fast velocity-aligned streak sparks, small sparks, slow specks
+## and outward streaks), not bare dots; the sparks fly flat (no gravity).
+func _test_hit_spark_layers() -> void:
+	var sparks = HIT_SPARK.spawn(self, Vector2(300, 300), "shot")
+	var layer: Node = sparks.get_parent()
+	for part in ["Glow", "Sparks", "SmallSparks", "Specks", "Streaks"]:
+		var node := layer.get_node_or_null(part) as CanvasItem
+		_expect(node != null, "a burst has a %s layer" % part)
+		if node == null:
+			continue
+		_expect(node.get("texture") is Texture2D, "the %s layer is textured" % part)
+		var mat := node.material as CanvasItemMaterial
+		_expect(mat != null and mat.blend_mode == CanvasItemMaterial.BLEND_MODE_ADD, "the %s layer blends additively" % part)
+		_expect((node as Node2D).position == Vector2(300, 300), "the %s layer sits on the contact point" % part)
+	_expect(layer.get_node("Sparks") == sparks, "spawn returns the main streak sparks")
+	_expect(sparks.particle_flag_align_y, "streak sparks point along their flight")
+	_expect(sparks.gravity == Vector2.ZERO, "streak sparks fly flat")
+	_expect(sparks.initial_velocity_min >= 1000.0, "streak sparks leave fast")
+	layer.queue_free()
 
 ## damage_number_flight: pops in red at 2.5x, launches up, falls, turns cream,
 ## frees itself (STS2 vfx_damage_num).

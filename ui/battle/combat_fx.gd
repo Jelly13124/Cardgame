@@ -43,6 +43,7 @@ static func spawn_feedback_text(
 ## contact -> tiny over-correction -> rest motion.
 const _SHAKE_ORIGIN_META := "_combatfx_shake_origin"
 const _SHAKE_TWEEN_META := "_combatfx_shake_tween"
+const _PUNCH_TWEEN_META := "_combatfx_punch_tween"
 
 
 static func recoil(target: Node2D, intensity: float = 4.0, duration: float = 0.12) -> void:
@@ -76,16 +77,45 @@ static func shake(target: Node2D, intensity: float = 4.0, duration: float = 0.12
 	recoil(target, intensity, duration)
 
 
-## Battlefield punch (STS2 ScreenPunchInstance): both sides swing horizontally,
+## Battlefield punch (STS2 ScreenPunchInstance on the combat SceneContainer): the
+## background, the player and the enemies swing together along one line at
+## `angle_deg` (random when negative, as in STS2), by
 ## cos(remaining x 60) x `strength` x CubicOut(remaining / duration), and settle
-## back on their rest positions together.
-static func punch_screen(scene: Node, strength: float, duration: float = 0.3) -> void:
+## back on their rest positions. Moving the backdrop with the creatures makes it
+## read as the camera shaking; punching the creatures alone made the hero look
+## as if it slid left and right on a still background. The hand and the HUD stay
+## put, as in STS2.
+static func punch_screen(scene: Node, strength: float, duration: float = 0.3, angle_deg: float = -1.0) -> void:
 	if scene == null or not is_instance_valid(scene):
 		return
-	for prop in ["player", "enemy_container"]:
-		var n = scene.get(prop)
-		if n is Node2D and is_instance_valid(n):
-			_punch(n, strength, duration)
+	var angle := deg_to_rad(angle_deg if angle_deg >= 0.0 else randf() * 360.0)
+	var direction := Vector2.RIGHT.rotated(angle)
+	var targets: Array = []
+	for n in [scene.get_node_or_null("BattleBackground"), scene.get("player"), scene.get("enemy_container")]:
+		if (n is Node2D or n is Control) and is_instance_valid(n):
+			targets.append(n)
+	if targets.is_empty():
+		return
+	# One tween drives every target, so the backdrop and the creatures never
+	# drift a frame apart.
+	# The punch tween is kept on the scene, not on the targets, so a recoil that
+	# starts mid-punch cannot kill it and strand the backdrop off its rest spot.
+	if scene.has_meta(_PUNCH_TWEEN_META):
+		var prior = scene.get_meta(_PUNCH_TWEEN_META)
+		if prior is Tween and prior.is_valid():
+			prior.kill()
+	var origins: Array = targets.map(func(t): return _prepare_position_tween(t))
+	var tween := scene.create_tween()
+	scene.set_meta(_PUNCH_TWEEN_META, tween)
+	var place := func(offset: Vector2) -> void:
+		for i in targets.size():
+			if is_instance_valid(targets[i]):
+				targets[i].set("position", origins[i] + offset)
+	tween.tween_method(
+		func(remaining: float) -> void: place.call(direction * punch_offset(strength, remaining, duration)),
+		duration, 0.0, duration
+	)
+	tween.tween_callback(place.bind(Vector2.ZERO))
 
 
 static func punch_offset(strength: float, remaining: float, duration: float) -> float:
@@ -96,31 +126,16 @@ static func punch_offset(strength: float, remaining: float, duration: float) -> 
 	return cos(remaining * 60.0) * strength * ease_out
 
 
-static func _punch(target: Node2D, strength: float, duration: float) -> void:
-	var origin := _prepare_position_tween(target)
-	var tween := target.create_tween()
-	target.set_meta(_SHAKE_TWEEN_META, tween)
-	tween.tween_method(
-		func(remaining: float) -> void:
-			if is_instance_valid(target):
-				target.position = origin + Vector2(punch_offset(strength, remaining, duration), 0.0),
-		duration, 0.0, duration
-	)
-	tween.tween_callback(func() -> void:
-		if is_instance_valid(target):
-			target.position = origin)
-
-
-static func _prepare_position_tween(target: Node2D) -> Vector2:
+static func _prepare_position_tween(target: CanvasItem) -> Vector2:
 	var origin: Vector2
 	if target.has_meta(_SHAKE_ORIGIN_META):
 		origin = target.get_meta(_SHAKE_ORIGIN_META)
 	else:
-		origin = target.position
+		origin = target.get("position")
 		target.set_meta(_SHAKE_ORIGIN_META, origin)
 	if target.has_meta(_SHAKE_TWEEN_META):
 		var prior = target.get_meta(_SHAKE_TWEEN_META)
 		if prior is Tween and prior.is_valid():
 			prior.kill()
-	target.position = origin
+	target.set("position", origin)
 	return origin
