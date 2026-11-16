@@ -162,6 +162,72 @@ All icons belong to one family:
   clear silhouette and one main colour, no faces, no skulls (except the elite and boss map
   icons, where the skull is the meaning) and no tiny salvage decoration.
 
+### UI chrome is minimal (owner decision, 2026-11-15)
+
+The user wants the UI chrome simpler than the approved style tile. This rule wins over
+any row in sections A–H, over the material table above, and over the first tile. The
+reference is `docs/art/previews/ui-v2-style-tile-v2.png`.
+
+- Panels and buttons are plain rounded rectangles: one outline, one flat colour, and at
+  most one hard shadow band along the bottom edge. On a nine-slice file, the band stays
+  inside the bottom margin.
+- No bolt dots, chipped patches, tape, nails, torn or curled paper edges, rope wraps,
+  texture, highlights, gradients or glow.
+- Hover and pressed states differ only by a lighter or darker fill, which the code tints.
+  Every `*_outline.png` is a plain warm-white rim line of the same shape, transparent
+  elsewhere, with no glow. The code shows it only for focus or a selected state.
+- The end-turn button stands out by size and colour only. `end_turn_glow.png` is dropped.
+- The energy orb is one flat circle with no highlight (`energy_orb_back.png` only).
+  `energy_orb_gear`, `energy_orb_glow` and `energy_orb_glass` are dropped.
+- UI icons are one silhouette with one flat fill (plus at most one accent area) and an
+  outline, with no inner detail. This includes map node icons, intent, status, attribute
+  and currency icons, and pile icons.
+- The map parchment has simple edges and no fold creases. A node is an octagon holding
+  one icon. The boss octagon is larger with a heavier rim, with no spikes or bolts.
+- UI palette: parchment cream `#e8d6b0`, rust red `#a8432c`, charcoal (about `#3a3a3c`),
+  warm dark-brown outline `#1a100a`, plus state accents (danger red, block blue, toxic
+  green, energy cyan, caps ochre) and the intents' own meaning colours.
+- Characters, enemies, card art, relics, equipment, scene backgrounds and the
+  illustrations inside rest-site choices keep the full enemy-roster detail. This rule is
+  for UI chrome only.
+- The earlier review note asking for bolt dots on the end-turn button is withdrawn.
+
+Row changes that follow from it:
+
+- **A:** `legend_card` is a plain parchment rounded rectangle.
+- **B:**
+  - the secondary button is charcoal with no brass rim;
+  - `panel_soft` is charcoal with no stitching;
+  - the tooltip has no curl, but keeps its margins;
+  - the banners are plain plates;
+  - `divider` is a solid ink line;
+  - `corner.png` is fully transparent.
+- **C:**
+  - `hp_fill` has no highlight;
+  - intents have no sparks, drips or dust;
+  - piles are single silhouettes;
+  - badges and the nameplate are plain rounded shapes.
+- **D:**
+  - drop the extras: the heart's patch, the star's arrow, the gear's wrench, the globe's
+    stamp style, the back arrow's tin scrap, the poster's pin;
+  - `card_reward` is three fanned cards;
+  - `remove_card` is a card with one cut line.
+- **E:**
+  - panels and rows are plain rounded rectangles, and the row has no left pocket;
+  - `proceed_base` is a rust rounded rectangle;
+  - victory and defeat banners are plain rust and charcoal plates.
+- **F:**
+  - `shop_rug` is a plain flat mat;
+  - price tags are small cream rounded rectangles: red fill for sale, grey for
+    unaffordable;
+  - `relic_stand` is a flat oval plate.
+- **G:** the choice-card frames are parchment rounded rectangles; their illustrations
+  keep full detail.
+- **H:**
+  - options are cream rounded rectangles;
+  - `option_locked` is grey with no padlock (the code adds `icons/lock.png`);
+  - `art_frame` is a plain cream frame.
+
 ## Step 1: Style tile (deliver this first, then stop)
 
 **File:** `docs/art/previews/ui-v2-style-tile.png`, 1920×1080 RGB.
