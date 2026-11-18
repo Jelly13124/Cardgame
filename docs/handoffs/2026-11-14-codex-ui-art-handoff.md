@@ -490,6 +490,8 @@ the off-style ones below. Each is a 512×320 RGB file in
 | `purge.png` | Shows a green alien who is not in the game, on a teal sky. Use Cowboy Bill or a roster enemy instead. |
 | `weak_strike.png` | The same alien on a purple sky. Use Cowboy Bill or a roster enemy instead. |
 
+**Skip (2026-11-18):** `curse_placeholder`, `double_tap`, `incinerate` and `preemptive_strike` are not used by any card in `content/cards/`, so leave those four files alone. That leaves 10 cards to redraw.
+
 For every card, keep the subject in the middle 70% of the frame. The card shell covers
 the edges.
 
