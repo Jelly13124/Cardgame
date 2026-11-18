@@ -423,10 +423,10 @@ New files in `run_system/assets/images/ui_v2/rewards/`.
 
 | File | Size | What it is |
 |---|---|---|
-| `run_system/assets/images/ui_v2/rest/rest_background.png` | 1920×1080 RGB | Night camp in the wastes. Cowboy Bill sits on a crate at left-centre beside a small campfire. Behind him: dark buttes and a starry sky. Keep the top-centre band (x 520–1400, y 200–900) dark and plain, because the two choices and their description sit there. The fire glow is drawn as flat colour shapes, not rendered light. |
+| `run_system/assets/images/ui_v2/rest/rest_background.png` | 1920×1080 RGB | Night camp in the wastes. Cowboy Bill (star hat, torn poncho, red bandana) sits on a crate at the left with a tin cup, beside a small campfire; the fire glow is one flat shape on the ground. Behind: dark buttes and a starry sky. The top-centre band (x 520–1400, y 200–900) stays dark and plain for the two choice cards. Approved 2026-11-17; the owner kept Bill after briefly asking for no character. |
 | `run_system/assets/images/ui_v2/rest/choice_rest.png` | 512×340 RGBA | Choice card art: a bedroll and a steaming tin cup, drawn on a canvas card with an outline border. |
 | `run_system/assets/images/ui_v2/rest/choice_forge.png` | 512×340 RGBA | Choice card art: an anvil with a glowing card on it, on the same canvas card. |
-| `run_system/assets/images/ui_v2/rest/choice_outline.png` | 512×348 RGBA | Rim-only hover glow for a choice card. |
+| `run_system/assets/images/ui_v2/rest/choice_outline.png` | 512×340 RGBA | Rim-only outline for a choice card, the same canvas and frame silhouette as the two choice cards. |
 
 ### H. Event screen
 
@@ -459,7 +459,7 @@ player who knows the old icon should still recognise the new one.
 |---|---|---|---|
 | `run_system/assets/images/relics/*.png` | 30 | 128×128 RGBA | Remove the glossy bevels, metallic gradients and shines. Draw each relic as one chunky object, like a prop held by an enemy. |
 | `battle_scene/assets/images/equipment/*.png` | 15 | 256×256 RGBA | Remove the heavy metal rendering. Each piece should look as if it came off one of the roster enemies. |
-| `battle_scene/assets/images/ui/equipment/*.png` | 15 | 256×256 RGBA | Empty equipment-slot ghosts. Use flat khaki silhouettes at low contrast, with a thin outline. |
+| `battle_scene/assets/images/ui/equipment/*.png` | 15 | 256×256 RGBA | **Real item art**, not slot ghosts (corrected 2026-11-17): the generic equipment pieces, one per slot and rarity (`<slot>_<common|uncommon|rare>`), e.g. `head_common` is the Scavenger Cowboy Hat. Shown in rewards, the shop and the backpack. Redraw each as a full-colour item exactly like the set equipment above, keeping the old file's subject. |
 | `battle_scene/assets/images/ui/status/*.png` | 19 | 64×64 RGBA | Status icons. Flat, with a 2 px outline and one accent colour each. Each must read at 32 px. |
 | `battle_scene/assets/images/ui/attributes/*.png` | 5 | 64×64 RGBA | The five attribute icons, drawn in the same family as the status icons. |
 | `run_system/assets/images/home/currency/*.png` | 3 | 128×128 RGBA | Currency icons. The caps icon must match `ui_v2/icons/caps.png`. |
