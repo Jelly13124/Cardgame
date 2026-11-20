@@ -26,8 +26,10 @@ const GOLD_ICON := "res://run_system/assets/images/home/currency/caps.png"
 const PORTRAIT_SIZE := 64.0
 const MAIN_BAR_HEIGHT := 80.0
 # Full-page art may continue behind the transparent relic shelf from this Y.
-# Interactive page content still begins at BAR_HEIGHT.
-const PAGE_ART_TOP := MAIN_BAR_HEIGHT
+# Interactive page content still begins at BAR_HEIGHT. It starts under the
+# bar's jagged ink edge (art rows 71-78), so no flat strip of clear colour shows
+# through the gaps between the teeth.
+const PAGE_ART_TOP := MAIN_BAR_HEIGHT - 16.0
 const RELIC_ROW_TOP := 84.0
 const RELIC_ROW_HEIGHT := 46.0
 const BAR_HEIGHT := 132.0

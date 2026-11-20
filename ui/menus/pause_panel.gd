@@ -132,7 +132,7 @@ func _show_confirm(text: String, on_yes: Callable) -> void:
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lbl.custom_minimum_size = Vector2(440, 0)
 	lbl.add_theme_font_size_override("font_size", 20)
-	lbl.add_theme_color_override("font_color", T.TEXT_MAIN)
+	lbl.add_theme_color_override("font_color", T.PANEL_INK)
 	_body.add_child(lbl)
 	_body.add_child(_gap(8))
 	_body.add_child(_menu_button(tr("PAUSE_CONFIRM_YES"), on_yes, true))
@@ -184,7 +184,7 @@ func _title(text: String) -> Label:
 	l.text = text
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.add_theme_font_size_override("font_size", 30)
-	l.add_theme_color_override("font_color", Color(1.0, 0.86, 0.48))
+	l.add_theme_color_override("font_color", T.PANEL_INK)
 	return l
 
 

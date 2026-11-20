@@ -7,6 +7,11 @@ extends Button
 const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_theme.gd
 const MODEL_DB = preload("uid://8k42t37sefpw")  # res://core/content/model_db.gd
 const ICON_DIR := "res://ui/events/icons/"
+## Locked options use the shared ui_v2 padlock on the grey strip.
+const LOCK_ICON := "res://run_system/assets/images/ui_v2/icons/lock.png"
+const INK := Color("#1a100a")
+const LOCKED_INK := Color("#3f3a35")
+const LETHAL_INK := Color("#9a2414")
 
 var option
 
@@ -33,16 +38,17 @@ func setup(p_option, model) -> void:
 	alignment = HORIZONTAL_ALIGNMENT_CENTER if option.is_proceed else HORIZONTAL_ALIGNMENT_LEFT
 	autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	focus_mode = Control.FOCUS_NONE
-	# STS-style option card: frosted-dark row, gold edge on hover, dim when locked.
+	# ui_v2 option strip: cream rounded rectangle, lighter on hover, grey when locked.
 	add_theme_stylebox_override("normal", _style("normal", locked))
 	add_theme_stylebox_override("hover", _style("hover", locked))
 	add_theme_stylebox_override("pressed", _style("pressed", locked))
 	add_theme_stylebox_override("disabled", _style("disabled", true))
-	var fg := Color(0.95, 0.91, 0.79) if not locked else Color(0.60, 0.56, 0.49)
+	var fg := INK if not locked else LOCKED_INK
 	if option.will_kill_player:
-		fg = Color(1.0, 0.42, 0.36)
+		fg = LETHAL_INK
 	add_theme_color_override("font_color", fg)
-	add_theme_color_override("font_hover_color", fg if option.will_kill_player else Color(1.0, 0.97, 0.84))
+	add_theme_color_override("font_hover_color", fg)
+	add_theme_constant_override("icon_max_width", 30)
 	add_theme_color_override("font_pressed_color", fg)
 	add_theme_color_override("font_disabled_color", fg)
 	disabled = locked
@@ -54,7 +60,7 @@ func setup(p_option, model) -> void:
 ## "  <text>" for a marker: with its icon file present, the icon shows and only
 ## `icon_text` follows the label; without it, the whole `fallback`.
 func _marker(kind: String, fallback: String, icon_text: String) -> String:
-	var path := ICON_DIR + kind + ".png"
+	var path := LOCK_ICON if kind == "lock" else ICON_DIR + kind + ".png"
 	if not ResourceLoader.exists(path):
 		return "  " + fallback
 	icon = load(path)
@@ -73,9 +79,11 @@ func _hover_tip() -> String:
 
 
 func _style(state: String, locked: bool) -> StyleBoxTexture:
-	var st := T.ll_button_olive("disabled" if locked else state) as StyleBoxTexture
-	st.content_margin_left = 22
-	st.content_margin_right = 22
-	st.content_margin_top = 14
-	st.content_margin_bottom = 14
+	var st := T.v2_box(
+		"events/option_locked" if locked else "events/option_9slice", Vector4(26, 14, 22, 14)
+	)
+	if not locked and state == "hover":
+		st.modulate_color = Color(1.07, 1.06, 1.04)
+	elif not locked and state == "pressed":
+		st.modulate_color = Color(0.88, 0.86, 0.83)
 	return st

@@ -15,7 +15,11 @@ const MERCHANT_SLOT = preload("uid://b8xlpnq6b5osf")  # res://ui/shop/merchant_s
 const MERCHANT_CARD_REMOVAL = preload("uid://cb444odpyv0bh")  # res://ui/shop/merchant_card_removal.gd
 # Lazy-loaded at call site to avoid map→shop→map cyclic preload.
 const MAP_SCENE_PATH := "uid://d3x5b8wvg2q"  # res://ui/map/map_scene.tscn
-const SHOP_BACKGROUND_PATH := "res://run_system/assets/images/shop/shop_interior_bg.png"
+const SHOP_BACKGROUND_PATH := "res://run_system/assets/images/ui_v2/shop/shop_background.png"
+## STS2 merchant_inventory: the goods lie straight on one big rug, cards in
+## the top row and relics, tools and card removal in the row below.
+const SHOP_RUG = preload("uid://c7vwm1yr54e3u")  # res://ui/shop/shop_rug.gd
+const RUG_ANCHORS := Rect2(0.022, 0.2, 0.735, 0.775)
 const SHOPKEEPER_PATH := "res://run_system/assets/images/shop/shopkeeper.png"
 
 var inventory
@@ -85,74 +89,54 @@ func _build_ui() -> void:
 	title.offset_bottom = RUN_TOP_BAR.BAR_HEIGHT + 68.0
 	title.add_theme_font_override("font", T.display_font(700))
 	title.add_theme_font_size_override("font_size", 30)
-	title.add_theme_color_override("font_color", Color(0.95, 0.77, 0.48))
+	title.add_theme_color_override("font_color", T.UI_V2_INK)
 	add_child(title)
 
-	var rule := ColorRect.new()
-	rule.color = Color(0.82, 0.55, 0.27, 0.92)
-	rule.offset_left = 52.0
-	rule.offset_top = RUN_TOP_BAR.BAR_HEIGHT + 76.0
-	rule.offset_right = 314.0
-	rule.offset_bottom = RUN_TOP_BAR.BAR_HEIGHT + 78.0
-	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(rule)
+	_add_rug()
 
-	# Relics: three large, immediately readable objects on the wall shelf.
-	var relic_shelf := HBoxContainer.new()
-	relic_shelf.name = "RelicShelf"
-	relic_shelf.anchor_left = 0.31
-	relic_shelf.anchor_top = 0.19
-	relic_shelf.anchor_right = 0.67
-	relic_shelf.anchor_bottom = 0.43
-	relic_shelf.alignment = BoxContainer.ALIGNMENT_CENTER
-	relic_shelf.add_theme_constant_override("separation", 44)
-	add_child(relic_shelf)
-	for entry in inventory.relic_entries:
-		relic_shelf.add_child(MERCHANT_SLOT.create(entry))
-
-	var shelf_line := ColorRect.new()
-	shelf_line.color = Color(0.075, 0.065, 0.052, 0.96)
-	shelf_line.anchor_left = 0.30
-	shelf_line.anchor_top = 0.425
-	shelf_line.anchor_right = 0.68
-	shelf_line.anchor_bottom = 0.432
-	shelf_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(shelf_line)
-	move_child(shelf_line, relic_shelf.get_index())
-
-	# Tools remain in the current shop economy but are deliberately subordinate
-	# to cards and relics so the accepted composition stays light.
-	var tool_shelf := HBoxContainer.new()
-	tool_shelf.name = "ToolShelf"
-	tool_shelf.anchor_left = 0.06
-	tool_shelf.anchor_top = 0.29
-	tool_shelf.anchor_right = 0.28
-	tool_shelf.anchor_bottom = 0.49
-	tool_shelf.alignment = BoxContainer.ALIGNMENT_CENTER
-	tool_shelf.add_theme_constant_override("separation", 12)
-	add_child(tool_shelf)
-	for entry in inventory.tool_entries:
-		tool_shelf.add_child(MERCHANT_SLOT.create(entry))
-
-	# Six cards fit in one clean row. The card itself remains the visual target;
-	# price and buy action collapse into one small footer chip.
+	# Top row: the six cards, as large as the rug allows.
 	var card_row := HBoxContainer.new()
 	card_row.name = "CardShelf"
-	card_row.anchor_left = 0.22
-	card_row.anchor_top = 0.54
-	card_row.anchor_right = 0.84
-	card_row.anchor_bottom = 0.91
+	card_row.anchor_left = 0.035
+	card_row.anchor_top = 0.225
+	card_row.anchor_right = 0.745
+	card_row.anchor_bottom = 0.57
 	card_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	card_row.add_theme_constant_override("separation", 18)
 	add_child(card_row)
 	for entry in inventory.card_entries:
 		card_row.add_child(MERCHANT_SLOT.create(entry, _card_factory))
 
+	# Bottom row: the three relics, then the tools, then card removal.
+	var relic_shelf := HBoxContainer.new()
+	relic_shelf.name = "RelicShelf"
+	relic_shelf.anchor_left = 0.05
+	relic_shelf.anchor_top = 0.6
+	relic_shelf.anchor_right = 0.31
+	relic_shelf.anchor_bottom = 0.88
+	relic_shelf.alignment = BoxContainer.ALIGNMENT_CENTER
+	relic_shelf.add_theme_constant_override("separation", 22)
+	add_child(relic_shelf)
+	for entry in inventory.relic_entries:
+		relic_shelf.add_child(MERCHANT_SLOT.create(entry))
+
+	var tool_shelf := HBoxContainer.new()
+	tool_shelf.name = "ToolShelf"
+	tool_shelf.anchor_left = 0.33
+	tool_shelf.anchor_top = 0.61
+	tool_shelf.anchor_right = 0.56
+	tool_shelf.anchor_bottom = 0.87
+	tool_shelf.alignment = BoxContainer.ALIGNMENT_CENTER
+	tool_shelf.add_theme_constant_override("separation", 18)
+	add_child(tool_shelf)
+	for entry in inventory.tool_entries:
+		tool_shelf.add_child(MERCHANT_SLOT.create(entry))
+
 	removal_service = MERCHANT_CARD_REMOVAL.create(inventory.card_removal_entry, _card_factory)
-	removal_service.anchor_left = 0.03
-	removal_service.anchor_top = 0.69
-	removal_service.anchor_right = 0.16
-	removal_service.anchor_bottom = 0.84
+	removal_service.anchor_left = 0.59
+	removal_service.anchor_top = 0.57
+	removal_service.anchor_right = 0.725
+	removal_service.anchor_bottom = 0.92
 	add_child(removal_service)
 
 	var leave_btn := Button.new()
@@ -170,13 +154,19 @@ func _build_ui() -> void:
 	leave_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	leave_btn.add_theme_font_override("font", T.display_font(700))
 	leave_btn.add_theme_font_size_override("font_size", 22)
-	for state in ["normal", "hover", "pressed"]:
-		leave_btn.add_theme_stylebox_override(
-			state, T.ll_button("hover" if state == "hover" else "normal")
-		)
+	T.apply_action_button(leave_btn, "primary")
 	leave_btn.pressed.connect(_on_leave_pressed)
 	add_child(leave_btn)
 
+
+
+func _add_rug() -> void:
+	var rug: Control = SHOP_RUG.new()
+	rug.anchor_left = RUG_ANCHORS.position.x
+	rug.anchor_top = RUG_ANCHORS.position.y
+	rug.anchor_right = RUG_ANCHORS.end.x
+	rug.anchor_bottom = RUG_ANCHORS.end.y
+	add_child(rug)
 
 
 func _add_scene_art() -> void:

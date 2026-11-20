@@ -1,6 +1,6 @@
 ## The "?" node's event screen (STS2 NEventRoom, default layout): the event's
-## illustration in a framed portrait on the left, its text and options on the
-## right, an act backdrop behind both. Owner sets `model` (already begun), adds
+## illustration fills the whole page behind the transparent relic shelf, with
+## no frame, and a soft dark wash on the right carries its text and options. Owner sets `model` (already begun), adds
 ## the room, and waits for `resolved`.
 ## class_name is intentionally omitted by project convention — preload.
 extends Control
@@ -14,9 +14,11 @@ const RESULT_SCREEN = preload("uid://bxh1x1hy6fylv")  # res://ui/rewards/result_
 const EVENT_LAYOUT = preload("res://ui/events/event_layout.gd")
 
 const ART_DIR := "res://run_system/assets/images/events/"
-## Shown at 1:1 in the 1920x1080 viewport (spec: left-portrait layout).
-const PORTRAIT_SIZE := Vector2(1024, 768)
-const PORTRAIT_X := 80.0
+## STS2 default_event_layout: the art covers the page; the wash starts where
+## the text column needs it, so the left of the scene stays clear.
+const WASH_START := 0.42
+const WASH_FULL := 0.6
+const WASH_ALPHA := 0.82
 const CONTENT_LEFT := 1144.0
 const CONTENT_RIGHT := 1840.0
 const SCREEN_HEIGHT := 1080.0
@@ -56,32 +58,24 @@ func _fit_to_viewport() -> void:
 func _build() -> void:
 	_add_backdrop()
 	var below_bar := RUN_TOP_BAR.BAR_HEIGHT
-	var frame := T.state_box("normal", 3.0)
-	var portrait := Panel.new()
+	var portrait := Control.new()
 	portrait.name = "EventPortrait"
-	portrait.position = Vector2(PORTRAIT_X, below_bar + (SCREEN_HEIGHT - below_bar - PORTRAIT_SIZE.y) * 0.5)
-	portrait.size = PORTRAIT_SIZE
+	portrait.anchor_right = 1.0
+	portrait.anchor_bottom = 1.0
+	portrait.offset_top = RUN_TOP_BAR.PAGE_ART_TOP
 	portrait.clip_contents = true
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	portrait.add_theme_stylebox_override("panel", frame)
 	add_child(portrait)
 	_portrait_art = TextureRect.new()
 	_portrait_art.name = "EventPortraitArt"
 	_portrait_art.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_portrait_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	# Fills the 768-high frame: 1024x768 art fits exactly, older 1408x768 art is
-	# centre-cropped; neither is scaled up.
+	# Covers the page whatever the art's aspect; the excess is cropped evenly.
 	_portrait_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	_portrait_art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_portrait_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	portrait.add_child(_portrait_art)
-	# The frame's border is drawn again over the art's edge.
-	var edge := T.semantic_outline(Color(0.62, 0.52, 0.32), 3, 4)
-	var border := Panel.new()
-	border.set_anchors_preset(Control.PRESET_FULL_RECT)
-	border.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	border.add_theme_stylebox_override("panel", edge)
-	portrait.add_child(border)
+	portrait.add_child(_text_wash())
 
 	_layout = EVENT_LAYOUT.new()
 	_layout.name = "EventContent"
@@ -92,6 +86,28 @@ func _build() -> void:
 	_layout.option_pressed.connect(_on_option_pressed)
 	model.state_changed.connect(_on_state_changed)
 	_refresh_portrait()
+
+
+## A left-to-right dark wash: clear over the scene, dark under the text.
+func _text_wash() -> TextureRect:
+	var gradient := Gradient.new()
+	gradient.offsets = PackedFloat32Array([0.0, WASH_START, WASH_FULL, 1.0])
+	gradient.colors = PackedColorArray([
+		Color(0, 0, 0, 0.0), Color(0, 0, 0, 0.0),
+		Color(0, 0, 0, WASH_ALPHA), Color(0, 0, 0, WASH_ALPHA),
+	])
+	var tex := GradientTexture2D.new()
+	tex.gradient = gradient
+	tex.width = 256
+	tex.height = 4
+	var wash := TextureRect.new()
+	wash.name = "EventTextWash"
+	wash.texture = tex
+	wash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	wash.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	wash.stretch_mode = TextureRect.STRETCH_SCALE
+	wash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return wash
 
 
 ## The act's backdrop under a dark scrim, opaque so the map is hidden; a flat

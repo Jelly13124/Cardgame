@@ -37,7 +37,7 @@ static func add_controls(
 	if in_battle:
 		var note := _label(TranslationServer.translate("SETTINGS_LANG_NOTE"))
 		note.add_theme_font_size_override("font_size", 16)
-		note.add_theme_color_override("font_color", T.TEXT_SECONDARY)
+		note.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
 		box.add_child(note)
 
 	# ── Fullscreen ── a themed toggle button ([✓]/[ ]) rather than the engine's
@@ -82,7 +82,7 @@ static func _speed_text(s: float) -> String:
 static func add_key_controls(box: VBoxContainer) -> void:
 	box.add_child(HSeparator.new())
 	var header := _label(TranslationServer.translate("SETTINGS_KEYBINDS"))
-	header.add_theme_color_override("font_color", T.SAND_LIGHT)
+	header.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
 	box.add_child(header)
 	var actions := [
 		["end_turn", "SETTINGS_KEY_END_TURN"],
@@ -129,7 +129,7 @@ static func _volume_row(box: VBoxContainer, key: String, value: float, setter: C
 static func _label(text: String) -> Label:
 	var l := Label.new()
 	l.text = text
-	l.add_theme_color_override("font_color", T.TEXT_MAIN)
+	l.add_theme_color_override("font_color", T.PANEL_INK)
 	l.add_theme_font_size_override("font_size", 20)
 	return l
 

@@ -2,8 +2,8 @@
   "id": "a5_elite_bias",
   "level": 5,
   "title": "Dangerous paths",
-  "description": "Mid and late map rolls lean toward elites and treasure.",
+  "description": "Each act map holds more elites.",
   "params": {
-    "roll_floor": 0.5
+    "elite_mult": 1.6
   }
 }

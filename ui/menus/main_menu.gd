@@ -17,6 +17,9 @@ const START_BG_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/b
 const START_TITLE_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/title_bottlecap_hunter.png"
 const START_DIVIDER_TEXTURE_PATH := "res://run_system/assets/images/ui/start_screen/divider_bottlecap.png"
 const START_LANGUAGE_BUTTON_PATH := "res://run_system/assets/images/ui/start_screen/icon_button_language.png"
+## Text on the cream shared kit panels (panel_textured / panel_hard_9slice).
+const PANEL_INK := T.PANEL_INK
+const PANEL_INK_SOFT := T.PANEL_INK_SOFT
 const START_SETTINGS_BUTTON_PATH := "res://run_system/assets/images/ui/start_screen/icon_button_settings.png"
 
 var _settings_layer: CanvasLayer = null
@@ -318,12 +321,12 @@ func _open_slot_modal(mode: String) -> void:
 	var heading := Label.new()
 	heading.text = tr("MENU_NEW_GAME") if mode == "new" else tr("MENU_SAVES")
 	T.style_display(heading, 30, 700)
-	heading.add_theme_color_override("font_color", Color(1.0, 0.81, 0.27))
+	heading.add_theme_color_override("font_color", PANEL_INK)
 	box.add_child(heading)
 	var sub := Label.new()
 	sub.text = tr("SLOT_SELECT_TITLE") if mode == "new" else tr("SLOT_MANAGE_TITLE")
 	sub.add_theme_font_size_override("font_size", 14)
-	sub.add_theme_color_override("font_color", T.TEXT_SECONDARY)
+	sub.add_theme_color_override("font_color", PANEL_INK_SOFT)
 	box.add_child(sub)
 
 	var spacer := Control.new()
@@ -356,20 +359,23 @@ func _modal_slot_card(n: int, mode: String, layer: CanvasLayer) -> Control:
 	name_lbl.text = tr("SLOT_LABEL").format({"n": n})
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	T.style_display(name_lbl, 20, 600)
-	name_lbl.add_theme_color_override("font_color", T.TEXT_MAIN if occupied else T.TEXT_SECONDARY)
+	var on_cream := mode != "new"
+	var main_ink: Color = PANEL_INK if on_cream else T.TEXT_MAIN
+	var soft_ink: Color = PANEL_INK_SOFT if on_cream else Color("#d9c49a")
+	name_lbl.add_theme_color_override("font_color", main_ink if occupied else soft_ink)
 	info_box.add_child(name_lbl)
 	var sub := Label.new()
 	sub.text = sub_text
 	sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	sub.add_theme_font_size_override("font_size", 14)
-	sub.add_theme_color_override("font_color", T.TEXT_SECONDARY)
+	sub.add_theme_color_override("font_color", soft_ink)
 	info_box.add_child(sub)
 
 	if mode == "new":
 		# Whole row is a button → start a new game in this slot.
 		var card := Button.new()
 		card.focus_mode = Control.FOCUS_NONE
-		card.custom_minimum_size = Vector2(0, 58)
+		card.custom_minimum_size = Vector2(0, 72)
 		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		T.apply_action_button(card, "list")
@@ -420,7 +426,7 @@ func _modal_slot_card(n: int, mode: String, layer: CanvasLayer) -> Control:
 		var empty := Label.new()
 		empty.text = tr("SLOT_EMPTY_SHORT")
 		empty.add_theme_font_size_override("font_size", 15)
-		empty.add_theme_color_override("font_color", Color(0.5, 0.42, 0.3))
+		empty.add_theme_color_override("font_color", PANEL_INK_SOFT)
 		empty.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		hbox.add_child(empty)
 	return pc
@@ -499,7 +505,7 @@ func _confirm_modal(message: String, confirm_label: String, on_yes: Callable) ->
 	msg.custom_minimum_size = Vector2(420, 0)
 	msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	msg.add_theme_font_size_override("font_size", 19)
-	msg.add_theme_color_override("font_color", T.TEXT_MAIN)
+	msg.add_theme_color_override("font_color", PANEL_INK)
 	vb.add_child(msg)
 
 	var btn_row := HBoxContainer.new()
@@ -611,7 +617,7 @@ func _build_settings_overlay() -> void:
 	title.text = tr("SETTINGS_TITLE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 28)
-	title.add_theme_color_override("font_color", Color(1.0, 0.86, 0.48))
+	title.add_theme_color_override("font_color", PANEL_INK)
 	box.add_child(title)
 
 	# Language change reloads this menu so the new locale applies immediately.

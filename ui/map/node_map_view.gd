@@ -1,11 +1,13 @@
 extends Control
 
 ## The act map as a scrollable parchment chart: floor 0 on the left, the boss on
-## the right, one MapNodeButton per node, dashed ink paths between them, the
+## the right, one MapNodeButton per node, dotted ink paths between them, the
 ## walked path in solid orange and the current node's choices in orange dashes,
 ## an orange start flag and a legend card. Scroll with the wheel or by dragging
 ## empty map. The layout is a pure function of the map, so the same seed always
-## draws the same chart.
+## draws the same chart. Like the STS2 map, a node's height follows its lane
+## (slot), not its rank on the floor, so paths stay short and rarely cross,
+## and the paths are thin dots that keep clear of the node badges.
 
 signal node_chosen(node_id: String)
 
@@ -13,17 +15,23 @@ const MAP_NODE_BUTTON = preload("uid://dxs0bi6rnni22")  # res://ui/map/map_node_
 const ICON_DIR := "res://run_system/assets/images/map/nodes/"
 const PARCHMENT_PATH := "res://run_system/assets/images/map/route_parchment.png"
 const FLAG_PATH := "res://run_system/assets/images/map/start_flag.png"
+const PLAYER_TOKEN_PATH := "res://run_system/assets/images/ui_v2/map/player_token.png"
+## Token drawn at 2x; its round base centre is 40 px below the canvas centre.
+const PLAYER_TOKEN_SIZE := 64.0
 const LEGEND_CARD_PATH := "res://run_system/assets/images/map/legend_card.png"
 const LEFT := 170.0
 const RIGHT_PAD := 260.0
 const FLOOR_SPACING := 300.0
 const TOP := 180.0
 const BOTTOM_MARGIN := 160.0
-const JITTER := 18.0
-const DASH := 14.0
-const GAP := 10.0
-const LINE_WIDTH := 4.0
-const INK := Color(0.23, 0.18, 0.15, 0.85)
+const JITTER := 14.0
+const DASH := 5.0
+const GAP := 9.0
+const LINE_WIDTH := 3.5
+const WALKED_WIDTH := 4.0
+## Paths stop this far from a node centre, leaving air around each badge.
+const NODE_CLEARANCE := 50.0
+const INK := Color(0.23, 0.18, 0.15, 0.55)
 const ORANGE := Color("#e8742a")
 const LEGEND_TYPES := ["enemy", "elite", "unknown", "merchant", "treasure", "rest", "relic", "boss"]
 
@@ -42,6 +50,8 @@ var _drag_scroll := 0.0
 var _canvas: Control
 var _background: TextureRect
 var _paths: Control
+var _flag_texture: Texture2D
+var _token: TextureRect
 var _legend_entries: VBoxContainer
 var _focus_id := ""
 
@@ -65,6 +75,15 @@ func _init() -> void:
 	_paths.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_paths.draw.connect(_draw_paths)
 	_canvas.add_child(_paths)
+	_token = TextureRect.new()
+	_token.name = "PlayerToken"
+	_token.texture = MAP_NODE_BUTTON._load(PLAYER_TOKEN_PATH)
+	_token.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_token.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_token.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_token.size = Vector2.ONE * PLAYER_TOKEN_SIZE
+	_token.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_canvas.add_child(_token)
 	_build_legend()
 	resized.connect(_relayout)
 
@@ -129,9 +148,11 @@ func _relayout() -> void:
 	if _map.is_empty() or size.y <= 0.0:
 		return
 	var floors := 0
+	var lanes := 1
 	var per_floor := {}
 	for n in _map:
 		floors = maxi(floors, int(n.floor) + 1)
+		lanes = maxi(lanes, int(n.slot) + 1)
 		per_floor[int(n.floor)] = per_floor.get(int(n.floor), []) + [n]
 	var width := LEFT + float(floors - 1) * FLOOR_SPACING + RIGHT_PAD
 	var band_top := TOP
@@ -149,8 +170,8 @@ func _relayout() -> void:
 		for i in nodes.size():
 			var n: Dictionary = nodes[i]
 			var y := (band_top + band_bottom) / 2.0
-			if nodes.size() > 1:
-				y = band_top + (band_bottom - band_top) * float(i) / float(nodes.size() - 1)
+			if nodes.size() > 1 and lanes > 1:
+				y = band_top + (band_bottom - band_top) * float(n.slot) / float(lanes - 1)
 			var h := hash(str(n.id))
 			var jitter := Vector2(float(h % 37) / 36.0 - 0.5, float((h / 37) % 37) / 36.0 - 0.5) * 2.0 * JITTER
 			if int(n.floor) == 0 or n.type == "boss":
@@ -159,12 +180,25 @@ func _relayout() -> void:
 	for id in _buttons:
 		var b: Control = _buttons[id]
 		b.position = _positions[id] - b.size / 2.0
+	_place_token()
 	_max_scroll = maxf(0.0, width - size.x)
 	if _focus_id != "":
 		scroll_to_node(_focus_id)
 	else:
 		_set_scroll(_scroll)
 	_paths.queue_redraw()
+
+
+## The player token stands just above the current node (the first node at the
+## act start), so it never covers the node icon or the start flag.
+func _place_token() -> void:
+	var at := _current if _current != "" else _first_id()
+	_token.visible = _positions.has(at) and _token.texture != null
+	if not _token.visible:
+		return
+	var base_centre := Vector2(PLAYER_TOKEN_SIZE * 0.5, PLAYER_TOKEN_SIZE * 0.5 + 20.0)
+	_token.position = _positions[at] + Vector2(0.0, -46.0) - base_centre
+	_canvas.move_child(_token, -1)
 
 
 func _set_scroll(value: float) -> void:
@@ -181,14 +215,18 @@ func _draw_paths() -> void:
 				continue
 			var walked: bool = a in _visited and b in _visited
 			var choice: bool = a == _current
-			var color := ORANGE if walked or choice else INK
 			if walked:
-				_paths.draw_line(_positions[a], _positions[b], color, LINE_WIDTH, true)
+				var dir: Vector2 = (_positions[b] - _positions[a]).normalized()
+				_paths.draw_line(_positions[a] + dir * NODE_CLEARANCE, _positions[b] - dir * NODE_CLEARANCE, ORANGE, WALKED_WIDTH, true)
 			else:
-				_dashed(_positions[a], _positions[b], color)
+				_dashed(_positions[a], _positions[b], ORANGE if choice else INK)
 	var start := _first_id()
 	if _positions.has(start):
-		var flag := MAP_NODE_BUTTON._load(FLAG_PATH)
+		# Keep a reference: a texture loaded inside _draw and dropped at once is
+		# freed before the frame renders, which drew a plain white square.
+		if _flag_texture == null:
+			_flag_texture = MAP_NODE_BUTTON._load(FLAG_PATH)
+		var flag := _flag_texture
 		var base: Vector2 = _positions[start] + Vector2(-64.0, -40.0)
 		if flag != null:
 			_paths.draw_texture_rect(flag, Rect2(base - Vector2(32, 32), Vector2(64, 64)), false)
@@ -197,11 +235,11 @@ func _draw_paths() -> void:
 			_paths.draw_colored_polygon(PackedVector2Array([base + Vector2(0, -26), base + Vector2(26, -16), base + Vector2(0, -6)]), ORANGE)
 
 
-## A dashed segment from `a` to `b`, trimmed off both node bases.
+## A dotted segment from `a` to `b`, trimmed clear of both node badges.
 func _dashed(a: Vector2, b: Vector2, color: Color) -> void:
 	var dir := (b - a).normalized()
-	var start := a + dir * 40.0
-	var end := b - dir * 40.0
+	var start := a + dir * NODE_CLEARANCE
+	var end := b - dir * NODE_CLEARANCE
 	var length := start.distance_to(end)
 	var t := 0.0
 	while t < length:

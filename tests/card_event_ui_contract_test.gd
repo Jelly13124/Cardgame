@@ -117,18 +117,20 @@ func _run() -> void:
 	var event_content := event.find_child("EventContent", true, false) as Control
 	_expect(portrait != null and event_content != null, "event exposes its portrait and its content")
 	if portrait != null and event_content != null:
-		_expect(portrait.position.y >= RUN_TOP_BAR.BAR_HEIGHT, "the portrait stays below the top bar")
 		_expect(event_content.position.y >= RUN_TOP_BAR.BAR_HEIGHT,
 			"event copy and choices stay below the complete persistent top bar")
-		_expect(portrait.position.x + portrait.size.x <= event_content.position.x,
-			"the portrait sits left of the text column")
+		_expect(is_equal_approx(portrait.offset_top, RUN_TOP_BAR.PAGE_ART_TOP),
+			"the event art fills the page behind the transparent relic shelf")
+		_expect(portrait.size.x >= event.size.x - 1.0,
+			"the event art spans the full width, with no portrait frame")
+		_expect(event.find_child("EventArtFrame", true, false) == null, "the event art has no frame")
+		_expect(portrait.find_child("EventTextWash", true, false) != null,
+			"a dark wash sits under the text column")
 		var art := portrait.find_child("EventPortraitArt", true, false) as TextureRect
 		_expect(art != null, "the portrait has an art rect")
 		if art != null:
-			art.texture = PlaceholderTexture2D.new()
-			(art.texture as PlaceholderTexture2D).size = Vector2(1408, 768)
-			_expect(is_equal_approx(portrait.size.y, 768.0) and is_equal_approx(art.size.y, 768.0),
-				"1408x768 art is drawn at 1:1 height in the 768 frame")
+			_expect(art.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_COVERED,
+				"event art covers the page at its own aspect")
 	event.queue_free()
 	await _frames(3)
 

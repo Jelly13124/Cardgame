@@ -11,8 +11,8 @@ const REST_PATH := "res://ui/map/map_scene.gd" # path-ok: rest scene is built he
 const BATTLE_BG_DIR := "res://battle_scene/assets/images/backgrounds/"
 const FULLSCREEN_BACKDROPS := [
 	"res://run_system/assets/images/map/wasteland_route_map_pixel_bg.png",
-	"res://run_system/assets/images/shop/shop_interior_bg.png",
-	"res://run_system/assets/images/ui/rest/campfire_scene_1920.png",
+	"res://run_system/assets/images/ui_v2/shop/shop_background.png",
+	"res://run_system/assets/images/ui_v2/rest/rest_background.png",
 	"res://run_system/assets/images/ui/start_screen/bottlecap_hunter_start_background_1920.png",
 	"res://run_system/assets/images/events/backdrops/act_1.png",
 	"res://run_system/assets/images/events/backdrops/act_2.png",

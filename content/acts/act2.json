@@ -40,48 +40,14 @@
   ],
   "map": {
     "guaranteed_treasure_floor": 6,
-    "early_floor_last": 4,
-    "max_extra_treasures": 2,
     "max_children_per_node": 3,
-    "early_rolls": [
-      {
-        "below": 0.65,
-        "type": "enemy"
-      },
-      {
-        "below": 0.85,
-        "type": "unknown"
-      },
-      {
-        "type": "enemy"
-      }
-    ],
-    "rolls": [
-      {
-        "below": 0.37,
-        "type": "enemy"
-      },
-      {
-        "below": 0.55,
-        "type": "unknown"
-      },
-      {
-        "below": 0.7,
-        "type": "merchant"
-      },
-      {
-        "below": 0.88,
-        "type": "rest"
-      },
-      {
-        "below": 0.93,
-        "type": "treasure",
-        "capped": true
-      },
-      {
-        "type": "elite"
-      }
-    ]
+    "lower_floor_min": 4,
+    "point_counts": {
+      "merchant": 2,
+      "elite": 3,
+      "rest": 3,
+      "unknown": 5
+    }
   },
   "extract_rewards": {
     "continue": 52,

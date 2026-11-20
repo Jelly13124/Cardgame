@@ -82,6 +82,59 @@ const REWARD_SCRIM = Color(0.035, 0.037, 0.043, 0.92)
 const RESULT_SCRIM = Color(0.024, 0.027, 0.032, 0.94)
 
 
+## ui_v2 minimal chrome (docs/handoffs/2026-11-14-codex-ui-art-handoff.md, B–H).
+## Files are drawn at twice display size.
+const UI_V2_CREAM = Color("#e8d6b0")
+const UI_V2_RUST = Color("#a8432c")
+const UI_V2_CHARCOAL = Color("#3a3a3c")
+const UI_V2_INK = Color("#1a100a")
+const UI_V2_DIR := "res://run_system/assets/images/ui_v2/"
+## Zero margins mean the plate is shown at exactly half its 2x size, so it just
+## scales; the end-turn button, reward rows and proceed sign have fixed sizes.
+const V2_PATCH_MARGINS := {
+	"hud/end_turn_base": Vector4(0, 0, 0, 0),
+	"hud/enemy_nameplate": Vector4(24, 12, 24, 12),
+	"rewards/reward_row": Vector4(0, 0, 0, 0),
+	"rewards/reward_panel": Vector4(40, 40, 40, 40),
+	"rewards/proceed_base": Vector4(0, 0, 0, 0),
+	"events/option_9slice": Vector4(60, 30, 40, 30),
+	"rest/choice_outline": Vector4(40, 40, 40, 40),
+}
+static var _v2_textures: Dictionary = {}
+
+
+## Loads `ui_v2/<rel>.png`, e.g. v2_tex("hud/energy_orb_back").
+static func v2_tex(rel: String) -> Texture2D:
+	if _v2_textures.has(rel):
+		return _v2_textures[rel]
+	var path := UI_V2_DIR + rel + ".png"
+	var texture: Texture2D = null
+	if ResourceLoader.exists(path):
+		texture = load(path) as Texture2D
+	if texture == null:
+		push_error("Missing ui_v2 texture: %s" % rel)
+		return null
+	_v2_textures[rel] = texture
+	return texture
+
+
+## Nine-slice StyleBox for a ui_v2 file with margins from V2_PATCH_MARGINS.
+static func v2_box(rel: String, content_margins: Vector4 = Vector4(-1, -1, -1, -1)) -> StyleBoxTexture:
+	var box := StyleBoxTexture.new()
+	box.texture = v2_tex(rel)
+	var m: Vector4 = V2_PATCH_MARGINS.get(rel, Vector4(24, 24, 24, 24))
+	box.texture_margin_left = m.x
+	box.texture_margin_top = m.y
+	box.texture_margin_right = m.z
+	box.texture_margin_bottom = m.w
+	if content_margins.x >= 0:
+		box.content_margin_left = content_margins.x
+		box.content_margin_top = content_margins.y
+		box.content_margin_right = content_margins.z
+		box.content_margin_bottom = content_margins.w
+	return box
+
+
 static func combat_tex(asset_name: String) -> Texture2D:
 	if _combat_textures.has(asset_name):
 		return _combat_textures[asset_name]
@@ -93,6 +146,8 @@ static func combat_tex(asset_name: String) -> Texture2D:
 	return texture
 
 
+## Minimal end-turn plate (ui_v2): one rust rounded plate. Hover and pressed only
+## tint the fill; the warm rim outline shows for hover/focus.
 static func apply_end_turn_button(button: Button) -> void:
 	apply_action_button(button, "primary", Vector4(24, 8, 24, 8))
 	var profile := button_feedback_profile("primary")
@@ -114,6 +169,38 @@ static func apply_end_turn_button(button: Button) -> void:
 	button.add_theme_color_override("font_color", COMBAT_HP_TEXT)
 	button.add_theme_color_override("font_hover_color", COMBAT_HP_TEXT)
 	button.add_theme_color_override("font_outline_color", COMBAT_HP_OUTLINE)
+
+
+## Gives `button` a ui_v2 base plate and rim outline (minimal chrome rule:
+## hover/pressed only tint the fill, the outline shows on hover/focus).
+## `ink_text` uses dark ink lettering for cream plates.
+static func apply_v2_button(
+	button: Button, base_rel: String, outline_rel: String,
+	content_margins: Vector4 = Vector4(-1, -1, -1, -1), ink_text: bool = false
+) -> void:
+	apply_action_button(button, "primary", content_margins)
+	var profile := button_feedback_profile("primary")
+	profile["base_texture"] = v2_tex(base_rel)
+	profile["outline_texture"] = v2_tex(outline_rel)
+	profile["patch_margins"] = V2_PATCH_MARGINS.get(base_rel, Vector4(24, 24, 24, 24))
+	profile["hover_scale"] = 1.0
+	profile["pressed_scale"] = 1.0
+	profile["hover_offset"] = Vector2(0, -2)
+	profile["pressed_offset"] = Vector2(0, 3)
+	profile["show_shadow"] = false
+	profile["outline_tint"] = Color.WHITE
+	profile["state_textures"] = {}
+	profile["face_tints"] = {
+		"normal": Color.WHITE,
+		"hover": Color(1.10, 1.08, 1.06),
+		"pressed": Color(0.84, 0.82, 0.80),
+		"disabled": Color(0.58, 0.58, 0.60),
+	}
+	button.get_node(NodePath(BUTTON_VISUALS_NAME)).configure(button, profile)
+	if ink_text:
+		for key in ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color", "font_hover_pressed_color"]:
+			button.add_theme_color_override(key, UI_V2_INK)
+		button.add_theme_constant_override("outline_size", 0)
 
 # ─── Shared original UI kit ────────────────────────────────────────────────────
 const KIT_DIR := "res://run_system/assets/images/ui/kit/"
@@ -352,6 +439,11 @@ static func icon_frame_style() -> StyleBoxTexture:
 	return state_box("normal", 3)
 
 
+## Text colours for content on the cream shared kit panels (panel_textured).
+const PANEL_INK = Color("#1a100a")
+const PANEL_INK_SOFT = Color("#5a4636")
+
+
 static func panel_textured(variant: String = "default") -> StyleBoxTexture:
 	var asset_name := "panel_soft_9slice" if variant == "soft" else "panel_hard_9slice"
 	return kit_box(asset_name, Vector4.ONE * 16)
@@ -470,6 +562,9 @@ static func style_slider(slider: HSlider, accent: Color = Color(0.82, 0.58, 0.25
 	slider.focus_mode = Control.FOCUS_NONE
 	var track := semantic_fill(GLASS_BG_DEEP)
 	track.set_corner_radius_all(4)
+	# Without a height the empty track vanishes and only the grabber shows.
+	track.content_margin_top = 4
+	track.content_margin_bottom = 4
 	slider.add_theme_stylebox_override("slider", track)
 	var fill := semantic_fill(accent)
 	fill.set_corner_radius_all(4)

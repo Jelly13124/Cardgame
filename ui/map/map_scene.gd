@@ -20,9 +20,14 @@ const SHOP_PACKED = preload("uid://dr8unxxfi0w51")  # res://ui/shop/merchant_roo
 const ROOMS = preload("uid://cxmgdj3654rrj")  # res://core/run/rooms.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
 const MAP_BACKGROUND_PATH = "res://run_system/assets/images/map/wasteland_route_map_pixel_bg.png"
-const REST_SITE_BACKGROUND_PATH = "res://run_system/assets/images/ui/rest/campfire_scene_1920.png"
-const REST_HEAL_ART_PATH = "res://run_system/assets/images/ui/rest/campfire_scene_1920.png"
-const REST_UPGRADE_ART_PATH = "res://run_system/assets/images/ui/forge/anvil_art.png"
+const REST_SITE_BACKGROUND_PATH = "res://run_system/assets/images/ui_v2/rest/rest_background.png"
+const REST_HEAL_ART_PATH = "res://run_system/assets/images/ui_v2/rest/choice_rest.png"
+const REST_UPGRADE_ART_PATH = "res://run_system/assets/images/ui_v2/rest/choice_forge.png"
+const REST_CHOICE_OUTLINE_PATH = "res://run_system/assets/images/ui_v2/rest/choice_outline.png"
+## Choice cards are drawn at 512x340 and shown at 3/4 size beside Bill, with
+## the title and detail on the dark night ground below each card.
+const REST_CARD_SIZE := Vector2(384, 255)
+const REST_COPY_HEIGHT := 96.0
 const REST_OPTION_SOURCE_SIZE := Vector2(256, 169)
 
 const POP_SECONDS := 0.2
@@ -665,24 +670,15 @@ func _open_rest_choice() -> void:
 	title.offset_bottom = RUN_TOP_BAR.BAR_HEIGHT + 74.0
 	title.add_theme_font_override("font", T_THEME.display_font(700))
 	title.add_theme_font_size_override("font_size", 28)
-	title.add_theme_color_override("font_color", Color(0.95, 0.77, 0.48))
+	title.add_theme_color_override("font_color", T_THEME.UI_V2_CREAM)
 	modal.add_child(title)
-
-	var rule := ColorRect.new()
-	rule.color = Color(0.92, 0.54, 0.15, 0.95)
-	rule.offset_left = 48.0
-	rule.offset_top = RUN_TOP_BAR.BAR_HEIGHT + 80.0
-	rule.offset_right = 300.0
-	rule.offset_bottom = RUN_TOP_BAR.BAR_HEIGHT + 82.0
-	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	modal.add_child(rule)
 
 	var heal_amount := mini(
 		ROOMS.rest_heal_amount(rm.max_health), rm.max_health - rm.current_health
 	)
 	var heal_btn := _rest_option(
-		Vector2(0.41, 0.40),
-		"icon_heart",
+		Vector2(0.47, 0.28),
+		"res://run_system/assets/images/ui_v2/icons/heart.png",
 		tr("UI_MAP_LEGEND_REST"),
 		tr("UI_ROUTE_HEAL").format({"n": heal_amount}) if heal_amount > 0 else tr("UI_ROUTE_HEAL_FULL"),
 		REST_HEAL_ART_PATH
@@ -698,7 +694,7 @@ func _open_rest_choice() -> void:
 	modal.add_child(heal_btn)
 
 	var upgrade_btn := _rest_option(
-		Vector2(0.59, 0.40),
+		Vector2(0.70, 0.28),
 		"icon_hammer",
 		tr("UI_MAP_REST_UPGRADE_BTN"),
 		tr("UI_UPGRADE_MODAL_HINT"),
@@ -734,10 +730,7 @@ func _open_rest_choice() -> void:
 	leave_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	leave_btn.add_theme_font_override("font", T_THEME.display_font(700))
 	leave_btn.add_theme_font_size_override("font_size", 22)
-	for state in ["normal", "hover", "pressed"]:
-		leave_btn.add_theme_stylebox_override(
-			state, T_THEME.ll_button("hover" if state == "hover" else "normal")
-		)
+	T_THEME.apply_action_button(leave_btn, "primary")
 	leave_btn.pressed.connect(
 		func():
 			modal.queue_free()
@@ -749,73 +742,74 @@ func _open_rest_choice() -> void:
 func _rest_option(
 	anchor: Vector2, icon_name: String, title_text: String, detail_text: String, art_path: String = ""
 ) -> Button:
+	# `anchor` is the top centre of the card; the copy sits under the card.
 	var button := Button.new()
 	button.anchor_left = anchor.x
 	button.anchor_top = anchor.y
 	button.anchor_right = anchor.x
 	button.anchor_bottom = anchor.y
-	button.offset_left = -123.5
-	button.offset_right = 123.5
-	button.offset_top = -81.5
-	button.offset_bottom = 81.5
-	button.custom_minimum_size = Vector2(247, 163)
+	button.offset_left = -REST_CARD_SIZE.x * 0.5
+	button.offset_right = REST_CARD_SIZE.x * 0.5
+	button.offset_top = 0.0
+	button.offset_bottom = REST_CARD_SIZE.y + REST_COPY_HEIGHT
+	button.custom_minimum_size = Vector2(REST_CARD_SIZE.x, REST_CARD_SIZE.y + REST_COPY_HEIGHT)
+	button.pivot_offset = Vector2(REST_CARD_SIZE.x * 0.5, REST_CARD_SIZE.y * 0.5)
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
-	button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
-	button.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
+	for state in ["normal", "hover", "pressed", "focus"]:  # bare-ok: theme state
+		button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
 
 	var art := TextureRect.new()
 	art.name = "RestChoiceArt"
-	art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	art.position = Vector2.ZERO
+	art.size = REST_CARD_SIZE
 	art.texture = _load_texture(art_path)
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	art.stretch_mode = TextureRect.STRETCH_SCALE
 	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(art)
 
-	var outline := Panel.new()
+	# Rim-only outline (ui_v2), shown only while hovered.
+	var outline := TextureRect.new()
 	outline.name = "RestChoiceOutline"
-	outline.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	outline.position = Vector2.ZERO
+	outline.size = REST_CARD_SIZE
+	outline.texture = _load_texture(REST_CHOICE_OUTLINE_PATH)
+	outline.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	outline.stretch_mode = TextureRect.STRETCH_SCALE
+	outline.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var outline_style := StyleBoxFlat.new()
-	outline_style.bg_color = Color(0.04, 0.025, 0.016, 0.20)
-	outline_style.border_color = Color(0.90, 0.72, 0.36, 0.92)
-	outline_style.set_border_width_all(3)
-	outline_style.set_corner_radius_all(7)
-	outline.add_theme_stylebox_override("panel", outline_style)
+	outline.visible = false
 	button.add_child(outline)
 
 	var row := HBoxContainer.new()
-	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	row.offset_left = 12.0
-	row.offset_top = 76.0
-	row.offset_right = -12.0
-	row.offset_bottom = -8.0
-	row.add_theme_constant_override("separation", 14)
+	row.position = Vector2(8.0, REST_CARD_SIZE.y + 12.0)
+	row.size = Vector2(REST_CARD_SIZE.x - 16.0, REST_COPY_HEIGHT - 12.0)
+	row.add_theme_constant_override("separation", 12)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(row)
 
 	button.mouse_entered.connect(
 		func():
+			outline.visible = true
 			var tween := button.create_tween()
 			tween.set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_OUT)
-			tween.tween_property(button, "scale", Vector2(1.1, 1.1), 0.05)
-			# Description follows the source art with an Expo-Out settle.
-			row.create_tween().set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT).tween_property(row, "position:y", 70.0, 0.8)
+			tween.tween_property(button, "scale", Vector2(1.04, 1.04), 0.06)
 	)
 	button.mouse_exited.connect(
 		func():
+			outline.visible = false
 			var tween := button.create_tween()
 			tween.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
-			tween.tween_property(button, "scale", Vector2.ONE, 1.0)
-			row.create_tween().set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT).tween_property(row, "position:y", 76.0, 0.8)
+			tween.tween_property(button, "scale", Vector2.ONE, 0.6)
 	)
 
 	var icon := TextureRect.new()
 	icon.name = "ChoiceIcon"
-	icon.texture = T_THEME.lightline_tex(icon_name)
-	icon.custom_minimum_size = Vector2(66, 66)
+	icon.texture = (
+		_load_texture(icon_name) if icon_name.begins_with("res://") else T_THEME.lightline_tex(icon_name)
+	)
+	icon.custom_minimum_size = Vector2(56, 56)
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -831,7 +825,7 @@ func _rest_option(
 	var title := Label.new()
 	title.text = title_text
 	T_THEME.style_display(title, 28, 700)
-	title.add_theme_color_override("font_color", T_THEME.TEXT_MAIN)
+	title.add_theme_color_override("font_color", T_THEME.UI_V2_CREAM)
 	copy.add_child(title)
 
 	var detail := Label.new()
@@ -839,6 +833,6 @@ func _rest_option(
 	detail.text = detail_text
 	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	T_THEME.style_display(detail, 20)
-	detail.add_theme_color_override("font_color", T_THEME.UI_BRASS_LIGHT)
+	detail.add_theme_color_override("font_color", Color("#d9c49a"))
 	copy.add_child(detail)
 	return button

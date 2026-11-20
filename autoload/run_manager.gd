@@ -475,10 +475,11 @@ func battle_rewards() -> Dictionary:
 	return {}
 
 
+## How many times the usual elite count the act map deals (ascension Dangerous Paths).
 func _elite_bias() -> float:
 	if has_ascension("base:a5_elite_bias"):
-		return float(ascension_param("base:a5_elite_bias", "roll_floor", 0.5))
-	return 0.0
+		return float(ascension_param("base:a5_elite_bias", "elite_mult", 1.6))
+	return 1.0
 
 
 # --- Encounter Selection ---

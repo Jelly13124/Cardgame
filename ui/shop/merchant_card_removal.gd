@@ -8,13 +8,14 @@ const T = preload("uid://dfcqloc58bvde")  # res://ui/common/theme/wasteland_them
 const MERCHANT_SLOT = preload("uid://b8xlpnq6b5osf")  # res://ui/shop/merchant_slot.gd
 
 const CARD_SCALE := 160.0 / 208.0
-const CARD_SERVICE_ICON_PATH := "res://run_system/assets/images/ui_kit_lightline/iconb_cards_fan.png"
+const CARD_SERVICE_ICON_PATH := "res://run_system/assets/images/ui_v2/shop/remove_service.png"
 
 var entry
 var picker: Control = null
 var _card_factory: Node
 var _price_content: Control
 var _price_label: Label
+var _price_button: Button
 
 
 static func create(p_entry, card_factory: Node) -> Button:
@@ -27,10 +28,15 @@ static func create(p_entry, card_factory: Node) -> Button:
 
 func _build() -> void:
 	name = "RemoveCardService"
-	custom_minimum_size = Vector2(180, 236)
+	custom_minimum_size = Vector2(180, 270)
 	focus_mode = Control.FOCUS_NONE
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	MERCHANT_SLOT.style_button(self, Color(0.67, 0.54, 0.34))
+	# The service is an object on the mat (ui_v2 burn barrel), not a framed plate.
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:  # bare-ok: theme state
+		add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	add_theme_color_override("font_disabled_color", T.TEXT_MAIN)
+	add_theme_color_override("font_outline_color", MERCHANT_SLOT.PRICE_INK)
+	add_theme_constant_override("outline_size", 10)
 	text = ""
 	var content := VBoxContainer.new()
 	content.name = "RemoveCardProduct"
@@ -41,26 +47,36 @@ func _build() -> void:
 	add_child(content)
 	var icon := TextureRect.new()
 	icon.name = "RemoveCardIcon"
-	icon.custom_minimum_size = Vector2(72, 72)
+	# Same aspect as the 300x360 barrel art, so anchors below match the art.
+	icon.custom_minimum_size = Vector2(175, 210)
 	icon.texture = load(CARD_SERVICE_ICON_PATH) if ResourceLoader.exists(CARD_SERVICE_ICON_PATH) else null
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content.add_child(icon)
+	# The title is painted on the barrel's blank cream sign.
 	var title := Label.new()
 	title.name = "RemoveCardTitle"
 	title.text = tr("UI_SHOP_REMOVE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	T.style_display(title, 20, 700)
-	title.add_theme_color_override("font_color", T.TEXT_MAIN)
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.anchor_left = 40.0 / 300.0
+	title.anchor_top = 280.0 / 360.0
+	title.anchor_right = 262.0 / 300.0
+	title.anchor_bottom = 345.0 / 360.0
+	T.style_display(title, 22, 700)
+	title.add_theme_color_override("font_color", T.PANEL_INK)
+	title.add_theme_constant_override("outline_size", 0)
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	content.add_child(title)
+	icon.add_child(title)
 	var price_button := Button.new()
 	price_button.name = "RemoveCardPrice"
-	price_button.custom_minimum_size = Vector2(164, 70)
+	price_button.custom_minimum_size = Vector2(140, 58)
+	price_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	price_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	price_button.focus_mode = Control.FOCUS_NONE
+	MERCHANT_SLOT.style_price_plain(price_button)
 	_price_content = T.centered_currency_button_content(price_button, 0, "caps", 39, 54, true, 4)
 	if _price_content.get_child_count() > 0:
 		var price_row := _price_content.get_child(0)
@@ -69,9 +85,10 @@ func _build() -> void:
 	if _price_label != null:
 		_price_label.add_theme_font_override("font", T.display_font(700))
 		_price_label.add_theme_font_size_override("font_size", 39)
-		_price_label.add_theme_color_override("font_outline_color", Color(0.08, 0.04, 0.02, 0.96))
+		_price_label.add_theme_color_override("font_outline_color", MERCHANT_SLOT.PRICE_INK)
 		_price_label.add_theme_constant_override("outline_size", 15)
 	content.add_child(price_button)
+	_price_button = price_button
 	pressed.connect(open_picker)
 	entry.entry_updated.connect(refresh)
 	entry.purchase_completed.connect(_on_purchase_completed)
@@ -95,9 +112,8 @@ func refresh() -> void:
 		_price_content.visible = not disabled
 	if _price_label != null and not disabled:
 		_price_label.text = str(entry.cost())
-	var color := Color(0.97, 0.85, 0.58) if entry.enough_gold() else MERCHANT_SLOT.PRICE_SHORT
 	if _price_label != null:
-		_price_label.add_theme_color_override("font_color", color)
+		_price_label.add_theme_color_override("font_color", MERCHANT_SLOT.price_color(entry.enough_gold()))
 
 
 func open_picker() -> void:

@@ -234,7 +234,8 @@ var enemy_container
 	scene.queue_free()
 
 
-## hit_spark_kinds: each hit kind throws its own burst; unknown kinds are shots.
+## hit_spark_kinds: each hit kind lands its own impact star; unknown kinds are
+## shots; emphasis lands a bigger star.
 func _test_hit_spark_kinds() -> void:
 	var shot = HIT_SPARK.spawn(self, Vector2.ZERO, "shot")
 	var blast = HIT_SPARK.spawn(self, Vector2.ZERO, "blast")
@@ -242,34 +243,31 @@ func _test_hit_spark_kinds() -> void:
 	var unknown = HIT_SPARK.spawn(self, Vector2.ZERO, "laser")
 	var heavy = HIT_SPARK.spawn(self, Vector2.ZERO, "shot", 1.5)
 	_expect(String(shot.get_parent().name).begins_with("CombatHitSpark_shot"), "a shot names its layer")
-	_expect(blast.amount > shot.amount, "a blast throws more sparks than a shot")
-	_expect(shock.color_ramp.get_color(0) != shot.color_ramp.get_color(0), "a shock has its own colour")
-	_expect(unknown.color_ramp.get_color(0) == shot.color_ramp.get_color(0) and unknown.amount == shot.amount, "an unknown kind falls back to a shot")
-	_expect(heavy.amount > shot.amount, "emphasis throws more sparks")
-	for sparks in [shot, blast, shock, unknown, heavy]:
-		_expect(sparks.emitting and sparks.one_shot, "sparks burst once")
-		sparks.get_parent().queue_free()
+	_expect(float(blast.get_meta("radius")) > float(shot.get_meta("radius")), "a blast lands a bigger star than a shot")
+	_expect(blast.get_node("Fill").polygon.size() > shot.get_node("Fill").polygon.size(), "a blast star has more spikes")
+	_expect(shock.get_node("Fill").color != shot.get_node("Fill").color, "a shock has its own colour")
+	_expect(unknown.get_node("Fill").color == shot.get_node("Fill").color
+		and is_equal_approx(float(unknown.get_meta("radius")), float(shot.get_meta("radius"))), "an unknown kind falls back to a shot")
+	_expect(float(heavy.get_meta("radius")) > float(shot.get_meta("radius")), "emphasis lands a bigger star")
+	for star in [shot, blast, shock, unknown, heavy]:
+		star.get_parent().queue_free()
 
 
-## hit_spark_layers: a burst is STS2's stack of textured, additive layers (a
-## centre glow, fast velocity-aligned streak sparks, small sparks, slow specks
-## and outward streaks), not bare dots; the sparks fly flat (no gravity).
+## hit_spark_layers: the impact is a flat comic star in the roster style: an
+## ink-outlined fill star, an accent star and ink speed marks, drawn without
+## additive glow, sitting on the contact point.
 func _test_hit_spark_layers() -> void:
-	var sparks = HIT_SPARK.spawn(self, Vector2(300, 300), "shot")
-	var layer: Node = sparks.get_parent()
-	for part in ["Glow", "Sparks", "SmallSparks", "Specks", "Streaks"]:
-		var node := layer.get_node_or_null(part) as CanvasItem
-		_expect(node != null, "a burst has a %s layer" % part)
-		if node == null:
-			continue
-		_expect(node.get("texture") is Texture2D, "the %s layer is textured" % part)
-		var mat := node.material as CanvasItemMaterial
-		_expect(mat != null and mat.blend_mode == CanvasItemMaterial.BLEND_MODE_ADD, "the %s layer blends additively" % part)
-		_expect((node as Node2D).position == Vector2(300, 300), "the %s layer sits on the contact point" % part)
-	_expect(layer.get_node("Sparks") == sparks, "spawn returns the main streak sparks")
-	_expect(sparks.particle_flag_align_y, "streak sparks point along their flight")
-	_expect(sparks.gravity == Vector2.ZERO, "streak sparks fly flat")
-	_expect(sparks.initial_velocity_min >= 1000.0, "streak sparks leave fast")
+	var star = HIT_SPARK.spawn(self, Vector2(300, 300), "shot")
+	var layer: Node = star.get_parent()
+	_expect(star.position == Vector2(300, 300), "the star sits on the contact point")
+	for part in ["Fill", "FillOutline", "Accent", "AccentOutline", "Mark0"]:
+		var node := star.get_node_or_null(part) as CanvasItem
+		_expect(node != null, "the star has a %s part" % part)
+		if node != null:
+			_expect(node.material == null, "the %s part is flat, not additive" % part)
+	var outline := star.get_node_or_null("FillOutline") as Line2D
+	_expect(outline != null and outline.default_color == HIT_SPARK.INK and outline.closed, "the star has a closed ink outline")
+	_expect(layer.get_children().filter(func(c): return c is CPUParticles2D or c is GPUParticles2D).is_empty(), "no particle sparks")
 	layer.queue_free()
 
 ## damage_number_flight: pops in red at 2.5x, launches up, falls, turns cream,

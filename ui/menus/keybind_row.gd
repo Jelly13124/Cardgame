@@ -16,7 +16,7 @@ func setup(action: String, label_text: String) -> void:
 	add_theme_constant_override("separation", 10)
 	var l := Label.new()
 	l.text = label_text
-	l.add_theme_color_override("font_color", T.TEXT_MAIN)
+	l.add_theme_color_override("font_color", T.PANEL_INK)
 	l.add_theme_font_size_override("font_size", 19)
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(l)

@@ -56,7 +56,7 @@ func _run() -> void:
 	# full-health run reads 已满血 instead of 回复0.
 	_expect(map.contains("RestChoiceOutline"), "rest choices have a dedicated outline layer")
 	_expect(map.contains("Vector2(256, 169)"), "rest option art keeps the 256x169 source contract")
-	_expect(map.contains("1.1") and map.contains("Expo"), "rest hover scales to 1.1 and recovers Expo-Out")
+	_expect(map.contains("Vector2(1.04, 1.04)") and map.contains("TRANS_EXPO"), "rest hover scales gently and recovers Expo-Out")
 	_expect(map.contains("UI_ROUTE_HEAL_FULL"), "full-health rest copy uses the explicit 已满血 key")
 	_expect(map.contains("RUN_TOP_BAR.BAR_HEIGHT"), "rest content starts below the complete top bar")
 

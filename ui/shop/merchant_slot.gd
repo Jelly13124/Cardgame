@@ -11,10 +11,15 @@ const CARD_ENTRY = preload("uid://c4olkv36j1puq")  # res://core/run/merchant/mer
 const RELIC_ENTRY = preload("uid://w22svgh4s36c")  # res://core/run/merchant/merchant_relic_entry.gd
 
 const PRICE := Color(1.0, 0.84, 0.18)
+## STS2 NMerchantSlot: the price is a bare coin and number lying on the rug
+## (54 px coin, 39 px digits, 15 px ink outline), no tag or plate behind it.
+const PRICE_INK := Color(0.08, 0.04, 0.02, 0.96)
 const PRICE_SHORT := Color(1.0, 0.36, 0.30)
 const SALE := Color(0.42, 0.92, 0.48)
 const TOOL_ACCENT := Color(0.38, 0.80, 0.93)
 const RELIC_ACCENT := Color(0.84, 0.68, 0.33)
+## Cards on the rug, near STS2's 0.65x of its 300x422 card (about 195 px wide).
+const CARD_SCALE := 0.95
 const RARITY_COLORS := {
 	"common": Color(0.85, 0.85, 0.85),
 	"uncommon": Color(0.45, 0.8, 1.0),
@@ -52,6 +57,8 @@ func _build() -> void:
 	sale_tag.add_theme_font_override("font", T.display_font(700))
 	sale_tag.add_theme_font_size_override("font_size", 18)
 	sale_tag.add_theme_color_override("font_color", SALE)
+	sale_tag.add_theme_color_override("font_outline_color", PRICE_INK)
+	sale_tag.add_theme_constant_override("outline_size", 8)
 	add_child(sale_tag)
 
 	buy_button = Button.new()
@@ -66,7 +73,7 @@ func _build() -> void:
 		_build_relic()
 	else:
 		_build_tool()
-	style_button(buy_button, _accent)
+	style_price_plain(buy_button)
 	_price_content = T.centered_currency_button_content(buy_button, 0, "caps", 39, 54, true, 4)
 	_price_content.name = "PriceContent"
 	if _price_content.get_child_count() > 0:
@@ -76,7 +83,7 @@ func _build() -> void:
 	if _price_label != null:
 		_price_label.add_theme_font_override("font", T.display_font(700))
 		_price_label.add_theme_font_size_override("font_size", 39)
-		_price_label.add_theme_color_override("font_outline_color", Color(0.08, 0.04, 0.02, 0.96))
+		_price_label.add_theme_color_override("font_outline_color", PRICE_INK)
 		_price_label.add_theme_constant_override("outline_size", 15)
 	# Keep the semantic price on the native button for accessibility and existing
 	# callers; the shared icon+amount child is the visible treatment.
@@ -100,13 +107,13 @@ func _on_resources_changed(_gold: int, _scrap: int) -> void:
 
 
 func _build_card() -> void:
-	custom_minimum_size = Vector2(170, 304)
+	custom_minimum_size = Vector2(202, 350)
 	var holder := Control.new()
-	holder.custom_minimum_size = Vector2(146, 202)
+	holder.custom_minimum_size = Vector2(CARD_SCALE * 208.0 + 4.0, CARD_SCALE * 286.0 + 4.0)
 	add_child(holder)
 	goods = holder
 	_accent = RARITY_COLORS.get(entry.rarity, PRICE)
-	buy_button.custom_minimum_size = Vector2(154, 70)
+	buy_button.custom_minimum_size = Vector2(154, 58)
 	holder.mouse_entered.connect(func(): _hover(holder, Vector2(1.04, 1.04)))
 	holder.mouse_exited.connect(func(): _hover(holder, Vector2.ONE))
 	_show_card()
@@ -128,14 +135,14 @@ func _show_card() -> void:
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.position = Vector2(2, 2)
 	card.pivot_offset = Vector2.ZERO
-	card.scale = Vector2.ONE * 0.69
+	card.scale = Vector2.ONE * CARD_SCALE
 	goods.add_child(card)
 
 
 func _build_relic() -> void:
-	custom_minimum_size = Vector2(170, 216)
+	custom_minimum_size = Vector2(140, 180)
 	var data: Dictionary = RunManager.get_relic_data(entry.relic_id)
-	var icon := _icon_button(str(data.get("icon", "")), Vector2(104, 104))
+	var icon := _icon_button(str(data.get("icon", "")), Vector2(96, 96))
 	var title := Settings.t(
 		"RELIC_%s_TITLE" % MODEL_ID.key_entry(entry.relic_id), str(data.get("title", entry.relic_id))
 	)
@@ -143,26 +150,25 @@ func _build_relic() -> void:
 		"RELIC_%s_DESC" % MODEL_ID.key_entry(entry.relic_id), str(data.get("description", ""))
 	)
 	Tooltip.bind_hover(icon, title if description.is_empty() else "%s\n%s" % [title, description])
-	for state in ["normal", "hover", "pressed", "focus"]:  # bare-ok: theme state
-		icon.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	style_bare(icon)
 	icon.pressed.connect(func(): entry.try_purchase())
 	add_child(icon)
 	goods = icon
 	_accent = RELIC_ACCENT
-	buy_button.custom_minimum_size = Vector2(154, 70)
+	buy_button.custom_minimum_size = Vector2(140, 58)
 
 
 func _build_tool() -> void:
-	custom_minimum_size = Vector2(120, 188)
+	custom_minimum_size = Vector2(120, 170)
 	var data: Dictionary = RunManager.get_tool_data(entry.tool_id)
-	var icon := _icon_button(str(data.get("icon", "")), Vector2(82, 90))
+	var icon := _icon_button(str(data.get("icon", "")), Vector2(84, 84))
 	Tooltip.bind_hover(icon, Settings.t("TOOL_%s_TITLE" % MODEL_ID.key_entry(entry.tool_id), str(data.get("title", entry.tool_id))))
-	style_button(icon, TOOL_ACCENT)
+	style_bare(icon)
 	icon.pressed.connect(func(): entry.try_purchase())
 	add_child(icon)
 	goods = icon
 	_accent = TOOL_ACCENT
-	buy_button.custom_minimum_size = Vector2(120, 70)
+	buy_button.custom_minimum_size = Vector2(120, 58)
 
 
 func _icon_button(icon_path: String, min_size: Vector2) -> Button:
@@ -173,6 +179,9 @@ func _icon_button(icon_path: String, min_size: Vector2) -> Button:
 	if icon_path != "" and ResourceLoader.exists(icon_path):
 		button.icon = load(icon_path)
 		button.expand_icon = true
+		button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button.mouse_entered.connect(func(): _hover(button, Vector2(1.12, 1.12)))
+	button.mouse_exited.connect(func(): _hover(button, Vector2.ONE))
 	return button
 
 
@@ -191,6 +200,9 @@ func refresh() -> void:
 	if not stocked:
 		buy_button.text = tr("UI_SHOP_SOLD")
 		buy_button.add_theme_color_override("font_color", T.TEXT_MAIN)
+		buy_button.add_theme_color_override("font_disabled_color", T.TEXT_MAIN)
+		buy_button.add_theme_color_override("font_outline_color", PRICE_INK)
+		buy_button.add_theme_constant_override("outline_size", 10)
 		if _price_content != null:
 			_price_content.visible = false
 		return
@@ -200,7 +212,7 @@ func refresh() -> void:
 		_price_content.visible = true
 	if _price_label != null:
 		_price_label.text = str(entry.cost())
-	var color := PRICE if entry.enough_gold() else PRICE_SHORT
+	var color := price_color(entry.enough_gold(), is_on_sale())
 	if _price_label != null:
 		_price_label.add_theme_color_override("font_color", color)
 		_price_label.add_theme_color_override("font_hover_color", color.lightened(0.3))
@@ -216,6 +228,25 @@ func _hover(node: Control, to: Vector2) -> void:
 	node.pivot_offset = node.size / 2.0
 	var tw := node.create_tween()
 	tw.tween_property(node, "scale", to, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+## The price colour: gold, green on sale, red when the player cannot afford it.
+static func price_color(affordable: bool, on_sale := false) -> Color:
+	if not affordable:
+		return PRICE_SHORT
+	return SALE if on_sale else PRICE
+
+
+## The price button draws nothing itself; only its coin and number show.
+static func style_price_plain(button: Button) -> void:
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:  # bare-ok: theme state
+		button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+
+
+## Relics and tools lie straight on the rug with no plate (STS2 NMerchantRelic).
+static func style_bare(button: Button) -> void:
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:  # bare-ok: theme state
+		button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
 
 
 static func style_button(button: Button, accent: Color) -> void:

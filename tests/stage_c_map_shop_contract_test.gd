@@ -40,7 +40,7 @@ func _run() -> void:
 
 	# Removal is a product in the same shelf language: icon, title and currency
 	# price are independent children, rather than a two-line bare button label.
-	_expect(removal.contains("iconb_cards_fan.png"), "removal slot has a card-service icon")
+	_expect(removal.contains("ui_v2/shop/remove_service.png"), "removal slot shows the ui_v2 burn-barrel service")
 	_expect(removal.contains("RemoveCardIcon"), "removal slot names its product icon")
 	_expect(removal.contains("RemoveCardTitle"), "removal slot names its product title")
 	_expect(removal.contains("centered_currency_button_content"), "removal price uses shared currency content")
