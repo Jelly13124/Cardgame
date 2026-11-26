@@ -1,7 +1,7 @@
 # Product Requirements Document
 **Project:** Unnamed Sci-Fi Roguelite Card Game  
 **Art Style:** Original 2D American-comic sci-fi western
-**Engine:** Godot 4.6  
+**Engine:** Godot 4.7  
 **Last Updated:** 2026-07-13
 
 ---
@@ -686,4 +686,6 @@ Function reference: `docs/building-screens-functions.md`.
 | P3 | Historical generated-sheet intermediates remain for traceability but are excluded from Godot import with `.gdignore`; current runtime references only production assets. |
 | ⚠️ | **The pre-2026-05-25 PixelLab key in `generate_enemy.ps1`** is in git history and should be rotated on the PixelLab side. The file now reads from `$env:PIXELLAB_API_KEY` but the old key remains exposed in historical commits. |
 | P3 | Windowed visual verification is still needed at every supported aspect ratio; enemy idle-breathe/full death-fade and a resolution dropdown remain polish candidates. |
+| P3 | **TODO: gamepad support (deferred, owner 2026-11-26).** The UI is mouse-first: buttons use `FOCUS_NONE`, screens grab no focus. Plan and checklist in `docs/conventions/ui-code.md` (Known violations, B). |
+| P3 | Every import (4.6.3 and 4.7.2) warns `UID duplicate detected between ui_map.csv and ui_loot.csv`, although their `.import` UIDs differ. No visible effect yet; find the source before release. |
 | ⚠️ | `steam_appid.txt` is still the test App ID `480`; set the real App ID and `application/config/store_url` before shipping the demo. |

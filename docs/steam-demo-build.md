@@ -46,9 +46,9 @@ application/file_description="Cap Hunter — Steam Demo"
 
 ## One-time setup
 
-1. **Install export templates** matching the engine (4.6):
+1. **Install export templates** matching the engine (4.7):
    - Editor → `Editor` → `Manage Export Templates…` → Download and Install,
-     **or** CLI: `Godot_v4.6-stable_win64.exe --headless --install-export-templates`.
+     **or** CLI: `Godot_v4.7.2-stable_win64.exe --headless --install-export-templates`.
 
 2. **Verify the preset** in the editor:
    - `Project` → `Export…` → select **Windows Desktop**.
@@ -92,7 +92,7 @@ from the same codebase. That full-game path is not part of the public demo scope
 When the demo gets a real Steam App ID and you want overlay / achievements /
 cloud saves:
 
-1. Add the **GodotSteam** GDExtension (`addons/godotsteam/`) — the prebuilt 4.6
+1. Add the **GodotSteam** GDExtension (`addons/godotsteam/`) — the prebuilt 4.7
    Windows binary, per its install guide. Keep the vendored addon unmodified.
 2. Replace `480` in `steam_appid.txt` with the real App ID.
 3. Add the real store page to `project.godot` so the result-screen CTA becomes

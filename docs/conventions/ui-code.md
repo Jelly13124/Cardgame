@@ -121,6 +121,19 @@ Combat rules no longer touch the UI (`core/combat/` runs headless since the phas
 
 **Reconsider:** when adding a non-UI consumer of these events (replay, analytics) or when a stale label bug appears.
 
+### B. No gamepad / keyboard focus yet (TODO, deferred)
+Every screen is mouse-first: buttons are built with `focus_mode = FOCUS_NONE`, no screen grabs focus when it opens, and overlays (settings, pause, slot picker, modals) are tracked with per-screen fields instead of one screen stack.
+
+**Why we ignore the rule:** the owner deferred gamepad support on 2026-11-26; it is a TODO for when there is time. The installed skills `godot-ui-control` and `game-ui-ux` describe the target.
+
+**When we pick it up:**
+1. Audit every screen first (main menu, settings, pause, map, battle, rewards, shop, rest, event, home base, deck views), then show the owner a staged plan before changing code.
+2. Give interactive controls a focus mode other than `FOCUS_NONE`, focus one control when a screen opens, and restore focus when an overlay closes.
+3. Set focus neighbours where containers do not give a sensible order (map nodes, hand cards, shop grid).
+4. Map `ui_accept` / `ui_cancel` and the battle actions (`end_turn`, pile views) to gamepad buttons in `autoload/settings.gd` key bindings.
+5. Add a headless test that every screen has a focused control after opening.
+6. Keep the current look: focus feedback reuses the hover/selection outline (see the UI gate in `AGENTS.md`).
+
 ---
 
 ## File-size discipline

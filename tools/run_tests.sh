@@ -42,7 +42,7 @@ fi
 
 GODOT="${GODOT_BIN:-$(command -v godot || true)}"
 if [ -z "$GODOT" ] || [ ! -e "$GODOT" ]; then
-  echo "Godot not found. Set GODOT_BIN to the Godot 4.6 executable." >&2
+  echo "Godot not found. Set GODOT_BIN to the Godot 4.7 executable." >&2
   exit 2
 fi
 

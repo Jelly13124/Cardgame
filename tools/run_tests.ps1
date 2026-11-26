@@ -2,7 +2,7 @@
 # expected-failure bookkeeping and the layering check.
 #
 # Usage (Windows PowerShell 5.1 or pwsh):
-#   $env:GODOT_BIN = "C:\path\to\Godot_v4.6.3-stable_win64_console.exe"
+#   $env:GODOT_BIN = "C:\path\to\Godot_v4.7.2-stable_win64_console.exe"
 #   powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_tests.ps1
 #   powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_tests.ps1 -Only "save_io*"
 #
@@ -31,7 +31,7 @@ function Resolve-Godot {
     }
     $cmd = Get-Command godot -ErrorAction SilentlyContinue
     if ($cmd) { return $cmd.Source }
-    Write-Host "Godot not found. Set GODOT_BIN to the Godot 4.6 console executable." -ForegroundColor Red
+    Write-Host "Godot not found. Set GODOT_BIN to the Godot 4.7 console executable." -ForegroundColor Red
     return $null
 }
 
