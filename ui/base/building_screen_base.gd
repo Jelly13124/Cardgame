@@ -31,9 +31,11 @@ const _POPOVER_POINTER_X := 88.0
 const TOK_PANEL_BG := Color(0.11, 0.08, 0.06, 0.92)
 const TOK_PANEL_BG_DARK := Color(0.075, 0.055, 0.040, 0.94)
 const TOK_LINE := Color(0.34, 0.28, 0.20, 0.85)
-const TOK_GOLD := Color(1.0, 0.86, 0.40)
-const TOK_TEXT := Color(0.92, 0.88, 0.76)
-const TOK_TEXT_DIM := Color(0.74, 0.68, 0.56)
+## Text on the cream paper panels (see WastelandTheme.PANEL_*).
+const TOK_GOLD := T.PANEL_HEADER
+const TOK_TEXT := T.PANEL_INK
+const TOK_TEXT_DIM := T.PANEL_INK_SOFT
+const TOK_INFO := Color("#1d5a66")  # teal status line (cyan read 1.05:1 on paper)
 const TOK_FONT_SECTION := 21
 const TOK_FONT_BODY := 17
 const TOK_FONT_DIM := 14
@@ -200,9 +202,7 @@ func _build_top_bar() -> Control:
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	name_label.add_theme_font_override("font", T.display_font(700))
 	name_label.add_theme_font_size_override("font_size", 34)
-	name_label.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
-	name_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.85))
-	name_label.add_theme_constant_override("outline_size", 2)
+	name_label.add_theme_color_override("font_color", T.PANEL_HEADER)
 	identity.add_child(name_label)
 
 	var right := HBoxContainer.new()
@@ -262,7 +262,7 @@ func _build_content(container: VBoxContainer) -> void:
 	var placeholder := Label.new()
 	placeholder.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	placeholder.text = tr("UI_BUILD_COMING")
-	_style_label(placeholder, 20, Color(0.8, 0.74, 0.6), 1)
+	_style_label(placeholder, 20, TOK_TEXT_DIM, 1)
 	container.add_child(placeholder)
 
 
@@ -325,7 +325,7 @@ func _rebuild_caps_row() -> void:
 	var amount_label := row.get_meta("amount_label") as Label
 	if is_instance_valid(amount_label):
 		amount_label.add_theme_font_override("font", T.display_font(700))
-		amount_label.add_theme_color_override("font_color", Color(0.94, 0.86, 0.68))
+		amount_label.add_theme_color_override("font_color", T.PANEL_INK)
 	_caps_host.add_child(row)
 
 
@@ -368,6 +368,9 @@ func _local_text(zh: String, en: String) -> String:
 func _style_label(label: Label, font_size: int, color: Color, outline_size: int) -> void:
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
+	# A dark outline only helps light text; around paper ink it just smears.
+	if color.get_luminance() < 0.5:
+		outline_size = 0
 	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.90))
 	label.add_theme_constant_override("outline_size", outline_size)
 

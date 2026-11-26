@@ -86,7 +86,7 @@ func _populate(container: VBoxContainer) -> void:
 	if tier <= 0:
 		var locked := Label.new()
 		locked.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_style_label(locked, 20, Color(0.86, 0.62, 0.5), 1)
+		_style_label(locked, 20, TOK_TEXT_DIM, 1)
 		locked.text = tr("UI_OUTPOST_LOCKED_BUILDING")
 		container.add_child(locked)
 		return
@@ -225,14 +225,13 @@ func _build_poster_card(bounty_id: String) -> Control:
 		art_center.add_child(_ll_icon("icon_poster", 84))
 	col.add_child(art)
 
-	# INK text — the card background is opaque parchment now, so poster copy
-	# reads dark-on-light (the old light-on-dark colors washed out).
+	# The poster frame is charcoal (2026-11 redraw), so its copy is cream.
 	var name_lbl := Label.new()
 	name_lbl.text = title
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_lbl.add_theme_font_size_override("font_size", 17)
-	name_lbl.add_theme_color_override("font_color", Color(0.18, 0.12, 0.07))
+	name_lbl.add_theme_color_override("font_color", T.UI_V2_CREAM)
 	col.add_child(name_lbl)
 
 	var obj_lbl := Label.new()
@@ -240,7 +239,7 @@ func _build_poster_card(bounty_id: String) -> Control:
 	obj_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	obj_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	obj_lbl.add_theme_font_size_override("font_size", 14)
-	obj_lbl.add_theme_color_override("font_color", Color(0.38, 0.29, 0.19))
+	obj_lbl.add_theme_color_override("font_color", Color("#c9b894"))
 	col.add_child(obj_lbl)
 
 	col.add_child(_build_reward_row(reward))
@@ -263,9 +262,8 @@ func _build_reward_row(reward: Dictionary) -> Control:
 		chip.add_child(_ll_icon("icon_%s" % cur, 26))
 		var amt_lbl := Label.new()
 		amt_lbl.text = str(amt)
-		# Ink on parchment (the poster card is opaque parchment now).
 		amt_lbl.add_theme_font_size_override("font_size", 16)
-		amt_lbl.add_theme_color_override("font_color", Color(0.24, 0.16, 0.09))
+		amt_lbl.add_theme_color_override("font_color", T.UI_V2_CREAM)
 		chip.add_child(amt_lbl)
 		row.add_child(chip)
 	var equip_tier := str(reward.get("equipment", ""))
@@ -278,9 +276,8 @@ func _build_reward_row(reward: Dictionary) -> Control:
 		Tooltip.bind_hover(tier_lbl, Settings.t("UI_BOUNTY_REWARD_EQUIP", "Equipment ({t})").format(
 			{"t": equip_tier}
 		))
-		# Ink on parchment (the poster card is opaque parchment now).
 		tier_lbl.add_theme_font_size_override("font_size", 16)
-		tier_lbl.add_theme_color_override("font_color", Color(0.18, 0.26, 0.38))
+		tier_lbl.add_theme_color_override("font_color", Color("#9ec8e8"))
 		echip.add_child(tier_lbl)
 		row.add_child(echip)
 	return row
@@ -383,7 +380,7 @@ func _fill_safe_cells(body: VBoxContainer) -> void:
 	# Current effective safe cells (base + upgrade level).
 	var now_lbl := Label.new()
 	now_lbl.text = tr("UI_OUTPOST_SAFE_CELLS_NOW").format({"n": MetaProgress.SAFE_CELLS_BASE + lvl})
-	_style_label(now_lbl, 16, Color(0.62, 0.90, 0.94), 1)
+	_style_label(now_lbl, 16, TOK_INFO, 1)
 	info.add_child(now_lbl)
 
 	# Cyan progress dots.
@@ -393,7 +390,7 @@ func _fill_safe_cells(body: VBoxContainer) -> void:
 	# Next effect + buy (or maxed).
 	var effect_lbl := Label.new()
 	effect_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(effect_lbl, 15, Color(0.94, 0.90, 0.78), 1)
+	_style_label(effect_lbl, 15, TOK_TEXT_DIM, 1)
 	info.add_child(effect_lbl)
 
 	# RIGHT: one decisive purchase/max state; the horizontal composition keeps
@@ -556,7 +553,7 @@ func _dots_row(cur: int, total: int) -> Control:
 		for i in range(total):
 			dots += "●" if i < cur else "○"
 		lbl.text = dots
-		_style_label(lbl, 16, Color(0.55, 0.88, 0.92), 1)
+		_style_label(lbl, 16, TOK_INFO, 1)
 		row.add_child(lbl)
 		return row
 	for i in range(total):
@@ -606,7 +603,7 @@ func _maxed_chip(plaque_size: Vector2 = Vector2(134, 57)) -> Control:
 	chip.add_child(center)
 	var lbl := Label.new()
 	lbl.text = tr("UI_HOME_UPGRADE_MAXED")
-	_style_label(lbl, 15, Color(0.72, 0.62, 0.42), 1)
+	_style_label(lbl, 15, TOK_TEXT, 1)
 	center.add_child(lbl)
 	return chip
 
@@ -640,7 +637,7 @@ func _add_lock_note(container: VBoxContainer, text: String) -> void:
 	var lbl := Label.new()
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_style_label(lbl, 17, Color(0.78, 0.6, 0.5), 1)
+	_style_label(lbl, 17, TOK_TEXT_DIM, 1)
 	lbl.text = text
 	row.add_child(lbl)
 	container.add_child(row)

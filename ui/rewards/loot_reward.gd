@@ -187,13 +187,13 @@ func _make_loot_row(loot: Dictionary) -> Button:
 	title.text = str(loot.get("title", tr("UI_LOOT_DEFAULT_TITLE")))
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	T.style_display(title, 28, 600)
-	title.add_theme_color_override("font_color", T.TEXT_MAIN)
+	title.add_theme_color_override("font_color", T.PANEL_INK)  # cream list plate
 	row.add_child(title)
 
 	var action := Label.new()
 	action.text = str(loot.get("action", tr("UI_LOOT_ACTION_CLAIM")))
 	T.style_display(action, 20, 700)
-	action.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
+	action.add_theme_color_override("font_color", T.PANEL_HEADER)
 	row.add_child(action)
 	return button
 
@@ -219,7 +219,7 @@ func _make_icon_well(icon_path: String) -> Control:
 		var fallback = Label.new()
 		fallback.text = "?"
 		fallback.add_theme_font_size_override("font_size", 34)
-		fallback.add_theme_color_override("font_color", T.TEXT_MAIN)
+		fallback.add_theme_color_override("font_color", T.PANEL_INK)
 		fallback.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		holder.add_child(fallback)
 

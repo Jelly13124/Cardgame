@@ -482,6 +482,14 @@ func _build_description(data: Dictionary, show_scaling_breakdown: bool = false) 
 	return CARD_DESCRIPTION.build(data, view)
 
 
+## A language switch re-renders the card. The text is built with tr() into plain
+## labels, so without this a card kept the language of its last refresh: a hand
+## refresh that ran under one locale left the card stale after the next switch.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED and is_node_ready():
+		update_display()
+
+
 ## Refreshes the card UI with current live data
 func update_display() -> void:
 	if not is_node_ready():

@@ -62,7 +62,7 @@ func _build() -> void:
 	_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_body.custom_minimum_size = Vector2(0, 110)
 	_body.add_theme_font_size_override("font_size", 21)
-	_body.add_theme_color_override("font_color", T.TEXT_MAIN)
+	_body.add_theme_color_override("font_color", T.PANEL_INK)
 	box.add_child(_body)
 
 	_next_btn = Button.new()

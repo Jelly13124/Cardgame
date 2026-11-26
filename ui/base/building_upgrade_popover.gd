@@ -78,7 +78,7 @@ func _build() -> void:
 	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_title_label.add_theme_font_override("font", T.display_font(700))
 	_title_label.add_theme_font_size_override("font_size", 24)
-	_title_label.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
+	_title_label.add_theme_color_override("font_color", T.PANEL_HEADER)
 	box.add_child(_title_label)
 
 	_tier_label = Label.new()
@@ -86,7 +86,7 @@ func _build() -> void:
 	_tier_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_tier_label.add_theme_font_override("font", T.display_font(700))
 	_tier_label.add_theme_font_size_override("font_size", 21)
-	_tier_label.add_theme_color_override("font_color", T.TEXT_MAIN)
+	_tier_label.add_theme_color_override("font_color", T.PANEL_INK)
 	box.add_child(_tier_label)
 
 	_unlock_label = Label.new()
@@ -94,7 +94,7 @@ func _build() -> void:
 	_unlock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_unlock_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_unlock_label.add_theme_font_size_override("font_size", 16)
-	_unlock_label.add_theme_color_override("font_color", T.TEXT_MAIN)
+	_unlock_label.add_theme_color_override("font_color", T.PANEL_INK)
 	box.add_child(_unlock_label)
 
 	var divider := HSeparator.new()
@@ -190,9 +190,9 @@ func _rebuild_currency_host(host: HBoxContainer, prefix: String, amount: int) ->
 	var prefix_label := Label.new()
 	prefix_label.text = prefix
 	prefix_label.add_theme_font_size_override("font_size", 15)
-	prefix_label.add_theme_color_override("font_color", T.TEXT_SECONDARY)
+	prefix_label.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
 	host.add_child(prefix_label)
-	var row := T.currency_row(amount, "scrap", 17, 19)
+	var row := T.currency_row(amount, "scrap", 17, 19, "", T.PANEL_INK)
 	_move_icon_first(row)
 	host.add_child(row)
 

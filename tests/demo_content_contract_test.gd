@@ -287,7 +287,7 @@ func _test_bill_identity() -> void:
 		var description := str(hero.get("description", "")).to_lower()
 		_expect(description.contains("robot"), "Bill is explicitly a damaged robot")
 		_expect(description.contains("western"), "Bill's surviving western memory is explicit")
-		_expect(hero.get("animate_idle", false) == true, "Bill uses the authored idle loop")
+		_expect(hero.get("animate_idle", true) == false, "Bill rests on one still pose that the code breathes")
 
 
 func _function_body(source: String, signature: String) -> String:

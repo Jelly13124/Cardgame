@@ -62,7 +62,7 @@ func init_window(title: String, win_size: Vector2, show_title_bar: bool = true) 
 	var lbl := Label.new()
 	lbl.text = title
 	lbl.add_theme_font_size_override("font_size", 20)
-	lbl.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
+	lbl.add_theme_color_override("font_color", T.PANEL_HEADER)
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_title_bar_box.add_child(lbl)
@@ -124,8 +124,8 @@ func add_title_button(text_or_icon: String, tooltip: String, cb: Callable) -> Bu
 	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	b.custom_minimum_size = Vector2(34, 0)
 	b.add_theme_font_size_override("font_size", 17)
-	b.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
-	b.add_theme_color_override("font_hover_color", T.UI_BRASS_LIGHT)
+	b.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
+	b.add_theme_color_override("font_hover_color", T.PANEL_HEADER)
 	b.pressed.connect(cb)
 	_title_bar_box.add_child(b)
 	if is_instance_valid(_close_btn):

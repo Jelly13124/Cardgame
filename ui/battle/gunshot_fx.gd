@@ -24,6 +24,8 @@ static func play(screen: Node, shooter: Node, target: Node) -> void:
 	if shot_vector.length_squared() > 0.001:
 		direction = shot_vector.normalized()
 
+	if shooter and shooter.has_method("play_recoil"):
+		shooter.play_recoil()
 	var muzzle = _make_fx_sprite(screen, MUZZLE_FLASH_TEX, origin, Vector2(0.62, 0.62))
 	muzzle.rotation = direction.angle()
 	var bullet = _make_fx_sprite(screen, BULLET_TEX, origin + direction * 18.0, Vector2(0.42, 0.42))

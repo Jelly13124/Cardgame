@@ -443,18 +443,17 @@ clean dark outlines, large readable shape blocks, sparse interior linework, broa
 two-to-three-value cel shading, unusual desert forms, salvage-tech silhouettes,
 dusty leather and brass, dented grey-green robot metal, patched red cloth, hoses,
 antennas, odd gadgets, and restrained cyan/orange/toxic accents. UI follows the
-lightweight UI07 language: thin ink-and-brass borders, charcoal fills, simple
-silhouettes, and minimal material noise.
+lightweight UI07 language: cream paper panels with ink outlines, rust primary and
+cream secondary buttons, dark ink text on paper, simple silhouettes, and minimal
+material noise.
 
 Do not use old project reference images as global style anchors. `docs/art/cowboy-bill-character-sheet-reference.png` may be used only to preserve Cowboy Bill's identity markers. Do not copy named show characters, logos, exact show-specific designs, franchise-specific props, or exact scene layouts.
 
-The approved production exemplars are Cowboy Bill's current runtime art and the new non-pixel backgrounds:
+The approved production exemplars are listed in `docs/project-rules.md`. The primary yardstick is the 20-enemy roster redrawn on 2026-11-10. The others are:
 
-- `battle_scene/assets/images/heroes/cowboy_bill/cowboy_bill_identity_offbeat_v2.png`
-- `battle_scene/assets/images/heroes/cowboy_bill/idle/`
-- `battle_scene/assets/images/heroes/cowboy_bill/attack/`
-- `battle_scene/assets/images/backgrounds/wasteland_battlefield_quiet_v6.png`
-- `run_system/assets/images/map/wasteland_route_map_sts2_bg.png`
+- `battle_scene/assets/images/heroes/cowboy_bill/idle/` and `attack/` (the round-head Bill of 2026-11-22)
+- `battle_scene/assets/images/backgrounds/wasteland_battlefield_act1_v1.png`
+- `run_system/assets/images/home/home_base_empty_bg.png`
 - `battle_scene/assets/images/cards/player/*.png` considered collectively as a varied reference set; the recurring majority look is authoritative, while isolated outliers or cards queued for rework are not
 
 The project is no longer a 128-pixel or pixel-art style. Any frame sizes in asset specs are engine output contracts only.
@@ -493,7 +492,7 @@ Final Godot assets are PNG files. Character and FX sheets can use a solid `#FF00
 4. Reference final PNGs from JSON or runtime loaders; gameplay must not reference raw sheets.
 
 - **Folder:** `enemies/{sprite_id}/{anim}/{sprite_id}_{anim}_{n}.png` or `heroes/{hero_id}/{anim}/{hero_id}_{anim}_{n}.png`.
-- **Frame counts:** Cowboy Bill holds `idle_0` as a static rest pose because hero data sets `animate_idle: false`; his attack uses 8 frames. Standard enemy attacks use 4 frames by default with `attack_0` as the static rest/wind-up pose. Enemy attacks must hit exactly once; repeated hit poses or multi-swing loops are rejected.
+- **Frame counts:** Cowboy Bill holds `idle_0` as a static rest pose because hero data sets `animate_idle: false`; code adds a breathing stretch. His attack has 8 frames, and the game plays frames 1–7 with the holds set in `player_view.gd` `ATTACK_FRAME_SECONDS`. Standard enemy attacks use 4 frames by default with `attack_0` as the static rest/wind-up pose. Enemy attacks must hit exactly once; repeated hit poses or multi-swing loops are rejected.
 - **Scale:** frames render at the size set by gameplay/UI code; scale does not change the art direction.
 - **Source sheets:** keep raw/generated sheets in `generated_sheet/` folders only.
 ---
@@ -666,6 +665,16 @@ Function reference: `docs/building-screens-functions.md`.
 - ✅ **Combat juice**: damage-scaled screen shake + per-hit sprite feedback (removed the ≥10 gate) + enemy-death thud + energy-orb pop.
 - ✅ **Content**: 3 elites (was 1; now picks one at random per node) — `chrome_warden` + `siege_breaker` reuse existing sprites with distinct movesets; Bill-pool card `lucky_streak` (crit-rate source); event-node frequency bumped. `wildfire` was removed, but Burn remains an enemy/status mechanic.
 - ✅ **Settings/QoL**: Battle Speed toggle (1×/1.5×/2×); one-shot legacy-save migration (`user://meta.json` → slot 1).
+- ✅ **Hit feel and pacing (2026-11-22)**:
+  - Bill's timed 7-frame attack with a recoil shove and a muzzle flash that follows the barrel;
+  - idle breathing;
+  - enemy damage on the hit frame;
+  - mailbox vsync with the frame rate capped at the screen refresh (this fixed the stutter);
+  - discarded cards no longer jump between piles during a reshuffle.
+- ✅ **UI readability pass (2026-11-24)**:
+  - ink text tokens on every cream panel;
+  - one cream secondary-button family beside the rust primary one;
+  - the small UI icons (top bar, menu, intents, currency, glyphs; map nodes keep their hand-drawn art) redrawn as SVG source in `tools/svg_icons/` (see `docs/conventions/ui-code.md`).
 
 ---
 

@@ -17,10 +17,8 @@ existing image that must be redrawn to match.
 The audit behind this brief is `docs/reviews/2026-11-14-ui-audit.md`. Its screenshots are
 in `.superpowers/ui-audit-2026-11-14/`, which is git-ignored and exists only locally.
 
-This brief replaces:
-
-- the open items in `docs/art/node-map-art-brief.md`;
-- the event and UI items in `docs/handoffs/2026-11-10-codex-art-handoff.md`.
+This brief replaced the earlier node-map brief and the 2026-11-10 art handoff. Both were
+deleted on 2026-11-24 once their remaining items were covered here.
 
 The hit-effect brief (`2026-11-14-codex-hit-vfx-handoff.md`) stays separate and still
 applies. Its flipbooks follow the style rules below as well.
@@ -192,11 +190,50 @@ reference is `docs/art/previews/ui-v2-style-tile-v2.png`.
   for UI chrome only.
 - The earlier review note asking for bolt dots on the end-turn button is withdrawn.
 
+### UI icons and buttons after the SVG pass (owner decisions, 2026-11-24)
+
+These decisions are newer than the rule above and win over it where they differ.
+
+- **Claude now draws the small UI icons as SVG** in `tools/svg_icons/gen.py`. A script
+  renders each one into the PNG path the game already loads. **Codex must not draw or
+  overwrite these files.** The next render would replace them anyway.
+  - `battle_scene/assets/images/ui/combat/intents/*.png` (section C intents; `multi.png`
+    is unused and was left alone)
+  - `run_system/assets/images/home/currency/{caps,scrap,core}.png` (the currency row of section J)
+  - `run_system/assets/images/ui_kit_lightline/` icons:
+    - `icon_heart`
+    - `icon_gear`
+    - `iconb_deck_stack`
+    - `iconb_clock`
+    - `iconb_cards_fan`
+    - `icon_lock`
+    - `glyph_close`
+    - `slider_knob` (the bottle-cap grabber on the settings sliders)
+  - `run_system/assets/images/ui_v2/icons/lock.png`
+  - `run_system/assets/images/ui/start_screen/icon_button_{settings,language}.png`
+- **The look the owner approved for those icons** (sample sheet, 2026-11-24):
+  - a wobbly ink outline that is heavier on the lower right;
+  - a flat fill plus one shadow tone, and at most one accent colour;
+  - at most one small dent, seam or patch per icon.
+
+  For these icons this replaces the "no inner detail" bullet above. Intents still use no
+  skulls and no faces.
+- **Map node icons keep their current hand-drawn art** (owner, 2026-11-25). An SVG
+  redraw was tried and rejected; do not redraw `map/nodes/*.png` unless the owner asks.
+- **The secondary button is cream, not charcoal.** `button_secondary_base.png` is a cream
+  plate (`#f4e8cb`) with a 4 px ink rim, drawn in the same shape as the primary button.
+  The game writes ink text on it. This replaces the row B description ("gunmetal plate")
+  and the B bullet below.
+- **Still Codex's work:**
+  - status and attribute icons;
+  - relics, equipment and the other item art;
+  - everything else in sections B–J that is not listed above.
+
 Row changes that follow from it:
 
 - **A:** `legend_card` is a plain parchment rounded rectangle.
 - **B:**
-  - the secondary button is charcoal with no brass rim;
+  - the secondary button is charcoal with no brass rim (replaced 2026-11-24: a cream plate, see above);
   - `panel_soft` is charcoal with no stitching;
   - the tooltip has no curl, but keeps its margins;
   - the banners are plain plates;
@@ -275,6 +312,7 @@ paths; you draw only the files below.
 | `node_octagon_visited.png` | 96×96 RGBA | The same octagon with a darker fill (around `#211a15`) and a thin dull rim. |
 | `node_octagon_unreachable.png` | 96×96 RGBA | The same octagon as a light warm-grey wash with a thin rim (the code also fades it to 45%). |
 | `node_octagon_boss.png` | 144×144 RGBA | A larger octagon with a heavier rim and rust spikes or bolts around the rim. |
+| `nodes/*.png` (8 files below) | — | **Keep the current art (owner, 2026-11-25); skip these rows.** |
 | `nodes/enemy.png` | 128×128 RGBA | Replaces the existing file at the same size. Revolver silhouette. Cream silhouette in the icon family. |
 | `nodes/elite.png` | 128×128 RGBA | Replaces the existing file. Horned skull. |
 | `nodes/rest.png` | 128×128 RGBA | Replaces the existing file. Campfire. |
@@ -301,8 +339,8 @@ margins, because the theme code applies those margins.
 |---|---|---|---|
 | `button_primary_base.png` | 320×96 RGBA | 20/16/20/16 | Main action button (Depart, Proceed, End turn style). Rust-red painted scrap plate, a bolt dot in two corners, one flat chipped patch, a dark ink rim. Plain centre. |
 | `button_primary_outline.png` | 320×96 RGBA | 20/16/20/16 | Only the rim of the same shape as a soft warm-white glow line, transparent elsewhere. The code shows it on hover. |
-| `button_secondary_base.png` | 320×96 RGBA | 20/16/20/16 | Secondary button: a gunmetal plate with a thin brass rim. |
-| `button_secondary_outline.png` | 320×96 RGBA | 20/16/20/16 | Rim glow for the secondary button, drawn the same way as the primary outline. |
+| `button_secondary_base.png` | 320×96 RGBA | 20/16/20/16 | Secondary button. **Done by Claude (2026-11-24):** a cream plate with an ink rim in the primary button's shape. Skip this row. |
+| `button_secondary_outline.png` | 320×96 RGBA | 20/16/20/16 | **Done by Claude (2026-11-24):** a copy of the primary outline. Skip this row. |
 | `panel_hard_9slice.png` | 96×96 RGBA | 24/24/24/24 | Paper panel: parchment with a torn edge and an outline border. This is the default for dialogs, reward lists and tutorials. |
 | `panel_soft_9slice.png` | 96×96 RGBA | 24/24/24/24 | Quieter panel: darker, worn canvas with a stitched border, for backgrounds behind lists. |
 | `tooltip_panel_9slice.png` | 320×96 RGBA | 55/43/91/32 | Small torn field-note paper. The right edge is slightly curled, which is why the right margin is wider. |
@@ -329,6 +367,7 @@ Drop-in files in `battle_scene/assets/images/ui/combat/`:
 | `hp_track.png` | 250×16 RGBA | The empty track: dark recessed fill. |
 | `hp_fill.png` | 250×16 RGBA | The current-HP fill: flat danger red with a one-tone highlight along the top. The code crops it horizontally. |
 | `hp_loss.png` | 250×16 RGBA | The recent-loss fill: pale bone-white with the same shape. |
+| `intents/*.png` (rows below) | — | **Done in SVG by Claude (2026-11-24); skip these rows.** |
 | `intents/attack_1.png` | 64×64 RGBA | Small attack (under 5 damage): a short simple red sword. The project rule is that attack intents are red swords; the three sizes differ in blade length and width only. |
 | `intents/attack_2.png` | 64×64 RGBA | Medium attack (5–19): a longer, broader red sword. |
 | `intents/attack_3.png` | 64×64 RGBA | Big attack (20 or more): a big heavy red sword with one small flat spark. |
@@ -462,7 +501,7 @@ player who knows the old icon should still recognise the new one.
 | `battle_scene/assets/images/ui/equipment/*.png` | 15 | 256×256 RGBA | **Real item art**, not slot ghosts (corrected 2026-11-17): the generic equipment pieces, one per slot and rarity (`<slot>_<common|uncommon|rare>`), e.g. `head_common` is the Scavenger Cowboy Hat. Shown in rewards, the shop and the backpack. Redraw each as a full-colour item exactly like the set equipment above, keeping the old file's subject. |
 | `battle_scene/assets/images/ui/status/*.png` | 19 | 64×64 RGBA | Status icons. Flat, with a 2 px outline and one accent colour each. Each must read at 32 px. |
 | `battle_scene/assets/images/ui/attributes/*.png` | 5 | 64×64 RGBA | The five attribute icons, drawn in the same family as the status icons. |
-| `run_system/assets/images/home/currency/*.png` | 3 | 128×128 RGBA | Currency icons. The caps icon must match `ui_v2/icons/caps.png`. |
+| `run_system/assets/images/home/currency/*.png` | 3 | 128×128 RGBA | **Done in SVG by Claude (2026-11-24); skip.** |
 | `run_system/assets/images/home/buildings_runtime/*.png` | 18 | Keep each file's current size | Six buildings, each with three files: normal, `_hover` and `_pressed`. Redraw the normal file. The hover and pressed files are the same drawing, with the hover a little brighter and the pressed a little darker and shifted down 2 px. These are much simpler than the current gritty versions, each with about five details. |
 | `run_system/assets/images/home/buildings/*.png` | 5 | 128×128 RGBA | Small building icons matching the redrawn buildings. Leave `buildings_preview.png` alone. |
 | `run_system/assets/images/shop/shopkeeper.png` | 1 | 768×1024 RGBA | The robot merchant, redrawn as a roster-style character: stocky, a big hat and poncho, one lantern, a few trinkets. It currently carries dozens of props; cut that to about five. |

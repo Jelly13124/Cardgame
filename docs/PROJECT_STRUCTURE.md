@@ -2,7 +2,7 @@
 
 This guide provides a precise map of the codebase for adjusting the UI, logic, and assets.
 
-**Last audited:** 2026-11-13. Runtime code and JSON remain authoritative when
+**Last audited:** 2026-11-24. Runtime code and JSON remain authoritative when
 this map falls behind implementation.
 
 ## Documentation
@@ -53,6 +53,12 @@ Code layering, the target directory structure and the uid reference rule are in
 *   **Main Scene**: `ui/battle/battle_screen.tscn`
     *   *The root scene where nodes for the Player, Enemies, and Deck are positioned.*
 *   **Battle Screen (room)**: `ui/battle/battle_screen.gd` — views, input, targeting, HUD and post-combat routing; animations through `ui/battle/battle_presenter.gd`, card nodes mirrored from the piles by `ui/battle/hand_view.gd`, creature views `ui/battle/{player_view,enemy_view}.gd`
+    *   *`player_view.gd` owns the hero's motion:*
+        *   *the timed attack frames (`ATTACK_FRAME_SECONDS`; the attack plays frames 1–7);*
+        *   *the idle breathing stretch, pivoted on the feet;*
+        *   *the recoil shove that `gunshot_fx.gd` triggers on the firing frame;*
+        *   *the muzzle position, which follows the barrel tip of each frame.*
+    *   *`battle_presenter.gd` applies an enemy attack's damage on its hit frame (`enemy_view.attack_contact`), not when the animation ends.*
     *   *Handles high-level battle transitions and UI refreshes when stats change.*
 *   **Hand and creature layout (STS2 values)**: `ui/battle/sts2_hand.gd` (hand slot positions, angles and scale, hover lift and neighbour push; cards drawn at STS2's 300 px width) and `ui/battle/sts2_creature_layout.gd` (hero and enemy positions, crowded-field shrink), applied by `battle_screen.gd` `layout_creatures()`
 *   **Targeting**: `ui/battle/targeting_arrow.gd`
@@ -91,7 +97,7 @@ Code layering, the target directory structure and the uid reference rule are in
 ### 🎒 Equipment System
 *   **Data**: `content/equipment/{item_id}.json` (**15 generic shells** `gear_{slot}_{tier}` sharing art by slot×rarity + **15 set pieces**, 3 sets × 5) + `content/equipment_sets/{set_id}.json` (3 sets). Rarity is **5-tier** (`core/meta/affixes.gd`): common/uncommon/rare/set/cursed roll 1/2/3/3/3 affixes, **each guaranteeing 1 attribute affix** — `set` = a piece carrying a `set_id` (green, grants set bonuses), `cursed` = 3 positives + 1 curse affix (red). Drops route through `RunManager.roll_shell_drop(tier)` (~15% a set piece, else a shell; cursed at Ascension ≥ 3 or via the forge). Instances roll affixes at drop time (`make_equip_instance`).
 *   **Set Effect System**: `core/listeners/equipment_set.gd` (a combat listener) — snapshots active tier effects at battle start and emits compact local trigger callouts. The demo reward track in `RunManager` offers three claim-gated pieces from one featured set at floors 3/6/9.
-*   **Equipment Icon Component**: `ui/common/equipment_icon.gd` — tile colored by **rarity** (common/uncommon/rare/set/cursed → graphite / steel-blue / gold / green / red) with a slot PNG icon (slot-letter fallback when the PNG is missing).
+*   **Equipment Icon Component**: `ui/common/equipment_icon.gd`. Each tile is coloured by **rarity** (`RARITY_COLORS`: common/uncommon/rare/set/cursed → graphite / steel-blue / gold / green / red) and shows a slot PNG icon, with a slot-letter fallback when the PNG is missing. Rarity text on cream paper uses the darker `PAPER_RARITY_COLORS` through `paper_rarity_color()`.
 *   **Character Window**: `ui/windows/character_window.gd` — draggable window (press **i** anywhere, or the right-edge Character image button at base), **Diablo-4 layout**: paper-doll center, equip slots flanking (head/chest/hands left; weapon/accessory + tools right), backpack grid below + sets/relics/stats. Modes: `base` (backpack = next-run carry list `pending_loadout`; slots = `pending_equipped`), `map` (editable), `battle` (read-only). **Stash Window**: `ui/windows/stash_window.gd` — separate 25-slot storage window (D4 model): drag stash→backpack to carry, backpack/slot→stash to store; equip slots reject direct stash drags. Window infra: `ui/windows/draggable_window.gd` + `ui/windows/window_layer.gd` (z-order, ESC closes topmost).
 *   **Inventory Full Modal**: `ui/common/inventory_full_modal.gd` — discard-or-skip flow when bag overflows.
 
@@ -102,11 +108,11 @@ Code layering, the target directory structure and the uid reference rule are in
 ### 🏃 Run Management
 *   **Run Shape**: the current public demo is **one 12-floor act** with a fixed `rust_titan` boss (`DEMO_BUILD = true`, `DEMO_MAX_ACTS = 1`); defeating it is a final victory with no extract-vs-push screen. The same manager retains the planned 3-act architecture behind `DEMO_BUILD = false`. Loot lives in a **20-cell backpack** where Gold / Scrap / equipment compete for space. On success only currencies bank automatically; gear returns to the independently persisted base backpack/slots (`pending_loadout` / `pending_equipped`). On death only safe-cell gear survives. `MetaProgress.stash` is permanent storage changed only by explicit player transfers.
 *   **Global State**: `autoload/run_manager.gd` (autoload)
-    *   *Gold, deck, equipped items, inventory, base_attributes, player_attributes (computed), relics, tools (**equipped** in `tool_inventory`, **held** in backpack `{"kind":"tool"}` cells), XP/level, map state. Public API: `add_card_to_deck`, `remove_card_from_deck_by_uid`, `gain_xp` / `xp_to_next`, `equip_to_slot`, `unequip_slot`, `add_to_inventory`, `discard_from_inventory`, `add_tool_to_backpack` / `equip_tool_from_backpack` / `unequip_tool` / `unequip_tool_to_backpack` / `tool_slots` (1 base + Outpost + relic), `purchase_*` (shop-gated wrappers), `recompute_attributes`, `get_active_set_tiers`. Normal encounter constants are explicit four-band rosters: `ENCOUNTER_POOLS_OPENING` (combined floor 0–1), EARLY (2–3), MID (4–7), LATE (8+), validated against role and base-HP budgets at startup. `start_new_run` applies Ascension, Clinic HP perks, Command Center Caps, reroll tokens, and backpack capacity from MetaProgress.*
+    *   *Gold, deck, equipped items, inventory, base_attributes, player_attributes (computed), relics, tools (**equipped** in `tool_inventory`, **held** in backpack `{"kind":"tool"}` cells), XP/level, map state. Public API: `add_card_to_deck`, `remove_card_from_deck_by_uid`, `gain_xp` / `xp_to_next`, `equip_to_slot`, `unequip_slot`, `add_to_inventory`, `discard_from_inventory`, `add_tool_to_backpack` / `equip_tool_from_backpack` / `unequip_tool` / `unequip_tool_to_backpack` / `tool_slots` (1 base + Outpost + relic), `purchase_*` (shop-gated wrappers), `recompute_attributes`, `get_active_set_tiers`. Normal encounters come from each act's `encounters` bands in `content/acts/<act>.json`. Act 1 has four: `opening` (floors 0–1), `early` (to 3), `mid` and `late`. `DataValidator` checks every band against role and base-HP budgets (`ENCOUNTER_BUDGETS`) at startup. `start_new_run` applies Ascension, Clinic HP perks, Command Center Caps, reroll tokens, and backpack capacity from MetaProgress.*
 
 ### 🏠 Base Building (Meta-Progression)
 *   **Save files**: `core/save/save_io.gd` — every save (profile, in-run, settings) is written atomically through `SaveIO` with two rotating backups (`.bak1`/`.bak2`); an unreadable file is kept as `.corrupt-<time>` and the newest readable backup is used.
-*   **UI-independent autoloads**: `autoload/` — `Settings`, `AudioManager`, `Tooltip`, `SceneTransition`.
+*   **UI-independent autoloads**: `autoload/` — `Settings`, `AudioManager`, `Tooltip`, `SceneTransition`. `Settings` also sets frame pacing at startup: mailbox vsync, with `max_fps` capped at the screen refresh rate. Plain vsync stuttered on a 165 Hz panel.
 *   **Persistent State**: `autoload/meta_progress.gd` (autoload, owns `user://slot_<n>/meta.json` — 3 save slots; imports the pre-slot global `user://meta.json` into slot 1 once) — **two currencies** (**Caps / Scrap**) + `buildings{}` + `BUILDING_DEFS` + pure-storage `stash` + the owned base backpack/slots serialized as `base_loadout` / `base_equipped`. Storage transfers use `move_stash_to_base_backpack`, `move_base_backpack_to_stash`, and `move_base_slot_to_stash` atomically. Building unlocks/tier-ups spend Scrap.
 *   **Bounty State (in MetaProgress)**: save fields `active_bounties` (held contracts `[{id, progress}]`, max 3) / `bounty_shelf` + `bounty_shelf_date` (today's **outpost** shelf) / `cards_seen`. `bounty_progress_add` settles instantly: Caps/Scrap pay directly, while equipment rolls into the active run backpack (owned base backpack fallback when out of run), never the stash. Signals: `bounties_changed`, `bounty_completed`.
 *   **In-run bounty hooks**: typed run events (`RunManager.enemy_killed`, `combat_won`, `card_played`, `gold_earned`, `card_upgraded`, `run_extracted`) heard by the bounty tracker run listener (`core/listeners/bounty_tracker.gd`) — no-op unless a run is active; emit sites: every card play + elite/boss kill (`ui/battle/battle_screen.gd`; the tracker counts only attacks), any kill (`battle_screen._on_enemy_died`), gold entering the backpack (`run_manager.add_gold` — starting gold / save-restores don't route through it), extraction (`run_manager._teardown_run`), card upgrade (`RunManager.upgrade_card`). Objective kinds live in the tracker's `OBJECTIVES`, which the validator uses.
@@ -125,9 +131,23 @@ Code layering, the target directory structure and the uid reference rule are in
 *   **Hero Sprites (PNG/Animated)**: `battle_scene/assets/images/heroes/{sprite_id}/` (e.g. `cowboy_bill/`; the active hero's `sprite_id` comes from its `content/characters/` JSON)
 *   **Enemy Sprites (PNG/Animated)**: `battle_scene/assets/images/enemies/`
 *   **Battle Backgrounds**: `battle_scene/assets/images/backgrounds/` (active Act 1: `wasteland_battlefield_act1_v1.png`; later acts remain separate)
-*   **Map Art and Node Icons**: `run_system/assets/images/map/` (active background: `wasteland_route_map_pixel_bg.png`)
+*   **Map Art and Node Icons**: `run_system/assets/images/map/`
+    *   *`node_map_view.gd` draws `route_parchment.png`.*
+    *   *`wasteland_route_map_pixel_bg.png` is only the fallback when the parchment is missing.*
+    *   *The node icons in `nodes/` are hand-drawn PNGs and stay out of the SVG icon pipeline (owner, 2026-11-25).*
 *   **Relic Icons**: `run_system/assets/images/relics/`
-*   **Lightline UI Kit (PNG)**: `run_system/assets/images/ui_kit_lightline/` — the base-building UI component library sliced from source sheets: **89 named pieces** (`icon_*` / `panel_*` / `btn_*` / `bar_*` / `card_*` / `slot_*` / `row_*` …) + `manifest.json` (per-piece 9-slice margins). Consumed through `wasteland_theme.gd`'s `ll_*` StyleBox hooks (`ll_panel` / `ll_titlebar` / `ll_section` / `ll_inset` / `ll_button` / `ll_button_olive` / `ll_slot`) — every lookup falls back to a programmatic StyleBox so a missing piece never crashes. Raw uncut sheets: `run_system/assets/images/ui_kit_imagegen_v2_lightline/`.
+*   **UI icons (SVG source)**: `tools/svg_icons/gen.py` draws the following icons, and `tools/svg_icons/rasterize.gd` renders them into their existing PNG paths. The target list is `MANIFEST` in `gen.py`, and the workflow is in `docs/conventions/ui-code.md` rule 6.
+    *   *top bar: heart, deck, gear, clock;*
+    *   *main menu: the globe and settings buttons;*
+    *   *battle: the enemy intents and the pile icons;*
+    *   *the caps, scrap and core currency;*
+    *   *the card-reward fan;*
+    *   *the lock and close glyphs;*
+    *   *the bottle-cap knob on the settings sliders.*
+*   **Shared UI kit (PNG)**: `run_system/assets/images/ui/kit/`. Holds the nine-slice panels and the two button families:
+    *   *`button_primary_*` is the rust plate;*
+    *   *`button_secondary_*` is the cream plate with an ink rim.*
+*   **Lightline UI Kit (PNG)**: `run_system/assets/images/ui_kit_lightline/` — the base-building UI component library sliced from source sheets: **the named pieces** (`icon_*` / `panel_*` / `btn_*` / `bar_*` / `card_*` / `slot_*` / `row_*` …) + `manifest.json` (per-piece 9-slice margins). Consumed through `wasteland_theme.gd`'s `ll_*` StyleBox hooks (`ll_panel` / `ll_titlebar` / `ll_section` / `ll_inset` / `ll_button` / `ll_button_olive` / `ll_slot`) — every lookup falls back to a programmatic StyleBox so a missing piece never crashes. Raw uncut sheets: `run_system/assets/images/ui_kit_imagegen_v2_lightline/`.
 
 ---
 

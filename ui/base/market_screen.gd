@@ -172,7 +172,7 @@ func _build_tool_section() -> Control:
 	if _tool_stock.is_empty():
 		var empty := Label.new()
 		empty.text = tr("UI_MARKET_TOOL_EMPTY")
-		_style_label(empty, 18, Color(0.8, 0.74, 0.6), 1)
+		_style_label(empty, 18, TOK_TEXT_DIM, 1)
 		body.add_child(empty)
 		return section
 
@@ -254,7 +254,7 @@ func _build_tool_tile(tool_id: String) -> Control:
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(name_lbl, 18, Color(0.95, 0.70, 0.24), 1)
+	_style_label(name_lbl, 18, TOK_TEXT, 1)
 	col.add_child(name_lbl)
 
 	var buy_btn := _price_footer(MARKET.tool_price(), 175.0, 47.0)
@@ -382,7 +382,7 @@ func _build_equip_tile(entry: Dictionary) -> Control:
 	kind_lbl.custom_minimum_size = Vector2(0, 43)
 	kind_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	kind_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_style_label(kind_lbl, 18, RARITY_COLORS.get(rarity, Color(0.95, 0.92, 0.85)), 1)
+	_style_label(kind_lbl, 18, TOK_TEXT, 1)  # ink reads on every rarity fill
 	col.add_child(kind_lbl)
 
 	var buy_btn := _price_footer(price, 184.0, 50.0)
@@ -661,7 +661,7 @@ func _locked_section(
 	var lbl := Label.new()
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_style_label(lbl, 17, Color(0.78, 0.6, 0.5), 1)
+	_style_label(lbl, 17, TOK_TEXT_DIM, 1)
 	lbl.text = tr("UI_MARKET_LOCKED_HINT").format({"t": tier})
 	row.add_child(lbl)
 	body.add_child(row)
@@ -715,17 +715,13 @@ func _orange_button(text: String) -> Button:
 	return btn
 
 
-## An olive lightline secondary button (refresh / swap actions), cream text.
+## A cream secondary button (refresh / swap actions), ink text.
 func _olive_button(text: String) -> Button:
 	var btn := Button.new()
 	btn.text = text
 	btn.custom_minimum_size = Vector2(0, 40)
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.add_theme_font_size_override("font_size", 16)
-	btn.add_theme_color_override("font_color", Color(0.93, 0.90, 0.78))
-	btn.add_theme_color_override("font_hover_color", Color(1.0, 0.97, 0.86))
-	btn.add_theme_color_override("font_pressed_color", Color(0.80, 0.77, 0.66))
-	btn.add_theme_color_override("font_disabled_color", Color(0.55, 0.52, 0.44, 0.9))
 	T.apply_concept_price_button(btn, "olive")
 	return btn
 
@@ -744,7 +740,7 @@ func _amount_field(amount: int) -> Control:
 	lbl.text = str(amount)
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_style_label(lbl, 18, PRICE_COLOR, 1)
+	_style_label(lbl, 18, TOK_TEXT, 1)
 	field.add_child(lbl)
 	return field
 

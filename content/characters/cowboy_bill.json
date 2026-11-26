@@ -2,7 +2,7 @@
   "id": "cowboy_bill",
   "name": "Cowboy Bill",
   "sprite_id": "cowboy_bill",
-  "animate_idle": true,
+  "animate_idle": false,
   "card_ui_skin": "cowboy_bill",
   "card_pool": "cowboy",
   "relic_pool": "cowboy",

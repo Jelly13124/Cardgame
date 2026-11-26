@@ -375,11 +375,12 @@ static func apply_dropdown_theme(option: OptionButton) -> void:
 	for state in ["normal", "hover", "pressed", "disabled"]:
 		option.add_theme_stylebox_override(state, dropdown_box(state))
 	option.add_theme_icon_override("arrow", kit_tex("dropdown_arrow"))
-	option.add_theme_color_override("font_color", TEXT_MAIN)
-	option.add_theme_color_override("font_hover_color", SAND_LIGHT)
-	option.add_theme_color_override("font_pressed_color", SAND_LIGHT)
+	# dropdown_9slice is cream paper: ink text.
+	option.add_theme_color_override("font_color", PANEL_INK)
+	option.add_theme_color_override("font_hover_color", PANEL_HEADER)
+	option.add_theme_color_override("font_pressed_color", PANEL_INK)
 	var popup := option.get_popup()
-	popup.add_theme_color_override("font_hover_color", TEXT_MAIN)
+	popup.add_theme_color_override("font_hover_color", PANEL_INK)  # cream hover plate
 	var popup_styles := {
 		"panel": kit_box("panel_hard_9slice"),
 		"hover": kit_box("button_secondary_hover"),
@@ -440,8 +441,11 @@ static func icon_frame_style() -> StyleBoxTexture:
 
 
 ## Text colours for content on the cream shared kit panels (panel_textured).
+## Contrast on the #e8d6b0 paper: ink 13:1, soft 6.2:1, header rust 5.7:1.
+## The gold/cream TEXT_MAIN / UI_HEADER_GOLD family is for dark surfaces only.
 const PANEL_INK = Color("#1a100a")
 const PANEL_INK_SOFT = Color("#5a4636")
+const PANEL_HEADER = Color("#8a3220")
 
 
 static func panel_textured(variant: String = "default") -> StyleBoxTexture:
@@ -519,15 +523,25 @@ static func apply_action_button(
 		empty.content_margin_right = content_margins.z
 		empty.content_margin_bottom = content_margins.w
 		button.add_theme_stylebox_override(state, empty)
-	button.add_theme_color_override("font_color", TEXT_MAIN)
-	var highlighted_text := UI_HEADER_GOLD if profile["role"] == "menu" else SAND_LIGHT
-	button.add_theme_color_override("font_hover_color", highlighted_text)
-	button.add_theme_color_override("font_focus_color", highlighted_text)
-	button.add_theme_color_override("font_pressed_color", SAND_LIGHT)
-	button.add_theme_color_override("font_hover_pressed_color", SAND_LIGHT)
-	button.add_theme_color_override("font_disabled_color", BUTTON_DISABLED_TEXT)
+	if profile["role"] in ["secondary", "list"]:
+		# Cream paper plate (button_secondary_base): ink text, no outline.
+		button.add_theme_color_override("font_color", PANEL_INK)
+		button.add_theme_color_override("font_hover_color", PANEL_HEADER)
+		button.add_theme_color_override("font_focus_color", PANEL_HEADER)
+		button.add_theme_color_override("font_pressed_color", PANEL_INK)
+		button.add_theme_color_override("font_hover_pressed_color", PANEL_INK)
+		button.add_theme_color_override("font_disabled_color", PANEL_INK_SOFT)
+		button.add_theme_constant_override("outline_size", 0)
+	else:
+		button.add_theme_color_override("font_color", TEXT_MAIN)
+		var highlighted_text := UI_HEADER_GOLD if profile["role"] == "menu" else SAND_LIGHT
+		button.add_theme_color_override("font_hover_color", highlighted_text)
+		button.add_theme_color_override("font_focus_color", highlighted_text)
+		button.add_theme_color_override("font_pressed_color", SAND_LIGHT)
+		button.add_theme_color_override("font_hover_pressed_color", SAND_LIGHT)
+		button.add_theme_color_override("font_disabled_color", BUTTON_DISABLED_TEXT)
+		button.add_theme_constant_override("outline_size", int(profile["font_outline_size"]))
 	button.add_theme_color_override("font_outline_color", BUTTON_FONT_OUTLINE)
-	button.add_theme_constant_override("outline_size", int(profile["font_outline_size"]))
 	var visuals := button.get_node_or_null(NodePath(BUTTON_VISUALS_NAME))
 	if visuals == null:
 		visuals = BUTTON_FEEDBACK.new()
@@ -570,6 +584,29 @@ static func style_slider(slider: HSlider, accent: Color = Color(0.82, 0.58, 0.25
 	fill.set_corner_radius_all(4)
 	slider.add_theme_stylebox_override("grabber_area", fill)
 	slider.add_theme_stylebox_override("grabber_area_highlight", fill)
+
+
+## Slider for cream paper panels: a faint ink groove, a rust fill and a bottle-cap
+## knob (slider_knob, drawn in tools/svg_icons/gen.py).
+static func style_paper_slider(slider: HSlider) -> void:
+	slider.focus_mode = Control.FOCUS_NONE
+	var groove := semantic_fill(Color(PANEL_INK, 0.16))
+	groove.set_corner_radius_all(5)
+	groove.border_color = Color(PANEL_INK, 0.55)
+	groove.set_border_width_all(2)
+	groove.content_margin_top = 5
+	groove.content_margin_bottom = 5
+	slider.add_theme_stylebox_override("slider", groove)
+	var fill := semantic_fill(RUST_PRIMARY)
+	fill.set_corner_radius_all(5)
+	fill.border_color = PANEL_INK
+	fill.set_border_width_all(2)
+	slider.add_theme_stylebox_override("grabber_area", fill)
+	slider.add_theme_stylebox_override("grabber_area_highlight", fill)
+	var knob := lightline_tex("slider_knob")
+	if knob != null:
+		for icon_name in ["grabber", "grabber_highlight", "grabber_disabled"]:  # bare-ok: Godot theme icons
+			slider.add_theme_icon_override(icon_name, knob)
 
 
 # ─── Existing fonts and currency content ────────────────────────────────────────
@@ -626,7 +663,8 @@ const _CURRENCY_FALLBACK_NAME := {
 ## `prefix` optionally prepends a label before the row (e.g. "花费: <row>") — pass
 ## the already-translated prefix text; empty string omits it.
 static func currency_row(
-	amount: int, currency: String, font_size: int = 20, icon_size: int = 22, prefix: String = ""
+	amount: int, currency: String, font_size: int = 20, icon_size: int = 22, prefix: String = "",
+	text_color: Color = TEXT_MAIN
 ) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
@@ -637,7 +675,7 @@ static func currency_row(
 		var prefix_lbl := Label.new()
 		prefix_lbl.text = prefix
 		prefix_lbl.add_theme_font_size_override("font_size", font_size)
-		prefix_lbl.add_theme_color_override("font_color", TEXT_MAIN)
+		prefix_lbl.add_theme_color_override("font_color", text_color)
 		prefix_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(prefix_lbl)
 
@@ -651,7 +689,7 @@ static func currency_row(
 	var amount_lbl := Label.new()
 	amount_lbl.text = str(amount)
 	amount_lbl.add_theme_font_size_override("font_size", font_size)
-	amount_lbl.add_theme_color_override("font_color", TEXT_MAIN)
+	amount_lbl.add_theme_color_override("font_color", text_color)
 	amount_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	amount_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(amount_lbl)
@@ -704,7 +742,9 @@ static func centered_currency_button_content(
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	var row := currency_row(amount, currency, font_size, icon_size)
+	# Follow the plate: ink on the cream secondary plate, light on the rust one.
+	var text_color := button.get_theme_color("font_color") if button.has_theme_color_override("font_color") else TEXT_MAIN
+	var row := currency_row(amount, currency, font_size, icon_size, "", text_color)
 	row.add_theme_constant_override("separation", separation)
 	if icon_first:
 		for child in row.get_children():
@@ -728,7 +768,8 @@ static func centered_currency_button_content(
 ## `left_inset` are negative pixel offsets from the parent's right edge (e.g.
 ## -8 / -66 reserves a ~58px-wide badge column, 8px from the edge).
 static func overlay_cost_badge(
-	amount: int, currency: String, font_size: int, icon_size: int, right_inset: int, left_inset: int
+	amount: int, currency: String, font_size: int, icon_size: int, right_inset: int, left_inset: int,
+	text_color: Color = TEXT_MAIN
 ) -> Control:
 	var holder := CenterContainer.new()
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -741,7 +782,7 @@ static func overlay_cost_badge(
 	holder.offset_left = left_inset
 	holder.offset_top = 0
 	holder.offset_bottom = 0
-	holder.add_child(currency_row(amount, currency, font_size, icon_size))
+	holder.add_child(currency_row(amount, currency, font_size, icon_size, "", text_color))
 	return holder
 
 
@@ -780,7 +821,7 @@ static func ui_header_label(text: String, size: int = 14) -> Label:
 	fv.spacing_glyph = 2
 	l.add_theme_font_override("font", fv)
 	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", UI_HEADER_GOLD)
+	l.add_theme_color_override("font_color", PANEL_HEADER)
 	return l
 
 
@@ -851,13 +892,37 @@ static func ll_titleplate() -> StyleBoxTexture:
 
 static func ll_close_button(px: float = 48.0) -> Button:
 	var button := Button.new()
-	button.text = "×"
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.custom_minimum_size = Vector2(px, px)
-	button.add_theme_font_override("font", display_font(600))
-	button.add_theme_font_size_override("font_size", int(px * 0.45))
 	apply_action_button(button, "secondary", Vector4.ZERO)
+	# Hand-inked × glyph (tools/svg_icons/gen.py); text × is the fallback.
+	var glyph := lightline_tex("glyph_close")
+	if glyph != null:
+		button.icon = glyph
+		button.expand_icon = true
+		button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		var pad := int(round(px * 0.19))
+		for state in ["normal", "hover", "pressed", "disabled"]:  # focus_mode is NONE
+			var box := button.get_theme_stylebox(state)
+			if box != null:
+				box = box.duplicate()
+				box.content_margin_left = pad
+				box.content_margin_right = pad
+				box.content_margin_top = pad
+				box.content_margin_bottom = pad
+				button.add_theme_stylebox_override(state, box)
+		# the glyph is white: tint it ink, rust on hover
+		button.add_theme_color_override("icon_normal_color", PANEL_INK)
+		button.add_theme_color_override("icon_focus_color", PANEL_INK)
+		button.add_theme_color_override("icon_hover_color", PANEL_HEADER)
+		button.add_theme_color_override("icon_pressed_color", PANEL_HEADER)
+		button.add_theme_color_override("icon_hover_pressed_color", PANEL_HEADER)
+		button.add_theme_color_override("icon_disabled_color", PANEL_INK_SOFT)
+	else:
+		button.text = "×"
+		button.add_theme_font_override("font", display_font(600))
+		button.add_theme_font_size_override("font_size", int(px * 0.45))
 	return button
 
 static func ll_slot(state: String = "normal") -> StyleBoxTexture:

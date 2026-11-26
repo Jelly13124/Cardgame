@@ -219,7 +219,7 @@ func _mount_forge_header() -> void:
 	_caps_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_caps_label.add_theme_font_override("font", T.display_font(700))
 	_caps_label.add_theme_font_size_override("font_size", 19)
-	_caps_label.add_theme_color_override("font_color", T.TEXT_MAIN)
+	_caps_label.add_theme_color_override("font_color", T.PANEL_INK)
 	_caps_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	caps_chip.add_child(_caps_label)
 
@@ -252,7 +252,7 @@ func _mount_forge_header() -> void:
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title.add_theme_font_override("font", T.display_font(700))
 	title.add_theme_font_size_override("font_size", 23)
-	title.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
+	title.add_theme_color_override("font_color", T.PANEL_HEADER)
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	center.add_child(title)
 
@@ -372,7 +372,7 @@ func _rebuild() -> void:
 		locked_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		locked_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		locked_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_style_label(locked_hint, 15, Color(0.72, 0.66, 0.52))
+		_style_label(locked_hint, 15, T.PANEL_INK_SOFT)
 		_root.add_child(locked_hint)
 		return
 
@@ -427,12 +427,15 @@ func _build_tab_icon(tab_id: String) -> Control:
 	btn.add_theme_constant_override("h_separation", 10)
 	btn.icon = T.lightline_tex(str(TAB_ICONS.get(tab_id, "icon_anvil")))
 	btn.expand_icon = true
-	btn.add_theme_color_override(
-		"font_color", Color(1.0, 0.70, 0.30) if selected else Color(0.82, 0.77, 0.66)
-	)
-	btn.add_theme_color_override("font_hover_color", Color(1.0, 0.88, 0.48))
-	btn.add_theme_color_override("font_pressed_color", Color(1.0, 0.74, 0.30))
-	btn.add_theme_color_override("font_disabled_color", Color(0.44, 0.42, 0.38, 0.72))
+	if selected:
+		btn.add_theme_color_override("font_color", Color(1.0, 0.70, 0.30))
+		btn.add_theme_color_override("font_hover_color", Color(1.0, 0.88, 0.48))
+		btn.add_theme_color_override("font_pressed_color", Color(1.0, 0.74, 0.30))
+	else:  # cream secondary plate
+		btn.add_theme_color_override("font_color", T.PANEL_INK)
+		btn.add_theme_color_override("font_hover_color", T.PANEL_HEADER)
+		btn.add_theme_color_override("font_pressed_color", T.PANEL_INK)
+	btn.add_theme_color_override("font_disabled_color", T.PANEL_INK)  # 6:1 on the dimmed locked plate
 	for state in ["normal", "hover", "pressed", "disabled"]:
 		btn.add_theme_stylebox_override(state, _forge_tab_style(state, selected, unlocked))
 	btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
@@ -534,7 +537,7 @@ func _fill_dismantle() -> void:
 	hint.text = _local_text("把背包装备拖到这里拆解。", "Drag backpack equipment here to dismantle it.")
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_style_label(hint, 12, Color(0.68, 0.62, 0.5))
+	_style_label(hint, 12, T.PANEL_INK_SOFT)
 	_content.add_child(hint)
 
 	_content.add_child(_build_bulk_list())
@@ -569,7 +572,7 @@ func _bulk_header_row() -> Control:
 	lbl.text = tr("UI_FORGE_BULK_TITLE")
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_style_label(lbl, 15, T.UI_HEADER_GOLD, 1)
+	_style_label(lbl, 15, T.PANEL_HEADER)
 	row.add_child(lbl)
 	return row
 
@@ -600,6 +603,9 @@ func _bulk_button_row(rarity: String, label_text: String, icon_name: String) -> 
 	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_override("font", T.display_font(700))
 	button.add_theme_font_size_override("font_size", 14)
+	button.add_theme_color_override("font_color", T.PANEL_INK)
+	button.add_theme_color_override("font_hover_color", T.PANEL_HEADER)
+	button.add_theme_color_override("font_disabled_color", T.PANEL_INK)
 	for state in ["normal", "hover", "pressed", "disabled"]:
 		button.add_theme_stylebox_override(state, _dismantle_action_style(state, false))
 	if enabled:
@@ -607,7 +613,6 @@ func _bulk_button_row(rarity: String, label_text: String, icon_name: String) -> 
 		button.pressed.connect(func() -> void: _show_bulk_confirm(rar))
 	else:
 		button.disabled = true
-		button.modulate = Color(1, 1, 1, 0.5)
 		Tooltip.bind_hover(button, tr("UI_FORGE_BULK_NONE"))
 	row.add_child(button)
 	if not enabled:
@@ -727,17 +732,17 @@ func _show_bulk_confirm(rarity: String) -> void:
 	var title := Label.new()
 	title.text = tr("UI_FORGE_BULK_CONFIRM_TITLE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_style_label(title, 22, T.UI_HEADER_GOLD, 1)
+	_style_label(title, 22, T.PANEL_HEADER)
 	box.add_child(title)
 
 	var msg := Label.new()
 	msg.text = tr("UI_FORGE_BULK_CONFIRM").format({"n": count, "s": scrap})
 	msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(msg, 18, Color(1.0, 0.93, 0.78))
+	_style_label(msg, 18, T.PANEL_INK)
 	box.add_child(msg)
 
-	var gain := T.currency_row(scrap, "scrap", 20, 22, "获得:" if zh else "Gain:")
+	var gain := T.currency_row(scrap, "scrap", 20, 22, "获得:" if zh else "Gain:", T.PANEL_INK)
 	gain.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_child(gain)
 
@@ -864,7 +869,7 @@ func _fill_reforge() -> void:
 	if affixes.is_empty():
 		var none := Label.new()
 		none.text = "—"
-		_style_label(none, 15, Color(0.7, 0.7, 0.68))
+		_style_label(none, 15, T.PANEL_INK_SOFT)
 		_content.add_child(none)
 	else:
 		for ai in range(affixes.size()):
@@ -887,7 +892,7 @@ func _fill_reforge() -> void:
 		else:
 			status.text = tr("UI_FORGE_REFORGE_FIRST")
 		status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_style_label(status, 12, Color(0.74, 0.70, 0.58))
+		_style_label(status, 12, T.PANEL_INK_SOFT)
 		_content.add_child(status)
 
 	_append_curse_action(sel)
@@ -913,7 +918,7 @@ func _append_curse_action(sel: Dictionary) -> void:
 
 	var title := Label.new()
 	title.text = tr("UI_FORGE_CURSE_VERB")
-	_style_label(title, 15, Color(0.94, 0.68, 0.36), 1)
+	_style_label(title, 15, T.PANEL_HEADER)
 	_content.add_child(title)
 
 	var unlocked := MetaProgress.building_can("forge", "curse")
@@ -937,7 +942,7 @@ func _append_curse_action(sel: Dictionary) -> void:
 			else _local_text("该装备已经被诅咒。", "This item is already cursed.")
 		)
 		status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_style_label(status, 12, Color(0.72, 0.66, 0.56))
+		_style_label(status, 12, T.PANEL_INK_SOFT)
 		_content.add_child(status)
 
 
@@ -1120,7 +1125,7 @@ func _bench_empty_hint() -> Label:
 	l.text = tr("UI_FORGE_BENCH_EMPTY")
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_style_label(l, 14, Color(0.72, 0.66, 0.52))
+	_style_label(l, 14, T.PANEL_INK_SOFT)
 	return l
 
 
@@ -1132,7 +1137,7 @@ func _selected_name_label(sel: Dictionary) -> Label:
 	var l := Label.new()
 	l.text = "%s [%s]" % [item_name, tr("UI_FORGE_RARITY_%s" % rarity.to_upper())]
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_style_label(l, 17, Color(1, 0.92, 0.55), 1)
+	_style_label(l, 17, T.PANEL_INK)
 	return l
 
 
@@ -1155,11 +1160,14 @@ func _build_affix_row(
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.add_theme_font_size_override("font_size", 15)
+	# Picked rows sit on the rust plate (light text), the rest on cream (dark text).
 	var fg := Color(1.0, 0.42, 0.42) if is_curse else Color(0.70, 0.92, 0.70)
+	if not picked:
+		fg = Color("#8a1e24") if is_curse else Color("#2a6230")
 	if can_pick and not pickable and not picked:
-		fg = fg.darkened(0.4)
+		fg = fg.lightened(0.35)
 	btn.add_theme_color_override("font_color", fg)
-	btn.add_theme_color_override("font_hover_color", fg.lightened(0.15))
+	btn.add_theme_color_override("font_hover_color", fg.lightened(0.15) if picked else fg.darkened(0.2))
 	btn.add_theme_color_override("font_pressed_color", fg)
 	btn.add_theme_color_override("font_disabled_color", fg)
 	btn.add_theme_stylebox_override("normal", _affix_row_style(picked))
@@ -1216,10 +1224,11 @@ func _icon_action_row(
 		btn.add_theme_color_override("font_hover_color", Color.WHITE)
 	else:
 		_apply_dark_button(btn)
+	var badge_color := btn.get_theme_color("font_color")
 	if cost > 0:
-		btn.add_child(T.overlay_cost_badge(cost, "scrap", 15, 16, -10, -72))
+		btn.add_child(T.overlay_cost_badge(cost, "scrap", 15, 16, -10, -72, badge_color))
 	elif cost < 0:
-		btn.add_child(T.overlay_cost_badge(abs(cost), "scrap", 15, 16, -10, -72))
+		btn.add_child(T.overlay_cost_badge(abs(cost), "scrap", 15, 16, -10, -72, badge_color))
 	if enabled:
 		btn.pressed.connect(cb)
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -1240,7 +1249,7 @@ func _picker_row(icon_name: String, label_text: String, option: OptionButton) ->
 	lbl.text = label_text
 	lbl.custom_minimum_size = Vector2(64, 0)
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_style_label(lbl, 15, Color(0.92, 0.88, 0.76))
+	_style_label(lbl, 15, T.PANEL_INK)
 	row.add_child(lbl)
 	T.apply_dropdown_theme(option)
 	row.add_child(option)
@@ -1260,10 +1269,10 @@ func _preview_panel(child: Control) -> Control:
 
 
 func _apply_dark_button(btn: Button) -> void:
-	btn.add_theme_color_override("font_color", Color(0.93, 0.87, 0.70))
-	btn.add_theme_color_override("font_hover_color", Color(1.0, 0.95, 0.78))
-	btn.add_theme_color_override("font_pressed_color", Color(0.9, 0.84, 0.66))
-	btn.add_theme_color_override("font_disabled_color", Color(0.7, 0.64, 0.5, 0.9))
+	btn.add_theme_color_override("font_color", T.PANEL_INK)
+	btn.add_theme_color_override("font_hover_color", T.PANEL_HEADER)
+	btn.add_theme_color_override("font_pressed_color", T.PANEL_INK)
+	btn.add_theme_color_override("font_disabled_color", T.PANEL_INK)
 	for state in ["normal", "hover", "pressed", "disabled"]:
 		btn.add_theme_stylebox_override(state, T.ll_button_olive(state))
 

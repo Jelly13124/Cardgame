@@ -79,7 +79,7 @@ func _ready() -> void:
 	_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_label.add_theme_font_override("normal_font", T.display_font(600))
 	_label.add_theme_font_override("bold_font", T.display_font(700))
-	_label.add_theme_color_override("default_color", T.TEXT_MAIN)
+	_label.add_theme_color_override("default_color", T.PANEL_INK)  # cream tooltip plate
 	_label.add_theme_font_size_override("normal_font_size", T.TOOLTIP_FONT_SIZE)
 	_label.add_theme_font_size_override("bold_font_size", T.TOOLTIP_FONT_SIZE)
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE

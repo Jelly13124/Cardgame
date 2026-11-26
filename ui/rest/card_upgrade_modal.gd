@@ -191,8 +191,8 @@ func _style_side_button(button: Button, accent: Color) -> void:
 		style.set_content_margin_all(3.0 if state == "hover" else 2.0)
 		button.add_theme_stylebox_override(state, style)
 	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	button.add_theme_color_override("font_color", Color(0.96, 0.91, 0.80))
-	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	button.add_theme_color_override("font_color", T.PANEL_INK)  # tinted cream plate
+	button.add_theme_color_override("font_hover_color", T.PANEL_HEADER)
 
 
 func _make_card_slot(entry: Dictionary) -> Control:

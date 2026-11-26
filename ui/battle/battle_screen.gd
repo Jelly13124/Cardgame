@@ -544,7 +544,7 @@ func can_play_card(card: Control) -> bool:
 func park_dropped_card(card: Control) -> void:
 	await card_animator.drop_card(card)
 	if is_instance_valid(card):
-		discard_pile.add_card(card)
+		hand_view.land(card.instance, card)  # a reshuffle may have taken it back meanwhile
 
 
 ## Cards and tools are used on the player's own turn only, and not after End

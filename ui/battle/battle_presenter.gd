@@ -100,7 +100,8 @@ func enemy_attack(enemy: Object) -> void:
 		return
 	if view.has_method("play_attack") and view.has_attack_animation():
 		view.play_attack()
-		await view.attack_animation_finished
+		# Damage lands on the hit frame; the recoil keeps playing underneath it.
+		await view.attack_contact
 		return
 	await wait(0.35)
 

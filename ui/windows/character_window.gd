@@ -334,7 +334,7 @@ func _build_hero_switcher(hero_id: String, hero_data: Dictionary) -> Control:
 	)
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.add_theme_font_size_override("font_size", 13)
-	name_lbl.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
+	name_lbl.add_theme_color_override("font_color", T.PANEL_INK)
 	plate.add_child(name_lbl)
 	row.add_child(plate)
 	if multi:
@@ -543,7 +543,7 @@ func _make_attribute_pill(attr: String, value: int, live: bool) -> Control:
 	var label := Label.new()
 	label.text = str(value)
 	label.add_theme_font_size_override("font_size", 20)
-	label.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
+	label.add_theme_color_override("font_color", T.PANEL_INK)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -555,7 +555,7 @@ func _make_attribute_pill(attr: String, value: int, live: bool) -> Control:
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	caption.add_theme_font_size_override("font_size", 13)
-	caption.add_theme_color_override("font_color", T.TEXT_MAIN)
+	caption.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
 	body.add_child(caption)
 	return chip
 
@@ -676,7 +676,7 @@ func _style_slot_empty(slot: String) -> void:
 	(parts["dot"] as Control).visible = false
 	var label: Label = _slot_labels[slot]
 	label.text = _slot_label(slot)
-	label.add_theme_color_override("font_color", T.UI_LABEL_BROWN)
+	label.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
 
 
 ## Flip a slot cell to the FILLED v2 look: EquipmentIcon restyled onto the flat
@@ -703,7 +703,7 @@ func _style_slot_filled(slot: String, item_name: String, sprite: String, rarity:
 	dot.add_theme_stylebox_override("panel", dsb)
 	var label: Label = _slot_labels[slot]
 	label.text = item_name
-	label.add_theme_color_override("font_color", rc)
+	label.add_theme_color_override("font_color", EQUIPMENT_ICON.paper_rarity_color(rarity))
 
 
 # --- base mode: equipment slots (→ pending_equipped) ------------------------
@@ -809,7 +809,7 @@ func _make_base_tool_slot_column() -> Control:
 	label.clip_text = true
 	label.custom_minimum_size = Vector2(90, 0)
 	label.add_theme_font_size_override("font_size", 11)
-	label.add_theme_color_override("font_color", T.UI_LABEL_BROWN)
+	label.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
 	col.add_child(label)
 	return frame
 
@@ -881,7 +881,7 @@ func _build_backpack_header(used: int, cap: int, hint_text: String) -> Control:
 	_inv_title = Label.new()
 	_inv_title.text = "%d / %d" % [used, cap]
 	_inv_title.add_theme_font_size_override("font_size", 12)
-	_inv_title.add_theme_color_override("font_color", T.UI_LABEL_DIM)
+	_inv_title.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
 	_inv_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(_inv_title)
 	var hint := Label.new()
@@ -892,7 +892,7 @@ func _build_backpack_header(used: int, cap: int, hint_text: String) -> Control:
 	hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	hint.clip_text = true
 	hint.add_theme_font_size_override("font_size", 11)
-	hint.add_theme_color_override("font_color", T.UI_SLOT_ICON_TINT)
+	hint.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
 	row.add_child(hint)
 	return row
 
@@ -1088,7 +1088,7 @@ func _build_map_battle() -> void:
 	_mount_header()
 	_vitals_label = Label.new()
 	_vitals_label.add_theme_font_size_override("font_size", 15)
-	_vitals_label.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
+	_vitals_label.add_theme_color_override("font_color", T.PANEL_INK)
 	vroot.add_child(_vitals_label)
 
 	# ── MIDDLE: the D4 zone ──
@@ -1488,7 +1488,7 @@ func _make_tool_cell(tool_id: String, index: int) -> Control:
 	if desc != "":
 		tip += "\n%s" % desc
 	if equip_hint != "":
-		tip += "\n[color=#9fd0ff]%s[/color]" % equip_hint
+		tip += "\n[color=#1d5590]%s[/color]" % equip_hint
 	cell.hover_tip = tip
 	cell.drag_payload = {"src": "backpack", "index": index, "kind": "tool", "tool_id": tool_id}  # bare-ok: drag source
 	cell.preview_text = "⚙"
@@ -1556,7 +1556,7 @@ func _make_equipped_tool_cell(index: int, tool_id: String) -> Control:
 	if desc != "":
 		cell.hover_tip += "\n%s" % desc
 	if unhint != "":
-		cell.hover_tip += "\n[color=#9fd0ff]%s[/color]" % unhint
+		cell.hover_tip += "\n[color=#1d5590]%s[/color]" % unhint
 	cell.drag_payload = {"src": "tool_slot", "index": index, "tool_id": tool_id}
 	cell.preview_text = title.substr(0, 1).to_upper()
 	cell.preview_color = T.ACCENT_NEON_BLUE
@@ -1693,7 +1693,7 @@ func _make_resource_cell(
 	amount_lbl.text = "x%d" % amount
 	amount_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	amount_lbl.add_theme_font_size_override("font_size", 18)
-	amount_lbl.add_theme_color_override("font_color", Color(0.98, 0.96, 0.9))
+	amount_lbl.add_theme_color_override("font_color", T.PANEL_INK)
 	box.add_child(amount_lbl)
 
 	cell.drag_payload = {"src": "backpack", "index": index, "kind": kind}  # bare-ok: drag source

@@ -497,8 +497,8 @@ func _test_main_menu_uses_shared_buttons() -> void:
 	_expect(action != null, "main menu constructs a native action button")
 	if action != null:
 		var visuals := action.get_node_or_null("ActionVisuals") as Control
-		_expect(visuals != null and visuals.get("role") == "menu",
-			"main menu keeps its actions in the shared text-first menu role")
+		_expect(visuals != null and visuals.get("role") == "secondary",
+			"main menu actions default to the shared cream plate role")
 		_expect(action.text == "New game", "main menu preserves live text above its feedback")
 		action.free()
 	var save_strip := menu.call("_start_save_info_button") as Button

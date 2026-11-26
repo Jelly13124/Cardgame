@@ -77,9 +77,35 @@ const PLAYER_HUD_SIZE := Vector2i(200, 10)
 ## Native pixel anchor in the 384px Bill frames.  Runtime scaling converts it
 ## to the same global muzzle point for every attack frame.
 const MUZZLE_NATIVE_POSITION := Vector2(334, 220)
+## The attack frame MUZZLE_NATIVE_POSITION was measured on. Other frames move the
+## anchor by how far their barrel tip moved from this frame's.
+const MUZZLE_REFERENCE_FRAME := 0
 const MAX_ANIMATION_FRAMES := 16
+## The still rest pose breathes: a slow vertical stretch pivoted on the feet.
+const BREATH_PERIOD := 2.8
+const BREATH_STRETCH := 0.016
+## Seconds each attack frame holds. Uneven holds read as raise, aim, fire, recoil,
+## return. Frames 0 and 7 hold the gun at the hip, below the rest pose's aim, so
+## the attack starts on frame 1 and ends on reaching frame 7 instead of popping
+## through them. Frame 3 lands at gunshot_fx's 0.22 s wind-up.
+const ATTACK_FRAME_SECONDS := [0.0, 0.08, 0.14, 0.07, 0.15, 0.09, 0.09, 0.0]
+const ATTACK_FIRST_FRAME := 1
+const ATTACK_END_FRAME := 7
+const ATTACK_FPS := 100.0
+## Code recoil on the firing frame: the body is shoved back, then settles.
+const RECOIL_PIXELS := 9.0
+const RECOIL_OUT_SECONDS := 0.05
+const RECOIL_BACK_SECONDS := 0.24
 
 var _sprite: AnimatedSprite2D
+var _base_scale := Vector2.ONE
+var _base_position := Vector2.ZERO
+## Native distance from the canvas centre down to the visible feet.
+var _feet_native := 0.0
+var _breath_time := 0.0
+var _recoil := 0.0
+var _recoil_tween: Tween
+var _barrel_tips := {}
 var _fallback_sprite: Sprite2D
 var _hud: Node
 var status_system:
@@ -194,6 +220,7 @@ func _build_animated_visual() -> void:
 	_sprite.sprite_frames = frames
 	_add_animation_frames(frames, "idle", _should_animate_idle(), 6.0)
 	_add_animation_frames(frames, "attack", false, 18.0)
+	_apply_attack_timing(frames)
 	_apply_display_scale(frames)
 	_sprite.modulate = _hero_tint()
 	add_child(_sprite)
@@ -240,6 +267,20 @@ func _add_animation_frames(
 			frames.add_frame(anim_name, tex)
 
 
+func _apply_attack_timing(frames: SpriteFrames) -> void:
+	if frames.get_frame_count("attack") != ATTACK_FRAME_SECONDS.size():
+		return
+	frames.set_animation_speed("attack", ATTACK_FPS)
+	for idx in range(ATTACK_FRAME_SECONDS.size()):
+		var duration := maxf(float(ATTACK_FRAME_SECONDS[idx]) * ATTACK_FPS, 1.0)
+		frames.set_frame("attack", idx, frames.get_frame_texture("attack", idx), duration)
+
+
+func _has_attack_timing() -> bool:
+	var frames := _sprite.sprite_frames
+	return frames.get_frame_count("attack") == ATTACK_FRAME_SECONDS.size()
+
+
 func _apply_display_scale(frames: SpriteFrames) -> void:
 	var tex := _first_frame_texture(frames)
 	if not tex:
@@ -250,6 +291,12 @@ func _apply_display_scale(frames: SpriteFrames) -> void:
 	var display_scale := TARGET_DISPLAY_HEIGHT / height
 	_sprite.scale = Vector2(display_scale, display_scale)
 	_sprite.position = Vector2(0, _position_for_foot_baseline(tex, display_scale))
+	_base_scale = _sprite.scale
+	_base_position = _sprite.position
+	var image := tex.get_image()
+	if image and not image.is_empty():
+		var used := image.get_used_rect()
+		_feet_native = float(used.position.y + used.size.y) - height * 0.5
 
 
 func _apply_fallback_display_scale() -> void:
@@ -334,11 +381,50 @@ func play_attack() -> void:
 	if not _sprite.animation_finished.is_connected(_on_attack_finished):
 		_sprite.animation_finished.connect(_on_attack_finished, CONNECT_ONE_SHOT)
 	_sprite.play("attack")
-	_sprite.frame = 0
+	_sprite.frame = ATTACK_FIRST_FRAME if _has_attack_timing() else 0
+	if _has_attack_timing() and not _sprite.frame_changed.is_connected(_on_attack_frame_changed):
+		_sprite.frame_changed.connect(_on_attack_frame_changed)
+
+
+## Ends the timed attack on reaching its hip-height last frame (see ATTACK_END_FRAME).
+func _on_attack_frame_changed() -> void:
+	if _sprite.animation != "attack" or _sprite.frame < ATTACK_END_FRAME:
+		return
+	_sprite.frame_changed.disconnect(_on_attack_frame_changed)
+	if _sprite.animation_finished.is_connected(_on_attack_finished):
+		_sprite.animation_finished.disconnect(_on_attack_finished)
+	_on_attack_finished()
 
 
 func _on_attack_finished() -> void:
 	_show_rest_pose()
+
+
+## Shoves the body back on the firing frame (gunshot_fx calls this with the flash).
+func play_recoil() -> void:
+	if _recoil_tween and _recoil_tween.is_valid():
+		_recoil_tween.kill()
+	_recoil_tween = create_tween()
+	_recoil_tween.tween_property(self, "_recoil", 1.0, RECOIL_OUT_SECONDS).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_recoil_tween.tween_property(self, "_recoil", 0.0, RECOIL_BACK_SECONDS).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+func _process(delta: float) -> void:
+	if not _sprite or not is_instance_valid(_sprite) or _base_scale == Vector2.ONE and _base_position == Vector2.ZERO:
+		return
+	var stretch := 0.0
+	if _sprite.animation == "idle" and not _sprite.is_playing():
+		_breath_time += delta
+		stretch = BREATH_STRETCH * (0.5 - 0.5 * cos(TAU * _breath_time / BREATH_PERIOD))
+	else:
+		_breath_time = 0.0
+	var scale_y := _base_scale.y * (1.0 + stretch)
+	_sprite.scale = Vector2(_base_scale.x, scale_y)
+	# Keep the feet planted while the body stretches up from them.
+	_sprite.position = Vector2(
+		_base_position.x - RECOIL_PIXELS * _recoil,
+		_base_position.y - _feet_native * (scale_y - _base_scale.y)
+	)
 
 
 func get_muzzle_global_position() -> Vector2:
@@ -360,9 +446,44 @@ func get_muzzle_global_position() -> Vector2:
 func _muzzle_anchor_for_texture(tex: Texture2D) -> Vector2:
 	if tex == null or tex.get_width() <= 0:
 		return MUZZLE_NATIVE_POSITION
+	var reference := _muzzle_reference_texture()
+	if _sprite and is_instance_valid(_sprite) and reference and tex.get_width() == reference.get_width():
+		var tip := _barrel_tip(tex)
+		var reference_tip := _barrel_tip(reference)
+		if tip != Vector2.INF and reference_tip != Vector2.INF:
+			return MUZZLE_NATIVE_POSITION + tip - reference_tip
 	# The block fallback is still a 256px frame.  Preserve the authored barrel
 	# proportion instead of applying the 384px coordinate literally.
 	return MUZZLE_NATIVE_POSITION * (float(tex.get_width()) / 384.0)
+
+
+func _muzzle_reference_texture() -> Texture2D:
+	var frames := _sprite.sprite_frames if _sprite and is_instance_valid(_sprite) else null
+	if frames and frames.get_frame_count("attack") > MUZZLE_REFERENCE_FRAME:
+		return frames.get_frame_texture("attack", MUZZLE_REFERENCE_FRAME)
+	return null
+
+
+## The gun is the rightmost thing in the chest band of a frame: its furthest
+## opaque pixel there is the barrel tip. Cached per texture.
+func _barrel_tip(tex: Texture2D) -> Vector2:
+	var key := tex.get_rid()
+	if _barrel_tips.has(key):
+		return _barrel_tips[key]
+	var tip := Vector2.INF
+	var image := tex.get_image()
+	if image and not image.is_empty():
+		var top := int(image.get_height() * 0.25)
+		var bottom := int(image.get_height() * 0.65)
+		for x in range(image.get_width() - 1, -1, -1):
+			for y in range(top, bottom):
+				if image.get_pixel(x, y).a > 0.5:
+					tip = Vector2(x, y)
+					break
+			if tip != Vector2.INF:
+				break
+	_barrel_tips[key] = tip
+	return tip
 
 
 func get_hit_global_position() -> Vector2:

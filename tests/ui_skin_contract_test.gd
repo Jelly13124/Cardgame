@@ -505,7 +505,7 @@ func _test_form_controls() -> void:
 		and popup.get_theme_font_size("font_size") == original_font_size,
 		"opened dropdown uses the common hover state with its original item spacing and type size"
 	)
-	_expect(popup.get_theme_color("font_hover_color") == T.TEXT_MAIN, "dropdown hover text keeps light ink contrast on the dark shared surface")
+	_expect(popup.get_theme_color("font_hover_color") == T.PANEL_INK, "dropdown hover text is ink on the cream shared surface")
 	picker.free()
 	var checkbox := CheckBox.new()
 	T.apply_checkbox_theme(checkbox)

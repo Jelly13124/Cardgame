@@ -168,7 +168,7 @@ func _build_attr_perk_row(perk_id: String) -> Control:
 	# Bare attribute name (concept) — shared UI_COMBAT_ATTR_* keys (力量/体质/…).
 	var name_lbl := Label.new()
 	name_lbl.text = tr("UI_COMBAT_ATTR_%s" % attr.to_upper())
-	_style_label(name_lbl, 21, Color(0.97, 0.93, 0.84), 1)
+	_style_label(name_lbl, 21, TOK_TEXT, 1)
 	name_lbl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(name_lbl)
 
@@ -254,7 +254,7 @@ func _build_cap_card() -> Control:
 		var value_lbl := Label.new()
 		value_lbl.text = "%s %d" % [tr("UI_CLINIC_CAP_TITLE"), MetaProgress.HIGH_PERK_CAP]
 		value_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_style_label(value_lbl, 22, Color(0.36, 0.86, 0.91), 2)
+		_style_label(value_lbl, 22, TOK_INFO, 2)
 		body.add_child(value_lbl)
 
 		var unlocked_lbl := Label.new()
@@ -315,7 +315,7 @@ func _maxed_chip(plaque_size: Vector2 = Vector2(146, 60)) -> Control:
 	chip.add_child(center)
 	var lbl := Label.new()
 	lbl.text = tr("UI_CLINIC_PERK_MAX")
-	_style_label(lbl, 15, Color(0.72, 0.62, 0.42), 1)
+	_style_label(lbl, 15, TOK_TEXT, 1)
 	center.add_child(lbl)
 	return chip
 
@@ -388,7 +388,7 @@ func _cyan_dots(cur: int, total: int, cap: int) -> Control:
 		for i in range(total):
 			dots += "●" if i < cur else "○"
 		lbl.text = dots
-		_style_label(lbl, 16, Color(0.55, 0.88, 0.92), 1)
+		_style_label(lbl, 16, TOK_INFO, 1)
 		row.add_child(lbl)
 		return row
 	for i in range(total):
@@ -473,7 +473,7 @@ func _add_lock_note(container: VBoxContainer, text: String) -> void:
 	var lbl := Label.new()
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_style_label(lbl, 17, Color(0.78, 0.6, 0.5), 1)
+	_style_label(lbl, 17, TOK_TEXT_DIM, 1)
 	lbl.text = text
 	row.add_child(lbl)
 	container.add_child(row)

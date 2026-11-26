@@ -1,0 +1,220 @@
+{
+ "heart": [
+  [
+   "res://run_system/assets/images/ui_kit_lightline/icon_heart.png",
+   120,
+   114,
+   "trim"
+  ]
+ ],
+ "bottlecap": [
+  [
+   "res://run_system/assets/images/home/currency/caps.png",
+   128,
+   128,
+   "trim"
+  ]
+ ],
+ "scrap": [
+  [
+   "res://run_system/assets/images/home/currency/scrap.png",
+   128,
+   128,
+   "trim"
+  ]
+ ],
+ "core": [
+  [
+   "res://run_system/assets/images/home/currency/core.png",
+   128,
+   128,
+   "trim"
+  ]
+ ],
+ "gear": [
+  [
+   "res://run_system/assets/images/ui_kit_lightline/icon_gear.png",
+   134,
+   135,
+   "trim"
+  ]
+ ],
+ "deck": [
+  [
+   "res://run_system/assets/images/ui_kit_lightline/iconb_deck_stack.png",
+   336,
+   352,
+   "trim"
+  ]
+ ],
+ "clock": [
+  [
+   "res://run_system/assets/images/ui_kit_lightline/iconb_clock.png",
+   307,
+   330,
+   "trim"
+  ]
+ ],
+ "cards_fan": [
+  [
+   "res://run_system/assets/images/ui_kit_lightline/iconb_cards_fan.png",
+   363,
+   346,
+   "trim"
+  ]
+ ],
+ "glyph_lock": [
+  [
+   "res://run_system/assets/images/ui_kit_lightline/icon_lock.png",
+   101,
+   139,
+   "trim"
+  ],
+  [
+   "res://run_system/assets/images/ui_v2/icons/lock.png",
+   128,
+   128
+  ]
+ ],
+ "glyph_close_white": [
+  [
+   "res://run_system/assets/images/ui_kit_lightline/glyph_close.png",
+   96,
+   96
+  ]
+ ],
+ "slider_knob": [
+  [
+   "res://run_system/assets/images/ui_kit_lightline/slider_knob.png",
+   40,
+   40,
+   "trim"
+  ]
+ ],
+ "menu_settings": [
+  [
+   "res://run_system/assets/images/ui/start_screen/icon_button_settings.png",
+   207,
+   197
+  ]
+ ],
+ "menu_language": [
+  [
+   "res://run_system/assets/images/ui/start_screen/icon_button_language.png",
+   208,
+   197
+  ]
+ ],
+ "intent_attack_1": [
+  [
+   "res://battle_scene/assets/images/ui/combat/intents/attack_1.png",
+   64,
+   64
+  ]
+ ],
+ "intent_attack_2": [
+  [
+   "res://battle_scene/assets/images/ui/combat/intents/attack_2.png",
+   64,
+   64
+  ]
+ ],
+ "intent_attack_3": [
+  [
+   "res://battle_scene/assets/images/ui/combat/intents/attack_3.png",
+   64,
+   64
+  ]
+ ],
+ "intent_block": [
+  [
+   "res://battle_scene/assets/images/ui/combat/intents/block.png",
+   64,
+   64
+  ]
+ ],
+ "intent_buff": [
+  [
+   "res://battle_scene/assets/images/ui/combat/intents/buff.png",
+   64,
+   64
+  ]
+ ],
+ "intent_debuff": [
+  [
+   "res://battle_scene/assets/images/ui/combat/intents/debuff.png",
+   64,
+   64
+  ]
+ ],
+ "intent_charge": [
+  [
+   "res://battle_scene/assets/images/ui/combat/intents/charge.png",
+   64,
+   64
+  ]
+ ],
+ "intent_card_debuff": [
+  [
+   "res://battle_scene/assets/images/ui/combat/intents/card_debuff.png",
+   64,
+   64
+  ]
+ ],
+ "intent_death_blow": [
+  [
+   "res://battle_scene/assets/images/ui/combat/intents/death_blow.png",
+   64,
+   64
+  ]
+ ],
+ "intent_heal": [
+  [
+   "res://battle_scene/assets/images/ui/combat/intents/heal.png",
+   64,
+   64
+  ]
+ ],
+ "intent_sleep": [
+  [
+   "res://battle_scene/assets/images/ui/combat/intents/sleep.png",
+   64,
+   64
+  ]
+ ],
+ "intent_status": [
+  [
+   "res://battle_scene/assets/images/ui/combat/intents/status.png",
+   64,
+   64
+  ]
+ ],
+ "intent_stun": [
+  [
+   "res://battle_scene/assets/images/ui/combat/intents/stun.png",
+   64,
+   64
+  ]
+ ],
+ "intent_summon": [
+  [
+   "res://battle_scene/assets/images/ui/combat/intents/summon.png",
+   64,
+   64
+  ]
+ ],
+ "intent_escape": [
+  [
+   "res://battle_scene/assets/images/ui/combat/intents/escape.png",
+   64,
+   64
+  ]
+ ],
+ "intent_unknown": [
+  [
+   "res://battle_scene/assets/images/ui/combat/intents/unknown.png",
+   64,
+   64
+  ]
+ ]
+}

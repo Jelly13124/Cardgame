@@ -44,6 +44,11 @@ func _battle() -> Node:
 	get_tree().current_scene = battle
 	for _i in range(30):
 		await get_tree().process_frame
+	# The opening draw staggers its cards 0.1 s apart and refreshes the labels per
+	# card; 30 headless frames can end before it does, which counted a stray refresh.
+	while battle.hand_view._busy:
+		await get_tree().process_frame
+	await get_tree().process_frame
 	return battle
 
 

@@ -48,6 +48,15 @@ const BOSS_DISPLAY_HEIGHT := 384.0
 const NORMAL_HUD_SIZE := Vector2i(250, 16)
 const ELITE_HUD_SIZE := Vector2i(250, 16)
 const BOSS_HUD_SIZE := Vector2i(250, 16)
+## Seconds each frame of a standard four-frame attack holds: rest, a held
+## wind-up, a held hit, recoil. Even 12 fps flashed the hit frame for 83 ms.
+const ATTACK_FRAME_SECONDS := [0.08, 0.22, 0.16, 0.2]
+const ATTACK_FPS := 100.0
+const ATTACK_CONTACT_FRAME := 2
+## Code motion over the frames: lean back on the wind-up, lunge on the hit.
+const WINDUP_PIXELS := 10.0
+const LUNGE_PIXELS := 30.0
+const LUNGE_SECONDS := 0.06
 const MAX_ANIMATION_FRAMES := 16
 const INTENT_BADGE_WIDTH := 176.0
 const INTENT_BADGE_HEIGHT := 72.0
@@ -136,11 +145,16 @@ var phases: Array:
 
 signal status_changed
 signal attack_animation_finished
+## The hit frame of an attack: damage resolves here, while recoil still plays.
+signal attack_contact
 
 # ─── Internal Nodes ───────────────────────────────────────────────────────────
 var _hud: Node
 ## Reference to the animated sprite (replaces old ColorRect body)
 var _sprite: AnimatedSprite2D
+var _sprite_rest_x := 0.0
+var _attack_tween: Tween
+var _contact_sent := true
 var _intent_cells: HBoxContainer
 var _intent_bg: Control
 var _intent_time := 0.0
@@ -256,6 +270,12 @@ func _build_sprite_visual(sid: String) -> void:
 		for tex in charge_frames:
 			frames.add_frame("charge", tex)
 
+	if frames.get_frame_count("attack") == ATTACK_FRAME_SECONDS.size():
+		frames.set_animation_speed("attack", ATTACK_FPS)
+		for idx in range(ATTACK_FRAME_SECONDS.size()):
+			var duration := float(ATTACK_FRAME_SECONDS[idx]) * ATTACK_FPS
+			frames.set_frame("attack", idx, frames.get_frame_texture("attack", idx), duration)
+
 	# Hurt frames are no longer used — hit feedback is a red flash (see _hit_flash).
 
 	var display_height := _apply_display_scale(frames)
@@ -286,6 +306,7 @@ func _apply_display_scale(frames: SpriteFrames) -> float:
 	var display_scale := target_height / native_height
 	_sprite.scale = Vector2(display_scale, display_scale)
 	_sprite.position = Vector2(0, -target_height * 0.5)
+	_sprite_rest_x = _sprite.position.x
 	_display_size = Vector2(float(tex.get_width()) * display_scale, target_height)
 
 	# Detect where the actual sprite content starts (vs how big the canvas is).
@@ -771,6 +792,9 @@ func play_attack() -> void:
 		return
 	if not _sprite.animation_finished.is_connected(_on_attack_finished):
 		_sprite.animation_finished.connect(_on_attack_finished, CONNECT_ONE_SHOT)
+	if not _sprite.frame_changed.is_connected(_on_attack_frame_changed):
+		_sprite.frame_changed.connect(_on_attack_frame_changed)
+	_contact_sent = false
 	_sprite.stop()
 	_sprite.animation = "attack"
 	_sprite.frame = 0
@@ -778,7 +802,41 @@ func play_attack() -> void:
 	_sprite.play("attack")
 
 
+func _on_attack_frame_changed() -> void:
+	if _sprite.animation != "attack" or not _sprite.is_playing():
+		return
+	var frame := _sprite.frame
+	if frame == ATTACK_CONTACT_FRAME - 1:
+		_move_sprite_x(_sprite_rest_x + WINDUP_PIXELS, float(ATTACK_FRAME_SECONDS[frame]), Tween.TRANS_SINE)
+	elif frame == ATTACK_CONTACT_FRAME:
+		# Damage lands when the lunge reaches the player, not as it sets off.
+		_move_sprite_x(_sprite_rest_x - LUNGE_PIXELS, LUNGE_SECONDS, Tween.TRANS_QUAD)
+		_attack_tween.tween_callback(_send_contact)
+	elif frame > ATTACK_CONTACT_FRAME:
+		_move_sprite_x(_sprite_rest_x, float(ATTACK_FRAME_SECONDS[mini(frame, ATTACK_FRAME_SECONDS.size() - 1)]), Tween.TRANS_BACK)
+
+
+func _move_sprite_x(x: float, seconds: float, trans: Tween.TransitionType) -> void:
+	if _attack_tween and _attack_tween.is_valid():
+		_attack_tween.kill()
+	_attack_tween = create_tween()
+	_attack_tween.tween_property(_sprite, "position:x", x, seconds).set_trans(trans).set_ease(Tween.EASE_OUT)
+
+
+func _send_contact() -> void:
+	if _contact_sent:
+		return
+	_contact_sent = true
+	attack_contact.emit()
+
+
 func _on_attack_finished() -> void:
+	if _sprite.frame_changed.is_connected(_on_attack_frame_changed):
+		_sprite.frame_changed.disconnect(_on_attack_frame_changed)
+	if _attack_tween and _attack_tween.is_valid():
+		_attack_tween.kill()
+	_sprite.position.x = _sprite_rest_x
+	_send_contact()
 	_show_rest_pose()
 	emit_signal("attack_animation_finished")
 

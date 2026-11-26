@@ -241,7 +241,7 @@ func _build_title_row() -> Control:
 	cap_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	cap_label.add_theme_font_override("font", T.display_font(600))
 	cap_label.add_theme_font_size_override("font_size", 24)
-	cap_label.add_theme_color_override("font_color", T.UI_HEADER_GOLD)
+	cap_label.add_theme_color_override("font_color", T.PANEL_INK)
 	right.add_child(cap_label)
 	var close_btn := T.ll_close_button(44.0)
 	close_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -263,7 +263,7 @@ func _build_sort_row() -> Control:
 	sort_label.text = tr("UI_STASH_SORT_LABEL")
 	sort_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	sort_label.add_theme_font_size_override("font_size", 18)
-	sort_label.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
+	sort_label.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
 	row.add_child(sort_label)
 
 	var sort := OptionButton.new()
@@ -316,6 +316,8 @@ func _make_page_button(delta: int) -> Button:
 	button.add_theme_font_size_override("font_size", 26)
 	for state in ["normal", "hover", "pressed", "disabled"]:
 		button.add_theme_stylebox_override(state, T.kit_box("button_secondary_" + state))
+	button.add_theme_color_override("font_color", T.PANEL_INK)
+	button.add_theme_color_override("font_hover_color", T.PANEL_HEADER)
 	button.pressed.connect(_change_page.bind(delta))
 	return button
 
@@ -368,7 +370,7 @@ func _build_drag_hint_row() -> Control:
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	label.add_theme_font_size_override("font_size", 18)
-	label.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
+	label.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
 	box.add_child(label)
 	var arrow_tex := T.lightline_tex("icon_arrow_right")
 	if arrow_tex != null:
@@ -444,16 +446,16 @@ func _style_ll_button(button: Button, accent: bool) -> void:
 		button.add_theme_color_override("font_color", T.UI_ACCENT_TEXT)
 		button.add_theme_color_override("font_hover_color", T.UI_ACCENT_TEXT)
 		button.add_theme_color_override("font_pressed_color", T.UI_ACCENT_TEXT)
-	else:
-		button.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
-		button.add_theme_color_override("font_hover_color", T.UI_HEADER_GOLD)
-		button.add_theme_color_override("font_pressed_color", T.UI_HEADER_GOLD)
-	button.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.8))
-	button.add_theme_constant_override("outline_size", 2)
+		button.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.8))
+		button.add_theme_constant_override("outline_size", 2)
+	else:  # cream secondary plate
+		button.add_theme_color_override("font_color", T.PANEL_INK)
+		button.add_theme_color_override("font_hover_color", T.PANEL_HEADER)
+		button.add_theme_color_override("font_pressed_color", T.PANEL_HEADER)
+		button.add_theme_constant_override("outline_size", 0)
 
 
-## Dark segmented-button box (btn_dark 9-slice, hover/pressed by modulate),
-## programmatic brass fallback while the PNG is undelivered.
+## Unselected segmented-button box: the shared cream secondary plate.
 func _dark_button_box(state: String) -> StyleBox:
 	var box := T.lightline_box("btn_dark", T.ui_button_brass(state), 24)
 	var tb := box as StyleBoxTexture

@@ -20,6 +20,7 @@ const START_LANGUAGE_BUTTON_PATH := "res://run_system/assets/images/ui/start_scr
 ## Text on the cream shared kit panels (panel_textured / panel_hard_9slice).
 const PANEL_INK := T.PANEL_INK
 const PANEL_INK_SOFT := T.PANEL_INK_SOFT
+const START_MENU_BUTTON_SIZE := Vector2(380, 80)
 const START_SETTINGS_BUTTON_PATH := "res://run_system/assets/images/ui/start_screen/icon_button_settings.png"
 
 var _settings_layer: CanvasLayer = null
@@ -59,6 +60,8 @@ func _build_start_screen_concept() -> void:
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(dim)
+	if bg_tex:
+		_add_menu_shade()
 
 	var title_tex := _place_image(START_TITLE_TEXTURE_PATH, Rect2(72, 92, 740, 236))
 	if title_tex == null:
@@ -69,23 +72,45 @@ func _build_start_screen_concept() -> void:
 		_place_control(title, Rect2(120, 68, 1020, 130))
 	_place_image(START_DIVIDER_TEXTURE_PATH, Rect2(150, 326, 610, 92))
 
-	_place_control(_start_icon_button(START_LANGUAGE_BUTTON_PATH, _on_settings), Rect2(1678, 28, 92, 92))
+	_place_control(_start_icon_button(START_LANGUAGE_BUTTON_PATH, _on_toggle_language), Rect2(1678, 28, 92, 92))
 	_place_control(_start_icon_button(START_SETTINGS_BUTTON_PATH, _on_settings), Rect2(1782, 28, 92, 92))
 
-	var button_y := 403.0
-	var button_x := 226.0
-	var button_size := Vector2(420, 96)
-	var button_gap := -2.0
-	var new_game := _start_menu_button(tr("MENU_NEW_GAME"), _on_new_game)
+	# Plate buttons: Start is the rust primary plate, the rest are cream plates.
+	var button_x := 246.0
+	var button_y := 430.0
+	var button_size := START_MENU_BUTTON_SIZE
+	var button_step := button_size.y + 16.0
+	var new_game := _start_menu_button(tr("MENU_NEW_GAME"), _on_new_game, "primary")
 	_place_control(new_game, Rect2(button_x, button_y, button_size.x, button_size.y))
 
 	var cont := _start_menu_button(tr("MENU_CONTINUE"), _on_continue)
 	cont.disabled = MetaProgress.most_recent_slot() == 0
-	_place_control(cont, Rect2(button_x, button_y + (button_size.y + button_gap), button_size.x, button_size.y))
-	_place_control(_start_menu_button(tr("MENU_SETTINGS"), _on_settings), Rect2(button_x, button_y + (button_size.y + button_gap) * 2.0, button_size.x, button_size.y))
-	_place_control(_start_menu_button(tr("MENU_QUIT"), _on_quit), Rect2(button_x, button_y + (button_size.y + button_gap) * 3.0, button_size.x, button_size.y))
+	_place_control(cont, Rect2(button_x, button_y + button_step, button_size.x, button_size.y))
+	_place_control(_start_menu_button(tr("MENU_SETTINGS"), _on_settings), Rect2(button_x, button_y + button_step * 2.0, button_size.x, button_size.y))
+	_place_control(_start_menu_button(tr("MENU_QUIT"), _on_quit), Rect2(button_x, button_y + button_step * 3.0, button_size.x, button_size.y))
 
-	_place_control(_start_save_info_button(), Rect2(44, 956, 298, 76))
+	_place_control(_start_save_info_button(), Rect2(44, 948, 380, 88))
+
+
+## A left-to-right fade from dark to clear behind the title and the menu column.
+## Not a panel: it only calms the busy saloon wall behind the title and the plates.
+func _add_menu_shade() -> void:
+	var gradient := Gradient.new()
+	gradient.set_color(0, Color(0.03, 0.02, 0.015, 0.62))
+	gradient.set_color(1, Color(0.03, 0.02, 0.015, 0.0))
+	gradient.add_point(0.55, Color(0.03, 0.02, 0.015, 0.45))
+	var tex := GradientTexture2D.new()
+	tex.gradient = gradient
+	tex.fill_from = Vector2(0, 0)
+	tex.fill_to = Vector2(1, 0)
+	tex.width = 256
+	tex.height = 4
+	var shade := TextureRect.new()
+	shade.texture = tex
+	shade.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	shade.stretch_mode = TextureRect.STRETCH_SCALE
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_place_control(shade, Rect2(0, 0, 980, 1080))
 
 
 func _place_control(control: Control, rect: Rect2) -> Control:
@@ -117,15 +142,15 @@ func _load_texture(path: String) -> Texture2D:
 	return null
 
 
-func _start_menu_button(text: String, handler: Callable) -> Button:
+func _start_menu_button(text: String, handler: Callable, role: String = "secondary") -> Button:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(420, 96)
+	button.custom_minimum_size = START_MENU_BUTTON_SIZE
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.add_theme_font_override("font", T.display_font(700))
 	button.add_theme_font_size_override("font_size", 32)
-	T.apply_action_button(button, "menu", Vector4(22, 12, 22, 12))
+	T.apply_action_button(button, role, Vector4(20, 10, 20, 12))
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	button.pressed.connect(handler)
 	return button
@@ -179,29 +204,32 @@ func _start_save_info_button() -> Button:
 	var pad := MarginContainer.new()
 	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pad.set_anchors_preset(Control.PRESET_FULL_RECT)
-	pad.add_theme_constant_override("margin_left", 24)
-	pad.add_theme_constant_override("margin_right", 16)
-	pad.add_theme_constant_override("margin_top", 13)
-	pad.add_theme_constant_override("margin_bottom", 10)
+	pad.add_theme_constant_override("margin_left", 26)
+	pad.add_theme_constant_override("margin_right", 20)
+	pad.add_theme_constant_override("margin_top", 14)
+	pad.add_theme_constant_override("margin_bottom", 14)
 	button.add_child(pad)
 
 	var labels := VBoxContainer.new()
 	labels.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	labels.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	labels.add_theme_constant_override("separation", 0)
+	labels.add_theme_constant_override("separation", 2)
+	labels.alignment = BoxContainer.ALIGNMENT_CENTER
 	pad.add_child(labels)
 
 	var slot_label := Label.new()
-	slot_label.text = "存档槽位： %d" % slot
-	T.style_display(slot_label, 16, 600)
-	slot_label.add_theme_color_override("font_color", Color(0.93, 0.80, 0.56))
+	slot_label.text = tr("SLOT_LABEL").format({"n": slot})
+	T.style_display(slot_label, 22, 700)
+	slot_label.add_theme_color_override("font_color", PANEL_INK)  # cream list plate
 	slot_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	labels.add_child(slot_label)
 
+	# Slot summary (caps · scrap · runs), then the build number.
 	var version := Label.new()
-	version.text = "v0.1.0"
-	T.style_display(version, 15, 600)
-	version.add_theme_color_override("font_color", Color(0.78, 0.66, 0.46))
+	version.text = "%s    v0.1.0" % _slot_summary_text(slot, MetaProgress.peek_slot(slot))
+	version.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	T.style_display(version, 16, 600)
+	version.add_theme_color_override("font_color", PANEL_INK_SOFT)
 	version.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	labels.add_child(version)
 	return button
@@ -359,9 +387,9 @@ func _modal_slot_card(n: int, mode: String, layer: CanvasLayer) -> Control:
 	name_lbl.text = tr("SLOT_LABEL").format({"n": n})
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	T.style_display(name_lbl, 20, 600)
-	var on_cream := mode != "new"
-	var main_ink: Color = PANEL_INK if on_cream else T.TEXT_MAIN
-	var soft_ink: Color = PANEL_INK_SOFT if on_cream else Color("#d9c49a")
+	# Both the "new" list plate and the saves panel are cream paper.
+	var main_ink: Color = PANEL_INK
+	var soft_ink: Color = PANEL_INK_SOFT
 	name_lbl.add_theme_color_override("font_color", main_ink if occupied else soft_ink)
 	info_box.add_child(name_lbl)
 	var sub := Label.new()
@@ -566,6 +594,12 @@ func _on_settings() -> void:
 	_settings_layer.visible = true
 
 
+## The globe on the title screen flips the language and reloads the menu.
+func _on_toggle_language() -> void:
+	Settings.set_language("en" if Settings.language == "zh" else "zh")
+	get_tree().reload_current_scene()
+
+
 func _on_quit() -> void:
 	get_tree().quit()
 
@@ -605,27 +639,39 @@ func _build_settings_overlay() -> void:
 	root.add_child(center)
 
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(420, 360)
+	panel.custom_minimum_size = Vector2(1000, 0)
 	panel.add_theme_stylebox_override("panel", T.panel_textured("dark"))
 	center.add_child(panel)
 
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 12)
-	panel.add_child(box)
+	var margin := MarginContainer.new()
+	for side in ["margin_left", "margin_right"]:
+		margin.add_theme_constant_override(side, 44)
+	margin.add_theme_constant_override("margin_top", 26)
+	margin.add_theme_constant_override("margin_bottom", 36)
+	panel.add_child(margin)
 
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 18)
+	margin.add_child(box)
+
+	# Title row: centred title, the shared × at the right (ESC also closes).
+	var title_row := HBoxContainer.new()
+	var balance := Control.new()
+	balance.custom_minimum_size = Vector2(48, 48)
+	title_row.add_child(balance)
 	var title := Label.new()
 	title.text = tr("SETTINGS_TITLE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 28)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	T.style_display(title, 36, 700)
 	title.add_theme_color_override("font_color", PANEL_INK)
-	box.add_child(title)
+	title_row.add_child(title)
+	var close := T.ll_close_button(48.0)
+	close.pressed.connect(func() -> void:
+		AudioManager.play_sfx("ui_click")
+		_settings_layer.visible = false)
+	title_row.add_child(close)
+	box.add_child(title_row)
 
 	# Language change reloads this menu so the new locale applies immediately.
-	SETTINGS_PANEL.add_controls(box, func() -> void: get_tree().reload_current_scene(), false)
-	SETTINGS_PANEL.add_key_controls(box)
-
-	box.add_child(HSeparator.new())
-
-	var close := _menu_button(tr("RULES_CLOSE"), func() -> void: _settings_layer.visible = false)
-	close.custom_minimum_size = Vector2(300, 48)
-	box.add_child(close)
+	box.add_child(SETTINGS_PANEL.build_columns(func() -> void: get_tree().reload_current_scene(), false))

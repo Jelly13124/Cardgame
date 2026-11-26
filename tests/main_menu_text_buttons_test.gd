@@ -1,8 +1,8 @@
 extends Node
 
-## The title menu's four entries are text buttons with no box (STS2
-## NMainMenuTextButton): empty styleboxes in every state, a cream label that
-## turns gold on hover, in the order New Game, Continue, Settings, Quit.
+## The title menu's four entries are plate buttons (owner, 2026-11-25): New Game
+## is the rust primary plate, Continue / Settings / Quit are cream secondary
+## plates, all the same size, in the order New Game, Continue, Settings, Quit.
 
 var failures: PackedStringArray = []
 
@@ -30,14 +30,17 @@ func _run() -> void:
 			found.append(b)
 	found.sort_custom(func(a, b): return a.position.y < b.position.y)
 	_expect(found.map(func(b): return b.text) == want, "the four entries keep their order (%s)" % [found.map(func(b): return b.text)])
-	for b in found:
-		for state in ["normal", "hover", "pressed", "disabled", "focus"]:  # bare-ok: theme state names
-			_expect(b.get_theme_stylebox(state) is StyleBoxEmpty, "%s has no %s box" % [b.text, state])
+	for i in found.size():
+		var b: Button = found[i]
+		var visuals := b.get_node_or_null("ActionVisuals")
+		var want_role := "primary" if i == 0 else "secondary"
+		_expect(visuals != null and visuals.get("role") == want_role, "%s uses the %s plate" % [b.text, want_role])
+		_expect(b.size == found[0].size, "%s matches the other plates' size" % b.text)
 		_expect(b.get_theme_color("font_hover_color") != b.get_theme_color("font_color"), "%s changes colour on hover" % b.text)
 	menu.queue_free()
 	if failures.is_empty():
-		print("[OK] main menu text buttons passed")
+		print("[OK] main menu plate buttons passed")
 		get_tree().quit(0)
 		return
-	push_error("main menu text buttons failed: %s" % "; ".join(failures))
+	push_error("main menu plate buttons failed: %s" % "; ".join(failures))
 	get_tree().quit(1)

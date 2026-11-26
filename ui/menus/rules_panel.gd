@@ -77,7 +77,7 @@ func _build() -> void:
 		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		line.custom_minimum_size = Vector2(660, 0)
 		line.add_theme_font_size_override("font_size", 19)
-		line.add_theme_color_override("font_color", T.TEXT_MAIN)
+		line.add_theme_color_override("font_color", T.PANEL_INK)
 		list.add_child(line)
 
 	var close := Button.new()

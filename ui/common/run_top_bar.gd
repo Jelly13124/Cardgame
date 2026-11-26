@@ -541,7 +541,7 @@ func _make_tool_slot(index: int, tool_id: String) -> Button:
 	else:
 		b.text = _short_label(title)
 		b.add_theme_font_size_override("font_size", 18)
-		b.add_theme_color_override("font_color", T.TEXT_MAIN)
+		b.add_theme_color_override("font_color", T.PANEL_INK)  # cream secondary plate
 	for state in ["normal", "hover", "pressed"]:
 		var style := T.ll_button_olive(state) as StyleBoxTexture
 		style.set_content_margin_all(2.0)

@@ -31,6 +31,8 @@ const BUILDING_ACCENTS := {
 	"market": Color(0.95, 0.82, 0.40),
 	"outpost": Color(0.62, 0.78, 0.96),
 }
+## Teal for the bounty board's hint line on the cream paper (5:1; cyan was 1.5:1).
+const BOUNTY_INFO_TEXT := Color("#1d5a66")
 const HOME_BACKGROUND_PATH := "res://run_system/assets/images/home/home_base_empty_bg.png"
 const FORGE_BACKDROP_PATH := "res://run_system/assets/images/buildings/forge_bg.png"
 const MAP_CANVAS_SIZE := Vector2(1920, 1080)
@@ -332,9 +334,8 @@ func _make_top_currency_chip(parent: Control, currency: String) -> Label:
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_override("font", T.display_font(600))
 	label.add_theme_font_size_override("font_size", 25)
-	label.add_theme_color_override("font_color", Color(0.92, 0.82, 0.62, 1.0))
-	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.88))
-	label.add_theme_constant_override("outline_size", 3)
+	# Ink on the bright orange sky (cream with a thin outline read washed out).
+	label.add_theme_color_override("font_color", T.PANEL_INK)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(label)
 	return label
@@ -394,9 +395,7 @@ func _make_top_difficulty_button() -> Button:
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.add_theme_font_override("font", T.display_font(600))
 	label.add_theme_font_size_override("font_size", 24)
-	label.add_theme_color_override("font_color", Color(0.94, 0.82, 0.60, 1.0))
-	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
-	label.add_theme_constant_override("outline_size", 3)
+	label.add_theme_color_override("font_color", T.PANEL_INK)  # cream secondary plate
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(label)
 
@@ -405,7 +404,7 @@ func _make_top_difficulty_button() -> Button:
 	arrow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	arrow.add_theme_font_override("font", T.display_font(700))
 	arrow.add_theme_font_size_override("font_size", 24)
-	arrow.add_theme_color_override("font_color", Color(0.78, 0.58, 0.32, 1.0))
+	arrow.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
 	arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(arrow)
 
@@ -478,9 +477,7 @@ func _add_bounty_board_panel(root: Control) -> void:
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title.add_theme_font_override("font", T.display_font(650))
 	title.add_theme_font_size_override("font_size", 20)
-	title.add_theme_color_override("font_color", Color("#dbc087"))
-	title.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.72))
-	title.add_theme_constant_override("outline_size", 1)
+	title.add_theme_color_override("font_color", T.PANEL_HEADER)
 	header.add_child(title)
 
 	var header_gap := Control.new()
@@ -519,7 +516,7 @@ func _add_bounty_board_panel(root: Control) -> void:
 	pickup_plus.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	pickup_plus.add_theme_font_override("font", T.display_font(700))
 	pickup_plus.add_theme_font_size_override("font_size", 16)
-	pickup_plus.add_theme_color_override("font_color", Color(0.18, 0.84, 0.90, 1.0))
+	pickup_plus.add_theme_color_override("font_color", BOUNTY_INFO_TEXT)
 	pickup_badge.add_child(pickup_plus)
 	var pickup_hint := Label.new()
 	pickup_hint.text = _home_text("新悬赏请进入前哨站领取", "Enter the Outpost to claim new bounties")
@@ -527,7 +524,7 @@ func _add_bounty_board_panel(root: Control) -> void:
 	pickup_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	pickup_hint.add_theme_font_override("font", T.display_font(600))
 	pickup_hint.add_theme_font_size_override("font_size", 14)
-	pickup_hint.add_theme_color_override("font_color", Color("#2fc0cf"))
+	pickup_hint.add_theme_color_override("font_color", BOUNTY_INFO_TEXT)
 	pickup_row.add_child(pickup_hint)
 
 
@@ -575,7 +572,7 @@ func _fill_bounty_rows() -> void:
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		empty.add_theme_font_override("font", T.display_font(500))
 		empty.add_theme_font_size_override("font_size", 16)
-		empty.add_theme_color_override("font_color", Color(0.72, 0.62, 0.48, 1.0))
+		empty.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
 		_bounty_rows_box.add_child(empty)
 
 
@@ -663,14 +660,14 @@ func _make_daily_task_row(
 	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name.add_theme_font_override("font", T.display_font(600))
 	name.add_theme_font_size_override("font_size", 16)
-	name.add_theme_color_override("font_color", Color("#d6bf94"))
+	name.add_theme_color_override("font_color", T.PANEL_INK)
 	top.add_child(name)
 
 	var progress_text := Label.new()
 	progress_text.text = "%d/%d" % [current, target]
 	progress_text.add_theme_font_override("font", T.display_font(600))
 	progress_text.add_theme_font_size_override("font_size", 15)
-	progress_text.add_theme_color_override("font_color", Color("#d6bf94"))
+	progress_text.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
 	top.add_child(progress_text)
 
 	var progress := ProgressBar.new()
@@ -747,8 +744,8 @@ func _add_seed_field(root: Control) -> void:
 	field.offset_bottom = -184.0
 	field.add_theme_font_override("font", T.display_font(600))
 	field.add_theme_font_size_override("font_size", 22)
-	field.add_theme_color_override("font_color", Color(1.0, 0.9, 0.72, 1.0))
-	field.add_theme_color_override("font_placeholder_color", Color(0.75, 0.66, 0.52, 0.7))
+	field.add_theme_color_override("font_color", T.PANEL_INK)  # cream input plate
+	field.add_theme_color_override("font_placeholder_color", T.PANEL_INK_SOFT)
 	_style_seed_field(field, false)
 	field.text_changed.connect(func(_text: String) -> void: _style_seed_field(field, false))
 	root.add_child(field)
@@ -850,9 +847,7 @@ func _make_home_nav_button(
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_override("font", T.display_font(600))
 	label.add_theme_font_size_override("font_size", 24)
-	label.add_theme_color_override("font_color", Color(0.94, 0.82, 0.60, 1.0))
-	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.88))
-	label.add_theme_constant_override("outline_size", 3)
+	label.add_theme_color_override("font_color", T.PANEL_INK)  # cream secondary plate
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(label)
 	return btn
@@ -1611,14 +1606,7 @@ func _open_card_gallery() -> void:
 	counter.add_theme_constant_override("outline_size", 2)
 	header.add_child(counter)
 
-	var close := Button.new()
-	close.text = "X"
-	close.custom_minimum_size = Vector2(54, 48)
-	close.focus_mode = Control.FOCUS_NONE
-	close.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	close.add_theme_font_override("font", T.display_font(700))
-	close.add_theme_font_size_override("font_size", 24)
-	T.apply_action_button(close, "secondary")
+	var close := T.ll_close_button(48.0)
 	close.pressed.connect(func() -> void: AudioManager.play_sfx("ui_back"))
 	close.pressed.connect(layer.queue_free)
 	header.add_child(close)

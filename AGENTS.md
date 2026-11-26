@@ -82,3 +82,10 @@ the short operational gate for agents.
   decorative glow frame or a large empty holder around a card.
 - Layout rhythm may reference another game, but do not copy its rendered materials,
   assets, fonts, or ornamental chrome.
+- Text on cream paper panels and on secondary buttons uses the ink tokens
+  (`T.PANEL_INK`, `PANEL_INK_SOFT`, `PANEL_HEADER`), never the gold or cream text that
+  is meant for dark surfaces.
+- Small UI icons (top bar, intents, currency, glyphs) are SVG source in
+  `tools/svg_icons/gen.py`. Change the script and re-render them; never hand-edit
+  those PNGs or queue them for Codex. Map node icons are not part of this: they keep
+  their hand-drawn art (owner, 2026-11-25). See `docs/conventions/ui-code.md`.

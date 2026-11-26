@@ -12,15 +12,8 @@ extends RefCounted
 
 const AFFIX_POOL = preload("uid://dvbrdiqme425c")  # res://core/meta/affixes.gd
 const MODEL_ID = preload("uid://ddtqasxna3kbq")  # res://core/content/model_id.gd
+const EQUIPMENT_ICON = preload("uid://c6mjhfe52nqj5")  # res://ui/common/equipment_icon.gd
 
-## Rarity → BBCode hex for the header (mirrors equipment_icon.gd RARITY_COLORS).
-const RARITY_HEX := {
-	"common": "f2f5fa",
-	"uncommon": "4fb0ff",
-	"rare": "ffcf45",
-	"set": "6bd975",
-	"cursed": "dc5257",
-}
 
 
 ## `data` = base equipment JSON, `slot` = its slot id, `instance` = the rolled
@@ -39,7 +32,8 @@ static func text(data: Dictionary, slot: String, instance: Dictionary = {}) -> S
 		lines.append("[b]%s[/b]" % name_str)
 	var rarity_str := Settings.t("UI_FORGE_RARITY_%s" % rarity.to_upper(), rarity)
 	var slot_str := Settings.t("UI_EQUIP_SLOT_%s" % slot.to_upper(), slot)
-	var hex := str(RARITY_HEX.get(rarity, RARITY_HEX["common"]))
+	# The tooltip plate is cream paper: use the darker paper rarity hues.
+	var hex := EQUIPMENT_ICON.paper_rarity_color(rarity).to_html(false)
 	lines.append("[b][color=#%s]%s · %s[/color][/b]" % [hex, rarity_str, slot_str])
 
 	# Affix block: one localized line per rolled affix.
@@ -56,9 +50,9 @@ static func text(data: Dictionary, slot: String, instance: Dictionary = {}) -> S
 				continue
 			var label := AFFIX_POOL.describe(affix as Dictionary)
 			if AFFIX_POOL.is_curse(affix as Dictionary):
-				lines.append("[color=#e0584c]%s[/color]" % label)
+				lines.append("[color=#8a1e24]%s[/color]" % label)
 			else:
-				lines.append("[color=#5fd06a]%s[/color]" % label)
+				lines.append("[color=#2a6230]%s[/color]" % label)
 
 	if set_id != "":
 		var set_name := Settings.t("SET_%s_NAME" % MODEL_ID.key_entry(set_id), set_id.replace("_", " "))

@@ -13,20 +13,25 @@ var _listening: bool = false
 
 func setup(action: String, label_text: String) -> void:
 	_action = action
-	add_theme_constant_override("separation", 10)
+	add_theme_constant_override("separation", 12)
+	custom_minimum_size.y = 46
 	var l := Label.new()
 	l.text = label_text
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	l.add_theme_color_override("font_color", T.PANEL_INK)
-	l.add_theme_font_size_override("font_size", 19)
+	l.add_theme_font_size_override("font_size", 20)
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(l)
+	# Cream key cap with ink text (the secondary plate), like every paper button.
 	_btn = Button.new()
-	_btn.custom_minimum_size = Vector2(150, 38)
+	_btn.custom_minimum_size = Vector2(150, 42)
+	_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_btn.focus_mode = Control.FOCUS_NONE
-	_btn.add_theme_color_override("font_color", T.TEXT_MAIN)
-	_btn.add_theme_stylebox_override("normal", T.button_textured("normal"))
-	_btn.add_theme_stylebox_override("hover", T.button_textured("hover"))
-	_btn.add_theme_stylebox_override("pressed", T.button_textured("pressed"))
+	_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_btn.add_theme_font_override("font", T.display_font(600))
+	_btn.add_theme_font_size_override("font_size", 18)
+	T.apply_action_button(_btn, "secondary", Vector4(10, 6, 10, 8))
+	_btn.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	_btn.pressed.connect(_start_listening)
 	add_child(_btn)
 	refresh()

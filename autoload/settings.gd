@@ -100,6 +100,19 @@ func _apply_all() -> void:
 	TranslationServer.set_locale(language)
 	_apply_fullscreen()
 	apply_audio()
+	_apply_frame_pacing()
+
+
+## Even frame pacing. Plain vsync (FIFO) on a 165 Hz laptop panel delivered
+## frames at 6 / 12 / 18 ms in turn, which read as stutter; mailbox vsync capped
+## at the screen's refresh rate held a steady 6 ms (playtest probe 2026-11-22).
+## Drivers without mailbox fall back to plain vsync on their own.
+func _apply_frame_pacing() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_MAILBOX)
+	var refresh := DisplayServer.screen_get_refresh_rate()
+	Engine.max_fps = int(round(refresh)) if refresh > 0.0 else 60
 
 
 func set_language(loc: String) -> void:

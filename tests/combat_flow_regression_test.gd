@@ -32,6 +32,7 @@ func _run() -> void:
 	await test_winning_card_stops_its_remaining_effects()
 	await test_enemy_attack_hits_the_real_player()
 	await test_two_full_rounds_on_the_real_battle()
+	await test_reshuffle_leaves_a_flying_card_alone()
 	RunManager.tool_inventory.assign(_saved_tools)
 	if failures.is_empty():
 		print("[OK] combat flow regressions passed")
@@ -161,3 +162,33 @@ func _wait_until(condition: Callable, seconds: float) -> bool:
 			return false
 		await get_tree().process_frame
 	return true
+
+
+## A card still flying to the discard pile when a draw reshuffles must not be
+## grabbed mid-flight (it jumped between the piles); its landing puts it in the
+## pile the rules now hold it in.
+func test_reshuffle_leaves_a_flying_card_alone() -> void:
+	var battle = await _battle()
+	var piles = battle.combat.state.piles
+	var view = battle.hand_view
+	for card in piles.draw.cards.duplicate():
+		piles.move(card, "discard")
+		var node = view.node_of(card)
+		if node.card_container and node.card_container.has_card(node):
+			node.card_container.remove_card(node)
+		battle.discard_pile.add_card(node)
+	_expect(piles.size("discard") >= 2, "the test needs two discard cards to reshuffle")
+	var flying = piles.discard.cards[0]
+	var flying_node = view.node_of(flying)
+	battle.discard_pile.remove_card(flying_node)  # mid-flight: in no container
+	await battle.combat.draw_cards(1)
+	_expect(not battle.deck.has_card(flying_node) and not battle.hand.has_card(flying_node),
+		"the reshuffle left the flying card's node alone")
+	for card in piles.draw.cards:
+		if card != flying:
+			_expect(battle.deck.has_card(view.node_of(card)), "the other reshuffled cards sit in the draw pile")
+	view.land(flying, flying_node)
+	var pile: String = piles.where(flying)
+	var container = battle.hand if pile == "hand" else (battle.deck if pile == "draw" else battle.discard_pile)
+	_expect(container.has_card(flying_node), "the flying card lands in the pile the rules hold it in (%s)" % pile)
+	await _free(battle)

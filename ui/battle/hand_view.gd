@@ -133,8 +133,12 @@ func _play_reshuffle(cards: Array) -> void:
 		var n = node_of(c)
 		if n == null or not is_instance_valid(n):
 			continue
-		if n.card_container and n.card_container.has_card(n):
-			n.card_container.remove_card(n)
+		# A node outside every container is still flying to the discard pile.
+		# Grabbing it mid-flight made it jump between the two piles; its flight
+		# ends with land(), which puts it in the draw pile.
+		if n.card_container == null or not n.card_container.has_card(n):
+			continue
+		n.card_container.remove_card(n)
 		deck.add_card(n)
 	screen._update_ui_labels()
 	await _wait(0.15)

@@ -60,7 +60,7 @@ func _ready() -> void:
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	heading.add_theme_font_override("font", T.display_font(700))
 	heading.add_theme_font_size_override("font_size", 24)
-	heading.add_theme_color_override("font_color", T.UI_BRASS_LIGHT)
+	heading.add_theme_color_override("font_color", T.PANEL_HEADER)
 	column.add_child(heading)
 
 	var item_row := HBoxContainer.new()
@@ -91,14 +91,14 @@ func _ready() -> void:
 		"TOOL_%s_TITLE" % MODEL_ID.key_entry(_tool_id), str(_tool_data.get("title", _tool_id))
 	)
 	title.add_theme_font_size_override("font_size", 20)
-	title.add_theme_color_override("font_color", T.TEXT_MAIN)
+	title.add_theme_color_override("font_color", T.PANEL_INK)
 	copy.add_child(title)
 
 	var description := Label.new()
 	description.name = "ToolDescription"
 	description.text = Settings.t("TOOL_%s_DESC" % MODEL_ID.key_entry(_tool_id), "")
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	description.add_theme_color_override("font_color", T.TEXT_SECONDARY)
+	description.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
 	copy.add_child(description)
 
 	var actions := HBoxContainer.new()
@@ -129,6 +129,10 @@ func _make_button(node_name: String, label: String, primary: bool) -> Button:
 	button.add_theme_stylebox_override(
 		"pressed", T.ll_button("pressed") if primary else T.ll_button_olive("pressed")
 	)
+	if not primary:  # cream secondary plate
+		button.add_theme_color_override("font_color", T.PANEL_INK)
+		button.add_theme_color_override("font_hover_color", T.PANEL_HEADER)
+		button.add_theme_color_override("font_pressed_color", T.PANEL_INK)
 	return button
 
 

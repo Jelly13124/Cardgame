@@ -69,7 +69,8 @@ func _build() -> void:
 	title.text = tr("RESULT_DEMO_TITLE") if is_win else tr("RESULT_DEFEAT_TITLE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	T.style_display(title, 44, 700)
-	title.add_theme_color_override("font_color", T.ACCENT_NEON_GREEN if is_win else T.ACCENT_DANGER)
+	# Paper panel: dark green / rust instead of the neon pair (1.1:1 and 2.3:1 there).
+	title.add_theme_color_override("font_color", Color("#2a6230") if is_win else T.PANEL_HEADER)
 	box.add_child(title)
 
 	var body := Label.new()
@@ -78,21 +79,21 @@ func _build() -> void:
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.custom_minimum_size = Vector2(560, 0)
 	T.style_display(body, 22)
-	body.add_theme_color_override("font_color", T.TEXT_MAIN)
+	body.add_theme_color_override("font_color", T.PANEL_INK)
 	box.add_child(body)
 
 	var summary := Label.new()
 	summary.text = _summary_text()
 	summary.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	summary.add_theme_font_size_override("font_size", 18)
-	summary.add_theme_color_override("font_color", T.TEXT_SECONDARY)
+	summary.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
 	box.add_child(summary)
 
 	var details := Label.new()
 	details.text = _detail_text()
 	details.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	details.add_theme_font_size_override("font_size", 17)
-	details.add_theme_color_override("font_color", T.TEXT_SECONDARY)
+	details.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
 	box.add_child(details)
 
 	var seed_label := Label.new()
@@ -100,7 +101,7 @@ func _build() -> void:
 	seed_label.text = tr("UI_RESULT_SEED").format({"seed": RunManager.run_seed()})
 	seed_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	seed_label.add_theme_font_size_override("font_size", 16)
-	seed_label.add_theme_color_override("font_color", T.TEXT_SECONDARY)
+	seed_label.add_theme_color_override("font_color", T.PANEL_INK_SOFT)
 	box.add_child(seed_label)
 
 	if _store_url() != "":

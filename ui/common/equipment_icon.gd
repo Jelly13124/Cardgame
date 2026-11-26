@@ -28,6 +28,19 @@ const RARITY_COLORS := {
 	"set": Color(0.42, 0.85, 0.46),  # green — set pieces
 	"cursed": Color(0.86, 0.32, 0.34),  # red — cursed gear
 }
+## Darker rarity hues for item names written on the cream paper panels
+## (the border colors above read 1.0–2.0:1 there; these are all >= 4.9:1).
+const PAPER_RARITY_COLORS := {
+	"common": Color("#1a100a"),
+	"uncommon": Color("#1d5590"),
+	"rare": Color("#7a4e00"),
+	"set": Color("#2a6230"),
+	"cursed": Color("#8a1e24"),
+}
+
+
+static func paper_rarity_color(rarity: String) -> Color:
+	return PAPER_RARITY_COLORS.get(rarity, PAPER_RARITY_COLORS["common"])
 
 var _label: Label
 var _texture_rect: TextureRect

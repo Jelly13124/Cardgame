@@ -98,19 +98,9 @@ func _show_menu() -> void:
 func _show_settings() -> void:
 	_clear_body()
 	_body.add_child(_title(tr("SETTINGS_TITLE")))
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(470, 392)
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_body.add_child(scroll)
-	var inner := VBoxContainer.new()
-	inner.add_theme_constant_override("separation", 12)
-	inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(inner)
 	# in_battle=true shows the "restart to apply language" note; the no-op language
 	# callback avoids reloading the scene under the pause (which would drop the run).
-	SETTINGS_PANEL.add_controls(inner, func() -> void: pass, true)
-	SETTINGS_PANEL.add_key_controls(inner)
+	_body.add_child(SETTINGS_PANEL.build_columns(func() -> void: pass, true))
 	_body.add_child(_menu_button(tr("PAUSE_BACK"), _show_menu))
 
 
@@ -202,8 +192,8 @@ func _menu_button(text: String, cb: Callable, danger: bool = false) -> Button:
 	b.add_theme_font_size_override("font_size", 21)
 	T.apply_action_button(b, "list")
 	if danger:
-		b.add_theme_color_override("font_color", T.ACCENT_DANGER)
-		b.add_theme_color_override("font_hover_color", T.UI_HEADER_GOLD)
+		b.add_theme_color_override("font_color", Color("#8a1e24"))  # danger red on the cream plate
+		b.add_theme_color_override("font_hover_color", T.PANEL_HEADER)
 	b.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	b.pressed.connect(cb)
 	return b
